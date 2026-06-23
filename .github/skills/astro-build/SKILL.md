@@ -48,15 +48,16 @@ Runs `scripts/run-verify.mjs` — 14 sequential steps (fail-fast except SonarClo
 | 5  | Build: Production Build       | `pnpm run build`                                   |
 | 6  | Lint: HTML5 Validation        | `pnpm lint:html`                                   |
 | 7  | Lint: RSS Feed                | `node scripts/ci/validate-rss.mjs dist`            |
-| 8  | Lint: Schema.org JSON-LD      | `node scripts/ci/validate-schema.mjs dist`         |
-| 9  | Lint: Spelling (CSpell)        | `pnpm exec cspell lint .`                          |
-| 10 | Lint: Broken Links (Lychee)   | `lychee --config lychee.toml --root-dir dist dist/**/*.html` |
-| 11 | Lint: JSDoc Coverage          | `node scripts/ci/calculate-jsdoc-coverage.mjs`     |
-| 12 | Security: SonarCloud Analysis | `pnpm exec sonar-scanner` *(if SONAR_TOKEN set)*   |
-| 13 | Analyze: SonarCloud Issues    | `node scripts/ci/get-sonar-issues.mjs` *(if SONAR_TOKEN + SONAR_PROJECT_KEY)* |
-| 14 | Tests: Playwright E2E         | `pnpm test:e2e`                                    |
+| 8  | Lint: Spelling (CSpell)        | `pnpm exec cspell lint .`                          |
+| 9  | Lint: Broken Links (Lychee)   | `lychee --config lychee.toml --root-dir dist dist/**/*.html` |
+| 10 | Lint: JSDoc Coverage          | `node scripts/ci/calculate-jsdoc-coverage.mjs`     |
+| 11 | Security: SonarCloud Analysis | `pnpm exec sonar-scanner` *(if SONAR_TOKEN set)*   |
+| 12 | Analyze: SonarCloud Issues    | `node scripts/ci/get-sonar-issues.mjs` *(if SONAR_TOKEN + SONAR_PROJECT_KEY)* |
+| 13 | Tests: Playwright E2E         | `pnpm test:e2e`                                    |
 
-Steps 6-14 require a successful build. Steps 12-13 are conditional (skipped without env vars). SonarCloud failures are recorded but don't block subsequent steps.
+Schema.org JSON-LD is validated at build via `schema-dts` `satisfies` types on every JSON-LD builder, checked by step 1 (Astro Check).
+
+Steps 5-13 require a successful build. Steps 11-12 are conditional (skipped without env vars). SonarCloud failures are recorded but don't block subsequent steps.
 
 ## Individual Checks
 ```bash

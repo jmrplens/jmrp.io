@@ -13,6 +13,7 @@ import BaseLayout from "@layouts/BaseLayout.astro";
 import { getPostsForLocale } from "@utils/blog";
 import { getSiteUrl } from "@utils/site";
 import { getImage } from "astro:assets";
+import type { CollectionPage, ListItem } from "schema-dts";
 
 const locale = (Astro.currentLocale ?? defaultLocale) as Locale;
 const t = useTranslations(locale);
@@ -51,14 +52,17 @@ const schema = {
   inLanguage: locale,
   mainEntity: {
     "@type": "ItemList",
-    itemListElement: posts.map((post, index) => ({
-      "@type": "ListItem",
-      position: index + 1,
-      url: new URL(`/blog/${post.data.slug}/`, getSiteUrl()).href,
-      name: post.data.title,
-    })),
+    numberOfItems: posts.length,
+    itemListElement: posts.map(
+      (post, index): ListItem => ({
+        "@type": "ListItem",
+        position: index + 1,
+        url: new URL(`/blog/${post.data.slug}/`, getSiteUrl()).href,
+        name: post.data.title,
+      }),
+    ),
   },
-};
+} satisfies CollectionPage;
 ---
 
 <BaseLayout

@@ -10,6 +10,7 @@ import BaseLayout from "@layouts/BaseLayout.astro";
 import { stripHtml } from "@utils/html";
 import { getPublications } from "@utils/publications";
 import { getSiteUrl } from "@utils/site";
+import type { CollectionPage, ListItem } from "schema-dts";
 
 const locale = (Astro.currentLocale ?? defaultLocale) as Locale;
 const t = useTranslations(locale);
@@ -45,54 +46,67 @@ const collectionSchema = {
   inLanguage: locale,
   mainEntity: {
     "@type": "ItemList",
-    itemListElement: allPublications.map((pub, index) => ({
-      "@type": "ListItem",
-      position: index + 1,
-      item: {
-        "@type": "ScholarlyArticle",
-        headline: pub.title,
-        name: pub.title,
-        datePublished: formatIssuedDate(pub.issued),
-        author:
-          pub.author?.map((a: { family: string; given?: string }) => ({
-            "@type": "Person",
-            ...(a.given && { givenName: a.given }),
-            familyName: a.family,
-            name: a.given ? `${a.given} ${a.family}` : a.family,
-          })) || [],
-        publication:
-          pub["container-title"] ||
-          pub.publisher ||
-          pub.school ||
-          pub.institution
-            ? {
-                "@type": "Periodical",
-                name:
-                  pub["container-title"] ||
-                  pub.publisher ||
-                  pub.school ||
-                  pub.institution,
-              }
-            : undefined,
-        abstract:
-          typeof pub.abstract === "string"
-            ? stripHtml(pub.abstract)
-            : undefined,
-        ...(() => {
-          const doi = typeof pub.doi === "string" ? pub.doi : undefined;
-          let doiUrl: string | undefined;
-          if (doi) {
-            doiUrl = doi.startsWith("http") ? doi : `https://doi.org/${doi}`;
-          }
-          return {
-            url: pub.url || doiUrl || undefined,
-            ...(doiUrl && { sameAs: [doiUrl] }),
-          };
-        })(),
-      },
-    })),
+    numberOfItems: allPublications.length,
+    itemListElement: allPublications.map(
+      (pub, index): ListItem => ({
+        "@type": "ListItem",
+        position: index + 1,
+        item: {
+          "@type": "ScholarlyArticle",
+          headline: pub.title,
+          name: pub.title,
+          datePublished: formatIssuedDate(pub.issued),
+          author:
+            pub.author?.map((a: { family: string; given?: string }) => ({
+              "@type": "Person",
+              // Link the site owner's own author node to the canonical #person
+              // entity so his publications connect to his site identity.
+              ...(/requena/i.test(a.family) && {
+                "@id": new URL("#person", getSiteUrl()).href,
+              }),
+              ...(a.given && { givenName: a.given }),
+              familyName: a.family,
+              name: a.given ? `${a.given} ${a.family}` : a.family,
+            })) || [],
+          // Schema.org: a scholarly article `isPartOf` its Periodical (journal /
+          // proceedings). `publication` expects a PublicationEvent, not a
+          // Periodical, so it is the wrong property here.
+          isPartOf:
+            pub["container-title"] ||
+            pub.publisher ||
+            pub.school ||
+            pub.institution
+              ? {
+                  "@type": "Periodical",
+                  name: String(
+                    pub["container-title"] ||
+                      pub.publisher ||
+                      pub.school ||
+                      pub.institution,
+                  ),
+                }
+              : undefined,
+          abstract:
+            typeof pub.abstract === "string"
+              ? stripHtml(pub.abstract)
+              : undefined,
+          ...(() => {
+            const doi = typeof pub.doi === "string" ? pub.doi : undefined;
+            let doiUrl: string | undefined;
+            if (doi) {
+              doiUrl = doi.startsWith("http") ? doi : `https://doi.org/${doi}`;
+            }
+            const pubUrl = typeof pub.url === "string" ? pub.url : undefined;
+            return {
+              url: pubUrl || doiUrl || undefined,
+              ...(doiUrl && { sameAs: [doiUrl] }),
+            };
+          })(),
+        },
+      }),
+    ),
   },
-};
+} satisfies CollectionPage;
 ---
 
 <BaseLayout

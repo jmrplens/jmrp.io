@@ -77,7 +77,7 @@ If you've ever looked at your server logs, you've likely seen countless attempts
 
 ## What is a tarpit?
 
-A **[tarpit](https://en.wikipedia.org/wiki/Tarpit_(networking))** (also known as a "tar pit" or "sticky honeypot") is a network security mechanism designed to **slow down attackers** by deliberately responding to their requests at an extremely slow rate. The name comes from the natural phenomenon of tar pits—geological formations where animals become trapped in viscous tar and cannot escape.
+A **[tarpit](https://en.wikipedia.org/wiki/Tarpit_(networking))** (also known as a "tar pit" or "[sticky honeypot](/blog/006-implementing-mikrotik-honeypot/)") is a network security mechanism designed to **slow down attackers** by deliberately responding to their requests at an extremely slow rate. The name comes from the natural phenomenon of tar pits—geological formations where animals become trapped in viscous tar and cannot escape.
 
 In cybersecurity, a tarpit does the same thing digitally: it accepts incoming connections from malicious actors but **drip-feeds data so slowly** that the attacker's tools become stuck, wasting their time and resources while they wait for a response that never fully arrives. For more background, see [Hedgehog Security's excellent overview](https://www.hedgehogsecurity.co.uk/blog/what-are-tarpits).
 

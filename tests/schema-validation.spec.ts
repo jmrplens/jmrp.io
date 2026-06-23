@@ -226,7 +226,16 @@ test.describe("ProfilePage schema on homepage", () => {
     expect(profile).not.toBeNull();
     if (!profile) return;
 
-    const person = profile.mainEntity as JsonLdSchema;
+    // mainEntity is a typed reference to the canonical #person node, which is
+    // defined once as the WebSite publisher (avoids a duplicate, thinner Person
+    // sharing the same @id). Resolve the reference and validate the full node.
+    const ref = profile.mainEntity as JsonLdSchema;
+    expect(ref["@type"]).toBe("Person");
+
+    const website = findInGraph(jsonLd, "WebSite");
+    expect(website).not.toBeNull();
+    const person = (website?.publisher ?? {}) as JsonLdSchema;
+    expect(person["@id"]).toBe(ref["@id"]);
     expect(person["@type"]).toBe("Person");
     expect(isNonEmptyStr(person.name)).toBe(true);
     expect(isValidUrl(person.url)).toBe(true);
@@ -391,6 +400,7 @@ test.describe("URL correctness in schemas", () => {
       "alumniOf",
       "hasCredential",
       "memberOf",
+      "identifier", // ORCID PropertyValue.url points to orcid.org by design
     ]);
 
     /** Collect @id and url values (skip external subtrees) */

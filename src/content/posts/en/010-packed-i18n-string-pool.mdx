@@ -959,4 +959,4 @@ The [string-pool packer](/tools/string-pool-packer/) runs entirely in your brows
   <li data-check="warning">**Account honestly.** The headline (−50% index) is real; the firmware delta (−2,224 B at `-Os`) is smaller because you hand back 500 B of cross-module dedup — and at `-Os` the linker already gets the blob within 282 B, so the table-plus-relocations is the load-bearing win, not the text.</li>
 </CheckList>
 
-This came out of Kleidos, a hardware password manager I'm building — not yet released. The i18n layer is a small corner of it, but it's a good reminder that on a constrained target the interesting savings often aren't in the data you store, but in how you _index_ it.
+This came out of Kleidos, a [hardware password manager](/blog/011-encrypt-then-mac-vault/) I'm building — not yet released. The i18n layer is a small corner of it, but it's a good reminder that on a constrained target the interesting savings often aren't in the data you store, but in how you _index_ it.

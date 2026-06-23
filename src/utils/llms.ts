@@ -35,6 +35,19 @@ const TECHNICAL_DETAILS = [
 
 const today = () => new Date().toISOString().slice(0, 10);
 
+/**
+ * Best-effort conversion of a post's MDX body to plain-ish markdown for AI
+ * ingestion: strips `import` statements and collapses excess blank lines.
+ * Component tags are left in place (harmless noise) to avoid corrupting code
+ * blocks that legitimately contain `<` / `>`.
+ */
+function mdxToText(body: string): string {
+  return body
+    .replaceAll(/^import [^\n]*/gm, "")
+    .replaceAll(/\n{3,}/g, "\n\n")
+    .trim();
+}
+
 /** Published English posts, ordered by their numbered slug (chronological). */
 async function getEnglishPosts() {
   const posts = await getCollection(
@@ -84,7 +97,12 @@ export async function generateLlmsTxt(siteUrl: string): Promise<string> {
     "",
     "## Blog Posts",
     "",
-    ...posts.map((p) => `- [${p.data.title}](${siteUrl}/blog/${p.data.slug}/)`),
+    ...posts.map(
+      (p) =>
+        `- [${p.data.title}](${siteUrl}/blog/${p.data.slug}/)${
+          p.data.description ? `: ${p.data.description}` : ""
+        }`,
+    ),
     "",
     "## Developer Tools",
     "",
@@ -129,6 +147,7 @@ export async function generateLlmsFullTxt(siteUrl: string): Promise<string> {
             ...(d.howto?.steps ?? []).map((s, i) => `${i + 1}. ${s.name}`),
           ]
         : []),
+      ...(p.body ? ["", "---", "", mdxToText(p.body)] : []),
       "",
     ];
   });

@@ -24,6 +24,7 @@ import { getSiteUrl } from "@utils/site";
 import { getImage, Picture } from "astro:assets";
 import { type CollectionEntry, getEntry, render } from "astro:content";
 import * as cheerio from "cheerio";
+import type { BlogPosting, FAQPage, HowTo, TechArticle } from "schema-dts";
 
 interface Props {
   /** The blog post entry from the content collection. */
@@ -163,13 +164,13 @@ const articleNode = {
   isPartOf: {
     "@id": new URL("#website", getSiteUrl()).href,
   },
-};
+} satisfies BlogPosting | TechArticle;
 
 // Secondary graph nodes: FAQPage (from `faq`) and HowTo (from `howto`).
 // Both share the post's `faq`/`howto` frontmatter as the single source of truth.
 const faqNode =
   post.data.faq && post.data.faq.length > 0
-    ? {
+    ? ({
         "@type": "FAQPage",
         "@id": `${postUrl}#faq`,
         isPartOf: { "@id": `${postUrl}#article` },
@@ -178,11 +179,11 @@ const faqNode =
           name: item.question,
           acceptedAnswer: { "@type": "Answer", text: item.answer },
         })),
-      }
+      } satisfies FAQPage)
     : undefined;
 
 const howtoNode = post.data.howto
-  ? {
+  ? ({
       "@type": "HowTo",
       "@id": `${postUrl}#howto`,
       name: post.data.howto.name,
@@ -208,7 +209,7 @@ const howtoNode = post.data.howto
         text: s.text,
         ...(s.anchor && { url: `${postUrl}#${s.anchor}` }),
       })),
-    }
+    } satisfies HowTo)
   : undefined;
 
 const articleSchema = [

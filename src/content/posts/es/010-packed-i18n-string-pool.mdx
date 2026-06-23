@@ -960,4 +960,4 @@ El [string-pool packer](/tools/string-pool-packer/) se ejecuta enteramente en tu
   <li data-check="warning">**Haz las cuentas con honestidad.** El titular (−50% de índice) es real; el delta de firmware (−2.224 B en `-Os`) es menor porque devuelves 500 B de dedup cruzado — y en `-Os` el linker ya deja el blob a 282 B, así que la tabla + relocations es la mejora que sostiene el peso, no el texto.</li>
 </CheckList>
 
-Esto salió de Kleidos, un gestor de contraseñas hardware que estoy construyendo — todavía no publicado. La capa i18n es un rincón pequeño de él, pero es un buen recordatorio de que en un objetivo limitado los ahorros interesantes a menudo no están en los datos que almacenas, sino en cómo los _indexas_.
+Esto salió de Kleidos, un [gestor de contraseñas hardware](/es/blog/011-encrypt-then-mac-vault/) que estoy construyendo — todavía no publicado. La capa i18n es un rincón pequeño de él, pero es un buen recordatorio de que en un objetivo limitado los ahorros interesantes a menudo no están en los datos que almacenas, sino en cómo los _indexas_.

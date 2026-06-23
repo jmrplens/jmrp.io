@@ -27,6 +27,12 @@ import { buildSameAs, getSiteUrl } from "@utils/site";
 import type { ImageMetadata } from "astro";
 import { Font, getImage } from "astro:assets";
 import { getEntry } from "astro:content";
+import type {
+  BreadcrumbList,
+  ListItem,
+  SiteNavigationElement,
+  WebSite,
+} from "schema-dts";
 
 const locale = (Astro.currentLocale ?? defaultLocale) as Locale;
 const t = useTranslations(locale);
@@ -149,6 +155,10 @@ const ogImageMime = (() => {
 // the page canonical form (avoids fragmenting the entity graph).
 const siteRoot = new URL("/", getSiteUrl()).href;
 
+// Machine-readable ORCID identifier for the Person, derived from sameAs.
+const orcidUrl = siteData.person?.sameAs?.find((u) => u.includes("orcid.org"));
+const orcidId = /orcid\.org\/([\dX-]+)/i.exec(orcidUrl ?? "")?.[1];
+
 // 1. WebSite Schema (Global)
 const websiteSchema = {
   "@type": "WebSite",
@@ -177,9 +187,17 @@ const websiteSchema = {
     ...(siteData.person?.knowsAbout && {
       knowsAbout: siteData.person.knowsAbout,
     }),
+    ...(orcidId && {
+      identifier: {
+        "@type": "PropertyValue",
+        propertyID: "ORCID",
+        value: orcidId,
+        url: orcidUrl,
+      },
+    }),
     sameAs: buildSameAs(siteData.social_links, siteData.person?.sameAs),
   },
-};
+} satisfies WebSite;
 
 // 2. Navigation Schema — use translated labels
 const navLabelKeyMap: Record<string, TranslationKey> = {
@@ -191,11 +209,13 @@ const navLabelKeyMap: Record<string, TranslationKey> = {
   "/publications/": "nav.publications",
   "/github/": "nav.repositories",
 };
-const navSchema = (siteData.nav || []).map((item) => ({
-  "@type": "SiteNavigationElement",
-  name: navLabelKeyMap[item.href] ? t(navLabelKeyMap[item.href]) : item.label,
-  url: new URL(item.href, getSiteUrl()).href,
-}));
+const navSchema = (siteData.nav || []).map(
+  (item): SiteNavigationElement => ({
+    "@type": "SiteNavigationElement",
+    name: navLabelKeyMap[item.href] ? t(navLabelKeyMap[item.href]) : item.label,
+    url: new URL(item.href, getSiteUrl()).href,
+  }),
+);
 
 // 3. Breadcrumb Schema (Automatic)
 const pathSegments = Astro.url.pathname.split("/").filter(Boolean);
@@ -209,7 +229,7 @@ const breadcrumbList = {
       name: t("nav.home"),
       item: siteRoot,
     },
-    ...pathSegments.map((segment, index) => {
+    ...pathSegments.map((segment, index): ListItem => {
       const path = `/${pathSegments.slice(0, index + 1).join("/")}/`;
       const isLastSegment = index === pathSegments.length - 1;
       const absoluteUrl = new URL(path, getSiteUrl()).href;
@@ -231,7 +251,7 @@ const breadcrumbList = {
       };
     }),
   ],
-};
+} satisfies BreadcrumbList;
 
 // 4. Merge Logic
 // We use a @graph to include multiple items (Website, Page, Breadcrumbs, etc.)

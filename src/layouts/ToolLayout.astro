@@ -14,6 +14,7 @@ import { defaultLocale, type Locale } from "@i18n/config";
 import { useTranslatedPath, useTranslations } from "@i18n/utils";
 import BaseLayout from "@layouts/BaseLayout.astro";
 import { getSiteUrl } from "@utils/site";
+import type { FAQPage, SoftwareApplication } from "schema-dts";
 
 interface Props {
   /** Page <title> and visible <h1>. */
@@ -42,7 +43,7 @@ const translatePath = useTranslatedPath(locale);
 const toolUrl = new URL(`/tools/${slug}/`, getSiteUrl()).href;
 // `@context` is intentionally omitted: this node is merged into the page-level
 // JSON-LD `@graph`, which already declares the context.
-const toolSchema = {
+const baseToolSchema = {
   "@type": "SoftwareApplication",
   "@id": `${toolUrl}#software`,
   name: title,
@@ -55,13 +56,13 @@ const toolSchema = {
   author: { "@id": new URL("#person", getSiteUrl()).href },
   creator: { "@id": new URL("#person", getSiteUrl()).href },
   inLanguage: locale,
-  ...extraSchema,
-};
+} satisfies SoftwareApplication;
+const toolSchema = { ...baseToolSchema, ...extraSchema };
 
 // Secondary FAQPage node (from the tool's `faq` frontmatter), merged into the graph.
 const faqNode =
   faq && faq.length > 0
-    ? {
+    ? ({
         "@type": "FAQPage",
         "@id": `${toolUrl}#faq`,
         isPartOf: { "@id": `${toolUrl}#software` },
@@ -70,7 +71,7 @@ const faqNode =
           name: item.question,
           acceptedAnswer: { "@type": "Answer", text: item.answer },
         })),
-      }
+      } satisfies FAQPage)
     : undefined;
 
 const pageSchema = faqNode ? [toolSchema, faqNode] : toolSchema;

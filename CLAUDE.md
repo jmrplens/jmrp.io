@@ -861,24 +861,25 @@ pnpm exec prettier --check .  # Format check (runs at end of build)
 
 ### `pnpm verify` Pipeline Detail (`scripts/run-verify.mjs`)
 
-14 sequential steps, fail-fast (except SonarCloud):
+13 sequential steps, fail-fast (except SonarCloud):
 
-1. **Astro Check** — `pnpm typecheck --minimumFailingSeverity warning`
+1. **Astro Check** — `pnpm typecheck --minimumFailingSeverity warning` (also validates all JSON-LD `@graph` builders against Schema.org via `schema-dts` `satisfies` types — the official Google Schema.org TypeScript vocabulary)
 2. **ESLint** — `pnpm lint --max-warnings=0`
 3. **Prettier** — `pnpm exec prettier --check .`
 4. **Stylelint** — `pnpm lint:css`
 5. **Production Build** — `pnpm run build` (includes pre-build + post-build integrations)
 6. **HTML5 Validation** — `pnpm lint:html`
 7. **RSS Feed Validation** — `node scripts/ci/validate-rss.mjs dist`
-8. **Schema.org JSON-LD** — `node scripts/ci/validate-schema.mjs dist`
-9. **Spelling (CSpell)** — `pnpm exec cspell lint .`
-10. **Broken Links (Lychee)** — `lychee --config lychee.toml --root-dir dist dist/**/*.html`
-11. **JSDoc Coverage** — `node scripts/ci/calculate-jsdoc-coverage.mjs`
-12. **SonarCloud Analysis** — `pnpm exec sonar-scanner` *(conditional: requires `SONAR_TOKEN`)*
-13. **SonarCloud Issues** — `node scripts/ci/get-sonar-issues.mjs` *(conditional: requires `SONAR_TOKEN` + `SONAR_PROJECT_KEY`)*
-14. **Playwright E2E** — `pnpm test:e2e`
+8. **Spelling (CSpell)** — `pnpm exec cspell lint .`
+9. **Broken Links (Lychee)** — `lychee --config lychee.toml --root-dir dist dist/**/*.html`
+10. **JSDoc Coverage** — `node scripts/ci/calculate-jsdoc-coverage.mjs`
+11. **SonarCloud Analysis** — `pnpm exec sonar-scanner` *(conditional: requires `SONAR_TOKEN`)*
+12. **SonarCloud Issues** — `node scripts/ci/get-sonar-issues.mjs` *(conditional: requires `SONAR_TOKEN` + `SONAR_PROJECT_KEY`)*
+13. **Playwright E2E** — `pnpm test:e2e`
 
-Steps 6-14 require a prior build. Steps 12-13 are skipped without env vars. Pre-run cleanup: removes `schema-report.json`, `html-validation.json`, `rss-validation.json`.
+> **Schema.org validation**: JSON-LD correctness is enforced at build via `schema-dts` types on every schema builder (`BaseHead`, `BlogPost`, `ToolLayout`, `HomePage`, `CVPage`, `PublicationsPage`, `BlogIndex`, `BlogTagPage`), checked by step 1. This replaced a hand-rolled output checker that had no cases for TechArticle/FAQPage/HowTo/SoftwareApplication/CollectionPage and wrongly rejected valid JSON-LD `@id` node references.
+
+Steps 5-13 require a prior build. Steps 11-12 are skipped without env vars. Pre-run cleanup: removes `html-validation.json`, `rss-validation.json`.
 
 ---
 

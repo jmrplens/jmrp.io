@@ -17,6 +17,7 @@ import { getCVData } from "@utils/cv";
 import { sanitize, stripToText } from "@utils/html";
 import { buildSameAs, getAbsoluteUrl, getSiteUrl } from "@utils/site";
 import { getEntry } from "astro:content";
+import type { ProfilePage } from "schema-dts";
 
 const locale = (Astro.currentLocale ?? defaultLocale) as Locale;
 const t = useTranslations(locale);
@@ -125,7 +126,7 @@ const personSchema = {
           )
         : [],
   },
-};
+} satisfies ProfilePage;
 ---
 
 <BaseLayout

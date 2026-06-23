@@ -442,28 +442,20 @@ jobs:
           node-version: 24
           cache: "pnpm"
       - run: pnpm install --frozen-lockfile --prefer-offline
-      - name: Validate Schema.org structured data
-        run: node scripts/ci/validate-schema.mjs dist 2>&1 | tee schema-validation.log
-      - name: Generate Schema Report
-        if: always()
-        run: |
-          if [ -f schema-report.json ]; then
-            node scripts/ci/generate-schema-report.mjs
-          fi
+      # Schema.org correctness is enforced via schema-dts types (`satisfies`)
+      # on every JSON-LD builder — the official Google Schema.org TypeScript
+      # vocabulary — validated by `astro check`. This is far more thorough than
+      # the previous hand-rolled output checker (which had no cases for
+      # TechArticle/FAQPage/HowTo/SoftwareApplication/CollectionPage and
+      # rejected valid JSON-LD node references).
+      - name: Validate Schema.org structured data (schema-dts)
+        run: pnpm typecheck 2>&1 | tee schema-validation.log
       - name: Upload Schema log
         if: always()
         uses: actions/upload-artifact@v6
         with:
           name: log-schema
           path: schema-validation.log
-          retention-days: 1
-      - name: Upload Schema validation files
-        uses: actions/upload-artifact@v6
-        with:
-          name: schema-validation-report
-          path: |
-            schema-report.json
-            schema-report.html
           retention-days: 1
 
   image-optimization:
