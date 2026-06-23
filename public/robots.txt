@@ -1,7 +1,7 @@
 User-agent: *
 # Content Signals (https://contentsignals.org/) — explicit intent: this site
 # welcomes search indexing, AI retrieval/RAG, and AI training.
-Content-Signal: search=yes, ai-input=yes, ai-train=yes
+Content-Signal: search=yes, ai-input=yes, ai-retrieval=yes, ai-train=yes
 Allow: /
 
 # --- Search Engine Bots (explicit allow for clarity) ---

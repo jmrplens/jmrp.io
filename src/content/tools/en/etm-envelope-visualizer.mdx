@@ -6,6 +6,12 @@ subtitle: "An interactive [ver][iv][hmacTag][cipher] demo with real AES-256-CBC 
 icon: "i-mdi:lock-check-outline"
 category: "security"
 tags: ["security", "cryptography", "encrypt-then-mac", "aes", "hmac", "firmware"]
+features:
+  - "Live AES-256-CBC + HMAC-SHA256 envelope sealing"
+  - "Separate encKey and macKey sub-key derivation"
+  - "Click any byte to simulate tampering"
+  - "Verify-before-decrypt fail-closed demonstration"
+  - "Web Crypto API, nothing leaves your browser"
 appComponent: "EnvelopeVisualizer"
 faq:
   - question: "What does \"encrypt-then-MAC\" mean?"

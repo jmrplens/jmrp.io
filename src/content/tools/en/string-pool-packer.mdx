@@ -6,6 +6,12 @@ subtitle: "See how a deduplicated, tail-merged string pool with uint16 offsets b
 icon: "i-mdi:package-variant-closed"
 category: "embedded"
 tags: ["i18n", "embedded", "firmware", "c++", "flash", "optimization"]
+features:
+  - "Pointer table vs packed pool comparison"
+  - "String deduplication and tail-merging"
+  - "uint16 offset and 64 KiB guard"
+  - "Lines and CSV i18n input modes"
+  - "Runs locally in your browser"
 appComponent: "StringPoolPacker"
 faq:
   - question: "Why do const char* pointer tables waste so much flash on an MCU?"

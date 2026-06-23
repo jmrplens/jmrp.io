@@ -8,7 +8,7 @@ import { defaultLocale, type Locale } from "@i18n/config";
 import { useTranslations } from "@i18n/utils";
 import BaseLayout from "@layouts/BaseLayout.astro";
 import { stripHtml } from "@utils/html";
-import { getPublications } from "@utils/publications";
+import { getPublications, stripTrailingPunctuation } from "@utils/publications";
 import { getSiteUrl } from "@utils/site";
 import type { CollectionPage, ListItem } from "schema-dts";
 
@@ -68,24 +68,28 @@ const collectionSchema = {
               familyName: a.family,
               name: a.given ? `${a.given} ${a.family}` : a.family,
             })) || [],
-          // Schema.org: a scholarly article `isPartOf` its Periodical (journal /
-          // proceedings). `publication` expects a PublicationEvent, not a
-          // Periodical, so it is the wrong property here.
-          isPartOf:
-            pub["container-title"] ||
-            pub.publisher ||
-            pub.school ||
-            pub.institution
-              ? {
-                  "@type": "Periodical",
-                  name: String(
-                    pub["container-title"] ||
-                      pub.publisher ||
-                      pub.school ||
-                      pub.institution,
-                  ),
-                }
-              : undefined,
+          // Schema.org: an article `isPartOf` its venue. A journal is a
+          // Periodical; conference proceedings are a CreativeWork (Periodical
+          // would wrongly imply a recurring magazine). Standalone works
+          // (theses/reports) have no journal/proceedings parent, so omit it.
+          ...(() => {
+            const venue = stripTrailingPunctuation(
+              String(pub["container-title"] || pub.publisher || ""),
+            ).trim();
+            const isJournal = [
+              "article-journal",
+              "article",
+              "article-magazine",
+            ].includes(pub.type);
+            const isConference = pub.type === "paper-conference";
+            if (!venue || (!isJournal && !isConference)) return {};
+            return {
+              isPartOf: {
+                "@type": isJournal ? "Periodical" : "CreativeWork",
+                name: venue,
+              },
+            };
+          })(),
           abstract:
             typeof pub.abstract === "string"
               ? stripHtml(pub.abstract)

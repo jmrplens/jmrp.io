@@ -370,6 +370,11 @@ const tools = defineCollection({
     faq: z
       .array(z.object({ question: z.string(), answer: z.string() }))
       .optional(),
+    /**
+     * Short feature bullets for the tool, emitted as SoftwareApplication
+     * `featureList` JSON-LD to give AI engines a richer capability description.
+     */
+    features: z.array(z.string()).optional(),
   }),
 });
 

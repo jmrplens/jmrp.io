@@ -85,8 +85,10 @@ const personSchema = {
     name: "José Manuel Requena Plens",
     jobTitle: t("seo.jobTitle"),
     description: t("pages.cv.schemaDescription"),
-    url: "https://jmrp.io",
-    image: "https://jmrp.io/assets/mehome.webp",
+    // `url` and `image` are intentionally omitted: this node shares its @id
+    // with the canonical #person (the WebSite publisher in BaseHead), which
+    // defines them. Re-declaring them here with different values (no trailing
+    // slash / a different image) would create a same-@id scalar conflict.
     sameAs: buildSameAs(siteData.social_links, siteData.person?.sameAs),
     knowsAbout:
       technicalSkills?.type === "list_groups"

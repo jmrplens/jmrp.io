@@ -31,9 +31,11 @@ interface Props {
   extraSchema?: Record<string, unknown>;
   /** FAQ pairs — rendered as an accessible section + emitted as FAQPage JSON-LD. */
   faq?: { question: string; answer: string }[];
+  /** Feature bullets — emitted as SoftwareApplication `featureList`. */
+  features?: string[];
 }
 
-const { title, description, subtitle, icon, slug, extraSchema, faq } =
+const { title, description, subtitle, icon, slug, extraSchema, faq, features } =
   Astro.props;
 
 const locale = (Astro.currentLocale ?? defaultLocale) as Locale;
@@ -56,6 +58,7 @@ const baseToolSchema = {
   author: { "@id": new URL("#person", getSiteUrl()).href },
   creator: { "@id": new URL("#person", getSiteUrl()).href },
   inLanguage: locale,
+  ...(features && features.length > 0 && { featureList: features }),
 } satisfies SoftwareApplication;
 const toolSchema = { ...baseToolSchema, ...extraSchema };
 

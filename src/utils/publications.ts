@@ -35,6 +35,20 @@ export interface PublicationGroup {
 }
 
 /**
+ * Strips trailing whitespace and `. , ;` punctuation from a venue/journal name
+ * (BibTeX values often carry them). Implemented without a regex to avoid any
+ * backtracking — strictly linear character walk.
+ *
+ * @param value - The raw string to clean.
+ * @returns The string with trailing whitespace/punctuation removed.
+ */
+export function stripTrailingPunctuation(value: string): string {
+  let end = value.length;
+  while (end > 0 && " \t\n\r.,;".includes(value[end - 1])) end--;
+  return value.slice(0, end);
+}
+
+/**
  * Fetches, parses, and processes publications from the BibTeX file.
  * File location: src/data/publications/bibliography/papers.bib
  *

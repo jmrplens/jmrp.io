@@ -925,3 +925,6 @@ autogenere
 autoasignada
 Wikidata
 wikidata
+seleccionable
+configurables
+retrorreferencias

@@ -6,6 +6,8 @@
  * a concise link index; `llms-full.txt` enriches each post with its description,
  * tags, FAQ questions, and HowTo step names (all sourced from frontmatter).
  */
+import { getCVData } from "@utils/cv";
+import { getPublications, stripTrailingPunctuation } from "@utils/publications";
 import { getCollection } from "astro:content";
 
 /** Curated, site-level narrative reused by both files. */
@@ -46,6 +48,31 @@ function mdxToText(body: string): string {
     .replaceAll(/^import [^\n]*/gm, "")
     .replaceAll(/\n{3,}/g, "\n\n")
     .trim();
+}
+
+/**
+ * Flattens the structured CV data (a discriminated union of section types) into
+ * a readable list of human-facing strings — section titles, institutions,
+ * summaries, skill and certificate names — skipping icons, links and levels.
+ * Type-agnostic so it survives schema changes.
+ */
+function cvToText(node: unknown, out: string[] = []): string[] {
+  if (typeof node === "string") {
+    const s = node.trim();
+    if (s && !s.startsWith("i-") && !/^https?:\/\//.test(s)) out.push(s);
+    return out;
+  }
+  if (Array.isArray(node)) {
+    for (const item of node) cvToText(item, out);
+    return out;
+  }
+  if (node && typeof node === "object") {
+    const skip = new Set(["icon", "link", "url", "image", "level", "type"]);
+    for (const [key, value] of Object.entries(node)) {
+      if (!skip.has(key)) cvToText(value, out);
+    }
+  }
+  return out;
 }
 
 /** Published English posts, ordered by their numbered slug (chronological). */
@@ -127,6 +154,30 @@ export async function generateLlmsTxt(siteUrl: string): Promise<string> {
 export async function generateLlmsFullTxt(siteUrl: string): Promise<string> {
   const posts = await getEnglishPosts();
   const tools = await getSortedTools();
+  const cv = await getCVData();
+  const publicationGroups = await getPublications();
+
+  const cvSection = cvToText(cv).map((line) => `- ${line}`);
+
+  const publicationsSection = publicationGroups.flatMap((group) => [
+    `### ${group.title}`,
+    "",
+    ...group.items.map((pub) => {
+      const authors = (pub.author ?? [])
+        .map((a) => (a.given ? `${a.given} ${a.family}` : a.family))
+        .join(", ");
+      const year = pub.issued?.["date-parts"]?.[0]?.[0];
+      const venueRaw = pub["container-title"] ?? pub.publisher;
+      const venue = stripTrailingPunctuation(
+        typeof venueRaw === "string" ? venueRaw : "",
+      ).trim();
+      const yearPart = year ? ` (${year})` : "";
+      const authorPart = authors ? ` — ${authors}` : "";
+      const venuePart = venue ? `. ${venue}` : "";
+      return `- ${pub.title}${yearPart}${authorPart}${venuePart}.`;
+    }),
+    "",
+  ]);
 
   const postSection = posts.flatMap((p) => {
     const d = p.data;
@@ -178,6 +229,13 @@ export async function generateLlmsFullTxt(siteUrl: string): Promise<string> {
     "## Developer Tools",
     "",
     ...toolSection,
+    "## Curriculum Vitae",
+    "",
+    ...cvSection,
+    "",
+    "## Publications",
+    "",
+    ...publicationsSection,
     "## Contact",
     "",
     ...CONTACT.map((c) => `- ${c}`),
