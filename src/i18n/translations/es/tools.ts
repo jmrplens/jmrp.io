@@ -1392,26 +1392,88 @@ export const tools = {
       "De una clave maestra (SHA-256 de la frase) se derivan dos subclaves con etiquetas HMAC distintas — así la clave de cifrado y la de MAC nunca son la misma.",
     encKeyLabel: "encKey",
     macKeyLabel: "macKey",
+    contextHeading: "Contexto autenticado (ligado al tag, no se almacena)",
+    contextNote:
+      "El tag también cubre ver ‖ recordType ‖ slotId ‖ generation. Esos bytes nunca se escriben en el fichero — vienen de dónde vive y de meta.bin — así que reubicar, cambiar de tipo o revertir un fichero rompe el MAC. Cambiar uno aquí vuelve a sellar el sobre.",
+    fieldType: "recordType",
+    fieldSlot: "slotId (0–255)",
+    fieldGen: "generation",
+    typeCredential: "Credencial",
+    typeTotp: "Totp",
+    typeIndex: "Índice",
     envelopeHeading: "Sobre sellado",
     tamperHint:
-      "Pulsa cualquier byte para alterarlo (simula manipulación en flash) y observa el camino de lectura de abajo.",
+      "Pulsa cualquier byte para alterarlo — o usa un ataque de abajo — y observa el veredicto de la lectura.",
     restore: "Restaurar",
     fieldVer: "ver · 1 B",
     fieldIv: "iv · 16 B",
     fieldTag: "hmacTag · 32 B",
     fieldCipher: "cipher · AES-256-CBC",
-    readHeading: "Camino de lectura",
-    step1:
-      "Recalcula el tag sobre ver ‖ iv ‖ cipher y compáralo en tiempo constante.",
-    step2: "Descifra solo si el tag verifica.",
+    attacksHeading: "Prueba un ataque",
+    attacksNote:
+      "Cada uno es una manipulación real del post. Todos se bloquean ante fallos bajo encrypt-then-MAC — pero por motivos distintos.",
+    atk_flipCipher: "Voltear un byte del cifrado",
+    atk_flipIv: "Voltear un byte del IV",
+    atk_forgeTag: "Falsificar el tag",
+    atk_truncate: "Truncar el cifrado",
+    atk_crossSlot: "Mover a otro slot",
+    atk_crossType: "Cambiar el tipo de registro",
+    atk_rollback: "Revertir la generación",
+    modeHeading: "Camino de lectura",
+    modeEtm: "Encrypt-then-MAC — verificar antes de descifrar",
+    modeEtmNote:
+      "El tag se comprueba primero; un fichero manipulado nunca llega al cifrado.",
+    modeDecryptFirst: "Descifrar-primero — MAC-then-Encrypt (el camino fatal)",
+    modeDecryptFirstNote:
+      "El descifrado corre sobre los bytes del atacante antes de consultar el MAC — ahí vive un oráculo de padding.",
     emptyState: "Escribe un secreto arriba para sellarlo en un sobre.",
     okVerdict: "Tag verificado — seguro descifrar.",
-    failVerdict:
-      "La verificación del MAC falló — bloqueo ante fallos. No se intenta descifrar; no se produce texto plano.",
+    failTitle: "La lectura se bloquea ante el fallo.",
+    pristine:
+      "El sobre está intacto — altera algún byte para ver cómo reacciona el MAC.",
+    reasonByteFlip:
+      "Un byte volteado cambia lo que cubre el HMAC, así que el tag recalculado deja de coincidir.",
+    reasonFlipCipher:
+      "Un byte del cifrado volteado cambia la entrada del HMAC — el tag deja de coincidir y el cifrado nunca se toca.",
+    reasonFlipIv:
+      "El IV también va autenticado, así que voltear uno de sus bytes rompe el tag antes de cualquier descifrado.",
+    reasonForgeTag:
+      "Sin la clave del MAC no puedes falsificar un tag válido — adivinarlo es una búsqueda de 2²⁵⁶.",
+    reasonTruncate:
+      "Quitar un bloque cambia la longitud del cifrado que el tag cubre, así que la verificación falla.",
+    reasonCrossSlot:
+      "El tag liga el slotId, así que leer el fichero desde otro slot hace que el contexto recalculado no coincida.",
+    reasonCrossType:
+      "El tag liga el recordType, así que leer el fichero como otro tipo hace fallar el MAC.",
+    reasonRollback:
+      "El tag liga la generación por slot; meta.bin ha avanzado, así que un fichero obsoleto falla.",
+    decryptFirstLeakTitle: "El descifrado corrió sobre bytes del atacante.",
+    decryptFirstLeakNote:
+      "Lanzó un error de padding — y esa señal de éxito/fallo es el oráculo de padding. El MAC nunca se alcanzó a tiempo.",
+    decryptFirstOkNote:
+      "el cifrado ya produjo salida; solo ahora se comprueba el MAC (mac {mac}) — demasiado tarde.",
     decryptedLabel: "descifrado",
     byteTitle: "Pulsa para alterar este byte",
     insecureContext:
       "Esta demo en vivo necesita un contexto seguro — ábrela por HTTPS o en localhost para ejecutar la criptografía en el navegador.",
+    oracleHeading: "Atacante de oráculo de padding",
+    oracleIntro:
+      "En modo descifrar-primero el dispositivo filtra un bit por consulta — padding válido o no. Eso basta para recuperar el texto plano sin la clave. Cambia a encrypt-then-MAC y el mismo atacante enmudece.",
+    oracleRun: "Lanzar el ataque de oráculo de padding",
+    oracleRunning:
+      "Consultando al oráculo, recuperando el último bloque byte a byte…",
+    oracleBlocked:
+      "Bloqueado: encrypt-then-MAC verifica el tag primero, así que nunca se llega al descifrado — el oráculo no responde.",
+    oracleRecoveredLabel: "Último bloque recuperado:",
+    oracleDone:
+      "Último bloque recuperado solo con la señal de padding válido/inválido — sin la clave.",
+    oracleNeedBlock: "Hace falta al menos un bloque de cifrado para atacar.",
+    malleabilityHeading: "Maleabilidad CBC — la palanca del atacante",
+    malleabilityNote:
+      "En CBC, voltear un byte del IV voltea el byte correspondiente del texto plano del bloque 0 en la misma cantidad exacta — un cambio controlado. (Con encrypt-then-MAC nunca llegas a usarlo.)",
+    malleabilityIdle:
+      "Voltea un byte del IV (arriba) para ver el cambio controlado que haría en el texto plano.",
+    malleabilityFlipped: "Cambio controlado en el bloque 0 del texto plano —",
   },
   bruteForceCost: {
     charsetLabel: "Alfabeto del secreto",

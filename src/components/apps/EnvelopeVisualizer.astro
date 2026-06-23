@@ -2,11 +2,21 @@
 /**
  * EnvelopeVisualizer Component
  *
- * Interactive encrypt-then-MAC envelope demo. Seals a secret into the vault's
- * `[ver][iv][hmacTag][cipher]` envelope with real WebCrypto (AES-256-CBC +
- * HMAC-SHA256, separate enc/mac sub-keys), lets you flip any byte, and shows the
- * read path verifying the tag in constant time BEFORE decrypting — so a tampered
- * envelope fails closed with no plaintext. Companion to post 011. Zero server.
+ * Interactive encrypt-then-MAC envelope playground (companion to post 011).
+ * Seals a secret into the vault's `[ver][iv][hmacTag][cipher]` envelope with real
+ * WebCrypto (AES-256-CBC + HMAC-SHA256, separate enc/mac sub-keys) and lets you:
+ *   1. Launch concrete tampering attacks (flip cipher/IV, forge tag, truncate)
+ *      and context attacks (cross-slot, cross-type, rollback) — each fails for
+ *      its own reason against the constant-time, context-bound MAC.
+ *   2. Bind the authenticated context prefix `ver‖recordType‖slotId‖generation`
+ *      into the tag and watch relocation / type-confusion / rollback break it.
+ *   3. Flip the read path between Encrypt-then-MAC (verify-before-decrypt) and
+ *      decrypt-first (the doom path), then run a REAL CBC padding-oracle attack
+ *      that recovers the last plaintext block byte-by-byte — and watch it go
+ *      silent the moment the MAC gate is restored.
+ *   4. See CBC malleability: flipping an IV byte flips the matching plaintext
+ *      byte of block 0 by the exact same delta (the attacker's lever).
+ * Zero server — everything runs in the browser.
  */
 import { defaultLocale, type Locale } from "@i18n/config";
 import { useTranslations } from "@i18n/utils";
@@ -20,12 +30,35 @@ const uniqueId = `env-${crypto.getRandomValues(new Uint32Array(1))[0].toString(3
 const i18n = {
   emptyState: t("tools.etmEnvelope.emptyState"),
   okVerdict: t("tools.etmEnvelope.okVerdict"),
-  failVerdict: t("tools.etmEnvelope.failVerdict"),
+  failTitle: t("tools.etmEnvelope.failTitle"),
   decryptedLabel: t("tools.etmEnvelope.decryptedLabel"),
   byteTitle: t("tools.etmEnvelope.byteTitle"),
   bytesLabel: t("tools.shared.bytes"),
   insecureContext: t("tools.etmEnvelope.insecureContext"),
   error: t("tools.shared.error"),
+  pristine: t("tools.etmEnvelope.pristine"),
+  reasonByteFlip: t("tools.etmEnvelope.reasonByteFlip"),
+  reasonFlipCipher: t("tools.etmEnvelope.reasonFlipCipher"),
+  reasonFlipIv: t("tools.etmEnvelope.reasonFlipIv"),
+  reasonForgeTag: t("tools.etmEnvelope.reasonForgeTag"),
+  reasonTruncate: t("tools.etmEnvelope.reasonTruncate"),
+  reasonCrossSlot: t("tools.etmEnvelope.reasonCrossSlot"),
+  reasonCrossType: t("tools.etmEnvelope.reasonCrossType"),
+  reasonRollback: t("tools.etmEnvelope.reasonRollback"),
+  decryptFirstLeakTitle: t("tools.etmEnvelope.decryptFirstLeakTitle"),
+  decryptFirstLeakNote: t("tools.etmEnvelope.decryptFirstLeakNote"),
+  decryptFirstOkNote: t("tools.etmEnvelope.decryptFirstOkNote"),
+  oracleRun: t("tools.etmEnvelope.oracleRun"),
+  oracleRunning: t("tools.etmEnvelope.oracleRunning"),
+  oracleBlocked: t("tools.etmEnvelope.oracleBlocked"),
+  oracleRecoveredLabel: t("tools.etmEnvelope.oracleRecoveredLabel"),
+  oracleDone: t("tools.etmEnvelope.oracleDone"),
+  oracleNeedBlock: t("tools.etmEnvelope.oracleNeedBlock"),
+  malleabilityIdle: t("tools.etmEnvelope.malleabilityIdle"),
+  malleabilityFlipped: t("tools.etmEnvelope.malleabilityFlipped"),
+  typeCredential: t("tools.etmEnvelope.typeCredential"),
+  typeTotp: t("tools.etmEnvelope.typeTotp"),
+  typeIndex: t("tools.etmEnvelope.typeIndex"),
 };
 
 const segs = [
@@ -33,6 +66,16 @@ const segs = [
   { id: "iv", label: t("tools.etmEnvelope.fieldIv") },
   { id: "tag", label: t("tools.etmEnvelope.fieldTag") },
   { id: "cipher", label: t("tools.etmEnvelope.fieldCipher") },
+];
+
+const attacks = [
+  { id: "flipCipher", icon: "i-mdi:dice-multiple-outline" },
+  { id: "flipIv", icon: "i-mdi:shuffle-variant" },
+  { id: "forgeTag", icon: "i-mdi:draw-pen" },
+  { id: "truncate", icon: "i-mdi:content-cut" },
+  { id: "crossSlot", icon: "i-mdi:swap-horizontal" },
+  { id: "crossType", icon: "i-mdi:rename-box-outline" },
+  { id: "rollback", icon: "i-mdi:history" },
 ];
 ---
 
@@ -76,6 +119,49 @@ const segs = [
       />
     </label>
   </div>
+
+  {/* Authenticated context prefix (bound into the tag, not stored on disk) */}
+  <fieldset class="ev-context">
+    <legend class="ev-section-title">
+      {t("tools.etmEnvelope.contextHeading")}
+    </legend>
+    <p class="ev-context-note">{t("tools.etmEnvelope.contextNote")}</p>
+    <div class="ev-context-grid">
+      <label class="ev-ctx-field">
+        <span class="ev-ctx-label">{t("tools.etmEnvelope.fieldType")}</span>
+        <select
+          class="ev-input"
+          data-ev-type
+        >
+          <option value="0">{t("tools.etmEnvelope.typeCredential")}</option>
+          <option value="1">{t("tools.etmEnvelope.typeTotp")}</option>
+          <option value="2">{t("tools.etmEnvelope.typeIndex")}</option>
+        </select>
+      </label>
+      <label class="ev-ctx-field">
+        <span class="ev-ctx-label">{t("tools.etmEnvelope.fieldSlot")}</span>
+        <input
+          type="number"
+          class="ev-input"
+          data-ev-slot
+          value="3"
+          min="0"
+          max="255"
+        />
+      </label>
+      <label class="ev-ctx-field">
+        <span class="ev-ctx-label">{t("tools.etmEnvelope.fieldGen")}</span>
+        <input
+          type="number"
+          class="ev-input"
+          data-ev-gen
+          value="1"
+          min="0"
+          max="4294967295"
+        />
+      </label>
+    </div>
+  </fieldset>
 
   {/* Derived sub-keys */}
   <div class="ev-keys">
@@ -138,33 +224,115 @@ const segs = [
     }
   </div>
 
-  {/* Read path verdict */}
-  <div class="ev-section-title ev-read-title">
-    {t("tools.etmEnvelope.readHeading")}
+  {/* Attack toolbar */}
+  <div class="ev-section-title ev-attacks-title">
+    {t("tools.etmEnvelope.attacksHeading")}
   </div>
-  <ol class="ev-steps">
-    <li class="ev-step">
-      <span
-        class="ev-step-icon i-mdi:numeric-1-circle-outline"
-        aria-hidden="true"
-      ></span>
-      {t("tools.etmEnvelope.step1")}
-    </li>
-    <li class="ev-step">
-      <span
-        class="ev-step-icon i-mdi:numeric-2-circle-outline"
-        aria-hidden="true"
-      ></span>
-      {t("tools.etmEnvelope.step2")}
-    </li>
-  </ol>
+  <p class="ev-tamper-hint">{t("tools.etmEnvelope.attacksNote")}</p>
+  <div
+    class="ev-attacks"
+    role="group"
+    aria-label={t("tools.etmEnvelope.attacksHeading")}
+  >
+    {
+      attacks.map((a) => (
+        <button
+          type="button"
+          class="ev-attack"
+          data-ev-attack={a.id}
+        >
+          <span
+            class={`${a.icon} ev-attack-icon`}
+            aria-hidden="true"
+          />
+          {t(
+            `tools.etmEnvelope.atk_${a.id}` as `tools.etmEnvelope.atk_flipCipher`,
+          )}
+        </button>
+      ))
+    }
+  </div>
 
+  {/* Read-path mode */}
+  <fieldset class="ev-mode">
+    <legend class="ev-section-title">
+      {t("tools.etmEnvelope.modeHeading")}
+    </legend>
+    <label class="ev-mode-opt">
+      <input
+        type="radio"
+        name={`${uniqueId}-mode`}
+        value="etm"
+        data-ev-mode
+        checked
+      />
+      <strong>{t("tools.etmEnvelope.modeEtm")}</strong>
+      <small>{t("tools.etmEnvelope.modeEtmNote")}</small>
+    </label>
+    <label class="ev-mode-opt">
+      <input
+        type="radio"
+        name={`${uniqueId}-mode`}
+        value="decrypt-first"
+        data-ev-mode
+      />
+      <strong>{t("tools.etmEnvelope.modeDecryptFirst")}</strong>
+      <small>{t("tools.etmEnvelope.modeDecryptFirstNote")}</small>
+    </label>
+  </fieldset>
+
+  {/* Read path verdict */}
   <div
     class="ev-verdict"
     data-ev-verdict
     role="status"
     aria-live="polite"
   >
+  </div>
+
+  {/* Padding-oracle attacker (decrypt-first only) */}
+  <div class="ev-oracle">
+    <div class="ev-section-title">{t("tools.etmEnvelope.oracleHeading")}</div>
+    <p class="ev-tamper-hint">{t("tools.etmEnvelope.oracleIntro")}</p>
+    <button
+      type="button"
+      class="ev-oracle-btn"
+      data-ev-oracle
+    >
+      <span
+        class="i-mdi:robot-angry-outline ev-attack-icon"
+        aria-hidden="true"
+      ></span>
+      {t("tools.etmEnvelope.oracleRun")}
+    </button>
+    <p
+      class="ev-oracle-status"
+      data-ev-oracle-status
+      role="status"
+      aria-live="polite"
+    >
+    </p>
+    <div
+      class="ev-oracle-out"
+      data-ev-oracle-out
+      hidden
+    >
+    </div>
+  </div>
+
+  {/* CBC malleability (the attacker's lever) */}
+  <div class="ev-cbc">
+    <div class="ev-section-title">
+      {t("tools.etmEnvelope.malleabilityHeading")}
+    </div>
+    <p class="ev-tamper-hint">{t("tools.etmEnvelope.malleabilityNote")}</p>
+    <p
+      class="ev-cbc-status"
+      data-ev-cbc
+      role="status"
+      aria-live="polite"
+    >
+    </p>
   </div>
 </div>
 
@@ -174,29 +342,46 @@ const segs = [
     const enc = new TextEncoder();
     const dec = new TextDecoder();
     const VER = 0x01;
+    const BLOCK = 16;
 
-    const secretInput = root.querySelector("[data-ev-secret]");
-    const passInput = root.querySelector("[data-ev-pass]");
-    const encKeyEl = root.querySelector("[data-ev-enckey]");
-    const macKeyEl = root.querySelector("[data-ev-mackey]");
-    const verdictEl = root.querySelector("[data-ev-verdict]");
-    const restoreBtn = root.querySelector("[data-ev-restore]");
-    const totalEl = root.querySelector("[data-ev-total]");
+    const $ = (sel) => root.querySelector(sel);
+    const secretInput = $("[data-ev-secret]");
+    const passInput = $("[data-ev-pass]");
+    const typeSel = $("[data-ev-type]");
+    const slotInput = $("[data-ev-slot]");
+    const genInput = $("[data-ev-gen]");
+    const encKeyEl = $("[data-ev-enckey]");
+    const macKeyEl = $("[data-ev-mackey]");
+    const verdictEl = $("[data-ev-verdict]");
+    const restoreBtn = $("[data-ev-restore]");
+    const totalEl = $("[data-ev-total]");
+    const oracleBtn = $("[data-ev-oracle]");
+    const oracleStatus = $("[data-ev-oracle-status]");
+    const oracleOut = $("[data-ev-oracle-out]");
+    const cbcEl = $("[data-ev-cbc]");
     const byteHosts = {
-      ver: root.querySelector('[data-ev-bytes="ver"]'),
-      iv: root.querySelector('[data-ev-bytes="iv"]'),
-      tag: root.querySelector('[data-ev-bytes="tag"]'),
-      cipher: root.querySelector('[data-ev-bytes="cipher"]'),
+      ver: $('[data-ev-bytes="ver"]'),
+      iv: $('[data-ev-bytes="iv"]'),
+      tag: $('[data-ev-bytes="tag"]'),
+      cipher: $('[data-ev-bytes="cipher"]'),
     };
 
-    // Working state: the sealed segments (original) + a live (possibly tampered) copy.
-    let state = null; // { ver, iv, tag, cipher: Uint8Array, encKey, macKey } (originals)
-    let live = null; // { ver, iv, tag, cipher } (Uint8Array copies the user can flip)
+    // Sealed originals + a live (mutable) copy + the reader's context view.
+    let state = null; // { ver, iv, tag, cipher, encKey, macKey, aesKey, ctx, padded }
+    let live = null; // { ver, iv, tag, cipher } (Uint8Array copies)
+    let readerCtx = null; // { type, slot, gen } the reader currently assumes
     let tampered = false;
+    let lastReason = null; // i18n key suffix describing the active attack
+    let mode = "etm";
 
+    const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
     const toHex = (bytes) =>
       Array.from(bytes)
         .map((b) => b.toString(16).padStart(2, "0"))
+        .join("");
+    const printable = (bytes) =>
+      Array.from(bytes)
+        .map((b) => (b >= 0x20 && b < 0x7f ? String.fromCharCode(b) : "·"))
         .join("");
 
     async function hmac(keyBytes, msg) {
@@ -230,7 +415,32 @@ const segs = [
       return out;
     }
 
-    // Constant-time-style compare (the UI mirrors the firmware's intent).
+    // authPrefix = ver(1) ‖ recordType(1) ‖ slotId(1) ‖ generation(4, little-endian)
+    function authPrefix(ctx) {
+      const g = ctx.gen >>> 0;
+      return new Uint8Array([
+        VER,
+        ctx.type & 0xff,
+        ctx.slot & 0xff,
+        g & 0xff,
+        (g >>> 8) & 0xff,
+        (g >>> 16) & 0xff,
+        (g >>> 24) & 0xff,
+      ]);
+    }
+
+    // The authenticated message: authPrefix ‖ iv ‖ cipher
+    function authMsg(ctx, iv, cipher) {
+      return concat(authPrefix(ctx), iv, cipher);
+    }
+
+    // PKCS#7 pad to the AES block size (so block 0 is exact for the malleability demo).
+    function pkcs7(bytes) {
+      const padLen = BLOCK - (bytes.length % BLOCK);
+      return concat(bytes, new Uint8Array(BLOCK).fill(padLen).slice(0, padLen));
+    }
+
+    // Constant-time-style compare (mirrors the firmware's mbedtls_ct_memcmp intent).
     function ctEqual(a, b) {
       if (a.length !== b.length) return false;
       let diff = 0;
@@ -238,13 +448,20 @@ const segs = [
       return diff === 0;
     }
 
+    function readCtxInputs() {
+      return {
+        type: Math.max(0, Math.min(2, Number(typeSel.value) || 0)),
+        slot: Math.max(0, Math.min(255, Number(slotInput.value) || 0)),
+        gen: Math.max(0, Math.min(0xffffffff, Number(genInput.value) || 0)),
+      };
+    }
+
     async function seal() {
       verdictEl.textContent = "";
       totalEl.textContent = "";
-      // WebCrypto's subtle API is only available in a secure context
-      // (HTTPS or localhost). Fail gracefully elsewhere instead of erroring.
+      resetOracle();
       if (!window.isSecureContext || !window.crypto || !crypto.subtle) {
-        state = live = null;
+        state = live = readerCtx = null;
         for (const id of Object.keys(byteHosts)) byteHosts[id].textContent = "";
         encKeyEl.textContent = macKeyEl.textContent = "—";
         verdictEl.className = "ev-verdict ev-verdict--empty";
@@ -255,20 +472,23 @@ const segs = [
       const secret = secretInput.value;
       const pass = passInput.value;
       if (!secret) {
-        state = live = null;
+        state = live = readerCtx = null;
         tampered = false;
+        lastReason = null;
         restoreBtn.hidden = true;
         for (const id of Object.keys(byteHosts)) byteHosts[id].textContent = "";
         encKeyEl.textContent = macKeyEl.textContent = "…";
         setVerdict("empty");
+        updateMalleability();
         return;
       }
       try {
+        const ctx = readCtxInputs();
         const { encKey, macKey } = await deriveKeys(pass);
         encKeyEl.textContent = toHex(encKey).slice(0, 24) + "…";
         macKeyEl.textContent = toHex(macKey).slice(0, 24) + "…";
 
-        const iv = crypto.getRandomValues(new Uint8Array(16));
+        const iv = crypto.getRandomValues(new Uint8Array(BLOCK));
         const aesKey = await crypto.subtle.importKey(
           "raw",
           encKey,
@@ -276,6 +496,7 @@ const segs = [
           false,
           ["encrypt", "decrypt"],
         );
+        const padded = pkcs7(enc.encode(secret));
         const cipher = new Uint8Array(
           await crypto.subtle.encrypt(
             { name: "AES-CBC", iv },
@@ -284,17 +505,20 @@ const segs = [
           ),
         );
         const ver = new Uint8Array([VER]);
-        const tag = await hmac(macKey, concat(ver, iv, cipher));
+        const tag = await hmac(macKey, authMsg(ctx, iv, cipher));
 
-        state = { ver, iv, tag, cipher, encKey, macKey, aesKey };
+        state = { ver, iv, tag, cipher, encKey, macKey, aesKey, ctx, padded };
         live = {
           ver: ver.slice(),
           iv: iv.slice(),
           tag: tag.slice(),
           cipher: cipher.slice(),
         };
+        readerCtx = { ...ctx };
         tampered = false;
+        lastReason = null;
         render();
+        updateMalleability();
         await readPath();
       } catch (e) {
         verdictEl.className = "ev-verdict ev-verdict--fail";
@@ -315,52 +539,102 @@ const segs = [
           cell.dataset.seg = id;
           cell.dataset.idx = String(idx);
           cell.title = i18n.byteTitle;
-          if (state[id][idx] !== b) cell.classList.add("ev-byte--flipped");
+          const orig = state[id];
+          if (idx >= orig.length || orig[idx] !== b)
+            cell.classList.add("ev-byte--flipped");
           host.appendChild(cell);
         });
       }
       const total =
         live.ver.length + live.iv.length + live.tag.length + live.cipher.length;
       totalEl.textContent = i18n.bytesLabel.replace("{count}", String(total));
-      restoreBtn.hidden = !tampered;
+      const ctxChanged =
+        readerCtx.type !== state.ctx.type ||
+        readerCtx.slot !== state.ctx.slot ||
+        readerCtx.gen !== state.ctx.gen;
+      restoreBtn.hidden = !(tampered || ctxChanged);
+    }
+
+    // Recompute the tag over the reader's context + the live IV/cipher.
+    async function tagMatches() {
+      const expected = await hmac(
+        state.macKey,
+        authMsg(readerCtx, live.iv, live.cipher),
+      );
+      return ctEqual(expected, live.tag);
+    }
+
+    async function tryDecrypt() {
+      const aesKey = await crypto.subtle.importKey(
+        "raw",
+        state.encKey,
+        { name: "AES-CBC" },
+        false,
+        ["decrypt"],
+      );
+      const plain = new Uint8Array(
+        await crypto.subtle.decrypt(
+          { name: "AES-CBC", iv: live.iv },
+          aesKey,
+          live.cipher,
+        ),
+      );
+      return dec.decode(plain);
     }
 
     async function readPath() {
       if (!state) return;
-      // Verify-before-decrypt: recompute the tag over ver || iv || cipher.
-      const expected = await hmac(
-        state.macKey,
-        concat(live.ver, live.iv, live.cipher),
-      );
-      const ok = ctEqual(expected, live.tag);
-      if (!ok) {
-        setVerdict("fail");
+      if (mode === "etm") {
+        // Verify-before-decrypt: the MAC gate runs first.
+        const ok = await tagMatches();
+        if (!ok) {
+          setVerdict("fail");
+          return;
+        }
+        try {
+          setVerdict("ok", await tryDecrypt());
+        } catch (e) {
+          setVerdict("fail");
+        }
         return;
       }
-      // Tag verified — only now decrypt.
+      // decrypt-first (the doom path): decryption runs on attacker bytes BEFORE
+      // the MAC is ever consulted — this is exactly where the oracle leaks.
       try {
-        const aesKey = await crypto.subtle.importKey(
-          "raw",
-          state.encKey,
-          { name: "AES-CBC" },
-          false,
-          ["decrypt"],
-        );
-        const plain = new Uint8Array(
-          await crypto.subtle.decrypt(
-            { name: "AES-CBC", iv: live.iv },
-            aesKey,
-            live.cipher,
-          ),
-        );
-        setVerdict("ok", dec.decode(plain));
+        const plaintext = await tryDecrypt();
+        const macOk = await tagMatches();
+        setVerdict("leak-ok", plaintext, macOk);
       } catch (e) {
-        // Authenticated but undecryptable (shouldn't happen for pristine data).
-        setVerdict("fail");
+        // WebCrypto threw OperationError == "invalid padding" == the oracle bit.
+        setVerdict("leak-bad");
       }
     }
 
-    function setVerdict(kind, plaintext) {
+    function clearVerdict() {
+      verdictEl.innerHTML = "";
+    }
+    function addIcon(cls) {
+      const icon = document.createElement("span");
+      icon.className = `${cls} ev-verdict-icon`;
+      icon.setAttribute("aria-hidden", "true");
+      verdictEl.appendChild(icon);
+    }
+    function reasonText() {
+      if (!lastReason) return i18n.pristine;
+      const map = {
+        flipCipher: i18n.reasonFlipCipher,
+        flipIv: i18n.reasonFlipIv,
+        forgeTag: i18n.reasonForgeTag,
+        truncate: i18n.reasonTruncate,
+        crossSlot: i18n.reasonCrossSlot,
+        crossType: i18n.reasonCrossType,
+        rollback: i18n.reasonRollback,
+        byte: i18n.reasonByteFlip,
+      };
+      return map[lastReason] || i18n.reasonByteFlip;
+    }
+
+    function setVerdict(kind, plaintext, macOk) {
       if (kind === "empty") {
         verdictEl.className = "ev-verdict ev-verdict--empty";
         verdictEl.textContent = i18n.emptyState;
@@ -368,42 +642,265 @@ const segs = [
       }
       if (kind === "fail") {
         verdictEl.className = "ev-verdict ev-verdict--fail";
-        verdictEl.innerHTML = "";
-        const icon = document.createElement("span");
-        icon.className = "i-mdi:close-octagon-outline ev-verdict-icon";
-        icon.setAttribute("aria-hidden", "true");
-        const txt = document.createElement("span");
-        txt.textContent = i18n.failVerdict;
-        verdictEl.append(icon, txt);
+        clearVerdict();
+        addIcon("i-mdi:close-octagon-outline");
+        const wrap = document.createElement("span");
+        const title = document.createElement("strong");
+        title.textContent = i18n.failTitle + " ";
+        const why = document.createElement("span");
+        why.className = "ev-why";
+        why.textContent = reasonText();
+        wrap.append(title, why);
+        verdictEl.appendChild(wrap);
         return;
       }
-      // ok
+      if (kind === "leak-bad") {
+        // decrypt-first, decryption threw → padding-oracle signal leaked.
+        verdictEl.className = "ev-verdict ev-verdict--leak";
+        clearVerdict();
+        addIcon("i-mdi:alert-octagon-outline");
+        const wrap = document.createElement("span");
+        const title = document.createElement("strong");
+        title.textContent = i18n.decryptFirstLeakTitle + " ";
+        const why = document.createElement("span");
+        why.className = "ev-why";
+        why.textContent = i18n.decryptFirstLeakNote;
+        wrap.append(title, why);
+        verdictEl.appendChild(wrap);
+        return;
+      }
+      if (kind === "leak-ok") {
+        // decrypt-first, decryption succeeded → plaintext already exposed,
+        // and only THEN is the MAC checked (too late).
+        verdictEl.className = "ev-verdict ev-verdict--leak";
+        clearVerdict();
+        addIcon("i-mdi:lock-open-alert-outline");
+        const wrap = document.createElement("span");
+        const lbl = document.createElement("span");
+        lbl.className = "ev-plain-label";
+        lbl.textContent = i18n.decryptedLabel + ": ";
+        const out = document.createElement("strong");
+        out.className = "ev-plain";
+        out.textContent = plaintext;
+        const why = document.createElement("span");
+        why.className = "ev-why";
+        why.textContent =
+          " — " + i18n.decryptFirstOkNote.replace("{mac}", macOk ? "✓" : "✗");
+        wrap.append(lbl, out, why);
+        verdictEl.appendChild(wrap);
+        return;
+      }
+      // ok (EtM happy path)
       verdictEl.className = "ev-verdict ev-verdict--ok";
-      verdictEl.innerHTML = "";
-      const icon = document.createElement("span");
-      icon.className = "i-mdi:check-decagram-outline ev-verdict-icon";
-      icon.setAttribute("aria-hidden", "true");
+      clearVerdict();
+      addIcon("i-mdi:check-decagram-outline");
+      const wrap = document.createElement("span");
       const txt = document.createElement("span");
       txt.textContent = i18n.okVerdict + " ";
-      const out = document.createElement("strong");
-      out.className = "ev-plain";
-      out.textContent = plaintext;
       const lbl = document.createElement("span");
       lbl.className = "ev-plain-label";
       lbl.textContent = i18n.decryptedLabel + ": ";
-      verdictEl.append(icon, txt, lbl, out);
+      const out = document.createElement("strong");
+      out.className = "ev-plain";
+      out.textContent = plaintext;
+      wrap.append(txt, lbl, out);
+      verdictEl.appendChild(wrap);
     }
 
-    // Flip a byte on click (event delegation over the envelope).
-    root.querySelector("[data-ev-envelope]").addEventListener("click", (e) => {
+    // ---- CBC malleability (the attacker's lever) -------------------------
+    // For block 0, ΔP0[i] == ΔIV[i] exactly: flipping an IV byte flips the
+    // matching plaintext byte by the same delta. We show that controlled change
+    // without needing to decrypt (it's a deterministic property of CBC).
+    function updateMalleability() {
+      if (!state) {
+        cbcEl.textContent = i18n.malleabilityIdle;
+        cbcEl.classList.remove("ev-cbc--active");
+        return;
+      }
+      const diffs = [];
+      for (let i = 0; i < BLOCK; i++) {
+        const delta = live.iv[i] ^ state.iv[i];
+        if (delta !== 0) diffs.push({ i, delta });
+      }
+      if (diffs.length === 0) {
+        cbcEl.textContent = i18n.malleabilityIdle;
+        cbcEl.classList.remove("ev-cbc--active");
+        return;
+      }
+      const p0 = state.padded.slice(0, BLOCK);
+      const parts = diffs.map((d) => {
+        const before = p0[d.i];
+        const after = (before ^ d.delta) & 0xff;
+        const bc =
+          before >= 0x20 && before < 0x7f ? String.fromCharCode(before) : "·";
+        const ac =
+          after >= 0x20 && after < 0x7f ? String.fromCharCode(after) : "·";
+        return `#${d.i}: ${bc} (0x${before.toString(16).padStart(2, "0")}) → ${ac} (0x${after.toString(16).padStart(2, "0")})  [⊕0x${d.delta.toString(16).padStart(2, "0")}]`;
+      });
+      cbcEl.textContent = i18n.malleabilityFlipped + " " + parts.join(" · ");
+      cbcEl.classList.add("ev-cbc--active");
+    }
+
+    // ---- Padding-oracle attacker -----------------------------------------
+    function resetOracle() {
+      if (oracleStatus) oracleStatus.textContent = "";
+      if (oracleOut) {
+        oracleOut.hidden = true;
+        oracleOut.textContent = "";
+      }
+    }
+
+    // Oracle: WebCrypto AES-CBC decrypt throws OperationError on invalid PKCS#7
+    // padding and succeeds otherwise — exactly the one-bit signal Vaudenay needs.
+    async function paddingValid(prev16, target16) {
+      try {
+        await crypto.subtle.decrypt(
+          { name: "AES-CBC", iv: prev16 },
+          state.aesKey,
+          target16,
+        );
+        return true;
+      } catch {
+        return false;
+      }
+    }
+
+    // Recover the last plaintext block byte-by-byte using only the padding bit.
+    async function recoverLastBlock(onByte) {
+      const C = live.cipher;
+      const n = C.length / BLOCK;
+      const target = C.slice((n - 1) * BLOCK, n * BLOCK);
+      const prevReal =
+        n >= 2 ? C.slice((n - 2) * BLOCK, (n - 1) * BLOCK) : live.iv.slice();
+      const inter = new Uint8Array(BLOCK); // I = Dec(target)
+      const craft = new Uint8Array(BLOCK);
+      for (let pos = BLOCK - 1; pos >= 0; pos--) {
+        const pad = BLOCK - pos;
+        for (let k = pos + 1; k < BLOCK; k++) craft[k] = inter[k] ^ pad;
+        let found = false;
+        for (let g = 0; g < 256; g++) {
+          craft[pos] = g;
+          if (await paddingValid(craft, target)) {
+            if (pos === BLOCK - 1) {
+              // Guard against a coincidental 0x02 0x02 … by perturbing byte 14.
+              craft[BLOCK - 2] ^= 0xff;
+              const ok2 = await paddingValid(craft, target);
+              craft[BLOCK - 2] ^= 0xff;
+              if (!ok2) continue;
+            }
+            inter[pos] = g ^ pad;
+            found = true;
+            break;
+          }
+        }
+        if (!found) inter[pos] = 0;
+        const plainByte = inter[pos] ^ prevReal[pos];
+        onByte(pos, plainByte);
+        await sleep(20);
+      }
+      const P = new Uint8Array(BLOCK);
+      for (let i = 0; i < BLOCK; i++) P[i] = inter[i] ^ prevReal[i];
+      return P;
+    }
+
+    async function runOracle() {
+      if (!state) return;
+      if (mode !== "decrypt-first") {
+        oracleStatus.textContent = i18n.oracleBlocked;
+        oracleStatus.className = "ev-oracle-status ev-oracle-status--blocked";
+        oracleOut.hidden = true;
+        return;
+      }
+      if (live.cipher.length < BLOCK) {
+        oracleStatus.textContent = i18n.oracleNeedBlock;
+        return;
+      }
+      oracleBtn.disabled = true;
+      oracleStatus.className = "ev-oracle-status";
+      oracleStatus.textContent = i18n.oracleRunning;
+      oracleOut.hidden = false;
+      const recovered = new Uint8Array(BLOCK).fill(0);
+      const cells = [];
+      oracleOut.textContent = "";
+      const row = document.createElement("div");
+      row.className = "ev-oracle-bytes";
+      for (let i = 0; i < BLOCK; i++) {
+        const c = document.createElement("span");
+        c.className = "ev-oracle-byte";
+        c.textContent = "··";
+        row.appendChild(c);
+        cells.push(c);
+      }
+      oracleOut.appendChild(row);
+      const txt = document.createElement("div");
+      txt.className = "ev-oracle-text";
+      oracleOut.appendChild(txt);
+
+      try {
+        await recoverLastBlock((pos, b) => {
+          recovered[pos] = b;
+          cells[pos].textContent = b.toString(16).padStart(2, "0");
+          cells[pos].classList.add("ev-oracle-byte--got");
+          txt.textContent =
+            i18n.oracleRecoveredLabel + " “" + printable(recovered) + "”";
+        });
+        oracleStatus.textContent = i18n.oracleDone;
+        oracleStatus.className = "ev-oracle-status ev-oracle-status--done";
+      } finally {
+        oracleBtn.disabled = false;
+      }
+    }
+
+    // ---- events -----------------------------------------------------------
+    $("[data-ev-envelope]").addEventListener("click", (e) => {
       const cell = e.target.closest(".ev-byte");
       if (!cell || !live) return;
       const seg = cell.dataset.seg;
       const idx = Number(cell.dataset.idx);
-      live[seg][idx] ^= 0xff; // flip all bits of that byte
+      live[seg][idx] ^= 0xff;
       tampered = true;
+      lastReason =
+        seg === "iv" ? "flipIv" : seg === "cipher" ? "flipCipher" : "byte";
       render();
+      updateMalleability();
       readPath();
+      resetOracle();
+    });
+
+    root.querySelectorAll("[data-ev-attack]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        if (!live) return;
+        const kind = btn.dataset.evAttack;
+        const rnd = (max) =>
+          crypto.getRandomValues(new Uint32Array(1))[0] % max;
+        if (kind === "flipCipher" && live.cipher.length) {
+          live.cipher[rnd(live.cipher.length)] ^= 0xff;
+          tampered = true;
+        } else if (kind === "flipIv") {
+          live.iv[rnd(BLOCK)] ^= 0xff;
+          tampered = true;
+        } else if (kind === "forgeTag") {
+          live.tag = crypto.getRandomValues(new Uint8Array(live.tag.length));
+          tampered = true;
+        } else if (kind === "truncate" && live.cipher.length > BLOCK) {
+          live.cipher = live.cipher.slice(0, live.cipher.length - BLOCK);
+          tampered = true;
+        } else if (kind === "crossSlot") {
+          readerCtx.slot = (state.ctx.slot + 2) & 0xff;
+          slotInput.value = String(readerCtx.slot);
+        } else if (kind === "crossType") {
+          readerCtx.type = (state.ctx.type + 1) % 3;
+          typeSel.value = String(readerCtx.type);
+        } else if (kind === "rollback") {
+          readerCtx.gen = (state.ctx.gen + 1) >>> 0;
+          genInput.value = String(readerCtx.gen);
+        }
+        lastReason = kind;
+        render();
+        updateMalleability();
+        readPath();
+        resetOracle();
+      });
     });
 
     restoreBtn.addEventListener("click", () => {
@@ -414,10 +911,29 @@ const segs = [
         tag: state.tag.slice(),
         cipher: state.cipher.slice(),
       };
+      readerCtx = { ...state.ctx };
+      typeSel.value = String(state.ctx.type);
+      slotInput.value = String(state.ctx.slot);
+      genInput.value = String(state.ctx.gen);
       tampered = false;
+      lastReason = null;
       render();
+      updateMalleability();
       readPath();
+      resetOracle();
     });
+
+    root.querySelectorAll("[data-ev-mode]").forEach((r) => {
+      r.addEventListener("change", () => {
+        if (r.checked) {
+          mode = r.value;
+          resetOracle();
+          readPath();
+        }
+      });
+    });
+
+    oracleBtn.addEventListener("click", runOracle);
 
     function debounce(fn, d) {
       let to;
@@ -429,6 +945,10 @@ const segs = [
     const onInput = debounce(seal, 200);
     secretInput.addEventListener("input", onInput);
     passInput.addEventListener("input", onInput);
+    // Changing a context field at the top RE-SEALS (the file's home context).
+    [typeSel, slotInput, genInput].forEach((el) =>
+      el.addEventListener("change", onInput),
+    );
 
     seal();
   }
@@ -448,8 +968,7 @@ const segs = [
     border-radius: var(--radius-md);
   }
 
-  /* Light-mode accents: the neon defaults are used as small label text, which
-     fails WCAG AA on light backgrounds. Darken them to >= 4.5:1. */
+  /* Light-mode accents: the neon defaults fail WCAG AA on light backgrounds. */
   @media (prefers-color-scheme: light) {
     :root:not([data-theme="dark"]) .ev {
       --ev-ver: #92400e;
@@ -514,6 +1033,45 @@ const segs = [
   .ev-input:focus {
     outline: none;
     border-color: var(--color-primary);
+  }
+
+  .ev-context {
+    padding: 0.75rem 0.9rem 0.9rem;
+    margin: 1rem 0 0;
+    background: var(--color-bg);
+    border: var(--border-1);
+    border-radius: var(--radius-sm);
+  }
+
+  .ev-context-note {
+    margin: 0.3rem 0 0.6rem;
+    font-size: 0.74rem;
+    color: var(--color-text-muted);
+  }
+
+  .ev-context-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0.6rem;
+  }
+
+  @media (width >= 560px) {
+    .ev-context-grid {
+      grid-template-columns: 1.4fr 1fr 1fr;
+    }
+  }
+
+  .ev-ctx-field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+  }
+
+  .ev-ctx-label {
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    font-weight: var(--fw-semibold);
+    color: var(--color-text-muted);
   }
 
   .ev-keys {
@@ -698,31 +1256,70 @@ const segs = [
     border-color: #ef4444;
   }
 
-  .ev-read-title {
+  .ev-attacks-title {
     margin-top: 1.5rem;
   }
 
-  .ev-steps {
+  .ev-attacks {
     display: flex;
-    flex-direction: column;
-    gap: 0.3rem;
-    padding: 0;
-    margin: 0.5rem 0 0.75rem;
-    list-style: none;
+    flex-wrap: wrap;
+    gap: 0.45rem;
   }
 
-  .ev-step {
-    display: flex;
-    gap: 0.4rem;
+  .ev-attack {
+    display: inline-flex;
+    gap: 0.35rem;
     align-items: center;
-    font-size: 0.82rem;
+    padding: 0.4rem 0.65rem;
+    font-size: 0.78rem;
+    color: var(--color-text);
+    cursor: pointer;
+    background: var(--color-bg);
+    border: var(--border-1);
+    border-radius: var(--radius-sm);
+  }
+
+  .ev-attack:hover {
+    border-color: #ef4444;
+  }
+
+  .ev-attack-icon {
+    flex-shrink: 0;
+    width: 16px;
+    height: 16px;
+  }
+
+  .ev-mode {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    padding: 0.85rem 0.9rem;
+    margin-top: 1.5rem;
+    background: var(--color-bg);
+    border: var(--border-1);
+    border-radius: var(--radius-sm);
+  }
+
+  .ev-mode-opt {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    column-gap: 0.5rem;
+    align-items: start;
+    cursor: pointer;
+  }
+
+  .ev-mode-opt input {
+    grid-row: 1 / 3;
+    margin-top: 0.2rem;
+  }
+
+  .ev-mode-opt strong {
+    font-size: 0.85rem;
     color: var(--color-text);
   }
 
-  .ev-step-icon {
-    flex-shrink: 0;
-    width: 18px;
-    height: 18px;
+  .ev-mode-opt small {
+    font-size: 0.74rem;
     color: var(--color-text-muted);
   }
 
@@ -731,6 +1328,7 @@ const segs = [
     gap: 0.5rem;
     align-items: center;
     padding: 0.75rem 0.9rem;
+    margin-top: 1rem;
     font-size: 0.9rem;
     border: 2px solid var(--color-border);
     border-radius: var(--radius-sm);
@@ -740,6 +1338,11 @@ const segs = [
     flex-shrink: 0;
     width: 22px;
     height: 22px;
+  }
+
+  .ev-why {
+    font-weight: var(--fw-normal);
+    color: var(--color-text-muted);
   }
 
   .ev-verdict--empty {
@@ -759,12 +1362,22 @@ const segs = [
     border-color: #ef4444;
   }
 
+  .ev-verdict--leak {
+    color: #b45309;
+    background: rgb(245 158 11 / 12%);
+    border-color: #f59e0b;
+  }
+
   :root[data-theme="dark"] .ev-verdict--ok {
     color: #34d399;
   }
 
   :root[data-theme="dark"] .ev-verdict--fail {
     color: #f87171;
+  }
+
+  :root[data-theme="dark"] .ev-verdict--leak {
+    color: #fbbf24;
   }
 
   .ev-plain-label {
@@ -775,5 +1388,116 @@ const segs = [
     font-family: var(--font-mono);
     color: var(--color-text-heading);
     overflow-wrap: anywhere;
+  }
+
+  .ev-oracle,
+  .ev-cbc {
+    padding: 0.85rem 0.9rem;
+    margin-top: 1rem;
+    background: var(--color-bg);
+    border: var(--border-1);
+    border-radius: var(--radius-sm);
+  }
+
+  .ev-oracle-btn {
+    display: inline-flex;
+    gap: 0.4rem;
+    align-items: center;
+    padding: 0.5rem 0.8rem;
+    font-size: 0.82rem;
+    font-weight: var(--fw-medium);
+    color: #fff;
+    cursor: pointer;
+    background: #b91c1c;
+    border: none;
+    border-radius: var(--radius-sm);
+  }
+
+  .ev-oracle-btn:hover {
+    background: #991b1b;
+  }
+
+  .ev-oracle-btn:disabled {
+    cursor: not-allowed;
+    opacity: 60%;
+  }
+
+  .ev-oracle-status {
+    margin: 0.6rem 0 0;
+    font-size: 0.8rem;
+    color: var(--color-text);
+  }
+
+  .ev-oracle-status--blocked {
+    color: #0f6e3d;
+  }
+
+  :root[data-theme="dark"] .ev-oracle-status--blocked {
+    color: #34d399;
+  }
+
+  .ev-oracle-status--done {
+    font-weight: var(--fw-semibold);
+    color: #b45309;
+  }
+
+  :root[data-theme="dark"] .ev-oracle-status--done {
+    color: #fbbf24;
+  }
+
+  .ev-oracle-out {
+    margin-top: 0.6rem;
+  }
+
+  .ev-oracle-bytes {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 3px;
+  }
+
+  .ev-oracle-byte {
+    min-width: 1.7rem;
+    padding: 0.2rem 0;
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    color: var(--color-text-muted);
+    text-align: center;
+    background: var(--color-bg-subtle);
+    border: 1px solid var(--color-border);
+    border-radius: 3px;
+  }
+
+  .ev-oracle-byte--got {
+    color: #1a1205;
+    background: #f59e0b;
+    border-color: #f59e0b;
+  }
+
+  .ev-oracle-text {
+    margin-top: 0.5rem;
+    font-family: var(--font-mono);
+    font-size: 0.82rem;
+    color: var(--color-text-heading);
+    overflow-wrap: anywhere;
+  }
+
+  .ev-cbc-status {
+    margin: 0;
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+    color: var(--color-text-muted);
+    overflow-wrap: anywhere;
+  }
+
+  .ev-cbc-status.ev-cbc--active {
+    color: var(--ev-iv);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .ev-byte,
+    .ev-byte:hover {
+      transform: none;
+      transition: none;
+    }
   }
 </style>

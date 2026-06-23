@@ -9,8 +9,9 @@ tags: ["security", "cryptography", "encrypt-then-mac", "aes", "hmac", "firmware"
 features:
   - "Sellado de sobre AES-256-CBC + HMAC-SHA256 en vivo"
   - "Derivación de subclaves encKey y macKey separadas"
-  - "Pulsa cualquier byte para simular manipulación"
-  - "Demuestra verificar antes de descifrar y fallar cerrado"
+  - "Tag ligado al contexto: ver‖recordType‖slotId‖generation"
+  - "Siete ataques reales: voltear, falsificar, truncar, reubicar, cambiar tipo, revertir"
+  - "Encrypt-then-MAC vs descifrar-primero, con ataque de oráculo de padding en vivo"
   - "Web Crypto API, nada sale de tu navegador"
 appComponent: "EnvelopeVisualizer"
 lang: "es"
@@ -44,22 +45,28 @@ faq:
 <h3>¿Cómo se usa?</h3>
 <ol>
   <li>
-    Escribe un secreto y una frase de paso — el sobre se sella en vivo según
-    escribes.
+    Escribe un secreto y una frase de paso, y fija el{" "}
+    <strong>contexto autenticado</strong> (tipo de registro, slot, generación).
+    El sobre se vuelve a sellar en vivo según escribes.
   </li>
   <li>
-    <strong>Pulsa cualquier byte</strong> para alterarlo, simulando manipulación
-    en una flash que un atacante ha volcado.
+    <strong>Pulsa cualquier byte</strong> para alterarlo, o elige uno de los
+    siete <strong>ataques</strong>: voltear un byte del cifrado/IV, falsificar el
+    tag, truncar el cifrado, mover el fichero a otro slot, cambiar su tipo de
+    registro o revertir su generación.
   </li>
   <li>
-    Observa el <strong>camino de lectura</strong>: el tag se recalcula y compara{" "}
-    <em>antes</em> de cualquier descifrado. Un solo byte alterado hace fallar el
-    MAC, así que la lectura <strong>se bloquea ante el fallo</strong> — no se
-    intenta descifrar y no se produce texto plano.
+    Observa el <strong>veredicto de la lectura</strong>. Bajo encrypt-then-MAC
+    todos los ataques <strong>se bloquean ante el fallo</strong> — y la
+    herramienta te dice <em>por qué</em> falla cada uno (un motivo distinto para
+    cada uno).
   </li>
   <li>
-    Pulsa <strong>Restaurar</strong> para deshacer la manipulación y ver cómo la
-    lectura vuelve a tener éxito.
+    Cambia el camino de lectura a <strong>descifrar-primero</strong> y pulsa{" "}
+    <strong>Lanzar el ataque de oráculo de padding</strong>: un ataque de
+    Vaudenay real recupera el último bloque del texto plano <em>byte a byte</em>{" "}
+    usando solo la señal de padding válido/inválido — sin la clave. Vuelve a
+    encrypt-then-MAC y el mismo atacante enmudece.
   </li>
 </ol>
 
@@ -67,18 +74,110 @@ faq:
 <ul>
   <li>
     <strong>Separación de claves</strong> — una frase de paso se convierte en una
-    clave maestra, que se abre en subclaves <code>encKey</code> y{" "}
-    <code>macKey</code> distintas. La clave de cifrado y la de MAC nunca son la
-    misma.
+    clave maestra que se abre en subclaves <code>encKey</code> y{" "}
+    <code>macKey</code> distintas.
   </li>
   <li>
-    <strong>Verificar antes de descifrar</strong> — el tag se comprueba primero,
-    así que un fichero manipulado nunca llega al descifrado AES-CBC (donde, si
-    no, viviría un oráculo de padding).
+    <strong>Ligado al contexto</strong> — el tag cubre{" "}
+    <code>ver ‖ recordType ‖ slotId ‖ generation</code>, así que reubicar,
+    cambiar de tipo o revertir un fichero rompe el MAC aunque el cifrado esté
+    intacto.
   </li>
   <li>
-    <strong>Bloqueo ante fallos</strong> — cualquier fallo no devuelve nada,
-    nunca un texto plano parcial o "a medias".
+    <strong>Verificar antes de descifrar y bloqueo ante fallos</strong> — el tag
+    se comprueba primero, así que un fichero manipulado nunca llega al descifrado
+    AES-CBC y cualquier fallo no devuelve nada.
+  </li>
+  <li>
+    <strong>El camino fatal</strong> — descifrar-primero corre el cifrado sobre
+    los bytes del atacante antes del MAC, exponiendo un{" "}
+    <strong>oráculo de padding</strong> real.
+  </li>
+  <li>
+    <strong>Maleabilidad CBC</strong> — voltear un byte del IV voltea el byte
+    correspondiente del texto plano del bloque 0 en la misma cantidad: la palanca
+    del atacante.
+  </li>
+</ul>
+
+<h3>La construcción, en fórmulas</h3>
+<p>Sellado (camino de escritura):</p>
+<pre><code>{`encKey = HMAC(master, "vault-enc")
+macKey = HMAC(master, "vault-mac")
+C      = AES-256-CBC-Encrypt(encKey, IV, PKCS7(P))
+tag    = HMAC-SHA256(macKey, ver ‖ recordType ‖ slotId ‖ generation ‖ IV ‖ C)
+file   = [ver] [IV] [tag] [C]`}</code></pre>
+<p>Lectura bajo encrypt-then-MAC (verificar y luego descifrar):</p>
+<pre><code>{`tag' = HMAC-SHA256(macKey, context ‖ IV ‖ C)
+if not constant_time_equal(tag', tag): reject   // bloqueo ante fallos, sin texto plano
+P    = unpad(AES-256-CBC-Decrypt(encKey, IV, C))`}</code></pre>
+<p>Por qué el orden lo es todo — el trabajo al que se enfrenta un atacante:</p>
+<ul>
+  <li>
+    Falsificar un tag sin <code>macKey</code>: una fuerza bruta de{" "}
+    <code>2^256</code> (HMAC-SHA256) — inviable.
+  </li>
+  <li>
+    Oráculo de padding (descifrar-primero): ~1 bit por consulta, ≤ 256 consultas
+    por byte → un bloque de 16 bytes en ≤ ~4096 consultas.
+  </li>
+  <li>
+    Encrypt-then-MAC elimina el oráculo de raíz: para un fichero falsificado el
+    descifrado es <em>inalcanzable</em>, así que el ataque pasa de lineal a
+    imposible.
+  </li>
+</ul>
+
+<h3>Por qué la maleabilidad CBC es la palanca</h3>
+<p>
+  En CBC, <code>P_i = Decrypt(C_i) ⊕ C_(i-1)</code> (con{" "}
+  <code>C_(-1) = IV</code>). Por tanto <code>ΔP_i = ΔC_(i-1)</code>: voltear un
+  byte del bloque anterior — o del IV, para el bloque 0 — voltea el mismo byte
+  del texto plano en la misma cantidad, de forma predecible. Ese cambio
+  controlado es justo lo que permite a un oráculo de padding extraer el texto
+  plano byte a byte.
+</p>
+
+<h3>Referencias y lecturas</h3>
+<ul>
+  <li>
+    <a href="https://eprint.iacr.org/2000/025">
+      Bellare y Namprempre — Authenticated Encryption: Relations among Notions
+      and Analysis of the Generic Composition Paradigm
+    </a>{" "}
+    (encrypt-then-MAC es la composición genéricamente segura)
+  </li>
+  <li>
+    <a href="https://eprint.iacr.org/2001/045">
+      Krawczyk — The Order of Encryption and Authentication for Protecting
+      Communications
+    </a>
+  </li>
+  <li>
+    <a href="https://www.iacr.org/archive/eurocrypt2002/23320530/cbc02_e02d.pdf">
+      Vaudenay (2002) — Security Flaws Induced by CBC Padding
+    </a>{" "}
+    (el ataque de oráculo de padding original)
+  </li>
+  <li>
+    <a href="https://moxie.org/2011/12/13/the-cryptographic-doom-principle.html">
+      Moxie Marlinspike — The Cryptographic Doom Principle
+    </a>
+  </li>
+  <li>
+    <a href="https://www.rfc-editor.org/rfc/rfc2104">RFC 2104 — HMAC</a> ·{" "}
+    <a href="https://www.rfc-editor.org/rfc/rfc5652#section-6.3">
+      RFC 5652 §6.3 — relleno PKCS#7
+    </a>
+  </li>
+  <li>
+    <a href="https://nvlpubs.nist.gov/nistpubs/SpecialPublications/NIST.SP.800-57pt1r5.pdf">
+      NIST SP 800-57 Parte 1
+    </a>{" "}
+    (una clave, un propósito) ·{" "}
+    <a href="https://csrc.nist.gov/pubs/fips/180-4/upd1/final">
+      FIPS 180-4 — SHA-256
+    </a>
   </li>
 </ul>
 

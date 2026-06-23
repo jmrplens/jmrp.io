@@ -1364,26 +1364,87 @@ export const tools = {
       "Two sub-keys are derived from one master key (SHA-256 of the passphrase) with distinct HMAC labels — so the encryption key and the MAC key are never the same.",
     encKeyLabel: "encKey",
     macKeyLabel: "macKey",
+    contextHeading: "Authenticated context (bound into the tag, not stored)",
+    contextNote:
+      "The tag also covers ver ‖ recordType ‖ slotId ‖ generation. These bytes are never written to the file — they come from where it lives and from meta.bin — so relocating, retyping, or rolling back a file breaks the MAC. Changing one here re-seals the envelope.",
+    fieldType: "recordType",
+    fieldSlot: "slotId (0–255)",
+    fieldGen: "generation",
+    typeCredential: "Credential",
+    typeTotp: "Totp",
+    typeIndex: "Index",
     envelopeHeading: "Sealed envelope",
     tamperHint:
-      "Click any byte to flip it (simulate tampering on flash), then watch the read path below.",
+      "Click any byte to flip it — or use an attack below — then watch the read-path verdict.",
     restore: "Restore",
     fieldVer: "ver · 1 B",
     fieldIv: "iv · 16 B",
     fieldTag: "hmacTag · 32 B",
     fieldCipher: "cipher · AES-256-CBC",
-    readHeading: "Read path",
-    step1:
-      "Recompute the tag over ver ‖ iv ‖ cipher and compare it constant-time.",
-    step2: "Decrypt only if the tag verified.",
+    attacksHeading: "Try an attack",
+    attacksNote:
+      "Each one is a real tampering from the post. They all fail closed under encrypt-then-MAC — but for different reasons.",
+    atk_flipCipher: "Flip a cipher byte",
+    atk_flipIv: "Flip an IV byte",
+    atk_forgeTag: "Forge the tag",
+    atk_truncate: "Truncate the cipher",
+    atk_crossSlot: "Move to another slot",
+    atk_crossType: "Change record type",
+    atk_rollback: "Roll back generation",
+    modeHeading: "Read path",
+    modeEtm: "Encrypt-then-MAC — verify before decrypt",
+    modeEtmNote:
+      "The tag is checked first; a tampered file never reaches the cipher.",
+    modeDecryptFirst: "Decrypt-first — MAC-then-Encrypt (the doom path)",
+    modeDecryptFirstNote:
+      "Decryption runs on attacker bytes before the MAC is consulted — this is where a padding oracle lives.",
     emptyState: "Enter a secret above to seal it into an envelope.",
     okVerdict: "Tag verified — safe to decrypt.",
-    failVerdict:
-      "MAC verification failed — fail closed. No decryption is attempted; no plaintext is produced.",
+    failTitle: "Read fails closed.",
+    pristine: "The envelope is pristine — tamper with it to see the MAC react.",
+    reasonByteFlip:
+      "A flipped byte changes what the HMAC covers, so the recomputed tag no longer matches.",
+    reasonFlipCipher:
+      "A flipped ciphertext byte changes the HMAC input — the tag no longer matches, and the cipher is never touched.",
+    reasonFlipIv:
+      "The IV is authenticated too, so flipping it breaks the tag before any decryption.",
+    reasonForgeTag:
+      "Without the MAC sub-key you cannot forge a valid tag — guessing it is a 2²⁵⁶ search.",
+    reasonTruncate:
+      "Dropping a block changes the ciphertext length the tag covers, so verification fails.",
+    reasonCrossSlot:
+      "The tag binds slotId, so reading the file from a different slot makes the recomputed context mismatch.",
+    reasonCrossType:
+      "The tag binds recordType, so reading the file as another type fails the MAC.",
+    reasonRollback:
+      "The tag binds the per-slot generation; meta.bin has moved on, so a stale file fails.",
+    decryptFirstLeakTitle: "Decryption ran on attacker bytes.",
+    decryptFirstLeakNote:
+      "It threw a padding error — and that pass/fail signal is the padding oracle. The MAC was never reached in time.",
+    decryptFirstOkNote:
+      "the cipher already produced output; only now is the MAC checked (mac {mac}) — too late.",
     decryptedLabel: "decrypted",
     byteTitle: "Click to flip this byte",
     insecureContext:
       "This live demo needs a secure context — open it over HTTPS or on localhost to run the in-browser cryptography.",
+    oracleHeading: "Padding-oracle attacker",
+    oracleIntro:
+      "In decrypt-first mode the device leaks one bit per query — padding valid or not. That is enough to recover plaintext without the key. Switch to encrypt-then-MAC and the same attacker goes silent.",
+    oracleRun: "Run the padding-oracle attack",
+    oracleRunning:
+      "Querying the oracle, recovering the last block byte-by-byte…",
+    oracleBlocked:
+      "Blocked: encrypt-then-MAC verifies the tag first, so the decrypt step is never reached — the oracle never answers.",
+    oracleRecoveredLabel: "Recovered last block:",
+    oracleDone:
+      "Last block recovered with only the padding-valid/invalid signal — no key needed.",
+    oracleNeedBlock: "Need at least one ciphertext block to attack.",
+    malleabilityHeading: "CBC malleability — the attacker's lever",
+    malleabilityNote:
+      "In CBC, flipping a byte of the IV flips the matching plaintext byte of block 0 by the exact same amount — a controlled change. (Encrypt-then-MAC means you never get to use it.)",
+    malleabilityIdle:
+      "Flip an IV byte (above) to see the controlled change it would make to the plaintext.",
+    malleabilityFlipped: "Controlled change to plaintext block 0 —",
   },
   bruteForceCost: {
     charsetLabel: "Secret alphabet",

@@ -9,8 +9,9 @@ tags: ["security", "cryptography", "encrypt-then-mac", "aes", "hmac", "firmware"
 features:
   - "Live AES-256-CBC + HMAC-SHA256 envelope sealing"
   - "Separate encKey and macKey sub-key derivation"
-  - "Click any byte to simulate tampering"
-  - "Verify-before-decrypt fail-closed demonstration"
+  - "Context-bound tag: ver‖recordType‖slotId‖generation"
+  - "Seven real attacks: flip, forge, truncate, relocate, retype, roll back"
+  - "Encrypt-then-MAC vs decrypt-first, with a live padding-oracle attack"
   - "Web Crypto API, nothing leaves your browser"
 appComponent: "EnvelopeVisualizer"
 faq:
@@ -43,21 +44,26 @@ faq:
 <h3>How do I use it?</h3>
 <ol>
   <li>
-    Type a secret and a passphrase — the envelope is sealed live as you type.
+    Type a secret and a passphrase, and set the <strong>authenticated context</strong>{" "}
+    (record type, slot, generation). The envelope re-seals live as you type.
   </li>
   <li>
-    <strong>Click any byte</strong> to flip it, simulating tampering on a flash
-    chip an attacker has dumped.
+    <strong>Click any byte</strong> to flip it, or pick one of the seven{" "}
+    <strong>attacks</strong>: flip a cipher/IV byte, forge the tag, truncate the
+    ciphertext, move the file to another slot, change its record type, or roll
+    back its generation.
   </li>
   <li>
-    Watch the <strong>read path</strong>: the tag is recomputed and compared{" "}
-    <em>before</em> any decryption. A single flipped byte fails the MAC, so the
-    read <strong>fails closed</strong> — no decryption is attempted and no
-    plaintext is produced.
+    Watch the <strong>read-path verdict</strong>. Under encrypt-then-MAC every
+    attack <strong>fails closed</strong> — and the tool tells you <em>why</em>{" "}
+    each one fails (a different reason for each).
   </li>
   <li>
-    Hit <strong>Restore</strong> to undo the tampering and watch the read
-    succeed again.
+    Flip the read path to <strong>decrypt-first</strong> and press{" "}
+    <strong>Run the padding-oracle attack</strong>: a real Vaudenay attack
+    recovers the last plaintext block <em>byte-by-byte</em> using only the
+    padding-valid/invalid signal — no key. Switch back to encrypt-then-MAC and
+    the same attacker goes silent.
   </li>
 </ol>
 
@@ -66,16 +72,104 @@ faq:
   <li>
     <strong>Key separation</strong> — one passphrase becomes a master key, which
     fans out into distinct <code>encKey</code> and <code>macKey</code> sub-keys.
-    The encryption key and the MAC key are never the same.
   </li>
   <li>
-    <strong>Verify-before-decrypt</strong> — the tag is checked first, so a
-    tampered file never reaches the AES-CBC decrypt path (where a padding oracle
-    would otherwise live).
+    <strong>Context binding</strong> — the tag covers{" "}
+    <code>ver ‖ recordType ‖ slotId ‖ generation</code>, so relocating,
+    retyping, or rolling back a file breaks the MAC even though the ciphertext is
+    pristine.
   </li>
   <li>
-    <strong>Fail-closed</strong> — any failure returns nothing, never a partial
-    or "best-effort" plaintext.
+    <strong>Verify-before-decrypt &amp; fail-closed</strong> — the tag is checked
+    first, so a tampered file never reaches the AES-CBC decrypt path, and any
+    failure returns nothing.
+  </li>
+  <li>
+    <strong>The doom path</strong> — decrypt-first runs the cipher on attacker
+    bytes before the MAC, exposing a genuine <strong>padding oracle</strong>.
+  </li>
+  <li>
+    <strong>CBC malleability</strong> — flipping an IV byte flips the matching
+    plaintext byte of block 0 by the same amount: the attacker's lever.
+  </li>
+</ul>
+
+<h3>The construction, in formulas</h3>
+<p>Sealing (write path):</p>
+<pre><code>{`encKey = HMAC(master, "vault-enc")
+macKey = HMAC(master, "vault-mac")
+C      = AES-256-CBC-Encrypt(encKey, IV, PKCS7(P))
+tag    = HMAC-SHA256(macKey, ver ‖ recordType ‖ slotId ‖ generation ‖ IV ‖ C)
+file   = [ver] [IV] [tag] [C]`}</code></pre>
+<p>Reading under encrypt-then-MAC (verify, then decrypt):</p>
+<pre><code>{`tag' = HMAC-SHA256(macKey, context ‖ IV ‖ C)
+if not constant_time_equal(tag', tag): reject   // fail closed, no plaintext
+P    = unpad(AES-256-CBC-Decrypt(encKey, IV, C))`}</code></pre>
+<p>Why the order is the whole game — the work an attacker faces:</p>
+<ul>
+  <li>
+    Forge a tag without <code>macKey</code>: a brute force of{" "}
+    <code>2^256</code> (HMAC-SHA256) — infeasible.
+  </li>
+  <li>
+    Padding oracle (decrypt-first): ~1 bit per query, ≤ 256 queries per byte → a
+    16-byte block in ≤ ~4096 queries.
+  </li>
+  <li>
+    Encrypt-then-MAC removes the oracle outright: for a forged file the decrypt
+    step is <em>unreachable</em>, so the attack drops from linear to impossible.
+  </li>
+</ul>
+
+<h3>Why CBC malleability is the lever</h3>
+<p>
+  In CBC, <code>P_i = Decrypt(C_i) ⊕ C_(i-1)</code> (with{" "}
+  <code>C_(-1) = IV</code>). So <code>ΔP_i = ΔC_(i-1)</code>: flipping a byte of
+  the previous block — or of the IV, for block 0 — flips the same byte of the
+  plaintext by the same amount, predictably. That controlled change is exactly
+  what lets a padding oracle walk the plaintext out one byte at a time.
+</p>
+
+<h3>References &amp; further reading</h3>
+<ul>
+  <li>
+    <a href="https://eprint.iacr.org/2000/025">
+      Bellare &amp; Namprempre — Authenticated Encryption: Relations among
+      Notions and Analysis of the Generic Composition Paradigm
+    </a>{" "}
+    (encrypt-then-MAC is the generically secure composition)
+  </li>
+  <li>
+    <a href="https://eprint.iacr.org/2001/045">
+      Krawczyk — The Order of Encryption and Authentication for Protecting
+      Communications
+    </a>
+  </li>
+  <li>
+    <a href="https://www.iacr.org/archive/eurocrypt2002/23320530/cbc02_e02d.pdf">
+      Vaudenay (2002) — Security Flaws Induced by CBC Padding
+    </a>{" "}
+    (the original padding-oracle attack)
+  </li>
+  <li>
+    <a href="https://moxie.org/2011/12/13/the-cryptographic-doom-principle.html">
+      Moxie Marlinspike — The Cryptographic Doom Principle
+    </a>
+  </li>
+  <li>
+    <a href="https://www.rfc-editor.org/rfc/rfc2104">RFC 2104 — HMAC</a> ·{" "}
+    <a href="https://www.rfc-editor.org/rfc/rfc5652#section-6.3">
+      RFC 5652 §6.3 — PKCS#7 padding
+    </a>
+  </li>
+  <li>
+    <a href="https://nvlpubs.nist.gov/nistpubs/SpecialPublications/NIST.SP.800-57pt1r5.pdf">
+      NIST SP 800-57 Part 1
+    </a>{" "}
+    (one key, one purpose) ·{" "}
+    <a href="https://csrc.nist.gov/pubs/fips/180-4/upd1/final">
+      FIPS 180-4 — SHA-256
+    </a>
   </li>
 </ul>
 
