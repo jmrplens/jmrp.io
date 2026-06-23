@@ -164,128 +164,134 @@ const algorithms = [
 
 <script is:inline define:vars={{ uniqueId, defaultCode, i18n }}>
   // Hash Calculator functionality with multiple algorithms
-  const container = document.querySelector(`[data-hash-id="${uniqueId}"]`);
-  if (container) {
-    const textarea = document.getElementById(`${uniqueId}-input`);
-    const sha256Output = document.getElementById(`${uniqueId}-sha256`);
-    const sha384Output = document.getElementById(`${uniqueId}-sha384`);
-    const sha512Output = document.getElementById(`${uniqueId}-sha512`);
-    const directiveOutput = document.getElementById(`${uniqueId}-directive`);
-    const htmlOutput = document.getElementById(`${uniqueId}-html`);
-    const copyBtns = container.querySelectorAll(".hash-copy-btn");
+  // Wrapped in an IIFE so the early-return guard below is valid under
+  // Astro 7's stricter Rust compiler (top-level `return` is now an error).
+  (() => {
+    const container = document.querySelector(`[data-hash-id="${uniqueId}"]`);
+    if (container) {
+      const textarea = document.getElementById(`${uniqueId}-input`);
+      const sha256Output = document.getElementById(`${uniqueId}-sha256`);
+      const sha384Output = document.getElementById(`${uniqueId}-sha384`);
+      const sha512Output = document.getElementById(`${uniqueId}-sha512`);
+      const directiveOutput = document.getElementById(`${uniqueId}-directive`);
+      const htmlOutput = document.getElementById(`${uniqueId}-html`);
+      const copyBtns = container.querySelectorAll(".hash-copy-btn");
 
-    // Guard against missing DOM elements
-    if (
-      !textarea ||
-      !sha256Output ||
-      !sha384Output ||
-      !sha512Output ||
-      !directiveOutput ||
-      !htmlOutput
-    ) {
-      console.error("[HashCalculator] Required DOM elements not found");
-      return;
-    }
-
-    // Calculate hash using Web Crypto API
-    async function calculateHash(content, algorithm) {
-      const encoder = new TextEncoder();
-      const data = encoder.encode(content);
-      const hashBuffer = await crypto.subtle.digest(algorithm, data);
-      const hashArray = Array.from(new Uint8Array(hashBuffer));
-      // Use spread operator instead of apply to avoid stack limits for large arrays
-      const hashBase64 = btoa(String.fromCharCode(...hashArray));
-      return hashBase64;
-    }
-
-    // Update all outputs
-    async function updateOutputs() {
-      const content = textarea.value;
-      const emptyMsg = i18n.emptyInput;
-
-      if (!content.trim()) {
-        sha256Output.textContent = emptyMsg;
-        sha384Output.textContent = emptyMsg;
-        sha512Output.textContent = emptyMsg;
-        directiveOutput.textContent = emptyMsg;
-        htmlOutput.textContent = emptyMsg;
+      // Guard against missing DOM elements
+      if (
+        !textarea ||
+        !sha256Output ||
+        !sha384Output ||
+        !sha512Output ||
+        !directiveOutput ||
+        !htmlOutput
+      ) {
+        console.error("[HashCalculator] Required DOM elements not found");
         return;
       }
 
-      try {
-        // Calculate all three hashes in parallel
-        const [hash256, hash384, hash512] = await Promise.all([
-          calculateHash(content, "SHA-256"),
-          calculateHash(content, "SHA-384"),
-          calculateHash(content, "SHA-512"),
-        ]);
-
-        sha256Output.textContent = `sha256-${hash256}`;
-        sha384Output.textContent = `sha384-${hash384}`;
-        sha512Output.textContent = `sha512-${hash512}`;
-        directiveOutput.textContent = `script-src 'sha256-${hash256}';`;
-
-        // Generate HTML example using DOM manipulation (safer than innerHTML)
-        const openTag = document.createElement("span");
-        openTag.className = "hl-tag";
-        // Use concatenation to avoid script tag termination in Astro
-        openTag.textContent = "<" + "script>";
-
-        const closeTag = document.createElement("span");
-        closeTag.className = "hl-tag";
-        closeTag.textContent = "</" + "script>";
-
-        // Clear existing content
-        htmlOutput.textContent = "";
-        htmlOutput.appendChild(openTag);
-        htmlOutput.appendChild(document.createTextNode("\n" + content + "\n"));
-        htmlOutput.appendChild(closeTag);
-      } catch (error) {
-        const errorMsg = i18n.errorCalculating;
-        sha256Output.textContent = errorMsg;
-        sha384Output.textContent = errorMsg;
-        sha512Output.textContent = errorMsg;
-        directiveOutput.textContent = i18n.error;
-        htmlOutput.textContent = i18n.error;
+      // Calculate hash using Web Crypto API
+      async function calculateHash(content, algorithm) {
+        const encoder = new TextEncoder();
+        const data = encoder.encode(content);
+        const hashBuffer = await crypto.subtle.digest(algorithm, data);
+        const hashArray = Array.from(new Uint8Array(hashBuffer));
+        // Use spread operator instead of apply to avoid stack limits for large arrays
+        const hashBase64 = btoa(String.fromCharCode(...hashArray));
+        return hashBase64;
       }
-    }
 
-    // Copy functionality
-    copyBtns.forEach((btn) => {
-      btn.addEventListener("click", () => {
-        const targetId = btn.dataset.target;
-        const targetEl = document.getElementById(targetId);
-        if (targetEl && navigator.clipboard) {
-          navigator.clipboard
-            .writeText(targetEl.textContent || "")
-            .then(() => {
-              btn.classList.add("copied");
-              setTimeout(() => btn.classList.remove("copied"), 2000);
-            })
-            .catch((err) => {
-              console.error("[HashCalculator] Clipboard write failed:", err);
-              btn.classList.add("error");
-              setTimeout(() => btn.classList.remove("error"), 2000);
-            });
+      // Update all outputs
+      async function updateOutputs() {
+        const content = textarea.value;
+        const emptyMsg = i18n.emptyInput;
+
+        if (!content.trim()) {
+          sha256Output.textContent = emptyMsg;
+          sha384Output.textContent = emptyMsg;
+          sha512Output.textContent = emptyMsg;
+          directiveOutput.textContent = emptyMsg;
+          htmlOutput.textContent = emptyMsg;
+          return;
         }
+
+        try {
+          // Calculate all three hashes in parallel
+          const [hash256, hash384, hash512] = await Promise.all([
+            calculateHash(content, "SHA-256"),
+            calculateHash(content, "SHA-384"),
+            calculateHash(content, "SHA-512"),
+          ]);
+
+          sha256Output.textContent = `sha256-${hash256}`;
+          sha384Output.textContent = `sha384-${hash384}`;
+          sha512Output.textContent = `sha512-${hash512}`;
+          directiveOutput.textContent = `script-src 'sha256-${hash256}';`;
+
+          // Generate HTML example using DOM manipulation (safer than innerHTML)
+          const openTag = document.createElement("span");
+          openTag.className = "hl-tag";
+          // Use concatenation to avoid script tag termination in Astro
+          openTag.textContent = "<" + "script>";
+
+          const closeTag = document.createElement("span");
+          closeTag.className = "hl-tag";
+          closeTag.textContent = "</" + "script>";
+
+          // Clear existing content
+          htmlOutput.textContent = "";
+          htmlOutput.appendChild(openTag);
+          htmlOutput.appendChild(
+            document.createTextNode("\n" + content + "\n"),
+          );
+          htmlOutput.appendChild(closeTag);
+        } catch (error) {
+          const errorMsg = i18n.errorCalculating;
+          sha256Output.textContent = errorMsg;
+          sha384Output.textContent = errorMsg;
+          sha512Output.textContent = errorMsg;
+          directiveOutput.textContent = i18n.error;
+          htmlOutput.textContent = i18n.error;
+        }
+      }
+
+      // Copy functionality
+      copyBtns.forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const targetId = btn.dataset.target;
+          const targetEl = document.getElementById(targetId);
+          if (targetEl && navigator.clipboard) {
+            navigator.clipboard
+              .writeText(targetEl.textContent || "")
+              .then(() => {
+                btn.classList.add("copied");
+                setTimeout(() => btn.classList.remove("copied"), 2000);
+              })
+              .catch((err) => {
+                console.error("[HashCalculator] Clipboard write failed:", err);
+                btn.classList.add("error");
+                setTimeout(() => btn.classList.remove("error"), 2000);
+              });
+          }
+        });
       });
-    });
 
-    // Debounce function - each call creates its own timer scope
-    function debounce(fn, delay) {
-      let timeout;
-      return function (...args) {
-        clearTimeout(timeout);
-        timeout = setTimeout(() => fn.apply(this, args), delay);
-      };
+      // Debounce function - each call creates its own timer scope
+      function debounce(fn, delay) {
+        let timeout;
+        return function (...args) {
+          clearTimeout(timeout);
+          timeout = setTimeout(() => fn.apply(this, args), delay);
+        };
+      }
+
+      // Add listener with debounce
+      textarea.addEventListener("input", debounce(updateOutputs, 150));
+
+      // Initial calculation
+      updateOutputs();
     }
-
-    // Add listener with debounce
-    textarea.addEventListener("input", debounce(updateOutputs, 150));
-
-    // Initial calculation
-    updateOutputs();
-  }
+  })();
 </script>
 
 <style>
