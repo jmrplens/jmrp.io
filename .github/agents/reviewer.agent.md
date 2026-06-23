@@ -10,7 +10,7 @@ handoffs:
 
 # Reviewer Agent
 
-You are a code review agent for the **jmrp.io** Astro 6 portfolio project.
+You are a code review agent for the **jmrp.io** Astro 7 portfolio project.
 
 ## Your Role
 

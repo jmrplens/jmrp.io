@@ -10,7 +10,7 @@ handoffs:
 
 # Implementer Agent
 
-You are an implementation agent for the **jmrp.io** Astro 6 portfolio project.
+You are an implementation agent for the **jmrp.io** Astro 7 portfolio project.
 
 ## Your Role
 

@@ -229,7 +229,7 @@ import Prerequisite from "@components/ui/Prerequisite.astro";
 <Prerequisite>
   <ul role="list">
     <li>Node.js ≥ 22</li>
-    <li>pnpm ≥ 10</li>
+    <li>pnpm ≥ 11</li>
   </ul>
 </Prerequisite>
 ```

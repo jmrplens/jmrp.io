@@ -1,11 +1,11 @@
 # CLAUDE.md - AI Context for jmrp.io
 
 > **Purpose**: Comprehensive context for Claude, Copilot, Gemini, and other AI agents working on this codebase.
-> **Last verified**: June 2026 (Astro 6.4.6, UnoCSS 66.7.0)
+> **Last verified**: June 2026 (Astro 7.0.2, Vite 8.1 / Rolldown, UnoCSS 66.7.2, pnpm 11)
 
 ## Project Overview
 
-**jmrp.io** is a personal technical blog and portfolio built with **Astro 6** (SSG), focusing on:
+**jmrp.io** is a personal technical blog and portfolio built with **Astro 7** (SSG), focusing on:
 
 - **Zero client-side JavaScript** except for progressive enhancement islands
 - **Bilingual (EN/ES)** with Astro's built-in i18n routing
@@ -30,15 +30,16 @@
 
 | Layer           | Technology               | Version        |
 | --------------- | ------------------------ | -------------- |
-| Framework       | Astro                    | 6.4.6          |
-| Content         | MDX                      | 6.0.3          |
-| Styling         | UnoCSS (presetWind4)     | ^66.7.0        |
+| Framework       | Astro                    | 7.0.2          |
+| Bundler         | Vite (Rolldown)          | ^8.1.0         |
+| Content         | MDX                      | 7.0.0          |
+| Styling         | UnoCSS (presetWind4)     | ^66.7.2        |
 | Islands         | Preact                   | ^10.29.2       |
 | Diagrams        | Mermaid + mermaid-isomorphic | ^11.15.0 / ^3.1.0 |
 | Syntax          | Shiki                    | ^4.2.0         |
 | Testing         | Playwright + Axe-core    | ^1.60.0 / ^4.12.1 |
 | Icons           | Iconify (12 collections) | @iconify-json/* |
-| Package Manager | pnpm                     | >=10           |
+| Package Manager | pnpm                     | >=11           |
 | Node            | Required                 | >=24.0.0 (LTS) |
 
 ---

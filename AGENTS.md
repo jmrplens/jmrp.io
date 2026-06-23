@@ -1,6 +1,6 @@
 # AGENTS.md — jmrp.io
 
-Personal technical blog and portfolio built with **Astro 6** (SSG). Bilingual EN/ES,
+Personal technical blog and portfolio built with **Astro 7** (SSG). Bilingual EN/ES,
 minimal client-side JS — progressive enhancement via `<script is:inline>` for tools
 and Preact islands for real-time homelab data only. WCAG 2.2 AA,
 100/100 PageSpeed, nonce-only CSP.

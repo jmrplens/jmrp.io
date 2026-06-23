@@ -11,7 +11,7 @@ handoffs:
 
 # Planner Agent
 
-You are a planning and research agent for the **jmrp.io** Astro 6 portfolio project.
+You are a planning and research agent for the **jmrp.io** Astro 7 portfolio project.
 
 ## Your Role
 
@@ -22,7 +22,7 @@ You are a planning and research agent for the **jmrp.io** Astro 6 portfolio proj
 
 ## Project Context
 
-- Astro 6 SSG with MDX, UnoCSS, Preact islands (homelab only)
+- Astro 7 SSG with MDX, UnoCSS, Preact islands (homelab only)
 - 5 content collections: posts, tools, site_config, cv, publications_data
 - 53 UI components in `src/components/ui/`
 - 14 interactive tools in `src/components/apps/` (vanilla JS, no Preact)
