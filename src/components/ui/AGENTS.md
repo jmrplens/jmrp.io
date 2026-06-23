@@ -228,8 +228,8 @@ import StepByStep from "@components/ui/StepByStep.astro";
 import Prerequisite from "@components/ui/Prerequisite.astro";
 <Prerequisite>
   <ul role="list">
-    <li>Node.js ≥ 22</li>
-    <li>pnpm ≥ 10</li>
+    <li>Node.js ≥ 24</li>
+    <li>pnpm ≥ 11</li>
   </ul>
 </Prerequisite>
 ```

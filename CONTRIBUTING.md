@@ -6,8 +6,8 @@ Thank you for your interest in contributing to **jmrp.io**! This document outlin
 
 ### Prerequisites
 
-- **Node.js**: v22.0.0 or higher.
-- **pnpm**: v10+ (managed via `corepack` or `npm i -g pnpm`).
+- **Node.js**: v24.0.0 or higher.
+- **pnpm**: v11+ (managed via `corepack` or `npm i -g pnpm`).
 - **[lychee](https://github.com/lycheeverse/lychee)**: A fast, async link checker (required for `pnpm verify`). Install via `cargo install lychee` or download from [releases](https://github.com/lycheeverse/lychee/releases).
 - **[Playwright Browsers](https://playwright.dev/docs/browsers)**: Run `pnpm exec playwright install` after installation.
 
@@ -23,9 +23,9 @@ pnpm install
 
 ### Project Structure
 
-The project follows the **Astro 6** structure with the **Content Layer API**. This version is required for Content Layer support. The exact version is pinned in `package.json`.
+The project follows the **Astro 7** structure with the **Content Layer API**. The exact version is pinned in `package.json`.
 
-> **Release Note**: We use Astro 6 (stable) to leverage the latest performance and content management features.
+> **Release Note**: We use Astro 7 (stable, on Vite 8 / Rolldown) to leverage the latest performance and content management features.
 
 ```plaintext
 /

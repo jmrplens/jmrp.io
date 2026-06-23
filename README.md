@@ -1,8 +1,8 @@
-# JMRP.io (Astro v6)
+# JMRP.io (Astro v7)
 
 <!-- Project & Status -->
 
-![Astro](https://img.shields.io/badge/astro-6.4.6-orange?style=flat&logo=astro)
+![Astro](https://img.shields.io/badge/astro-7.0.2-orange?style=flat&logo=astro)
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
 [![Dependabot](https://badgen.net/badge/Dependabot/enabled/green?icon=dependabot)](https://github.com/jmrplens/jmrp.io/pulls)
 [![CI Dashboard](https://img.shields.io/badge/CI_Dashboard-Live_Status-blueviolet?style=for-the-badge&logo=vercel)](https://jmrp-ci-reports.vercel.app)
@@ -18,7 +18,7 @@
 ![PageSpeed Desktop](https://img.shields.io/badge/PageSpeed%20Desktop-100-brightgreen)
 ![PageSpeed Mobile](https://img.shields.io/badge/PageSpeed%20Mobile-100-brightgreen)
 
-This is the source code for my personal website, **[jmrp.io](https://jmrp.io)**, built with **Astro 6**. It features a high-performance static architecture, robust security headers (including a strict CSP), and a focus on accessibility and modern web standards.
+This is the source code for my personal website, **[jmrp.io](https://jmrp.io)**, built with **Astro 7**. It features a high-performance static architecture, robust security headers (including a strict CSP), and a focus on accessibility and modern web standards.
 
 ## 📑 Table of Contents
 
@@ -49,7 +49,7 @@ This is the source code for my personal website, **[jmrp.io](https://jmrp.io)**,
   - **HTML5 Compliance**: Strict HTML validation (`html-validate`).
   - **Motion Sensitivity**: Respects `prefers-reduced-motion` settings.
 - **Content**:
-  - **Content Layer API**: Advanced content management (Standard in Astro v6).
+  - **Content Layer API**: Advanced content management (Content Layer API).
   - **Technical Blog**: Support for MDX, LaTeX (MathJax), and Mermaid diagrams (SSR rendered).
   - **Bilingual (EN/ES)**: Full i18n with Astro's built-in routing, `hreflang` alternates, and a language switcher with automatic browser language detection.
   - **Interactive Tools**: 14 privacy-first browser tools (security, network, developer utilities).
@@ -65,7 +65,7 @@ This is the source code for my personal website, **[jmrp.io](https://jmrp.io)**,
 
 ## 🛠️ Tech Stack
 
-- **Framework**: [Astro v6](https://astro.build/)
+- **Framework**: [Astro v7](https://astro.build/) (Vite 8 / Rolldown)
 - **UI Components**: [Preact](https://preactjs.com/) (islands only)
 - **Styling**: [UnoCSS](https://unocss.dev/) (`presetWind4`) & CSS Custom Properties
 - **Content**: [MDX](https://mdxjs.com/), [Mermaid](https://mermaid.js.org/) (SSR), [MathJax](https://www.mathjax.org/) (SSR)
@@ -117,8 +117,8 @@ This is the source code for my personal website, **[jmrp.io](https://jmrp.io)**,
 
 ### Prerequisites
 
-- **Node.js (v22.18.0+)**: Required for advanced build and CI features.
-- **pnpm (v10.0.0+)**: Required package manager.
+- **Node.js (v24.0.0+)**: Required for advanced build and CI features.
+- **pnpm (v11.0.0+)**: Required package manager.
 
 ### Installation
 
@@ -177,7 +177,7 @@ Advanced Nginx configuration for high-security environments.
 
 - **CSP (Content Security Policy)**: Nonce-only strategy with `strict-dynamic` for CSP compliance.
 - **SRI (Subresource Integrity)**: Automated hash generation for all local resources.
-- **Astro v6 Nonce Patch**: Custom Vite plugin to ensure CSP compliance with Astro's prefetch system.
+- **Astro v7 Nonce Patch**: Custom Vite plugin to ensure CSP compliance with Astro's prefetch system.
 - **Automated Deployment**: Post-build script verifies Nginx config and deploys security snippets atomically.
 - **Security Headers**: HSTS (2 years), X-Content-Type-Options, X-Frame-Options, COOP, COEP, CORP, Permissions-Policy.
 

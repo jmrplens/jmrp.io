@@ -1,13 +1,13 @@
 ---
 name: astro-build
-description: Build, preview, and verify the jmrp.io Astro 6 project. Use when asked to build, deploy, or run the QA pipeline.
+description: Build, preview, and verify the jmrp.io Astro 7 project. Use when asked to build, deploy, or run the QA pipeline.
 argument-hint: "[command: build|verify|preview|dev]"
 disable-model-invocation: true
 ---
 
 # Astro Build Skill
 
-Build and verify the jmrp.io Astro 6 SSG project.
+Build and verify the jmrp.io Astro 7 SSG project.
 
 ## Build Commands
 

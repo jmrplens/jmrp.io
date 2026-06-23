@@ -6,7 +6,7 @@ argument-hint: "[issue: violation|nonce|sri|headers|all]"
 
 # CSP Debug Skill
 
-Debug and fix Content Security Policy and SRI issues in the jmrp.io Astro 6 project.
+Debug and fix Content Security Policy and SRI issues in the jmrp.io Astro 7 project.
 
 ## CSP Architecture
 
