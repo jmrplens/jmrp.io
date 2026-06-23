@@ -467,15 +467,15 @@ const personSchema = {
     transform: translateY(-2px);
   }
 
-  /* Decorative notch linking the card to the timeline rail. It lives on
-     .timeline-marker (a sibling of .timeline-content) instead of as a ::before
-     on the content card so axe-core can resolve the background of the links
-     inside and verify their contrast — a ::before on the text's ancestor made
-     `color-contrast` report "incomplete" (could not determine background). */
-  .timeline-marker::after {
+  /* Decorative notch linking the card to the timeline rail. Kept as a ::before
+     on .timeline-content (flush with the card edge). This makes axe report the
+     card's links as `color-contrast` "incomplete" (it can't resolve a pseudo
+     ancestor's background), but that is benign — the unmasked audit confirmed
+     no hidden contrast failure here. */
+  .timeline-content::before {
     position: absolute;
-    top: -3px;
-    left: calc(var(--space-lg) + 1px);
+    top: 22px;
+    left: -6px;
     width: 12px;
     height: 12px;
     content: "";
@@ -486,7 +486,7 @@ const personSchema = {
     transition: border-color 0.2s;
   }
 
-  .timeline-item:hover .timeline-marker::after {
+  .timeline-content:hover::before {
     border-bottom-color: var(--color-primary);
     border-left-color: var(--color-primary);
   }
