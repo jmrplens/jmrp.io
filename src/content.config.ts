@@ -54,14 +54,26 @@ const posts = defineCollection({
        * intended entity — a wrong Q-id is worse than none.
        */
       topics: z
-        .array(z.object({ name: z.string(), wikidata: z.string() }))
+        .array(
+          z.object({
+            name: z.string().min(1),
+            wikidata: z
+              .string()
+              .regex(/^Q\d+$/, "wikidata must be a bare Q-id, e.g. Q1128636"),
+          }),
+        )
         .optional(),
       /**
        * FAQ pairs. Rendered as a visible accessible FAQ section AND emitted as
        * FAQPage JSON-LD — single source of truth. Only add genuine Q&A.
        */
       faq: z
-        .array(z.object({ question: z.string(), answer: z.string() }))
+        .array(
+          z.object({
+            question: z.string().min(1),
+            answer: z.string().min(1),
+          }),
+        )
         .optional(),
       /**
        * HowTo schema for step-by-step guides. Emitted as a secondary `HowTo`
@@ -368,7 +380,12 @@ const tools = defineCollection({
      * emitted as FAQPage JSON-LD — single source of truth. Only genuine Q&A.
      */
     faq: z
-      .array(z.object({ question: z.string(), answer: z.string() }))
+      .array(
+        z.object({
+          question: z.string().min(1),
+          answer: z.string().min(1),
+        }),
+      )
       .optional(),
     /**
      * Short feature bullets for the tool, emitted as SoftwareApplication

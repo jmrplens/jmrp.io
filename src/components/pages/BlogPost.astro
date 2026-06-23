@@ -131,7 +131,8 @@ const articleNode = {
     "@type": "WebPage",
     "@id": postUrl,
   },
-  inLanguage: locale,
+  // Fallback (untranslated) posts render English content, so mark them as such.
+  inLanguage: isFallback ? "en" : locale,
   wordCount,
   ...(post.data.articleType === "TechArticle" &&
     post.data.proficiencyLevel && {

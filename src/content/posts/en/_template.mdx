@@ -62,23 +62,22 @@ faq:
 #       text: "What to do."
 #       anchor: "first-step"  # links the step to its in-page heading id
 
-# References (optional - for citing sources; also auto-collected from body links)
-references:
-  - text: "Reference Title"
-    url: "https://example.com/reference"
-  - text: "Another Reference"
-    url: "https://example.com/another"
+# References: NOT a frontmatter field — the layout auto-collects every markdown
+# link and <a> in the body and renders a References list at the end of the post.
+# Just cite sources inline (e.g. [Nginx docs](https://nginx.org/...)).
 ---
 
 import TLDRSummary from "@components/ui/TLDRSummary.astro";
 import Callout from "@components/ui/Callout.astro";
-import References from "@components/ui/References.astro";
 import { Tabs, TabPanel } from "@components/ui/tabs";
 import YouTube from "@components/ui/YouTube.astro";
 import BeforeAfter from "@components/ui/BeforeAfter.astro";
 
-{/* Open EVERY post with a TL;DR — it renders as an <h2> answer-target that AI
-engines extract. Make it a self-contained summary of the takeaway. */}
+{/* Standard opening: a one-paragraph intro (the "entradilla") that frames the
+problem, then a <TLDRSummary> before the first H2. The TL;DR renders as an <h2>
+answer-target that AI engines extract — keep it a self-contained takeaway. */}
+
+A short introductory paragraph that frames the problem and why it matters.
 
 <TLDRSummary>
 One-paragraph summary of the key takeaway (not a "what you'll learn" preview).
@@ -146,11 +145,11 @@ Centered, responsive video:
 
 <YouTube id="VIDEO_ID_HERE" title="Video Title" />
 
-### References Section
+### References
 
-Add at the end of your post to display all references:
-
-<References references={frontmatter.references} />
+Don't add a References component or list yourself: cite sources inline with normal
+markdown links (`[Nginx docs](https://nginx.org/...)`) and the layout collects them
+into a References section at the end of the post automatically.
 
 {/* ========================================================================
 FIELD REFERENCE
@@ -169,7 +168,7 @@ FIELD REFERENCE
     - draft: Boolean - Draft status (defaults to false)
     - coverImage: String - Path to cover image (defaults to site default)
     - tags: Array[String] - Post tags/categories
-    - references: Array[{text: String, url: String}] - External references
+    (references are not a field — they are auto-collected from body links)
 
     GEO / STRUCTURED DATA:
     - articleType: "TechArticle" (guides) | "BlogPosting" (default)

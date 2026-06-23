@@ -78,9 +78,14 @@ const GENERIC_NAMES = new Set([
 function isGenericName(name) {
   const n = name.trim().toLowerCase();
   if (!n) return false;
-  if (GENERIC_NAMES.has(n)) return true;
   // A single non-alphanumeric glyph used as a label (e.g. "•", "·", ">").
-  return n.length === 1 && !/[a-z0-9]/i.test(n);
+  if (n.length === 1 && !/[a-z0-9]/i.test(n)) return true;
+  // Strip trailing decorative punctuation/arrows/ellipsis so "Read more →" and
+  // "Learn more…" still match their generic base form. A char-walk (not an
+  // anchored `+$` regex) keeps this strictly linear.
+  let end = n.length;
+  while (end > 0 && !/[\p{L}\p{N})\]]/u.test(n[end - 1])) end--;
+  return GENERIC_NAMES.has(n.slice(0, end).trim());
 }
 
 const INTERACTIVE = new Set([
@@ -90,6 +95,24 @@ const INTERACTIVE = new Set([
   "select",
   "textarea",
   "summary",
+]);
+// ARIA roles that make any element an interactive control needing a name.
+const INTERACTIVE_ROLES = new Set([
+  "button",
+  "link",
+  "checkbox",
+  "radio",
+  "switch",
+  "tab",
+  "menuitem",
+  "menuitemcheckbox",
+  "menuitemradio",
+  "option",
+  "textbox",
+  "searchbox",
+  "slider",
+  "spinbutton",
+  "combobox",
 ]);
 const FORM_FIELD = new Set(["input", "select", "textarea"]);
 
@@ -106,8 +129,9 @@ function getInterest(tagName, attrs) {
     return { skip: true };
   }
   const isInteractive =
-    INTERACTIVE.has(tagName) &&
-    !(tagName === "input" && attrs.type === "hidden");
+    (INTERACTIVE.has(tagName) &&
+      !(tagName === "input" && attrs.type === "hidden")) ||
+    (!!attrs.role && INTERACTIVE_ROLES.has(attrs.role));
   const isImg = tagName === "img";
   const isMeaningfulSvg =
     tagName === "svg" &&
@@ -181,10 +205,14 @@ function getAccName($, $el, attrs) {
   const txt = visibleText($, $el);
   if (txt) return txt;
 
-  // 6. Nested labelled descendant (icon-only link wrapping <img alt> / [aria-label])
-  const nestedImg = $el.find("img[alt]").first().attr("alt");
+  // 6. Nested labelled descendant (icon-only link wrapping <img alt> / [aria-label]).
+  // Search a clone with aria-hidden subtrees removed — a hidden descendant must
+  // not contribute the control's accessible name.
+  const visible = $el.clone();
+  visible.find('[aria-hidden="true"]').remove();
+  const nestedImg = visible.find("img[alt]").first().attr("alt");
   if (nestedImg?.trim()) return nestedImg.trim();
-  const nestedAria = $el.find("[aria-label]").first().attr("aria-label");
+  const nestedAria = visible.find("[aria-label]").first().attr("aria-label");
   if (nestedAria?.trim()) return nestedAria.trim();
 
   // 7. title fallback
@@ -197,6 +225,27 @@ function getAccName($, $el, attrs) {
  * @param {Record<string, unknown>} f - The finding object.
  * @param {number} idx - Zero-based index for display.
  */
+/**
+ * Builds the repetition note for a finding (ambiguous link / repeated control /
+ * benign duplicate), or null when the name is not repeated.
+ *
+ * @param {Record<string, unknown>} f - The annotated finding.
+ * @param {string} accName - The finding's accessible name (already coerced).
+ * @returns {string|null} The formatted note line, or null.
+ */
+function repeatNote(f, accName) {
+  if (f.isAmbiguous) {
+    return `${C.red}✖ AMBIGUOUS:${C.reset} "${accName}" labels ${f.destCount} different destinations (WCAG 2.4.4).`;
+  }
+  if (f.isButtonRepeated) {
+    return `${C.red}✖ REPEATED:${C.reset} Name shared by ${f.repeatCount} non-link controls — verify they act identically.`;
+  }
+  if (f.isRepeated) {
+    return `${C.dim}↔ duplicate: name used by ${f.repeatCount} links to the same destination (OK).${C.reset}`;
+  }
+  return null;
+}
+
 function printFinding(f, idx) {
   // typeof guards narrow the loosely-typed finding fields to strings (so they
   // are never base-stringified to "[object Object]").
@@ -209,25 +258,16 @@ function printFinding(f, idx) {
   const classStr = cls
     ? `.${cls.trim().split(/\s+/).filter(Boolean).join(".")}`
     : "";
+  const note = repeatNote(f, accName);
 
   console.log(
     `${C.dim}[${idx + 1}]${C.reset} ${C.bright}${tag}${C.dim}${idStr}${classStr}${C.reset}`,
   );
   if (accName) console.log(`    ${C.green}name:${C.reset} "${accName}"`);
   if (href) console.log(`    ${C.dim}href:${C.reset} ${href}`);
-  if (!f.hasName) console.log(`    ${C.red}⚠️  ERROR: Missing name.${C.reset}`);
-  if (f.isAmbiguous)
-    console.log(
-      `    ${C.red}✖ AMBIGUOUS:${C.reset} "${accName}" labels ${f.destCount} different destinations (WCAG 2.4.4).`,
-    );
-  else if (f.isButtonRepeated)
-    console.log(
-      `    ${C.red}✖ REPEATED:${C.reset} Name shared by ${f.repeatCount} non-link controls — verify they act identically.`,
-    );
-  else if (f.isRepeated)
-    console.log(
-      `    ${C.dim}↔ duplicate: name used by ${f.repeatCount} links to the same destination (OK).${C.reset}`,
-    );
+  if (!f.hasName && f.nameRequired)
+    console.log(`    ${C.red}⚠️  ERROR: Missing name.${C.reset}`);
+  if (note) console.log(`    ${note}`);
   if (f.isGeneric)
     console.log(
       `    ${C.yellow}💬 GENERIC:${C.reset} Non-descriptive name — rewrite to something specific.`,
@@ -270,28 +310,40 @@ function readAttrs($el) {
  * @param {Map<string, Set<string>>} nameHrefs - accName → hrefs (mutated).
  * @returns {Record<string, unknown>|null} The finding, or null when not of interest.
  */
+/**
+ * Records an interactive element's accessible name in the file-wide maps:
+ * its frequency, and (for links) the set of distinct destinations.
+ *
+ * @param {never} el - The raw element.
+ * @param {string} accName - The resolved accessible name.
+ * @param {Record<string, string|undefined>} attrs - The element attributes.
+ * @param {Map<string, number>} freq - accName → count (mutated).
+ * @param {Map<string, Set<string>>} nameHrefs - accName → hrefs (mutated).
+ */
+function trackOccurrence(el, accName, attrs, freq, nameHrefs) {
+  freq.set(accName, (freq.get(accName) || 0) + 1);
+  if (el.tagName === "a" && attrs.href) {
+    if (!nameHrefs.has(accName)) nameHrefs.set(accName, new Set());
+    nameHrefs.get(accName).add(attrs.href);
+  }
+}
+
 function evaluateElement($, el, freq, nameHrefs) {
   const $el = $(el);
   const attrs = readAttrs($el);
   const interest = getInterest(el.tagName, attrs);
   if (interest.skip) return null;
   if (attrs.ariaHidden === "true" && !interest.isInteractive) return null;
-  if (
-    !interest.isInteractive &&
-    !interest.isImg &&
-    !interest.isMeaningfulSvg &&
-    !interest.hasExplicitAria
-  ) {
-    return null;
-  }
+  const qualifies =
+    interest.isInteractive ||
+    interest.isImg ||
+    interest.isMeaningfulSvg ||
+    interest.hasExplicitAria;
+  if (!qualifies) return null;
 
   const accName = getAccName($, $el, attrs);
   if (interest.isInteractive && accName) {
-    freq.set(accName, (freq.get(accName) || 0) + 1);
-    if (el.tagName === "a" && attrs.href) {
-      if (!nameHrefs.has(accName)) nameHrefs.set(accName, new Set());
-      nameHrefs.get(accName).add(attrs.href);
-    }
+    trackOccurrence(el, accName, attrs, freq, nameHrefs);
   }
 
   return {
@@ -305,6 +357,13 @@ function evaluateElement($, el, freq, nameHrefs) {
         visibleText($, $el).toLowerCase(),
     isGeneric: interest.isInteractive && isGenericName(accName),
     isInteractive: interest.isInteractive,
+    // An accessible name is required for: interactive controls, an <img> with no
+    // `alt` attribute at all (alt="" is a valid decorative image), and a
+    // meaningful (role=img / labelled) SVG.
+    nameRequired:
+      interest.isInteractive ||
+      (interest.isImg && attrs.alt === undefined) ||
+      interest.isMeaningfulSvg,
   };
 }
 
@@ -336,7 +395,7 @@ function annotate(f, freq, nameHrefs) {
 function shouldShow(f, options) {
   if (!options.rep && !options.err && !options.gen) return true;
   if (options.rep && (f.isAmbiguous || f.isButtonRepeated)) return true;
-  if (options.err && !f.hasName && f.isInteractive) return true;
+  if (options.err && !f.hasName && f.nameRequired) return true;
   return !!(options.gen && f.isGeneric);
 }
 
@@ -363,7 +422,7 @@ function audit(path, options) {
   const stats = {
     total: findings.length,
     ok: findings.filter((f) => f.hasName).length,
-    missing: findings.filter((f) => f.isInteractive && !f.hasName).length,
+    missing: findings.filter((f) => f.nameRequired && !f.hasName).length,
     redundant: findings.filter((f) => f.isRedundant).length,
     generic: findings.filter((f) => f.isGeneric).length,
     repeated: [...freq.values()].filter((c) => c > 1).length,

@@ -60,8 +60,9 @@ const collectionSchema = {
             pub.author?.map((a: { family: string; given?: string }) => ({
               "@type": "Person",
               // Link the site owner's own author node to the canonical #person
-              // entity so his publications connect to his site identity.
-              ...(/requena/i.test(a.family) && {
+              // entity. Match the full surname "Requena-Plens"/"Requena Plens"
+              // (not a bare "Requena") so a co-author is never mis-attributed.
+              ...(/requena[\s-]?plens/i.test(a.family) && {
                 "@id": new URL("#person", getSiteUrl()).href,
               }),
               ...(a.given && { givenName: a.given }),

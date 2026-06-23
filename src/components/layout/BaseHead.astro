@@ -221,7 +221,9 @@ const navSchema = (siteData.nav || []).map(
 const pathSegments = Astro.url.pathname.split("/").filter(Boolean);
 const breadcrumbList = {
   "@type": "BreadcrumbList",
-  "@id": `${siteRoot}#breadcrumb`,
+  // Page-scoped @id so each page's breadcrumb trail is a distinct graph node
+  // (a single site-wide id would collapse different trails into one).
+  "@id": `${new URL(Astro.url.pathname, getSiteUrl()).href}#breadcrumb`,
   itemListElement: [
     {
       "@type": "ListItem",

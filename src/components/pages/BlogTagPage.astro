@@ -62,7 +62,8 @@ const schema = {
       (post, index): ListItem => ({
         "@type": "ListItem",
         position: index + 1,
-        url: new URL(`/blog/${post.data.slug}/`, getSiteUrl()).href,
+        url: new URL(translatePath(`/blog/${post.data.slug}/`), getSiteUrl())
+          .href,
         name: post.data.title,
       }),
     ),

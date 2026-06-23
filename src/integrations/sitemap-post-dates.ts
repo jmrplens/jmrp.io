@@ -26,7 +26,8 @@ interface PostFrontmatter {
 
 /** Extracts and parses the YAML frontmatter block from raw MDX content. */
 function parseFrontmatter(raw: string): PostFrontmatter | undefined {
-  const match = /^---\n([\s\S]*?)\n---/.exec(raw);
+  // Tolerate CRLF line endings and a leading BOM/whitespace.
+  const match = /^---\r?\n([\s\S]*?)\r?\n---/.exec(raw.trimStart());
   if (!match) return undefined;
   try {
     return parseYaml(match[1]) as PostFrontmatter;
@@ -59,7 +60,9 @@ function readPostDate(
   if (!fm?.slug || fm.draft) return undefined;
   const date = fm.updatedDate ?? fm.publishedDate;
   if (!date) return undefined;
-  return { slug: fm.slug, iso: new Date(date).toISOString() };
+  const parsed = new Date(date);
+  if (Number.isNaN(parsed.getTime())) return undefined; // skip malformed dates
+  return { slug: fm.slug, iso: parsed.toISOString() };
 }
 
 /**
