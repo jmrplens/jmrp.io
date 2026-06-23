@@ -62,6 +62,7 @@ const algorithms = [
       </label>
       <textarea
         id={`${uniqueId}-input`}
+        data-hash-role="input"
         class="hash-textarea"
         rows="5"
         placeholder={t("tools.hashCalculator.inputPlaceholder")}
@@ -94,13 +95,14 @@ const algorithms = [
                 )}
               </div>
               <div class="hash-result-value">
-                <code id={`${uniqueId}-${algo.id}`}>
+                <code data-hash-output={algo.id}>
                   {t("tools.shared.calculating")}
                 </code>
                 <button
                   class="hash-copy-btn"
                   type="button"
-                  data-target={`${uniqueId}-${algo.id}`}
+                  data-action="copy"
+                  data-target={algo.id}
                   aria-label={t("tools.hashCalculator.copyShaHash").replace(
                     "{algo}",
                     () => algo.name,
@@ -122,13 +124,14 @@ const algorithms = [
           >
         </div>
         <div class="hash-result-value hash-result-directive">
-          <code id={`${uniqueId}-directive`}
+          <code data-hash-output="directive"
             >{t("tools.shared.calculating")}</code
           >
           <button
             class="hash-copy-btn"
             type="button"
-            data-target={`${uniqueId}-directive`}
+            data-action="copy"
+            data-target="directive"
             aria-label={t("tools.hashCalculator.copyCspDirective")}
           >
             <span class="i-mdi:content-copy"></span>
@@ -142,7 +145,7 @@ const algorithms = [
           {t("tools.hashCalculator.htmlExampleLabel")}
         </div>
         <pre
-          class="hash-example-code"><code id={`${uniqueId}-html`}>...</code></pre>
+          class="hash-example-code"><code data-hash-output="html">...</code></pre>
       </div>
     </div>
   </div>
@@ -169,13 +172,20 @@ const algorithms = [
   (() => {
     const container = document.querySelector(`[data-hash-id="${uniqueId}"]`);
     if (container) {
-      const textarea = document.getElementById(`${uniqueId}-input`);
-      const sha256Output = document.getElementById(`${uniqueId}-sha256`);
-      const sha384Output = document.getElementById(`${uniqueId}-sha384`);
-      const sha512Output = document.getElementById(`${uniqueId}-sha512`);
-      const directiveOutput = document.getElementById(`${uniqueId}-directive`);
-      const htmlOutput = document.getElementById(`${uniqueId}-html`);
-      const copyBtns = container.querySelectorAll(".hash-copy-btn");
+      const textarea = container.querySelector('[data-hash-role="input"]');
+      const sha256Output = container.querySelector(
+        '[data-hash-output="sha256"]',
+      );
+      const sha384Output = container.querySelector(
+        '[data-hash-output="sha384"]',
+      );
+      const sha512Output = container.querySelector(
+        '[data-hash-output="sha512"]',
+      );
+      const directiveOutput = container.querySelector(
+        '[data-hash-output="directive"]',
+      );
+      const htmlOutput = container.querySelector('[data-hash-output="html"]');
 
       // Guard against missing DOM elements
       if (
@@ -255,25 +265,26 @@ const algorithms = [
         }
       }
 
-      // Copy functionality
-      copyBtns.forEach((btn) => {
-        btn.addEventListener("click", () => {
-          const targetId = btn.dataset.target;
-          const targetEl = document.getElementById(targetId);
-          if (targetEl && navigator.clipboard) {
-            navigator.clipboard
-              .writeText(targetEl.textContent || "")
-              .then(() => {
-                btn.classList.add("copied");
-                setTimeout(() => btn.classList.remove("copied"), 2000);
-              })
-              .catch((err) => {
-                console.error("[HashCalculator] Clipboard write failed:", err);
-                btn.classList.add("error");
-                setTimeout(() => btn.classList.remove("error"), 2000);
-              });
-          }
-        });
+      // Copy functionality (event-delegated; target resolved via data-* attrs)
+      container.addEventListener("click", (event) => {
+        const btn = event.target.closest('[data-action="copy"]');
+        if (!btn || !container.contains(btn)) return;
+        const targetEl = container.querySelector(
+          `[data-hash-output="${btn.dataset.target}"]`,
+        );
+        if (targetEl && navigator.clipboard) {
+          navigator.clipboard
+            .writeText(targetEl.textContent || "")
+            .then(() => {
+              btn.classList.add("copied");
+              setTimeout(() => btn.classList.remove("copied"), 2000);
+            })
+            .catch((err) => {
+              console.error("[HashCalculator] Clipboard write failed:", err);
+              btn.classList.add("error");
+              setTimeout(() => btn.classList.remove("error"), 2000);
+            });
+        }
       });
 
       // Debounce function - each call creates its own timer scope
