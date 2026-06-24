@@ -372,11 +372,11 @@ export const common = {
     home: {
       heroTitle: "Hi, I'm José Manuel.",
       heroSubtitle:
-        "Software Engineer & Researcher. <br>Bridging the gap between <strong>Acoustics</strong>, <strong>Electronics</strong>, and <strong>Code</strong>.",
+        "Embedded Firmware & Software Engineer. <br>Bridging the gap between <strong>firmware</strong>, <strong>software</strong>, and <strong>applied research</strong>.",
       heroBio1:
-        "I'm a multidisciplinary engineer who enjoys solving technical problems where <strong>hardware</strong>, <strong>software</strong> and <strong>applied research</strong> meet. I've worked on projects across very different domains —from <strong>academic research</strong> to <strong>industrial development</strong>— and that diversity is what motivates me the most.",
+        "I'm a multidisciplinary engineer who enjoys solving problems where <strong>embedded firmware</strong>, <strong>software</strong> and <strong>applied research</strong> meet. My path runs from <strong>academic research</strong> in acoustics to <strong>industrial firmware development</strong> — and that breadth is what motivates me the most.",
       heroBio2:
-        "I thrive on the challenge of integrating hardware and software. When I'm not coding industrial systems, I'm an active <strong>Open Source</strong> contributor and a passionate self-hoster, constantly refining my homelab and building tools for the community. <a href='/cv/'>Check out my CV</a> to see the full journey.",
+        "I thrive on integrating hardware and software end to end. I'm an active <strong>Open Source</strong> contributor whose tools are used by developers around the world, and a passionate self-hoster, constantly refining my homelab and building tools for the community. <a href='/cv/'>Check out my CV</a> to see the full journey.",
       viewCV: "View CV",
       viewCVAria: "View CV - my professional curriculum vitae",
       readBlog: "Read Blog",
@@ -444,6 +444,7 @@ export const common = {
       levelAdvanced: "Advanced",
       levelExpert: "Expert",
       levelUnknown: "Unknown",
+      projectMetrics: "Highlights for {name}",
     },
     github: {
       title: "GitHub Repositories",

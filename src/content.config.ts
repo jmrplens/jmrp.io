@@ -287,6 +287,18 @@ const CVCertificateGroup = z.object({
   items: z.array(CVCertificateItem),
 });
 
+/** Schema for a featured open-source / portfolio project. */
+const CVProjectItem = z.object({
+  name: z.string(),
+  /** Short tech/role line, e.g. "Go · MCP server". */
+  tech: z.string().optional(),
+  icon: z.string().optional(),
+  description: z.string().optional(),
+  /** Free-text badges, e.g. ["23k downloads", "14★", "PyPI"]. */
+  metrics: z.array(z.string()).optional(),
+  links: z.array(CVLink).optional(),
+});
+
 /**
  * Configuration for 'cv' data collection.
  * Defines the complex structure for the multi-section resume.
@@ -318,6 +330,11 @@ const cv = defineCollection({
         title: z.string(),
         type: z.literal("certificate_list"),
         contents: z.array(CVCertificateGroup),
+      }),
+      z.object({
+        title: z.string(),
+        type: z.literal("projects"),
+        contents: z.array(CVProjectItem),
       }),
     ]),
   ),

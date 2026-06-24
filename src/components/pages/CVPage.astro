@@ -8,6 +8,7 @@ import "@styles/skills.css";
 
 import CertificateGroup from "@components/cv/CertificateGroup.astro";
 import CVMenu, { type MenuSection } from "@components/cv/CVMenu.astro";
+import ProjectCard from "@components/cv/ProjectCard.astro";
 import SkillGroup from "@components/cv/SkillGroup.astro";
 import { defaultLocale, type Locale } from "@i18n/config";
 import { useTranslations } from "@i18n/utils";
@@ -59,6 +60,13 @@ const menuSections: MenuSection[] = sortedSections.map((section) => {
       }));
       break;
     }
+    case "projects": {
+      items = section.contents.map((project, index) => ({
+        title: project.name,
+        slug: generateSlug(`${section.title}-${project.name}-${index}`),
+      }));
+      break;
+    }
   }
 
   return {
@@ -68,7 +76,10 @@ const menuSections: MenuSection[] = sortedSections.map((section) => {
   };
 });
 
-// Extract specific sections by type for schema generation
+// Extract specific sections by type for schema generation.
+// Only Experience and Formal Education use the `time_table` type (in that order),
+// so this stays stable regardless of where other sections — e.g. `projects` or
+// `list_groups` — are inserted in the YAML.
 const timeTables = cvData.filter((s) => s.type === "time_table");
 const experience = timeTables[0]; // First time_table = Experience
 const formalEducation = timeTables[1]; // Second time_table = Formal Education
@@ -309,6 +320,19 @@ const personSchema = {
               ))}
             </div>
           )}
+
+          {section.type === "projects" && (
+            <div class="grid-layout">
+              {section.contents.map((project, index) => (
+                <div
+                  class="project-card-wrapper"
+                  id={generateSlug(`${section.title}-${project.name}-${index}`)}
+                >
+                  <ProjectCard project={project} />
+                </div>
+              ))}
+            </div>
+          )}
         </section>
       ))
     }
@@ -359,6 +383,31 @@ const personSchema = {
     <span class="i-fa-solid:users"></span>
     <span class="i-fa-solid:industry"></span>
     <span class="i-fa-solid:laptop-code"></span>
+    <span class="i-logos:go"></span>
+    <span class="i-logos:typescript-icon"></span>
+    <span class="i-logos:bash-icon"></span>
+    <span class="i-simple-icons:platformio"></span>
+    <span class="i-mdi:shield-key-outline"></span>
+    <span class="i-simple-icons:doxygen"></span>
+    <span class="i-fa-solid:shield-alt"></span>
+    <span class="i-simple-icons:gitlab"></span>
+    <span class="i-simple-icons:jenkins"></span>
+    <span class="i-simple-icons:sonarqube"></span>
+    <span class="i-mdi:package-variant-closed"></span>
+    <span class="i-fa-solid:search-plus"></span>
+    <span class="i-fa-solid:vials"></span>
+    <span class="i-simple-icons:precommit"></span>
+    <span class="i-mdi:lan"></span>
+    <span class="i-simple-icons:mikrotik"></span>
+    <span class="i-simple-icons:wireguard"></span>
+    <span class="i-mdi:ip-network-outline"></span>
+    <span class="i-mdi:lightning-bolt"></span>
+    <span class="i-mdi:dns"></span>
+    <span class="i-mdi:shield-lock-outline"></span>
+    <span class="i-fa-solid:key"></span>
+    <span class="i-fa-solid:certificate"></span>
+    <span class="i-simple-icons:nginx"></span>
+    <span class="i-fa-solid:user-shield"></span>
   </div>
   {/* ICON_DETECTION_END */}
 </BaseLayout>
@@ -388,7 +437,8 @@ const personSchema = {
 
   .timeline-item,
   .skill-group-wrapper,
-  .cert-group-wrapper {
+  .cert-group-wrapper,
+  .project-card-wrapper {
     scroll-margin-top: calc(var(--header-height) + 1rem);
   }
 

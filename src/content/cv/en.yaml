@@ -159,6 +159,9 @@
         - name: ESP32 / ESP-IDF
           icon: simple-icons:espressif
           level: 4
+        - name: PlatformIO
+          icon: simple-icons:platformio
+          level: 4
         - name: Texas Instruments
           desc: (MSP430, Tiva C, Code Composer Studio)
           icon: mdi:chip
@@ -181,6 +184,14 @@
           desc: (Oscilloscopes, DAQs, Logic A.)
           icon: fa-solid:wave-square
           level: 4
+        - name: Secure Boot & Embedded Security
+          desc: (secure boot, flash encryption, key derivation)
+          icon: mdi:shield-key-outline
+          level: 3
+        - name: Doxygen
+          desc: (firmware documentation)
+          icon: simple-icons:doxygen
+          level: 4
 
     - category: Software Engineering & Tools
       icon: fa-solid:code
@@ -190,6 +201,16 @@
           level: 4
         - name: C++
           icon: logos:c-plusplus
+          level: 3
+        - name: Go
+          icon: logos:go
+          level: 2
+        - name: TypeScript
+          icon: logos:typescript-icon
+          level: 2
+        - name: Bash
+          desc: (shellcheck, bats)
+          icon: logos:bash-icon
           level: 3
         - name: Clang Tooling
           desc: (clangd, clang-format, clang-tidy)
@@ -204,10 +225,6 @@
         - name: GitLab
           icon: mdi:gitlab
           level: 4
-        - name: CI/CD
-          desc: (GitHub Actions)
-          icon: simple-icons:githubactions
-          level: 4
         - name: Docker
           icon: logos:docker-icon
           level: 4
@@ -220,6 +237,83 @@
         - name: JetBrains Toolbox
           desc: (CLion, PyCharm, WebStorm)
           icon: logos:jetbrains
+          level: 4
+
+    - category: Quality, CI/CD & DevSecOps
+      icon: fa-solid:shield-alt
+      items:
+        - name: GitHub Actions
+          icon: simple-icons:githubactions
+          level: 4
+        - name: GitLab CI
+          icon: simple-icons:gitlab
+          level: 3
+        - name: Jenkins
+          icon: simple-icons:jenkins
+          level: 2
+        - name: SonarQube / SonarCloud
+          icon: simple-icons:sonarqube
+          level: 4
+        - name: GoReleaser
+          desc: (multi-platform releases)
+          icon: mdi:package-variant-closed
+          level: 3
+        - name: Static Analysis & SAST
+          desc: (CodeQL, gitleaks, Trivy, golangci-lint)
+          icon: fa-solid:search-plus
+          level: 3
+        - name: Testing
+          desc: (pytest, Playwright, Vitest, bats)
+          icon: fa-solid:vials
+          level: 4
+        - name: pre-commit hooks
+          icon: simple-icons:precommit
+          level: 4
+
+    - category: Networking
+      icon: mdi:lan
+      items:
+        - name: TCP/IP & Networking
+          icon: fa-solid:network-wired
+          level: 4
+        - name: MikroTik RouterOS
+          icon: simple-icons:mikrotik
+          level: 4
+        - name: WireGuard / VPN
+          icon: simple-icons:wireguard
+          level: 4
+        - name: IPv6 & Dual-stack
+          icon: mdi:ip-network-outline
+          level: 4
+        - name: QUIC / HTTP3
+          icon: mdi:lightning-bolt
+          level: 3
+        - name: DNS / Dynamic DNS
+          icon: mdi:dns
+          level: 3
+
+    - category: Security & Cryptography
+      icon: mdi:shield-lock-outline
+      items:
+        - name: Applied Cryptography
+          desc: (AEAD, encrypt-then-MAC, KDFs)
+          icon: fa-solid:key
+          level: 3
+        - name: TLS / mTLS / PKI
+          desc: (client certificates)
+          icon: fa-solid:certificate
+          level: 4
+        - name: Nginx Hardening
+          desc: (CSP, security headers)
+          icon: simple-icons:nginx
+          level: 4
+        - name: CrowdSec
+          desc: (IDS/IPS)
+          icon: fa-solid:user-shield
+          level: 3
+        - name: Network Hardening
+          desc: (firewall, tarpit, honeypot)
+          icon: fa-solid:shield-alt
           level: 4
 
     - category: AI & Agentic Engineering
@@ -254,9 +348,6 @@
         - name: Linux / Unix
           icon: logos:linux-tux
           level: 4
-        - name: TCP/IP & Networking
-          icon: fa-solid:network-wired
-          level: 4
         - name: MacOS
           icon: simple-icons:apple
           level: 4
@@ -269,6 +360,77 @@
         - name: HTML / CSS
           icon: vscode-icons:file-type-html
           level: 3
+
+- title: Open Source Projects
+  type: projects
+  contents:
+    - name: gitlab-mcp-server
+      tech: Go · Model Context Protocol server
+      icon: logos:go
+      description: >
+        Open-source GitLab MCP server that exposes 1,000+ GitLab operations to AI assistants
+        through a dynamic 2-tool find/execute design, with stdio/HTTP/OAuth transports and
+        safe & read-only modes.
+      metrics:
+        - 14★
+        - 30 releases
+        - ~23k downloads
+        - Listed on Glama, mcp.so, Cursor & mcpservers.org
+      links:
+        - link: https://github.com/jmrplens/gitlab-mcp-server
+          linkname: GitHub
+        - link: https://glama.ai/mcp/servers/jmrplens/gitlab-mcp-server
+          linkname: Glama
+        - link: https://cursor.directory/plugins/gitlab-mcp-server
+          linkname: Cursor
+    - name: PyOctaveBand
+      tech: Python · Signal processing
+      icon: logos:python
+      description: >
+        Octave-band and fractional octave-band filtering library for time-domain signals,
+        published on PyPI.
+      metrics:
+        - 96★
+        - PyPI
+      links:
+        - link: https://github.com/jmrplens/PyOctaveBand
+          linkname: GitHub
+        - link: https://pypi.org/project/PyOctaveBand/
+          linkname: PyPI
+    - name: cs-routeros-bouncer
+      tech: Go · Network security
+      icon: logos:go
+      description: >
+        CrowdSec bouncer for MikroTik RouterOS — manages address lists and firewall rules
+        through the RouterOS API.
+      metrics:
+        - 10★
+        - 14 releases
+      links:
+        - link: https://github.com/jmrplens/cs-routeros-bouncer
+          linkname: GitHub
+    - name: Cloudflare-DNS-Updater
+      tech: Bash · DevOps
+      icon: logos:bash-icon
+      description: >
+        Dynamic DNS client for Cloudflare (IPv4/IPv6) written in Bash, with a bats test
+        suite and coverage reporting.
+      metrics:
+        - 26★
+      links:
+        - link: https://github.com/jmrplens/Cloudflare-DNS-Updater
+          linkname: GitHub
+    - name: TFG-TFM_EPS
+      tech: LaTeX · Academic template
+      icon: vscode-icons:file-type-tex
+      description: >
+        LaTeX template for Bachelor's and Master's theses at the University of Alicante (EPS),
+        with an automated CI build pipeline.
+      metrics:
+        - 79★
+      links:
+        - link: https://github.com/jmrplens/TFG-TFM_EPS
+          linkname: GitHub
 
 - title: Formal education
   type: time_table

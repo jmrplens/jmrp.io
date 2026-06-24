@@ -36,6 +36,12 @@ person:
     - "IPv6"
     - "Acoustics"
     - "Signal Processing"
+    - "Go"
+    - "Model Context Protocol"
+    - "CI/CD"
+    - "DevSecOps"
+    - "Software Testing"
+    - "ESP32"
 
 # Social links for JSON-LD sameAs and dynamic rendering
 # These are canonical URLs used across the site
@@ -95,6 +101,7 @@ hero:
     - "I thrive on the challenge of integrating hardware and software. When I'm not coding industrial systems, I'm an active <strong>Open Source</strong> contributor and a passionate self-hoster, constantly refining my homelab and building tools for the community. <a href='/cv/'>Check out my CV</a> to see the full journey."
 
 featured_projects:
+  - "gitlab-mcp-server"
   - "PyOctaveBand"
   - "Cloudflare-DNS-Updater"
   - "TFG-TFM_EPS"
