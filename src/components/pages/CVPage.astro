@@ -164,12 +164,17 @@ const personSchema = {
 
           {section.type === "map" && (
             <div class="cv-map">
-              {section.contents.map((item) => (
-                <div class="map-item">
-                  <span class="map-key">{item.name}:</span>
-                  {item.value && <span class="map-value">{item.value}</span>}
-                  {item.links && (
-                    <div class="map-links">
+              {section.contents.map((item) =>
+                item.dropdown && item.links ? (
+                  <details class="cv-download">
+                    <summary>
+                      <span
+                        class="i-fa-solid:download"
+                        aria-hidden="true"
+                      />
+                      {item.name}
+                    </summary>
+                    <div class="cv-download-menu">
                       {item.links.map((link) => (
                         <a
                           href={link.link}
@@ -182,9 +187,29 @@ const personSchema = {
                         </a>
                       ))}
                     </div>
-                  )}
-                </div>
-              ))}
+                  </details>
+                ) : (
+                  <div class="map-item">
+                    <span class="map-key">{item.name}:</span>
+                    {item.value && <span class="map-value">{item.value}</span>}
+                    {item.links && (
+                      <div class="map-links">
+                        {item.links.map((link) => (
+                          <a
+                            href={link.link}
+                            class="btn btn-sm btn-outline"
+                            download={link.download || undefined}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                          >
+                            {link.name}
+                          </a>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ),
+              )}
             </div>
           )}
 
@@ -408,6 +433,7 @@ const personSchema = {
     <span class="i-fa-solid:certificate"></span>
     <span class="i-simple-icons:nginx"></span>
     <span class="i-fa-solid:user-shield"></span>
+    <span class="i-fa-solid:download"></span>
   </div>
   {/* ICON_DETECTION_END */}
 </BaseLayout>
@@ -469,6 +495,65 @@ const personSchema = {
   .map-links {
     display: inline-flex;
     gap: var(--space-sm);
+  }
+
+  /* Download dropdowns (accessible <details>, zero-JS) */
+  .cv-download {
+    margin-top: var(--space-xs);
+  }
+
+  .cv-download > summary {
+    display: inline-flex;
+    gap: var(--space-xs);
+    align-items: center;
+    padding: var(--space-xs) var(--space-md);
+    font-weight: var(--fw-medium);
+    color: var(--color-text);
+    cursor: pointer;
+    list-style: none;
+    background-color: var(--color-bg-subtle);
+    border: var(--border-1);
+    border-radius: var(--radius-md);
+    transition:
+      border-color 0.2s,
+      color 0.2s;
+  }
+
+  .cv-download > summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .cv-download > summary::after {
+    width: 0;
+    height: 0;
+    content: "";
+    border-right: 0.3em solid transparent;
+    border-left: 0.3em solid transparent;
+    border-top: 0.35em solid currentcolor;
+    transition: transform 0.2s;
+  }
+
+  .cv-download[open] > summary::after {
+    transform: rotate(180deg);
+  }
+
+  .cv-download > summary:hover,
+  .cv-download[open] > summary {
+    color: var(--color-primary);
+    border-color: var(--color-primary);
+  }
+
+  .cv-download > summary:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+  }
+
+  .cv-download-menu {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-sm);
+    margin-top: var(--space-sm);
+    margin-left: var(--space-sm);
   }
 
   /* Time Table (Timeline) */

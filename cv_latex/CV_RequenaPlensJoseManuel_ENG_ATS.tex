@@ -1,0 +1,186 @@
+% =====================================================================
+%  CV — José Manuel Requena Plens — ATS version (EN)
+%  Single-column "designed" layout, ATS-friendly. Engine: LuaLaTeX + fontspec.
+%  Compile (recruiter-friendly output filename):
+%    lualatex -jobname="Jose_Requena_Plens_Firmware_Software_Engineer_2026" CV_RequenaPlensJoseManuel_ENG_ATS.tex
+% =====================================================================
+% Accessibility: tagged PDF + document language.
+\DocumentMetadata{lang=en-US, pdfversion=2.0, testphase={phase-III}}
+\documentclass[11pt,a4paper]{article}
+
+% ---- Encoding / language ----
+\usepackage{fontspec}
+\usepackage[english]{babel}
+\usepackage{microtype}
+
+% ---- Geometry (wide margins = "premium" whitespace) ----
+\usepackage[a4paper,top=1.5cm,bottom=1.4cm,left=1.7cm,right=1.7cm]{geometry}
+
+% ---- Color (single accent = jmrp.io purple) ----
+\usepackage{xcolor}
+\definecolor{accent}{HTML}{B509AC}
+\definecolor{ink}{HTML}{1F2328}
+\definecolor{muted}{HTML}{57606A}
+
+% ---- Typography: Inter ----
+\setmainfont{Inter}[
+  UprightFont = *-Regular,
+  BoldFont    = *-SemiBold,
+  ItalicFont  = *-Italic,
+  BoldItalicFont = *-SemiBoldItalic,
+  WordSpace   = 1.15,        % wider word spacing: more robust ATS extraction
+  RawFeature  = {-tlig},     % apóstrofo recto (U+0027) en vez de ’ (U+2019): ATS más limpio
+]
+\newfontfamily\headingfont{Inter}[UprightFont=*-Bold]
+\color{ink}
+
+% ---- Compact lists ----
+\usepackage{enumitem}
+\setlist[itemize]{
+  leftmargin=1.1em, topsep=4pt, partopsep=0pt, parsep=0pt, itemsep=4pt,
+  label=\small\textcolor{accent}{\textbullet}
+}
+
+% ---- Sections (accent heading + thin rule) ----
+\usepackage{titlesec}
+\titleformat{\section}
+  {\headingfont\large\color{accent}}
+  {}{0em}{}[\vspace{-0.55em}{\color{accent}\rule{\linewidth}{0.8pt}}]
+\titlespacing*{\section}{0pt}{1.0em}{0.5em}
+
+% Avoid orphan section headings at the bottom of a page.
+\usepackage{needspace}
+\let\jmrpsection\section
+\renewcommand{\section}[1]{\needspace{4\baselineskip}\jmrpsection{#1}}
+
+% ---- Links + PDF metadata ----
+\usepackage[hidelinks]{hyperref}
+\hypersetup{
+  colorlinks=true, urlcolor=accent, linkcolor=accent,
+  pdftitle={José Manuel Requena Plens — CV (Embedded Firmware \& Software Engineer)},
+  pdfauthor={José Manuel Requena Plens},
+  pdfsubject={Curriculum Vitae},
+  pdfkeywords={firmware, embedded, C, STM32, ESP32, FreeRTOS, Go, Python, QA, CI/CD, SonarQube, Modbus, RTOS, software, DevSecOps},
+  pdflang={en-US},
+}
+\usepackage{fontawesome5}
+
+% ---- Comfortable leading ----
+\linespread{1.05}
+\setlength{\parindent}{0pt}
+
+% =====================================================================
+%  Helper commands
+% =====================================================================
+% Experience/education entry: {role}{organization}{location}{dates}
+\newcommand{\cventry}[4]{%
+  \textbf{#1}\hfill\textbf{#4}\par
+  {\color{muted}\textit{#2}\hfill\textit{#3}}\par
+  \vspace{2pt}
+}
+% Project: {name}{stack}{metrics}
+\newcommand{\cvproject}[3]{%
+  \textbf{#1}\,\textcolor{muted}{\small— #2}\hfill{\small\textcolor{accent}{#3}}\par
+  \vspace{1pt}
+}
+% Skill: {category}{items}
+\newcommand{\cvskill}[2]{\textbf{#1:} #2\par\vspace{2pt}}
+\newcommand{\divider}{\textcolor{muted}{\ \raisebox{0.4ex}{\scriptsize$\bullet$}\ }}
+
+\begin{document}
+
+% =====================================================================
+%  HEADER
+% =====================================================================
+{\headingfont\fontsize{22pt}{24pt}\selectfont José Manuel Requena Plens}\par
+\vspace{2pt}
+{\large\color{accent}Embedded Firmware \& Software Engineer}\par
+\vspace{7pt}
+{\small\color{muted}%
+Valencia, Spain \divider
+\href{mailto:jmrplens@gmail.com}{jmrplens@gmail.com} \divider
+\href{https://jmrp.io}{jmrp.io} \divider
+\href{https://github.com/jmrplens}{github.com/jmrplens} \divider
+\href{https://www.linkedin.com/in/jmrplens}{linkedin.com/in/jmrplens}%
+}\par
+\vspace{2pt}
+{\color{accent}\rule{\linewidth}{1.2pt}}
+
+% =====================================================================
+%  SUMMARY
+% =====================================================================
+\section{Summary}
+\textbf{Embedded firmware and software engineer} with 3+ years building industrial firmware for solar inverters (C, STM32, FreeRTOS) and a solid \textbf{R\&D} background. Focused on low-level optimization, industrial communications (Modbus) and hardware test automation. I maintain \textit{open source} projects used by developers worldwide. Targeting \textbf{firmware, software and QA} roles, bringing engineering rigor and a focus on quality.
+
+% =====================================================================
+%  EXPERIENCE
+% =====================================================================
+\section{Experience}
+\cventry{R\&D Software Developer}{Power Electronics — Solar + Storage}{Llíria, Spain}{Apr 2023 – May 2026}
+\begin{itemize}
+  \item Reduced RTOS task stack usage by 30\%–50\%, optimizing memory on STM32 microcontrollers.
+  \item Optimized Modbus TCP request handling, cutting CPU usage under load (40,000 req/s) from 80\% to 17\% with no dropped responses.
+  \item Improved embedded file-system stability, reducing access times under continuous operation.
+  \item Built and maintained industrial communications in C with hardware abstraction layers (HAL): Modbus RTU/TCP, UART, I2C and SPI.
+  \item Automated thousands of unit tests (Ceedling) and on-hardware integration tests (pytest): TCP/FTP performance and FTP security.
+  \item Reviewed the team's merge requests, catching bugs and proposing improvements before integration.
+\end{itemize}\vspace{6pt}
+
+\cventry{Predoctoral Researcher (acoustics \& ultrasound)}{UPV · CSIC · i3M / IIS La Fe}{Valencia, Spain}{Jul 2021 – Apr 2023}
+\begin{itemize}
+  \item Designed acoustic metamaterials (metadiffusers and lenses) that reduce the footprint of conventional diffusers, validated with MATLAB and COMSOL simulations.
+  \item Manufactured and characterized prototypes; published results at international conferences (Euronoise, Tecniacústica).
+  \item Supervised a Master's thesis in Acoustic Engineering (UPV), from research design to defense.
+\end{itemize}\vspace{6pt}
+
+\cventry{Researcher in European Project}{UPV · European Space Agency (ESA) — IGIC}{Gandía, Spain}{Feb 2020 – Jul 2021}
+\begin{itemize}
+  \item Designed and experimentally validated a noise-mitigation metamaterial for the VEGA rocket launch (ESA project AO/1-9479/18/NL/LvH), meeting 100\% of project objectives with results accepted by ESA.
+  \item Developed acoustic measurement software per ISO 10534-2 and ASTM 2611 (\href{https://github.com/jmrplens/A-Lab}{A\,|\,Lab}) and a 3-axis robotic system for experimental measurements.
+  \item Co-author of international publications/talks (Euronoise, ECSSMET).
+\end{itemize}\vspace{6pt}
+
+% =====================================================================
+%  TECHNICAL SKILLS
+% =====================================================================
+\section{Technical Skills}
+\cvskill{Firmware \& embedded}{C, STM32/ARM, ESP32/ESP-IDF, FreeRTOS, PlatformIO, Modbus RTU/TCP, I2C/SPI/UART, JTAG/SWD, Secure Boot, Doxygen, instrumentation (oscilloscope, signal generator, logic analyzer)}
+\cvskill{Software \& languages}{Python, Go, C++, Bash, TypeScript, Git, Docker, CMake, Clang tooling}
+\cvskill{Quality, CI/CD \& DevSecOps}{GitHub Actions, GitLab CI, Jenkins, SonarQube, GoReleaser, Ceedling, pytest, Playwright, static analysis/SAST (CodeQL, gitleaks), pre-commit}
+\cvskill{Networking}{TCP/IP, MikroTik RouterOS, WireGuard, IPv6, QUIC/HTTP3, DNS}
+\cvskill{Security \& cryptography}{TLS/mTLS, PKI (public-key infrastructure), applied cryptography (AEAD, key derivation/KDF), hardening, CrowdSec}
+\cvskill{AI \& agentic}{Model Context Protocol (MCP), AI coding agents (Claude Code, Copilot), LLM integration}
+\cvskill{Simulation \& measurement}{MATLAB, COMSOL Multiphysics, LabVIEW, acoustic instrumentation (laser \& vibration accelerometers, microphones)}
+
+% =====================================================================
+%  OPEN SOURCE PROJECTS
+% =====================================================================
+\section{Open Source Projects}
+\cvproject{\href{https://github.com/jmrplens/gitlab-mcp-server}{gitlab-mcp-server}}{Go · MCP server (Model Context Protocol)}{14\,\faStar \ \divider\ \texttt{\textasciitilde}23k downloads \divider\ Glama / mcp.so / Cursor}
+GitLab MCP server exposing 1,000+ operations to AI assistants through a dynamic 2-tool design (\textit{find/execute}), with stdio/HTTP/OAuth transports.\par\vspace{7pt}
+
+\cvproject{\href{https://github.com/jmrplens/PyOctaveBand}{PyOctaveBand}}{Python · signal processing}{96\,\faStar \ \divider\ PyPI}
+Octave-band and fractional octave-band filtering library for time-domain signals.\par\vspace{7pt}
+
+\cvproject{\href{https://github.com/jmrplens/cs-routeros-bouncer}{cs-routeros-bouncer}}{Go · network security}{10\,\faStar}
+CrowdSec bouncer for MikroTik RouterOS; manages address lists and firewall rules via the RouterOS API.\par\vspace{7pt}
+
+\cvproject{\href{https://github.com/jmrplens/Cloudflare-DNS-Updater}{Cloudflare-DNS-Updater}}{Bash · DevOps}{26\,\faStar}
+Dynamic DNS client for Cloudflare (IPv4/IPv6) with a bats test suite and coverage.
+
+% =====================================================================
+%  EDUCATION
+% =====================================================================
+\section{Education}
+\cventry{PhD Programme in Health and Wellness Technologies}{Polytechnic University of Valencia (i3M / UMIL)}{Valencia, Spain}{2023}
+{\color{muted}\small Research on acoustic metamaterials for medical imaging and ultrasound beam control (programme not completed; redirected to industrial software development).}\par\vspace{7pt}
+
+\cventry{Master's Degree in Acoustic Engineering}{Polytechnic University of Valencia (EPSG)}{Gandía, Spain}{2019}
+{\color{muted}\small Graduated with honors; Master's thesis awarded a special distinction.}\par\vspace{7pt}
+
+\cventry{Degree in Telecommunication Engineering (Sound \& Image)}{University of Alicante (EPS)}{Alicante, Spain}{2018}
+{\color{muted}\small Two specializations: Acoustic Engineering and Audiovisual Technology.}\par\vspace{7pt}
+
+\cventry{Vocational Higher Degree in Sound \& Technical Degree in Electronic Systems}{IES Salesianos · IES Luis García Berlanga}{Elche / Alicante, Spain}{2009 – 2011}
+
+\end{document}

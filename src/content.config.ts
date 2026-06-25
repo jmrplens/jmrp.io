@@ -232,6 +232,8 @@ const CVMapItem = z.object({
   name: z.string(),
   value: z.string().optional(),
   links: z.array(CVLink).optional(),
+  /** When true, render the links inside an accessible <details> dropdown. */
+  dropdown: z.boolean().optional(),
 });
 
 /** Schema for a chronologically listed item (Education, Experience). */

@@ -5,12 +5,24 @@
       value: José Manuel Requena Plens
     - name: Languages
       value: Spanish (native), English (intermediate)
-    - name: Download CV
+    - name: CV · Spanish
+      dropdown: true
       links:
         - link: /pdf/CV_RequenaPlensJoseManuel_SPA.pdf
-          name: CV PDF [SPANISH]
+          name: Design version
+          download: Jose_Requena_Plens_CV_ES.pdf
+        - link: /pdf/CV_RequenaPlensJoseManuel_SPA_ATS.pdf
+          name: ATS-friendly version
+          download: Jose_Requena_Plens_Firmware_Software_2026.pdf
+    - name: CV · English
+      dropdown: true
+      links:
         - link: /pdf/CV_RequenaPlensJoseManuel_ENG.pdf
-          name: CV PDF [ENGLISH]
+          name: Design version
+          download: Jose_Requena_Plens_CV_EN.pdf
+        - link: /pdf/CV_RequenaPlensJoseManuel_ENG_ATS.pdf
+          name: ATS-friendly version
+          download: Jose_Requena_Plens_Firmware_Software_Engineer_2026.pdf
 
 - title: Experience
   type: time_table
@@ -259,11 +271,11 @@
           icon: mdi:package-variant-closed
           level: 3
         - name: Static Analysis & SAST
-          desc: (CodeQL, gitleaks, Trivy, golangci-lint)
+          desc: (CodeQL, gitleaks, golangci-lint)
           icon: fa-solid:search-plus
           level: 3
         - name: Testing
-          desc: (pytest, Playwright, Vitest, bats)
+          desc: (Ceedling, pytest, Playwright, Vitest, bats)
           icon: fa-solid:vials
           level: 4
         - name: pre-commit hooks
@@ -341,6 +353,10 @@
         - name: LabView
           icon: simple-icons:labview
           level: 3
+        - name: Acoustic Instrumentation
+          desc: (laser/vibration accelerometers, microphones)
+          icon: fa-solid:wave-square
+          level: 4
 
     - category: General & Platforms
       icon: fa-solid:desktop

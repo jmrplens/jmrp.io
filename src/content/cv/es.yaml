@@ -5,12 +5,24 @@
       value: José Manuel Requena Plens
     - name: Idiomas
       value: Español (nativo), Inglés (intermedio)
-    - name: Descargar CV
+    - name: CV · Español
+      dropdown: true
       links:
         - link: /pdf/CV_RequenaPlensJoseManuel_SPA.pdf
-          name: CV PDF [ESPAÑOL]
+          name: Versión diseño
+          download: Jose_Requena_Plens_CV_ES.pdf
+        - link: /pdf/CV_RequenaPlensJoseManuel_SPA_ATS.pdf
+          name: Versión compatible con ATS
+          download: Jose_Requena_Plens_Firmware_Software_2026.pdf
+    - name: CV · Inglés
+      dropdown: true
+      links:
         - link: /pdf/CV_RequenaPlensJoseManuel_ENG.pdf
-          name: CV PDF [INGLÉS]
+          name: Versión diseño
+          download: Jose_Requena_Plens_CV_EN.pdf
+        - link: /pdf/CV_RequenaPlensJoseManuel_ENG_ATS.pdf
+          name: Versión compatible con ATS
+          download: Jose_Requena_Plens_Firmware_Software_Engineer_2026.pdf
 
 - title: Experiencia
   type: time_table
@@ -259,11 +271,11 @@
           icon: mdi:package-variant-closed
           level: 3
         - name: Análisis estático y SAST
-          desc: (CodeQL, gitleaks, Trivy, golangci-lint)
+          desc: (CodeQL, gitleaks, golangci-lint)
           icon: fa-solid:search-plus
           level: 3
         - name: Testing
-          desc: (pytest, Playwright, Vitest, bats)
+          desc: (Ceedling, pytest, Playwright, Vitest, bats)
           icon: fa-solid:vials
           level: 4
         - name: pre-commit hooks
@@ -341,6 +353,10 @@
         - name: LabView
           icon: simple-icons:labview
           level: 3
+        - name: Instrumentación acústica
+          desc: (acelerómetros láser y de vibración, micrófonos)
+          icon: fa-solid:wave-square
+          level: 4
 
     - category: General y Plataformas
       icon: fa-solid:desktop

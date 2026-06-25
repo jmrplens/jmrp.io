@@ -1,0 +1,188 @@
+% =====================================================================
+%  CV — José Manuel Requena Plens — Versión ATS (ES)
+%  Diseño: una columna "diseñada", ATS-friendly. Motor: LuaLaTeX + fontspec.
+%  Compilar (nombre para reclutadores en el PDF de salida):
+%    lualatex -jobname="Jose_Requena_Plens_Firmware_Software_2026" CV_RequenaPlensJoseManuel_SPA_ATS.tex
+% =====================================================================
+% Accesibilidad: PDF etiquetado (tagged) + idioma del documento.
+\DocumentMetadata{lang=es-ES, pdfversion=2.0, testphase={phase-III}}
+\documentclass[11pt,a4paper]{article}
+
+% ---- Codificación / idioma ----
+\usepackage{fontspec}
+\usepackage[spanish,es-noindentfirst]{babel}
+\usepackage{microtype}
+
+% ---- Geometría (márgenes amplios = aire "premium") ----
+\usepackage[a4paper,top=1.5cm,bottom=1.4cm,left=1.7cm,right=1.7cm]{geometry}
+
+% ---- Color (un solo acento = morado de jmrp.io) ----
+\usepackage{xcolor}
+\definecolor{accent}{HTML}{B509AC}     % morado de marca (light theme)
+\definecolor{ink}{HTML}{1F2328}        % texto principal (casi negro)
+\definecolor{muted}{HTML}{57606A}      % texto secundario
+
+% ---- Tipografía: Inter ----
+\setmainfont{Inter}[
+  UprightFont = *-Regular,
+  BoldFont    = *-SemiBold,
+  ItalicFont  = *-Italic,
+  BoldItalicFont = *-SemiBoldItalic,
+  WordSpace   = 1.15,        % ensancha el espacio entre palabras: extracción ATS más robusta
+  RawFeature  = {-tlig},     % apóstrofo/comillas rectos (mejor extracción ATS)
+]
+\newfontfamily\headingfont{Inter}[UprightFont=*-Bold]
+\color{ink}
+
+% ---- Listas compactas ----
+\usepackage{enumitem}
+\setlist[itemize]{
+  leftmargin=1.1em, topsep=3pt, partopsep=0pt, parsep=0pt, itemsep=3pt,
+  label=\small\textcolor{accent}{\textbullet}
+}
+
+% ---- Secciones (versalitas + regla fina en acento) ----
+\usepackage{titlesec}
+\titleformat{\section}
+  {\headingfont\large\color{accent}}
+  {}{0em}{}[\vspace{-0.55em}{\color{accent}\rule{\linewidth}{0.8pt}}]
+\titlespacing*{\section}{0pt}{1.0em}{0.5em}
+
+% Evita encabezados de sección huérfanos al final de página:
+% si no caben al menos ~4 líneas de contenido tras el título, salta de página.
+\usepackage{needspace}
+\let\jmrpsection\section
+\renewcommand{\section}[1]{\needspace{4\baselineskip}\jmrpsection{#1}}
+
+% ---- Enlaces ----
+\usepackage[hidelinks]{hyperref}
+\hypersetup{
+  colorlinks=true, urlcolor=accent, linkcolor=accent,
+  pdftitle={José Manuel Requena Plens — CV (Ingeniero de Firmware y Software)},
+  pdfauthor={José Manuel Requena Plens},
+  pdfsubject={Curriculum Vitae},
+  pdfkeywords={firmware, embedded, C, STM32, ESP32, FreeRTOS, Go, Python, QA, CI/CD, SonarQube, Modbus, RTOS, software, DevSecOps},
+  pdflang={es-ES},
+}
+\usepackage{fontawesome5}
+
+% ---- Interlineado cómodo ----
+\linespread{1.05}
+\setlength{\parindent}{0pt}
+
+% =====================================================================
+%  Comandos de ayuda
+% =====================================================================
+% Entrada de experiencia/formación: {cargo}{organización}{lugar}{fechas}
+\newcommand{\cventry}[4]{%
+  \textbf{#1}\hfill\textbf{#4}\par
+  {\color{muted}\textit{#2}\hfill\textit{#3}}\par
+  \vspace{2pt}
+}
+% Proyecto: {nombre}{stack}{métricas}
+\newcommand{\cvproject}[3]{%
+  \textbf{#1}\,\textcolor{muted}{\small— #2}\hfill{\small\textcolor{accent}{#3}}\par
+  \vspace{1pt}
+}
+% Skill: {categoría}{items}
+\newcommand{\cvskill}[2]{\textbf{#1:} #2\par\vspace{2pt}}
+\newcommand{\divider}{\textcolor{muted}{\ \raisebox{0.4ex}{\scriptsize$\bullet$}\ }}
+
+\begin{document}
+
+% =====================================================================
+%  ENCABEZADO
+% =====================================================================
+{\headingfont\fontsize{22pt}{24pt}\selectfont José Manuel Requena Plens}\par
+\vspace{2pt}
+{\large\color{accent}Ingeniero de Firmware y Software}\par
+\vspace{4pt}
+{\small\color{muted}%
+Valencia, España \divider
+\href{mailto:jmrplens@gmail.com}{jmrplens@gmail.com} \divider
+% TODO: teléfono (no figura en el repo) — añadir o eliminar
+\href{https://jmrp.io}{jmrp.io} \divider
+\href{https://github.com/jmrplens}{github.com/jmrplens} \divider
+\href{https://www.linkedin.com/in/jmrplens}{linkedin.com/in/jmrplens}%
+}\par
+\vspace{2pt}
+{\color{accent}\rule{\linewidth}{1.2pt}}
+
+% =====================================================================
+%  PERFIL
+% =====================================================================
+\section{Perfil}
+\textbf{Ingeniero de firmware y software} con más de 3 años desarrollando firmware industrial para inversores solares (C, STM32, FreeRTOS) y una base sólida en \textbf{I+D}. Especializado en optimización de bajo nivel, comunicaciones industriales (Modbus) y automatización de pruebas sobre hardware. Mantengo proyectos \textit{open source} usados por desarrolladores de todo el mundo. Oriento mi carrera a roles de \textbf{firmware, software y QA}, aportando rigor de ingeniería y foco en la calidad.
+
+% =====================================================================
+%  EXPERIENCIA
+% =====================================================================
+\section{Experiencia}
+\cventry{Desarrollador de Software I+D}{Power Electronics — Solar + Storage}{Llíria, España}{abr 2023 – may 2026}
+\begin{itemize}
+  \item Reduje el consumo de \textit{stack} de las tareas sobre RTOS entre un 30\% y un 50\%, optimizando el uso de memoria en los STM32.
+  \item Optimicé el manejo de peticiones Modbus TCP, reduciendo el uso de CPU bajo carga (40.000 peticiones/s) del 80\% al 17\% sin pérdida de respuestas.
+  \item Mejoré la estabilidad del sistema de archivos embebido, reduciendo los tiempos de acceso en operación continua.
+  \item Implementé y mantuve comunicaciones industriales en C con capas de abstracción de hardware (HAL): Modbus RTU/TCP, UART, I2C y SPI.
+  \item Automaticé miles de pruebas unitarias (Ceedling) y de integración sobre hardware real (pytest): rendimiento TCP/FTP y seguridad FTP.
+  \item Revisé los \textit{merge requests} del equipo, detectando bugs y proponiendo mejoras antes de su integración.
+\end{itemize}\vspace{4pt}
+
+\cventry{Investigador predoctoral (acústica y ultrasonidos)}{UPV · CSIC · i3M / IIS La Fe}{Valencia, España}{jul 2021 – abr 2023}
+\begin{itemize}
+  \item Diseñé metamateriales acústicos (metadifusores y lentes) que reducen el tamaño de los difusores convencionales, validados con simulación en MATLAB y COMSOL.
+  \item Fabriqué y caractericé prototipos; publiqué resultados en congresos internacionales (Euronoise, Tecniacústica).
+  \item Tutoricé el Trabajo Fin de Máster de un estudiante del Máster en Ingeniería Acústica de la UPV, desde el diseño de la investigación hasta la defensa.
+\end{itemize}\vspace{4pt}
+
+\cventry{Investigador en proyecto europeo}{UPV · Agencia Espacial Europea (ESA) — IGIC}{Gandía, España}{feb 2020 – jul 2021}
+\begin{itemize}
+  \item Diseñé y validé experimentalmente un metamaterial de mitigación de ruido para el lanzamiento del cohete VEGA (proyecto ESA AO/1-9479/18/NL/LvH), cumpliendo el 100\% de los objetivos del proyecto y con resultados aceptados por la ESA.
+  \item Desarrollé software de medición acústica según ISO 10534-2 y ASTM 2611 (\href{https://github.com/jmrplens/A-Lab}{A\,|\,Lab}) y un sistema robótico de 3 ejes para mediciones experimentales.
+  \item Coautor de publicaciones/ponencias internacionales (Euronoise, ECSSMET).
+\end{itemize}\vspace{4pt}
+
+% =====================================================================
+%  COMPETENCIAS TÉCNICAS
+% =====================================================================
+\section{Competencias Técnicas}
+\cvskill{Firmware y embebido}{C, STM32/ARM, ESP32/ESP-IDF, FreeRTOS, PlatformIO, Modbus RTU/TCP, I2C/SPI/UART, JTAG/SWD, Secure Boot, Doxygen, instrumentación (osciloscopio, generador de señal, analizador lógico)}
+\cvskill{Software y lenguajes}{Python, Go, C++, Bash, TypeScript, Git, Docker, CMake, Clang tooling}
+\cvskill{Calidad, CI/CD y DevSecOps}{GitHub Actions, GitLab CI, Jenkins, SonarQube, GoReleaser, Ceedling, pytest, Playwright, análisis estático/SAST (CodeQL, gitleaks), pre-commit}
+\cvskill{Redes}{TCP/IP, MikroTik RouterOS, WireGuard, IPv6, QUIC/HTTP3, DNS}
+\cvskill{Seguridad y criptografía}{TLS/mTLS, PKI (infraestructura de clave pública), criptografía aplicada (AEAD, derivación de claves/KDF), hardening, CrowdSec}
+\cvskill{IA y agentes}{Model Context Protocol (MCP), agentes de IA para programar (Claude Code, Copilot), integración de LLMs}
+\cvskill{Simulación y medida}{MATLAB, COMSOL Multiphysics, LabVIEW, instrumentación acústica (acelerómetros láser y de vibración, micrófonos)}
+
+% =====================================================================
+%  PROYECTOS OPEN SOURCE
+% =====================================================================
+\section{Proyectos Open Source}
+\cvproject{\href{https://github.com/jmrplens/gitlab-mcp-server}{gitlab-mcp-server}}{Go · servidor MCP (Model Context Protocol)}{14\,\faStar \ \divider\ \texttt{\textasciitilde}23k descargas \divider\ Glama / mcp.so / Cursor}
+Servidor MCP de GitLab que expone más de 1.000 operaciones a asistentes de IA mediante un diseño dinámico de 2 herramientas (\textit{find/execute}), con transportes stdio/HTTP/OAuth.\par\vspace{4pt}
+
+\cvproject{\href{https://github.com/jmrplens/PyOctaveBand}{PyOctaveBand}}{Python · procesado de señal}{96\,\faStar \ \divider\ PyPI}
+Biblioteca de filtrado por bandas de octava y fracciones de octava para señales en el dominio del tiempo.\par\vspace{4pt}
+
+\cvproject{\href{https://github.com/jmrplens/cs-routeros-bouncer}{cs-routeros-bouncer}}{Go · seguridad de red}{10\,\faStar}
+Bouncer de CrowdSec para MikroTik RouterOS; gestiona \textit{address lists} y reglas de firewall vía la API de RouterOS.\par\vspace{4pt}
+
+\cvproject{\href{https://github.com/jmrplens/Cloudflare-DNS-Updater}{Cloudflare-DNS-Updater}}{Bash · DevOps}{26\,\faStar}
+Cliente de DNS dinámico para Cloudflare (IPv4/IPv6) con batería de pruebas (bats) y cobertura.
+
+% =====================================================================
+%  FORMACIÓN
+% =====================================================================
+\section{Formación}
+\cventry{Programa de Doctorado en Tecnologías para la Salud y el Bienestar}{Universitat Politècnica de València (i3M / UMIL)}{Valencia, España}{2023}
+{\color{muted}\small Investigación en metamateriales acústicos para imagen médica y control de haces ultrasónicos (programa no finalizado; reorientación a desarrollo de software industrial).}\par\vspace{4pt}
+
+\cventry{Máster en Ingeniería Acústica}{Universitat Politècnica de València (EPSG)}{Gandía, España}{2019}
+{\color{muted}\small Titulación con honores; TFM con mención especial.}\par\vspace{4pt}
+
+\cventry{Grado en Ingeniería de Telecomunicación (Sonido e Imagen)}{Universidad de Alicante (EPS)}{Alicante, España}{2018}
+{\color{muted}\small Dos especializaciones: Ingeniería Acústica y Tecnología Audiovisual.}\par\vspace{4pt}
+
+\cventry{Téc. Superior en Sonido \& Téc. en Sistemas Electrónicos (CFGS/CFGM)}{IES Salesianos · IES Luis García Berlanga}{Elche / Alicante, España}{2009 – 2011}
+
+\end{document}
