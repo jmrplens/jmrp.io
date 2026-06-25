@@ -57,7 +57,10 @@ const { project } = Astro.props;
             class="btn btn-sm btn-outline"
             target="_blank"
             rel="external noopener noreferrer"
-            aria-label={link.ariaLabel ?? `${link.linkname} — ${project.name}`}
+            aria-label={
+              link.ariaLabel ??
+              `${link.linkname ?? link.name ?? "Link"} — ${project.name}`
+            }
           >
             <span
               class="i-fa-solid:external-link-alt"

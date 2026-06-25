@@ -63,14 +63,17 @@ compile_lualatex() {
     local filename=$1
     echo "Compiling $filename (lualatex)..."
 
-    if ! lualatex -interaction=nonstopmode "${filename}.tex" > /dev/null 2>&1; then
+    if ! lualatex -interaction=nonstopmode "${filename}.tex" > "${filename}.lualog" 2>&1; then
         echo "  ✗ Error: lualatex first pass failed for ${filename}"
+        cat "${filename}.lualog"; rm -f "${filename}.lualog"
         return 1
     fi
-    if ! lualatex -interaction=nonstopmode "${filename}.tex" > /dev/null 2>&1; then
+    if ! lualatex -interaction=nonstopmode "${filename}.tex" > "${filename}.lualog" 2>&1; then
         echo "  ✗ Error: lualatex second pass failed for ${filename}"
+        cat "${filename}.lualog"; rm -f "${filename}.lualog"
         return 1
     fi
+    rm -f "${filename}.lualog"
 
     if [ -f "${filename}.pdf" ]; then
         mv "${filename}.pdf" "$OUTPUT_DIR/"
