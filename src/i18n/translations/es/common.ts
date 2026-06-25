@@ -446,6 +446,8 @@ export const common = {
       levelAdvanced: "Avanzado",
       levelExpert: "Experto",
       levelUnknown: "Desconocido",
+      downloadsTitle: "Descargar CV",
+      downloadRecommended: "recomendado",
     },
     github: {
       title: "Repositorios de GitHub",

@@ -5,24 +5,27 @@
       value: José Manuel Requena Plens
     - name: Languages
       value: Spanish (native), English (intermediate)
-    - name: CV · Spanish
-      dropdown: true
+    - name: ATS
+      downloadGroup: true
+      recommended: true
+      value: recommended for job portals
+      links:
+        - link: /pdf/CV_RequenaPlensJoseManuel_SPA_ATS.pdf
+          name: Spanish
+          download: Jose_Requena_Plens_Firmware_Software_2026.pdf
+        - link: /pdf/CV_RequenaPlensJoseManuel_ENG_ATS.pdf
+          name: English
+          download: Jose_Requena_Plens_Firmware_Software_Engineer_2026.pdf
+    - name: Design
+      downloadGroup: true
+      value: for reading or printing
       links:
         - link: /pdf/CV_RequenaPlensJoseManuel_SPA.pdf
-          name: Design version
+          name: Spanish
           download: Jose_Requena_Plens_CV_ES.pdf
-        - link: /pdf/CV_RequenaPlensJoseManuel_SPA_ATS.pdf
-          name: ATS-friendly version
-          download: Jose_Requena_Plens_Firmware_Software_2026.pdf
-    - name: CV · English
-      dropdown: true
-      links:
         - link: /pdf/CV_RequenaPlensJoseManuel_ENG.pdf
-          name: Design version
+          name: English
           download: Jose_Requena_Plens_CV_EN.pdf
-        - link: /pdf/CV_RequenaPlensJoseManuel_ENG_ATS.pdf
-          name: ATS-friendly version
-          download: Jose_Requena_Plens_Firmware_Software_Engineer_2026.pdf
 
 - title: Experience
   type: time_table

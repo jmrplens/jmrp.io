@@ -164,31 +164,9 @@ const personSchema = {
 
           {section.type === "map" && (
             <div class="cv-map">
-              {section.contents.map((item) =>
-                item.dropdown && item.links ? (
-                  <details class="cv-download">
-                    <summary>
-                      <span
-                        class="i-fa-solid:download"
-                        aria-hidden="true"
-                      />
-                      {item.name}
-                    </summary>
-                    <div class="cv-download-menu">
-                      {item.links.map((link) => (
-                        <a
-                          href={link.link}
-                          class="btn btn-sm btn-outline"
-                          download={link.download || undefined}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                        >
-                          {link.name}
-                        </a>
-                      ))}
-                    </div>
-                  </details>
-                ) : (
+              {section.contents
+                .filter((item) => !item.downloadGroup)
+                .map((item) => (
                   <div class="map-item">
                     <span class="map-key">{item.name}:</span>
                     {item.value && <span class="map-value">{item.value}</span>}
@@ -208,7 +186,65 @@ const personSchema = {
                       </div>
                     )}
                   </div>
-                ),
+                ))}
+
+              {section.contents.some((item) => item.downloadGroup) && (
+                <div
+                  class="cv-downloads"
+                  role="group"
+                  aria-labelledby="cv-downloads-title"
+                >
+                  <span
+                    class="cv-downloads-title"
+                    id="cv-downloads-title"
+                  >
+                    {t("pages.cv.downloadsTitle")}
+                  </span>
+                  {section.contents
+                    .filter((item) => item.downloadGroup && item.links)
+                    .map((fmt) => (
+                      <div
+                        class:list={[
+                          "dl-format",
+                          { recommended: fmt.recommended },
+                        ]}
+                      >
+                        <div class="dl-format-head">
+                          <span
+                            class="dl-dot"
+                            aria-hidden="true"
+                          />
+                          <span class="dl-format-name">{fmt.name}</span>
+                          {fmt.recommended && (
+                            <span class="dl-badge">
+                              {t("pages.cv.downloadRecommended")}
+                            </span>
+                          )}
+                          {fmt.value && (
+                            <span class="dl-format-note">{fmt.value}</span>
+                          )}
+                        </div>
+                        <div class="dl-format-links">
+                          {(fmt.links ?? []).map((link) => (
+                            <a
+                              class="dl-btn"
+                              href={link.link}
+                              download={link.download || undefined}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              aria-label={`${fmt.name} · ${link.name} (PDF)`}
+                            >
+                              <span
+                                class="i-fa-solid:download"
+                                aria-hidden="true"
+                              />
+                              {link.name}
+                            </a>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                </div>
               )}
             </div>
           )}
@@ -449,6 +485,12 @@ const personSchema = {
     scroll-margin-top: var(--header-height);
   }
 
+  /* The General Information block ends in the downloads buttons; couple it a
+     bit tighter to the next section so it doesn't leave a large empty gap. */
+  .cv-section:has(.cv-downloads) {
+    margin-bottom: var(--space-md-lg);
+  }
+
   .section-header {
     margin-bottom: var(--space-lg);
     border-bottom: 2px solid var(--color-border);
@@ -497,63 +539,97 @@ const personSchema = {
     gap: var(--space-sm);
   }
 
-  /* Download dropdowns (accessible <details>, zero-JS) */
-  .cv-download {
+  /* Downloads — grouped by format (ATS / Design), zero-JS */
+  .cv-downloads {
+    margin-top: var(--space-sm);
+  }
+
+  .cv-downloads-title {
+    display: block;
+    margin-bottom: var(--space-sm);
+    font-weight: var(--fw-semibold);
+    color: var(--color-text);
+  }
+
+  .dl-format + .dl-format {
+    margin-top: var(--space-md);
+  }
+
+  .dl-format-head {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-xs) var(--space-sm);
+    align-items: baseline;
+  }
+
+  .dl-dot {
+    display: inline-block;
+    align-self: center;
+    width: 0.55em;
+    height: 0.55em;
+    border: 1.5px solid var(--color-text-muted);
+    border-radius: 50%;
+  }
+
+  .dl-format.recommended .dl-dot {
+    background-color: var(--color-primary);
+    border-color: var(--color-primary);
+  }
+
+  .dl-format-name {
+    font-weight: var(--fw-semibold);
+    color: var(--color-text);
+  }
+
+  .dl-badge {
+    padding: 0.05rem 0.45rem;
+    font-size: 0.68rem;
+    font-weight: var(--fw-medium);
+    color: var(--color-on-primary);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    background-color: var(--color-primary);
+    border-radius: var(--radius-sm);
+  }
+
+  .dl-format-note {
+    font-size: 0.8rem;
+    color: var(--color-text-muted);
+  }
+
+  .dl-format-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-sm);
     margin-top: var(--space-xs);
   }
 
-  .cv-download > summary {
+  .dl-btn {
     display: inline-flex;
     gap: var(--space-xs);
     align-items: center;
     padding: var(--space-xs) var(--space-md);
-    font-weight: var(--fw-medium);
+    font-size: 0.9rem;
     color: var(--color-text);
-    cursor: pointer;
-    list-style: none;
+    text-decoration: none;
     background-color: var(--color-bg-subtle);
     border: var(--border-1);
     border-radius: var(--radius-md);
     transition:
-      border-color 0.2s,
-      color 0.2s;
+      color 0.2s,
+      background-color 0.2s,
+      border-color 0.2s;
   }
 
-  .cv-download > summary::-webkit-details-marker {
-    display: none;
-  }
-
-  .cv-download > summary::after {
-    width: 0;
-    height: 0;
-    content: "";
-    border-top: 0.35em solid currentcolor;
-    border-right: 0.3em solid transparent;
-    border-left: 0.3em solid transparent;
-    transition: transform 0.2s;
-  }
-
-  .cv-download[open] > summary::after {
-    transform: rotate(180deg);
-  }
-
-  .cv-download > summary:hover,
-  .cv-download[open] > summary {
-    color: var(--color-primary);
+  .dl-btn:hover {
+    color: var(--color-on-primary);
+    background-color: var(--color-primary);
     border-color: var(--color-primary);
   }
 
-  .cv-download > summary:focus-visible {
+  .dl-btn:focus-visible {
     outline: 2px solid var(--color-primary);
     outline-offset: 2px;
-  }
-
-  .cv-download-menu {
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--space-sm);
-    margin-top: var(--space-sm);
-    margin-left: var(--space-sm);
   }
 
   /* Time Table (Timeline) */
