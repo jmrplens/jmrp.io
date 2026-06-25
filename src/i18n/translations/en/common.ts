@@ -444,7 +444,6 @@ export const common = {
       levelAdvanced: "Advanced",
       levelExpert: "Expert",
       levelUnknown: "Unknown",
-      projectMetrics: "Highlights for {name}",
     },
     github: {
       title: "GitHub Repositories",

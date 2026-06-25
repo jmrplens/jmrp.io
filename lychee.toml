@@ -43,6 +43,7 @@ exclude = [
     'youtube\.com/embed/',
     'mathworks\.com',                  # AUTOSAR rule pages — 403 to bots
     'gnu\.org/software/gettext',       # gettext .mo manual — 429 rate-limit
+    'cursor\.directory',               # Cursor directory — 429 rate-limit to bots
     'cs\.android\.com',                # Android Code Search — JS SPA, 404s to bots
     'learn\.microsoft\.com',           # MS Learn — 403s to bots
     'icu\.unicode\.org',               # ICU design docs — bot-blocked

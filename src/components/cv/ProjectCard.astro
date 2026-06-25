@@ -3,8 +3,6 @@
  * Renders a single featured open-source / portfolio project as a card.
  * Used by the CV "projects" section type.
  */
-import { defaultLocale, type Locale } from "@i18n/config";
-import { useTranslations } from "@i18n/utils";
 import type { CVProjectItem } from "@src/types";
 import { sanitize } from "@utils/html";
 
@@ -13,9 +11,6 @@ interface Props {
 }
 
 const { project } = Astro.props;
-
-const locale = (Astro.currentLocale ?? defaultLocale) as Locale;
-const t = useTranslations(locale);
 ---
 
 <article class="project-card">
@@ -33,10 +28,7 @@ const t = useTranslations(locale);
     </h3>
     {
       project.metrics && project.metrics.length > 0 && (
-        <ul
-          class="project-metrics"
-          aria-label={t("pages.cv.projectMetrics", { name: project.name })}
-        >
+        <ul class="project-metrics">
           {project.metrics.map((m) => (
             <li class="metric-badge">{m}</li>
           ))}
@@ -159,7 +151,7 @@ const t = useTranslations(locale);
     display: flex;
     flex-wrap: wrap;
     gap: var(--space-sm);
-    margin-top: auto;
     padding-top: var(--space-md);
+    margin-top: auto;
   }
 </style>

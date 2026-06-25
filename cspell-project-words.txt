@@ -930,3 +930,13 @@ configurables
 retrorreferencias
 wbsearchentities
 entradilla
+acelerómetros
+Ceedling
+gitleaks
+Glama
+golangci
+jenkins
+mcpservers
+precommit
+pytest
+sonarqube
