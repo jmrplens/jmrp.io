@@ -154,7 +154,14 @@ const personSchema = {
     {
       sortedSections.map((section) => (
         <section
-          class="cv-section"
+          class:list={[
+            "cv-section",
+            {
+              "cv-section--downloads": section.contents.some(
+                (item) => "downloadGroup" in item && item.downloadGroup,
+              ),
+            },
+          ]}
           id={generateSlug(section.title)}
           aria-label={section.title}
         >
@@ -188,15 +195,17 @@ const personSchema = {
                   </div>
                 ))}
 
-              {section.contents.some((item) => item.downloadGroup) && (
+              {section.contents.some(
+                (item) => item.downloadGroup && item.links,
+              ) && (
                 <div
                   class="cv-downloads"
                   role="group"
-                  aria-labelledby="cv-downloads-title"
+                  aria-labelledby={`cv-downloads-title-${generateSlug(section.title)}`}
                 >
                   <span
                     class="cv-downloads-title"
-                    id="cv-downloads-title"
+                    id={`cv-downloads-title-${generateSlug(section.title)}`}
                   >
                     {t("pages.cv.downloadsTitle")}
                   </span>
@@ -232,7 +241,12 @@ const personSchema = {
                               download={link.download || undefined}
                               target="_blank"
                               rel="noopener noreferrer"
-                              aria-label={`${fmt.name} · ${link.name} (PDF)`}
+                              aria-label={
+                                link.ariaLabel ??
+                                (link.name
+                                  ? `${fmt.name} · ${link.name} (PDF)`
+                                  : undefined)
+                              }
                             >
                               <span
                                 class="i-fa-solid:download"
@@ -487,7 +501,7 @@ const personSchema = {
 
   /* The General Information block ends in the downloads buttons; couple it a
      bit tighter to the next section so it doesn't leave a large empty gap. */
-  .cv-section:has(.cv-downloads) {
+  .cv-section--downloads {
     margin-bottom: var(--space-md-lg);
   }
 

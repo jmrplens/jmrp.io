@@ -14,7 +14,7 @@
           name: Español
           download: Jose_Requena_Plens_Firmware_Software_2026.pdf
         - link: /pdf/CV_RequenaPlensJoseManuel_ENG_ATS.pdf
-          name: English
+          name: Inglés
           download: Jose_Requena_Plens_Firmware_Software_Engineer_2026.pdf
     - name: Diseño
       downloadGroup: true
@@ -24,7 +24,7 @@
           name: Español
           download: Jose_Requena_Plens_CV_ES.pdf
         - link: /pdf/CV_RequenaPlensJoseManuel_ENG.pdf
-          name: English
+          name: Inglés
           download: Jose_Requena_Plens_CV_EN.pdf
 
 - title: Experiencia
