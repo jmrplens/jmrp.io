@@ -8,6 +8,7 @@ import "@styles/skills.css";
 
 import CertificateGroup from "@components/cv/CertificateGroup.astro";
 import CVMenu, { type MenuSection } from "@components/cv/CVMenu.astro";
+import ProjectCard from "@components/cv/ProjectCard.astro";
 import SkillGroup from "@components/cv/SkillGroup.astro";
 import { defaultLocale, type Locale } from "@i18n/config";
 import { useTranslations } from "@i18n/utils";
@@ -59,6 +60,13 @@ const menuSections: MenuSection[] = sortedSections.map((section) => {
       }));
       break;
     }
+    case "projects": {
+      items = section.contents.map((project, index) => ({
+        title: project.name,
+        slug: generateSlug(`${section.title}-${project.name}-${index}`),
+      }));
+      break;
+    }
   }
 
   return {
@@ -68,7 +76,10 @@ const menuSections: MenuSection[] = sortedSections.map((section) => {
   };
 });
 
-// Extract specific sections by type for schema generation
+// Extract specific sections by type for schema generation.
+// Only Experience and Formal Education use the `time_table` type (in that order),
+// so this stays stable regardless of where other sections — e.g. `projects` or
+// `list_groups` — are inserted in the YAML.
 const timeTables = cvData.filter((s) => s.type === "time_table");
 const experience = timeTables[0]; // First time_table = Experience
 const formalEducation = timeTables[1]; // Second time_table = Formal Education
@@ -153,12 +164,17 @@ const personSchema = {
 
           {section.type === "map" && (
             <div class="cv-map">
-              {section.contents.map((item) => (
-                <div class="map-item">
-                  <span class="map-key">{item.name}:</span>
-                  {item.value && <span class="map-value">{item.value}</span>}
-                  {item.links && (
-                    <div class="map-links">
+              {section.contents.map((item) =>
+                item.dropdown && item.links ? (
+                  <details class="cv-download">
+                    <summary>
+                      <span
+                        class="i-fa-solid:download"
+                        aria-hidden="true"
+                      />
+                      {item.name}
+                    </summary>
+                    <div class="cv-download-menu">
                       {item.links.map((link) => (
                         <a
                           href={link.link}
@@ -171,9 +187,29 @@ const personSchema = {
                         </a>
                       ))}
                     </div>
-                  )}
-                </div>
-              ))}
+                  </details>
+                ) : (
+                  <div class="map-item">
+                    <span class="map-key">{item.name}:</span>
+                    {item.value && <span class="map-value">{item.value}</span>}
+                    {item.links && (
+                      <div class="map-links">
+                        {item.links.map((link) => (
+                          <a
+                            href={link.link}
+                            class="btn btn-sm btn-outline"
+                            download={link.download || undefined}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                          >
+                            {link.name}
+                          </a>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ),
+              )}
             </div>
           )}
 
@@ -309,6 +345,19 @@ const personSchema = {
               ))}
             </div>
           )}
+
+          {section.type === "projects" && (
+            <div class="grid-layout">
+              {section.contents.map((project, index) => (
+                <div
+                  class="project-card-wrapper"
+                  id={generateSlug(`${section.title}-${project.name}-${index}`)}
+                >
+                  <ProjectCard project={project} />
+                </div>
+              ))}
+            </div>
+          )}
         </section>
       ))
     }
@@ -359,6 +408,32 @@ const personSchema = {
     <span class="i-fa-solid:users"></span>
     <span class="i-fa-solid:industry"></span>
     <span class="i-fa-solid:laptop-code"></span>
+    <span class="i-logos:go"></span>
+    <span class="i-logos:typescript-icon"></span>
+    <span class="i-logos:bash-icon"></span>
+    <span class="i-simple-icons:platformio"></span>
+    <span class="i-mdi:shield-key-outline"></span>
+    <span class="i-simple-icons:doxygen"></span>
+    <span class="i-fa-solid:shield-alt"></span>
+    <span class="i-simple-icons:gitlab"></span>
+    <span class="i-simple-icons:jenkins"></span>
+    <span class="i-simple-icons:sonarqube"></span>
+    <span class="i-mdi:package-variant-closed"></span>
+    <span class="i-fa-solid:search-plus"></span>
+    <span class="i-fa-solid:vials"></span>
+    <span class="i-simple-icons:precommit"></span>
+    <span class="i-mdi:lan"></span>
+    <span class="i-simple-icons:mikrotik"></span>
+    <span class="i-simple-icons:wireguard"></span>
+    <span class="i-mdi:ip-network-outline"></span>
+    <span class="i-mdi:lightning-bolt"></span>
+    <span class="i-mdi:dns"></span>
+    <span class="i-mdi:shield-lock-outline"></span>
+    <span class="i-fa-solid:key"></span>
+    <span class="i-fa-solid:certificate"></span>
+    <span class="i-simple-icons:nginx"></span>
+    <span class="i-fa-solid:user-shield"></span>
+    <span class="i-fa-solid:download"></span>
   </div>
   {/* ICON_DETECTION_END */}
 </BaseLayout>
@@ -388,7 +463,8 @@ const personSchema = {
 
   .timeline-item,
   .skill-group-wrapper,
-  .cert-group-wrapper {
+  .cert-group-wrapper,
+  .project-card-wrapper {
     scroll-margin-top: calc(var(--header-height) + 1rem);
   }
 
@@ -419,6 +495,65 @@ const personSchema = {
   .map-links {
     display: inline-flex;
     gap: var(--space-sm);
+  }
+
+  /* Download dropdowns (accessible <details>, zero-JS) */
+  .cv-download {
+    margin-top: var(--space-xs);
+  }
+
+  .cv-download > summary {
+    display: inline-flex;
+    gap: var(--space-xs);
+    align-items: center;
+    padding: var(--space-xs) var(--space-md);
+    font-weight: var(--fw-medium);
+    color: var(--color-text);
+    cursor: pointer;
+    list-style: none;
+    background-color: var(--color-bg-subtle);
+    border: var(--border-1);
+    border-radius: var(--radius-md);
+    transition:
+      border-color 0.2s,
+      color 0.2s;
+  }
+
+  .cv-download > summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .cv-download > summary::after {
+    width: 0;
+    height: 0;
+    content: "";
+    border-top: 0.35em solid currentcolor;
+    border-right: 0.3em solid transparent;
+    border-left: 0.3em solid transparent;
+    transition: transform 0.2s;
+  }
+
+  .cv-download[open] > summary::after {
+    transform: rotate(180deg);
+  }
+
+  .cv-download > summary:hover,
+  .cv-download[open] > summary {
+    color: var(--color-primary);
+    border-color: var(--color-primary);
+  }
+
+  .cv-download > summary:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+  }
+
+  .cv-download-menu {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-sm);
+    margin-top: var(--space-sm);
+    margin-left: var(--space-sm);
   }
 
   /* Time Table (Timeline) */

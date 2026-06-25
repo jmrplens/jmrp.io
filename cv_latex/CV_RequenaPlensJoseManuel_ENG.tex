@@ -30,6 +30,7 @@
 \geometry{left=2cm,right=2cm,marginparwidth=6.8cm,marginparsep=1.2cm,top=1.5cm,bottom=1.5cm}
 \usepackage{calc}
 \usepackage{needspace}
+\usepackage{simpleicons} % logos de marca (Go, TypeScript, SonarQube, etc.) para skills
 
 % Fuente
 \usepackage[default]{lato}
@@ -299,36 +300,50 @@ Installation and tuning of audio equipment for live events and permanent install
 \cvskill{\faCuttlefish~C}{4}
 \cvskill{\faMicrochip~STM32 \& ARM}{4}
 \cvskill{\faWifi~ESP32 / ESP-IDF}{4}
+\cvskill{\simpleicon{platformio}~PlatformIO}{4}
 \cvskill{\faMemory~Texas Instruments}{3}
 \cvskill{\faClock~FreeRTOS / RTOS}{4}
 \cvskill{\faProjectDiagram~Comm. Protocols}{4}
 \cvskill{\faBug~HW Debugging}{4}
 \cvskill{\faMicrochip~Keil uVision}{4}
+\cvskill{\faLock~Secure Boot \& Embedded Sec.}{3}
+\cvskill{\simpleicon{doxygen}~Doxygen}{4}
 \cvskill{\faTools~Instrumentation}{4}
 
 \vspace{1em}
 
-\cvskillheader{Simulation \& Acoustics}
-\cvskill{\faAtom~COMSOL Multiphysics}{4}
-\cvskill{\faWaveSquare~LabView}{3}
+\cvskillheader{Quality, CI/CD \& DevSecOps}
+\cvskill{\simpleicon{githubactions}~GitHub Actions}{4}
+\cvskill{\simpleicon{gitlab}~GitLab CI}{3}
+\cvskill{\simpleicon{jenkins}~Jenkins}{2}
+\cvskill{\simpleicon{sonarqube}~SonarQube / SonarCloud}{4}
+\cvskill{\simpleicon{goreleaser}~GoReleaser}{3}
+\cvskill{\faSearch~Static Analysis \& SAST}{3}
+\cvskill{\faVials~Testing}{4}
+\cvskill{\simpleicon{precommit}~pre-commit hooks}{4}
 
 \vspace{1em}
 
-\cvskillheader{AI \& Agentic Engineering}
-\cvskill{\faPlug~Model Context Protocol (MCP)}{4}
-\cvskill{\faRobot~AI Agents \& Best Practices}{4}
-\cvskill{\faBrain~LLM Integration}{3}
+\cvskillheader{Networking}
+\cvskill{\faNetworkWired~TCP/IP \& Networking}{4}
+\cvskill{\simpleicon{mikrotik}~MikroTik RouterOS}{4}
+\cvskill{\simpleicon{wireguard}~WireGuard / VPN}{4}
+\cvskill{\faSitemap~IPv6 \& Dual-stack}{4}
+\cvskill{\faBolt~QUIC / HTTP3}{3}
+\cvskill{\faServer~DNS / Dynamic DNS}{3}
 \end{minipage}
 \hfill
 \begin{minipage}[t]{0.45\textwidth}
 \cvskillheader{Software Engineering \& Tools}
 \cvskill{\faPython~Python}{4}
 \cvskill{\faCode~C++}{3}
+\cvskill{\simpleicon{go}~Go}{2}
+\cvskill{\simpleicon{typescript}~TypeScript}{2}
+\cvskill{\simpleicon{gnubash}~Bash}{3}
 \cvskill{\faBroom~Clang Tooling}{3}
 \cvskill{\faGit*~Git}{4}
 \cvskill{\faGithub~GitHub}{4}
 \cvskill{\faGitlab~GitLab}{4}
-\cvskill{\faInfinity~CI/CD}{4}
 \cvskill{\faDocker~Docker}{4}
 \cvskill{\faFileCode~MATLAB}{4}
 \cvskill{\faCogs~CMake}{3}
@@ -336,9 +351,31 @@ Installation and tuning of audio equipment for live events and permanent install
 
 \vspace{1em}
 
+\cvskillheader{Security \& Cryptography}
+\cvskill{\faKey~Applied Cryptography}{3}
+\cvskill{\faCertificate~TLS / mTLS / PKI}{4}
+\cvskill{\simpleicon{nginx}~Nginx Hardening}{4}
+\cvskill{\simpleicon{crowdsec}~CrowdSec}{3}
+\cvskill{\faUserShield~Network Hardening}{4}
+
+\vspace{1em}
+
+\cvskillheader{AI \& Agentic Engineering}
+\cvskill{\simpleicon{modelcontextprotocol}~Model Context Protocol (MCP)}{4}
+\cvskill{\faRobot~AI Agents \& Best Practices}{4}
+\cvskill{\faBrain~LLM Integration}{3}
+
+\vspace{1em}
+
+\cvskillheader{Simulation \& Acoustics}
+\cvskill{\faAtom~COMSOL Multiphysics}{4}
+\cvskill{\faWaveSquare~LabView}{3}
+\cvskill{\faWaveSquare~Acoustic Instrumentation}{4}
+
+\vspace{1em}
+
 \cvskillheader{General \& Platforms}
 \cvskill{\faLinux~Linux / Unix}{4}
-\cvskill{\faNetworkWired~TCP/IP \& Networking}{4}
 \cvskill{\faApple~MacOS}{4}
 \cvskill{\faWindows~Windows}{4}
 \cvskill{\faFile~LaTeX}{4}

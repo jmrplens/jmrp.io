@@ -5,12 +5,24 @@
       value: José Manuel Requena Plens
     - name: Idiomas
       value: Español (nativo), Inglés (intermedio)
-    - name: Descargar CV
+    - name: CV · Español
+      dropdown: true
       links:
         - link: /pdf/CV_RequenaPlensJoseManuel_SPA.pdf
-          name: CV PDF [ESPAÑOL]
+          name: Versión diseño
+          download: Jose_Requena_Plens_CV_ES.pdf
+        - link: /pdf/CV_RequenaPlensJoseManuel_SPA_ATS.pdf
+          name: Versión compatible con ATS
+          download: Jose_Requena_Plens_Firmware_Software_2026.pdf
+    - name: CV · Inglés
+      dropdown: true
+      links:
         - link: /pdf/CV_RequenaPlensJoseManuel_ENG.pdf
-          name: CV PDF [INGLÉS]
+          name: Versión diseño
+          download: Jose_Requena_Plens_CV_EN.pdf
+        - link: /pdf/CV_RequenaPlensJoseManuel_ENG_ATS.pdf
+          name: Versión compatible con ATS
+          download: Jose_Requena_Plens_Firmware_Software_Engineer_2026.pdf
 
 - title: Experiencia
   type: time_table
@@ -159,6 +171,9 @@
         - name: ESP32 / ESP-IDF
           icon: simple-icons:espressif
           level: 4
+        - name: PlatformIO
+          icon: simple-icons:platformio
+          level: 4
         - name: Texas Instruments
           desc: (MSP430, Tiva C, Code Composer Studio)
           icon: mdi:chip
@@ -181,6 +196,14 @@
           desc: (Osciloscopios, DAQs, Anal. lóg.)
           icon: fa-solid:wave-square
           level: 4
+        - name: Secure Boot y Seguridad Embebida
+          desc: (arranque seguro, cifrado de flash, derivación de claves)
+          icon: mdi:shield-key-outline
+          level: 3
+        - name: Doxygen
+          desc: (documentación de firmware)
+          icon: simple-icons:doxygen
+          level: 4
 
     - category: Ingeniería de Software y Herramientas
       icon: fa-solid:code
@@ -190,6 +213,16 @@
           level: 4
         - name: C++
           icon: logos:c-plusplus
+          level: 3
+        - name: Go
+          icon: logos:go
+          level: 2
+        - name: TypeScript
+          icon: logos:typescript-icon
+          level: 2
+        - name: Bash
+          desc: (shellcheck, bats)
+          icon: logos:bash-icon
           level: 3
         - name: Clang Tooling
           desc: (clangd, clang-format, clang-tidy)
@@ -204,10 +237,6 @@
         - name: GitLab
           icon: mdi:gitlab
           level: 4
-        - name: CI/CD
-          desc: (GitHub Actions)
-          icon: simple-icons:githubactions
-          level: 4
         - name: Docker
           icon: logos:docker-icon
           level: 4
@@ -220,6 +249,83 @@
         - name: JetBrains Toolbox
           desc: (CLion, PyCharm, WebStorm)
           icon: logos:jetbrains
+          level: 4
+
+    - category: Calidad, CI/CD y DevSecOps
+      icon: fa-solid:shield-alt
+      items:
+        - name: GitHub Actions
+          icon: simple-icons:githubactions
+          level: 4
+        - name: GitLab CI
+          icon: simple-icons:gitlab
+          level: 3
+        - name: Jenkins
+          icon: simple-icons:jenkins
+          level: 2
+        - name: SonarQube / SonarCloud
+          icon: simple-icons:sonarqube
+          level: 4
+        - name: GoReleaser
+          desc: (releases multiplataforma)
+          icon: mdi:package-variant-closed
+          level: 3
+        - name: Análisis estático y SAST
+          desc: (CodeQL, gitleaks, golangci-lint)
+          icon: fa-solid:search-plus
+          level: 3
+        - name: Testing
+          desc: (Ceedling, pytest, Playwright, Vitest, bats)
+          icon: fa-solid:vials
+          level: 4
+        - name: pre-commit hooks
+          icon: simple-icons:precommit
+          level: 4
+
+    - category: Redes
+      icon: mdi:lan
+      items:
+        - name: TCP/IP y Redes
+          icon: fa-solid:network-wired
+          level: 4
+        - name: MikroTik RouterOS
+          icon: simple-icons:mikrotik
+          level: 4
+        - name: WireGuard / VPN
+          icon: simple-icons:wireguard
+          level: 4
+        - name: IPv6 y Dual-stack
+          icon: mdi:ip-network-outline
+          level: 4
+        - name: QUIC / HTTP3
+          icon: mdi:lightning-bolt
+          level: 3
+        - name: DNS / DNS dinámico
+          icon: mdi:dns
+          level: 3
+
+    - category: Seguridad y Criptografía
+      icon: mdi:shield-lock-outline
+      items:
+        - name: Criptografía aplicada
+          desc: (AEAD, encrypt-then-MAC, KDFs)
+          icon: fa-solid:key
+          level: 3
+        - name: TLS / mTLS / PKI
+          desc: (certificados de cliente)
+          icon: fa-solid:certificate
+          level: 4
+        - name: Hardening de Nginx
+          desc: (CSP, cabeceras de seguridad)
+          icon: simple-icons:nginx
+          level: 4
+        - name: CrowdSec
+          desc: (IDS/IPS)
+          icon: fa-solid:user-shield
+          level: 3
+        - name: Hardening de red
+          desc: (firewall, tarpit, honeypot)
+          icon: fa-solid:shield-alt
           level: 4
 
     - category: IA e Ingeniería de Agentes
@@ -247,15 +353,16 @@
         - name: LabView
           icon: simple-icons:labview
           level: 3
+        - name: Instrumentación acústica
+          desc: (acelerómetros láser y de vibración, micrófonos)
+          icon: fa-solid:wave-square
+          level: 4
 
     - category: General y Plataformas
       icon: fa-solid:desktop
       items:
         - name: Linux / Unix
           icon: logos:linux-tux
-          level: 4
-        - name: TCP/IP y Redes
-          icon: fa-solid:network-wired
           level: 4
         - name: MacOS
           icon: simple-icons:apple
@@ -269,6 +376,77 @@
         - name: HTML / CSS
           icon: vscode-icons:file-type-html
           level: 3
+
+- title: Proyectos Open Source
+  type: projects
+  contents:
+    - name: gitlab-mcp-server
+      tech: Go · Servidor Model Context Protocol
+      icon: logos:go
+      description: >
+        Servidor MCP de GitLab de código abierto que expone más de 1.000 operaciones
+        a asistentes de IA mediante un diseño dinámico de 2 herramientas (find/execute), con
+        transportes stdio/HTTP/OAuth y modos seguro y de solo lectura.
+      metrics:
+        - 14★
+        - 30 releases
+        - ~23k descargas
+        - Listado en Glama, mcp.so, Cursor y mcpservers.org
+      links:
+        - link: https://github.com/jmrplens/gitlab-mcp-server
+          linkname: GitHub
+        - link: https://glama.ai/mcp/servers/jmrplens/gitlab-mcp-server
+          linkname: Glama
+        - link: https://cursor.directory/plugins/gitlab-mcp-server
+          linkname: Cursor
+    - name: PyOctaveBand
+      tech: Python · Procesado de señal
+      icon: logos:python
+      description: >
+        Biblioteca de filtrado por bandas de octava y fracciones de octava para señales en el
+        dominio del tiempo, publicada en PyPI.
+      metrics:
+        - 96★
+        - PyPI
+      links:
+        - link: https://github.com/jmrplens/PyOctaveBand
+          linkname: GitHub
+        - link: https://pypi.org/project/PyOctaveBand/
+          linkname: PyPI
+    - name: cs-routeros-bouncer
+      tech: Go · Seguridad de red
+      icon: logos:go
+      description: >
+        Bouncer de CrowdSec para MikroTik RouterOS — gestiona address lists y reglas de
+        firewall a través de la API de RouterOS.
+      metrics:
+        - 10★
+        - 14 releases
+      links:
+        - link: https://github.com/jmrplens/cs-routeros-bouncer
+          linkname: GitHub
+    - name: Cloudflare-DNS-Updater
+      tech: Bash · DevOps
+      icon: logos:bash-icon
+      description: >
+        Cliente de DNS dinámico para Cloudflare (IPv4/IPv6) escrito en Bash, con batería de
+        pruebas (bats) y cobertura.
+      metrics:
+        - 26★
+      links:
+        - link: https://github.com/jmrplens/Cloudflare-DNS-Updater
+          linkname: GitHub
+    - name: TFG-TFM_EPS
+      tech: LaTeX · Plantilla académica
+      icon: vscode-icons:file-type-tex
+      description: >
+        Plantilla LaTeX para Trabajos Fin de Grado y Fin de Máster en la Universidad de
+        Alicante (EPS), con pipeline de compilación automatizado en CI.
+      metrics:
+        - 79★
+      links:
+        - link: https://github.com/jmrplens/TFG-TFM_EPS
+          linkname: GitHub
 
 - title: Formación Académica
   type: time_table

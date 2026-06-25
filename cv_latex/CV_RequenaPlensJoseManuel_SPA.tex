@@ -30,6 +30,7 @@
 \geometry{left=2cm,right=2cm,marginparwidth=6.8cm,marginparsep=1.2cm,top=1.5cm,bottom=1.5cm}
 \usepackage{calc}
 \usepackage{needspace}
+\usepackage{simpleicons} % logos de marca (Go, TypeScript, SonarQube, etc.) para skills
 
 % Fuente
 \usepackage[default]{lato}
@@ -303,25 +304,37 @@ Instalación y ajuste de equipos de audio para eventos en directo e instalacione
 \cvskill{\faCuttlefish~C}{4}
 \cvskill{\faMicrochip~STM32 \& ARM}{4}
 \cvskill{\faWifi~ESP32 / ESP-IDF}{4}
+\cvskill{\simpleicon{platformio}~PlatformIO}{4}
 \cvskill{\faMemory~Texas Instruments}{3}
 \cvskill{\faClock~FreeRTOS / RTOS}{4}
 \cvskill{\faProjectDiagram~Protocolos de com.}{4}
 \cvskill{\faBug~Depuración HW}{4}
 \cvskill{\faMicrochip~Keil uVision}{4}
+\cvskill{\faLock~Secure Boot y Seg. Embebida}{3}
+\cvskill{\simpleicon{doxygen}~Doxygen}{4}
 \cvskill{\faTools~Instrumentación}{4}
 
 \vspace{1em}
 
-\cvskillheader{Simulación y Acústica}
-\cvskill{\faAtom~COMSOL Multiphysics}{4}
-\cvskill{\faWaveSquare~LabView}{3}
+\cvskillheader{Calidad, CI/CD y DevSecOps}
+\cvskill{\simpleicon{githubactions}~GitHub Actions}{4}
+\cvskill{\simpleicon{gitlab}~GitLab CI}{3}
+\cvskill{\simpleicon{jenkins}~Jenkins}{2}
+\cvskill{\simpleicon{sonarqube}~SonarQube / SonarCloud}{4}
+\cvskill{\simpleicon{goreleaser}~GoReleaser}{3}
+\cvskill{\faSearch~Análisis estático y SAST}{3}
+\cvskill{\faVials~Testing}{4}
+\cvskill{\simpleicon{precommit}~pre-commit hooks}{4}
 
 \vspace{1em}
 
-\cvskillheader{IA e Ingeniería de Agentes}
-\cvskill{\faPlug~Model Context Protocol (MCP)}{4}
-\cvskill{\faRobot~Agentes de IA y buenas prácticas}{4}
-\cvskill{\faBrain~Integración de LLMs}{3}
+\cvskillheader{Redes}
+\cvskill{\faNetworkWired~TCP/IP y Redes}{4}
+\cvskill{\simpleicon{mikrotik}~MikroTik RouterOS}{4}
+\cvskill{\simpleicon{wireguard}~WireGuard / VPN}{4}
+\cvskill{\faSitemap~IPv6 y Dual-stack}{4}
+\cvskill{\faBolt~QUIC / HTTP3}{3}
+\cvskill{\faServer~DNS / DNS dinámico}{3}
 \end{minipage}
 \vspace{0.5em}
 \hfill
@@ -329,11 +342,13 @@ Instalación y ajuste de equipos de audio para eventos en directo e instalacione
 \cvskillheader{Ingeniería de Software y Herramientas}
 \cvskill{\faPython~Python}{4}
 \cvskill{\faCode~C++}{3}
+\cvskill{\simpleicon{go}~Go}{2}
+\cvskill{\simpleicon{typescript}~TypeScript}{2}
+\cvskill{\simpleicon{gnubash}~Bash}{3}
 \cvskill{\faBroom~Clang Tooling}{3}
 \cvskill{\faGit*~Git}{4}
 \cvskill{\faGithub~GitHub}{4}
 \cvskill{\faGitlab~GitLab}{4}
-\cvskill{\faInfinity~CI/CD}{4}
 \cvskill{\faDocker~Docker}{4}
 \cvskill{\faFileCode~MATLAB}{4}
 \cvskill{\faCogs~CMake}{3}
@@ -341,9 +356,31 @@ Instalación y ajuste de equipos de audio para eventos en directo e instalacione
 
 \vspace{1em}
 
+\cvskillheader{Seguridad y Criptografía}
+\cvskill{\faKey~Criptografía aplicada}{3}
+\cvskill{\faCertificate~TLS / mTLS / PKI}{4}
+\cvskill{\simpleicon{nginx}~Hardening de Nginx}{4}
+\cvskill{\simpleicon{crowdsec}~CrowdSec}{3}
+\cvskill{\faUserShield~Hardening de red}{4}
+
+\vspace{1em}
+
+\cvskillheader{IA e Ingeniería de Agentes}
+\cvskill{\simpleicon{modelcontextprotocol}~Model Context Protocol (MCP)}{4}
+\cvskill{\faRobot~Agentes de IA y buenas prácticas}{4}
+\cvskill{\faBrain~Integración de LLMs}{3}
+
+\vspace{1em}
+
+\cvskillheader{Simulación y Acústica}
+\cvskill{\faAtom~COMSOL Multiphysics}{4}
+\cvskill{\faWaveSquare~LabView}{3}
+\cvskill{\faWaveSquare~Instrumentación acústica}{4}
+
+\vspace{1em}
+
 \cvskillheader{General y Plataformas}
 \cvskill{\faLinux~Linux / Unix}{4}
-\cvskill{\faNetworkWired~TCP/IP y Redes}{4}
 \cvskill{\faApple~MacOS}{4}
 \cvskill{\faWindows~Windows}{4}
 \cvskill{\faFile~LaTeX}{4}

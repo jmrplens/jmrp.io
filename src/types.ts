@@ -48,3 +48,11 @@ export type CVCertificateGroup = Extract<
   CVSection,
   { type: "certificate_list" }
 >["contents"][number];
+
+/**
+ * A single featured project within a projects section.
+ */
+export type CVProjectItem = Extract<
+  CVSection,
+  { type: "projects" }
+>["contents"][number];

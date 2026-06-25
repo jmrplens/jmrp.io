@@ -10,7 +10,10 @@ SCRIPT_DIR="$(cd -- "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd)"
 LATEX_DIR="${LATEX_DIR:-$SCRIPT_DIR}"
 # Default: output PDF directory as ../public/pdf relative to this script
 OUTPUT_DIR="${OUTPUT_DIR:-"$SCRIPT_DIR/../public/pdf"}"
+# AltaCV (design) sources — compiled with xelatex (+ biber for bibliography)
 FILES=("CV_RequenaPlensJoseManuel_ENG" "CV_RequenaPlensJoseManuel_SPA")
+# ATS-friendly sources — compiled with lualatex (tagged PDF, no bibliography)
+ATS_FILES=("CV_RequenaPlensJoseManuel_ENG_ATS" "CV_RequenaPlensJoseManuel_SPA_ATS")
 
 cd "$LATEX_DIR" || exit 1
 
@@ -55,20 +58,51 @@ compile_latex() {
     fi
 }
 
+# Compile an ATS source with lualatex (two passes for stable links/tagging).
+compile_lualatex() {
+    local filename=$1
+    echo "Compiling $filename (lualatex)..."
+
+    if ! lualatex -interaction=nonstopmode "${filename}.tex" > "${filename}.lualog" 2>&1; then
+        echo "  ✗ Error: lualatex first pass failed for ${filename}"
+        cat "${filename}.lualog"; rm -f "${filename}.lualog"
+        return 1
+    fi
+    if ! lualatex -interaction=nonstopmode "${filename}.tex" > "${filename}.lualog" 2>&1; then
+        echo "  ✗ Error: lualatex second pass failed for ${filename}"
+        cat "${filename}.lualog"; rm -f "${filename}.lualog"
+        return 1
+    fi
+    rm -f "${filename}.lualog"
+
+    if [ -f "${filename}.pdf" ]; then
+        mv "${filename}.pdf" "$OUTPUT_DIR/"
+        echo "  ✓ Generated and moved ${filename}.pdf to $OUTPUT_DIR"
+    else
+        echo "  ✗ Error: ${filename}.pdf was not generated."
+        return 1
+    fi
+}
+
 # Clean previous temp files
 # Note: This removes temporary LaTeX files and specific target PDFs before compilation
-for file in "${FILES[@]}"; do
+for file in "${FILES[@]}" "${ATS_FILES[@]}"; do
     rm -f "${file}.aux" "${file}.log" "${file}.out" "${file}.toc" "${file}.bbl" "${file}.blg" "${file}.run.xml" "${file}.bcf" "${file}.pdf"
 done
 
-# Compile all files
+# Compile AltaCV (design) files with xelatex
 for file in "${FILES[@]}"; do
     compile_latex "$file"
 done
 
+# Compile ATS files with lualatex
+for file in "${ATS_FILES[@]}"; do
+    compile_lualatex "$file"
+done
+
 # Final cleanup of temporary LaTeX files
 echo "Cleaning up temporary files..."
-for file in "${FILES[@]}"; do
+for file in "${FILES[@]}" "${ATS_FILES[@]}"; do
     rm -f "${file}.aux" "${file}.log" "${file}.out" "${file}.toc" "${file}.bbl" "${file}.blg" "${file}.run.xml" "${file}.bcf"
 done
 

@@ -374,11 +374,11 @@ export const common = {
     home: {
       heroTitle: "Hola, soy José Manuel.",
       heroSubtitle:
-        "Ingeniero de Software & Investigador. <br>Tendiendo puentes entre la <strong>Acústica</strong>, la <strong>Electrónica</strong> y el <strong>Código</strong>.",
+        "Ingeniero de Firmware y Software. <br>Tendiendo puentes entre el <strong>firmware</strong>, el <strong>software</strong> y la <strong>I+D</strong>.",
       heroBio1:
-        "Soy un ingeniero multidisciplinar que disfruta resolviendo problemas técnicos allá donde se cruzan el <strong>hardware</strong>, el <strong>software</strong> y la <strong>investigación aplicada</strong>. He pasado por proyectos en ámbitos muy distintos —desde la <strong>investigación académica</strong> hasta el <strong>desarrollo industrial</strong>—, y esa diversidad es la que más me motiva.",
+        "Soy un ingeniero multidisciplinar que disfruta resolviendo problemas allá donde se cruzan el <strong>firmware</strong>, el <strong>software</strong> y la <strong>I+D</strong>. Mi trayectoria va desde la <strong>investigación académica</strong> en acústica hasta el <strong>desarrollo de firmware industrial</strong>, y esa amplitud es la que más me motiva.",
       heroBio2:
-        "Disfruto del reto de integrar hardware y software. Cuando no estoy programando sistemas industriales, contribuyo activamente al <strong>Open Source</strong> y soy un apasionado del self-hosting, donde no paro de mejorar mi homelab y crear herramientas para la comunidad. <a href='/es/cv/'>Consulta mi CV</a> para ver la trayectoria completa.",
+        "Disfruto integrando hardware y software de principio a fin. Contribuyo activamente al <strong>Open Source</strong> —con herramientas usadas por desarrolladores de todo el mundo— y soy un apasionado del self-hosting, siempre mejorando mi homelab y aportando proyectos a la comunidad. <a href='/es/cv/'>Consulta mi CV</a> para ver la trayectoria completa.",
       viewCV: "Ver CV",
       viewCVAria: "Ver CV - mi currículum profesional",
       readBlog: "Leer Blog",
