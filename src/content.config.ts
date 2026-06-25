@@ -232,8 +232,10 @@ const CVMapItem = z.object({
   name: z.string(),
   value: z.string().optional(),
   links: z.array(CVLink).optional(),
-  /** When true, render the links inside an accessible <details> dropdown. */
-  dropdown: z.boolean().optional(),
+  /** When true, this item is a format group of the CV downloads block (ATS / Design). */
+  downloadGroup: z.boolean().optional(),
+  /** Marks the recommended download format (shows a badge). */
+  recommended: z.boolean().optional(),
 });
 
 /** Schema for a chronologically listed item (Education, Experience). */
