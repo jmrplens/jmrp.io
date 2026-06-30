@@ -1,657 +1,990 @@
-- title: General Information
-  type: map
-  contents:
-    - name: Full Name
-      value: José Manuel Requena Plens
-    - name: Languages
-      value: Spanish (native), English (intermediate)
-    - name: ATS
-      downloadGroup: true
-      recommended: true
-      value: recommended for job portals
-      links:
-        - link: /pdf/CV_RequenaPlensJoseManuel_SPA_ATS.pdf
-          name: Spanish
-          download: Jose_Requena_Plens_Firmware_Software_2026.pdf
-        - link: /pdf/CV_RequenaPlensJoseManuel_ENG_ATS.pdf
-          name: English
-          download: Jose_Requena_Plens_Firmware_Software_Engineer_2026.pdf
-    - name: Design
-      downloadGroup: true
-      value: for reading or printing
-      links:
-        - link: /pdf/CV_RequenaPlensJoseManuel_SPA.pdf
-          name: Spanish
-          download: Jose_Requena_Plens_CV_ES.pdf
-        - link: /pdf/CV_RequenaPlensJoseManuel_ENG.pdf
-          name: English
-          download: Jose_Requena_Plens_CV_EN.pdf
+basics:
+  name: José Manuel Requena Plens
+  headline: Firmware & Software Engineer
+  location: Valencia, Spain
+  availability: On-site, remote or hybrid
+  email: jmrplens@gmail.com
+  profile: >-
+    **Embedded firmware and software engineer** with experience building industrial
+    firmware for solar inverters (C, STM32, FreeRTOS) and a solid **R&D**
+    background. Focused on low-level optimization, industrial communications
+    (Modbus) and hardware test automation. I maintain *open source* projects used
+    by developers worldwide. Targeting **firmware, software and QA** roles,
+    bringing engineering rigor and a focus on quality.
+  links:
+    - { kind: website, label: jmrp.io, url: https://jmrp.io }
+    - {
+        kind: github,
+        label: github.com/jmrplens,
+        url: https://github.com/jmrplens,
+      }
+    - {
+        kind: linkedin,
+        label: linkedin.com/in/jmrplens,
+        url: https://www.linkedin.com/in/jmrplens,
+      }
+    - {
+        kind: scholar,
+        label: Google Scholar,
+        url: "https://scholar.google.com/citations?user=9b0kPaUAAAAJ",
+        ariaLabel: Google Scholar - academic publications profile,
+      }
+    - {
+        kind: orcid,
+        label: 0000-0003-1250-6212,
+        url: https://orcid.org/0000-0003-1250-6212,
+        ariaLabel: ORCID - researcher identifier 0000-0003-1250-6212,
+      }
 
-- title: Experience
-  type: time_table
-  contents:
-    - title: R&D Software Developer
-      institution: Power Electronics (<a href="https://power-electronics.com/en" aria-label="PE - Power Electronics website">PE</a>)
-      department: Solar + Storage (<a href="https://power-electronics.com/en/solar" aria-label="PE Solar - Power Electronics Solar & Storage division">PE Solar</a>)
-      location: Lliria, Spain
-      year: Apr 2023 - May 2026
-      summary: >
-        Firmware development for solar inverters and control systems in photovoltaic plants, working on STM32 microcontrollers with bare-metal and RTOS environments.
-        <br><br>
-        Key contributions:
-      description:
-        - "Optimized the embedded file system, reducing access times and improving stability under continuous operation."
-        - "Improved TCP communications performance, reducing latency and increasing the robustness of the network stack."
-        - "Optimized tasks on STM32: reduced stack and heap usage, and tuned CPU cycles to improve real-time performance."
-        - "Implementation and maintenance of industrial communications: Modbus RTU/TCP, UART, I2C and SPI."
-        - "Development in C with HAL layers and low-level peripheral management."
-        - "Test automation on real hardware using Python, including unit, integration and stress tests."
+downloads:
+  - format: ATS (concise)
+    note: recommended for job portals
+    recommended: true
+    files:
+      - {
+          lang: es,
+          label: Spanish,
+          url: /pdf/CV_RequenaPlensJoseManuel_SPA_ATS.pdf,
+          download: Jose_Requena_Plens_Firmware_Software_2026.pdf,
+        }
+      - {
+          lang: en,
+          label: English,
+          url: /pdf/CV_RequenaPlensJoseManuel_ENG_ATS.pdf,
+          download: Jose_Requena_Plens_Firmware_Software_Engineer_2026.pdf,
+        }
+  - format: ATS (full)
+    note: exhaustive, indexable version
+    files:
+      - {
+          lang: es,
+          label: Spanish,
+          url: /pdf/CV_RequenaPlensJoseManuel_SPA_ATS_EXT.pdf,
+          download: Jose_Requena_Plens_Firmware_Software_Completo_2026.pdf,
+        }
+      - {
+          lang: en,
+          label: English,
+          url: /pdf/CV_RequenaPlensJoseManuel_ENG_ATS_EXT.pdf,
+          download: Jose_Requena_Plens_Firmware_Software_Engineer_Full_2026.pdf,
+        }
+  - format: Design
+    note: for reading or printing
+    files:
+      - {
+          lang: es,
+          label: Spanish,
+          url: /pdf/CV_RequenaPlensJoseManuel_SPA.pdf,
+          download: Jose_Requena_Plens_CV_ES.pdf,
+        }
+      - {
+          lang: en,
+          label: English,
+          url: /pdf/CV_RequenaPlensJoseManuel_ENG.pdf,
+          download: Jose_Requena_Plens_CV_EN.pdf,
+        }
 
-    - title: Predoctoral researcher
-      institution: Polytechnic University of Valencia (<a href="https://www.upv.es/index-en.html" aria-label="UPV - Polytechnic University of Valencia">UPV</a>) + Spanish National Research Council (<a href="https://www.csic.es/en" aria-label="CSIC - Spanish National Research Council">CSIC</a>) + Hospital La Fe (<a href="https://www.iislafe.es/en/" aria-label="IIS - Institute for Health Research La Fe">IIS</a>)
-      department: Medical Imaging and Therapy Systems (<a href="https://i3m.csic.upv.es/" aria-label="i3M - Research Institute">i3M</a>)
-      year: Jan 2023 - Apr 2023
-      location: Valencia, Spain
-      summary: >
-        Researcher in the R&D line: <b>Acoustic Metamaterials for Ultrasound Histotripsy treatments</b>.
-        <br><br>
-        <b>Project</b>: New generation of smart metasurfaces based on additive manufacturing for strategic applications in telecommunications (Metasmart). Funded by the Valencian Agency for Innovation (Reference: INNEST/2022/345).
-        <br><br>
-        Some planned tasks:
-      description:
-        - Ultra-close focus acoustic lens design.
-        - Prototype manufacturing.
-        - Experimentation with ex-vivo tissues.
+sections:
+  - kind: experience
+    title: Experience
+    items:
+      - role: R&D Software Developer
+        org:
+          - {
+              name: Power Electronics,
+              short: PE,
+              url: https://power-electronics.com/en,
+            }
+        department:
+          {
+            name: Solar + Storage,
+            short: PE Solar,
+            url: https://power-electronics.com/en/solar,
+          }
+        location: Lliria, Spain
+        period: Apr 2023 - May 2026
+        summary: >-
+          Firmware development for solar inverters and control systems in
+          photovoltaic plants, working on STM32 microcontrollers with bare-metal
+          and RTOS environments.
+        bullets:
+          - >-
+            Reduced RTOS task stack usage by 30%–50%, optimizing memory on STM32
+            microcontrollers.
+          - >-
+            Optimized Modbus TCP request handling, cutting CPU usage under load
+            (40,000 req/s) from 80% to 17% with no dropped responses.
+          - >-
+            Redesigned embedded file-system access, cutting access times by over
+            50%.
+          - >-
+            Implemented a scheduled purge (daily/monthly) that safely clears
+            thousands of files, preventing storage exhaustion under continuous
+            operation.
+          - >-
+            Built and maintained industrial communications in C with hardware
+            abstraction layers (HAL): Modbus RTU/TCP, UART, I2C and SPI.
+          - >-
+            Automated the test suite: ~50–80 unit tests per module (Ceedling,
+            thousands in total) reaching 100% line and branch coverage via
+            standard-library mocks/fakes, plus hundreds of on-hardware integration
+            tests (pytest) — TCP/FTP performance and FTP security —; all in CI.
+          - >-
+            Reviewed merge requests across a 12-person team, catching bugs and
+            proposing improvements before integration.
+        ats:
+          normal: true
+          org: Power Electronics — Solar + Storage
 
-    - title: Predoctoral researcher
-      institution: Polytechnic University of Valencia (<a href="https://www.upv.es/index-en.html" aria-label="UPV - Polytechnic University of Valencia">UPV</a>) + Spanish National Research Council (<a href="https://www.csic.es/en" aria-label="CSIC - Spanish National Research Council">CSIC</a>)
-      department: Medical Imaging and Therapy Systems (<a href="https://i3m.csic.upv.es/" aria-label="i3M - Research Institute">i3M</a>)
-      year: Jul 2021 - Jul 2022
-      location: Valencia, Spain
-      summary: >
-        The main objective is to conduct research and development of acoustic metamaterials for use in architectural applications and medical imaging.
-        <br><br>
-        Goals achieved:
-      description:
-        - Theoretical development of acoustic metadiffusers based on membranes or plates reducing the size of commercial diffusers.
-        - Simulation of the acoustic diffusers and validation of results (MATLAB & COMSOL).
-        - title: "Two publications in national and international congresses:"
-          contents:
-            - Tecniacústica - <a href="/pdf/paper-resources/Conferences/Tecniacustica/JimenezTEC2020a.pdf">Beyond Schroeder diffusers using acoustic metasurfaces</a>.
-            - Euronoise - <a href="/pdf/paper-resources/Conferences/Euronoise/plensEuro2021_2.pdf">Sound diffusing metasurfaces based on elastic plates and membranes</a>
-        - Development and simulation of metamaterial-based waveguides for improved ultrasound resolution in air.
-        - Fabrication of waveguide prototypes.
-        - Validated experimental results against those obtained in simulation.
-        - Advisor of the Master thesis of a student of the Master's Degree in Acoustic Engineering of the UPV.
+      - role: Predoctoral researcher
+        org:
+          - {
+              name: Polytechnic University of Valencia,
+              short: UPV,
+              url: https://www.upv.es/index-en.html,
+            }
+          - {
+              name: Spanish National Research Council,
+              short: CSIC,
+              url: https://www.csic.es/en,
+            }
+          - {
+              name: Hospital La Fe,
+              short: IIS,
+              url: https://www.iislafe.es/en/,
+            }
+        department:
+          {
+            name: Medical Imaging and Therapy Systems,
+            short: i3M,
+            url: https://i3m.csic.upv.es/,
+          }
+        location: Valencia, Spain
+        period: Jan 2023 - Apr 2023
+        summary: >-
+          Researcher in the R&D line: **Acoustic Metamaterials for Ultrasound
+          Histotripsy treatments**.
+        notes:
+          - >-
+            **Project**: New generation of smart metasurfaces based on additive
+            manufacturing for strategic applications in telecommunications
+            (Metasmart). Funded by the Valencian Agency for Innovation (Reference:
+            INNEST/2022/345).
+        bullets:
+          - Ultra-close focus acoustic lens design.
+          - Prototype manufacturing.
+          - Experimentation with ex-vivo tissues.
+        ats: { normal: false }
 
-    - title: Researcher in European project
-      institution: Higher Polytechnic School of Gandia (<a href="https://www.upv.es/entidades/epsg/en/home/" aria-label="UPV - Gandia Campus">UPV</a>) + European Space Agency (<a href="https://www.esa.int/" aria-label="ESA - European Space Agency">ESA</a>)
-      department: Complex Media Acoustics Group of IGIC (<a href="https://igic.webs.upv.es/" aria-label="IGIC - Interdisciplinary Institute for Coastal Management">IGIC</a>)
-      year: Feb 2020 - Jul 2021
-      location: Gandia, Spain
-      summary:
-        "Implement and experimentally validate a sound mitigation method, applicable to a real space vehicle launch configuration (VEGA), that results in a significant decrease in sound pressure levels generated in the launch area during spacecraft liftoff.
-        <br><br>
-        Project funded by ESA (European Space Agency) with reference ESA AO/1-9479/18/NL/LvH, in collaboration with: CNRS/Laboratoire d'Acoustique de la Université du Mans; COMET Ingeniería; Spanish National Research Council (CSIC) and Polytechnic University of Madrid.
-        <br><br>
-        All project objectives were completed at 100%:"
-      description:
-        - Design of the optimum geometry of the acoustic metamaterial to reduce noise levels.
-        - Simulation of a real environment to validate design performance (MATLAB, COMSOL & Python).
-        - Design of the industrial model for the manufacture of the prototype by means of plastic injection.
-        - Development of software for acoustic measurements according to ISO 10534-2:1998 and ASTM 2611-19 standards. <a href="https://github.com/jmrplens/A-Lab">A|Lab</a>
-        - 'Design and development of a 3-axis robotic system to perform experimental measurements. Photos and some information here: <a href="https://cienciagandia.webs.upv.es/en/2022/03/metamaterial-to-reduce-noise-in-space-rocket-launches/" aria-label="NEWS - Space rocket launches metamaterial project">NEWS</a>'
-        - Results validated and accepted by ESA.
-        - title: "Three publications/presentations at international congresses (Euronoise and ECSSMET) and one at a national congress (Tecniacústica):"
-          contents:
-            - Euronoise - <a href="/pdf/paper-resources/Conferences/Euronoise/plensEuro2021.pdf">Perfect broadband sound absorber metamaterial for noise reduction in a rocket launch</a>.
-            - Euronoise - <a href="/pdf/paper-resources/Conferences/Euronoise/EscartiEuro2021.pdf">Application of metamaterials to control noise scattering during space vehicle lift-off</a>.
-            - "ECSSMET - Launch sound level characterisation and mitigation: numerical modelling framework and metamaterial proof of concept."
-            - Tecniacústica - <a href="/pdf/paper-resources/Conferences/Tecniacustica/plensTEC2020.pdf">Acoustic field prediction during the launch of rockets</a>.
+      - role: Predoctoral researcher
+        org:
+          - {
+              name: Polytechnic University of Valencia,
+              short: UPV,
+              url: https://www.upv.es/index-en.html,
+            }
+          - {
+              name: Spanish National Research Council,
+              short: CSIC,
+              url: https://www.csic.es/en,
+            }
+        department:
+          {
+            name: Medical Imaging and Therapy Systems,
+            short: i3M,
+            url: https://i3m.csic.upv.es/,
+          }
+        location: Valencia, Spain
+        period: Jul 2021 - Jul 2022
+        summary: >-
+          The main objective is to conduct research and development of acoustic
+          metamaterials for use in architectural applications and medical imaging.
+        bullets:
+          - >-
+            Developed acoustic metadiffusers reaching a diffusion coefficient of 0.8
+            with a thickness 10× smaller than traditional diffusers.
+          - Simulation of the acoustic diffusers and validation of results (MATLAB & COMSOL).
+          - >-
+            Designed and 3D-printed (resin) slitted-tube waveguides with
+            numerically-computed slits (2–3 cm tubes, ~0.5 mm slits) that increased
+            ultrasound directivity and range ~15× in air, validated experimentally.
+          - Validated experimental results against those obtained in simulation.
+          - >-
+            Advisor of the Master thesis of a student of the Master's Degree in
+            Acoustic Engineering of the UPV.
+        pubGroups:
+          - heading: "Two publications in national and international congresses:"
+            items:
+              - >-
+                Tecniacústica - [Beyond Schroeder diffusers using acoustic
+                metasurfaces](/pdf/paper-resources/Conferences/Tecniacustica/JimenezTEC2020a.pdf).
+              - >-
+                Euronoise - [Sound diffusing metasurfaces based on elastic plates and
+                membranes](/pdf/paper-resources/Conferences/Euronoise/plensEuro2021_2.pdf)
+        ats:
+          normal: true
+          org: UPV · CSIC · i3M
+          bullets:
+            - >-
+              Designed acoustic metamaterials (metadiffusers and lenses) that reduce
+              the footprint of conventional diffusers, validated with MATLAB and
+              COMSOL simulations.
+            - >-
+              Manufactured and characterized prototypes; published results at
+              international conferences (Euronoise, Tecniacústica).
+            - >-
+              Supervised a Master's thesis in Acoustic Engineering (UPV), from
+              research design to defense.
 
-    - title: Research internship
-      institution: University of Alicante (<a href="https://www.ua.es/en/index.html" aria-label="UA - University of Alicante">UA</a>)
-      department: Dep. of Physics, Systems Engineering and Signal Theory (<a href="https://dfests.ua.es/" aria-label="DFESTS - Department at UA">DFESTS</a>)
-      year: Feb 2018 - Jul 2018
-      location: Alicante, Spain
-      summary:
-        'Internship in different research projects in the <a href="https://iufacyt.ua.es/es/grupos-de-investigacion/acustica-aplicada.html" aria-label="Applied Acoustics Group at UA">Applied Acoustics Group</a>, belonging to the University Institute of Physics Applied to Sciences and Technologies of the Higher Polytechnic School of Alicante.
-        <br><br>
-        Goals achieved:'
-      description:
-        - Simulation of acoustic models.
-        - Acoustic measurements by means of a LabView-controlled robotic system.
-        - 'Investigation of the acoustic radiation efficiency (Vibration-borne noise) of metallic plates for an initial study of ship noise emissions in water. Carried out in collaboration with <a href="https://electronica-submarina.com/" aria-label="SAES - Marine Electronics">SAES</a>, here you can read a news item on the subject: <a href="https://electronica-submarina.com/2018/11/05/saes-latest-researches-on-underwater-noise-by-ships-are-presented-at-tecniacustica/" aria-label="NEWS - Ship underwater noise research">NEWS</a>.'
-        - title: "A publication at a national congress:"
-          contents:
-            - Tecniacústica - <a href="/pdf/paper-resources/Conferences/Tecniacustica/saura2018.pdf">Comportamiento vibroacústico de contenedores cilíndricos en aire</a>.
+      - role: Researcher in European project
+        org:
+          - {
+              name: Higher Polytechnic School of Gandia,
+              short: UPV,
+              url: https://www.upv.es/entidades/epsg/en/home/,
+            }
+          - {
+              name: European Space Agency,
+              short: ESA,
+              url: https://www.esa.int/,
+            }
+        department:
+          {
+            name: Complex Media Acoustics Group of IGIC,
+            short: IGIC,
+            url: https://igic.webs.upv.es/,
+          }
+        location: Gandia, Spain
+        period: Feb 2020 - Jul 2021
+        summary: >-
+          Implement and experimentally validate a sound mitigation method,
+          applicable to a real space vehicle launch configuration (VEGA), that
+          results in a significant decrease in sound pressure levels generated in the
+          launch area during spacecraft liftoff.
+        notes:
+          - >-
+            Project funded by ESA (European Space Agency) with reference ESA
+            AO/1-9479/18/NL/LvH, in collaboration with: CNRS/Laboratoire d'Acoustique
+            de la Université du Mans; COMET Ingeniería; Spanish National Research
+            Council (CSIC) and Polytechnic University of Madrid.
+        bullets:
+          - >-
+            Designed the optimum acoustic-metamaterial geometry, achieving near-total
+            absorption (α ≈ 1) across 200–500 Hz with a subwavelength design
+            (wavelength/thickness ratio ≈ 16.5 vs ~2 conventional), validated on real
+            lab prototypes.
+          - Simulation of a real environment to validate design performance (MATLAB, COMSOL & Python).
+          - >-
+            Designed and 3D-printed the first prototype; for the large-scale version
+            designed the injection-molding model and sourced the manufacturing of 600
+            modules with a supplier.
+          - >-
+            Development of software for acoustic measurements according to ISO
+            10534-2 and ASTM E2611 standards. [A|Lab](https://github.com/jmrplens/A-Lab)
+          - >-
+            Design and development of a 3-axis robotic system to perform experimental
+            measurements. Photos and some information here:
+            [NEWS](https://cienciagandia.webs.upv.es/en/2022/03/metamaterial-to-reduce-noise-in-space-rocket-launches/ "Space rocket launches metamaterial project")
+          - Results validated and accepted by ESA.
+        pubGroups:
+          - heading: "Three publications/presentations at international congresses (Euronoise and ECSSMET) and one at a national congress (Tecniacústica):"
+            items:
+              - >-
+                Euronoise - [Perfect broadband sound absorber metamaterial for noise
+                reduction in a rocket launch](/pdf/paper-resources/Conferences/Euronoise/plensEuro2021.pdf).
+              - >-
+                Euronoise - [Application of metamaterials to control noise scattering
+                during space vehicle lift-off](/pdf/paper-resources/Conferences/Euronoise/EscartiEuro2021.pdf).
+              - "ECSSMET - Launch sound level characterisation and mitigation: numerical modelling framework and metamaterial proof of concept."
+              - >-
+                Tecniacústica - [Acoustic field prediction during the launch of
+                rockets](/pdf/paper-resources/Conferences/Tecniacustica/plensTEC2020.pdf).
+        ats:
+          normal: true
+          org: UPV · European Space Agency (ESA) — IGIC
+          bullets:
+            - >-
+              Designed and experimentally validated a noise-mitigation metamaterial
+              for the VEGA rocket launch (ESA project AO/1-9479/18/NL/LvH), meeting
+              100% of project objectives with results accepted by ESA.
+            - >-
+              Developed acoustic measurement software per ISO 10534-2 and ASTM 2611
+              ([A|Lab](https://github.com/jmrplens/A-Lab)) and a 3-axis robotic system
+              for experimental measurements.
+            - Co-author of international publications/talks (Euronoise, ECSSMET).
 
-    - title: Founder and Vocal Member
-      institution: AmicroTech (<a href="https://www.linkedin.com/company/a-µtech/" aria-label="AµTech - AmicroTech LinkedIn profile">AµTech</a>)
-      department: University of Alicante (<a href="https://www.ua.es/en/index.html" aria-label="UA - University of Alicante">UA</a>)
-      year: Sep 2016 - Jul 2018
-      location: Alicante, Spain
-      summary:
-        "Association based at the Higher Polytechnic School of the University of Alicante. Founded in 2016. Promotes project-oriented microcontroller programming knowledge.
-        <br><br>
-        Activities performed:"
-      description:
-        - Group classes of reinforcement and extension of the subject "Digital Electronic Systems" of the Degree in Sound and Image Engineering of the University of Alicante.
-        - Laboratory organization and planning (located at the Colegio Mayor).
-        - Communication and Public Relations.
+      - role: Research internship
+        org:
+          - {
+              name: University of Alicante,
+              short: UA,
+              url: https://www.ua.es/en/index.html,
+            }
+        department:
+          name: Dep. of Physics, Systems Engineering and Signal Theory
+          short: DFESTS
+          url: https://dfests.ua.es/
+        location: Alicante, Spain
+        period: Feb 2018 - Jul 2018
+        summary: >-
+          Internship in different research projects in the [Applied Acoustics
+          Group](https://iufacyt.ua.es/es/grupos-de-investigacion/acustica-aplicada.html "Applied Acoustics Group at UA"),
+          belonging to the University Institute of Physics Applied to Sciences and
+          Technologies of the Higher Polytechnic School of Alicante.
+        bullets:
+          - Simulation of acoustic models.
+          - Acoustic measurements by means of a LabView-controlled robotic system.
+          - >-
+            Investigation of the acoustic radiation efficiency (Vibration-borne
+            noise) of metallic plates for an initial study of ship noise emissions in
+            water. Carried out in collaboration with
+            [SAES](https://electronica-submarina.com/ "SAES - Marine Electronics"),
+            here you can read a news item on the subject:
+            [NEWS](https://electronica-submarina.com/2018/11/05/saes-latest-researches-on-underwater-noise-by-ships-are-presented-at-tecniacustica/ "Ship underwater noise research").
+        pubGroups:
+          - heading: "A publication at a national congress:"
+            items:
+              - >-
+                Tecniacústica - [Comportamiento vibroacústico de contenedores
+                cilíndricos en aire](/pdf/paper-resources/Conferences/Tecniacustica/saura2018.pdf).
+        ats: { normal: false }
 
-    - title: Sound technician
-      institution: Acusticox (<a href="https://acusticox.com/" aria-label="web - Acusticox official website">web</a>)
-      year: Jun 2011 - Feb 2018
-      location: Cox, Spain
-      description:
-        - Equipment installation and adjustment for events.
-        - Equipment installation and adjustment for permanent installation.
-        - FOH Technician.
-        - Customer acquisition.
+      - role: Founder and Vocal Member
+        org:
+          - {
+              name: AmicroTech,
+              short: AµTech,
+              url: "https://www.linkedin.com/company/a-µtech/",
+            }
+        department:
+          {
+            name: University of Alicante,
+            short: UA,
+            url: https://www.ua.es/en/index.html,
+          }
+        location: Alicante, Spain
+        period: Sep 2016 - Jul 2018
+        summary: >-
+          Association based at the Higher Polytechnic School of the University of
+          Alicante. Promotes project-oriented microcontroller
+          programming knowledge.
+        bullets:
+          - >-
+            Taught 30+ students in reinforcement and extension classes for the
+            subject "Digital Electronic Systems" of the Degree in Sound and Image
+            Engineering of the University of Alicante.
+          - Laboratory organization and planning (located at the Colegio Mayor).
+          - Communication and Public Relations.
+        ats: { normal: false }
 
-    - title: Laboratory technician
-      institution: Profdent (<a href="https://profdent.es/" aria-label="web - Profdent dental laboratory website">web</a>)
-      year: Sep 2005 - Nov 2009
-      location: Alicante, Spain
-      description:
-        - Reception of work from dentists.
-        - Model preparation and retouching.
-        - Minor responsibilities.
+      - role: Sound technician
+        org:
+          - { name: Acusticox, url: https://acusticox.com/ }
+        location: Cox, Spain
+        period: Jun 2011 - Feb 2018
+        bullets:
+          - Equipment installation and adjustment for events.
+          - Equipment installation and adjustment for permanent installation.
+          - FOH Technician.
+          - Customer acquisition.
+        ats: { normal: false }
 
-- title: Technical Skills
-  type: list_groups
-  contents:
-    - category: Embedded Firmware & Electronics
-      icon: fa-solid:microchip
-      items:
-        - name: C
-          icon: logos:c
-          level: 4
-        - name: STM32 & ARM
-          icon: simple-icons:arm
-          level: 4
-        - name: ESP32 / ESP-IDF
-          icon: simple-icons:espressif
-          level: 4
-        - name: PlatformIO
-          icon: simple-icons:platformio
-          level: 4
-        - name: Texas Instruments
-          desc: (MSP430, Tiva C, Code Composer Studio)
-          icon: mdi:chip
-          level: 3
-        - name: FreeRTOS / RTOS
-          icon: mdi:clock-fast
-          level: 4
-        - name: Comm. Protocols
-          desc: (I2C, SPI, RS485, Modbus)
-          icon: fa-solid:project-diagram
-          level: 4
-        - name: HW Debugging
-          desc: (JTAG / SWD)
-          icon: fa-solid:bug
-          level: 4
-        - name: Keil uVision
-          icon: simple-icons:arm
-          level: 4
-        - name: Instrumentation
-          desc: (Oscilloscopes, DAQs, Logic A.)
-          icon: fa-solid:wave-square
-          level: 4
-        - name: Secure Boot & Embedded Security
-          desc: (secure boot, flash encryption, key derivation)
-          icon: mdi:shield-key-outline
-          level: 3
-        - name: Doxygen
-          desc: (firmware documentation)
-          icon: simple-icons:doxygen
-          level: 4
+      - role: Laboratory technician
+        org:
+          - { name: Profdent, url: https://profdent.es/ }
+        location: Alicante, Spain
+        period: Sep 2005 - Nov 2009
+        bullets:
+          - >-
+            Reception of work and casting of plaster models from impressions
+            (alginate/silicone), with and without implants.
+          - Mounting articulators and casting metal crowns in a centrifuge.
+          - Ceramic application on crowns and bridges.
+        ats: { normal: false }
 
-    - category: Software Engineering & Tools
-      icon: fa-solid:code
-      items:
-        - name: Python
-          icon: logos:python
-          level: 4
-        - name: C++
-          icon: logos:c-plusplus
-          level: 3
-        - name: Go
-          icon: logos:go
-          level: 2
-        - name: TypeScript
-          icon: logos:typescript-icon
-          level: 2
-        - name: Bash
-          desc: (shellcheck, bats)
-          icon: logos:bash-icon
-          level: 3
-        - name: Clang Tooling
-          desc: (clangd, clang-format, clang-tidy)
-          icon: vscode-icons:file-type-clangd
-          level: 3
-        - name: Git
-          icon: logos:git-icon
-          level: 4
-        - name: GitHub
-          icon: mdi:github
-          level: 4
-        - name: GitLab
-          icon: mdi:gitlab
-          level: 4
-        - name: Docker
-          icon: logos:docker-icon
-          level: 4
-        - name: MATLAB
-          icon: vscode-icons:file-type-matlab
-          level: 4
-        - name: CMake
-          icon: vscode-icons:file-type-cmake
-          level: 3
-        - name: JetBrains Toolbox
-          desc: (CLion, PyCharm, WebStorm)
-          icon: logos:jetbrains
-          level: 4
+  - kind: skills
+    title: Technical Skills
+    groups:
+      - category: Embedded Firmware & Electronics
+        icon: fa-solid:microchip
+        items:
+          - { name: C, icon: logos:c, level: 4 }
+          - { name: STM32 & ARM, icon: simple-icons:arm, level: 4 }
+          - { name: ESP32 / ESP-IDF, icon: simple-icons:espressif, level: 4 }
+          - { name: PlatformIO, icon: simple-icons:platformio, level: 4 }
+          - {
+              name: Texas Instruments,
+              note: "(MSP430, Tiva C, Code Composer Studio)",
+              icon: mdi:chip,
+              level: 3,
+            }
+          - { name: FreeRTOS / RTOS, icon: mdi:clock-fast, level: 4 }
+          - {
+              name: Comm. Protocols,
+              note: "(I2C, SPI, RS485, Modbus)",
+              icon: fa-solid:project-diagram,
+              level: 4,
+            }
+          - {
+              name: HW Debugging,
+              note: "(JTAG / SWD)",
+              icon: fa-solid:bug,
+              level: 4,
+            }
+          - { name: Keil uVision, icon: simple-icons:arm, level: 4 }
+          - {
+              name: Instrumentation,
+              note: "(Oscilloscopes, DAQs, Logic A.)",
+              icon: fa-solid:wave-square,
+              level: 4,
+            }
+          - {
+              name: Secure Boot & Embedded Security,
+              note: "(secure boot, flash encryption, key derivation)",
+              icon: mdi:shield-key-outline,
+              level: 3,
+            }
+          - {
+              name: Doxygen,
+              note: "(firmware documentation)",
+              icon: simple-icons:doxygen,
+              level: 4,
+            }
+      - category: Software Engineering & Tools
+        icon: fa-solid:code
+        items:
+          - { name: Python, icon: logos:python, level: 4 }
+          - { name: C++, icon: logos:c-plusplus, level: 3 }
+          - { name: Go, icon: logos:go, level: 2 }
+          - { name: TypeScript, icon: logos:typescript-icon, level: 2 }
+          - {
+              name: Bash,
+              note: "(shellcheck, bats)",
+              icon: logos:bash-icon,
+              level: 3,
+            }
+          - {
+              name: Clang Tooling,
+              note: "(clangd, clang-format, clang-tidy)",
+              icon: vscode-icons:file-type-clangd,
+              level: 3,
+            }
+          - { name: Git, icon: logos:git-icon, level: 4 }
+          - { name: GitHub, icon: mdi:github, level: 4 }
+          - { name: GitLab, icon: mdi:gitlab, level: 4 }
+          - { name: Docker, icon: logos:docker-icon, level: 4 }
+          - { name: MATLAB, icon: vscode-icons:file-type-matlab, level: 4 }
+          - { name: CMake, icon: vscode-icons:file-type-cmake, level: 3 }
+          - {
+              name: JetBrains Toolbox,
+              note: "(CLion, PyCharm, WebStorm)",
+              icon: logos:jetbrains,
+              level: 4,
+            }
+      - category: Quality, CI/CD & DevSecOps
+        icon: fa-solid:shield-alt
+        items:
+          - { name: GitHub Actions, icon: simple-icons:githubactions, level: 4 }
+          - { name: GitLab CI, icon: simple-icons:gitlab, level: 3 }
+          - { name: Jenkins, icon: simple-icons:jenkins, level: 2 }
+          - {
+              name: SonarQube / SonarCloud,
+              icon: simple-icons:sonarqube,
+              level: 4,
+            }
+          - {
+              name: GoReleaser,
+              note: "(multi-platform releases)",
+              icon: mdi:package-variant-closed,
+              level: 3,
+            }
+          - {
+              name: Static Analysis & SAST,
+              note: "(CodeQL, gitleaks, golangci-lint)",
+              icon: fa-solid:search-plus,
+              level: 3,
+            }
+          - {
+              name: Testing,
+              note: "(Ceedling, pytest, Playwright, Vitest, bats)",
+              icon: fa-solid:vials,
+              level: 4,
+            }
+          - { name: pre-commit hooks, icon: simple-icons:precommit, level: 4 }
+      - category: Networking
+        icon: mdi:lan
+        items:
+          - {
+              name: TCP/IP & Networking,
+              icon: fa-solid:network-wired,
+              level: 4,
+            }
+          - { name: MikroTik RouterOS, icon: simple-icons:mikrotik, level: 4 }
+          - { name: WireGuard / VPN, icon: simple-icons:wireguard, level: 4 }
+          - { name: IPv6 & Dual-stack, icon: mdi:ip-network-outline, level: 4 }
+          - { name: QUIC / HTTP3, icon: mdi:lightning-bolt, level: 3 }
+          - { name: DNS / Dynamic DNS, icon: mdi:dns, level: 3 }
+      - category: Security & Cryptography
+        icon: mdi:shield-lock-outline
+        items:
+          - {
+              name: Applied Cryptography,
+              note: "(AEAD, encrypt-then-MAC, KDFs)",
+              icon: fa-solid:key,
+              level: 3,
+            }
+          - {
+              name: TLS / mTLS / PKI,
+              note: "(client certificates)",
+              icon: fa-solid:certificate,
+              level: 4,
+            }
+          - {
+              name: Nginx Hardening,
+              note: "(CSP, security headers)",
+              icon: simple-icons:nginx,
+              level: 4,
+            }
+          - {
+              name: CrowdSec,
+              note: "(IDS/IPS)",
+              icon: fa-solid:user-shield,
+              level: 3,
+            }
+          - {
+              name: Network Hardening,
+              note: "(firewall, tarpit, honeypot)",
+              icon: fa-solid:shield-alt,
+              level: 4,
+            }
+      - category: AI & Agentic Engineering
+        icon: mdi:robot-outline
+        items:
+          - {
+              name: Model Context Protocol (MCP),
+              note: "(Server development in Go)",
+              icon: simple-icons:modelcontextprotocol,
+              level: 4,
+            }
+          - {
+              name: AI Coding Agents,
+              note: "(Claude Code, Copilot, agent skills/workflows)",
+              icon: simple-icons:claude,
+              level: 4,
+            }
+          - {
+              name: LLM Integration,
+              note: "(API, prompt engineering, tool-use)",
+              icon: mdi:brain,
+              level: 3,
+            }
+      - category: Simulation & Acoustics
+        icon: fa-solid:wave-square
+        items:
+          - { name: COMSOL Multiphysics, icon: simple-icons:comsol, level: 4 }
+          - { name: LabView, icon: simple-icons:labview, level: 3 }
+          - {
+              name: Acoustic Instrumentation,
+              note: "(laser/vibration accelerometers, microphones)",
+              icon: fa-solid:wave-square,
+              level: 4,
+            }
+      - category: General & Platforms
+        icon: fa-solid:desktop
+        items:
+          - { name: Linux / Unix, icon: logos:linux-tux, level: 4 }
+          - { name: MacOS, icon: simple-icons:apple, level: 4 }
+          - { name: Windows, icon: logos:microsoft-windows-icon, level: 4 }
+          - { name: LaTeX, icon: vscode-icons:file-type-tex, level: 4 }
+          - { name: HTML / CSS, icon: vscode-icons:file-type-html, level: 3 }
 
-    - category: Quality, CI/CD & DevSecOps
-      icon: fa-solid:shield-alt
-      items:
-        - name: GitHub Actions
-          icon: simple-icons:githubactions
-          level: 4
-        - name: GitLab CI
-          icon: simple-icons:gitlab
-          level: 3
-        - name: Jenkins
-          icon: simple-icons:jenkins
-          level: 2
-        - name: SonarQube / SonarCloud
-          icon: simple-icons:sonarqube
-          level: 4
-        - name: GoReleaser
-          desc: (multi-platform releases)
-          icon: mdi:package-variant-closed
-          level: 3
-        - name: Static Analysis & SAST
-          desc: (CodeQL, gitleaks, golangci-lint)
-          icon: fa-solid:search-plus
-          level: 3
-        - name: Testing
-          desc: (Ceedling, pytest, Playwright, Vitest, bats)
-          icon: fa-solid:vials
-          level: 4
-        - name: pre-commit hooks
-          icon: simple-icons:precommit
-          level: 4
+  - kind: projects
+    title: Open Source Projects
+    items:
+      - name: gitlab-mcp-server
+        tech: Go · Model Context Protocol server
+        icon: logos:go
+        description: >-
+          Open-source GitLab MCP server that exposes 1,000+ GitLab operations to AI
+          assistants through a dynamic 2-tool find/execute design, with
+          stdio/HTTP/OAuth transports and safe & read-only modes.
+        metrics: ["Listed on Glama, mcp.so, Cursor & mcpservers.org"]
+        links:
+          - {
+              label: GitHub,
+              url: https://github.com/jmrplens/gitlab-mcp-server,
+            }
+          - {
+              label: Glama,
+              url: https://glama.ai/mcp/servers/jmrplens/gitlab-mcp-server,
+            }
+          - {
+              label: Cursor,
+              url: https://cursor.directory/plugins/gitlab-mcp-server,
+            }
+          - { label: Docs, url: https://jmrplens.github.io/gitlab-mcp-server/ }
+      - name: PyOctaveBand
+        tech: Python · Signal processing
+        icon: logos:python
+        description: >-
+          Octave-band and fractional octave-band filtering library for time-domain
+          signals, published on PyPI.
+        metrics: [PyPI]
+        links:
+          - { label: GitHub, url: https://github.com/jmrplens/PyOctaveBand }
+          - { label: PyPI, url: https://pypi.org/project/PyOctaveBand/ }
+      - name: cs-routeros-bouncer
+        tech: Go · Firewall · MikroTik · WAF
+        icon: logos:go
+        description: >-
+          CrowdSec bouncer for MikroTik RouterOS: feeds the collaborative IPS/WAF
+          CrowdSec decisions into the RouterOS firewall (address lists) through its
+          API, blocking malicious IPs in real time.
+        metrics:
+          - On the CrowdSec Hub
+        links:
+          - {
+              label: GitHub,
+              url: https://github.com/jmrplens/cs-routeros-bouncer,
+            }
+          - {
+              label: CrowdSec Hub,
+              url: https://app.crowdsec.net/hub/author/jmrplens/remediation-components/cs-routeros-bouncer,
+            }
+          - {
+              label: Docs,
+              url: https://jmrplens.github.io/cs-routeros-bouncer/,
+            }
+      - name: Cloudflare-DNS-Updater
+        tech: Bash · DevOps
+        icon: logos:bash-icon
+        description: >-
+          Dynamic DNS client for Cloudflare (IPv4/IPv6) written in Bash, with a bats
+          test suite and coverage reporting.
+        links:
+          - {
+              label: GitHub,
+              url: https://github.com/jmrplens/Cloudflare-DNS-Updater,
+            }
+      - name: TFG-TFM_EPS
+        tech: LaTeX · Academic template
+        icon: vscode-icons:file-type-tex
+        description: >-
+          LaTeX template for Bachelor's and Master's theses at the University of
+          Alicante (EPS), with an automated CI build pipeline.
+        links:
+          - { label: GitHub, url: https://github.com/jmrplens/TFG-TFM_EPS }
+        ats: { normal: false }
 
-    - category: Networking
-      icon: mdi:lan
-      items:
-        - name: TCP/IP & Networking
-          icon: fa-solid:network-wired
-          level: 4
-        - name: MikroTik RouterOS
-          icon: simple-icons:mikrotik
-          level: 4
-        - name: WireGuard / VPN
-          icon: simple-icons:wireguard
-          level: 4
-        - name: IPv6 & Dual-stack
-          icon: mdi:ip-network-outline
-          level: 4
-        - name: QUIC / HTTP3
-          icon: mdi:lightning-bolt
-          level: 3
-        - name: DNS / Dynamic DNS
-          icon: mdi:dns
-          level: 3
+  - kind: education
+    title: Education
+    items:
+      - degree: PhD in Health and Wellness Technologies
+        org:
+          - {
+              name: Polytechnic University of Valencia,
+              short: UPV,
+              url: https://www.upv.es/index-en.html,
+            }
+        department:
+          {
+            name: Ultrasound Medical and Industrial Laboratory,
+            short: UMIL,
+            url: https://i3m.csic.upv.es/,
+          }
+        location: Valencia, Spain
+        period: 2023
+        summary: >-
+          Industrial and biomedical applications of metamaterials for the control of
+          acoustic beams. In this project, we propose to combine new air-coupled
+          ultrasound transducers with hyperbolic metamaterials to design vision
+          systems that exceed the imaging capabilities of traditional systems.
+        bullets:
+          - Biomedical signal processing and acoustic analysis algorithms.
+          - Ultrasound characterization for medical applications.
+          - Computational modeling and simulation of acoustic phenomena.
+          - Development of experimental methodologies for biomedical studies.
+          - Publication of results in specialized conferences and journals.
+          - >-
+            Before completing the doctorate, I redirected my career toward industrial
+            software development, applying my foundation in data analysis, programming
+            and analytical problem-solving.
+        documents:
+          - {
+              label: Academic record (ENG),
+              url: /pdf/degree/PhDExpEng.pdf,
+              ariaLabel: Academic record (ENG) - PhD program in English,
+            }
+          - {
+              label: Academic record (SPA),
+              url: /pdf/degree/PhDExpCas.pdf,
+              ariaLabel: Academic record (SPA) - PhD program in Spanish,
+            }
+        ats:
+          normal: true
+          org: Polytechnic University of Valencia (i3M / UMIL)
+          summary: >-
+            Research on acoustic metamaterials for medical imaging and ultrasound
+            beam control (programme not completed; redirected to industrial software
+            development).
+      - degree: Master's Degree in Acoustical Engineering
+        org:
+          - {
+              name: Polytechnic University of Valencia,
+              short: UPV,
+              url: https://www.upv.es/index-en.html,
+            }
+        department:
+          {
+            name: Higher Polytechnic School of Gandia,
+            short: EPSG,
+            url: https://www.upv.es/entidades/epsg/en/home/,
+          }
+        location: Gandia, Spain
+        period: 2019
+        summary: >-
+          Degree obtained with honors in: Fundamentals of Acoustics, Acoustic
+          Isolation, Musical Acoustics, Signal Processing in Acoustic Engineering,
+          Ultrasonics and Acoustic Simulation Techniques.
+        notes:
+          - >-
+            Final Master's thesis entitled **Difusores acústicos basados en
+            resonadores de membrana y placa** ('Acoustic diffusers based on membrane
+            and plate resonators'), qualified with honors with special mention.
+        documents:
+          - {
+              label: Diploma,
+              url: /pdf/degree/Acoustic.pdf,
+              ariaLabel: Diploma (Acoustical Engineering),
+            }
+          - {
+              label: Academic record,
+              url: /pdf/degree/AcousticExpEng.pdf,
+              ariaLabel: Academic record (Acoustical Engineering),
+            }
+        ats:
+          normal: true
+          org: Polytechnic University of Valencia (EPSG)
+          summary: "Graduated with honors; Master's thesis awarded a special distinction."
+      - degree: Degree in Telecommunication Engineering in Sound and Image
+        org:
+          - {
+              name: University of Alicante,
+              short: UA,
+              url: https://www.ua.es/en/index.html,
+            }
+        department:
+          {
+            name: Higher Polytechnic School,
+            short: EPS,
+            url: https://eps.ua.es/en/home.html,
+          }
+        location: Alicante, Spain
+        period: 2018
+        summary: "Degree obtained together with the 2 specializations: Acoustic Engineering and Audiovisual Technology."
+        notes:
+          - >-
+            Final Degree Work entitled [Estudio de la relación campo
+            directo/reverberado; útil/perjudicial](https://rua.ua.es/entities/publication/51f4a3fd-7a4b-4d5a-9ff1-3cd7900b7d0f "Final Degree Work")
+            ('Study of the direct/reverberated field relationship; useful/harmful').
+        documents:
+          - {
+              label: Diploma,
+              url: /pdf/degree/Telecom.pdf,
+              ariaLabel: Diploma (Telecommunications),
+            }
+          - {
+              label: Academic record,
+              url: /pdf/degree/TelecomExpEng.pdf,
+              ariaLabel: Academic record (Telecommunications),
+            }
+        ats:
+          normal: true
+          org: University of Alicante (EPS)
+          summary: "Two specializations: Acoustic Engineering and Audiovisual Technology."
+      - degree: Higher Vocational Degree — Superior Sound Technician
+        org:
+          - {
+              name: IES Luis García Berlanga,
+              url: https://ies-berlanga.info/index.php/es/,
+            }
+        location: Alicante, Spain
+        period: 2011
+        documents:
+          - { label: Diploma (Sound), url: /pdf/degree/CFGS_Sonido.pdf }
+        ats: { normal: true, org: IES Luis García Berlanga }
+      - degree: Intermediate Vocational Degree — Electronics Technician
+        org:
+          - {
+              name: IES Salesianos (San José Artesano),
+              url: https://elche.salesianos.edu/colegio/san-jose-artesano/,
+            }
+        location: Elche, Spain
+        period: 2009
+        documents:
+          - {
+              label: Diploma (Electronics),
+              url: /pdf/degree/CFGM_Electronica.pdf,
+            }
+        ats: { normal: true, org: IES Salesianos (San José Artesano) }
 
-    - category: Security & Cryptography
-      icon: mdi:shield-lock-outline
-      items:
-        - name: Applied Cryptography
-          desc: (AEAD, encrypt-then-MAC, KDFs)
-          icon: fa-solid:key
-          level: 3
-        - name: TLS / mTLS / PKI
-          desc: (client certificates)
-          icon: fa-solid:certificate
-          level: 4
-        - name: Nginx Hardening
-          desc: (CSP, security headers)
-          icon: simple-icons:nginx
-          level: 4
-        - name: CrowdSec
-          desc: (IDS/IPS)
-          icon: fa-solid:user-shield
-          level: 3
-        - name: Network Hardening
-          desc: (firewall, tarpit, honeypot)
-          icon: fa-solid:shield-alt
-          level: 4
-
-    - category: AI & Agentic Engineering
-      icon: mdi:robot-outline
-      items:
-        - name: Model Context Protocol (MCP)
-          desc: (Server development in Go)
-          icon: simple-icons:modelcontextprotocol
-          level: 4
-        - name: AI Coding Agents
-          desc: (Claude Code, Copilot, agent skills/workflows)
-          icon: simple-icons:claude
-          level: 4
-        - name: LLM Integration
-          desc: (API, prompt engineering, tool-use)
-          icon: mdi:brain
-          level: 3
-
-    - category: Simulation & Acoustics
-      icon: fa-solid:wave-square
-      items:
-        - name: COMSOL Multiphysics
-          icon: simple-icons:comsol
-          level: 4
-        - name: LabView
-          icon: simple-icons:labview
-          level: 3
-        - name: Acoustic Instrumentation
-          desc: (laser/vibration accelerometers, microphones)
-          icon: fa-solid:wave-square
-          level: 4
-
-    - category: General & Platforms
-      icon: fa-solid:desktop
-      items:
-        - name: Linux / Unix
-          icon: logos:linux-tux
-          level: 4
-        - name: MacOS
-          icon: simple-icons:apple
-          level: 4
-        - name: Windows
-          icon: logos:microsoft-windows-icon
-          level: 4
-        - name: LaTeX
-          icon: vscode-icons:file-type-tex
-          level: 4
-        - name: HTML / CSS
-          icon: vscode-icons:file-type-html
-          level: 3
-
-- title: Open Source Projects
-  type: projects
-  contents:
-    - name: gitlab-mcp-server
-      tech: Go · Model Context Protocol server
-      icon: logos:go
-      description: >
-        Open-source GitLab MCP server that exposes 1,000+ GitLab operations to AI assistants
-        through a dynamic 2-tool find/execute design, with stdio/HTTP/OAuth transports and
-        safe & read-only modes.
-      metrics:
-        - 14★
-        - 30 releases
-        - ~23k downloads
-        - Listed on Glama, mcp.so, Cursor & mcpservers.org
-      links:
-        - link: https://github.com/jmrplens/gitlab-mcp-server
-          linkname: GitHub
-        - link: https://glama.ai/mcp/servers/jmrplens/gitlab-mcp-server
-          linkname: Glama
-        - link: https://cursor.directory/plugins/gitlab-mcp-server
-          linkname: Cursor
-    - name: PyOctaveBand
-      tech: Python · Signal processing
-      icon: logos:python
-      description: >
-        Octave-band and fractional octave-band filtering library for time-domain signals,
-        published on PyPI.
-      metrics:
-        - 96★
-        - PyPI
-      links:
-        - link: https://github.com/jmrplens/PyOctaveBand
-          linkname: GitHub
-        - link: https://pypi.org/project/PyOctaveBand/
-          linkname: PyPI
-    - name: cs-routeros-bouncer
-      tech: Go · Network security
-      icon: logos:go
-      description: >
-        CrowdSec bouncer for MikroTik RouterOS — manages address lists and firewall rules
-        through the RouterOS API.
-      metrics:
-        - 10★
-        - 14 releases
-      links:
-        - link: https://github.com/jmrplens/cs-routeros-bouncer
-          linkname: GitHub
-    - name: Cloudflare-DNS-Updater
-      tech: Bash · DevOps
-      icon: logos:bash-icon
-      description: >
-        Dynamic DNS client for Cloudflare (IPv4/IPv6) written in Bash, with a bats test
-        suite and coverage reporting.
-      metrics:
-        - 26★
-      links:
-        - link: https://github.com/jmrplens/Cloudflare-DNS-Updater
-          linkname: GitHub
-    - name: TFG-TFM_EPS
-      tech: LaTeX · Academic template
-      icon: vscode-icons:file-type-tex
-      description: >
-        LaTeX template for Bachelor's and Master's theses at the University of Alicante (EPS),
-        with an automated CI build pipeline.
-      metrics:
-        - 79★
-      links:
-        - link: https://github.com/jmrplens/TFG-TFM_EPS
-          linkname: GitHub
-
-- title: Formal education
-  type: time_table
-  contents:
-    - title: PhD in Health and Wellness Technologies
-      institution: Polytechnic University of Valencia (<a href="https://www.upv.es/index-en.html" aria-label="UPV - Polytechnic University of Valencia (PhD)">UPV</a>)
-      department: Ultrasound Medical and Industrial Laboratory (<a href="https://i3m.csic.upv.es/" aria-label="Ultrasound Medical and Industrial Laboratory (UMIL) - Laboratory (PhD)">UMIL</a>)
-      location: Valencia, Spain
-      year: 2023
-      summary: >
-        Industrial and biomedical applications of metamaterials for the control of acoustic beams. In this project, we propose to combine new air-coupled ultrasound transducers with hyperbolic metamaterials to design vision systems that exceed the imaging capabilities of traditional systems.
-        <br><br>
-        During my PhD in Acoustic Engineering applied to Biomedicine, I conducted advanced research:
-      description:
-        - Biomedical signal processing and acoustic analysis algorithms.
-        - Ultrasound characterization for medical applications.
-        - Computational modeling and simulation of acoustic phenomena.
-        - Development of experimental methodologies for biomedical studies.
-        - Publication of results in specialized conferences and journals.
-        - "After nearly completing the doctoral program, I made the strategic decision to redirect my career toward industrial software development. This transition allowed me to apply my solid foundation in data analysis, programming, and analytical thinking to the software sector, where I found a more direct alignment between my technical skills and my long-term professional goals."
-      linkitems:
-        - link: /pdf/degree/PhDExpEng.pdf
-          linkname: "Academic record (ENG)"
-          ariaLabel: "Academic record (ENG) - PhD program in English"
-        - link: /pdf/degree/PhDExpCas.pdf
-          linkname: "Academic record (SPA)"
-          ariaLabel: "Academic record (SPA) - PhD program in Spanish"
-    - title: Master's Degree in Acoustical Engineering
-      institution: Polytechnic University of Valencia (<a href="https://www.upv.es/index-en.html" aria-label="UPV - Polytechnic University of Valencia (Master)">UPV</a>)
-      department: Higher Polytechnic School of Gandia (<a href="https://www.upv.es/entidades/epsg/en/home/" aria-label="EPSG - Gandia Campus (Master)">EPSG</a>)
-      location: Gandia, Spain
-      year: 2019
-      summary: >
-        Degree obtained with honors in: Fundamentals of Acoustics, Acoustic Isolation, Musical Acoustics, Signal Processing in Acoustic Engineering, Ultrasonics and Acoustic Simulation Techniques.
-        <br><br>
-        Final Master's thesis entitled <strong>Difusores acústicos basados en resonadores de membrana y placa</strong> ('Acoustic diffusers based on membrane and plate resonators'), qualified with honors with special mention.
-      linkitems:
-        - link: /pdf/degree/Acoustic.pdf
-          linkname: "Diploma"
-          ariaLabel: "Diploma (Acoustical Engineering)"
-        - link: /pdf/degree/AcousticExpEng.pdf
-          linkname: "Academic record"
-          ariaLabel: "Academic record (Acoustical Engineering)"
-    - title: Degree in Telecommunication Engineering in Sound and Image
-      institution: University of Alicante (<a href="https://www.ua.es/en/index.html" aria-label="UA - University of Alicante (Bachelor)">UA</a>)
-      department: Higher Polytechnic School (<a href="https://eps.ua.es/en/home.html" aria-label="EPS - Higher Polytechnic School (Bachelor)">EPS</a>)
-      location: Alicante, Spain
-      year: 2018
-      summary: >
-        Degree obtained together with the 2 specializations: Acoustic Engineering and Audiovisual Technology.
-        <br><br>
-        Final Degree Work entitled <a href="https://rua.ua.es/entities/publication/51f4a3fd-7a4b-4d5a-9ff1-3cd7900b7d0f" aria-label="Estudio de la relación campo directo/reverberado - Final Degree Work">Estudio de la relación campo directo/reverberado; útil/perjudicial</a> ('Study of the direct/reverberated field relationship; useful/harmful')
-      linkitems:
-        - link: /pdf/degree/Telecom.pdf
-          linkname: "Diploma"
-          ariaLabel: "Diploma (Telecommunications)"
-        - link: /pdf/degree/TelecomExpEng.pdf
-          linkname: "Academic record"
-          ariaLabel: "Academic record (Telecommunications)"
-    - title: Certificate of Higher Education in Electronics Technician & Superior Sound Technician
-      institution: <a href="https://elche.salesianos.edu/colegio/san-jose-artesano/" aria-label="IES Salesianos (San José Artesano) - website">IES Salesianos (San José Artesano)</a> & <a href="https://ies-berlanga.info/index.php/es/" aria-label="IES Luis García Berlanga - website">IES Luis García Berlanga</a>
-      location: Elche & Alicante, Spain
-      year: 2009/2011
-      linkitems:
-        - link: /pdf/degree/CFGM_Electronica.pdf
-          linkname: "Diploma (Electronics)"
-        - link: /pdf/degree/CFGS_Sonido.pdf
-          linkname: "Diploma (Sound)"
-
-- title: Certificates
-  type: certificate_list
-  contents:
-    - category: Occupational Health and Safety
-      icon: fa-solid:medkit
-      items:
-        - name: Generic
-          school: INVASSAT
-          time: 50 Hours
-          link: /pdf/certificates/PRL/PRL_Generico.pdf
-          linkname: CERT
-        - name: Nanomaterials
-          school: INVASSAT
-          time: 50 Hours
-          link: /pdf/certificates/PRL/PRL_Nanomateriales.pdf
-          linkname: CERT
-        - name: Chemical sector
-          school: INVASSAT
-          time: 50 Hours
-          link: /pdf/certificates/PRL/PRL_Quimico.pdf
-          linkname: CERT
-        - name: Emergencies
-          school: INVASSAT
-          time: 70 Hours
-          link: /pdf/certificates/PRL/PRL_Emergencias.pdf
-          linkname: CERT
-        - name: Nutrition
-          school: INVASSAT
-          time: 50 Hours
-          link: /pdf/certificates/PRL/PRL_Alimentario.pdf
-          linkname: CERT
-        - name: Educational
-          school: INVASSAT
-          time: 50 Hours
-          link: /pdf/certificates/PRL/PRL_Educativo.pdf
-          linkname: CERT
-        - name: Services
-          school: INVASSAT
-          time: 50 Hours
-          link: /pdf/certificates/PRL/PRL_Servicios.pdf
-          linkname: CERT
-        - name: Researcher
-          school: UPV
-          time: 15 Hours
-          link: /pdf/certificates/PRL/CertificadoPRLUPV.pdf
-          linkname: CERT
-
-    - category: Transversal competences
-      icon: fa-solid:users
-      items:
-        - name: Gender perspective
-          school: EVES
-          time: 20 Hours
-          link: /pdf/certificates/PerspectivaDeGenero.pdf
-          linkname: CERT
-        - name: Teamwork
-          school: Labora
-          time: 25 Hours
-          link: /pdf/certificates/TrabajoEnEquipo.pdf
-          linkname: CERT
-        - name: Design Thinking
-          school: Labora
-          time: 25 Hours
-          link: /pdf/certificates/DesignThinking.pdf
-          linkname: CERT
-        - name: Critical Thinking
-          school: Labora
-          time: 25 Hours
-          link: /pdf/certificates/PensamientoCritico.pdf
-          linkname: CERT
-        - name: Adaptability, flexibility and agility
-          school: Labora
-          time: 25 Hours
-          link: /pdf/certificates/AdaptacionFlexibilidadAgilidad.pdf
-          linkname: CERT
-        - name: Autonomy, innovation, ...
-          school: Labora
-          time: 25 Hours
-          link: /pdf/certificates/AutonomiaInnovacion.pdf
-          linkname: CERT
-        - name: Improving professional efficiency
-          school: Labora
-          time: 25 Hours
-          link: /pdf/certificates/MejoraEficiencia.pdf
-          linkname: CERT
-        - name: Entrepreneur gender perspective
-          school: UPV
-          time: 20 Hours
-          link: /pdf/certificates/EmprendimientoPerspectivaGenero.pdf
-          linkname: CERT
-    - category: Labor/Industrial
-      icon: fa-solid:industry
-      items:
-        - name: Op. Industrial trucks
-          school: Gescoform
-          time: 15 Hours
-          link: /pdf/certificates/Certificado_Carretilla.pdf
-          linkname: CERT
-        - name: Food Hygiene Course
-          school: Asonoman
-          time: 30 Hours
-          link: https://www.asonaman.es/files/crt/2022/10/09/CBBUWIQEBMUJKENWAKEZHYAGHKKA.pdf
-          linkname: CERT
-        - name: Self-protection plans
-          school: INVASSAT
-          time: 15 Hours
-          link: /pdf/certificates/PlanesAutoproteccion.pdf
-          linkname: CERT
-        - name: Static electricity
-          school: INVASSAT
-          time: 15 Hours
-          link: /pdf/certificates/ElectricidadEstatica.pdf
-          linkname: CERT
-        - name: Data privacy
-          school: CSIRT-CV
-          time: 10 Hours
-          link: /pdf/certificates/ProteccionDeDatos.pdf
-          linkname: CERT
-    - category: Information technology
-      icon: fa-solid:laptop-code
-      items:
-        - name: Using Python for Research
-          school: HardvardX
-          time: 50 Hours
-          link: https://courses.edx.org/certificates/f1fb6cbd6f39431c9f57c7ee3a5dc3ad
-          linkname: CERT
-        - name: Analyzing Data With Python
-          school: IBM
-          time: 20 Hours
-          link: https://courses.edx.org/certificates/62fed4c86a17427ebb5b6bbbc39e34df
-          linkname: CERT
-        - name: Visualizing Data with Python
-          school: IBM
-          time: 20 Hours
-          link: https://courses.edx.org/certificates/0f49b9baa42f4464b2e0d99ade544790
-          linkname: CERT
+  - kind: certificates
+    title: Certificates
+    ats: { normal: false }
+    groups:
+      - category: Occupational Health and Safety
+        icon: fa-solid:medkit
+        items:
+          - {
+              name: Generic,
+              school: INVASSAT,
+              hours: 50 Hours,
+              url: /pdf/certificates/PRL/PRL_Generico.pdf,
+            }
+          - {
+              name: Nanomaterials,
+              school: INVASSAT,
+              hours: 50 Hours,
+              url: /pdf/certificates/PRL/PRL_Nanomateriales.pdf,
+            }
+          - {
+              name: Chemical sector,
+              school: INVASSAT,
+              hours: 50 Hours,
+              url: /pdf/certificates/PRL/PRL_Quimico.pdf,
+            }
+          - {
+              name: Emergencies,
+              school: INVASSAT,
+              hours: 70 Hours,
+              url: /pdf/certificates/PRL/PRL_Emergencias.pdf,
+            }
+          - {
+              name: Nutrition,
+              school: INVASSAT,
+              hours: 50 Hours,
+              url: /pdf/certificates/PRL/PRL_Alimentario.pdf,
+            }
+          - {
+              name: Educational,
+              school: INVASSAT,
+              hours: 50 Hours,
+              url: /pdf/certificates/PRL/PRL_Educativo.pdf,
+            }
+          - {
+              name: Services,
+              school: INVASSAT,
+              hours: 50 Hours,
+              url: /pdf/certificates/PRL/PRL_Servicios.pdf,
+            }
+          - {
+              name: Researcher,
+              school: UPV,
+              hours: 15 Hours,
+              url: /pdf/certificates/PRL/CertificadoPRLUPV.pdf,
+            }
+      - category: Transversal competences
+        icon: fa-solid:users
+        items:
+          - {
+              name: Gender perspective,
+              school: EVES,
+              hours: 20 Hours,
+              url: /pdf/certificates/PerspectivaDeGenero.pdf,
+            }
+          - {
+              name: Teamwork,
+              school: Labora,
+              hours: 25 Hours,
+              url: /pdf/certificates/TrabajoEnEquipo.pdf,
+            }
+          - {
+              name: Design Thinking,
+              school: Labora,
+              hours: 25 Hours,
+              url: /pdf/certificates/DesignThinking.pdf,
+            }
+          - {
+              name: Critical Thinking,
+              school: Labora,
+              hours: 25 Hours,
+              url: /pdf/certificates/PensamientoCritico.pdf,
+            }
+          - {
+              name: "Adaptability, flexibility and agility",
+              school: Labora,
+              hours: 25 Hours,
+              url: /pdf/certificates/AdaptacionFlexibilidadAgilidad.pdf,
+            }
+          - {
+              name: "Workplace autonomy and innovation, initiative and creativity",
+              school: Labora,
+              hours: 25 Hours,
+              url: /pdf/certificates/AutonomiaInnovacion.pdf,
+            }
+          - {
+              name: Improving professional efficiency,
+              school: Labora,
+              hours: 25 Hours,
+              url: /pdf/certificates/MejoraEficiencia.pdf,
+            }
+          - {
+              name: Entrepreneur gender perspective,
+              school: UPV,
+              hours: 20 Hours,
+              url: /pdf/certificates/EmprendimientoPerspectivaGenero.pdf,
+            }
+      - category: Labor/Industrial
+        icon: fa-solid:industry
+        items:
+          - {
+              name: Op. Industrial trucks,
+              school: Gescoform,
+              hours: 15 Hours,
+              url: /pdf/certificates/Certificado_Carretilla.pdf,
+            }
+          - {
+              name: Food Hygiene Course,
+              school: Asonoman,
+              hours: 30 Hours,
+              url: https://www.asonaman.es/files/crt/2022/10/09/CBBUWIQEBMUJKENWAKEZHYAGHKKA.pdf,
+            }
+          - {
+              name: Self-protection plans,
+              school: INVASSAT,
+              hours: 15 Hours,
+              url: /pdf/certificates/PlanesAutoproteccion.pdf,
+            }
+          - {
+              name: Static electricity,
+              school: INVASSAT,
+              hours: 15 Hours,
+              url: /pdf/certificates/ElectricidadEstatica.pdf,
+            }
+          - {
+              name: Data privacy,
+              school: CSIRT-CV,
+              hours: 10 Hours,
+              url: /pdf/certificates/ProteccionDeDatos.pdf,
+            }
+      - category: Information technology
+        icon: fa-solid:laptop-code
+        items:
+          - {
+              name: Using Python for Research,
+              school: HarvardX,
+              hours: 50 Hours,
+              url: https://courses.edx.org/certificates/f1fb6cbd6f39431c9f57c7ee3a5dc3ad,
+            }
+          - {
+              name: Analyzing Data With Python,
+              school: IBM,
+              hours: 20 Hours,
+              url: https://courses.edx.org/certificates/62fed4c86a17427ebb5b6bbbc39e34df,
+            }
+          - {
+              name: Visualizing Data with Python,
+              school: IBM,
+              hours: 20 Hours,
+              url: https://courses.edx.org/certificates/0f49b9baa42f4464b2e0d99ade544790,
+            }

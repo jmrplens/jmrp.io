@@ -86,6 +86,10 @@ function runVerify() {
     { name: "Static: Prettier", command: "pnpm exec prettier --check ." },
     { name: "Lint: CSS (Stylelint)", command: "pnpm lint:css" },
     { name: "Build: Production Build", command: "pnpm run build" },
+    {
+      name: "ATS: CV Compatibility",
+      command: "node scripts/cv/verify-ats.mjs",
+    },
     { name: "Lint: HTML5 Validation", command: "pnpm lint:html" },
     {
       name: "Lint: RSS Feed",

@@ -4,7 +4,7 @@
  * Used by the CV "projects" section type.
  */
 import type { CVProjectItem } from "@src/types";
-import { sanitize } from "@utils/html";
+import { markdownToHtml } from "@utils/cv-markdown";
 
 interface Props {
   project: CVProjectItem;
@@ -43,7 +43,7 @@ const { project } = Astro.props;
     project.description && (
       <div
         class="project-description"
-        set:html={sanitize(project.description)}
+        set:html={markdownToHtml(project.description)}
       />
     )
   }
@@ -53,20 +53,17 @@ const { project } = Astro.props;
       <div class="project-links">
         {project.links.map((link) => (
           <a
-            href={link.link}
+            href={link.url}
             class="btn btn-sm btn-outline"
             target="_blank"
             rel="external noopener noreferrer"
-            aria-label={
-              link.ariaLabel ??
-              `${link.linkname ?? link.name ?? "Link"} — ${project.name}`
-            }
+            aria-label={link.ariaLabel ?? `${link.label} — ${project.name}`}
           >
             <span
               class="i-fa-solid:external-link-alt"
               aria-hidden="true"
             />
-            {link.linkname ?? link.name}
+            {link.label}
           </a>
         ))}
       </div>

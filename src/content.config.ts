@@ -218,94 +218,186 @@ const site_config = defineCollection({
   ]),
 });
 
-/** Schema for a link item within the CV. */
+/**
+ * A URL restricted to safe schemes (http/https/mailto) or root-relative paths,
+ * since these values are later rendered as `href`.
+ */
+const safeUrl = z
+  .string()
+  .refine(
+    (u) =>
+      !u.startsWith("//") &&
+      (/^(https?:|mailto:)/i.test(u) || u.startsWith("/")),
+    "URL must be http(s), mailto:, or a root-relative path (no //host)",
+  );
+
+/**
+ * Generic CV link. `kind` tags contact links in `basics`; `ariaLabel`
+ * disambiguates links with the same visible text.
+ */
 const CVLink = z.object({
-  link: z.string(),
-  name: z.string().optional(),
-  linkname: z.string().optional(),
-  download: z.string().optional(),
+  label: z.string(),
+  url: safeUrl,
+  kind: z.string().optional(),
   ariaLabel: z.string().optional(),
 });
 
-/** Schema for a simple key-value or list item in CV sections. */
-const CVMapItem = z.object({
+/** An organization/entity (with optional short name + URL). */
+const CVOrg = z.object({
   name: z.string(),
-  value: z.string().optional(),
-  links: z.array(CVLink).optional(),
-  /** When true, this item is a format group of the CV downloads block (ATS / Design). */
-  downloadGroup: z.boolean().optional(),
-  /** Marks the recommended download format (shows a badge). */
-  recommended: z.boolean().optional(),
+  short: z.string().optional(),
+  url: safeUrl.optional(),
 });
 
-/** Schema for a chronologically listed item (Education, Experience). */
-const CVTimelineItem = z.object({
-  title: z.string(),
-  institution: z.string().optional(),
-  department: z.string().optional(),
-  location: z.string().optional(),
-  year: z.union([z.string(), z.number()]).optional(),
+/**
+ * ATS-generator hints (ignored by the website). Control the concise ("normal")
+ * ATS profile: whether the item/section appears, and condensed org/summary/bullets.
+ */
+const CVAts = z.object({
+  normal: z.boolean().optional(),
+  org: z.string().optional(),
   summary: z.string().optional(),
-  description: z
-    .array(
-      z.union([
-        z.string(),
-        z.object({
-          title: z.string(),
-          contents: z.array(z.string()),
-        }),
-      ]),
-    )
-    .optional(),
-  linkitems: z.array(CVLink).optional(),
+  bullets: z.array(z.string()).optional(),
 });
 
-/** Schema for an individual skill or tool. */
+/** A grouped list of publications embedded under an experience/education entry. */
+const CVPubGroup = z.object({
+  heading: z.string(),
+  items: z.array(z.string()),
+});
+
+/** Header / identity block (name, headline, contact, profile summary). */
+const CVBasics = z.object({
+  name: z.string(),
+  headline: z.string(),
+  location: z.string(),
+  availability: z.string().optional(),
+  email: z.string().optional(),
+  /** Profile summary (inline markdown). */
+  profile: z.string(),
+  links: z.array(CVLink),
+});
+
+/** A downloadable CV file within a download format group. */
+const CVDownloadFile = z.object({
+  lang: z.string(),
+  label: z.string(),
+  url: safeUrl,
+  download: z.string(),
+});
+
+/** A CV download format group (e.g. ATS concise / ATS full / Design). */
+const CVDownload = z.object({
+  format: z.string(),
+  note: z.string().optional(),
+  recommended: z.boolean().optional(),
+  files: z.array(CVDownloadFile),
+});
+
+/** Common fields for chronological entries (text fields are inline markdown). */
+const CVChronoBase = {
+  org: z.array(CVOrg),
+  department: CVOrg.optional(),
+  location: z.string().optional(),
+  period: z.union([z.string(), z.number()]).optional(),
+  summary: z.string().optional(),
+  notes: z.array(z.string()).optional(),
+  bullets: z.array(z.string()).optional(),
+  pubGroups: z.array(CVPubGroup).optional(),
+  links: z.array(CVLink).optional(),
+  ats: CVAts.optional(),
+};
+
+/** An experience (job/role) entry. */
+const CVExperienceItem = z.object({ role: z.string(), ...CVChronoBase });
+
+/** An education entry (adds downloads for diplomas/transcripts). */
+const CVEducationItem = z.object({
+  degree: z.string(),
+  ...CVChronoBase,
+  documents: z.array(CVLink).optional(),
+});
+
+/** An individual skill or tool. */
 const CVSkillItem = z.object({
   name: z.string(),
   icon: z.string().optional(),
   level: z.number().optional(),
-  desc: z.string().optional(),
+  note: z.string().optional(),
 });
 
-/** Schema for a grouped collection of skills. */
+/** A grouped collection of skills. */
 const CVSkillGroup = z.object({
   category: z.string(),
   icon: z.string().optional(),
   items: z.array(CVSkillItem),
 });
 
-/** Schema for a certificate or award. */
+/** A featured open-source / portfolio project. */
+const CVProjectItem = z.object({
+  name: z.string(),
+  tech: z.string().optional(),
+  icon: z.string().optional(),
+  description: z.string().optional(),
+  metrics: z.array(z.string()).optional(),
+  links: z.array(CVLink).optional(),
+  ats: CVAts.optional(),
+});
+
+/** A certificate or award. */
 const CVCertificateItem = z.object({
   name: z.string(),
   school: z.string().optional(),
-  time: z.string().optional(),
-  link: z.string().optional(),
-  linkname: z.string().optional(),
+  hours: z.string().optional(),
+  url: safeUrl.optional(),
+  ariaLabel: z.string().optional(),
 });
 
-/** Schema for a grouped collection of certificates. */
+/** A grouped collection of certificates. */
 const CVCertificateGroup = z.object({
   category: z.string(),
   icon: z.string().optional(),
   items: z.array(CVCertificateItem),
 });
 
-/** Schema for a featured open-source / portfolio project. */
-const CVProjectItem = z.object({
-  name: z.string(),
-  /** Short tech/role line, e.g. "Go · MCP server". */
-  tech: z.string().optional(),
-  icon: z.string().optional(),
-  description: z.string().optional(),
-  /** Free-text badges, e.g. ["23k downloads", "14★", "PyPI"]. */
-  metrics: z.array(z.string()).optional(),
-  links: z.array(CVLink).optional(),
-});
+/** CV body sections, discriminated by an explicit `kind`. */
+const CVSection = z.discriminatedUnion("kind", [
+  z.object({
+    kind: z.literal("experience"),
+    title: z.string(),
+    items: z.array(CVExperienceItem),
+    ats: CVAts.optional(),
+  }),
+  z.object({
+    kind: z.literal("education"),
+    title: z.string(),
+    items: z.array(CVEducationItem),
+    ats: CVAts.optional(),
+  }),
+  z.object({
+    kind: z.literal("skills"),
+    title: z.string(),
+    groups: z.array(CVSkillGroup),
+    ats: CVAts.optional(),
+  }),
+  z.object({
+    kind: z.literal("projects"),
+    title: z.string(),
+    items: z.array(CVProjectItem),
+    ats: CVAts.optional(),
+  }),
+  z.object({
+    kind: z.literal("certificates"),
+    title: z.string(),
+    groups: z.array(CVCertificateGroup),
+    ats: CVAts.optional(),
+  }),
+]);
 
 /**
  * Configuration for 'cv' data collection.
- * Defines the complex structure for the multi-section resume.
+ * Each locale file (`{es,en}.yaml`) is one document: a header (`basics`),
+ * downloadable PDFs (`downloads`), and the CV body (`sections`).
  */
 const cv = defineCollection({
   loader: glob({
@@ -313,35 +405,11 @@ const cv = defineCollection({
     base: "./src/content/cv",
     generateId: ({ entry }) => stripExtension(entry),
   }),
-  schema: z.array(
-    z.discriminatedUnion("type", [
-      z.object({
-        title: z.string(),
-        type: z.literal("map"),
-        contents: z.array(CVMapItem),
-      }),
-      z.object({
-        title: z.string(),
-        type: z.literal("time_table"),
-        contents: z.array(CVTimelineItem),
-      }),
-      z.object({
-        title: z.string(),
-        type: z.literal("list_groups"),
-        contents: z.array(CVSkillGroup),
-      }),
-      z.object({
-        title: z.string(),
-        type: z.literal("certificate_list"),
-        contents: z.array(CVCertificateGroup),
-      }),
-      z.object({
-        title: z.string(),
-        type: z.literal("projects"),
-        contents: z.array(CVProjectItem),
-      }),
-    ]),
-  ),
+  schema: z.object({
+    basics: CVBasics,
+    downloads: z.array(CVDownload),
+    sections: z.array(CVSection),
+  }),
 });
 
 /**
