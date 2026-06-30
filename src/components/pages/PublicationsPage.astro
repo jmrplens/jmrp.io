@@ -47,67 +47,69 @@ const collectionSchema = {
   mainEntity: {
     "@type": "ItemList",
     numberOfItems: allPublications.length,
-    itemListElement: allPublications.map((pub, index): ListItem => ({
-      "@type": "ListItem",
-      position: index + 1,
-      item: {
-        "@type": "ScholarlyArticle",
-        headline: pub.title,
-        name: pub.title,
-        datePublished: formatIssuedDate(pub.issued),
-        author:
-          pub.author?.map((a: { family: string; given?: string }) => ({
-            "@type": "Person",
-            // Link the site owner's own author node to the canonical #person
-            // entity. Match the full surname "Requena-Plens"/"Requena Plens"
-            // (not a bare "Requena") so a co-author is never mis-attributed.
-            ...(/requena[\s-]?plens/i.test(a.family) && {
-              "@id": new URL("#person", getSiteUrl()).href,
-            }),
-            ...(a.given && { givenName: a.given }),
-            familyName: a.family,
-            name: a.given ? `${a.given} ${a.family}` : a.family,
-          })) || [],
-        // Schema.org: an article `isPartOf` its venue. A journal is a
-        // Periodical; conference proceedings are a CreativeWork (Periodical
-        // would wrongly imply a recurring magazine). Standalone works
-        // (theses/reports) have no journal/proceedings parent, so omit it.
-        ...(() => {
-          const venue = stripTrailingPunctuation(
-            String(pub["container-title"] || pub.publisher || ""),
-          ).trim();
-          const isJournal = [
-            "article-journal",
-            "article",
-            "article-magazine",
-          ].includes(pub.type);
-          const isConference = pub.type === "paper-conference";
-          if (!venue || (!isJournal && !isConference)) return {};
-          return {
-            isPartOf: {
-              "@type": isJournal ? "Periodical" : "CreativeWork",
-              name: venue,
-            },
-          };
-        })(),
-        abstract:
-          typeof pub.abstract === "string"
-            ? stripHtml(pub.abstract)
-            : undefined,
-        ...(() => {
-          const doi = typeof pub.doi === "string" ? pub.doi : undefined;
-          let doiUrl: string | undefined;
-          if (doi) {
-            doiUrl = doi.startsWith("http") ? doi : `https://doi.org/${doi}`;
-          }
-          const pubUrl = typeof pub.url === "string" ? pub.url : undefined;
-          return {
-            url: pubUrl || doiUrl || undefined,
-            ...(doiUrl && { sameAs: [doiUrl] }),
-          };
-        })(),
-      },
-    })),
+    itemListElement: allPublications.map(
+      (pub, index): ListItem => ({
+        "@type": "ListItem",
+        position: index + 1,
+        item: {
+          "@type": "ScholarlyArticle",
+          headline: pub.title,
+          name: pub.title,
+          datePublished: formatIssuedDate(pub.issued),
+          author:
+            pub.author?.map((a: { family: string; given?: string }) => ({
+              "@type": "Person",
+              // Link the site owner's own author node to the canonical #person
+              // entity. Match the full surname "Requena-Plens"/"Requena Plens"
+              // (not a bare "Requena") so a co-author is never mis-attributed.
+              ...(/requena[\s-]?plens/i.test(a.family) && {
+                "@id": new URL("#person", getSiteUrl()).href,
+              }),
+              ...(a.given && { givenName: a.given }),
+              familyName: a.family,
+              name: a.given ? `${a.given} ${a.family}` : a.family,
+            })) || [],
+          // Schema.org: an article `isPartOf` its venue. A journal is a
+          // Periodical; conference proceedings are a CreativeWork (Periodical
+          // would wrongly imply a recurring magazine). Standalone works
+          // (theses/reports) have no journal/proceedings parent, so omit it.
+          ...(() => {
+            const venue = stripTrailingPunctuation(
+              String(pub["container-title"] || pub.publisher || ""),
+            ).trim();
+            const isJournal = [
+              "article-journal",
+              "article",
+              "article-magazine",
+            ].includes(pub.type);
+            const isConference = pub.type === "paper-conference";
+            if (!venue || (!isJournal && !isConference)) return {};
+            return {
+              isPartOf: {
+                "@type": isJournal ? "Periodical" : "CreativeWork",
+                name: venue,
+              },
+            };
+          })(),
+          abstract:
+            typeof pub.abstract === "string"
+              ? stripHtml(pub.abstract)
+              : undefined,
+          ...(() => {
+            const doi = typeof pub.doi === "string" ? pub.doi : undefined;
+            let doiUrl: string | undefined;
+            if (doi) {
+              doiUrl = doi.startsWith("http") ? doi : `https://doi.org/${doi}`;
+            }
+            const pubUrl = typeof pub.url === "string" ? pub.url : undefined;
+            return {
+              url: pubUrl || doiUrl || undefined,
+              ...(doiUrl && { sameAs: [doiUrl] }),
+            };
+          })(),
+        },
+      }),
+    ),
   },
 } satisfies CollectionPage;
 ---

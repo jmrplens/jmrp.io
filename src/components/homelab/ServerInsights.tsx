@@ -337,7 +337,12 @@ function formatPercent(v: number | string): string {
 }
 
 type StatusKey =
-  "critical" | "high" | "elevated" | "optimal" | "healthy" | "unknown";
+  | "critical"
+  | "high"
+  | "elevated"
+  | "optimal"
+  | "healthy"
+  | "unknown";
 
 /** Returns a status key based on CPU and Memory usage thresholds. */
 function getStatus(
@@ -518,7 +523,10 @@ export default function ServerInsights({
           if (isValidStatsForType(type, data)) {
             setStats(
               data as
-                MatrixStats | MastodonStats | TrueNASStats | MikroTikStats,
+                | MatrixStats
+                | MastodonStats
+                | TrueNASStats
+                | MikroTikStats,
             );
             setError(false);
           } else {

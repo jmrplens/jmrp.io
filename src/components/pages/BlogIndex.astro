@@ -54,13 +54,15 @@ const schema = {
   mainEntity: {
     "@type": "ItemList",
     numberOfItems: posts.length,
-    itemListElement: posts.map((post, index): ListItem => ({
-      "@type": "ListItem",
-      position: index + 1,
-      url: new URL(translatePath(`/blog/${post.data.slug}/`), getSiteUrl())
-        .href,
-      name: post.data.title,
-    })),
+    itemListElement: posts.map(
+      (post, index): ListItem => ({
+        "@type": "ListItem",
+        position: index + 1,
+        url: new URL(translatePath(`/blog/${post.data.slug}/`), getSiteUrl())
+          .href,
+        name: post.data.title,
+      }),
+    ),
   },
 } satisfies CollectionPage;
 ---

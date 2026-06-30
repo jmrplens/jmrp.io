@@ -175,7 +175,12 @@ function formatPercent(v: number | string) {
 }
 
 type StatusKey =
-  "critical" | "high" | "elevated" | "optimal" | "healthy" | "unknown";
+  | "critical"
+  | "high"
+  | "elevated"
+  | "optimal"
+  | "healthy"
+  | "unknown";
 
 /**
  * Returns a status key based on CPU and Memory usage thresholds.

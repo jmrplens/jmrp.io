@@ -102,7 +102,8 @@ export async function getSitemapUrls(): Promise<string[]> {
 
   try {
     const parsed = (await parseStringPromise(sitemap.content)) as
-      SitemapResult | SitemapIndexResult;
+      | SitemapResult
+      | SitemapIndexResult;
     const urls: string[] = [];
 
     if (sitemap.isIndex && "sitemapindex" in parsed) {
@@ -209,7 +210,8 @@ export async function getPagesFromSitemap(): Promise<PageInfo[]> {
 
   try {
     const parsed = (await parseStringPromise(sitemap.content)) as
-      SitemapResult | SitemapIndexResult;
+      | SitemapResult
+      | SitemapIndexResult;
 
     let urls: PageInfo[] = [];
 
