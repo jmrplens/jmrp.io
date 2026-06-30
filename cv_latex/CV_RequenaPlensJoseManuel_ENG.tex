@@ -121,10 +121,10 @@ Firmware development for solar inverters and control systems in photovoltaic pla
 \begin{itemize}
 	\item Reduced RTOS task stack usage by 30\%--50\%, optimizing memory on STM32 microcontrollers.
 	\item Optimized Modbus TCP request handling, cutting CPU usage under load (40,000 req/s) from 80\% to 17\% with no dropped responses.
-	\item Improved embedded file-system stability, reducing access times under continuous operation.
+	\item Redesigned embedded file-system access, cutting access times by over 50\% and adding a scheduled purge (daily/monthly) that safely clears thousands of files under continuous operation.
 	\item Built and maintained industrial communications in C with hardware abstraction layers (HAL): Modbus RTU/TCP, UART, I2C and SPI.
-	\item Automated thousands of unit tests (Ceedling) and on-hardware integration tests (pytest): TCP/FTP performance and FTP security.
-	\item Reviewed the team's merge requests, catching bugs and proposing improvements before integration.
+	\item Automated the test suite: $\sim$50--80 unit tests per module (Ceedling, thousands in total) reaching 100\% line and branch coverage via standard-library \textit{mocks}/\textit{fakes}, plus hundreds of on-hardware integration tests (pytest); all in CI.
+	\item Reviewed merge requests across a 12-person team, catching bugs and proposing improvements before integration.
 \end{itemize}
 \end{minipage}
 \vspace{0.5em}
@@ -161,15 +161,14 @@ The main objective is to conduct research and development of acoustic metamateri
 \noindent Goals achieved:
 \end{justify}
 \begin{itemize}
-	\item Theoretical development of acoustic metadiffusers based on membranes or plates reducing the size of commercial diffusers.
+	\item Developed acoustic metadiffusers reaching a diffusion coefficient of 0.8 with a thickness 10$\times$ smaller than traditional diffusers.
 	\item Simulation of the acoustic diffusers and validation of results (MATLAB \& COMSOL).
 	\item Two publications in national and international congresses:
 	\begin{itemize}
 		\item Tecniacústica - \href{https://jmrp.io/pdf/paper-resources/Conferences/Tecniacustica/JimenezTEC2020a.pdf}{\bf Beyond Schroeder diffusers using acoustic metasurfaces}
 		\item Euronoise - \href{https://jmrp.io/pdf/paper-resources/Conferences/Euronoise/plensEuro2021_2.pdf}{\bf Sound diffusing metasurfaces based on elastic plates and membranes}
 	\end{itemize}
-	\item Development and simulation of metamaterial-based waveguides for improved ultrasound resolution in air. 
-	\item Fabrication of waveguide prototypes.
+	\item Designed and 3D-printed (resin) slitted-tube waveguides with numerically-computed slits (2--3 cm tubes, $\sim$0.5 mm slits) that increased ultrasound directivity and range $\sim$15$\times$ in air, validated experimentally.
 	\item Validated experimental results against those obtained in simulation.
 	\item Advisor of the Master thesis of a student of the Master's Degree in Acoustic Engineering of the UPV.
 \end{itemize}
@@ -192,10 +191,10 @@ Implement and experimentally validate a sound mitigation method, applicable to a
 \noindent All project objectives were completed at 100\%:
 \end{justify}
 \begin{itemize}
-	\item Design of the optimum geometry of the acoustic metamaterial to reduce noise levels.
+	\item Designed the optimum acoustic-metamaterial geometry, achieving near-total absorption ($\alpha \approx 1$) across 200--500 Hz with a subwavelength design (ratio $\lambda$/thickness $\approx 16.5$ vs $\sim$2 conventional), validated on real lab prototypes.
 	\item Simulation of a real environment to validate design performance (MATLAB, COMSOL \& Python).
-	\item Design of the industrial model for the manufacture of the prototype by means of plastic injection.
-	\item Development of software for acoustic measurements according to ISO 10534-2:1998 and ASTM 2611-19 standards. \href{https://github.com/jmrplens/A-Lab}{\bf A|Lab}.
+	\item Designed and 3D-printed the first prototype; for the large-scale version designed the injection-molding model and sourced the manufacture of 600 modules with a supplier.
+	\item Development of software for acoustic measurements according to ISO 10534-2 and ASTM E2611 standards. \href{https://github.com/jmrplens/A-Lab}{\bf A|Lab}.
 	\item Design and development of a 3-axis robotic system to perform experimental measurements. Photos and some information here: \href{https://cienciagandia.webs.upv.es/en/2022/03/metamaterial-to-reduce-noise-in-space-rocket-launches/}{\bf NEWS}.
 	\item Results validated and accepted by ESA.
 	\item Three publications/presentations at international congresses (Euronoise and ECSSMET) and one at a national congress (Tecniacústica):

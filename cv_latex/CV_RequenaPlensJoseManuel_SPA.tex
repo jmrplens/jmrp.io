@@ -129,10 +129,10 @@ Desarrollo de firmware para inversores solares y sistemas de control en plantas 
 \begin{itemize}
 	\item Reduje el consumo de \textit{stack} de las tareas sobre RTOS entre un 30\% y un 50\%, optimizando el uso de memoria en los STM32.
 	\item Optimicé el manejo de peticiones Modbus TCP, reduciendo el uso de CPU bajo carga (40.000 peticiones/s) del 80\% al 17\% sin pérdida de respuestas.
-	\item Mejoré la estabilidad del sistema de archivos embebido, reduciendo los tiempos de acceso en operación continua.
+	\item Rediseñé el acceso al sistema de archivos embebido, reduciendo los tiempos de acceso más de un 50\% e implementé un borrado programado (diario/mensual) que limpia de forma segura miles de archivos en operación continua.
 	\item Implementé y mantuve comunicaciones industriales en C con capas de abstracción de hardware (HAL): Modbus RTU/TCP, UART, I2C y SPI.
-	\item Automaticé miles de pruebas unitarias (Ceedling) y de integración sobre hardware real (pytest): rendimiento TCP/FTP y seguridad FTP.
-	\item Revisé los \textit{merge requests} del equipo, detectando bugs y proponiendo mejoras antes de su integración.
+	\item Automaticé la suite de pruebas: $\sim$50--80 tests unitarios por módulo (Ceedling, miles en total) con 100\% de cobertura de líneas y ramas mediante \textit{mocks}/\textit{fakes} de la librería estándar, más cientos de pruebas de integración sobre hardware real (pytest); todo en CI.
+	\item Revisé los \textit{merge requests} de un equipo de 12 personas, detectando bugs y proponiendo mejoras antes de la integración.
 \end{itemize}
 \end{minipage}
 \vspace{0.5em}
@@ -165,15 +165,14 @@ Investigador en la línea de I+D: {\bf Metamateriales Acústicos para tratamient
 El objetivo principal es realizar la investigación y desarrollo de metamateriales acústicos para su uso en aplicaciones arquitectónicas y en el ámbito de la imagen médica.
 \end{justify}
 \begin{itemize}
-	\item Desarrollo teórico de metadifusores acústicos basados en membranas o placas reduciendo el tamaño de los difusores comerciales.
+	\item Desarrollé metadifusores acústicos que alcanzan un coeficiente de difusión de 0,8 con un espesor 10$\times$ menor que los difusores tradicionales.
 	\item Simulación de los difusores acústicos validando los resultados.
 	\item Dos publicaciones en congresos nacionales e internacionales:
 	\begin{itemize}
 		\item Tecniacústica - \href{https://jmrp.io/pdf/paper-resources/Conferences/Tecniacustica/JimenezTEC2020a.pdf}{\bf Beyond Schroeder diffusers using acoustic metasurfaces}.
 		\item Euronoise - \href{https://jmrp.io/pdf/paper-resources/Conferences/Euronoise/plensEuro2021_2.pdf}{\bf Sound diffusing metasurfaces based on elastic plates and membranes}.
 	\end{itemize}
-	\item Desarrollo y simulación de guías de ondas basadas en metamateriales para mejorar la resolución de los ultrasonidos en aire. 
-	\item Fabricación de los prototipos de las guías de onda.
+	\item Diseñé e imprimí en 3D (resina) guías de ondas de tubo con rendijas calculadas numéricamente (tubos de 2--3 cm, rendijas $\sim$0,5 mm) que aumentaron $\sim$15$\times$ la directividad y el alcance ultrasónico en aire, validado experimentalmente.
 	\item Validados los resultados experimentales frente a los obtenidos en simulación.
 	\item Dirección de Trabajo Final de Máster de alumno del Máster en Ingeniería Acústica de la UPV.
 \end{itemize}
@@ -197,10 +196,10 @@ Implementar y validar experimentalmente un método de mitigación de sonido, apl
 \end{justify}
 \begin{itemize}
 	\vspace{0.25em}
-	\item Diseño de la geometría optima para reducir los niveles de ruido.
+	\item Diseñé la geometría óptima del metamaterial acústico, logrando absorción casi total ($\alpha \approx 1$) en 200--500 Hz con un diseño sub-longitud de onda (ratio $\lambda$/espesor $\approx 16{,}5$ frente a $\sim$2 convencional), validado con prototipos reales.
 	\item Simulación de un entorno real para validar el funcionamiento del diseño.
-	\item Diseño del modelo industrial para la fabricación del prototipo mediante inyección de plástico.
-	\item Desarrollo de software para realizar medidas acústicas según normas ISO 10534-2:1998 y ASTM 2611-19. \href{https://github.com/jmrplens/A-Lab}{\bf A|Lab}.
+	\item Diseñé e imprimí en 3D el primer prototipo; para la versión a gran escala diseñé el modelo de fabricación por inyección y gestioné con un proveedor la producción de 600 módulos.
+	\item Desarrollo de software para realizar medidas acústicas según normas ISO 10534-2 y ASTM E2611. \href{https://github.com/jmrplens/A-Lab}{\bf A|Lab}.
 	\item Diseño y desarrollo de sistema robótico de 3 ejes para realizar las medidas experimentales. Fotografías y algo de información aquí: \href{https://cienciagandia.webs.upv.es/en/2022/03/metamaterial-to-reduce-noise-in-space-rocket-launches/}{\bf Noticia}.
 	\item Tres publicaciones/presentaciones en congresos internacionales (Euronoise y ECSSMET) y una en congreso nacional (Tecniacústica):
 	\begin{itemize}\setlength\itemsep{0em}

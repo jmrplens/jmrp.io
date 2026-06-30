@@ -115,17 +115,23 @@ sections:
             Optimized Modbus TCP request handling, cutting CPU usage under load
             (40,000 req/s) from 80% to 17% with no dropped responses.
           - >-
-            Improved embedded file-system stability, reducing access times under
-            continuous operation.
+            Redesigned embedded file-system access, cutting access times by over
+            50%.
+          - >-
+            Implemented a scheduled purge (daily/monthly) that safely clears
+            thousands of files, preventing storage exhaustion under continuous
+            operation.
           - >-
             Built and maintained industrial communications in C with hardware
             abstraction layers (HAL): Modbus RTU/TCP, UART, I2C and SPI.
           - >-
-            Automated thousands of unit tests (Ceedling) and on-hardware integration
-            tests (pytest): TCP/FTP performance and FTP security.
+            Automated the test suite: ~50–80 unit tests per module (Ceedling,
+            thousands in total) reaching 100% line and branch coverage via
+            standard-library mocks/fakes, plus hundreds of on-hardware integration
+            tests (pytest) — TCP/FTP performance and FTP security —; all in CI.
           - >-
-            Reviewed the team's merge requests, catching bugs and proposing
-            improvements before integration.
+            Reviewed merge requests across a 12-person team, catching bugs and
+            proposing improvements before integration.
         ats:
           normal: true
           org: Power Electronics — Solar + Storage
@@ -195,13 +201,13 @@ sections:
           metamaterials for use in architectural applications and medical imaging.
         bullets:
           - >-
-            Theoretical development of acoustic metadiffusers based on membranes or
-            plates reducing the size of commercial diffusers.
+            Developed acoustic metadiffusers reaching a diffusion coefficient of 0.8
+            with a thickness 10× smaller than traditional diffusers.
           - Simulation of the acoustic diffusers and validation of results (MATLAB & COMSOL).
           - >-
-            Development and simulation of metamaterial-based waveguides for improved
-            ultrasound resolution in air.
-          - Fabrication of waveguide prototypes.
+            Designed and 3D-printed (resin) slitted-tube waveguides with
+            numerically-computed slits (2–3 cm tubes, ~0.5 mm slits) that increased
+            ultrasound directivity and range ~15× in air, validated experimentally.
           - Validated experimental results against those obtained in simulation.
           - >-
             Advisor of the Master thesis of a student of the Master's Degree in
@@ -262,9 +268,16 @@ sections:
             de la Université du Mans; COMET Ingeniería; Spanish National Research
             Council (CSIC) and Polytechnic University of Madrid.
         bullets:
-          - Design of the optimum geometry of the acoustic metamaterial to reduce noise levels.
+          - >-
+            Designed the optimum acoustic-metamaterial geometry, achieving near-total
+            absorption (α ≈ 1) across 200–500 Hz with a subwavelength design
+            (wavelength/thickness ratio ≈ 16.5 vs ~2 conventional), validated on real
+            lab prototypes.
           - Simulation of a real environment to validate design performance (MATLAB, COMSOL & Python).
-          - Design of the industrial model for the manufacture of the prototype by means of plastic injection.
+          - >-
+            Designed and 3D-printed the first prototype; for the large-scale version
+            designed the injection-molding model and sourced the manufacturing of 600
+            modules with a supplier.
           - >-
             Development of software for acoustic measurements according to ISO
             10534-2 and ASTM E2611 standards. [A|Lab](https://github.com/jmrplens/A-Lab)
@@ -357,9 +370,9 @@ sections:
           programming knowledge.
         bullets:
           - >-
-            Group classes of reinforcement and extension of the subject "Digital
-            Electronic Systems" of the Degree in Sound and Image Engineering of the
-            University of Alicante.
+            Taught 30+ students in reinforcement and extension classes for the
+            subject "Digital Electronic Systems" of the Degree in Sound and Image
+            Engineering of the University of Alicante.
           - Laboratory organization and planning (located at the Colegio Mayor).
           - Communication and Public Relations.
         ats: { normal: false }
@@ -382,9 +395,11 @@ sections:
         location: Alicante, Spain
         period: Sep 2005 - Nov 2009
         bullets:
-          - Reception of work from dentists.
-          - Model preparation and retouching.
-          - Minor responsibilities.
+          - >-
+            Reception of work and casting of plaster models from impressions
+            (alginate/silicone), with and without implants.
+          - Mounting articulators and casting metal crowns in a centrifuge.
+          - Ceramic application on crowns and bridges.
         ats: { normal: false }
 
   - kind: skills
@@ -607,6 +622,7 @@ sections:
               label: Cursor,
               url: https://cursor.directory/plugins/gitlab-mcp-server,
             }
+          - { label: Docs, url: https://jmrplens.github.io/gitlab-mcp-server/ }
       - name: PyOctaveBand
         tech: Python · Signal processing
         icon: logos:python
@@ -618,15 +634,26 @@ sections:
           - { label: GitHub, url: https://github.com/jmrplens/PyOctaveBand }
           - { label: PyPI, url: https://pypi.org/project/PyOctaveBand/ }
       - name: cs-routeros-bouncer
-        tech: Go · Network security
+        tech: Go · Firewall · MikroTik · WAF
         icon: logos:go
         description: >-
-          CrowdSec bouncer for MikroTik RouterOS — manages address lists and
-          firewall rules through the RouterOS API.
+          CrowdSec bouncer for MikroTik RouterOS: feeds the collaborative IPS/WAF
+          CrowdSec decisions into the RouterOS firewall (address lists) through its
+          API, blocking malicious IPs in real time.
+        metrics:
+          - On the CrowdSec Hub
         links:
           - {
               label: GitHub,
               url: https://github.com/jmrplens/cs-routeros-bouncer,
+            }
+          - {
+              label: CrowdSec Hub,
+              url: https://app.crowdsec.net/hub/author/jmrplens/remediation-components/cs-routeros-bouncer,
+            }
+          - {
+              label: Docs,
+              url: https://jmrplens.github.io/cs-routeros-bouncer/,
             }
       - name: Cloudflare-DNS-Updater
         tech: Bash · DevOps

@@ -117,17 +117,24 @@ sections:
             bajo carga (40.000 peticiones/s) del 80% al 17% sin pérdida de
             respuestas.
           - >-
-            Mejoré la estabilidad del sistema de archivos embebido, reduciendo los
-            tiempos de acceso en operación continua.
+            Rediseñé el acceso al sistema de archivos embebido, reduciendo los
+            tiempos de acceso más de un 50%.
+          - >-
+            Implementé un borrado programado (diario/mensual) que limpia de forma
+            segura miles de archivos, evitando el llenado del almacenamiento en
+            operación continua.
           - >-
             Implementé y mantuve comunicaciones industriales en C con capas de
             abstracción de hardware (HAL): Modbus RTU/TCP, UART, I2C y SPI.
           - >-
-            Automaticé miles de pruebas unitarias (Ceedling) y de integración sobre
-            hardware real (pytest): rendimiento TCP/FTP y seguridad FTP.
+            Automaticé la suite de pruebas: ~50–80 tests unitarios por módulo
+            (Ceedling, miles en total) con 100% de cobertura de líneas y ramas
+            mediante mocks/fakes de la librería estándar, más cientos de pruebas de
+            integración sobre hardware real (pytest) — rendimiento TCP/FTP y
+            seguridad FTP —; todo en CI.
           - >-
-            Revisé los merge requests del equipo, detectando bugs y proponiendo
-            mejoras antes de su integración.
+            Revisé los merge requests de un equipo de 12 personas, detectando bugs y
+            proponiendo mejoras antes de la integración.
         ats:
           normal: true
           org: Power Electronics — Solar + Storage
@@ -193,13 +200,14 @@ sections:
           acústicos para su uso en aplicaciones arquitectónicas e imagen médica.
         bullets:
           - >-
-            Desarrollo teórico de metadifusores acústicos basados en membranas o
-            placas reduciendo el tamaño de los difusores comerciales.
+            Desarrollé metadifusores acústicos que alcanzan un coeficiente de
+            difusión de 0,8 con un espesor 10× menor que los difusores tradicionales.
           - Simulación de los difusores acústicos y validación de resultados (MATLAB y COMSOL).
           - >-
-            Desarrollo y simulación de guías de ondas basadas en metamateriales para
-            mejorar la resolución ultrasónica en aire.
-          - Fabricación de prototipos de guías de ondas.
+            Diseñé e imprimí en 3D (resina) guías de ondas de tubo con rendijas
+            calculadas numéricamente (tubos de 2–3 cm, rendijas ~0,5 mm) que
+            aumentaron ~15× la directividad y el alcance ultrasónico en aire,
+            validado experimentalmente.
           - Resultados experimentales validados frente a los obtenidos en simulación.
           - >-
             Tutor del Trabajo Final de Máster de un estudiante del Máster en
@@ -262,9 +270,16 @@ sections:
             d'Acoustique de la Université du Mans; COMET Ingeniería; Consejo Superior
             de Investigaciones Científicas (CSIC) y Universidad Politécnica de Madrid.
         bullets:
-          - Diseño de la geometría óptima del metamaterial acústico para reducir los niveles de ruido.
+          - >-
+            Diseñé la geometría óptima del metamaterial acústico, logrando absorción
+            casi total (α ≈ 1) en 200–500 Hz con un diseño sub-longitud de onda
+            (ratio λ/espesor ≈ 16,5 frente a ~2 convencional), validado con
+            prototipos reales en laboratorio.
           - Simulación de un entorno real para validar el rendimiento del diseño (MATLAB, COMSOL y Python).
-          - Diseño del modelo industrial para la fabricación del prototipo mediante inyección de plástico.
+          - >-
+            Diseñé e imprimí en 3D el primer prototipo; para la versión a gran
+            escala diseñé el modelo de fabricación por inyección y gestioné con un
+            proveedor la producción de 600 módulos.
           - >-
             Desarrollo de software para mediciones acústicas según las normas ISO
             10534-2 y ASTM E2611. [A|Lab](https://github.com/jmrplens/A-Lab)
@@ -358,9 +373,9 @@ sections:
           microcontroladores orientada a proyectos.
         bullets:
           - >-
-            Clases grupales de refuerzo y ampliación de la asignatura "Sistemas
-            Electrónicos Digitales" del Grado en Ingeniería en Sonido e Imagen de la
-            Universidad de Alicante.
+            Formé a más de 30 estudiantes en clases de refuerzo y ampliación de la
+            asignatura "Sistemas Electrónicos Digitales" del Grado en Ingeniería en
+            Sonido e Imagen de la Universidad de Alicante.
           - Organización y planificación del laboratorio (situado en el Colegio Mayor).
           - Comunicación y Relaciones Públicas.
         ats: { normal: false }
@@ -383,9 +398,11 @@ sections:
         location: Alicante, España
         period: Sep 2005 - Nov 2009
         bullets:
-          - Recepción de trabajos de dentistas.
-          - Preparación y retoque de modelos.
-          - Responsabilidades menores.
+          - >-
+            Recepción de trabajos y vaciado de modelos en escayola a partir de
+            impresiones (alginato/silicona), con y sin implantes.
+          - Montaje de articuladores y colado de coronas metálicas en centrifugadora.
+          - Aplicación de cerámica en coronas y puentes.
         ats: { normal: false }
 
   - kind: skills
@@ -605,6 +622,10 @@ sections:
               label: Cursor,
               url: https://cursor.directory/plugins/gitlab-mcp-server,
             }
+          - {
+              label: Documentación,
+              url: https://jmrplens.github.io/gitlab-mcp-server/es/,
+            }
       - name: PyOctaveBand
         tech: Python · Procesado de señal
         icon: logos:python
@@ -616,15 +637,26 @@ sections:
           - { label: GitHub, url: https://github.com/jmrplens/PyOctaveBand }
           - { label: PyPI, url: https://pypi.org/project/PyOctaveBand/ }
       - name: cs-routeros-bouncer
-        tech: Go · Seguridad de red
+        tech: Go · Firewall · MikroTik · WAF
         icon: logos:go
         description: >-
-          Bouncer de CrowdSec para MikroTik RouterOS — gestiona address lists y
-          reglas de firewall a través de la API de RouterOS.
+          Bouncer de CrowdSec para MikroTik RouterOS: integra las decisiones del
+          IPS/WAF colaborativo CrowdSec en el firewall de RouterOS (address lists)
+          a través de su API, bloqueando IPs maliciosas en tiempo real.
+        metrics:
+          - En el Hub de CrowdSec
         links:
           - {
               label: GitHub,
               url: https://github.com/jmrplens/cs-routeros-bouncer,
+            }
+          - {
+              label: CrowdSec Hub,
+              url: https://app.crowdsec.net/hub/author/jmrplens/remediation-components/cs-routeros-bouncer,
+            }
+          - {
+              label: Documentación,
+              url: https://jmrplens.github.io/cs-routeros-bouncer/,
             }
       - name: Cloudflare-DNS-Updater
         tech: Bash · DevOps
