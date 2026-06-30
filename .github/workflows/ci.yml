@@ -67,7 +67,7 @@ jobs:
       - name: Build Project (Production)
         run: pnpm run build
       - name: Upload build artifact
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: dist-build
           path: dist/
@@ -92,7 +92,7 @@ jobs:
         run: pnpm exec astro check 2>&1 | tee astro-check.log
       - name: Upload Astro Check log
         if: always()
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: log-astro
           path: astro-check.log
@@ -115,7 +115,7 @@ jobs:
         run: pnpm exec prettier --check . 2>&1 | tee prettier.log
       - name: Upload Prettier log
         if: always()
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: log-prettier
           path: prettier.log
@@ -138,7 +138,7 @@ jobs:
         run: pnpm exec eslint . --max-warnings=0 2>&1 | tee eslint.log
       - name: Upload ESLint log
         if: always()
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: log-eslint
           path: eslint.log
@@ -161,7 +161,7 @@ jobs:
         run: pnpm audit --audit-level=high 2>&1 | tee security-audit.log
       - name: Upload Audit log
         if: always()
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: log-audit
           path: security-audit.log
@@ -184,7 +184,7 @@ jobs:
         run: pnpm exec stylelint "src/**/*.{astro,css}" 2>&1 | tee stylelint.log
       - name: Upload Stylelint log
         if: always()
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: log-stylelint
           path: stylelint.log
@@ -218,7 +218,7 @@ jobs:
           echo "coverage=${COVERAGE}%" >> $GITHUB_OUTPUT
       - name: Upload JSDoc log
         if: always()
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: log-jsdoc
           path: jsdoc-coverage.log
@@ -238,11 +238,11 @@ jobs:
           key: cache-lychee-source-${{ github.sha }}
           restore-keys: cache-lychee-source-
       - name: Download build artifact
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           name: dist-build
           path: dist
-      - uses: lycheeverse/lychee-action@v2.7.0
+      - uses: lycheeverse/lychee-action@v2.8.0
         with:
           args: --config lychee.toml --root-dir ${{ github.workspace }}/dist --format markdown ./dist/**/*.html
           output: lychee-report.md
@@ -256,7 +256,7 @@ jobs:
           node scripts/ci/generate-lychee-report.mjs
       - name: Upload Lychee reports
         if: always()
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: lychee-report
           path: |
@@ -281,7 +281,7 @@ jobs:
         run: pnpm exec cspell lint "." --no-progress 2>&1 | tee cspell.log
       - name: Upload CSpell log
         if: always()
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: log-cspell
           path: cspell.log
@@ -313,7 +313,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - name: Download build artifact
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           name: dist-build
           path: dist
@@ -327,13 +327,13 @@ jobs:
         run: node scripts/ci/analyze-bundle-size.mjs 2>&1 | tee bundle-size.log
       - name: Upload bundle log
         if: always()
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: log-bundle
           path: bundle-size.log
           retention-days: 1
       - name: Upload bundle analysis
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: bundle-analysis
           path: bundle-analysis.json
@@ -347,7 +347,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - name: Download build artifact
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           name: dist-build
           path: dist
@@ -367,14 +367,14 @@ jobs:
           node scripts/ci/generate-html-validation-report.mjs
       - name: Upload HTML log
         if: always()
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: log-html
           path: html-validation.log
           retention-days: 1
 
       - name: Upload HTML validation files
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: html-validation-report
           path: |
@@ -390,7 +390,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - name: Download build artifact
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           name: dist-build
           path: dist
@@ -410,13 +410,13 @@ jobs:
           node scripts/preview-rss.mjs
       - name: Upload RSS log
         if: always()
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: log-rss
           path: rss-validation.log
           retention-days: 1
       - name: Upload RSS validation files
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: rss-validation-report
           path: |
@@ -432,7 +432,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - name: Download build artifact
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           name: dist-build
           path: dist
@@ -452,7 +452,7 @@ jobs:
         run: pnpm typecheck 2>&1 | tee schema-validation.log
       - name: Upload Schema log
         if: always()
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: log-schema
           path: schema-validation.log
@@ -466,7 +466,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - name: Download build artifact
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           name: dist-build
           path: dist
@@ -484,7 +484,7 @@ jobs:
       - name: Generate Image HTML Report
         run: node scripts/ci/generate-image-report.mjs
       - name: Upload image report
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: image-optimization-report
           path: image-report.html
@@ -498,7 +498,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - name: Download build artifact
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           name: dist-build
           path: dist
@@ -520,7 +520,7 @@ jobs:
       - name: Run Playwright tests
         run: pnpm exec playwright test --project=functional --project=mobile-functional
       - name: Upload functional report
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: functional-report
           path: playwright-report/
@@ -539,7 +539,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - name: Download build artifact
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           name: dist-build
           path: dist
@@ -562,7 +562,7 @@ jobs:
         run: THEME=${{ matrix.theme }} LOCALE_FILTER=${{ matrix.locale }} pnpm exec playwright test --project=accessibility
       - name: Upload Axe Results
         if: always()
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: axe-accessibility-report-${{ matrix.theme }}-${{ matrix.locale }}
           path: accessibility-report/
@@ -582,7 +582,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - name: Download build artifact
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           name: dist-build
           path: dist
@@ -603,7 +603,7 @@ jobs:
           pnpm exec lhci autorun
       - name: Upload Lighthouse Results
         if: always()
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: lh-results-${{ matrix.theme }}-${{ matrix.formFactor }}-${{ matrix.locale }}
           path: lighthouse-results/
@@ -669,25 +669,25 @@ jobs:
       - run: pnpm install --frozen-lockfile --prefer-offline
       # Download each locale separately to avoid summary JSON overwrites
       - name: Download Axe Results (Light EN)
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         continue-on-error: true
         with:
           name: axe-accessibility-report-light-en
           path: a11y-deploy/light/en
       - name: Download Axe Results (Light ES)
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         continue-on-error: true
         with:
           name: axe-accessibility-report-light-es
           path: a11y-deploy/light/es
       - name: Download Axe Results (Dark EN)
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         continue-on-error: true
         with:
           name: axe-accessibility-report-dark-en
           path: a11y-deploy/dark/en
       - name: Download Axe Results (Dark ES)
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         continue-on-error: true
         with:
           name: axe-accessibility-report-dark-es
@@ -754,7 +754,7 @@ jobs:
       - name: Generate Dashboard
         run: node scripts/ci/generate-accessibility-index.mjs a11y-deploy
       - name: Upload consolidated assets
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: a11y-dashboard
           path: a11y-deploy/
@@ -775,49 +775,49 @@ jobs:
           cache: "pnpm"
       - run: pnpm install --frozen-lockfile --prefer-offline
       - name: Download LH Results (Light - Mobile - EN)
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         continue-on-error: true
         with:
           name: lh-results-light-mobile-en
           path: lh-deploy/light/mobile/en
       - name: Download LH Results (Light - Mobile - ES)
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         continue-on-error: true
         with:
           name: lh-results-light-mobile-es
           path: lh-deploy/light/mobile/es
       - name: Download LH Results (Light - Desktop - EN)
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         continue-on-error: true
         with:
           name: lh-results-light-desktop-en
           path: lh-deploy/light/desktop/en
       - name: Download LH Results (Light - Desktop - ES)
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         continue-on-error: true
         with:
           name: lh-results-light-desktop-es
           path: lh-deploy/light/desktop/es
       - name: Download LH Results (Dark - Mobile - EN)
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         continue-on-error: true
         with:
           name: lh-results-dark-mobile-en
           path: lh-deploy/dark/mobile/en
       - name: Download LH Results (Dark - Mobile - ES)
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         continue-on-error: true
         with:
           name: lh-results-dark-mobile-es
           path: lh-deploy/dark/mobile/es
       - name: Download LH Results (Dark - Desktop - EN)
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         continue-on-error: true
         with:
           name: lh-results-dark-desktop-en
           path: lh-deploy/dark/desktop/en
       - name: Download LH Results (Dark - Desktop - ES)
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         continue-on-error: true
         with:
           name: lh-results-dark-desktop-es
@@ -841,7 +841,7 @@ jobs:
       - name: Generate Dashboard
         run: node scripts/ci/generate-lighthouse-index.mjs lh-deploy
       - name: Upload LH Dashboard
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: lh-dashboard
           path: lh-deploy/
@@ -879,49 +879,49 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - name: Download Accessibility Dashboard
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         continue-on-error: true
         with:
           name: a11y-dashboard
           path: a11y-deploy
       - name: Download Lighthouse Dashboard
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         continue-on-error: true
         with:
           name: lh-dashboard
           path: lh-deploy
       - name: Download HTML Validation
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         continue-on-error: true
         with:
           name: html-validation-report
           path: .
       - name: Download RSS Preview
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         continue-on-error: true
         with:
           name: rss-validation-report
           path: .
       - name: Download Schema Report
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         continue-on-error: true
         with:
           name: schema-validation-report
           path: .
       - name: Download Image Report
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         continue-on-error: true
         with:
           name: image-optimization-report
           path: .
       - name: Download Bundle Stats
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         continue-on-error: true
         with:
           name: bundle-analysis
           path: .
       - name: Download Lychee Report
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         continue-on-error: true
         with:
           name: lychee-report
@@ -934,7 +934,7 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile --prefer-offline
       - name: Download Logs
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         continue-on-error: true
         with:
           pattern: log-*
