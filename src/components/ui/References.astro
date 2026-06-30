@@ -136,7 +136,7 @@ const iconFiles = import.meta.glob<{ default: ImageMetadata }>(
     gap: 0.75rem;
     align-items: center;
     margin-bottom: 1.5rem;
-    color: var(--color-heading);
+    color: var(--color-text-heading);
   }
 
   .header-icon {
@@ -163,16 +163,20 @@ const iconFiles = import.meta.glob<{ default: ImageMetadata }>(
     padding: 1rem;
     overflow: hidden;
     text-decoration: none;
-    background: var(--color-subtle-bg, rgb(125 125 125 / 5%));
+    background: var(--color-surface-2);
     border: var(--border-1);
-    border-radius: 12px;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    border-radius: var(--radius-lg);
+    transition:
+      background-color var(--dur-2) var(--ease-out),
+      border-color var(--dur-2) var(--ease-out),
+      box-shadow var(--dur-2) var(--ease-out),
+      transform var(--dur-2) var(--ease-out);
   }
 
   .reference-card:hover {
-    background: var(--color-card-bg, rgb(125 125 125 / 10%));
+    background: var(--color-bg-secondary);
     border-color: var(--color-primary);
-    box-shadow: 0 4px 12px rgb(0 0 0 / 5%);
+    box-shadow: var(--sh-card);
     transform: translateY(-3px);
   }
 
@@ -185,7 +189,7 @@ const iconFiles = import.meta.glob<{ default: ImageMetadata }>(
     width: 40px;
     height: 40px;
     overflow: hidden;
-    border-radius: 10px;
+    border-radius: var(--radius-md);
   }
 
   .ref-favicon {
@@ -230,7 +234,9 @@ const iconFiles = import.meta.glob<{ default: ImageMetadata }>(
     color: var(--color-primary);
     opacity: 0%;
     transform: translateX(-10px);
-    transition: all 0.3s ease;
+    transition:
+      opacity var(--dur-2) var(--ease-out),
+      transform var(--dur-2) var(--ease-out);
   }
 
   .reference-card:hover .card-arrow {
@@ -242,14 +248,26 @@ const iconFiles = import.meta.glob<{ default: ImageMetadata }>(
   .reference-card:focus-visible {
     outline: 2px solid var(--color-primary);
     outline-offset: 2px;
-    background: var(--color-card-bg, rgb(125 125 125 / 10%));
+    background: var(--color-bg-secondary);
     border-color: var(--color-primary);
-    box-shadow: 0 4px 12px rgb(0 0 0 / 5%);
+    box-shadow: var(--sh-card);
     transform: translateY(-3px);
   }
 
   .reference-card:focus-visible .card-arrow {
     opacity: 100%;
     transform: translateX(0);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .reference-card,
+    .card-arrow {
+      transition: none;
+    }
+
+    .reference-card:hover,
+    .reference-card:focus-visible {
+      transform: none;
+    }
   }
 </style>

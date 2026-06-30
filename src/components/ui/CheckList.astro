@@ -32,18 +32,19 @@ const t = useTranslations(locale);
   .checklist {
     padding: 1rem 1.25rem;
     margin: 1.5rem 0;
-    background: var(--color-bg-subtle);
+    background: var(--color-bg-secondary);
     border: var(--border-1);
-    border-radius: var(--radius-md);
+    border-radius: var(--radius-lg);
   }
 
   .checklist-title {
     margin-bottom: 0.75rem;
-    font-size: 0.9rem;
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
     font-weight: var(--fw-semibold);
     color: var(--color-text-muted);
     text-transform: uppercase;
-    letter-spacing: 0.05em;
+    letter-spacing: 0.08em;
   }
 
   .checklist-items {
@@ -100,7 +101,7 @@ const t = useTranslations(locale);
   .checklist-items :global(li[data-check="optional"]::before) {
     color: var(--color-text-muted);
     content: "○";
-    background: var(--color-bg-secondary);
+    background: var(--color-surface-2);
   }
 
   /* Light mode adjustments for WCAG AA contrast - consolidated selectors */

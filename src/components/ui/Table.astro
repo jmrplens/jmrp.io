@@ -114,17 +114,18 @@ const wrapperClasses = [
      CSS CUSTOM PROPERTIES (Tokens)
      =========================================== */
   .table-wrapper {
-    /* Light mode defaults */
-    --table-bg: var(--color-bg-secondary, #f6f8fa);
-    --table-header-bg: var(--color-bg-header, #eaeff2);
-    --table-header-text: var(--color-text-heading, #1f2328);
+    /* Surface tokens — theme-aware via the global Lab tokens. */
+    --table-bg: var(--color-bg-secondary);
+    --table-header-bg: var(--color-bg-subtle);
+    --table-header-text: var(--color-text-heading);
     --table-row-odd: transparent;
-    --table-row-even: rgb(0 0 0 / 2.5%);
-    --table-row-hover: rgb(0 0 0 / 5%);
-    --table-border: var(--color-border, #d0d7de);
-    --table-text: var(--color-text, #24292f);
+    --table-row-even: var(--color-bg-subtle);
+    --table-row-hover: var(--accent-dim);
+    --table-border: var(--color-border);
+    --table-hair: var(--color-hair);
+    --table-text: var(--color-text);
 
-    /* Status colors - Light mode */
+    /* Status colors - Light mode (semantic; no Lab token equivalent) */
     --status-success-bg: #dcfce7;
     --status-success-text: #166534;
     --status-success-border: #86efac;
@@ -143,20 +144,11 @@ const wrapperClasses = [
     overflow: hidden;
     background-color: var(--table-bg);
     border: 1px solid var(--table-border);
-    border-radius: var(--radius-md, 8px);
+    border-radius: var(--radius-lg);
   }
 
-  /* Dark mode overrides */
+  /* Dark mode status overrides (surfaces come from the theme tokens above) */
   :root[data-theme="dark"] .table-wrapper {
-    --table-bg: var(--color-bg-secondary, #0d1117);
-    --table-header-bg: rgb(255 255 255 / 5%);
-    --table-header-text: var(--color-text-heading, #fff);
-    --table-row-odd: transparent;
-    --table-row-even: rgb(255 255 255 / 3%);
-    --table-row-hover: rgb(255 255 255 / 6%);
-    --table-border: var(--color-border, #30363d);
-    --table-text: var(--color-text, #c9d1d9);
-
     /* Status colors - Dark mode */
     --status-success-bg: rgb(34 197 94 / 20%);
     --status-success-text: #86efac;
@@ -176,10 +168,11 @@ const wrapperClasses = [
   :global(.table-wrapper caption.table-title) {
     padding: 0.75rem 1rem;
     font-family: var(--font-mono);
-    font-size: 0.85rem;
+    font-size: 0.8125rem;
     font-weight: 600;
     color: var(--table-header-text);
     text-align: left;
+    letter-spacing: 0.02em;
     caption-side: top;
     background-color: var(--table-header-bg);
     border-bottom: 1px solid var(--table-border);
@@ -221,11 +214,12 @@ const wrapperClasses = [
   }
 
   :global(.table-wrapper thead th) {
+    font-family: var(--font-mono);
     font-size: 0.75rem;
-    font-weight: 700;
+    font-weight: 600;
     color: var(--table-header-text);
     text-transform: uppercase;
-    letter-spacing: 0.05em;
+    letter-spacing: 0.08em;
     background-color: var(--table-header-bg);
   }
 
@@ -234,8 +228,8 @@ const wrapperClasses = [
      =========================================== */
   :global(.table-wrapper tbody tr) {
     background-color: var(--table-row-odd);
-    border-bottom: 1px solid var(--table-border);
-    transition: background-color 0.15s ease;
+    border-bottom: 1px solid var(--table-hair);
+    transition: background-color var(--dur-1) var(--ease-out);
   }
 
   :global(.table-wrapper tbody tr:last-child) {
@@ -326,8 +320,9 @@ const wrapperClasses = [
     padding: 0.15rem 0.4rem;
     font-family: var(--font-mono);
     font-size: 0.85em;
-    background-color: rgb(128 128 128 / 10%);
-    border-radius: var(--radius-sm, 4px);
+    color: var(--color-text);
+    background-color: var(--color-surface-2);
+    border-radius: var(--radius-sm);
   }
 
   /* Strong text in tables */

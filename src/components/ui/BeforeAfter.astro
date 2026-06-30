@@ -78,33 +78,27 @@ const {
     min-width: 0;
     overflow: hidden;
     background-color: var(--color-bg-secondary);
-    border: 1px solid var(--ba-border-color);
+    border: 1px solid var(--ba-line);
     border-radius: var(--radius-md);
   }
 
-  /* Pastel color scheme with WCAG AA contrast ≥4.5:1 */
+  /*
+   * Lab two-accent scheme: "before" = amber (attention/old), "after" = teal
+   * (resolved/OK). Status is never colour-only — each block carries an icon
+   * (✗ / ✓), an uppercase label, and a fixed position. Header text uses the
+   * heading token so it stays AA in both themes; the accent rides on the icon,
+   * tint and hairline (graphical, ≥3:1). All derived from tokens via color-mix.
+   */
   .ba-before {
-    --ba-border-color: rgb(239 68 68 / 40%);
-    --ba-header-bg: rgb(239 68 68 / 10%);
-    --ba-header-text: #b91c1c; /* red-700 for WCAG AA contrast */
+    --ba-accent: var(--color-primary);
+    --ba-tint: var(--accent-dim);
+    --ba-line: var(--accent-line);
   }
 
   .ba-after {
-    --ba-border-color: rgb(16 185 129 / 40%);
-    --ba-header-bg: rgb(16 185 129 / 10%);
-    --ba-header-text: #047857; /* emerald-700 for WCAG AA contrast ≥4.5:1 */
-  }
-
-  :root[data-theme="dark"] .ba-before {
-    --ba-border-color: rgb(248 113 113 / 30%);
-    --ba-header-bg: rgb(248 113 113 / 12%);
-    --ba-header-text: #f87171;
-  }
-
-  :root[data-theme="dark"] .ba-after {
-    --ba-border-color: rgb(52 211 153 / 30%);
-    --ba-header-bg: rgb(52 211 153 / 12%);
-    --ba-header-text: #34d399;
+    --ba-accent: var(--teal);
+    --ba-tint: color-mix(in srgb, var(--teal) 12%, transparent);
+    --ba-line: color-mix(in srgb, var(--teal) 40%, transparent);
   }
 
   .ba-header {
@@ -112,18 +106,19 @@ const {
     gap: 0.5rem;
     align-items: center;
     padding: 0.5rem 1rem;
-    font-size: 0.85rem;
-    font-weight: 600;
-    color: var(--ba-header-text);
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    font-weight: var(--fw-semibold);
+    color: var(--color-text-heading);
     text-transform: uppercase;
-    letter-spacing: 0.03em;
-    background-color: var(--ba-header-bg);
-    border-bottom: 1px solid var(--ba-border-color);
+    letter-spacing: 0.08em;
+    background-color: var(--ba-tint);
+    border-bottom: 1px solid var(--ba-line);
   }
 
   .ba-icon {
     font-size: 1.1rem;
-    color: currentcolor;
+    color: var(--ba-accent);
   }
 
   .ba-content {

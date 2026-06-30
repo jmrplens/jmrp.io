@@ -178,20 +178,21 @@ function parseMarkdownLinks(text: string): string {
     font-family: var(--font-mono);
     font-size: 0.7rem;
     font-weight: var(--fw-medium);
-    color: var(--tl-badge-fg, var(--tl-accent, var(--color-text-muted)));
-    background: var(--tl-bg-muted, rgb(0 0 0 / 6%));
+    color: var(--color-text);
+    background: var(--tl-bg-muted, var(--color-bg-subtle));
     border-radius: 0.1875rem;
   }
 
   .tl-type {
     flex-shrink: 0;
     padding: 0.0625rem 0.375rem;
+    font-family: var(--font-mono);
     font-size: 0.65rem;
     font-weight: var(--fw-semibold);
-    color: var(--tl-badge-fg, var(--tl-accent, var(--color-text-muted)));
+    color: var(--color-text-heading);
     text-transform: uppercase;
-    letter-spacing: 0.025em;
-    background: var(--tl-bg-muted, rgb(0 0 0 / 6%));
+    letter-spacing: 0.06em;
+    background: var(--tl-bg-muted, var(--color-bg-subtle));
     border-radius: 0.1875rem;
   }
 
@@ -223,58 +224,35 @@ function parseMarkdownLinks(text: string): string {
     text-decoration-color: var(--color-primary);
   }
 
-  /* Type variants */
+  /*
+   * Type variants — Lab amber + teal only. The dot (graphical, ≥3:1) and the
+   * `tl-type` label text carry the semantic; chip text uses the heading/body
+   * tokens so it stays AA on every tint in both themes. `warning` and
+   * `milestone` share amber but are told apart by their label text and the
+   * milestone dot's ring.
+   */
   .tl-default {
     --tl-accent: var(--color-text-muted);
-    --tl-bg-muted: rgb(0 0 0 / 6%);
+    --tl-bg-muted: var(--color-bg-subtle);
   }
 
   .tl-success {
-    --tl-accent: var(--color-success, #10b981);
-
-    /* Darker ink for the date/type chips so their text meets WCAG AA on the
-       light success tint (the bright accent failed at ~2.3:1). */
-    --tl-badge-fg: #065f46;
-    --tl-bg-muted: color-mix(
-      in srgb,
-      var(--color-success, #10b981) 12%,
-      transparent
-    );
+    --tl-accent: var(--teal);
+    --tl-bg-muted: color-mix(in srgb, var(--teal) 14%, transparent);
   }
 
   .tl-warning {
-    --tl-accent: var(--color-warning, #f59e0b);
-
-    /* Darker ink for the chips so their text meets WCAG AA on the light
-       warning tint (the bright accent failed at ~2.0:1). */
-    --tl-badge-fg: #8a5000;
-    --tl-bg-muted: color-mix(
-      in srgb,
-      var(--color-warning, #f59e0b) 12%,
-      transparent
-    );
+    --tl-accent: var(--color-primary);
+    --tl-bg-muted: var(--accent-dim);
   }
 
   .tl-milestone {
     --tl-accent: var(--color-primary);
-    --tl-bg-muted: color-mix(in srgb, var(--color-primary) 12%, transparent);
+    --tl-bg-muted: var(--accent-dim);
   }
 
   .tl-milestone .tl-dot {
-    box-shadow: 0 0 0 3px
-      color-mix(in srgb, var(--color-primary) 25%, transparent);
-  }
-
-  /* Dark mode */
-  :global([data-theme="dark"]) .tl-default {
-    --tl-bg-muted: rgb(255 255 255 / 8%);
-  }
-
-  /* On the dark tinted chips the bright accent already meets AA, so the
-     light-theme dark ink is reverted here. */
-  :global([data-theme="dark"]) .tl-success,
-  :global([data-theme="dark"]) .tl-warning {
-    --tl-badge-fg: var(--tl-accent);
+    box-shadow: 0 0 0 3px var(--accent-line);
   }
 
   /* Responsive */

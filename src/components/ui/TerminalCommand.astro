@@ -105,11 +105,11 @@ if (ariaLabel) {
   data-testid={`terminal-${contentHash}`}
 >
   <div class="terminal-header">
-    <div class="terminal-controls">
-      <span class="dot red"></span>
-      <span class="dot yellow"></span>
-      <span class="dot green"></span>
-    </div>
+    <span
+      class="terminal-mark"
+      aria-hidden="true"
+      >❯</span
+    >
     <div class="action-area">
       <CopyButton
         content={rawContent}
@@ -179,32 +179,17 @@ if (ariaLabel) {
     justify-content: space-between;
     min-height: 36px;
     padding: 0.5rem 0.75rem;
-    background-color: var(--color-bg-header);
-    border-bottom: var(--border-1);
+    background-color: var(--color-surface-2);
+    border-bottom: 1px solid var(--color-hair);
   }
 
-  .terminal-controls {
-    display: flex;
-    gap: 6px;
-  }
-
-  .dot {
-    width: 10px;
-    height: 10px;
-    background-color: var(--color-border);
-    border-radius: 50%;
-  }
-
-  .dot.red {
-    background-color: #ff5f56;
-  }
-
-  .dot.yellow {
-    background-color: #ffbd2e;
-  }
-
-  .dot.green {
-    background-color: #27c93f;
+  .terminal-mark {
+    font-family: var(--font-mono);
+    font-size: 0.9rem;
+    font-weight: var(--fw-semibold);
+    line-height: 1;
+    color: var(--teal);
+    user-select: none;
   }
 
   /*
@@ -270,16 +255,15 @@ if (ariaLabel) {
     flex-shrink: 0;
     margin-right: 0.75rem;
     font-family: inherit;
-    font-weight: bold;
-    color: var(--color-primary);
+    font-weight: var(--fw-bold);
+    color: var(--teal);
     user-select: none;
-    opacity: 80%;
   }
 
   .line-content {
     flex-grow: 1;
     font-family: inherit;
-    color: var(--color-text);
+    color: var(--color-text-heading);
   }
 
   .line-content.is-comment {

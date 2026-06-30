@@ -131,9 +131,9 @@ const ariaLabel = `${t("ui.download")}: ${name}${sizeLabel ? ` (${sizeLabel})` :
     align-items: center;
     padding: 1rem 1.25rem;
     margin: 1.5rem 0;
-    background: var(--color-bg-subtle);
+    background: var(--color-bg-secondary);
     border: var(--border-1);
-    border-radius: var(--radius-md);
+    border-radius: var(--radius-lg);
   }
 
   .file-download__icon {
@@ -170,18 +170,24 @@ const ariaLabel = `${t("ui.download")}: ${name}${sizeLabel ? ` (${sizeLabel})` :
     padding: 0.5rem 0.9rem;
     margin-left: auto;
     font-size: 0.85rem;
-    font-weight: var(--fw-medium);
+    font-weight: var(--fw-semibold);
     color: var(--color-on-primary);
     white-space: nowrap;
     text-decoration: none;
     background: var(--color-primary);
-    border-radius: var(--radius-sm);
-    transition: background-color 0.15s;
+    border-radius: var(--radius-md);
+    transition: background-color var(--dur-1) var(--ease-out);
   }
 
   .file-download__btn:hover,
   .file-download__btn:focus-visible {
-    background: var(--color-primary-hover);
+    background: var(--accent-hi);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .file-download__btn {
+      transition: none;
+    }
   }
 
   .file-download__btn span {

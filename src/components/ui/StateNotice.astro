@@ -179,38 +179,45 @@ const removalMessages: Record<NoticeType, string | null> = {
 
 <style>
   .state-notice {
-    margin: 1.5rem 0;
+    padding: var(--space-md);
+    margin: var(--space-md-lg) 0;
     overflow: hidden;
-    background: rgb(var(--sn-bg-color) / 8%);
-    border: 1px solid rgb(var(--sn-bg-color) / 30%);
+    background: var(--color-bg-secondary);
+    border: 1px solid var(--color-hair);
+    border-left: 4px solid var(--sn-color);
     border-radius: var(--radius-md);
+    box-shadow: var(--sh-card);
   }
 
+  /* Header collapses into a Lab status pill: icon (shape cue) + mono label. */
   .sn-header {
-    display: flex;
-    gap: 0.5rem;
+    display: inline-flex;
+    gap: var(--space-xs);
     align-items: center;
-    padding: 0.625rem 1rem;
+    padding: 0.1875rem 0.5rem;
+    margin-bottom: var(--space-sm);
     background: rgb(var(--sn-bg-color) / 15%);
-    border-bottom: 1px solid rgb(var(--sn-bg-color) / 20%);
+    border: 1px solid rgb(var(--sn-bg-color) / 32%);
+    border-radius: var(--radius-sm);
   }
 
   .sn-icon {
-    width: 18px;
-    height: 18px;
+    width: 15px;
+    height: 15px;
     color: var(--sn-color);
   }
 
   .sn-title {
-    font-size: 0.8rem;
-    font-weight: var(--fw-bold);
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
+    font-weight: var(--fw-semibold);
     color: var(--sn-text-color);
     text-transform: uppercase;
-    letter-spacing: 0.05em;
+    letter-spacing: 0.1em;
   }
 
   .sn-content {
-    padding: 0.875rem 1rem;
+    padding: 0;
   }
 
   .sn-message {

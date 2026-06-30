@@ -32,24 +32,9 @@ const summaryText =
   <summary>
     <span class="summary-text">{summaryText}</span>
     <span
-      class="icon-wrapper"
+      class="i-mdi:chevron-down chevron"
       aria-hidden="true"
-    >
-      <svg
-        class="chevron"
-        xmlns="http://www.w3.org/2000/svg"
-        width="24"
-        height="24"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        stroke-width="2"
-        stroke-linecap="round"
-        stroke-linejoin="round"
-      >
-        <polyline points="6 9 12 15 18 9"></polyline>
-      </svg>
-    </span>
+    ></span>
   </summary>
   <div class="collapsible-content">
     <slot />
@@ -63,7 +48,7 @@ const summaryText =
     overflow-clip-margin: 4px; /* Allow focus ring to render outside */
     background-color: var(--color-bg-secondary);
     border: var(--border-1);
-    border-radius: var(--radius-md);
+    border-radius: var(--radius-lg);
   }
 
   .collapsible-wrapper[open] {
@@ -75,17 +60,17 @@ const summaryText =
     align-items: center;
     justify-content: space-between;
     padding: 0.8rem 1rem;
-    font-weight: 500;
-    color: var(--color-text);
+    font-weight: var(--fw-medium);
+    color: var(--color-text-heading);
     cursor: pointer;
     list-style: none; /* Remove default marker */
-    transition: background-color 0.2s;
+    transition: background-color var(--dur-2) var(--ease-out);
   }
 
   summary:focus-visible {
     /* Use inset box-shadow for focus ring that respects border-radius */
     outline: none;
-    border-radius: var(--radius-md);
+    border-radius: var(--radius-lg);
     box-shadow:
       inset 0 0 0 2px var(--color-primary),
       0 0 0 2px var(--color-primary);
@@ -96,7 +81,7 @@ const summaryText =
   }
 
   .collapsible-wrapper[open] > summary {
-    background-color: var(--color-bg-header);
+    background-color: var(--color-bg-subtle);
     border-bottom: var(--border-1);
   }
 
@@ -105,12 +90,23 @@ const summaryText =
     font-size: 0.9rem;
   }
 
-  .icon-wrapper {
-    transition: transform 0.2s ease-in-out;
+  .chevron {
+    flex-shrink: 0;
+    width: 1.4em;
+    height: 1.4em;
+    color: var(--color-text-muted);
+    transition: transform var(--dur-2) var(--ease-in-out);
   }
 
-  .collapsible-wrapper[open] > summary .icon-wrapper {
+  .collapsible-wrapper[open] > summary .chevron {
     transform: rotate(180deg);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    summary,
+    .chevron {
+      transition: none;
+    }
   }
 
   .collapsible-content {

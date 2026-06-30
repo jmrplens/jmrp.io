@@ -60,9 +60,11 @@ const iconName = icon || icons[type];
 >
   <span class="sr-only">{translatedType}:</span>
   <span
-    class={`i-${iconName} icon-wrapper`}
+    class="callout-icon-box"
     aria-hidden="true"
-  ></span>
+  >
+    <span class={`i-${iconName} icon-wrapper`}></span>
+  </span>
   <div class="callout-content-wrapper">
     {title && <strong class="callout-title">{title}</strong>}
     <div class="content">
@@ -75,13 +77,15 @@ const iconName = icon || icons[type];
   .callout {
     position: relative;
     display: flex;
-    gap: 1rem;
-    padding: 0.75rem 1rem;
-    margin: 1.5rem 0;
+    gap: var(--space-md);
+    padding: var(--space-md);
+    margin: var(--space-md-lg) 0;
     overflow: hidden;
     background: var(--callout-bg);
+    border: 1px solid color-mix(in srgb, var(--callout-color) 22%, transparent);
     border-left: 4px solid var(--callout-color);
     border-radius: var(--radius-md);
+    box-shadow: var(--sh-card);
   }
 
   /*
@@ -192,41 +196,60 @@ const iconName = icon || icons[type];
     --callout-color: var(--color-keypoint-text);
     --callout-bg: var(--color-keypoint-bg);
 
-    padding: 1.25rem;
-    border: var(--border-1);
-    border-left: 4px solid var(--callout-color);
+    padding: var(--space-md-lg);
+  }
+
+  /* Tinted square that frames the state icon (Lab pattern). */
+  .callout-icon-box {
+    display: flex;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    color: var(--callout-color);
+    background: color-mix(in srgb, var(--callout-color) 14%, transparent);
+    border: 1px solid color-mix(in srgb, var(--callout-color) 28%, transparent);
+    border-radius: var(--radius-sm);
   }
 
   .icon-wrapper {
-    display: flex;
-    flex-shrink: 0;
-    align-items: flex-start;
-    width: 24px;
-    height: 24px;
-    margin-top: 0.125rem; /* Precise alignment with text cap-height */
+    display: block;
+    width: 18px;
+    height: 18px;
     color: var(--callout-color);
   }
 
   .callout-content-wrapper {
     display: flex;
     flex-direction: column;
-    gap: 0.25rem;
+    gap: var(--space-xs);
+    align-self: center;
     width: 100%;
     min-width: 0; /* Prevent flex blowout */
   }
 
+  /* Mono uppercase kicker — the title doubles as the Lab "// label" cue. */
   .callout-title {
     display: block;
-    margin-bottom: 0.25rem;
-    font-size: 1rem;
-    font-weight: var(--fw-bold);
+    margin-bottom: var(--space-xs);
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
+    font-weight: var(--fw-semibold);
     color: var(--callout-color);
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
   }
 
   .content {
     font-size: 0.95rem;
     line-height: 1.6;
     color: var(--color-text);
+  }
+
+  /* When a title is present the content sits below it, top-aligned. */
+  .callout-content-wrapper:has(.callout-title) {
+    align-self: flex-start;
   }
 
   .content :global(p:last-child) {

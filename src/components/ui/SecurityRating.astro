@@ -62,13 +62,14 @@ const config = ratingConfig[rating];
 <style>
   .security-rating {
     display: flex;
-    gap: 1rem;
-    padding: 1rem 1.25rem;
-    margin: 1.5rem 0;
-    background: var(--sr-bg);
-    border: 1px solid var(--sr-border);
+    gap: var(--space-md);
+    padding: var(--space-md);
+    margin: var(--space-md-lg) 0;
+    background: var(--color-bg-secondary);
+    border: 1px solid var(--color-hair);
     border-left: 4px solid var(--sr-color);
     border-radius: var(--radius-md);
+    box-shadow: var(--sh-card);
   }
 
   .sr-badge {
@@ -77,36 +78,42 @@ const config = ratingConfig[rating];
     align-items: center;
     justify-content: center;
     min-width: 64px;
-    padding: 0.5rem;
+    padding: var(--space-sm);
     background: var(--sr-badge-color, var(--sr-color));
     border-radius: var(--radius-sm);
   }
 
   .sr-grade {
+    font-family: var(--font-display);
     font-size: 1.5rem;
     font-weight: var(--fw-bold);
     line-height: 1;
     color: #fff;
+    letter-spacing: -0.02em;
   }
 
   .sr-label {
-    margin-top: 0.25rem;
+    margin-top: var(--space-xs);
+    font-family: var(--font-mono);
     font-size: 0.65rem;
     font-weight: var(--fw-medium);
     color: #fff;
     text-align: center;
     text-transform: uppercase;
-    letter-spacing: 0.05em;
+    letter-spacing: 0.08em;
   }
 
   .sr-content {
     flex: 1;
+    align-self: center;
   }
 
   .sr-title {
     display: block;
-    margin-bottom: 0.25rem;
+    margin-bottom: var(--space-xs);
+    font-family: var(--font-display);
     font-size: 1rem;
+    font-weight: var(--fw-semibold);
     color: var(--color-text-heading);
   }
 
@@ -114,7 +121,7 @@ const config = ratingConfig[rating];
     margin: 0;
     font-size: 0.9rem;
     line-height: 1.5;
-    color: var(--color-text-muted);
+    color: var(--color-text);
   }
 
   /* Rating variants - badge colors are darker for WCAG AA contrast (4.5:1 with white) */

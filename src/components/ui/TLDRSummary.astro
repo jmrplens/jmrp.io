@@ -41,7 +41,7 @@ const { title = t("components.tldr.title"), collapsed = false } = Astro.props;
   .tldr-summary {
     margin: 1.5rem 0;
     overflow: hidden;
-    background: var(--color-bg-subtle);
+    background: var(--color-bg-secondary);
     border: var(--border-1);
     border-radius: var(--radius-md);
   }
@@ -56,7 +56,7 @@ const { title = t("components.tldr.title"), collapsed = false } = Astro.props;
     cursor: pointer;
     user-select: none;
     list-style: none;
-    transition: background-color 0.2s ease;
+    transition: background-color var(--dur-2) var(--ease-out);
   }
 
   .tldr-header::-webkit-details-marker {
@@ -79,13 +79,17 @@ const { title = t("components.tldr.title"), collapsed = false } = Astro.props;
     height: 20px;
   }
 
+  /* Mono "kicker" treatment — the Lab answer-target eyebrow. */
   .tldr-title {
     flex: 1;
     margin: 0;
-    font-size: 1rem;
-    font-weight: var(--fw-semibold);
-    line-height: inherit;
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
+    font-weight: var(--fw-medium);
+    line-height: 1.3;
     color: inherit;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
   }
 
   .tldr-chevron {

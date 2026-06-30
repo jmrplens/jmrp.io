@@ -109,17 +109,18 @@ const uniqueId = `bs-${crypto.randomUUID().slice(0, 8)}`;
     overflow: hidden;
     background: var(--color-bg-secondary);
     border: var(--border-1);
-    border-radius: var(--radius-md);
+    border-radius: var(--radius-lg);
   }
 
   .bs-title {
     padding: 0.625rem 1rem;
     margin: 0;
-    font-size: 0.85rem;
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
     font-weight: var(--fw-semibold);
     color: var(--color-text-muted);
     text-transform: uppercase;
-    letter-spacing: 0.05em;
+    letter-spacing: 0.08em;
     background: var(--color-bg-subtle);
     border-bottom: var(--border-1);
   }
@@ -128,7 +129,7 @@ const uniqueId = `bs-${crypto.randomUUID().slice(0, 8)}`;
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
     gap: 1px;
-    background: var(--color-border);
+    background: var(--color-hair);
   }
 
   .bs-item {
@@ -174,7 +175,7 @@ const uniqueId = `bs-${crypto.randomUUID().slice(0, 8)}`;
   }
 
   .support-partial .bs-status-icon {
-    color: var(--color-warning, #f59e0b);
+    color: var(--color-primary);
   }
 
   .support-none .bs-status-icon {

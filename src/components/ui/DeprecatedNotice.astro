@@ -73,38 +73,45 @@ if (import.meta.env.DEV && alternativeUrl && !alternative) {
 
 <style>
   .deprecated-notice {
-    margin: 1.5rem 0;
+    padding: var(--space-md);
+    margin: var(--space-md-lg) 0;
     overflow: hidden;
-    background: rgb(239 68 68 / 8%);
-    border: 1px solid rgb(239 68 68 / 30%);
+    background: var(--color-bg-secondary);
+    border: 1px solid var(--color-hair);
+    border-left: 4px solid #ef4444;
     border-radius: var(--radius-md);
+    box-shadow: var(--sh-card);
   }
 
+  /* Header collapses into a Lab status pill: icon (shape cue) + mono label. */
   .dn-header {
-    display: flex;
-    gap: 0.5rem;
+    display: inline-flex;
+    gap: var(--space-xs);
     align-items: center;
-    padding: 0.625rem 1rem;
+    padding: 0.1875rem 0.5rem;
+    margin-bottom: var(--space-sm);
     background: rgb(239 68 68 / 15%);
-    border-bottom: 1px solid rgb(239 68 68 / 20%);
+    border: 1px solid rgb(239 68 68 / 32%);
+    border-radius: var(--radius-sm);
   }
 
   .dn-icon {
-    width: 20px;
-    height: 20px;
+    width: 15px;
+    height: 15px;
     color: #b91c1c;
   }
 
   .dn-title {
-    font-size: 0.85rem;
-    font-weight: var(--fw-bold);
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
+    font-weight: var(--fw-semibold);
     color: #b91c1c;
     text-transform: uppercase;
-    letter-spacing: 0.05em;
+    letter-spacing: 0.1em;
   }
 
   .dn-content {
-    padding: 0.875rem 1rem;
+    padding: 0;
   }
 
   .dn-message {
@@ -158,5 +165,29 @@ if (import.meta.env.DEV && alternativeUrl && !alternative) {
     outline: 2px solid currentcolor;
     outline-offset: 2px;
     border-radius: var(--radius-sm);
+  }
+
+  /* Dark mode: lift reds/greens to the 400 scale for WCAG AA (≥4.5:1) on the
+     neutral surface. Mirrors StateNotice's dark-first override pattern. */
+  :root[data-theme="dark"] .dn-icon,
+  :root[data-theme="dark"] .dn-title,
+  :root[data-theme="dark"] .dn-message code {
+    color: #f87171; /* red-400, ~5.5:1 */
+  }
+
+  :root[data-theme="dark"] .dn-alternative code {
+    color: #34d399; /* emerald-400, ~7.2:1 */
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme]) .dn-icon,
+    :root:not([data-theme]) .dn-title,
+    :root:not([data-theme]) .dn-message code {
+      color: #f87171;
+    }
+
+    :root:not([data-theme]) .dn-alternative code {
+      color: #34d399;
+    }
   }
 </style>

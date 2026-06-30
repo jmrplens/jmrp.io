@@ -163,10 +163,10 @@ const encodedContent = content ? encodeURIComponent(content) : undefined;
      * CSS custom properties for theming in different contexts.
      * Parent components can override these for better contrast.
      */
-    --copy-btn-bg: var(--color-bg-subtle, rgb(255 255 255 / 10%));
-    --copy-btn-bg-hover: var(--color-bg-secondary, #222);
-    --copy-btn-border: var(--border-1, 1px solid rgb(255 255 255 / 10%));
-    --copy-btn-icon-color: var(--color-text-muted, #888);
+    --copy-btn-bg: var(--color-bg-subtle);
+    --copy-btn-bg-hover: var(--color-surface-2);
+    --copy-btn-border: var(--border-1);
+    --copy-btn-icon-color: var(--color-text-muted);
 
     position: absolute;
     top: 0.5rem;
@@ -181,11 +181,11 @@ const encodedContent = content ? encodeURIComponent(content) : undefined;
     cursor: pointer;
     background-color: var(--copy-btn-bg);
     border: var(--copy-btn-border);
-    border-radius: 4px;
+    border-radius: var(--radius-sm);
     opacity: 80%;
     transition:
-      opacity 0.2s ease,
-      background-color 0.2s ease;
+      opacity var(--dur-2) var(--ease-out),
+      background-color var(--dur-2) var(--ease-out);
   }
 
   .copy-button:hover,
@@ -196,7 +196,7 @@ const encodedContent = content ? encodeURIComponent(content) : undefined;
   }
 
   .copy-button:focus-visible {
-    outline: 2px solid var(--color-primary, #8b5cf6);
+    outline: 2px solid var(--color-primary);
     outline-offset: 2px;
   }
 
@@ -215,7 +215,7 @@ const encodedContent = content ? encodeURIComponent(content) : undefined;
   }
 
   .success-icon {
-    color: var(--color-success, #2ea043);
+    color: var(--teal);
   }
 
   .hidden {
