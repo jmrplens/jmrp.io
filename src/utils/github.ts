@@ -46,8 +46,7 @@ export interface GitHubProfile {
 
 const USERNAME = "jmrplens";
 const GITHUB_TOKEN: string | undefined = import.meta.env.GITHUB_TOKEN as
-  | string
-  | undefined; // Optional, for rate limits
+  string | undefined; // Optional, for rate limits
 
 function getGitHubHeaders(): Record<string, string> {
   const headers: Record<string, string> = {

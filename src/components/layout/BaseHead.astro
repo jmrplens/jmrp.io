@@ -209,13 +209,11 @@ const navLabelKeyMap: Record<string, TranslationKey> = {
   "/publications/": "nav.publications",
   "/github/": "nav.repositories",
 };
-const navSchema = (siteData.nav || []).map(
-  (item): SiteNavigationElement => ({
-    "@type": "SiteNavigationElement",
-    name: navLabelKeyMap[item.href] ? t(navLabelKeyMap[item.href]) : item.label,
-    url: new URL(item.href, getSiteUrl()).href,
-  }),
-);
+const navSchema = (siteData.nav || []).map((item): SiteNavigationElement => ({
+  "@type": "SiteNavigationElement",
+  name: navLabelKeyMap[item.href] ? t(navLabelKeyMap[item.href]) : item.label,
+  url: new URL(item.href, getSiteUrl()).href,
+}));
 
 // 3. Breadcrumb Schema (Automatic)
 const pathSegments = Astro.url.pathname.split("/").filter(Boolean);

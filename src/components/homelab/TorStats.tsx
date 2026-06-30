@@ -81,8 +81,7 @@ interface TorApiResponse {
 
 /** Discriminated fetch result to decouple error handling from the fetch logic. */
 type FetchResult =
-  | { ok: true; data: TorApiResponse }
-  | { ok: false; error: string };
+  { ok: true; data: TorApiResponse } | { ok: false; error: string };
 
 /**
  * Format bytes into a human-readable string.
