@@ -74,6 +74,11 @@ function escapeAttr(value) {
   return escapeHtml(value).replaceAll('"', "&quot;");
 }
 
+/** Allowlists safe href schemes (blocks javascript:/data: in injected HTML). */
+function isSafeHref(url) {
+  return /^(https?:|mailto:)/i.test(url) || url.startsWith("/");
+}
+
 /**
  * Walks the inline tokens of a markdown string, calling the renderer callbacks.
  *
@@ -132,6 +137,8 @@ export function markdownToHtml(md) {
   return walk(md, {
     text: escapeHtml,
     link: (text, url, title) => {
+      // Drop the link (keep the text) when the scheme isn't allowlisted.
+      if (!isSafeHref(url)) return escapeHtml(text);
       const aria = title ? ` aria-label="${escapeAttr(title)}"` : "";
       return `<a href="${escapeAttr(url)}" target="_blank" rel="external noopener noreferrer"${aria}>${escapeHtml(text)}</a>`;
     },

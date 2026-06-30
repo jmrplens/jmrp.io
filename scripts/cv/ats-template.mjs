@@ -93,7 +93,7 @@ export function documentPreamble({
 \usepackage[hidelinks]{hyperref}
 \hypersetup{
   colorlinks=true, urlcolor=accent, linkcolor=accent,
-  pdftitle={${pdfTitle}},
+  pdftitle={${escapeLatex(pdfTitle)}},
   pdfauthor={José Manuel Requena Plens},
   pdfsubject={${pdfSubject}},
   pdfkeywords={${pdfKeywords}},

@@ -309,16 +309,18 @@ function renderPublications(meta) {
 async function fetchProjectStats(sections, locale) {
   const statsBySlug = new Map();
   const projects = sections.find((s) => s.kind === "projects");
-  for (const p of projects?.items ?? []) {
-    const slug = githubSlug(p.links);
-    if (!slug || statsBySlug.has(slug)) continue;
-    try {
-      statsBySlug.set(slug, formatStats(await fetchRepoStats(slug), locale));
-    } catch (error) {
-      console.warn(`[cv] GitHub stats failed for ${slug}: ${error.message}`);
-      statsBySlug.set(slug, []);
-    }
-  }
+  await Promise.all(
+    (projects?.items ?? []).map(async (p) => {
+      const slug = githubSlug(p.links);
+      if (!slug) return;
+      try {
+        statsBySlug.set(slug, formatStats(await fetchRepoStats(slug), locale));
+      } catch (error) {
+        console.warn(`[cv] GitHub stats failed for ${slug}: ${error.message}`);
+        statsBySlug.set(slug, []);
+      }
+    }),
+  );
   return statsBySlug;
 }
 

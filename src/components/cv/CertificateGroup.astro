@@ -57,7 +57,7 @@ const t = useTranslations(locale);
             <a
               href={item.url}
               class="btn btn-sm"
-              download
+              download={item.url.startsWith("/") || undefined}
               target="_blank"
               rel="external noopener noreferrer"
               aria-label={

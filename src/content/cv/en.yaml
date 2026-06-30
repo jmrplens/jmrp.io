@@ -217,7 +217,7 @@ sections:
                 membranes](/pdf/paper-resources/Conferences/Euronoise/plensEuro2021_2.pdf)
         ats:
           normal: true
-          org: UPV · CSIC · i3M / IIS La Fe
+          org: UPV · CSIC · i3M
           bullets:
             - >-
               Designed acoustic metamaterials (metadiffusers and lenses) that reduce
@@ -399,48 +399,39 @@ sections:
           - { name: PlatformIO, icon: simple-icons:platformio, level: 4 }
           - {
               name: Texas Instruments,
-              note: (MSP430,
-              Tiva C,
-              Code Composer Studio),
+              note: "(MSP430, Tiva C, Code Composer Studio)",
               icon: mdi:chip,
               level: 3,
             }
           - { name: FreeRTOS / RTOS, icon: mdi:clock-fast, level: 4 }
           - {
               name: Comm. Protocols,
-              note: (I2C,
-              SPI,
-              RS485,
-              Modbus),
+              note: "(I2C, SPI, RS485, Modbus)",
               icon: fa-solid:project-diagram,
               level: 4,
             }
           - {
               name: HW Debugging,
-              note: (JTAG / SWD),
+              note: "(JTAG / SWD)",
               icon: fa-solid:bug,
               level: 4,
             }
           - { name: Keil uVision, icon: simple-icons:arm, level: 4 }
           - {
               name: Instrumentation,
-              note: (Oscilloscopes,
-              DAQs,
-              Logic A.),
+              note: "(Oscilloscopes, DAQs, Logic A.)",
               icon: fa-solid:wave-square,
               level: 4,
             }
           - {
               name: Secure Boot & Embedded Security,
-              note: (secure boot,
-              flash encryption,
-              key derivation),
+              note: "(secure boot, flash encryption, key derivation)",
               icon: mdi:shield-key-outline,
               level: 3,
             }
           - {
               name: Doxygen,
-              note: (firmware documentation),
+              note: "(firmware documentation)",
               icon: simple-icons:doxygen,
               level: 4,
             }
@@ -453,16 +444,13 @@ sections:
           - { name: TypeScript, icon: logos:typescript-icon, level: 2 }
           - {
               name: Bash,
-              note: (shellcheck,
-              bats),
+              note: "(shellcheck, bats)",
               icon: logos:bash-icon,
               level: 3,
             }
           - {
               name: Clang Tooling,
-              note: (clangd,
-              clang-format,
-              clang-tidy),
+              note: "(clangd, clang-format, clang-tidy)",
               icon: vscode-icons:file-type-clangd,
               level: 3,
             }
@@ -474,9 +462,7 @@ sections:
           - { name: CMake, icon: vscode-icons:file-type-cmake, level: 3 }
           - {
               name: JetBrains Toolbox,
-              note: (CLion,
-              PyCharm,
-              WebStorm),
+              note: "(CLion, PyCharm, WebStorm)",
               icon: logos:jetbrains,
               level: 4,
             }
@@ -493,25 +479,19 @@ sections:
             }
           - {
               name: GoReleaser,
-              note: (multi-platform releases),
+              note: "(multi-platform releases)",
               icon: mdi:package-variant-closed,
               level: 3,
             }
           - {
               name: Static Analysis & SAST,
-              note: (CodeQL,
-              gitleaks,
-              golangci-lint),
+              note: "(CodeQL, gitleaks, golangci-lint)",
               icon: fa-solid:search-plus,
               level: 3,
             }
           - {
               name: Testing,
-              note: (Ceedling,
-              pytest,
-              Playwright,
-              Vitest,
-              bats),
+              note: "(Ceedling, pytest, Playwright, Vitest, bats)",
               icon: fa-solid:vials,
               level: 4,
             }
@@ -534,36 +514,31 @@ sections:
         items:
           - {
               name: Applied Cryptography,
-              note: (AEAD,
-              encrypt-then-MAC,
-              KDFs),
+              note: "(AEAD, encrypt-then-MAC, KDFs)",
               icon: fa-solid:key,
               level: 3,
             }
           - {
               name: TLS / mTLS / PKI,
-              note: (client certificates),
+              note: "(client certificates)",
               icon: fa-solid:certificate,
               level: 4,
             }
           - {
               name: Nginx Hardening,
-              note: (CSP,
-              security headers),
+              note: "(CSP, security headers)",
               icon: simple-icons:nginx,
               level: 4,
             }
           - {
               name: CrowdSec,
-              note: (IDS/IPS),
+              note: "(IDS/IPS)",
               icon: fa-solid:user-shield,
               level: 3,
             }
           - {
               name: Network Hardening,
-              note: (firewall,
-              tarpit,
-              honeypot),
+              note: "(firewall, tarpit, honeypot)",
               icon: fa-solid:shield-alt,
               level: 4,
             }
@@ -572,23 +547,19 @@ sections:
         items:
           - {
               name: Model Context Protocol (MCP),
-              note: (Server development in Go),
+              note: "(Server development in Go)",
               icon: simple-icons:modelcontextprotocol,
               level: 4,
             }
           - {
               name: AI Coding Agents,
-              note: (Claude Code,
-              Copilot,
-              agent skills/workflows),
+              note: "(Claude Code, Copilot, agent skills/workflows)",
               icon: simple-icons:claude,
               level: 4,
             }
           - {
               name: LLM Integration,
-              note: (API,
-              prompt engineering,
-              tool-use),
+              note: "(API, prompt engineering, tool-use)",
               icon: mdi:brain,
               level: 3,
             }
@@ -599,8 +570,7 @@ sections:
           - { name: LabView, icon: simple-icons:labview, level: 3 }
           - {
               name: Acoustic Instrumentation,
-              note: (laser/vibration accelerometers,
-              microphones),
+              note: "(laser/vibration accelerometers, microphones)",
               icon: fa-solid:wave-square,
               level: 4,
             }
@@ -975,7 +945,7 @@ sections:
         items:
           - {
               name: Using Python for Research,
-              school: HardvardX,
+              school: HarvardX,
               hours: 50 Hours,
               url: https://courses.edx.org/certificates/f1fb6cbd6f39431c9f57c7ee3a5dc3ad,
             }

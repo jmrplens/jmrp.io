@@ -219,12 +219,23 @@ const site_config = defineCollection({
 });
 
 /**
+ * A URL restricted to safe schemes (http/https/mailto) or root-relative paths,
+ * since these values are later rendered as `href`.
+ */
+const safeUrl = z
+  .string()
+  .refine(
+    (u) => /^(https?:|mailto:)/i.test(u) || u.startsWith("/"),
+    "URL must be http(s), mailto:, or a root-relative path",
+  );
+
+/**
  * Generic CV link. `kind` tags contact links in `basics`; `ariaLabel`
  * disambiguates links with the same visible text.
  */
 const CVLink = z.object({
   label: z.string(),
-  url: z.string(),
+  url: safeUrl,
   kind: z.string().optional(),
   ariaLabel: z.string().optional(),
 });
@@ -233,7 +244,7 @@ const CVLink = z.object({
 const CVOrg = z.object({
   name: z.string(),
   short: z.string().optional(),
-  url: z.string().optional(),
+  url: safeUrl.optional(),
 });
 
 /**
@@ -269,7 +280,7 @@ const CVBasics = z.object({
 const CVDownloadFile = z.object({
   lang: z.string(),
   label: z.string(),
-  url: z.string(),
+  url: safeUrl,
   download: z.string(),
 });
 
@@ -336,7 +347,7 @@ const CVCertificateItem = z.object({
   name: z.string(),
   school: z.string().optional(),
   hours: z.string().optional(),
-  url: z.string().optional(),
+  url: safeUrl.optional(),
   ariaLabel: z.string().optional(),
 });
 

@@ -110,3 +110,8 @@ test("markdownToHtml: attribute value is escaped", () => {
     '<a href="https://x.io" target="_blank" rel="external noopener noreferrer" aria-label="a &amp; b">t</a>',
   );
 });
+
+test("markdownToHtml: unsafe link scheme is dropped (keeps text)", () => {
+  assert.equal(markdownToHtml("[x](javascript:alert)"), "x");
+  assert.equal(markdownToHtml("[y](data:text/html,bad)"), "y");
+});
