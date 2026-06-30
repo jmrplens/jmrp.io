@@ -8,7 +8,7 @@ overrides:
   form-data: '>=4.0.0'
   qs: '>=6.14.2'
   tmp: '>=0.2.5'
-  glob: '>=13.0.0'
+  glob: ^13.0.6
   rimraf: '>=6.1.2'
   uuid: '>=9.0.0'
   whatwg-encoding: '>=3.1.1'
@@ -16,9 +16,9 @@ overrides:
   lodash-es: '>=4.17.23'
   '@vercel/blob': '>=2.2.0'
   path-to-regexp: '>=6.3.0'
-  shiki: ^4.0.0
-  eslint: ^10.5.0
-  vite: ^8.1.0
+  shiki: ^4.3.0
+  eslint: ^10.6.0
+  vite: ^8.1.1
   '@astrojs/markdown-remark>smol-toml': ^1.6.1
   '@astrojs/yaml2ts>yaml': ^2.8.3
   '@mapbox/node-pre-gyp>tar': ^7.5.11
@@ -1499,7 +1499,7 @@ packages:
     resolution: {integrity: sha512-phrYmNiYppR7znFEdqgfWHXR6NCkZEK7hwWDHZUjit/2/U0r6XvkDl0SYnoM51Hq7FhCGdLDT6zxCCOY1hexsQ==}
     engines: {node: ^12.22.0 || ^14.17.0 || >=16.0.0}
     peerDependencies:
-      eslint: ^10.5.0
+      eslint: ^10.6.0
 
   '@eslint-community/regexpp@4.12.2':
     resolution: {integrity: sha512-EriSTlt5OC9/7SXkRSCAhfSxxoSUgBm33OH+IkwbdpgoqsSsUg7y3uh+IICI/Qg4BBWr3U2i39RpmycbxMq4ew==}
@@ -1552,7 +1552,7 @@ packages:
     resolution: {integrity: sha512-ZugRpHvMauAjawKLyfHvu6R00GWzJ5F5KH+cgYnehC4gmecUl5O6fMe+9xuUdfrkjRIvlu0Vrm63K64ZqwBLMg==}
     engines: {node: 12.x || 14.x || >= 16}
     peerDependencies:
-      eslint: ^10.5.0
+      eslint: ^10.6.0
 
   '@html-validate/stylish@6.0.0':
     resolution: {integrity: sha512-d1/lI3qIXhGVJF3+MmKEBn1dRX6U4Z+BDaOdDI3E6SXcO+OQ7hC/3mSo6BIjwQlcuV6NdDOKm6QCrzIQL1EezQ==}
@@ -2558,7 +2558,7 @@ packages:
     resolution: {integrity: sha512-p0vJpxiVO7KWWazWny3LUZ+saXyZKWv6Ju0bYMWNJRp2YveufRPgSUB1C4MTqGJfz07EehMgfN+AJNwQy+w6Iw==}
     peerDependencies:
       '@babel/core': 7.x
-      vite: ^8.1.0
+      vite: ^8.1.1
 
   '@preact/signals-core@1.14.3':
     resolution: {integrity: sha512-m0K3vnbSLC5rHs2ZVfeAMvBtT1zIyq4mxx5OlNncSgMj5Iz6W5Rn3kPrDxAC+iIKmiVe0lSl6U37t5ZkEWoVAw==}
@@ -2583,7 +2583,7 @@ packages:
     resolution: {integrity: sha512-FY1fzXpUjiuosznMV0YM7XAOPZjB5FIdWS0W24+XnlxYkt9hNAwwsiKYn+cuTEoMtD/ZVazS5QVssBr9YhpCQA==}
     peerDependencies:
       preact: ^10.4.0 || ^11.0.0-0
-      vite: ^8.1.0
+      vite: ^8.1.1
 
   '@prisma/instrumentation@6.11.1':
     resolution: {integrity: sha512-mrZOev24EDhnefmnZX7WVVT7v+r9LttPRqf54ONvj6re4XMF7wFTpK2tLJi4XHB7fFp/6xhYbgRel8YV7gQiyA==}
@@ -3113,14 +3113,14 @@ packages:
     engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
     peerDependencies:
       '@typescript-eslint/parser': ^8.62.1
-      eslint: ^10.5.0
+      eslint: ^10.6.0
       typescript: '>=4.8.4 <6.1.0'
 
   '@typescript-eslint/parser@8.62.1':
     resolution: {integrity: sha512-sPhE4iHuJDSvoAiec+Ro8JyXw8f0ql13HFR82P99nCm9GwTEKG0KYLvDe6REk8BCXuit6vJAv/Yxg5ABaNS2rA==}
     engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
     peerDependencies:
-      eslint: ^10.5.0
+      eslint: ^10.6.0
       typescript: '>=4.8.4 <6.1.0'
 
   '@typescript-eslint/project-service@8.62.1':
@@ -3147,7 +3147,7 @@ packages:
     resolution: {integrity: sha512-aXM5xlqXiTxPibXB93cLAURfT3rlizf7uMXISCXy66Isr/9hISJx3yDsKl0L7lKa51b8JpFuNKby0/O0pEm9jg==}
     engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
     peerDependencies:
-      eslint: ^10.5.0
+      eslint: ^10.6.0
       typescript: '>=4.8.4 <6.1.0'
 
   '@typescript-eslint/types@5.62.0':
@@ -3177,13 +3177,13 @@ packages:
     resolution: {integrity: sha512-n8oxjeb5aIbPFEtmQxQYOLI0i9n5ySBEY/ZEHHZqKQSFnxio1rv6dthascc9dLuwrL0RC5mPCxB7vnAVGAYWAQ==}
     engines: {node: ^12.22.0 || ^14.17.0 || >=16.0.0}
     peerDependencies:
-      eslint: ^10.5.0
+      eslint: ^10.6.0
 
   '@typescript-eslint/utils@8.62.1':
     resolution: {integrity: sha512-sHtbPfuKNZCG+ih8SyjjucqRntSVmp8XgL5u6o9mAhiSn8ds5o/M/XdM0abweme2Tln3szOstOrZ9OXitvPh0g==}
     engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
     peerDependencies:
-      eslint: ^10.5.0
+      eslint: ^10.6.0
       typescript: '>=4.8.4 <6.1.0'
 
   '@typescript-eslint/visitor-keys@5.62.0':
@@ -3200,7 +3200,7 @@ packages:
   '@unocss/astro@66.7.4':
     resolution: {integrity: sha512-so0EdH8A9bN1hHYWAyo96U0cxwCtPW/9a8dkLfpRdOJPLYCgvWuYWaRajE4zSxQU3V97Wynn5lXtOqWzShn/CQ==}
     peerDependencies:
-      vite: ^8.1.0
+      vite: ^8.1.1
     peerDependenciesMeta:
       vite:
         optional: true
@@ -3275,7 +3275,7 @@ packages:
   '@unocss/vite@66.7.4':
     resolution: {integrity: sha512-U6P3qWuGJIQ3fqMQf9qMB2kkXGrISkcdeW1kHlBKs54QjWKJRMNTxgAAb57ytlbD2K9osEMO/k58w96lbXcTNg==}
     peerDependencies:
-      vite: ^8.1.0
+      vite: ^8.1.1
 
   '@upsetjs/venn.js@2.0.0':
     resolution: {integrity: sha512-WbBhLrooyePuQ1VZxrJjtLvTc4NVfpOyKx0sKqioq9bX1C1m7Jgykkn8gLrtwumBioXIqam8DLxp88Adbue6Hw==}
@@ -4675,7 +4675,7 @@ packages:
     engines: {node: ^22.22.3 || ^24.16.0 || >=26.3.0}
     peerDependencies:
       '@typescript-eslint/parser': '>=8.61.0'
-      eslint: ^10.5.0
+      eslint: ^10.6.0
       eslint-plugin-jsx-a11y: '>=6.10.2'
     peerDependenciesMeta:
       '@typescript-eslint/parser':
@@ -4687,47 +4687,47 @@ packages:
     resolution: {integrity: sha512-A9UIWsCquaKnit7rasXxYf12hhGIdDRjv65/RUE3AxbT6rdKBvr3MjH37g3gP+g4ipQMXuMn9slFKjO+vqNfkg==}
     engines: {node: ^22.13.0 || >=24}
     peerDependencies:
-      eslint: ^10.5.0
+      eslint: ^10.6.0
 
   eslint-plugin-jsx-a11y@6.10.2:
     resolution: {integrity: sha512-scB3nz4WmG75pV8+3eRUQOHZlNSUhFNq37xnpgRkCCELU3XMvXAxLk1eqWWyE22Ki4Q01Fnsw9BA3cJHDPgn2Q==}
     engines: {node: '>=4.0'}
     peerDependencies:
-      eslint: ^10.5.0
+      eslint: ^10.6.0
 
   eslint-plugin-no-secrets@2.3.3:
     resolution: {integrity: sha512-sroCsCscpwQxZ/O9Ml69w5qt/2nvHhXDeyUnSqSC5dMANGxt4rQgUn7xbPvDmhbMPmUCAc2Y3SRU0cXet7kNWQ==}
     engines: {node: '>=18', npm: '>=8'}
     peerDependencies:
-      eslint: ^10.5.0
+      eslint: ^10.6.0
 
   eslint-plugin-playwright@2.10.4:
     resolution: {integrity: sha512-l0V/VxyqfFbtqCTxj5AdRn3Q6S/hIW4nKBnKZVleVbZ24N2My6Usj//ytX3dKKqAoSbvKck9YtSytfdZ5qjLuA==}
     engines: {node: '>=16.9.0'}
     peerDependencies:
-      eslint: ^10.5.0
+      eslint: ^10.6.0
 
   eslint-plugin-react-hooks@7.1.1:
     resolution: {integrity: sha512-f2I7Gw6JbvCexzIInuSbZpfdQ44D7iqdWX01FKLvrPgqxoE7oMj8clOfto8U6vYiz4yd5oKu39rRSVOe1zRu0g==}
     engines: {node: '>=18'}
     peerDependencies:
-      eslint: ^10.5.0
+      eslint: ^10.6.0
 
   eslint-plugin-simple-import-sort@13.0.0:
     resolution: {integrity: sha512-McAc+/Nlvcg4byY/CABGH8kqnefWBj8s3JA2okEtz8ixbECQgU46p0HkTUKa4YS7wvgGceimlc34p1nXqbWqtA==}
     peerDependencies:
-      eslint: ^10.5.0
+      eslint: ^10.6.0
 
   eslint-plugin-sonarjs@4.1.0:
     resolution: {integrity: sha512-rh+FlVz0yfd2RNIb6WqSkuGh0addX/Qi5scwQ5FphXDFrM6fZKcxP1+attJ78yUKcyYfiu6MTaISPpAFPzqRJw==}
     peerDependencies:
-      eslint: ^10.5.0
+      eslint: ^10.6.0
 
   eslint-plugin-unicorn@69.0.0:
     resolution: {integrity: sha512-ZN/KtHr9hQ6AOByANSNJpsDbo/+Nn+EyQ6blK4w+dcmS/xpYkqLLfrUc+NA/wOK6vF5uEUvhn8my5B/3sruB9g==}
     engines: {node: '>=22'}
     peerDependencies:
-      eslint: ^10.5.0
+      eslint: ^10.6.0
 
   eslint-scope@5.1.1:
     resolution: {integrity: sha512-2NxwbF/hZ0KpepYN0cNbo+FN6XoK7GaHlQhgx/hIZl6Va0bF45RQOOwhLIy8lQDbuCiadSLCBnH2CFYquit5bw==}
@@ -7660,7 +7660,7 @@ packages:
     resolution: {integrity: sha512-vymnnM5g0AKQDSAyfP12nMIBvgwgA42syg74kkuZ4x1VuTzwQKwc5h9rGxeShCjny5o+zWAb6OEoz7XLgrIkIw==}
     engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
     peerDependencies:
-      eslint: ^10.5.0
+      eslint: ^10.6.0
       typescript: '>=4.8.4 <6.1.0'
 
   typescript@5.9.3:
@@ -7896,7 +7896,7 @@ packages:
     peerDependencies:
       sharp: '>=0.34.0'
       svgo: '>=4'
-      vite: ^8.1.0
+      vite: ^8.1.1
     peerDependenciesMeta:
       sharp:
         optional: true
@@ -7906,7 +7906,7 @@ packages:
   vite-prerender-plugin@0.5.13:
     resolution: {integrity: sha512-IKSpYkzDBsKAxa05naRbj7GvNVMSdww/Z/E89oO3xndz+gWnOBOKOAbEXv7qDhktY/j3vHgJmoV1pPzqU2tx9g==}
     peerDependencies:
-      vite: ^8.1.0
+      vite: ^8.1.1
 
   vite@8.1.1:
     resolution: {integrity: sha512-X/05/cT+VITy2AeDc1der6smvGWWREtL4hPbPTaVbjSBuuWkmNOjR6HP3NzqcQA2nF6VHGUPaFRJyft/2AE9Kg==}
@@ -7954,7 +7954,7 @@ packages:
   vitefu@1.1.3:
     resolution: {integrity: sha512-ub4okH7Z5KLjb6hDyjqrGXqWtWvoYdU3IGm/NorpgHncKoLTCfRIbvlhBm7r0YstIaQRYlp4yEbFqDcKSzXSSg==}
     peerDependencies:
-      vite: ^8.1.0
+      vite: ^8.1.1
     peerDependenciesMeta:
       vite:
         optional: true
