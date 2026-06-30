@@ -260,15 +260,17 @@ const socialLinksWithType = socialLinks.map((link) => {
   footer {
     padding: var(--space-lg) 0;
     margin-top: auto;
-    font-size: 0.9rem;
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
     color: var(--color-text-muted);
     text-align: center;
+    border-top: 1px solid var(--color-hair);
   }
 
   .container {
     display: flex;
     flex-direction: column;
-    gap: var(--space-sm);
+    gap: var(--space-md);
   }
 
   .social-links {
@@ -323,6 +325,6 @@ const socialLinksWithType = socialLinks.map((link) => {
 
   .social-btn:hover,
   .social-btn:focus {
-    background-color: rgb(179 137 245 / 10%);
+    background-color: var(--accent-dim);
   }
 </style>

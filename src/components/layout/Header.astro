@@ -9,6 +9,7 @@ import Logo from "@components/layout/Logo.astro";
 import ThemeToggle from "@components/ui/ThemeToggle.astro";
 import { defaultLocale, type Locale } from "@i18n/config";
 import {
+  stripLocalePrefix,
   type TranslationKey,
   useTranslatedPath,
   useTranslations,
@@ -18,6 +19,13 @@ import { getEntry } from "astro:content";
 const locale = (Astro.currentLocale ?? defaultLocale) as Locale;
 const t = useTranslations(locale);
 const translatePath = useTranslatedPath(locale);
+
+// Active-nav detection by first path segment (e.g. /blog/... -> "blog").
+const currentSegment =
+  stripLocalePrefix(Astro.url.pathname).split("/").find(Boolean) ?? "";
+/** Whether a nav href points at the current first-level section. */
+const isCurrent = (href: string): boolean =>
+  (stripLocalePrefix(href).split("/").find(Boolean) ?? "") === currentSegment;
 
 const siteEntry = await getEntry("site_config", "site");
 // Type guard: siteEntry may be undefined, and data is a union type.
@@ -61,11 +69,13 @@ const navLabelKeyMap: Record<string, TranslationKey> = {
           navItems.map((item) => {
             const labelKey = navLabelKeyMap[item.href];
             const label = labelKey ? t(labelKey) : item.label;
+            const active = isCurrent(item.href);
             return (
               <li>
                 <a
                   href={translatePath(item.href)}
                   data-astro-prefetch
+                  aria-current={active ? "page" : undefined}
                 >
                   {label}
                 </a>
@@ -216,8 +226,22 @@ const navLabelKeyMap: Record<string, TranslationKey> = {
     align-items: center;
     height: var(--header-height); /* Fix height to prevent CLS */
     padding: var(--space-md) 0;
-    background-color: var(--color-bg-secondary);
-    border-bottom: var(--border-1);
+    border-bottom: 1px solid var(--color-hair);
+  }
+
+  /*
+   * Frosted Lab chrome on a ::before layer (NOT on <header> itself): a
+   * backdrop-filter on the header would make it the containing block for the
+   * position:fixed mobile drawer, pushing its off-screen transform into the
+   * document scroll width. Keeping the blur on a child layer avoids that.
+   */
+  header::before {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    content: "";
+    background-color: var(--color-bg-header);
+    backdrop-filter: blur(12px);
   }
 
   nav {
@@ -284,22 +308,33 @@ const navLabelKeyMap: Record<string, TranslationKey> = {
   .nav-links a {
     display: block; /* Make block for better mobile hit area */
     padding: 0.5rem 0.75rem;
-    font-weight: var(--fw-semibold);
-    color: var(--color-text);
+    font-weight: var(--fw-medium);
+    color: var(--color-text-muted);
     text-decoration: none;
     border-radius: var(--radius-sm);
     transition:
-      background-color 0.2s,
-      color 0.2s,
-      border-color 0.2s,
-      box-shadow 0.2s,
-      transform 0.2s;
+      background-color var(--dur-2) var(--ease-out),
+      color var(--dur-2) var(--ease-out),
+      border-color var(--dur-2) var(--ease-out),
+      box-shadow var(--dur-2) var(--ease-out),
+      transform var(--dur-2) var(--ease-out);
   }
 
   .nav-links a:hover,
-  .nav-links a:focus {
-    color: var(--color-primary);
-    background-color: rgb(179 137 245 / 10%);
+  .nav-links a:focus-visible {
+    color: var(--color-text-heading);
+    background-color: var(--color-bg-subtle);
+  }
+
+  /*
+   * Active section: heading-color text (AA on the dim chip in both themes) on a
+   * dim amber chip, with an inset amber underline as the non-color accent cue.
+   */
+  .nav-links a[aria-current="page"] {
+    font-weight: var(--fw-semibold);
+    color: var(--color-text-heading);
+    background-color: var(--accent-dim);
+    box-shadow: inset 0 -2px 0 var(--color-accent);
   }
 
   /* Mobile Styles */
@@ -352,16 +387,22 @@ const navLabelKeyMap: Record<string, TranslationKey> = {
       padding: 1rem 1.25rem;
       font-size: 1.1rem;
       color: var(--color-text);
-      background-color: rgb(255 255 255 / 3%); /* Subtle card bg */
-      border: var(--border-1);
+      background-color: var(--color-bg-subtle); /* Subtle card bg */
+      border: 1px solid var(--color-hair);
       border-radius: var(--radius-md);
-      transition: all 0.2s ease;
+      transition: all var(--dur-2) var(--ease-out);
+    }
+
+    .nav-links a[aria-current="page"] {
+      color: var(--color-text-heading);
+      background-color: var(--accent-dim);
+      border-color: var(--color-accent);
     }
 
     .nav-links a:hover,
     .nav-links a:focus {
       color: var(--color-primary);
-      background-color: rgb(179 137 245 / 10%); /* Primary color low opacity */
+      background-color: var(--accent-dim); /* Primary color low opacity */
       border-color: var(--color-primary);
       transform: translateX(5px); /* Subtle slide effect */
     }

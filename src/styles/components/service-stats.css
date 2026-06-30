@@ -293,7 +293,7 @@
   padding: 1px 8px;
   font-size: 0.8em;
   color: var(--color-primary);
-  background: var(--color-primary-bg, rgb(179 137 245 / 10%));
+  background: var(--color-primary-bg, var(--accent-dim));
   border-radius: 10px;
 }
 
