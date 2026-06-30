@@ -57,6 +57,7 @@ ignorePaths:
   - "*.woff2"
   - "*.woff"
   - cv_latex/**
+  - scripts/cv/** # LaTeX/ATS generator toolchain (LaTeX macros + Spanish template strings)
   - public/pdf/**
   - src/content/publications_data/papers.bib
   - schema-report.json

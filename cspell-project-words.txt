@@ -940,3 +940,9 @@ mcpservers
 precommit
 pytest
 sonarqube
+chrono
+completo
+linkedin
+orcid
+pubgroup
+ultrasónicos

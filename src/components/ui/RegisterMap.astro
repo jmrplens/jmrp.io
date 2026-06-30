@@ -92,7 +92,7 @@ interface Run {
   reserved: boolean;
 }
 const runs: Run[] = [];
-for (let b = width - 1; b >= 0; ) {
+for (let b = width - 1; b >= 0;) {
   const o = owner[b];
   let lo = b;
   while (lo >= 1 && owner[lo - 1] === o) lo--;

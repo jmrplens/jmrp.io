@@ -1,8 +1,8 @@
 ---
 /**
  * CV Page shared component.
- * Displays curriculum vitae data loaded from `src/content/cv/main.yaml`.
- * Renders sections dynamically using specific components or generic layouts.
+ * Renders the curriculum vitae from `src/content/cv/{locale}.yaml`
+ * (`{ basics, downloads, sections }`). Section bodies are rendered by `kind`.
  */
 import "@styles/skills.css";
 
@@ -15,7 +15,9 @@ import { useTranslations } from "@i18n/utils";
 import BaseLayout from "@layouts/BaseLayout.astro";
 import type { SiteConfig } from "@src/types";
 import { getCVData } from "@utils/cv";
-import { sanitize, stripToText } from "@utils/html";
+import { fetchRepoStats, formatStats, githubSlug } from "@utils/cv-github";
+import { markdownToHtml } from "@utils/cv-markdown";
+import { stripToText } from "@utils/html";
 import { buildSameAs, getAbsoluteUrl, getSiteUrl } from "@utils/site";
 import { getEntry } from "astro:content";
 import type { ProfilePage } from "schema-dts";
@@ -23,15 +25,12 @@ import type { ProfilePage } from "schema-dts";
 const locale = (Astro.currentLocale ?? defaultLocale) as Locale;
 const t = useTranslations(locale);
 
-const cvData = await getCVData(locale);
+const { basics, downloads, sections } = await getCVData(locale);
 
 const siteEntry = await getEntry("site_config", "site");
 const siteData = (siteEntry?.data || {}) as SiteConfig;
 
-// Use cvData directly — YAML defines the section order
-const sortedSections = cvData;
-
-// Helper to generate slugs
+/** Generates a URL slug from arbitrary text. */
 const generateSlug = (text: string) =>
   text
     .toLowerCase()
@@ -39,29 +38,52 @@ const generateSlug = (text: string) =>
     .trim()
     .replaceAll(/\s+/g, "-");
 
-// Prepare menu structure with subsections
-const menuSections: MenuSection[] = sortedSections.map((section) => {
+type OrgEntity = { name: string; short?: string; url?: string };
+
+/** Inline-markdown label for an organization entity. */
+const orgMd = (o: OrgEntity) => {
+  if (o.short) {
+    return o.url
+      ? `${o.name} ([${o.short}](${o.url}))`
+      : `${o.name} (${o.short})`;
+  }
+  return o.url ? `[${o.name}](${o.url})` : o.name;
+};
+
+/** Rendered HTML for an organization list (joined by ·). */
+const orgsHtml = (orgs: OrgEntity[]) =>
+  markdownToHtml(orgs.map((o) => orgMd(o)).join(" · "));
+
+// Build the navigation menu structure from the body sections.
+const menuSections: MenuSection[] = sections.map((section) => {
   const sectionSlug = generateSlug(section.title);
   let items: { title: string; slug: string }[] = [];
 
-  switch (section.type) {
-    case "time_table": {
-      items = section.contents.map((item, index) => ({
-        title: item.year ? `${item.title} (${item.year})` : item.title,
-        slug: generateSlug(`${section.title}-${item.title}-${index}`),
+  switch (section.kind) {
+    case "experience": {
+      items = section.items.map((item, index) => ({
+        title: item.period ? `${item.role} (${item.period})` : item.role,
+        slug: generateSlug(`${section.title}-${item.role}-${index}`),
       }));
       break;
     }
-    case "list_groups":
-    case "certificate_list": {
-      items = section.contents.map((group, index) => ({
+    case "education": {
+      items = section.items.map((item, index) => ({
+        title: item.period ? `${item.degree} (${item.period})` : item.degree,
+        slug: generateSlug(`${section.title}-${item.degree}-${index}`),
+      }));
+      break;
+    }
+    case "skills":
+    case "certificates": {
+      items = section.groups.map((group, index) => ({
         title: group.category,
         slug: generateSlug(`${section.title}-${group.category}-${index}`),
       }));
       break;
     }
     case "projects": {
-      items = section.contents.map((project, index) => ({
+      items = section.items.map((project, index) => ({
         title: project.name,
         slug: generateSlug(`${section.title}-${project.name}-${index}`),
       }));
@@ -69,22 +91,33 @@ const menuSections: MenuSection[] = sortedSections.map((section) => {
     }
   }
 
-  return {
-    title: section.title,
-    slug: sectionSlug,
-    items,
-  };
+  return { title: section.title, slug: sectionSlug, items };
 });
 
-// Extract specific sections by type for schema generation.
-// Only Experience and Formal Education use the `time_table` type (in that order),
-// so this stays stable regardless of where other sections — e.g. `projects` or
-// `list_groups` — are inserted in the YAML.
-const timeTables = cvData.filter((s) => s.type === "time_table");
-const experience = timeTables[0]; // First time_table = Experience
-const formalEducation = timeTables[1]; // Second time_table = Formal Education
-const technicalSkills = cvData.find((s) => s.type === "list_groups");
-const certificates = cvData.find((s) => s.type === "certificate_list");
+// Live GitHub stats for the project cards, fetched at build time so star /
+// release / download counts never need manual maintenance.
+const projectsSection = sections.find((s) => s.kind === "projects");
+const projectStats = new Map<string, string[]>();
+if (projectsSection?.kind === "projects") {
+  for (const project of projectsSection.items) {
+    const slug = githubSlug(project.links);
+    if (!slug || projectStats.has(project.name)) continue;
+    try {
+      projectStats.set(
+        project.name,
+        formatStats(await fetchRepoStats(slug), locale),
+      );
+    } catch {
+      projectStats.set(project.name, []);
+    }
+  }
+}
+
+// Sections used to build the ProfilePage JSON-LD.
+const experience = sections.find((s) => s.kind === "experience");
+const education = sections.find((s) => s.kind === "education");
+const skills = sections.find((s) => s.kind === "skills");
+const certificates = sections.find((s) => s.kind === "certificates");
 
 const personSchema = {
   "@type": "ProfilePage",
@@ -93,39 +126,35 @@ const personSchema = {
   mainEntity: {
     "@type": "Person",
     "@id": new URL("#person", getSiteUrl()).href,
-    name: "José Manuel Requena Plens",
+    name: basics.name,
     jobTitle: t("seo.jobTitle"),
     description: t("pages.cv.schemaDescription"),
-    // `url` and `image` are intentionally omitted: this node shares its @id
-    // with the canonical #person (the WebSite publisher in BaseHead), which
-    // defines them. Re-declaring them here with different values (no trailing
-    // slash / a different image) would create a same-@id scalar conflict.
     sameAs: buildSameAs(siteData.social_links, siteData.person?.sameAs),
     knowsAbout:
-      technicalSkills?.type === "list_groups"
-        ? technicalSkills.contents.flatMap((g) => g.items.map((i) => i.name))
+      skills?.kind === "skills"
+        ? skills.groups.flatMap((g) => g.items.map((i) => i.name))
         : [],
     alumniOf:
-      formalEducation?.type === "time_table"
-        ? formalEducation.contents.map((edu) => ({
+      education?.kind === "education"
+        ? education.items.map((edu) => ({
             "@type": "EducationalOrganization",
-            name: edu.institution ? stripToText(edu.institution) : undefined,
-            department: edu.department
-              ? stripToText(edu.department)
-              : undefined,
+            name: edu.org[0]?.name,
+            department: edu.department?.name,
           }))
         : [],
     hasOccupation:
-      experience?.type === "time_table"
-        ? experience.contents.map((job) => ({
+      experience?.kind === "experience"
+        ? experience.items.map((job) => ({
             "@type": "Occupation",
-            name: job.title,
-            description: job.summary ? stripToText(job.summary) : undefined,
+            name: job.role,
+            description: job.summary
+              ? stripToText(markdownToHtml(job.summary))
+              : undefined,
           }))
         : [],
     hasCredential:
-      certificates?.type === "certificate_list"
-        ? certificates.contents.flatMap((group) =>
+      certificates?.kind === "certificates"
+        ? certificates.groups.flatMap((group) =>
             group.items.map((cert) => ({
               "@type": "EducationalOccupationalCredential",
               name: cert.name,
@@ -134,7 +163,7 @@ const personSchema = {
                 "@type": "Organization",
                 name: cert.school,
               },
-              ...(cert.link && { url: getAbsoluteUrl(cert.link) }),
+              ...(cert.url && { url: getAbsoluteUrl(cert.url) }),
             })),
           )
         : [],
@@ -151,17 +180,88 @@ const personSchema = {
   <div class="container">
     <h1 class="page-title cv-title">{t("pages.cv.heading")}</h1>
 
+    <header class="cv-basics">
+      <h2 class="cv-name">{basics.name}</h2>
+      <p class="cv-headline">{basics.headline}</p>
+
+      <ul class="cv-contact">
+        <li>
+          <span
+            class="i-fa-solid:map-marker-alt"
+            aria-hidden="true"
+          ></span>{" "}
+          {basics.location}
+        </li>
+      </ul>
+
+      {
+        basics.availability && (
+          <p class="cv-availability">
+            <strong>{t("pages.cv.availability")}:</strong> {basics.availability}
+          </p>
+        )
+      }
+
+      <div
+        class="cv-profile"
+        set:html={markdownToHtml(basics.profile)}
+      />
+
+      <div
+        class="cv-downloads"
+        role="group"
+        aria-labelledby="cv-downloads-title"
+      >
+        <span
+          class="cv-downloads-title"
+          id="cv-downloads-title"
+        >
+          {t("pages.cv.downloadsTitle")}
+        </span>
+        {
+          downloads.map((fmt) => (
+            <div class:list={["dl-format", { recommended: fmt.recommended }]}>
+              <div class="dl-format-head">
+                <span
+                  class="dl-dot"
+                  aria-hidden="true"
+                />
+                <span class="dl-format-name">{fmt.format}</span>
+                {fmt.recommended && (
+                  <span class="dl-badge">
+                    {t("pages.cv.downloadRecommended")}
+                  </span>
+                )}
+                {fmt.note && <span class="dl-format-note">{fmt.note}</span>}
+              </div>
+              <div class="dl-format-links">
+                {fmt.files.map((file) => (
+                  <a
+                    class="dl-btn"
+                    href={file.url}
+                    download={file.download}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label={`${fmt.format} · ${file.label} (PDF)`}
+                  >
+                    <span
+                      class="i-fa-solid:download"
+                      aria-hidden="true"
+                    />
+                    {file.label}
+                  </a>
+                ))}
+              </div>
+            </div>
+          ))
+        }
+      </div>
+    </header>
+
     {
-      sortedSections.map((section) => (
+      sections.map((section) => (
         <section
-          class:list={[
-            "cv-section",
-            {
-              "cv-section--downloads": section.contents.some(
-                (item) => "downloadGroup" in item && item.downloadGroup,
-              ),
-            },
-          ]}
+          class="cv-section"
           id={generateSlug(section.title)}
           aria-label={section.title}
         >
@@ -169,206 +269,122 @@ const personSchema = {
             <h2>{section.title}</h2>
           </div>
 
-          {section.type === "map" && (
-            <div class="cv-map">
-              {section.contents
-                .filter((item) => !item.downloadGroup)
-                .map((item) => (
-                  <div class="map-item">
-                    <span class="map-key">{item.name}:</span>
-                    {item.value && <span class="map-value">{item.value}</span>}
-                    {item.links && (
-                      <div class="map-links">
-                        {item.links.map((link) => (
-                          <a
-                            href={link.link}
-                            class="btn btn-sm btn-outline"
-                            download={link.download || undefined}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                          >
-                            {link.name}
-                          </a>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                ))}
-
-              {section.contents.some(
-                (item) => item.downloadGroup && item.links,
-              ) && (
-                <div
-                  class="cv-downloads"
-                  role="group"
-                  aria-labelledby={`cv-downloads-title-${generateSlug(section.title)}`}
-                >
-                  <span
-                    class="cv-downloads-title"
-                    id={`cv-downloads-title-${generateSlug(section.title)}`}
+          {(section.kind === "experience" || section.kind === "education") && (
+            <div class="timeline">
+              {section.items.map((item, index) => {
+                const title = "role" in item ? item.role : item.degree;
+                return (
+                  <article
+                    class="timeline-item"
+                    id={generateSlug(`${section.title}-${title}-${index}`)}
                   >
-                    {t("pages.cv.downloadsTitle")}
-                  </span>
-                  {section.contents
-                    .filter((item) => item.downloadGroup && item.links)
-                    .map((fmt) => (
+                    <div
+                      class="timeline-marker"
+                      aria-hidden="true"
+                    />
+                    <div class="timeline-content">
+                      <header class="timeline-header">
+                        <h3 class="item-title">{title}</h3>
+                        <span class="item-year">{item.period}</span>
+                      </header>
+
                       <div
-                        class:list={[
-                          "dl-format",
-                          { recommended: fmt.recommended },
-                        ]}
-                      >
-                        <div class="dl-format-head">
+                        class="item-institution"
+                        set:html={orgsHtml(item.org)}
+                      />
+                      {item.department && (
+                        <div
+                          class="item-department"
+                          set:html={markdownToHtml(orgMd(item.department))}
+                        />
+                      )}
+                      {item.location && (
+                        <div class="item-location">
                           <span
-                            class="dl-dot"
+                            class="i-fa-solid:map-marker-alt"
                             aria-hidden="true"
-                          />
-                          <span class="dl-format-name">{fmt.name}</span>
-                          {fmt.recommended && (
-                            <span class="dl-badge">
-                              {t("pages.cv.downloadRecommended")}
-                            </span>
-                          )}
-                          {fmt.value && (
-                            <span class="dl-format-note">{fmt.value}</span>
-                          )}
+                          />{" "}
+                          {item.location}
                         </div>
-                        <div class="dl-format-links">
-                          {(fmt.links ?? []).map((link) => (
+                      )}
+
+                      {item.summary && (
+                        <div
+                          class="item-summary"
+                          set:html={markdownToHtml(item.summary)}
+                        />
+                      )}
+                      {item.notes?.map((note) => (
+                        <div
+                          class="item-summary"
+                          set:html={markdownToHtml(note)}
+                        />
+                      ))}
+
+                      {item.bullets && item.bullets.length > 0 && (
+                        <ul class="item-description-list">
+                          {item.bullets.map((bullet) => (
+                            <li set:html={markdownToHtml(bullet)} />
+                          ))}
+                        </ul>
+                      )}
+
+                      {item.pubGroups?.map((pg) => (
+                        <div class="item-pubgroup">
+                          <strong>{pg.heading}</strong>
+                          <ul>
+                            {pg.items.map((pub) => (
+                              <li set:html={markdownToHtml(pub)} />
+                            ))}
+                          </ul>
+                        </div>
+                      ))}
+
+                      {"documents" in item && item.documents && (
+                        <div class="item-links">
+                          {item.documents.map((doc) => (
                             <a
-                              class="dl-btn"
-                              href={link.link}
-                              download={link.download || undefined}
+                              href={doc.url}
+                              class="btn btn-sm"
                               target="_blank"
-                              rel="noopener noreferrer"
-                              aria-label={
-                                link.ariaLabel ??
-                                (link.name
-                                  ? `${fmt.name} · ${link.name} (PDF)`
-                                  : undefined)
-                              }
+                              rel="external noopener noreferrer"
+                              aria-label={doc.ariaLabel}
                             >
                               <span
-                                class="i-fa-solid:download"
+                                class="i-fa-solid:file-pdf"
                                 aria-hidden="true"
                               />
-                              {link.name}
+                              {doc.label}
                             </a>
                           ))}
                         </div>
-                      </div>
-                    ))}
-                </div>
-              )}
+                      )}
+
+                      {item.links && item.links.length > 0 && (
+                        <div class="item-links">
+                          {item.links.map((link) => (
+                            <a
+                              href={link.url}
+                              class="btn btn-sm"
+                              target="_blank"
+                              rel="external noopener noreferrer"
+                              aria-label={link.ariaLabel}
+                            >
+                              {link.label}
+                            </a>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </article>
+                );
+              })}
             </div>
           )}
 
-          {section.type === "time_table" && (
-            <div class="timeline">
-              {section.contents.map((item, index) => (
-                <article
-                  class="timeline-item"
-                  id={generateSlug(`${section.title}-${item.title}-${index}`)}
-                >
-                  <div
-                    class="timeline-marker"
-                    aria-hidden="true"
-                  />
-                  <div class="timeline-content">
-                    <header class="timeline-header">
-                      <h3 class="item-title">{item.title}</h3>
-                      <span class="item-year">{item.year}</span>
-                    </header>
-
-                    {item.institution && (
-                      <div
-                        class="item-institution"
-                        set:html={sanitize(item.institution)}
-                      />
-                    )}
-                    {item.department && (
-                      <div
-                        class="item-department"
-                        set:html={sanitize(item.department)}
-                      />
-                    )}
-                    {item.location && (
-                      <div class="item-location">
-                        <span
-                          class="i-fa-solid:map-marker-alt"
-                          aria-hidden="true"
-                        />{" "}
-                        {item.location}
-                      </div>
-                    )}
-
-                    {item.summary && (
-                      <div
-                        class="item-summary"
-                        set:html={sanitize(item.summary)}
-                      />
-                    )}
-
-                    {item.description && Array.isArray(item.description) && (
-                      <ul class="item-description-list">
-                        {item.description.map((desc) => {
-                          if (typeof desc === "string")
-                            return (
-                              <li>
-                                <div set:html={sanitize(desc)} />
-                              </li>
-                            );
-                          if (
-                            typeof desc === "object" &&
-                            desc.title &&
-                            Array.isArray(desc.contents)
-                          ) {
-                            return (
-                              <li>
-                                <strong>{desc.title}</strong>
-                                <ul>
-                                  {desc.contents.map((sub: string) => (
-                                    <li>
-                                      <div set:html={sanitize(sub)} />
-                                    </li>
-                                  ))}
-                                </ul>
-                              </li>
-                            );
-                          }
-                          return null;
-                        })}
-                      </ul>
-                    )}
-
-                    {item.linkitems && (
-                      <div class="item-links">
-                        {item.linkitems.map((link) => (
-                          <a
-                            href={link.link}
-                            class="btn btn-sm"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            aria-label={link.ariaLabel}
-                          >
-                            <span
-                              class="i-fa-solid:file-pdf"
-                              aria-hidden="true"
-                            />
-                            {link.linkname}
-                          </a>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                </article>
-              ))}
-            </div>
-          )}
-
-          {section.type === "list_groups" && (
+          {section.kind === "skills" && (
             <div class="grid-layout">
-              {section.contents.map((group, index) => (
+              {section.groups.map((group, index) => (
                 <div
                   class="skill-group-wrapper"
                   id={generateSlug(
@@ -381,9 +397,9 @@ const personSchema = {
             </div>
           )}
 
-          {section.type === "certificate_list" && (
+          {section.kind === "certificates" && (
             <div class="grid-layout">
-              {section.contents.map((group, index) => (
+              {section.groups.map((group, index) => (
                 <div
                   class="cert-group-wrapper"
                   id={generateSlug(
@@ -396,14 +412,22 @@ const personSchema = {
             </div>
           )}
 
-          {section.type === "projects" && (
+          {section.kind === "projects" && (
             <div class="grid-layout">
-              {section.contents.map((project, index) => (
+              {section.items.map((project, index) => (
                 <div
                   class="project-card-wrapper"
                   id={generateSlug(`${section.title}-${project.name}-${index}`)}
                 >
-                  <ProjectCard project={project} />
+                  <ProjectCard
+                    project={{
+                      ...project,
+                      metrics: [
+                        ...(projectStats.get(project.name) ?? []),
+                        ...(project.metrics ?? []),
+                      ],
+                    }}
+                  />
                 </div>
               ))}
             </div>
@@ -484,6 +508,8 @@ const personSchema = {
     <span class="i-simple-icons:nginx"></span>
     <span class="i-fa-solid:user-shield"></span>
     <span class="i-fa-solid:download"></span>
+    <span class="i-fa-solid:map-marker-alt"></span>
+    <span class="i-fa-solid:file-pdf"></span>
   </div>
   {/* ICON_DETECTION_END */}
 </BaseLayout>
@@ -493,16 +519,57 @@ const personSchema = {
     margin-bottom: var(--space-md);
   }
 
+  /* Basics / header block */
+  .cv-basics {
+    margin-bottom: var(--space-lg-xl);
+  }
+
+  .cv-name {
+    margin: 0;
+    font-size: 1.6rem;
+    color: var(--color-text-heading);
+  }
+
+  .cv-headline {
+    margin: var(--space-xs) 0 0;
+    font-size: 1.1rem;
+    font-weight: var(--fw-semibold);
+    color: var(--color-primary);
+  }
+
+  .cv-contact {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-xs) var(--space-md);
+    padding: 0;
+    margin: var(--space-sm) 0 0;
+    font-size: 0.9rem;
+    color: var(--color-text-muted);
+    list-style: none;
+  }
+
+  .cv-contact li {
+    display: inline-flex;
+    gap: var(--space-xs);
+    align-items: center;
+  }
+
+  .cv-availability {
+    margin: var(--space-sm) 0 0;
+    font-size: 0.9rem;
+    color: var(--color-text-muted);
+  }
+
+  .cv-profile {
+    margin-top: var(--space-md);
+    line-height: 1.6;
+    color: var(--color-text-offset);
+  }
+
   /* Section Styling */
   .cv-section {
     margin-bottom: var(--space-lg-xl);
     scroll-margin-top: var(--header-height);
-  }
-
-  /* The General Information block ends in the downloads buttons; couple it a
-     bit tighter to the next section so it doesn't leave a large empty gap. */
-  .cv-section--downloads {
-    margin-bottom: var(--space-md-lg);
   }
 
   .section-header {
@@ -524,38 +591,9 @@ const personSchema = {
     scroll-margin-top: calc(var(--header-height) + 1rem);
   }
 
-  /* Map Type */
-  .cv-map {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-sm);
-  }
-
-  .map-item {
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--space-xs) var(--space-sm);
-    align-items: baseline;
-    font-size: 1.05rem;
-  }
-
-  .map-key {
-    font-weight: var(--fw-bold);
-    color: var(--color-text);
-  }
-
-  .map-value {
-    color: var(--color-text-offset);
-  }
-
-  .map-links {
-    display: inline-flex;
-    gap: var(--space-sm);
-  }
-
-  /* Downloads — grouped by format (ATS / Design), zero-JS */
+  /* Downloads — grouped by format, zero-JS */
   .cv-downloads {
-    margin-top: var(--space-sm);
+    margin-top: var(--space-lg);
   }
 
   .cv-downloads-title {
@@ -692,11 +730,7 @@ const personSchema = {
     transform: translateY(-2px);
   }
 
-  /* Decorative notch linking the card to the timeline rail. Kept as a ::before
-     on .timeline-content (flush with the card edge). This makes axe report the
-     card's links as `color-contrast` "incomplete" (it can't resolve a pseudo
-     ancestor's background), but that is benign — the unmasked audit confirmed
-     no hidden contrast failure here. */
+  /* Decorative notch linking the card to the timeline rail. */
   .timeline-content::before {
     position: absolute;
     top: 22px;
@@ -767,6 +801,16 @@ const personSchema = {
 
   .item-description-list li {
     margin-bottom: var(--space-xs);
+  }
+
+  .item-pubgroup {
+    margin-top: var(--space-sm);
+    color: var(--color-text-offset);
+  }
+
+  .item-pubgroup ul {
+    padding-left: var(--space-lg);
+    margin-top: var(--space-xs);
   }
 
   .item-links {

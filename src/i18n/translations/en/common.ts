@@ -446,6 +446,7 @@ export const common = {
       levelUnknown: "Unknown",
       downloadsTitle: "Download CV",
       downloadRecommended: "recommended",
+      availability: "Availability",
     },
     github: {
       title: "GitHub Repositories",

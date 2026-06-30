@@ -95,6 +95,8 @@
   \github{github.com/jmrplens} 
   \mbox{\textcolor{accent}{\normalfont \faBook}~
       \href{https://scholar.google.com/citations?user=9b0kPaUAAAAJ}{\utffriendlydetokenize{Google Scholar}}\hspace{2em}}
+  \mbox{\textcolor{accent}{\normalfont \faOrcid}~
+      \href{https://orcid.org/0000-0003-1250-6212}{\utffriendlydetokenize{0000-0003-1250-6212}}}
   }
 
 %% Make the header extend all the way to the right, if you want.
@@ -113,6 +115,8 @@
 
 \footnotesize{\bf Para más información puede hacer click sobre el nombre de títulos, lugares, certificados o cursos que aparecen en el currículum.}
 
+{\footnotesize\itshape Disponibilidad: presencial, remota o híbrida.}
+
 \vspace{1.5em}
 \cvsection{Experiencia}
 
@@ -123,12 +127,12 @@
 Desarrollo de firmware para inversores solares y sistemas de control en plantas fotovoltaicas, trabajando sobre microcontroladores STM32 con entornos bare-metal y RTOS.
 \end{justify}
 \begin{itemize}
-	\item Optimización del sistema de archivos embebido, reduciendo tiempos de acceso y mejorando la estabilidad en operación continua.
-	\item Mejora del rendimiento en comunicaciones TCP, reduciendo latencia y aumentando la robustez del stack de red.
-	\item Optimización de tareas en STM32: reducción de consumo de stack y heap, y ajuste de ciclos de CPU para mejorar el rendimiento en tiempo real.
-	\item Implementación y mantenimiento de comunicaciones industriales: Modbus RTU/TCP, UART, I2C y SPI.
-	\item Desarrollo en C con capas HAL y gestión de periféricos de bajo nivel.
-	\item Automatización de pruebas hardware-in-the-loop (HIL) en Python (pytest): tests unitarios, de integración y de estrés integrados en pipelines de CI/CD.
+	\item Reduje el consumo de \textit{stack} de las tareas sobre RTOS entre un 30\% y un 50\%, optimizando el uso de memoria en los STM32.
+	\item Optimicé el manejo de peticiones Modbus TCP, reduciendo el uso de CPU bajo carga (40.000 peticiones/s) del 80\% al 17\% sin pérdida de respuestas.
+	\item Mejoré la estabilidad del sistema de archivos embebido, reduciendo los tiempos de acceso en operación continua.
+	\item Implementé y mantuve comunicaciones industriales en C con capas de abstracción de hardware (HAL): Modbus RTU/TCP, UART, I2C y SPI.
+	\item Automaticé miles de pruebas unitarias (Ceedling) y de integración sobre hardware real (pytest): rendimiento TCP/FTP y seguridad FTP.
+	\item Revisé los \textit{merge requests} del equipo, detectando bugs y proponiendo mejoras antes de su integración.
 \end{itemize}
 \end{minipage}
 \vspace{0.5em}

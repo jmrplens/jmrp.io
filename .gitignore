@@ -103,6 +103,8 @@ validation_*.txt
 
 # Project-specific LaTeX paths
 cv_latex/*.pdf
+# Auto-generated ATS .tex sources (produced from the CV YAML by scripts/cv/generate-ats.mjs)
+cv_latex/generated/
 
 # --- 8. PROJECT SPECIFIC & MISC ---
 # Agentic workflows and local knowledge

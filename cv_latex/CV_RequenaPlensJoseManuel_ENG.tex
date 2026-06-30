@@ -87,6 +87,8 @@
   \github{github.com/jmrplens}
   \mbox{\textcolor{accent}{\normalfont \faBook}~
       \href{https://scholar.google.com/citations?user=9b0kPaUAAAAJ}{\utffriendlydetokenize{Google Scholar}}\hspace{2em}}
+  \mbox{\textcolor{accent}{\normalfont \faOrcid}~
+      \href{https://orcid.org/0000-0003-1250-6212}{\utffriendlydetokenize{0000-0003-1250-6212}}}
   }
 
 %% Make the header extend all the way to the right, if you want.
@@ -105,6 +107,7 @@
 
 \footnotesize{\bf For more information you can click on the name of places, certificates or courses that appear in the curriculum.}
 
+{\footnotesize\itshape Availability: on-site, remote or hybrid.}
 
 \vspace{1.5em}
 \cvsection{Work experience}
@@ -116,12 +119,12 @@
 Firmware development for solar inverters and control systems in photovoltaic plants, working on STM32 microcontrollers with bare-metal and RTOS environments.
 \end{justify}
 \begin{itemize}
-	\item Optimized the embedded file system, reducing access times and improving stability under continuous operation.
-	\item Improved TCP communications performance, reducing latency and increasing the robustness of the network stack.
-	\item Optimized tasks on STM32: reduced stack and heap usage, and tuned CPU cycles to improve real-time performance.
-	\item Implementation and maintenance of industrial communications: Modbus RTU/TCP, UART, I2C and SPI.
-	\item Development in C with HAL layers and low-level peripheral management.
-	\item Hardware-in-the-loop (HIL) test automation in Python (pytest): unit, integration and stress tests integrated into CI/CD pipelines.
+	\item Reduced RTOS task stack usage by 30\%--50\%, optimizing memory on STM32 microcontrollers.
+	\item Optimized Modbus TCP request handling, cutting CPU usage under load (40,000 req/s) from 80\% to 17\% with no dropped responses.
+	\item Improved embedded file-system stability, reducing access times under continuous operation.
+	\item Built and maintained industrial communications in C with hardware abstraction layers (HAL): Modbus RTU/TCP, UART, I2C and SPI.
+	\item Automated thousands of unit tests (Ceedling) and on-hardware integration tests (pytest): TCP/FTP performance and FTP security.
+	\item Reviewed the team's merge requests, catching bugs and proposing improvements before integration.
 \end{itemize}
 \end{minipage}
 \vspace{0.5em}
