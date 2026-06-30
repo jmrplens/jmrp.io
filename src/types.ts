@@ -24,35 +24,54 @@ export type SocialsConfig = Extract<
 >;
 
 /**
- * Full structure of the CV content collection data.
+ * Full structure of the CV content collection data
+ * (`{ basics, downloads, sections }`).
  */
 export type CVData = CollectionEntry<"cv">["data"];
 
-/**
- * A single section within the CV (e.g., Education, Experience).
- */
-export type CVSection = CVData[number];
+/** Header / identity block of the CV. */
+export type CVBasics = CVData["basics"];
+
+/** A CV download format group (ATS concise / ATS full / Design). */
+export type CVDownload = CVData["downloads"][number];
 
 /**
- * A group of skills within a skill list section.
+ * A single CV body section, discriminated by `kind`.
+ */
+export type CVSection = CVData["sections"][number];
+
+/** An experience (job/role) entry. */
+export type CVExperienceItem = Extract<
+  CVSection,
+  { kind: "experience" }
+>["items"][number];
+
+/** An education entry. */
+export type CVEducationItem = Extract<
+  CVSection,
+  { kind: "education" }
+>["items"][number];
+
+/**
+ * A group of skills within a skills section.
  */
 export type CVSkillGroup = Extract<
   CVSection,
-  { type: "list_groups" }
->["contents"][number];
+  { kind: "skills" }
+>["groups"][number];
 
 /**
- * A group of certificates within a certificate list section.
+ * A group of certificates within a certificates section.
  */
 export type CVCertificateGroup = Extract<
   CVSection,
-  { type: "certificate_list" }
->["contents"][number];
+  { kind: "certificates" }
+>["groups"][number];
 
 /**
  * A single featured project within a projects section.
  */
 export type CVProjectItem = Extract<
   CVSection,
-  { type: "projects" }
->["contents"][number];
+  { kind: "projects" }
+>["items"][number];

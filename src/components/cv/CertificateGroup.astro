@@ -41,32 +41,35 @@ const t = useTranslations(locale);
                   {item.school}
                 </span>
               )}
-              {item.time && (
+              {item.hours && (
                 <span class="cert-time">
                   <span
                     class="i-fa-solid:clock meta-icon"
                     aria-hidden="true"
                   />
-                  {item.time}
+                  {item.hours}
                 </span>
               )}
             </div>
           </div>
 
-          {item.link && (
+          {item.url && (
             <a
-              href={item.link}
+              href={item.url}
               class="btn btn-sm"
-              download
+              download={item.url.startsWith("/") || undefined}
               target="_blank"
               rel="external noopener noreferrer"
-              aria-label={t("aria.downloadCertificate", { name: item.name })}
+              aria-label={
+                item.ariaLabel ??
+                t("aria.downloadCertificate", { name: item.name })
+              }
             >
               <span
                 class="i-fa-solid:download"
                 aria-hidden="true"
               />
-              {item.linkname || t("pages.cv.certificateFallback")}
+              {t("pages.cv.certificateFallback")}
             </a>
           )}
         </div>

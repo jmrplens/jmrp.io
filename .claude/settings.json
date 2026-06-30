@@ -40,7 +40,6 @@
       "Edit(dist/**)",
       "Edit(.env)",
       "Edit(.env.*)",
-      "Bash(rm -rf *)",
       "Bash(curl *)",
       "Bash(wget *)",
       "Bash(npm *)",

@@ -10,10 +10,19 @@ SCRIPT_DIR="$(cd -- "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd)"
 LATEX_DIR="${LATEX_DIR:-$SCRIPT_DIR}"
 # Default: output PDF directory as ../public/pdf relative to this script
 OUTPUT_DIR="${OUTPUT_DIR:-"$SCRIPT_DIR/../public/pdf"}"
+# Directory for the auto-generated ATS sources (produced from the CV YAML).
+GEN_DIR="${GEN_DIR:-"$SCRIPT_DIR/generated"}"
 # AltaCV (design) sources — compiled with xelatex (+ biber for bibliography)
 FILES=("CV_RequenaPlensJoseManuel_ENG" "CV_RequenaPlensJoseManuel_SPA")
-# ATS-friendly sources — compiled with lualatex (tagged PDF, no bibliography)
-ATS_FILES=("CV_RequenaPlensJoseManuel_ENG_ATS" "CV_RequenaPlensJoseManuel_SPA_ATS")
+# ATS sources — GENERATED from src/content/cv/{es,en}.yaml (do not edit by hand),
+# compiled with lualatex (tagged PDF, no bibliography). Two profiles per locale:
+# concise (…_ATS) and exhaustive (…_ATS_EXT).
+ATS_FILES=(
+    "CV_RequenaPlensJoseManuel_ENG_ATS"
+    "CV_RequenaPlensJoseManuel_ENG_ATS_EXT"
+    "CV_RequenaPlensJoseManuel_SPA_ATS"
+    "CV_RequenaPlensJoseManuel_SPA_ATS_EXT"
+)
 
 cd "$LATEX_DIR" || exit 1
 
@@ -84,26 +93,35 @@ compile_lualatex() {
     fi
 }
 
-# Clean previous temp files
+# Clean previous AltaCV temp files (in LATEX_DIR)
 # Note: This removes temporary LaTeX files and specific target PDFs before compilation
-for file in "${FILES[@]}" "${ATS_FILES[@]}"; do
+for file in "${FILES[@]}"; do
     rm -f "${file}.aux" "${file}.log" "${file}.out" "${file}.toc" "${file}.bbl" "${file}.blg" "${file}.run.xml" "${file}.bcf" "${file}.pdf"
 done
 
-# Compile AltaCV (design) files with xelatex
+# Generate the ATS .tex sources from the CV YAML (single source of truth).
+echo "Generating ATS sources from src/content/cv/{es,en}.yaml..."
+node "$SCRIPT_DIR/../scripts/cv/generate-ats.mjs"
+
+# Compile AltaCV (design) files with xelatex (in LATEX_DIR)
 for file in "${FILES[@]}"; do
     compile_latex "$file"
 done
 
-# Compile ATS files with lualatex
+# Compile the generated ATS files with lualatex (in GEN_DIR)
+cd "$GEN_DIR" || exit 1
 for file in "${ATS_FILES[@]}"; do
+    rm -f "${file}.aux" "${file}.log" "${file}.out" "${file}.pdf"
     compile_lualatex "$file"
 done
 
 # Final cleanup of temporary LaTeX files
 echo "Cleaning up temporary files..."
-for file in "${FILES[@]}" "${ATS_FILES[@]}"; do
-    rm -f "${file}.aux" "${file}.log" "${file}.out" "${file}.toc" "${file}.bbl" "${file}.blg" "${file}.run.xml" "${file}.bcf"
+for file in "${FILES[@]}"; do
+    rm -f "$LATEX_DIR/${file}.aux" "$LATEX_DIR/${file}.log" "$LATEX_DIR/${file}.out" "$LATEX_DIR/${file}.toc" "$LATEX_DIR/${file}.bbl" "$LATEX_DIR/${file}.blg" "$LATEX_DIR/${file}.run.xml" "$LATEX_DIR/${file}.bcf"
+done
+for file in "${ATS_FILES[@]}"; do
+    rm -f "$GEN_DIR/${file}.aux" "$GEN_DIR/${file}.log" "$GEN_DIR/${file}.out"
 done
 
 echo "CV compilation process completed."
