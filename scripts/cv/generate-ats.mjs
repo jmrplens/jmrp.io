@@ -52,6 +52,8 @@ const META = {
       "firmware, embedded, C, STM32, ESP32, FreeRTOS, Go, Python, QA, CI/CD, SonarQube, Modbus, RTOS, software, DevSecOps",
     profileTitle: "Perfil",
     publicationsTitle: "Publicaciones y congresos",
+    cvLabel: "CV",
+    cvFullLabel: "CV completo",
     pubGroupLabels: {
       journal: "Revista",
       conference: "Congresos",
@@ -66,6 +68,8 @@ const META = {
       "firmware, embedded, C, STM32, ESP32, FreeRTOS, Go, Python, QA, CI/CD, SonarQube, Modbus, RTOS, software, DevSecOps",
     profileTitle: "Profile",
     publicationsTitle: "Publications & conferences",
+    cvLabel: "CV",
+    cvFullLabel: "Full CV",
     pubGroupLabels: {
       journal: "Journal",
       conference: "Conferences",
@@ -224,31 +228,30 @@ function renderCertificates(groups) {
     .join("\n");
 }
 
-/** Reads a custom BibTeX field for an entry id via a linear scan. */
+/** Reads a custom BibTeX field for an entry id (handles `{...}` and `"..."`). */
 function bibField(bibText, id, field) {
-  const start = bibText.indexOf(`{${id},`);
-  if (start === -1) return null;
+  const reEntry = new RegExp(String.raw`@\w+\s*\{\s*${id}\s*,`, "i");
+  const mEntry = reEntry.exec(bibText);
+  if (!mEntry) return null;
+  const start = mEntry.index;
   const next = bibText.indexOf("\n@", start);
   const body = bibText.slice(start, next === -1 ? undefined : next);
-  const re = new RegExp(String.raw`${field}\s*=\s*\{([^}]*)\}`, "i");
+  const re = new RegExp(String.raw`${field}\s*=\s*[{"]([^}"]*)[}"]`, "i");
   const m = re.exec(body);
   return m ? m[1].trim() : null;
 }
 
-/** Formats a CSL author list, bolding the CV owner and truncating long lists. */
+/** Formats a CSL author list in order, bolding the CV owner (no truncation). */
 function formatAuthors(authors) {
   if (!authors || authors.length === 0) return "";
-  const fmt = (a) => {
-    const name = [a.given, a.family].filter(Boolean).join(" ");
-    return /requena/i.test(a.family ?? "")
-      ? String.raw`\textbf{${escapeLatex(name)}}`
-      : escapeLatex(name);
-  };
-  if (authors.length <= 8) return authors.map(fmt).join(", ");
-  const head = authors.slice(0, 7).map(fmt);
-  const meIdx = authors.findIndex((a) => /requena/i.test(a.family ?? ""));
-  if (meIdx >= 7) head.push(fmt(authors[meIdx]));
-  return `${head.join(", ")}, et al.`;
+  return authors
+    .map((a) => {
+      const name = [a.given, a.family].filter(Boolean).join(" ");
+      return /requena/i.test(a.family ?? "")
+        ? String.raw`\textbf{${escapeLatex(name)}}`
+        : escapeLatex(name);
+    })
+    .join(", ");
 }
 
 /** Renders the full Publications section from papers.bib (extended only). */
@@ -329,7 +332,9 @@ export async function buildDocument(locale, profile) {
   let doc = documentPreamble({
     babelLang: meta.babelLang,
     docLang: meta.docLang,
-    pdfTitle: `${basics.name} — CV (${basics.headline})`,
+    pdfTitle: `${basics.name} — ${
+      profile === "extended" ? meta.cvFullLabel : meta.cvLabel
+    } (${basics.headline})`,
     pdfSubject: meta.pdfSubject,
     pdfKeywords: meta.pdfKeywords,
   });

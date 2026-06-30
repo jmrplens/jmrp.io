@@ -99,18 +99,20 @@ const menuSections: MenuSection[] = sections.map((section) => {
 const projectsSection = sections.find((s) => s.kind === "projects");
 const projectStats = new Map<string, string[]>();
 if (projectsSection?.kind === "projects") {
-  for (const project of projectsSection.items) {
-    const slug = githubSlug(project.links);
-    if (!slug || projectStats.has(project.name)) continue;
-    try {
-      projectStats.set(
-        project.name,
-        formatStats(await fetchRepoStats(slug), locale),
-      );
-    } catch {
-      projectStats.set(project.name, []);
-    }
-  }
+  await Promise.all(
+    projectsSection.items.map(async (project) => {
+      const slug = githubSlug(project.links);
+      if (!slug) return;
+      try {
+        projectStats.set(
+          project.name,
+          formatStats(await fetchRepoStats(slug), locale),
+        );
+      } catch {
+        projectStats.set(project.name, []);
+      }
+    }),
+  );
 }
 
 // Sections used to build the ProfilePage JSON-LD.

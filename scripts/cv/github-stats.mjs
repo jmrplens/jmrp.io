@@ -48,30 +48,36 @@ export function githubSlug(links) {
 export function fetchRepoStats(slug) {
   if (cache.has(slug)) return cache.get(slug);
   const promise = (async () => {
-    const [repoRes, relRes] = await Promise.all([
-      fetch(`${API}/repos/${slug}`, { headers: ghHeaders() }),
-      fetch(`${API}/repos/${slug}/releases?per_page=100`, {
-        headers: ghHeaders(),
-      }),
-    ]);
-    if (!repoRes.ok) {
-      throw new Error(`GitHub ${slug}: HTTP ${repoRes.status}`);
-    }
-    const repo = await repoRes.json();
-    let releases = 0;
-    let downloads = 0;
-    if (relRes.ok) {
-      const rels = await relRes.json();
-      if (Array.isArray(rels)) {
-        releases = rels.length;
-        for (const rel of rels) {
-          for (const asset of rel.assets ?? []) {
-            downloads += asset.download_count ?? 0;
+    try {
+      const [repoRes, relRes] = await Promise.all([
+        fetch(`${API}/repos/${slug}`, { headers: ghHeaders() }),
+        fetch(`${API}/repos/${slug}/releases?per_page=100`, {
+          headers: ghHeaders(),
+        }),
+      ]);
+      if (!repoRes.ok) {
+        throw new Error(`GitHub ${slug}: HTTP ${repoRes.status}`);
+      }
+      const repo = await repoRes.json();
+      let releases = 0;
+      let downloads = 0;
+      if (relRes.ok) {
+        const rels = await relRes.json();
+        if (Array.isArray(rels)) {
+          releases = rels.length;
+          for (const rel of rels) {
+            for (const asset of rel.assets ?? []) {
+              downloads += asset.download_count ?? 0;
+            }
           }
         }
       }
+      return { stars: repo.stargazers_count ?? 0, releases, downloads };
+    } catch (error) {
+      // Don't cache failures so a later call can retry.
+      cache.delete(slug);
+      throw error;
     }
-    return { stars: repo.stargazers_count ?? 0, releases, downloads };
   })();
   cache.set(slug, promise);
   return promise;
