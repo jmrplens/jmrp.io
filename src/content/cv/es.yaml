@@ -267,7 +267,7 @@ sections:
           - Diseño del modelo industrial para la fabricación del prototipo mediante inyección de plástico.
           - >-
             Desarrollo de software para mediciones acústicas según las normas ISO
-            10534-2:1998 y ASTM 2611-19. [A|Lab](https://github.com/jmrplens/A-Lab)
+            10534-2 y ASTM E2611. [A|Lab](https://github.com/jmrplens/A-Lab)
           - >-
             Diseño y desarrollo de un sistema robótico de 3 ejes para realizar
             mediciones experimentales. Fotos e información aquí:
@@ -354,7 +354,7 @@ sections:
         period: Sep 2016 - Jul 2018
         summary: >-
           Asociación con sede en la Escuela Politécnica Superior de la Universidad de
-          Alicante. Fundada en 2016. Promueve el conocimiento de programación de
+          Alicante. Promueve el conocimiento de programación de
           microcontroladores orientada a proyectos.
         bullets:
           - >-
@@ -889,7 +889,7 @@ sections:
               url: /pdf/certificates/AdaptacionFlexibilidadAgilidad.pdf,
             }
           - {
-              name: "Autonomía, innovación, ...",
+              name: "Autonomía e innovación laboral, iniciativa y creatividad",
               school: Labora,
               hours: 25 Horas,
               url: /pdf/certificates/AutonomiaInnovacion.pdf,

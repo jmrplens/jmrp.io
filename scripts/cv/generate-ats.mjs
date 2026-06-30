@@ -66,7 +66,7 @@ const META = {
     pdfSubject: "Curriculum Vitae",
     pdfKeywords:
       "firmware, embedded, C, STM32, ESP32, FreeRTOS, Go, Python, QA, CI/CD, SonarQube, Modbus, RTOS, software, DevSecOps",
-    profileTitle: "Profile",
+    profileTitle: "Summary",
     publicationsTitle: "Publications & conferences",
     cvLabel: "CV",
     cvFullLabel: "Full CV",
@@ -281,11 +281,19 @@ function renderPublications(meta) {
 
   const renderItem = (item) => {
     const year = item.issued?.["date-parts"]?.[0]?.[0] ?? "";
-    const venue = item["container-title"] ?? item.publisher ?? "";
+    // Strip any trailing period from BibTeX values so we don't double it up
+    // when we append our own sentence period (e.g. "Voice Coil." -> "Voice Coil").
+    const stripDot = (s) => {
+      let v = s.trimEnd();
+      while (v.endsWith(".")) v = v.slice(0, -1).trimEnd();
+      return v;
+    };
+    const venue = stripDot(item["container-title"] ?? item.publisher ?? "");
+    const title = stripDot(item.title ?? "");
     const pdf = bibField(bibText, item.id, "pdf");
     const titleTex = pdf
-      ? markdownToLatex(`[${item.title ?? ""}](${pdf})`)
-      : escapeLatex(item.title ?? "");
+      ? markdownToLatex(`[${title}](${pdf})`)
+      : escapeLatex(title);
     const yearTex = year ? ` (${year}).` : "";
     const venueTex = venue ? String.raw` \textit{${escapeLatex(venue)}}.` : "";
     return String.raw`  \item ${formatAuthors(item.author)}${yearTex} ${titleTex}.${venueTex}`;

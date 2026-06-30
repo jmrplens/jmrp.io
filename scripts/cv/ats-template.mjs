@@ -114,16 +114,21 @@ export function documentPreamble({
   {\color{muted}\textit{#2}\hfill\textit{#3}}\par
   \vspace{2pt}
 }
-% Proyecto: {nombre}{stack}{métricas}
+% Proyecto: {nombre}{stack}{métricas}. Métricas en su propia línea a la
+% izquierda (no \hfill a la derecha) para que la extracción ATS vea una sola columna.
 \newcommand{\cvproject}[3]{%
-  \textbf{#1}\,\textcolor{muted}{\small— #2}\hfill{\small\textcolor{accent}{#3}}\par
+  \textbf{#1}\,\textcolor{muted}{\small— #2}\par
+  {\small\textcolor{accent}{#3}}\par
   \vspace{1pt}
 }
 % Skill: {categoría}{items}
 \newcommand{\cvskill}[2]{\textbf{#1:} #2\par\vspace{2pt}}
 % Subencabezado dentro de una sección (p.ej. categoría de certificados)
 \newcommand{\cvsubhead}[1]{\vspace{2pt}{\color{ink}\textbf{#1}}\par\vspace{1pt}}
-\newcommand{\divider}{\textcolor{muted}{\ \raisebox{0.4ex}{\scriptsize$\bullet$}\ }}
+% Divisor inline. Sin \raisebox: un bullet elevado obtiene una línea base
+% distinta y los extractores PDF lo leen como una "línea" suelta de un solo
+% "•" → rompe la heurística de una sola columna. En la línea base se agrupa bien.
+\newcommand{\divider}{\textcolor{muted}{\ \scriptsize\textbullet\ }}
 `;
 }
 

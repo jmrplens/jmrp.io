@@ -267,7 +267,7 @@ sections:
           - Design of the industrial model for the manufacture of the prototype by means of plastic injection.
           - >-
             Development of software for acoustic measurements according to ISO
-            10534-2:1998 and ASTM 2611-19 standards. [A|Lab](https://github.com/jmrplens/A-Lab)
+            10534-2 and ASTM E2611 standards. [A|Lab](https://github.com/jmrplens/A-Lab)
           - >-
             Design and development of a 3-axis robotic system to perform experimental
             measurements. Photos and some information here:
@@ -353,7 +353,7 @@ sections:
         period: Sep 2016 - Jul 2018
         summary: >-
           Association based at the Higher Polytechnic School of the University of
-          Alicante. Founded in 2016. Promotes project-oriented microcontroller
+          Alicante. Promotes project-oriented microcontroller
           programming knowledge.
         bullets:
           - >-
@@ -650,7 +650,7 @@ sections:
         ats: { normal: false }
 
   - kind: education
-    title: Formal education
+    title: Education
     items:
       - degree: PhD in Health and Wellness Technologies
         org:
@@ -890,7 +890,7 @@ sections:
               url: /pdf/certificates/AdaptacionFlexibilidadAgilidad.pdf,
             }
           - {
-              name: "Autonomy, innovation, ...",
+              name: "Workplace autonomy and innovation, initiative and creativity",
               school: Labora,
               hours: 25 Hours,
               url: /pdf/certificates/AutonomiaInnovacion.pdf,
