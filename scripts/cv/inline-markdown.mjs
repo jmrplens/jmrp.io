@@ -74,8 +74,13 @@ function escapeAttr(value) {
   return escapeHtml(value).replaceAll('"', "&quot;");
 }
 
-/** Allowlists safe href schemes (blocks javascript:/data: in injected HTML). */
+/**
+ * Allowlists safe href schemes (blocks javascript:/data: in injected HTML).
+ * Protocol-relative URLs (`//host`) are rejected: they look root-relative but
+ * resolve to an external origin.
+ */
 function isSafeHref(url) {
+  if (url.startsWith("//")) return false;
   return /^(https?:|mailto:)/i.test(url) || url.startsWith("/");
 }
 
@@ -117,6 +122,8 @@ export function markdownToLatex(md) {
   return walk(md, {
     text: escapeLatex,
     link: (text, url) => {
+      // Drop the link (keep the text) when the scheme isn't allowlisted.
+      if (!isSafeHref(url)) return escapeLatex(text);
       const resolved = url.startsWith("/") ? BASE_URL + url : url;
       return String.raw`\href{${escapeLatexUrl(resolved)}}{${escapeLatex(text)}}`;
     },

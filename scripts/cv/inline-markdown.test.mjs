@@ -115,3 +115,12 @@ test("markdownToHtml: unsafe link scheme is dropped (keeps text)", () => {
   assert.equal(markdownToHtml("[x](javascript:alert)"), "x");
   assert.equal(markdownToHtml("[y](data:text/html,bad)"), "y");
 });
+
+test("markdownToHtml: protocol-relative link is dropped (keeps text)", () => {
+  assert.equal(markdownToHtml("[z](//evil.example.com)"), "z");
+});
+
+test("markdownToLatex: unsafe/protocol-relative links are dropped", () => {
+  assert.equal(markdownToLatex("[x](javascript:alert)"), "x");
+  assert.equal(markdownToLatex("[z](//evil.example.com)"), "z");
+});

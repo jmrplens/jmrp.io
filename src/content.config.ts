@@ -225,8 +225,10 @@ const site_config = defineCollection({
 const safeUrl = z
   .string()
   .refine(
-    (u) => /^(https?:|mailto:)/i.test(u) || u.startsWith("/"),
-    "URL must be http(s), mailto:, or a root-relative path",
+    (u) =>
+      !u.startsWith("//") &&
+      (/^(https?:|mailto:)/i.test(u) || u.startsWith("/")),
+    "URL must be http(s), mailto:, or a root-relative path (no //host)",
   );
 
 /**

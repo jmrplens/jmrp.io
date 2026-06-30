@@ -95,8 +95,8 @@ export function documentPreamble({
   colorlinks=true, urlcolor=accent, linkcolor=accent,
   pdftitle={${escapeLatex(pdfTitle)}},
   pdfauthor={José Manuel Requena Plens},
-  pdfsubject={${pdfSubject}},
-  pdfkeywords={${pdfKeywords}},
+  pdfsubject={${escapeLatex(pdfSubject)}},
+  pdfkeywords={${escapeLatex(pdfKeywords)}},
   pdflang={${docLang}},
 }
 \usepackage{fontawesome5}
