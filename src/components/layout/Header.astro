@@ -5,6 +5,7 @@
  * Responsive design with a hamburger menu for mobile.
  */
 import LanguageSwitcher from "@components/layout/LanguageSwitcher.astro";
+import Logo from "@components/layout/Logo.astro";
 import ThemeToggle from "@components/ui/ThemeToggle.astro";
 import { defaultLocale, type Locale } from "@i18n/config";
 import {
@@ -25,9 +26,6 @@ const siteData = siteEntry?.data;
 
 const navItems =
   (siteData && "nav" in siteData ? siteData.nav : undefined) ?? [];
-const logoText =
-  (siteData && "logo_text" in siteData ? siteData.logo_text : undefined) ??
-  "<JMRP />";
 
 /** Map each nav href to its i18n translation key. */
 const navLabelKeyMap: Record<string, TranslationKey> = {
@@ -51,7 +49,7 @@ const navLabelKeyMap: Record<string, TranslationKey> = {
       class="logo"
       aria-label={t("aria.homeLogo")}
     >
-      <span class="text-mono">{logoText}</span>
+      <Logo />
     </a>
     <div class="nav-right">
       <ul
@@ -232,10 +230,10 @@ const navLabelKeyMap: Record<string, TranslationKey> = {
 
   .logo {
     z-index: calc(var(--z-header) + 1); /* Stay above mobile menu */
+    display: inline-flex;
+    align-items: center;
     padding: 0.5rem;
-    font-size: 1.25rem;
-    font-weight: var(--fw-extrabold);
-    color: var(--color-primary);
+    color: inherit; /* the Logo component colors its own glyphs */
     text-decoration: none;
   }
 

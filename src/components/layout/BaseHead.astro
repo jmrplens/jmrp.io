@@ -281,20 +281,18 @@ const jsonLD = {
   content="width=device-width,initial-scale=1"
 />
 
-<!-- Font Preloads (Managed by Astro) -->
+<!-- Font Preloads (Managed by Astro) — only the above-the-fold critical weights -->
 <Font
-  cssVariable="--font-geist-sans"
-  preload={[
-    { weight: "400", style: "normal" },
-    { weight: "700", style: "normal" },
-  ]}
+  cssVariable="--font-ibm-plex-sans"
+  preload={[{ weight: "400", style: "normal" }]}
 />
 <Font
-  cssVariable="--font-geist-mono"
-  preload={[
-    { weight: "400", style: "normal" },
-    { weight: "700", style: "normal" },
-  ]}
+  cssVariable="--font-space-grotesk"
+  preload={[{ weight: "700", style: "normal" }]}
+/>
+<Font
+  cssVariable="--font-ibm-plex-mono"
+  preload={[{ weight: "500", style: "normal" }]}
 />
 
 <link

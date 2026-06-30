@@ -48,10 +48,23 @@ export default defineConfig({
   },
   fonts: [
     {
-      name: "Geist Sans",
+      // Display: headings, large numbers, card titles.
+      name: "Space Grotesk",
       provider: fontProviders.fontsource(),
-      cssVariable: "--font-geist-sans",
-      weights: [400, 700],
+      cssVariable: "--font-space-grotesk",
+      weights: [500, 700],
+      styles: ["normal"],
+      subsets: ["latin"],
+      display: "swap",
+      fallbacks: ["sans-serif"],
+      optimizedFallbacks: true,
+    },
+    {
+      // Body: paragraphs, UI text.
+      name: "IBM Plex Sans",
+      provider: fontProviders.fontsource(),
+      cssVariable: "--font-ibm-plex-sans",
+      weights: [400, 500],
       styles: ["normal", "italic"],
       subsets: ["latin"],
       display: "swap",
@@ -59,11 +72,12 @@ export default defineConfig({
       optimizedFallbacks: true,
     },
     {
-      name: "Geist Mono",
+      // Mono: kickers, code, data, the logo.
+      name: "IBM Plex Mono",
       provider: fontProviders.fontsource(),
-      cssVariable: "--font-geist-mono",
-      weights: [400, 700],
-      styles: ["normal", "italic"],
+      cssVariable: "--font-ibm-plex-mono",
+      weights: [400, 500, 600],
+      styles: ["normal"],
       subsets: ["latin"],
       display: "swap",
       fallbacks: ["monospace"],

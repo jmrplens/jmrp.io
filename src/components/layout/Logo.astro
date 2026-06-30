@@ -1,0 +1,94 @@
+---
+/**
+ * Logo — the `❯ jmrp_` terminal-prompt brand mark.
+ *
+ * Anatomy: an optional first-level breadcrumb path (e.g. `~/blog`) + the teal
+ * chevron prompt `❯` + the `jmrp` command in heading color + a blinking amber
+ * cursor. The path only reflects the first URL segment (never deep post/tool
+ * slugs). The cursor animation respects `prefers-reduced-motion`.
+ *
+ * The accessible name is provided by the wrapping anchor (`aria-label`), so the
+ * visible glyphs here are presentational; the cursor is `aria-hidden`.
+ */
+import { stripLocalePrefix } from "@i18n/utils";
+
+interface Props {
+  /** Show the first-level breadcrumb path (`~`, `~/blog`, …). Default: true. */
+  showPath?: boolean;
+  /** Collapsed mark: only `❯ _` (favicon / tight contexts). Default: false. */
+  collapsed?: boolean;
+}
+
+const { showPath = true, collapsed = false } = Astro.props;
+
+// First-level path label only — strip locale prefix, take the first segment.
+const cleanPath = stripLocalePrefix(Astro.url.pathname);
+const segment = cleanPath.split("/").find(Boolean);
+const pathLabel = segment ? `~/${segment}` : "~";
+---
+
+<span class="logo-mark">
+  {showPath && !collapsed && <span class="logo__path">{pathLabel}</span>}
+  <span class="logo__prompt">❯</span>
+  {!collapsed && <span class="logo__cmd">jmrp</span>}
+  <span
+    class="logo__cursor"
+    aria-hidden="true"
+  >
+  </span>
+</span>
+
+<style>
+  .logo-mark {
+    display: inline-flex;
+    align-items: center;
+    font-family: var(--font-mono);
+    font-size: 1.0625rem;
+    font-weight: var(--fw-semibold);
+    line-height: 1;
+    letter-spacing: -0.01em;
+  }
+
+  .logo__path {
+    color: var(--color-text-muted);
+  }
+
+  .logo__prompt {
+    margin-left: 0.5em;
+    color: var(--teal);
+  }
+
+  .logo__cmd {
+    margin-left: 0.5em;
+    color: var(--color-text-heading);
+  }
+
+  .logo__cursor {
+    align-self: flex-end;
+    width: 0.6em;
+    height: 0.12em;
+    margin-bottom: 0.16em;
+    margin-left: 0.12em;
+    background: var(--color-accent);
+    border-radius: 1px;
+    animation: jblink 1.15s steps(1) infinite;
+  }
+
+  @keyframes jblink {
+    0%,
+    46% {
+      opacity: 100%;
+    }
+
+    54%,
+    100% {
+      opacity: 0%;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .logo__cursor {
+      animation: none;
+    }
+  }
+</style>
