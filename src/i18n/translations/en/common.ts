@@ -398,6 +398,13 @@ export const common = {
       kicker: "Notes",
       subtitle: "Thoughts, tutorials, and engineering notes.",
       topicsTitle: "Topics",
+      allPosts: "all",
+      featured: "featured",
+      minRead: "min",
+      searchPlaceholder: "search…",
+      searchLabel: "Search posts",
+      rssLabel: "RSS feed",
+      noResults: "No posts match your filters.",
       aiDisclaimer:
         "Real projects, AI-assisted drafting. I document my actual experiments and code, using AI tools to structure and polish the final write-ups.",
       description:

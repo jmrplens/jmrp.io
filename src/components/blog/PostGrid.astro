@@ -23,18 +23,33 @@ const t = useTranslations(locale);
     posts.map((post, index) => (
       <PostCard
         post={post}
-        loading={index <= 1 ? "eager" : "lazy"}
-        fetchpriority={index <= 1 ? "high" : "auto"}
+        index={index + 1}
       />
     ))
   }
+  <p
+    class="posts-grid__empty"
+    hidden
+    data-posts-empty
+  >
+    {t("pages.blog.noResults")}
+  </p>
 </section>
 
 <style>
   .posts-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-    gap: var(--space-md-lg);
+    gap: var(--space-md);
+  }
+
+  .posts-grid__empty {
+    grid-column: 1 / -1;
+    padding: var(--space-lg) 0;
+    font-family: var(--font-mono);
+    font-size: 0.9rem;
+    color: var(--color-text-muted);
+    text-align: center;
   }
 
   @media (width <= 640px) {

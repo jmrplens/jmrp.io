@@ -1,8 +1,7 @@
 ---
 import { defaultLocale, type Locale } from "@i18n/config";
 import { useTranslatedPath, useTranslations } from "@i18n/utils";
-import { getPostsForLocale } from "@utils/blog";
-import { getUniqueTags } from "@utils/blog";
+import { getPostsForLocale, getUniqueTags } from "@utils/blog";
 
 const locale = (Astro.currentLocale ?? defaultLocale) as Locale;
 const t = useTranslations(locale);
@@ -13,67 +12,48 @@ const posts = entries.map((e) => e.post);
 const tags = getUniqueTags(posts);
 ---
 
-<div class="tag-cloud">
-  <h2>{t("pages.blog.topicsTitle")}</h2>
-  <div class="tags">
-    {
-      tags.map(({ tag, count }) => (
-        <a
-          href={translatePath(
-            `/blog/tags/${encodeURIComponent(tag.toLowerCase())}/`,
-          )}
-          class="tag"
-          aria-label={t("aria.viewTaggedPosts", { tag })}
-        >
-          <span class="tag-name">
-            <span class="hash">#</span>
-            {tag}
-          </span>
-          <span class="count">{count}</span>
-        </a>
-      ))
-    }
-  </div>
-</div>
+<nav
+  class="tag-filter"
+  aria-label={t("pages.blog.topicsTitle")}
+  data-tag-filter
+>
+  <a
+    href={translatePath("/blog/")}
+    class="tag-pill is-active"
+    data-tag=""
+  >
+    {t("pages.blog.allPosts")} · {posts.length}
+  </a>
+  {
+    tags.map(({ tag }) => (
+      <a
+        href={translatePath(`/blog/tags/${encodeURIComponent(tag)}/`)}
+        class="tag-pill"
+        data-tag={tag}
+      >
+        {tag}
+      </a>
+    ))
+  }
+</nav>
 
 <style>
-  .tag-cloud {
-    width: 100%;
-  }
-
-  /* Section label — visually hidden; the chips are self-evident, screen
-     readers still get the grouping context. */
-  h2 {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    padding: 0;
-    margin: -1px;
-    overflow: hidden;
-    white-space: nowrap;
-    border: 0;
-    clip-path: inset(50%);
-  }
-
-  .tags {
+  .tag-filter {
     display: flex;
     flex-wrap: wrap;
     gap: var(--space-sm);
+    width: 100%;
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
   }
 
-  /* Mono pill chip: "# tag  count" */
-  .tag {
-    display: inline-flex;
-    gap: var(--space-sm);
-    align-items: center;
-    padding: 0.4rem 0.85rem;
-    font-family: var(--font-mono);
-    font-size: 0.8125rem;
+  .tag-pill {
+    padding: 7px 15px;
     color: var(--color-text);
+    text-transform: lowercase;
     white-space: nowrap;
     text-decoration: none;
-    background: var(--color-bg-secondary);
-    border: var(--border-1);
+    border: 1px solid var(--color-border);
     border-radius: 100px;
     transition:
       color var(--dur-2) var(--ease-out),
@@ -81,28 +61,20 @@ const tags = getUniqueTags(posts);
       background-color var(--dur-2) var(--ease-out);
   }
 
-  .tag:hover {
+  .tag-pill:hover {
     color: var(--color-text-heading);
-    background: var(--color-surface-2);
     border-color: var(--color-accent);
   }
 
-  .tag:focus-visible {
+  .tag-pill.is-active {
+    font-weight: var(--fw-medium);
+    color: var(--color-on-primary);
+    background: var(--color-accent);
+    border-color: var(--color-accent);
+  }
+
+  .tag-pill:focus-visible {
     outline: 2px solid var(--color-primary);
     outline-offset: 2px;
-  }
-
-  .hash {
-    font-weight: var(--fw-semibold);
-    color: var(--color-accent);
-  }
-
-  .count {
-    font-size: 0.75rem;
-    color: var(--color-text-muted);
-  }
-
-  .tag:hover .count {
-    color: var(--color-text);
   }
 </style>

@@ -5,6 +5,7 @@
  */
 import "@styles/blog.css";
 
+import FeaturedPost from "@components/blog/FeaturedPost.astro";
 import PostGrid from "@components/blog/PostGrid.astro";
 import TagCloud from "@components/blog/TagCloud.astro";
 import { defaultLocale, type Locale } from "@i18n/config";
@@ -90,19 +91,92 @@ const schema = {
         aria-hidden="true"
       >
       </div>
-      <p class="kicker section-title">{t("pages.blog.kicker")}</p>
-      <h1>{t("pages.blog.title")}</h1>
-      <p class="subtitle">{t("pages.blog.subtitle")}</p>
-      <p class="ai-disclaimer">
-        {t("pages.blog.aiDisclaimer")}
-      </p>
+      <div class="page-header__intro">
+        <p class="kicker section-title">{t("pages.blog.kicker")}</p>
+        <h1>{t("pages.blog.title")}</h1>
+        <p class="subtitle">{t("pages.blog.subtitle")}</p>
+      </div>
+      <div class="page-header__controls">
+        <div class="blog-search">
+          <span
+            class="i-mdi:magnify blog-search__icon"
+            aria-hidden="true"
+          ></span>
+          <input
+            type="search"
+            class="blog-search__input"
+            placeholder={t("pages.blog.searchPlaceholder")}
+            aria-label={t("pages.blog.searchLabel")}
+            data-blog-search
+          />
+        </div>
+        <a
+          class="blog-rss"
+          href="/rss.xml"
+          aria-label={t("pages.blog.rssLabel")}
+        >
+          <span
+            class="i-mdi:rss"
+            aria-hidden="true"
+          ></span>
+        </a>
+      </div>
     </header>
 
     <div class="blog-body">
       <TagCloud />
-      <PostGrid posts={posts} />
+      <p class="ai-disclaimer">{t("pages.blog.aiDisclaimer")}</p>
+      {posts[0] && <FeaturedPost post={posts[0]} />}
+      <PostGrid posts={posts.slice(1)} />
     </div>
   </div>
+
+  <script is:inline>
+    (function () {
+      const search = document.querySelector("[data-blog-search]");
+      const filterNav = document.querySelector("[data-tag-filter]");
+      const empty = document.querySelector("[data-posts-empty]");
+      const cards = Array.prototype.slice.call(
+        document.querySelectorAll("[data-post]"),
+      );
+      let activeTag = "";
+      let query = "";
+
+      function apply() {
+        let visible = 0;
+        cards.forEach(function (card) {
+          const tags = (card.getAttribute("data-tags") || "").split(" ");
+          const hay = card.getAttribute("data-search") || "";
+          const matchTag = !activeTag || tags.indexOf(activeTag) !== -1;
+          const matchQuery = !query || hay.indexOf(query) !== -1;
+          const show = matchTag && matchQuery;
+          card.hidden = !show;
+          if (show) visible++;
+        });
+        if (empty) empty.hidden = visible > 0;
+      }
+
+      if (search) {
+        search.addEventListener("input", function (e) {
+          query = (e.target.value || "").trim().toLowerCase();
+          apply();
+        });
+      }
+
+      if (filterNav) {
+        filterNav.addEventListener("click", function (e) {
+          const pill = e.target.closest("[data-tag]");
+          if (!pill) return;
+          e.preventDefault();
+          activeTag = pill.getAttribute("data-tag") || "";
+          filterNav.querySelectorAll(".tag-pill").forEach(function (p) {
+            p.classList.toggle("is-active", p === pill);
+          });
+          apply();
+        });
+      }
+    })();
+  </script>
 </BaseLayout>
 
 <style>
@@ -110,6 +184,11 @@ const schema = {
      Overrides the centered defaults from blog.css. */
   .page-header {
     position: relative;
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-md) var(--space-lg);
+    align-items: flex-end;
+    justify-content: space-between;
     padding-bottom: var(--space-md-lg);
     overflow: hidden;
     text-align: left;
@@ -120,9 +199,75 @@ const schema = {
     z-index: 0;
   }
 
-  .page-header :where(.kicker, h1, .subtitle, .ai-disclaimer) {
+  .page-header__intro,
+  .page-header__controls {
     position: relative;
     z-index: 1;
+  }
+
+  .page-header__controls {
+    display: flex;
+    gap: var(--space-sm);
+    align-items: center;
+  }
+
+  .blog-search {
+    display: flex;
+    gap: 0.6em;
+    align-items: center;
+    min-width: 200px;
+    padding: 8px 14px;
+    color: var(--color-text-muted);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+  }
+
+  .blog-search:focus-within {
+    border-color: var(--color-accent);
+  }
+
+  .blog-search__icon {
+    flex: none;
+    font-size: 0.95rem;
+  }
+
+  .blog-search__input {
+    width: 100%;
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
+    color: var(--color-text);
+    outline: none;
+    background: transparent;
+    border: 0;
+  }
+
+  .blog-search__input::placeholder {
+    color: var(--color-text-muted);
+  }
+
+  .blog-rss {
+    display: grid;
+    flex: none;
+    place-items: center;
+    width: 42px;
+    height: 42px;
+    font-size: 1rem;
+    color: var(--color-accent);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    transition:
+      border-color var(--dur-2) var(--ease-out),
+      background-color var(--dur-2) var(--ease-out);
+  }
+
+  .blog-rss:hover {
+    background: var(--accent-dim);
+    border-color: var(--accent-line);
+  }
+
+  .blog-rss:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
   }
 
   .kicker {
@@ -143,9 +288,9 @@ const schema = {
   }
 
   .ai-disclaimer {
-    max-width: 60ch;
-    margin-top: var(--space-sm);
-    font-size: 0.9375rem;
+    max-width: 70ch;
+    margin: 0;
+    font-size: 0.8125rem;
     font-style: italic;
     line-height: 1.5;
     color: var(--color-text-muted);

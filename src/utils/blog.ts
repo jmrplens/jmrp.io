@@ -54,6 +54,21 @@ export async function getPostsForLocale(
 }
 
 /**
+ * Estimates reading time in whole minutes from a post's raw body.
+ *
+ * Uses a 200-words-per-minute baseline (a common prose reading speed) and never
+ * returns less than 1 minute. Markdown/MDX syntax is counted as words, which
+ * slightly over-counts, but the figure is a rough reader-facing hint.
+ *
+ * @param post - The post collection entry.
+ * @returns Estimated reading time in minutes (≥ 1).
+ */
+export function getReadingTime(post: CollectionEntry<"posts">): number {
+  const words = post.body?.trim().split(/\s+/).filter(Boolean).length ?? 0;
+  return Math.max(1, Math.round(words / 200));
+}
+
+/**
  * Processes a collection of blog posts to extract all unique tags and their occurrence counts.
  */
 export function getUniqueTags(posts: CollectionEntry<"posts">[]) {

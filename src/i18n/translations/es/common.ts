@@ -400,6 +400,13 @@ export const common = {
       kicker: "Notas",
       subtitle: "Reflexiones, tutoriales y notas de ingeniería.",
       topicsTitle: "Temas",
+      allPosts: "todos",
+      featured: "destacado",
+      minRead: "min",
+      searchPlaceholder: "buscar…",
+      searchLabel: "Buscar notas",
+      rssLabel: "Feed RSS",
+      noResults: "Ninguna nota coincide con los filtros.",
       aiDisclaimer:
         "Proyectos reales, redacción asistida por IA. Documento mis experimentos y código reales, usando herramientas de IA para estructurar y pulir los textos finales.",
       description:

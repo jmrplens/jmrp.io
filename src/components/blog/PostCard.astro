@@ -1,115 +1,87 @@
 ---
 import { defaultLocale, type Locale } from "@i18n/config";
-import { formatDate, useTranslatedPath, useTranslations } from "@i18n/utils";
-import { Image } from "astro:assets";
+import { useTranslatedPath, useTranslations } from "@i18n/utils";
+import { getReadingTime } from "@utils/blog";
 import type { CollectionEntry } from "astro:content";
 
 interface Props {
   post: CollectionEntry<"posts">;
-  loading?: "eager" | "lazy";
-  fetchpriority?: "high" | "auto" | "low";
+  /** 1-based position in the listing, shown as a mono "NN" index. */
+  index: number;
 }
 
-const { post, loading = "lazy", fetchpriority = "auto" } = Astro.props;
+const { post, index } = Astro.props;
 const locale = (Astro.currentLocale ?? defaultLocale) as Locale;
 const t = useTranslations(locale);
 const translatePath = useTranslatedPath(locale);
 
-// Show the publication (creation) date on the listing — not the last-edited
-// date — so the index reflects when each post was first published.
 const displayDate = post.data.publishedDate;
+const readingTime = getReadingTime(post);
+const tags = (post.data.tags ?? []).slice(0, 2);
+
+/** Compact "YYYY·MM·DD" date used in the Lab card meta row. */
+const dotDate = (d: Date): string =>
+  `${d.getFullYear()}·${String(d.getMonth() + 1).padStart(2, "0")}·${String(
+    d.getDate(),
+  ).padStart(2, "0")}`;
+
+// Search-filter haystack (lowercased title + description + tags).
+const haystack = [
+  post.data.title,
+  post.data.description,
+  ...(post.data.tags ?? []),
+]
+  .filter(Boolean)
+  .join(" ")
+  .toLowerCase();
 ---
 
-<article class="post-card">
-  {
-    post.data.coverImage && (
-      <div class="image-container">
-        <Image
-          src={post.data.coverImage}
-          alt={post.data.title}
-          format="webp"
-          class="card-image"
-          width={260}
-          height={146}
-          widths={[130, 260, 520]}
-          sizes="(max-width: 640px) 130px, 260px"
-          quality={50}
-          loading={loading}
-          fetchpriority={fetchpriority}
-        />
-      </div>
-    )
-  }
-  <div class="card-content">
-    <div class="post-meta">
-      <time datetime={displayDate.toISOString()}>
-        {formatDate(displayDate, locale)}
-      </time>
-      {
-        post.data.tags && (
-          /* eslint-disable-next-line astro/jsx-a11y/no-redundant-roles -- Safari VoiceOver needs role=list when list-style:none */
-          <ul
-            class="tags"
-            role="list"
-          >
-            {post.data.tags.slice(0, 3).map((tag) => (
-              <li>
-                <a
-                  href={translatePath(
-                    `/blog/tags/${encodeURIComponent(tag.toLowerCase())}/`,
-                  )}
-                  class="tag"
-                  aria-label={t("aria.viewTaggedPosts", { tag })}
-                >
-                  #{tag}
-                </a>
-              </li>
-            ))}
-          </ul>
-        )
-      }
-    </div>
-    <h2>
-      <a
-        href={translatePath(`/blog/${post.data.slug}/`)}
-        class="main-link"
-        aria-label={t("aria.readArticle", {
-          title: post.data.title,
-        })}
-      >
-        {post.data.title}
-      </a>
-    </h2>
-    <p>{post.data.description}</p>
-  </div>
-  <div
-    class="card-footer"
-    aria-hidden="true"
+<article
+  class="post-card"
+  data-post
+  data-tags={(post.data.tags ?? []).map((tag) => tag.toLowerCase()).join(" ")}
+  data-search={haystack}
+>
+  <a
+    class="post-card__link"
+    href={translatePath(`/blog/${post.data.slug}/`)}
+    aria-label={t("aria.readArticle", { title: post.data.title })}
   >
-    <span class="read-more">{t("pages.blogPost.readAction")}</span>
-  </div>
+    <div class="post-card__top">
+      <span class="post-card__tags">{tags.join(" · ")}</span>
+      <span
+        class="post-card__index"
+        aria-hidden="true"
+      >
+        {String(index).padStart(2, "0")}
+      </span>
+    </div>
+    <h3 class="post-card__title">{post.data.title}</h3>
+    <p class="post-card__desc">{post.data.description}</p>
+    <div class="post-card__meta">
+      <time datetime={displayDate.toISOString()}>{dotDate(displayDate)}</time>
+      <span aria-hidden="true">·</span>
+      <span>{readingTime} {t("pages.blog.minRead")}</span>
+    </div>
+  </a>
 </article>
 
 <style>
   .post-card {
-    position: relative;
     display: flex;
-    flex-direction: column;
-    height: 100%;
-    overflow: hidden;
     background: var(--color-bg-secondary);
-    border: var(--border-1);
-    border-radius: var(--radius-lg);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
     transition:
-      transform var(--dur-3) var(--ease-out),
-      border-color var(--dur-3) var(--ease-out),
-      box-shadow var(--dur-3) var(--ease-out);
+      border-color var(--dur-2) var(--ease-out),
+      box-shadow var(--dur-2) var(--ease-out),
+      transform var(--dur-2) var(--ease-out);
   }
 
   .post-card:hover {
-    border-color: var(--color-accent);
+    border-color: var(--accent-line);
     box-shadow: var(--sh-card);
-    transform: translateY(-4px);
+    transform: translateY(-3px);
   }
 
   @media (prefers-reduced-motion: reduce) {
@@ -122,267 +94,64 @@ const displayDate = post.data.publishedDate;
     }
   }
 
-  /* Image Card Styles */
-
-  /* Height is supplied by the flex parent's default align-items: stretch */
-  .image-container {
-    position: relative;
-    width: 100%;
-    min-height: 120px; /* Prevent collapse when content is minimal */
-    aspect-ratio: 16 / 9;
-    overflow: hidden;
-  }
-
-  .card-image {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    border-bottom: var(--border-1);
-    transition: transform var(--dur-3) var(--ease-out);
-  }
-
-  .post-card:hover .card-image {
-    transform: scale(1.05);
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    .post-card:hover .card-image {
-      transform: none;
-    }
-  }
-
-  /* Standard Card Styles */
-  .card-content {
+  .post-card__link {
     display: flex;
     flex: 1;
     flex-direction: column;
-    padding: 1.25rem 1.5rem 0.75rem;
+    padding: var(--space-md-lg);
+    color: var(--color-text);
+    text-decoration: none;
   }
 
-  .post-meta {
+  .post-card__top {
     display: flex;
-    flex-wrap: nowrap; /* Force single line */
-    gap: 0.5rem;
     align-items: center;
     justify-content: space-between;
-    max-height: 1.5rem; /* Max single-line height, allows expansion */
-    margin-bottom: 0.6rem;
-    overflow: hidden; /* Hide content that doesn't fit */
+    margin-bottom: var(--space-md);
     font-family: var(--font-mono);
-    font-size: 0.8125rem;
+    font-size: 0.72rem;
+  }
+
+  .post-card__tags {
+    color: var(--color-accent);
+    text-transform: lowercase;
+  }
+
+  .post-card__index {
     color: var(--color-text-muted);
-    letter-spacing: 0.01em;
+    letter-spacing: 0.05em;
   }
 
-  .post-meta time {
-    flex-shrink: 0; /* Never shrink the date */
-    white-space: nowrap; /* Never wrap the date */
-  }
-
-  .tags {
-    position: relative;
-    z-index: 2; /* Ensure tags are clickable above the card link */
-    display: flex;
-    flex-grow: 1; /* Take remaining space after date */
-    flex-shrink: 1; /* Allow shrinking */
-    flex-wrap: wrap; /* Tags that don't fit wrap to next line */
-    gap: 0.5rem;
-    max-height: 1.25rem; /* Max height for single line of tags */
-    padding: 0;
-    margin: 0;
-    overflow: hidden; /* Hide wrapped tags completely */
-    list-style: none;
-  }
-
-  .tags li {
-    display: flex; /* Enables flex alignment for tag content */
-  }
-
-  .tag {
-    flex-shrink: 0; /* Never shrink - hide if doesn't fit */
-    padding: 0.1rem 0.45rem;
-    font-family: var(--font-mono);
-    font-size: 0.7rem;
-    font-weight: var(--fw-medium);
-    color: var(--color-accent);
-    text-decoration: none;
-    background: transparent;
-    border: var(--border-1);
-    border-radius: var(--radius-sm);
-    transition:
-      color var(--dur-2) var(--ease-out),
-      border-color var(--dur-2) var(--ease-out);
-  }
-
-  .tag:hover {
-    color: var(--accent-hi);
-    border-color: var(--color-accent);
-  }
-
-  .post-card h2 {
-    display: -webkit-box;
-    flex-shrink: 0; /* Don't shrink the title */
-    margin-top: 0; /* Remove browser default margin */
-    margin-bottom: 0.5rem;
-    overflow: hidden;
-    -webkit-line-clamp: 3; /* Max 3 lines */
-    line-clamp: 3; /* Standard property */
+  .post-card__title {
+    margin: 0 0 var(--space-sm);
     font-family: var(--font-display);
-    font-size: 1.25rem;
-    font-weight: var(--fw-semibold);
-    line-height: 1.25;
-    letter-spacing: -0.01em;
-    overflow-wrap: break-word;
-    -webkit-box-orient: vertical;
-  }
-
-  .main-link {
-    color: var(--color-text-heading);
-    text-decoration: none;
-  }
-
-  .main-link::after {
-    position: absolute;
-    inset: 0;
-    z-index: 1;
-    content: "";
-  }
-
-  .post-card p {
-    /* Webkit line clamp for text truncation */
-    display: -webkit-box;
-
-    /* Grow to fill available space */
-    flex-grow: 1; /* Fill remaining space after title */
-    margin: 0; /* Reset margin */
-    overflow: hidden;
-    -webkit-line-clamp: 4; /* Allow up to 4 lines when space permits */
-    line-clamp: 4; /* Standard property */
-    font-size: 0.95rem;
-    line-height: 1.5;
-    color: var(--color-text);
-    -webkit-box-orient: vertical;
-  }
-
-  .card-footer {
-    display: flex; /* Ensure alignment */
-    align-items: center;
-    min-height: auto; /* Remove fixed height constraint */
-    padding: 0.75rem 1.5rem;
-    background: transparent;
-    border-top: 1px solid var(--color-hair);
-  }
-
-  .read-more {
-    font-family: var(--font-mono);
-    font-size: 0.8125rem;
+    font-size: 1.15rem;
     font-weight: var(--fw-medium);
-    color: var(--color-accent);
+    line-height: 1.2;
+    color: var(--color-text-heading);
+    letter-spacing: -0.01em;
   }
 
-  @media (width <= 640px) {
-    .post-card {
-      flex-direction: row; /* Horizontal layout on mobile */
-      height: auto; /* Allow growing */
-      max-height: none; /* Remove height constraint */
-    }
-
-    .image-container {
-      flex-shrink: 0;
-      width: 130px; /* Fixed width for image */
-      height: auto; /* Let flex stretch handle vertical sizing */
-      aspect-ratio: unset; /* Override default aspect ratio */
-    }
-
-    .card-image {
-      height: 100%; /* Stretch to cover container height */
-    }
-
-    .card-content {
-      padding: 0.75rem 1rem;
-    }
-
-    .post-card h2 {
-      /* Clamp title to 3 lines, no fixed height */
-      -webkit-line-clamp: 3;
-      line-clamp: 3;
-      font-size: 1.1rem;
-    }
-
-    .post-card p {
-      /* Description grows to fill space, capped at 5 lines on mobile */
-      display: -webkit-box;
-      flex-grow: 1;
-      -webkit-line-clamp: 5;
-      line-clamp: 5;
-      font-size: 0.85rem;
-      -webkit-box-orient: vertical;
-    }
-
-    /* Hide footer visually to save space. It is also hidden from screen readers via aria-hidden="true" */
-    .card-footer {
-      position: absolute;
-      width: 1px;
-      height: 1px;
-      padding: 0;
-      margin: -1px;
-      overflow: hidden;
-      white-space: nowrap;
-      border: 0;
-      clip-path: inset(50%);
-    }
-
-    /* Make main link focusable and labelled correctly */
-    .main-link {
-      outline-offset: 2px;
-    }
-
-    .post-meta {
-      margin-bottom: 0.25rem;
-    }
-
-    /* Hide tags visually but keep in accessibility tree */
-    .tags {
-      position: absolute;
-      width: 1px;
-      height: 1px;
-      padding: 0;
-      margin: -1px;
-      overflow: hidden;
-      white-space: nowrap;
-      border: 0;
-      clip-path: inset(50%);
-    }
-
-    /* Restore visibility when focused (keyboard navigation) */
-    .tags:focus-within {
-      position: relative;
-      width: auto;
-      height: auto;
-      margin: 0;
-      overflow: visible;
-      white-space: normal;
-      clip-path: none;
-    }
+  .post-card__desc {
+    flex: 1;
+    margin: 0 0 var(--space-md-lg);
+    font-size: 0.9rem;
+    line-height: 1.55;
+    color: var(--color-text);
   }
 
-  /* Keyboard focus styles for main-link */
-  .main-link:focus-visible {
+  .post-card__meta {
+    display: flex;
+    gap: 0.75em;
+    align-items: center;
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    color: var(--color-text-muted);
+  }
+
+  .post-card__link:focus-visible {
     outline: 2px solid var(--color-primary);
     outline-offset: 2px;
-    border-radius: 4px;
-  }
-
-  /* Ensure focus ring is visible above the overlay */
-  .main-link:focus-visible::after {
-    z-index: 0; /* Lower than focus ring which is on the link itself */
-  }
-
-  /* Keyboard focus styles for tag links */
-  .tag:focus-visible {
-    color: var(--accent-hi);
-    outline: 2px solid var(--color-primary);
-    outline-offset: 1px;
-    border-color: var(--color-accent);
+    border-radius: var(--radius-sm);
   }
 </style>
