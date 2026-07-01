@@ -13,6 +13,9 @@ export const common = {
     publications: "Publicaciones",
     repositories: "Repositorios",
     homelab: "Homelab",
+    about: "Perfil",
+    uses: "Uses",
+    now: "Ahora",
   },
   ui: {
     skipToContent: "Ir al contenido",
@@ -737,6 +740,21 @@ export const common = {
       chipThesis: "tesis",
       chipOther: "otro",
       noData: "—",
+    },
+    about: {
+      title: "Perfil",
+      description:
+        "José Manuel Requena Plens — ingeniero de firmware y software en Alicante: dispositivos embebidos seguros, herramientas open-source e infraestructura self-hosted.",
+    },
+    uses: {
+      title: "Uses",
+      description:
+        "El hardware, software y servicios que José Manuel Requena Plens tiene en rotación — escritorio, herramientas de desarrollo y homelab.",
+    },
+    now: {
+      title: "Ahora",
+      description:
+        "En qué está centrado José Manuel Requena Plens ahora mismo — proyectos actuales, experimentos y lecturas.",
     },
     tools: {
       title: "Herramientas para desarrolladores",

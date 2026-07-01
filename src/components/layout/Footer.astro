@@ -5,13 +5,20 @@
  * Includes logic to map FontAwesome classes to Iconify names.
  */
 import { defaultLocale, type Locale } from "@i18n/config";
-import { useTranslations } from "@i18n/utils";
+import { useTranslatedPath, useTranslations } from "@i18n/utils";
 import type { SiteConfig, SocialsConfig } from "@src/types";
 import { Image } from "astro:assets";
 import { getEntry } from "astro:content";
 
 const locale = (Astro.currentLocale ?? defaultLocale) as Locale;
 const t = useTranslations(locale);
+const translatePath = useTranslatedPath(locale);
+
+const footerNav = [
+  { label: t("nav.about"), href: translatePath("/about/") },
+  { label: t("nav.uses"), href: translatePath("/uses/") },
+  { label: t("nav.now"), href: translatePath("/now/") },
+];
 
 const today = new Date();
 const socialsEntry = await getEntry("site_config", "socials");
@@ -204,6 +211,21 @@ const socialLinksWithType = socialLinks.map((link) => {
 
 <footer>
   <div class="container">
+    <nav
+      class="footer-nav"
+      aria-label={t("nav.about")}
+    >
+      {
+        footerNav.map((item) => (
+          <a
+            href={item.href}
+            class="footer-nav__link"
+          >
+            {item.label}
+          </a>
+        ))
+      }
+    </nav>
     <p>
       {
         t("ui.copyright", {
@@ -271,6 +293,23 @@ const socialLinksWithType = socialLinks.map((link) => {
     display: flex;
     flex-direction: column;
     gap: var(--space-md);
+  }
+
+  .footer-nav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-md);
+    justify-content: center;
+  }
+
+  .footer-nav__link {
+    color: var(--color-text-muted);
+    text-decoration: none;
+    transition: color 0.2s;
+  }
+
+  .footer-nav__link:hover {
+    color: var(--color-accent);
   }
 
   .social-links {

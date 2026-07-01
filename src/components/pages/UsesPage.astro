@@ -1,0 +1,210 @@
+---
+/**
+ * Uses page ("// /USES") — hardware, software, and homelab in rotation,
+ * grouped into three columns of cards. Content is inline bilingual prose.
+ */
+import { defaultLocale, type Locale } from "@i18n/config";
+import { useTranslations } from "@i18n/utils";
+import BaseLayout from "@layouts/BaseLayout.astro";
+
+const locale = (Astro.currentLocale ?? defaultLocale) as Locale;
+const t = useTranslations(locale);
+
+interface UsesItem {
+  name: string;
+  detail: string;
+}
+interface UsesGroup {
+  label: string;
+  items: UsesItem[];
+}
+
+const content: Record<
+  Locale,
+  { kicker: string; title: string; intro: string; groups: UsesGroup[] }
+> = {
+  en: {
+    kicker: "/uses",
+    title: "What I use",
+    intro:
+      "Hardware, software, and services I keep in rotation. Updated now and then.",
+    groups: [
+      {
+        label: "// desk",
+        items: [
+          { name: "Mac mini M4 Pro", detail: "48 GB · daily driver" },
+          { name: '4K 27" monitor', detail: "+ 65% mechanical keyboard" },
+          { name: "Probes & iron", detail: "logic analyzer · PicoScope" },
+        ],
+      },
+      {
+        label: "// software",
+        items: [
+          { name: "Neovim · Zed", detail: "editing · IBM Plex Mono" },
+          { name: "ESP-IDF · PlatformIO", detail: "firmware" },
+          { name: "Astro · Go · Python", detail: "web · services · DSP" },
+        ],
+      },
+      {
+        label: "// homelab",
+        items: [
+          { name: "Proxmox · ZFS NAS", detail: "48 TB" },
+          {
+            name: "MikroTik · RouterOS",
+            detail: "VLANs · WireGuard · CrowdSec",
+          },
+          { name: "Docker · 24 services", detail: "see /homelab" },
+        ],
+      },
+    ],
+  },
+  es: {
+    kicker: "/uses",
+    title: "Lo que uso",
+    intro:
+      "Hardware, software y servicios que tengo en rotación. Actualizado de vez en cuando.",
+    groups: [
+      {
+        label: "// escritorio",
+        items: [
+          { name: "Mac mini M4 Pro", detail: "48 GB · daily driver" },
+          { name: 'Monitor 4K 27"', detail: "+ teclado mecánico 65%" },
+          {
+            name: "Sondas y soldador",
+            detail: "analizador lógico · PicoScope",
+          },
+        ],
+      },
+      {
+        label: "// software",
+        items: [
+          { name: "Neovim · Zed", detail: "edición · IBM Plex Mono" },
+          { name: "ESP-IDF · PlatformIO", detail: "firmware" },
+          { name: "Astro · Go · Python", detail: "web · servicios · DSP" },
+        ],
+      },
+      {
+        label: "// homelab",
+        items: [
+          { name: "Proxmox · NAS ZFS", detail: "48 TB" },
+          {
+            name: "MikroTik · RouterOS",
+            detail: "VLANs · WireGuard · CrowdSec",
+          },
+          { name: "Docker · 24 servicios", detail: "ver /homelab" },
+        ],
+      },
+    ],
+  },
+};
+
+const c = content[locale] ?? content.en;
+---
+
+<BaseLayout
+  title={t("pages.uses.title")}
+  description={t("pages.uses.description")}
+>
+  <div class="uses container">
+    <header class="uses-header">
+      <p class="section-title">{c.kicker}</p>
+      <h1 class="page-title uses-header__title">{c.title}</h1>
+      <p class="uses-header__intro">{c.intro}</p>
+    </header>
+
+    <div class="uses-grid">
+      {
+        c.groups.map((group) => (
+          <section
+            class="uses-col"
+            aria-label={group.label.replace("// ", "")}
+          >
+            <h2 class="uses-col__title">{group.label}</h2>
+            <div class="uses-col__items">
+              {group.items.map((item) => (
+                <div class="uses-item">
+                  <div class="uses-item__name">{item.name}</div>
+                  <div class="uses-item__detail">{item.detail}</div>
+                </div>
+              ))}
+            </div>
+          </section>
+        ))
+      }
+    </div>
+  </div>
+</BaseLayout>
+
+<style>
+  .uses {
+    padding-top: var(--space-xl);
+    padding-bottom: var(--space-xl);
+  }
+
+  .uses-header {
+    padding-bottom: var(--space-lg);
+    margin-bottom: var(--space-lg);
+    border-bottom: 1px solid var(--color-hair);
+  }
+
+  .uses-header .section-title {
+    margin-bottom: var(--space-sm);
+  }
+
+  .uses-header__title {
+    padding-bottom: 0;
+    margin: 0 0 var(--space-md);
+    font-size: clamp(1.9rem, 4.5vw, 2.75rem);
+    line-height: 1.05;
+    border-bottom: 0;
+  }
+
+  .uses-header__intro {
+    max-width: 54ch;
+    margin: 0;
+    font-size: 1.0625rem;
+    line-height: 1.6;
+    color: var(--color-text);
+  }
+
+  .uses-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+    gap: var(--space-lg);
+  }
+
+  .uses-col__title {
+    margin: 0 0 var(--space-md);
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+    font-weight: var(--fw-medium);
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+  }
+
+  .uses-col__items {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .uses-item {
+    padding: 14px 16px;
+    background: var(--color-bg-secondary);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+  }
+
+  .uses-item__name {
+    font-size: 0.9rem;
+    color: var(--color-text-heading);
+  }
+
+  .uses-item__detail {
+    margin-top: 3px;
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    color: var(--color-text-muted);
+  }
+</style>

@@ -1,0 +1,265 @@
+---
+/**
+ * About page ("// PERFIL") — short bio, a portrait slot, and three summary
+ * cards (build / write about / say hi). Bilingual content is kept inline
+ * because it is page-specific prose rather than reusable UI chrome.
+ */
+import { defaultLocale, type Locale } from "@i18n/config";
+import { useTranslatedPath, useTranslations } from "@i18n/utils";
+import BaseLayout from "@layouts/BaseLayout.astro";
+
+const locale = (Astro.currentLocale ?? defaultLocale) as Locale;
+const t = useTranslations(locale);
+const translatePath = useTranslatedPath(locale);
+
+const content = {
+  en: {
+    kicker: "Profile",
+    title: "Hi, I'm José Manuel.",
+    lead: "Firmware and software engineer in Alicante, Spain. I build secure embedded devices, open-source tools, and the infrastructure that keeps them running. Before that, acoustics and instrumentation — which is where my taste for problems at the meeting point of signal, system and code comes from.",
+    note: "This site is my notebook: what I learn I write down, what I build I publish.",
+    cards: [
+      {
+        label: "I build",
+        items: [
+          "Embedded firmware (ESP32, Arm)",
+          "MCP servers in Go",
+          "Network & security tooling",
+          "Self-hosted infrastructure",
+        ],
+      },
+      {
+        label: "I write about",
+        items: [
+          "Firmware & low level",
+          "Networking (MikroTik, nginx)",
+          "Homelab & CSP/security",
+          "Acoustics & DSP",
+        ],
+      },
+    ],
+    contactLabel: "Say hi",
+  },
+  es: {
+    kicker: "Perfil",
+    title: "Hola, soy José Manuel.",
+    lead: "Ingeniero de firmware y software en Alicante. Construyo dispositivos embebidos seguros, herramientas open-source y la infraestructura que los sostiene. Antes, acústica e instrumentación — de ahí mi gusto por los problemas donde la señal, el sistema y el código se tocan.",
+    note: "Este sitio es mi cuaderno: lo que aprendo lo escribo, lo que construyo lo publico.",
+    cards: [
+      {
+        label: "Construyo",
+        items: [
+          "Firmware embebido (ESP32, Arm)",
+          "Servidores MCP en Go",
+          "Herramientas de red y seguridad",
+          "Infraestructura self-hosted",
+        ],
+      },
+      {
+        label: "Escribo sobre",
+        items: [
+          "Firmware y bajo nivel",
+          "Redes (MikroTik, nginx)",
+          "Homelab y CSP/seguridad",
+          "Acústica y DSP",
+        ],
+      },
+    ],
+    contactLabel: "Hablemos",
+  },
+} as const;
+
+const c = content[locale] ?? content.en;
+
+const contactLinks = [
+  {
+    key: "git",
+    value: "github.com/jmrplens",
+    href: "https://github.com/jmrplens",
+  },
+  { key: "mail", value: "mail@jmrp.io", href: "mailto:mail@jmrp.io" },
+  { key: "cv", value: "/cv", href: translatePath("/cv/") },
+];
+---
+
+<BaseLayout
+  title={t("pages.about.title")}
+  description={t("pages.about.description")}
+  type="profile"
+>
+  <div class="about container">
+    <section class="about-hero">
+      <div>
+        <p class="section-title">{c.kicker}</p>
+        <h1 class="page-title about-hero__title">{c.title}</h1>
+        <p class="about-hero__lead">{c.lead}</p>
+        <p class="about-hero__note">{c.note}</p>
+      </div>
+      <div
+        class="about-portrait"
+        aria-hidden="true"
+      >
+        <span class="about-portrait__tag">photo</span>
+      </div>
+    </section>
+
+    <section
+      class="about-cards"
+      aria-label={c.kicker}
+    >
+      {
+        c.cards.map((card) => (
+          <div class="about-card">
+            <p class="about-card__label">{card.label}</p>
+            <ul class="about-card__list">
+              {card.items.map((item) => (
+                <li>{item}</li>
+              ))}
+            </ul>
+          </div>
+        ))
+      }
+      <div class="about-card">
+        <p class="about-card__label">{c.contactLabel}</p>
+        <ul class="about-card__list about-card__list--mono">
+          {
+            contactLinks.map((link) => (
+              <li>
+                <span class="about-card__key">{link.key} ·</span>{" "}
+                <a href={link.href}>{link.value}</a>
+              </li>
+            ))
+          }
+        </ul>
+      </div>
+    </section>
+  </div>
+</BaseLayout>
+
+<style>
+  .about {
+    padding-top: var(--space-xl);
+    padding-bottom: var(--space-xl);
+  }
+
+  .about-hero {
+    display: grid;
+    grid-template-columns: 1.4fr 0.6fr;
+    gap: var(--space-xl);
+    align-items: center;
+  }
+
+  .about-hero .section-title {
+    margin-bottom: var(--space-sm);
+  }
+
+  .about-hero__title {
+    padding-bottom: 0;
+    margin: 0 0 var(--space-md);
+    font-size: clamp(2rem, 5vw, 2.875rem);
+    line-height: 1.05;
+    border-bottom: 0;
+  }
+
+  .about-hero__lead {
+    margin: 0 0 var(--space-md);
+    font-size: 1.0625rem;
+    line-height: 1.65;
+    color: var(--color-text);
+  }
+
+  .about-hero__note {
+    margin: 0;
+    font-size: 0.95rem;
+    line-height: 1.65;
+    color: var(--color-text-muted);
+  }
+
+  .about-portrait {
+    display: grid;
+    place-items: center;
+    justify-self: center;
+    max-width: 300px;
+    aspect-ratio: 1;
+    background: repeating-linear-gradient(
+      135deg,
+      var(--color-bg-secondary) 0 12px,
+      var(--color-bg) 12px 24px
+    );
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+  }
+
+  .about-portrait__tag {
+    padding: 7px 12px;
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    color: var(--color-text-muted);
+    border: 1px dashed var(--color-border);
+    border-radius: var(--radius-sm);
+  }
+
+  .about-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: var(--space-md);
+    margin-top: var(--space-xl);
+  }
+
+  .about-card {
+    padding: var(--space-md-lg);
+    background: var(--color-bg-secondary);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+  }
+
+  .about-card__label {
+    margin: 0 0 var(--space-md);
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    color: var(--color-accent);
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+  }
+
+  .about-card__list {
+    display: flex;
+    flex-direction: column;
+    gap: 9px;
+    padding: 0;
+    margin: 0;
+    font-size: 0.9rem;
+    color: var(--color-text);
+    list-style: none;
+  }
+
+  .about-card__list--mono {
+    font-family: var(--font-mono);
+    font-size: 0.84rem;
+  }
+
+  .about-card__key {
+    color: var(--color-text-muted);
+  }
+
+  .about-card__list a {
+    color: var(--color-text);
+    text-decoration: none;
+  }
+
+  .about-card__list a:hover {
+    color: var(--color-accent);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+
+  @media (width <= 720px) {
+    .about-hero {
+      grid-template-columns: 1fr;
+    }
+
+    .about-portrait {
+      justify-self: start;
+    }
+  }
+</style>

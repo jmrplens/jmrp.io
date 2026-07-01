@@ -1,0 +1,190 @@
+---
+/**
+ * Now page ("// /NOW") — a short, honest list of what I'm focused on right now,
+ * in the spirit of nownownow.com. Inline bilingual content.
+ */
+import { defaultLocale, type Locale } from "@i18n/config";
+import { useTranslations } from "@i18n/utils";
+import BaseLayout from "@layouts/BaseLayout.astro";
+
+const locale = (Astro.currentLocale ?? defaultLocale) as Locale;
+const t = useTranslations(locale);
+
+interface NowEntry {
+  tone: "accent" | "teal" | "muted";
+  title: string;
+  body: string;
+}
+
+const content: Record<
+  Locale,
+  {
+    kicker: string;
+    title: string;
+    updated: string;
+    entries: NowEntry[];
+    footer: string;
+  }
+> = {
+  en: {
+    kicker: "/now",
+    title: "Right now",
+    updated: "Updated · July 2026 · Alicante",
+    entries: [
+      {
+        tone: "accent",
+        title: "Designing an accessible diagram system",
+        body: "Replacing Mermaid with zero-JS, themeable SVG diagrams that keep a clean accessibility tree. Showcase in progress.",
+      },
+      {
+        tone: "teal",
+        title: "Iterating on Kleidos",
+        body: "A BLE hardware password manager on ESP32-S3. Tuning the secure pairing flow.",
+      },
+      {
+        tone: "muted",
+        title: "Reading",
+        body: "On applied cryptography and binary formats. Notes on the blog soon.",
+      },
+    ],
+    footer: "Inspired by nownownow.com · an honest page about what I'm up to.",
+  },
+  es: {
+    kicker: "/now",
+    title: "Ahora mismo",
+    updated: "Actualizado · julio 2026 · Alicante",
+    entries: [
+      {
+        tone: "accent",
+        title: "Diseñando un sistema de diagramas accesible",
+        body: "Reemplazo de Mermaid por SVG zero-JS, temable y con árbol de accesibilidad limpio. Showcase en marcha.",
+      },
+      {
+        tone: "teal",
+        title: "Iterando Kleidos",
+        body: "Gestor de contraseñas hardware BLE en ESP32-S3. Afinando el emparejamiento seguro.",
+      },
+      {
+        tone: "muted",
+        title: "Leyendo",
+        body: "Sobre criptografía aplicada y formatos binarios. Notas en el blog pronto.",
+      },
+    ],
+    footer: "Inspirado en nownownow.com · una página honesta de en qué ando.",
+  },
+};
+
+const c = content[locale] ?? content.en;
+---
+
+<BaseLayout
+  title={t("pages.now.title")}
+  description={t("pages.now.description")}
+>
+  <div class="now">
+    <p class="section-title">{c.kicker}</p>
+    <h1 class="page-title now__title">{c.title}</h1>
+    <p class="now__updated">{c.updated}</p>
+
+    <div class="now-list">
+      {
+        c.entries.map((entry) => (
+          <article class="now-entry">
+            <span
+              class={`now-entry__dot now-entry__dot--${entry.tone}`}
+              aria-hidden="true"
+            />
+            <div>
+              <h2 class="now-entry__title">{entry.title}</h2>
+              <p class="now-entry__body">{entry.body}</p>
+            </div>
+          </article>
+        ))
+      }
+    </div>
+
+    <p class="now__footer">{c.footer}</p>
+  </div>
+</BaseLayout>
+
+<style>
+  .now {
+    box-sizing: border-box;
+    width: 100%;
+    max-width: 760px;
+    padding: var(--space-xl) var(--space-lg);
+    margin: 0 auto;
+  }
+
+  .now .section-title {
+    margin-bottom: var(--space-sm);
+  }
+
+  .now__title {
+    padding-bottom: 0;
+    margin: 0 0 var(--space-sm);
+    font-size: clamp(1.9rem, 4.5vw, 2.75rem);
+    line-height: 1.05;
+    border-bottom: 0;
+  }
+
+  .now__updated {
+    margin: 0 0 var(--space-xl);
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+    color: var(--color-text-muted);
+  }
+
+  .now-list {
+    border-top: 1px solid var(--color-hair);
+  }
+
+  .now-entry {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: var(--space-md-lg);
+    padding: var(--space-md-lg) 2px;
+    border-bottom: 1px solid var(--color-hair);
+  }
+
+  .now-entry__dot {
+    width: 8px;
+    height: 8px;
+    margin-top: 7px;
+    border-radius: 50%;
+  }
+
+  .now-entry__dot--accent {
+    background: var(--color-accent);
+  }
+
+  .now-entry__dot--teal {
+    background: var(--teal);
+  }
+
+  .now-entry__dot--muted {
+    background: var(--color-text-muted);
+  }
+
+  .now-entry__title {
+    margin: 0 0 5px;
+    font-family: var(--font-display);
+    font-size: 1rem;
+    font-weight: var(--fw-medium);
+    color: var(--color-text-heading);
+  }
+
+  .now-entry__body {
+    margin: 0;
+    font-size: 0.9rem;
+    line-height: 1.55;
+    color: var(--color-text);
+  }
+
+  .now__footer {
+    margin: var(--space-lg) 0 0;
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    color: var(--color-text-muted);
+  }
+</style>

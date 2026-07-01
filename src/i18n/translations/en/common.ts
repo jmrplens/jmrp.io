@@ -13,6 +13,9 @@ export const common = {
     publications: "Publications",
     repositories: "Repositories",
     homelab: "Homelab",
+    about: "About",
+    uses: "Uses",
+    now: "Now",
   },
   ui: {
     skipToContent: "Skip to content",
@@ -734,6 +737,21 @@ export const common = {
       chipThesis: "thesis",
       chipOther: "other",
       noData: "—",
+    },
+    about: {
+      title: "About",
+      description:
+        "José Manuel Requena Plens — firmware and software engineer in Alicante building secure embedded devices, open-source tools, and self-hosted infrastructure.",
+    },
+    uses: {
+      title: "Uses",
+      description:
+        "The hardware, software, and services José Manuel Requena Plens keeps in rotation — desk, dev tools, and homelab.",
+    },
+    now: {
+      title: "Now",
+      description:
+        "What José Manuel Requena Plens is focused on right now — current projects, experiments, and reading.",
     },
     tools: {
       title: "Developer Tools",
