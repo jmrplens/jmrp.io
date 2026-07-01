@@ -48,6 +48,45 @@ export function stripTrailingPunctuation(value: string): string {
   return value.slice(0, end);
 }
 
+/** Coarse display kind for a publication (drives the chip + sidebar filter). */
+export type PublicationKind = "journal" | "conference" | "thesis" | "other";
+
+/** Translation key for each publication kind's chip label. */
+export const PUBLICATION_KIND_LABEL_KEY = {
+  journal: "pages.publications.chipJournal",
+  conference: "pages.publications.chipConference",
+  thesis: "pages.publications.chipThesis",
+  other: "pages.publications.chipOther",
+} as const;
+
+/**
+ * Maps a CSL publication `type` to a coarse display "kind" used for the type
+ * chip and the sidebar filter: `journal`, `conference`, `thesis`, or `other`.
+ *
+ * @param type - The CSL type string (e.g. "article-journal").
+ * @returns One of the four display kinds.
+ */
+export function getPublicationKind(type: string): PublicationKind {
+  switch (type) {
+    case "article-journal":
+    case "article":
+    case "article-magazine": {
+      return "journal";
+    }
+    case "paper-conference":
+    case "chapter": {
+      return "conference";
+    }
+    case "thesis":
+    case "report": {
+      return "thesis";
+    }
+    default: {
+      return "other";
+    }
+  }
+}
+
 /**
  * Fetches, parses, and processes publications from the BibTeX file.
  * File location: src/data/publications/bibliography/papers.bib

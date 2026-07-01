@@ -8,8 +8,14 @@ import { defaultLocale, type Locale } from "@i18n/config";
 import { useTranslations } from "@i18n/utils";
 import BaseLayout from "@layouts/BaseLayout.astro";
 import { stripHtml } from "@utils/html";
-import { getPublications, stripTrailingPunctuation } from "@utils/publications";
+import {
+  getPublicationKind,
+  getPublications,
+  PUBLICATION_KIND_LABEL_KEY,
+  stripTrailingPunctuation,
+} from "@utils/publications";
 import { getSiteUrl } from "@utils/site";
+import { getEntry } from "astro:content";
 import type { CollectionPage, ListItem } from "schema-dts";
 
 const locale = (Astro.currentLocale ?? defaultLocale) as Locale;
@@ -18,6 +24,60 @@ const t = useTranslations(locale);
 const publicationGroups = await getPublications(locale);
 
 const allPublications = publicationGroups.flatMap((group) => group.items);
+
+// --- Headline stats ------------------------------------------------------
+// Publications and co-authors are counted from the source data. Citation
+// counts and the h-index need an external source (Google Scholar) the site
+// does not ingest yet, so they render as an em dash rather than a fabricated
+// number.
+const coauthorsEntry = await getEntry("publications_data", "coauthors");
+const coauthorsCount = Object.keys(coauthorsEntry?.data ?? {}).length;
+
+const stats = [
+  {
+    value: String(allPublications.length),
+    label: t("pages.publications.statPublications"),
+  },
+  {
+    value: t("pages.publications.noData"),
+    label: t("pages.publications.statCitations"),
+  },
+  {
+    value: t("pages.publications.noData"),
+    label: t("pages.publications.statHIndex"),
+  },
+  {
+    value: String(coauthorsCount),
+    label: t("pages.publications.statCoauthors"),
+  },
+];
+
+// --- Type filter (sidebar) ----------------------------------------------
+const typeCounts = new Map<string, number>();
+for (const pub of allPublications) {
+  const kind = getPublicationKind(pub.type);
+  typeCounts.set(kind, (typeCounts.get(kind) ?? 0) + 1);
+}
+const typeFilters = [...typeCounts].map(([kind, count]) => ({
+  kind,
+  label: t(
+    PUBLICATION_KIND_LABEL_KEY[kind as keyof typeof PUBLICATION_KIND_LABEL_KEY],
+  ),
+  count,
+}));
+
+// --- Group by publication year (newest first) ----------------------------
+const yearOf = (pub: (typeof allPublications)[number]): number =>
+  pub.issued?.["date-parts"]?.[0]?.[0] ?? 0;
+
+const byYear = new Map<number, typeof allPublications>();
+for (const pub of allPublications) {
+  const year = yearOf(pub);
+  const bucket = byYear.get(year);
+  if (bucket) bucket.push(pub);
+  else byYear.set(year, [pub]);
+}
+const yearGroups = [...byYear].sort((a, b) => b[0] - a[0]);
 
 /**
  * Builds the most precise ISO date the BibTeX entry supports:
@@ -127,32 +187,124 @@ const collectionSchema = {
       <p class="section-title">{t("pages.publications.kicker")}</p>
       <h1 class="pub-page-title">{t("pages.publications.title")}</h1>
       <p class="pub-subtitle">{t("pages.publications.description")}</p>
+      <dl class="pub-stats">
+        {
+          stats.map((stat) => (
+            <div class="pub-stat">
+              <dd class="pub-stat__value">{stat.value}</dd>
+              <dt class="pub-stat__label">{stat.label}</dt>
+            </div>
+          ))
+        }
+      </dl>
     </header>
 
-    {
-      publicationGroups.map((group) => (
-        <section
-          class="pub-section"
-          aria-label={group.title}
+    <div class="pub-layout">
+      <aside class="pub-sidebar">
+        <nav
+          class="pub-filter"
+          aria-label={t("pages.publications.filterType")}
+          data-pub-filter
         >
-          <div class="section-header">
-            <h2>{group.title}</h2>
+          <p class="pub-filter__label">{t("pages.publications.filterType")}</p>
+          <button
+            type="button"
+            class="pub-filter__pill is-active"
+            data-kind=""
+          >
+            {t("pages.publications.filterAll")} · {allPublications.length}
+          </button>
+          {
+            typeFilters.map((f) => (
+              <button
+                type="button"
+                class="pub-filter__pill"
+                data-kind={f.kind}
+              >
+                {f.label} · {f.count}
+              </button>
+            ))
+          }
+        </nav>
+        <div class="pub-export">
+          <p class="pub-filter__label">{t("pages.publications.export")}</p>
+          <a
+            class="pub-export__btn"
+            href="/publications.bib"
+            download
+          >
             <span
-              class="section-count"
+              class="i-mdi:download pub-export__icon"
               aria-hidden="true"
+            ></span>
+            {t("pages.publications.exportBibtex")}
+          </a>
+        </div>
+      </aside>
+
+      <div class="pub-main">
+        {
+          yearGroups.map(([year, items]) => (
+            <section
+              class="pub-year-group"
+              aria-label={String(year)}
+              data-pub-year
             >
-              {group.items.length}
-            </span>
-          </div>
-          <div class="publications-list">
-            {group.items.map((pub) => (
-              <PublicationItem pub={pub} />
-            ))}
-          </div>
-        </section>
-      ))
-    }
+              <h2 class="pub-year-group__title">{year}</h2>
+              <div class="publications-list">
+                {items.map((pub) => (
+                  <PublicationItem pub={pub} />
+                ))}
+              </div>
+            </section>
+          ))
+        }
+        <p
+          class="pub-empty"
+          hidden
+          data-pub-empty
+        >
+          {t("pages.blog.noResults")}
+        </p>
+      </div>
+    </div>
   </div>
+
+  <script is:inline>
+    (function () {
+      const filter = document.querySelector("[data-pub-filter]");
+      const items = Array.prototype.slice.call(
+        document.querySelectorAll("[data-pub-type]"),
+      );
+      const years = Array.prototype.slice.call(
+        document.querySelectorAll("[data-pub-year]"),
+      );
+      const empty = document.querySelector("[data-pub-empty]");
+      if (!filter) return;
+
+      filter.addEventListener("click", function (e) {
+        const pill = e.target.closest("[data-kind]");
+        if (!pill) return;
+        const kind = pill.getAttribute("data-kind") || "";
+        filter.querySelectorAll(".pub-filter__pill").forEach(function (p) {
+          p.classList.toggle("is-active", p === pill);
+        });
+        let visible = 0;
+        items.forEach(function (item) {
+          const show = !kind || item.getAttribute("data-pub-type") === kind;
+          item.hidden = !show;
+          if (show) visible++;
+        });
+        years.forEach(function (group) {
+          const anyVisible = group.querySelector(
+            "[data-pub-type]:not([hidden])",
+          );
+          group.hidden = !anyVisible;
+        });
+        if (empty) empty.hidden = visible > 0;
+      });
+    })();
+  </script>
 </BaseLayout>
 
 <script>
@@ -217,33 +369,142 @@ const collectionSchema = {
   .pub-subtitle {
     position: relative;
     max-width: var(--max-width-prose);
-    margin: 0;
+    margin: 0 0 var(--space-lg);
     font-size: 1.05rem;
     line-height: 1.6;
     color: var(--color-text-muted);
   }
 
-  .pub-section {
-    margin-bottom: var(--space-xl);
+  /* Headline stats band */
+  .pub-stats {
+    position: relative;
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, max-content));
+    width: fit-content;
+    max-width: 100%;
+    margin: 0;
+    overflow: hidden;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
   }
 
-  .publications-list {
+  .pub-stat {
+    padding: 16px 26px;
+    border-right: 1px solid var(--color-border);
+  }
+
+  .pub-stat:last-child {
+    border-right: 0;
+  }
+
+  .pub-stat__value {
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: 1.75rem;
+    font-weight: var(--fw-bold);
+    line-height: 1;
+    color: var(--color-text-heading);
+  }
+
+  .pub-stat__label {
+    margin-top: 7px;
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    color: var(--color-text-muted);
+  }
+
+  /* Sidebar + main two-column layout */
+  .pub-layout {
+    display: grid;
+    grid-template-columns: 220px 1fr;
+    gap: var(--space-xl);
+    align-items: start;
+  }
+
+  .pub-sidebar {
+    position: sticky;
+    top: calc(var(--header-height) + var(--space-md));
     display: flex;
     flex-direction: column;
-    gap: var(--space-md-lg);
+    gap: var(--space-lg);
   }
 
-  .section-header {
+  .pub-filter {
     display: flex;
-    gap: var(--space-md);
-    align-items: baseline;
-    padding-bottom: var(--space-sm);
-    margin-bottom: var(--space-lg);
-    border-bottom: 1px solid var(--color-hair);
+    flex-wrap: wrap;
+    gap: var(--space-sm);
   }
 
-  .pub-section h2 {
+  .pub-filter__label {
+    width: 100%;
     margin: 0;
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+  }
+
+  .pub-filter__pill {
+    width: 100%;
+    padding: 6px 12px;
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+    color: var(--color-text);
+    text-align: left;
+    cursor: pointer;
+    background: transparent;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    transition:
+      color var(--dur-2) var(--ease-out),
+      border-color var(--dur-2) var(--ease-out),
+      background-color var(--dur-2) var(--ease-out);
+  }
+
+  .pub-filter__pill:hover {
+    border-color: var(--color-accent);
+  }
+
+  .pub-filter__pill.is-active {
+    font-weight: var(--fw-medium);
+    color: var(--color-on-primary);
+    background: var(--color-accent);
+    border-color: var(--color-accent);
+  }
+
+  .pub-filter__pill:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+  }
+
+  .pub-export__btn {
+    display: flex;
+    gap: 0.6em;
+    align-items: center;
+    padding: 9px 12px;
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
+    color: var(--color-text);
+    text-decoration: none;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+  }
+
+  .pub-export__btn:hover {
+    border-color: var(--color-accent);
+  }
+
+  .pub-export__icon {
+    color: var(--color-accent);
+  }
+
+  .pub-year-group {
+    margin-bottom: var(--space-lg);
+  }
+
+  .pub-year-group__title {
+    margin: 0 0 var(--space-sm);
     font-family: var(--font-display);
     font-size: 1.5rem;
     font-weight: var(--fw-medium);
@@ -251,14 +512,48 @@ const collectionSchema = {
     letter-spacing: -0.01em;
   }
 
-  /* Mono item count beside the group heading. */
-  .section-count {
+  .publications-list {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .pub-empty {
+    padding: var(--space-lg) 0;
     font-family: var(--font-mono);
-    font-size: 0.85rem;
+    font-size: 0.9rem;
     color: var(--color-text-muted);
   }
 
-  .section-count::before {
-    content: "· ";
+  @media (width <= 820px) {
+    .pub-layout {
+      grid-template-columns: 1fr;
+      gap: var(--space-lg);
+    }
+
+    .pub-sidebar {
+      position: static;
+      top: auto;
+    }
+
+    .pub-filter {
+      flex-direction: row;
+    }
+
+    .pub-filter__pill {
+      width: auto;
+    }
+
+    .pub-stats {
+      grid-template-columns: repeat(2, 1fr);
+      width: 100%;
+    }
+
+    .pub-stat:nth-child(2) {
+      border-right: 0;
+    }
+
+    .pub-stat:nth-child(-n + 2) {
+      border-bottom: 1px solid var(--color-border);
+    }
   }
 </style>
