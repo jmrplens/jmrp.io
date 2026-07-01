@@ -1,7 +1,7 @@
 /* Homelab Global Variables */
 :root {
-  --color-status-online: #10b981;
-  --color-status-online-bg: rgb(16 185 129 / 10%);
+  --color-status-online: #46b8a6; /* teal = live/OK (Lab system) */
+  --color-status-online-bg: rgb(70 184 166 / 12%);
   --color-status-offline: #6b7280;
   --color-status-offline-bg: rgb(107 114 128 / 10%);
   --color-status-warning: #f59e0b;
@@ -15,8 +15,8 @@
 
 /* Light theme overrides for status variables */
 :root[data-theme="light"] {
-  --color-status-online: #065f46;
-  --color-status-online-bg: #dcfce7;
+  --color-status-online: #1f7e6e;
+  --color-status-online-bg: rgb(31 126 110 / 12%);
   --color-status-offline: #374151;
   --color-status-offline-bg: #f3f4f6;
   --color-status-warning: #92400e;
@@ -30,8 +30,8 @@
 
 @media (prefers-color-scheme: light) {
   :root:not([data-theme="dark"]) {
-    --color-status-online: #065f46;
-    --color-status-online-bg: #dcfce7;
+    --color-status-online: #1f7e6e;
+    --color-status-online-bg: rgb(31 126 110 / 12%);
     --color-status-offline: #374151;
     --color-status-offline-bg: #f3f4f6;
     --color-status-warning: #92400e;
@@ -77,18 +77,21 @@
 }
 
 .insight-label {
+  font-family: var(--font-mono);
   font-size: 0.75rem;
-  font-weight: var(--fw-bold);
+  font-weight: var(--fw-medium);
   color: var(--color-text-muted);
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.08em;
 }
 
 .insight-value {
   margin: var(--space-xs) 0 var(--space-md);
+  font-family: var(--font-display);
   font-size: 1.6rem;
   font-weight: var(--fw-bold);
-  color: var(--color-primary);
+  color: var(--color-text-heading);
+  letter-spacing: -0.01em;
 }
 
 .insight-value output {

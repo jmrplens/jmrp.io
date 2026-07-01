@@ -220,16 +220,18 @@
 }
 
 .stat-value {
+  font-family: var(--font-display);
   font-size: 1.1em;
   font-weight: 700;
-  color: var(--color-primary);
+  color: var(--color-text-heading);
 }
 
 .stat-label {
+  font-family: var(--font-mono);
   font-size: 0.75em;
   color: var(--color-text-muted);
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.08em;
 }
 
 /* Skeleton Loading */
@@ -292,28 +294,19 @@
 .tor-flag-badge {
   padding: 1px 8px;
   font-size: 0.8em;
-  color: var(--color-primary);
-  background: var(--color-primary-bg, var(--accent-dim));
+  color: var(--color-accent);
+  background: transparent;
+  border: 1px solid var(--accent-line);
   border-radius: 10px;
-}
-
-:root[data-theme="light"] .tor-flag-badge {
-  color: var(--color-primary);
-  background: var(--color-primary-bg, rgb(124 58 237 / 10%));
 }
 
 .tor-transport-badge {
   padding: 1px 8px;
   font-family: var(--font-mono);
   font-size: 0.8em;
-  color: var(--color-status-online, #10b981);
-  background: var(--color-status-online-bg, rgb(16 185 129 / 10%));
+  color: var(--color-status-online);
+  background: var(--color-status-online-bg);
   border-radius: 10px;
-}
-
-:root[data-theme="light"] .tor-transport-badge {
-  color: var(--color-status-online, #059669);
-  background: var(--color-status-online-bg, rgb(5 150 105 / 10%));
 }
 
 .tor-version-badge {
@@ -330,11 +323,6 @@
 .tor-version-badge--warn {
   color: var(--color-status-warn, #f59e0b);
   background: var(--color-status-warn-bg, rgb(245 158 11 / 10%));
-}
-
-:root[data-theme="light"] .tor-version-badge--ok {
-  color: var(--color-status-online, #059669);
-  background: var(--color-status-online-bg, rgb(5 150 105 / 10%));
 }
 
 :root[data-theme="light"] .tor-version-badge--warn {

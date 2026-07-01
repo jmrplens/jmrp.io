@@ -476,6 +476,7 @@ export const common = {
       userFallback: "Usuario de GitHub",
     },
     homelab: {
+      kicker: "Infraestructura",
       title: "Estado del Homelab",
       schemaName: "Infraestructura del Homelab",
       description:

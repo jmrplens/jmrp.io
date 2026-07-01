@@ -67,16 +67,28 @@ const t = useTranslations(locale);
     height: 100%; /* Ensure cards match height in grid */
     padding: var(--space-lg);
     background-color: var(--color-bg-secondary);
-    border: var(--border-1);
-    border-radius: var(--radius-md);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
     transition:
-      transform 0.2s,
-      border-color 0.2s;
+      transform var(--dur-2) var(--ease-out),
+      border-color var(--dur-2) var(--ease-out),
+      box-shadow var(--dur-2) var(--ease-out);
   }
 
   .service-card:hover {
-    border-color: var(--color-primary);
+    border-color: var(--accent-line);
+    box-shadow: var(--sh-card);
     transform: translateY(-2px);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .service-card {
+      transition: none;
+    }
+
+    .service-card:hover {
+      transform: none;
+    }
   }
 
   /* Prevent overflow issues */
