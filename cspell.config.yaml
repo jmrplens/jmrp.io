@@ -51,6 +51,7 @@ ignorePaths:
   - dist_old
   - .git
   - plan/** # gitignored working notes (Spanish prose), not part of the project
+  - design-audit/** # temporary generated screenshots + HTML for the design review
   - pnpm-lock.yaml
   - package-lock.json
   - "*.trie.gz"

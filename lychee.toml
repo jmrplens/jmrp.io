@@ -75,7 +75,8 @@ include = [
 ]
 
 exclude_path = [
-    "node_modules"
+    "node_modules",
+    "design-audit"
 ]
 
 # Show only errors

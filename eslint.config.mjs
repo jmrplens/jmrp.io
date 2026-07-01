@@ -18,6 +18,7 @@ export default [
       "**/dist/**",
       "**/dist_new/**",
       "**/dist-reports/**",
+      "design-audit/**",
       "**/node_modules/**",
       "**/.astro/**",
       "**/coverage/**",
