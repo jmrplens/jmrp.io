@@ -13,6 +13,8 @@ import ServerInsights from "@components/homelab/ServerInsights";
 import ServiceCard from "@components/homelab/ServiceCard.astro";
 import type { ServiceStatsTranslations } from "@components/homelab/ServiceStats";
 import ServiceStats from "@components/homelab/ServiceStats";
+import type { TorAggregateTranslations } from "@components/homelab/TorAggregate";
+import TorAggregate from "@components/homelab/TorAggregate";
 import type {
   TorStatsTranslations,
   TorType,
@@ -103,6 +105,13 @@ const serviceStatsTranslations: ServiceStatsTranslations = {
   viewMapAria: t("pages.homelab.viewMapAria"),
   viewMonitor: t("pages.homelab.viewMonitor"),
   viewMonitorAria: t("pages.homelab.viewMonitorAria"),
+};
+
+const torAggregateTranslations: TorAggregateTranslations = {
+  nodes: t("pages.homelab.torNodes"),
+  clients: t("pages.homelab.torClients"),
+  bandwidth: t("pages.homelab.torBandwidth"),
+  traffic: t("pages.homelab.torTraffic"),
 };
 
 const torStatsTranslations: TorStatsTranslations = {
@@ -534,29 +543,42 @@ const servicesSchema = {
             </ServiceCard>
           ))
         }
-        {
-          torServices.map((service) => (
-            <ServiceCard
-              title={service.title}
-              icon={service.icon}
-              description={service.description}
-              link={service.url}
-              linkText={service.linkText}
-            >
-              <div
-                id={`${service.id}-stats`}
-                class="stats-container"
-              >
-                <TorStats
-                  client:visible
-                  type={service.torType}
-                  translations={torStatsTranslations}
-                />
-              </div>
-            </ServiceCard>
-          ))
-        }
       </div>
+
+      <section
+        class="tor-section"
+        aria-label={t("pages.homelab.torSectionAria")}
+      >
+        <p class="section-title">{t("pages.homelab.torKicker")}</p>
+        <TorAggregate
+          client:visible
+          translations={torAggregateTranslations}
+        />
+        <div class="services-grid">
+          {
+            torServices.map((service) => (
+              <ServiceCard
+                title={service.title}
+                icon={service.icon}
+                description={service.description}
+                link={service.url}
+                linkText={service.linkText}
+              >
+                <div
+                  id={`${service.id}-stats`}
+                  class="stats-container"
+                >
+                  <TorStats
+                    client:visible
+                    type={service.torType}
+                    translations={torStatsTranslations}
+                  />
+                </div>
+              </ServiceCard>
+            ))
+          }
+        </div>
+      </section>
 
       <section
         class="infrastructure-insights"

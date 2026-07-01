@@ -488,6 +488,12 @@ export const common = {
       wanTraffic: "WAN 24h",
       crowdsecBlocked: "CrowdSec · blocked IPs",
       healthy: "Healthy",
+      torSectionAria: "Tor network nodes",
+      torKicker: "Tor Network",
+      torNodes: "monitored nodes",
+      torClients: "clients helped · 24h",
+      torBandwidth: "advertised bandwidth",
+      torTraffic: "relayed traffic · 24h",
       title: "Homelab Status",
       schemaName: "Homelab Infrastructure",
       description:

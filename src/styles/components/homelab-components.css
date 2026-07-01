@@ -273,6 +273,42 @@
   color: var(--color-text-muted);
 }
 
+/* ===== Tor network aggregate band ===== */
+.tor-section {
+  margin-bottom: var(--space-xl);
+}
+
+.tor-aggregate {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: var(--space-md);
+  padding: var(--space-md-lg);
+  margin-bottom: var(--space-md-lg);
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+}
+
+.tor-agg-item {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
+.tor-agg-value {
+  font-family: var(--font-display);
+  font-size: 1.6rem;
+  font-weight: var(--fw-bold);
+  color: var(--color-text-heading);
+  letter-spacing: -0.01em;
+}
+
+.tor-agg-label {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+}
+
 /* Color utility classes - using variables only */
 .color-warning {
   color: var(--color-status-warning);
