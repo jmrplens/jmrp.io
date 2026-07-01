@@ -211,10 +211,7 @@ const socialLinksWithType = socialLinks.map((link) => {
 
 <footer>
   <div class="container">
-    <nav
-      class="footer-nav"
-      aria-label={t("nav.about")}
-    >
+    <div class="footer-nav">
       {
         footerNav.map((item) => (
           <a
@@ -225,7 +222,7 @@ const socialLinksWithType = socialLinks.map((link) => {
           </a>
         ))
       }
-    </nav>
+    </div>
     <p>
       {
         t("ui.copyright", {

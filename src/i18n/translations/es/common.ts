@@ -744,7 +744,7 @@ export const common = {
     about: {
       title: "Perfil",
       description:
-        "José Manuel Requena Plens — ingeniero de firmware y software en Alicante: dispositivos embebidos seguros, herramientas open-source e infraestructura self-hosted.",
+        "Ingeniero de firmware y software en Alicante: dispositivos embebidos seguros, herramientas open-source e infraestructura self-hosted.",
     },
     uses: {
       title: "Uses",

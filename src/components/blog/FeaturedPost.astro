@@ -48,7 +48,7 @@ const haystack = [
       post.data.coverImage && (
         <Image
           src={post.data.coverImage}
-          alt=""
+          alt={post.data.title}
           format="webp"
           class="featured-post__image"
           width={640}

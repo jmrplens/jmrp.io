@@ -19,6 +19,7 @@
   --color-hair: #1d1d22; /* hairline separators */
   --color-surface-2: #16161a; /* elevated surface / inputs */
   --teal: #46b8a6; /* OK state, logo prompt, support */
+  --teal-text: #46b8a6; /* teal used as text — AA-safe in both themes */
   --accent-hi: #ffbb4d; /* accent hover (= primary-hover) */
   --accent-dim: rgb(245 166 35 / 13%);
   --accent-line: rgb(245 166 35 / 32%);
@@ -106,6 +107,7 @@
     --color-hair: #eae9e2;
     --color-surface-2: #f1f1ec;
     --teal: #1f7e6e;
+    --teal-text: #12695a;
     --accent-hi: #c07a10;
     --accent-dim: rgb(156 93 0 / 10%);
     --accent-line: rgb(156 93 0 / 28%);
@@ -131,6 +133,7 @@
   --color-hair: #eae9e2;
   --color-surface-2: #f1f1ec;
   --teal: #1f7e6e;
+  --teal-text: #12695a;
   --accent-hi: #c07a10;
   --accent-dim: rgb(156 93 0 / 10%);
   --accent-line: rgb(156 93 0 / 28%);
@@ -155,6 +158,7 @@
   --color-hair: #1d1d22;
   --color-surface-2: #16161a;
   --teal: #46b8a6;
+  --teal-text: #46b8a6;
   --accent-hi: #ffbb4d;
   --accent-dim: rgb(245 166 35 / 13%);
   --accent-line: rgb(245 166 35 / 32%);

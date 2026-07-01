@@ -135,7 +135,7 @@ export default function HomelabKpi({
   ];
 
   return (
-    <dl
+    <div
       className="kpi-band"
       role="group"
       aria-label={t.ariaLabel}
@@ -145,10 +145,10 @@ export default function HomelabKpi({
           key={k.l}
           className="kpi-card"
         >
-          <dd className="kpi-card__value">{k.v}</dd>
-          <dt className="kpi-card__label">{k.l}</dt>
+          <p className="kpi-card__value">{k.v}</p>
+          <p className="kpi-card__label">{k.l}</p>
         </div>
       ))}
-    </dl>
+    </div>
   );
 }

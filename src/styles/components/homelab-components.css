@@ -15,7 +15,7 @@
 
 /* Light theme overrides for status variables */
 :root[data-theme="light"] {
-  --color-status-online: #1f7e6e;
+  --color-status-online: #12695a;
   --color-status-online-bg: rgb(31 126 110 / 12%);
   --color-status-offline: #374151;
   --color-status-offline-bg: #f3f4f6;
@@ -30,7 +30,7 @@
 
 @media (prefers-color-scheme: light) {
   :root:not([data-theme="dark"]) {
-    --color-status-online: #1f7e6e;
+    --color-status-online: #12695a;
     --color-status-online-bg: rgb(31 126 110 / 12%);
     --color-status-offline: #374151;
     --color-status-offline-bg: #f3f4f6;
@@ -196,7 +196,7 @@
   margin: 0;
   font-family: var(--font-mono);
   font-size: 0.8125rem;
-  color: var(--teal);
+  color: var(--teal-text);
   border: 1px solid var(--color-border);
   border-radius: 100px;
 }
@@ -246,7 +246,7 @@
 }
 
 .kpi-card__label {
-  margin-top: 7px;
+  margin: 7px 0 0;
   font-family: var(--font-mono);
   font-size: 0.72rem;
   color: var(--color-text-muted);
@@ -519,7 +519,7 @@
 }
 
 .node-card__status--ok {
-  color: var(--teal);
+  color: var(--teal-text);
   background: color-mix(in srgb, var(--teal) 12%, transparent);
   border: 1px solid color-mix(in srgb, var(--teal) 32%, transparent);
 }

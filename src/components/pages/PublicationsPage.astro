@@ -187,16 +187,16 @@ const collectionSchema = {
       <p class="section-title">{t("pages.publications.kicker")}</p>
       <h1 class="pub-page-title">{t("pages.publications.title")}</h1>
       <p class="pub-subtitle">{t("pages.publications.description")}</p>
-      <dl class="pub-stats">
+      <div class="pub-stats">
         {
           stats.map((stat) => (
             <div class="pub-stat">
-              <dd class="pub-stat__value">{stat.value}</dd>
-              <dt class="pub-stat__label">{stat.label}</dt>
+              <p class="pub-stat__value">{stat.value}</p>
+              <p class="pub-stat__label">{stat.label}</p>
             </div>
           ))
         }
-      </dl>
+      </div>
     </header>
 
     <div class="pub-layout">
@@ -407,7 +407,7 @@ const collectionSchema = {
   }
 
   .pub-stat__label {
-    margin-top: 7px;
+    margin: 7px 0 0;
     font-family: var(--font-mono);
     font-size: 0.68rem;
     color: var(--color-text-muted);
