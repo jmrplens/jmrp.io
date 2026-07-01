@@ -53,7 +53,16 @@ exclude = [
     'http://purl\.org/rss/1.0/modules/content/',
     'http://search\.yahoo\.com/mrss/',
     # Localhost
-    'http://localhost.*'
+    'http://localhost.*',
+    # Redesign branch only: About/Uses/Now are new pages that exist on this
+    # branch + beta.jmrp.io but not yet on production jmrp.io, so their absolute
+    # canonical/og URLs 404 until the redesign ships. REMOVE after first deploy.
+    'https://jmrp\.io/about/',
+    'https://jmrp\.io/es/about/',
+    'https://jmrp\.io/uses/',
+    'https://jmrp\.io/es/uses/',
+    'https://jmrp\.io/now/',
+    'https://jmrp\.io/es/now/',
 ]
 
 # File globs to check (used locally)
