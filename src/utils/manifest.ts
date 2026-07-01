@@ -62,8 +62,8 @@ export async function generateManifest(locale: Locale): Promise<Response> {
     description: t("seo.siteDescription"),
     start_url: `${pathPrefix}/`,
     display: "standalone",
-    background_color: siteData?.background_color || "#000000",
-    theme_color: siteData?.theme_color || "#B509AC",
+    background_color: siteData?.background_color || "#0A0A0B",
+    theme_color: siteData?.theme_color || "#0A0A0B",
     orientation: "portrait-primary",
     icons: [
       {

@@ -345,9 +345,16 @@ const jsonLD = {
   name="generator"
   content={Astro.generator}
 />
+{/* Dark-first theme-color; light override follows the OS preference */}
 <meta
   name="theme-color"
   content={siteData.theme_color}
+  media="(prefers-color-scheme: dark)"
+/>
+<meta
+  name="theme-color"
+  content="#fafaf7"
+  media="(prefers-color-scheme: light)"
 />
 <meta
   name="robots"
