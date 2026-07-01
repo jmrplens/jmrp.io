@@ -92,6 +92,8 @@ export interface InfrastructureTranslations {
   cpuTemp: string;
   /** Kicker for the edge-defense spotlight (rendered as a mono `// ` label). */
   edgeDefense: string;
+  /** Chip beside the edge-defense kicker (e.g. "router + nginx"). */
+  edgeDefenseChip: string;
   /** One-line description of the defense data flow. */
   flowBand: string;
   /** Title of the MikroTik (network-layer) column. */
@@ -404,7 +406,10 @@ export default function InfrastructureInsights({ translations: t }: Props) {
       className="infrastructure-section edge-defense"
       aria-label={t.ariaLabel}
     >
-      <p className="section-title">{t.edgeDefense}</p>
+      <div className="edge-defense__head">
+        <p className="section-title">{t.edgeDefense}</p>
+        <span className="edge-defense__chip">{t.edgeDefenseChip}</span>
+      </div>
       <p className="edge-flow">{t.flowBand}</p>
 
       <div className="edge-cols">

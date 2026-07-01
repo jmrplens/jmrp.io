@@ -477,6 +477,14 @@ export const common = {
     },
     homelab: {
       kicker: "Infraestructura",
+      realtimePill: "En tiempo real · vía API",
+      kpiAriaLabel: "Métricas destacadas del homelab",
+      kpiServicesOnline: "servicios online",
+      kpiMonitoredNodes: "nodos monitorizados",
+      kpiThreatsBlocked: "amenazas bloqueadas · 24h",
+      kpiUptime: "uptime · 24h",
+      edgeDefenseChip: "router + nginx",
+      servicesKicker: "Servicios públicos",
       edgeDefense: "Defensa del Edge",
       flowBand:
         "Honeypot MikroTik + patrones NGINX → CrowdSec · WAF → bouncers (NGINX / router / Cloudflare)",
@@ -496,7 +504,7 @@ export const common = {
       torClients: "clientes ayudados · 24h",
       torBandwidth: "ancho de banda anunciado",
       torTraffic: "tráfico retransmitido · 24h",
-      title: "Estado del Homelab",
+      title: "Homelab",
       schemaName: "Infraestructura del Homelab",
       description:
         "Estado de la infraestructura autoalojada — Mastodon, Matrix y Meshtastic ejecutándose en un homelab personal. Disponibilidad y estadísticas en tiempo real.",

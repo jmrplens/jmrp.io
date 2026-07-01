@@ -6,6 +6,8 @@
 import "@styles/components/service-stats.css";
 import "@styles/components/homelab-components.css";
 
+import type { HomelabKpiTranslations } from "@components/homelab/HomelabKpi";
+import HomelabKpi from "@components/homelab/HomelabKpi";
 import type { InfrastructureTranslations } from "@components/homelab/InfrastructureInsights";
 import InfrastructureInsights from "@components/homelab/InfrastructureInsights";
 import type { ServerInsightsTranslations } from "@components/homelab/ServerInsights";
@@ -92,6 +94,15 @@ const infrastructureTranslations: InfrastructureTranslations = {
   wanTraffic: t("pages.homelab.wanTraffic"),
   crowdsecBlocked: t("pages.homelab.crowdsecBlocked"),
   healthy: t("pages.homelab.healthy"),
+  edgeDefenseChip: t("pages.homelab.edgeDefenseChip"),
+};
+
+const kpiTranslations: HomelabKpiTranslations = {
+  ariaLabel: t("pages.homelab.kpiAriaLabel"),
+  servicesOnline: t("pages.homelab.kpiServicesOnline"),
+  monitoredNodes: t("pages.homelab.kpiMonitoredNodes"),
+  threatsBlocked: t("pages.homelab.kpiThreatsBlocked"),
+  uptime: t("pages.homelab.kpiUptime"),
 };
 
 const serviceStatsTranslations: ServiceStatsTranslations = {
@@ -467,6 +478,38 @@ const torServices = [
   },
 ];
 
+/** Self-hosted nodes rendered with live per-node telemetry (ServerInsights). */
+const serverNodes = [
+  {
+    id: "node-matrix-homeserver",
+    type: "matrix" as const,
+    heading: t("pages.homelab.matrixNode"),
+    translations: matrixInsightsTranslations,
+  },
+  {
+    id: "node-mastodon-instance",
+    type: "mastodon" as const,
+    heading: t("pages.homelab.mastodonNode"),
+    translations: mastodonInsightsTranslations,
+  },
+  {
+    id: "node-truenas-storage",
+    type: "truenas" as const,
+    heading: t("pages.homelab.truenasNode"),
+    translations: truenasInsightsTranslations,
+  },
+  {
+    id: "node-edge-router",
+    type: "mikrotik" as const,
+    heading: t("pages.homelab.routerNode"),
+    translations: mikrotikInsightsTranslations,
+  },
+];
+
+// Monitored-node headline count: per-node telemetry cards + Tor nodes +
+// Meshtastic. Derived from the rendered arrays so the figure never drifts.
+const monitoredNodesCount = serverNodes.length + torServices.length + 1;
+
 const servicesSchema = {
   "@context": "https://schema.org",
   "@type": "CollectionPage",
@@ -506,44 +549,78 @@ const servicesSchema = {
   </div>
   <section aria-label={t("aria.homelabInfrastructure")}>
     <div class="container">
-      <p class="section-title">{t("pages.homelab.kicker")}</p>
-      <h1 class="page-title">{t("pages.homelab.title")}</h1>
-      <p class="intro">
-        {t("pages.homelab.intro")}
-      </p>
-
-      <div class="services-grid">
-        {
-          services.map((service) => (
-            <ServiceCard
-              title={service.title}
-              icon={service.icon}
-              description={service.description}
-              link={service.url}
-              linkText={service.linkText}
-            >
-              {service.userInfo && (
-                <div
-                  slot="extra"
-                  class="user-info"
-                >
-                  {t("pages.homelab.userLabel")} <code>{service.userInfo}</code>
-                </div>
-              )}
-              <div
-                id={`${service.id}-stats`}
-                class="stats-container"
-              >
-                <ServiceStats
-                  client:visible
-                  type={service.statsType}
-                  translations={serviceStatsTranslations}
-                />
-              </div>
-            </ServiceCard>
-          ))
-        }
+      <div class="homelab-hero">
+        <div>
+          <p class="section-title">{t("pages.homelab.kicker")}</p>
+          <h1 class="page-title">{t("pages.homelab.title")}</h1>
+          <p class="homelab-hero__intro">{t("pages.homelab.intro")}</p>
+        </div>
+        <p class="realtime-pill">
+          <span
+            class="realtime-pill__dot"
+            aria-hidden="true"
+          ></span>
+          {t("pages.homelab.realtimePill")}
+        </p>
       </div>
+
+      <HomelabKpi
+        client:visible
+        translations={kpiTranslations}
+        servicesCount={services.length}
+        nodesCount={monitoredNodesCount}
+        uptimeValue="99.98%"
+      />
+
+      <section
+        class="infrastructure-insights"
+        aria-label={t("pages.homelab.edgeDefense")}
+      >
+        <InfrastructureInsights
+          client:visible
+          translations={infrastructureTranslations}
+        />
+      </section>
+
+      <section
+        class="services-section"
+        aria-label={t("pages.homelab.servicesKicker")}
+      >
+        <p class="section-title">{t("pages.homelab.servicesKicker")}</p>
+        <div class="services-grid">
+          {
+            services.map((service) => (
+              <ServiceCard
+                title={service.title}
+                icon={service.icon}
+                description={service.description}
+                link={service.url}
+                linkText={service.linkText}
+              >
+                {service.userInfo && (
+                  <div
+                    slot="extra"
+                    class="user-info"
+                  >
+                    {t("pages.homelab.userLabel")}{" "}
+                    <code>{service.userInfo}</code>
+                  </div>
+                )}
+                <div
+                  id={`${service.id}-stats`}
+                  class="stats-container"
+                >
+                  <ServiceStats
+                    client:visible
+                    type={service.statsType}
+                    translations={serviceStatsTranslations}
+                  />
+                </div>
+              </ServiceCard>
+            ))
+          }
+        </div>
+      </section>
 
       <section
         class="tor-section"
@@ -580,99 +657,51 @@ const servicesSchema = {
         </div>
       </section>
 
-      <section
-        class="infrastructure-insights"
-        aria-labelledby="node-nginx-edge-security-analytics"
-      >
-        <h2
-          class="section-subtitle"
-          id="node-nginx-edge-security-analytics"
-        >
-          {t("pages.homelab.nginxNode")}
-        </h2>
-        <InfrastructureInsights
-          client:visible
-          translations={infrastructureTranslations}
-        />
-      </section>
-
-      <section
-        class="infrastructure-insights"
-        aria-labelledby="node-matrix-homeserver"
-      >
-        <h2
-          class="section-subtitle"
-          id="node-matrix-homeserver"
-        >
-          {t("pages.homelab.matrixNode")}
-        </h2>
-        <ServerInsights
-          client:visible
-          type="matrix"
-          translations={matrixInsightsTranslations}
-        />
-      </section>
-
-      <section
-        class="infrastructure-insights"
-        aria-labelledby="node-mastodon-instance"
-      >
-        <h2
-          class="section-subtitle"
-          id="node-mastodon-instance"
-        >
-          {t("pages.homelab.mastodonNode")}
-        </h2>
-        <ServerInsights
-          client:visible
-          type="mastodon"
-          translations={mastodonInsightsTranslations}
-        />
-      </section>
-
-      <section
-        class="infrastructure-insights"
-        aria-labelledby="node-truenas-storage"
-      >
-        <h2
-          class="section-subtitle"
-          id="node-truenas-storage"
-        >
-          {t("pages.homelab.truenasNode")}
-        </h2>
-        <ServerInsights
-          client:visible
-          type="truenas"
-          translations={truenasInsightsTranslations}
-        />
-      </section>
-
-      <section
-        class="infrastructure-insights"
-        aria-labelledby="node-edge-router"
-      >
-        <h2
-          class="section-subtitle"
-          id="node-edge-router"
-        >
-          {t("pages.homelab.routerNode")}
-        </h2>
-        <ServerInsights
-          client:visible
-          type="mikrotik"
-          translations={mikrotikInsightsTranslations}
-        />
-      </section>
+      {
+        serverNodes.map((node) => (
+          <section
+            class="infrastructure-insights"
+            aria-labelledby={node.id}
+          >
+            <h2
+              class="section-subtitle"
+              id={node.id}
+            >
+              {node.heading}
+            </h2>
+            <ServerInsights
+              client:visible
+              type={node.type}
+              translations={node.translations}
+            />
+          </section>
+        ))
+      }
     </div>
   </section>
 </BaseLayout>
 
 <style>
-  .intro {
-    max-width: 800px;
+  .homelab-hero {
     margin-bottom: var(--space-xl);
-    font-size: 1.1rem;
-    color: var(--color-text-muted);
+  }
+
+  .homelab-hero .section-title {
+    margin-bottom: var(--space-md);
+  }
+
+  .homelab-hero .page-title {
+    padding-bottom: 0;
+    margin: 0 0 var(--space-sm);
+    font-size: clamp(2.125rem, 4.4vw, 3.25rem);
+    font-weight: var(--fw-bold);
+    line-height: 1.04;
+    border-bottom: 0;
+  }
+
+  .services-section,
+  .tor-section {
+    margin-top: var(--space-xl);
   }
 
   .services-grid {
