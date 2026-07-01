@@ -86,18 +86,23 @@ const t = useTranslations(locale);
   #repo-search {
     width: 100%;
     padding: var(--space-sm) var(--space-md);
-    font-size: 1rem;
+    font-family: var(--font-mono);
+    font-size: 0.95rem;
     color: var(--color-text);
-    background-color: var(--color-bg);
-    border: var(--border-1);
+    background-color: var(--color-surface-2);
+    border: 1px solid var(--color-border);
     border-radius: var(--radius-md);
-    transition: border-color 0.2s;
+    transition: border-color var(--dur-2) var(--ease-out);
   }
 
-  #repo-search:focus {
+  #repo-search::placeholder {
+    color: var(--color-text-muted);
+  }
+
+  #repo-search:focus-visible {
     outline: none;
     border-color: var(--color-primary);
-    box-shadow: 0 0 0 2px rgb(var(--color-primary-rgb, 37 99 235) / 20%);
+    box-shadow: 0 0 0 3px var(--accent-line);
   }
 
   .repos-grid {

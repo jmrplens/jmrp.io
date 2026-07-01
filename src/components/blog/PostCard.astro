@@ -99,17 +99,27 @@ const displayDate = post.data.publishedDate;
     overflow: hidden;
     background: var(--color-bg-secondary);
     border: var(--border-1);
-    border-radius: 16px;
+    border-radius: var(--radius-lg);
     transition:
-      transform 0.3s ease,
-      border-color 0.3s ease,
-      box-shadow 0.3s ease;
+      transform var(--dur-3) var(--ease-out),
+      border-color var(--dur-3) var(--ease-out),
+      box-shadow var(--dur-3) var(--ease-out);
   }
 
   .post-card:hover {
-    border-color: var(--color-primary);
-    box-shadow: 0 12px 24px -10px rgb(0 0 0 / 15%);
+    border-color: var(--color-accent);
+    box-shadow: var(--sh-card);
     transform: translateY(-4px);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .post-card {
+      transition: border-color var(--dur-2) var(--ease-out);
+    }
+
+    .post-card:hover {
+      transform: none;
+    }
   }
 
   /* Image Card Styles */
@@ -127,11 +137,18 @@ const displayDate = post.data.publishedDate;
     width: 100%;
     height: 100%;
     object-fit: cover;
-    transition: transform 0.5s ease;
+    border-bottom: var(--border-1);
+    transition: transform var(--dur-3) var(--ease-out);
   }
 
   .post-card:hover .card-image {
     transform: scale(1.05);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .post-card:hover .card-image {
+      transform: none;
+    }
   }
 
   /* Standard Card Styles */
@@ -149,10 +166,12 @@ const displayDate = post.data.publishedDate;
     align-items: center;
     justify-content: space-between;
     max-height: 1.5rem; /* Max single-line height, allows expansion */
-    margin-bottom: 0.4rem;
+    margin-bottom: 0.6rem;
     overflow: hidden; /* Hide content that doesn't fit */
-    font-size: 0.875rem;
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
     color: var(--color-text-muted);
+    letter-spacing: 0.01em;
   }
 
   .post-meta time {
@@ -181,19 +200,23 @@ const displayDate = post.data.publishedDate;
 
   .tag {
     flex-shrink: 0; /* Never shrink - hide if doesn't fit */
-    padding: 0.15rem 0.4rem;
+    padding: 0.1rem 0.45rem;
+    font-family: var(--font-mono);
     font-size: 0.7rem;
-    font-weight: 500;
-    color: var(--color-text);
+    font-weight: var(--fw-medium);
+    color: var(--color-accent);
     text-decoration: none;
-    background: var(--color-bg-subtle);
-    border-radius: 4px;
-    transition: background-color 0.2s ease;
+    background: transparent;
+    border: var(--border-1);
+    border-radius: var(--radius-sm);
+    transition:
+      color var(--dur-2) var(--ease-out),
+      border-color var(--dur-2) var(--ease-out);
   }
 
   .tag:hover {
-    color: var(--color-primary);
-    background: var(--color-bg-tertiary);
+    color: var(--accent-hi);
+    border-color: var(--color-accent);
   }
 
   .post-card h2 {
@@ -204,9 +227,11 @@ const displayDate = post.data.publishedDate;
     overflow: hidden;
     -webkit-line-clamp: 3; /* Max 3 lines */
     line-clamp: 3; /* Standard property */
+    font-family: var(--font-display);
     font-size: 1.25rem;
-    font-weight: 700;
-    line-height: 1.3;
+    font-weight: var(--fw-semibold);
+    line-height: 1.25;
+    letter-spacing: -0.01em;
     overflow-wrap: break-word;
     -webkit-box-orient: vertical;
   }
@@ -244,14 +269,15 @@ const displayDate = post.data.publishedDate;
     align-items: center;
     min-height: auto; /* Remove fixed height constraint */
     padding: 0.75rem 1.5rem;
-    background: var(--color-bg-subtle);
-    border-top: var(--border-1);
+    background: transparent;
+    border-top: 1px solid var(--color-hair);
   }
 
   .read-more {
-    font-size: 0.85rem;
-    font-weight: var(--fw-semibold);
-    color: var(--color-primary);
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
+    font-weight: var(--fw-medium);
+    color: var(--color-accent);
   }
 
   @media (width <= 640px) {
@@ -354,9 +380,9 @@ const displayDate = post.data.publishedDate;
 
   /* Keyboard focus styles for tag links */
   .tag:focus-visible {
-    color: var(--color-primary);
+    color: var(--accent-hi);
     outline: 2px solid var(--color-primary);
     outline-offset: 1px;
-    background: var(--color-bg-tertiary);
+    border-color: var(--color-accent);
   }
 </style>

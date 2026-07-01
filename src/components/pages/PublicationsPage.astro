@@ -118,7 +118,16 @@ const collectionSchema = {
   schema={collectionSchema}
 >
   <div class="container">
-    <h1 class="page-title">{t("pages.publications.title")}</h1>
+    <header class="pub-header">
+      <div
+        class="lab-grid"
+        aria-hidden="true"
+      >
+      </div>
+      <p class="section-title">{t("pages.publications.kicker")}</p>
+      <h1 class="pub-page-title">{t("pages.publications.title")}</h1>
+      <p class="pub-subtitle">{t("pages.publications.description")}</p>
+    </header>
 
     {
       publicationGroups.map((group) => (
@@ -128,6 +137,12 @@ const collectionSchema = {
         >
           <div class="section-header">
             <h2>{group.title}</h2>
+            <span
+              class="section-count"
+              aria-hidden="true"
+            >
+              {group.items.length}
+            </span>
           </div>
           <div class="publications-list">
             {group.items.map((pub) => (
@@ -175,27 +190,75 @@ const collectionSchema = {
 </script>
 
 <style>
+  /* Lab hero: mono kicker + display title over an ambient hairline grid. */
+  .pub-header {
+    position: relative;
+    padding: var(--space-lg) 0 var(--space-md);
+    margin-bottom: var(--space-xl);
+    overflow: hidden;
+  }
+
+  .pub-header .section-title {
+    position: relative;
+    margin-bottom: var(--space-sm);
+  }
+
+  .pub-page-title {
+    position: relative;
+    margin: 0 0 var(--space-md);
+    font-family: var(--font-display);
+    font-size: clamp(2rem, 5vw, 2.75rem);
+    font-weight: var(--fw-bold);
+    line-height: 1.05;
+    color: var(--color-text-heading);
+    letter-spacing: -0.02em;
+  }
+
+  .pub-subtitle {
+    position: relative;
+    max-width: var(--max-width-prose);
+    margin: 0;
+    font-size: 1.05rem;
+    line-height: 1.6;
+    color: var(--color-text-muted);
+  }
+
   .pub-section {
-    margin-bottom: var(--space-3xl);
+    margin-bottom: var(--space-xl);
   }
 
   .publications-list {
     display: flex;
     flex-direction: column;
-    gap: var(--space-lg);
+    gap: var(--space-md-lg);
   }
 
   .section-header {
+    display: flex;
+    gap: var(--space-md);
+    align-items: baseline;
+    padding-bottom: var(--space-sm);
     margin-bottom: var(--space-lg);
-    border-bottom: 2px solid var(--color-border);
+    border-bottom: 1px solid var(--color-hair);
   }
 
   .pub-section h2 {
-    display: inline-block;
-    padding-bottom: var(--space-sm);
-    margin-bottom: -2px;
+    margin: 0;
+    font-family: var(--font-display);
     font-size: 1.5rem;
-    font-weight: bold;
-    border-bottom: 2px solid var(--color-primary);
+    font-weight: var(--fw-medium);
+    color: var(--color-primary);
+    letter-spacing: -0.01em;
+  }
+
+  /* Mono item count beside the group heading. */
+  .section-count {
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+    color: var(--color-text-muted);
+  }
+
+  .section-count::before {
+    content: "· ";
   }
 </style>

@@ -100,15 +100,23 @@ const pageSchema = faqNode ? [toolSchema, faqNode] : toolSchema;
       </nav>
 
       <header class="page-header">
-        <div class="header-icon">
-          <span
-            class={icon}
-            aria-hidden="true"
-          ></span>
+        <div
+          class="lab-grid"
+          aria-hidden="true"
+        >
         </div>
-        <div class="header-content">
-          <h1>{title}</h1>
-          <p class="subtitle">{subtitle ?? description}</p>
+        <div class="page-header__body">
+          <div class="header-icon">
+            <span
+              class={icon}
+              aria-hidden="true"
+            ></span>
+          </div>
+          <div class="header-content">
+            <p class="section-title">{t("nav.tools")}</p>
+            <h1>{title}</h1>
+            <p class="subtitle">{subtitle ?? description}</p>
+          </div>
         </div>
       </header>
 
@@ -149,14 +157,15 @@ const pageSchema = faqNode ? [toolSchema, faqNode] : toolSchema;
     gap: var(--space-xs);
     align-items: center;
     margin-bottom: var(--space-lg);
-    font-size: 0.875rem;
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
     color: var(--color-text-muted);
   }
 
   .breadcrumb a {
     color: var(--color-text-muted);
     text-decoration: none;
-    transition: color 0.2s ease;
+    transition: color var(--dur-1) var(--ease-out);
   }
 
   .breadcrumb a:hover {
@@ -170,10 +179,18 @@ const pageSchema = faqNode ? [toolSchema, faqNode] : toolSchema;
 
   /* Page header */
   .page-header {
+    position: relative;
+    margin-bottom: var(--space-xl);
+    overflow: hidden;
+  }
+
+  .page-header__body {
+    position: relative;
+    z-index: 1;
     display: flex;
     gap: var(--space-md);
     align-items: center;
-    margin-bottom: var(--space-xl);
+    padding: var(--space-md) 0;
   }
 
   .header-icon {
@@ -181,20 +198,17 @@ const pageSchema = faqNode ? [toolSchema, faqNode] : toolSchema;
     flex-shrink: 0;
     align-items: center;
     justify-content: center;
-    width: 4rem;
-    height: 4rem;
-    background: linear-gradient(
-      135deg,
-      var(--color-success, #10b981),
-      var(--color-success-dark, #059669)
-    );
+    width: 3.5rem;
+    height: 3.5rem;
+    background: var(--color-surface-2);
+    border: 1px solid var(--color-hair);
     border-radius: var(--radius-lg);
   }
 
   .header-icon span {
-    width: 2rem;
-    height: 2rem;
-    color: var(--header-icon-color, #fff);
+    width: 1.75rem;
+    height: 1.75rem;
+    color: var(--color-primary);
   }
 
   .header-content {
@@ -202,10 +216,16 @@ const pageSchema = faqNode ? [toolSchema, faqNode] : toolSchema;
     min-width: 0;
   }
 
+  .header-content .section-title {
+    margin-bottom: var(--space-xs);
+  }
+
   .page-header h1 {
     margin-bottom: var(--space-xs);
+    font-family: var(--font-display);
     font-size: 2rem;
-    font-weight: 800;
+    font-weight: var(--fw-bold);
+    color: var(--color-text-heading);
     letter-spacing: -0.02em;
   }
 
@@ -224,7 +244,7 @@ const pageSchema = faqNode ? [toolSchema, faqNode] : toolSchema;
   .tool-info {
     padding: var(--space-lg);
     background: var(--color-bg-secondary);
-    border: var(--border-1);
+    border: 1px solid var(--color-hair);
     border-radius: var(--radius-lg);
   }
 
@@ -291,7 +311,7 @@ const pageSchema = faqNode ? [toolSchema, faqNode] : toolSchema;
 
   /* Responsive */
   @media (width <= 640px) {
-    .page-header {
+    .page-header__body {
       flex-direction: column;
       text-align: center;
     }

@@ -1,7 +1,8 @@
 ---
 /**
  * Tools Index shared component.
- * Displays available interactive tools grouped by category.
+ * Displays available interactive tools as a filterable card grid,
+ * ordered by category (security → mikrotik).
  */
 import { defaultLocale, type Locale } from "@i18n/config";
 import { useTranslatedPath, useTranslations } from "@i18n/utils";
@@ -14,12 +15,12 @@ const t = useTranslations(locale);
 const translatePath = useTranslatedPath(locale);
 
 /** Category display metadata. Order determines rendering order. */
-const categoryMeta: Record<string, { name: string; order: number }> = {
-  security: { name: t("pages.tools.categorySecurity"), order: 1 },
-  developer: { name: t("pages.tools.categoryDeveloper"), order: 2 },
-  network: { name: t("pages.tools.categoryNetwork"), order: 3 },
-  embedded: { name: t("pages.tools.categoryEmbedded"), order: 4 },
-  mikrotik: { name: t("pages.tools.categoryMikrotik"), order: 5 },
+const categoryMeta: Record<string, { short: string; order: number }> = {
+  security: { short: t("pages.tools.shortSecurity"), order: 1 },
+  developer: { short: t("pages.tools.shortDeveloper"), order: 2 },
+  network: { short: t("pages.tools.shortNetwork"), order: 3 },
+  embedded: { short: t("pages.tools.shortEmbedded"), order: 4 },
+  mikrotik: { short: t("pages.tools.shortMikrotik"), order: 5 },
 };
 
 const toolEntries = await getToolsForLocale(locale);
@@ -28,13 +29,13 @@ const allTools = toolEntries.map((e) => e.tool);
 /** Group tools by category and sort categories by defined order. */
 const categories = Object.values(
   allTools.reduce<
-    Record<string, { id: string; name: string; tools: typeof allTools }>
+    Record<string, { id: string; short: string; tools: typeof allTools }>
   >((acc, tool) => {
     const cat = tool.data.category;
     if (!acc[cat]) {
       acc[cat] = {
         id: cat,
-        name: categoryMeta[cat]?.name ?? cat,
+        short: categoryMeta[cat]?.short ?? cat,
         tools: [],
       };
     }
@@ -44,6 +45,11 @@ const categories = Object.values(
 ).sort(
   (a, b) =>
     (categoryMeta[a.id]?.order ?? 99) - (categoryMeta[b.id]?.order ?? 99),
+);
+
+/** Flat, category-ordered list rendered into the grid. */
+const orderedTools = categories.flatMap((c) =>
+  c.tools.map((tool) => ({ tool, short: c.short })),
 );
 
 const baseUrl = new URL(Astro.url.pathname, getSiteUrl());
@@ -76,57 +82,80 @@ const toolsSchema = {
   schema={toolsSchema}
 >
   <div class="container">
-    <h1 class="page-title">{t("pages.tools.title")}</h1>
-    <p class="intro">
-      {t("pages.tools.intro")}
-    </p>
-
-    {
-      categories.map((category) => (
-        <section
-          class="tools-section"
-          aria-label={category.name}
+    <header class="tools-hero">
+      <div
+        class="lab-grid"
+        aria-hidden="true"
+      >
+      </div>
+      <p class="section-title">{t("nav.tools")}</p>
+      <h1 class="tools-title">{t("pages.tools.title")}</h1>
+      <p class="intro">{t("pages.tools.intro")}</p>
+      <p class="status-pill">
+        <span
+          class="status-dot"
+          aria-hidden="true"
+        ></span>
+        <span class="status-text"
+          >{t("pages.tools.statusPrivacy")} · {
+            t("pages.tools.statusTelemetry")
+          }</span
         >
-          <div class="section-header">
-            <h2>
-              <a href={translatePath(`/tools/categories/${category.id}/`)}>
-                {category.name}
-              </a>
-            </h2>
-          </div>
+      </p>
+    </header>
 
-          <div class="tools-grid">
-            {category.tools.map((tool) => (
-              <a
-                href={translatePath(`/tools/${tool.data.slug}/`)}
-                class="tool-card"
-              >
-                <span
-                  class={`tool-icon ${tool.data.icon}`}
-                  aria-hidden="true"
-                />
-                <div class="tool-content">
-                  <h3 class="tool-name">{tool.data.title}</h3>
-                  <p class="tool-description">{tool.data.description}</p>
-                </div>
-                <span
-                  class="i-mdi:chevron-right tool-arrow"
-                  aria-hidden="true"
-                />
-              </a>
-            ))}
-          </div>
-        </section>
-      ))
-    }
+    <nav
+      class="filter-bar"
+      aria-label={t("pages.tools.filterLabel")}
+    >
+      <a
+        href={translatePath("/tools/")}
+        class="chip chip--active"
+        aria-current="page"
+      >
+        {t("pages.tools.filterAll")} · {allTools.length}
+      </a>
+      {
+        categories.map((category) => (
+          <a
+            href={translatePath(`/tools/categories/${category.id}/`)}
+            class="chip"
+          >
+            {category.short}
+          </a>
+        ))
+      }
+    </nav>
+
+    <div class="tools-grid">
+      {
+        orderedTools.map(({ tool, short }) => (
+          <a
+            href={translatePath(`/tools/${tool.data.slug}/`)}
+            class="tool-card"
+          >
+            <span class="tool-card__top">
+              <span class="tool-badge">
+                <span class="sr-only">{t("pages.tools.categoryLabel")}: </span>
+                {short}
+              </span>
+              <span
+                class="i-mdi:arrow-top-right tool-arrow"
+                aria-hidden="true"
+              />
+            </span>
+            <h2 class="tool-name">{tool.data.title}</h2>
+            <p class="tool-description">{tool.data.description}</p>
+          </a>
+        ))
+      }
+    </div>
 
     <section
       class="info-section"
       aria-label={t("pages.tools.aboutTitle")}
     >
-      <div class="section-header">
-        <h2>{t("pages.tools.aboutTitle")}</h2>
-      </div>
+      <h2 class="section-title">{t("pages.tools.aboutTitle")}</h2>
 
       <div class="info-grid">
         <div class="info-item">
@@ -136,9 +165,7 @@ const toolsSchema = {
           ></span>
           <div class="info-content">
             <strong>{t("pages.tools.privacyTitle")}</strong>
-            <p>
-              {t("pages.tools.privacyDesc")}
-            </p>
+            <p>{t("pages.tools.privacyDesc")}</p>
           </div>
         </div>
         <div class="info-item">
@@ -148,9 +175,7 @@ const toolsSchema = {
           ></span>
           <div class="info-content">
             <strong>{t("pages.tools.instantTitle")}</strong>
-            <p>
-              {t("pages.tools.instantDesc")}
-            </p>
+            <p>{t("pages.tools.instantDesc")}</p>
           </div>
         </div>
         <div class="info-item">
@@ -177,56 +202,129 @@ const toolsSchema = {
 </BaseLayout>
 
 <style>
+  /* Hero — kicker + display title + intro + status, over ambient grid. */
+  .tools-hero {
+    position: relative;
+    padding: var(--space-lg) 0 var(--space-md-lg);
+    margin-top: var(--space-md);
+    overflow: hidden;
+  }
+
+  .tools-hero > :not(.lab-grid) {
+    position: relative;
+    z-index: 1;
+  }
+
+  .tools-title {
+    margin: 0 0 var(--space-md);
+    font-family: var(--font-display);
+    font-size: clamp(2rem, 5vw, 3rem);
+    font-weight: var(--fw-bold);
+    line-height: 1.05;
+    color: var(--color-text-heading);
+    letter-spacing: -0.02em;
+  }
+
   .intro {
-    max-width: 600px;
-    margin-bottom: var(--space-xl);
-    font-size: 1.1rem;
+    max-width: 42rem;
+    margin: 0 0 var(--space-md);
+    font-size: 1.0625rem;
     line-height: 1.7;
+    color: var(--color-text);
+  }
+
+  .status-pill {
+    display: inline-flex;
+    gap: var(--space-sm);
+    align-items: center;
+    margin: 0;
+  }
+
+  .status-dot {
+    flex-shrink: 0;
+    width: 0.5rem;
+    height: 0.5rem;
+    background: var(--teal);
+    border-radius: 50%;
+  }
+
+  .status-text {
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
     color: var(--color-text-muted);
   }
 
-  .tools-section,
-  .info-section {
-    margin-bottom: var(--space-2xl);
-  }
-
-  .section-header {
+  /* Filter chips — real links to category pages; active = solid amber. */
+  .filter-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-sm);
     margin-bottom: var(--space-lg);
-    border-bottom: 2px solid var(--color-border);
   }
 
-  .section-header h2 {
-    display: inline-block;
-    padding-bottom: var(--space-sm);
-    margin-bottom: -2px;
-    font-size: 1.5rem;
-    font-weight: var(--fw-bold);
-    border-bottom: 2px solid var(--color-primary);
+  .chip {
+    display: inline-flex;
+    gap: 0.4em;
+    align-items: center;
+    padding: 0.375rem 0.875rem;
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
+    color: var(--color-text);
+    text-decoration: none;
+    background: var(--color-surface-2);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    transition:
+      color var(--dur-1) var(--ease-out),
+      border-color var(--dur-1) var(--ease-out),
+      background var(--dur-1) var(--ease-out);
   }
 
+  .chip:hover {
+    color: var(--color-text-heading);
+    border-color: var(--color-primary);
+  }
+
+  .chip--active,
+  .chip--active:hover {
+    font-weight: var(--fw-medium);
+    color: var(--color-on-primary);
+    background: var(--color-primary);
+    border-color: var(--color-primary);
+  }
+
+  .chip:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+  }
+
+  /* Tool cards */
   .tools-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr));
-    gap: var(--space-sm);
+    gap: var(--space-md);
+    margin-bottom: var(--space-xl);
   }
 
   .tool-card {
     display: flex;
+    flex-direction: column;
     gap: var(--space-sm);
-    align-items: center;
-    padding: 0.625rem 0.75rem;
+    padding: var(--space-md-lg);
     text-decoration: none;
     background: var(--color-bg-secondary);
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-md);
+    border: 1px solid var(--color-hair);
+    border-radius: var(--radius-lg);
     transition:
-      border-color 0.15s ease,
-      box-shadow 0.15s ease;
+      border-color var(--dur-2) var(--ease-out),
+      transform var(--dur-2) var(--ease-out),
+      box-shadow var(--dur-2) var(--ease-out);
   }
 
   .tool-card:hover {
-    border-color: var(--color-primary);
-    box-shadow: 0 1px 4px rgb(0 0 0 / 8%);
+    border-color: var(--color-border);
+    box-shadow: var(--sh-card);
+    transform: translateY(-2px);
   }
 
   .tool-card:focus-visible {
@@ -234,77 +332,84 @@ const toolsSchema = {
     outline-offset: 2px;
   }
 
-  .tool-icon {
-    flex-shrink: 0;
-    width: 1.25rem;
-    height: 1.25rem;
-    color: var(--color-primary);
+  .tool-card__top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
   }
 
-  .tool-content {
-    display: flex;
-    flex: 1;
-    flex-direction: column;
-    gap: 0.125rem;
-    min-width: 0;
+  .tool-badge {
+    padding: 0.125rem 0.5rem;
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
+    color: var(--color-text-heading);
+    letter-spacing: 0.02em;
+    background: var(--accent-dim);
+    border: 1px solid var(--accent-line);
+    border-radius: var(--radius-sm);
+  }
+
+  .tool-arrow {
+    width: 1.1rem;
+    height: 1.1rem;
+    color: var(--color-text-muted);
+    transition:
+      transform var(--dur-2) var(--ease-out),
+      color var(--dur-2) var(--ease-out);
+  }
+
+  .tool-card:hover .tool-arrow,
+  .tool-card:focus-visible .tool-arrow {
+    color: var(--color-primary);
+    transform: translate(2px, -2px);
   }
 
   .tool-name {
     margin: 0;
-    font-size: 0.9rem;
-    font-weight: var(--fw-semibold);
-    line-height: 1.3;
+    font-family: var(--font-display);
+    font-size: 1.25rem;
+    font-weight: var(--fw-medium);
+    line-height: 1.2;
     color: var(--color-text-heading);
+    letter-spacing: -0.01em;
   }
 
   .tool-description {
     display: -webkit-box;
     margin: 0;
     overflow: hidden;
-    -webkit-line-clamp: 2;
-    font-size: 0.775rem;
-    line-height: 1.4;
+    -webkit-line-clamp: 3;
+    font-size: 0.9rem;
+    line-height: 1.5;
     color: var(--color-text-muted);
     -webkit-box-orient: vertical;
   }
 
-  .tool-arrow {
-    flex-shrink: 0;
-    width: 1rem;
-    height: 1rem;
-    color: var(--color-text-muted);
-    opacity: 50%;
-    transition:
-      transform 0.15s ease,
-      opacity 0.15s ease;
-  }
-
-  .tool-card:hover .tool-arrow {
-    color: var(--color-primary);
-    opacity: 100%;
-    transform: translateX(2px);
+  /* About section */
+  .info-section {
+    margin-bottom: var(--space-xl);
   }
 
   .info-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(min(100%, 240px), 1fr));
-    gap: var(--space-sm);
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 260px), 1fr));
+    gap: var(--space-md);
   }
 
   .info-item {
     display: flex;
     gap: var(--space-sm);
     align-items: flex-start;
-    padding: 0.625rem 0.75rem;
+    padding: var(--space-md);
     background: var(--color-bg-secondary);
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-md);
+    border: 1px solid var(--color-hair);
+    border-radius: var(--radius-lg);
   }
 
   .info-icon {
     flex-shrink: 0;
-    width: 1.25rem;
-    height: 1.25rem;
+    width: 1.375rem;
+    height: 1.375rem;
     margin-top: 1px;
     color: var(--color-primary);
   }
@@ -315,15 +420,16 @@ const toolsSchema = {
 
   .info-content strong {
     display: block;
-    margin-bottom: 0.125rem;
-    font-size: 0.85rem;
+    margin-bottom: 0.25rem;
+    font-family: var(--font-display);
+    font-size: 0.95rem;
     color: var(--color-text-heading);
   }
 
   .info-content p {
     margin: 0;
-    font-size: 0.775rem;
-    line-height: 1.4;
+    font-size: 0.85rem;
+    line-height: 1.5;
     color: var(--color-text-muted);
   }
 
@@ -344,9 +450,14 @@ const toolsSchema = {
   }
 
   @media (prefers-reduced-motion: reduce) {
+    .chip,
     .tool-card,
     .tool-arrow {
       transition: none;
+    }
+
+    .tool-card:hover {
+      transform: none;
     }
   }
 </style>

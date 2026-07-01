@@ -517,26 +517,48 @@ const personSchema = {
 </BaseLayout>
 
 <style>
+  /* Page kicker — "// curriculum vitae" mono label replaces the big h1 title. */
   .cv-title {
-    margin-bottom: var(--space-md);
+    padding: 0;
+    margin: var(--space-lg) 0 var(--space-sm);
+    font-family: var(--font-mono);
+
+    /* !important defeats the global mobile `h1 { font-size: 1.5em !important }`
+       so the CV title stays a small mono kicker on narrow viewports. */
+    font-size: 0.8125rem !important;
+    font-weight: var(--fw-medium);
+    color: var(--color-accent);
+    text-transform: uppercase;
+    letter-spacing: 0.16em;
+    border: 0;
+  }
+
+  .cv-title::before {
+    content: "// ";
   }
 
   /* Basics / header block */
   .cv-basics {
+    padding-bottom: var(--space-lg);
     margin-bottom: var(--space-lg-xl);
+    border-bottom: 1px solid var(--color-hair);
   }
 
   .cv-name {
     margin: 0;
-    font-size: 1.6rem;
+    font-family: var(--font-display);
+    font-size: clamp(2rem, 5vw, 3rem);
+    font-weight: var(--fw-bold);
+    line-height: 1.05;
     color: var(--color-text-heading);
+    letter-spacing: -0.02em;
   }
 
   .cv-headline {
-    margin: var(--space-xs) 0 0;
-    font-size: 1.1rem;
-    font-weight: var(--fw-semibold);
-    color: var(--color-primary);
+    margin: var(--space-sm) 0 0;
+    font-size: 1.15rem;
+    font-weight: var(--fw-medium);
+    color: var(--color-text-heading);
   }
 
   .cv-contact {
@@ -545,7 +567,8 @@ const personSchema = {
     gap: var(--space-xs) var(--space-md);
     padding: 0;
     margin: var(--space-sm) 0 0;
-    font-size: 0.9rem;
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
     color: var(--color-text-muted);
     list-style: none;
   }
@@ -557,15 +580,20 @@ const personSchema = {
   }
 
   .cv-availability {
-    margin: var(--space-sm) 0 0;
-    font-size: 0.9rem;
+    margin: var(--space-xs) 0 0;
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
     color: var(--color-text-muted);
+  }
+
+  .cv-availability strong {
+    color: var(--color-text);
   }
 
   .cv-profile {
     margin-top: var(--space-md);
-    line-height: 1.6;
-    color: var(--color-text-offset);
+    line-height: 1.65;
+    color: var(--color-text);
   }
 
   /* Section Styling */
@@ -575,15 +603,27 @@ const personSchema = {
   }
 
   .section-header {
+    padding-bottom: var(--space-sm);
     margin-bottom: var(--space-lg);
-    border-bottom: 2px solid var(--color-border);
+    border-bottom: 1px solid var(--color-hair);
   }
 
+  /* Section title rendered as a mono "// section" kicker. */
   .cv-section h2 {
     display: inline-block;
-    padding-bottom: var(--space-sm);
-    margin-bottom: -2px;
-    border-bottom: 2px solid var(--color-primary);
+    padding: 0;
+    margin: 0;
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
+    font-weight: var(--fw-medium);
+    color: var(--color-accent);
+    text-transform: uppercase;
+    letter-spacing: 0.16em;
+    border: 0;
+  }
+
+  .cv-section h2::before {
+    content: "// ";
   }
 
   .timeline-item,
@@ -601,8 +641,23 @@ const personSchema = {
   .cv-downloads-title {
     display: block;
     margin-bottom: var(--space-sm);
-    font-weight: var(--fw-semibold);
-    color: var(--color-text);
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    font-weight: var(--fw-medium);
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+  }
+
+  .dl-format {
+    padding: var(--space-md);
+    background-color: var(--color-surface-2);
+    border: 1px solid var(--color-hair);
+    border-radius: var(--radius-md);
+  }
+
+  .dl-format.recommended {
+    border-color: var(--accent-line);
   }
 
   .dl-format + .dl-format {
@@ -686,11 +741,11 @@ const personSchema = {
     outline-offset: 2px;
   }
 
-  /* Time Table (Timeline) */
+  /* Time Table (Timeline) — open, card-less entries on a hairline rail. */
   .timeline {
     position: relative;
     padding-left: var(--space-lg);
-    border-left: 2px solid var(--color-border);
+    border-left: 1px solid var(--color-hair);
   }
 
   .timeline-item {
@@ -704,78 +759,52 @@ const personSchema = {
 
   .timeline-marker {
     position: absolute;
-    top: 24px;
-    left: calc(-1 * var(--space-lg) - 7px);
+    top: 8px;
+    left: calc(-1 * var(--space-lg) - 5px);
     z-index: 10;
-    width: 12px;
-    height: 12px;
-    background-color: var(--color-bg);
-    border: 2px solid var(--color-primary);
+    width: 9px;
+    height: 9px;
+    background-color: var(--color-primary);
     border-radius: 50%;
   }
 
   .timeline-content {
     position: relative;
-    padding: var(--space-lg);
-    background-color: var(--color-bg-secondary);
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-md);
-    transition:
-      transform 0.2s,
-      border-color 0.2s,
-      box-shadow 0.2s;
-  }
-
-  .timeline-content:hover {
-    border-color: var(--color-primary);
-    box-shadow: var(--shadow-md);
-    transform: translateY(-2px);
-  }
-
-  /* Decorative notch linking the card to the timeline rail. */
-  .timeline-content::before {
-    position: absolute;
-    top: 22px;
-    left: -6px;
-    width: 12px;
-    height: 12px;
-    content: "";
-    background-color: var(--color-bg-secondary);
-    border-bottom: 1px solid var(--color-border);
-    border-left: 1px solid var(--color-border);
-    transform: rotate(45deg);
-    transition: border-color 0.2s;
-  }
-
-  .timeline-content:hover::before {
-    border-bottom-color: var(--color-primary);
-    border-left-color: var(--color-primary);
   }
 
   .timeline-header {
     display: flex;
     flex-direction: column;
     gap: var(--space-xs);
-    margin-bottom: var(--space-sm);
+    margin-bottom: var(--space-xs);
+  }
+
+  /* Mono date sits above the role title. */
+  .item-year {
+    order: -1;
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    font-weight: var(--fw-medium);
+    color: var(--color-text-muted);
+    letter-spacing: 0.02em;
   }
 
   .item-title {
     margin: 0;
-    font-size: 1.25rem;
-    color: var(--color-text);
-  }
-
-  .item-year {
-    font-family: var(--font-mono);
-    font-size: 0.95rem;
-    font-weight: var(--fw-medium);
-    color: var(--color-primary);
+    font-family: var(--font-display);
+    font-size: 1.35rem;
+    font-weight: var(--fw-bold);
+    color: var(--color-text-heading);
   }
 
   .item-institution,
   .item-department {
-    font-size: 1rem;
+    font-size: 0.95rem;
     font-weight: var(--fw-semibold);
+    color: var(--color-accent);
+  }
+
+  .item-department {
     color: var(--color-text-muted);
   }
 
@@ -784,30 +813,42 @@ const personSchema = {
     gap: var(--space-xs);
     align-items: center;
     margin-top: var(--space-xs);
-    font-size: 0.9rem;
-    font-style: italic;
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
     color: var(--color-text-muted);
   }
 
   .item-summary {
     margin-top: var(--space-md);
-    line-height: 1.6;
-    color: var(--color-text-offset);
+    line-height: 1.65;
+    color: var(--color-text);
   }
 
   .item-description-list {
-    padding-left: var(--space-lg);
+    padding-left: 0;
     margin-top: var(--space-sm);
-    color: var(--color-text-offset);
+    color: var(--color-text);
+    list-style: none;
   }
 
   .item-description-list li {
-    margin-bottom: var(--space-xs);
+    position: relative;
+    padding-left: var(--space-md-lg);
+    margin-bottom: var(--space-sm);
+  }
+
+  /* Amber "corner" marker echoing the mockup's ↳ bullets. */
+  .item-description-list li::before {
+    position: absolute;
+    left: 0;
+    font-family: var(--font-mono);
+    color: var(--color-accent);
+    content: "↳";
   }
 
   .item-pubgroup {
     margin-top: var(--space-sm);
-    color: var(--color-text-offset);
+    color: var(--color-text);
   }
 
   .item-pubgroup ul {

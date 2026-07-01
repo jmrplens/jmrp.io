@@ -134,7 +134,16 @@ const instanceCss = labels
   {/* Tab headers as labels - auto-generated from TabPanel children */}
   {/* Note: This is a CSS-only tab pattern. Accessibility is provided by the */}
   {/* hidden radio inputs which support arrow key navigation natively. */}
-  <div class="tab-headers">
+  {
+    /* tabindex="0" keeps the header keyboard-scrollable when the tabs overflow
+      (axe scrollable-region-focusable); jsx-a11y's no-noninteractive-tabindex
+      rule doesn't model scroll containers, so it's disabled just here. */
+  }
+  {/* eslint-disable astro/jsx-a11y/no-noninteractive-tabindex */}
+  <div
+    class="tab-headers"
+    tabindex="0"
+  >
     {
       labels.map((label, index) => (
         <label
@@ -147,6 +156,7 @@ const instanceCss = labels
       ))
     }
   </div>
+  {/* eslint-enable astro/jsx-a11y/no-noninteractive-tabindex */}
 
   {/* Tab panels from slot - already contains rendered TabPanel components */}
   <div

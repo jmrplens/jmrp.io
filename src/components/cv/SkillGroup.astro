@@ -109,6 +109,10 @@ import "@styles/skills.css";
 
 <style>
   .group-category {
+    padding: var(--space-md);
+    background-color: var(--color-surface-2);
+    border: 1px solid var(--color-hair);
+    border-radius: var(--radius-md);
     break-inside: avoid;
   }
 
@@ -116,9 +120,15 @@ import "@styles/skills.css";
     display: flex;
     gap: var(--space-sm);
     align-items: center;
-    padding-bottom: var(--space-xs);
-    margin-bottom: var(--space-md);
-    border-bottom: var(--border-2);
+    padding-bottom: var(--space-sm);
+    margin: 0 0 var(--space-md);
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    font-weight: var(--fw-semibold);
+    color: var(--color-accent);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    border-bottom: 1px solid var(--color-hair);
   }
 
   .compact-list {
@@ -156,7 +166,7 @@ import "@styles/skills.css";
 
   .skill-desc {
     font-size: 0.75rem;
-    color: var(--color-text-offset);
+    color: var(--color-text-muted);
   }
 
   .skill-meta {
@@ -187,8 +197,9 @@ import "@styles/skills.css";
   }
 
   .level-text {
+    font-family: var(--font-mono);
     font-size: 0.7rem;
-    color: var(--color-text-offset);
+    color: var(--color-text-muted);
     text-transform: uppercase;
     letter-spacing: 0.5px;
   }

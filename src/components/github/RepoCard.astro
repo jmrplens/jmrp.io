@@ -40,10 +40,10 @@ const t = useTranslations(locale);
         <div class="meta-item">
           <span
             class="lang-dot"
-            style={`background-color: ${langColors[repo.language] || "#ccc"}`}
+            style={`--lang-color: ${langColors[repo.language] || "var(--color-text-muted)"}`}
             aria-hidden="true"
           />
-          {repo.language}
+          <span class="lang-name">{repo.language}</span>
         </div>
       )
     }
@@ -116,18 +116,28 @@ const t = useTranslations(locale);
     height: 100%;
     padding: var(--space-md);
     background-color: var(--color-bg-secondary);
-    border: var(--border-1);
+    border: 1px solid var(--color-hair);
     border-radius: var(--radius-md);
     transition:
-      transform 0.2s,
-      box-shadow 0.2s,
-      border-color 0.2s;
+      transform var(--dur-2) var(--ease-out),
+      box-shadow var(--dur-2) var(--ease-out),
+      border-color var(--dur-2) var(--ease-out);
   }
 
   .repo-card:hover {
     border-color: var(--color-primary);
-    box-shadow: 0 4px 12px rgb(0 0 0 / 20%);
+    box-shadow: var(--sh-card);
     transform: translateY(-2px);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .repo-card {
+      transition: border-color var(--dur-2) var(--ease-out);
+    }
+
+    .repo-card:hover {
+      transform: none;
+    }
   }
 
   .repo-header {
@@ -139,8 +149,10 @@ const t = useTranslations(locale);
 
   .repo-header h3 {
     margin: 0;
+    font-family: var(--font-display);
     font-size: 1.1rem;
-    font-weight: var(--fw-semibold);
+    font-weight: var(--fw-medium);
+    letter-spacing: -0.01em;
   }
 
   .repo-header a {
@@ -179,21 +191,24 @@ const t = useTranslations(locale);
     align-items: center;
     padding-top: var(--space-sm);
     margin-top: auto;
-    font-size: 0.85rem;
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
     color: var(--color-text-muted);
-    border-top: var(--border-1);
+    border-top: 1px solid var(--color-hair);
   }
 
   .meta-item {
     display: flex;
-    gap: 4px;
+    gap: 5px;
     align-items: center;
   }
 
   .lang-dot {
     display: inline-block;
-    width: 10px;
-    height: 10px;
+    width: 9px;
+    height: 9px;
+    background-color: var(--lang-color, var(--color-text-muted));
+    border: 1px solid var(--color-hair);
     border-radius: 50%;
   }
 </style>

@@ -1,14 +1,11 @@
 ---
 /**
- * 404 Error Page shared component — "Ah ah ah, you didn't say the magic word!"
- * Jurassic Park / Dennis Nedry themed error page.
+ * 404 Error Page shared component — "Lab / Engineering" terminal 404.
+ * A big display "404", a mono terminal card echoing a failed `cat` on the
+ * requested path, and a primary link home. The Jurassic Park "magic word"
+ * audio easter egg is preserved (plays on first interaction).
  */
-import {
-  nedryAudio,
-  nedryBody,
-  nedryHand,
-  nedryHead,
-} from "@assets/nedry-assets";
+import { nedryAudio } from "@assets/nedry-assets";
 import { defaultLocale, type Locale } from "@i18n/config";
 import { useTranslatedPath, useTranslations } from "@i18n/utils";
 import BaseLayout from "@layouts/BaseLayout.astro";
@@ -23,44 +20,48 @@ const translatePath = useTranslatedPath(locale);
   description={t("pages.notFound.description")}
   noIndex={true}
 >
-  <div class="nedry-page">
-    <div class="nedry-wrapper">
-      <h1 class="nedry-code">
-        <span class="nedry-code-num">404</span>
-        <span class="nedry-code-label">{t("pages.notFound.pageNotFound")}</span>
+  <div class="nf-page">
+    <div
+      class="lab-grid"
+      aria-hidden="true"
+    >
+    </div>
+
+    <div class="nf-wrapper">
+      <h1 class="nf-code">
+        <span
+          class="nf-code-num"
+          aria-hidden="true"
+          >404</span
+        >
+        <span class="sr-only">{t("pages.notFound.pageNotFound")}</span>
       </h1>
 
+      {
+        /* Decorative terminal flourish; meaning is carried by the heading + message. */
+      }
       <div
-        class="nedry-stage"
-        data-nedry-trigger
-        role="button"
-        tabindex="0"
-        aria-label={t("aria.playSoundNedry")}
+        class="nf-terminal"
+        aria-hidden="true"
       >
-        <div class="nedry-container">
-          <img
-            class="nedry-body"
-            src={nedryBody}
-            alt={t("pages.notFound.nedryAlt")}
-          />
-          <img
-            class="nedry-head"
-            src={nedryHead}
-            alt=""
-            role="presentation"
-          />
-          <img
-            class="nedry-hand"
-            src={nedryHand}
-            alt=""
-            role="presentation"
-          />
-        </div>
+        <p class="nf-line">
+          <span class="nf-prompt">jmrp@home:~$</span>{" "}
+          <span class="nf-cmd">cat $REQUEST_URI</span>
+        </p>
+        <p class="nf-line">
+          <span class="nf-out">cat: </span><span class="nf-err"
+            >{t("pages.notFound.pageNotFound")}</span
+          >
+        </p>
+        <p class="nf-line">
+          <span class="nf-prompt">jmrp@home:~$</span>{" "}
+          <span class="nf-cursor"></span>
+        </p>
       </div>
 
-      <p class="nedry-message">{t("pages.notFound.message")}</p>
+      <p class="nf-message">{t("pages.notFound.message")}</p>
 
-      <div class="nedry-actions">
+      <div class="nf-actions">
         <a
           href={translatePath("/")}
           class="btn btn-primary"
@@ -87,7 +88,7 @@ const translatePath = useTranslatedPath(locale);
 </BaseLayout>
 
 <style>
-  .nedry-page {
+  .nf-page {
     position: relative;
     display: flex;
     flex: 1;
@@ -95,136 +96,113 @@ const translatePath = useTranslatedPath(locale);
     align-items: center;
     justify-content: center;
     min-height: 0;
-    padding: var(--space-sm) var(--space-md);
+    padding: var(--space-lg) var(--space-md);
     overflow: hidden;
   }
 
-  .nedry-wrapper {
+  .nf-wrapper {
+    position: relative;
+    z-index: 1;
     display: flex;
     flex-direction: column;
     align-items: center;
     width: 100%;
-    max-width: 500px;
+    max-width: 640px;
   }
 
-  .nedry-code {
-    display: flex;
-    flex-shrink: 0;
-    flex-direction: column;
-    align-items: center;
-    margin: 0 0 var(--space-xs, 0.25rem);
+  .nf-code {
+    margin: 0;
     line-height: 1;
     text-align: center;
   }
 
-  .nedry-code-num {
-    font-family: var(--font-mono);
-    font-size: clamp(3rem, 10vw, 6rem);
-    font-weight: 800;
-    color: var(--color-primary);
+  .nf-code-num {
+    display: block;
+    font-family: var(--font-display);
+    font-size: clamp(5rem, 22vw, 11rem);
+    font-weight: var(--fw-extrabold);
+    color: var(--color-text-heading);
     letter-spacing: -0.04em;
   }
 
-  .nedry-code-label {
-    font-size: clamp(1rem, 3vw, 1.3rem);
-    font-weight: var(--fw-medium, 500);
-    color: var(--color-text-muted);
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-  }
-
-  .nedry-stage {
-    position: relative;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+  /* Terminal card */
+  .nf-terminal {
     width: 100%;
-    max-width: 380px;
-    cursor: pointer;
-    outline-offset: 4px;
-    border-radius: var(--radius-lg, 12px);
-  }
-
-  .nedry-stage:focus-visible {
-    outline: 2px solid var(--color-primary);
-  }
-
-  .nedry-container {
-    position: relative;
-    max-width: 100%;
-    height: min(calc(100dvh - 25rem), 466px);
-    aspect-ratio: 440 / 540;
-  }
-
-  .nedry-body {
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-    pointer-events: none;
-    object-fit: contain;
-  }
-
-  .nedry-head {
-    position: absolute;
-    top: 6.5%;
-    left: 31.8%;
-    z-index: 2;
-    width: 36.4%;
-  }
-
-  .nedry-hand {
-    position: absolute;
-    top: 28.7%;
-    left: 60.2%;
-    z-index: 3;
-    width: 22.7%;
-    transform-origin: 50% 100%;
-    animation: hand-wave 1s linear infinite;
-  }
-
-  @keyframes hand-wave {
-    0% {
-      transform: rotate(-10deg);
-    }
-
-    50% {
-      transform: rotate(14deg);
-    }
-
-    100% {
-      transform: rotate(-10deg);
-    }
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    .nedry-hand {
-      animation: none;
-    }
-  }
-
-  .nedry-message {
-    flex-shrink: 0;
-    margin: var(--space-lg, 1.25rem) 0 0;
+    max-width: 520px;
+    padding: var(--space-md) var(--space-md-lg);
+    margin-top: var(--space-lg);
     font-family: var(--font-mono);
-    font-size: clamp(0.85rem, 2.5vw, 1.05rem);
-    font-weight: var(--fw-semibold, 600);
+    font-size: clamp(0.8rem, 2.5vw, 0.95rem);
+    line-height: 1.9;
+    text-align: left;
+    background-color: var(--color-surface-2);
+    border: 1px solid var(--color-hair);
+    border-radius: var(--radius-md);
+    box-shadow: var(--sh-card);
+  }
+
+  .nf-line {
+    margin: 0;
+    overflow-wrap: anywhere;
+  }
+
+  .nf-prompt {
+    color: var(--color-text);
+  }
+
+  .nf-cmd,
+  .nf-out {
+    color: var(--color-text-muted);
+  }
+
+  .nf-err {
+    color: var(--color-accent);
+  }
+
+  .nf-cursor {
+    display: inline-block;
+    width: 0.55em;
+    height: 1.05em;
+    vertical-align: text-bottom;
+    background-color: var(--color-accent);
+    border-radius: 1px;
+    animation: nf-blink 1.15s steps(1) infinite;
+  }
+
+  @keyframes nf-blink {
+    0%,
+    46% {
+      opacity: 100%;
+    }
+
+    54%,
+    100% {
+      opacity: 0%;
+    }
+  }
+
+  .nf-message {
+    margin: var(--space-lg) 0 0;
+    font-size: clamp(0.95rem, 2.5vw, 1.05rem);
     color: var(--color-text);
     text-align: center;
   }
 
-  .nedry-actions {
+  .nf-actions {
     display: flex;
-    flex-shrink: 0;
-    gap: var(--space-sm);
-    margin-top: var(--space-sm);
+    margin-top: var(--space-md-lg);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .nf-cursor {
+      animation: none;
+    }
   }
 </style>
 
 <script is:inline>
   (function () {
     var audio = document.querySelector("[data-nedry-audio]");
-    var trigger = document.querySelector("[data-nedry-trigger]");
     var played = false;
 
     function play() {
@@ -235,16 +213,6 @@ const translatePath = useTranslatedPath(locale);
           played = true;
         })
         .catch(function () {});
-    }
-
-    if (trigger) {
-      trigger.addEventListener("click", play);
-      trigger.addEventListener("keydown", function (e) {
-        if (e.key === "Enter" || e.key === " ") {
-          e.preventDefault();
-          play();
-        }
-      });
     }
 
     play();

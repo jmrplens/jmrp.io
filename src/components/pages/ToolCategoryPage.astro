@@ -1,12 +1,14 @@
 ---
 /**
  * Tool Category Page shared component.
- * Displays tools filtered by category.
+ * Displays tools filtered by category, with the same filterable card
+ * grid + chip bar as the tools landing.
  */
 import { defaultLocale, type Locale } from "@i18n/config";
 import { pluralize, useTranslatedPath, useTranslations } from "@i18n/utils";
 import BaseLayout from "@layouts/BaseLayout.astro";
 import { getSiteUrl } from "@utils/site";
+import { getToolsForLocale } from "@utils/tools";
 import type { CollectionEntry } from "astro:content";
 
 interface Props {
@@ -22,43 +24,55 @@ const locale = (Astro.currentLocale ?? defaultLocale) as Locale;
 const t = useTranslations(locale);
 const translatePath = useTranslatedPath(locale);
 
-/** Category display metadata. */
+/** Category display metadata (order drives the chip bar). */
 const categoryMeta: Record<
   string,
-  { name: string; description: string; icon: string }
+  { name: string; short: string; description: string; order: number }
 > = {
   security: {
     name: t("pages.tools.categorySecurity"),
+    short: t("pages.tools.shortSecurity"),
     description: t("pages.toolsCategory.securityDesc"),
-    icon: "i-mdi:shield-lock-outline",
+    order: 1,
   },
   developer: {
     name: t("pages.tools.categoryDeveloper"),
+    short: t("pages.tools.shortDeveloper"),
     description: t("pages.toolsCategory.developerDesc"),
-    icon: "i-mdi:code-braces",
+    order: 2,
   },
   network: {
     name: t("pages.tools.categoryNetwork"),
+    short: t("pages.tools.shortNetwork"),
     description: t("pages.toolsCategory.networkDesc"),
-    icon: "i-mdi:lan",
+    order: 3,
   },
   embedded: {
     name: t("pages.tools.categoryEmbedded"),
+    short: t("pages.tools.shortEmbedded"),
     description: t("pages.toolsCategory.embeddedDesc"),
-    icon: "i-mdi:chip",
+    order: 4,
   },
   mikrotik: {
     name: t("pages.tools.categoryMikrotik"),
+    short: t("pages.tools.shortMikrotik"),
     description: t("pages.toolsCategory.mikrotikDesc"),
-    icon: "i-simple-icons:mikrotik",
+    order: 5,
   },
 };
 
 const meta = categoryMeta[category] ?? {
   name: category,
+  short: category,
   description: t("pages.toolsCategory.fallbackDesc", { category }),
-  icon: "i-mdi:tools",
+  order: 99,
 };
+
+/** All categories (ordered) for the chip bar, plus total for the "all" chip. */
+const chipCategories = Object.entries(categoryMeta)
+  .map(([id, m]) => ({ id, short: m.short, order: m.order }))
+  .sort((a, b) => a.order - b.order);
+const totalTools = (await getToolsForLocale(locale)).length;
 
 const schema = {
   "@type": "CollectionPage",
@@ -96,34 +110,55 @@ const schema = {
         class="i-mdi:chevron-right"
         aria-hidden="true"
       ></span>
-      <span aria-current="page">{meta.name}</span>
+      <span aria-current="page">{meta.short}</span>
     </nav>
 
-    <header class="page-header">
-      <div class="header-icon">
-        <span
-          class={meta.icon}
-          aria-hidden="true"
-        ></span>
+    <header class="cat-hero">
+      <div
+        class="lab-grid"
+        aria-hidden="true"
+      >
       </div>
-      <div class="header-content">
-        <h1>{meta.name}</h1>
-        <p class="subtitle">
-          {tools.length}
-          {
-            pluralize(
-              tools.length,
-              {
-                one: t("pages.toolsCategory.toolSingular"),
-                other: t("pages.toolsCategory.toolPlural"),
-              },
-              locale,
-            )
-          }
-          {t("pages.toolsCategory.inCategory")}
-        </p>
-      </div>
+      <p class="section-title">{meta.short}</p>
+      <h1 class="cat-title">{meta.name}</h1>
+      <p class="subtitle">
+        {tools.length}
+        {
+          pluralize(
+            tools.length,
+            {
+              one: t("pages.toolsCategory.toolSingular"),
+              other: t("pages.toolsCategory.toolPlural"),
+            },
+            locale,
+          )
+        }
+        {t("pages.toolsCategory.inCategory")}
+      </p>
     </header>
+
+    <nav
+      class="filter-bar"
+      aria-label={t("pages.tools.filterLabel")}
+    >
+      <a
+        href={translatePath("/tools/")}
+        class="chip"
+      >
+        {t("pages.tools.filterAll")} · {totalTools}
+      </a>
+      {
+        chipCategories.map((c) => (
+          <a
+            href={translatePath(`/tools/categories/${c.id}/`)}
+            class:list={["chip", { "chip--active": c.id === category }]}
+            aria-current={c.id === category ? "page" : undefined}
+          >
+            {c.short}
+          </a>
+        ))
+      }
+    </nav>
 
     <div class="tools-grid">
       {
@@ -131,7 +166,6 @@ const schema = {
           (tool: {
             data: {
               slug: string;
-              icon: string;
               title: string;
               description: string;
             };
@@ -140,18 +174,20 @@ const schema = {
               href={translatePath(`/tools/${tool.data.slug}/`)}
               class="tool-card"
             >
-              <span
-                class={`tool-icon ${tool.data.icon}`}
-                aria-hidden="true"
-              />
-              <div class="tool-content">
-                <h2 class="tool-name">{tool.data.title}</h2>
-                <p class="tool-description">{tool.data.description}</p>
-              </div>
-              <span
-                class="i-mdi:chevron-right tool-arrow"
-                aria-hidden="true"
-              />
+              <span class="tool-card__top">
+                <span class="tool-badge">
+                  <span class="sr-only">
+                    {t("pages.tools.categoryLabel")}:{" "}
+                  </span>
+                  {meta.short}
+                </span>
+                <span
+                  class="i-mdi:arrow-top-right tool-arrow"
+                  aria-hidden="true"
+                />
+              </span>
+              <h2 class="tool-name">{tool.data.title}</h2>
+              <p class="tool-description">{tool.data.description}</p>
             </a>
           ),
         )
@@ -172,14 +208,15 @@ const schema = {
     gap: var(--space-xs);
     align-items: center;
     margin-bottom: var(--space-lg);
-    font-size: 0.875rem;
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
     color: var(--color-text-muted);
   }
 
   .breadcrumb a {
     color: var(--color-text-muted);
     text-decoration: none;
-    transition: color 0.2s ease;
+    transition: color var(--dur-1) var(--ease-out);
   }
 
   .breadcrumb a:hover {
@@ -191,76 +228,106 @@ const schema = {
     height: 1rem;
   }
 
-  .page-header {
-    display: flex;
-    gap: var(--space-md);
-    align-items: center;
-    margin-bottom: var(--space-xl);
+  /* Hero */
+  .cat-hero {
+    position: relative;
+    padding: var(--space-md) 0 var(--space-md-lg);
+    overflow: hidden;
   }
 
-  .header-icon {
-    display: flex;
-    flex-shrink: 0;
-    align-items: center;
-    justify-content: center;
-    width: 4rem;
-    height: 4rem;
-    background: linear-gradient(
-      135deg,
-      var(--color-success, #10b981),
-      var(--color-success-dark, #059669)
-    );
-    border-radius: var(--radius-lg);
+  .cat-hero > :not(.lab-grid) {
+    position: relative;
+    z-index: 1;
   }
 
-  .header-icon span {
-    width: 2rem;
-    height: 2rem;
-    color: var(--header-icon-color, #fff);
-  }
-
-  .header-content {
-    flex: 1;
-    min-width: 0;
-  }
-
-  .page-header h1 {
-    margin-bottom: var(--space-xs);
-    font-size: 2rem;
-    font-weight: 800;
+  .cat-title {
+    margin: 0 0 var(--space-sm);
+    font-family: var(--font-display);
+    font-size: clamp(1.75rem, 4vw, 2.5rem);
+    font-weight: var(--fw-bold);
+    line-height: 1.08;
+    color: var(--color-text-heading);
     letter-spacing: -0.02em;
   }
 
   .subtitle {
+    margin: 0;
     font-size: 1rem;
     line-height: 1.5;
     color: var(--color-text-muted);
   }
 
+  /* Filter chips */
+  .filter-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-sm);
+    margin-bottom: var(--space-lg);
+  }
+
+  .chip {
+    display: inline-flex;
+    gap: 0.4em;
+    align-items: center;
+    padding: 0.375rem 0.875rem;
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
+    color: var(--color-text);
+    text-decoration: none;
+    background: var(--color-surface-2);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    transition:
+      color var(--dur-1) var(--ease-out),
+      border-color var(--dur-1) var(--ease-out),
+      background var(--dur-1) var(--ease-out);
+  }
+
+  .chip:hover {
+    color: var(--color-text-heading);
+    border-color: var(--color-primary);
+  }
+
+  .chip--active,
+  .chip--active:hover {
+    font-weight: var(--fw-medium);
+    color: var(--color-on-primary);
+    background: var(--color-primary);
+    border-color: var(--color-primary);
+  }
+
+  .chip:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+  }
+
+  /* Tool cards */
   .tools-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr));
-    gap: var(--space-sm);
+    gap: var(--space-md);
     margin-bottom: var(--space-xl);
   }
 
   .tool-card {
     display: flex;
+    flex-direction: column;
     gap: var(--space-sm);
-    align-items: center;
-    padding: 0.625rem 0.75rem;
+    padding: var(--space-md-lg);
     text-decoration: none;
     background: var(--color-bg-secondary);
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-md);
+    border: 1px solid var(--color-hair);
+    border-radius: var(--radius-lg);
     transition:
-      border-color 0.15s ease,
-      box-shadow 0.15s ease;
+      border-color var(--dur-2) var(--ease-out),
+      transform var(--dur-2) var(--ease-out),
+      box-shadow var(--dur-2) var(--ease-out);
   }
 
   .tool-card:hover {
-    border-color: var(--color-primary);
-    box-shadow: 0 1px 4px rgb(0 0 0 / 8%);
+    border-color: var(--color-border);
+    box-shadow: var(--sh-card);
+    transform: translateY(-2px);
   }
 
   .tool-card:focus-visible {
@@ -268,55 +335,57 @@ const schema = {
     outline-offset: 2px;
   }
 
-  .tool-icon {
-    flex-shrink: 0;
-    width: 1.25rem;
-    height: 1.25rem;
-    color: var(--color-primary);
+  .tool-card__top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
   }
 
-  .tool-content {
-    display: flex;
-    flex: 1;
-    flex-direction: column;
-    gap: 0.125rem;
-    min-width: 0;
+  .tool-badge {
+    padding: 0.125rem 0.5rem;
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
+    color: var(--color-text-heading);
+    letter-spacing: 0.02em;
+    background: var(--accent-dim);
+    border: 1px solid var(--accent-line);
+    border-radius: var(--radius-sm);
+  }
+
+  .tool-arrow {
+    width: 1.1rem;
+    height: 1.1rem;
+    color: var(--color-text-muted);
+    transition:
+      transform var(--dur-2) var(--ease-out),
+      color var(--dur-2) var(--ease-out);
+  }
+
+  .tool-card:hover .tool-arrow,
+  .tool-card:focus-visible .tool-arrow {
+    color: var(--color-primary);
+    transform: translate(2px, -2px);
   }
 
   .tool-name {
     margin: 0;
-    font-size: 0.9rem;
-    font-weight: var(--fw-semibold);
-    line-height: 1.3;
+    font-family: var(--font-display);
+    font-size: 1.25rem;
+    font-weight: var(--fw-medium);
+    line-height: 1.2;
     color: var(--color-text-heading);
+    letter-spacing: -0.01em;
   }
 
   .tool-description {
     display: -webkit-box;
     margin: 0;
     overflow: hidden;
-    -webkit-line-clamp: 2;
-    font-size: 0.775rem;
-    line-height: 1.4;
+    -webkit-line-clamp: 3;
+    font-size: 0.9rem;
+    line-height: 1.5;
     color: var(--color-text-muted);
     -webkit-box-orient: vertical;
-  }
-
-  .tool-arrow {
-    flex-shrink: 0;
-    width: 1rem;
-    height: 1rem;
-    color: var(--color-text-muted);
-    opacity: 50%;
-    transition:
-      transform 0.15s ease,
-      opacity 0.15s ease;
-  }
-
-  .tool-card:hover .tool-arrow {
-    color: var(--color-primary);
-    opacity: 100%;
-    transform: translateX(2px);
   }
 
   .back-link {
@@ -324,9 +393,11 @@ const schema = {
   }
 
   .back-link a {
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
     color: var(--color-text-muted);
     text-decoration: none;
-    transition: color 0.2s ease;
+    transition: color var(--dur-1) var(--ease-out);
   }
 
   .back-link a:hover {
@@ -334,20 +405,20 @@ const schema = {
   }
 
   @media (width <= 640px) {
-    .page-header {
-      flex-direction: column;
-      text-align: center;
-    }
-
     .tools-grid {
       grid-template-columns: 1fr;
     }
   }
 
   @media (prefers-reduced-motion: reduce) {
+    .chip,
     .tool-card,
     .tool-arrow {
       transition: none;
+    }
+
+    .tool-card:hover {
+      transform: none;
     }
   }
 </style>

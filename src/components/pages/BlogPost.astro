@@ -6,6 +6,7 @@
  */
 import "@styles/blog.css";
 
+import mehomeImg from "@assets/mehome.webp";
 import AuthorCard from "@components/blog/AuthorCard.astro";
 import TableOfContentsDrawer from "@components/layout/TableOfContentsDrawer.astro";
 import Callout from "@components/ui/Callout.astro";
@@ -21,7 +22,7 @@ import { formatDate, useTranslatedPath, useTranslations } from "@i18n/utils";
 import BaseLayout from "@layouts/BaseLayout.astro";
 import type { SiteConfig } from "@src/types";
 import { getSiteUrl } from "@utils/site";
-import { getImage, Picture } from "astro:assets";
+import { getImage, Image, Picture } from "astro:assets";
 import { type CollectionEntry, getEntry, render } from "astro:content";
 import * as cheerio from "cheerio";
 import type { BlogPosting, FAQPage, HowTo, TechArticle } from "schema-dts";
@@ -242,6 +243,11 @@ const articleSchema = [
     })}
   >
     <header class="post-header">
+      <div
+        class="lab-grid"
+        aria-hidden="true"
+      >
+      </div>
       <div class="content-wrapper">
         <div class="header-meta">
           <a
@@ -252,29 +258,6 @@ const articleSchema = [
             {t("pages.blogPost.backToBlog")}
           </a>
           <div class="meta">
-            <span class="author">
-              {post.data.author || siteData.author}
-            </span>
-            <span class="separator">•</span>
-            <time datetime={post.data.publishedDate.toISOString()}>
-              {formatDate(post.data.publishedDate, locale)}
-            </time>
-            {
-              post.data.updatedDate && (
-                <>
-                  <span class="separator">•</span>
-                  <time
-                    class="updated"
-                    datetime={post.data.updatedDate.toISOString()}
-                  >
-                    {t("pages.blogPost.updatedOn", {
-                      date: formatDate(post.data.updatedDate, locale),
-                    })}
-                  </time>
-                </>
-              )
-            }
-            <span class="separator">•</span>
             {
               post.data.tags && (
                 <div class="tags">
@@ -292,6 +275,21 @@ const articleSchema = [
                 </div>
               )
             }
+            <time datetime={post.data.publishedDate.toISOString()}>
+              {formatDate(post.data.publishedDate, locale)}
+            </time>
+            {
+              post.data.updatedDate && (
+                <time
+                  class="updated"
+                  datetime={post.data.updatedDate.toISOString()}
+                >
+                  {t("pages.blogPost.updatedOn", {
+                    date: formatDate(post.data.updatedDate, locale),
+                  })}
+                </time>
+              )
+            }
           </div>
         </div>
 
@@ -299,6 +297,26 @@ const articleSchema = [
           <div class="header-content">
             <h1>{post.data.title}</h1>
             <p class="lead">{post.data.description}</p>
+            <div class="byline">
+              <Image
+                src={mehomeImg}
+                alt={t("pages.blogPost.authorAvatarAlt", {
+                  author: post.data.author || siteData.author,
+                })}
+                class="byline__avatar"
+                width={40}
+                height={40}
+                loading="eager"
+              />
+              <span class="byline__text">
+                <span class="byline__name">
+                  {post.data.author || siteData.author}
+                </span>
+                <span class="byline__role">
+                  {t("pages.blogPost.authorRole")}
+                </span>
+              </span>
+            </div>
           </div>
           {
             post.data.coverImage && (
@@ -456,10 +474,21 @@ const articleSchema = [
 
 <style>
   .post-header {
+    position: relative;
     padding: var(--space-lg) 0;
     margin-bottom: var(--space-md-lg);
+    overflow: hidden;
     background-color: var(--color-bg-secondary);
-    border-bottom: var(--border-1);
+    border-bottom: 1px solid var(--color-hair);
+  }
+
+  .post-header > .lab-grid {
+    z-index: 0;
+  }
+
+  .post-header > .content-wrapper {
+    position: relative;
+    z-index: 1;
   }
 
   .content-wrapper {
@@ -491,28 +520,18 @@ const articleSchema = [
     gap: var(--space-md);
     align-items: center;
     min-height: 1.5em;
-    font-family:
-      system-ui,
-      -apple-system,
-      blinkmacsystemfont,
-      "Segoe UI",
-      roboto,
-      helvetica,
-      arial,
-      sans-serif;
-    font-size: 0.9rem;
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
     color: var(--color-text-muted);
+    letter-spacing: 0.01em;
   }
 
-  .author {
-    font-weight: var(--fw-semibold);
-    color: var(--color-text);
+  .meta time {
+    white-space: nowrap;
   }
 
-  .separator {
-    display: inline-block;
-    width: 1ch;
-    text-align: center;
+  .updated {
+    color: var(--color-text-muted);
   }
 
   .tags {
@@ -521,36 +540,41 @@ const articleSchema = [
     gap: var(--space-sm);
   }
 
+  /* Mono tag chip: amber text on the header surface (AA in both themes),
+     hairline border as the non-color affordance. */
   .tag {
-    font-size: 0.85rem;
-    font-weight: 600;
-    color: var(--color-primary);
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
+    padding: 0.15rem 0.5rem;
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    font-weight: var(--fw-medium);
+    color: var(--color-accent);
     text-decoration: none;
+    border: var(--border-1);
+    border-radius: var(--radius-sm);
     transition:
-      color 0.2s ease,
-      text-decoration 0.2s ease;
+      color var(--dur-2) var(--ease-out),
+      border-color var(--dur-2) var(--ease-out);
   }
 
   .tag:hover {
-    text-decoration: underline;
-    text-underline-offset: 3px;
+    color: var(--accent-hi);
+    border-color: var(--color-accent);
   }
 
   .tag:focus-visible {
     outline: 2px solid var(--color-primary);
     outline-offset: 2px;
-    border-radius: 2px;
+    border-radius: var(--radius-sm);
   }
 
   h1 {
     margin-bottom: 1.25rem;
-    font-size: 2.5rem;
-    font-weight: 800;
-    line-height: 1.2;
+    font-family: var(--font-display);
+    font-size: clamp(2rem, 4.6vw, 3.125rem);
+    font-weight: var(--fw-bold);
+    line-height: 1.06;
     color: var(--color-text-heading);
-    letter-spacing: -0.02em;
+    letter-spacing: -0.025em;
     text-wrap: balance;
   }
 
@@ -560,14 +584,57 @@ const articleSchema = [
     color: var(--color-text);
   }
 
+  /* Author byline strip below the lead. */
+  .byline {
+    display: flex;
+    gap: var(--space-md);
+    align-items: center;
+    padding: var(--space-md) 0;
+    margin-top: var(--space-md-lg);
+    border-top: 1px solid var(--color-hair);
+    border-bottom: 1px solid var(--color-hair);
+  }
+
+  .byline__avatar {
+    flex-shrink: 0;
+    width: 40px;
+    height: 40px;
+    object-fit: cover;
+    border-radius: 50%;
+  }
+
+  .byline__text {
+    display: flex;
+    flex-direction: column;
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
+    line-height: 1.5;
+  }
+
+  .byline__name {
+    font-weight: var(--fw-medium);
+    color: var(--color-text-heading);
+  }
+
+  .byline__role {
+    color: var(--color-text-muted);
+  }
+
   .cover-image-container {
     width: 100%;
     height: auto;
     aspect-ratio: 16 / 9;
     overflow: hidden;
     background-color: var(--color-bg-secondary);
+    border: 1px solid var(--color-hair);
     border-radius: var(--radius-lg);
-    box-shadow: var(--shadow-lg);
+    box-shadow: var(--sh-card);
+  }
+
+  /* Comfortable reading measure for the post body. */
+  .layout-grid .prose {
+    max-width: var(--max-width-prose);
+    margin-inline: auto;
   }
 
   .cover-image {
@@ -588,10 +655,6 @@ const articleSchema = [
       grid-template-columns: 1.2fr 0.8fr;
       gap: var(--space-xl);
       align-items: center;
-    }
-
-    h1 {
-      font-size: 3.5rem;
     }
 
     .cover-image-container {
@@ -616,10 +679,6 @@ const articleSchema = [
     .post-header {
       padding: var(--space-lg) 0;
       text-align: left;
-    }
-
-    h1 {
-      font-size: 2rem;
     }
 
     .lead {

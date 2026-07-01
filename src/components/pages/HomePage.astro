@@ -4,7 +4,6 @@
  * Displays the hero section, biography, and quick links.
  * Content is configured via `src/content/site_config/site.yaml`.
  */
-import mehomeImg from "@assets/mehome.webp";
 import PostCard from "@components/blog/PostCard.astro";
 import RepoCard from "@components/github/RepoCard.astro";
 import { defaultLocale, type Locale } from "@i18n/config";
@@ -15,7 +14,6 @@ import { getPostsForLocale } from "@utils/blog";
 import { fetchRepositoriesByName } from "@utils/github";
 import { sanitize } from "@utils/html";
 import { getSiteUrl } from "@utils/site";
-import { Image } from "astro:assets";
 import { getEntry } from "astro:content";
 import type { ProfilePage } from "schema-dts";
 
@@ -52,6 +50,12 @@ const [postEntries, featuredProjects] = await Promise.all([
 // Process posts
 const latestPosts = postEntries.slice(0, 3).map((e) => e.post);
 
+// Terminal "whoami" card — language-neutral technical facts (data, not prose).
+const whoami = {
+  focus: "ESP32 · RouterOS · MCP",
+  base: "Alicante, ES",
+};
+
 const personSchema = [
   {
     "@type": "ProfilePage",
@@ -75,121 +79,101 @@ const personSchema = [
   schema={personSchema}
 >
   <section class="hero">
-    <div class="container">
-      <div class="hero-content">
-        <div class="hero-text">
-          <h1>{hero.title}</h1>
-          <p
-            class="subtitle"
-            set:html={sanitize(hero.subtitle)}
-          />
-          <div class="bio">
-            {
-              hero.bio.map((paragraph: string) => (
-                <p set:html={sanitize(paragraph)} />
-              ))
-            }
-          </div>
+    <div
+      class="lab-grid"
+      aria-hidden="true"
+    >
+    </div>
+    <div class="hero__inner container">
+      <div class="hero__text">
+        <p class="hero__status">
+          <span
+            class="hero__status-dot"
+            aria-hidden="true"
+          ></span>
+          {t("pages.home.availability")}
+        </p>
+
+        <h1 class="hero__title">{hero.title}</h1>
+
+        <p
+          class="hero__subtitle"
+          set:html={sanitize(hero.subtitle)}
+        />
+
+        <div class="hero__bio">
+          {
+            hero.bio.map((paragraph: string) => (
+              <p set:html={sanitize(paragraph)} />
+            ))
+          }
         </div>
 
-        <div class="profile-image centered">
-          <div class="hero-image">
-            <Image
-              src={mehomeImg}
-              alt={person.name}
-              width={350}
-              height={350}
-              widths={[200, 350, 400, 700]}
-              sizes="(max-width: 768px) 200px, 350px"
-              quality={50}
-              loading="eager"
-              fetchpriority="high"
-            />
-          </div>
+        <div class="hero__cta">
+          <a
+            href={translatePath("/cv/")}
+            class="btn btn-primary"
+            aria-label={t("pages.home.viewCVAria")}
+          >
+            {t("pages.home.viewCV")}
+            <span
+              class="i-tabler:arrow-right"
+              aria-hidden="true"
+            ></span>
+          </a>
+          <a
+            href={translatePath("/blog/")}
+            class="btn btn-outline"
+            aria-label={t("pages.home.readBlogAria")}
+          >
+            {t("pages.home.readBlog")}
+          </a>
         </div>
       </div>
 
-      <div class="social-links-row">
-        <a
-          href={translatePath("/cv/")}
-          class="btn btn-primary"
-          aria-label={t("pages.home.viewCVAria")}
-        >
+      <figure
+        class="terminal"
+        aria-label={t("pages.home.terminalLabel")}
+      >
+        <figcaption class="terminal__bar">
           <span
-            class="i-fa-solid:file-pdf"
+            class="terminal__dots"
             aria-hidden="true"
-          ></span>
-          {t("pages.home.viewCV")}
-        </a>
-        <a
-          href={translatePath("/blog/")}
-          class="btn btn-outline"
-          aria-label={t("pages.home.readBlogAria")}
-        >
-          <span
-            class="i-fa-solid:pen-nib"
-            aria-hidden="true"
-          ></span>
-          {t("pages.home.readBlog")}
-        </a>
-        <a
-          href={translatePath("/github/")}
-          class="btn btn-outline"
-          aria-label={t("pages.home.projectsAria")}
-        >
-          <span
-            class="i-fa-brands:github"
-            aria-hidden="true"
-          ></span>
-          {t("pages.home.projects")}
-        </a>
-        <a
-          href={translatePath("/homelab/")}
-          class="btn btn-outline"
-          aria-label={t("pages.home.homelabAria")}
-        >
-          <span
-            class="i-fa-solid:server"
-            aria-hidden="true"
-          ></span>
-          {t("pages.home.homelab")}
-        </a>
-      </div>
+          >
+            <span class="terminal__dot terminal__dot--red"></span>
+            <span class="terminal__dot terminal__dot--amber"></span>
+            <span class="terminal__dot terminal__dot--teal"></span>
+          </span>
+          <span class="terminal__path">~/whoami</span>
+        </figcaption>
+        <div class="terminal__body">
+          <p class="terminal__cmd">
+            <span class="terminal__prompt">jmrp@home:~$</span> stat
+          </p>
+          <dl class="terminal__grid">
+            <dt>role</dt>
+            <dd>{t("pages.home.terminalRole")}</dd>
+            <dt>focus</dt>
+            <dd>{whoami.focus}</dd>
+            <dt>base</dt>
+            <dd>{whoami.base}</dd>
+          </dl>
+        </div>
+      </figure>
     </div>
   </section>
 
   {
-    latestPosts.length > 0 && (
-      <section class="latest-posts">
-        <div class="container">
-          <div class="section-header">
-            <h2>{t("pages.home.latestFromBlog")}</h2>
-            <a
-              href={translatePath("/blog/")}
-              class="btn btn-link"
-            >
-              {t("pages.home.viewAllPosts")}
-            </a>
-          </div>
-          <div class="grid-layout">
-            {latestPosts.map((post) => (
-              <PostCard post={post} />
-            ))}
-          </div>
-        </div>
-      </section>
-    )
-  }
-
-  {
     featuredProjects.length > 0 && (
-      <section class="featured-projects">
+      <section class="home-section">
         <div class="container">
-          <div class="section-header">
-            <h2>{t("pages.home.featuredProjects")}</h2>
+          <div class="home-section__head">
+            <h2 class="section-title standard">
+              {t("pages.home.featuredProjects")}
+            </h2>
             <a
               href={translatePath("/github/")}
-              class="btn btn-link"
+              class="home-section__link"
             >
               {t("pages.home.viewAllRepos")}
             </a>
@@ -203,129 +187,248 @@ const personSchema = [
       </section>
     )
   }
+
+  {
+    latestPosts.length > 0 && (
+      <section class="home-section">
+        <div class="container">
+          <div class="home-section__head">
+            <h2 class="section-title standard">
+              {t("pages.home.latestFromBlog")}
+            </h2>
+            <a
+              href={translatePath("/blog/")}
+              class="home-section__link"
+            >
+              {t("pages.home.viewAllPosts")}
+            </a>
+          </div>
+          <div class="grid-layout">
+            {latestPosts.map((post) => (
+              <PostCard post={post} />
+            ))}
+          </div>
+        </div>
+      </section>
+    )
+  }
 </BaseLayout>
 
 <style>
+  /* ---------- Hero ---------- */
   .hero {
-    padding: var(--space-xl) 0;
-    background-color: var(--color-bg-secondary);
+    position: relative;
+    padding: var(--space-xl) 0 var(--space-lg-xl);
+    overflow: hidden;
   }
 
-  .hero-content {
+  .hero__inner {
+    position: relative;
+    z-index: 1;
     display: grid;
-    grid-template-columns: 1.5fr 1fr;
+    grid-template-columns: 1.15fr 0.85fr;
     gap: var(--space-xl);
-    align-items: start;
-    margin-bottom: var(--space-xl);
-  }
-
-  .social-links-row {
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--space-md);
     align-items: center;
-    justify-content: flex-start;
-    min-height: 44px;
-    margin-top: var(--space-lg);
   }
 
-  .social-links-row span {
-    flex-shrink: 0;
-    width: 1.2rem;
-    height: 1.2rem;
-  }
-
-  .hero-text {
+  .hero__text {
     display: flex;
     flex-direction: column;
-    min-height: fit-content;
+    align-items: flex-start;
+    min-width: 0;
   }
 
-  .hero-text h1 {
-    margin-bottom: var(--space-md);
-    font-size: 3rem;
-    line-height: 1.2;
+  /* Availability status pill — teal dot + text (never colour alone) */
+  .hero__status {
+    display: inline-flex;
+    gap: var(--space-sm);
+    align-items: center;
+    padding: var(--space-xs) var(--space-md);
+    margin: 0 0 var(--space-md-lg);
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
+    color: var(--color-text);
+    background: color-mix(in srgb, var(--teal) 8%, var(--color-bg-secondary));
+    border: 1px solid color-mix(in srgb, var(--teal) 32%, var(--color-border));
+    border-radius: 999px;
   }
 
-  .subtitle {
-    min-height: 2.8em;
-    margin-bottom: var(--space-md);
-    font-size: 1.5rem;
+  .hero__status-dot {
+    flex-shrink: 0;
+    width: 0.5rem;
+    height: 0.5rem;
+    background: var(--teal);
+    border-radius: 50%;
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--teal) 22%, transparent);
+  }
+
+  .hero__title {
+    margin: 0 0 var(--space-md);
+    font-family: var(--font-display);
+    font-size: clamp(2.5rem, 6vw, 3.75rem);
+    font-weight: var(--fw-bold);
+    line-height: 1.04;
+    letter-spacing: -0.03em;
+  }
+
+  .hero__subtitle {
+    margin: 0 0 var(--space-md);
+    font-size: 1.375rem;
     line-height: 1.4;
     color: var(--color-text);
   }
 
-  .bio {
-    font-size: 1.1rem;
-    line-height: 1.6;
-    transition: none !important;
+  .hero__subtitle :global(strong) {
+    font-weight: var(--fw-semibold);
+    color: var(--color-accent);
   }
 
-  .bio p {
-    margin-bottom: var(--space-md);
+  .hero__bio {
+    max-width: 60ch;
+    font-size: 1.0625rem;
+    line-height: 1.65;
   }
 
-  .profile-image.centered {
+  .hero__bio :global(p) {
+    margin: 0 0 var(--space-md);
+  }
+
+  .hero__bio :global(strong) {
+    font-weight: var(--fw-semibold);
+    color: var(--color-accent);
+  }
+
+  .hero__cta {
     display: flex;
-    align-items: center;
-    justify-content: center;
+    flex-wrap: wrap;
+    gap: var(--space-md);
+    margin-top: var(--space-md-lg);
   }
 
-  .profile-image img {
-    width: 100%;
-    max-width: 350px;
-    height: auto;
-    aspect-ratio: 1/1;
-    object-fit: cover;
-    border: 4px solid var(--color-border);
+  .hero__cta span[class^="i-"] {
+    flex-shrink: 0;
+    width: 1.05rem;
+    height: 1.05rem;
+    transition: transform var(--dur-2) var(--ease-out);
+  }
+
+  .hero__cta .btn-primary:hover span[class^="i-"] {
+    transform: translateX(3px);
+  }
+
+  /* ---------- Terminal "whoami" card ---------- */
+  .terminal {
+    min-width: 0;
+    margin: 0;
+    overflow: hidden;
+    font-family: var(--font-mono);
+    background: var(--color-surface-2);
+    border: 1px solid var(--color-border);
     border-radius: var(--radius-lg);
-    box-shadow: 0 20px 40px rgb(0 0 0 / 30%);
-    transition: none !important;
+    box-shadow: var(--sh-card);
   }
 
-  .hero-image {
+  .terminal__bar {
     display: flex;
-    width: 100%;
-    height: 100%;
-    aspect-ratio: 1 / 1;
-  }
-
-  section {
-    padding: var(--space-lg) 0;
-  }
-
-  h2 {
-    position: relative;
-    display: inline-block;
-    margin-bottom: var(--space-lg);
-    font-size: 2rem;
-  }
-
-  h2::after {
-    position: absolute;
-    bottom: -8px;
-    left: 0;
-    width: 40px;
-    height: 4px;
-    content: "";
-    background-color: var(--color-primary);
-    border-radius: 2px;
-  }
-
-  .latest-posts,
-  .featured-projects {
-    padding: var(--space-xl) 0;
-  }
-
-  .section-header {
-    display: flex;
+    gap: var(--space-md);
     align-items: center;
-    justify-content: space-between;
-    margin-bottom: var(--space-xl);
+    padding: var(--space-sm) var(--space-md);
+    background: var(--color-bg-secondary);
+    border-bottom: 1px solid var(--color-hair);
   }
 
-  .section-header h2 {
+  .terminal__dots {
+    display: inline-flex;
+    gap: 0.4rem;
+  }
+
+  .terminal__dot {
+    width: 0.7rem;
+    height: 0.7rem;
+    border-radius: 50%;
+  }
+
+  .terminal__dot--red {
+    background: color-mix(in srgb, var(--color-text-muted) 55%, transparent);
+  }
+
+  .terminal__dot--amber {
+    background: var(--color-accent);
+  }
+
+  .terminal__dot--teal {
+    background: var(--teal);
+  }
+
+  .terminal__path {
+    font-size: 0.8125rem;
+    color: var(--color-text-muted);
+  }
+
+  .terminal__body {
+    padding: var(--space-md-lg) var(--space-md-lg) var(--space-lg);
+    font-size: 0.9375rem;
+    line-height: 1.5;
+  }
+
+  .terminal__cmd {
+    margin: 0 0 var(--space-md);
+    color: var(--color-text);
+  }
+
+  .terminal__prompt {
+    color: var(--color-text);
+  }
+
+  .terminal__grid {
+    display: grid;
+    grid-template-columns: max-content 1fr;
+    gap: var(--space-sm) var(--space-md-lg);
+    margin: 0;
+  }
+
+  .terminal__grid dt {
+    color: var(--color-text);
+  }
+
+  .terminal__grid dd {
+    margin: 0;
+    color: var(--color-text-heading);
+  }
+
+  /* ---------- Featured / Latest sections ---------- */
+  .home-section {
+    padding: var(--space-lg-xl) 0;
+  }
+
+  .home-section__head {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-sm) var(--space-md);
+    align-items: baseline;
+    justify-content: space-between;
+    padding-bottom: var(--space-md);
+    margin-bottom: var(--space-lg);
+    border-bottom: 1px solid var(--color-hair);
+  }
+
+  .home-section__head .section-title {
     margin-bottom: 0;
+  }
+
+  .home-section__link {
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
+    font-weight: var(--fw-medium);
+    color: var(--color-accent);
+    letter-spacing: 0.02em;
+    text-decoration: none;
+    border-radius: var(--radius-sm);
+  }
+
+  .home-section__link:hover {
+    text-decoration: underline;
+    text-underline-offset: 3px;
   }
 
   .grid-layout {
@@ -334,50 +437,19 @@ const personSchema = [
     gap: var(--space-lg);
   }
 
-  .btn-link {
-    font-weight: var(--fw-semibold);
-    color: var(--color-primary);
-    text-decoration: none;
-    border-radius: 4px;
-  }
-
-  .btn-link:hover {
-    text-decoration: underline;
-  }
-
-  .btn-link:focus-visible {
-    text-decoration: underline;
-    outline: 2px solid var(--color-primary);
-    outline-offset: 2px;
-  }
-
-  @media (width <= 768px) {
-    .hero-content {
+  /* ---------- Responsive ---------- */
+  @media (width <= 860px) {
+    .hero__inner {
       grid-template-columns: 1fr;
-      text-align: center;
+      gap: var(--space-lg);
     }
 
-    .profile-image {
-      order: -1;
-      width: 200px;
-      max-width: 200px;
-      min-height: 200px;
-      aspect-ratio: 1 / 1;
-      margin: 0 auto var(--space-lg) auto;
+    .terminal {
+      order: 2;
     }
 
-    .social-links-row {
-      justify-content: center;
-      min-height: auto;
-    }
-
-    .bio {
-      text-align: left;
-    }
-
-    .hero-text {
-      min-height: auto;
-      text-align: center;
+    .hero__subtitle {
+      font-size: 1.25rem;
     }
   }
 </style>

@@ -14,7 +14,7 @@ const tags = getUniqueTags(posts);
 ---
 
 <div class="tag-cloud">
-  <h3>{t("pages.blog.topicsTitle")}</h3>
+  <h2>{t("pages.blog.topicsTitle")}</h2>
   <div class="tags">
     {
       tags.map(({ tag, count }) => (
@@ -37,150 +37,72 @@ const tags = getUniqueTags(posts);
 </div>
 
 <style>
-  /* Base/Mobile Styles */
   .tag-cloud {
-    position: relative;
     width: 100%;
-
-    /* Ensure we span full width to edges if possible, or just contain nicely */
   }
 
-  /* Gradient Fade for Mobile */
-  .tag-cloud::after {
-    position: absolute;
-    top: 0;
-    right: 0;
-    bottom: 0;
-    z-index: 10;
-    width: 80px;
-    pointer-events: none;
-    content: "";
-    background: linear-gradient(to right, transparent, var(--color-bg));
-  }
-
-  h3 {
-    /* Visually hidden on mobile but accessible to screen readers */
+  /* Section label — visually hidden; the chips are self-evident, screen
+     readers still get the grouping context. */
+  h2 {
     position: absolute;
     width: 1px;
     height: 1px;
     padding: 0;
     margin: -1px;
     overflow: hidden;
-
-    /* Text styles (applied when visible on desktop) */
-    font-size: 0.9rem;
-    font-weight: var(--fw-bold);
-    color: var(--color-text-muted);
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
     white-space: nowrap;
     border: 0;
     clip-path: inset(50%);
   }
 
   .tags {
-    display: grid;
-    grid-template-rows: repeat(2, auto); /* restore 2-row layout */
-    grid-auto-flow: column;
+    display: flex;
+    flex-wrap: wrap;
     gap: var(--space-sm);
-    padding-right: var(--space-xl); /* Space for gradient */
-    padding-bottom: var(--space-sm);
-    overflow-x: auto;
-    scrollbar-width: none;
   }
 
-  .tags::-webkit-scrollbar {
-    display: none;
-  }
-
+  /* Mono pill chip: "# tag  count" */
   .tag {
     display: inline-flex;
     gap: var(--space-sm);
     align-items: center;
-    width: max-content;
-    padding: 0.35rem 0.8rem;
-    font-size: 0.85rem;
+    padding: 0.4rem 0.85rem;
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
+    color: var(--color-text);
     white-space: nowrap;
     text-decoration: none;
     background: var(--color-bg-secondary);
-    border: 1px solid var(--border-color, rgb(255 255 255 / 10%));
-    border-radius: 9999px;
-    transition: all 0.2s ease;
+    border: var(--border-1);
+    border-radius: 100px;
+    transition:
+      color var(--dur-2) var(--ease-out),
+      border-color var(--dur-2) var(--ease-out),
+      background-color var(--dur-2) var(--ease-out);
+  }
+
+  .tag:hover {
+    color: var(--color-text-heading);
+    background: var(--color-surface-2);
+    border-color: var(--color-accent);
+  }
+
+  .tag:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
   }
 
   .hash {
-    color: var(--color-primary);
-    opacity: 80%;
+    font-weight: var(--fw-semibold);
+    color: var(--color-accent);
   }
 
   .count {
-    padding: 0.1rem var(--space-sm);
     font-size: 0.75rem;
-    background: rgb(0 0 0 / 10%);
-    border-radius: 9999px;
-    opacity: 70%;
+    color: var(--color-text-muted);
   }
 
-  /* Desktop Styles (Sidebar List) */
-  @media (width >= 900px) {
-    .tag-cloud {
-      position: sticky;
-      top: var(--space-lg);
-      background: transparent;
-    }
-
-    .tag-cloud::after {
-      display: none; /* No gradient on desktop */
-    }
-
-    h3 {
-      /* Reset visually-hidden styles */
-      position: static;
-      width: auto;
-      height: auto;
-      padding: 0 0 0 0.75rem;
-      margin: 0 0 var(--space-md) 0;
-      overflow: visible;
-      white-space: normal;
-      clip-path: none;
-    }
-
-    .tags {
-      display: flex;
-      flex-direction: column;
-      gap: var(--space-xs);
-      padding-right: 0;
-      padding-bottom: 0;
-      overflow-x: visible;
-    }
-
-    .tag {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      width: 100%;
-      padding: var(--space-sm) 0.75rem;
-      background: transparent;
-      border: 1px solid transparent;
-      border-radius: var(--radius-md);
-    }
-
-    .tag:hover {
-      color: var(--color-text-heading);
-      background: var(--color-bg-secondary);
-      transform: translateX(4px);
-    }
-
-    .tag:hover .hash {
-      opacity: 100%;
-    }
-
-    .count {
-      background: var(--color-bg-subtle, rgb(255 255 255 / 5%));
-    }
-
-    .tag:hover .count {
-      background: var(--color-bg, transparent);
-    }
+  .tag:hover .count {
+    color: var(--color-text);
   }
 </style>

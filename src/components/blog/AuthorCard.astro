@@ -96,8 +96,8 @@ const externalRel = "external noopener noreferrer";
     align-items: flex-start;
     padding: var(--space-md-lg);
     margin-block-start: var(--space-lg);
-    background: var(--color-bg-subtle);
-    border: var(--border-1);
+    background: var(--color-bg-secondary);
+    border: 1px solid var(--color-hair);
     border-radius: var(--radius-lg);
   }
 
@@ -115,11 +115,12 @@ const externalRel = "external noopener noreferrer";
 
   .author-card__eyebrow {
     margin: 0;
-    font-size: 0.8rem;
-    font-weight: var(--fw-semibold);
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    font-weight: var(--fw-medium);
     color: var(--color-text-muted);
     text-transform: uppercase;
-    letter-spacing: 0.04em;
+    letter-spacing: 0.16em;
   }
 
   .author-card__name {
@@ -131,13 +132,15 @@ const externalRel = "external noopener noreferrer";
   }
 
   .author-card__fullname {
+    font-family: var(--font-display);
     font-weight: var(--fw-bold);
     color: var(--color-text-heading);
   }
 
   .author-card__role {
-    font-size: 0.9rem;
-    color: var(--color-primary);
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+    color: var(--color-accent);
   }
 
   .author-card__bio {
@@ -150,12 +153,13 @@ const externalRel = "external noopener noreferrer";
     display: flex;
     flex-wrap: wrap;
     gap: var(--space-md);
-    font-size: 0.9rem;
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
   }
 
   .author-card__links a {
     font-weight: var(--fw-medium);
-    color: var(--color-primary);
+    color: var(--color-accent);
     text-decoration: none;
   }
 
@@ -166,7 +170,8 @@ const externalRel = "external noopener noreferrer";
 
   .author-card__disclosure {
     margin: var(--space-md) 0 0;
-    font-size: 0.8rem;
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
     font-style: italic;
     color: var(--color-text-muted);
   }

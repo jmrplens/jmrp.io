@@ -80,7 +80,13 @@ const schema = {
 >
   <div class="content-wrapper">
     <header class="page-header">
-      <h1 class="text-primary">#{tag}</h1>
+      <div
+        class="lab-grid"
+        aria-hidden="true"
+      >
+      </div>
+      <p class="kicker section-title">{t("pages.blog.kicker")}</p>
+      <h1>#{tag}</h1>
       <p class="subtitle">
         {posts.length}
         {postWord}
@@ -93,13 +99,54 @@ const schema = {
       </div>
     </header>
 
-    <div class="blog-layout">
-      <div class="posts-container">
-        <PostGrid posts={posts} />
-      </div>
-      <aside>
-        <TagCloud />
-      </aside>
+    <div class="blog-body">
+      <TagCloud />
+      <PostGrid posts={posts} />
     </div>
   </div>
 </BaseLayout>
+
+<style>
+  /* Left-aligned "Lab" header with mono kicker + ambient grid.
+     Overrides the centered defaults from blog.css. */
+  .page-header {
+    position: relative;
+    padding-bottom: var(--space-md-lg);
+    overflow: hidden;
+    text-align: left;
+    border-bottom: 1px solid var(--color-hair);
+  }
+
+  .page-header > .lab-grid {
+    z-index: 0;
+  }
+
+  .page-header :where(.kicker, h1, .subtitle, .back-link) {
+    position: relative;
+    z-index: 1;
+  }
+
+  .kicker {
+    margin-bottom: var(--space-sm);
+  }
+
+  .page-header h1 {
+    margin-bottom: var(--space-sm);
+    font-family: var(--font-mono);
+    font-size: clamp(1.75rem, 3.6vw, 2.75rem);
+    font-weight: var(--fw-semibold);
+    color: var(--color-text-heading);
+    letter-spacing: -0.01em;
+  }
+
+  .subtitle {
+    font-size: 1.0625rem;
+    color: var(--color-text);
+  }
+
+  .blog-body {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-lg);
+  }
+</style>

@@ -391,9 +391,13 @@ export const common = {
       viewAllPosts: "Ver todas las entradas →",
       featuredProjects: "Proyectos destacados",
       viewAllRepos: "Ver todos los repositorios →",
+      availability: "Disponible para proyectos · Alicante (UTC+1)",
+      terminalRole: "Ing. Firmware / Software",
+      terminalLabel: "Resumen de perfil",
     },
     blog: {
       title: "Blog",
+      kicker: "Notas",
       subtitle: "Reflexiones, tutoriales y notas de ingeniería.",
       topicsTitle: "Temas",
       aiDisclaimer:
@@ -452,6 +456,7 @@ export const common = {
     },
     github: {
       title: "Repositorios de GitHub",
+      kicker: "Código abierto",
       description:
         "Proyectos y contribuciones open source de José Manuel Requena Plens. Herramientas de acústica, utilidades DevOps y recursos comunitarios.",
       schemaDescription:
@@ -653,6 +658,7 @@ export const common = {
     },
     publications: {
       title: "Publicaciones",
+      kicker: "Investigación",
       description:
         "Publicaciones académicas de José Manuel Requena Plens. Temas: acústica, metamateriales, ultrasonidos y mitigación de ruido para la ESA.",
       schemaDescription:
@@ -685,6 +691,16 @@ export const common = {
       categoryNetwork: "Herramientas de red y servidor",
       categoryEmbedded: "Herramientas embebidas e industriales",
       categoryMikrotik: "Herramientas MikroTik",
+      shortSecurity: "seguridad",
+      shortDeveloper: "dev",
+      shortNetwork: "red",
+      shortEmbedded: "embebido",
+      shortMikrotik: "mikrotik",
+      statusPrivacy: "privacy-first",
+      statusTelemetry: "0 telemetría",
+      filterAll: "todas",
+      filterLabel: "Filtrar herramientas por categoría",
+      categoryLabel: "Categoría",
     },
     toolsCategory: {
       toolSingular: "herramienta",
