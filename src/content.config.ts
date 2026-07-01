@@ -171,7 +171,6 @@ const site_config = defineCollection({
       theme_color: z.string(),
       background_color: z.string().optional(),
       twitter_creator: z.string(),
-      logo_text: z.string(),
       nav: z.array(z.object({ label: z.string(), href: z.string() })),
       hero: z.object({
         title: z.string(),

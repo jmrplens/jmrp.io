@@ -75,8 +75,6 @@ shortcuts:
     url: "/publications/"
     description: "Research papers and co-authors"
 
-logo_text: "<JMRP />"
-
 nav:
   - label: "Home"
     href: "/"

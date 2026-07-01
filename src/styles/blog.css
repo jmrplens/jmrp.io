@@ -25,13 +25,6 @@
   color: var(--color-text-muted);
 }
 
-.blog-layout {
-  display: grid;
-  grid-template-columns: 1fr 300px;
-  gap: var(--space-lg-xl);
-  align-items: start;
-}
-
 .tags {
   display: flex;
   flex-wrap: wrap;
@@ -78,21 +71,6 @@
 @media (width <=900px) {
   .page-header {
     margin-bottom: var(--space-md);
-  }
-
-  .blog-layout {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-md);
-  }
-
-  /* Only apply sticky to the sidebar in blog-layout, not all asides (e.g., Prerequisite) */
-  .blog-layout > aside {
-    position: sticky;
-    top: 0;
-    z-index: 10;
-    order: -1;
-    width: 100%;
   }
 }
 
