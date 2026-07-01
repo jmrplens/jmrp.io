@@ -170,6 +170,109 @@
   color: var(--color-accent);
 }
 
+/* ===== Edge-defense spotlight (InfrastructureInsights) ===== */
+.edge-flow {
+  margin: 0 0 var(--space-md-lg);
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  line-height: 1.6;
+  color: var(--color-text-muted);
+}
+
+.edge-cols {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: var(--space-md);
+  margin-bottom: var(--space-xl);
+}
+
+.edge-col {
+  padding: var(--space-md-lg);
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+}
+
+.edge-col__head {
+  display: flex;
+  gap: var(--space-sm);
+  align-items: center;
+  padding-bottom: var(--space-md);
+  margin-bottom: var(--space-xs);
+  border-bottom: 1px solid var(--color-hair);
+}
+
+.edge-col__icon {
+  font-size: 1.5rem;
+  color: var(--color-accent);
+}
+
+.edge-col__heading {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.2;
+}
+
+.edge-col__title {
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  font-weight: var(--fw-bold);
+  color: var(--color-text-heading);
+}
+
+.edge-col__sub {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+}
+
+.edge-rows {
+  margin: 0;
+}
+
+.edge-row {
+  display: flex;
+  gap: var(--space-md);
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-sm) 0;
+  font-size: 0.9rem;
+  border-bottom: 1px solid var(--color-hair);
+}
+
+.edge-row:last-child {
+  border-bottom: 0;
+}
+
+.edge-row dt {
+  margin: 0;
+  color: var(--color-text-muted);
+}
+
+.edge-row dd {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-weight: var(--fw-semibold);
+  color: var(--color-text-heading);
+  text-align: right;
+}
+
+.edge-regions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+  align-items: center;
+  padding-top: var(--space-md);
+  margin-top: var(--space-sm);
+  border-top: 1px solid var(--color-hair);
+}
+
+.edge-regions__label {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+}
+
 /* Color utility classes - using variables only */
 .color-warning {
   color: var(--color-status-warning);

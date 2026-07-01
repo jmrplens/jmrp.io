@@ -196,6 +196,23 @@ test.describe("Keyboard Navigation Accessibility", () => {
       });
     });
 
+    // The edge-defense spotlight also pulls the MikroTik (network-layer) data.
+    await page.route("**/api/homelab/mikrotik", async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          honeypot_hits: 700,
+          port_scanners_dropped: 500,
+          blacklist_scanners: 60,
+          crowdsec_blocked: 12_000,
+          active_connections: 300,
+          wan_rx_bytes: 1024 * 1024 * 1024,
+          wan_tx_bytes: 512 * 1024 * 1024,
+        }),
+      });
+    });
+
     await page.goto("/homelab/");
 
     // 1. Find the infrastructure section (first one is InfrastructureInsights/Nginx)
@@ -218,23 +235,26 @@ test.describe("Keyboard Navigation Accessibility", () => {
     await expect(tarpitLink).toBeVisible({ timeout: 10_000 });
     await expect(honeypotLink).toBeVisible({ timeout: 10_000 });
 
-    // Start navigation
-    await tarpitLink.focus();
-    await expect(tarpitLink).toBeFocused();
-    await expect(tarpitLink).toHaveAttribute(
+    // Start navigation at the first link in DOM order: the MikroTik column's
+    // "Port Scanners" (honeypot blog post) precedes the CrowdSec column's tarpit.
+    await honeypotLink.focus();
+    await expect(honeypotLink).toBeFocused();
+    await expect(honeypotLink).toHaveAttribute(
       "aria-label",
-      /Read blog post about implementing Nginx Tarpit/i,
+      /Read blog post about MikroTik Port Scanner Honeypot/i,
     );
 
-    // Tab to next link
+    // Tab to the next focusable link: Tarpit Hits (tarpit blog post).
     await page.keyboard.press("Tab");
 
     // Re-locate to handle potential hydration re-renders
-    const freshHoneypotLink = section.locator('a[href*="mikrotik-honeypot"]');
-    await expect(freshHoneypotLink).toBeFocused();
-    await expect(freshHoneypotLink).toHaveAttribute(
+    const freshTarpitLink = section.locator(
+      'a[href*="implementing-tarpit-nginx"]',
+    );
+    await expect(freshTarpitLink).toBeFocused();
+    await expect(freshTarpitLink).toHaveAttribute(
       "aria-label",
-      /Read blog post about MikroTik Port Scanner Honeypot/i,
+      /Read blog post about implementing Nginx Tarpit/i,
     );
 
     // 3. Run Axe on the section

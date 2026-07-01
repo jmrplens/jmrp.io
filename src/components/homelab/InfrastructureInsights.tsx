@@ -90,6 +90,30 @@ export interface InfrastructureTranslations {
   statusUnknown: string;
   /** Label for CPU temperature. */
   cpuTemp: string;
+  /** Kicker for the edge-defense spotlight (rendered as a mono `// ` label). */
+  edgeDefense: string;
+  /** One-line description of the defense data flow. */
+  flowBand: string;
+  /** Title of the MikroTik (network-layer) column. */
+  mikrotikTitle: string;
+  /** Sub-label for the MikroTik column (e.g. "network layer · honeypot"). */
+  mikrotikLayer: string;
+  /** Title of the CrowdSec + NGINX (application-layer) column. */
+  crowdsecTitle: string;
+  /** Sub-label for the CrowdSec column (e.g. "application layer · WAF"). */
+  crowdsecLayer: string;
+  /** Label for the honeypot hits metric. */
+  honeypotHits: string;
+  /** Label for the blacklisted scanners metric. */
+  blacklistScanners: string;
+  /** Label for the active connections metric. */
+  activeConnections: string;
+  /** Label for the WAN 24h traffic metric. */
+  wanTraffic: string;
+  /** Label for the CrowdSec blocked-IPs metric. */
+  crowdsecBlocked: string;
+  /** Status text shown when the WAF is healthy. */
+  healthy: string;
 }
 
 /** Component props */
@@ -116,6 +140,27 @@ interface HomelabStats {
   mem_used_percent: number;
   cpu_temp: number | null;
   top_security_countries: Country[];
+}
+
+/** MikroTik edge-router stats (network layer + honeypot) for the spotlight. */
+interface MikrotikStats {
+  honeypot_hits: number;
+  port_scanners_dropped: number;
+  blacklist_scanners: number;
+  crowdsec_blocked: number;
+  active_connections: number;
+  wan_rx_bytes: number;
+  wan_tx_bytes: number;
+}
+
+/** Light validation for the MikroTik payload (spotlight is best-effort). */
+function isValidMikrotik(data: unknown): data is MikrotikStats {
+  if (!data || typeof data !== "object") return false;
+  const d = data as Record<string, unknown>;
+  return (
+    typeof d.honeypot_hits === "number" &&
+    typeof d.crowdsec_blocked === "number"
+  );
 }
 
 /**
@@ -235,6 +280,7 @@ function getStatusLabel(
  */
 export default function InfrastructureInsights({ translations: t }: Props) {
   const [stats, setStats] = useState<HomelabStats | null>(null);
+  const [mikrotik, setMikrotik] = useState<MikrotikStats | null>(null);
   const [error, setError] = useState(false);
   const isFetchingRef = useRef(false);
 
@@ -242,6 +288,25 @@ export default function InfrastructureInsights({ translations: t }: Props) {
     const controller = new AbortController();
     // Refresh interval in milliseconds (30 seconds)
     const REFRESH_INTERVAL = 30_000;
+
+    const fetchMikrotik = async (headers: Record<string, string>) => {
+      try {
+        const mkRes = await fetch("/api/homelab/mikrotik", {
+          signal: controller.signal,
+          headers,
+        });
+        if (mkRes.ok) {
+          const mkData = (await mkRes.json()) as unknown;
+          if (isValidMikrotik(mkData)) setMikrotik(mkData);
+        }
+      } catch (mkError: unknown) {
+        if (!(
+          mkError instanceof DOMException && mkError.name === "AbortError"
+        )) {
+          console.error("Failed to fetch MikroTik stats", mkError);
+        }
+      }
+    };
 
     const fetchStats = async () => {
       if (isFetchingRef.current) return;
@@ -251,9 +316,10 @@ export default function InfrastructureInsights({ translations: t }: Props) {
         const token =
           document.querySelector<HTMLElement>("[data-homelab-token]")?.dataset
             .homelabToken ?? "";
+        const headers = { "X-Homelab-Token": token };
         const res = await fetch("/api/homelab/stats", {
           signal: controller.signal,
-          headers: { "X-Homelab-Token": token },
+          headers,
         });
         if (res.ok) {
           const data = (await res.json()) as unknown;
@@ -267,6 +333,10 @@ export default function InfrastructureInsights({ translations: t }: Props) {
         } else {
           setError(true);
         }
+
+        // MikroTik edge-router data feeds the network-layer spotlight column
+        // (best-effort; a failure never blocks the main stats view).
+        await fetchMikrotik(headers);
       } catch (error: unknown) {
         if (error instanceof DOMException && error.name === "AbortError") {
           return;
@@ -302,12 +372,6 @@ export default function InfrastructureInsights({ translations: t }: Props) {
 
   const countries = stats?.top_security_countries || [];
 
-  const totalSecurityBlocks = stats
-    ? (stats.nginx_bans_24h || 0) +
-      (stats.tarpit_hits_24h || 0) +
-      (stats.mikrotik_scans_total || 0)
-    : null;
-
   const systemStatus = getStatus(
     stats?.cpu_usage_avg,
     stats?.mem_used_percent,
@@ -337,9 +401,142 @@ export default function InfrastructureInsights({ translations: t }: Props) {
 
   return (
     <section
-      className="infrastructure-section"
+      className="infrastructure-section edge-defense"
       aria-label={t.ariaLabel}
     >
+      <p className="section-title">{t.edgeDefense}</p>
+      <p className="edge-flow">{t.flowBand}</p>
+
+      <div className="edge-cols">
+        {/* Network layer — MikroTik + honeypot */}
+        <article
+          className="edge-col"
+          aria-labelledby="edge-mikrotik-title"
+        >
+          <header className="edge-col__head">
+            <span
+              className="i-simple-icons:mikrotik edge-col__icon"
+              aria-hidden="true"
+            />
+            <span className="edge-col__heading">
+              <span
+                className="edge-col__title"
+                id="edge-mikrotik-title"
+              >
+                {t.mikrotikTitle}
+              </span>
+              <span className="edge-col__sub">{t.mikrotikLayer}</span>
+            </span>
+          </header>
+          <dl className="edge-rows">
+            <div className="edge-row">
+              <dt>{t.honeypotHits}</dt>
+              <dd>{displayVal(mikrotik?.honeypot_hits)}</dd>
+            </div>
+            <div className="edge-row">
+              <dt>
+                <a
+                  href={t.portScannerBlogUrl}
+                  className="insight-link"
+                  aria-label={t.portScannerBlogAria}
+                >
+                  {t.portScanners}
+                </a>
+              </dt>
+              <dd>{displayVal(mikrotik?.port_scanners_dropped)}</dd>
+            </div>
+            <div className="edge-row">
+              <dt>{t.blacklistScanners}</dt>
+              <dd>{displayVal(mikrotik?.blacklist_scanners)}</dd>
+            </div>
+            <div className="edge-row">
+              <dt>{t.wanTraffic}</dt>
+              <dd>
+                {mikrotik ? `${formatBytes(mikrotik.wan_rx_bytes)} ↓` : "..."}
+              </dd>
+            </div>
+            <div className="edge-row">
+              <dt>{t.activeConnections}</dt>
+              <dd>{displayVal(mikrotik?.active_connections)}</dd>
+            </div>
+          </dl>
+        </article>
+
+        {/* Application layer — CrowdSec WAF + NGINX */}
+        <article
+          className="edge-col"
+          aria-labelledby="edge-crowdsec-title"
+        >
+          <header className="edge-col__head">
+            <span
+              className="i-mdi:shield-outline edge-col__icon"
+              aria-hidden="true"
+            />
+            <span className="edge-col__heading">
+              <span
+                className="edge-col__title"
+                id="edge-crowdsec-title"
+              >
+                {t.crowdsecTitle}
+              </span>
+              <span className="edge-col__sub">{t.crowdsecLayer}</span>
+            </span>
+          </header>
+          <dl className="edge-rows">
+            <div className="edge-row">
+              <dt>{t.crowdsecBlocked}</dt>
+              <dd>{displayVal(mikrotik?.crowdsec_blocked)}</dd>
+            </div>
+            <div className="edge-row">
+              <dt>{t.requestsReceived}</dt>
+              <dd>{displayVal(stats?.requests_received_24h)}</dd>
+            </div>
+            <div className="edge-row">
+              <dt>
+                <a
+                  href={t.tarpitBlogUrl}
+                  className="insight-link"
+                  aria-label={t.tarpitBlogAria}
+                >
+                  {t.tarpitHits}
+                </a>
+              </dt>
+              <dd>{displayVal(stats?.tarpit_hits_24h)}</dd>
+            </div>
+            <div className="edge-row">
+              <dt>{t.nginxBans}</dt>
+              <dd>{displayVal(stats?.nginx_bans_24h)}</dd>
+            </div>
+            <div className="edge-row">
+              <dt>{t.availability}</dt>
+              <dd>
+                <span className="edge-status color-success">{t.healthy}</span>
+              </dd>
+            </div>
+          </dl>
+          {countries.length > 0 && (
+            <div className="edge-regions">
+              <span className="edge-regions__label">{t.attackRegions}</span>
+              <ul
+                className="country-list"
+                aria-label={t.attackRegionsList}
+              >
+                {countries.map((c) => (
+                  <li
+                    key={c.code}
+                    className="country-badge"
+                    aria-label={`${c.code} — ${c.count} ${t.hits}`}
+                    title={`${c.count} ${t.hits}`}
+                  >
+                    {c.code}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </article>
+      </div>
+
       <div className="insights-grid">
         <article
           className="insight-card"
@@ -390,88 +587,6 @@ export default function InfrastructureInsights({ translations: t }: Props) {
               <output aria-labelledby="label-bandwidth-down">
                 {displayVal(stats?.bandwidth_recv_24h, formatBytes)}
               </output>
-            </div>
-          </div>
-        </article>
-
-        <article
-          className="insight-card security"
-          aria-labelledby="label-security"
-        >
-          <span
-            className="insight-label"
-            id="label-security"
-          >
-            {t.securityBlocks}
-          </span>
-          <div className="insight-value">
-            <span className="sr-only">
-              {totalSecurityBlocks?.toLocaleString() ?? t.loading}{" "}
-              {t.totalSecurityBlocks}
-            </span>
-            <span aria-hidden="true">
-              {totalSecurityBlocks?.toLocaleString() ?? "..."}{" "}
-              <small>{t.blocks}</small>
-            </span>
-          </div>
-          <div className="insight-details">
-            <div className="detail-row">
-              <span id="label-nginx-bans">{t.nginxBans}</span>
-              <output aria-labelledby="label-nginx-bans">
-                {displayVal(stats?.nginx_bans_24h)}
-              </output>
-            </div>
-            <div className="detail-row">
-              <a
-                href={t.tarpitBlogUrl}
-                className="insight-link"
-                aria-label={t.tarpitBlogAria}
-              >
-                {t.tarpitHits}
-              </a>
-              <output
-                aria-label={`${displayVal(stats?.tarpit_hits_24h)} ${t.tarpitHitsUnit}`}
-              >
-                {displayVal(stats?.tarpit_hits_24h)}
-              </output>
-            </div>
-            <div className="detail-row">
-              <a
-                href={t.portScannerBlogUrl}
-                className="insight-link"
-                aria-label={t.portScannerBlogAria}
-              >
-                {t.portScanners}
-              </a>
-              <output
-                aria-label={`${displayVal(stats?.mikrotik_scans_total)} ${t.portScannersDetected}`}
-              >
-                {displayVal(stats?.mikrotik_scans_total)}
-              </output>
-            </div>
-            <div className="detail-row">
-              <span className="sr-only">{t.attackRegions}:</span>
-              <span aria-hidden="true">{t.attackRegions}</span>
-              <ul className="country-list">
-                <li className="sr-only">{t.attackRegionsList}</li>
-                {countries.length > 0 ? (
-                  countries.map((c) => (
-                    <li
-                      key={c.code}
-                      className="country-badge"
-                      aria-label={`${c.code} — ${c.count} ${t.hits}`}
-                      title={`${c.count} ${t.hits}`}
-                    >
-                      {c.code}
-                    </li>
-                  ))
-                ) : (
-                  <li>
-                    <span aria-hidden="true">{stats ? "-" : "..."}</span>
-                    <span className="sr-only">{t.noAttackRegions}</span>
-                  </li>
-                )}
-              </ul>
             </div>
           </div>
         </article>

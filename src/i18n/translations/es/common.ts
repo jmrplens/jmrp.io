@@ -477,6 +477,19 @@ export const common = {
     },
     homelab: {
       kicker: "Infraestructura",
+      edgeDefense: "Defensa del Edge",
+      flowBand:
+        "Honeypot MikroTik + patrones NGINX → CrowdSec · WAF → bouncers (NGINX / router / Cloudflare)",
+      mikrotikTitle: "MikroTik",
+      mikrotikLayer: "capa de red · honeypot",
+      crowdsecTitle: "CrowdSec + NGINX",
+      crowdsecLayer: "capa de aplicación · WAF",
+      honeypotHits: "Honeypot hits",
+      blacklistScanners: "Escáneres en lista negra",
+      activeConnections: "Conexiones activas",
+      wanTraffic: "WAN 24h",
+      crowdsecBlocked: "CrowdSec · IPs bloqueadas",
+      healthy: "Saludable",
       title: "Estado del Homelab",
       schemaName: "Infraestructura del Homelab",
       description:
