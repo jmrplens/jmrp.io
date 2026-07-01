@@ -131,11 +131,7 @@ export default function NodeCards({ translations: t, nodes }: Props) {
   }, [nodes]);
 
   return (
-    <div
-      className="node-grid"
-      role="group"
-      aria-label={t.ariaLabel}
-    >
+    <div className="node-grid">
       {nodes.map((node) => {
         const load = loads[node.key];
         const high = !!load && (load.cpu >= HIGH_LOAD || load.mem >= HIGH_LOAD);

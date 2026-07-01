@@ -91,7 +91,7 @@ export default function HomelabKpi({
         ]);
         if (!stats) return;
         let total = stats.tarpit_hits_24h + stats.nginx_bans_24h;
-        if (mkRes && mkRes.ok) {
+        if (mkRes?.ok) {
           const mk = pickNumbers<MikrotikSubset>(await mkRes.json(), [
             "honeypot_hits",
             "port_scanners_dropped",
@@ -135,11 +135,7 @@ export default function HomelabKpi({
   ];
 
   return (
-    <div
-      className="kpi-band"
-      role="group"
-      aria-label={t.ariaLabel}
-    >
+    <div className="kpi-band">
       {kpis.map((k) => (
         <div
           key={k.l}

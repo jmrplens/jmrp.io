@@ -354,13 +354,15 @@ const servicesSchema = {
         </p>
       </div>
 
-      <HomelabKpi
-        client:visible
-        translations={kpiTranslations}
-        servicesCount={services.length}
-        nodesCount={monitoredNodesCount}
-        uptimeValue="99.98%"
-      />
+      <section aria-label={t("pages.homelab.kpiAriaLabel")}>
+        <HomelabKpi
+          client:visible
+          translations={kpiTranslations}
+          servicesCount={services.length}
+          nodesCount={monitoredNodesCount}
+          uptimeValue="99.98%"
+        />
+      </section>
 
       <section
         class="infrastructure-insights"
