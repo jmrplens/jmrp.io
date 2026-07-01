@@ -90,6 +90,9 @@ overrides:
     language: es,en
   - filename: "src/i18n/translations/es/**"
     language: es,en
+  # About/Uses/Now pages carry inline bilingual (ES+EN) prose content
+  - filename: "src/components/pages/{About,Uses,Now}Page.astro"
+    language: es,en
   # PDF metadata script has Spanish certificate/course names
   - filename: "scripts/optimize-pdf-metadata.py"
     language: es,en
