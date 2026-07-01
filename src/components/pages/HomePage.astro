@@ -4,14 +4,16 @@
  * Displays the hero section, biography, and quick links.
  * Content is configured via `src/content/site_config/site.yaml`.
  */
-import PostCard from "@components/blog/PostCard.astro";
-import RepoCard from "@components/github/RepoCard.astro";
 import { defaultLocale, type Locale } from "@i18n/config";
 import { useTranslatedPath, useTranslations } from "@i18n/utils";
 import BaseLayout from "@layouts/BaseLayout.astro";
 import type { SiteConfig } from "@src/types";
 import { getPostsForLocale } from "@utils/blog";
-import { fetchRepositoriesByName } from "@utils/github";
+import {
+  fetchGitHubProfile,
+  fetchRepositoriesByName,
+  langColors,
+} from "@utils/github";
 import { sanitize } from "@utils/html";
 import { getSiteUrl } from "@utils/site";
 import { getEntry } from "astro:content";
@@ -20,6 +22,10 @@ import type { ProfilePage } from "schema-dts";
 const locale = (Astro.currentLocale ?? defaultLocale) as Locale;
 const t = useTranslations(locale);
 const translatePath = useTranslatedPath(locale);
+
+/** Compact "YYYY·MM·DD" date used in the latest-notes list (mockup style). */
+const dotDate = (d: Date): string =>
+  `${d.getFullYear()}·${String(d.getMonth() + 1).padStart(2, "0")}·${String(d.getDate()).padStart(2, "0")}`;
 
 const siteEntry = await getEntry("site_config", "site");
 const siteData = (siteEntry?.data || {}) as SiteConfig;
@@ -38,22 +44,29 @@ const person = siteData.person || {
 };
 
 // Fetch data concurrently with error handling for external API
-const [postEntries, featuredProjects] = await Promise.all([
+const [postEntries, featuredProjects, ghProfile] = await Promise.all([
   getPostsForLocale(locale),
   fetchRepositoriesByName(siteData.featured_projects || []).catch((error) => {
     const errorMessage = error instanceof Error ? error.message : String(error);
     console.error(`Failed to fetch featured projects: ${errorMessage}`);
     return [];
   }),
+  fetchGitHubProfile().catch(() => null),
 ]);
 
 // Process posts
-const latestPosts = postEntries.slice(0, 3).map((e) => e.post);
+const latestPosts = postEntries.slice(0, 4).map((e) => e.post);
 
 // Terminal "whoami" card — language-neutral technical facts (data, not prose).
+// The system-status lines mix a real signal (public repo count from the GitHub
+// API) with the site's own stated figures; they are a hero flourish, not a live
+// dashboard.
 const whoami = {
   focus: "ESP32 · RouterOS · MCP",
   base: "Alicante, ES",
+  uptime: "99.98%",
+  services: "24",
+  repos: ghProfile ? String(ghProfile.public_repos) : "—",
 };
 
 const personSchema = [
@@ -158,6 +171,27 @@ const personSchema = [
             <dt>base</dt>
             <dd>{whoami.base}</dd>
           </dl>
+          <div class="terminal__metrics">
+            <div class="terminal__metric">
+              <span>homelab.uptime</span>
+              <span class="terminal__ok">{whoami.uptime}</span>
+            </div>
+            <div class="terminal__metric">
+              <span>services.live</span>
+              <span class="terminal__num">{whoami.services}</span>
+            </div>
+            <div class="terminal__metric">
+              <span>repos.public</span>
+              <span class="terminal__num">{whoami.repos}</span>
+            </div>
+          </div>
+          <p class="terminal__cmd terminal__cmd--last">
+            <span class="terminal__prompt">jmrp@home:~$</span>{" "}
+            <span
+              class="terminal__cursor"
+              aria-hidden="true"
+            ></span>
+          </p>
         </div>
       </figure>
     </div>
@@ -178,9 +212,38 @@ const personSchema = [
               {t("pages.home.viewAllRepos")}
             </a>
           </div>
-          <div class="grid-layout">
+          <div class="proj-grid">
             {featuredProjects.map((repo) => (
-              <RepoCard repo={repo} />
+              <a
+                class="proj-card"
+                href={repo.html_url}
+                target="_blank"
+                rel="external noopener noreferrer"
+              >
+                <div class="proj-card__top">
+                  <span class="proj-card__metric">
+                    <span
+                      class="i-mdi:star-outline"
+                      aria-hidden="true"
+                    />
+                    {repo.stargazers_count}
+                  </span>
+                </div>
+                <h3 class="proj-card__title">{repo.name}</h3>
+                {repo.description && (
+                  <p class="proj-card__desc">{repo.description}</p>
+                )}
+                {repo.language && (
+                  <div class="proj-card__foot">
+                    <span
+                      class="proj-card__dot"
+                      style={`--lang-color:${langColors[repo.language] ?? "#8b949e"}`}
+                      aria-hidden="true"
+                    />
+                    {repo.language}
+                  </div>
+                )}
+              </a>
             ))}
           </div>
         </div>
@@ -203,11 +266,24 @@ const personSchema = [
               {t("pages.home.viewAllPosts")}
             </a>
           </div>
-          <div class="grid-layout">
+          <ul class="notes-list">
             {latestPosts.map((post) => (
-              <PostCard post={post} />
+              <li class="notes-item">
+                <span class="notes-date">
+                  {dotDate(post.data.publishedDate)}
+                </span>
+                <a
+                  class="notes-title"
+                  href={translatePath(`/blog/${post.data.slug}/`)}
+                >
+                  {post.data.title}
+                </a>
+                {post.data.tags?.[0] && (
+                  <span class="notes-tag">{post.data.tags[0]}</span>
+                )}
+              </li>
             ))}
-          </div>
+          </ul>
         </div>
       </section>
     )
@@ -396,6 +472,62 @@ const personSchema = [
     color: var(--color-text-heading);
   }
 
+  .terminal__metrics {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+    padding-top: var(--space-md);
+    margin-top: var(--space-md);
+    border-top: 1px solid var(--color-hair);
+  }
+
+  .terminal__metric {
+    display: flex;
+    justify-content: space-between;
+    color: var(--color-text-muted);
+  }
+
+  .terminal__ok {
+    color: var(--teal);
+  }
+
+  .terminal__num {
+    color: var(--color-text-heading);
+  }
+
+  .terminal__cmd--last {
+    margin: var(--space-md) 0 0;
+    color: var(--color-text-muted);
+  }
+
+  .terminal__cursor {
+    display: inline-block;
+    width: 0.55em;
+    height: 1.05em;
+    vertical-align: text-bottom;
+    background: var(--color-accent);
+    border-radius: 1px;
+    animation: home-blink 1.1s steps(1) infinite;
+  }
+
+  @keyframes home-blink {
+    0%,
+    46% {
+      opacity: 100%;
+    }
+
+    54%,
+    100% {
+      opacity: 0%;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .terminal__cursor {
+      animation: none;
+    }
+  }
+
   /* ---------- Featured / Latest sections ---------- */
   .home-section {
     padding: var(--space-lg-xl) 0;
@@ -431,10 +563,131 @@ const personSchema = [
     text-underline-offset: 3px;
   }
 
-  .grid-layout {
+  /* Featured project cards */
+  .proj-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(min(300px, 100%), 1fr));
-    gap: var(--space-lg);
+    gap: var(--space-md);
+  }
+
+  .proj-card {
+    display: flex;
+    flex-direction: column;
+    padding: var(--space-md-lg);
+    color: var(--color-text);
+    text-decoration: none;
+    background: var(--color-bg-secondary);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    transition:
+      border-color var(--dur-2) var(--ease-out),
+      box-shadow var(--dur-2) var(--ease-out),
+      transform var(--dur-2) var(--ease-out);
+  }
+
+  .proj-card:hover {
+    border-color: var(--accent-line);
+    box-shadow: var(--sh-card);
+    transform: translateY(-2px);
+  }
+
+  .proj-card__top {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: var(--space-sm);
+  }
+
+  .proj-card__metric {
+    display: inline-flex;
+    gap: 0.35em;
+    align-items: center;
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    color: var(--color-text-muted);
+  }
+
+  .proj-card__title {
+    margin: 0 0 var(--space-sm);
+    font-family: var(--font-display);
+    font-size: 1.3rem;
+    font-weight: var(--fw-medium);
+    color: var(--color-text-heading);
+    letter-spacing: -0.01em;
+  }
+
+  .proj-card__desc {
+    flex: 1;
+    margin: 0 0 var(--space-md);
+    font-size: 0.95rem;
+    line-height: 1.5;
+    color: var(--color-text);
+  }
+
+  .proj-card__foot {
+    display: flex;
+    gap: 0.5em;
+    align-items: center;
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    color: var(--color-text-muted);
+  }
+
+  .proj-card__dot {
+    width: 9px;
+    height: 9px;
+    background: var(--lang-color, var(--color-text-muted));
+    border-radius: 50%;
+  }
+
+  /* Latest notes list */
+  .notes-list {
+    padding: 0;
+    margin: 0;
+    list-style: none;
+  }
+
+  .notes-item {
+    display: grid;
+    grid-template-columns: max-content 1fr max-content;
+    gap: var(--space-md);
+    align-items: center;
+    padding: var(--space-md) 0;
+    border-bottom: 1px solid var(--color-hair);
+  }
+
+  .notes-item:last-child {
+    border-bottom: 0;
+  }
+
+  .notes-date {
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
+    color: var(--color-text-muted);
+  }
+
+  .notes-title {
+    font-size: 1.05rem;
+    color: var(--color-text-heading);
+    text-decoration: none;
+  }
+
+  .notes-title:hover {
+    color: var(--color-accent);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+
+  .notes-tag {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    color: var(--color-accent);
+  }
+
+  @media (width <= 640px) {
+    .notes-item {
+      grid-template-columns: 1fr;
+      gap: var(--space-xs);
+    }
   }
 
   /* ---------- Responsive ---------- */
