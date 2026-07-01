@@ -133,6 +133,7 @@ export default function NodeCards({ translations: t, nodes }: Props) {
   return (
     <div
       className="node-grid"
+      role="group"
       aria-label={t.ariaLabel}
     >
       {nodes.map((node) => {

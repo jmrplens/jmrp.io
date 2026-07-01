@@ -137,6 +137,7 @@ export default function HomelabKpi({
   return (
     <dl
       className="kpi-band"
+      role="group"
       aria-label={t.ariaLabel}
     >
       {kpis.map((k) => (
