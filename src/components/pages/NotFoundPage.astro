@@ -2,10 +2,16 @@
 /**
  * 404 Error Page shared component — "Lab / Engineering" terminal 404.
  * A big display "404", a mono terminal card echoing a failed `cat` on the
- * requested path, and a primary link home. The Jurassic Park "magic word"
- * audio easter egg is preserved (plays on first interaction).
+ * requested path, and a primary link home. Keeps the Jurassic Park / Dennis
+ * Nedry easter egg: the finger-wagging character plays the "magic word" sound
+ * on click (and on first page interaction).
  */
-import { nedryAudio } from "@assets/nedry-assets";
+import {
+  nedryAudio,
+  nedryBody,
+  nedryHand,
+  nedryHead,
+} from "@assets/nedry-assets";
 import { defaultLocale, type Locale } from "@i18n/config";
 import { useTranslatedPath, useTranslations } from "@i18n/utils";
 import BaseLayout from "@layouts/BaseLayout.astro";
@@ -58,6 +64,34 @@ const translatePath = useTranslatedPath(locale);
           <span class="nf-cursor"></span>
         </p>
       </div>
+
+      {
+        /* Easter egg: click Nedry to hear "ah ah ah, you didn't say the magic word". */
+      }
+      <button
+        class="nf-nedry"
+        type="button"
+        data-nedry-trigger
+        aria-label={t("aria.playSoundNedry")}
+      >
+        <span class="nf-nedry-stage">
+          <img
+            class="nf-nedry-body"
+            src={nedryBody}
+            alt={t("pages.notFound.nedryAlt")}
+          />
+          <img
+            class="nf-nedry-head"
+            src={nedryHead}
+            alt=""
+          />
+          <img
+            class="nf-nedry-hand"
+            src={nedryHand}
+            alt=""
+          />
+        </span>
+      </button>
 
       <p class="nf-message">{t("pages.notFound.message")}</p>
 
@@ -193,8 +227,74 @@ const translatePath = useTranslatedPath(locale);
     margin-top: var(--space-md-lg);
   }
 
+  /* Nedry easter-egg character (click to play the "magic word" sound) */
+  .nf-nedry {
+    display: block;
+    width: 100%;
+    max-width: 240px;
+    padding: 0;
+    margin-top: var(--space-lg);
+    cursor: pointer;
+    background: none;
+    border: 0;
+    border-radius: var(--radius-md);
+  }
+
+  .nf-nedry:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 4px;
+  }
+
+  .nf-nedry-stage {
+    position: relative;
+    display: block;
+    width: 100%;
+    aspect-ratio: 380 / 466;
+  }
+
+  .nf-nedry-body,
+  .nf-nedry-head,
+  .nf-nedry-hand {
+    position: absolute;
+  }
+
+  .nf-nedry-body {
+    inset: 0;
+    width: 100%;
+    height: 100%;
+  }
+
+  .nf-nedry-head {
+    top: 6.5%;
+    left: 31.8%;
+    width: 36.4%;
+  }
+
+  .nf-nedry-hand {
+    top: 28.7%;
+    left: 60.2%;
+    width: 22.7%;
+    transform-origin: 50% 100%;
+    animation: hand-wave 1s linear infinite;
+  }
+
+  @keyframes hand-wave {
+    0% {
+      transform: rotate(-10deg);
+    }
+
+    50% {
+      transform: rotate(14deg);
+    }
+
+    100% {
+      transform: rotate(-10deg);
+    }
+  }
+
   @media (prefers-reduced-motion: reduce) {
-    .nf-cursor {
+    .nf-cursor,
+    .nf-nedry-hand {
       animation: none;
     }
   }
@@ -221,5 +321,15 @@ const translatePath = useTranslatedPath(locale);
     ["pointerdown", "scroll", "keydown"].forEach(function (evt) {
       document.addEventListener(evt, play, once);
     });
+
+    // Click Nedry to (re)play the "magic word" sound on demand.
+    var trigger = document.querySelector("[data-nedry-trigger]");
+    if (trigger) {
+      trigger.addEventListener("click", function () {
+        if (!audio) return;
+        audio.currentTime = 0;
+        audio.play().catch(function () {});
+      });
+    }
   })();
 </script>
