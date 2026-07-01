@@ -23,8 +23,13 @@ const translatePath = useTranslatedPath(locale);
 const entries = await getPostsForLocale(locale);
 const posts = entries.map((e) => e.post);
 
+// Hero = the post flagged `featured: true` (fallback: most recent). The rest
+// keep their date order in the grid below.
+const featuredPost = posts.find((p) => p.data.featured) ?? posts[0];
+const gridPosts = posts.filter((p) => p !== featuredPost);
+
 // Optimize LCP image for preload
-const lcpPost = posts[0];
+const lcpPost = featuredPost;
 let lcpImagePreload = null;
 
 if (lcpPost && lcpPost.data.coverImage) {
@@ -126,8 +131,8 @@ const schema = {
     <div class="blog-body">
       <TagCloud />
       <p class="ai-disclaimer">{t("pages.blog.aiDisclaimer")}</p>
-      {posts[0] && <FeaturedPost post={posts[0]} />}
-      <PostGrid posts={posts.slice(1)} />
+      {featuredPost && <FeaturedPost post={featuredPost} />}
+      <PostGrid posts={gridPosts} />
     </div>
   </div>
 

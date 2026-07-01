@@ -377,9 +377,9 @@ export const common = {
     home: {
       heroTitle: "Hola, soy José Manuel.",
       heroSubtitle:
-        "Ingeniero de Firmware y Software. <br>Tendiendo puentes entre el <strong>firmware</strong>, el <strong>software</strong> y la <strong>I+D</strong>.",
+        "Ingeniero de Firmware y Software. <br>Tendiendo puentes entre el <strong>firmware</strong>, el software y la I+D.",
       heroBio1:
-        "Soy un ingeniero multidisciplinar que disfruta resolviendo problemas allá donde se cruzan el <strong>firmware</strong>, el <strong>software</strong> y la <strong>I+D</strong>. Mi trayectoria va desde la <strong>investigación académica</strong> en acústica hasta el <strong>desarrollo de firmware industrial</strong>, y esa amplitud es la que más me motiva.",
+        "Soy un ingeniero multidisciplinar que disfruta resolviendo problemas allá donde se cruzan el firmware, el software y la I+D. Mi trayectoria va desde la investigación académica en acústica hasta el <strong>desarrollo de firmware industrial</strong>, y esa amplitud es la que más me motiva.",
       heroBio2:
         "Disfruto integrando hardware y software de principio a fin. Contribuyo activamente al <strong>Open Source</strong> —con herramientas usadas por desarrolladores de todo el mundo— y soy un apasionado del self-hosting, siempre mejorando mi homelab y aportando proyectos a la comunidad. <a href='/es/cv/'>Consulta mi CV</a> para ver la trayectoria completa.",
       viewCV: "Ver CV",
@@ -492,8 +492,12 @@ export const common = {
       kpiServicesOnline: "servicios online",
       kpiMonitoredNodes: "nodos monitorizados",
       kpiThreatsBlocked: "amenazas bloqueadas · 24h",
-      kpiUptime: "uptime · 24h",
+      kpiUptime: "uptime · objetivo",
       edgeDefenseChip: "router + nginx",
+      edgeDescription:
+        "CrowdSec actúa como WAF: analiza patrones en NGINX y, junto al honeypot del router, decide qué IPs bloquear. Los bloqueos se reparten a todos los bouncers — NGINX, Cloudflare y el router vía mi cs-RouterOS-bouncer.",
+      linkTarpit: "Cómo funciona el tarpit ↗",
+      linkHoneypot: "Honeypot & CrowdSec ↗",
       servicesKicker: "Servicios públicos",
       nodesUnit: "nodos",
       nodesLiveHint: "carga en vivo · vía API",
@@ -727,6 +731,8 @@ export const common = {
       abstract: "Resumen",
       bibtex: "BibTeX",
       statPublications: "publicaciones",
+      statJournals: "artículos de revista",
+      statConferences: "ponencias en congresos",
       statCitations: "citas",
       statHIndex: "índice h",
       statCoauthors: "coautores",

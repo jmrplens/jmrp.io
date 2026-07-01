@@ -25,11 +25,17 @@ const publicationGroups = await getPublications(locale);
 
 const allPublications = publicationGroups.flatMap((group) => group.items);
 
+// --- Type counts (shared by the stats band + the sidebar filter) ---------
+const typeCounts = new Map<string, number>();
+for (const pub of allPublications) {
+  const kind = getPublicationKind(pub.type);
+  typeCounts.set(kind, (typeCounts.get(kind) ?? 0) + 1);
+}
+
 // --- Headline stats ------------------------------------------------------
-// Publications and co-authors are counted from the source data. Citation
-// counts and the h-index need an external source (Google Scholar) the site
-// does not ingest yet, so they render as an em dash rather than a fabricated
-// number.
+// All four figures are counted from the source dataset. Citation counts and the
+// h-index would need an external source (OpenAlex/Scholar) the site does not
+// ingest yet, so they are intentionally omitted rather than shown as blanks.
 const coauthorsEntry = await getEntry("publications_data", "coauthors");
 const coauthorsCount = Object.keys(coauthorsEntry?.data ?? {}).length;
 
@@ -39,12 +45,12 @@ const stats = [
     label: t("pages.publications.statPublications"),
   },
   {
-    value: t("pages.publications.noData"),
-    label: t("pages.publications.statCitations"),
+    value: String(typeCounts.get("journal") ?? 0),
+    label: t("pages.publications.statJournals"),
   },
   {
-    value: t("pages.publications.noData"),
-    label: t("pages.publications.statHIndex"),
+    value: String(typeCounts.get("conference") ?? 0),
+    label: t("pages.publications.statConferences"),
   },
   {
     value: String(coauthorsCount),
@@ -53,11 +59,6 @@ const stats = [
 ];
 
 // --- Type filter (sidebar) ----------------------------------------------
-const typeCounts = new Map<string, number>();
-for (const pub of allPublications) {
-  const kind = getPublicationKind(pub.type);
-  typeCounts.set(kind, (typeCounts.get(kind) ?? 0) + 1);
-}
 const typeFilters = [...typeCounts].map(([kind, count]) => ({
   kind,
   label: t(

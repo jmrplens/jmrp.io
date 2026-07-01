@@ -30,6 +30,9 @@ const posts = defineCollection({
       publishedDate: z.coerce.date(),
       updatedDate: z.coerce.date().optional(),
       draft: z.boolean().default(false),
+      // Pins this post as the blog index hero. If none is flagged, the most
+      // recent post is used as the fallback.
+      featured: z.boolean().default(false),
       description: z.string().optional(),
       author: z.string().optional(),
       authorEmail: z.email().optional(),

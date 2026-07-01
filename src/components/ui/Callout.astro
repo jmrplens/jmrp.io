@@ -94,16 +94,12 @@ const iconName = icon || icons[type];
      * Uses 400/500 scale for text in Dark Mode
      */
 
+  /* Non-semantic Callout hues (tip/note/keypoint/important) — the four
+     state types (info/warning/error/success) consume the formal semantic
+     tokens from global.css instead of redefining colliding globals. */
+
   /* Default (Dark Mode) */
   :root {
-    --color-info-text: var(--color-primary);
-    --color-info-bg: rgb(59 130 246 / 10%);
-    --color-warning-text: #fbbf24; /* Amber 400 */
-    --color-warning-bg: rgb(245 158 11 / 10%);
-    --color-error-text: #f87171; /* Red 400 */
-    --color-error-bg: rgb(239 68 68 / 10%);
-    --color-success-text: #34d399; /* Emerald 400 */
-    --color-success-bg: rgb(16 185 129 / 10%);
     --color-tip-text: #a78bfa; /* Violet 400 */
     --color-tip-bg: rgb(139 92 246 / 10%);
     --color-note-text: #9ca3af; /* Gray 400 */
@@ -117,14 +113,6 @@ const iconName = icon || icons[type];
   /* Light Mode Overrides */
   @media (prefers-color-scheme: light) {
     :root:not([data-theme="dark"]) {
-      --color-info-text: #1d4ed8; /* Blue 700 */
-      --color-info-bg: rgb(59 130 246 / 10%);
-      --color-warning-text: #92400e; /* Amber 800 — AA on warm light bg */
-      --color-warning-bg: rgb(245 158 11 / 10%);
-      --color-error-text: #b91c1c; /* Red 700 */
-      --color-error-bg: rgb(239 68 68 / 10%);
-      --color-success-text: #047857; /* Emerald 700 */
-      --color-success-bg: rgb(16 185 129 / 10%);
       --color-tip-text: #6d28d9; /* Violet 700 */
       --color-tip-bg: rgb(139 92 246 / 10%);
       --color-note-text: #374151; /* Gray 700 */
@@ -138,14 +126,6 @@ const iconName = icon || icons[type];
 
   /* Explicit Light Mode Force */
   :root[data-theme="light"] {
-    --color-info-text: #1d4ed8;
-    --color-info-bg: rgb(59 130 246 / 10%);
-    --color-warning-text: #92400e;
-    --color-warning-bg: rgb(245 158 11 / 10%);
-    --color-error-text: #b91c1c;
-    --color-error-bg: rgb(239 68 68 / 10%);
-    --color-success-text: #047857;
-    --color-success-bg: rgb(16 185 129 / 10%);
     --color-tip-text: #6d28d9;
     --color-tip-bg: rgb(139 92 246 / 10%);
     --color-note-text: #374151;
@@ -156,25 +136,25 @@ const iconName = icon || icons[type];
     --color-important-bg: rgb(124 58 237 / 10%);
   }
 
-  /* Assignments */
+  /* Assignments — state types map to the formal semantic tokens. */
   .callout-info {
-    --callout-color: var(--color-info-text);
-    --callout-bg: var(--color-info-bg);
+    --callout-color: var(--color-info);
+    --callout-bg: var(--info-dim);
   }
 
   .callout-warning {
-    --callout-color: var(--color-warning-text);
-    --callout-bg: var(--color-warning-bg);
+    --callout-color: var(--color-warning);
+    --callout-bg: var(--warning-dim);
   }
 
   .callout-error {
-    --callout-color: var(--color-error-text);
-    --callout-bg: var(--color-error-bg);
+    --callout-color: var(--color-danger);
+    --callout-bg: var(--danger-dim);
   }
 
   .callout-success {
-    --callout-color: var(--color-success-text);
-    --callout-bg: var(--color-success-bg);
+    --callout-color: var(--color-success);
+    --callout-bg: var(--success-dim);
   }
 
   .callout-tip {

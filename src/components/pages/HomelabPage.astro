@@ -98,6 +98,10 @@ const infrastructureTranslations: InfrastructureTranslations = {
   crowdsecBlocked: t("pages.homelab.crowdsecBlocked"),
   healthy: t("pages.homelab.healthy"),
   edgeDefenseChip: t("pages.homelab.edgeDefenseChip"),
+  threatsBlocked: t("pages.homelab.kpiThreatsBlocked"),
+  edgeDescription: t("pages.homelab.edgeDescription"),
+  linkTarpit: t("pages.homelab.linkTarpit"),
+  linkHoneypot: t("pages.homelab.linkHoneypot"),
 };
 
 const kpiTranslations: HomelabKpiTranslations = {
@@ -418,7 +422,10 @@ const servicesSchema = {
         class="tor-section"
         aria-label={t("pages.homelab.torSectionAria")}
       >
-        <p class="section-title">{t("pages.homelab.torKicker")}</p>
+        <p class="section-title">
+          {t("pages.homelab.torKicker")} · {torServices.length}{" "}
+          {t("pages.homelab.nodesUnit")}
+        </p>
         <TorAggregate
           client:visible
           translations={torAggregateTranslations}

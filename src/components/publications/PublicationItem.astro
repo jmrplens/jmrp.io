@@ -271,19 +271,12 @@ const cleanedBibtex = cleanBibtex(pub.bibtex);
       )
     }
   </div>
-  <div class="pub-cite">
-    <span class="pub-cite__num">{t("pages.publications.noData")}</span>
-    <span class="pub-cite__label">{t("pages.publications.citations")}</span>
-  </div>
 </article>
 
 <style>
   .publication-item {
-    /* Hairline-separated row: content + citations column */
-    display: grid;
-    grid-template-columns: 1fr auto;
-    gap: var(--space-lg);
-    align-items: start;
+    /* Hairline-separated row. The per-item citations column is intentionally
+       omitted until a citation data source exists (a lone "—" reads as broken). */
     padding: var(--space-md-lg) 0;
     border-bottom: 1px solid var(--color-hair);
   }
@@ -326,25 +319,6 @@ const cleanedBibtex = cleanBibtex(pub.bibtex);
   .pub-chip--other {
     color: var(--color-accent);
     background: var(--accent-dim);
-  }
-
-  .pub-cite {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-    font-family: var(--font-mono);
-    text-align: right;
-  }
-
-  .pub-cite__num {
-    font-size: 1.25rem;
-    line-height: 1;
-    color: var(--color-text-heading);
-  }
-
-  .pub-cite__label {
-    font-size: 0.66rem;
-    color: var(--color-text-muted);
   }
 
   .venue-short {

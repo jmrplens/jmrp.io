@@ -156,26 +156,24 @@ const summary =
 <style>
   .gt {
     --gt-pass: #6ee7a8;
-    --gt-danger: #f0789b;
+    --gt-danger: var(--color-danger); /* formal semantic token (theme-aware) */
     --gt-pass-bg: rgb(110 231 168 / 12%);
-    --gt-danger-bg: rgb(240 120 155 / 12%);
+    --gt-danger-bg: var(--danger-dim);
     --gt-rail: 1.6rem; /* width of the rail gutter column (single source of truth) */
 
     margin: 1.5rem 0;
   }
 
-  /* Light-mode accents: darken the neon text colours to meet WCAG AA (>= 4.5:1)
-     on light backgrounds. Backgrounds stay as low-opacity tints. */
+  /* Light-mode accents: darken the neon "pass" green to meet WCAG AA on light
+     backgrounds. Danger uses the theme-aware --color-danger token. */
   @media (prefers-color-scheme: light) {
     :root:not([data-theme="dark"]) .gt {
       --gt-pass: #0f6e3d;
-      --gt-danger: #be123c;
     }
   }
 
   :root[data-theme="light"] .gt {
     --gt-pass: #0f6e3d;
-    --gt-danger: #be123c;
   }
 
   .gt__title {

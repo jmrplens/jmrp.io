@@ -94,6 +94,14 @@ export interface InfrastructureTranslations {
   edgeDefense: string;
   /** Chip beside the edge-defense kicker (e.g. "router + nginx"). */
   edgeDefenseChip: string;
+  /** Label under the hero aggregate number (e.g. "threats blocked · 24h"). */
+  threatsBlocked: string;
+  /** Prose describing how the WAF/honeypot pipeline decides what to block. */
+  edgeDescription: string;
+  /** "Learn more" link label pointing to the tarpit write-up. */
+  linkTarpit: string;
+  /** "Learn more" link label pointing to the honeypot/CrowdSec write-up. */
+  linkHoneypot: string;
   /** One-line description of the defense data flow. */
   flowBand: string;
   /** Title of the MikroTik (network-layer) column. */
@@ -214,67 +222,6 @@ function formatBytes(bytes: number | string) {
 }
 
 /**
- * Formats a number as a percentage string.
- */
-function formatPercent(v: number | string) {
-  const num = typeof v === "string" ? Number.parseFloat(v) : v;
-  return Number.isFinite(num) ? num.toFixed(1) : "...";
-}
-
-type StatusKey =
-  "critical" | "high" | "elevated" | "optimal" | "healthy" | "unknown";
-
-/**
- * Returns a status key based on CPU and Memory usage thresholds.
- */
-function getStatus(
-  cpu: number | undefined,
-  mem: number | undefined,
-  labels: { high: StatusKey; medium: StatusKey; normal: StatusKey },
-): StatusKey {
-  if (cpu === undefined || mem === undefined) return "unknown";
-  if (cpu > 90 || mem > 90) return labels.high;
-  if (cpu > 70 || mem > 70) return labels.medium;
-  return labels.normal;
-}
-
-/** Maps a status key to a CSS color class. */
-function getStatusColor(status: StatusKey) {
-  switch (status) {
-    case "critical": {
-      return "color-danger";
-    }
-    case "elevated":
-    case "high": {
-      return "color-warning";
-    }
-    case "healthy":
-    case "optimal": {
-      return "color-success";
-    }
-    default: {
-      return "";
-    }
-  }
-}
-
-/** Maps a status key to its translated display label. */
-function getStatusLabel(
-  status: StatusKey,
-  translations: InfrastructureTranslations,
-): string {
-  const map: Record<StatusKey, string> = {
-    critical: translations.statusCritical,
-    high: translations.statusHigh,
-    elevated: translations.statusElevated,
-    optimal: translations.statusOptimal,
-    healthy: translations.statusHealthy,
-    unknown: translations.statusUnknown,
-  };
-  return map[status];
-}
-
-/**
  * Infrastructure insights component.
  * Displays real-time statistics from Nginx and InfluxDB.
  *
@@ -374,21 +321,17 @@ export default function InfrastructureInsights({ translations: t }: Props) {
 
   const countries = stats?.top_security_countries || [];
 
-  const systemStatus = getStatus(
-    stats?.cpu_usage_avg,
-    stats?.mem_used_percent,
-    {
-      high: "critical",
-      medium: "elevated",
-      normal: "healthy",
-    },
-  );
+  // Aggregate headline: same honest 24h sum as the KPI band (tarpit + nginx).
+  const threats24h =
+    stats == null ? null : stats.tarpit_hits_24h + stats.nginx_bans_24h;
 
-  const loadStatus = getStatus(stats?.cpu_usage_avg, stats?.mem_used_percent, {
-    high: "critical",
-    medium: "high",
-    normal: "optimal",
-  });
+  // Four headline sub-metrics shown in the hero band (all distinct real fields).
+  const fwTop = [
+    { label: t.honeypotHits, value: displayVal(mikrotik?.honeypot_hits) },
+    { label: t.tarpitHits, value: displayVal(stats?.tarpit_hits_24h) },
+    { label: t.nginxBans, value: displayVal(stats?.nginx_bans_24h) },
+    { label: t.crowdsecBlocked, value: displayVal(mikrotik?.crowdsec_blocked) },
+  ];
 
   if (error) {
     return (
@@ -410,271 +353,182 @@ export default function InfrastructureInsights({ translations: t }: Props) {
         <p className="section-title">{t.edgeDefense}</p>
         <span className="edge-defense__chip">{t.edgeDefenseChip}</span>
       </div>
-      <p className="edge-flow">{t.flowBand}</p>
 
-      <div className="edge-cols">
-        {/* Network layer — MikroTik + honeypot */}
-        <article
-          className="edge-col"
-          aria-labelledby="edge-mikrotik-title"
-        >
-          <header className="edge-col__head">
-            <span
-              className="i-simple-icons:mikrotik edge-col__icon"
-              aria-hidden="true"
-            />
-            <span className="edge-col__heading">
-              <span
-                className="edge-col__title"
-                id="edge-mikrotik-title"
+      <div className="edge-card">
+        <div className="edge-hero">
+          <span
+            className="i-mdi:shield-check-outline edge-hero__icon"
+            aria-hidden="true"
+          />
+          <div className="edge-hero__lead">
+            <div className="edge-hero__headline">
+              <output className="edge-hero__num">
+                {displayVal(threats24h)}
+              </output>
+              <span className="edge-hero__label">{t.threatsBlocked}</span>
+            </div>
+            <p className="edge-hero__desc">{t.edgeDescription}</p>
+          </div>
+          <div className="edge-hero__metrics">
+            {fwTop.map((m) => (
+              <div
+                className="edge-metric"
+                key={m.label}
               >
-                {t.mikrotikTitle}
-              </span>
-              <span className="edge-col__sub">{t.mikrotikLayer}</span>
-            </span>
-          </header>
-          <dl className="edge-rows">
-            <div className="edge-row">
-              <dt>{t.honeypotHits}</dt>
-              <dd>{displayVal(mikrotik?.honeypot_hits)}</dd>
-            </div>
-            <div className="edge-row">
-              <dt>
-                <a
-                  href={t.portScannerBlogUrl}
-                  className="insight-link"
-                  aria-label={t.portScannerBlogAria}
-                >
-                  {t.portScanners}
-                </a>
-              </dt>
-              <dd>{displayVal(mikrotik?.port_scanners_dropped)}</dd>
-            </div>
-            <div className="edge-row">
-              <dt>{t.blacklistScanners}</dt>
-              <dd>{displayVal(mikrotik?.blacklist_scanners)}</dd>
-            </div>
-            <div className="edge-row">
-              <dt>{t.wanTraffic}</dt>
-              <dd>
-                {mikrotik ? `${formatBytes(mikrotik.wan_rx_bytes)} ↓` : "..."}
-              </dd>
-            </div>
-            <div className="edge-row">
-              <dt>{t.activeConnections}</dt>
-              <dd>{displayVal(mikrotik?.active_connections)}</dd>
-            </div>
-          </dl>
-        </article>
+                <span className="edge-metric__num">{m.value}</span>
+                <span className="edge-metric__label">{m.label}</span>
+              </div>
+            ))}
+          </div>
+        </div>
 
-        {/* Application layer — CrowdSec WAF + NGINX */}
-        <article
-          className="edge-col"
-          aria-labelledby="edge-crowdsec-title"
-        >
-          <header className="edge-col__head">
-            <span
-              className="i-mdi:shield-outline edge-col__icon"
-              aria-hidden="true"
-            />
-            <span className="edge-col__heading">
+        <p className="edge-flow">{t.flowBand}</p>
+
+        <div className="edge-cols">
+          {/* Network layer — MikroTik + honeypot */}
+          <article
+            className="edge-col"
+            aria-labelledby="edge-mikrotik-title"
+          >
+            <header className="edge-col__head">
               <span
-                className="edge-col__title"
-                id="edge-crowdsec-title"
-              >
-                {t.crowdsecTitle}
-              </span>
-              <span className="edge-col__sub">{t.crowdsecLayer}</span>
-            </span>
-          </header>
-          <dl className="edge-rows">
-            <div className="edge-row">
-              <dt>{t.crowdsecBlocked}</dt>
-              <dd>{displayVal(mikrotik?.crowdsec_blocked)}</dd>
-            </div>
-            <div className="edge-row">
-              <dt>{t.requestsReceived}</dt>
-              <dd>{displayVal(stats?.requests_received_24h)}</dd>
-            </div>
-            <div className="edge-row">
-              <dt>
-                <a
-                  href={t.tarpitBlogUrl}
-                  className="insight-link"
-                  aria-label={t.tarpitBlogAria}
+                className="i-simple-icons:mikrotik edge-col__icon"
+                aria-hidden="true"
+              />
+              <span className="edge-col__heading">
+                <span
+                  className="edge-col__title"
+                  id="edge-mikrotik-title"
                 >
-                  {t.tarpitHits}
-                </a>
-              </dt>
-              <dd>{displayVal(stats?.tarpit_hits_24h)}</dd>
-            </div>
-            <div className="edge-row">
-              <dt>{t.nginxBans}</dt>
-              <dd>{displayVal(stats?.nginx_bans_24h)}</dd>
-            </div>
-            <div className="edge-row">
-              <dt>{t.availability}</dt>
-              <dd>
-                <span className="edge-status color-success">{t.healthy}</span>
-              </dd>
-            </div>
-          </dl>
-          {countries.length > 0 && (
-            <div className="edge-regions">
-              <span className="edge-regions__label">{t.attackRegions}</span>
-              <ul
-                className="country-list"
-                aria-label={t.attackRegionsList}
-              >
-                {countries.map((c) => (
-                  <li
-                    key={c.code}
-                    className="country-badge"
-                    aria-label={`${c.code} — ${c.count} ${t.hits}`}
-                    title={`${c.count} ${t.hits}`}
+                  {t.mikrotikTitle}
+                </span>
+                <span className="edge-col__sub">{t.mikrotikLayer}</span>
+              </span>
+            </header>
+            <dl className="edge-rows">
+              {/* The MikroTik honeypot IS the port-scanner trap: the API returns
+                port_scanners_dropped === honeypot_hits (same counter). Show it
+                once, as "Port Scanners" (links to the honeypot write-up). */}
+              <div className="edge-row">
+                <dt>
+                  <a
+                    href={t.portScannerBlogUrl}
+                    className="insight-link"
+                    aria-label={t.portScannerBlogAria}
                   >
-                    {c.code}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-        </article>
+                    {t.portScanners}
+                  </a>
+                </dt>
+                <dd>{displayVal(mikrotik?.port_scanners_dropped)}</dd>
+              </div>
+              <div className="edge-row">
+                <dt>{t.blacklistScanners}</dt>
+                <dd>{displayVal(mikrotik?.blacklist_scanners)}</dd>
+              </div>
+              <div className="edge-row">
+                <dt>{t.wanTraffic}</dt>
+                <dd>
+                  {mikrotik ? `${formatBytes(mikrotik.wan_rx_bytes)} ↓` : "..."}
+                </dd>
+              </div>
+              <div className="edge-row">
+                <dt>{t.activeConnections}</dt>
+                <dd>{displayVal(mikrotik?.active_connections)}</dd>
+              </div>
+            </dl>
+          </article>
+
+          {/* Application layer — CrowdSec WAF + NGINX */}
+          <article
+            className="edge-col"
+            aria-labelledby="edge-crowdsec-title"
+          >
+            <header className="edge-col__head">
+              <span
+                className="i-mdi:shield-outline edge-col__icon"
+                aria-hidden="true"
+              />
+              <span className="edge-col__heading">
+                <span
+                  className="edge-col__title"
+                  id="edge-crowdsec-title"
+                >
+                  {t.crowdsecTitle}
+                </span>
+                <span className="edge-col__sub">{t.crowdsecLayer}</span>
+              </span>
+            </header>
+            <dl className="edge-rows">
+              <div className="edge-row">
+                <dt>{t.crowdsecBlocked}</dt>
+                <dd>{displayVal(mikrotik?.crowdsec_blocked)}</dd>
+              </div>
+              <div className="edge-row">
+                <dt>{t.requestsReceived}</dt>
+                <dd>{displayVal(stats?.requests_received_24h)}</dd>
+              </div>
+              <div className="edge-row">
+                <dt>
+                  <a
+                    href={t.tarpitBlogUrl}
+                    className="insight-link"
+                    aria-label={t.tarpitBlogAria}
+                  >
+                    {t.tarpitHits}
+                  </a>
+                </dt>
+                <dd>{displayVal(stats?.tarpit_hits_24h)}</dd>
+              </div>
+              <div className="edge-row">
+                <dt>{t.nginxBans}</dt>
+                <dd>{displayVal(stats?.nginx_bans_24h)}</dd>
+              </div>
+              <div className="edge-row">
+                <dt>{t.availability}</dt>
+                <dd>
+                  <span className="edge-status color-success">{t.healthy}</span>
+                </dd>
+              </div>
+            </dl>
+            {countries.length > 0 && (
+              <div className="edge-regions">
+                <span className="edge-regions__label">{t.attackRegions}</span>
+                <ul
+                  className="country-list"
+                  aria-label={t.attackRegionsList}
+                >
+                  {countries.map((c) => (
+                    <li
+                      key={c.code}
+                      className="country-badge"
+                      aria-label={`${c.code} — ${c.count} ${t.hits}`}
+                      title={`${c.count} ${t.hits}`}
+                    >
+                      {c.code}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </article>
+        </div>
       </div>
 
-      <div className="insights-grid">
-        <article
-          className="insight-card"
-          aria-labelledby="label-traffic"
+      <div className="edge-links">
+        <a
+          href={t.tarpitBlogUrl}
+          className="edge-link"
+          aria-label={t.tarpitBlogAria}
         >
-          <span
-            className="insight-label"
-            id="label-traffic"
-          >
-            {t.requestsReceived}
-          </span>
-          <div className="insight-value">
-            <span className="sr-only">
-              {displayVal(stats?.requests_received_24h)} {t.requestsReceivedSR}
-            </span>
-            <span aria-hidden="true">
-              <output>{displayVal(stats?.requests_received_24h)}</output>{" "}
-              <small>{t.handled}</small>
-            </span>
-          </div>
-          <div className="insight-details">
-            <div className="detail-row">
-              <span id="label-responses">{t.responsesSent}</span>
-              <output aria-labelledby="label-responses">
-                {displayVal(stats?.responses_sent_24h)}
-              </output>
-            </div>
-            <div className="detail-row">
-              <span id="label-upstream">{t.upstream}</span>
-              <output aria-labelledby="label-upstream">
-                {displayVal(stats?.upstream_sent_24h)}
-              </output>
-            </div>
-            <div className="detail-row">
-              <span id="label-bandwidth-up">
-                <span className="sr-only">{t.sentPrefix} </span>
-                {t.bandwidthUp}
-              </span>
-              <output aria-labelledby="label-bandwidth-up">
-                {displayVal(stats?.bandwidth_sent_24h, formatBytes)}
-              </output>
-            </div>
-            <div className="detail-row">
-              <span id="label-bandwidth-down">
-                <span className="sr-only">{t.receivedPrefix} </span>
-                {t.bandwidthDown}
-              </span>
-              <output aria-labelledby="label-bandwidth-down">
-                {displayVal(stats?.bandwidth_recv_24h, formatBytes)}
-              </output>
-            </div>
-          </div>
-        </article>
-
-        <article
-          className="insight-card errors"
-          aria-labelledby="label-availability"
+          {t.linkTarpit}
+        </a>
+        <a
+          href={t.portScannerBlogUrl}
+          className="edge-link"
+          aria-label={t.portScannerBlogAria}
         >
-          <span
-            className="insight-label"
-            id="label-availability"
-          >
-            {t.availability}
-          </span>
-          <div className="insight-value">
-            <span className="sr-only">
-              {displayVal(stats?.rate_limited_503_24h)} {t.rateLimits}
-            </span>
-            <span aria-hidden="true">
-              {displayVal(stats?.rate_limited_503_24h)}{" "}
-              <small>{t.rateLimits}</small>
-            </span>
-          </div>
-          <div className="insight-details">
-            <div className="detail-row">
-              <span id="label-system-status">{t.systemStatus}</span>
-              <output
-                className={getStatusColor(systemStatus)}
-                aria-labelledby="label-system-status"
-              >
-                {getStatusLabel(systemStatus, t)}
-              </output>
-            </div>
-          </div>
-        </article>
-
-        <article
-          className="insight-card hardware"
-          aria-labelledby="label-hardware"
-        >
-          <span
-            className="insight-label"
-            id="label-hardware"
-          >
-            {t.nodeResourceLoad}
-          </span>
-          <div className="insight-value">
-            <span className="sr-only">
-              {t.cpuUsagePrefix}{" "}
-              {displayVal(stats?.cpu_usage_avg, formatPercent)} %
-            </span>
-            <span aria-hidden="true">
-              <output>{displayVal(stats?.cpu_usage_avg, formatPercent)}</output>{" "}
-              <small>{t.percentCPU}</small>
-            </span>
-          </div>
-          <div className="insight-details">
-            <div className="detail-row">
-              <span id="label-memory">{t.memoryUsage}</span>
-              <output aria-labelledby="label-memory">
-                {displayVal(stats?.mem_used_percent, formatPercent)}
-                <small aria-hidden="true"> {t.percentRAM}</small>
-              </output>
-            </div>
-            <div className="detail-row">
-              <span id="label-cpu-temp">{t.cpuTemp}</span>
-              <output aria-labelledby="label-cpu-temp">
-                {stats?.cpu_temp == null
-                  ? "—"
-                  : `${Math.round(stats.cpu_temp)}°C`}
-              </output>
-            </div>
-            <div className="detail-row">
-              <span id="label-load-status">{t.loadStatus}</span>
-              <output
-                className={getStatusColor(loadStatus)}
-                aria-labelledby="label-load-status"
-              >
-                {getStatusLabel(loadStatus, t)}
-              </output>
-            </div>
-          </div>
-        </article>
+          {t.linkHoneypot}
+        </a>
       </div>
     </section>
   );

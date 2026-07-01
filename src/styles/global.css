@@ -20,6 +20,18 @@
   --color-surface-2: #16161a; /* elevated surface / inputs */
   --teal: #46b8a6; /* OK state, logo prompt, support */
   --teal-text: #46b8a6; /* teal used as text — AA-safe in both themes */
+
+  /* Formal semantic tokens (AA as text/icon on surface in both themes).
+     success = teal · warning = amber accent · danger = tokenized pink ·
+     info = supporting blue. Fills derive via color-mix like --accent-dim. */
+  --color-success: #46b8a6;
+  --color-warning: #f5a623;
+  --color-danger: #f2789c;
+  --color-info: #6aa0ff;
+  --success-dim: color-mix(in srgb, var(--color-success) 13%, transparent);
+  --warning-dim: color-mix(in srgb, var(--color-warning) 13%, transparent);
+  --danger-dim: color-mix(in srgb, var(--color-danger) 13%, transparent);
+  --info-dim: color-mix(in srgb, var(--color-info) 13%, transparent);
   --accent-hi: #ffbb4d; /* accent hover (= primary-hover) */
   --accent-dim: rgb(245 166 35 / 13%);
   --accent-line: rgb(245 166 35 / 32%);
@@ -108,6 +120,10 @@
     --color-surface-2: #f1f1ec;
     --teal: #1f7e6e;
     --teal-text: #12695a;
+    --color-success: #12695a;
+    --color-warning: #8f5300;
+    --color-danger: #c02748;
+    --color-info: #2160c4;
     --accent-hi: #c07a10;
     --accent-dim: rgb(156 93 0 / 10%);
     --accent-line: rgb(156 93 0 / 28%);
@@ -134,6 +150,10 @@
   --color-surface-2: #f1f1ec;
   --teal: #1f7e6e;
   --teal-text: #12695a;
+  --color-success: #12695a;
+  --color-warning: #8f5300;
+  --color-danger: #c02748;
+  --color-info: #2160c4;
   --accent-hi: #c07a10;
   --accent-dim: rgb(156 93 0 / 10%);
   --accent-line: rgb(156 93 0 / 28%);
@@ -159,6 +179,10 @@
   --color-surface-2: #16161a;
   --teal: #46b8a6;
   --teal-text: #46b8a6;
+  --color-success: #46b8a6;
+  --color-warning: #f5a623;
+  --color-danger: #f2789c;
+  --color-info: #6aa0ff;
   --accent-hi: #ffbb4d;
   --accent-dim: rgb(245 166 35 / 13%);
   --accent-line: rgb(245 166 35 / 32%);

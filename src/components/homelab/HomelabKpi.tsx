@@ -25,18 +25,15 @@ interface Props {
   readonly uptimeValue: string;
 }
 
-/** Subset of the stats payload used for the 24h threats-blocked headline. */
+/**
+ * Subset of the stats payload used for the "threats blocked · 24h" headline.
+ * Only genuine 24h counters are summed — the MikroTik honeypot/blacklist/
+ * CrowdSec figures are cumulative totals, so mixing them in would break the
+ * "· 24h" label.
+ */
 interface StatsSubset {
   tarpit_hits_24h: number;
   nginx_bans_24h: number;
-}
-
-/** Subset of the MikroTik payload used for the 24h threats-blocked headline. */
-interface MikrotikSubset {
-  honeypot_hits: number;
-  port_scanners_dropped: number;
-  blacklist_scanners: number;
-  crowdsec_blocked: number;
 }
 
 /** Narrow an unknown payload to the numeric fields we sum. */
@@ -77,36 +74,17 @@ export default function HomelabKpi({
           document.querySelector<HTMLElement>("[data-homelab-token]")?.dataset
             .homelabToken ?? "";
         const headers = { "X-Homelab-Token": token };
-        const [statsRes, mkRes] = await Promise.all([
-          fetch("/api/homelab/stats", { signal: controller.signal, headers }),
-          fetch("/api/homelab/mikrotik", {
-            signal: controller.signal,
-            headers,
-          }).catch(() => null),
-        ]);
+        const statsRes = await fetch("/api/homelab/stats", {
+          signal: controller.signal,
+          headers,
+        });
         if (!statsRes.ok) return;
         const stats = pickNumbers<StatsSubset>(await statsRes.json(), [
           "tarpit_hits_24h",
           "nginx_bans_24h",
         ]);
         if (!stats) return;
-        let total = stats.tarpit_hits_24h + stats.nginx_bans_24h;
-        if (mkRes?.ok) {
-          const mk = pickNumbers<MikrotikSubset>(await mkRes.json(), [
-            "honeypot_hits",
-            "port_scanners_dropped",
-            "blacklist_scanners",
-            "crowdsec_blocked",
-          ]);
-          if (mk) {
-            total +=
-              mk.honeypot_hits +
-              mk.port_scanners_dropped +
-              mk.blacklist_scanners +
-              mk.crowdsec_blocked;
-          }
-        }
-        setThreats(total);
+        setThreats(stats.tarpit_hits_24h + stats.nginx_bans_24h);
       } catch (error: unknown) {
         if (error instanceof DOMException && error.name === "AbortError")
           return;

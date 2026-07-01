@@ -284,12 +284,42 @@ async function fetchPotatoVersion(): Promise<string> {
 }
 
 /**
- * Mastodon Stats Component
- *
- * @param props - Component properties.
- * @param props.stats - The data to display.
- * @param props.translations - Translated strings.
+ * Compact service-stats card (matches the mockup): an "online" status pill
+ * followed by two key stat pairs. The service title, description and link come
+ * from the surrounding ServiceCard.
  */
+function ServiceStatCard({
+  online,
+  stats,
+}: {
+  readonly online: string;
+  readonly stats: readonly { value: string; label: string }[];
+}) {
+  return (
+    <div className="svc-stats">
+      <span className="svc-stats__pill">
+        <span
+          className="svc-stats__dot"
+          aria-hidden="true"
+        ></span>
+        {online}
+      </span>
+      <div className="svc-stats__grid">
+        {stats.map((s) => (
+          <div
+            className="svc-stat"
+            key={s.label}
+          >
+            <span className="svc-stat__value">{s.value}</span>
+            <span className="svc-stat__label">{s.label}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/** Mastodon: instances helped + running server version. */
 function MastodonStats({
   stats,
   translations: t,
@@ -297,83 +327,21 @@ function MastodonStats({
   readonly stats: MastodonStatsData | null;
   readonly translations: ServiceStatsTranslations;
 }) {
-  const peersCount = stats?.peersCount;
-  const mastodonTrends = stats?.mastodonTrends || [];
-  const instanceVersion = stats?.instanceVersion || "...";
-
   return (
-    <div className="stats-wrapper-col">
-      <div className="status-header">
-        <div className="status-badge">
-          <span className="status-dot"></span>
-          <strong>{t.online}</strong>
-        </div>
-        <div className="status-text-muted">
-          <strong className="status-text">{peersCount ?? "..."}</strong>{" "}
-          {t.knownInstances}
-        </div>
-      </div>
-
-      <div className="server-grid">
-        <div className="component-row">
-          <span className="component-icon brand-mastodon">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 24 24"
-              width="20"
-              height="20"
-            >
-              <path
-                fill="currentColor"
-                d="M23.268 5.313c-.35-2.578-2.617-4.61-5.304-5.004C17.51.242 15.792 0 11.813 0h-.03c-3.98 0-4.835.242-5.288.309C3.882.692 1.496 2.518.917 5.127C.64 6.412.61 7.837.661 9.143c.074 1.874.088 3.745.26 5.611c.118 1.24.325 2.47.62 3.68c.55 2.237 2.777 4.098 4.96 4.857c2.336.792 4.849.923 7.256.38q.398-.092.786-.213c.585-.184 1.27-.39 1.774-.753a.06.06 0 0 0 .023-.043v-1.809a.05.05 0 0 0-.02-.041a.05.05 0 0 0-.046-.01a20.3 20.3 0 0 1-4.709.545c-2.73 0-3.463-1.284-3.674-1.818a5.6 5.6 0 0 1-.319-1.433a.053.053 0 0 1 .066-.054c1.517.363 3.072.546 4.632.546c.376 0 .75 0 1.125-.01c1.57-.044 3.224-.124 4.768-.422q.059-.011.11-.024c2.435-.464 4.753-1.92 4.989-5.604c.008-.145.03-1.52.03-1.67c.002-.512.167-3.63-.024-5.545m-3.748 9.195h-2.561V8.29c0-1.309-.55-1.976-1.67-1.976c-1.23 0-1.846.79-1.846 2.35v3.403h-2.546V8.663c0-1.56-.617-2.35-1.848-2.35c-1.112 0-1.668.668-1.67 1.977v6.218H4.822V8.102q0-1.965 1.011-3.12c.696-.77 1.608-1.164 2.74-1.164c1.311 0 2.302.5 2.962 1.498l.638 1.06l.638-1.06c.66-.999 1.65-1.498 2.96-1.498c1.13 0 2.043.395 2.74 1.164q1.012 1.155 1.012 3.12z"
-              />
-            </svg>
-          </span>
-          <div className="component-info">
-            <span className="component-name">Mastodon</span>
-            <span className="component-version">{instanceVersion}</span>
-          </div>
-        </div>
-      </div>
-
-      <div>
-        <div className="trending-header">{t.trendingNow}</div>
-        <div className="trending-grid">
-          {mastodonTrends.length > 0
-            ? mastodonTrends.map((tag: { url: string; name: string }) => (
-                <a
-                  key={tag.name}
-                  href={tag.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="stat-btn-filled"
-                >
-                  <span className="opacity-60">#</span> {tag.name}
-                </a>
-              ))
-            : // Skeletons to reserve space
-              [1, 2, 3].map((i) => (
-                <div
-                  key={i}
-                  className="stat-btn-filled skeleton"
-                  aria-hidden="true"
-                >
-                  # {".".repeat(i * 3 + 4)}
-                </div>
-              ))}
-        </div>
-      </div>
-    </div>
+    <ServiceStatCard
+      online={t.online}
+      stats={[
+        {
+          value: stats?.peersCount?.toLocaleString() ?? "...",
+          label: t.knownInstances,
+        },
+        { value: stats?.instanceVersion || "...", label: "Mastodon" },
+      ]}
+    />
   );
 }
 
-/**
- * Matrix Stats Component
- *
- * @param props - Component properties.
- * @param props.stats - The data to display.
- * @param props.translations - Translated strings.
- */
+/** Matrix: known federation servers + Synapse version. */
 function MatrixStats({
   stats,
   translations: t,
@@ -381,104 +349,21 @@ function MatrixStats({
   readonly stats: MatrixStatsData | null;
   readonly translations: ServiceStatsTranslations;
 }) {
-  const matrixData = stats?.matrixData;
-  const matrixFed = stats?.matrixFed;
-  const synapseVersion = matrixFed?.server?.version || "...";
-
   return (
-    <div className="stats-wrapper-col">
-      <div className="status-header">
-        <div className="status-badge">
-          <span className="status-dot"></span>
-          <strong>{t.online}</strong>
-        </div>
-        <div className="status-text-muted">
-          <strong className="status-text">
-            {matrixData?.federationTotal ?? "..."}
-          </strong>{" "}
-          {t.knownServers}
-        </div>
-      </div>
-
-      <div className="server-grid">
-        <div className="component-row">
-          <span className="component-icon brand-matrix">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 24 24"
-              width="16"
-              height="16"
-            >
-              <path
-                fill="currentColor"
-                d="M.632.55v22.9H2.28V24H0V0h2.28v.55zm7.043 7.26v1.157h.033c.56-.966 1.535-1.3 2.575-1.3s1.796.335 2.387 1.296c.613-.96 1.745-1.296 2.574-1.296c1.54 0 2.495 1.132 2.495 3.296V23h-2.19l-.003-9.632c0-1.268-.57-1.815-1.344-1.815c-.99 0-1.312.495-1.312 1.816V23h-2.208V13.369c0-1.268-.54-1.815-1.226-1.815c-.99 0-1.313.495-1.313 1.816V23H7.675V8.81h2.208v-1zM23.368.55V24h-2.28v-.55H24V0h-2.28v.55z"
-              />
-            </svg>
-          </span>
-          <div className="component-info">
-            <span className="component-name">Synapse</span>
-            <span className="component-version">{synapseVersion}</span>
-          </div>
-        </div>
-      </div>
-    </div>
+    <ServiceStatCard
+      online={t.online}
+      stats={[
+        {
+          value: stats?.matrixData?.federationTotal?.toLocaleString() ?? "...",
+          label: t.knownServers,
+        },
+        { value: stats?.matrixFed?.server?.version || "...", label: "Synapse" },
+      ]}
+    />
   );
 }
 
-/** Internal helper for rendering a status dot */
-const StatusDot = () => <span className="status-dot-inline"></span>;
-
-/** Props for MeshRow component */
-interface MeshRowProps {
-  readonly title: string;
-  readonly nodes: number | undefined;
-  readonly version?: string;
-  readonly linkHref: string;
-  readonly linkLabel: string;
-  readonly linkText: string;
-  readonly nodesLabel: string;
-}
-
-/** Component for a single Meshtastic service row */
-const MeshRow = ({
-  title,
-  nodes,
-  version,
-  linkHref,
-  linkLabel,
-  linkText,
-  nodesLabel,
-}: MeshRowProps) => (
-  <div className="meshtastic-row">
-    <div className="meshtastic-left">
-      <StatusDot />
-      <div>
-        <strong className="meshtastic-title">{title}</strong>
-        <div className="meshtastic-sub">
-          {nodes ?? "..."} {nodesLabel}
-          {version && <span className="meshtastic-ver">• {version}</span>}
-        </div>
-      </div>
-    </div>
-    <a
-      href={linkHref}
-      target="_blank"
-      rel="noopener noreferrer"
-      className="btn btn-sm"
-      aria-label={linkLabel}
-    >
-      {linkText}
-    </a>
-  </div>
-);
-
-/**
- * Meshtastic Combined Stats Component
- *
- * @param props - Component properties.
- * @param props.stats - The data to display.
- * @param props.translations - Translated strings.
- */
+/** Meshtastic: PotatoMesh + MeshMonitor node counts. */
 function MeshtasticStats({
   stats,
   translations: t,
@@ -486,31 +371,20 @@ function MeshtasticStats({
   readonly stats: MeshtasticStatsData | null;
   readonly translations: ServiceStatsTranslations;
 }) {
-  const potatoNodes = stats?.potatoNodes;
-  const meshmonitorNodes = stats?.meshmonitorNodes;
-  const potatoVersion = stats?.potatoVersion;
-
   return (
-    <div className="stats-wrapper-small-gap">
-      <MeshRow
-        title="PotatoMesh"
-        nodes={potatoNodes}
-        version={potatoVersion}
-        linkHref="https://potatomesh.jmrp.io"
-        linkLabel={t.viewMapAria}
-        linkText={t.viewMap}
-        nodesLabel={t.nodes}
-      />
-
-      <MeshRow
-        title="MeshMonitor"
-        nodes={meshmonitorNodes}
-        linkHref="https://meshmonitor.jmrp.io"
-        linkLabel={t.viewMonitorAria}
-        linkText={t.viewMonitor}
-        nodesLabel={t.nodes}
-      />
-    </div>
+    <ServiceStatCard
+      online={t.online}
+      stats={[
+        {
+          value: stats?.potatoNodes?.toLocaleString() ?? "...",
+          label: `PotatoMesh ${t.nodes}`,
+        },
+        {
+          value: stats?.meshmonitorNodes?.toLocaleString() ?? "...",
+          label: `MeshMonitor ${t.nodes}`,
+        },
+      ]}
+    />
   );
 }
 

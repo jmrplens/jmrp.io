@@ -1,7 +1,7 @@
 ---
 import { defaultLocale, type Locale } from "@i18n/config";
 import { useTranslatedPath, useTranslations } from "@i18n/utils";
-import { getReadingTime } from "@utils/blog";
+import { formatDateDot, getReadingTime } from "@utils/blog";
 import type { CollectionEntry } from "astro:content";
 
 interface Props {
@@ -18,12 +18,6 @@ const translatePath = useTranslatedPath(locale);
 const displayDate = post.data.publishedDate;
 const readingTime = getReadingTime(post);
 const tags = (post.data.tags ?? []).slice(0, 2);
-
-/** Compact "YYYY·MM·DD" date used in the Lab card meta row. */
-const dotDate = (d: Date): string =>
-  `${d.getFullYear()}·${String(d.getMonth() + 1).padStart(2, "0")}·${String(
-    d.getDate(),
-  ).padStart(2, "0")}`;
 
 // Search-filter haystack (lowercased title + description + tags).
 const haystack = [
@@ -59,7 +53,9 @@ const haystack = [
     <h2 class="post-card__title">{post.data.title}</h2>
     <p class="post-card__desc">{post.data.description}</p>
     <div class="post-card__meta">
-      <time datetime={displayDate.toISOString()}>{dotDate(displayDate)}</time>
+      <time datetime={displayDate.toISOString()}>
+        {formatDateDot(displayDate)}
+      </time>
       <span aria-hidden="true">·</span>
       <span>{readingTime} {t("pages.blog.minRead")}</span>
     </div>

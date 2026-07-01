@@ -375,9 +375,9 @@ export const common = {
     home: {
       heroTitle: "Hi, I'm José Manuel.",
       heroSubtitle:
-        "Embedded Firmware & Software Engineer. <br>Bridging the gap between <strong>firmware</strong>, <strong>software</strong>, and <strong>applied research</strong>.",
+        "Embedded Firmware & Software Engineer. <br>Bridging the gap between <strong>firmware</strong>, software, and applied research.",
       heroBio1:
-        "I'm a multidisciplinary engineer who enjoys solving problems where <strong>embedded firmware</strong>, <strong>software</strong> and <strong>applied research</strong> meet. My path runs from <strong>academic research</strong> in acoustics to <strong>industrial firmware development</strong> — and that breadth is what motivates me the most.",
+        "I'm a multidisciplinary engineer who enjoys solving problems where embedded firmware, software and applied research meet. My path runs from academic research in acoustics to <strong>industrial firmware development</strong> — and that breadth is what motivates me the most.",
       heroBio2:
         "I thrive on integrating hardware and software end to end. I'm an active <strong>Open Source</strong> contributor whose tools are used by developers around the world, and a passionate self-hoster, constantly refining my homelab and building tools for the community. <a href='/cv/'>Check out my CV</a> to see the full journey.",
       viewCV: "View CV",
@@ -490,8 +490,12 @@ export const common = {
       kpiServicesOnline: "services online",
       kpiMonitoredNodes: "monitored nodes",
       kpiThreatsBlocked: "threats blocked · 24h",
-      kpiUptime: "uptime · 24h",
+      kpiUptime: "uptime · target",
       edgeDefenseChip: "router + nginx",
+      edgeDescription:
+        "CrowdSec acts as a WAF: it analyses NGINX patterns and, together with the router honeypot, decides which IPs to block. Decisions fan out to every bouncer — NGINX, Cloudflare and the router via my cs-RouterOS-bouncer.",
+      linkTarpit: "How the tarpit works ↗",
+      linkHoneypot: "Honeypot & CrowdSec ↗",
       servicesKicker: "Public services",
       nodesUnit: "nodes",
       nodesLiveHint: "live load · via API",
@@ -724,6 +728,8 @@ export const common = {
       abstract: "Abstract",
       bibtex: "BibTeX",
       statPublications: "publications",
+      statJournals: "journal articles",
+      statConferences: "conference papers",
       statCitations: "citations",
       statHIndex: "h-index",
       statCoauthors: "co-authors",

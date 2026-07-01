@@ -8,7 +8,7 @@ import { defaultLocale, type Locale } from "@i18n/config";
 import { useTranslatedPath, useTranslations } from "@i18n/utils";
 import BaseLayout from "@layouts/BaseLayout.astro";
 import type { SiteConfig } from "@src/types";
-import { getPostsForLocale } from "@utils/blog";
+import { formatDateDot, getPostsForLocale } from "@utils/blog";
 import {
   fetchGitHubProfile,
   fetchRepositoriesByName,
@@ -22,10 +22,6 @@ import type { ProfilePage } from "schema-dts";
 const locale = (Astro.currentLocale ?? defaultLocale) as Locale;
 const t = useTranslations(locale);
 const translatePath = useTranslatedPath(locale);
-
-/** Compact "YYYY·MM·DD" date used in the latest-notes list (mockup style). */
-const dotDate = (d: Date): string =>
-  `${d.getFullYear()}·${String(d.getMonth() + 1).padStart(2, "0")}·${String(d.getDate()).padStart(2, "0")}`;
 
 const siteEntry = await getEntry("site_config", "site");
 const siteData = (siteEntry?.data || {}) as SiteConfig;
@@ -270,7 +266,7 @@ const personSchema = [
             {latestPosts.map((post) => (
               <li class="notes-item">
                 <span class="notes-date">
-                  {dotDate(post.data.publishedDate)}
+                  {formatDateDot(post.data.publishedDate)}
                 </span>
                 <a
                   class="notes-title"

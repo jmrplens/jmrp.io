@@ -227,9 +227,15 @@ test.describe("Keyboard Navigation Accessibility", () => {
 
     // 2. Verify Tab navigation through links
     // First link: Tarpit Hits
-    const tarpitLink = section.locator('a[href*="implementing-tarpit-nginx"]');
+    // Scope to the two source COLUMNS so the locators are unambiguous — the
+    // same posts are also linked from the explainer links below the card.
+    const tarpitLink = section.locator(
+      '.edge-col a[href*="implementing-tarpit-nginx"]',
+    );
     // Second link: Port Scanners
-    const honeypotLink = section.locator('a[href*="mikrotik-honeypot"]');
+    const honeypotLink = section.locator(
+      '.edge-col a[href*="mikrotik-honeypot"]',
+    );
 
     // Wait for data to load and links to be visible
     await expect(tarpitLink).toBeVisible({ timeout: 10_000 });
@@ -249,7 +255,7 @@ test.describe("Keyboard Navigation Accessibility", () => {
 
     // Re-locate to handle potential hydration re-renders
     const freshTarpitLink = section.locator(
-      'a[href*="implementing-tarpit-nginx"]',
+      '.edge-col a[href*="implementing-tarpit-nginx"]',
     );
     await expect(freshTarpitLink).toBeFocused();
     await expect(freshTarpitLink).toHaveAttribute(

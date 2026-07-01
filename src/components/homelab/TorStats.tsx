@@ -1,4 +1,3 @@
-import type { ComponentChildren } from "preact";
 import { useEffect, useState } from "preact/hooks";
 
 /** Translations required by TorStats. Passed from Astro parent. */
@@ -194,128 +193,64 @@ function getStatusText(
   return data.running ? t.running : t.offline;
 }
 
-/** Renders the flag badges for a Tor node. Returns empty fragment if no flags. */
-function TorFlagList({
-  flags,
-  label,
-  badgeClass = "tor-flag-badge",
-}: {
-  readonly flags: readonly string[];
-  readonly label: string;
-  readonly badgeClass?: string;
-}) {
-  if (flags.length === 0) return <></>;
-  return (
-    <div className="tor-flags">
-      <span className="tor-flags-label">{label}:</span>
-      <div className="tor-flags-list">
-        {flags.map((flag) => (
-          <span
-            key={flag}
-            className={badgeClass}
-          >
-            {flag}
-          </span>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-/** A single metric cell (label + value). */
-function TorMetric({
-  label,
-  value,
-}: {
-  readonly label: string;
-  readonly value: string;
-}) {
-  return (
-    <div className="tor-metric">
-      <span className="tor-metric-label">{label}</span>
-      <strong className="tor-metric-value">{value}</strong>
-    </div>
-  );
-}
-
 /**
- * Shared layout for both Bridge and Relay cards.
- * Renders the common status header, flags, traffic section, and a slot
- * for type-specific metrics, eliminating markup duplication.
+ * Compact Tor node card (matches the mockup): status pill + one headline figure
+ * (clients/connections · 24h) + location + advertised bandwidth. The full
+ * "Tor Metrics" link is provided by the surrounding ServiceCard.
  */
 function TorNodeCard({
   data,
   translations: t,
-  children,
+  headlineLabel,
+  headlineValue,
 }: {
   readonly data: TorNodeData | null;
   readonly translations: TorStatsTranslations;
-  readonly children: ComponentChildren;
+  readonly headlineLabel: string;
+  readonly headlineValue: string;
 }) {
   const isOffline = data !== null && !data.running;
-
+  const bandwidth =
+    data?.advertised_bandwidth == null
+      ? "..."
+      : formatBandwidth(data.advertised_bandwidth);
   return (
-    <div className="stats-wrapper-col">
-      {/* Status + Version */}
-      <div className="status-header">
-        <div
-          className={`status-badge${isOffline ? " status-badge--offline" : ""}`}
-        >
-          <span
-            className={`status-dot${isOffline ? " status-dot--offline" : ""}`}
-          ></span>
-          <strong>{getStatusText(data, t)}</strong>
+    <div className="tor-node">
+      <span
+        className={`tor-node__status${isOffline ? " tor-node__status--off" : ""}`}
+      >
+        <span
+          className="tor-node__dot"
+          aria-hidden="true"
+        ></span>
+        {getStatusText(data, t)}
+      </span>
+      <p className="tor-node__headline">
+        <output className="tor-node__num">{headlineValue}</output>
+        <span className="tor-node__label">{headlineLabel}</span>
+      </p>
+      <div className="tor-node__rows">
+        <div className="tor-node__row">
+          <span className="tor-node__k">{t.location}</span>
+          <span className="tor-node__v">{data?.location ?? "..."}</span>
         </div>
-        {data ? (
-          <div className="status-text-muted">
-            <strong className="status-text">Tor {data.version}</strong>{" "}
-            <span
-              className={`tor-version-badge ${data.recommended_version ? "tor-version-badge--ok" : "tor-version-badge--warn"}`}
-            >
-              {data.recommended_version
-                ? `✓ ${t.recommended}`
-                : `⚠ ${t.obsolete}`}
-            </span>
-          </div>
-        ) : null}
-      </div>
-
-      {data ? (
-        <TorFlagList
-          flags={data.flags}
-          label={t.flags}
-        />
-      ) : null}
-
-      {/* Traffic 24h */}
-      <div className="tor-metrics">
-        <div className="tor-metric-header">{t.traffic24h}</div>
-        <div className="tor-metric-grid">
-          <TorMetric
-            label={t.download}
-            value={data ? formatBytes(data.traffic_read_24h) : "..."}
-          />
-          <TorMetric
-            label={t.upload}
-            value={data ? formatBytes(data.traffic_write_24h) : "..."}
-          />
+        <div className="tor-node__row">
+          <span className="tor-node__k">{t.advertisedBandwidth}</span>
+          <span className="tor-node__v">{bandwidth}</span>
         </div>
       </div>
-
-      {/* Type-specific metrics */}
-      {children}
     </div>
   );
 }
 
 /**
- * Displays live Tor statistics for a bridge or relay node.
- * Fetches data from /api/homelab/tor and renders the appropriate card layout.
+ * Live Tor node stats as a compact card. Bridges show clients helped (24h);
+ * relays show connections (24h). Data comes from /api/homelab/tor.
  *
  * @param props - Component properties.
- * @param props.type - The node type: `"bridge"` (obfs4/WebTunnel, UK), `"bridge-es1"` (obfs4/WebTunnel, ES), `"relay"` (UK middle relay), or `"relay-es"` (ES middle relay).
+ * @param props.type - Node type: bridge, bridge-es1, relay or relay-es.
  * @param props.translations - Translated strings for the component.
- * @returns The rendered stats component.
+ * @returns The rendered compact Tor node card.
  */
 export default function TorStats({ type, translations: t }: Props) {
   const [data, setData] = useState<TorNodeData | null>(null);
@@ -347,85 +282,18 @@ export default function TorStats({ type, translations: t }: Props) {
     return <div className="stats-error">{t.serviceUnavailable}</div>;
   }
 
+  const isBridge = type === "bridge" || type === "bridge-es1";
+  const headlineValue = isBridge
+    ? (data?.clients_24h?.toLocaleString() ?? "...")
+    : (data?.connections_24h?.toLocaleString() ?? "...");
+  const headlineLabel = isBridge ? t.clients24h : t.connections24h;
+
   return (
     <TorNodeCard
       data={data}
       translations={t}
-    >
-      {type === "bridge" || type === "bridge-es1" ? (
-        <>
-          {data?.transports ? (
-            <TorFlagList
-              flags={data.transports}
-              label={t.transports}
-              badgeClass="tor-transport-badge"
-            />
-          ) : null}
-          <div className="tor-metric-grid">
-            <TorMetric
-              label={t.clients24h}
-              value={data?.clients_24h?.toLocaleString() ?? "..."}
-            />
-            <TorMetric
-              label={t.advertisedBandwidth}
-              value={
-                data?.advertised_bandwidth == null
-                  ? "..."
-                  : formatBandwidth(data.advertised_bandwidth)
-              }
-            />
-          </div>
-          <div className="tor-metric-grid">
-            <TorMetric
-              label={t.orConnections}
-              value={data?.or_connections?.toLocaleString() ?? "..."}
-            />
-            <TorMetric
-              label={t.circuits}
-              value={data?.circuits_open?.toLocaleString() ?? "..."}
-            />
-          </div>
-          <div className="tor-metric-grid">
-            <TorMetric
-              label={t.location}
-              value={data?.location ?? "..."}
-            />
-          </div>
-        </>
-      ) : (
-        <>
-          <div className="tor-metric-grid">
-            <TorMetric
-              label={t.orConnections}
-              value={data?.or_connections?.toLocaleString() ?? "..."}
-            />
-            <TorMetric
-              label={t.circuits}
-              value={data?.circuits_open?.toLocaleString() ?? "..."}
-            />
-          </div>
-          <div className="tor-metric-grid">
-            <TorMetric
-              label={t.connections24h}
-              value={data?.connections_24h?.toLocaleString() ?? "..."}
-            />
-            <TorMetric
-              label={t.location}
-              value={data?.location ?? "..."}
-            />
-          </div>
-          <div className="tor-metric-grid">
-            <TorMetric
-              label={t.advertisedBandwidth}
-              value={
-                data?.advertised_bandwidth == null
-                  ? "..."
-                  : formatBandwidth(data.advertised_bandwidth)
-              }
-            />
-          </div>
-        </>
-      )}
-    </TorNodeCard>
+      headlineLabel={headlineLabel}
+      headlineValue={headlineValue}
+    />
   );
 }

@@ -21,6 +21,7 @@ import { defaultLocale, type Locale } from "@i18n/config";
 import { formatDate, useTranslatedPath, useTranslations } from "@i18n/utils";
 import BaseLayout from "@layouts/BaseLayout.astro";
 import type { SiteConfig } from "@src/types";
+import { formatDateDot, getReadingTime } from "@utils/blog";
 import { getSiteUrl } from "@utils/site";
 import { getImage, Image, Picture } from "astro:assets";
 import { type CollectionEntry, getEntry, render } from "astro:content";
@@ -44,6 +45,11 @@ const siteEntry = await getEntry("site_config", "site");
 const siteData = (siteEntry?.data || {}) as SiteConfig;
 
 const { Content, headings } = await render(post);
+
+// Post header meta: dot date + reading time + 1–2 amber category chips
+// (the full tag list lives in the JSON-LD / tag pages, not the header).
+const readingMin = getReadingTime(post);
+const primaryTags = (post.data.tags ?? []).slice(0, 2);
 
 // --- Reference Collection Logic ---
 const bodyWithoutCode = (post.body || "")
@@ -259,25 +265,41 @@ const articleSchema = [
           </a>
           <div class="meta">
             {
-              post.data.tags && (
+              primaryTags.length > 0 && (
                 <div class="tags">
-                  {post.data.tags.map((tag) => (
+                  {primaryTags.map((tag) => (
                     <a
                       href={translatePath(
                         `/blog/tags/${encodeURIComponent(tag.toLowerCase())}/`,
                       )}
-                      class="tag"
+                      class="tag-chip"
                       aria-label={t("aria.viewTaggedPosts", { tag })}
                     >
-                      #{tag}
+                      {tag}
                     </a>
                   ))}
                 </div>
               )
             }
+            <span
+              class="meta-sep"
+              aria-hidden="true"
+            >
+              ·
+            </span>
             <time datetime={post.data.publishedDate.toISOString()}>
-              {formatDate(post.data.publishedDate, locale)}
+              {formatDateDot(post.data.publishedDate)}
             </time>
+            <span
+              class="meta-sep"
+              aria-hidden="true"
+            >
+              ·
+            </span>
+            <span class="reading-time">
+              {readingMin}
+              {t("pages.blog.minRead")}
+            </span>
             {
               post.data.updatedDate && (
                 <time
@@ -517,7 +539,7 @@ const articleSchema = [
   .meta {
     display: flex;
     flex-wrap: wrap;
-    gap: var(--space-md);
+    gap: 0.5rem 0.75rem;
     align-items: center;
     min-height: 1.5em;
     font-family: var(--font-mono);
@@ -527,6 +549,14 @@ const articleSchema = [
   }
 
   .meta time {
+    white-space: nowrap;
+  }
+
+  .meta-sep {
+    color: var(--color-border);
+  }
+
+  .reading-time {
     white-space: nowrap;
   }
 
@@ -540,31 +570,28 @@ const articleSchema = [
     gap: var(--space-sm);
   }
 
-  /* Mono tag chip: amber text on the header surface (AA in both themes),
-     hairline border as the non-color affordance. */
-  .tag {
-    padding: 0.15rem 0.5rem;
+  /* Amber category chip (filled). Non-colour affordance: filled pill + ink
+     text; only the primary 1–2 tags appear here so they don't fight the title. */
+  .tag-chip {
+    padding: 2px 8px;
     font-family: var(--font-mono);
     font-size: 0.75rem;
     font-weight: var(--fw-medium);
-    color: var(--color-accent);
+    color: var(--color-on-primary);
+    text-transform: lowercase;
     text-decoration: none;
-    border: var(--border-1);
-    border-radius: var(--radius-sm);
-    transition:
-      color var(--dur-2) var(--ease-out),
-      border-color var(--dur-2) var(--ease-out);
+    background: var(--color-accent);
+    border-radius: var(--radius-md);
+    transition: background-color var(--dur-2) var(--ease-out);
   }
 
-  .tag:hover {
-    color: var(--accent-hi);
-    border-color: var(--color-accent);
+  .tag-chip:hover {
+    background: var(--accent-hi);
   }
 
-  .tag:focus-visible {
+  .tag-chip:focus-visible {
     outline: 2px solid var(--color-primary);
     outline-offset: 2px;
-    border-radius: var(--radius-sm);
   }
 
   h1 {

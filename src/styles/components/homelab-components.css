@@ -274,7 +274,7 @@
 }
 
 .edge-defense__head .section-title {
-  margin-bottom: 0;
+  margin: 0;
 }
 
 .edge-defense__chip {
@@ -287,26 +287,168 @@
   border-radius: 100px;
 }
 
-.edge-flow {
-  margin: 0 0 var(--space-md-lg);
+/* Unified spotlight card: accent hairline + subtle amber wash. */
+.edge-card {
+  overflow: hidden;
+  background: linear-gradient(
+    160deg,
+    color-mix(in srgb, var(--color-accent) 9%, var(--color-bg-secondary)),
+    var(--color-bg-secondary) 60%
+  );
+  border: 1px solid var(--accent-line);
+  border-radius: var(--radius-lg);
+}
+
+/* Hero aggregate: shield + big number + description + 4 mini-metrics. */
+.edge-hero {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-md-lg);
+  align-items: center;
+  padding: var(--space-md-lg);
+  border-bottom: 1px solid var(--color-hair);
+}
+
+.edge-hero__icon {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 50px;
+  height: 50px;
+  font-size: 1.6rem;
+  color: var(--color-accent);
+  background: var(--accent-dim);
+  border: 1px solid var(--accent-line);
+  border-radius: 13px;
+}
+
+.edge-hero__lead {
+  flex: 1;
+  min-width: 200px;
+}
+
+.edge-hero__headline {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-sm) var(--space-md);
+  align-items: baseline;
+}
+
+.edge-hero__num {
+  font-family: var(--font-display);
+  font-size: clamp(2.125rem, 5vw, 2.875rem);
+  font-weight: var(--fw-bold);
+  line-height: 1;
+  color: var(--color-text-heading);
+  letter-spacing: -0.03em;
+}
+
+.edge-hero__label {
   font-family: var(--font-mono);
-  font-size: 0.8125rem;
-  line-height: 1.6;
+  font-size: 0.875rem;
+  color: var(--color-text);
+}
+
+.edge-hero__desc {
+  max-width: 62ch;
+  margin: 6px 0 0;
+  font-size: 0.85rem;
+  line-height: 1.5;
   color: var(--color-text-muted);
 }
 
+.edge-hero__metrics {
+  display: flex;
+  flex: none;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+}
+
+/* On narrow widths the 4 boxes must wrap (a rigid row overflows the card). */
+@media (width <= 720px) {
+  .edge-hero__metrics {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    width: 100%;
+  }
+
+  .edge-metric {
+    min-width: 0;
+  }
+}
+
+.edge-metric {
+  min-width: 96px;
+  padding: 10px 14px;
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+}
+
+.edge-metric__num {
+  display: block;
+  font-family: var(--font-display);
+  font-size: 1.2rem;
+  font-weight: var(--fw-bold);
+  line-height: 1;
+  color: var(--color-text-heading);
+}
+
+.edge-metric__label {
+  display: block;
+  margin-top: 5px;
+  font-family: var(--font-mono);
+  font-size: 0.66rem;
+  color: var(--color-text-muted);
+}
+
+.edge-flow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6em;
+  align-items: center;
+  padding: 11px var(--space-md-lg);
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  line-height: 1.6;
+  color: var(--color-text-muted);
+  border-bottom: 1px solid var(--color-hair);
+}
+
+/* Two source columns, divided internally (no individual card chrome). */
 .edge-cols {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: var(--space-md);
-  margin-bottom: var(--space-xl);
 }
 
 .edge-col {
   padding: var(--space-md-lg);
-  background: var(--color-bg-secondary);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-lg);
+}
+
+.edge-col:first-child {
+  border-right: 1px solid var(--color-hair);
+}
+
+/* Explainer links below the card. */
+.edge-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-md) var(--space-lg);
+  margin-top: var(--space-md);
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+}
+
+.edge-link {
+  color: var(--color-text);
+  text-decoration: none;
+}
+
+.edge-link:hover {
+  color: var(--color-accent);
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }
 
 .edge-col__head {
@@ -596,4 +738,141 @@
   .node-meter__fill {
     transition: none;
   }
+}
+
+/* ===== Compact Tor node card (TorStats) ===== */
+.tor-node {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.tor-node__status {
+  display: inline-flex;
+  gap: 0.5em;
+  align-items: center;
+  align-self: flex-start;
+  padding: 3px 10px;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  color: var(--teal-text);
+  background: color-mix(in srgb, var(--teal) 12%, transparent);
+  border-radius: 100px;
+}
+
+.tor-node__status--off {
+  color: var(--color-text-muted);
+  background: var(--color-bg-subtle);
+}
+
+.tor-node__dot {
+  width: 7px;
+  height: 7px;
+  background: var(--teal);
+  border-radius: 50%;
+}
+
+.tor-node__status--off .tor-node__dot {
+  background: var(--color-text-muted);
+}
+
+.tor-node__headline {
+  margin: var(--space-xs) 0 var(--space-sm);
+}
+
+.tor-node__num {
+  display: block;
+  font-family: var(--font-display);
+  font-size: 1.75rem;
+  font-weight: var(--fw-bold);
+  line-height: 1;
+  color: var(--color-text-heading);
+  letter-spacing: -0.02em;
+}
+
+.tor-node__label {
+  display: block;
+  margin-top: 5px;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  color: var(--color-text-muted);
+}
+
+.tor-node__rows {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  padding-top: var(--space-sm);
+  border-top: 1px solid var(--color-hair);
+}
+
+.tor-node__row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+}
+
+.tor-node__k {
+  color: var(--color-text-muted);
+}
+
+.tor-node__v {
+  color: var(--color-text-heading);
+}
+
+/* ===== Compact service-stats card (ServiceStats) ===== */
+.svc-stats {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.svc-stats__pill {
+  display: inline-flex;
+  gap: 0.5em;
+  align-items: center;
+  align-self: flex-start;
+  padding: 3px 10px;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  color: var(--teal-text);
+  background: color-mix(in srgb, var(--teal) 12%, transparent);
+  border-radius: 100px;
+}
+
+.svc-stats__dot {
+  width: 7px;
+  height: 7px;
+  background: var(--teal);
+  border-radius: 50%;
+}
+
+.svc-stats__grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-md);
+}
+
+.svc-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.svc-stat__value {
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  font-weight: var(--fw-bold);
+  line-height: 1.05;
+  color: var(--color-text-heading);
+  letter-spacing: -0.01em;
+  overflow-wrap: anywhere;
+}
+
+.svc-stat__label {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  color: var(--color-text-muted);
 }

@@ -54,6 +54,21 @@ export async function getPostsForLocale(
 }
 
 /**
+ * Formats a date as the site's canonical compact "YYYY·MM·DD" string
+ * (middle-dot separator, U+00B7). Used across the blog listing, the home
+ * "latest notes" list and the post header so dates read consistently.
+ *
+ * @param input - A Date (or date string).
+ * @returns The date as `YYYY·MM·DD`.
+ */
+export function formatDateDot(input: Date | string): string {
+  const d = typeof input === "string" ? new Date(input) : input;
+  return `${d.getFullYear()}·${String(d.getMonth() + 1).padStart(2, "0")}·${String(
+    d.getDate(),
+  ).padStart(2, "0")}`;
+}
+
+/**
  * Estimates reading time in whole minutes from a post's raw body.
  *
  * Uses a 200-words-per-minute baseline (a common prose reading speed) and never
