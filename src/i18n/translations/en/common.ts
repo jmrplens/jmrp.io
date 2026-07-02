@@ -38,6 +38,11 @@ export const common = {
     location: "Alicante, ES (UTC+1)",
     blocked: "permission denied — nice try",
     usage: "usage",
+    nedryDenied: "ACCESS DENIED",
+    nedrySound: "with sound",
+    nedryBack: "back to menu",
+    nedryAria:
+      "Dennis Nedry wagging his finger — you didn't say the magic word",
     groupNav: "navigation",
     groupDiscover: "discover",
     groupIdentity: "identity",

@@ -127,8 +127,21 @@ const termData = {
   social,
   identity,
   langPaths: { en: cleanPath, es: `/es${cleanPath}` },
+  // Nedry easter-egg assets — static files, fetched on demand only when a
+  // blocked command runs (never shipped inline on every page).
+  nedry: {
+    body: "/nedry/nedry-body.png",
+    head: "/nedry/nedry-head.png",
+    hand: "/nedry/nedry-hand.png",
+    audio: "/nedry/nedry-audio.mp3",
+  },
   i18n: {
     youAreHere: t("menu.youAreHere"),
+    nedryDenied: t("terminal.nedryDenied"),
+    nedrySound: t("terminal.nedrySound"),
+    nedryBack: t("terminal.nedryBack"),
+    nedryAria: t("terminal.nedryAria"),
+    nedryMessage: t("pages.notFound.message"),
     notFound: t("terminal.notFound"),
     typeHelp: t("terminal.typeHelp"),
     emptyDir: t("terminal.emptyDir"),
@@ -652,6 +665,59 @@ const staticRecent = postData.slice(0, 6);
         return [row];
       }
 
+      // --- Nedry easter egg (blocked commands) ---
+      let nedryAudio = null;
+      function stopNedry() {
+        if (nedryAudio) {
+          try {
+            nedryAudio.pause();
+          } catch (e) {}
+          nedryAudio = null;
+        }
+      }
+      function nedry() {
+        stopNedry();
+        const box = el("div", "term-nedry");
+        const head = el("div", "term-nedry__head");
+        head.appendChild(el("span", "term-nedry__denied", T.nedryDenied));
+        head.appendChild(el("span", "term-nedry__sound", "♪ " + T.nedrySound));
+        box.appendChild(head);
+        const stage = el("div", "term-nedry__stage");
+        stage.setAttribute("role", "img");
+        stage.setAttribute("aria-label", T.nedryAria);
+        [
+          ["body", "term-nedry__body"],
+          ["head", "term-nedry__head-img"],
+          ["hand", "term-nedry__hand"],
+        ].forEach(function (pair) {
+          const img = el("img", pair[1]);
+          img.src = D.nedry[pair[0]];
+          img.alt = "";
+          img.loading = "lazy";
+          stage.appendChild(img);
+        });
+        box.appendChild(stage);
+        box.appendChild(el("p", "term-nedry__msg", T.nedryMessage));
+        const back = el("button", "term-nedry__back", "↺ " + T.nedryBack);
+        back.type = "button";
+        back.addEventListener("click", function () {
+          stopNedry();
+          prev = cwd;
+          setCwd("~");
+          setOutput(rTree());
+          ran = false;
+          resetBtn.hidden = true;
+          input.focus();
+        });
+        box.appendChild(back);
+        setOutput([box]);
+        // The Enter keypress is a user gesture, so playback is allowed.
+        try {
+          nedryAudio = new Audio(D.nedry.audio);
+          nedryAudio.play().catch(function () {});
+        } catch (e) {}
+      }
+
       // --- navigation helpers ---
       function resolvePath(arg) {
         let p = (arg || "").trim().replace(/^~\/?/, "").replace(/^\//, "");
@@ -678,6 +744,7 @@ const staticRecent = postData.slice(0, 6);
         return [comment("theme " + next)];
       }
       function closeDrawer() {
+        stopNedry();
         if (checkbox) {
           checkbox.checked = false;
           checkbox.dispatchEvent(new Event("change", { bubbles: true }));
@@ -691,7 +758,7 @@ const staticRecent = postData.slice(0, 6);
         const c = (sp === -1 ? cmd : cmd.slice(0, sp)).toLowerCase();
         const arg = sp === -1 ? "" : cmd.slice(sp + 1).trim();
 
-        if (BLOCKED.has(c)) return setOutput([comment(T.blocked)]);
+        if (BLOCKED.has(c)) return nedry();
 
         switch (c) {
           case "help":
@@ -793,6 +860,7 @@ const staticRecent = postData.slice(0, 6);
       function execute(raw) {
         const cmd = raw.trim();
         if (!cmd) return;
+        stopNedry();
         history.push(cmd);
         hIdx = history.length;
         run(cmd);
@@ -1269,6 +1337,111 @@ const staticRecent = postData.slice(0, 6);
     color: var(--color-text-muted);
   }
 
+  /* --- Nedry easter egg (blocked commands) --- */
+  .term-live :global(.term-nedry) {
+    margin: 8px 0;
+    overflow: hidden;
+    background: var(--accent-dim);
+    border: 1px solid var(--accent-line);
+    border-radius: var(--radius-lg);
+  }
+
+  .term-live :global(.term-nedry__head) {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 9px 12px;
+    font-family: var(--font-mono);
+    font-size: 0.7188rem;
+    border-bottom: 1px solid var(--accent-line);
+  }
+
+  .term-live :global(.term-nedry__denied) {
+    color: var(--color-accent);
+    letter-spacing: 0.1em;
+  }
+
+  .term-live :global(.term-nedry__sound) {
+    color: var(--color-text-muted);
+  }
+
+  .term-live :global(.term-nedry__stage) {
+    position: relative;
+    display: block;
+    width: 150px;
+    aspect-ratio: 380 / 466;
+    margin: 16px auto 0;
+  }
+
+  .term-live :global(.term-nedry__body),
+  .term-live :global(.term-nedry__head-img),
+  .term-live :global(.term-nedry__hand) {
+    position: absolute;
+  }
+
+  .term-live :global(.term-nedry__body) {
+    inset: 0;
+    width: 100%;
+    height: 100%;
+  }
+
+  .term-live :global(.term-nedry__head-img) {
+    top: 6.5%;
+    left: 31.8%;
+    width: 36.4%;
+  }
+
+  .term-live :global(.term-nedry__hand) {
+    top: 28.7%;
+    left: 60.2%;
+    width: 22.7%;
+    transform-origin: 50% 100%;
+    animation: hand-wave 1s linear infinite;
+  }
+
+  @keyframes hand-wave {
+    0% {
+      transform: rotate(-10deg);
+    }
+
+    50% {
+      transform: rotate(14deg);
+    }
+
+    100% {
+      transform: rotate(-10deg);
+    }
+  }
+
+  .term-live :global(.term-nedry__msg) {
+    margin: 12px 14px 0;
+    font-family: var(--font-body);
+    font-size: 0.9375rem;
+    font-weight: var(--fw-medium);
+    color: var(--color-text-heading);
+    text-align: center;
+  }
+
+  .term-live :global(.term-nedry__back) {
+    display: block;
+    min-height: 44px;
+    padding: 11px 18px;
+    margin: 12px auto 16px;
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
+    color: var(--color-on-primary);
+    cursor: pointer;
+    background: var(--color-primary);
+    border: 0;
+    border-radius: var(--radius-md);
+  }
+
+  .term-live :global(.term-nedry__back:hover),
+  .term-live :global(.term-nedry__back:focus-visible) {
+    outline: none;
+    background: var(--accent-hi);
+  }
+
   /* --- Terminal I/O --- */
   .term-io {
     border-top: 1px solid var(--color-hair);
@@ -1421,6 +1594,10 @@ const staticRecent = postData.slice(0, 6);
     .nav-drawer,
     .cmd__chevron {
       transition: none;
+    }
+
+    .term-live :global(.term-nedry__hand) {
+      animation: none;
     }
   }
 </style>

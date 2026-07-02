@@ -6,12 +6,6 @@
  * Nedry easter egg: the finger-wagging character plays the "magic word" sound
  * on click (and on first page interaction).
  */
-import {
-  nedryAudio,
-  nedryBody,
-  nedryHand,
-  nedryHead,
-} from "@assets/nedry-assets";
 import { defaultLocale, type Locale } from "@i18n/config";
 import { useTranslatedPath, useTranslations } from "@i18n/utils";
 import BaseLayout from "@layouts/BaseLayout.astro";
@@ -77,17 +71,17 @@ const translatePath = useTranslatedPath(locale);
         <span class="nf-nedry-stage">
           <img
             class="nf-nedry-body"
-            src={nedryBody}
+            src="/nedry/nedry-body.png"
             alt={t("pages.notFound.nedryAlt")}
           />
           <img
             class="nf-nedry-head"
-            src={nedryHead}
+            src="/nedry/nedry-head.png"
             alt=""
           />
           <img
             class="nf-nedry-hand"
-            src={nedryHand}
+            src="/nedry/nedry-hand.png"
             alt=""
           />
         </span>
@@ -113,7 +107,7 @@ const translatePath = useTranslatedPath(locale);
       loop
     >
       <source
-        src={nedryAudio}
+        src="/nedry/nedry-audio.mp3"
         type="audio/mp3"
       />
     </audio>
