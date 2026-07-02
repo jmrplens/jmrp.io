@@ -17,6 +17,13 @@ export const common = {
     uses: "Uses",
     now: "Now",
   },
+  menu: {
+    drawerLabel: "Navigation menu",
+    youAreHere: "you are here",
+    recent: "recent posts",
+    tags: "tags",
+    available: "available",
+  },
   ui: {
     skipToContent: "Skip to content",
     readMore: "Read more",

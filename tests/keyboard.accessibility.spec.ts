@@ -85,56 +85,36 @@ test.describe("Keyboard Navigation Accessibility", () => {
     await page.setViewportSize({ width: 375, height: 667 });
     await page.goto("/");
 
-    // 1. Focus the menu toggle button
+    // The burger is a <label> for the #nav-open checkbox (zero-JS base); the
+    // checkbox is the focusable control. The drawer itself is #nav-drawer.
     const menuToggle = page.locator("#menu-toggle");
+    const checkbox = page.locator("#nav-open");
+    const drawer = page.locator("#nav-drawer");
     await expect(menuToggle).toBeVisible();
 
-    // Tab until we reach the menu toggle
-    // It might take a few tabs depending on logo/skip links
-    // Strategy: click to focus body, then find way to button or just focus it directly to simulate "getting there"
-    await menuToggle.focus();
-    await expect(menuToggle).toBeFocused();
-
-    // 2. Open menu with Enter
-    await page.keyboard.press("Enter");
-
-    // Wait for menu to be open
-    const navLinksContainer = page.locator("#nav-links");
-    await expect(navLinksContainer).toHaveClass(/open/);
+    // 1. Open by activating the burger (toggles the checkbox → JS enhances).
+    await menuToggle.click();
+    await expect(drawer).toHaveClass(/open/);
     await expect(page.locator("body")).toHaveClass(/menu-open/);
 
-    // 3. Check for focus trap or focus management
-    // Ideally, focus should move to the first element in the menu or the close button
-    // Navigate via Tab keys to check focus sequence
-    // Good practice: Focus should be inside the menu.
-    await page.keyboard.press("Tab");
-
-    // Verify focus is within the nav links container
-    // Check if the focused element's ancestor is the nav-links container
-    // This is a loose check; strict focus trapping is hard to implement perfectly without a library,
-    // but we want to ensure we are at least navigating the menu items.
-
-    // For this test, let's verify we can tab through the mobile links
-
-    // If focus didn't move automatically (common issue), we might still be on the toggle or next element.
-    // Assert that we can reach the links.
-
-    // Note: If the menu doesn't trap focus or move it, this test might fail or behave unexpectedly.
-    // This is a "functional a11y test" - we are testing if it works for keyboard users.
-
-    // Snapshot the open menu state with Axe
+    // 2. Snapshot the open drawer with Axe.
     const results = await new AxeBuilder({ page })
-      .include("#nav-links")
+      .include("#nav-drawer")
       .analyze();
-
     expect(results.violations).toEqual([]);
 
-    // 4. Close menu with Escape
-    await page.keyboard.press("Escape");
-    await expect(navLinksContainer).not.toHaveClass(/open/);
+    // 3. Focus should have moved into the drawer (focus management).
+    const focusInDrawer = await drawer.evaluate((el) =>
+      el.contains(document.activeElement),
+    );
+    expect(focusInDrawer).toBe(true);
 
-    // 5. Verify focus returns to toggle (Best Practice)
-    await expect(menuToggle).toBeFocused();
+    // 4. Close with Escape.
+    await page.keyboard.press("Escape");
+    await expect(drawer).not.toHaveClass(/open/);
+
+    // 5. Focus returns to the trigger control (the #nav-open checkbox).
+    await expect(checkbox).toBeFocused();
   });
 
   test("Theme Toggle Keyboard Interaction", async ({ page }) => {

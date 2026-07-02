@@ -218,7 +218,7 @@ test.describe("Interactive Features", () => {
     // Open the mobile menu
     const menuToggle = page.locator("#menu-toggle");
     await menuToggle.click();
-    await expect(page.locator("#nav-links")).toHaveClass(/open/);
+    await expect(page.locator("#nav-drawer")).toHaveClass(/open/);
     await expect(page.locator("body")).toHaveClass(/menu-open/);
 
     // Verify body has position:fixed (scroll lock active)
@@ -229,7 +229,7 @@ test.describe("Interactive Features", () => {
 
     // Close the menu
     await page.keyboard.press("Escape");
-    await expect(page.locator("#nav-links")).not.toHaveClass(/open/);
+    await expect(page.locator("#nav-drawer")).not.toHaveClass(/open/);
     await expect(page.locator("body")).not.toHaveClass(/menu-open/);
 
     // Verify scroll position is restored (within tolerance for sub-pixel differences)

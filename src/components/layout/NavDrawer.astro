@@ -1,0 +1,515 @@
+---
+/**
+ * NavDrawer — the mobile "terminal" navigation drawer (Lab system).
+ *
+ * Phase 1: a ZERO-JS, accessible base. Open/close is the CSS checkbox hack
+ * (`#nav-open` lives in Header; opened via `html:has(#nav-open:checked)`), so
+ * the drawer works with no JavaScript. The body is the `tree -L 1` section list
+ * as REAL Astro links plus a couple of `<details>` command fallbacks (`cd blog`,
+ * `tags`) rendered from build-time collections — all keyboard-usable without JS.
+ * The editable JS terminal is a later enhancement layered on top of this.
+ */
+import LanguageSwitcher from "@components/layout/LanguageSwitcher.astro";
+import Logo from "@components/layout/Logo.astro";
+import { defaultLocale, type Locale } from "@i18n/config";
+import {
+  stripLocalePrefix,
+  type TranslationKey,
+  useTranslatedPath,
+  useTranslations,
+} from "@i18n/utils";
+import { formatDateDot, getPostsForLocale, getUniqueTags } from "@utils/blog";
+import { getEntry } from "astro:content";
+
+const locale = (Astro.currentLocale ?? defaultLocale) as Locale;
+const t = useTranslations(locale);
+const translatePath = useTranslatedPath(locale);
+
+// Active section = first path segment (locale-stripped).
+const currentSegment =
+  stripLocalePrefix(Astro.url.pathname).split("/").find(Boolean) ?? "";
+
+const siteEntry = await getEntry("site_config", "site");
+const siteData = siteEntry?.data;
+const navItems =
+  (siteData && "nav" in siteData ? siteData.nav : undefined) ?? [];
+
+/** Map each nav href to its i18n label key (mirrors Header). */
+const navLabelKeyMap: Record<string, TranslationKey> = {
+  "/": "nav.home",
+  "/blog/": "nav.blog",
+  "/homelab/": "nav.homelab",
+  "/tools/": "nav.tools",
+  "/cv/": "nav.cv",
+  "/publications/": "nav.publications",
+  "/github/": "nav.repositories",
+};
+
+// `tree -L 1` rows: section path + label, current one flagged.
+const treeRows = navItems.map((item, i) => {
+  const seg = stripLocalePrefix(item.href).split("/").find(Boolean) ?? "";
+  const labelKey = navLabelKeyMap[item.href];
+  return {
+    href: translatePath(item.href),
+    path: seg ? `~/${seg}` : "~",
+    label: labelKey ? t(labelKey) : item.label,
+    current: seg === currentSegment,
+    glyph: i === navItems.length - 1 ? "└──" : "├──",
+  };
+});
+
+// Build-time data for the command fallbacks.
+const posts = (await getPostsForLocale(locale)).map((e) => e.post);
+const recent = posts.slice(0, 6).map((p) => ({
+  href: translatePath(`/blog/${p.data.slug}/`),
+  title: p.data.title,
+  date: formatDateDot(p.data.publishedDate),
+}));
+const tags = getUniqueTags(posts)
+  .slice(0, 14)
+  .map(({ tag, count }) => ({
+    href: translatePath(`/blog/tags/${tag}/`),
+    tag,
+    count,
+  }));
+---
+
+<div
+  id="nav-drawer"
+  class="nav-drawer"
+  role="dialog"
+  aria-label={t("menu.drawerLabel")}
+>
+  <div class="drawer__head">
+    <span class="drawer__mark">
+      <Logo showPath={false} />
+    </span>
+    <label
+      for="nav-open"
+      class="drawer__close"
+      aria-label={t("aria.closeMenu")}
+    >
+      <span
+        class="i-fa-solid:times"
+        aria-hidden="true"
+      ></span>
+    </label>
+  </div>
+
+  <div class="drawer__body">
+    {/* tree -L 1 — the accessible zero-JS section list */}
+    <p class="term-line">
+      <span
+        class="term-line__prompt"
+        aria-hidden="true"
+        >jmrp@home:~$</span
+      > tree -L 1
+    </p>
+    <ul class="tree">
+      {
+        treeRows.map((row) => (
+          <li>
+            <a
+              href={row.href}
+              class="tree__row"
+              aria-current={row.current ? "page" : undefined}
+            >
+              <span
+                class="tree__glyph"
+                aria-hidden="true"
+              >
+                {row.glyph}
+              </span>
+              <span class="tree__path">{row.path}</span>
+              <span class="tree__label">{row.label}</span>
+              {row.current && (
+                <span class="tree__here">{t("menu.youAreHere")}</span>
+              )}
+            </a>
+          </li>
+        ))
+      }
+    </ul>
+
+    {/* command fallbacks (keyboard-usable, no JS) */}
+    <details class="cmd">
+      <summary class="cmd__summary">
+        <span
+          class="cmd__chevron i-mdi:menu-right"
+          aria-hidden="true"
+        ></span>
+        <span class="cmd__text">cd blog</span>
+        <span class="cmd__hint">{t("menu.recent")}</span>
+      </summary>
+      <ul class="cmd__list">
+        {
+          recent.map((p) => (
+            <li>
+              <a
+                href={p.href}
+                class="cmd__row"
+              >
+                <span class="cmd__path">~/blog</span>
+                <span class="cmd__rowlabel">{p.title}</span>
+                <span class="cmd__marker">{p.date}</span>
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+    </details>
+
+    <details class="cmd">
+      <summary class="cmd__summary">
+        <span
+          class="cmd__chevron i-mdi:menu-right"
+          aria-hidden="true"
+        ></span>
+        <span class="cmd__text">tags</span>
+        <span class="cmd__hint">{t("menu.tags")}</span>
+      </summary>
+      <ul class="cmd__list cmd__list--tags">
+        {
+          tags.map((tg) => (
+            <li>
+              <a
+                href={tg.href}
+                class="cmd__tag"
+              >
+                #{tg.tag}
+                <span class="cmd__tag-count">{tg.count}</span>
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+    </details>
+  </div>
+
+  <div class="drawer__foot">
+    <span class="drawer__status">
+      <span
+        class="drawer__dot"
+        aria-hidden="true"
+      ></span>
+      {t("menu.available")}
+    </span>
+    <div class="drawer__foot-right">
+      <LanguageSwitcher />
+      <a
+        href="https://github.com/jmrplens"
+        class="drawer__gh"
+        target="_blank"
+        rel="external noopener noreferrer"
+        aria-label={t("aria.opensNewTab", { text: "GitHub" })}
+      >
+        <span
+          class="i-fa-brands:github"
+          aria-hidden="true"
+        ></span>
+      </a>
+    </div>
+  </div>
+</div>
+
+<style>
+  .nav-drawer {
+    position: fixed;
+    top: 0;
+    right: 0;
+    z-index: var(--z-drawer);
+    display: flex;
+    visibility: hidden;
+    flex-direction: column;
+    width: var(--drawer-w);
+    height: 100vh;
+    height: 100dvh;
+    background: color-mix(in srgb, var(--color-bg-secondary) 88%, transparent);
+    border-left: 1px solid var(--color-border);
+    box-shadow: -30px 0 60px -30px rgb(0 0 0 / 55%);
+    backdrop-filter: blur(16px);
+    transform: translateX(110%);
+    transition: transform var(--dur-3) var(--ease-out);
+  }
+
+  /* Open state: zero-JS via the checkbox, plus the JS `.open` class. */
+  :global(html:has(#nav-open:checked)) .nav-drawer,
+  .nav-drawer.open {
+    visibility: visible;
+    transform: translateX(0);
+  }
+
+  .drawer__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: var(--header-height-mobile);
+    padding: 0 14px 0 18px;
+    border-bottom: 1px solid var(--color-hair);
+  }
+
+  .drawer__close {
+    display: grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    color: var(--color-text-muted);
+    cursor: pointer;
+    border-radius: var(--radius-sm);
+  }
+
+  .drawer__close:hover {
+    color: var(--color-text-heading);
+    background: var(--color-surface-2);
+  }
+
+  .drawer__close > span {
+    width: 1.1rem;
+    height: 1.1rem;
+  }
+
+  .drawer__body {
+    flex: 1;
+    padding: 12px 14px;
+    overflow-y: auto;
+    font-family: var(--font-mono);
+    font-size: 0.875rem;
+  }
+
+  .term-line {
+    margin: 4px 6px 10px;
+    color: var(--color-text);
+  }
+
+  .term-line__prompt {
+    color: var(--teal-text);
+  }
+
+  .tree {
+    padding: 0;
+    margin: 0 0 14px;
+    list-style: none;
+  }
+
+  .tree__row {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    min-height: 44px;
+    padding: 6px 8px;
+    text-decoration: none;
+    border-radius: var(--radius-md);
+  }
+
+  .tree__glyph {
+    color: var(--color-text-faint);
+    white-space: pre;
+  }
+
+  .tree__path {
+    color: var(--color-text-heading);
+  }
+
+  .tree__label {
+    flex: 1;
+    font-family: var(--font-body);
+    font-size: 0.78rem;
+    color: var(--color-text-muted);
+  }
+
+  .tree__row[aria-current="page"] .tree__path {
+    color: var(--color-accent);
+  }
+
+  .tree__here {
+    font-size: 0.6875rem;
+    color: var(--color-accent);
+    white-space: nowrap;
+  }
+
+  .tree__row:hover,
+  .tree__row:focus-visible {
+    outline: none;
+    background: var(--color-surface-2);
+    box-shadow: inset 0 0 0 2px var(--accent-line);
+  }
+
+  /* --- Command fallbacks --- */
+  .cmd {
+    margin-bottom: 6px;
+    border-top: 1px solid var(--color-hair);
+  }
+
+  .cmd__summary {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    min-height: 44px;
+    padding: 6px 8px;
+    color: var(--color-text-heading);
+    cursor: pointer;
+    list-style: none;
+  }
+
+  .cmd__summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .cmd__chevron {
+    width: 1em;
+    height: 1em;
+    color: var(--color-accent);
+    transition: transform var(--dur-2) var(--ease-out);
+  }
+
+  .cmd[open] .cmd__chevron {
+    transform: rotate(90deg);
+  }
+
+  .cmd__hint {
+    flex: 1;
+    font-family: var(--font-body);
+    font-size: 0.75rem;
+    color: var(--color-text-muted);
+  }
+
+  .cmd__summary:focus-visible {
+    outline: none;
+    border-radius: var(--radius-sm);
+    box-shadow: inset 0 0 0 2px var(--accent-line);
+  }
+
+  .cmd__list {
+    padding: 0 0 8px;
+    margin: 0;
+    list-style: none;
+  }
+
+  .cmd__row {
+    display: flex;
+    gap: 8px;
+    align-items: baseline;
+    min-height: 44px;
+    padding: 6px 8px 6px 24px;
+    text-decoration: none;
+    border-radius: var(--radius-md);
+  }
+
+  .cmd__path {
+    color: var(--color-accent);
+    white-space: nowrap;
+  }
+
+  .cmd__rowlabel {
+    flex: 1;
+    font-family: var(--font-body);
+    font-size: 0.8rem;
+    color: var(--color-text);
+  }
+
+  .cmd__marker {
+    font-size: 0.6875rem;
+    color: var(--color-text-muted);
+    white-space: nowrap;
+  }
+
+  .cmd__row:hover,
+  .cmd__row:focus-visible {
+    outline: none;
+    background: var(--color-surface-2);
+    box-shadow: inset 0 0 0 2px var(--accent-line);
+  }
+
+  .cmd__list--tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    padding: 0 8px 10px 24px;
+  }
+
+  .cmd__tag {
+    display: inline-flex;
+    gap: 5px;
+    align-items: center;
+    min-height: 34px;
+    padding: 6px 10px;
+    color: var(--color-text);
+    text-decoration: none;
+    background: var(--color-surface-2);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+  }
+
+  .cmd__tag-count {
+    font-size: 0.6875rem;
+    color: var(--color-text-muted);
+  }
+
+  .cmd__tag:hover,
+  .cmd__tag:focus-visible {
+    color: var(--color-text-heading);
+    outline: none;
+    border-color: var(--accent-line);
+    box-shadow: 0 0 0 3px
+      color-mix(in srgb, var(--color-accent) 30%, transparent);
+  }
+
+  /* --- Footer --- */
+  .drawer__foot {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 11px 18px;
+    border-top: 1px solid var(--color-hair);
+  }
+
+  .drawer__status {
+    display: inline-flex;
+    gap: 8px;
+    align-items: center;
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
+    color: var(--color-text);
+  }
+
+  .drawer__dot {
+    width: 7px;
+    height: 7px;
+    background: var(--teal);
+    border-radius: 50%;
+    box-shadow: 0 0 8px var(--teal);
+  }
+
+  .drawer__foot-right {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+  }
+
+  .drawer__gh {
+    display: grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    color: var(--color-text);
+    border-radius: var(--radius-sm);
+  }
+
+  .drawer__gh > span {
+    width: 1.1rem;
+    height: 1.1rem;
+  }
+
+  .drawer__gh:hover,
+  .drawer__gh:focus-visible {
+    color: var(--color-text-heading);
+    background: var(--color-surface-2);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .nav-drawer,
+    .cmd__chevron {
+      transition: none;
+    }
+  }
+</style>

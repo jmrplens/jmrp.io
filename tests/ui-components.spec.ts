@@ -273,11 +273,11 @@ test.describe("Mobile Menu", () => {
     await menuToggle.click();
     await page.waitForTimeout(300);
 
-    const navLinks = page.locator("#nav-links");
+    const navLinks = page.locator("#nav-drawer");
     await expect(navLinks).toHaveClass(/open/);
 
-    // Close menu
-    await menuToggle.click();
+    // Close via the drawer's ✕ (the burger sits behind the open drawer).
+    await page.locator(".drawer__close").click();
     await page.waitForTimeout(300);
     await expect(navLinks).not.toHaveClass(/open/);
   });
@@ -295,7 +295,7 @@ test.describe("Mobile Menu", () => {
     await page.keyboard.press("Escape");
     await page.waitForTimeout(300);
 
-    const navLinks = page.locator("#nav-links");
+    const navLinks = page.locator("#nav-drawer");
     await expect(navLinks).not.toHaveClass(/open/);
   });
 });

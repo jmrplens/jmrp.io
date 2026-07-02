@@ -198,6 +198,8 @@
 
   /* ===== LAYOUT =========================================================== */
   --header-height: 64px;
+  --header-height-mobile: 58px; /* barra colapsada (móvil) */
+  --drawer-w: min(340px, 88vw); /* ancho del menú móvil (drawer) */
   --max-width-container: 1200px; /* ancho de página */
   --max-width-content: 1100px; /* ancho de contenido/hero (mockups) */
   --max-width-prose: 70ch; /* ancho de lectura */
