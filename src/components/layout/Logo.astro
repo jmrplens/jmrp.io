@@ -53,6 +53,15 @@ const pathLabel = segment ? `~/${segment}` : "~";
     color: var(--color-text-muted);
   }
 
+  /* Collapsed mobile bar shows just `❯ jmrp_` (per the handoff); dropping the
+     breadcrumb path also keeps a long segment (e.g. ~/publications) from
+     pushing the right cluster off a narrow (≤390px) viewport. */
+  @media (width <= 880px) {
+    .logo__path {
+      display: none;
+    }
+  }
+
   .logo__prompt {
     margin-left: 0.5em;
     color: var(--teal);
