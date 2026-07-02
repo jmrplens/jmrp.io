@@ -129,13 +129,17 @@ const { title = t("components.tldr.title"), collapsed = false } = Astro.props;
     margin: 0;
   }
 
+  /* Hanging em-dash marker. NOT flex: a flex <li> turns every inline text node
+     and <strong> into its own flex item (narrow columns), breaking the text. */
   .tldr-content :global(ul > li) {
-    display: flex;
-    gap: 0.7em;
+    position: relative;
+    padding-left: 1.4em;
     margin: 0;
   }
 
   .tldr-content :global(ul > li)::before {
+    position: absolute;
+    left: 0;
     color: var(--color-accent);
     content: "—";
   }
