@@ -15,7 +15,7 @@ const DESCRIPTION =
   "Personal technical blog and portfolio of José Manuel Requena Plens — R&D Engineer specializing in Embedded Systems, Acoustics, and Industrial Software Development.";
 
 const ABOUT =
-  "José Manuel Requena Plens (JMRP) is a multidisciplinary engineer building control systems for renewable energy at Power Electronics. Background in Acoustics research, noise mitigation for the European Space Agency (ESA), and biomedical ultrasound at UPV. Active open source contributor and self-hoster.";
+  "José Manuel Requena Plens (JMRP) is a multidisciplinary engineer working across firmware, embedded systems, and applied research. Background in solar-inverter firmware and industrial control systems, Acoustics research, noise mitigation for the European Space Agency (ESA), and biomedical ultrasound at UPV. Active open source contributor and self-hoster.";
 
 const CONTACT = [
   "GitHub: https://github.com/jmrplens",

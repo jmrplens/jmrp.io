@@ -14,9 +14,6 @@ twitter_creator: "@jmrplens"
 person:
   name: "José Manuel Requena Plens"
   jobTitle: "R&D Engineer"
-  worksFor:
-    name: "Power Electronics"
-    url: "https://power-electronics.com/"
   # Canonical academic/identity profiles for JSON-LD `sameAs` (not shown as footer icons).
   # Merged with `social_links` to strengthen AI entity recognition.
   sameAs:
