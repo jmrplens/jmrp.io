@@ -976,6 +976,7 @@ aprox
 azul
 barras
 caut
+comilla
 diagramas
 gráfico
 pizarra

@@ -121,11 +121,17 @@ h4 {
   font-size: 1.1em;
 }
 
-/* ===== Contenido largo (.prose) ============================================ */
+/* ===== Contenido largo (.prose) ============================================
+   Escala tipográfica del contenido según el mockup ("Post completo"):
+   cuerpo 17px / interlineado 1.78 (IBM Plex Sans); h2 26px y h3 19px en
+   Space Grotesk con peso MEDIO (500), no negrita — los títulos de sección del
+   diseño son medium; sólo los títulos hero/post (h1) van en 700. */
 .prose {
   /* Optimización: salta el layout del contenido fuera de pantalla */
   contain-intrinsic-size: 1px 5000px;
   content-visibility: auto;
+  font-size: 1.0625rem; /* 17px */
+  line-height: 1.78;
 }
 
 .prose h1 {
@@ -133,25 +139,41 @@ h4 {
 }
 
 .prose h2 {
-  margin-top: 2rem;
+  margin-top: 2.375rem; /* 38px */
   margin-bottom: 1rem;
-  font-size: 1.5em;
+  font-size: 1.625rem; /* 26px */
+  font-weight: var(--fw-medium);
+  letter-spacing: -0.01em;
 }
 
 .prose h3 {
-  margin-top: 1.5rem;
+  margin-top: 1.75rem;
   margin-bottom: 0.75rem;
-  font-size: 1.25em;
+  font-size: 1.1875rem; /* 19px */
+  font-weight: var(--fw-medium);
 }
 
 .prose h4 {
   margin-top: 1.25rem;
   margin-bottom: 0.5rem;
-  font-size: 1.1em;
+  font-size: 1.0625rem; /* 17px */
+  font-weight: var(--fw-semibold);
 }
 
 .prose p {
-  margin-bottom: 1.25rem;
+  margin-bottom: 1.375rem; /* 22px */
+}
+
+/* Inline code (una sola comilla invertida) — chip mono acento sobre surface2.
+   Excluye el código dentro de <pre> (bloques Shiki), que tiene su propio estilo. */
+.prose :not(pre) > code {
+  padding: 1px 6px;
+  font-family: var(--font-mono);
+  font-size: 0.88em;
+  color: var(--color-accent);
+  overflow-wrap: break-word;
+  background-color: var(--color-surface-2);
+  border-radius: var(--radius-sm);
 }
 
 .prose ul,
