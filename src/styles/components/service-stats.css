@@ -1,6 +1,4 @@
-:root {
-  --color-brand-mastodon: #6364ff;
-}
+/* --color-brand-mastodon now lives in tokens.css (single source of truth). */
 
 /* Styling for React ServiceStats component */
 .stats-wrapper-col {

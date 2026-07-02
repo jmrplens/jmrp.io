@@ -958,3 +958,13 @@ zeroize
 zgrab
 zurück
 nownownow
+
+# Lab style-system logo class fragments + fonts + ES terms
+janim
+jcur
+jlogo
+jund
+monaco
+plex
+sobreescribimos
+tokenizado

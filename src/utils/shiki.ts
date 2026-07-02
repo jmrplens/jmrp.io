@@ -46,6 +46,20 @@ export const SHIKI_THEMES = {
   dark: "github-dark-high-contrast",
 } as const;
 
+/**
+ * `github-light-high-contrast` is designed for a white canvas, but the `<Code>`
+ * and `<FileContent>` components render code on `--color-surface-2` (#f1f1ec) in
+ * light mode, where the theme's comment grey (#66707b) drops to 4.44:1 — just
+ * under WCAG AA. Remap it to a same-hue grey that clears 4.5:1 on that surface.
+ * (Bare markdown fences render on the page background — white in light — where
+ * #66707b already passes, so only this component path needs the override.)
+ */
+const SHIKI_COLOR_REPLACEMENTS = {
+  "github-light-high-contrast": {
+    "#66707b": "#5c6673",
+  },
+};
+
 /** Promise for the singleton highlighter (created on first use). */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 let highlighterPromise: Promise<HighlighterGeneric<any, any>> | undefined;
@@ -121,6 +135,7 @@ export async function highlightCode(
     lang: langName,
     themes: SHIKI_THEMES,
     defaultColor: "light",
+    colorReplacements: SHIKI_COLOR_REPLACEMENTS,
     transformers: [
       {
         // Match Astro's built-in Code component output format:

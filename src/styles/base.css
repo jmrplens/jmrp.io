@@ -1,0 +1,287 @@
+/* =============================================================================
+   base.css — jmrp.io · reset + estilos base de elementos
+   Consume exclusivamente los tokens de tokens.css. No hay valores mágicos:
+   cualquier color/tamaño sale de una variable. Requiere tokens.css cargado antes.
+============================================================================= */
+
+/* ===== Reset ================================================================ */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  font-family: var(--font-body);
+  font-size: 100%; /* 16px base — respeta el zoom del usuario */
+  line-height: 1.6;
+  color: var(--color-text);
+  background-color: var(--color-bg);
+
+  /* Evita el "font boosting" de móvil sin bloquear el zoom accesible */
+  /* stylelint-disable-next-line property-no-vendor-prefix */
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+body {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  min-height: 100vh;
+  padding: 0;
+  margin: 0;
+  overflow-x: hidden; /* sin scroll horizontal global */
+  overflow-wrap: break-word; /* palabras largas no rompen el layout */
+}
+
+img,
+video,
+iframe,
+svg:not(.inline-icon) {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
+/* Iconos SVG en texto/botones: mantienen el flujo inline */
+svg.inline-icon {
+  display: inline-block;
+  vertical-align: middle;
+}
+
+pre {
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+/* ===== Enlaces ============================================================== */
+a {
+  font-weight: var(--fw-semibold);
+  color: var(--color-accent);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-decoration-color: var(--color-accent);
+  text-underline-offset: 3px;
+}
+
+a:hover {
+  text-decoration-thickness: 2px;
+}
+
+/* ===== Foco visible (no se quita el outline sin sustituto) ================ */
+:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+/* ===== Selección de texto ================================================== */
+::selection {
+  color: var(--color-on-primary);
+  background: var(--color-primary);
+}
+
+/* ===== Encabezados ========================================================== */
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: var(--font-display);
+  font-weight: var(--fw-bold);
+  line-height: 1.15;
+  color: var(--color-text-heading);
+  letter-spacing: -0.02em;
+  scroll-margin-top: calc(var(--header-height) + 1rem);
+}
+
+h1 {
+  font-size: 1.75em;
+}
+
+h2 {
+  margin-top: 2rem;
+  margin-bottom: 1rem;
+  font-size: 1.5em;
+}
+
+h3 {
+  margin-top: 1.5rem;
+  margin-bottom: 0.75rem;
+  font-size: 1.25em;
+}
+
+h4 {
+  margin-top: 1.25rem;
+  margin-bottom: 0.5rem;
+  font-size: 1.1em;
+}
+
+/* ===== Contenido largo (.prose) ============================================ */
+.prose {
+  /* Optimización: salta el layout del contenido fuera de pantalla */
+  contain-intrinsic-size: 1px 5000px;
+  content-visibility: auto;
+}
+
+.prose h1 {
+  font-size: 1.75em;
+}
+
+.prose h2 {
+  margin-top: 2rem;
+  margin-bottom: 1rem;
+  font-size: 1.5em;
+}
+
+.prose h3 {
+  margin-top: 1.5rem;
+  margin-bottom: 0.75rem;
+  font-size: 1.25em;
+}
+
+.prose h4 {
+  margin-top: 1.25rem;
+  margin-bottom: 0.5rem;
+  font-size: 1.1em;
+}
+
+.prose p {
+  margin-bottom: 1.25rem;
+}
+
+.prose ul,
+.prose ol {
+  padding-left: 1.75rem;
+  margin-bottom: 1.25rem;
+}
+
+.prose ul {
+  list-style-type: disc;
+}
+
+.prose ol {
+  list-style-type: decimal;
+}
+
+.prose li {
+  position: relative;
+  padding-left: 0.25rem;
+  margin-bottom: 0.5rem;
+}
+
+.prose ul > li::marker {
+  font-size: 1.1em;
+  color: var(--color-accent);
+}
+
+.prose ol > li::marker {
+  font-weight: var(--fw-semibold);
+  color: var(--color-accent);
+}
+
+.prose ul ul,
+.prose ol ul {
+  margin-top: 0.5rem;
+  list-style-type: circle;
+}
+
+.prose ul ul ul,
+.prose ol ul ul {
+  list-style-type: square;
+}
+
+.prose ol ol,
+.prose ul ol {
+  margin-top: 0.5rem;
+  list-style-type: lower-alpha;
+}
+
+/* Enlaces en texto: subrayado obligatorio (indicador no cromático) */
+.prose a {
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-decoration-color: var(--color-accent);
+  text-underline-offset: 3px;
+}
+
+.prose a:hover {
+  text-decoration-thickness: 2px;
+}
+
+/* Área táctil mínima para enlaces de contenido en móvil (≥24px) */
+@media (width <= 900px) {
+  .prose a {
+    position: relative;
+    display: inline-block;
+    min-width: 24px;
+    min-height: 24px;
+    padding: 2px 0;
+  }
+
+  .prose ul li,
+  .prose ol li {
+    margin-bottom: 0.75rem;
+  }
+
+  .prose ul li a,
+  .prose ol li a {
+    padding: 4px 0;
+  }
+}
+
+/* ===== Bloques de código Shiki (tema dual claro/oscuro) ====================
+   Shiki emite color: (claro) + --shiki-dark (oscuro). En oscuro sobreescribimos
+   con var(--shiki-dark); en claro dejamos que gane el color: de la clase. */
+.astro-code,
+.astro-code span {
+  margin: 0 !important;
+  background-color: transparent !important;
+}
+
+:root[data-theme="dark"] .astro-code span {
+  font-style: var(--shiki-dark-font-style) !important;
+  font-weight: var(--shiki-dark-font-weight) !important;
+  color: var(--shiki-dark) !important;
+  text-decoration: var(--shiki-dark-text-decoration) !important;
+}
+
+/* Estado por defecto (sin data-theme) = oscuro; el @media lo neutraliza en claro */
+@media not (prefers-color-scheme: light) {
+  :root:not([data-theme]) .astro-code span {
+    font-style: var(--shiki-dark-font-style) !important;
+    font-weight: var(--shiki-dark-font-weight) !important;
+    color: var(--shiki-dark) !important;
+    text-decoration: var(--shiki-dark-text-decoration) !important;
+  }
+}
+
+/* ===== Movimiento reducido — respeto global de la preferencia ============= */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.001ms !important;
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}
+
+/* ===== Ajustes móviles globales ============================================ */
+@media (width <= 900px) {
+  :root {
+    --space-md: 0.75rem !important;
+    --space-lg: 1.25rem !important;
+    --space-xl: 2.5rem !important;
+  }
+
+  html {
+    font-size: 90% !important;
+  }
+
+  h1 {
+    font-size: 1.5em !important;
+  }
+}

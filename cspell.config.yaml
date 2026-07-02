@@ -82,6 +82,9 @@ ignorePaths:
 
 # Per-path language overrides
 overrides:
+  # Global style system carries Spanish design-token comments (Lab system)
+  - filename: "src/styles/{tokens,base,utilities,global}.css"
+    language: es,en
   # Spanish content — check against BOTH English and Spanish dictionaries
   - filename: "src/content/posts/es/**"
     language: es,en
