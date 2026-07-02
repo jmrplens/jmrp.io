@@ -46,10 +46,6 @@ export interface InfrastructureTranslations {
   portScannerBlogAria: string;
   /** URL of the port scanner blog post. */
   portScannerBlogUrl: string;
-  /** Label for the port scanners metric. */
-  portScanners: string;
-  /** Descriptive text for detected port scanners count. */
-  portScannersDetected: string;
   /** Heading for the attack regions section. */
   attackRegions: string;
   /** ARIA label for the attack regions list. */
@@ -406,21 +402,9 @@ export default function InfrastructureInsights({ translations: t }: Props) {
               </span>
             </header>
             <dl className="edge-rows">
-              {/* The MikroTik honeypot IS the port-scanner trap: the API returns
-                port_scanners_dropped === honeypot_hits (same counter). Show it
-                once, as "Port Scanners" (links to the honeypot write-up). */}
-              <div className="edge-row">
-                <dt>
-                  <a
-                    href={t.portScannerBlogUrl}
-                    className="insight-link"
-                    aria-label={t.portScannerBlogAria}
-                  >
-                    {t.portScanners}
-                  </a>
-                </dt>
-                <dd>{displayVal(mikrotik?.port_scanners_dropped)}</dd>
-              </div>
+              {/* port_scanners_dropped === honeypot_hits (same backend counter).
+                  "Honeypot hits" is already in the hero band above; the redundant
+                  "Port Scanners" row has been removed per §E. */}
               <div className="edge-row">
                 <dt>{t.blacklistScanners}</dt>
                 <dd>{displayVal(mikrotik?.blacklist_scanners)}</dd>

@@ -6,7 +6,6 @@
  */
 import "@styles/blog.css";
 
-import mehomeImg from "@assets/mehome.webp";
 import AuthorCard from "@components/blog/AuthorCard.astro";
 import TableOfContentsDrawer from "@components/layout/TableOfContentsDrawer.astro";
 import Callout from "@components/ui/Callout.astro";
@@ -23,7 +22,7 @@ import BaseLayout from "@layouts/BaseLayout.astro";
 import type { SiteConfig } from "@src/types";
 import { formatDateDot, getReadingTime } from "@utils/blog";
 import { getSiteUrl } from "@utils/site";
-import { getImage, Image, Picture } from "astro:assets";
+import { getImage, Picture } from "astro:assets";
 import { type CollectionEntry, getEntry, render } from "astro:content";
 import * as cheerio from "cheerio";
 import type { BlogPosting, FAQPage, HowTo, TechArticle } from "schema-dts";
@@ -91,9 +90,9 @@ const finalReferences = collectedRefsFromMarkdown.filter((ref) => {
 // --- Image Optimization (JSON-LD) ---
 let jsonLdImage = "/default-blog-cover.webp";
 
-const coverImageWidths = [400, 450, 540, 600, 720, 800, 1080, 1200];
-const coverImageSizes =
-  "(max-width: 768px) calc(100vw - 2.5rem), (max-width: 1024px) 600px, 460px";
+const coverImageWidths = [400, 540, 600, 712, 800, 1080, 1200];
+// Narrow 760px stacked header: 760px max-width minus 2×24px side padding = 712px.
+const coverImageSizes = "(max-width: 768px) calc(100vw - 2.5rem), 712px";
 
 if (post.data.coverImage) {
   const coverImage = post.data.coverImage;
@@ -323,16 +322,14 @@ const articleSchema = [
             <h1>{post.data.title}</h1>
             <p class="lead">{post.data.description}</p>
             <div class="byline">
-              <Image
-                src={mehomeImg}
-                alt={t("pages.blogPost.authorAvatarAlt", {
-                  author: post.data.author || siteData.author,
-                })}
+              {
+                /* Monogram initials avatar — decorative; author name in adjacent text */
+              }
+              <span
                 class="byline__avatar"
-                width={40}
-                height={40}
-                loading="eager"
-              />
+                aria-hidden="true"
+                >JM</span
+              >
               <span class="byline__text">
                 <span class="byline__name">
                   {post.data.author || siteData.author}
@@ -361,7 +358,6 @@ const articleSchema = [
                   widths={coverImageWidths}
                   sizes={coverImageSizes}
                   quality={70}
-                  style="width: 100%; height: auto; aspect-ratio: 16/9;"
                 />
               </div>
             )
@@ -582,11 +578,9 @@ const articleSchema = [
 <style>
   .post-header {
     position: relative;
-    padding: var(--space-lg) 0;
-    margin-bottom: var(--space-md-lg);
+    padding: var(--space-lg-xl) 0 0;
+    margin-bottom: 0;
     overflow: hidden;
-    background-color: var(--color-bg-secondary);
-    border-bottom: 1px solid var(--color-hair);
   }
 
   .post-header > .lab-grid {
@@ -598,10 +592,13 @@ const articleSchema = [
     z-index: 1;
   }
 
+  /* Narrow header column — single stacked column at ~760px matching the mockup.
+     Narrower than the global --max-width-container so the header feels intimate
+     and the cover image sits centered below the lead rather than beside it. */
   .content-wrapper {
     width: 100%;
-    max-width: var(--max-width-container);
-    padding: 0 var(--space-lg);
+    max-width: 760px;
+    padding: 0 var(--space-md-lg);
     margin: 0 auto;
   }
 
@@ -655,23 +652,24 @@ const articleSchema = [
     gap: var(--space-sm);
   }
 
-  /* Amber category chip (filled). Non-colour affordance: filled pill + ink
-     text; only the primary 1–2 tags appear here so they don't fight the title. */
+  /* Category chip — accent-dim tint (not solid fill) matching the mockup.
+     Non-colour affordance: accent text on tinted bg distinguishes the chip from
+     the muted meta text; only 1–2 primary tags shown so the header stays clean. */
   .tag-chip {
-    padding: 2px 8px;
+    padding: 4px 10px;
     font-family: var(--font-mono);
     font-size: 0.75rem;
     font-weight: var(--fw-medium);
-    color: var(--color-on-primary);
+    color: var(--color-accent);
     text-transform: lowercase;
     text-decoration: none;
-    background: var(--color-accent);
-    border-radius: var(--radius-md);
+    background: var(--accent-dim);
+    border-radius: var(--radius-sm);
     transition: background-color var(--dur-2) var(--ease-out);
   }
 
   .tag-chip:hover {
-    background: var(--accent-hi);
+    background: color-mix(in srgb, var(--color-accent) 22%, transparent);
   }
 
   .tag-chip:focus-visible {
@@ -707,11 +705,20 @@ const articleSchema = [
     border-bottom: 1px solid var(--color-hair);
   }
 
+  /* "JM" initials monogram — 36px accent-dim circle matching the mockup.
+     display:grid/place-items centers the text; aria-hidden on the span
+     means screen readers only read the adjacent .byline__name text. */
   .byline__avatar {
+    display: grid;
     flex-shrink: 0;
-    width: 40px;
-    height: 40px;
-    object-fit: cover;
+    place-items: center;
+    width: 36px;
+    height: 36px;
+    font-family: var(--font-display);
+    font-size: 0.8125rem; /* 13px */
+    font-weight: var(--fw-bold);
+    color: var(--color-accent);
+    background: var(--accent-dim);
     border-radius: 50%;
   }
 
@@ -834,24 +841,6 @@ const articleSchema = [
   }
 
   @media (width > 1024px) {
-    .post-header {
-      padding: var(--space-lg-xl) 0;
-    }
-
-    .header-grid {
-      display: grid;
-      grid-template-columns: 1.2fr 0.8fr;
-      gap: var(--space-xl);
-      align-items: center;
-    }
-
-    .cover-image-container {
-      max-width: none;
-      height: auto;
-      max-height: none;
-      margin: 0;
-    }
-
     /* 2-column grid: 200px TOC rail + prose body */
     .reading-section--with-toc {
       display: grid;
@@ -873,20 +862,9 @@ const articleSchema = [
     }
   }
 
-  @media (width <= 1024px) {
-    .cover-image-container {
-      order: 2;
-      max-width: 600px;
-      margin-top: var(--space-md-lg);
-      margin-right: auto;
-      margin-left: auto;
-    }
-  }
-
   @media (width <= 768px) {
     .post-header {
-      padding: var(--space-lg) 0;
-      text-align: left;
+      padding: var(--space-lg) 0 0;
     }
 
     .lead {
@@ -900,10 +878,6 @@ const articleSchema = [
     .reading-section {
       padding-right: 1.25rem;
       padding-left: 1.25rem;
-    }
-
-    .cover-image-container {
-      width: 100%;
     }
   }
 </style>

@@ -437,9 +437,9 @@ export const common = {
       heroSubtitle:
         "Ingeniero de Firmware y Software. <br>Tendiendo puentes entre el <strong>firmware</strong>, el software y la I+D.",
       heroBio1:
-        "Soy un ingeniero multidisciplinar que disfruta resolviendo problemas allá donde se cruzan el firmware, el software y la I+D. Mi trayectoria va desde la investigación académica en acústica hasta el <strong>desarrollo de firmware industrial</strong>, y esa amplitud es la que más me motiva.",
+        "Soy un ingeniero multidisciplinar que disfruta resolviendo problemas allá donde se cruzan el firmware, el software y la I+D. Mi trayectoria va desde la investigación académica en acústica hasta el desarrollo de firmware industrial, y esa amplitud es la que más me motiva.",
       heroBio2:
-        "Disfruto integrando hardware y software de principio a fin. Contribuyo activamente al <strong>Open Source</strong> —con herramientas usadas por desarrolladores de todo el mundo— y soy un apasionado del self-hosting, siempre mejorando mi homelab y aportando proyectos a la comunidad. <a href='/es/cv/'>Consulta mi CV</a> para ver la trayectoria completa.",
+        "Disfruto integrando hardware y software de principio a fin. Contribuyo activamente al Open Source —con herramientas usadas por desarrolladores de todo el mundo— y soy un apasionado del self-hosting, siempre mejorando mi homelab y aportando proyectos a la comunidad. <a href='/es/cv/'>Consulta mi CV</a> para ver la trayectoria completa.",
       viewCV: "Ver CV",
       viewCVAria: "Ver CV - mi currículum profesional",
       readBlog: "Leer Blog",
@@ -642,8 +642,6 @@ export const common = {
       tarpitHitsUnit: "impactos tarpit",
       portScannerBlogAria:
         "Leer artículo sobre el Honeypot de MikroTik Port Scanner",
-      portScanners: "Escáneres de Puertos",
-      portScannersDetected: "escáneres de puertos detectados",
       attackRegions: "Regiones de Ataque",
       attackRegionsList: "Lista de regiones de ataque:",
       noAttackRegions: "No se registraron regiones de ataque",

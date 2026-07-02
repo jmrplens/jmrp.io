@@ -311,8 +311,8 @@ const cleanedBibtex = cleanBibtex(pub.bibtex);
   }
 
   .pub-chip--conference {
-    color: var(--color-primary);
-    background: color-mix(in srgb, var(--color-primary) 14%, transparent);
+    color: var(--violet);
+    background: color-mix(in srgb, var(--violet) 14%, transparent);
   }
 
   .pub-chip--thesis,
@@ -339,8 +339,10 @@ const cleanedBibtex = cleanBibtex(pub.bibtex);
   .pub-authors {
     min-height: 1.25em; /* Stabilize for CLS */
     margin-bottom: var(--space-md);
-    font-size: 0.95rem;
-    color: var(--color-text);
+    font-family: var(--font-mono);
+    font-size: 0.8438rem; /* 13.5px — matches mockup */
+    line-height: 1.5;
+    color: var(--color-text-muted);
   }
 
   .pub-actions {
@@ -446,11 +448,11 @@ const cleanedBibtex = cleanBibtex(pub.bibtex);
     font-weight: var(--fw-semibold);
   }
 
-  /* Highlight the site owner among the author list. Emphasis via high-contrast
-       heading color + weight (non-color cue), never small amber body text. */
+  /* Highlight the site owner among the author list. Emphasis via body-text
+     color + heavier weight (non-color cue). Other authors render muted. */
   .pub-authors .pub-author-self {
     font-weight: var(--fw-semibold);
-    color: var(--color-text-heading);
+    color: var(--color-text);
   }
 
   a.pub-author-self {

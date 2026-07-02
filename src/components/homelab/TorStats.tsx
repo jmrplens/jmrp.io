@@ -184,19 +184,11 @@ function fetchTorStats(): Promise<FetchResult> {
   return sharedFetchPromise;
 }
 
-/** Returns the display text for a Tor node's running status. */
-function getStatusText(
-  data: TorNodeData | null,
-  t: TorStatsTranslations,
-): string {
-  if (!data) return "...";
-  return data.running ? t.running : t.offline;
-}
-
 /**
- * Compact Tor node card (matches the mockup): status pill + one headline figure
- * (clients/connections · 24h) + location + advertised bandwidth. The full
- * "Tor Metrics" link is provided by the surrounding ServiceCard.
+ * Compact Tor node card: one headline figure (clients/connections · 24h) +
+ * location + advertised bandwidth. The status pill is now rendered by the
+ * surrounding ServiceCard header; offline state is signalled via the headline
+ * value showing the translated "offline" label with muted styling.
  */
 function TorNodeCard({
   data,
@@ -216,17 +208,12 @@ function TorNodeCard({
       : formatBandwidth(data.advertised_bandwidth);
   return (
     <div className="tor-node">
-      <span
-        className={`tor-node__status${isOffline ? " tor-node__status--off" : ""}`}
-      >
-        <span
-          className="tor-node__dot"
-          aria-hidden="true"
-        ></span>
-        {getStatusText(data, t)}
-      </span>
       <p className="tor-node__headline">
-        <output className="tor-node__num">{headlineValue}</output>
+        <output
+          className={`tor-node__num${isOffline ? " tor-node__num--off" : ""}`}
+        >
+          {isOffline ? t.offline : headlineValue}
+        </output>
         <span className="tor-node__label">{headlineLabel}</span>
       </p>
       <div className="tor-node__rows">

@@ -981,6 +981,13 @@ idioma
 idiomas
 nativo
 objetivo
+avanzado
+experto
+hace
+día
+días
+rasterisation
+subsetted
 diagramas
 gráfico
 pizarra

@@ -747,6 +747,13 @@
   letter-spacing: -0.02em;
 }
 
+/* Offline state: smaller muted text shows translated "offline" label in place of the metric */
+.tor-node__num--off {
+  font-size: 1.1rem;
+  font-weight: var(--fw-medium);
+  color: var(--color-text-muted);
+}
+
 .tor-node__label {
   display: block;
   margin-top: 5px;

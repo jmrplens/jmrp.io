@@ -1,21 +1,33 @@
 ---
 /**
  * ServiceCard component.
- * Displays a card for a service or skill area, with optional slots for extra content.
+ * Displays a card for a hosted service with a 40×40 accent icon chip, optional
+ * top-right status pill, title below the header row, description, optional extra
+ * content slot, stats slot, and an accent mono action link with ↗ arrow.
  */
 import { defaultLocale, type Locale } from "@i18n/config";
 import { useTranslations } from "@i18n/utils";
 
+/** ServiceCard component props. */
 interface Props {
+  /** Service display title rendered as an h3 below the header row. */
   title: string;
+  /** Iconify icon identifier without the `i-` prefix, e.g. `"fa-brands:mastodon"`. */
   icon: string;
+  /** Short description rendered below the title. */
   description: string;
+  /** Optional external URL for the action link. */
   link?: string;
+  /** Visible text for the action link; a ↗ arrow is appended automatically. */
   linkText?: string;
+  /** Optional HTML id for the card wrapper element. */
   id?: string;
+  /** Optional status label rendered as a minimal top-right pill in the header row, e.g. "Online". */
+  statusText?: string;
 }
 
-const { title, icon, description, link, linkText, id } = Astro.props;
+const { title, icon, description, link, linkText, id, statusText } =
+  Astro.props;
 
 const locale = (Astro.currentLocale ?? defaultLocale) as Locale;
 const t = useTranslations(locale);
@@ -25,21 +37,36 @@ const t = useTranslations(locale);
   class="service-card"
   id={id}
 >
+  {/* Header row: icon chip (left) + optional status pill (right) */}
   <div class="service-header">
     <span
-      class={`i-${icon} service-icon`}
+      class={`i-${icon} service-icon-chip`}
       aria-hidden="true"
     ></span>
-    <h2>{title}</h2>
+    {
+      statusText && (
+        <span class="service-status-pill">
+          <span
+            class="service-status-dot"
+            aria-hidden="true"
+          />
+          {statusText}
+        </span>
+      )
+    }
   </div>
+
+  {/* Title on its own line below the header row */}
+  <h3 class="service-title">{title}</h3>
+
   <p class="service-description">
     {description}
   </p>
 
-  {/* Extra content slot (e.g., Matrix User Info) */}
+  {/* Extra content slot (e.g., Matrix user info) */}
   <slot name="extra" />
 
-  {/* Main Content / Stats Slot */}
+  {/* Main content / stats slot */}
   <div class="stats-wrapper">
     <slot />
   </div>
@@ -49,11 +76,12 @@ const t = useTranslations(locale);
       <a
         href={link}
         target="_blank"
-        rel="noopener noreferrer"
-        class="btn btn-primary btn-sm service-link"
+        rel="external noopener noreferrer"
+        class="service-link"
         aria-label={`${linkText} ${t("pages.homelab.opensInNewTab")}`}
       >
         {linkText}
+        <span aria-hidden="true"> ↗</span>
       </a>
     )
   }
@@ -64,7 +92,7 @@ const t = useTranslations(locale);
     display: flex;
     flex-direction: column;
     align-items: flex-start;
-    height: 100%; /* Ensure cards match height in grid */
+    height: 100%;
     padding: var(--space-lg);
     background-color: var(--color-bg-secondary);
     border: 1px solid var(--color-border);
@@ -100,38 +128,90 @@ const t = useTranslations(locale);
     overflow-wrap: anywhere;
   }
 
+  /* Header row: space-between layout */
   .service-header {
     display: flex;
-    gap: var(--space-md);
     align-items: center;
+    justify-content: space-between;
+    width: 100%;
     margin-bottom: var(--space-md);
   }
 
-  .service-icon {
-    font-size: 2rem;
-    color: var(--color-primary);
+  /* 40×40 accent-dim rounded icon chip */
+  .service-icon-chip {
+    display: grid;
+    flex: none;
+    place-items: center;
+    width: 40px;
+    height: 40px;
+    font-size: 1.25rem;
+    color: var(--color-accent);
+    background: var(--accent-dim);
+    border-radius: 10px;
   }
 
-  .service-header h2 {
-    margin: 0;
-    font-size: 1.4rem;
+  /* Minimal status pill: border-only, no background fill */
+  .service-status-pill {
+    display: inline-flex;
+    gap: 0.5em;
+    align-items: center;
+    padding: 3px 9px;
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    color: var(--teal-text);
+    border: 1px solid color-mix(in srgb, var(--teal) 40%, transparent);
+    border-radius: 100px;
+  }
+
+  .service-status-dot {
+    width: 6px;
+    height: 6px;
+    background: var(--teal);
+    border-radius: 50%;
+  }
+
+  /* Title on its own line below the header */
+  .service-title {
+    margin: 0 0 var(--space-sm);
+    font-family: var(--font-display);
+    font-size: 1.1875rem;
+    font-weight: var(--fw-medium);
+    color: var(--color-text-heading);
+    letter-spacing: -0.01em;
   }
 
   .service-description {
     flex-grow: 0;
     margin-bottom: var(--space-md);
-    line-height: 1.5;
+    font-size: 0.8438rem;
+    line-height: 1.55;
   }
 
   .stats-wrapper {
     flex-grow: 1;
-    width: 100%; /* Important for stats container */
+    width: 100%;
     margin-bottom: var(--space-md);
-
-    /* Allows stats to grow; together with .service-link { margin-top: auto } this pushes the action button to the bottom. */
   }
 
+  /* Accent mono action link with ↗ arrow */
   .service-link {
-    margin-top: auto; /* Pushes button to bottom */
+    display: inline-flex;
+    align-items: center;
+    margin-top: auto;
+    font-family: var(--font-mono);
+    font-size: 0.7813rem;
+    color: var(--color-accent);
+    text-decoration: none;
+  }
+
+  .service-link:hover {
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+
+  .service-link:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 3px;
+    border-radius: 2px;
   }
 </style>

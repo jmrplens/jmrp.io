@@ -8,8 +8,6 @@
  * Mobile (< 1024 px): single column; sidebar flows above main content.
  * The CVMenu FAB drawer handles section navigation on all viewports.
  */
-import "@styles/skills.css";
-
 import CertificateGroup from "@components/cv/CertificateGroup.astro";
 import CVMenu, { type MenuSection } from "@components/cv/CVMenu.astro";
 import ProjectCard from "@components/cv/ProjectCard.astro";
@@ -408,14 +406,15 @@ const SIDEBAR_LINK_KINDS = new Set([
                         id={generateSlug(`${section.title}-${title}-${index}`)}
                       >
                         <div
-                          class="timeline-marker"
+                          class:list={[
+                            "timeline-marker",
+                            { "timeline-marker--past": index > 0 },
+                          ]}
                           aria-hidden="true"
                         />
+                        <span class="item-year">{item.period}</span>
                         <div class="timeline-content">
-                          <header class="timeline-header">
-                            <h3 class="item-title">{title}</h3>
-                            <span class="item-year">{item.period}</span>
-                          </header>
+                          <h3 class="item-title">{title}</h3>
 
                           <div
                             class="item-institution"
@@ -512,22 +511,37 @@ const SIDEBAR_LINK_KINDS = new Set([
               )}
 
               {section.kind === "skills" && (
-                <div class="grid-layout">
-                  {section.groups.map((group, index) => (
-                    <div
-                      class="skill-group-wrapper"
-                      id={generateSlug(
-                        `${section.title}-${group.category}-${index}`,
-                      )}
-                    >
-                      <SkillGroup group={group} />
-                    </div>
-                  ))}
-                </div>
+                <>
+                  <div class="grid-layout grid-layout--skills">
+                    {section.groups.map((group, index) => (
+                      <div
+                        class="skill-group-wrapper"
+                        id={generateSlug(
+                          `${section.title}-${group.category}-${index}`,
+                        )}
+                      >
+                        <SkillGroup group={group} />
+                      </div>
+                    ))}
+                  </div>
+                  <div
+                    class="skills-legend"
+                    aria-hidden="true"
+                  >
+                    <span class="legend-item">
+                      <span class="legend-swatch legend-swatch--advanced" />
+                      {t("pages.cv.levelAdvanced")}
+                    </span>
+                    <span class="legend-item">
+                      <span class="legend-swatch" />
+                      {`${t("pages.cv.levelIntermediate")} / ${t("pages.cv.levelBasic").toLowerCase()}`}
+                    </span>
+                  </div>
+                </>
               )}
 
               {section.kind === "certificates" && (
-                <div class="grid-layout">
+                <div class="grid-layout grid-layout--cards">
                   {section.groups.map((group, index) => (
                     <div
                       class="cert-group-wrapper"
@@ -542,7 +556,7 @@ const SIDEBAR_LINK_KINDS = new Set([
               )}
 
               {section.kind === "projects" && (
-                <div class="grid-layout">
+                <div class="grid-layout grid-layout--cards">
                   {section.items.map((project, index) => (
                     <div
                       class="project-card-wrapper"
@@ -852,6 +866,12 @@ const SIDEBAR_LINK_KINDS = new Set([
     color: var(--color-text);
   }
 
+  /* Emphasis in the profile: heading color (not extra-bold) — limits amber density. */
+  .cv-profile :global(strong) {
+    font-weight: var(--fw-semibold);
+    color: var(--color-text-heading);
+  }
+
   /* ===== CV Section Styling ======================================= */
   .cv-section {
     margin-bottom: var(--space-lg-xl);
@@ -989,8 +1009,12 @@ const SIDEBAR_LINK_KINDS = new Set([
     border-left: 1px solid var(--color-hair);
   }
 
+  /* Desktop: 2-column grid — date column left (130 px) + content right. */
   .timeline-item {
     position: relative;
+    display: grid;
+    grid-template-columns: 130px 1fr;
+    gap: 1.5rem; /* 24px */
     margin-bottom: var(--space-xl);
   }
 
@@ -1005,36 +1029,35 @@ const SIDEBAR_LINK_KINDS = new Set([
     z-index: 10;
     width: 9px;
     height: 9px;
-    background-color: var(--color-primary);
+    background-color: var(--color-accent);
     border-radius: 50%;
   }
 
+  /* Past (non-current) entries use a neutral dot to distinguish from the current role. */
+  .timeline-marker--past {
+    background-color: var(--color-border);
+  }
+
+  /* Absolute marker is excluded from grid flow, so content still starts at col 1. */
   .timeline-content {
     position: relative;
   }
 
-  .timeline-header {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-xs);
-    margin-bottom: var(--space-xs);
-  }
-
-  /* Mono date sits above the role title. */
+  /* Mono date — left column in the 2-col grid. */
   .item-year {
-    order: -1;
+    padding-top: 3px; /* align top with role title cap-height */
     font-family: var(--font-mono);
-    font-size: 0.8rem;
-    font-weight: var(--fw-medium);
+    font-size: var(--text-label); /* 12.5px */
     color: var(--color-text-muted);
-    letter-spacing: 0.02em;
+    overflow-wrap: break-word; /* allow long date ranges to wrap in 130 px column */
   }
 
+  /* Role / degree heading — display font, 19 px / 500 (mockup spec). */
   .item-title {
     margin: 0;
     font-family: var(--font-display);
-    font-size: 1.35rem;
-    font-weight: var(--fw-bold);
+    font-size: 1.1875rem; /* 19 px */
+    font-weight: var(--fw-medium); /* 500 */
     color: var(--color-text-heading);
   }
 
@@ -1108,13 +1131,48 @@ const SIDEBAR_LINK_KINDS = new Set([
   .grid-layout {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
-    gap: var(--space-xl);
+    gap: 0.875rem; /* 14 px — tight card grid (projects + certs) */
     align-items: start;
+  }
+
+  /* Skills chip groups: wider row-gap (≈ 26 px) and col-gap (≈ 40 px). */
+  .grid-layout--skills {
+    gap: 1.625rem 2.5rem;
   }
 
   .grid-layout :global(h3) {
     box-sizing: border-box;
     min-height: var(--grid-header-min-h, auto);
+  }
+
+  /* ===== Skills legend ============================================= */
+  .skills-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.875rem; /* 14 px */
+    align-items: center;
+    margin-top: 1rem;
+    font-family: var(--font-mono);
+    font-size: 0.6563rem; /* 10.5 px */
+    color: var(--color-text-muted);
+  }
+
+  .legend-item {
+    display: flex;
+    gap: 0.375rem; /* 6 px */
+    align-items: center;
+  }
+
+  .legend-swatch {
+    flex-shrink: 0;
+    width: 9px;
+    height: 9px;
+    border: 1px solid var(--color-border);
+    border-radius: 3px;
+  }
+
+  .legend-swatch--advanced {
+    border-color: var(--color-accent);
   }
 
   /* ===== Responsive =============================================== */
@@ -1131,9 +1189,10 @@ const SIDEBAR_LINK_KINDS = new Set([
   }
 
   @media (width <= 768px) {
-    .timeline-header {
-      flex-direction: column;
-      gap: 0;
+    /* Collapse 2-col date + content into a single column on narrow viewports. */
+    .timeline-item {
+      grid-template-columns: 1fr;
+      gap: var(--space-xs);
     }
 
     .grid-layout {

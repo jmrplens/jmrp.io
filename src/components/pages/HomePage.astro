@@ -53,6 +53,48 @@ const [postEntries, featuredProjects, ghProfile] = await Promise.all([
 // Process posts
 const latestPosts = postEntries.slice(0, 4).map((e) => e.post);
 
+/**
+ * Per-project metadata: accent category chip label and secondary tech tag.
+ * Maintained manually because {@link GitHubRepo} does not include GitHub topics.
+ */
+const PROJECT_META: Readonly<
+  Record<string, { category: string; tag?: string } | undefined>
+> = {
+  "gitlab-mcp-server": { category: "mcp · ai", tag: "stdio · HTTP" },
+  PyOctaveBand: { category: "acoustics · dsp", tag: "SciPy" },
+  "Cloudflare-DNS-Updater": {
+    category: "devops · networking",
+    tag: "Cloudflare API",
+  },
+  "TFG-TFM_EPS": { category: "docs · templates", tag: "LaTeX" },
+  "cs-routeros-bouncer": {
+    category: "network · security",
+    tag: "RouterOS API",
+  },
+  Kleidos: { category: "hardware · embedded", tag: "ESP-IDF" },
+};
+
+/** Days elapsed since the most recent post; drives the terminal `last.post` metric. */
+const lastPost = latestPosts.at(0) ?? null;
+const daysSinceLastPost: number | null = lastPost
+  ? Math.floor(
+      (Date.now() - new Date(lastPost.data.publishedDate).getTime()) /
+        86_400_000,
+    )
+  : null;
+
+/**
+ * Returns a locale-aware "N days ago" string.
+ * Intentionally inline rather than via `t()` — the terminal widget treats this
+ * as technical data, consistent with `whoami.base = "Valencia, ES"`.
+ */
+function formatDaysAgo(days: number, lang: Locale): string {
+  if (lang === "es") {
+    return days === 1 ? "hace 1 día" : `hace ${days} días`;
+  }
+  return days === 1 ? "1 day ago" : `${days} days ago`;
+}
+
 // Terminal "whoami" card — language-neutral technical facts (data, not prose).
 // The system-status lines mix a real signal (public repo count from the GitHub
 // API) with the site's own stated figures; they are a hero flourish, not a live
@@ -180,6 +222,16 @@ const personSchema = [
               <span>repos.public</span>
               <span class="terminal__num">{whoami.repos}</span>
             </div>
+            {
+              daysSinceLastPost !== null && (
+                <div class="terminal__metric">
+                  <span>last.post</span>
+                  <span class="terminal__num">
+                    {formatDaysAgo(daysSinceLastPost, locale)}
+                  </span>
+                </div>
+              )
+            }
           </div>
           <p class="terminal__cmd terminal__cmd--last">
             <span class="terminal__prompt">jmrp@home:~$</span>{" "}
@@ -209,38 +261,51 @@ const personSchema = [
             </a>
           </div>
           <div class="proj-grid">
-            {featuredProjects.map((repo) => (
-              <a
-                class="proj-card"
-                href={repo.html_url}
-                target="_blank"
-                rel="external noopener noreferrer"
-              >
-                <div class="proj-card__top">
-                  <span class="proj-card__metric">
-                    <span
-                      class="i-mdi:star-outline"
-                      aria-hidden="true"
-                    />
-                    {repo.stargazers_count}
-                  </span>
-                </div>
-                <h3 class="proj-card__title">{repo.name}</h3>
-                {repo.description && (
-                  <p class="proj-card__desc">{repo.description}</p>
-                )}
-                {repo.language && (
-                  <div class="proj-card__foot">
-                    <span
-                      class="proj-card__dot"
-                      style={`--lang-color:${langColors[repo.language] ?? "#8b949e"}`}
-                      aria-hidden="true"
-                    />
-                    {repo.language}
+            {featuredProjects.map((repo) => {
+              const meta = PROJECT_META[repo.name];
+              return (
+                <a
+                  class="proj-card"
+                  href={repo.html_url}
+                  target="_blank"
+                  rel="external noopener noreferrer"
+                >
+                  <div class="proj-card__top">
+                    {meta?.category && (
+                      <span class="proj-card__chip">{meta.category}</span>
+                    )}
+                    <span class="proj-card__metric">
+                      <span
+                        class="i-mdi:star-outline"
+                        aria-hidden="true"
+                      />
+                      {repo.stargazers_count}
+                    </span>
                   </div>
-                )}
-              </a>
-            ))}
+                  <h3 class="proj-card__title">{repo.name}</h3>
+                  {repo.description && (
+                    <p class="proj-card__desc">{repo.description}</p>
+                  )}
+                  {(repo.language ?? meta?.tag) && (
+                    <div class="proj-card__foot">
+                      {repo.language && (
+                        <span class="proj-card__lang">
+                          <span
+                            class="proj-card__dot"
+                            style={`--lang-color:${langColors[repo.language] ?? "#8b949e"}`}
+                            aria-hidden="true"
+                          />
+                          {repo.language}
+                        </span>
+                      )}
+                      {meta?.tag && (
+                        <span class="proj-card__tag">{meta.tag}</span>
+                      )}
+                    </div>
+                  )}
+                </a>
+              );
+            })}
           </div>
         </div>
       </section>
@@ -559,10 +624,10 @@ const personSchema = [
     text-underline-offset: 3px;
   }
 
-  /* Featured project cards */
+  /* Featured project cards — 2-col desktop, 1-col mobile */
   .proj-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(min(300px, 100%), 1fr));
+    grid-template-columns: repeat(2, 1fr);
     gap: var(--space-md);
   }
 
@@ -587,16 +652,31 @@ const personSchema = [
     transform: translateY(-2px);
   }
 
+  /* chip (left) + star metric (right, pushed via margin-left:auto on metric) */
   .proj-card__top {
     display: flex;
-    justify-content: flex-end;
-    margin-bottom: var(--space-sm);
+    gap: var(--space-sm);
+    align-items: center;
+    margin-bottom: var(--space-md);
+  }
+
+  /* accent category chip — "mcp · ai", "hardware · embedded" … */
+  .proj-card__chip {
+    display: inline-flex;
+    align-items: center;
+    padding: 3px 8px;
+    font-family: var(--font-mono);
+    font-size: var(--text-micro);
+    color: var(--color-accent);
+    background: var(--accent-dim);
+    border-radius: var(--radius-sm);
   }
 
   .proj-card__metric {
     display: inline-flex;
     gap: 0.35em;
     align-items: center;
+    margin-left: auto;
     font-family: var(--font-mono);
     font-size: 0.75rem;
     color: var(--color-text-muted);
@@ -619,20 +699,32 @@ const personSchema = [
     color: var(--color-text);
   }
 
+  /* footer: language dot+name (left) · secondary tag (right) */
   .proj-card__foot {
     display: flex;
-    gap: 0.5em;
     align-items: center;
+    justify-content: space-between;
     font-family: var(--font-mono);
     font-size: 0.75rem;
     color: var(--color-text-muted);
   }
 
+  .proj-card__lang {
+    display: flex;
+    gap: 0.5em;
+    align-items: center;
+  }
+
   .proj-card__dot {
+    flex-shrink: 0;
     width: 9px;
     height: 9px;
     background: var(--lang-color, var(--color-text-muted));
     border-radius: 50%;
+  }
+
+  .proj-card__tag {
+    color: var(--color-text-muted);
   }
 
   /* Latest notes list */
@@ -680,6 +772,10 @@ const personSchema = [
   }
 
   @media (width <= 640px) {
+    .proj-grid {
+      grid-template-columns: 1fr;
+    }
+
     .notes-item {
       grid-template-columns: 1fr;
       gap: var(--space-xs);

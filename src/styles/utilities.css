@@ -195,6 +195,14 @@
   }
 }
 
+/* Home hero CTA — mono font, smaller size, medium weight.
+   Scoped via .hero__cta parent; does NOT affect global .btn. */
+.hero__cta .btn {
+  font-family: var(--font-mono);
+  font-size: 0.875rem;
+  font-weight: var(--fw-medium);
+}
+
 /* ===== Chip / pill / badge =================================================
    Cápsula genérica. Variantes cambian solo color/borde/relleno. */
 .chip {

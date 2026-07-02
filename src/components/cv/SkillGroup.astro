@@ -1,9 +1,17 @@
 ---
+/**
+ * Renders a single skill group as a set of level-colored tag chips.
+ *
+ * Advanced skills (level ≥ 4 or string "advanced"/"expert") get an accent-colored
+ * border and text; intermediate / basic skills use the neutral border color.
+ * A section-level legend (rendered in CVPage.astro) explains the visual convention.
+ */
 import { defaultLocale, type Locale } from "@i18n/config";
 import { useTranslations } from "@i18n/utils";
 import type { CVSkillGroup } from "@src/types";
 
 interface Props {
+  /** The skill group data (category title + items with optional level). */
   group: CVSkillGroup;
 }
 
@@ -12,195 +20,78 @@ const { group } = Astro.props;
 const locale = (Astro.currentLocale ?? defaultLocale) as Locale;
 const t = useTranslations(locale);
 
-const levelTextMap: Record<number, string> = {
-  0: t("pages.cv.levelNone"),
-  1: t("pages.cv.levelElementary"),
-  2: t("pages.cv.levelBasic"),
-  3: t("pages.cv.levelIntermediate"),
-  4: t("pages.cv.levelAdvanced"),
-  5: t("pages.cv.levelExpert"),
-};
-
-import "@styles/skills.css";
+/**
+ * Returns true when a skill level qualifies as "advanced" (≥ 4 on 0–5 scale,
+ * or the string values "advanced", "expert", "avanzado", "experto").
+ *
+ * @param level - The raw level value from the CV YAML.
+ */
+function isAdvanced(level: number | string | null | undefined): boolean {
+  if (typeof level === "number") return level >= 4;
+  if (typeof level === "string") {
+    return ["advanced", "expert", "avanzado", "experto"].includes(
+      level.toLowerCase(),
+    );
+  }
+  return false;
+}
 ---
 
-<div class="group-category">
-  <h3>
-    {
-      group.icon && (
-        <span
-          class={`i-${group.icon}`}
-          aria-hidden="true"
-        />
-      )
-    }
-    {group.category}
-  </h3>
-  <div class="compact-list">
+<div class="skill-group">
+  <h3 class="skill-group-title">{group.category}</h3>
+  <ul class="chip-list">
     {
       group.items.map((item) => {
-        // Handle numeric and string levels
-        // If numeric, use directly. If string, map if possible or default to 0 for score
-        // For aria-valuenow, we only want a number.
-
-        let score = 0;
-        let levelLabel: string | number = t("pages.cv.levelUnknown");
-
-        if (typeof item.level === "number") {
-          score = item.level;
-          levelLabel = levelTextMap[item.level] || String(item.level);
-        } else if (typeof item.level === "string") {
-          // Try to find if the string matches a known level name
-          levelLabel = item.level;
-        }
-
-        const showDots = typeof item.level === "number";
-
+        const advanced = isAdvanced(item.level);
         return (
-          <div class="compact-item skill-item">
-            {item.icon && (
-              <span
-                class={`i-${item.icon} skill-icon`}
-                aria-hidden="true"
-              />
+          <li class:list={["chip", { "chip--advanced": advanced }]}>
+            {item.name}
+            {advanced && (
+              <span class="sr-only">, {t("pages.cv.levelAdvanced")}</span>
             )}
-            <div class="skill-content">
-              <div class="skill-header">
-                <span class="compact-name">{item.name}</span>
-                {item.note && <span class="skill-desc">{item.note}</span>}
-              </div>
-              {item.level != null && (
-                <div
-                  class="skill-meta"
-                  role={showDots ? "meter" : "status"}
-                  aria-valuemin={showDots ? 0 : undefined}
-                  aria-valuemax={showDots ? 5 : undefined}
-                  aria-valuenow={showDots ? score : undefined}
-                  aria-label={t("aria.skillLevel", {
-                    name: item.name,
-                    level: String(levelLabel),
-                  })}
-                >
-                  {showDots && (
-                    <div
-                      class="level-dots"
-                      aria-hidden="true"
-                    >
-                      {[1, 2, 3, 4, 5].map((i) => (
-                        <div class={`dot ${i <= score ? "filled" : ""}`} />
-                      ))}
-                    </div>
-                  )}
-                  <span
-                    class="level-text"
-                    aria-hidden="true"
-                  >
-                    {levelLabel}
-                  </span>
-                </div>
-              )}
-            </div>
-          </div>
+          </li>
         );
       })
     }
-  </div>
+  </ul>
 </div>
 
 <style>
-  .group-category {
-    padding: var(--space-md);
-    background-color: var(--color-surface-2);
-    border: 1px solid var(--color-hair);
-    border-radius: var(--radius-md);
+  .skill-group {
     break-inside: avoid;
   }
 
-  .group-category h3 {
-    display: flex;
-    gap: var(--space-sm);
-    align-items: center;
-    padding-bottom: var(--space-sm);
-    margin: 0 0 var(--space-md);
-    font-family: var(--font-mono);
-    font-size: 0.8rem;
-    font-weight: var(--fw-semibold);
-    color: var(--color-accent);
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-    border-bottom: 1px solid var(--color-hair);
+  /* Group heading — display font, heading color (not mono kicker style). */
+  .skill-group-title {
+    margin: 0 0 0.6875rem;
+    font-family: var(--font-display);
+    font-size: 0.8125rem; /* 13 px */
+    font-weight: var(--fw-medium);
+    color: var(--color-text-heading);
   }
 
-  .compact-list {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-sm);
-  }
-
-  /* Skill Item Styles duplicate from cv.astro to ensure self-contained style or inherit from global */
-
-  /* .skill-item is now imported from @styles/skills.css */
-
-  .skill-icon {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 1.5rem;
-    min-width: 1.5rem;
-    height: 1.5rem;
-  }
-
-  .skill-content {
-    display: flex;
-    flex-direction: column;
-    width: 100%;
-    overflow: hidden; /* Prevent overflow */
-  }
-
-  .skill-header {
+  .chip-list {
     display: flex;
     flex-wrap: wrap;
-    gap: 0.5rem;
-    align-items: baseline;
+    gap: 0.375rem; /* 6 px */
+    padding: 0;
+    margin: 0;
+    list-style: none;
   }
 
-  .skill-desc {
-    font-size: 0.75rem;
-    color: var(--color-text-muted);
-  }
-
-  .skill-meta {
-    display: flex;
-    gap: 0.5rem;
-    align-items: center;
-  }
-
-  .level-dots {
-    display: flex;
-    gap: 4px;
-  }
-
-  .dot {
-    width: 10px;
-    height: 10px;
-    background-color: transparent;
-    border: 1.5px solid var(--color-border);
-    border-radius: 50%;
-    transition:
-      background-color 0.2s ease,
-      border-color 0.2s ease;
-  }
-
-  .dot.filled {
-    background-color: var(--color-primary); /* Uses theme color */
-    border-color: var(--color-primary);
-  }
-
-  .level-text {
+  /* Base chip — intermediate / basic level. */
+  .chip {
+    padding: 0.1875rem 0.5rem; /* 3 px 8 px */
     font-family: var(--font-mono);
-    font-size: 0.7rem;
-    color: var(--color-text-muted);
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
+    font-size: 0.6875rem; /* 11 px */
+    color: var(--color-text);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+  }
+
+  /* Advanced chip — accent border + accent text. */
+  .chip--advanced {
+    color: var(--color-accent);
+    border-color: var(--color-accent);
   }
 </style>

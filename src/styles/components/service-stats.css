@@ -190,6 +190,34 @@
   color: #374151;
 }
 
+/* Meshtastic key-value list (replaces the big-number grid) */
+.svc-kv {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  margin: 0;
+}
+
+.svc-kv__row {
+  display: flex;
+  gap: var(--space-sm);
+  align-items: center;
+  justify-content: space-between;
+}
+
+.svc-kv__key {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--color-text);
+}
+
+.svc-kv__val {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--color-text-heading);
+  text-align: right;
+}
+
 .stats-error,
 .stats-loading {
   width: 100%;

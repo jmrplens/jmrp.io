@@ -202,27 +202,34 @@ test.describe("Keyboard Navigation Accessibility", () => {
     // Ensure component hydration triggers (client:visible)
     await section.scrollIntoViewIfNeeded();
 
-    // Wait for data to load (ensures hydration is complete)
-    await expect(section).toContainText("500", { timeout: 10_000 });
+    // Wait for data to load (ensures hydration is complete). Uses honeypot_hits
+    // (700) — the Port-Scanners row that once showed 500 was removed (it duplicated
+    // the same backend counter as Honeypot hits).
+    await expect(section).toContainText("700", { timeout: 10_000 });
 
-    // 2. Verify Tab navigation through links
-    // First link: Tarpit Hits
-    // Scope to the two source COLUMNS so the locators are unambiguous — the
-    // same posts are also linked from the explainer links below the card.
+    // 2. Verify the section's blog links are keyboard-focusable and named.
+    // The in-column "Port Scanners" row was removed (it duplicated Honeypot
+    // hits), so the honeypot post is now linked from the explainer row
+    // (.edge-links); the tarpit post stays linked in-column (.edge-col).
     const tarpitLink = section.locator(
       '.edge-col a[href*="implementing-tarpit-nginx"]',
     );
-    // Second link: Port Scanners
     const honeypotLink = section.locator(
-      '.edge-col a[href*="mikrotik-honeypot"]',
+      '.edge-links a[href*="mikrotik-honeypot"]',
     );
 
     // Wait for data to load and links to be visible
     await expect(tarpitLink).toBeVisible({ timeout: 10_000 });
     await expect(honeypotLink).toBeVisible({ timeout: 10_000 });
 
-    // Start navigation at the first link in DOM order: the MikroTik column's
-    // "Port Scanners" (honeypot blog post) precedes the CrowdSec column's tarpit.
+    // Each link is focusable and carries a descriptive accessible name.
+    await tarpitLink.focus();
+    await expect(tarpitLink).toBeFocused();
+    await expect(tarpitLink).toHaveAttribute(
+      "aria-label",
+      /Read blog post about implementing Nginx Tarpit/i,
+    );
+
     await honeypotLink.focus();
     await expect(honeypotLink).toBeFocused();
     await expect(honeypotLink).toHaveAttribute(
@@ -230,18 +237,10 @@ test.describe("Keyboard Navigation Accessibility", () => {
       /Read blog post about MikroTik Port Scanner Honeypot/i,
     );
 
-    // Tab to the next focusable link: Tarpit Hits (tarpit blog post).
+    // Tab from a link advances focus to another focusable element.
+    await tarpitLink.focus();
     await page.keyboard.press("Tab");
-
-    // Re-locate to handle potential hydration re-renders
-    const freshTarpitLink = section.locator(
-      '.edge-col a[href*="implementing-tarpit-nginx"]',
-    );
-    await expect(freshTarpitLink).toBeFocused();
-    await expect(freshTarpitLink).toHaveAttribute(
-      "aria-label",
-      /Read blog post about implementing Nginx Tarpit/i,
-    );
+    await expect(tarpitLink).not.toBeFocused();
 
     // 3. Run Axe on the section
     const results = await new AxeBuilder({ page })

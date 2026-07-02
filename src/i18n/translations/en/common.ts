@@ -436,9 +436,9 @@ export const common = {
       heroSubtitle:
         "Embedded Firmware & Software Engineer. <br>Bridging the gap between <strong>firmware</strong>, software, and applied research.",
       heroBio1:
-        "I'm a multidisciplinary engineer who enjoys solving problems where embedded firmware, software and applied research meet. My path runs from academic research in acoustics to <strong>industrial firmware development</strong> — and that breadth is what motivates me the most.",
+        "I'm a multidisciplinary engineer who enjoys solving problems where embedded firmware, software and applied research meet. My path runs from academic research in acoustics to industrial firmware development — and that breadth is what motivates me the most.",
       heroBio2:
-        "I thrive on integrating hardware and software end to end. I'm an active <strong>Open Source</strong> contributor whose tools are used by developers around the world, and a passionate self-hoster, constantly refining my homelab and building tools for the community. <a href='/cv/'>Check out my CV</a> to see the full journey.",
+        "I thrive on integrating hardware and software end to end. I'm an active Open Source contributor whose tools are used by developers around the world, and a passionate self-hoster, constantly refining my homelab and building tools for the community. <a href='/cv/'>Check out my CV</a> to see the full journey.",
       viewCV: "View CV",
       viewCVAria: "View CV - my professional curriculum vitae",
       readBlog: "Read Blog",
@@ -641,8 +641,6 @@ export const common = {
       tarpitHitsUnit: "tarpit hits",
       portScannerBlogAria:
         "Read blog post about MikroTik Port Scanner Honeypot",
-      portScanners: "Port Scanners",
-      portScannersDetected: "port scanners detected",
       attackRegions: "Attack Regions",
       attackRegionsList: "List of attack regions:",
       noAttackRegions: "No attack regions recorded",

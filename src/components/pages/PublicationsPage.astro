@@ -504,13 +504,17 @@ const collectionSchema = {
     margin-bottom: var(--space-lg);
   }
 
+  /* Year label: small mono kicker with hairline rule below — matches mockup
+     (display heading style replaced by the Lab system's mono-label pattern). */
   .pub-year-group__title {
-    margin: 0 0 var(--space-sm);
-    font-family: var(--font-display);
-    font-size: 1.5rem;
+    padding-bottom: 12px;
+    margin: 0 0 var(--space-xs); /* 4px gap before first item */
+    font-family: var(--font-mono);
+    font-size: 0.875rem; /* 14px */
     font-weight: var(--fw-medium);
-    color: var(--color-primary);
-    letter-spacing: -0.01em;
+    color: var(--color-accent);
+    letter-spacing: 0;
+    border-bottom: 1px solid var(--color-hair);
   }
 
   .publications-list {

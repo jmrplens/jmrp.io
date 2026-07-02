@@ -123,15 +123,15 @@ if (image) {
     resolvedImage = new URL(optimizedImage.src, getSiteUrl());
   }
 } else {
-  // Fallback to default site image (imported)
-  // We strictly use the imported asset for the default to ensure optimization
-  const optimizedDefault = await getImage({
-    src: defaultOgImage,
-    format: "webp",
-    width: 1200,
-    height: 630,
-  });
-  resolvedImage = new URL(optimizedDefault.src, getSiteUrl());
+  // Per-route generated OG image (1200×630 branded PNG).
+  // Strip locale prefix and derive slug from the canonical pathname.
+  // Falls through to the Lab default image only for routes not enumerated
+  // in src/pages/og/[...slug].png.ts (e.g. future pages not yet added).
+  const cleanPath = Astro.url.pathname
+    .replace(/^\/es(?=\/|$)/, "") // strip /es locale prefix
+    .replaceAll(/^\/|\/$/g, ""); // strip leading / trailing slashes
+  const ogSlug = cleanPath || "home";
+  resolvedImage = new URL(`/og/${ogSlug}.png`, getSiteUrl());
 }
 
 /** Derive MIME type from the resolved image URL extension. */

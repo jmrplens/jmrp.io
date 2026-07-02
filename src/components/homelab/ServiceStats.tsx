@@ -4,8 +4,6 @@ import { useEffect, useState } from "preact/hooks";
 export interface ServiceStatsTranslations {
   /** Label shown when the service API is unavailable. */
   serviceUnavailable: string;
-  /** Status text displayed when the service is online. */
-  online: string;
   /** Label for the known instances count (e.g. Mastodon peers). */
   knownInstances: string;
   /** Label for the known servers count (e.g. Matrix federation). */
@@ -284,42 +282,30 @@ async function fetchPotatoVersion(): Promise<string> {
 }
 
 /**
- * Compact service-stats card (matches the mockup): an "online" status pill
- * followed by two key stat pairs. The service title, description and link come
- * from the surrounding ServiceCard.
+ * Compact service-stats grid: two key stat pairs (value + label).
+ * The status pill lives in the ServiceCard header; only the data grid is rendered here.
  */
 function ServiceStatCard({
-  online,
   stats,
 }: {
-  readonly online: string;
   readonly stats: readonly { value: string; label: string }[];
 }) {
   return (
-    <div className="svc-stats">
-      <span className="svc-stats__pill">
-        <span
-          className="svc-stats__dot"
-          aria-hidden="true"
-        ></span>
-        {online}
-      </span>
-      <div className="svc-stats__grid">
-        {stats.map((s) => (
-          <div
-            className="svc-stat"
-            key={s.label}
-          >
-            <span className="svc-stat__value">{s.value}</span>
-            <span className="svc-stat__label">{s.label}</span>
-          </div>
-        ))}
-      </div>
+    <div className="svc-stats__grid">
+      {stats.map((s) => (
+        <div
+          className="svc-stat"
+          key={s.label}
+        >
+          <span className="svc-stat__value">{s.value}</span>
+          <span className="svc-stat__label">{s.label}</span>
+        </div>
+      ))}
     </div>
   );
 }
 
-/** Mastodon: instances helped + running server version. */
+/** Mastodon: instances federated + running server version. */
 function MastodonStats({
   stats,
   translations: t,
@@ -329,7 +315,6 @@ function MastodonStats({
 }) {
   return (
     <ServiceStatCard
-      online={t.online}
       stats={[
         {
           value: stats?.peersCount?.toLocaleString() ?? "...",
@@ -351,7 +336,6 @@ function MatrixStats({
 }) {
   return (
     <ServiceStatCard
-      online={t.online}
       stats={[
         {
           value: stats?.matrixData?.federationTotal?.toLocaleString() ?? "...",
@@ -363,7 +347,11 @@ function MatrixStats({
   );
 }
 
-/** Meshtastic: PotatoMesh + MeshMonitor node counts. */
+/**
+ * Meshtastic: PotatoMesh + MeshMonitor node counts as a key-value list.
+ * The mockup shows these as two rows (label left, count right) rather than the
+ * two-column big-number grid used by Mastodon/Matrix.
+ */
 function MeshtasticStats({
   stats,
   translations: t,
@@ -372,19 +360,20 @@ function MeshtasticStats({
   readonly translations: ServiceStatsTranslations;
 }) {
   return (
-    <ServiceStatCard
-      online={t.online}
-      stats={[
-        {
-          value: stats?.potatoNodes?.toLocaleString() ?? "...",
-          label: `PotatoMesh ${t.nodes}`,
-        },
-        {
-          value: stats?.meshmonitorNodes?.toLocaleString() ?? "...",
-          label: `MeshMonitor ${t.nodes}`,
-        },
-      ]}
-    />
+    <dl className="svc-kv">
+      <div className="svc-kv__row">
+        <dt className="svc-kv__key">PotatoMesh</dt>
+        <dd className="svc-kv__val">
+          {stats?.potatoNodes?.toLocaleString() ?? "…"} {t.nodes}
+        </dd>
+      </div>
+      <div className="svc-kv__row">
+        <dt className="svc-kv__key">MeshMonitor</dt>
+        <dd className="svc-kv__val">
+          {stats?.meshmonitorNodes?.toLocaleString() ?? "…"} {t.nodes}
+        </dd>
+      </div>
+    </dl>
   );
 }
 

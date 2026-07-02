@@ -1,164 +1,78 @@
 ---
-import { defaultLocale, type Locale } from "@i18n/config";
-import { useTranslations } from "@i18n/utils";
+/**
+ * Renders a certificate group as a single summary card.
+ *
+ * The card shows the group category name alongside an item-count badge.
+ * Certificate names are listed in a single compact paragraph, reducing
+ * visual complexity compared to individual downloadable rows.
+ */
 import type { CVCertificateGroup } from "@src/types";
 
 interface Props {
+  /** The certificate group data (category + array of individual certs). */
   group: CVCertificateGroup;
 }
 
 const { group } = Astro.props;
 
-const locale = (Astro.currentLocale ?? defaultLocale) as Locale;
-const t = useTranslations(locale);
+const count = group.items.length;
+const names = group.items.map((item) => item.name).join(" · ");
 ---
 
-<div class="group-category">
-  <h3>
-    {
-      group.icon && (
-        <span
-          class={`i-${group.icon}`}
-          aria-hidden="true"
-        />
-      )
-    }
-    {group.category}
-  </h3>
-  <div class="certificate-list">
-    {
-      group.items.map((item) => (
-        <div class="certificate-item">
-          <div class="cert-main">
-            <span class="cert-name">{item.name}</span>
-            <div class="cert-meta">
-              {item.school && (
-                <span class="cert-school">
-                  <span
-                    class="i-fa-solid:university meta-icon"
-                    aria-hidden="true"
-                  />
-                  {item.school}
-                </span>
-              )}
-              {item.hours && (
-                <span class="cert-time">
-                  <span
-                    class="i-fa-solid:clock meta-icon"
-                    aria-hidden="true"
-                  />
-                  {item.hours}
-                </span>
-              )}
-            </div>
-          </div>
-
-          {item.url && (
-            <a
-              href={item.url}
-              class="btn btn-sm"
-              download={item.url.startsWith("/") || undefined}
-              target="_blank"
-              rel="external noopener noreferrer"
-              aria-label={
-                item.ariaLabel ??
-                t("aria.downloadCertificate", { name: item.name })
-              }
-            >
-              <span
-                class="i-fa-solid:download"
-                aria-hidden="true"
-              />
-              {t("pages.cv.certificateFallback")}
-            </a>
-          )}
-        </div>
-      ))
-    }
-  </div>
+<div class="cert-card">
+  <header class="cert-card-header">
+    <span class="cert-card-name">{group.category}</span>
+    <span class="cert-count">{count}</span>
+  </header>
+  <p class="cert-items">{names}</p>
 </div>
 
 <style>
-  .group-category {
-    break-inside: avoid;
-  }
-
-  .group-category h3 {
-    display: flex;
-    gap: var(--space-sm);
-    align-items: center;
-    padding-bottom: var(--space-sm);
-    margin: 0 0 var(--space-md);
-    font-family: var(--font-mono);
-    font-size: 0.8rem;
-    font-weight: var(--fw-semibold);
-    color: var(--color-accent);
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-    border-bottom: 1px solid var(--color-hair);
-  }
-
-  .certificate-list {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-sm);
-  }
-
-  .certificate-item {
-    display: flex;
-    gap: var(--space-md);
-    align-items: center;
-    justify-content: space-between;
-    padding: var(--space-sm) var(--space-md);
-    background-color: var(--color-surface-2);
-    border: 1px solid var(--color-hair);
+  .cert-card {
+    padding: 1rem 1.125rem; /* 16 px 18 px */
+    border: 1px solid var(--color-border);
     border-radius: var(--radius-md);
     transition:
       border-color var(--dur-2) var(--ease-out),
       box-shadow var(--dur-2) var(--ease-out);
   }
 
-  .certificate-item:hover {
+  .cert-card:hover {
     border-color: var(--accent-line);
     box-shadow: var(--sh-card);
   }
 
-  .cert-main {
-    display: flex;
-    flex-direction: column;
-    gap: 0.2rem;
-  }
-
-  .cert-name {
-    font-size: 1rem;
-    font-weight: var(--fw-semibold);
-    color: var(--color-text);
-  }
-
-  .cert-meta {
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--space-md);
-    font-size: 0.85rem;
-    color: var(--color-text-muted);
-  }
-
-  .cert-meta span {
-    display: flex;
-    gap: 0.4rem;
-    align-items: center;
-  }
-
-  .meta-icon {
-    font-size: 0.8em;
-    opacity: 80%;
-  }
-
-  @media (width <= 600px) {
-    .certificate-item {
-      flex-direction: column;
-      gap: var(--space-sm);
-      align-items: flex-start;
+  @media (prefers-reduced-motion: reduce) {
+    .cert-card {
+      transition: none;
     }
+  }
+
+  .cert-card-header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin-bottom: 0.5625rem; /* 9 px */
+  }
+
+  .cert-card-name {
+    font-family: var(--font-display);
+    font-size: 0.9375rem; /* 15 px */
+    font-weight: var(--fw-medium);
+    color: var(--color-text-heading);
+  }
+
+  /* Item count badge — mono, accent, top-right of card header. */
+  .cert-count {
+    font-family: var(--font-mono);
+    font-size: 0.6875rem; /* 11 px */
+    color: var(--color-accent);
+  }
+
+  .cert-items {
+    margin: 0;
+    font-size: 0.8125rem; /* 13 px */
+    line-height: 1.5;
+    color: var(--color-text);
   }
 </style>
