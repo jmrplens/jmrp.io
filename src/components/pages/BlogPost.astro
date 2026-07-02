@@ -56,7 +56,10 @@ const bodyWithoutCode = (post.body || "")
   .replaceAll(/```[\s\S]*?```/g, "")
   .replaceAll(/`[^`]*?`/g, "");
 
-const linkRegex = /\[([^\]]+)\]\(([^)]+(?:\([^)]+\)[^)]*)*)\)/g;
+// Link-text group excludes newlines and `[`/`{` so the scan can't run from a
+// JSX array/object bracket (e.g. `events={[ … [Real Link](url)`) through to a
+// real link's `](`, which would otherwise capture a mangled multi-line "title".
+const linkRegex = /\[([^\]\n[{]+)\]\(([^)]+(?:\([^)]+\)[^)]*)*)\)/g;
 const collectedRefsFromMarkdown = [];
 let match;
 while ((match = linkRegex.exec(bodyWithoutCode)) !== null) {
