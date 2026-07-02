@@ -7,12 +7,12 @@
  *
  * Design matches the Lab design system (tokens.css):
  * - Background: #0A0A0B with hairline grid overlay (#1D1D22 @ 40px)
- * - Logo mark: "❯ jmrp_" (teal chevron #46B8A6, amber cursor #F5A623)
+ * - Logo mark: the real `❯ jmrp_` brand PNG (src/assets/brand), embedded
  * - Title: Space Grotesk 700, up to 2 lines, heading colour #F4F2EC
  * - Domain: IBM Plex Mono 500, bottom-right, muted #8C8A82
  * - Bottom accent bar: 3px teal #46B8A6
  *
- * Fonts are committed to `src/assets/fonts/og/` (latin subsets, woff2).
+ * Fonts are committed to `src/assets/fonts/og/` (latin subsets, TTF).
  * They match the exact files Astro Fonts downloads at build time.
  */
 
@@ -31,7 +31,6 @@ const OG_GRID = "#1d1d22";
 const OG_HEADING = "#f4f2ec";
 const OG_MUTED = "#8c8a82";
 const OG_TEAL = "#46b8a6";
-const OG_AMBER = "#f5a623";
 const OG_BORDER = "#26262c";
 
 // ─── Dimensions ─────────────────────────────────────────────────────────────
@@ -96,6 +95,24 @@ interface VNode {
   };
 }
 
+// Lazily loaded brand logo — the real `❯ jmrp_` mark (dark theme, truecolor+sRGB
+// PNG from the brand pipeline) embedded as a data-URI so satori renders the
+// actual chevron/underscore, not an ASCII approximation.
+let _logo: { uri: string; ratio: number } | undefined;
+async function getLogo(): Promise<{ uri: string; ratio: number }> {
+  if (!_logo) {
+    const buf = await readFileAsync(
+      path.join(process.cwd(), "src/assets/brand/logo-full-dark-512.png"),
+    );
+    // PNG IHDR carries width @ byte 16 and height @ byte 20 (big-endian).
+    _logo = {
+      uri: `data:image/png;base64,${buf.toString("base64")}`,
+      ratio: buf.readUInt32BE(16) / buf.readUInt32BE(20),
+    };
+  }
+  return _logo;
+}
+
 /**
  * Creates a satori-compatible virtual node.
  * @param type - HTML element tag name.
@@ -146,7 +163,11 @@ function titleFontSize(title: string): number {
  * @param title - Main page title (displayed large, centre-vertical).
  * @param subtitle - Optional kicker shown below the title in muted type.
  */
-function buildLayout(title: string, subtitle?: string): VNode {
+function buildLayout(
+  title: string,
+  subtitle: string | undefined,
+  logo: { uri: string; ratio: number },
+): VNode {
   const fs = titleFontSize(title);
 
   // Root container: full bleed, flex column, dark bg + grid
@@ -180,24 +201,17 @@ function buildLayout(title: string, subtitle?: string): VNode {
         background:
           "linear-gradient(160deg, rgba(10,10,11,0.30) 0%, transparent 55%, rgba(10,10,11,0.55) 100%)",
       },
-      // ── Top row: logo mark
-      el(
-        "div",
-        {
-          display: "flex",
-          alignItems: "center",
-          fontFamily: "'IBM Plex Mono'",
-          fontSize: "17px",
-          fontWeight: "500",
-          letterSpacing: "-0.01em",
-          gap: "6px",
+      // ── Top row: the real `❯ jmrp_` brand mark (embedded PNG)
+      {
+        type: "img",
+        key: null,
+        props: {
+          src: logo.uri,
+          width: Math.round(40 * logo.ratio),
+          height: 40,
+          style: { display: "flex" },
         },
-        // ">" (ASCII) not "❯" (U+276F) — the subsetted OG mono font lacks the
-        // ornament glyph and would render tofu.
-        el("span", { color: OG_TEAL }, ">"),
-        el("span", { color: OG_HEADING }, "jmrp"),
-        el("span", { color: OG_AMBER }, "_"),
-      ),
+      },
       // ── Centre: title + subtitle
       el(
         "div",
@@ -283,13 +297,14 @@ export async function generateOgImage(
   title: string,
   subtitle?: string,
 ): Promise<Buffer> {
-  const [spaceGrotesk, ibmPlexMono] = await Promise.all([
+  const [spaceGrotesk, ibmPlexMono, logo] = await Promise.all([
     getSpaceGrotesk700(),
     getIbmPlexMono500(),
+    getLogo(),
   ]);
 
   const svg = await satori(
-    buildLayout(title, subtitle) as Parameters<typeof satori>[0],
+    buildLayout(title, subtitle, logo) as Parameters<typeof satori>[0],
     {
       width: W,
       height: H,

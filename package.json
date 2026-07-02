@@ -113,6 +113,7 @@
     "js-yaml": "^5.2.0",
     "lighthouse": "^13.4.0",
     "mermaid-isomorphic": "^3.1.0",
+    "opentype.js": "^2.0.0",
     "pdf-parse": "^2.4.5",
     "playwright": "^1.61.1",
     "prettier": "^3.9.4",
