@@ -2,6 +2,7 @@
 import { defaultLocale, type Locale } from "@i18n/config";
 import { useTranslatedPath, useTranslations } from "@i18n/utils";
 import { formatDateDot, getReadingTime } from "@utils/blog";
+import { Image } from "astro:assets";
 import type { CollectionEntry } from "astro:content";
 
 interface Props {
@@ -41,23 +42,42 @@ const haystack = [
     href={translatePath(`/blog/${post.data.slug}/`)}
     aria-label={t("aria.readArticle", { title: post.data.title })}
   >
-    <div class="post-card__top">
-      <span class="post-card__tags">{tags.join(" · ")}</span>
-      <span
-        class="post-card__index"
-        aria-hidden="true"
-      >
-        {String(index).padStart(2, "0")}
-      </span>
-    </div>
-    <h2 class="post-card__title">{post.data.title}</h2>
-    <p class="post-card__desc">{post.data.description}</p>
-    <div class="post-card__meta">
-      <time datetime={displayDate.toISOString()}>
-        {formatDateDot(displayDate)}
-      </time>
-      <span aria-hidden="true">·</span>
-      <span>{readingTime} {t("pages.blog.minRead")}</span>
+    {
+      post.data.coverImage && (
+        <div class="post-card__cover">
+          <Image
+            class="post-card__cover-img"
+            src={post.data.coverImage}
+            alt=""
+            role="presentation"
+            width={640}
+            height={360}
+            widths={[320, 480, 640]}
+            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 380px"
+            loading="lazy"
+          />
+        </div>
+      )
+    }
+    <div class="post-card__body">
+      <div class="post-card__top">
+        <span class="post-card__tags">{tags.join(" · ")}</span>
+        <span
+          class="post-card__index"
+          aria-hidden="true"
+        >
+          {String(index).padStart(2, "0")}
+        </span>
+      </div>
+      <h2 class="post-card__title">{post.data.title}</h2>
+      <p class="post-card__desc">{post.data.description}</p>
+      <div class="post-card__meta">
+        <time datetime={displayDate.toISOString()}>
+          {formatDateDot(displayDate)}
+        </time>
+        <span aria-hidden="true">·</span>
+        <span>{readingTime} {t("pages.blog.minRead")}</span>
+      </div>
     </div>
   </a>
 </article>
@@ -65,6 +85,7 @@ const haystack = [
 <style>
   .post-card {
     display: flex;
+    overflow: hidden;
     background: var(--color-bg-secondary);
     border: 1px solid var(--color-border);
     border-radius: var(--radius-md);
@@ -94,9 +115,44 @@ const haystack = [
     display: flex;
     flex: 1;
     flex-direction: column;
-    padding: var(--space-md-lg);
     color: var(--color-text);
     text-decoration: none;
+  }
+
+  .post-card__cover {
+    aspect-ratio: 16 / 9;
+    overflow: hidden;
+    background-color: var(--color-surface-2);
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  .post-card__cover-img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform var(--dur-3) var(--ease-out);
+  }
+
+  .post-card:hover .post-card__cover-img {
+    transform: scale(1.04);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .post-card__cover-img {
+      transition: none;
+    }
+
+    .post-card:hover .post-card__cover-img {
+      transform: none;
+    }
+  }
+
+  .post-card__body {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    padding: var(--space-md-lg);
   }
 
   .post-card__top {
