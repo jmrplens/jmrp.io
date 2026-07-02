@@ -968,3 +968,4 @@ monaco
 plex
 sobreescribimos
 tokenizado
+neofetch

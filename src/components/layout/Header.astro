@@ -180,10 +180,15 @@ const navLabelKeyMap: Record<string, TranslationKey> = {
       window.scrollTo({ top: savedScrollY, behavior: "instant" });
     };
 
+    // Only VISIBLE focusables — the zero-JS `.term-static` links are
+    // display:none once the JS terminal takes over, but querySelectorAll would
+    // still return them (offsetParent is null for display:none elements).
     const focusables = () =>
-      drawer.querySelectorAll(
-        'a[href], button:not([disabled]), input:not([disabled]), [tabindex]:not([tabindex="-1"])',
-      );
+      [
+        ...drawer.querySelectorAll(
+          'a[href], button:not([disabled]), input:not([disabled]), [tabindex]:not([tabindex="-1"])',
+        ),
+      ].filter((el) => el.offsetParent !== null);
 
     const open = () => {
       drawer.classList.add("open");

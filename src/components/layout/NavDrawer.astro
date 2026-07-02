@@ -2,12 +2,15 @@
 /**
  * NavDrawer — the mobile "terminal" navigation drawer (Lab system).
  *
- * Phase 1: a ZERO-JS, accessible base. Open/close is the CSS checkbox hack
- * (`#nav-open` lives in Header; opened via `html:has(#nav-open:checked)`), so
- * the drawer works with no JavaScript. The body is the `tree -L 1` section list
- * as REAL Astro links plus a couple of `<details>` command fallbacks (`cd blog`,
- * `tags`) rendered from build-time collections — all keyboard-usable without JS.
- * The editable JS terminal is a later enhancement layered on top of this.
+ * Zero-JS base (`.term-static`): the `tree -L 1` section list as REAL Astro
+ * links + `<details>` command fallbacks — fully usable with no JavaScript.
+ *
+ * JS enhancement (`.term-live` + `.term-io`, activated by `html.js-term`): an
+ * editable terminal. The static tree is hidden and an input line + live output
+ * + dynamic suggestion chips take over. Typing/deleting does nothing; Enter
+ * executes and REPLACES the output; ↑/↓ walk the command history. All the data
+ * (sections, posts, tools, tags, socials, identity, i18n) is serialized once at
+ * build time into a non-executable JSON island; the engine below reads it.
  */
 import LanguageSwitcher from "@components/layout/LanguageSwitcher.astro";
 import Logo from "@components/layout/Logo.astro";
@@ -19,15 +22,16 @@ import {
   useTranslations,
 } from "@i18n/utils";
 import { formatDateDot, getPostsForLocale, getUniqueTags } from "@utils/blog";
+import { safeJsonLd } from "@utils/html";
+import { getToolsForLocale } from "@utils/tools";
 import { getEntry } from "astro:content";
 
 const locale = (Astro.currentLocale ?? defaultLocale) as Locale;
 const t = useTranslations(locale);
 const translatePath = useTranslatedPath(locale);
 
-// Active section = first path segment (locale-stripped).
-const currentSegment =
-  stripLocalePrefix(Astro.url.pathname).split("/").find(Boolean) ?? "";
+const cleanPath = stripLocalePrefix(Astro.url.pathname);
+const currentSegment = cleanPath.split("/").find(Boolean) ?? "";
 
 const siteEntry = await getEntry("site_config", "site");
 const siteData = siteEntry?.data;
@@ -51,6 +55,7 @@ const treeRows = navItems.map((item, i) => {
   const labelKey = navLabelKeyMap[item.href];
   return {
     href: translatePath(item.href),
+    seg,
     path: seg ? `~/${seg}` : "~",
     label: labelKey ? t(labelKey) : item.label,
     current: seg === currentSegment,
@@ -58,20 +63,118 @@ const treeRows = navItems.map((item, i) => {
   };
 });
 
-// Build-time data for the command fallbacks.
+// Build-time data.
 const posts = (await getPostsForLocale(locale)).map((e) => e.post);
-const recent = posts.slice(0, 6).map((p) => ({
-  href: translatePath(`/blog/${p.data.slug}/`),
+const postData = posts.map((p) => ({
   title: p.data.title,
+  href: translatePath(`/blog/${p.data.slug}/`),
   date: formatDateDot(p.data.publishedDate),
+  tags: p.data.tags ?? [],
 }));
-const tags = getUniqueTags(posts)
-  .slice(0, 14)
-  .map(({ tag, count }) => ({
-    href: translatePath(`/blog/tags/${tag}/`),
-    tag,
-    count,
-  }));
+const toolData = (await getToolsForLocale(locale)).map((e) => ({
+  title: e.tool.data.title,
+  href: translatePath(`/tools/${e.tool.data.slug}/`),
+  category: e.tool.data.category,
+}));
+const allTags = getUniqueTags(posts).map(({ tag, count }) => ({
+  tag,
+  count,
+  href: translatePath(`/blog/tags/${tag}/`),
+}));
+
+// Identity / social for whoami · neofetch · social (no current employer).
+const person = siteData && "person" in siteData ? siteData.person : undefined;
+const socialLinks =
+  (siteData && "social_links" in siteData
+    ? siteData.social_links
+    : undefined) ?? [];
+const socialsEntry = await getEntry("site_config", "socials");
+const scholarId =
+  socialsEntry?.data && "scholar_userid" in socialsEntry.data
+    ? socialsEntry.data.scholar_userid
+    : undefined;
+const social = [
+  ...socialLinks.map((s) => ({ name: s.name, url: s.url })),
+  ...(scholarId
+    ? [
+        {
+          name: "Google Scholar",
+          url: `https://scholar.google.com/citations?user=${scholarId}`,
+        },
+      ]
+    : []),
+];
+const identity = {
+  handle: "jmrp",
+  name: person?.name ?? "José Manuel Requena Plens",
+  role: person?.jobTitle ?? "R&D Engineer",
+  location: t("terminal.location"),
+  stack: (person?.knowsAbout ?? []).slice(0, 6),
+};
+
+// Serialized payload for the engine (data + the i18n it needs).
+const termData = {
+  sections: treeRows.map((r) => ({
+    seg: r.seg,
+    path: r.path,
+    label: r.label,
+    href: r.href,
+    current: r.current,
+  })),
+  posts: postData,
+  tools: toolData,
+  tags: allTags,
+  social,
+  identity,
+  langPaths: { en: cleanPath, es: `/es${cleanPath}` },
+  i18n: {
+    youAreHere: t("menu.youAreHere"),
+    notFound: t("terminal.notFound"),
+    typeHelp: t("terminal.typeHelp"),
+    emptyDir: t("terminal.emptyDir"),
+    noResults: t("terminal.noResults"),
+    blocked: t("terminal.blocked"),
+    usage: t("terminal.usage"),
+    resetHome: t("terminal.resetHome"),
+    groups: {
+      nav: t("terminal.groupNav"),
+      discover: t("terminal.groupDiscover"),
+      identity: t("terminal.groupIdentity"),
+      system: t("terminal.groupSystem"),
+    },
+    labels: {
+      role: t("terminal.labelRole"),
+      base: t("terminal.labelBase"),
+      stack: t("terminal.labelStack"),
+      posts: t("terminal.labelPosts"),
+      tags: t("terminal.labelTags"),
+    },
+    desc: {
+      help: t("terminal.desc.help"),
+      tree: t("terminal.desc.tree"),
+      ls: t("terminal.desc.ls"),
+      cd: t("terminal.desc.cd"),
+      pwd: t("terminal.desc.pwd"),
+      find: t("terminal.desc.find"),
+      recent: t("terminal.desc.recent"),
+      tags: t("terminal.desc.tags"),
+      sitemap: t("terminal.desc.sitemap"),
+      whoami: t("terminal.desc.whoami"),
+      neofetch: t("terminal.desc.neofetch"),
+      social: t("terminal.desc.social"),
+      history: t("terminal.desc.history"),
+      man: t("terminal.desc.man"),
+      open: t("terminal.desc.open"),
+      theme: t("terminal.desc.theme"),
+      lang: t("terminal.desc.lang"),
+      clear: t("terminal.desc.clear"),
+      exit: t("terminal.desc.exit"),
+    },
+  },
+};
+
+const staticTags = allTags.slice(0, 14);
+const staticRecent = postData.slice(0, 6);
 ---
 
 <div
@@ -97,93 +200,146 @@ const tags = getUniqueTags(posts)
   </div>
 
   <div class="drawer__body">
-    {/* tree -L 1 — the accessible zero-JS section list */}
-    <p class="term-line">
+    {/* --- Zero-JS base: tree + command fallbacks --- */}
+    <div class="term-static">
+      <p class="term-line">
+        <span
+          class="term-line__prompt"
+          aria-hidden="true"
+          >jmrp@home:~$</span
+        > tree -L 1
+      </p>
+      <ul class="tree">
+        {
+          treeRows.map((row) => (
+            <li>
+              <a
+                href={row.href}
+                class="tree__row"
+                aria-current={row.current ? "page" : undefined}
+              >
+                <span
+                  class="tree__glyph"
+                  aria-hidden="true"
+                >
+                  {row.glyph}
+                </span>
+                <span class="tree__path">{row.path}</span>
+                <span class="tree__label">{row.label}</span>
+                {row.current && (
+                  <span class="tree__here">{t("menu.youAreHere")}</span>
+                )}
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+
+      <details class="cmd">
+        <summary class="cmd__summary">
+          <span
+            class="cmd__chevron i-mdi:menu-right"
+            aria-hidden="true"
+          ></span>
+          <span class="cmd__text">cd blog</span>
+          <span class="cmd__hint">{t("menu.recent")}</span>
+        </summary>
+        <ul class="cmd__list">
+          {
+            staticRecent.map((p) => (
+              <li>
+                <a
+                  href={p.href}
+                  class="cmd__row"
+                >
+                  <span class="cmd__path">~/blog</span>
+                  <span class="cmd__rowlabel">{p.title}</span>
+                  <span class="cmd__marker">{p.date}</span>
+                </a>
+              </li>
+            ))
+          }
+        </ul>
+      </details>
+
+      <details class="cmd">
+        <summary class="cmd__summary">
+          <span
+            class="cmd__chevron i-mdi:menu-right"
+            aria-hidden="true"
+          ></span>
+          <span class="cmd__text">tags</span>
+          <span class="cmd__hint">{t("menu.tags")}</span>
+        </summary>
+        <ul class="cmd__list cmd__list--tags">
+          {
+            staticTags.map((tg) => (
+              <li>
+                <a
+                  href={tg.href}
+                  class="cmd__tag"
+                >
+                  #{tg.tag}
+                  <span class="cmd__tag-count">{tg.count}</span>
+                </a>
+              </li>
+            ))
+          }
+        </ul>
+      </details>
+    </div>
+
+    {/* --- JS live output --- */}
+    <div
+      id="term-output"
+      class="term-live"
+      role="region"
+      aria-live="polite"
+      aria-label={t("terminal.outputLabel")}
+    >
+    </div>
+  </div>
+
+  {/* --- JS terminal I/O (hint + input + suggestions) --- */}
+  <div class="term-io">
+    <div class="term-hint">
+      <span>
+        {t("terminal.hintType")}
+        <b>help</b> · <b>↑↓</b>
+        {t("terminal.hintHistory")}
+      </span>
+      <button
+        id="term-reset"
+        class="term-reset"
+        type="button"
+        hidden
+      >
+        {t("terminal.resetHome")}
+      </button>
+    </div>
+    <div class="term-input-line">
       <span
-        class="term-line__prompt"
+        class="term-prompt"
         aria-hidden="true"
-        >jmrp@home:~$</span
-      > tree -L 1
-    </p>
-    <ul class="tree">
-      {
-        treeRows.map((row) => (
-          <li>
-            <a
-              href={row.href}
-              class="tree__row"
-              aria-current={row.current ? "page" : undefined}
-            >
-              <span
-                class="tree__glyph"
-                aria-hidden="true"
-              >
-                {row.glyph}
-              </span>
-              <span class="tree__path">{row.path}</span>
-              <span class="tree__label">{row.label}</span>
-              {row.current && (
-                <span class="tree__here">{t("menu.youAreHere")}</span>
-              )}
-            </a>
-          </li>
-        ))
-      }
-    </ul>
-
-    {/* command fallbacks (keyboard-usable, no JS) */}
-    <details class="cmd">
-      <summary class="cmd__summary">
-        <span
-          class="cmd__chevron i-mdi:menu-right"
-          aria-hidden="true"
-        ></span>
-        <span class="cmd__text">cd blog</span>
-        <span class="cmd__hint">{t("menu.recent")}</span>
-      </summary>
-      <ul class="cmd__list">
-        {
-          recent.map((p) => (
-            <li>
-              <a
-                href={p.href}
-                class="cmd__row"
-              >
-                <span class="cmd__path">~/blog</span>
-                <span class="cmd__rowlabel">{p.title}</span>
-                <span class="cmd__marker">{p.date}</span>
-              </a>
-            </li>
-          ))
-        }
-      </ul>
-    </details>
-
-    <details class="cmd">
-      <summary class="cmd__summary">
-        <span
-          class="cmd__chevron i-mdi:menu-right"
-          aria-hidden="true"
-        ></span>
-        <span class="cmd__text">tags</span>
-        <span class="cmd__hint">{t("menu.tags")}</span>
-      </summary>
-      <ul class="cmd__list cmd__list--tags">
-        {
-          tags.map((tg) => (
-            <li>
-              <a
-                href={tg.href}
-                class="cmd__tag"
-              >
-                #{tg.tag}
-                <span class="cmd__tag-count">{tg.count}</span>
-              </a>
-            </li>
-          ))
-        }
-      </ul>
-    </details>
+        >jmrp@home:<span id="term-cwd">~</span>$</span
+      >
+      <input
+        id="term-input"
+        class="term-input"
+        type="text"
+        aria-label={t("terminal.inputLabel")}
+        placeholder={t("terminal.inputPlaceholder")}
+        autocomplete="off"
+        autocapitalize="off"
+        autocorrect="off"
+        spellcheck="false"
+      />
+    </div>
+    <div
+      id="term-suggest"
+      class="term-suggest"
+    >
+    </div>
   </div>
 
   <div class="drawer__foot">
@@ -210,7 +366,506 @@ const tags = getUniqueTags(posts)
       </a>
     </div>
   </div>
+
+  <script
+    type="application/json"
+    id="nav-term-data"
+    set:html={safeJsonLd(termData)}
+  />
 </div>
+
+<script is:inline>
+  (function () {
+    function initTerm() {
+      const drawer = document.getElementById("nav-drawer");
+      const dataEl = document.getElementById("nav-term-data");
+      if (!drawer || !dataEl || drawer.dataset.termReady) return;
+
+      let D;
+      try {
+        D = JSON.parse(dataEl.textContent);
+      } catch (e) {
+        return;
+      }
+      const output = document.getElementById("term-output");
+      const input = document.getElementById("term-input");
+      const suggest = document.getElementById("term-suggest");
+      const resetBtn = document.getElementById("term-reset");
+      const cwdEl = document.getElementById("term-cwd");
+      const checkbox = document.getElementById("nav-open");
+      if (!output || !input || !suggest) return;
+
+      drawer.dataset.termReady = "1";
+      document.documentElement.classList.add("js-term");
+
+      const T = D.i18n;
+      const BLOCKED = new Set([
+        "sudo",
+        "rm",
+        "chmod",
+        "chown",
+        "kill",
+        "mkfs",
+        "dd",
+        "reboot",
+        "shutdown",
+        "format",
+        "del",
+        "mv",
+        ":(){",
+      ]);
+      const SUGGEST_POOL = [
+        "help",
+        "ls",
+        "tree",
+        "cd blog",
+        "ls blog",
+        "cd tools",
+        "cd ..",
+        "pwd",
+        "find ",
+        "recent",
+        "tags",
+        "sitemap",
+        "whoami",
+        "neofetch",
+        "social",
+        "history",
+        "theme light",
+        "theme dark",
+        "lang en",
+        "lang es",
+        "open ~/blog",
+        "clear",
+        "exit",
+      ];
+      const START_SUGGEST = ["help", "ls", "cd blog", "find ", "recent"];
+
+      let cwd = "~";
+      let prev = "~";
+      let ran = false;
+      const history = [];
+      let hIdx = 0;
+
+      const sectionBySeg = {};
+      D.sections.forEach((s) => {
+        sectionBySeg[s.seg] = s;
+      });
+
+      // --- DOM helpers ---
+      function el(tag, cls, text) {
+        const n = document.createElement(tag);
+        if (cls) n.className = cls;
+        if (text != null) n.textContent = text;
+        return n;
+      }
+      function comment(text) {
+        return el("div", "term-comment", text);
+      }
+      function textRow(text) {
+        return el("div", "term-row", text);
+      }
+      function link(href, path, label, marker, glyph) {
+        const a = el("a", "term-link");
+        a.href = href;
+        if (glyph) a.appendChild(el("span", "term-link__glyph", glyph));
+        if (path) a.appendChild(el("span", "term-link__path", path));
+        if (label) a.appendChild(el("span", "term-link__label", label));
+        if (marker) a.appendChild(el("span", "term-link__marker", marker));
+        a.addEventListener("click", closeDrawer);
+        return a;
+      }
+      function extLink(href, label) {
+        const a = el("a", "term-link");
+        a.href = href;
+        a.target = "_blank";
+        a.rel = "external noopener noreferrer";
+        a.appendChild(el("span", "term-link__glyph", "↗"));
+        a.appendChild(el("span", "term-link__path", label));
+        return a;
+      }
+      function setOutput(nodes) {
+        output.replaceChildren(...nodes);
+        output.scrollTop = 0;
+      }
+      function setCwd(next) {
+        cwd = next;
+        cwdEl.textContent = next;
+      }
+
+      // --- renderers ---
+      function rTree() {
+        const nodes = [comment("tree -L 1")];
+        const box = el("div", "term-tree");
+        D.sections.forEach((s, i) => {
+          const glyph = i === D.sections.length - 1 ? "└──" : "├──";
+          const a = link(
+            s.href,
+            s.path,
+            s.label,
+            s.current ? T.youAreHere : "",
+            glyph,
+          );
+          if (s.current) a.classList.add("is-current");
+          box.appendChild(a);
+        });
+        nodes.push(box);
+        return nodes;
+      }
+      function rPostList(list, header) {
+        const nodes = [comment(header)];
+        if (list.length === 0) return [comment(T.emptyDir)];
+        list.forEach((p) =>
+          nodes.push(link(p.href, "~/blog", p.title, p.date, "·")),
+        );
+        return nodes;
+      }
+      function rToolList() {
+        const nodes = [comment("~/tools")];
+        D.tools.forEach((tl) =>
+          nodes.push(link(tl.href, "~/tools", tl.title, tl.category, "·")),
+        );
+        return nodes;
+      }
+      function rTags() {
+        const nodes = [comment("tags")];
+        const box = el("div", "term-chips");
+        D.tags.forEach((tg) => {
+          const a = el("a", "term-chip");
+          a.href = tg.href;
+          a.textContent = "#" + tg.tag;
+          a.appendChild(el("span", "term-chip__count", String(tg.count)));
+          a.addEventListener("click", closeDrawer);
+          box.appendChild(a);
+        });
+        nodes.push(box);
+        return nodes;
+      }
+      function rFind(q) {
+        const query = (q || "").toLowerCase().trim();
+        if (!query) return [comment(T.usage + ": find <text>")];
+        const hits = D.posts.filter(
+          (p) =>
+            p.title.toLowerCase().includes(query) ||
+            p.tags.join(" ").toLowerCase().includes(query),
+        );
+        const secHits = D.sections.filter((s) =>
+          s.label.toLowerCase().includes(query),
+        );
+        if (hits.length === 0 && secHits.length === 0)
+          return [comment(T.noResults + ' "' + query + '"')];
+        const nodes = [comment('find "' + query + '"')];
+        secHits.forEach((s) =>
+          nodes.push(link(s.href, s.path, s.label, "", "·")),
+        );
+        hits.forEach((p) =>
+          nodes.push(
+            link(
+              p.href,
+              "~/blog",
+              p.title,
+              p.tags[0] ? "#" + p.tags[0] : p.date,
+              "·",
+            ),
+          ),
+        );
+        return nodes;
+      }
+      function rSitemap() {
+        const nodes = [comment("sitemap")];
+        const box = el("div", "term-tree");
+        D.sections.forEach((s) => {
+          box.appendChild(link(s.href, s.path, s.label, "", "├──"));
+        });
+        D.posts.slice(0, 10).forEach((p) => {
+          box.appendChild(link(p.href, "", p.title, p.date, "   └─"));
+        });
+        nodes.push(box);
+        return nodes;
+      }
+      function rWhoami() {
+        const id = D.identity;
+        const parts = [id.handle, id.role, id.location].concat(id.stack);
+        return [comment("whoami"), textRow(parts.join(" · "))];
+      }
+      function rNeofetch() {
+        const id = D.identity;
+        const rows = [
+          [T.labels.role, id.role],
+          [T.labels.base, id.location],
+          [T.labels.stack, id.stack.join(", ")],
+          [T.labels.posts, String(D.posts.length)],
+          [T.labels.tags, String(D.tags.length)],
+        ];
+        const nodes = [comment(id.handle + "@home")];
+        rows.forEach(([k, v]) => {
+          const row = el("div", "term-kv");
+          row.appendChild(el("span", "term-kv__k", k));
+          row.appendChild(el("span", "term-kv__v", v));
+          nodes.push(row);
+        });
+        return nodes;
+      }
+      function rSocial() {
+        const nodes = [comment("social")];
+        D.social.forEach((s) => nodes.push(extLink(s.url, s.name)));
+        return nodes;
+      }
+      function rHelp() {
+        const groups = [
+          ["nav", ["help", "ls", "tree", "cd", "pwd"]],
+          ["discover", ["find", "recent", "tags", "sitemap"]],
+          ["identity", ["whoami", "neofetch", "social"]],
+          [
+            "system",
+            ["open", "theme", "lang", "history", "man", "clear", "exit"],
+          ],
+        ];
+        const nodes = [];
+        groups.forEach(([g, cmds]) => {
+          nodes.push(el("div", "term-help-group", "// " + T.groups[g]));
+          cmds.forEach((c) => {
+            const row = el("div", "term-help");
+            row.appendChild(el("span", "term-help__cmd", c));
+            row.appendChild(el("span", "term-help__desc", T.desc[c]));
+            nodes.push(row);
+          });
+        });
+        return nodes;
+      }
+      function rMan(arg) {
+        const c = (arg || "").trim();
+        if (!c || !T.desc[c]) return [comment(T.usage + ": man <command>")];
+        return [comment("man " + c), textRow(c + " — " + T.desc[c])];
+      }
+      function rHistory() {
+        if (history.length === 0) return [comment(T.emptyDir)];
+        return [comment("history")].concat(
+          history.map((h, i) => textRow(i + 1 + "  " + h)),
+        );
+      }
+      function notFound(c) {
+        const row = el("div", "term-row term-row--error");
+        row.appendChild(el("span", null, T.notFound + ": "));
+        row.appendChild(el("span", "term-cmd", c));
+        row.appendChild(el("span", null, " — " + T.typeHelp));
+        return [row];
+      }
+
+      // --- navigation helpers ---
+      function resolvePath(arg) {
+        let p = (arg || "").trim().replace(/^~\/?/, "").replace(/^\//, "");
+        if (p === "" || p === "~") return sectionBySeg[""]?.href || "/";
+        const seg = p.split("/")[0];
+        return sectionBySeg[seg]?.href || null;
+      }
+      function navigate(href) {
+        if (href) {
+          closeDrawer();
+          window.location.href = href;
+        }
+      }
+      function setTheme(arg) {
+        const a = (arg || "").trim().toLowerCase();
+        const cur = document.documentElement.dataset.theme || "dark";
+        const next =
+          a === "dark" || a === "light" ? a : cur === "dark" ? "light" : "dark";
+        document.documentElement.dataset.theme = next;
+        try {
+          localStorage.setItem("theme", next);
+        } catch (e) {}
+        window.dispatchEvent(new Event("theme-changed"));
+        return [comment("theme " + next)];
+      }
+      function closeDrawer() {
+        if (checkbox) {
+          checkbox.checked = false;
+          checkbox.dispatchEvent(new Event("change", { bubbles: true }));
+        }
+      }
+
+      // --- command dispatch ---
+      function run(raw) {
+        const cmd = raw.trim();
+        const sp = cmd.indexOf(" ");
+        const c = (sp === -1 ? cmd : cmd.slice(0, sp)).toLowerCase();
+        const arg = sp === -1 ? "" : cmd.slice(sp + 1).trim();
+
+        if (BLOCKED.has(c)) return setOutput([comment(T.blocked)]);
+
+        switch (c) {
+          case "help":
+          case "?":
+            return setOutput(rHelp());
+          case "tree":
+            return setOutput(rTree());
+          case "ls": {
+            const dir = arg || (cwd === "~" ? "" : cwd.replace("~/", ""));
+            if (dir === "blog" || dir === "~/blog")
+              return setOutput(rPostList(D.posts, "~/blog"));
+            if (dir === "tools" || dir === "~/tools")
+              return setOutput(rToolList());
+            if (dir === "tags") return setOutput(rTags());
+            return setOutput(rTree());
+          }
+          case "cd": {
+            const a = arg.replace(/^~\/?/, "").replace(/^\//, "");
+            if (arg === "" || a === "" || a === "~") {
+              prev = cwd;
+              setCwd("~");
+              return setOutput(rTree());
+            }
+            if (arg === "..") {
+              prev = cwd;
+              setCwd("~");
+              return setOutput(rTree());
+            }
+            if (arg === "-") {
+              const p = prev;
+              prev = cwd;
+              setCwd(p);
+              return setOutput(p === "~" ? rTree() : rPostList(D.posts, p));
+            }
+            if (a.indexOf("tags/") === 0) {
+              const tg = a.slice(5);
+              const list = D.posts.filter((p) =>
+                p.tags.map((x) => x.toLowerCase()).includes(tg.toLowerCase()),
+              );
+              prev = cwd;
+              setCwd("~/tags/" + tg);
+              return setOutput(rPostList(list, "#" + tg));
+            }
+            const seg = a.split("/")[0];
+            if (!sectionBySeg[seg]) return setOutput(notFound("cd " + arg));
+            prev = cwd;
+            setCwd("~/" + seg);
+            if (seg === "blog") return setOutput(rPostList(D.posts, "~/blog"));
+            if (seg === "tools") return setOutput(rToolList());
+            return navigate(sectionBySeg[seg].href);
+          }
+          case "pwd":
+            return setOutput([
+              textRow("/home/jmrp" + (cwd === "~" ? "" : "/" + cwd.slice(2))),
+            ]);
+          case "find":
+          case "search":
+            return setOutput(rFind(arg));
+          case "recent":
+          case "latest":
+            return setOutput(rPostList(D.posts.slice(0, 8), "// recent"));
+          case "tags":
+            return setOutput(rTags());
+          case "sitemap":
+            return setOutput(rSitemap());
+          case "whoami":
+            return setOutput(rWhoami());
+          case "neofetch":
+            return setOutput(rNeofetch());
+          case "social":
+          case "links":
+            return setOutput(rSocial());
+          case "history":
+            return setOutput(rHistory());
+          case "man":
+            return setOutput(rMan(arg));
+          case "open":
+          case "go":
+            return navigate(resolvePath(arg));
+          case "theme":
+            return setOutput(setTheme(arg));
+          case "lang": {
+            const l = arg.trim().toLowerCase();
+            if (l === "es" || l === "en") return navigate(D.langPaths[l]);
+            return setOutput(notFound("lang " + arg));
+          }
+          case "clear":
+            prev = cwd;
+            setCwd("~");
+            return setOutput(rTree());
+          case "exit":
+          case "q":
+            return closeDrawer();
+          default:
+            return setOutput(notFound(c));
+        }
+      }
+
+      function execute(raw) {
+        const cmd = raw.trim();
+        if (!cmd) return;
+        history.push(cmd);
+        hIdx = history.length;
+        run(cmd);
+        ran = true;
+        resetBtn.hidden = false;
+        input.value = "";
+        renderSuggest("");
+      }
+
+      // --- suggestions ---
+      function renderSuggest(value) {
+        const v = value.trim().toLowerCase();
+        const pool = v
+          ? SUGGEST_POOL.filter((s) => s.startsWith(v))
+          : START_SUGGEST;
+        const chips = pool.slice(0, 5);
+        suggest.replaceChildren(
+          ...chips.map((s) => {
+            const b = el("button", "term-suggest__chip", s.trim());
+            b.type = "button";
+            b.addEventListener("click", () => {
+              if (s.endsWith(" ")) {
+                input.value = s;
+                input.focus();
+                renderSuggest(s);
+              } else {
+                execute(s);
+              }
+            });
+            return b;
+          }),
+        );
+      }
+
+      // --- events ---
+      input.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") {
+          e.preventDefault();
+          execute(input.value);
+        } else if (e.key === "ArrowUp") {
+          e.preventDefault();
+          if (history.length === 0) return;
+          hIdx = Math.max(0, hIdx - 1);
+          input.value = history[hIdx] || "";
+          renderSuggest(input.value);
+        } else if (e.key === "ArrowDown") {
+          e.preventDefault();
+          if (history.length === 0) return;
+          hIdx = Math.min(history.length, hIdx + 1);
+          input.value = hIdx === history.length ? "" : history[hIdx];
+          renderSuggest(input.value);
+        }
+      });
+      input.addEventListener("input", () => renderSuggest(input.value));
+      resetBtn.addEventListener("click", () => {
+        prev = cwd;
+        setCwd("~");
+        setOutput(rTree());
+        ran = false;
+        resetBtn.hidden = true;
+        input.focus();
+      });
+
+      // Initial view: the tree.
+      setOutput(rTree());
+      renderSuggest("");
+    }
+
+    document.addEventListener("DOMContentLoaded", initTerm);
+    document.addEventListener("astro:after-swap", initTerm);
+    if (document.readyState !== "loading") initTerm();
+  })();
+</script>
 
 <style>
   .nav-drawer {
@@ -276,6 +931,24 @@ const tags = getUniqueTags(posts)
     font-size: 0.875rem;
   }
 
+  /* Static (zero-JS) vs live (JS) swap. */
+  .term-live,
+  .term-io {
+    display: none;
+  }
+
+  :global(html.js-term) .term-static {
+    display: none;
+  }
+
+  :global(html.js-term) .term-live {
+    display: block;
+  }
+
+  :global(html.js-term) .term-io {
+    display: block;
+  }
+
   .term-line {
     margin: 4px 6px 10px;
     color: var(--color-text);
@@ -334,7 +1007,7 @@ const tags = getUniqueTags(posts)
     box-shadow: inset 0 0 0 2px var(--accent-line);
   }
 
-  /* --- Command fallbacks --- */
+  /* --- Command fallbacks (zero-JS) --- */
   .cmd {
     margin-bottom: 6px;
     border-top: 1px solid var(--color-hair);
@@ -452,6 +1125,244 @@ const tags = getUniqueTags(posts)
     border-color: var(--accent-line);
     box-shadow: 0 0 0 3px
       color-mix(in srgb, var(--color-accent) 30%, transparent);
+  }
+
+  /* --- Live terminal output ---
+     These nodes are created by the engine at runtime, so they lack the scoped
+     data-astro-cid attribute; the rules are made global under `.term-live`. */
+  .term-live :global(.term-comment) {
+    margin: 2px 0 6px;
+    color: var(--color-text-muted);
+  }
+
+  .term-live :global(.term-row) {
+    padding: 2px 0;
+    color: var(--color-text);
+    overflow-wrap: anywhere;
+  }
+
+  .term-live :global(.term-row--error) {
+    color: var(--color-danger);
+  }
+
+  .term-live :global(.term-cmd) {
+    color: var(--color-text-heading);
+  }
+
+  .term-live :global(.term-tree),
+  .term-live :global(.term-chips) {
+    margin-bottom: 10px;
+  }
+
+  .term-live :global(.term-link) {
+    display: flex;
+    gap: 8px;
+    align-items: baseline;
+    min-height: 44px;
+    padding: 6px 8px;
+    text-decoration: none;
+    border-radius: var(--radius-md);
+  }
+
+  .term-live :global(.term-link__glyph) {
+    color: var(--color-text-faint);
+    white-space: pre;
+  }
+
+  .term-live :global(.term-link__path) {
+    color: var(--color-text-heading);
+    white-space: nowrap;
+  }
+
+  .term-live :global(.term-link.is-current .term-link__path) {
+    color: var(--color-accent);
+  }
+
+  .term-live :global(.term-link__label) {
+    flex: 1;
+    font-family: var(--font-body);
+    font-size: 0.8rem;
+    color: var(--color-text-muted);
+  }
+
+  .term-live :global(.term-link__marker) {
+    font-size: 0.6875rem;
+    color: var(--color-text-muted);
+    white-space: nowrap;
+  }
+
+  .term-live :global(.term-link:hover),
+  .term-live :global(.term-link:focus-visible) {
+    outline: none;
+    background: var(--color-surface-2);
+    box-shadow: inset 0 0 0 2px var(--accent-line);
+  }
+
+  .term-live :global(.term-chips) {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .term-live :global(.term-chip) {
+    display: inline-flex;
+    gap: 5px;
+    align-items: center;
+    min-height: 34px;
+    padding: 6px 10px;
+    color: var(--color-text);
+    text-decoration: none;
+    background: var(--color-surface-2);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+  }
+
+  .term-live :global(.term-chip__count) {
+    font-size: 0.6875rem;
+    color: var(--color-text-muted);
+  }
+
+  .term-live :global(.term-chip:hover),
+  .term-live :global(.term-chip:focus-visible) {
+    color: var(--color-text-heading);
+    outline: none;
+    border-color: var(--accent-line);
+  }
+
+  .term-live :global(.term-kv) {
+    display: flex;
+    gap: 10px;
+    padding: 2px 0;
+  }
+
+  .term-live :global(.term-kv__k) {
+    width: 4.5rem;
+    color: var(--color-text-muted);
+  }
+
+  .term-live :global(.term-kv__v) {
+    flex: 1;
+    color: var(--color-text-heading);
+    overflow-wrap: anywhere;
+  }
+
+  .term-live :global(.term-help-group) {
+    margin: 10px 0 4px;
+    color: var(--color-accent);
+  }
+
+  .term-live :global(.term-help) {
+    display: flex;
+    gap: 10px;
+    padding: 3px 0;
+  }
+
+  .term-live :global(.term-help__cmd) {
+    width: 5.5rem;
+    color: var(--color-text-heading);
+  }
+
+  .term-live :global(.term-help__desc) {
+    flex: 1;
+    font-family: var(--font-body);
+    font-size: 0.8rem;
+    color: var(--color-text-muted);
+  }
+
+  /* --- Terminal I/O --- */
+  .term-io {
+    border-top: 1px solid var(--color-hair);
+  }
+
+  .term-hint {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    justify-content: space-between;
+    padding: 7px 18px;
+    font-family: var(--font-mono);
+    font-size: 0.7188rem;
+    color: var(--color-text-muted);
+  }
+
+  .term-hint b {
+    font-weight: var(--fw-medium);
+    color: var(--color-text-heading);
+  }
+
+  .term-reset {
+    display: inline-flex;
+    gap: 5px;
+    align-items: center;
+    min-height: 32px;
+    padding: 5px 12px;
+    font-family: var(--font-mono);
+    font-size: 0.7188rem;
+    color: var(--color-accent);
+    cursor: pointer;
+    background: var(--accent-dim);
+    border: 1px solid var(--accent-line);
+    border-radius: var(--radius-pill);
+  }
+
+  .term-reset:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px
+      color-mix(in srgb, var(--color-accent) 45%, transparent);
+  }
+
+  .term-input-line {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    padding: 10px 18px;
+    font-family: var(--font-mono);
+    border-top: 1px solid var(--color-hair);
+  }
+
+  .term-prompt {
+    color: var(--teal-text);
+    white-space: pre;
+  }
+
+  .term-input {
+    flex: 1;
+    min-width: 0;
+    padding: 2px 0;
+    font-family: var(--font-mono);
+    font-size: 1rem; /* 16px: avoids iOS zoom on focus */
+    color: var(--color-text-heading);
+    caret-color: var(--color-accent);
+    outline: none;
+    background: transparent;
+    border: 0;
+  }
+
+  .term-suggest {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    min-height: 30px;
+    padding: 2px 18px 10px;
+  }
+
+  .term-suggest :global(.term-suggest__chip) {
+    min-height: 34px;
+    padding: 7px 11px;
+    font-family: var(--font-mono);
+    font-size: 0.7813rem;
+    color: var(--color-text);
+    cursor: pointer;
+    background: var(--color-surface-2);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+  }
+
+  .term-suggest :global(.term-suggest__chip:hover),
+  .term-suggest :global(.term-suggest__chip:focus-visible) {
+    color: var(--color-text-heading);
+    outline: none;
+    border-color: var(--accent-line);
   }
 
   /* --- Footer --- */
