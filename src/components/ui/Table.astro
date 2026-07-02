@@ -108,7 +108,16 @@ const wrapperClasses = [
   class={wrapperClasses}
   data-testid={uuid}
 >
-  <div class="table-container">
+  {
+    /* eslint-disable astro/jsx-a11y/no-noninteractive-tabindex -- Focusable so keyboard users can scroll wide tables (axe scrollable-region-focusable) */
+  }
+  <div
+    class="table-container"
+    role="group"
+    tabindex="0"
+    aria-label={finalAriaLabel}
+  >
+    {/* eslint-enable astro/jsx-a11y/no-noninteractive-tabindex */}
     <table aria-label={finalAriaLabel}>
       {title && <caption class="table-title">{title}</caption>}
       <Fragment set:html={processedContent} />

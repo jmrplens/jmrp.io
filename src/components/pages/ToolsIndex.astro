@@ -135,7 +135,7 @@ const toolsSchema = {
             class="tool-card"
           >
             <span class="tool-card__top">
-              <span class="tool-badge">
+              <span class={`tool-badge tool-badge--${tool.data.category}`}>
                 <span class="sr-only">{t("pages.tools.categoryLabel")}: </span>
                 {short}
               </span>
@@ -347,6 +347,37 @@ const toolsSchema = {
     background: var(--accent-dim);
     border: 1px solid var(--accent-line);
     border-radius: var(--radius-sm);
+  }
+
+  /* Per-category badge colour variants.
+     Security keeps the default amber/accent tint; the others use their
+     respective brand tokens with the same colour-mix pattern as callouts. */
+  .tool-badge--security {
+    color: var(--color-accent);
+  }
+
+  .tool-badge--network {
+    color: var(--teal-text);
+    background: color-mix(in srgb, var(--teal) 13%, transparent);
+    border-color: color-mix(in srgb, var(--teal) 32%, transparent);
+  }
+
+  .tool-badge--developer {
+    color: var(--violet);
+    background: color-mix(in srgb, var(--violet) 13%, transparent);
+    border-color: color-mix(in srgb, var(--violet) 32%, transparent);
+  }
+
+  .tool-badge--embedded {
+    color: var(--color-info);
+    background: color-mix(in srgb, var(--color-info) 13%, transparent);
+    border-color: color-mix(in srgb, var(--color-info) 32%, transparent);
+  }
+
+  .tool-badge--mikrotik {
+    color: var(--color-success);
+    background: color-mix(in srgb, var(--color-success) 13%, transparent);
+    border-color: color-mix(in srgb, var(--color-success) 32%, transparent);
   }
 
   .tool-arrow {

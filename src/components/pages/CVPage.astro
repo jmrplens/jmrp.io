@@ -3,6 +3,10 @@
  * CV Page shared component.
  * Renders the curriculum vitae from `src/content/cv/{locale}.yaml`
  * (`{ basics, downloads, sections }`). Section bodies are rendered by `kind`.
+ *
+ * Desktop: 2-column grid — 300 px sticky sidebar + 1 fr main.
+ * Mobile (< 1024 px): single column; sidebar flows above main content.
+ * The CVMenu FAB drawer handles section navigation on all viewports.
  */
 import "@styles/skills.css";
 
@@ -171,6 +175,18 @@ const personSchema = {
         : [],
   },
 } satisfies ProfilePage;
+
+/**
+ * Link kinds displayed in the sidebar contact block.
+ * "orcid" and other academic IDs are intentionally omitted — they belong
+ * in the full profile / publications page, not the sidebar snapshot.
+ */
+const SIDEBAR_LINK_KINDS = new Set([
+  "website",
+  "github",
+  "linkedin",
+  "scholar",
+]);
 ---
 
 <BaseLayout
@@ -182,261 +198,376 @@ const personSchema = {
   <div class="container">
     <h1 class="page-title cv-title">{t("pages.cv.heading")}</h1>
 
-    <header class="cv-basics">
+    <!-- Full-width hero: name + headline + location/availability -->
+    <header class="cv-hero">
       <h2 class="cv-name">{basics.name}</h2>
       <p class="cv-headline">{basics.headline}</p>
-
-      <ul class="cv-contact">
-        <li>
-          <span
-            class="i-fa-solid:map-marker-alt"
-            aria-hidden="true"
-          ></span>{" "}
-          {basics.location}
-        </li>
-      </ul>
-
-      {
-        basics.availability && (
-          <p class="cv-availability">
-            <strong>{t("pages.cv.availability")}:</strong> {basics.availability}
-          </p>
-        )
-      }
-
-      <div
-        class="cv-profile"
-        set:html={markdownToHtml(basics.profile)}
-      />
-
-      <div
-        class="cv-downloads"
-        role="group"
-        aria-labelledby="cv-downloads-title"
-      >
+      <p class="cv-hero-meta">
         <span
-          class="cv-downloads-title"
-          id="cv-downloads-title"
-        >
-          {t("pages.cv.downloadsTitle")}
-        </span>
-        {
-          downloads.map((fmt) => (
-            <div class:list={["dl-format", { recommended: fmt.recommended }]}>
-              <div class="dl-format-head">
-                <span
-                  class="dl-dot"
-                  aria-hidden="true"
-                />
-                <span class="dl-format-name">{fmt.format}</span>
-                {fmt.recommended && (
-                  <span class="dl-badge">
-                    {t("pages.cv.downloadRecommended")}
-                  </span>
-                )}
-                {fmt.note && <span class="dl-format-note">{fmt.note}</span>}
-              </div>
-              <div class="dl-format-links">
-                {fmt.files.map((file) => (
-                  <a
-                    class="dl-btn"
-                    href={file.url}
-                    download={file.download}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    aria-label={`${fmt.format} · ${file.label} (PDF)`}
-                  >
+          class="i-fa-solid:map-marker-alt"
+          aria-hidden="true"
+        ></span>
+        {basics.location}
+        {basics.availability && <> · {basics.availability}</>}
+      </p>
+    </header>
+
+    <!-- 2-column layout: 300px sticky sidebar + 1fr main -->
+    <div class="cv-layout">
+      <!-- Left column: sticky sidebar (stacks above main on mobile) -->
+      <aside
+        class="cv-sidebar"
+        aria-label={t("pages.cv.sidebarAriaLabel")}
+      >
+        <!-- Block: Downloads -->
+        <div class="cv-sb-block">
+          <p
+            class="cv-sb-eyebrow"
+            id="cv-sb-dl-label"
+          >
+            {t("pages.cv.downloadsTitle")}
+          </p>
+          <div
+            class="cv-sb-downloads"
+            role="group"
+            aria-labelledby="cv-sb-dl-label"
+          >
+            {
+              downloads.map((fmt) => (
+                <div
+                  class:list={["dl-format", { recommended: fmt.recommended }]}
+                >
+                  <div class="dl-format-head">
                     <span
-                      class="i-fa-solid:download"
+                      class="dl-dot"
                       aria-hidden="true"
                     />
-                    {file.label}
-                  </a>
-                ))}
+                    <span class="dl-format-name">{fmt.format}</span>
+                    {fmt.recommended && (
+                      <span class="dl-badge">
+                        {t("pages.cv.downloadRecommended")}
+                      </span>
+                    )}
+                    {fmt.note && <span class="dl-format-note">{fmt.note}</span>}
+                  </div>
+                  <div class="dl-format-links">
+                    {fmt.files.map((file) => (
+                      <a
+                        class="dl-btn"
+                        href={file.url}
+                        download={file.download}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        aria-label={`${fmt.format} · ${file.label} (PDF)`}
+                      >
+                        <span
+                          class="i-fa-solid:download"
+                          aria-hidden="true"
+                        />
+                        {file.label}
+                      </a>
+                    ))}
+                  </div>
+                </div>
+              ))
+            }
+          </div>
+        </div>
+
+        <div
+          class="cv-sb-divider"
+          aria-hidden="true"
+        >
+        </div>
+
+        <!-- Block: Contact links + location -->
+        <div class="cv-sb-block">
+          <p
+            class="cv-sb-eyebrow"
+            id="cv-sb-contact-label"
+          >
+            {t("pages.cv.sidebarContact")}
+          </p>
+          <ul class="cv-sb-contact">
+            {
+              basics.links
+                .filter((l) => SIDEBAR_LINK_KINDS.has(l.kind ?? ""))
+                .map((link) => (
+                  <li>
+                    <a
+                      href={link.url}
+                      class="cv-sb-link"
+                      target="_blank"
+                      rel="external noopener noreferrer"
+                      aria-label={link.ariaLabel || undefined}
+                    >
+                      <span
+                        class="cv-sb-link-arrow"
+                        aria-hidden="true"
+                      >
+                        ↳
+                      </span>
+                      {link.label}
+                    </a>
+                  </li>
+                ))
+            }
+            <li>
+              <span class="cv-sb-link cv-sb-location">
+                <span
+                  class="cv-sb-link-arrow"
+                  aria-hidden="true"
+                  >↳</span
+                >
+                {basics.location}
+              </span>
+            </li>
+          </ul>
+        </div>
+
+        {
+          basics.objetivo && basics.objetivo.length > 0 && (
+            <div class="cv-sb-group">
+              <div
+                class="cv-sb-divider"
+                aria-hidden="true"
+              />
+              <div class="cv-sb-block">
+                <p
+                  class="cv-sb-eyebrow"
+                  id="cv-sb-objetivo-label"
+                >
+                  {t("pages.cv.sidebarObjective")}
+                </p>
+                <ul class="cv-sb-chips">
+                  {basics.objetivo.map((role) => (
+                    <li>
+                      <span class="cv-chip">{role}</span>
+                    </li>
+                  ))}
+                </ul>
               </div>
             </div>
+          )
+        }
+
+        {
+          basics.idiomas && basics.idiomas.length > 0 && (
+            <div class="cv-sb-group">
+              <div
+                class="cv-sb-divider"
+                aria-hidden="true"
+              />
+              <div class="cv-sb-block">
+                <p
+                  class="cv-sb-eyebrow"
+                  id="cv-sb-idiomas-label"
+                >
+                  {t("pages.cv.sidebarLanguages")}
+                </p>
+                <dl class="cv-sb-idiomas">
+                  {basics.idiomas.map((lang) => (
+                    <div class="cv-sb-idioma-row">
+                      <dt>{lang.name}</dt>
+                      <dd>{lang.level}</dd>
+                    </div>
+                  ))}
+                </dl>
+              </div>
+            </div>
+          )
+        }
+      </aside>
+
+      <!-- Right column: profile paragraph + CV sections -->
+      <div class="cv-main">
+        <div
+          class="cv-profile"
+          set:html={markdownToHtml(basics.profile)}
+        />
+
+        {
+          sections.map((section) => (
+            <section
+              class="cv-section"
+              id={generateSlug(section.title)}
+              aria-label={section.title}
+            >
+              <div class="section-header">
+                <h2>{section.title}</h2>
+              </div>
+
+              {(section.kind === "experience" ||
+                section.kind === "education") && (
+                <div class="timeline">
+                  {section.items.map((item, index) => {
+                    const title = "role" in item ? item.role : item.degree;
+                    return (
+                      <article
+                        class="timeline-item"
+                        id={generateSlug(`${section.title}-${title}-${index}`)}
+                      >
+                        <div
+                          class="timeline-marker"
+                          aria-hidden="true"
+                        />
+                        <div class="timeline-content">
+                          <header class="timeline-header">
+                            <h3 class="item-title">{title}</h3>
+                            <span class="item-year">{item.period}</span>
+                          </header>
+
+                          <div
+                            class="item-institution"
+                            set:html={orgsHtml(item.org)}
+                          />
+                          {item.department && (
+                            <div
+                              class="item-department"
+                              set:html={markdownToHtml(orgMd(item.department))}
+                            />
+                          )}
+                          {item.location && (
+                            <div class="item-location">
+                              <span
+                                class="i-fa-solid:map-marker-alt"
+                                aria-hidden="true"
+                              />{" "}
+                              {item.location}
+                            </div>
+                          )}
+
+                          {item.summary && (
+                            <div
+                              class="item-summary"
+                              set:html={markdownToHtml(item.summary)}
+                            />
+                          )}
+                          {item.notes?.map((note) => (
+                            <div
+                              class="item-summary"
+                              set:html={markdownToHtml(note)}
+                            />
+                          ))}
+
+                          {item.bullets && item.bullets.length > 0 && (
+                            <ul class="item-description-list">
+                              {item.bullets.map((bullet) => (
+                                <li set:html={markdownToHtml(bullet)} />
+                              ))}
+                            </ul>
+                          )}
+
+                          {item.pubGroups?.map((pg) => (
+                            <div class="item-pubgroup">
+                              <strong>{pg.heading}</strong>
+                              <ul>
+                                {pg.items.map((pub) => (
+                                  <li set:html={markdownToHtml(pub)} />
+                                ))}
+                              </ul>
+                            </div>
+                          ))}
+
+                          {"documents" in item && item.documents && (
+                            <div class="item-links">
+                              {item.documents.map((doc) => (
+                                <a
+                                  href={doc.url}
+                                  class="btn btn-sm"
+                                  target="_blank"
+                                  rel="external noopener noreferrer"
+                                  aria-label={doc.ariaLabel}
+                                >
+                                  <span
+                                    class="i-fa-solid:file-pdf"
+                                    aria-hidden="true"
+                                  />
+                                  {doc.label}
+                                </a>
+                              ))}
+                            </div>
+                          )}
+
+                          {item.links && item.links.length > 0 && (
+                            <div class="item-links">
+                              {item.links.map((link) => (
+                                <a
+                                  href={link.url}
+                                  class="btn btn-sm"
+                                  target="_blank"
+                                  rel="external noopener noreferrer"
+                                  aria-label={link.ariaLabel}
+                                >
+                                  {link.label}
+                                </a>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      </article>
+                    );
+                  })}
+                </div>
+              )}
+
+              {section.kind === "skills" && (
+                <div class="grid-layout">
+                  {section.groups.map((group, index) => (
+                    <div
+                      class="skill-group-wrapper"
+                      id={generateSlug(
+                        `${section.title}-${group.category}-${index}`,
+                      )}
+                    >
+                      <SkillGroup group={group} />
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {section.kind === "certificates" && (
+                <div class="grid-layout">
+                  {section.groups.map((group, index) => (
+                    <div
+                      class="cert-group-wrapper"
+                      id={generateSlug(
+                        `${section.title}-${group.category}-${index}`,
+                      )}
+                    >
+                      <CertificateGroup group={group} />
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {section.kind === "projects" && (
+                <div class="grid-layout">
+                  {section.items.map((project, index) => (
+                    <div
+                      class="project-card-wrapper"
+                      id={generateSlug(
+                        `${section.title}-${project.name}-${index}`,
+                      )}
+                    >
+                      <ProjectCard
+                        project={{
+                          ...project,
+                          metrics: [
+                            ...(projectStats.get(project.name) ?? []),
+                            ...(project.metrics ?? []),
+                          ],
+                        }}
+                      />
+                    </div>
+                  ))}
+                </div>
+              )}
+            </section>
           ))
         }
       </div>
-    </header>
-
-    {
-      sections.map((section) => (
-        <section
-          class="cv-section"
-          id={generateSlug(section.title)}
-          aria-label={section.title}
-        >
-          <div class="section-header">
-            <h2>{section.title}</h2>
-          </div>
-
-          {(section.kind === "experience" || section.kind === "education") && (
-            <div class="timeline">
-              {section.items.map((item, index) => {
-                const title = "role" in item ? item.role : item.degree;
-                return (
-                  <article
-                    class="timeline-item"
-                    id={generateSlug(`${section.title}-${title}-${index}`)}
-                  >
-                    <div
-                      class="timeline-marker"
-                      aria-hidden="true"
-                    />
-                    <div class="timeline-content">
-                      <header class="timeline-header">
-                        <h3 class="item-title">{title}</h3>
-                        <span class="item-year">{item.period}</span>
-                      </header>
-
-                      <div
-                        class="item-institution"
-                        set:html={orgsHtml(item.org)}
-                      />
-                      {item.department && (
-                        <div
-                          class="item-department"
-                          set:html={markdownToHtml(orgMd(item.department))}
-                        />
-                      )}
-                      {item.location && (
-                        <div class="item-location">
-                          <span
-                            class="i-fa-solid:map-marker-alt"
-                            aria-hidden="true"
-                          />{" "}
-                          {item.location}
-                        </div>
-                      )}
-
-                      {item.summary && (
-                        <div
-                          class="item-summary"
-                          set:html={markdownToHtml(item.summary)}
-                        />
-                      )}
-                      {item.notes?.map((note) => (
-                        <div
-                          class="item-summary"
-                          set:html={markdownToHtml(note)}
-                        />
-                      ))}
-
-                      {item.bullets && item.bullets.length > 0 && (
-                        <ul class="item-description-list">
-                          {item.bullets.map((bullet) => (
-                            <li set:html={markdownToHtml(bullet)} />
-                          ))}
-                        </ul>
-                      )}
-
-                      {item.pubGroups?.map((pg) => (
-                        <div class="item-pubgroup">
-                          <strong>{pg.heading}</strong>
-                          <ul>
-                            {pg.items.map((pub) => (
-                              <li set:html={markdownToHtml(pub)} />
-                            ))}
-                          </ul>
-                        </div>
-                      ))}
-
-                      {"documents" in item && item.documents && (
-                        <div class="item-links">
-                          {item.documents.map((doc) => (
-                            <a
-                              href={doc.url}
-                              class="btn btn-sm"
-                              target="_blank"
-                              rel="external noopener noreferrer"
-                              aria-label={doc.ariaLabel}
-                            >
-                              <span
-                                class="i-fa-solid:file-pdf"
-                                aria-hidden="true"
-                              />
-                              {doc.label}
-                            </a>
-                          ))}
-                        </div>
-                      )}
-
-                      {item.links && item.links.length > 0 && (
-                        <div class="item-links">
-                          {item.links.map((link) => (
-                            <a
-                              href={link.url}
-                              class="btn btn-sm"
-                              target="_blank"
-                              rel="external noopener noreferrer"
-                              aria-label={link.ariaLabel}
-                            >
-                              {link.label}
-                            </a>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  </article>
-                );
-              })}
-            </div>
-          )}
-
-          {section.kind === "skills" && (
-            <div class="grid-layout">
-              {section.groups.map((group, index) => (
-                <div
-                  class="skill-group-wrapper"
-                  id={generateSlug(
-                    `${section.title}-${group.category}-${index}`,
-                  )}
-                >
-                  <SkillGroup group={group} />
-                </div>
-              ))}
-            </div>
-          )}
-
-          {section.kind === "certificates" && (
-            <div class="grid-layout">
-              {section.groups.map((group, index) => (
-                <div
-                  class="cert-group-wrapper"
-                  id={generateSlug(
-                    `${section.title}-${group.category}-${index}`,
-                  )}
-                >
-                  <CertificateGroup group={group} />
-                </div>
-              ))}
-            </div>
-          )}
-
-          {section.kind === "projects" && (
-            <div class="grid-layout">
-              {section.items.map((project, index) => (
-                <div
-                  class="project-card-wrapper"
-                  id={generateSlug(`${section.title}-${project.name}-${index}`)}
-                >
-                  <ProjectCard
-                    project={{
-                      ...project,
-                      metrics: [
-                        ...(projectStats.get(project.name) ?? []),
-                        ...(project.metrics ?? []),
-                      ],
-                    }}
-                  />
-                </div>
-              ))}
-            </div>
-          )}
-        </section>
-      ))
-    }
+    </div>
   </div>
 
   <CVMenu sections={menuSections} />
@@ -517,7 +648,7 @@ const personSchema = {
 </BaseLayout>
 
 <style>
-  /* Page kicker — "// curriculum vitae" mono label replaces the big h1 title. */
+  /* ===== Page kicker "// curriculum vitae" ======================== */
   .cv-title {
     padding: 0;
     margin: var(--space-lg) 0 var(--space-sm);
@@ -537,8 +668,8 @@ const personSchema = {
     content: "// ";
   }
 
-  /* Basics / header block */
-  .cv-basics {
+  /* ===== Full-width hero (name / headline / location) ============= */
+  .cv-hero {
     padding-bottom: var(--space-lg);
     margin-bottom: var(--space-lg-xl);
     border-bottom: 1px solid var(--color-hair);
@@ -561,42 +692,167 @@ const personSchema = {
     color: var(--color-text-heading);
   }
 
-  .cv-contact {
+  /* Location + availability in one mono line */
+  .cv-hero-meta {
     display: flex;
     flex-wrap: wrap;
-    gap: var(--space-xs) var(--space-md);
-    padding: 0;
+    gap: var(--space-xs) var(--space-sm);
+    align-items: center;
     margin: var(--space-sm) 0 0;
     font-family: var(--font-mono);
     font-size: 0.85rem;
     color: var(--color-text-muted);
+  }
+
+  /* ===== 2-column layout ========================================== */
+  .cv-layout {
+    display: grid;
+    grid-template-columns: 300px 1fr;
+    gap: var(--space-lg-xl); /* 48px — matches mockup */
+    align-items: start;
+  }
+
+  /* ===== Left sticky sidebar ====================================== */
+  .cv-sidebar {
+    position: sticky;
+    top: calc(var(--header-height) + 1.25rem); /* ≈ 84px */
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md-lg); /* 24px between blocks */
+  }
+
+  /* Horizontal hairline between sidebar blocks */
+  .cv-sb-divider {
+    height: 1px;
+    background: var(--color-hair);
+  }
+
+  /* Transparent wrapper: lets optional divider+block participate directly
+     in the sidebar flex flow without an extra visual layer. */
+  .cv-sb-group {
+    display: contents;
+  }
+
+  /* Mono eyebrow label — same "// " prefix style as section headings */
+  .cv-sb-eyebrow {
+    margin: 0 0 0.8125rem; /* 13px */
+    font-family: var(--font-mono);
+    font-size: var(--text-label); /* 12.5px */
+    font-weight: var(--fw-medium);
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.16em;
+  }
+
+  .cv-sb-eyebrow::before {
+    content: "// ";
+  }
+
+  /* ===== Contact link list ======================================== */
+  .cv-sb-contact {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5625rem; /* 9px */
+    padding: 0;
+    margin: 0;
     list-style: none;
   }
 
-  .cv-contact li {
+  /* Shared layout for both anchor links and the static location span */
+  .cv-sb-link {
     display: inline-flex;
-    gap: var(--space-xs);
+    gap: 0.5625rem; /* 9px */
     align-items: center;
-  }
-
-  .cv-availability {
-    margin: var(--space-xs) 0 0;
     font-family: var(--font-mono);
-    font-size: 0.85rem;
-    color: var(--color-text-muted);
+    font-size: var(--text-xs); /* 13px */
+    color: var(--color-text);
+    text-decoration: none;
   }
 
-  .cv-availability strong {
+  /* Hover / focus only on actual anchor links */
+  a.cv-sb-link:hover {
+    color: var(--color-accent);
+  }
+
+  a.cv-sb-link:focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+    border-radius: 2px;
+  }
+
+  .cv-sb-link-arrow {
+    flex-shrink: 0;
+    color: var(--color-accent);
+  }
+
+  /* Location is static text — override pointer so it stays default */
+  .cv-sb-location {
+    cursor: default;
+  }
+
+  /* ===== Objetivo chips =========================================== */
+  .cv-sb-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-xs);
+    padding: 0;
+    margin: 0;
+    list-style: none;
+  }
+
+  .cv-chip {
+    display: inline-block;
+    padding: 0.1875rem 0.5rem; /* 3px 8px */
+    font-family: var(--font-mono);
+    font-size: var(--text-micro); /* 11.5px */
+    color: var(--color-accent);
+    border: 1px solid var(--accent-line);
+    border-radius: var(--radius-sm);
+  }
+
+  /* ===== Idiomas (languages) ====================================== */
+  .cv-sb-idiomas {
+    margin: 0;
+  }
+
+  .cv-sb-idioma-row {
+    display: flex;
+    gap: var(--space-sm);
+    justify-content: space-between;
+    font-family: var(--font-mono);
+    font-size: var(--text-label); /* 12.5px */
+  }
+
+  .cv-sb-idioma-row + .cv-sb-idioma-row {
+    margin-top: 0.4375rem; /* 7px */
+  }
+
+  .cv-sb-idioma-row dt {
     color: var(--color-text);
   }
 
+  .cv-sb-idioma-row dd {
+    margin: 0;
+    color: var(--color-text-muted);
+  }
+
+  /* ===== Downloads (sidebar context) ==============================
+     dl-format blocks carry their own padding/radius styles; this wrapper
+     is here for targeting only if sidebar-specific overrides are needed. */
+  .cv-sb-downloads {
+    /* inherits dl-format spacing via adjacent sibling rule */
+  }
+
+  /* ===== Right main column ======================================== */
+
+  /* Profile text — first item in the main column */
   .cv-profile {
-    margin-top: var(--space-md);
+    margin-bottom: var(--space-lg-xl);
     line-height: 1.65;
     color: var(--color-text);
   }
 
-  /* Section Styling */
+  /* ===== CV Section Styling ======================================= */
   .cv-section {
     margin-bottom: var(--space-lg-xl);
     scroll-margin-top: var(--header-height);
@@ -633,22 +889,7 @@ const personSchema = {
     scroll-margin-top: calc(var(--header-height) + 1rem);
   }
 
-  /* Downloads — grouped by format, zero-JS */
-  .cv-downloads {
-    margin-top: var(--space-lg);
-  }
-
-  .cv-downloads-title {
-    display: block;
-    margin-bottom: var(--space-sm);
-    font-family: var(--font-mono);
-    font-size: 0.75rem;
-    font-weight: var(--fw-medium);
-    color: var(--color-text-muted);
-    text-transform: uppercase;
-    letter-spacing: 0.12em;
-  }
-
+  /* ===== Downloads — format cards ================================= */
   .dl-format {
     padding: var(--space-md);
     background-color: var(--color-surface-2);
@@ -741,7 +982,7 @@ const personSchema = {
     outline-offset: 2px;
   }
 
-  /* Time Table (Timeline) — open, card-less entries on a hairline rail. */
+  /* ===== Time Table (Timeline) ==================================== */
   .timeline {
     position: relative;
     padding-left: var(--space-lg);
@@ -863,7 +1104,7 @@ const personSchema = {
     margin-top: var(--space-md);
   }
 
-  /* Grid Layouts for Skills/Certs */
+  /* ===== Grid Layouts for Skills / Certs / Projects =============== */
   .grid-layout {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
@@ -876,7 +1117,19 @@ const personSchema = {
     min-height: var(--grid-header-min-h, auto);
   }
 
-  /* Responsive */
+  /* ===== Responsive =============================================== */
+
+  /* Below 1024px: collapse sidebar above the main content column */
+  @media (width <= 1024px) {
+    .cv-layout {
+      grid-template-columns: 1fr;
+    }
+
+    .cv-sidebar {
+      position: static;
+    }
+  }
+
   @media (width <= 768px) {
     .timeline-header {
       flex-direction: column;

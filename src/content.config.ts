@@ -201,6 +201,7 @@ const site_config = defineCollection({
       linkedin_username: z.string().optional(),
       mastodon_username: z.string().optional(),
       scholar_userid: z.string().optional(),
+      orcid_id: z.string().optional(),
       matrix_id: z.string().optional(),
       work_url: z.url().optional(),
       custom_social: z
@@ -278,6 +279,19 @@ const CVBasics = z.object({
   /** Profile summary (inline markdown). */
   profile: z.string(),
   links: z.array(CVLink),
+  /**
+   * Job-search target role categories shown as chips in the CV sidebar.
+   * These are NOT claimed positions — they describe the roles the author
+   * is actively targeting (e.g. ["Firmware", "Software", "QA"]).
+   */
+  objetivo: z.array(z.string()).optional(),
+  /**
+   * Language proficiencies shown in the CV sidebar.
+   * `level` should be written in the locale's own language (e.g. "Nativo").
+   */
+  idiomas: z
+    .array(z.object({ name: z.string(), level: z.string() }))
+    .optional(),
 });
 
 /** A downloadable CV file within a download format group. */

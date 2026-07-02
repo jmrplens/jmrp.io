@@ -57,7 +57,7 @@ export async function generateManifest(locale: Locale): Promise<Response> {
   });
 
   const manifest = {
-    name: siteData?.author || "José Manuel Requena Plens",
+    name: "jmrp.io",
     short_name: "JMRP",
     description: t("seo.siteDescription"),
     start_url: `${pathPrefix}/`,

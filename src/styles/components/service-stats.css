@@ -26,15 +26,15 @@
   gap: 0.4rem;
   align-items: center;
   padding: 2px 8px;
-  color: var(--color-status-online, #10b981);
-  background: var(--color-status-online-bg, rgb(16 185 129 / 10%));
+  color: var(--color-status-online);
+  background: var(--color-status-online-bg);
   border-radius: 12px;
 }
 
 .status-dot {
   width: 6px;
   height: 6px;
-  background: var(--color-status-online, #10b981);
+  background: var(--color-status-online);
   border-radius: 50%;
 }
 
@@ -43,7 +43,7 @@
 }
 
 .status-text {
-  color: var(--color-text, #c9d1d9);
+  color: var(--color-text);
 }
 
 :root[data-theme="light"] .status-text {
@@ -63,8 +63,8 @@
   gap: 0.5rem;
   align-items: center;
   padding: 0.4rem 0.6rem;
-  background: var(--color-bg, #fff);
-  border: var(--border-1, 1px solid #30363d);
+  background: var(--color-bg);
+  border: var(--border-1);
   border-radius: 6px;
 }
 
@@ -82,8 +82,8 @@
 
 .brand-matrix {
   padding: 2px;
-  color: var(--color-text, #000);
-  background: var(--color-bg, #fff);
+  color: var(--color-text);
+  background: var(--color-bg);
   border-radius: 50%;
 }
 
@@ -102,7 +102,7 @@
 .component-version {
   font-size: 0.85em;
   font-weight: bold;
-  color: var(--color-text, #000);
+  color: var(--color-text);
 }
 
 /* Trends */
@@ -239,7 +239,7 @@
   color: transparent !important;
   pointer-events: none;
   user-select: none;
-  background-color: var(--color-bg-secondary, #161b22);
+  background-color: var(--color-bg-secondary);
   border-color: transparent !important;
 }
 
@@ -314,18 +314,18 @@
 }
 
 .tor-version-badge--ok {
-  color: var(--color-status-online, #10b981);
-  background: var(--color-status-online-bg, rgb(16 185 129 / 10%));
+  color: var(--color-status-online);
+  background: var(--color-status-online-bg);
 }
 
 .tor-version-badge--warn {
-  color: var(--color-status-warn, #f59e0b);
-  background: var(--color-status-warn-bg, rgb(245 158 11 / 10%));
+  color: var(--color-status-warn);
+  background: var(--color-status-warn-bg);
 }
 
 :root[data-theme="light"] .tor-version-badge--warn {
-  color: var(--color-status-warn, #d97706);
-  background: var(--color-status-warn-bg, rgb(217 119 6 / 10%));
+  color: var(--color-status-warn);
+  background: var(--color-status-warn-bg);
 }
 
 .tor-metrics {
@@ -366,10 +366,10 @@
 }
 
 .status-badge--offline {
-  color: var(--color-status-offline, #ef4444);
-  background: var(--color-status-offline-bg, rgb(239 68 68 / 10%));
+  color: var(--color-status-offline);
+  background: var(--color-status-offline-bg);
 }
 
 .status-dot--offline {
-  background: var(--color-status-offline, #ef4444);
+  background: var(--color-status-offline);
 }

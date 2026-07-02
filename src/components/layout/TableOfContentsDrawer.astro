@@ -397,27 +397,12 @@ const t = useTranslations(locale);
       visibility 0s;
   }
 
-  /* Desktop Styles */
+  /* Desktop: the inline sticky TOC rail takes over; hide FAB, drawer, backdrop */
   @media (width >= 1024px) {
-    /* On desktop, we still use the FAB and drawer, but maybe style the drawer as a side panel */
-
-    /* The existing CSS for .toc-drawer is mostly fine, we just need to ensure it's not hidden by media queries */
-
-    .toc-drawer {
-      /* Ensure it acts as a side drawer on desktop */
-      top: 0;
-      bottom: 0; /* Full height */
-      left: 0;
-      width: 320px; /* Fixed width */
-      max-width: 400px;
-      max-height: none;
-      border-right: var(--border-1);
-      border-radius: 0;
-      transform: translateX(-100%); /* Slide from left */
-    }
-
-    .toc-drawer.open {
-      transform: translateX(0);
+    .toc-fab,
+    .toc-drawer,
+    .toc-backdrop {
+      display: none;
     }
   }
 </style>

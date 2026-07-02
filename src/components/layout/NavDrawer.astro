@@ -93,8 +93,13 @@ const scholarId =
   socialsEntry?.data && "scholar_userid" in socialsEntry.data
     ? socialsEntry.data.scholar_userid
     : undefined;
+const orcidId =
+  socialsEntry?.data && "orcid_id" in socialsEntry.data
+    ? socialsEntry.data.orcid_id
+    : undefined;
 const social = [
   ...socialLinks.map((s) => ({ name: s.name, url: s.url })),
+  ...(orcidId ? [{ name: "ORCID", url: `https://orcid.org/${orcidId}` }] : []),
   ...(scholarId
     ? [
         {

@@ -370,7 +370,36 @@ const articleSchema = [
       </div>
     </header>
 
-    <div class="layout-grid content-wrapper">
+    <div
+      class:list={[
+        "reading-section",
+        { "reading-section--with-toc": headings.length > 0 },
+      ]}
+    >
+      {
+        headings.length > 0 && (
+          <nav
+            class="toc-rail"
+            aria-label={t("aria.tableOfContents")}
+          >
+            <div
+              class="toc-rail__eyebrow"
+              aria-hidden="true"
+            >
+              {t("aria.tableOfContents")}
+            </div>
+            <div class="toc-rail__nav">
+              <ul>
+                {headings.map((heading) => (
+                  <li class={`toc-depth-${heading.depth}`}>
+                    <a href={`#${heading.slug}`}>{heading.text}</a>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </nav>
+        )
+      }
       <div class="prose">
         <Content components={{ Callout, Tabs, TabPanel, YouTube, Code }} />
         {
@@ -428,10 +457,61 @@ const articleSchema = [
 <script>
   const observedElements = new WeakSet<Element>();
   const observerMap = new Map<Element, MutationObserver>();
+  let tocSpyObserver: IntersectionObserver | undefined;
 
   const cleanupObservers = () => {
     observerMap.forEach((observer) => observer.disconnect());
     observerMap.clear();
+  };
+
+  /**
+   * Sets up scroll-spy on the desktop TOC rail.
+   * Uses IntersectionObserver to track which heading is nearest the top
+   * of the viewport and marks the corresponding rail link aria-current.
+   */
+  const setupTocScrollSpy = () => {
+    tocSpyObserver?.disconnect();
+    tocSpyObserver = undefined;
+
+    const railNav = document.querySelector<HTMLElement>(".toc-rail__nav");
+    if (!railNav) return;
+
+    const headingEls = Array.from(
+      document.querySelectorAll<HTMLElement>(".prose h2[id], .prose h3[id]"),
+    );
+    if (!headingEls.length) return;
+
+    const links = railNav.querySelectorAll<HTMLAnchorElement>('a[href^="#"]');
+
+    const setActive = (id: string | null) => {
+      links.forEach((link) => {
+        if (link.getAttribute("href") === `#${id}`) {
+          link.setAttribute("aria-current", "location");
+        } else {
+          link.removeAttribute("aria-current");
+        }
+      });
+    };
+
+    const visible = new Set<string>();
+
+    const spy = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (entry.isIntersecting) {
+            visible.add(entry.target.id);
+          } else {
+            visible.delete(entry.target.id);
+          }
+        }
+        const first = headingEls.find((h) => visible.has(h.id));
+        setActive(first?.id ?? null);
+      },
+      { rootMargin: "-84px 0px -60% 0px", threshold: 0 },
+    );
+
+    tocSpyObserver = spy;
+    headingEls.forEach((h) => spy.observe(h));
   };
 
   const setupPostInteractions = () => {
@@ -488,6 +568,8 @@ const articleSchema = [
       });
       observerMap.set(prose, observer);
     }
+
+    setupTocScrollSpy();
   };
 
   setupPostInteractions();
@@ -661,10 +743,86 @@ const articleSchema = [
     box-shadow: var(--sh-card);
   }
 
-  /* Comfortable reading measure for the post body. */
-  .layout-grid .prose {
-    max-width: var(--max-width-prose);
+  /* === READING SECTION ================================================== */
+
+  .reading-section {
+    width: 100%;
+    max-width: var(--max-width-content);
+    padding: var(--space-lg-xl) var(--space-lg) var(--space-xl);
     margin-inline: auto;
+  }
+
+  /* Prose: comfortable reading measure, centered on mobile */
+  .reading-section .prose {
+    max-width: 680px;
+    margin-inline: auto;
+  }
+
+  /* === TOC RAIL — desktop-only sticky sidebar =========================== */
+
+  /* Hidden by default (mobile-first); shown only on desktop */
+  .toc-rail {
+    display: none;
+  }
+
+  /* Uppercase mono eyebrow label above the nav */
+  .toc-rail__eyebrow {
+    margin-bottom: 1rem;
+    font-family: var(--font-mono);
+    font-size: 0.6875rem; /* 11px */
+    font-weight: var(--fw-medium);
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.16em;
+  }
+
+  /* Vertical list with left hairline border */
+  .toc-rail__nav ul {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6875rem;
+    padding: 0;
+    margin: 0;
+    list-style: none;
+    border-left: 1px solid var(--color-hair);
+  }
+
+  /* Links: flush left padding, 2px transparent left border for active state */
+  .toc-rail__nav a {
+    display: block;
+    padding-left: 0.875rem; /* 14px */
+    margin-left: -1px;
+    font-size: 0.8438rem; /* ~13.5px */
+    line-height: 1.4;
+    color: var(--color-text);
+    text-decoration: none;
+    border-left: 2px solid transparent;
+    transition:
+      color var(--dur-2) var(--ease-out),
+      border-left-color var(--dur-2) var(--ease-out);
+  }
+
+  .toc-rail__nav a:hover {
+    color: var(--color-primary);
+  }
+
+  .toc-rail__nav a:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+    border-radius: 2px;
+  }
+
+  /* Active link: amber text + 2px amber left border (per mockup) */
+  .toc-rail__nav a[aria-current="location"] {
+    color: var(--color-accent);
+    border-left-color: var(--color-accent);
+  }
+
+  /* h3 links: extra indent + smaller/muted text */
+  .toc-rail .toc-depth-3 a {
+    padding-left: 1.375rem; /* 22px */
+    font-size: 0.8125rem; /* 13px */
+    color: var(--color-text-muted);
   }
 
   .cover-image {
@@ -693,6 +851,26 @@ const articleSchema = [
       max-height: none;
       margin: 0;
     }
+
+    /* 2-column grid: 200px TOC rail + prose body */
+    .reading-section--with-toc {
+      display: grid;
+      grid-template-columns: 200px 1fr;
+      gap: var(--space-lg-xl); /* 48px */
+      align-items: start;
+    }
+
+    /* Prose left-aligned in its grid cell (no auto centering) */
+    .reading-section--with-toc .prose {
+      margin-inline: 0;
+    }
+
+    /* Show sticky rail */
+    .toc-rail {
+      position: sticky;
+      top: calc(var(--header-height) + 1.25rem); /* 64px + 20px = 84px */
+      display: block;
+    }
   }
 
   @media (width <= 1024px) {
@@ -717,6 +895,11 @@ const articleSchema = [
 
     .content-wrapper {
       padding: 0 1.25rem;
+    }
+
+    .reading-section {
+      padding-right: 1.25rem;
+      padding-left: 1.25rem;
     }
 
     .cover-image-container {

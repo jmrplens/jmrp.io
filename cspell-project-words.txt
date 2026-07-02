@@ -977,6 +977,10 @@ azul
 barras
 caut
 comilla
+idioma
+idiomas
+nativo
+objetivo
 diagramas
 gráfico
 pizarra

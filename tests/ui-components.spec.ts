@@ -305,6 +305,9 @@ test.describe("Mobile Menu", () => {
 test.describe("Table of Contents Drawer", () => {
   test("opens and closes on FAB click", async ({ page }) => {
     await blockCloudflare(page);
+    // The ToC FAB/drawer is the mobile affordance (≤1024px); on desktop the
+    // sticky rail replaces it, so test at a narrow viewport.
+    await page.setViewportSize({ width: 800, height: 1200 });
     // Blog posts have ToC
     await page.goto("/blog/001-secure-nginx-client-certificates/");
 
@@ -326,6 +329,8 @@ test.describe("Table of Contents Drawer", () => {
 
   test("contains heading links", async ({ page }) => {
     await blockCloudflare(page);
+    // ToC drawer is mobile-only (≤1024px); the desktop rail replaces it.
+    await page.setViewportSize({ width: 800, height: 1200 });
     await page.goto("/blog/001-secure-nginx-client-certificates/");
 
     const tocToggle = page.locator("#toc-toggle-btn");

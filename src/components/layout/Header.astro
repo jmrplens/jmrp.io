@@ -40,6 +40,12 @@ const siteData = siteEntry?.data;
 const navItems =
   (siteData && "nav" in siteData ? siteData.nav : undefined) ?? [];
 
+/**
+ * Desktop nav shows the 6 section links only; the GitHub page is reachable
+ * via the right-cluster brand icon, so the /github/ duplicate is excluded.
+ */
+const desktopNavItems = navItems.filter((item) => item.href !== "/github/");
+
 /** Map each nav href to its i18n translation key. */
 const navLabelKeyMap: Record<string, TranslationKey> = {
   "/": "nav.home",
@@ -79,7 +85,7 @@ const navLabelKeyMap: Record<string, TranslationKey> = {
     <div class="nav-right">
       <ul class="nav-links">
         {
-          navItems.map((item) => {
+          desktopNavItems.map((item) => {
             const labelKey = navLabelKeyMap[item.href];
             const label = labelKey ? t(labelKey) : item.label;
             const active = isCurrent(item.href);

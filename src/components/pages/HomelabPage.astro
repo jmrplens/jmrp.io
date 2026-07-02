@@ -107,6 +107,7 @@ const infrastructureTranslations: InfrastructureTranslations = {
 const kpiTranslations: HomelabKpiTranslations = {
   ariaLabel: t("pages.homelab.kpiAriaLabel"),
   servicesOnline: t("pages.homelab.kpiServicesOnline"),
+  // Breakdown ("· N infra · M Tor") appended below, once nodeCards/torServices exist.
   monitoredNodes: t("pages.homelab.kpiMonitoredNodes"),
   threatsBlocked: t("pages.homelab.kpiThreatsBlocked"),
   uptime: t("pages.homelab.kpiUptime"),
@@ -289,6 +290,10 @@ const nodeCards: NodeConfig[] = [
     role: t("pages.homelab.nodeRouterRole"),
   },
 ];
+
+// Node-count breakdown for the KPI band, derived from the real arrays so it stays
+// in sync (e.g. "monitored nodes · 5 infra · 4 Tor").
+kpiTranslations.monitoredNodes = `${t("pages.homelab.kpiMonitoredNodes")} · ${nodeCards.length} infra · ${torServices.length} Tor`;
 
 const nodeCardsTranslations: NodeCardsTranslations = {
   ariaLabel: t("pages.homelab.nodesAriaLabel"),

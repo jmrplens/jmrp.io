@@ -520,6 +520,10 @@ export const common = {
       downloadsTitle: "Download CV",
       downloadRecommended: "recommended",
       availability: "Availability",
+      sidebarAriaLabel: "CV sidebar: contact, objective and languages",
+      sidebarContact: "Contact",
+      sidebarObjective: "Objective",
+      sidebarLanguages: "Languages",
     },
     github: {
       title: "GitHub Repositories",

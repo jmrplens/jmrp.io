@@ -521,6 +521,10 @@ export const common = {
       downloadsTitle: "Descargar CV",
       downloadRecommended: "recomendado",
       availability: "Disponibilidad",
+      sidebarAriaLabel: "Barra lateral del CV: contacto, objetivo e idiomas",
+      sidebarContact: "Contacto",
+      sidebarObjective: "Objetivo",
+      sidebarLanguages: "Idiomas",
     },
     github: {
       title: "Repositorios de GitHub",
