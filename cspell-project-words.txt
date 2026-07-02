@@ -969,3 +969,16 @@ plex
 sobreescribimos
 tokenizado
 neofetch
+
+# Design re-audit — ES comment terms in .astro/.css (en-scoped) + token abbrevs
+ámbar
+aprox
+azul
+barras
+caut
+diagramas
+gráfico
+pizarra
+resto
+tarjeta
+también

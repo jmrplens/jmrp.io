@@ -25,6 +25,7 @@ html {
 }
 
 body {
+  position: relative; /* contexto para la rejilla ambiental a página completa */
   display: flex;
   flex-direction: column;
   width: 100%;
@@ -33,6 +34,8 @@ body {
   margin: 0;
   overflow-x: hidden; /* sin scroll horizontal global */
   overflow-wrap: break-word; /* palabras largas no rompen el layout */
+  isolation: isolate; /* stacking context propio: la rejilla (z-index:-1) queda
+                         tras el contenido pero sobre el fondo del body */
 }
 
 img,
@@ -238,6 +241,20 @@ h4 {
 .astro-code span {
   margin: 0 !important;
   background-color: transparent !important;
+}
+
+/* Bare ``` fences (direct children of .prose — NOT the <Code>/<FileContent>/
+   <Tabs> components, which own their own card) get the Lab code-card chrome so
+   they don't render as unstyled, container-less text. */
+.prose > pre.astro-code {
+  padding: 1rem 1.125rem;
+  margin: var(--space-md) 0;
+  overflow-x: auto;
+  font-size: 0.8125rem;
+  line-height: 1.7;
+  background-color: var(--color-bg-secondary) !important;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
 }
 
 :root[data-theme="dark"] .astro-code span {

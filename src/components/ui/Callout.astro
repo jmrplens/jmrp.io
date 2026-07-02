@@ -101,42 +101,18 @@ const iconName = icon || icons[type];
      state types (info/warning/error/success) consume the formal semantic
      tokens from global.css instead of redefining colliding globals. */
 
-  /* Default (Dark Mode) */
+  /* Non-semantic hues now derive from the formal status palette so they track
+     the mockup (note=azul · tip=verde · important=ámbar) and auto-theme via the
+     already theme-aware semantic tokens. Keypoint keeps the violet primary. */
   :root {
-    --color-tip-text: #a78bfa; /* Violet 400 */
-    --color-tip-bg: rgb(139 92 246 / 10%);
-    --color-note-text: #9ca3af; /* Gray 400 */
-    --color-note-bg: rgb(107 114 128 / 10%);
+    --color-tip-text: var(--color-success); /* verde */
+    --color-tip-bg: color-mix(in srgb, var(--color-success) 10%, transparent);
+    --color-note-text: var(--color-info); /* azul pizarra */
+    --color-note-bg: color-mix(in srgb, var(--color-info) 10%, transparent);
     --color-keypoint-text: var(--color-primary);
     --color-keypoint-bg: var(--color-bg-subtle);
-    --color-important-text: #a78bfa; /* Purple 400 */
-    --color-important-bg: rgb(167 139 250 / 10%);
-  }
-
-  /* Light Mode Overrides */
-  @media (prefers-color-scheme: light) {
-    :root:not([data-theme="dark"]) {
-      --color-tip-text: #6d28d9; /* Violet 700 */
-      --color-tip-bg: rgb(139 92 246 / 10%);
-      --color-note-text: #374151; /* Gray 700 */
-      --color-note-bg: rgb(107 114 128 / 10%);
-      --color-keypoint-text: #1d4ed8; /* Blue 700 */
-      --color-keypoint-bg: var(--color-bg-subtle);
-      --color-important-text: #7c3aed; /* Purple 600 */
-      --color-important-bg: rgb(124 58 237 / 10%);
-    }
-  }
-
-  /* Explicit Light Mode Force */
-  :root[data-theme="light"] {
-    --color-tip-text: #6d28d9;
-    --color-tip-bg: rgb(139 92 246 / 10%);
-    --color-note-text: #374151;
-    --color-note-bg: rgb(107 114 128 / 10%);
-    --color-keypoint-text: #1d4ed8;
-    --color-keypoint-bg: var(--color-bg-subtle);
-    --color-important-text: #7c3aed;
-    --color-important-bg: rgb(124 58 237 / 10%);
+    --color-important-text: var(--color-accent); /* ámbar */
+    --color-important-bg: var(--accent-dim);
   }
 
   /* Assignments — state types map to the formal semantic tokens. */

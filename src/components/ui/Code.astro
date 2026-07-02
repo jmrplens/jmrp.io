@@ -19,7 +19,6 @@ import { createHash } from "node:crypto";
 import { defaultLocale, type Locale } from "@i18n/config";
 import { useTranslations } from "@i18n/utils";
 import { decodeHtml } from "@utils/html";
-import { getIconForLang } from "@utils/icons";
 import { highlightCode, resolveShikiLanguage } from "@utils/shiki";
 import type { BuiltinLanguage, SpecialLanguage } from "shiki";
 
@@ -109,7 +108,41 @@ const finalAriaLabel =
 // Language display name (mockup shows lowercase, e.g. "python")
 const langDisplay = lang.toLowerCase();
 
-const langIcon = getIconForLang(lang);
+// Language "LED" square color (mockup uses an 8px rounded square in the
+// language's brand color, e.g. #3572A5 for python). Normalized to a CSS class
+// so no inline styles are emitted (CSP-safe). Falls back to the amber accent.
+const KNOWN_LANG_DOTS = new Set([
+  "bash",
+  "shell",
+  "sh",
+  "nginx",
+  "cpp",
+  "c",
+  "html",
+  "json",
+  "javascript",
+  "js",
+  "typescript",
+  "ts",
+  "ini",
+  "toml",
+  "yaml",
+  "yml",
+  "python",
+  "py",
+  "powershell",
+  "lua",
+  "astro",
+  "css",
+  "sql",
+  "rust",
+  "go",
+  "routeros",
+  "http",
+  "docker",
+  "dockerfile",
+]);
+const langDot = KNOWN_LANG_DOTS.has(langDisplay) ? langDisplay : "default";
 
 // Highlight using the singleton Shiki instance (avoids creating N instances per page)
 const highlightedHtml = isEmpty
@@ -129,10 +162,7 @@ const highlightedHtml = isEmpty
       <div class="code-block-header">
         <div class="code-lang-info">
           <span
-            class:list={[
-              langIcon.startsWith("i-") ? langIcon : `i-${langIcon}`,
-              "code-type-icon",
-            ]}
+            class:list={["code-lang-dot", `lang-${langDot}`]}
             aria-hidden="true"
           />
           {title && <span class="code-title">{title}</span>}
@@ -159,7 +189,7 @@ const highlightedHtml = isEmpty
     overflow: hidden;
     background-color: var(--color-bg-secondary);
     border: var(--border-1);
-    border-radius: var(--radius-md);
+    border-radius: var(--radius-lg); /* mockup card radius ~11-12px */
   }
 
   .code-block-header {
@@ -187,11 +217,95 @@ const highlightedHtml = isEmpty
     align-items: center;
   }
 
-  .code-type-icon {
+  /* Language "LED" square (mockup: 8px rounded square in the language color) */
+  .code-lang-dot {
     flex-shrink: 0;
-    width: 0.875rem; /* 14px */
-    height: 0.875rem;
-    color: var(--color-accent);
+    width: 8px;
+    height: 8px;
+    background-color: var(--color-accent);
+    border-radius: 2px;
+  }
+
+  /* GitHub-linguist-style language colors for the header LED. */
+  .lang-python,
+  .lang-py {
+    background-color: #3572a5;
+  }
+
+  .lang-bash,
+  .lang-shell,
+  .lang-sh {
+    background-color: #89e051;
+  }
+
+  .lang-nginx {
+    background-color: #009639;
+  }
+
+  .lang-cpp,
+  .lang-c {
+    background-color: #f34b7d;
+  }
+
+  .lang-html,
+  .lang-astro {
+    background-color: #e34c26;
+  }
+
+  .lang-json {
+    background-color: #cbcb41;
+  }
+
+  .lang-javascript,
+  .lang-js {
+    background-color: #f1e05a;
+  }
+
+  .lang-typescript,
+  .lang-ts {
+    background-color: #3178c6;
+  }
+
+  .lang-yaml,
+  .lang-yml {
+    background-color: #cb171e;
+  }
+
+  .lang-ini,
+  .lang-toml {
+    background-color: #6d8086;
+  }
+
+  /* Brightened vs the true brand navy so the LED reads on the dark header. */
+  .lang-lua {
+    background-color: #7c6ce0;
+  }
+
+  .lang-powershell {
+    background-color: #5391fe;
+  }
+
+  .lang-css {
+    background-color: #639;
+  }
+
+  .lang-sql {
+    background-color: #e38c00;
+  }
+
+  .lang-rust {
+    background-color: #dea584;
+  }
+
+  .lang-go {
+    background-color: #00add8;
+  }
+
+  .lang-routeros,
+  .lang-http,
+  .lang-docker,
+  .lang-dockerfile {
+    background-color: #7b8fa3;
   }
 
   .code-language-label {

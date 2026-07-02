@@ -289,6 +289,13 @@
   );
 }
 
+/* Variante a página completa: capa ambiental tras TODO el contenido (patrón del
+   mockup, primer hijo del scroll). Se sitúa detrás gracias al stacking context
+   del body (isolation:isolate) para no tapar texto ni interceptar clics. */
+.lab-grid--page {
+  z-index: -1;
+}
+
 /* =============================================================================
    LOGOTIPO — prompt de terminal "❯ jmrp_"
    chevron = teal (prompt) · jmrp = heading (comando) · _ = ámbar (cursor).

@@ -54,12 +54,13 @@
   --violet: #b389f5; /* acento terciario (highlight) */
 
   /* ===== SEMÁNTICOS FORMALES (dark) — avisos / callouts ==================
-     success=teal · warning=ámbar · danger=rosa tokenizado · info=azul.
-     Los -dim se derivan con color-mix (relleno translúcido AA-safe). */
-  --color-success: #46b8a6; /* 8.2 sobre bg */
-  --color-warning: #f5a623; /* 9.8 sobre bg */
-  --color-danger: #f2789c; /* 7.5 sobre bg */
-  --color-info: #6aa0ff; /* 7.6 sobre bg */
+     Paleta de estado del mockup (Lab): tip=verde · warn=oro · caut=rojo ·
+     note=azul pizarra. `success` se separa del `--teal` de identidad (prompt)
+     como pedía el diseñador. Los -dim se derivan con color-mix (AA-safe). */
+  --color-success: #57c98a; /* c-tip · verde */
+  --color-warning: #e3b23c; /* c-warn · oro (distinto del ámbar de acento) */
+  --color-danger: #e5655b; /* c-caut · rojo-naranja */
+  --color-info: #6e8fd6; /* c-note · azul pizarra */
   --success-dim: color-mix(in srgb, var(--color-success) 13%, transparent);
   --warning-dim: color-mix(in srgb, var(--color-warning) 13%, transparent);
   --danger-dim: color-mix(in srgb, var(--color-danger) 13%, transparent);
@@ -161,10 +162,15 @@
   --space-lg-xl: 3rem; /* 48px */
   --space-xl: 4rem; /* 64px */
 
-  /* ===== RADIOS =========================================================== */
-  --radius-sm: 4px;
-  --radius-md: 8px;
-  --radius-lg: 16px;
+  /* ===== RADIOS ===========================================================
+     Escala alineada con el mockup del diseñador (r-sm 6 · r-md 9/11 · r-lg 12
+     · r-xl 14). Las tarjetas dominantes del mockup usan 11-12px; los chips y
+     badges 5-6px. Antes la escala (4/8/16) dejaba las tarjetas con esquinas
+     demasiado cerradas y las grandes demasiado redondas. */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 12px;
+  --radius-xl: 14px;
   --radius-pill: 100px; /* badges / pills / chips */
   --radius-full: 9999px; /* círculos (dots, avatares) */
 
@@ -248,11 +254,12 @@
     --teal-text: #12695a; /* 6.3 sobre bg : AA texto */
     --violet: #6d45c4;
 
-    /* Semánticos formales (light) — todos AA como texto sobre superficies */
-    --color-success: #12695a; /* 6.3 */
-    --color-warning: #8f5300; /* 5.9 */
-    --color-danger: #c02748; /* 5.5 */
-    --color-info: #2160c4; /* 5.7 */
+    /* Semánticos formales (light) — paleta de estado del mockup, tonos
+       oscurecidos a AA como texto sobre superficies claras. */
+    --color-success: #157347; /* verde */
+    --color-warning: #806600; /* oro */
+    --color-danger: #b23c2f; /* rojo-naranja */
+    --color-info: #2f57a6; /* azul pizarra */
 
     /* Estado de infraestructura (light) */
     --color-status-online: #12695a;
@@ -325,10 +332,10 @@
   --teal: #1f7e6e;
   --teal-text: #12695a;
   --violet: #6d45c4;
-  --color-success: #12695a;
-  --color-warning: #8f5300;
-  --color-danger: #c02748;
-  --color-info: #2160c4;
+  --color-success: #157347;
+  --color-warning: #806600;
+  --color-danger: #b23c2f;
+  --color-info: #2f57a6;
   --color-status-online: #12695a;
   --color-status-online-bg: rgb(31 126 110 / 12%);
   --color-status-offline: #374151;
@@ -392,10 +399,10 @@
   --teal: #46b8a6;
   --teal-text: #46b8a6;
   --violet: #b389f5;
-  --color-success: #46b8a6;
-  --color-warning: #f5a623;
-  --color-danger: #f2789c;
-  --color-info: #6aa0ff;
+  --color-success: #57c98a;
+  --color-warning: #e3b23c;
+  --color-danger: #e5655b;
+  --color-info: #6e8fd6;
   --color-status-online: #46b8a6;
   --color-status-online-bg: rgb(70 184 166 / 12%);
   --color-status-offline: #6b7280;

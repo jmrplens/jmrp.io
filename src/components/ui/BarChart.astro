@@ -334,8 +334,8 @@ function getBarColor(index: number, item: BarData): string {
     --bar-chart-track-bg: var(--color-surface-2, rgb(255 255 255 / 10%));
     --bar-chart-text: var(--color-text, #e5e7eb);
     --bar-chart-text-muted: var(--color-text-muted, #9ca3af);
-    --bar-height: 0.625rem;
-    --bar-gap: 1rem;
+    --bar-height: 0.5rem; /* 8px — mockup */
+    --bar-gap: 0.875rem; /* 14px — mockup */
     --bar-radius: 0.3125rem;
 
     /* Okabe-Ito palette (default) - Scientific standard for colorblind accessibility */
@@ -458,12 +458,16 @@ function getBarColor(index: number, item: BarData): string {
     --bar-mono-9: rgb(31 41 55); /* Gray 800 */
     --bar-mono-10: rgb(17 24 39); /* Gray 900 */
 
-    padding: 0;
+    /* Card chrome (mockup): el resto de diagramas van en tarjeta; el gráfico
+       de barras también. */
+    padding: var(--space-md-lg); /* 18px aprox. */
+    margin: 1.5rem 0;
+    background-color: var(--color-bg-secondary);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
 
     --bar-text-shadow: 0 1px 2px rgb(0 0 0 / 30%);
     --bar-value-color: #fff;
-
-    margin: 1.5rem 0;
   }
 
   /* Light mode adjustments */
