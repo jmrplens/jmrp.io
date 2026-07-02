@@ -48,120 +48,55 @@ const displayValue = value ?? type.charAt(0).toUpperCase() + type.slice(1);
 </span>
 
 <style>
+  /* Flat, borderless inline chip: mono text on a soft hue tint, small radius.
+     Icon (shape cue) inherits the semantic colour; colours use tokens that are
+     AA-safe as text in both themes. */
   .version-badge {
     display: inline-flex;
-    gap: var(--space-xs);
+    gap: 5px;
     align-items: center;
-    padding: 0.125rem 0.5rem;
-    font-size: 0.75rem;
+    padding: 2px 9px;
+    font-family: var(--font-mono);
+    font-size: 0.75rem; /* 12px */
     font-weight: var(--fw-medium);
     vertical-align: middle;
     white-space: nowrap;
-    border: 1px solid color-mix(in srgb, currentcolor 30%, transparent);
-    border-radius: 9999px;
+    border-radius: var(--radius-sm);
   }
 
   .badge-icon {
     flex-shrink: 0;
-    width: 14px;
-    height: 14px;
+    width: 13px;
+    height: 13px;
   }
 
   .badge-text {
-    font-family: var(--font-mono);
-    letter-spacing: 0.04em;
+    letter-spacing: 0.02em;
   }
 
-  /* Version - purple/primary */
-  .badge-version {
-    color: var(--color-primary);
+  /* Version / Level - accent (amber) */
+  .badge-version,
+  .badge-level {
+    color: var(--color-accent);
     background: var(--accent-dim);
   }
 
-  /* Level - blue */
-  .badge-level {
-    color: #3b82f6;
-    background: rgb(59 130 246 / 15%);
-  }
-
-  /* Deprecated - red/warning */
-  .badge-deprecated {
-    color: #ef4444;
-    background: rgb(239 68 68 / 15%);
-  }
-
-  /* New - green */
-  .badge-new {
-    color: #10b981;
-    background: rgb(16 185 129 / 15%);
-  }
-
-  /* Experimental - amber */
-  .badge-experimental {
-    color: #f59e0b;
-    background: rgb(245 158 11 / 15%);
-  }
-
-  /* Stable - emerald */
+  /* New / Stable - success (teal/green) */
+  .badge-new,
   .badge-stable {
-    color: #059669;
-    background: rgb(5 150 105 / 15%);
+    color: var(--color-success);
+    background: color-mix(in srgb, var(--color-success) 16%, transparent);
   }
 
-  /* Light mode adjustments for WCAG AA contrast */
-  :root[data-theme="light"] .badge-version,
-  :root:not([data-theme="dark"]) .badge-version {
-    color: #7c3aed;
+  /* Deprecated - danger */
+  .badge-deprecated {
+    color: var(--color-danger);
+    background: color-mix(in srgb, var(--color-danger) 16%, transparent);
   }
 
-  :root[data-theme="light"] .badge-level,
-  :root:not([data-theme="dark"]) .badge-level {
-    color: #1e40af; /* blue-800 */
-  }
-
-  :root[data-theme="light"] .badge-deprecated,
-  :root:not([data-theme="dark"]) .badge-deprecated {
-    color: #991b1b; /* red-800 */
-  }
-
-  :root[data-theme="light"] .badge-new,
-  :root:not([data-theme="dark"]) .badge-new {
-    color: #065f46; /* emerald-800 */
-  }
-
-  :root[data-theme="light"] .badge-experimental,
-  :root:not([data-theme="dark"]) .badge-experimental {
-    color: #92400e; /* amber-800 */
-  }
-
-  :root[data-theme="light"] .badge-stable,
-  :root:not([data-theme="dark"]) .badge-stable {
-    color: #065f46; /* emerald-800 */
-  }
-
-  @media (prefers-color-scheme: light) {
-    :root:not([data-theme="dark"]) .badge-version {
-      color: #7c3aed;
-    }
-
-    :root:not([data-theme="dark"]) .badge-level {
-      color: #1e40af;
-    }
-
-    :root:not([data-theme="dark"]) .badge-deprecated {
-      color: #991b1b;
-    }
-
-    :root:not([data-theme="dark"]) .badge-new {
-      color: #065f46;
-    }
-
-    :root:not([data-theme="dark"]) .badge-experimental {
-      color: #92400e;
-    }
-
-    :root:not([data-theme="dark"]) .badge-stable {
-      color: #065f46;
-    }
+  /* Experimental - warning (amber) */
+  .badge-experimental {
+    color: var(--color-warning);
+    background: color-mix(in srgb, var(--color-warning) 16%, transparent);
   }
 </style>

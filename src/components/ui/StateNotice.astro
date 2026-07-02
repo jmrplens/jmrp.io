@@ -34,57 +34,30 @@ const locale = (Astro.currentLocale ?? defaultLocale) as Locale;
 const t = useTranslations(locale);
 
 type NoticeType = NonNullable<Props["type"]>;
-const config: Record<
-  NoticeType,
-  {
-    icon: string;
-    label: string;
-    color: string;
-    bgColor: string;
-    textColor: string;
-  }
-> = {
+const config: Record<NoticeType, { icon: string; label: string }> = {
   deprecated: {
     icon: "mdi:alert-octagon",
     label: t("components.stateNotice.deprecated"),
-    color: "#ef4444",
-    bgColor: "239 68 68",
-    textColor: "#991b1b", // red-800 for WCAG AA (~5.8:1)
   },
   mandatory: {
     icon: "mdi:check-decagram",
     label: t("components.stateNotice.mandatory"),
-    color: "#10b981",
-    bgColor: "16 185 129",
-    textColor: "#065f46", // emerald-800 for WCAG AA (~6.5:1)
   },
   experimental: {
     icon: "mdi:flask",
     label: t("components.stateNotice.experimental"),
-    color: "#f59e0b",
-    bgColor: "245 158 11",
-    textColor: "#92400e", // amber-800 for WCAG AA (~6.3:1)
   },
   preview: {
     icon: "mdi:eye",
     label: t("components.stateNotice.preview"),
-    color: "#3b82f6",
-    bgColor: "59 130 246",
-    textColor: "#1e40af", // blue-800 for WCAG AA (~6.1:1)
   },
   breaking: {
     icon: "mdi:alert-box",
     label: t("components.stateNotice.breakingChange"),
-    color: "#dc2626",
-    bgColor: "220 38 38",
-    textColor: "#7f1d1d", // red-900 for WCAG AA (~7.8:1)
   },
   security: {
     icon: "mdi:shield-alert",
     label: t("components.stateNotice.security"),
-    color: "#f97316",
-    bgColor: "249 115 22",
-    textColor: "#9a3412", // orange-800 for WCAG AA (~5.9:1)
   },
 };
 
@@ -128,7 +101,6 @@ const removalMessages: Record<NoticeType, string | null> = {
   class={`state-notice state-notice--${type}`}
   role="note"
   aria-label={displayTitle}
-  style={`--sn-color: ${current.color}; --sn-bg-color: ${current.bgColor};`}
 >
   <div class="sn-header">
     <span
@@ -178,59 +150,61 @@ const removalMessages: Record<NoticeType, string | null> = {
 </div>
 
 <style>
+  /* Flat, horizontal notice: solid status pill on the left, message filling the
+     rest. Border + fill are hue-tinted; the hue is a semantic token set per
+     variant below so light/dark AA is handled centrally in global.css. */
   .state-notice {
-    padding: var(--space-md);
+    display: flex;
+    gap: 14px;
+    align-items: center;
+    padding: 14px 18px;
     margin: var(--space-md-lg) 0;
-    overflow: hidden;
-    background: var(--color-bg-secondary);
-    border: 1px solid var(--color-hair);
-    border-left: 4px solid var(--sn-color);
+    background: color-mix(in srgb, var(--sn-hue) 7%, var(--color-bg-secondary));
+    border: 1px solid color-mix(in srgb, var(--sn-hue) 35%, var(--color-border));
     border-radius: var(--radius-md);
-    box-shadow: var(--sh-card);
   }
 
-  /* Header collapses into a Lab status pill: icon (shape cue) + mono label. */
+  /* Solid status pill: icon (shape cue) + mono uppercase label on the hue. */
   .sn-header {
     display: inline-flex;
+    flex-shrink: 0;
     gap: var(--space-xs);
     align-items: center;
-    padding: 0.1875rem 0.5rem;
-    margin-bottom: var(--space-sm);
-    background: rgb(var(--sn-bg-color) / 15%);
-    border: 1px solid rgb(var(--sn-bg-color) / 32%);
+    padding: 4px 9px;
+    background: var(--sn-hue);
     border-radius: var(--radius-sm);
   }
 
   .sn-icon {
-    width: 15px;
-    height: 15px;
-    color: var(--sn-color);
+    width: 13px;
+    height: 13px;
+    color: var(--color-on-primary);
   }
 
   .sn-title {
     font-family: var(--font-mono);
-    font-size: 0.6875rem;
-    font-weight: var(--fw-semibold);
-    color: var(--sn-text-color);
+    font-size: 0.6563rem; /* 10.5px */
+    font-weight: var(--fw-medium);
+    color: var(--color-on-primary);
     text-transform: uppercase;
-    letter-spacing: 0.1em;
+    letter-spacing: 0.06em;
   }
 
   .sn-content {
-    padding: 0;
-  }
-
-  .sn-message {
-    margin: 0 0 0.5rem;
-    font-size: 0.9rem;
+    flex: 1;
+    font-size: 0.9063rem; /* 14.5px */
+    line-height: 1.5;
     color: var(--color-text);
   }
 
+  .sn-message {
+    margin: 0;
+  }
+
   .sn-feature {
-    padding: 0.125rem 0.375rem;
-    color: var(--sn-text-color);
-    background: rgb(var(--sn-bg-color) / 15%);
-    border-radius: var(--radius-sm);
+    font-family: var(--font-mono);
+    font-size: 0.9em;
+    color: var(--color-text-heading);
   }
 
   .sn-date {
@@ -241,22 +215,18 @@ const removalMessages: Record<NoticeType, string | null> = {
     display: flex;
     gap: 0.5rem;
     align-items: baseline;
-    margin: 0;
-    font-size: 0.9rem;
-    color: var(--color-text);
+    margin: 0.375rem 0 0;
   }
 
   .sn-label {
-    font-size: 0.8rem;
     font-weight: var(--fw-medium);
     color: var(--color-text-muted);
   }
 
   .sn-alt-code {
-    padding: 0.125rem 0.375rem;
-    color: var(--sn-text-color);
-    background: rgb(var(--sn-bg-color) / 15%);
-    border-radius: var(--radius-sm);
+    font-family: var(--font-mono);
+    font-size: 0.9em;
+    color: var(--color-success);
   }
 
   .sn-alternative a {
@@ -268,93 +238,29 @@ const removalMessages: Record<NoticeType, string | null> = {
   }
 
   .sn-content :global(p) {
-    margin: 0.5rem 0 0;
-    font-size: 0.9rem;
-    color: var(--color-text);
+    margin: 0.375rem 0 0;
   }
 
   .sn-content :global(p:first-child) {
     margin-top: 0;
   }
 
-  /* Per-variant accessible text colour for light theme. Defined here (not via
-     the element's inline style) so the dark-theme overrides below win through
-     the normal cascade — an inline custom property would outrank them and was
-     leaving dark-mode text at ~2:1 contrast. These mirror the (now light-only)
-     config values. */
-  .state-notice--deprecated {
-    --sn-text-color: #991b1b; /* red-800, ~5.8:1 */
+  /* Semantic hue per variant — resolves to AA-safe values in both themes. */
+  .state-notice--deprecated,
+  .state-notice--breaking,
+  .state-notice--security {
+    --sn-hue: var(--color-danger);
   }
 
   .state-notice--mandatory {
-    --sn-text-color: #065f46; /* emerald-800, ~6.5:1 */
+    --sn-hue: var(--color-success);
   }
 
   .state-notice--experimental {
-    --sn-text-color: #92400e; /* amber-800, ~6.3:1 */
+    --sn-hue: var(--color-warning);
   }
 
   .state-notice--preview {
-    --sn-text-color: #1e40af; /* blue-800, ~6.1:1 */
-  }
-
-  .state-notice--breaking {
-    --sn-text-color: #7f1d1d; /* red-900, ~7.8:1 */
-  }
-
-  .state-notice--security {
-    --sn-text-color: #9a3412; /* orange-800, ~5.9:1 */
-  }
-
-  /* Dark mode: use lighter text colors for WCAG AA contrast (≥4.5:1) */
-  :root[data-theme="dark"] .state-notice--deprecated {
-    --sn-text-color: #f87171; /* red-400, ~5.5:1 contrast */
-  }
-
-  :root[data-theme="dark"] .state-notice--mandatory {
-    --sn-text-color: #34d399; /* emerald-400, ~7.2:1 contrast */
-  }
-
-  :root[data-theme="dark"] .state-notice--experimental {
-    --sn-text-color: #fb6d16; /* Custom contrast-adjusted orange, ~5.28:1 contrast */
-  }
-
-  :root[data-theme="dark"] .state-notice--preview {
-    --sn-text-color: #60a5fa; /* blue-400, ~5.1:1 contrast */
-  }
-
-  :root[data-theme="dark"] .state-notice--breaking {
-    --sn-text-color: #f87171; /* red-400, ~5.5:1 contrast */
-  }
-
-  :root[data-theme="dark"] .state-notice--security {
-    --sn-text-color: #fb923c; /* orange-400, ~6.4:1 contrast */
-  }
-
-  /* System dark mode fallback - matches [data-theme="dark"] values */
-  @media (prefers-color-scheme: dark) {
-    :root:not([data-theme]) .state-notice--deprecated {
-      --sn-text-color: #f87171;
-    }
-
-    :root:not([data-theme]) .state-notice--mandatory {
-      --sn-text-color: #34d399;
-    }
-
-    :root:not([data-theme]) .state-notice--experimental {
-      --sn-text-color: #fb6d16;
-    }
-
-    :root:not([data-theme]) .state-notice--preview {
-      --sn-text-color: #60a5fa;
-    }
-
-    :root:not([data-theme]) .state-notice--breaking {
-      --sn-text-color: #f87171;
-    }
-
-    :root:not([data-theme]) .state-notice--security {
-      --sn-text-color: #fb923c;
-    }
+    --sn-hue: var(--color-info);
   }
 </style>

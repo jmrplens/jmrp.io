@@ -199,17 +199,38 @@ const summary =
 
 <style>
   .memory-map {
-    /* Theme-aware palette (dark-first). */
-    --mm-1: #b389f5; /* violet */
-    --mm-2: #58d6df; /* cyan */
-    --mm-3: #fbbf24; /* amber */
-    --mm-4: #6ee7a8; /* green */
-    --mm-5: #f0789b; /* pink */
-    --mm-6: #7aa2ff; /* blue */
-    --mm-track-bg: var(--color-bg-subtle, rgb(255 255 255 / 5%));
-    --mm-on-seg: #0b0b13;
+    /* Categorical data-viz palette (dark-first), matching the design system's
+       diagram hues. Light-theme values are overridden below. */
+    --mm-1: #f5a623; /* amber */
+    --mm-2: #6e8fd6; /* blue */
+    --mm-3: #46b8a6; /* teal */
+    --mm-4: #b389f5; /* violet */
+    --mm-5: #e0739f; /* pink */
+    --mm-6: #57c98a; /* green */
+    --mm-track-bg: var(--color-surface-2);
+    --mm-on-seg: var(--color-on-primary);
 
     margin: 1.5rem 0;
+  }
+
+  :root[data-theme="light"] .memory-map {
+    --mm-1: #8f5300; /* darkened amber: AA for white on-fill label text */
+    --mm-2: #3f6fc4;
+    --mm-3: #1f7e6e;
+    --mm-4: #6d45c4;
+    --mm-5: #bc3f76;
+    --mm-6: #197a43;
+  }
+
+  @media (prefers-color-scheme: light) {
+    :root:not([data-theme="dark"]) .memory-map {
+      --mm-1: #8f5300; /* darkened amber: AA for white on-fill label text */
+      --mm-2: #3f6fc4;
+      --mm-3: #1f7e6e;
+      --mm-4: #6d45c4;
+      --mm-5: #bc3f76;
+      --mm-6: #197a43;
+    }
   }
 
   .memory-map__title {
@@ -235,8 +256,9 @@ const summary =
 
   .memory-map__region {
     grid-area: region;
-    font-size: 0.875rem;
-    font-weight: var(--fw-bold, 700);
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    font-weight: var(--fw-medium, 500);
     color: var(--color-text-heading);
     text-align: right;
   }
@@ -248,10 +270,11 @@ const summary =
   .memory-map__track {
     display: flex;
     min-width: 1.5rem;
-    height: 2rem;
+    height: 1.875rem;
     overflow: hidden;
+    font-family: var(--font-mono);
     background: var(--mm-track-bg);
-    border-radius: var(--radius-sm, 4px);
+    border-radius: 6px;
   }
 
   .memory-map__seg {
@@ -266,15 +289,15 @@ const summary =
   }
 
   .memory-map__seg + .memory-map__seg {
-    border-left: 2px solid var(--color-bg, #000);
+    border-left: 1px solid var(--color-bg-secondary);
   }
 
   .memory-map__seg-label {
     padding: 0 0.4rem;
     overflow: hidden;
     text-overflow: ellipsis;
-    font-size: 0.8rem;
-    font-weight: var(--fw-semibold, 600);
+    font-size: 0.656rem;
+    font-weight: var(--fw-medium, 500);
     color: var(--mm-on-seg);
     white-space: nowrap;
   }
@@ -293,7 +316,8 @@ const summary =
     display: inline-flex;
     column-gap: 0.4rem;
     align-items: center;
-    font-size: 0.8rem;
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
     color: var(--color-text-muted);
   }
 

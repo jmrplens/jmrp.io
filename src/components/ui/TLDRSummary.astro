@@ -22,10 +22,6 @@ const { title = t("components.tldr.title"), collapsed = false } = Astro.props;
   open={!collapsed}
 >
   <summary class="tldr-header">
-    <span
-      class="i-mdi:lightning-bolt tldr-icon"
-      aria-hidden="true"
-    ></span>
     <h2 class="tldr-title">{title}</h2>
     <span
       class="i-mdi:chevron-down tldr-chevron"
@@ -42,20 +38,21 @@ const { title = t("components.tldr.title"), collapsed = false } = Astro.props;
     margin: 1.5rem 0;
     overflow: hidden;
     background: var(--color-bg-secondary);
-    border: var(--border-1);
-    border-radius: var(--radius-md);
+    border: 1px solid var(--accent-line);
+    border-radius: var(--radius-lg);
   }
 
   .tldr-header {
     display: flex;
     gap: 0.5rem;
     align-items: center;
-    padding: 0.875rem 1rem;
-    font-weight: var(--fw-semibold);
-    color: var(--color-primary);
+    padding: 0.8125rem 1.125rem;
+    color: var(--color-accent);
     cursor: pointer;
     user-select: none;
     list-style: none;
+    background: var(--accent-dim);
+    border-bottom: 1px solid var(--accent-line);
     transition: background-color var(--dur-2) var(--ease-out);
   }
 
@@ -64,7 +61,7 @@ const { title = t("components.tldr.title"), collapsed = false } = Astro.props;
   }
 
   .tldr-header:hover {
-    background: var(--color-bg-subtle);
+    background: color-mix(in srgb, var(--color-accent) 18%, transparent);
   }
 
   .tldr-header:focus-visible {
@@ -84,12 +81,12 @@ const { title = t("components.tldr.title"), collapsed = false } = Astro.props;
     flex: 1;
     margin: 0;
     font-family: var(--font-mono);
-    font-size: 0.8125rem;
+    font-size: 0.75rem;
     font-weight: var(--fw-medium);
     line-height: 1.3;
     color: inherit;
     text-transform: uppercase;
-    letter-spacing: 0.12em;
+    letter-spacing: 0.1em;
   }
 
   .tldr-chevron {
@@ -111,24 +108,44 @@ const { title = t("components.tldr.title"), collapsed = false } = Astro.props;
   }
 
   .tldr-content {
-    padding: 0 1rem 1rem;
+    padding: 1rem 1.125rem;
     font-size: 0.95rem;
-    line-height: 1.6;
+    line-height: 1.55;
     color: var(--color-text);
   }
 
-  .tldr-content :global(ul),
+  /* Mockup uses an amber em-dash marker instead of default bullets. */
+  .tldr-content :global(ul) {
+    display: flex;
+    flex-direction: column;
+    gap: 0.625rem;
+    padding: 0;
+    margin: 0;
+    list-style: none;
+  }
+
   .tldr-content :global(ol) {
     padding-left: 1.25rem;
     margin: 0;
   }
 
-  .tldr-content :global(li) {
+  .tldr-content :global(ul > li) {
+    display: flex;
+    gap: 0.7em;
+    margin: 0;
+  }
+
+  .tldr-content :global(ul > li)::before {
+    color: var(--color-accent);
+    content: "—";
+  }
+
+  .tldr-content :global(ol > li) {
     margin-bottom: 0.5rem;
   }
 
-  .tldr-content :global(li::marker) {
-    color: var(--color-primary);
+  .tldr-content :global(ol > li::marker) {
+    color: var(--color-accent);
   }
 
   .tldr-content :global(p:last-child),

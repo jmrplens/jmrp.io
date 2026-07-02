@@ -44,10 +44,13 @@ const { title, layers, caption, ariaLabel } = Astro.props;
 const locale = (Astro.currentLocale ?? defaultLocale) as Locale;
 const t = useTranslations(locale);
 
-const PALETTE = 6;
+// Neutral surface bands by default; the top layer (or any layer given an
+// explicit `color`) is accented — an accent-tinted band with a coloured border,
+// matching the emphasized top layer in the design mockup.
 const resolved = layers.map((l, i) => ({
   ...l,
-  resolvedColor: l.color ?? `var(--ls-${(i % PALETTE) + 1})`,
+  accent: i === 0 || l.color != null,
+  accentColor: l.color ?? "var(--color-accent)",
 }));
 
 const summary =
@@ -72,13 +75,11 @@ const summary =
   <ol class="layers__stack">
     {
       resolved.map((l) => (
-        <li class="layers__row">
-          <div
-            class="layers__band"
-            style={`background-color:${l.resolvedColor}`}
-          >
-            <span class="layers__name">{l.name}</span>
-          </div>
+        <li
+          class:list={["layers__band", l.accent && "layers__band--accent"]}
+          style={l.accent ? `--ls-accent:${l.accentColor}` : undefined}
+        >
+          <span class="layers__name">{l.name}</span>
           {l.note && <span class="layers__note">{l.note}</span>}
         </li>
       ))
@@ -90,14 +91,6 @@ const summary =
 
 <style>
   .layers {
-    --ls-1: #b389f5;
-    --ls-2: #7aa2ff;
-    --ls-3: #58d6df;
-    --ls-4: #6ee7a8;
-    --ls-5: #fbbf24;
-    --ls-6: #f0789b;
-    --ls-on: #0b0b13;
-
     margin: 1.5rem 0;
   }
 
@@ -111,41 +104,50 @@ const summary =
   .layers__stack {
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    gap: 6px;
     max-width: 32rem;
     padding: 0;
     margin: 0;
     list-style: none;
   }
 
-  .layers__row {
-    display: flex;
-    column-gap: 0.75rem;
-    align-items: center;
-  }
-
   .layers__band {
     display: flex;
-    flex: 1;
+    column-gap: 1rem;
     align-items: center;
-    justify-content: center;
+    justify-content: space-between;
     min-height: 2.75rem;
-    padding: 0.5rem 0.75rem;
-    color: var(--ls-on);
-    text-align: center;
-    border-radius: var(--radius-sm, 4px);
+    padding: 0.75rem 1rem;
+    background: var(--color-bg-secondary);
+    border: var(--border-1);
+    border-radius: var(--radius-md);
+  }
+
+  .layers__band--accent {
+    background: color-mix(
+      in srgb,
+      var(--ls-accent, var(--color-accent)) 13%,
+      transparent
+    );
+    border-color: var(--ls-accent, var(--color-accent));
   }
 
   .layers__name {
     font-size: 0.9rem;
-    font-weight: var(--fw-semibold, 600);
+    font-weight: var(--fw-medium, 500);
+    color: var(--color-text-heading);
   }
 
   .layers__note {
     flex-shrink: 0;
-    width: 9rem;
-    font-size: 0.8rem;
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
     color: var(--color-text-muted);
+    text-align: right;
+  }
+
+  .layers__band--accent .layers__note {
+    color: var(--ls-accent, var(--color-accent));
   }
 
   .layers__caption {
@@ -154,12 +156,5 @@ const summary =
     font-style: italic;
     color: var(--color-text-muted);
     text-align: center;
-  }
-
-  @media (width <= 640px) {
-    .layers__note {
-      width: 6rem;
-      font-size: 0.72rem;
-    }
   }
 </style>

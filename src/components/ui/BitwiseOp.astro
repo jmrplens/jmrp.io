@@ -170,10 +170,21 @@ const summary =
 
 <style>
   .bitop {
-    --bo-set: var(--color-primary);
+    --bo-set: var(--color-accent);
     --bo-on: var(--color-on-primary, #000);
+    --bo-tip: #57c98a; /* green — result emphasis */
 
     margin: 1.5rem 0;
+  }
+
+  :root[data-theme="light"] .bitop {
+    --bo-tip: #197a43;
+  }
+
+  @media (prefers-color-scheme: light) {
+    :root:not([data-theme="dark"]) .bitop {
+      --bo-tip: #197a43;
+    }
   }
 
   .bitop__title {
@@ -208,9 +219,14 @@ const summary =
   .bitop__label {
     flex-shrink: 0;
     width: 4.5rem;
-    font-size: 0.8rem;
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
     color: var(--color-text-muted);
     text-align: right;
+  }
+
+  .bitop__row--result .bitop__label {
+    color: var(--bo-tip);
   }
 
   .bitop__bits {
@@ -227,7 +243,7 @@ const summary =
     font-family: var(--font-mono);
     font-size: 0.8rem;
     color: var(--color-text-muted);
-    background: var(--color-bg-subtle);
+    background: var(--color-surface-2);
     border-radius: 3px;
   }
 
@@ -241,11 +257,22 @@ const summary =
     border: var(--border-1);
   }
 
+  /* Result set bits carry the green "output" accent from the design system. */
+  .bitop__bit--res.bitop__bit--set {
+    color: var(--color-on-primary);
+    background: var(--bo-tip);
+    border-color: transparent;
+  }
+
   .bitop__value {
     font-family: var(--font-mono);
     font-size: 0.8rem;
     color: var(--color-text-heading);
     white-space: nowrap;
+  }
+
+  .bitop__row--result .bitop__value {
+    color: var(--bo-tip);
   }
 
   .bitop__caption {

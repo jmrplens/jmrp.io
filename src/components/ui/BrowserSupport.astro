@@ -104,32 +104,31 @@ const uniqueId = `bs-${crypto.randomUUID().slice(0, 8)}`;
 </section>
 
 <style>
+  /* Lab BrowserSupport — grid of flat per-browser cards; the wrapper is bare. */
   .browser-support {
     margin: 1.5rem 0;
-    overflow: hidden;
-    background: var(--color-bg-secondary);
-    border: var(--border-1);
-    border-radius: var(--radius-lg);
+    background: transparent;
+    border: none;
   }
 
   .bs-title {
-    padding: 0.625rem 1rem;
-    margin: 0;
+    padding: 0;
+    margin: 0 0 0.75rem;
     font-family: var(--font-mono);
-    font-size: 0.8125rem;
+    font-size: 0.6875rem;
     font-weight: var(--fw-semibold);
     color: var(--color-text-muted);
     text-transform: uppercase;
-    letter-spacing: 0.08em;
-    background: var(--color-bg-subtle);
-    border-bottom: var(--border-1);
+    letter-spacing: 0.14em;
+    background: transparent;
+    border: none;
   }
 
   .bs-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-    gap: 1px;
-    background: var(--color-hair);
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 0.625rem;
+    background: transparent;
   }
 
   .bs-item {
@@ -137,14 +136,16 @@ const uniqueId = `bs-${crypto.randomUUID().slice(0, 8)}`;
     flex-direction: column;
     gap: 0.5rem;
     align-items: center;
-    padding: 1rem;
+    padding: 0.875rem;
     text-align: center;
     background: var(--color-bg-secondary);
+    border: var(--border-1);
+    border-radius: var(--radius-md);
   }
 
   .bs-browser-icon {
-    width: 32px;
-    height: 32px;
+    width: 28px;
+    height: 28px;
   }
 
   .bs-info {
@@ -154,14 +155,15 @@ const uniqueId = `bs-${crypto.randomUUID().slice(0, 8)}`;
   }
 
   .bs-name {
-    font-size: 0.9rem;
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
     font-weight: var(--fw-medium);
-    color: var(--color-text);
+    color: var(--color-text-heading);
   }
 
   .bs-version {
     font-family: var(--font-mono);
-    font-size: 0.8rem;
+    font-size: 0.6875rem;
     color: var(--color-text-muted);
   }
 
@@ -170,16 +172,18 @@ const uniqueId = `bs-${crypto.randomUUID().slice(0, 8)}`;
     height: 20px;
   }
 
+  /* Support state — carried by icon SHAPE (check/alert/close/help) + aria-label,
+     colour only reinforces it. */
   .support-full .bs-status-icon {
-    color: var(--color-success, #10b981);
+    color: var(--color-success);
   }
 
   .support-partial .bs-status-icon {
-    color: var(--color-primary);
+    color: var(--color-warning);
   }
 
   .support-none .bs-status-icon {
-    color: var(--color-danger, #ef4444);
+    color: var(--color-danger);
   }
 
   .support-unknown .bs-status-icon {
@@ -187,8 +191,8 @@ const uniqueId = `bs-${crypto.randomUUID().slice(0, 8)}`;
   }
 
   .bs-note {
-    font-size: 0.75rem;
-    font-style: italic;
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
     color: var(--color-text-muted);
   }
 
@@ -203,16 +207,8 @@ const uniqueId = `bs-${crypto.randomUUID().slice(0, 8)}`;
     }
 
     .bs-browser-icon {
-      width: 28px;
-      height: 28px;
-    }
-
-    .bs-name {
-      font-size: 0.8rem;
-    }
-
-    .bs-version {
-      font-size: 0.7rem;
+      width: 26px;
+      height: 26px;
     }
   }
 </style>

@@ -41,16 +41,24 @@ let hosts = 2 ** (32 - prefix) - 2;
 if (prefix === 32) hosts = 1;
 else if (prefix === 31) hosts = 2;
 
-// 32 bits, grouped into 4 octets, each bit tagged network / host.
-const octetBits = [0, 1, 2, 3].map((oi) =>
-  Array.from({ length: 8 }, (_, bi) => {
+// 32 bits, grouped into 4 octets. Within an octet the network bits are always
+// the leading run (CIDR prefixes are contiguous), so each octet renders as up
+// to two blocks: a network run then a host run (mockup style).
+const octetBlocks = [0, 1, 2, 3].map((oi) => {
+  const bits = Array.from({ length: 8 }, (_, bi) => {
     const bitIndex = oi * 8 + bi; // 0 = MSB
     return {
       value: (u32 >>> (31 - bitIndex)) & 1,
       network: bitIndex < prefix,
     };
-  }),
-);
+  });
+  const net = bits.filter((b) => b.network);
+  const host = bits.filter((b) => !b.network);
+  return {
+    net: net.map((b) => b.value).join(""),
+    host: host.map((b) => b.value).join(""),
+  };
+});
 
 const summary =
   ariaLabel ??
@@ -68,22 +76,29 @@ const summary =
 
   <div class="subnet__octets">
     {
-      octetBits.map((bitsArr, oi) => (
-        <div class="subnet__octet">
-          <div class="subnet__bits">
-            {bitsArr.map((bit) => (
-              <span
-                class:list={[
-                  "subnet__bit",
-                  bit.network ? "subnet__bit--net" : "subnet__bit--host",
-                ]}
-              >
-                {bit.value}
-              </span>
-            ))}
-          </div>
-          <span class="subnet__decimal">{octets[oi]}</span>
-        </div>
+      octetBlocks.map((oct) => (
+        <span class="subnet__octet">
+          {oct.net && (
+            <b
+              class:list={[
+                "subnet__run subnet__run--net",
+                oct.host ? "subnet__run--split-l" : "",
+              ]}
+            >
+              {oct.net}
+            </b>
+          )}
+          {oct.host && (
+            <b
+              class:list={[
+                "subnet__run subnet__run--host",
+                oct.net ? "subnet__run--split-r" : "",
+              ]}
+            >
+              {oct.host}
+            </b>
+          )}
+        </span>
       ))
     }
   </div>
@@ -106,12 +121,15 @@ const summary =
   </ul>
 
   <dl class="subnet__facts">
-    <div><dt>CIDR</dt><dd>{ip}/{prefix}</dd></div>
     <div><dt>Mask</dt><dd>{dotted(mask)}</dd></div>
-    <div><dt>Network</dt><dd>{dotted(network)}</dd></div>
+    <div>
+      <dt>Network</dt>
+      <dd class="subnet__fact--net">{dotted(network)}</dd>
+    </div>
     <div><dt>Broadcast</dt><dd>{dotted(broadcast)}</dd></div>
     <div>
-      <dt>Usable hosts</dt><dd>
+      <dt>Usable hosts</dt>
+      <dd class="subnet__fact--hosts">
         {hosts.toLocaleString(locale, { useGrouping: "always" })}
       </dd>
     </div>
@@ -121,12 +139,14 @@ const summary =
 </figure>
 
 <style>
+  /* Flat bordered card (mockup). Net = accent, host = teal; ink text flips
+     with the theme so both fills stay AA in light and dark. */
   .subnet {
-    --sn-net: #b389f5;
-    --sn-host: #58d6df;
-    --sn-on: #0b0b13;
-
+    padding: 18px;
     margin: 1.5rem 0;
+    background: var(--color-bg-secondary);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
   }
 
   .subnet__title {
@@ -139,46 +159,37 @@ const summary =
   .subnet__octets {
     display: flex;
     flex-wrap: wrap;
-    gap: 0.6rem 1rem;
+    gap: 10px;
   }
 
   .subnet__octet {
     display: flex;
-    flex-direction: column;
-    gap: 0.25rem;
-    align-items: center;
-  }
-
-  .subnet__bits {
-    display: flex;
     gap: 2px;
   }
 
-  .subnet__bit {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 1.3rem;
-    height: 1.5rem;
+  .subnet__run {
+    padding: 4px 5px;
     font-family: var(--font-mono);
-    font-size: 0.78rem;
-    color: var(--sn-on);
+    font-size: 0.6875rem;
+    font-weight: var(--fw-medium);
+    color: var(--color-on-primary);
     border-radius: 3px;
   }
 
-  .subnet__bit--net {
-    background: var(--sn-net);
+  .subnet__run--net {
+    background: var(--color-primary);
   }
 
-  .subnet__bit--host {
-    background: var(--sn-host);
+  .subnet__run--host {
+    background: var(--teal);
   }
 
-  .subnet__decimal {
-    font-family: var(--font-mono);
-    font-size: 0.85rem;
-    font-weight: var(--fw-semibold, 600);
-    color: var(--color-text-heading);
+  .subnet__run--split-l {
+    border-radius: 3px 0 0 3px;
+  }
+
+  .subnet__run--split-r {
+    border-radius: 0 3px 3px 0;
   }
 
   .subnet__legend {
@@ -186,8 +197,9 @@ const summary =
     flex-wrap: wrap;
     gap: 0.35rem 1rem;
     padding: 0;
-    margin: 0.85rem 0 0;
-    font-size: 0.8rem;
+    margin: 12px 0 0;
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
     color: var(--color-text-muted);
     list-style: none;
   }
@@ -205,30 +217,42 @@ const summary =
   }
 
   .subnet__swatch--net {
-    background: var(--sn-net);
+    background: var(--color-primary);
   }
 
   .subnet__swatch--host {
-    background: var(--sn-host);
+    background: var(--teal);
   }
 
   .subnet__facts {
     display: flex;
     flex-wrap: wrap;
-    gap: 0.3rem 1.5rem;
-    margin: 0.85rem 0 0;
-    font-size: 0.82rem;
+    gap: 6px 18px;
+    margin: 14px 0 0;
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+  }
+
+  .subnet__facts div {
+    display: inline-flex;
+    gap: 0.4em;
   }
 
   .subnet__facts dt {
-    font-weight: var(--fw-semibold, 600);
     color: var(--color-text-muted);
   }
 
   .subnet__facts dd {
     margin: 0;
-    font-family: var(--font-mono);
     color: var(--color-text-heading);
+  }
+
+  .subnet__facts .subnet__fact--net {
+    color: var(--color-accent);
+  }
+
+  .subnet__facts .subnet__fact--hosts {
+    color: var(--teal-text);
   }
 
   .subnet__caption {

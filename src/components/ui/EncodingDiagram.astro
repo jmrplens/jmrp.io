@@ -43,6 +43,18 @@ const { title, rows, caption, ariaLabel } = Astro.props;
 const locale = (Astro.currentLocale ?? defaultLocale) as Locale;
 const t = useTranslations(locale);
 
+// Assign each byte a categorical colour from a rotating palette (running
+// counter across all rows) so adjacent bytes read as distinct chips.
+const CAT = 6;
+let byteIndex = 0;
+const rendered = rows.map((row) => ({
+  ...row,
+  bytes: row.bytes.map((byte) => ({
+    value: byte,
+    cat: (byteIndex++ % CAT) + 1,
+  })),
+}));
+
 const summary =
   ariaLabel ??
   (title
@@ -59,18 +71,17 @@ const summary =
 
   <ul class="enc__rows">
     {
-      rows.map((row) => (
+      rendered.map((row) => (
         <li class="enc__row">
           <span class="enc__src">{row.label}</span>
-          <span
-            class="enc__arrow"
-            aria-hidden="true"
-          >
-            →
-          </span>
           <span class="enc__bytes">
             {row.bytes.map((byte) => (
-              <span class="enc__byte">{byte}</span>
+              <span
+                class="enc__byte"
+                style={`--enc-byte:var(--cat-${byte.cat})`}
+              >
+                {byte.value}
+              </span>
             ))}
           </span>
           {row.note && <span class="enc__note">{row.note}</span>}
@@ -84,10 +95,36 @@ const summary =
 
 <style>
   .enc {
-    --enc-byte: #58d6df;
-    --enc-on: #0b0b13;
+    /* Categorical chip palette — mockup hues. Accent + teal ride the theme
+       tokens; the rest carry explicit light overrides below. Ink text flips
+       with the theme so bright (dark mode) / dark (light mode) chips stay AA. */
+    --cat-1: var(--color-accent);
+    --cat-2: #6e8fd6;
+    --cat-3: var(--teal);
+    --cat-4: #57c98a;
+    --cat-5: #e3b23c;
+    --cat-6: #e5655b;
+    --enc-on: #0a0a0b;
 
     margin: 1.5rem 0;
+  }
+
+  :global(:root[data-theme="light"]) .enc {
+    --cat-2: #3f6fc4;
+    --cat-4: #197a43;
+    --cat-5: #8a6a00;
+    --cat-6: #c13b31;
+    --enc-on: #fff;
+  }
+
+  @media (prefers-color-scheme: light) {
+    :global(:root:not([data-theme="dark"])) .enc {
+      --cat-2: #3f6fc4;
+      --cat-4: #197a43;
+      --cat-5: #8a6a00;
+      --cat-6: #c13b31;
+      --enc-on: #fff;
+    }
   }
 
   .enc__title {
@@ -100,33 +137,32 @@ const summary =
   .enc__rows {
     display: flex;
     flex-direction: column;
-    gap: 0.6rem;
-    padding: 0;
+    gap: 0.75rem;
+    padding: 18px;
     margin: 0;
     list-style: none;
+    background: var(--color-bg-secondary);
+    border: var(--border-1);
+    border-radius: var(--radius-md);
   }
 
   .enc__row {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.3rem 0.6rem;
+    display: grid;
+    grid-template-columns: 8.5rem 1fr;
+    gap: 0.3rem 0.9rem;
     align-items: center;
   }
 
   .enc__src {
-    min-width: 7rem;
     font-family: var(--font-mono);
-    font-size: 0.85rem;
+    font-size: 0.82rem;
     color: var(--color-text-heading);
-  }
-
-  .enc__arrow {
-    color: var(--color-text-muted);
   }
 
   .enc__bytes {
     display: inline-flex;
-    gap: 4px;
+    flex-wrap: wrap;
+    gap: 6px;
   }
 
   .enc__byte {
@@ -134,16 +170,17 @@ const summary =
     align-items: center;
     justify-content: center;
     min-width: 2.2rem;
-    padding: 0.2rem 0.4rem;
+    padding: 0.25rem 0.6rem;
     font-family: var(--font-mono);
-    font-size: 0.82rem;
-    font-weight: var(--fw-semibold, 600);
+    font-size: 0.75rem;
+    font-weight: var(--fw-medium, 500);
     color: var(--enc-on);
-    background: var(--enc-byte);
+    background: var(--enc-byte, var(--cat-1));
     border-radius: var(--radius-sm, 4px);
   }
 
   .enc__note {
+    grid-column: 2;
     font-size: 0.8rem;
     color: var(--color-text-muted);
   }
@@ -154,5 +191,15 @@ const summary =
     font-style: italic;
     color: var(--color-text-muted);
     text-align: center;
+  }
+
+  @media (width <= 480px) {
+    .enc__row {
+      grid-template-columns: 1fr;
+    }
+
+    .enc__note {
+      grid-column: 1;
+    }
   }
 </style>

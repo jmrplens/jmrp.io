@@ -48,10 +48,12 @@ const t = useTranslations(locale);
 // Fall back to the localized default when the caller doesn't override it.
 const growth = growthLabel ?? t("components.callStack.growthLabel");
 
-const PALETTE = 6;
+// Neutral mono frames; the deepest frame (or any frame given an explicit
+// `color`) is accented, echoing the highlighted innermost frame in the mockup.
 const resolved = frames.map((f, i) => ({
   ...f,
-  resolvedColor: f.color ?? `var(--cs-${(i % PALETTE) + 1})`,
+  accent: i === frames.length - 1 || f.color != null,
+  accentColor: f.color ?? "var(--color-accent)",
 }));
 
 const summary =
@@ -76,12 +78,10 @@ const summary =
   <ol class="cstack__frames">
     {
       resolved.map((f) => (
-        <li class="cstack__frame">
-          <span
-            class="cstack__accent"
-            style={`background-color:${f.resolvedColor}`}
-            aria-hidden="true"
-          />
+        <li
+          class:list={["cstack__frame", f.accent && "cstack__frame--accent"]}
+          style={f.accent ? `--cs-accent:${f.accentColor}` : undefined}
+        >
           <span class="cstack__name">{f.name}</span>
           {f.detail && <span class="cstack__detail">{f.detail}</span>}
         </li>
@@ -102,13 +102,6 @@ const summary =
 
 <style>
   .cstack {
-    --cs-1: #b389f5;
-    --cs-2: #7aa2ff;
-    --cs-3: #58d6df;
-    --cs-4: #6ee7a8;
-    --cs-5: #fbbf24;
-    --cs-6: #f0789b;
-
     margin: 1.5rem 0;
   }
 
@@ -122,7 +115,7 @@ const summary =
   .cstack__frames {
     display: flex;
     flex-direction: column;
-    gap: 3px;
+    gap: 6px;
     max-width: 34rem;
     padding: 0;
     margin: 0;
@@ -134,7 +127,7 @@ const summary =
     column-gap: 0.45rem;
     align-items: center;
     max-width: 34rem;
-    margin: 0.55rem 0 0;
+    margin: 0.6rem 0 0;
     font-size: 0.78rem;
     color: var(--color-text-muted);
   }
@@ -143,38 +136,44 @@ const summary =
     font-size: 1.05rem;
     font-weight: var(--fw-bold, 700);
     line-height: 1;
-    color: var(--color-primary);
+    color: var(--color-accent);
   }
 
   .cstack__frame {
     display: flex;
     column-gap: 0.6rem;
-    align-items: baseline;
-    padding: 0.6rem 0.75rem;
-    background: var(--color-bg-subtle);
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.7rem 1rem;
+    background: var(--color-bg-secondary);
     border: var(--border-1);
-    border-radius: var(--radius-sm, 4px);
+    border-radius: var(--radius-md, 8px);
   }
 
-  .cstack__accent {
-    flex-shrink: 0;
-    align-self: stretch;
-    width: 4px;
-    border-radius: 2px;
+  .cstack__frame--accent {
+    background: color-mix(
+      in srgb,
+      var(--cs-accent, var(--color-accent)) 13%,
+      transparent
+    );
+    border-color: var(--cs-accent, var(--color-accent));
   }
 
   .cstack__name {
-    flex: 1;
     font-family: var(--font-mono);
-    font-size: 0.85rem;
-    font-weight: var(--fw-semibold, 600);
+    font-size: 0.82rem;
     color: var(--color-text-heading);
   }
 
   .cstack__detail {
-    font-size: 0.78rem;
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
     color: var(--color-text-muted);
     text-align: right;
+  }
+
+  .cstack__frame--accent .cstack__detail {
+    color: var(--cs-accent, var(--color-accent));
   }
 
   .cstack__caption {

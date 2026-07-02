@@ -103,9 +103,11 @@ const ariaLabel = `${t("ui.download")}: ${name}${sizeLabel ? ` (${sizeLabel})` :
 
 <div class="file-download">
   <span
-    class={`file-download__icon ${fileIcon}`}
+    class="file-download__icon-box"
     aria-hidden="true"
-  ></span>
+  >
+    <span class={`file-download__icon ${fileIcon}`}></span>
+  </span>
   <div class="file-download__meta">
     <span class="file-download__name">{name}</span>
     {sub && <span class="file-download__sub">{sub}</span>}
@@ -116,10 +118,6 @@ const ariaLabel = `${t("ui.download")}: ${name}${sizeLabel ? ` (${sizeLabel})` :
     download
     aria-label={ariaLabel}
   >
-    <span
-      class="i-mdi:download"
-      aria-hidden="true"
-    ></span>
     {t("ui.download")}
   </a>
 </div>
@@ -127,50 +125,59 @@ const ariaLabel = `${t("ui.download")}: ${name}${sizeLabel ? ` (${sizeLabel})` :
 <style>
   .file-download {
     display: flex;
-    gap: 1rem;
+    gap: 14px;
     align-items: center;
-    padding: 1rem 1.25rem;
+    padding: 16px 18px;
     margin: 1.5rem 0;
     background: var(--color-bg-secondary);
-    border: var(--border-1);
+    border: 1px solid var(--color-border);
     border-radius: var(--radius-lg);
   }
 
-  .file-download__icon {
+  /* Tinted square framing the file-type glyph (Lab pattern). */
+  .file-download__icon-box {
+    display: grid;
     flex-shrink: 0;
-    width: 36px;
-    height: 36px;
-    color: var(--color-primary);
+    place-items: center;
+    width: 42px;
+    height: 42px;
+    color: var(--color-accent);
+    background: var(--accent-dim);
+    border-radius: var(--radius-md);
+  }
+
+  .file-download__icon {
+    width: 18px;
+    height: 18px;
+    color: var(--color-accent);
   }
 
   .file-download__meta {
     display: flex;
+    flex: 1;
     flex-direction: column;
-    gap: 0.15rem;
+    gap: 2px;
     min-width: 0;
   }
 
   .file-download__name {
     font-family: var(--font-mono);
-    font-size: 0.95rem;
-    font-weight: var(--fw-semibold);
+    font-size: 0.8125rem;
     color: var(--color-text-heading);
     overflow-wrap: anywhere;
   }
 
   .file-download__sub {
-    font-size: 0.8rem;
+    font-family: var(--font-mono);
+    font-size: 0.7188rem;
     color: var(--color-text-muted);
   }
 
   .file-download__btn {
-    display: inline-flex;
-    gap: 0.4rem;
-    align-items: center;
-    padding: 0.5rem 0.9rem;
+    padding: 7px 14px;
     margin-left: auto;
-    font-size: 0.85rem;
-    font-weight: var(--fw-semibold);
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
     color: var(--color-on-primary);
     white-space: nowrap;
     text-decoration: none;
@@ -188,11 +195,6 @@ const ariaLabel = `${t("ui.download")}: ${name}${sizeLabel ? ` (${sizeLabel})` :
     .file-download__btn {
       transition: none;
     }
-  }
-
-  .file-download__btn span {
-    width: 18px;
-    height: 18px;
   }
 
   @media (width <= 480px) {

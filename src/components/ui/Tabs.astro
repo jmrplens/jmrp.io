@@ -203,7 +203,7 @@ const instanceCss = labels
     display: flex;
     overflow: auto hidden;
     scrollbar-width: thin;
-    background: var(--color-bg-header);
+    background: var(--color-surface-2);
     border-bottom: 1px solid var(--color-hair);
   }
 
@@ -269,12 +269,12 @@ const instanceCss = labels
   /* Code blocks inside tab panels - Increased specificity to avoid !important */
   .tabs-container .tab-panel pre,
   .tabs-container .tab-panel pre.astro-code {
-    padding: 1rem 1.25rem;
+    padding: 1rem 1.125rem; /* 16px 18px */
     margin: 0;
     overflow-x: auto;
     font-family: var(--font-mono);
-    font-size: 0.9rem;
-    line-height: 1.6;
+    font-size: 0.8125rem; /* 13px */
+    line-height: 1.7;
     color: var(--color-text);
     background-color: transparent;
     border: none;

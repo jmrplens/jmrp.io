@@ -75,24 +75,16 @@ const summary =
   <ol class="pipeline__flow">
     {
       resolved.map((s, i) => (
-        <li class="pipeline__item">
-          {i > 0 && (
-            <span
-              class="pipeline__edge"
-              aria-hidden="true"
-            >
-              {s.via && <span class="pipeline__via">{s.via}</span>}
-              <span class="pipeline__arrow">→</span>
-            </span>
-          )}
-          <span
-            class="pipeline__stage"
-            style={`--pl-accent:${s.accent}`}
-          >
-            <span class="pipeline__num">{i + 1}</span>
-            <span class="pipeline__name">{s.name}</span>
-            {s.note && <span class="pipeline__note">{s.note}</span>}
+        <li
+          class="pipeline__stage"
+          style={`--pl-accent:${s.accent}`}
+        >
+          <span class="pipeline__meta">
+            <span class="pipeline__num">{String(i + 1).padStart(2, "0")}</span>
+            {s.via && <span class="pipeline__via">· ← {s.via}</span>}
           </span>
+          <span class="pipeline__name">{s.name}</span>
+          {s.note && <span class="pipeline__note">{s.note}</span>}
         </li>
       ))
     }
@@ -103,15 +95,33 @@ const summary =
 
 <style>
   .pipeline {
-    --pl-1: #b389f5;
-    --pl-2: #58d6df;
-    --pl-3: #6ee7a8;
-    --pl-4: #fbbf24;
-    --pl-5: #f0789b;
-    --pl-6: #7aa2ff;
-    --pl-on: #0b0b13;
+    /* Per-stage accent (top border). Categorical hues in the mockup's pipeline
+       order: blue · accent · green · gold · red · teal. Accent + teal ride the
+       theme tokens; the rest carry light overrides for legibility. */
+    --pl-1: #6e8fd6;
+    --pl-2: var(--color-accent);
+    --pl-3: #57c98a;
+    --pl-4: #e3b23c;
+    --pl-5: #e5655b;
+    --pl-6: var(--teal);
 
     margin: 1.5rem 0;
+  }
+
+  :global(:root[data-theme="light"]) .pipeline {
+    --pl-1: #3f6fc4;
+    --pl-3: #197a43;
+    --pl-4: #8a6a00;
+    --pl-5: #c13b31;
+  }
+
+  @media (prefers-color-scheme: light) {
+    :global(:root:not([data-theme="dark"])) .pipeline {
+      --pl-1: #3f6fc4;
+      --pl-3: #197a43;
+      --pl-4: #8a6a00;
+      --pl-5: #c13b31;
+    }
   }
 
   .pipeline__title {
@@ -122,89 +132,47 @@ const summary =
   }
 
   .pipeline__flow {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: stretch;
-    padding: 0.7rem 0 0 0.7rem;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+    gap: 12px;
+    padding: 0;
     margin: 0;
     list-style: none;
   }
 
-  .pipeline__item {
-    display: flex;
-    flex: 1;
-    align-items: stretch;
-    min-width: 0;
-  }
-
-  .pipeline__edge {
-    display: flex;
-    flex-shrink: 0;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 0 0.3rem;
-  }
-
-  .pipeline__via {
-    max-width: 6rem;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    font-family: var(--font-mono);
-    font-size: 0.62rem;
-    color: var(--color-text-muted);
-    text-align: center;
-    white-space: nowrap;
-  }
-
-  .pipeline__arrow {
-    font-size: 1.15rem;
-    line-height: 1;
-    color: var(--color-text-muted);
-  }
-
   .pipeline__stage {
-    position: relative;
     display: flex;
-    flex: 1;
     flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    min-height: 3.25rem;
-    padding: 0.7rem 0.75rem 0.6rem;
-    text-align: center;
-    background: var(--color-bg-subtle);
+    gap: 0.35rem;
+    padding: 15px;
+    background: var(--color-bg-secondary);
     border: var(--border-1);
     border-top: 3px solid var(--pl-accent, var(--color-border));
     border-radius: var(--radius-md, 8px);
   }
 
-  .pipeline__num {
-    position: absolute;
-    top: -0.6rem;
-    left: -0.6rem;
+  .pipeline__meta {
     display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 1.25rem;
-    height: 1.25rem;
+    column-gap: 0.4rem;
+    align-items: baseline;
+    font-family: var(--font-mono);
     font-size: 0.68rem;
-    font-weight: var(--fw-bold, 700);
-    color: var(--pl-on);
-    background: var(--pl-accent, var(--color-primary));
-    border-radius: 50%;
+    color: var(--color-text-muted);
+  }
+
+  .pipeline__via {
+    color: var(--color-text-muted);
   }
 
   .pipeline__name {
-    font-family: var(--font-mono);
-    font-size: 0.82rem;
-    font-weight: var(--fw-semibold, 600);
+    font-size: 0.9rem;
+    font-weight: var(--fw-medium, 500);
     color: var(--color-text-heading);
     overflow-wrap: break-word;
   }
 
   .pipeline__note {
-    margin-top: 0.15rem;
+    font-family: var(--font-mono);
     font-size: 0.72rem;
     color: var(--color-text-muted);
   }
@@ -215,31 +183,5 @@ const summary =
     font-style: italic;
     color: var(--color-text-muted);
     text-align: center;
-  }
-
-  @media (width <= 640px) {
-    .pipeline__flow {
-      flex-direction: column;
-      align-items: stretch;
-    }
-
-    .pipeline__item {
-      flex-direction: column;
-      align-items: stretch;
-    }
-
-    .pipeline__edge {
-      flex-direction: row;
-      column-gap: 0.4rem;
-      padding: 0.3rem 0;
-    }
-
-    .pipeline__via {
-      max-width: none;
-    }
-
-    .pipeline__arrow {
-      transform: rotate(90deg);
-    }
   }
 </style>

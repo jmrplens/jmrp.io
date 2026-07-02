@@ -77,43 +77,48 @@ const {
     flex-direction: column;
     min-width: 0;
     overflow: hidden;
-    background-color: var(--color-bg-secondary);
+    background-color: color-mix(
+      in srgb,
+      var(--ba-accent) 5%,
+      var(--color-bg-secondary)
+    );
     border: 1px solid var(--ba-line);
     border-radius: var(--radius-md);
   }
 
   /*
-   * Lab two-accent scheme: "before" = amber (attention/old), "after" = teal
-   * (resolved/OK). Status is never colour-only — each block carries an icon
-   * (✗ / ✓), an uppercase label, and a fixed position. Header text uses the
-   * heading token so it stays AA in both themes; the accent rides on the icon,
-   * tint and hairline (graphical, ≥3:1). All derived from tokens via color-mix.
+   * Semantic before/after scheme: "before" = danger (the flawed/old state),
+   * "after" = success/teal (the resolved state). Status is never colour-only —
+   * each block carries an icon (✗ / ✓), a mono label and a fixed column. The
+   * accent tints the border, the 5% surface wash and the header text; the
+   * header text keeps ≥4.5:1 in both themes (both tokens are AA-safe as text).
    */
   .ba-before {
-    --ba-accent: var(--color-primary);
-    --ba-tint: var(--accent-dim);
-    --ba-line: var(--accent-line);
+    --ba-accent: var(--color-danger);
+    --ba-line: color-mix(in srgb, var(--color-danger) 25%, var(--color-border));
   }
 
   .ba-after {
-    --ba-accent: var(--teal);
-    --ba-tint: color-mix(in srgb, var(--teal) 12%, transparent);
-    --ba-line: color-mix(in srgb, var(--teal) 40%, transparent);
+    --ba-accent: var(--color-success);
+    --ba-line: color-mix(
+      in srgb,
+      var(--color-success) 25%,
+      var(--color-border)
+    );
   }
 
   .ba-header {
     display: flex;
     gap: 0.5rem;
     align-items: center;
-    padding: 0.5rem 1rem;
+    padding: 0.625rem 1rem;
     font-family: var(--font-mono);
-    font-size: 0.8rem;
+    font-size: 0.72rem;
     font-weight: var(--fw-semibold);
-    color: var(--color-text-heading);
+    color: var(--ba-accent);
     text-transform: uppercase;
     letter-spacing: 0.08em;
-    background-color: var(--ba-tint);
-    border-bottom: 1px solid var(--ba-line);
+    border-bottom: 1px solid var(--color-hair);
   }
 
   .ba-icon {

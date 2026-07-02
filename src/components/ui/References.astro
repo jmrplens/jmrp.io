@@ -1,12 +1,11 @@
 ---
 /**
  * References component (Simple).
- * Renders a grid of external reference cards from a given prop.
+ * Renders a flat, bordered list of external reference links (Lab mockup):
+ * an accent ↗ marker + the reference title. No favicon cards / hover lift.
  */
 import { defaultLocale, type Locale } from "@i18n/config";
 import { useTranslations } from "@i18n/utils";
-import type { ImageMetadata } from "astro";
-import { Image } from "astro:assets";
 
 interface Reference {
   text: string;
@@ -21,13 +20,6 @@ const { references = [] } = Astro.props;
 
 const locale = (Astro.currentLocale ?? defaultLocale) as Locale;
 const t = useTranslations(locale);
-
-const iconFiles = import.meta.glob<{ default: ImageMetadata }>(
-  "/src/assets/icons/*.webp",
-  {
-    eager: true,
-  },
-);
 ---
 
 {
@@ -40,11 +32,9 @@ const iconFiles = import.meta.glob<{ default: ImageMetadata }>(
         />
         <h3>{t("components.references.title")}</h3>
       </div>
-      <div class="references-grid">
+      <div class="references-list">
         {references.map((ref) => {
           let urlObj: URL | null = null;
-          let hostname = "";
-          let iconModule: { default: ImageMetadata } | undefined;
 
           try {
             urlObj = new URL(ref.url);
@@ -56,16 +46,6 @@ const iconFiles = import.meta.glob<{ default: ImageMetadata }>(
             ) {
               throw new Error(`Invalid protocol: ${urlObj.protocol}`);
             }
-
-            // Handle mailto: and tel: protocols specially
-            hostname =
-              urlObj.protocol === "mailto:" || urlObj.protocol === "tel:"
-                ? urlObj.pathname || ref.url.replace(/^(mailto:|tel:)/, "")
-                : urlObj.hostname;
-
-            const iconName = hostname.replaceAll(/[^a-z0-9]/gi, "_");
-            const iconPath = `/src/assets/icons/${iconName}.webp`;
-            iconModule = iconFiles[iconPath];
           } catch {
             console.warn(
               `[References] Invalid URL for reference "${ref.text}": ${ref.url}`,
@@ -77,6 +57,10 @@ const iconFiles = import.meta.glob<{ default: ImageMetadata }>(
           const isExternalLink =
             urlObj?.protocol === "http:" || urlObj?.protocol === "https:";
 
+          // Always give the anchor an accessible name: fall back to the
+          // hostname (then the raw URL) when a reference has empty text.
+          const label = ref.text?.trim() || urlObj?.hostname || ref.url;
+
           return (
             <a
               href={ref.url}
@@ -84,37 +68,13 @@ const iconFiles = import.meta.glob<{ default: ImageMetadata }>(
                 ? { target: "_blank", rel: "noopener noreferrer" }
                 : {})}
               data-astro-prefetch="false"
-              class="reference-card"
+              class="reference-link"
             >
-              <div class="card-icon">
-                {iconModule ? (
-                  <Image
-                    src={iconModule.default}
-                    alt={`${hostname} icon`}
-                    width={40}
-                    height={40}
-                    format="webp"
-                    widths={[40, 80, 120]}
-                    class="ref-favicon"
-                    loading="lazy"
-                  />
-                ) : (
-                  <span
-                    class="i-mdi:web fallback-icon"
-                    aria-hidden="true"
-                  />
-                )}
-              </div>
-              <div class="card-content">
-                <span class="ref-text">{ref.text}</span>
-                <span class="ref-url">{hostname}</span>
-              </div>
-              <div class="card-arrow">
-                <span
-                  class="i-mdi:arrow-top-right"
-                  aria-hidden="true"
-                />
-              </div>
+              <span
+                class="i-mdi:arrow-top-right ref-marker"
+                aria-hidden="true"
+              />
+              <span class="ref-text">{label}</span>
             </a>
           );
         })}
@@ -149,125 +109,55 @@ const iconFiles = import.meta.glob<{ default: ImageMetadata }>(
     font-size: 1.25rem;
   }
 
-  .references-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr));
-    gap: 1rem;
-  }
-
-  .reference-card {
-    position: relative;
+  /* Flat bordered container holding a simple vertical link list (mockup). */
+  .references-list {
     display: flex;
-    gap: 1rem;
-    align-items: center;
-    padding: 1rem;
-    overflow: hidden;
-    text-decoration: none;
-    background: var(--color-surface-2);
-    border: var(--border-1);
-    border-radius: var(--radius-lg);
-    transition:
-      background-color var(--dur-2) var(--ease-out),
-      border-color var(--dur-2) var(--ease-out),
-      box-shadow var(--dur-2) var(--ease-out),
-      transform var(--dur-2) var(--ease-out);
-  }
-
-  .reference-card:hover {
-    background: var(--color-bg-secondary);
-    border-color: var(--color-primary);
-    box-shadow: var(--sh-card);
-    transform: translateY(-3px);
-  }
-
-  .card-icon {
-    position: relative;
-    display: flex;
-    flex-shrink: 0;
-    align-items: center;
-    justify-content: center;
-    width: 40px;
-    height: 40px;
-    overflow: hidden;
-    border-radius: var(--radius-md);
-  }
-
-  .ref-favicon {
-    width: 100%;
-    height: 100%;
-    object-fit: contain;
-  }
-
-  .fallback-icon {
-    position: absolute;
-    top: 0;
-    left: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 100%;
-    height: 100%;
-    font-size: 1.5rem;
-    color: var(--color-text-muted);
-  }
-
-  .card-content {
-    display: flex;
-    flex: 1;
     flex-direction: column;
-    gap: 0.15rem;
+    gap: 12px;
+    padding: 16px 18px;
+    background: var(--color-bg-secondary);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+  }
+
+  .reference-link {
+    display: flex;
+    gap: 11px;
+    align-items: baseline;
+    text-decoration: none;
+    transition: color var(--dur-2) var(--ease-out);
+  }
+
+  .ref-marker {
+    flex-shrink: 0;
+    width: 0.95em;
+    height: 0.95em;
+    color: var(--color-accent);
+    transform: translateY(0.12em);
   }
 
   .ref-text {
-    font-size: 0.95rem;
-    font-weight: 500;
-    line-height: 1.3;
+    font-size: 0.875rem;
+    line-height: 1.4;
+    color: var(--color-text-heading);
   }
 
-  .ref-url {
-    font-family: var(--font-mono, monospace);
-    font-size: 0.75rem;
-    color: var(--color-text-muted);
+  .reference-link:hover .ref-text,
+  .reference-link:focus-visible .ref-text {
+    color: var(--color-accent);
+    text-decoration: underline;
+    text-underline-offset: 2px;
   }
 
-  .card-arrow {
-    color: var(--color-primary);
-    opacity: 0%;
-    transform: translateX(-10px);
-    transition:
-      opacity var(--dur-2) var(--ease-out),
-      transform var(--dur-2) var(--ease-out);
-  }
-
-  .reference-card:hover .card-arrow {
-    opacity: 100%;
-    transform: translateX(0);
-  }
-
-  /* Focus-visible styles for keyboard navigation */
-  .reference-card:focus-visible {
+  .reference-link:focus-visible {
     outline: 2px solid var(--color-primary);
-    outline-offset: 2px;
-    background: var(--color-bg-secondary);
-    border-color: var(--color-primary);
-    box-shadow: var(--sh-card);
-    transform: translateY(-3px);
-  }
-
-  .reference-card:focus-visible .card-arrow {
-    opacity: 100%;
-    transform: translateX(0);
+    outline-offset: 3px;
+    border-radius: var(--radius-sm);
   }
 
   @media (prefers-reduced-motion: reduce) {
-    .reference-card,
-    .card-arrow {
+    .reference-link {
       transition: none;
-    }
-
-    .reference-card:hover,
-    .reference-card:focus-visible {
-      transform: none;
     }
   }
 </style>

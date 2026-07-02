@@ -242,11 +242,10 @@ const highlightedHtml =
     gap: 0.5rem;
     align-items: center;
     justify-content: space-between; /* Push actions to the right */
-    min-height: 48px;
-    padding: 0.5rem 1rem;
+    padding: 0.625rem 1rem; /* 10px 16px */
     font-family: var(--font-mono);
-    font-size: 0.85rem;
-    color: var(--color-text-muted);
+    font-size: 0.75rem; /* 12px */
+    color: var(--color-text-heading);
     background-color: var(--color-surface-2);
     border-bottom: 1px solid var(--color-hair);
     transition: background-color var(--dur-2) var(--ease-out);
@@ -279,7 +278,7 @@ const highlightedHtml =
   .file-info {
     display: flex;
     flex: 1;
-    gap: 0.5rem;
+    gap: 0.5625rem; /* 9px */
     align-items: center;
     min-width: 0; /* Enable text truncation for flex children */
   }
@@ -304,7 +303,7 @@ const highlightedHtml =
 
   .file-icon {
     flex-shrink: 0;
-    font-size: 1.3rem;
+    font-size: 0.875rem; /* 14px */
     color: var(--color-accent);
   }
 
@@ -352,14 +351,14 @@ const highlightedHtml =
   .file-body :global(.astro-code) {
     display: block;
     width: 100%;
-    padding: 1rem 1.25rem !important;
+    padding: 1rem 1.125rem !important; /* 16px 18px */
     margin: 0 !important;
     overflow-x: visible !important; /* Managed by parent container for a11y */
 
     /* Typography */
     font-family: var(--font-mono);
-    font-size: 0.9rem;
-    line-height: 1.6;
+    font-size: 0.8125rem; /* 13px */
+    line-height: 1.7;
     border: none !important;
     border-radius: 0 !important;
     box-shadow: none !important;

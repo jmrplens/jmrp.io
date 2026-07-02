@@ -47,7 +47,7 @@ const { title, bitsPerRow = 32, fields, caption, ariaLabel } = Astro.props;
 const locale = (Astro.currentLocale ?? defaultLocale) as Locale;
 const t = useTranslations(locale);
 
-const PALETTE = 6;
+const PALETTE = 8;
 const fieldColors = fields.map(
   (f, i) => f.color ?? `var(--pk-${(i % PALETTE) + 1})`,
 );
@@ -150,15 +150,42 @@ const summary =
 
 <style>
   .packet {
-    --pk-1: #b389f5;
-    --pk-2: #58d6df;
-    --pk-3: #fbbf24;
-    --pk-4: #6ee7a8;
-    --pk-5: #f0789b;
-    --pk-6: #7aa2ff;
-    --pk-on: #0b0b13;
+    /* Categorical data-viz palette (dark-first); light values overridden below. */
+    --pk-1: #f5a623; /* amber */
+    --pk-2: #6e8fd6; /* blue */
+    --pk-3: #46b8a6; /* teal */
+    --pk-4: #e0739f; /* pink */
+    --pk-5: #57c98a; /* green */
+    --pk-6: #b389f5; /* violet */
+    --pk-7: #ec8c46; /* orange */
+    --pk-8: #49b9cc; /* cyan */
+    --pk-on: var(--color-on-primary);
 
     margin: 1.5rem 0;
+  }
+
+  :root[data-theme="light"] .packet {
+    --pk-1: #8f5300; /* darkened amber: AA for white on-fill text */
+    --pk-2: #3f6fc4;
+    --pk-3: #1f7e6e;
+    --pk-4: #bc3f76;
+    --pk-5: #197a43;
+    --pk-6: #6d45c4;
+    --pk-7: #8a4a15; /* darkened orange: AA for white on-fill text */
+    --pk-8: #1c7e92;
+  }
+
+  @media (prefers-color-scheme: light) {
+    :root:not([data-theme="dark"]) .packet {
+      --pk-1: #8f5300; /* darkened amber: AA for white on-fill text */
+      --pk-2: #3f6fc4;
+      --pk-3: #1f7e6e;
+      --pk-4: #bc3f76;
+      --pk-5: #197a43;
+      --pk-6: #6d45c4;
+      --pk-7: #8a4a15; /* darkened orange: AA for white on-fill text */
+      --pk-8: #1c7e92;
+    }
   }
 
   .packet__title {
@@ -179,6 +206,7 @@ const summary =
   }
 
   .packet__bitnum {
+    font-family: var(--font-mono);
     font-size: 0.62rem;
     color: var(--color-text-muted);
     text-align: center;
@@ -189,15 +217,16 @@ const summary =
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    min-height: 2.4rem;
+    min-height: 2.375rem;
     padding: 0.25rem 0.2rem;
     overflow: hidden;
+    font-family: var(--font-mono);
     color: var(--pk-on);
-    border-radius: var(--radius-sm, 4px);
+    border-radius: 4px;
   }
 
   .packet__field--cont {
-    border-radius: 0 var(--radius-sm, 4px) var(--radius-sm, 4px) 0;
+    border-radius: 0 4px 4px 0;
     opacity: 92%;
   }
 
@@ -205,14 +234,13 @@ const summary =
     max-width: 100%;
     overflow: hidden;
     text-overflow: ellipsis;
-    font-size: 0.74rem;
-    font-weight: var(--fw-semibold, 600);
+    font-size: 0.656rem;
+    font-weight: var(--fw-medium, 500);
     white-space: nowrap;
   }
 
   .packet__field-bits {
     font-size: 0.62rem;
-    opacity: 85%;
   }
 
   .packet__legend {
@@ -228,7 +256,8 @@ const summary =
     display: inline-flex;
     column-gap: 0.4rem;
     align-items: baseline;
-    font-size: 0.8rem;
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
     color: var(--color-text-muted);
   }
 

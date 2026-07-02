@@ -30,11 +30,11 @@ const summaryText =
 
 <details class="collapsible-wrapper">
   <summary>
-    <span class="summary-text">{summaryText}</span>
     <span
-      class="i-mdi:chevron-down chevron"
+      class="i-mdi:menu-right chevron"
       aria-hidden="true"
     ></span>
+    <span class="summary-text">{summaryText}</span>
   </summary>
   <div class="collapsible-content">
     <slot />
@@ -47,20 +47,17 @@ const summaryText =
     overflow: clip; /* Use clip instead of hidden to allow focus ring */
     overflow-clip-margin: 4px; /* Allow focus ring to render outside */
     background-color: var(--color-bg-secondary);
-    border: var(--border-1);
-    border-radius: var(--radius-lg);
-  }
-
-  .collapsible-wrapper[open] {
-    border-color: var(--color-primary);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
   }
 
   summary {
     display: flex;
+    gap: 12px;
     align-items: center;
-    justify-content: space-between;
-    padding: 0.8rem 1rem;
-    font-weight: var(--fw-medium);
+    padding: 15px 18px;
+    font-family: var(--font-mono);
+    font-size: 0.875rem;
     color: var(--color-text-heading);
     cursor: pointer;
     list-style: none; /* Remove default marker */
@@ -80,26 +77,22 @@ const summaryText =
     display: none; /* Remove default marker for Safari */
   }
 
-  .collapsible-wrapper[open] > summary {
-    background-color: var(--color-bg-subtle);
-    border-bottom: var(--border-1);
-  }
-
   .summary-text {
     font-family: var(--font-mono);
-    font-size: 0.9rem;
+    font-size: 0.875rem;
   }
 
+  /* Accent ▸ marker on the left; rotates down when open (Lab mockup). */
   .chevron {
     flex-shrink: 0;
-    width: 1.4em;
-    height: 1.4em;
-    color: var(--color-text-muted);
+    width: 0.95em;
+    height: 0.95em;
+    color: var(--color-accent);
     transition: transform var(--dur-2) var(--ease-in-out);
   }
 
   .collapsible-wrapper[open] > summary .chevron {
-    transform: rotate(180deg);
+    transform: rotate(90deg);
   }
 
   @media (prefers-reduced-motion: reduce) {
@@ -110,7 +103,7 @@ const summaryText =
   }
 
   .collapsible-content {
-    padding: 1rem;
+    padding: 0 18px 18px 42px;
   }
 
   /* Handle nested margins gracefully */

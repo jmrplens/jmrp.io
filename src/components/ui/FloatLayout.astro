@@ -126,12 +126,27 @@ const summary =
 
 <style>
   .float {
-    --fl-1: #f0789b;
-    --fl-2: #fbbf24;
-    --fl-3: #58d6df;
-    --fl-on: #0b0b13;
+    /* sign · exponent · mantissa — categorical diagram hues (dark-first). */
+    --fl-1: #e5655b; /* red — sign */
+    --fl-2: #6e8fd6; /* blue — exponent */
+    --fl-3: #f5a623; /* amber — mantissa */
+    --fl-on: var(--color-on-primary);
 
     margin: 1.5rem 0;
+  }
+
+  :root[data-theme="light"] .float {
+    --fl-1: #c13b31;
+    --fl-2: #3f6fc4;
+    --fl-3: #8f5300; /* darkened amber: AA for white on-fill text */
+  }
+
+  @media (prefers-color-scheme: light) {
+    :root:not([data-theme="dark"]) .float {
+      --fl-1: #c13b31;
+      --fl-2: #3f6fc4;
+      --fl-3: #8f5300; /* darkened amber: AA for white on-fill text */
+    }
   }
 
   .float__title {
@@ -144,7 +159,8 @@ const summary =
   .float__bar {
     display: flex;
     overflow: hidden;
-    border-radius: var(--radius-sm, 4px);
+    font-family: var(--font-mono);
+    border-radius: 6px;
   }
 
   .float__seg {
@@ -154,24 +170,23 @@ const summary =
     align-items: center;
     justify-content: center;
     min-width: 2rem;
-    min-height: 3rem;
+    min-height: 2.125rem;
     padding: 0.3rem;
     color: var(--fl-on);
     text-align: center;
   }
 
   .float__seg + .float__seg {
-    border-left: 2px solid var(--color-bg, #000);
+    border-left: 1px solid var(--color-bg-secondary);
   }
 
   .float__seg-name {
-    font-size: 0.82rem;
-    font-weight: var(--fw-semibold, 600);
+    font-size: 0.656rem;
+    font-weight: var(--fw-medium, 500);
   }
 
   .float__seg-w {
-    font-size: 0.68rem;
-    opacity: 85%;
+    font-size: 0.62rem;
   }
 
   .float__bits {
@@ -192,12 +207,14 @@ const summary =
 
   .float__decode {
     margin: 0.6rem 0 0;
-    font-size: 0.85rem;
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
     color: var(--color-text-muted);
   }
 
   .float__decode b {
     font-family: var(--font-mono);
+    font-weight: var(--fw-medium, 500);
     color: var(--color-text-heading);
   }
 

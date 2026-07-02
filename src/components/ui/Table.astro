@@ -116,10 +116,10 @@ const wrapperClasses = [
   .table-wrapper {
     /* Surface tokens — theme-aware via the global Lab tokens. */
     --table-bg: var(--color-bg-secondary);
-    --table-header-bg: var(--color-bg-subtle);
+    --table-header-bg: var(--color-surface-2);
     --table-header-text: var(--color-text-heading);
     --table-row-odd: transparent;
-    --table-row-even: var(--color-bg-subtle);
+    --table-row-even: var(--color-surface-2);
     --table-row-hover: var(--accent-dim);
     --table-border: var(--color-border);
     --table-hair: var(--color-hair);
@@ -144,7 +144,7 @@ const wrapperClasses = [
     overflow: hidden;
     background-color: var(--table-bg);
     border: 1px solid var(--table-border);
-    border-radius: var(--radius-lg);
+    border-radius: var(--radius-md);
   }
 
   /* Dark mode status overrides (surfaces come from the theme tokens above) */
@@ -196,7 +196,7 @@ const wrapperClasses = [
 
   :global(.table-wrapper th),
   :global(.table-wrapper td) {
-    padding: 0.875rem 1rem;
+    padding: 0.75rem 1rem;
     vertical-align: middle;
     text-align: left;
   }
@@ -210,16 +210,16 @@ const wrapperClasses = [
      HEADER STYLES
      =========================================== */
   :global(.table-wrapper thead) {
-    border-bottom: 2px solid var(--table-border);
+    border-bottom: 1px solid var(--table-border);
   }
 
   :global(.table-wrapper thead th) {
     font-family: var(--font-mono);
-    font-size: 0.75rem;
-    font-weight: 600;
-    color: var(--table-header-text);
+    font-size: 0.72rem;
+    font-weight: 500;
+    color: var(--color-text-muted);
     text-transform: uppercase;
-    letter-spacing: 0.08em;
+    letter-spacing: 0.1em;
     background-color: var(--table-header-bg);
   }
 

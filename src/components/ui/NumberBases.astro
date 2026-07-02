@@ -46,9 +46,9 @@ const binPadded = binFull.padStart(Math.ceil(binFull.length / 4) * 4, "0");
 const nibbles = binPadded.match(/.{4}/g) ?? [binPadded];
 
 const baseRows = [
-  { base: t("components.numberBases.hex"), val: hex },
-  { base: t("components.numberBases.dec"), val: dec },
-  { base: t("components.numberBases.oct"), val: oct },
+  { base: t("components.numberBases.hex"), val: hex, accent: true },
+  { base: t("components.numberBases.dec"), val: dec, accent: false },
+  { base: t("components.numberBases.oct"), val: oct, accent: false },
 ];
 
 const summary =
@@ -70,7 +70,9 @@ const summary =
       baseRows.map((r) => (
         <div class="nbases__row">
           <dt class="nbases__base">{r.base}</dt>
-          <dd class="nbases__val">{r.val}</dd>
+          <dd class:list={["nbases__val", r.accent && "nbases__val--accent"]}>
+            {r.val}
+          </dd>
         </div>
       ))
     }
@@ -100,41 +102,55 @@ const summary =
   .nbases__grid {
     display: flex;
     flex-direction: column;
-    gap: 0.4rem;
     margin: 0;
+    overflow: hidden;
+    background: var(--color-bg-secondary);
+    border: var(--border-1);
+    border-radius: var(--radius-md, 8px);
   }
 
   .nbases__row {
-    display: grid;
-    grid-template-columns: 3rem 1fr;
+    display: flex;
     column-gap: 0.75rem;
     align-items: baseline;
+    justify-content: space-between;
+    padding: 0.625rem 1rem;
+    border-bottom: 1px solid var(--color-hair);
+  }
+
+  .nbases__row:last-child {
+    border-bottom: 0;
   }
 
   .nbases__base {
+    font-family: var(--font-mono);
     font-size: 0.8rem;
-    font-weight: var(--fw-semibold, 600);
+    font-weight: var(--fw-medium, 500);
     color: var(--color-text-muted);
-    text-transform: uppercase;
+    text-transform: lowercase;
   }
 
   .nbases__val {
     margin: 0;
     font-family: var(--font-mono);
-    font-size: 0.95rem;
+    font-size: 0.8125rem;
     color: var(--color-text-heading);
+    text-align: right;
+  }
+
+  .nbases__val--accent {
+    color: var(--color-accent);
   }
 
   .nbases__bin {
     display: flex;
     flex-wrap: wrap;
-    gap: 0.5rem;
+    gap: 0.4rem;
+    justify-content: flex-end;
   }
 
   .nbases__nibble {
-    padding: 0.1rem 0.4rem;
-    background: var(--color-bg-subtle);
-    border-radius: var(--radius-sm, 4px);
+    padding: 0;
   }
 
   .nbases__caption {

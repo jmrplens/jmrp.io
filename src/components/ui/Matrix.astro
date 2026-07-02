@@ -130,8 +130,6 @@ const summary =
 
 <style>
   .matrix {
-    --mx-hi: color-mix(in srgb, var(--color-primary) 28%, transparent);
-
     margin: 1.5rem 0;
   }
 
@@ -144,48 +142,54 @@ const summary =
 
   .matrix__scroll {
     overflow-x: auto;
+    background: var(--color-bg-secondary);
+    border: var(--border-1);
+    border-radius: var(--radius-md);
   }
 
   .matrix__table {
+    width: 100%;
+    font-family: var(--font-mono);
     font-size: 0.82rem;
     border-collapse: collapse;
   }
 
-  .matrix__corner {
-    padding: 0.35rem 0.6rem;
-    font-weight: var(--fw-semibold, 600);
+  .matrix__corner,
+  .matrix__colhead {
+    padding: 0.65rem 1rem;
+    font-weight: var(--fw-medium, 500);
     color: var(--color-text-muted);
     text-align: left;
-  }
-
-  .matrix__colhead,
-  .matrix__rowhead {
-    padding: 0.35rem 0.6rem;
-    font-weight: var(--fw-semibold, 600);
-    color: var(--color-text-heading);
     white-space: nowrap;
-  }
-
-  .matrix__colhead {
-    text-align: center;
+    background: var(--color-surface-2);
+    border-bottom: 1px solid var(--color-hair);
   }
 
   .matrix__rowhead {
-    text-align: right;
+    padding: 0.65rem 1rem;
+    font-weight: var(--fw-medium, 500);
+    color: var(--color-text-heading);
+    text-align: left;
+    white-space: nowrap;
+    border-bottom: 1px solid var(--color-hair);
   }
 
   .matrix__cell {
-    padding: 0.35rem 0.6rem;
+    padding: 0.65rem 1rem;
     color: var(--color-text);
-    text-align: center;
+    text-align: left;
     white-space: nowrap;
-    border: var(--border-1);
+    border-bottom: 1px solid var(--color-hair);
   }
 
   .matrix__cell--hi {
-    font-weight: var(--fw-semibold, 600);
-    color: var(--color-text-heading);
-    background: var(--mx-hi);
+    font-weight: var(--fw-medium, 500);
+    color: var(--color-accent);
+    background: var(--accent-dim);
+  }
+
+  .matrix__table tbody tr:last-child :where(td, th) {
+    border-bottom: 0;
   }
 
   .matrix__caption {

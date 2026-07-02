@@ -72,58 +72,66 @@ if (import.meta.env.DEV && alternativeUrl && !alternative) {
 </aside>
 
 <style>
+  /* Flat, horizontal deprecation notice: solid danger pill on the left, message
+     filling the rest. Border + fill are danger-tinted; the danger token is
+     AA-safe in both themes (light/dark handled centrally in global.css). */
   .deprecated-notice {
-    padding: var(--space-md);
+    display: flex;
+    gap: 14px;
+    align-items: center;
+    padding: 14px 18px;
     margin: var(--space-md-lg) 0;
-    overflow: hidden;
-    background: var(--color-bg-secondary);
-    border: 1px solid var(--color-hair);
-    border-left: 4px solid #ef4444;
+    background: color-mix(
+      in srgb,
+      var(--color-danger) 7%,
+      var(--color-bg-secondary)
+    );
+    border: 1px solid
+      color-mix(in srgb, var(--color-danger) 35%, var(--color-border));
     border-radius: var(--radius-md);
-    box-shadow: var(--sh-card);
   }
 
-  /* Header collapses into a Lab status pill: icon (shape cue) + mono label. */
+  /* Solid status pill: icon (shape cue) + mono uppercase label on danger. */
   .dn-header {
     display: inline-flex;
+    flex-shrink: 0;
     gap: var(--space-xs);
     align-items: center;
-    padding: 0.1875rem 0.5rem;
-    margin-bottom: var(--space-sm);
-    background: rgb(239 68 68 / 15%);
-    border: 1px solid rgb(239 68 68 / 32%);
+    padding: 4px 9px;
+    background: var(--color-danger);
     border-radius: var(--radius-sm);
   }
 
   .dn-icon {
-    width: 15px;
-    height: 15px;
-    color: #b91c1c;
+    width: 13px;
+    height: 13px;
+    color: var(--color-on-primary);
   }
 
   .dn-title {
     font-family: var(--font-mono);
-    font-size: 0.6875rem;
-    font-weight: var(--fw-semibold);
-    color: #b91c1c;
+    font-size: 0.6563rem; /* 10.5px */
+    font-weight: var(--fw-medium);
+    color: var(--color-on-primary);
     text-transform: uppercase;
-    letter-spacing: 0.1em;
+    letter-spacing: 0.06em;
   }
 
   .dn-content {
-    padding: 0;
-  }
-
-  .dn-message {
-    margin: 0 0 0.5rem;
+    flex: 1;
+    font-size: 0.9063rem; /* 14.5px */
+    line-height: 1.5;
     color: var(--color-text);
   }
 
+  .dn-message {
+    margin: 0;
+  }
+
   .dn-message code {
-    padding: 0.125rem 0.375rem;
-    color: #ef4444;
-    background: rgb(239 68 68 / 15%);
-    border-radius: var(--radius-sm);
+    font-family: var(--font-mono);
+    font-size: 0.9em;
+    color: var(--color-text-heading);
   }
 
   .dn-removal {
@@ -134,21 +142,18 @@ if (import.meta.env.DEV && alternativeUrl && !alternative) {
     display: flex;
     gap: 0.5rem;
     align-items: baseline;
-    margin: 0;
-    color: var(--color-text);
+    margin: 0.375rem 0 0;
   }
 
   .dn-label {
-    font-size: 0.85rem;
     font-weight: var(--fw-medium);
     color: var(--color-text-muted);
   }
 
   .dn-alternative code {
-    padding: 0.125rem 0.375rem;
-    color: #047857;
-    background: rgb(16 185 129 / 15%);
-    border-radius: var(--radius-sm);
+    font-family: var(--font-mono);
+    font-size: 0.9em;
+    color: var(--color-success);
   }
 
   .dn-alternative a {
@@ -165,29 +170,5 @@ if (import.meta.env.DEV && alternativeUrl && !alternative) {
     outline: 2px solid currentcolor;
     outline-offset: 2px;
     border-radius: var(--radius-sm);
-  }
-
-  /* Dark mode: lift reds/greens to the 400 scale for WCAG AA (≥4.5:1) on the
-     neutral surface. Mirrors StateNotice's dark-first override pattern. */
-  :root[data-theme="dark"] .dn-icon,
-  :root[data-theme="dark"] .dn-title,
-  :root[data-theme="dark"] .dn-message code {
-    color: #f87171; /* red-400, ~5.5:1 */
-  }
-
-  :root[data-theme="dark"] .dn-alternative code {
-    color: #34d399; /* emerald-400, ~7.2:1 */
-  }
-
-  @media (prefers-color-scheme: dark) {
-    :root:not([data-theme]) .dn-icon,
-    :root:not([data-theme]) .dn-title,
-    :root:not([data-theme]) .dn-message code {
-      color: #f87171;
-    }
-
-    :root:not([data-theme]) .dn-alternative code {
-      color: #34d399;
-    }
   }
 </style>

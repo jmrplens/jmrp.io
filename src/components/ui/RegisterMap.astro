@@ -245,16 +245,43 @@ const summary =
 
 <style>
   .register-map {
-    --rm-1: #b389f5;
-    --rm-2: #58d6df;
-    --rm-3: #fbbf24;
-    --rm-4: #6ee7a8;
-    --rm-5: #f0789b;
-    --rm-6: #7aa2ff;
-    --rm-on: #0b0b13;
-    --rm-track-bg: var(--color-bg-subtle, rgb(255 255 255 / 5%));
+    /* Categorical data-viz palette (dark-first); light values overridden below. */
+    --rm-1: #f5a623; /* amber */
+    --rm-2: #6e8fd6; /* blue */
+    --rm-3: #46b8a6; /* teal */
+    --rm-4: #b389f5; /* violet */
+    --rm-5: #e0739f; /* pink */
+    --rm-6: #57c98a; /* green */
+    --rm-on: var(--color-on-primary);
+
+    /* Diagonal hatch marks "reserved" bits without relying on colour alone. */
+    --rm-stripe: repeating-linear-gradient(
+      45deg,
+      var(--color-border) 0 6px,
+      var(--color-hair) 6px 12px
+    );
 
     margin: 1.5rem 0;
+  }
+
+  :root[data-theme="light"] .register-map {
+    --rm-1: #b26a00;
+    --rm-2: #3f6fc4;
+    --rm-3: #1f7e6e;
+    --rm-4: #6d45c4;
+    --rm-5: #bc3f76;
+    --rm-6: #197a43;
+  }
+
+  @media (prefers-color-scheme: light) {
+    :root:not([data-theme="dark"]) .register-map {
+      --rm-1: #b26a00;
+      --rm-2: #3f6fc4;
+      --rm-3: #1f7e6e;
+      --rm-4: #6d45c4;
+      --rm-5: #bc3f76;
+      --rm-6: #197a43;
+    }
   }
 
   .register-map__title {
@@ -277,6 +304,7 @@ const summary =
   }
 
   .register-map__bitnum {
+    font-family: var(--font-mono);
     font-size: 0.7rem;
     color: var(--color-text-muted);
     text-align: center;
@@ -287,29 +315,30 @@ const summary =
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    min-height: 2.6rem;
+    min-height: 2.375rem;
     padding: 0.3rem 0.2rem;
     overflow: hidden;
+    font-family: var(--font-mono);
     color: var(--rm-on);
-    border-radius: var(--radius-sm, 4px);
+    border-radius: 6px;
   }
 
   .register-map__field--reserved {
     color: var(--color-text-muted);
-    background: var(--rm-track-bg);
+    background: var(--rm-stripe);
   }
 
   .register-map__field-name {
     max-width: 100%;
     overflow: hidden;
     text-overflow: ellipsis;
-    font-size: 0.8rem;
-    font-weight: var(--fw-semibold, 600);
+    font-size: 0.656rem;
+    font-weight: var(--fw-medium, 500);
     white-space: nowrap;
   }
 
   .register-map__field-bits {
-    font-size: 0.68rem;
+    font-size: 0.62rem;
     opacity: 85%;
   }
 
@@ -326,7 +355,8 @@ const summary =
     display: inline-flex;
     column-gap: 0.4rem;
     align-items: baseline;
-    font-size: 0.8rem;
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
     color: var(--color-text-muted);
   }
 
@@ -338,9 +368,9 @@ const summary =
     border-radius: 2px;
   }
 
-  /* Matches the muted "reserved" field boxes — bordered so it reads on dark. */
+  /* Matches the striped "reserved" field boxes. */
   .register-map__swatch--reserved {
-    background: var(--rm-track-bg);
+    background: var(--rm-stripe);
     border: 1px solid var(--color-border);
   }
 

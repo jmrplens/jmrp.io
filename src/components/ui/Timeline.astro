@@ -64,22 +64,20 @@ function parseMarkdownLinks(text: string): string {
       const label = typeLabel[eventType];
       return (
         <li class={`tl-event ${typeClass}`}>
-          <div class="tl-marker">
-            <span
-              class="tl-dot"
-              aria-hidden="true"
-            />
-          </div>
+          <span
+            class="tl-dot"
+            aria-hidden="true"
+          />
+          <time
+            class="tl-date"
+            datetime={event.date}
+          >
+            {event.date}
+          </time>
           <div class="tl-content">
-            <div class="tl-header">
-              <time
-                class="tl-date"
-                datetime={event.date}
-              >
-                {event.date}
-              </time>
-              {label && <span class="tl-type">{label}</span>}
+            <div class="tl-title-row">
               <span class="tl-title">{event.title}</span>
+              {label && <span class="tl-type">{label}</span>}
             </div>
             {event.description && (
               <p
@@ -96,91 +94,68 @@ function parseMarkdownLinks(text: string): string {
 
 <style>
   .timeline {
-    --tl-dot-size: 10px;
-    --tl-line-width: 2px;
-    --tl-marker-col: 1rem;
-    --tl-dot-offset: 0.35rem;
+    --tl-dot-size: 9px;
+    --tl-dot-top: 0.25rem;
 
-    position: relative;
     display: flex;
     flex-direction: column;
-    gap: 0;
-    padding: 0;
-    margin: 1rem 0;
+    padding: 1.375rem 1.125rem 0.5rem;
+    margin: 1.5rem 0;
     list-style: none;
+    background: var(--color-bg-secondary);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
   }
 
+  /* Each row carries the continuous rail (border-left) and hangs its dot over
+     that edge; the date sits in its own column, content in the next. */
   .tl-event {
+    position: relative;
     display: grid;
-    grid-template-columns: var(--tl-marker-col) 1fr;
-    gap: 0.75rem;
-    padding: 0 0 1rem;
-    margin: 0;
+    grid-template-columns: 4rem 1fr;
+    gap: 1.125rem;
+    padding-bottom: 1.25rem;
+    padding-left: 1.5rem;
+    margin-left: 0.5rem;
+    border-left: 1px solid var(--color-hair);
   }
 
   .tl-event:last-child {
-    padding-bottom: 0;
+    padding-bottom: 0.25rem;
   }
 
-  /* Marker column */
-  .tl-marker {
-    position: relative;
-    display: flex;
-    justify-content: center;
-    padding-top: var(--tl-dot-offset);
-  }
-
-  /* Connecting line, drawn per-row on the marker cell (a sibling of the
-     content) rather than as a ::before on the .timeline container. Keeping it
-     off the text's ancestor chain lets axe-core resolve the background of the
-     text/links inside and verify their contrast (it was reported as
-     `color-contrast` incomplete otherwise). Each segment runs from this dot's
-     centre to the next dot's centre; hidden on the last row. */
-  .tl-marker::before {
-    position: absolute;
-    top: calc(var(--tl-dot-offset) + var(--tl-dot-size) / 2);
-    bottom: calc(-1rem - var(--tl-dot-offset) - var(--tl-dot-size) / 2);
-    left: calc(50% - var(--tl-line-width) / 2);
-    width: var(--tl-line-width);
-    content: "";
-    background: var(--color-border);
-  }
-
-  .tl-event:last-child .tl-marker::before {
-    display: none;
-  }
-
-  /* Small colored dot */
+  /* Dot: default is a small grey marker; typed events get a larger dot with a
+     coloured halo. Position is graphical (≥3:1) and pairs with the type label
+     so state is never colour-only. */
   .tl-dot {
+    position: absolute;
+    top: var(--tl-dot-top);
+    left: calc(var(--tl-dot-size) / -2);
     z-index: 1;
     width: var(--tl-dot-size);
     height: var(--tl-dot-size);
-    background: var(--tl-accent, var(--color-text-muted));
+    background: var(--tl-accent, var(--color-border));
     border-radius: 50%;
   }
 
-  /* Content */
+  .tl-date {
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+    font-weight: var(--fw-medium);
+    line-height: 1.4;
+    color: var(--color-text-muted);
+  }
+
   .tl-content {
     min-width: 0;
   }
 
-  .tl-header {
+  .tl-title-row {
     display: flex;
     flex-wrap: wrap;
     gap: 0.375rem 0.625rem;
     align-items: baseline;
     line-height: 1.4;
-  }
-
-  .tl-date {
-    flex-shrink: 0;
-    padding: 0.0625rem 0.375rem;
-    font-family: var(--font-mono);
-    font-size: 0.7rem;
-    font-weight: var(--fw-medium);
-    color: var(--color-text);
-    background: var(--tl-bg-muted, var(--color-bg-subtle));
-    border-radius: 0.1875rem;
   }
 
   .tl-type {
@@ -197,16 +172,16 @@ function parseMarkdownLinks(text: string): string {
   }
 
   .tl-title {
-    font-size: 0.9rem;
-    font-weight: var(--fw-semibold);
+    font-size: 0.95rem;
+    font-weight: var(--fw-medium);
     color: var(--color-text-heading);
   }
 
   .tl-description {
-    margin: 0.25rem 0 0;
-    font-size: 0.825rem;
+    margin: 0.125rem 0 0;
+    font-size: 0.85rem;
     line-height: 1.5;
-    color: var(--color-text-muted);
+    color: var(--color-text);
   }
 
   .tl-description a {
@@ -225,11 +200,10 @@ function parseMarkdownLinks(text: string): string {
   }
 
   /*
-   * Type variants — Lab amber + teal only. The dot (graphical, ≥3:1) and the
-   * `tl-type` label text carry the semantic; chip text uses the heading/body
-   * tokens so it stays AA on every tint in both themes. `warning` and
-   * `milestone` share amber but are told apart by their label text and the
-   * milestone dot's ring.
+   * Type variants — semantic hues. The dot colour + halo (graphical, ≥3:1) and
+   * the `tl-type` label text both carry the state; chip text uses the heading
+   * token so it stays AA on every tint in both themes. Typed dots grow to 11px
+   * and gain a 3px halo so they read as emphasized against the plain default.
    */
   .tl-default {
     --tl-accent: var(--color-text-muted);
@@ -237,27 +211,36 @@ function parseMarkdownLinks(text: string): string {
   }
 
   .tl-success {
-    --tl-accent: var(--teal);
-    --tl-bg-muted: color-mix(in srgb, var(--teal) 14%, transparent);
+    --tl-accent: var(--color-success);
+    --tl-bg-muted: color-mix(in srgb, var(--color-success) 16%, transparent);
   }
 
   .tl-warning {
-    --tl-accent: var(--color-primary);
-    --tl-bg-muted: var(--accent-dim);
+    --tl-accent: var(--color-warning);
+    --tl-bg-muted: color-mix(in srgb, var(--color-warning) 16%, transparent);
   }
 
   .tl-milestone {
-    --tl-accent: var(--color-primary);
-    --tl-bg-muted: var(--accent-dim);
+    --tl-accent: var(--color-info);
+    --tl-bg-muted: color-mix(in srgb, var(--color-info) 16%, transparent);
   }
 
+  .tl-success .tl-dot,
+  .tl-warning .tl-dot,
   .tl-milestone .tl-dot {
-    box-shadow: 0 0 0 3px var(--accent-line);
+    --tl-dot-size: 11px;
+
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--tl-accent) 25%, transparent);
   }
 
   /* Responsive */
   @media (width <= 480px) {
-    .tl-header {
+    .tl-event {
+      grid-template-columns: 3.25rem 1fr;
+      gap: 0.75rem;
+    }
+
+    .tl-title-row {
       flex-direction: column;
       gap: 0.125rem;
       align-items: flex-start;

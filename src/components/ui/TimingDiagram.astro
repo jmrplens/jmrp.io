@@ -90,7 +90,12 @@ interface Rendered {
   yName: number;
   path: string;
   boxes: Box[];
+  color: string;
 }
+
+// Per-signal stroke colour, cycling accent → teal → info (matches the SPI
+// SCLK/MOSI/CS palette in the design system). Theme-aware via design tokens.
+const WIRE_COLORS = ["var(--color-accent)", "var(--teal)", "var(--color-info)"];
 
 type Base = { kind: Kind; val: string; label: string | null };
 
@@ -201,7 +206,14 @@ function buildRow(sig: Signal, si: number): Rendered {
     }
   }
 
-  return { name: sig.name, top: yHi, yName: yMid + 4, path, boxes };
+  return {
+    name: sig.name,
+    top: yHi,
+    yName: yMid + 4,
+    path,
+    boxes,
+    color: WIRE_COLORS[si % WIRE_COLORS.length],
+  };
 }
 
 const rows: Rendered[] = signals.map((sig, si) => buildRow(sig, si));
@@ -257,7 +269,7 @@ const summary =
       </defs>
       {
         rows.map((r) => (
-          <g>
+          <g style={`--wire:${r.color}`}>
             <text
               x={PAD_X}
               y={r.yName}
@@ -273,7 +285,7 @@ const summary =
                   width={b.w}
                   height={ROW_H}
                   rx="3"
-                  fill={b.fill ?? `url(#${uid}-hatch)`}
+                  fill={b.fill ? "none" : `url(#${uid}-hatch)`}
                   class={b.fill ? "timing__data" : "timing__x"}
                 />
                 {b.label && (
@@ -314,7 +326,11 @@ const summary =
   }
 
   .timing__scroll {
+    padding: 18px;
     overflow-x: auto;
+    background: var(--color-bg-secondary);
+    border: var(--border-1);
+    border-radius: var(--radius-md);
   }
 
   .timing__svg {
@@ -324,27 +340,31 @@ const summary =
 
   .timing__wire {
     fill: none;
-    stroke: var(--color-text);
+    stroke: var(--wire, var(--color-text));
     stroke-width: 2;
     stroke-linejoin: round;
   }
 
   .timing__name {
     font-family: var(--font-mono);
-    font-size: 13px;
-    fill: var(--color-text-heading);
+    font-size: 11px;
+    fill: var(--color-text-muted);
   }
 
+  /* Data bus units: an open envelope in the signal's own colour (not a filled
+     block), echoing the SPI MOSI/MISO bus style in the mockup. */
   .timing__data {
-    stroke: var(--color-bg);
-    stroke-width: 1;
+    fill: none;
+    stroke: var(--wire, var(--color-text));
+    stroke-width: 2;
+    stroke-linejoin: round;
   }
 
   .timing__data-label {
     font-family: var(--font-mono);
-    font-size: 12px;
-    font-weight: 600;
-    fill: #0b0b13;
+    font-size: 11px;
+    font-weight: var(--fw-medium, 500);
+    fill: var(--wire, var(--color-text-heading));
   }
 
   .timing__x-bg {

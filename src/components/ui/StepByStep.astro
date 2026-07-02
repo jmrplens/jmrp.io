@@ -43,12 +43,18 @@ const uniqueId = randomBytes(4).toString("hex");
 </section>
 
 <style is:global>
+  /* Flat bordered card holding a numbered step list (Lab mockup):
+     each step gets a 26px accent circle badge on the left. */
   .step-by-step {
+    padding: 18px;
     margin: 1.5rem 0;
+    background: var(--color-bg-secondary);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
   }
 
   .step-by-step .sbs-title {
-    margin-bottom: 1rem;
+    margin-bottom: 14px;
     font-family: var(--font-display);
     font-size: 1.1rem;
     font-weight: var(--fw-bold);
@@ -57,29 +63,17 @@ const uniqueId = randomBytes(4).toString("hex");
   }
 
   .step-by-step .sbs-steps {
-    position: relative;
     padding: 0;
     margin: 0;
     list-style: none;
     counter-reset: step;
   }
 
-  /* Continuous timeline line */
-  .step-by-step .sbs-steps::before {
-    position: absolute;
-    top: 6px;
-    bottom: 6px;
-    left: 5px;
-    width: 2px;
-    content: "";
-    background: var(--color-hair);
-  }
-
   /* Only direct children get step styling */
   .step-by-step .sbs-steps > li {
     position: relative;
     display: block !important;
-    padding: 0 0 1.25rem 32px !important;
+    padding: 3px 0 16px 40px !important;
     margin: 0 !important;
     counter-increment: step;
   }
@@ -88,34 +82,37 @@ const uniqueId = randomBytes(4).toString("hex");
     padding-bottom: 0 !important;
   }
 
-  /* Timeline dot - small and subtle */
+  /* Numbered accent circle badge */
   .step-by-step .sbs-steps > li::before {
     position: absolute;
-    top: 6px;
+    top: 0;
     left: 0;
-    z-index: 1;
-    width: 12px;
-    height: 12px;
-    content: "";
-    background: var(--color-bg);
-    border: 2px solid var(--color-primary);
+    display: grid;
+    place-items: center;
+    width: 26px;
+    height: 26px;
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    color: var(--color-accent);
+    content: counter(step);
+    background: var(--accent-dim);
+    border: 1px solid var(--color-accent);
     border-radius: 50%;
-    box-shadow: 0 0 0 3px var(--color-bg);
   }
 
-  /* No separate connector line - using parent's continuous line */
   .step-by-step .sbs-steps > li::after {
     display: none;
   }
 
-  /* First paragraph - title styling with step number */
+  /* First paragraph */
   .step-by-step .sbs-steps > li > p:first-of-type {
     margin: 0 !important;
-    font-size: 0.9rem;
+    font-size: 0.9063rem;
     line-height: 1.6;
+    color: var(--color-text);
   }
 
-  /* Title styling - works for both p>strong and direct strong */
+  /* Optional bold lead-in title */
   .step-by-step .sbs-steps > li > p:first-of-type strong:first-child,
   .step-by-step .sbs-steps > li > strong:first-child {
     display: inline;
@@ -124,32 +121,10 @@ const uniqueId = randomBytes(4).toString("hex");
     color: var(--color-text-heading);
   }
 
-  /* Step number badge before title - both selector patterns */
-  .step-by-step .sbs-steps > li > p:first-of-type strong:first-child::before,
-  .step-by-step .sbs-steps > li > strong:first-child::before {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    min-width: 1.25rem;
-    height: 1.25rem;
-    padding: 0 0.35rem;
-    margin-right: 0.5rem;
-    font-family: var(--font-mono);
-    font-size: 0.75rem;
-    font-weight: var(--fw-bold);
-    vertical-align: baseline;
-    color: var(--color-primary);
-    content: counter(step);
-    background: var(--accent-dim);
-    border: 1px solid var(--accent-line);
-    border-radius: var(--radius-sm);
-  }
-
-  /* Subsequent paragraphs - aligned with title text */
+  /* Subsequent paragraphs */
   .step-by-step .sbs-steps > li > p:not(:first-of-type) {
-    padding-left: 1.75rem; /* aligns with title (badge width + margin) */
     margin: 0.25rem 0 0 !important;
-    font-size: 0.9rem;
+    font-size: 0.9063rem;
     line-height: 1.6;
     color: var(--color-text);
   }
@@ -167,7 +142,7 @@ const uniqueId = randomBytes(4).toString("hex");
   /* Nested lists inside steps - restore normal list styling */
   .step-by-step .sbs-steps > li ul,
   .step-by-step .sbs-steps > li ol {
-    padding-left: calc(1.75rem + 1.25rem); /* badge offset + list indent */
+    padding-left: 1.25rem;
     margin: 0.5rem 0 0;
   }
 

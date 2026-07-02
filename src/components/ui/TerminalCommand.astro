@@ -104,20 +104,13 @@ if (ariaLabel) {
   class="terminal-command-wrapper copy-container"
   data-testid={`terminal-${contentHash}`}
 >
-  <div class="terminal-header">
-    <span
-      class="terminal-mark"
-      aria-hidden="true"
-      >❯</span
-    >
-    <div class="action-area">
-      <CopyButton
-        content={rawContent}
-        ariaLabel={t("components.terminal.copyCommand", {
-          command: finalAriaLabel,
-        })}
-      />
-    </div>
+  <div class="action-area">
+    <CopyButton
+      content={rawContent}
+      ariaLabel={t("components.terminal.copyCommand", {
+        command: finalAriaLabel,
+      })}
+    />
   </div>
 
   {
@@ -168,28 +161,16 @@ if (ariaLabel) {
     flex-direction: column;
     margin: 1.5rem 0;
     overflow: hidden;
-    background-color: var(--color-bg-secondary);
+    background-color: var(--color-bg);
     border: var(--border-1);
     border-radius: var(--radius-md);
   }
 
-  .terminal-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    min-height: 36px;
-    padding: 0.5rem 0.75rem;
-    background-color: var(--color-surface-2);
-    border-bottom: 1px solid var(--color-hair);
-  }
-
-  .terminal-mark {
-    font-family: var(--font-mono);
-    font-size: 0.9rem;
-    font-weight: var(--fw-semibold);
-    line-height: 1;
-    color: var(--teal);
-    user-select: none;
+  .action-area {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    z-index: 10;
   }
 
   /*
@@ -211,13 +192,14 @@ if (ariaLabel) {
     width: 100%; /* Explicit width constraint */
     min-width: 0;
     max-width: 100%; /* Ensure it doesn't overflow parent calculation */
-    padding: 0.75rem 1rem;
+    padding: 0.9375rem 1rem; /* 15px 16px */
+    padding-right: 2.75rem; /* room for absolute copy button */
     margin: 0; /* Reset pre default margin */
     overflow-x: auto;
 
     /* Typography */
     font-family: var(--font-mono);
-    font-size: 0.9rem;
+    font-size: 0.7813rem; /* 12.5px */
     line-height: 1.6;
 
     /* Mobile Fix: Prevent font inflation */
@@ -239,10 +221,10 @@ if (ariaLabel) {
 
   .command-line {
     display: flex;
-    align-items: baseline;
+    align-items: flex-start;
     min-height: 1.6em;
     font-family: var(--font-mono);
-    font-size: 0.9rem;
+    font-size: 0.7813rem; /* 12.5px */
     line-height: 1.6;
     color: var(--color-text);
     white-space: pre;
@@ -253,7 +235,7 @@ if (ariaLabel) {
 
   .prompt {
     flex-shrink: 0;
-    margin-right: 0.75rem;
+    margin-right: 0.625rem; /* 10px */
     font-family: inherit;
     font-weight: var(--fw-bold);
     color: var(--teal);

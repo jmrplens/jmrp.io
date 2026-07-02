@@ -142,21 +142,22 @@ const summary =
         const widthPct = (seg.bytes / totalSize) * 100;
         return (
           <span
-            class:list={[
-              "struct-packing__seg",
-              seg.padding && "struct-packing__seg--pad",
-            ]}
-            style={
-              seg.padding
-                ? `flex-grow:${widthPct.toFixed(3)}`
-                : `flex-grow:${widthPct.toFixed(3)};background-color:${seg.color}`
-            }
+            class="struct-packing__seg"
+            style={`flex-grow:${widthPct.toFixed(3)}`}
             title={`${seg.label}: ${seg.detail} (@${seg.offset})`}
           >
+            <span
+              class:list={[
+                "struct-packing__bar",
+                seg.padding && "struct-packing__bar--pad",
+              ]}
+              style={seg.padding ? undefined : `background-color:${seg.color}`}
+            >
+              {widthPct >= 12 && (
+                <span class="struct-packing__name">{seg.label}</span>
+              )}
+            </span>
             <span class="struct-packing__offset">@{seg.offset}</span>
-            {widthPct >= 12 && (
-              <span class="struct-packing__name">{seg.label}</span>
-            )}
           </span>
         );
       })
@@ -222,16 +223,44 @@ const summary =
 
 <style>
   .struct-packing {
-    --sp-1: #b389f5;
-    --sp-2: #58d6df;
-    --sp-3: #fbbf24;
-    --sp-4: #6ee7a8;
-    --sp-5: #f0789b;
-    --sp-6: #7aa2ff;
-    --sp-on: #0b0b13;
-    --sp-pad-bg: var(--color-bg-subtle, rgb(255 255 255 / 5%));
+    /* Categorical data-viz palette (dark-first); light values overridden below. */
+    --sp-1: #f5a623; /* amber */
+    --sp-2: #6e8fd6; /* blue */
+    --sp-3: #46b8a6; /* teal */
+    --sp-4: #b389f5; /* violet */
+    --sp-5: #e0739f; /* pink */
+    --sp-6: #57c98a; /* green */
+    --sp-on: var(--color-on-primary);
+
+    /* Diagonal hatch marks alignment padding (not colour alone). */
+    --sp-pad-bg: var(--color-surface-2);
+    --sp-stripe: repeating-linear-gradient(
+      45deg,
+      var(--color-border) 0 6px,
+      var(--color-hair) 6px 12px
+    );
 
     margin: 1.5rem 0;
+  }
+
+  :root[data-theme="light"] .struct-packing {
+    --sp-1: #8f5300; /* darkened amber: AA for white on-fill name text */
+    --sp-2: #3f6fc4;
+    --sp-3: #1f7e6e;
+    --sp-4: #6d45c4;
+    --sp-5: #bc3f76;
+    --sp-6: #197a43;
+  }
+
+  @media (prefers-color-scheme: light) {
+    :root:not([data-theme="dark"]) .struct-packing {
+      --sp-1: #8f5300; /* darkened amber: AA for white on-fill name text */
+      --sp-2: #3f6fc4;
+      --sp-3: #1f7e6e;
+      --sp-4: #6d45c4;
+      --sp-5: #bc3f76;
+      --sp-6: #197a43;
+    }
   }
 
   .struct-packing__title {
@@ -244,52 +273,54 @@ const summary =
   .struct-packing__track {
     display: flex;
     overflow: hidden;
-    border-radius: var(--radius-sm, 4px);
+    font-family: var(--font-mono);
+    border-radius: 6px;
   }
 
+  /* Wrapper column: contiguous coloured bar on top, offset label below. */
   .struct-packing__seg {
     display: flex;
     flex-basis: 0;
     flex-direction: column;
-    align-items: center;
-    justify-content: center;
+    align-items: stretch;
     min-width: 2.2rem;
-    min-height: 3rem;
-    padding: 0.3rem 0.25rem;
-    overflow: hidden;
-    color: var(--sp-on);
     text-align: center;
   }
 
-  .struct-packing__seg + .struct-packing__seg {
-    border-left: 2px solid var(--color-bg, #000);
+  .struct-packing__bar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 2rem;
+    padding: 0.3rem 0.25rem;
+    overflow: hidden;
+    color: var(--sp-on);
   }
 
-  .struct-packing__seg--pad {
+  .struct-packing__seg + .struct-packing__seg .struct-packing__bar {
+    border-left: 1px solid var(--color-bg-secondary);
+  }
+
+  .struct-packing__bar--pad {
     color: var(--color-text-muted);
     background-color: var(--sp-pad-bg);
-    background-image: repeating-linear-gradient(
-      45deg,
-      rgb(127 127 127 / 25%) 0,
-      rgb(127 127 127 / 25%) 5px,
-      transparent 5px,
-      transparent 10px
-    );
+    background-image: var(--sp-stripe);
   }
 
+  /* Offset meta sits below the fill, muted on the card surface (AA-safe). */
   .struct-packing__offset {
-    align-self: flex-start;
+    margin-top: 5px;
     font-size: 0.65rem;
-    font-weight: var(--fw-semibold, 600);
-    opacity: 75%;
+    font-weight: var(--fw-medium, 500);
+    color: var(--color-text-muted);
   }
 
   .struct-packing__name {
     max-width: 100%;
     overflow: hidden;
     text-overflow: ellipsis;
-    font-size: 0.8rem;
-    font-weight: var(--fw-semibold, 600);
+    font-size: 0.656rem;
+    font-weight: var(--fw-medium, 500);
     white-space: nowrap;
   }
 
@@ -306,7 +337,8 @@ const summary =
     display: inline-flex;
     column-gap: 0.4rem;
     align-items: baseline;
-    font-size: 0.8rem;
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
     color: var(--color-text-muted);
   }
 
@@ -320,13 +352,8 @@ const summary =
 
   .struct-packing__swatch--pad {
     background-color: var(--sp-pad-bg);
-    background-image: repeating-linear-gradient(
-      45deg,
-      rgb(127 127 127 / 35%) 0,
-      rgb(127 127 127 / 35%) 3px,
-      transparent 3px,
-      transparent 6px
-    );
+    background-image: var(--sp-stripe);
+    border: 1px solid var(--color-border);
   }
 
   .struct-packing__legend-text b {
@@ -336,7 +363,8 @@ const summary =
 
   .struct-packing__summary {
     margin: 0.7rem 0 0;
-    font-size: 0.85rem;
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
     color: var(--color-text-muted);
   }
 

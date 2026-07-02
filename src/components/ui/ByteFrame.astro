@@ -99,18 +99,22 @@ const summary =
     {
       segments.map((seg) => (
         <span
-          class:list={[
-            "byte-frame__seg",
-            seg.variable && "byte-frame__seg--var",
-          ]}
-          style={`flex-grow:${seg.widthPct.toFixed(3)};background-color:${seg.color}`}
+          class="byte-frame__seg"
+          style={`flex-grow:${seg.widthPct.toFixed(3)}`}
           title={`${seg.label}: ${seg.sizeLabel} (${seg.offsetLabel})`}
         >
+          <span
+            class:list={[
+              "byte-frame__bar",
+              seg.variable && "byte-frame__bar--var",
+            ]}
+            style={`background-color:${seg.color}`}
+          >
+            {seg.widthPct >= 14 && (
+              <span class="byte-frame__name">{seg.label}</span>
+            )}
+          </span>
           <span class="byte-frame__offset">{seg.offsetLabel}</span>
-          {seg.widthPct >= 14 && (
-            <span class="byte-frame__name">{seg.label}</span>
-          )}
-          <span class="byte-frame__size">{seg.sizeLabel}</span>
         </span>
       ))
     }
@@ -161,15 +165,43 @@ const summary =
 
 <style>
   .byte-frame {
-    --bf-1: #b389f5;
-    --bf-2: #58d6df;
-    --bf-3: #fbbf24;
-    --bf-4: #6ee7a8;
-    --bf-5: #f0789b;
-    --bf-6: #7aa2ff;
-    --bf-on: #0b0b13;
+    /* Categorical data-viz palette (dark-first); light values overridden below. */
+    --bf-1: #f5a623; /* amber */
+    --bf-2: #6e8fd6; /* blue */
+    --bf-3: #46b8a6; /* teal */
+    --bf-4: #b389f5; /* violet */
+    --bf-5: #e0739f; /* pink */
+    --bf-6: #57c98a; /* green */
+    --bf-on: var(--color-on-primary);
+
+    /* Diagonal hatch marks the variable-length field (not colour alone). */
+    --bf-stripe: repeating-linear-gradient(
+      45deg,
+      var(--color-border) 0 7px,
+      var(--color-hair) 7px 14px
+    );
 
     margin: 1.5rem 0;
+  }
+
+  :root[data-theme="light"] .byte-frame {
+    --bf-1: #8f5300; /* darkened amber: AA for white on-fill name text */
+    --bf-2: #3f6fc4;
+    --bf-3: #1f7e6e;
+    --bf-4: #6d45c4;
+    --bf-5: #bc3f76;
+    --bf-6: #197a43;
+  }
+
+  @media (prefers-color-scheme: light) {
+    :root:not([data-theme="dark"]) .byte-frame {
+      --bf-1: #8f5300; /* darkened amber: AA for white on-fill name text */
+      --bf-2: #3f6fc4;
+      --bf-3: #1f7e6e;
+      --bf-4: #6d45c4;
+      --bf-5: #bc3f76;
+      --bf-6: #197a43;
+    }
   }
 
   .byte-frame__title {
@@ -181,58 +213,53 @@ const summary =
 
   .byte-frame__track {
     display: flex;
+    gap: 4px;
     overflow: hidden;
-    border-radius: var(--radius-sm, 4px);
+    font-family: var(--font-mono);
   }
 
+  /* Wrapper column: coloured bar on top, offset label below (on the surface). */
   .byte-frame__seg {
     display: flex;
     flex-basis: 0;
     flex-direction: column;
-    align-items: center;
-    justify-content: center;
+    align-items: stretch;
     min-width: 2.2rem;
-    min-height: 3rem;
-    padding: 0.3rem 0.25rem;
-    overflow: hidden;
-    color: var(--bf-on);
     text-align: center;
   }
 
-  .byte-frame__seg + .byte-frame__seg {
-    border-left: 2px solid var(--color-bg, #000);
+  .byte-frame__bar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 2.6rem;
+    padding: 0.3rem 0.25rem;
+    overflow: hidden;
+    color: var(--bf-on);
+    border-radius: 5px;
   }
 
-  /* Variable-length field: a hatched fade to signal "and so on". */
-  .byte-frame__seg--var {
-    background-image: repeating-linear-gradient(
-      45deg,
-      rgb(0 0 0 / 12%) 0,
-      rgb(0 0 0 / 12%) 6px,
-      transparent 6px,
-      transparent 12px
-    );
-  }
-
-  .byte-frame__offset {
-    align-self: flex-start;
-    font-size: 0.65rem;
-    font-weight: var(--fw-semibold, 600);
-    opacity: 75%;
+  /* Variable-length field: a hatched pattern to signal "and so on". */
+  .byte-frame__bar--var {
+    color: var(--color-text-heading);
+    background-image: var(--bf-stripe);
   }
 
   .byte-frame__name {
     max-width: 100%;
     overflow: hidden;
     text-overflow: ellipsis;
-    font-size: 0.8rem;
-    font-weight: var(--fw-semibold, 600);
+    font-size: 0.688rem;
+    font-weight: var(--fw-medium, 500);
     white-space: nowrap;
   }
 
-  .byte-frame__size {
-    font-size: 0.7rem;
-    opacity: 85%;
+  /* Offset meta sits below the fill, muted on the card surface (AA-safe). */
+  .byte-frame__offset {
+    margin-top: 5px;
+    font-size: 0.65rem;
+    font-weight: var(--fw-medium, 500);
+    color: var(--color-text-muted);
   }
 
   .byte-frame__legend {
@@ -248,7 +275,8 @@ const summary =
     display: inline-flex;
     column-gap: 0.4rem;
     align-items: baseline;
-    font-size: 0.8rem;
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
     color: var(--color-text-muted);
   }
 

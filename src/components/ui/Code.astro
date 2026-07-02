@@ -106,8 +106,8 @@ const finalAriaLabel =
         text: plainText || t("components.code.fallbackAria"),
       }));
 
-// Language display name (uppercase)
-const langDisplay = lang.toUpperCase();
+// Language display name (mockup shows lowercase, e.g. "python")
+const langDisplay = lang.toLowerCase();
 
 const langIcon = getIconForLang(lang);
 
@@ -135,13 +135,15 @@ const highlightedHtml = isEmpty
             ]}
             aria-hidden="true"
           />
-          <span class="code-language-label">{langDisplay}</span>
           {title && <span class="code-title">{title}</span>}
         </div>
-        <CopyButton
-          class="code-header-copy-btn"
-          ariaLabel={t("components.code.copyAria", { label: finalAriaLabel })}
-        />
+        <div class="code-header-actions">
+          <span class="code-language-label">{langDisplay}</span>
+          <CopyButton
+            class="code-header-copy-btn"
+            ariaLabel={t("components.code.copyAria", { label: finalAriaLabel })}
+          />
+        </div>
       </div>
       <div class="code-body">
         <Fragment set:html={highlightedHtml} />
@@ -162,11 +164,10 @@ const highlightedHtml = isEmpty
 
   .code-block-header {
     display: flex;
-    gap: 0.5rem;
+    gap: 0.75rem;
     align-items: center;
     justify-content: space-between;
-    min-height: 40px;
-    padding: 0.5rem 1rem;
+    padding: 0.625rem 1rem; /* 10px 16px */
     font-family: var(--font-mono);
     background-color: var(--color-surface-2);
     border-bottom: 1px solid var(--color-hair);
@@ -174,31 +175,40 @@ const highlightedHtml = isEmpty
 
   .code-lang-info {
     display: flex;
-    gap: 0.5rem;
+    gap: 0.5625rem; /* 9px */
+    align-items: center;
+    min-width: 0;
+  }
+
+  .code-header-actions {
+    display: flex;
+    flex-shrink: 0;
+    gap: 0.75rem; /* 12px */
     align-items: center;
   }
 
   .code-type-icon {
-    width: 1.1rem;
-    height: 1.1rem;
-    color: var(--color-text-muted);
+    flex-shrink: 0;
+    width: 0.875rem; /* 14px */
+    height: 0.875rem;
+    color: var(--color-accent);
   }
 
   .code-language-label {
     font-family: var(--font-mono);
-    font-size: 0.8rem;
-    font-weight: var(--fw-semibold);
+    font-size: 0.6875rem; /* 11px */
+    font-weight: var(--fw-medium);
     color: var(--color-accent);
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
+    text-transform: none;
+    letter-spacing: 0;
   }
 
   .code-title {
-    padding-left: 0.5rem;
-    margin-left: 0.5rem;
-    font-size: 0.8rem;
-    color: var(--color-text-heading);
-    border-left: 1px solid var(--color-hair);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-size: 0.7188rem; /* 11.5px */
+    color: var(--color-text-muted);
+    white-space: nowrap;
   }
 
   .code-body {
@@ -215,12 +225,12 @@ const highlightedHtml = isEmpty
    */
   .code-body pre,
   .code-body :global(pre.astro-code) {
-    padding: 1rem 1.25rem !important;
+    padding: 1rem 1.125rem !important; /* 16px 18px */
     margin: 0 !important;
     overflow-x: auto;
     font-family: var(--font-mono);
-    font-size: 0.9rem;
-    line-height: 1.6;
+    font-size: 0.8125rem; /* 13px */
+    line-height: 1.7;
     color: var(--color-text);
     background-color: transparent !important;
     border: none !important;

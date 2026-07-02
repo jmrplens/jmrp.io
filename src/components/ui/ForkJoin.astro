@@ -73,6 +73,20 @@ const centers = branches.map((_, i) =>
   Number((((i + 0.5) / n) * 100).toFixed(2)),
 );
 
+// Parallel branches alternate accent → teal by default (matching the mockup's
+// kPool/kOffsets pair); an explicit `color` overrides. `accent` colours the
+// fill/border; `accentText` is the AA-safe variant used for the name text
+// (teal-as-text needs the darker --teal-text on light tints to clear 4.5:1).
+const branchesR = branches.map((b, i) => {
+  const isTeal = i % 2 !== 0;
+  return {
+    ...b,
+    accent: b.color ?? (isTeal ? "var(--teal)" : "var(--color-accent)"),
+    accentText:
+      b.color ?? (isTeal ? "var(--teal-text)" : "var(--color-accent)"),
+  };
+});
+
 const summary =
   ariaLabel ??
   (title
@@ -135,10 +149,10 @@ const summary =
     style={`--fj-cols:${Math.max(n, 1)}`}
   >
     {
-      branches.map((node) => (
+      branchesR.map((node) => (
         <div
           class="fj__node fj__node--branch"
-          style={node.color ? `--fj-accent:${node.color}` : undefined}
+          style={`--fj-accent:${node.accent};--fj-accent-text:${node.accentText}`}
         >
           <span class="fj__name">{node.name}</span>
           {node.note && <span class="fj__note">{node.note}</span>}
@@ -214,16 +228,13 @@ const summary =
   }
 
   .fj__phase {
-    padding: 0.15rem 0.65rem;
     margin-bottom: 0.5rem;
+    font-family: var(--font-mono);
     font-size: 0.66rem;
-    font-weight: var(--fw-semibold, 600);
+    font-weight: var(--fw-medium, 500);
     color: var(--color-text-muted);
     text-transform: uppercase;
-    letter-spacing: 0.08em;
-    background: var(--color-bg-subtle);
-    border: var(--border-1);
-    border-radius: 999px;
+    letter-spacing: 0.12em;
   }
 
   .fj__phase--end {
@@ -239,14 +250,14 @@ const summary =
     max-width: 24rem;
     padding: 0.6rem 0.95rem;
     text-align: center;
-    background: var(--color-bg-subtle);
+    background: var(--color-surface-2);
     border: var(--border-1);
     border-radius: var(--radius-md, 8px);
   }
 
   .fj__node--branch {
     max-width: none;
-    background: var(--color-bg-secondary);
+    background: color-mix(in srgb, var(--fj-accent) 12%, transparent);
     border-color: var(--fj-accent);
 
     /* 2px accent border lives inside the box (no overflow), so the full-width
@@ -255,7 +266,7 @@ const summary =
   }
 
   .fj__node--branch .fj__name {
-    color: var(--fj-accent);
+    color: var(--fj-accent-text, var(--fj-accent));
   }
 
   .fj__name {
