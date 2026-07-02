@@ -30,6 +30,7 @@
   --color-bg-subtle: rgb(255 255 255 / 5%); /* relleno suave sobre bg */
   --color-hair: #1d1d22; /* línea de pelo (hairline) */
   --color-border: #26262c; /* borde visible */
+  --color-border-hover: var(--accent-line); /* borde en hover/focus (ámbar) */
   --color-bg-header: rgb(10 10 11 / 72%); /* header con backdrop-blur */
 
   /* ===== TEXTO (dark) — ratios contra bg / surface / surface-2 =========== */

@@ -58,7 +58,11 @@ const navLabelKeyMap: Record<string, TranslationKey> = {
     type="checkbox"
     id="nav-open"
     class="nav-open-cb sr-only"
+    role="button"
     aria-label={t("aria.toggleNav")}
+    aria-haspopup="dialog"
+    aria-controls="nav-drawer"
+    aria-expanded="false"
   />
 
   <nav
@@ -190,9 +194,17 @@ const navLabelKeyMap: Record<string, TranslationKey> = {
         ),
       ].filter((el) => el.offsetParent !== null);
 
+    // Background landmarks to inert while the modal drawer is open.
+    const bgEls = () =>
+      [document.querySelector("main"), document.querySelector("footer")].filter(
+        Boolean,
+      );
+
     const open = () => {
       drawer.classList.add("open");
       toggle.setAttribute("aria-expanded", "true");
+      checkbox.setAttribute("aria-expanded", "true");
+      bgEls().forEach((el) => el.setAttribute("inert", ""));
       lockScroll();
       const first = focusables()[0];
       if (first) first.focus({ preventScroll: true });
@@ -202,8 +214,14 @@ const navLabelKeyMap: Record<string, TranslationKey> = {
       checkbox.checked = false;
       drawer.classList.remove("open");
       toggle.setAttribute("aria-expanded", "false");
+      checkbox.setAttribute("aria-expanded", "false");
+      bgEls().forEach((el) => el.removeAttribute("inert"));
       unlockScroll();
-      if (restoreFocus) toggle.focus({ preventScroll: true });
+      // Let the terminal (NavDrawer) stop any playing Nedry audio.
+      document.dispatchEvent(new CustomEvent("nav-drawer-close"));
+      // Focus returns to the real trigger control (the #nav-open checkbox);
+      // the burger <label> is not focusable.
+      if (restoreFocus) checkbox.focus({ preventScroll: true });
     };
 
     // The checkbox is the source of truth (also flips on label/scrim clicks).
@@ -360,8 +378,8 @@ const navLabelKeyMap: Record<string, TranslationKey> = {
   .gh-link {
     display: grid;
     place-items: center;
-    width: 34px;
-    height: 34px;
+    width: 44px;
+    height: 44px;
     color: var(--color-text);
     border-radius: var(--radius-sm);
     transition:
@@ -378,6 +396,12 @@ const navLabelKeyMap: Record<string, TranslationKey> = {
   .gh-link:focus-visible {
     color: var(--color-text-heading);
     background: var(--color-surface-2);
+  }
+
+  .gh-link:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px
+      color-mix(in srgb, var(--color-accent) 55%, transparent);
   }
 
   /* --- Burger (label toggling #nav-open) --- */
@@ -452,6 +476,12 @@ const navLabelKeyMap: Record<string, TranslationKey> = {
 
     .menu-toggle {
       display: grid;
+    }
+
+    /* Mobile bar = logo · lang · theme · burger. GitHub stays in the desktop
+       cluster and the drawer footer (keeps the 320px bar from overflowing). */
+    .gh-link {
+      display: none;
     }
   }
 

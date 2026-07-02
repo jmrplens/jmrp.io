@@ -194,6 +194,7 @@ const staticRecent = postData.slice(0, 6);
   id="nav-drawer"
   class="nav-drawer"
   role="dialog"
+  aria-modal="true"
   aria-label={t("menu.drawerLabel")}
 >
   <div class="drawer__head">
@@ -410,6 +411,12 @@ const staticRecent = postData.slice(0, 6);
 
       drawer.dataset.termReady = "1";
       document.documentElement.classList.add("js-term");
+
+      // Tear down any document-level listeners from a prior page (View
+      // Transitions replace the drawer element but `document` persists).
+      if (window.__navTermAbort) window.__navTermAbort.abort();
+      window.__navTermAbort = new AbortController();
+      const { signal } = window.__navTermAbort;
 
       const T = D.i18n;
       const BLOCKED = new Set([
@@ -648,7 +655,8 @@ const staticRecent = postData.slice(0, 6);
       }
       function rMan(arg) {
         const c = (arg || "").trim();
-        if (!c || !T.desc[c]) return [comment(T.usage + ": man <command>")];
+        if (!c || !Object.hasOwn(T.desc, c))
+          return [comment(T.usage + ": man <command>")];
         return [comment("man " + c), textRow(c + " — " + T.desc[c])];
       }
       function rHistory() {
@@ -751,6 +759,20 @@ const staticRecent = postData.slice(0, 6);
         }
       }
 
+      // Render the content that matches a given cwd (used by `cd -`).
+      function renderCwd(c) {
+        if (c === "~/blog") return rPostList(D.posts, "~/blog");
+        if (c === "~/tools") return rToolList();
+        if (c.indexOf("~/tags/") === 0) {
+          const tg = c.slice(7);
+          const list = D.posts.filter((p) =>
+            p.tags.map((x) => x.toLowerCase()).includes(tg.toLowerCase()),
+          );
+          return rPostList(list, "#" + tg);
+        }
+        return rTree();
+      }
+
       // --- command dispatch ---
       function run(raw) {
         const cmd = raw.trim();
@@ -791,7 +813,7 @@ const staticRecent = postData.slice(0, 6);
               const p = prev;
               prev = cwd;
               setCwd(p);
-              return setOutput(p === "~" ? rTree() : rPostList(D.posts, p));
+              return setOutput(renderCwd(p));
             }
             if (a.indexOf("tags/") === 0) {
               const tg = a.slice(5);
@@ -836,8 +858,11 @@ const staticRecent = postData.slice(0, 6);
           case "man":
             return setOutput(rMan(arg));
           case "open":
-          case "go":
-            return navigate(resolvePath(arg));
+          case "go": {
+            const href = resolvePath(arg);
+            if (!href) return setOutput(notFound(c + " " + arg));
+            return navigate(href);
+          }
           case "theme":
             return setOutput(setTheme(arg));
           case "lang": {
@@ -883,6 +908,7 @@ const staticRecent = postData.slice(0, 6);
             b.type = "button";
             b.addEventListener("click", () => {
               if (s.endsWith(" ")) {
+                stopNedry();
                 input.value = s;
                 input.focus();
                 renderSuggest(s);
@@ -916,6 +942,7 @@ const staticRecent = postData.slice(0, 6);
       });
       input.addEventListener("input", () => renderSuggest(input.value));
       resetBtn.addEventListener("click", () => {
+        stopNedry();
         prev = cwd;
         setCwd("~");
         setOutput(rTree());
@@ -924,13 +951,21 @@ const staticRecent = postData.slice(0, 6);
         input.focus();
       });
 
+      // Stop any Nedry audio when the drawer closes by ANY path (Esc, scrim,
+      // exit command, link nav) — Header.close() dispatches this on document.
+      document.addEventListener("nav-drawer-close", stopNedry, { signal });
+
       // Initial view: the tree.
       setOutput(rTree());
       renderSuggest("");
     }
 
     document.addEventListener("DOMContentLoaded", initTerm);
-    document.addEventListener("astro:after-swap", initTerm);
+    // One-time registration so the after-swap re-init doesn't accumulate.
+    if (!document.documentElement.hasAttribute("data-term-listener-init")) {
+      document.documentElement.setAttribute("data-term-listener-init", "true");
+      document.addEventListener("astro:after-swap", initTerm);
+    }
     if (document.readyState !== "loading") initTerm();
   })();
 </script>
@@ -1063,7 +1098,7 @@ const staticRecent = postData.slice(0, 6);
   }
 
   .tree__here {
-    font-size: 0.6875rem;
+    font-size: 0.7188rem;
     color: var(--color-accent);
     white-space: nowrap;
   }
@@ -1149,7 +1184,7 @@ const staticRecent = postData.slice(0, 6);
   }
 
   .cmd__marker {
-    font-size: 0.6875rem;
+    font-size: 0.7188rem;
     color: var(--color-text-muted);
     white-space: nowrap;
   }
@@ -1182,7 +1217,7 @@ const staticRecent = postData.slice(0, 6);
   }
 
   .cmd__tag-count {
-    font-size: 0.6875rem;
+    font-size: 0.7188rem;
     color: var(--color-text-muted);
   }
 
@@ -1254,7 +1289,7 @@ const staticRecent = postData.slice(0, 6);
   }
 
   .term-live :global(.term-link__marker) {
-    font-size: 0.6875rem;
+    font-size: 0.7188rem;
     color: var(--color-text-muted);
     white-space: nowrap;
   }
@@ -1286,7 +1321,7 @@ const staticRecent = postData.slice(0, 6);
   }
 
   .term-live :global(.term-chip__count) {
-    font-size: 0.6875rem;
+    font-size: 0.7188rem;
     color: var(--color-text-muted);
   }
 
@@ -1552,7 +1587,7 @@ const staticRecent = postData.slice(0, 6);
     gap: 8px;
     align-items: center;
     font-family: var(--font-mono);
-    font-size: 0.6875rem;
+    font-size: 0.7188rem;
     color: var(--color-text);
   }
 
@@ -1588,6 +1623,31 @@ const staticRecent = postData.slice(0, 6);
   .drawer__gh:focus-visible {
     color: var(--color-text-heading);
     background: var(--color-surface-2);
+  }
+
+  /* Consistent 3px accent focus ring on all drawer controls (WCAG 2.4.11). */
+  .drawer__close:focus-visible,
+  .drawer__gh:focus-visible,
+  .cmd__tag:focus-visible,
+  .term-live :global(.term-chip:focus-visible),
+  .term-live :global(.term-nedry__back:focus-visible),
+  .term-suggest :global(.term-suggest__chip:focus-visible) {
+    outline: none;
+    box-shadow: 0 0 0 3px
+      color-mix(in srgb, var(--color-accent) 55%, transparent);
+  }
+
+  .term-input-line:focus-within {
+    border-radius: var(--radius-sm);
+    box-shadow: 0 0 0 3px
+      color-mix(in srgb, var(--color-accent) 55%, transparent);
+  }
+
+  /* ≥44px touch targets (project rule). */
+  .cmd__tag,
+  .term-live :global(.term-chip),
+  .term-suggest :global(.term-suggest__chip) {
+    min-height: 44px;
   }
 
   @media (prefers-reduced-motion: reduce) {

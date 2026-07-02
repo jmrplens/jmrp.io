@@ -79,6 +79,7 @@ const pathFor = (loc: Locale): string =>
     align-items: center;
     justify-content: center;
     min-width: 2.25rem;
+    min-height: 40px;
     padding: 0.25rem 0.5rem;
     color: var(--color-text-muted);
     text-decoration: none;
@@ -92,6 +93,12 @@ const pathFor = (loc: Locale): string =>
   a.lang-seg:focus-visible {
     color: var(--color-text-heading);
     background-color: var(--color-bg-subtle);
+  }
+
+  a.lang-seg:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px
+      color-mix(in srgb, var(--color-accent) 55%, transparent);
   }
 
   .lang-seg--active {
