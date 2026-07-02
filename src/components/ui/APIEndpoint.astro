@@ -39,10 +39,6 @@ const methodColors: Record<Props["method"], string> = {
           role="note"
           aria-label={t("aria.authRequired")}
         >
-          <span
-            class="i-mdi:lock ae-auth-icon"
-            aria-hidden="true"
-          />
           {t("components.apiEndpoint.auth")}
         </span>
       )
@@ -88,10 +84,10 @@ const methodColors: Record<Props["method"], string> = {
    * REST intent: GET read, POST create, PUT/PATCH update, DELETE destructive.
    */
   .ae-method {
-    padding: 0.25rem 0.5625rem;
+    padding: 3px 9px;
     font-family: var(--font-mono);
     font-size: 0.6875rem;
-    font-weight: var(--fw-semibold);
+    font-weight: var(--fw-medium);
     color: var(--color-on-primary);
     text-transform: uppercase;
     letter-spacing: 0.05em;
@@ -125,31 +121,22 @@ const methodColors: Record<Props["method"], string> = {
     background: transparent;
   }
 
-  /* Auth marker — outlined accent chip (icon + word, never colour alone). */
+  /* Auth marker — outlined accent chip (text only). */
   .ae-auth {
-    display: inline-flex;
-    gap: 0.25rem;
-    align-items: center;
     padding: 0.125rem 0.4375rem;
     margin-left: auto;
     font-family: var(--font-mono);
     font-size: 0.65rem;
     color: var(--color-accent);
     background: transparent;
-    border: 1px solid var(--accent-line);
+    border: 1px solid var(--color-accent);
     border-radius: var(--radius-sm);
-  }
-
-  .ae-auth-icon {
-    width: 12px;
-    height: 12px;
-    color: var(--color-accent);
   }
 
   .ae-description {
     padding: 0 1.125rem 1rem;
     margin: 0;
-    font-size: 0.875rem;
+    font-size: 0.84rem;
     line-height: 1.5;
     color: var(--color-text);
   }

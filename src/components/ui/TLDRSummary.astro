@@ -1,44 +1,49 @@
 ---
 /**
  * TLDRSummary Component
- * Renders a collapsible/expandible executive summary with key points.
+ * Renders a static executive summary panel with a key-points count.
  */
 import { defaultLocale, type Locale } from "@i18n/config";
 import { useTranslations } from "@i18n/utils";
 
 interface Props {
   title?: string;
+  /** @deprecated No longer used — the panel is always visible. Kept for MDX back-compat. */
   collapsed?: boolean;
 }
 
 const locale = (Astro.currentLocale ?? defaultLocale) as Locale;
 const t = useTranslations(locale);
 
-const { title = t("components.tldr.title"), collapsed = false } = Astro.props;
+const { title = t("components.tldr.title") } = Astro.props;
+
+const body = await Astro.slots.render("default");
+const points = (body.match(/<li\b/gi) ?? []).length;
 ---
 
-<details
-  class="tldr-summary"
-  open={!collapsed}
->
-  <summary class="tldr-header">
+<div class="tldr-summary">
+  <div class="tldr-header">
     <h2 class="tldr-title">{title}</h2>
-    <span
-      class="i-mdi:chevron-down tldr-chevron"
-      aria-hidden="true"
-    ></span>
-  </summary>
-  <div class="tldr-content">
-    <slot />
+    {
+      points > 0 && (
+        <span class="tldr-count">
+          {t("components.tldr.keyPoints", { count: points })}
+        </span>
+      )
+    }
   </div>
-</details>
+  <div
+    class="tldr-content"
+    set:html={body}
+  />
+</div>
 
 <style>
   .tldr-summary {
     margin: 1.5rem 0;
     overflow: hidden;
     background: var(--color-bg-secondary);
-    border: 1px solid var(--accent-line);
+    border: 1px solid var(--accent-dim);
     border-radius: var(--radius-lg);
   }
 
@@ -48,32 +53,9 @@ const { title = t("components.tldr.title"), collapsed = false } = Astro.props;
     align-items: center;
     padding: 0.8125rem 1.125rem;
     color: var(--color-accent);
-    cursor: pointer;
-    user-select: none;
-    list-style: none;
     background: var(--accent-dim);
-    border-bottom: 1px solid var(--accent-line);
-    transition: background-color var(--dur-2) var(--ease-out);
-  }
-
-  .tldr-header::-webkit-details-marker {
-    display: none;
-  }
-
-  .tldr-header:hover {
-    background: color-mix(in srgb, var(--color-accent) 18%, transparent);
-  }
-
-  .tldr-header:focus-visible {
-    outline: 2px solid var(--color-primary);
-    outline-offset: 2px;
-    border-radius: var(--radius-sm);
-  }
-
-  .tldr-icon {
-    flex-shrink: 0;
-    width: 20px;
-    height: 20px;
+    border-bottom: 1px solid
+      color-mix(in srgb, var(--color-accent) 20%, transparent);
   }
 
   /* Mono "kicker" treatment — the Lab answer-target eyebrow. */
@@ -89,22 +71,11 @@ const { title = t("components.tldr.title"), collapsed = false } = Astro.props;
     letter-spacing: 0.1em;
   }
 
-  .tldr-chevron {
-    flex-shrink: 0;
-    width: 20px;
-    height: 20px;
-    transition: transform 0.2s ease;
-  }
-
-  .tldr-summary[open] .tldr-chevron {
-    transform: rotate(180deg);
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    .tldr-chevron,
-    .tldr-header {
-      transition: none;
-    }
+  .tldr-count {
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
+    color: var(--color-text-muted);
+    white-space: nowrap;
   }
 
   .tldr-content {

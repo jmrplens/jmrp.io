@@ -255,10 +255,11 @@
     --violet: #6d45c4;
 
     /* Semánticos formales (light) — paleta de estado del mockup, tonos
-       oscurecidos a AA como texto sobre superficies claras. */
-    --color-success: #157347; /* verde */
-    --color-warning: #806600; /* oro */
-    --color-danger: #b23c2f; /* rojo-naranja */
+       oscurecidos a AA. Deben cumplir 4.5:1 incluso sobre su propio tinte al
+       14% (pills de Table/Callout), no solo sobre el blanco. */
+    --color-success: #0f5132; /* verde */
+    --color-warning: #6b5600; /* oro */
+    --color-danger: #a5342a; /* rojo-naranja */
     --color-info: #2f57a6; /* azul pizarra */
 
     /* Estado de infraestructura (light) */
@@ -332,9 +333,9 @@
   --teal: #1f7e6e;
   --teal-text: #12695a;
   --violet: #6d45c4;
-  --color-success: #157347;
-  --color-warning: #806600;
-  --color-danger: #b23c2f;
+  --color-success: #0f5132;
+  --color-warning: #6b5600;
+  --color-danger: #a5342a;
   --color-info: #2f57a6;
   --color-status-online: #12695a;
   --color-status-online-bg: rgb(31 126 110 / 12%);

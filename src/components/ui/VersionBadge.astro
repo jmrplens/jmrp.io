@@ -17,31 +17,33 @@ const locale = (Astro.currentLocale ?? defaultLocale) as Locale;
 const t = useTranslations(locale);
 
 type BadgeType = NonNullable<Props["type"]>;
-const config: Record<
-  BadgeType,
-  { icon: string; class: string; prefix?: string }
-> = {
-  version: { icon: "mdi-code-tags", class: "badge-version" },
+const config: Record<BadgeType, { class: string; prefix?: string }> = {
+  version: { class: "badge-version" },
   level: {
-    icon: "mdi-layers-triple",
     class: "badge-level",
     prefix: t("components.versionBadge.level"),
   },
-  deprecated: { icon: "mdi-alert-circle", class: "badge-deprecated" },
-  new: { icon: "mdi-new-box", class: "badge-new" },
-  experimental: { icon: "mdi-flask", class: "badge-experimental" },
-  stable: { icon: "mdi-check-decagram", class: "badge-stable" },
+  deprecated: { class: "badge-deprecated" },
+  new: { class: "badge-new" },
+  experimental: { class: "badge-experimental" },
+  stable: { class: "badge-stable" },
 };
 
-const { icon, class: badgeClass, prefix } = config[type];
+const { class: badgeClass, prefix } = config[type];
 const displayValue = value ?? type.charAt(0).toUpperCase() + type.slice(1);
 ---
 
 <span class={`version-badge ${badgeClass}`}>
-  <span
-    class={`i-${icon} badge-icon`}
-    aria-hidden="true"
-  ></span>
+  {
+    type === "new" && (
+      <span
+        class="badge-bullet"
+        aria-hidden="true"
+      >
+        ●
+      </span>
+    )
+  }
   <span class="badge-text"
     >{prefix ? `${prefix} ${displayValue}` : displayValue}</span
   >
@@ -64,10 +66,10 @@ const displayValue = value ?? type.charAt(0).toUpperCase() + type.slice(1);
     border-radius: var(--radius-sm);
   }
 
-  .badge-icon {
+  .badge-bullet {
     flex-shrink: 0;
-    width: 13px;
-    height: 13px;
+    font-size: 0.6em;
+    line-height: 1;
   }
 
   .badge-text {

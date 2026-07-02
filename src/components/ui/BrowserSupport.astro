@@ -23,14 +23,6 @@ const t = useTranslations(locale);
 
 const { title = t("components.browserSupport.title"), browsers } = Astro.props;
 
-const browserIcons: Record<string, string> = {
-  chrome: "logos:chrome",
-  firefox: "logos:firefox",
-  safari: "logos:safari",
-  edge: "logos:microsoft-edge",
-  opera: "logos:opera",
-};
-
 const browserNames: Record<string, string> = {
   chrome: "Chrome",
   firefox: "Firefox",
@@ -41,61 +33,48 @@ const browserNames: Record<string, string> = {
 
 const supportConfig: Record<
   string,
-  { icon: string; class: string; label: string }
+  { glyph: string; class: string; label: string }
 > = {
   full: {
-    icon: "mdi:check-circle",
+    glyph: "✓",
     class: "support-full",
     label: t("components.browserSupport.fullSupport"),
   },
   partial: {
-    icon: "mdi:alert-circle",
+    glyph: "⚠",
     class: "support-partial",
     label: t("components.browserSupport.partialSupport"),
   },
   none: {
-    icon: "mdi:close-circle",
+    glyph: "✕",
     class: "support-none",
     label: t("components.browserSupport.noSupport"),
   },
   unknown: {
-    icon: "mdi:help-circle",
+    glyph: "?",
     class: "support-unknown",
     label: t("components.browserSupport.unknown"),
   },
 };
-
-// Generate unique ID for accessibility
-const uniqueId = `bs-${crypto.randomUUID().slice(0, 8)}`;
 ---
 
 <section
   class="browser-support"
-  aria-labelledby={uniqueId}
+  aria-label={title}
 >
-  <h3
-    class="bs-title"
-    id={uniqueId}
-  >
-    {title}
-  </h3>
   <div class="bs-grid">
     {
       browsers.map((b) => (
         <div class={`bs-item ${supportConfig[b.support].class}`}>
+          <span class="bs-name">{browserNames[b.browser]}</span>
           <span
-            class={`i-${browserIcons[b.browser]} bs-browser-icon`}
+            class="bs-glyph"
             aria-hidden="true"
-          />
-          <div class="bs-info">
-            <span class="bs-name">{browserNames[b.browser]}</span>
-            {b.version && <span class="bs-version">{b.version}+</span>}
-          </div>
-          <span
-            class={`i-${supportConfig[b.support].icon} bs-status-icon`}
-            role="img"
-            aria-label={supportConfig[b.support].label}
-          />
+          >
+            {supportConfig[b.support].glyph}
+          </span>
+          <span class="sr-only">{supportConfig[b.support].label}</span>
+          {b.version && <span class="bs-version">{b.version}+</span>}
           {b.note && <span class="bs-note">{b.note}</span>}
         </div>
       ))
@@ -104,29 +83,16 @@ const uniqueId = `bs-${crypto.randomUUID().slice(0, 8)}`;
 </section>
 
 <style>
-  /* Lab BrowserSupport — grid of flat per-browser cards; the wrapper is bare. */
+  /* Lab BrowserSupport — 4-col grid of flat per-browser cards; no internal title. */
   .browser-support {
     margin: 1.5rem 0;
     background: transparent;
     border: none;
   }
 
-  .bs-title {
-    padding: 0;
-    margin: 0 0 0.75rem;
-    font-family: var(--font-mono);
-    font-size: 0.6875rem;
-    font-weight: var(--fw-semibold);
-    color: var(--color-text-muted);
-    text-transform: uppercase;
-    letter-spacing: 0.14em;
-    background: transparent;
-    border: none;
-  }
-
   .bs-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    grid-template-columns: repeat(4, 1fr);
     gap: 0.625rem;
     background: transparent;
   }
@@ -143,17 +109,6 @@ const uniqueId = `bs-${crypto.randomUUID().slice(0, 8)}`;
     border-radius: var(--radius-md);
   }
 
-  .bs-browser-icon {
-    width: 28px;
-    height: 28px;
-  }
-
-  .bs-info {
-    display: flex;
-    flex-direction: column;
-    gap: 0.125rem;
-  }
-
   .bs-name {
     font-family: var(--font-mono);
     font-size: 0.75rem;
@@ -161,32 +116,32 @@ const uniqueId = `bs-${crypto.randomUUID().slice(0, 8)}`;
     color: var(--color-text-heading);
   }
 
-  .bs-version {
-    font-family: var(--font-mono);
-    font-size: 0.6875rem;
-    color: var(--color-text-muted);
+  .bs-glyph {
+    font-size: 1.125rem;
+    line-height: 1;
   }
 
-  .bs-status-icon {
-    width: 20px;
-    height: 20px;
-  }
-
-  /* Support state — carried by icon SHAPE (check/alert/close/help) + aria-label,
+  /* Support state — conveyed by glyph shape (✓/⚠/✕/?) + sr-only label;
      colour only reinforces it. */
-  .support-full .bs-status-icon {
+  .support-full .bs-glyph {
     color: var(--color-success);
   }
 
-  .support-partial .bs-status-icon {
+  .support-partial .bs-glyph {
     color: var(--color-warning);
   }
 
-  .support-none .bs-status-icon {
+  .support-none .bs-glyph {
     color: var(--color-danger);
   }
 
-  .support-unknown .bs-status-icon {
+  .support-unknown .bs-glyph {
+    color: var(--color-text-muted);
+  }
+
+  .bs-version {
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
     color: var(--color-text-muted);
   }
 
@@ -196,19 +151,26 @@ const uniqueId = `bs-${crypto.randomUUID().slice(0, 8)}`;
     color: var(--color-text-muted);
   }
 
-  /* Mobile responsive - switch to 2 columns on small screens */
-  @media (width <= 640px) {
+  /* Visually hidden but available to assistive technology */
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    white-space: nowrap;
+    border-width: 0;
+  }
+
+  /* Mobile — relax to 2 columns below 600px to prevent card overflow */
+  @media (width <= 600px) {
     .bs-grid {
       grid-template-columns: repeat(2, 1fr);
     }
 
     .bs-item {
       padding: 0.75rem 0.5rem;
-    }
-
-    .bs-browser-icon {
-      width: 26px;
-      height: 26px;
     }
   }
 </style>

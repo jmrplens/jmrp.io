@@ -34,29 +34,23 @@ const locale = (Astro.currentLocale ?? defaultLocale) as Locale;
 const t = useTranslations(locale);
 
 type NoticeType = NonNullable<Props["type"]>;
-const config: Record<NoticeType, { icon: string; label: string }> = {
+const config: Record<NoticeType, { label: string }> = {
   deprecated: {
-    icon: "mdi:alert-octagon",
     label: t("components.stateNotice.deprecated"),
   },
   mandatory: {
-    icon: "mdi:check-decagram",
     label: t("components.stateNotice.mandatory"),
   },
   experimental: {
-    icon: "mdi:flask",
     label: t("components.stateNotice.experimental"),
   },
   preview: {
-    icon: "mdi:eye",
     label: t("components.stateNotice.preview"),
   },
   breaking: {
-    icon: "mdi:alert-box",
     label: t("components.stateNotice.breakingChange"),
   },
   security: {
-    icon: "mdi:shield-alert",
     label: t("components.stateNotice.security"),
   },
 };
@@ -103,10 +97,6 @@ const removalMessages: Record<NoticeType, string | null> = {
   aria-label={displayTitle}
 >
   <div class="sn-header">
-    <span
-      class={`i-${current.icon} sn-icon`}
-      aria-hidden="true"
-    ></span>
     <span class="sn-title">{displayTitle}</span>
   </div>
   <div class="sn-content">
@@ -164,21 +154,14 @@ const removalMessages: Record<NoticeType, string | null> = {
     border-radius: var(--radius-md);
   }
 
-  /* Solid status pill: icon (shape cue) + mono uppercase label on the hue. */
+  /* Solid status pill: mono uppercase label on the hue. */
   .sn-header {
     display: inline-flex;
     flex-shrink: 0;
-    gap: var(--space-xs);
     align-items: center;
     padding: 4px 9px;
     background: var(--sn-hue);
     border-radius: var(--radius-sm);
-  }
-
-  .sn-icon {
-    width: 13px;
-    height: 13px;
-    color: var(--color-on-primary);
   }
 
   .sn-title {

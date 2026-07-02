@@ -48,11 +48,7 @@ if (mdnUrl) {
           class="dc-mdn"
           aria-label={t("aria.mdnDocs", { name })}
         >
-          <span
-            class="i-simple-icons:mdnwebdocs dc-mdn-icon"
-            aria-hidden="true"
-          />
-          MDN
+          MDN ↗
         </a>
       )
     }
@@ -61,20 +57,15 @@ if (mdnUrl) {
   {
     (syntax || defaultValue || description) && (
       <div class="dc-body">
-        {syntax && (
-          <div class="dc-row">
-            <span class="dc-label">{t("components.directiveCard.syntax")}</span>
-            <code class="dc-code">{syntax}</code>
-          </div>
-        )}
+        {syntax && <p class="dc-mono-line">{syntax}</p>}
 
         {defaultValue && (
-          <div class="dc-row">
-            <span class="dc-label">
-              {t("components.directiveCard.default")}
-            </span>
-            <code class="dc-code">{defaultValue}</code>
-          </div>
+          <p class="dc-mono-line">
+            <span class="dc-default-key">
+              {t("components.directiveCard.default")}:
+            </span>{" "}
+            <span class="dc-default-val">{defaultValue}</span>
+          </p>
         )}
 
         {description && <p class="dc-description">{description}</p>}
@@ -130,10 +121,8 @@ if (mdnUrl) {
   }
 
   .dc-mdn {
-    display: inline-flex;
-    gap: 0.25rem;
-    align-items: center;
     margin-left: auto;
+    font-family: var(--font-mono);
     font-size: 0.75rem;
     color: var(--color-info);
     text-decoration: none;
@@ -152,43 +141,29 @@ if (mdnUrl) {
     border-radius: var(--radius-sm);
   }
 
-  .dc-mdn-icon {
-    width: 14px;
-    height: 14px;
-  }
-
   .dc-body {
     padding: 1rem 1.125rem;
   }
 
-  .dc-row {
-    display: flex;
-    gap: 0.625rem;
-    align-items: baseline;
-    margin-bottom: 0.625rem;
+  /* Plain mono lines for syntax and default rows */
+  .dc-mono-line {
+    margin: 0 0 0.625rem;
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
+    line-height: 1.5;
+    color: var(--color-text);
   }
 
-  .dc-row:last-child {
+  .dc-mono-line:last-child {
     margin-bottom: 0;
   }
 
-  .dc-label {
-    min-width: 50px;
-    font-family: var(--font-mono);
-    font-size: 0.7rem;
-    font-weight: var(--fw-medium);
+  .dc-default-key {
     color: var(--color-text-muted);
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
   }
 
-  .dc-code {
-    padding: 0.125rem 0.375rem;
-    font-family: var(--font-mono);
-    font-size: 0.8125rem;
+  .dc-default-val {
     color: var(--color-text-heading);
-    background: var(--color-surface-2);
-    border-radius: var(--radius-sm);
   }
 
   .dc-description {
@@ -203,7 +178,7 @@ if (mdnUrl) {
     border-top: 1px solid var(--color-hair);
   }
 
-  /* Mobile responsive - stack label above value */
+  /* Mobile responsive */
   @media (width <= 640px) {
     .dc-header {
       gap: 0.5rem;
@@ -213,18 +188,8 @@ if (mdnUrl) {
       font-size: 0.95rem;
     }
 
-    .dc-row {
-      flex-direction: column;
-      gap: 0.25rem;
-      align-items: flex-start;
-    }
-
-    .dc-label {
-      min-width: unset;
-    }
-
-    .dc-code {
-      font-size: 0.8rem;
+    .dc-mono-line {
+      font-size: 0.75rem;
       word-break: break-all;
     }
   }

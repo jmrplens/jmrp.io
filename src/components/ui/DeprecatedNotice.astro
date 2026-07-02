@@ -32,10 +32,6 @@ if (import.meta.env.DEV && alternativeUrl && !alternative) {
   aria-label={t("components.deprecated.isDeprecated", { feature })}
 >
   <div class="dn-header">
-    <span
-      class="i-mdi:alert-octagon dn-icon"
-      aria-hidden="true"
-    ></span>
     <span class="dn-title">{t("components.deprecated.label")}</span>
   </div>
   <div class="dn-content">
@@ -91,21 +87,14 @@ if (import.meta.env.DEV && alternativeUrl && !alternative) {
     border-radius: var(--radius-md);
   }
 
-  /* Solid status pill: icon (shape cue) + mono uppercase label on danger. */
+  /* Solid status pill: mono uppercase label on danger. */
   .dn-header {
     display: inline-flex;
     flex-shrink: 0;
-    gap: var(--space-xs);
     align-items: center;
     padding: 4px 9px;
     background: var(--color-danger);
     border-radius: var(--radius-sm);
-  }
-
-  .dn-icon {
-    width: 13px;
-    height: 13px;
-    color: var(--color-on-primary);
   }
 
   .dn-title {

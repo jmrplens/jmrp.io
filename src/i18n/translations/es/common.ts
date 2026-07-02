@@ -158,6 +158,7 @@ export const common = {
     },
     tldr: {
       title: "Resumen",
+      keyPoints: "{count} puntos clave",
     },
     collapsible: {
       defaultSummary: "Detalles",
