@@ -213,6 +213,37 @@ const staticRecent = postData.slice(0, 6);
     </label>
   </div>
 
+  {
+    /* --- JS terminal input, kept at the TOP so the on-screen keyboard never
+     covers where you type. Suggestions appear inline only while typing. --- */
+  }
+  <div class="term-io-top">
+    <div class="term-input-line">
+      <span
+        class="term-prompt"
+        aria-hidden="true"
+        >jmrp@home:<span id="term-cwd">~</span>$</span
+      >
+      <input
+        id="term-input"
+        class="term-input"
+        type="text"
+        aria-label={t("terminal.inputLabel")}
+        placeholder={t("terminal.inputPlaceholder")}
+        autocomplete="off"
+        autocapitalize="off"
+        autocorrect="off"
+        spellcheck="false"
+      />
+    </div>
+    <div
+      id="term-suggest"
+      class="term-suggest"
+      hidden
+    >
+    </div>
+  </div>
+
   <div class="drawer__body">
     {/* --- Zero-JS base: tree + command fallbacks --- */}
     <div class="term-static">
@@ -314,8 +345,8 @@ const staticRecent = postData.slice(0, 6);
     </div>
   </div>
 
-  {/* --- JS terminal I/O (hint + input + suggestions) --- */}
-  <div class="term-io">
+  {/* --- Hint at the very bottom: `help` reveals everything --- */}
+  <div class="term-io-bottom">
     <div class="term-hint">
       <span>
         {t("terminal.hintType")}
@@ -330,29 +361,6 @@ const staticRecent = postData.slice(0, 6);
       >
         {t("terminal.resetHome")}
       </button>
-    </div>
-    <div class="term-input-line">
-      <span
-        class="term-prompt"
-        aria-hidden="true"
-        >jmrp@home:<span id="term-cwd">~</span>$</span
-      >
-      <input
-        id="term-input"
-        class="term-input"
-        type="text"
-        aria-label={t("terminal.inputLabel")}
-        placeholder={t("terminal.inputPlaceholder")}
-        autocomplete="off"
-        autocapitalize="off"
-        autocorrect="off"
-        spellcheck="false"
-      />
-    </div>
-    <div
-      id="term-suggest"
-      class="term-suggest"
-    >
     </div>
   </div>
 
@@ -459,7 +467,6 @@ const staticRecent = postData.slice(0, 6);
         "clear",
         "exit",
       ];
-      const START_SUGGEST = ["help", "ls", "cd blog", "find ", "recent"];
 
       let cwd = "~";
       let prev = "~";
@@ -898,12 +905,21 @@ const staticRecent = postData.slice(0, 6);
       // --- suggestions ---
       function renderSuggest(value) {
         const v = value.trim().toLowerCase();
-        const pool = v
-          ? SUGGEST_POOL.filter((s) => s.startsWith(v))
-          : START_SUGGEST;
-        const chips = pool.slice(0, 5);
+        // Only while typing: no input → no suggestions (just the bottom hint).
+        const matches = v
+          ? SUGGEST_POOL.filter((s) => s.startsWith(v) && s.trim() !== v).slice(
+              0,
+              6,
+            )
+          : [];
+        if (matches.length === 0) {
+          suggest.hidden = true;
+          suggest.replaceChildren();
+          return;
+        }
+        suggest.hidden = false;
         suggest.replaceChildren(
-          ...chips.map((s) => {
+          ...matches.map((s) => {
             const b = el("button", "term-suggest__chip", s.trim());
             b.type = "button";
             b.addEventListener("click", () => {
@@ -1036,7 +1052,8 @@ const staticRecent = postData.slice(0, 6);
 
   /* Static (zero-JS) vs live (JS) swap. */
   .term-live,
-  .term-io {
+  .term-io-top,
+  .term-io-bottom {
     display: none;
   }
 
@@ -1048,7 +1065,8 @@ const staticRecent = postData.slice(0, 6);
     display: block;
   }
 
-  :global(html.js-term) .term-io {
+  :global(html.js-term) .term-io-top,
+  :global(html.js-term) .term-io-bottom {
     display: block;
   }
 
@@ -1403,7 +1421,7 @@ const staticRecent = postData.slice(0, 6);
   .term-live :global(.term-nedry__stage) {
     position: relative;
     display: block;
-    width: 150px;
+    width: min(74%, 240px);
     aspect-ratio: 380 / 466;
     margin: 16px auto 0;
   }
@@ -1477,8 +1495,71 @@ const staticRecent = postData.slice(0, 6);
     background: var(--accent-hi);
   }
 
-  /* --- Terminal I/O --- */
-  .term-io {
+  /* --- Terminal input (top) --- */
+  .term-io-top {
+    border-bottom: 1px solid var(--color-hair);
+  }
+
+  .term-input-line {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    padding: 12px 18px;
+    font-family: var(--font-mono);
+  }
+
+  .term-prompt {
+    color: var(--teal-text);
+    white-space: pre;
+  }
+
+  .term-input {
+    flex: 1;
+    min-width: 0;
+    padding: 2px 0;
+    font-family: var(--font-mono);
+    font-size: 16px; /* explicit 16px: avoids iOS zoom on focus */
+    color: var(--color-text-heading);
+    caret-color: var(--color-accent);
+    outline: none;
+    background: transparent;
+    border: 0;
+  }
+
+  /* Suggestions: a subtle grey inline list, shown only while typing (the JS
+     toggles the [hidden] attribute when the input is empty / has no match). */
+  .term-suggest {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2px 16px;
+    padding: 0 18px 10px;
+  }
+
+  .term-suggest[hidden] {
+    display: none;
+  }
+
+  .term-suggest :global(.term-suggest__chip) {
+    min-height: 28px;
+    padding: 3px 0;
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
+    color: var(--color-text-muted);
+    cursor: pointer;
+    background: none;
+    border: 0;
+  }
+
+  .term-suggest :global(.term-suggest__chip:hover),
+  .term-suggest :global(.term-suggest__chip:focus-visible) {
+    color: var(--color-accent);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    outline: none;
+  }
+
+  /* --- Hint (bottom) --- */
+  .term-io-bottom {
     border-top: 1px solid var(--color-hair);
   }
 
@@ -1487,7 +1568,7 @@ const staticRecent = postData.slice(0, 6);
     gap: 8px;
     align-items: center;
     justify-content: space-between;
-    padding: 7px 18px;
+    padding: 8px 18px;
     font-family: var(--font-mono);
     font-size: 0.7188rem;
     color: var(--color-text-muted);
@@ -1513,64 +1594,14 @@ const staticRecent = postData.slice(0, 6);
     border-radius: var(--radius-pill);
   }
 
+  .term-reset[hidden] {
+    display: none;
+  }
+
   .term-reset:focus-visible {
     outline: none;
     box-shadow: 0 0 0 3px
       color-mix(in srgb, var(--color-accent) 45%, transparent);
-  }
-
-  .term-input-line {
-    display: flex;
-    gap: 8px;
-    align-items: center;
-    padding: 10px 18px;
-    font-family: var(--font-mono);
-    border-top: 1px solid var(--color-hair);
-  }
-
-  .term-prompt {
-    color: var(--teal-text);
-    white-space: pre;
-  }
-
-  .term-input {
-    flex: 1;
-    min-width: 0;
-    padding: 2px 0;
-    font-family: var(--font-mono);
-    font-size: 1rem; /* 16px: avoids iOS zoom on focus */
-    color: var(--color-text-heading);
-    caret-color: var(--color-accent);
-    outline: none;
-    background: transparent;
-    border: 0;
-  }
-
-  .term-suggest {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
-    min-height: 30px;
-    padding: 2px 18px 10px;
-  }
-
-  .term-suggest :global(.term-suggest__chip) {
-    min-height: 34px;
-    padding: 7px 11px;
-    font-family: var(--font-mono);
-    font-size: 0.7813rem;
-    color: var(--color-text);
-    cursor: pointer;
-    background: var(--color-surface-2);
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-sm);
-  }
-
-  .term-suggest :global(.term-suggest__chip:hover),
-  .term-suggest :global(.term-suggest__chip:focus-visible) {
-    color: var(--color-text-heading);
-    outline: none;
-    border-color: var(--accent-line);
   }
 
   /* --- Footer --- */
@@ -1625,13 +1656,13 @@ const staticRecent = postData.slice(0, 6);
     background: var(--color-surface-2);
   }
 
-  /* Consistent 3px accent focus ring on all drawer controls (WCAG 2.4.11). */
+  /* Consistent 3px accent focus ring on all drawer controls (WCAG 2.4.11).
+     (Suggestions are grey text and use an underline focus of their own.) */
   .drawer__close:focus-visible,
   .drawer__gh:focus-visible,
   .cmd__tag:focus-visible,
   .term-live :global(.term-chip:focus-visible),
-  .term-live :global(.term-nedry__back:focus-visible),
-  .term-suggest :global(.term-suggest__chip:focus-visible) {
+  .term-live :global(.term-nedry__back:focus-visible) {
     outline: none;
     box-shadow: 0 0 0 3px
       color-mix(in srgb, var(--color-accent) 55%, transparent);
@@ -1645,8 +1676,7 @@ const staticRecent = postData.slice(0, 6);
 
   /* ≥44px touch targets (project rule). */
   .cmd__tag,
-  .term-live :global(.term-chip),
-  .term-suggest :global(.term-suggest__chip) {
+  .term-live :global(.term-chip) {
     min-height: 44px;
   }
 
