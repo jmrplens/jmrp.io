@@ -35,7 +35,7 @@ export const common = {
     noResults: "no results for",
     notFound: "command not found",
     typeHelp: "type help",
-    location: "Alicante, ES (UTC+1)",
+    location: "Valencia, ES (UTC+1)",
     blocked: "permission denied — nice try",
     usage: "usage",
     nedryDenied: "ACCESS DENIED",
@@ -450,7 +450,7 @@ export const common = {
       viewAllPosts: "View all posts →",
       featuredProjects: "Featured Projects",
       viewAllRepos: "View all repositories →",
-      availability: "Available for projects · Alicante (UTC+1)",
+      availability: "Available for projects · Valencia (UTC+1)",
       terminalRole: "Firmware / Software Eng.",
       terminalLabel: "Profile summary",
     },
@@ -805,7 +805,7 @@ export const common = {
     about: {
       title: "About",
       description:
-        "José Manuel Requena Plens — firmware and software engineer in Alicante building secure embedded devices, open-source tools, and self-hosted infrastructure.",
+        "José Manuel Requena Plens — firmware and software engineer in Valencia building secure embedded devices, open-source tools, and self-hosted infrastructure.",
     },
     uses: {
       title: "Uses",

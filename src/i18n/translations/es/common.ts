@@ -35,7 +35,7 @@ export const common = {
     noResults: "sin resultados para",
     notFound: "comando no encontrado",
     typeHelp: "escribe help",
-    location: "Alicante, ES (UTC+1)",
+    location: "Valencia, ES (UTC+1)",
     blocked: "permiso denegado — buen intento",
     usage: "uso",
     nedryDenied: "ACCESO DENEGADO",
@@ -451,7 +451,7 @@ export const common = {
       viewAllPosts: "Ver todas las entradas →",
       featuredProjects: "Proyectos destacados",
       viewAllRepos: "Ver todos los repositorios →",
-      availability: "Disponible para proyectos · Alicante (UTC+1)",
+      availability: "Disponible para proyectos · Valencia (UTC+1)",
       terminalRole: "Ing. Firmware / Software",
       terminalLabel: "Resumen de perfil",
     },
@@ -807,7 +807,7 @@ export const common = {
     about: {
       title: "Perfil",
       description:
-        "Ingeniero de firmware y software en Alicante: dispositivos embebidos seguros, herramientas open-source e infraestructura self-hosted.",
+        "Ingeniero de firmware y software en Valencia: dispositivos embebidos seguros, herramientas open-source e infraestructura self-hosted.",
     },
     uses: {
       title: "Uses",
