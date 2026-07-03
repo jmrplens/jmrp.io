@@ -15,7 +15,6 @@ import { createHash } from "node:crypto";
 import { defaultLocale, type Locale } from "@i18n/config";
 import { useTranslations } from "@i18n/utils";
 import { decodeHtml } from "@utils/html";
-import { getIconForFile } from "@utils/icons";
 import { highlightCode, resolveShikiLanguage } from "@utils/shiki";
 import type { BuiltinLanguage, SpecialLanguage } from "shiki";
 
@@ -23,6 +22,8 @@ import CopyButton from "./CopyButton.astro";
 
 interface Props {
   filename: string;
+  /** Reserved (accepted for back-compat, intentionally unused): the redesign
+   * uses ONE uniform file icon, never per-extension logos. */
   icon?: string;
   language?: BuiltinLanguage | SpecialLanguage | string;
   collapsible?: boolean;
@@ -32,7 +33,6 @@ interface Props {
 
 const {
   filename,
-  icon,
   language,
   collapsible = false,
   open = false,
@@ -41,9 +41,6 @@ const {
 
 const locale = (Astro.currentLocale ?? defaultLocale) as Locale;
 const t = useTranslations(locale);
-
-const finalIcon = icon || getIconForFile(filename);
-const iconClass = finalIcon.startsWith("i-") ? finalIcon : `i-${finalIcon}`;
 
 // Zero-width space after "/" so long paths wrap cleanly (never truncated).
 const filenameFormatted = filename.replaceAll("/", "/&#8203;");
@@ -115,10 +112,18 @@ const linesText = `${lineCount} ${t("ui.lines")}`;
             >
               <path d="m9 6 6 6-6 6" />
             </svg>
-            <span
-              class={`${iconClass} jmrp-file__icon`}
+            <svg
+              class="jmrp-file__icon"
+              viewBox="0 0 24 24"
+              width="15"
+              height="15"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.8"
               aria-hidden="true"
-            />
+            >
+              <path d="M14 3v5h5M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+            </svg>
             <span
               class="jmrp-file__name"
               set:html={filenameFormatted}
@@ -156,22 +161,27 @@ const linesText = `${lineCount} ${t("ui.lines")}`;
     >
       <div class="jmrp-file__head">
         <span class="jmrp-file__id">
-          <span
-            class={`${iconClass} jmrp-file__icon jmrp-file__icon--accent`}
+          <svg
+            class="jmrp-file__icon jmrp-file__icon--accent"
+            viewBox="0 0 24 24"
+            width="15"
+            height="15"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.8"
             aria-hidden="true"
-          />
+          >
+            <path d="M14 3v5h5M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+          </svg>
           <span
             class="jmrp-file__name"
             set:html={filenameFormatted}
           />
         </span>
-        <span class="jmrp-file__meta">
-          <span class="jmrp-file__lines">{linesText}</span>
-          <CopyButton
-            content={codeText}
-            ariaLabel={copyAria}
-          />
-        </span>
+        <CopyButton
+          content={codeText}
+          ariaLabel={copyAria}
+        />
       </div>
       <div class="jmrp-file__body">
         {/* eslint-disable astro/jsx-a11y/no-noninteractive-tabindex -- focusable scroll region */}

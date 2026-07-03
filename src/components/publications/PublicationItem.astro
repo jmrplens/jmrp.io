@@ -419,23 +419,8 @@ const cleanedBibtex = cleanBibtex(pub.bibtex);
     white-space: normal;
   }
 
-  /* Custom Copy Button Styling */
-  .pub-card-wrapper :global(.pub-copy-btn) {
-    position: static;
-    width: 28px;
-    min-width: 28px;
-    height: 28px;
-    min-height: 28px;
-    padding: 0;
-    color: var(--color-text-muted);
-    background: transparent;
-    border: none;
-  }
-
-  .pub-card-wrapper :global(.pub-copy-btn:hover) {
-    color: var(--color-text);
-    background-color: var(--color-bg-subtle);
-  }
+  /* Copy button uses the shared discreet CopyButton design; no local override
+     needed (letting it grow for the "Copied" confirmation). */
 
   /* Hide copy button */
   .pub-card-wrapper :global(.copy) {

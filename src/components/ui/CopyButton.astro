@@ -70,21 +70,44 @@ const doneLabel = copiedLabel ?? t("ui.copied");
     aria-live="polite"
   ></span>
   <span class="copy-button__idle">
-    <span
-      class="i-mdi:clipboard-outline copy-icon"
+    <svg
+      class="copy-icon"
+      viewBox="0 0 24 24"
+      width="14"
+      height="14"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="2"
       aria-hidden="true"
-    ></span>
+    >
+      <rect
+        x="9"
+        y="9"
+        width="11"
+        height="11"
+        rx="2"
+      ></rect>
+      <path d="M5 15V5a2 2 0 0 1 2-2h10"></path>
+    </svg>
     {text && <span class="copy-button__text">{text}</span>}
   </span>
   <span
     class="copy-button__done"
     aria-hidden="true"
   >
-    <span
-      class="i-mdi:check success-icon"
+    <svg
+      class="success-icon"
+      viewBox="0 0 24 24"
+      width="14"
+      height="14"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="2.4"
       aria-hidden="true"
-    ></span>
-    {text && <span class="copy-button__text">{doneLabel}</span>}
+    >
+      <path d="M20 6 9 17l-5-5"></path>
+    </svg>
+    <span class="copy-button__text">{doneLabel}</span>
   </span>
 </button>
 
