@@ -4,9 +4,11 @@
  * cards (build / write about / say hi). Bilingual content is kept inline
  * because it is page-specific prose rather than reusable UI chrome.
  */
+import githubAvatar from "@assets/github-avatar.png";
 import { defaultLocale, type Locale } from "@i18n/config";
 import { useTranslatedPath, useTranslations } from "@i18n/utils";
 import BaseLayout from "@layouts/BaseLayout.astro";
+import { Image } from "astro:assets";
 
 const locale = (Astro.currentLocale ?? defaultLocale) as Locale;
 const t = useTranslations(locale);
@@ -15,8 +17,9 @@ const translatePath = useTranslatedPath(locale);
 const content = {
   en: {
     kicker: "Profile",
-    title: "Hi, I'm José Manuel.",
-    lead: "Firmware and software engineer in Valencia, Spain. I build secure embedded devices, open-source tools, and the infrastructure that keeps them running. Before that, acoustics and instrumentation — which is where my taste for problems at the meeting point of signal, system and code comes from.",
+    title: "The engineer behind the notebook.",
+    photoAlt: "José Manuel Requena Plens",
+    lead: "I'm José Manuel — a firmware and software engineer based in Valencia, Spain. Day to day that means secure embedded devices, open-source tooling, and the self-hosted infrastructure that keeps them running. I came to code from acoustics and instrumentation, and I still gravitate to problems that sit where signal, system and software meet.",
     note: "This site is my notebook: what I learn I write down, what I build I publish.",
     cards: [
       {
@@ -42,8 +45,9 @@ const content = {
   },
   es: {
     kicker: "Perfil",
-    title: "Hola, soy José Manuel.",
-    lead: "Ingeniero de firmware y software en Valencia. Construyo dispositivos embebidos seguros, herramientas open-source y la infraestructura que los sostiene. Antes, acústica e instrumentación — de ahí mi gusto por los problemas donde la señal, el sistema y el código se tocan.",
+    title: "El ingeniero detrás del cuaderno.",
+    photoAlt: "José Manuel Requena Plens",
+    lead: "Soy José Manuel, ingeniero de firmware y software en Valencia. En el día a día eso son dispositivos embebidos seguros, herramientas open-source y la infraestructura self-hosted que los mantiene en marcha. Llegué al código desde la acústica y la instrumentación, y sigo prefiriendo los problemas donde la señal, el sistema y el software se tocan.",
     note: "Este sitio es mi cuaderno: lo que aprendo lo escribo, lo que construyo lo publico.",
     cards: [
       {
@@ -95,11 +99,17 @@ const contactLinks = [
         <p class="about-hero__lead">{c.lead}</p>
         <p class="about-hero__note">{c.note}</p>
       </div>
-      <div
-        class="about-portrait"
-        aria-hidden="true"
-      >
-        <span class="about-portrait__tag">photo</span>
+      <div class="about-portrait">
+        <Image
+          class="about-portrait__img"
+          src={githubAvatar}
+          alt={c.photoAlt}
+          width={260}
+          height={260}
+          widths={[180, 260, 360]}
+          sizes="(max-width: 720px) 180px, 260px"
+          loading="lazy"
+        />
       </div>
     </section>
 
@@ -176,27 +186,19 @@ const contactLinks = [
   }
 
   .about-portrait {
-    display: grid;
-    place-items: center;
     justify-self: center;
-    max-width: 300px;
-    aspect-ratio: 1;
-    background: repeating-linear-gradient(
-      135deg,
-      var(--color-bg-secondary) 0 12px,
-      var(--color-bg) 12px 24px
-    );
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-lg);
+    width: 100%;
+    max-width: 260px;
   }
 
-  .about-portrait__tag {
-    padding: 7px 12px;
-    font-family: var(--font-mono);
-    font-size: 0.7rem;
-    color: var(--color-text-muted);
-    border: 1px dashed var(--color-border);
-    border-radius: var(--radius-sm);
+  .about-portrait__img {
+    display: block;
+    width: 100%;
+    height: auto;
+    aspect-ratio: 1;
+    object-fit: cover;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
   }
 
   .about-cards {
