@@ -47,10 +47,15 @@ const t = useTranslations(locale);
     position: relative;
   }
 
+  /* Floating over code: give the (otherwise chrome-less) button a surface so it
+     stays legible above syntax-highlighted content. */
   .tab-panel :global(.panel-copy-button) {
     position: absolute;
     top: 0.5rem;
     right: 0.5rem;
     z-index: 10;
+    padding: 4px 6px;
+    background: var(--color-surface-2);
+    border: var(--border-1);
   }
 </style>

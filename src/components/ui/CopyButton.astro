@@ -1,36 +1,67 @@
 ---
 /**
- * CopyButton Component
- * A reusable button that copies text from the nearest parent `.copy-container`.
+ * CopyButton — shared copy-to-clipboard button (Code, CodeBlock, FileContent,
+ * Terminal family, tabs, publications…).
  *
- * Usage:
- * <div class="copy-container">
- *   <code>Some text to copy</code>
- *   <CopyButton />
- * </div>
+ * Discreet chrome: no background box — icon + colour change + a green check and
+ * "Copied" confirmation for ~1.6 s. `variant="terminal"` tunes the colours for
+ * the dark terminal surface.
+ *
+ * Text to copy (in order):
+ *   1. `content` / `code` prop → data-content (URL-encoded)
+ *   2. otherwise the nearest `.copy-container`'s <code> or .copy-content
+ *
+ * Accessible: real <button>, aria-label updates to the copied message, an
+ * aria-live status announces the copy, focus-visible ring, reduced-motion.
  */
 import { defaultLocale, type Locale } from "@i18n/config";
 import { useTranslations } from "@i18n/utils";
 
 interface Props {
   class?: string;
+  /** Explicit text to copy. `code` is an alias kept for the code family. */
   content?: string;
+  code?: string;
+  /** ARIA label (idle). `label` is an alias. */
   ariaLabel?: string;
+  label?: string;
+  /** Confirmation text/label. Defaults to t("ui.copied"). */
+  copiedLabel?: string;
+  variant?: "default" | "terminal";
+  /** Optional visible label next to the icon (e.g. "Copy", "Commands"). */
+  text?: string;
 }
 
 const locale = (Astro.currentLocale ?? defaultLocale) as Locale;
 const t = useTranslations(locale);
 
-const { class: className, content, ariaLabel } = Astro.props;
-const encodedContent = content ? encodeURIComponent(content) : undefined;
+const {
+  class: className,
+  content,
+  code,
+  ariaLabel,
+  label,
+  copiedLabel,
+  variant = "default",
+  text,
+} = Astro.props;
+
+const copyText = content ?? code;
+const encodedContent = copyText ? encodeURIComponent(copyText) : undefined;
+const idleLabel = ariaLabel ?? label ?? t("aria.copyToClipboard");
+const doneLabel = copiedLabel ?? t("ui.copied");
 ---
 
 <button
-  class:list={["copy-button", className]}
+  class:list={[
+    "copy-button",
+    variant === "terminal" && "copy-button--term",
+    className,
+  ]}
   type="button"
-  aria-label={ariaLabel || t("aria.copyToClipboard")}
+  aria-label={idleLabel}
   data-content={encodedContent}
-  data-msg-copied={t("aria.copied")}
+  data-msg-copied={doneLabel}
   data-msg-unavailable={t("components.copyButton.clipboardUnavailable")}
   data-msg-failed={t("components.copyButton.failedToCopy")}
 >
@@ -38,196 +69,176 @@ const encodedContent = content ? encodeURIComponent(content) : undefined;
     class="copy-status sr-only"
     aria-live="polite"
   ></span>
+  <span class="copy-button__idle">
+    <span
+      class="i-mdi:clipboard-outline copy-icon"
+      aria-hidden="true"
+    ></span>
+    {text && <span class="copy-button__text">{text}</span>}
+  </span>
   <span
-    class="i-mdi:clipboard-outline copy-icon"
+    class="copy-button__done"
     aria-hidden="true"
-  ></span>
-  <span
-    class="i-mdi:check success-icon hidden"
-    aria-hidden="true"
-  ></span>
+  >
+    <span
+      class="i-mdi:check success-icon"
+      aria-hidden="true"
+    ></span>
+    {text && <span class="copy-button__text">{doneLabel}</span>}
+  </span>
 </button>
-
-<script>
-  const setupCopyButtons = () => {
-    document.querySelectorAll(".copy-button").forEach((button) => {
-      // Avoid duplicate listeners if script runs multiple times (e.g., view transitions)
-      if (button.getAttribute("data-has-listener")) return;
-      button.setAttribute("data-has-listener", "true");
-
-      button.addEventListener("click", () => {
-        let text = null;
-        const rawContent = button.getAttribute("data-content");
-        if (rawContent) {
-          try {
-            text = decodeURIComponent(rawContent);
-          } catch (e) {
-            console.error("Failed to decode data-content", e);
-          }
-        }
-
-        if (!text) {
-          const wrapper =
-            button.closest(".copy-container") || button.parentElement;
-          if (!wrapper) return;
-
-          const codeBlock = wrapper.querySelector("code, .copy-content");
-          if (codeBlock && codeBlock instanceof HTMLElement) {
-            // Prefer textContent (no layout) over innerText (forces layout)
-            text = codeBlock.textContent?.trim() || codeBlock.innerText;
-          }
-        }
-
-        if (!text) {
-          console.warn("CopyButton: No code element found in wrapper.");
-          return;
-        }
-
-        if (!navigator.clipboard) {
-          console.error("Clipboard API not available");
-          if (button instanceof HTMLElement) {
-            button.setAttribute(
-              "title",
-              button.getAttribute("data-msg-unavailable") ||
-                "Clipboard API unavailable",
-            );
-          }
-          return;
-        }
-
-        navigator.clipboard.writeText(text).then(
-          () => {
-            // Visual feedback
-            const copyIcon = button.querySelector(".copy-icon");
-            const successIcon = button.querySelector(".success-icon");
-
-            if (copyIcon && successIcon) {
-              copyIcon.classList.add("hidden");
-              successIcon.classList.remove("hidden");
-
-              // Clear any stale title from previous clipboard unavailable state
-              button.removeAttribute("title");
-
-              // Screen reader feedback
-              const status = button.querySelector(".copy-status");
-              if (status)
-                status.textContent =
-                  button.getAttribute("data-msg-copied") || "Copied!";
-
-              // Clear any existing timeout to prevent flickering
-              // Use a data attribute to store the timeout ID for cross-browser safety
-              const existingTimeoutId =
-                button.getAttribute("data-copy-timeout");
-              if (existingTimeoutId) {
-                clearTimeout(Number(existingTimeoutId));
-              }
-
-              // Store new timeout ID back to the button
-              const timeoutId = setTimeout(() => {
-                copyIcon.classList.remove("hidden");
-                successIcon.classList.add("hidden");
-                if (status) status.textContent = "";
-                button.removeAttribute("data-copy-timeout");
-              }, 3000);
-
-              button.setAttribute("data-copy-timeout", String(timeoutId));
-            }
-          },
-          (err) => {
-            console.error("Failed to copy:", err);
-            if (button instanceof HTMLElement) {
-              button.setAttribute(
-                "title",
-                button.getAttribute("data-msg-failed") || "Failed to copy!",
-              );
-            }
-          },
-        );
-      });
-    });
-  };
-
-  // Initialize on first load
-  setupCopyButtons();
-
-  // Re-initialize on view transitions if enabled
-  if (!document.documentElement.hasAttribute("data-copy-listener-init")) {
-    document.documentElement.setAttribute("data-copy-listener-init", "true");
-    document.addEventListener("astro:after-swap", setupCopyButtons);
-  }
-</script>
 
 <style>
   .copy-button {
-    /*
-     * CSS custom properties for theming in different contexts.
-     * Parent components can override these for better contrast.
-     */
-    --copy-btn-bg: var(--color-bg-subtle);
-    --copy-btn-bg-hover: var(--color-surface-2);
-    --copy-btn-border: var(--border-1);
-    --copy-btn-icon-color: var(--color-text-muted);
-
-    position: absolute;
-    top: 0.5rem;
-    right: 0.5rem;
-    z-index: 10; /* Ensure it stays above content/headers */
-    display: flex;
+    display: inline-flex;
+    gap: 6px;
     align-items: center;
     justify-content: center;
-    min-width: 32px;
-    min-height: 32px;
-    padding: 0.3rem 0.5rem;
+    min-width: 24px; /* WCAG 2.2 target size (icon-only would be 22px otherwise) */
+    height: var(--copy-size);
+    padding: 0 4px;
+    font-family: var(--font-mono);
+    font-size: var(--text-micro);
+    font-weight: var(--fw-medium);
+    line-height: 1;
+    color: var(--color-text-muted);
     cursor: pointer;
-    background-color: var(--copy-btn-bg);
-    border: var(--copy-btn-border);
+    background: transparent;
+    border: 0;
     border-radius: var(--radius-sm);
-    opacity: 80%;
-    transition:
-      opacity var(--dur-2) var(--ease-out),
-      background-color var(--dur-2) var(--ease-out);
+    transition: color var(--dur-1) var(--ease-out);
   }
 
-  .copy-button:hover,
-  .copy-button:focus-visible {
-    outline: none;
-    background-color: var(--copy-btn-bg-hover);
-    opacity: 100%;
+  .copy-button:hover {
+    color: var(--color-text-heading);
   }
 
   .copy-button:focus-visible {
-    outline: 2px solid var(--color-primary);
+    outline: 2px solid var(--color-accent);
     outline-offset: 2px;
   }
 
-  .copy-button:active {
-    transform: scale(0.95);
+  .copy-button__idle,
+  .copy-button__done {
+    display: inline-flex;
+    gap: 6px;
+    align-items: center;
   }
 
-  /* Icons */
-  .copy-icon,
-  .success-icon {
-    display: block;
-    width: 1.2rem;
-    height: 1.2rem;
-    font-size: 1.2rem;
-    color: var(--copy-btn-icon-color);
+  .copy-button__done {
+    display: none;
+    color: var(--color-success);
   }
 
-  .success-icon {
-    color: var(--teal);
-  }
-
-  .hidden {
+  .copy-button.is-copied .copy-button__idle {
     display: none;
   }
 
-  /* Reset absolute positioning when used in header contexts */
-  .copy-button:where(
-    .code-header-copy-btn,
-    .compare-copy-button,
-    .terminal-header-copy-btn
-  ) {
-    position: static;
+  .copy-button.is-copied .copy-button__done {
+    display: inline-flex;
+  }
+
+  .copy-icon,
+  .success-icon {
+    display: block;
+    width: var(--copy-icon);
+    height: var(--copy-icon);
+    font-size: var(--copy-icon);
+  }
+
+  /* Variant over the dark terminal surface */
+  .copy-button--term {
+    color: var(--term-dim);
+  }
+
+  .copy-button--term:hover {
+    color: var(--term-fg);
+  }
+
+  .copy-button--term.is-copied .copy-button__done {
+    color: var(--term-ok);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .copy-button {
+      transition: none;
+    }
   }
 </style>
+
+<script>
+  // Single delegated listener for every CopyButton (survives view transitions:
+  // `document` persists across astro:after-swap, so no re-init is needed).
+  interface CopyWin extends Window {
+    __jmrpCopyInit?: boolean;
+  }
+  const w = window as CopyWin;
+  if (!w.__jmrpCopyInit) {
+    w.__jmrpCopyInit = true;
+
+    document.addEventListener("click", (event) => {
+      const target = event.target as HTMLElement | null;
+      const button = target?.closest<HTMLButtonElement>(".copy-button");
+      if (!button) return;
+
+      // 1) explicit content, 2) nearest .copy-container's <code>/.copy-content
+      let text = "";
+      const raw = button.dataset.content;
+      if (raw) {
+        try {
+          text = decodeURIComponent(raw);
+        } catch {
+          text = "";
+        }
+      }
+      if (!text) {
+        const wrapper =
+          button.closest<HTMLElement>(".copy-container") ??
+          button.parentElement;
+        const source = wrapper?.querySelector<HTMLElement>(
+          "code, .copy-content",
+        );
+        if (source) text = source.textContent?.trim() || source.innerText;
+      }
+      text = text.replace(/\n+$/, "");
+      if (!text) return;
+
+      if (!navigator.clipboard) {
+        button.setAttribute(
+          "title",
+          button.dataset.msgUnavailable || "Clipboard unavailable",
+        );
+        return;
+      }
+
+      navigator.clipboard.writeText(text).then(
+        () => {
+          button.removeAttribute("title");
+          button.classList.add("is-copied");
+          const prevLabel = button.getAttribute("aria-label");
+          const copied = button.dataset.msgCopied || "Copied";
+          button.setAttribute("aria-label", copied);
+
+          const status = button.querySelector<HTMLElement>(".copy-status");
+          if (status) status.textContent = copied;
+
+          window.clearTimeout(Number(button.dataset.copyTimeout));
+          button.dataset.copyTimeout = String(
+            window.setTimeout(() => {
+              button.classList.remove("is-copied");
+              if (prevLabel) button.setAttribute("aria-label", prevLabel);
+              if (status) status.textContent = "";
+              delete button.dataset.copyTimeout;
+            }, 1600),
+          );
+        },
+        () => {
+          button.setAttribute(
+            "title",
+            button.dataset.msgFailed || "Failed to copy",
+          );
+        },
+      );
+    });
+  }
+</script>
