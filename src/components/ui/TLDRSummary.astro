@@ -74,7 +74,10 @@ const points = (body.match(/<li\b/gi) ?? []).length;
   .tldr-count {
     font-family: var(--font-mono);
     font-size: 0.6875rem;
-    color: var(--color-text-muted);
+
+    /* --color-text (not -muted): 11px on the amber-tinted header is 4.4:1 with
+       muted in dark mode — just under AA. Body colour clears it in both themes. */
+    color: var(--color-text);
     white-space: nowrap;
   }
 
