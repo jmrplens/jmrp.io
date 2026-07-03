@@ -2276,35 +2276,40 @@ const i18n = {
   }
 
   /* ── Result grid ── */
-  .net-result-grid {
+  /* Results are built client-side via document.createElement, so scoped styles
+     never reach them (Astro scoping needs the data-astro attribute the JS nodes
+     lack). Hence :global — the classes are net-* namespaced, so no collision.
+     Layout follows the design-review P3: a 2-column "label · value" grid with
+     real column-gap, label muted, value in heading color. */
+  :global(.net-result-grid) {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(min(100%, 220px), 1fr));
-    gap: 0.5rem;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr));
+    gap: 0.35rem var(--space-lg);
   }
 
-  .net-result-item {
-    display: flex;
-    flex-direction: column;
-    gap: 0.25rem;
-    padding: 0.6rem 0.75rem;
-    background: var(--color-bg-secondary);
-    border: var(--border-1);
-    border-radius: var(--radius-sm);
+  :global(.net-result-item) {
+    display: grid;
+    grid-template-columns: minmax(9rem, max-content) 1fr;
+    column-gap: var(--space-md);
+    align-items: baseline;
+    padding: 0.35rem 0;
+    border-bottom: 1px solid var(--color-hair);
   }
 
-  .net-result-wide {
+  :global(.net-result-wide) {
     grid-column: 1 / -1;
   }
 
-  .net-result-label {
-    font-size: 0.65rem;
+  :global(.net-result-label) {
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
     font-weight: var(--fw-semibold);
     color: var(--color-text-muted);
     text-transform: uppercase;
     letter-spacing: 0.03em;
   }
 
-  .net-result-value {
+  :global(.net-result-value) {
     font-family: var(--font-mono);
     font-size: 0.85rem;
     font-weight: var(--fw-medium);
@@ -2543,7 +2548,7 @@ const i18n = {
       max-width: none;
     }
 
-    .net-result-grid {
+    :global(.net-result-grid) {
       grid-template-columns: 1fr;
     }
 
