@@ -3,6 +3,15 @@ import { defaultLocale, type Locale } from "@i18n/config";
 import { useTranslatedPath, useTranslations } from "@i18n/utils";
 import { getPostsForLocale, getUniqueTags } from "@utils/blog";
 
+interface Props {
+  /** Marks the matching pill active (tag pages). Empty = "all posts" active. */
+  activeTag?: string;
+  /** How many tag pills stay visible before the rest collapse into <details>. */
+  limit?: number;
+}
+
+const { activeTag = "", limit = 12 } = Astro.props;
+
 const locale = (Astro.currentLocale ?? defaultLocale) as Locale;
 const t = useTranslations(locale);
 const translatePath = useTranslatedPath(locale);
@@ -10,6 +19,19 @@ const translatePath = useTranslatedPath(locale);
 const entries = await getPostsForLocale(locale);
 const posts = entries.map((e) => e.post);
 const tags = getUniqueTags(posts);
+
+// Most-used tags stay visible; the rest collapse into a zero-JS <details> so
+// the index doesn't open with a wall of ~29 chips (P6). The active tag (on a
+// tag page) is always kept visible even if it falls outside the top slice.
+let visible = tags.slice(0, limit);
+let overflow = tags.slice(limit);
+if (activeTag && !visible.some((x) => x.tag === activeTag)) {
+  const idx = overflow.findIndex((x) => x.tag === activeTag);
+  if (idx >= 0) {
+    visible = [...visible, overflow[idx]];
+    overflow = overflow.filter((_, i) => i !== idx);
+  }
+}
 ---
 
 <nav
@@ -19,21 +41,41 @@ const tags = getUniqueTags(posts);
 >
   <a
     href={translatePath("/blog/")}
-    class="tag-pill is-active"
+    class:list={["tag-pill", { "is-active": !activeTag }]}
     data-tag=""
   >
     {t("pages.blog.allPosts")} · {posts.length}
   </a>
   {
-    tags.map(({ tag }) => (
+    visible.map(({ tag }) => (
       <a
         href={translatePath(`/blog/tags/${encodeURIComponent(tag)}/`)}
-        class="tag-pill"
+        class:list={["tag-pill", { "is-active": tag === activeTag }]}
         data-tag={tag}
       >
         {tag}
       </a>
     ))
+  }
+  {
+    overflow.length > 0 && (
+      <details class="tag-more">
+        <summary class="tag-pill tag-pill--more">
+          {t("pages.blog.moreTopics", { count: overflow.length })}
+        </summary>
+        <div class="tag-more__list">
+          {overflow.map(({ tag }) => (
+            <a
+              href={translatePath(`/blog/tags/${encodeURIComponent(tag)}/`)}
+              class:list={["tag-pill", { "is-active": tag === activeTag }]}
+              data-tag={tag}
+            >
+              {tag}
+            </a>
+          ))}
+        </div>
+      </details>
+    )
   }
 </nav>
 
@@ -76,5 +118,37 @@ const tags = getUniqueTags(posts);
   .tag-pill:focus-visible {
     outline: 2px solid var(--color-primary);
     outline-offset: 2px;
+  }
+
+  /* Zero-JS "show more topics" disclosure. The overflow pills stay in the DOM
+     (so the index's client-side tag filter still finds them) and reveal below
+     the summary when opened. */
+  .tag-more {
+    align-self: flex-start;
+  }
+
+  .tag-more > summary {
+    cursor: pointer;
+    list-style: none;
+  }
+
+  .tag-more > summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .tag-pill--more {
+    color: var(--color-text-muted);
+  }
+
+  .tag-more[open] > summary {
+    color: var(--color-text-heading);
+    border-color: var(--color-accent);
+  }
+
+  .tag-more__list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-sm);
+    margin-top: var(--space-sm);
   }
 </style>

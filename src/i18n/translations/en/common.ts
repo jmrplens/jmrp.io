@@ -461,6 +461,7 @@ export const common = {
       subtitle: "Thoughts, tutorials, and engineering notes.",
       topicsTitle: "Topics",
       allPosts: "all",
+      moreTopics: "+{count} more",
       featured: "featured",
       minRead: "min",
       searchPlaceholder: "search…",

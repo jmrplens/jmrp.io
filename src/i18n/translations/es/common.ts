@@ -462,6 +462,7 @@ export const common = {
       subtitle: "Reflexiones, tutoriales y notas de ingeniería.",
       topicsTitle: "Temas",
       allPosts: "todos",
+      moreTopics: "+{count} más",
       featured: "destacado",
       minRead: "min",
       searchPlaceholder: "buscar…",
