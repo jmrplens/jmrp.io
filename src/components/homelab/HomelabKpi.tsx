@@ -12,6 +12,8 @@ export interface HomelabKpiTranslations {
   threatsBlocked: string;
   /** Label under the "uptime (24h)" figure. */
   uptime: string;
+  /** Shown in place of a figure when its live value is unavailable. */
+  noData: string;
 }
 
 /** Component props. */
@@ -110,7 +112,7 @@ export default function HomelabKpi({
     },
     { v: String(nodesCount), l: t.monitoredNodes, empty: false },
     {
-      v: threats === null ? "—" : threats.toLocaleString(),
+      v: threats === null ? t.noData : threats.toLocaleString(),
       l: t.threatsBlocked,
       empty: threats === null,
     },

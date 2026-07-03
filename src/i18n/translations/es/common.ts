@@ -565,6 +565,7 @@ export const common = {
       nodesUnit: "nodos",
       nodesLiveHint: "carga en vivo · vía API",
       nodesAriaLabel: "Carga de recursos de los nodos de infraestructura",
+      noData: "sin datos",
       nodeCpu: "CPU",
       nodeRam: "RAM",
       nodeTempOptimal: "Temp · Óptimo",

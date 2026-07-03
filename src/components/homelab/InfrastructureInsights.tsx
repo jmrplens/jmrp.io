@@ -28,6 +28,8 @@ export interface InfrastructureTranslations {
   securityBlocks: string;
   /** Text shown while data is loading. */
   loading: string;
+  /** Shown in place of a value when it is unavailable (e.g. API failed). */
+  noData: string;
   /** Label for the total security blocks count. */
   totalSecurityBlocks: string;
   /** Unit label for block counts. */
@@ -311,7 +313,7 @@ export default function InfrastructureInsights({ translations: t }: Props) {
     val: number | null | undefined,
     formatter?: (v: number | string) => string,
   ) => {
-    if (val === undefined || val === null) return "...";
+    if (val === undefined || val === null) return t.noData;
     return formatter ? formatter(val) : val.toLocaleString();
   };
 

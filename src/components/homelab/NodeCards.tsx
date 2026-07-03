@@ -16,6 +16,8 @@ export interface NodeCardsTranslations {
   statusOptimal: string;
   /** Status pill text when the node is under high load. */
   statusHighLoad: string;
+  /** Shown in place of a metric when its live value is unavailable. */
+  noData: string;
 }
 
 /** Static per-node configuration (name, role, API endpoint). */
@@ -136,7 +138,7 @@ export default function NodeCards({ translations: t, nodes }: Props) {
         const load = loads[node.key];
         const high = !!load && (load.cpu >= HIGH_LOAD || load.mem >= HIGH_LOAD);
         const pct = (v: number | undefined) =>
-          v === undefined ? "…" : `${v.toFixed(1)}%`;
+          v === undefined ? t.noData : `${v.toFixed(1)}%`;
         return (
           <article
             key={node.key}
@@ -200,7 +202,7 @@ export default function NodeCards({ translations: t, nodes }: Props) {
                   {high ? t.tempHighLoad : t.tempOptimal}
                 </span>
                 <span className="node-card__temp-value">
-                  {load?.temp == null ? "—" : `${Math.round(load.temp)}°C`}
+                  {load?.temp == null ? t.noData : `${Math.round(load.temp)}°C`}
                 </span>
               </div>
             </div>
