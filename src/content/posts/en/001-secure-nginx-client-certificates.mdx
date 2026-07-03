@@ -342,7 +342,7 @@ Before generating, decide on these parameters:
 
 Create a comprehensive OpenSSL configuration file:
 
-<FileContent filename="/etc/nginx/pki/openssl.cnf" icon="mdi:file-cog">
+<FileContent filename="/etc/nginx/pki/openssl.cnf">
 ```ini
 # =============================================================
 # OpenSSL Configuration for mTLS Certificate Authority
@@ -812,7 +812,7 @@ The `ssl_verify_client` directive controls how Nginx handles client certificates
 
 ### Complete Nginx configuration
 
-<FileContent filename="/etc/nginx/sites-available/secure.example.com.conf" icon="devicon:nginx">
+<FileContent filename="/etc/nginx/sites-available/secure.example.com.conf">
 ```nginx
 server {
     listen 443 ssl;
@@ -1005,7 +1005,7 @@ Proper TLS configuration is critical for security.
 
 ### Recommended configuration
 
-<FileContent filename="TLS Security Settings" icon="mdi:lock">
+<FileContent filename="TLS Security Settings">
 ```nginx
 # Only allow TLS 1.2 and 1.3
 ssl_protocols TLSv1.2 TLSv1.3;
@@ -1088,7 +1088,7 @@ Nginx exposes these variables for client certificate information:
 
 Use the `map` directive to create an allowlist:
 
-<FileContent filename="/etc/nginx/conf.d/mtls-access.conf" icon="devicon:nginx">
+<FileContent filename="/etc/nginx/conf.d/mtls-access.conf">
 ```nginx
 # Place this OUTSIDE the server block (in nginx.conf or included file)
 
@@ -1109,7 +1109,7 @@ map $ssl_client_s_dn $mtls_access_allowed {
 
 Then in your server block:
 
-<FileContent filename="Server Block Access Control" icon="devicon:nginx">
+<FileContent filename="Server Block Access Control">
 ```nginx
 server {
     # ... SSL configuration ...
@@ -1141,7 +1141,7 @@ You can achieve this in Nginx using a `map` directive to whitelist verified clie
 
 ### Configuration example
 
-<FileContent filename="/etc/nginx/nginx.conf" icon="devicon:nginx">
+<FileContent filename="/etc/nginx/nginx.conf">
 ```nginx
 http {
     # ...
@@ -1257,7 +1257,7 @@ openssl crl -in crl/ca.crl -text -noout
 
 #### Step 3: configure Nginx
 
-<FileContent filename="Add to server block" icon="devicon:nginx">
+<FileContent filename="Add to server block">
 ```nginx
 # Enable CRL checking
 ssl_crl /etc/nginx/pki/crl/ca.crl;
@@ -1349,7 +1349,7 @@ This script automates the entire creation process
 
 : generating the key, CSR, signing it, and exporting the PKCS#12 bundle.
 
-<FileContent filename="/usr/local/bin/mtls-add-client.sh" icon="mdi:bash" collapsible={true}>
+<FileContent filename="/usr/local/bin/mtls-add-client.sh" collapsible={true}>
 ```bash
 #!/bin/bash
 set -e
@@ -1440,7 +1440,7 @@ This script checks for expiring certificates
 
 , revokes them, re-signs the original CSR, and generates a new `.p12` bundle.
 
-<FileContent filename="/usr/local/bin/mtls-renew.sh" icon="mdi:bash" collapsible={true}>
+<FileContent filename="/usr/local/bin/mtls-renew.sh" collapsible={true}>
 ```bash
 #!/bin/bash
 # mTLS Certificate Renewal Script
@@ -1554,7 +1554,7 @@ fi
 
 Schedule this in crontab to run daily:
 
-<FileContent filename="crontab -e" icon="mdi:calendar-clock">
+<FileContent filename="crontab -e">
 ```text
 0 3 * * * /usr/local/bin/mtls-renew.sh >> /var/log/mtls-renew.log 2>&1
 ```

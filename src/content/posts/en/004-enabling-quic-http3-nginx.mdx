@@ -742,7 +742,7 @@ configure arguments: ... --with-http_v3_module ...
 
 Here's the minimal configuration to enable HTTP/3:
 
-<FileContent filename="/etc/nginx/sites-available/example.com.conf" icon="devicon:nginx">
+<FileContent filename="/etc/nginx/sites-available/example.com.conf">
 ```nginx
 server {
     server_name example.com;
@@ -802,7 +802,7 @@ server {
 
 Here's a comprehensive configuration with all optimizations. The configuration is split into two files: the main `nginx.conf` for global settings and a site-specific configuration file.
 
-<FileContent filename="/etc/nginx/nginx.conf" icon="devicon:nginx" collapsible ariaLabel="Nginx main configuration">
+<FileContent filename="/etc/nginx/nginx.conf" collapsible ariaLabel="Nginx main configuration">
 ```nginx
 # Main context
 worker_processes auto;
@@ -851,7 +851,7 @@ http {
 
 The site-specific configuration includes all the directives for QUIC, TLS, headers, and logging:
 
-<FileContent filename="/etc/nginx/sites-available/example.com.conf" icon="devicon:nginx" collapsible ariaLabel="Nginx site-specific configuration">
+<FileContent filename="/etc/nginx/sites-available/example.com.conf" collapsible ariaLabel="Nginx site-specific configuration">
 ```nginx
 server {
     server_name example.com www.example.com;
@@ -1086,7 +1086,7 @@ server {
 
 For high-traffic servers, increase UDP buffer sizes:
 
-<FileContent filename="/etc/sysctl.d/99-quic.conf" icon="mdi:cog">
+<FileContent filename="/etc/sysctl.d/99-quic.conf">
 ```bash
 # Increase UDP buffer sizes for QUIC
 net.core.rmem_max = 16777216

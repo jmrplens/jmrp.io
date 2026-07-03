@@ -51,9 +51,6 @@ export default defineConfig({
   safelist: [
     // Footer custom_social icons (dynamically generated from socials.yaml)
     "i-mdi:key",
-    "i-devicon:html5",
-    "i-devicon:javascript",
-    "i-devicon:cplusplus",
     "i-simple-icons:mikrotik",
     "i-mdi:file-outline",
     "i-mdi:file-cog-outline",
@@ -61,8 +58,6 @@ export default defineConfig({
     "i-mdi:code-json",
     "i-mdi:xml",
     "i-mdi:database",
-    "i-devicon:mongodb",
-    "i-devicon:graphql",
     // Timeline component icons (dynamically generated)
     "i-mdi:circle-medium",
     "i-mdi:check-circle",

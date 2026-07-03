@@ -22,9 +22,6 @@ import CopyButton from "./CopyButton.astro";
 
 interface Props {
   filename: string;
-  /** Reserved (accepted for back-compat, intentionally unused): the redesign
-   * uses ONE uniform file icon, never per-extension logos. */
-  icon?: string;
   language?: BuiltinLanguage | SpecialLanguage | string;
   collapsible?: boolean;
   open?: boolean;

@@ -45,7 +45,6 @@
        AA (dark 5.4:1 · light 5.0:1). --color-faint-lg: SOLO texto GRANDE tenue
        (kickers hero, números display). */
   --color-meta: var(--color-text-faint-alt);
-  --color-faint-lg: var(--color-text-faint);
   --color-on-primary: #0a0a0b; /* texto sobre relleno --color-primary */
 
   /* ===== MARCA (dark) ===================================================== */
@@ -53,7 +52,6 @@
   --color-primary-hover: #ffbb4d; /* 11.8 sobre bg */
   --color-accent: #f5a623; /* = primary; enlaces, foco, énfasis */
   --accent-hi: #ffbb4d; /* hover de acento (= primary-hover) */
-  --accent-hi-alt: #ffbb4d; /* en oscuro el hover ya cumple AA (10.7); alt = igual */
   --accent-dim: rgb(245 166 35 / 13%); /* relleno de acento */
   --accent-line: rgb(245 166 35 / 32%); /* borde de acento */
   --teal: #46b8a6; /* soporte / prompt del logo · 8.2 sobre bg */
@@ -86,35 +84,7 @@
   --color-status-warn: var(--color-status-warning); /* alias legado */
   --color-status-warn-bg: var(--color-status-warning-bg); /* alias legado */
   --color-status-error: #ef4444;
-  --color-status-error-bg: rgb(239 68 68 / 10%);
-  --color-status-unknown: #9ca3af;
-  --color-status-unknown-bg: rgb(156 163 175 / 10%);
   --color-status-info: #3b82f6;
-
-  /* ===== ESCALA DE GRÁFICOS (dark) — series de charts =====================
-     12 tonos de igual peso perceptual, arranca en el ámbar de marca. */
-  --g1: #f5a623;
-  --g2: #ec8c46;
-  --g3: #e5655b;
-  --g4: #e0739f;
-  --g5: #c77fd6;
-  --g6: #b389f5;
-  --g7: #8a93e6;
-  --g8: #6e8fd6;
-  --g9: #49b9cc;
-  --g10: #46b8a6;
-  --g11: #57c98a;
-  --g12: #9cc560;
-
-  /* ===== SEMÁNTICOS DE DIAGRAMAS (dark) — librería a11y-diagrams =========
-     Set propio de los diagramas (nodos por clase). Distinto de los formales
-     de la web: aquí success es verde (convención de diagrama), no teal. */
-  --diagram-info: #6e8fd6;
-  --diagram-tip: #46b8a6;
-  --diagram-success: #57c98a;
-  --diagram-warning: #e3b23c;
-  --diagram-danger: #e5655b;
-  --diagram-highlight: #b389f5;
 
   /* ===== SOMBRAS (dark) =================================================== */
   --sh-card: 0 30px 70px -30px rgb(0 0 0 / 80%);
@@ -149,13 +119,6 @@
 
   /* ===== TIPOGRAFÍA — escala de tamaños (fluida arriba, fija abajo) =======
      Úsala en componentes; los estilos base de h1..h6 viven en base.css. */
-  --text-display: clamp(40px, 5.4vw, 68px);
-  --text-h1: clamp(34px, 4.4vw, 52px);
-  --text-h2: 27px;
-  --text-h3: 19px;
-  --text-lead: 19px; /* intro/subtítulo */
-  --text-body: 16.5px;
-  --text-sm: 14px;
   --text-xs: 13px;
   --text-label: 12.5px; /* kickers mono en mayúsculas */
   --text-micro: 11.5px;
@@ -177,7 +140,6 @@
   --radius-sm: 6px;
   --radius-md: 10px;
   --radius-lg: 12px;
-  --radius-xl: 14px;
   --radius-pill: 100px; /* badges / pills / chips */
   --radius-full: 9999px; /* círculos (dots, avatares) */
 
@@ -192,23 +154,10 @@
   --dur-3: 320ms;
   --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
   --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
-  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
-
-  /* ===== FOCO ============================================================= */
-  --focus: var(--color-primary);
-  --ring-w: 3px;
-  --ring: 0 0 0 var(--ring-w)
-    color-mix(in srgb, var(--color-primary) 55%, transparent);
 
   /* ===== TRANSPARENCIAS — porcentajes para color-mix ======================
      Uso: color-mix(in srgb, var(--color-accent) var(--a-12), transparent) */
-  --a-04: 4%;
-  --a-08: 8%;
   --a-12: 12%;
-  --a-16: 16%;
-  --a-24: 24%;
-  --a-40: 40%;
-  --a-64: 64%;
 
   /* ===== LAYOUT =========================================================== */
   --header-height: 64px;
@@ -281,7 +230,6 @@
     --color-primary-hover: #c07a10; /* 3.3 sobre bg : SOLO hover / texto grande */
     --color-accent: #8f5300;
     --accent-hi: #c07a10;
-    --accent-hi-alt: #9a5f08; /* 5.0 / 4.9 / 4.6 : AA si se usa como texto (misma gama, más oscuro) */
     --accent-dim: rgb(156 93 0 / 10%);
     --accent-line: rgb(156 93 0 / 28%);
     --teal: #1f7e6e;
@@ -304,32 +252,11 @@
     --color-status-warning: #92400e;
     --color-status-warning-bg: #fef3c7;
     --color-status-error: #991b1b;
-    --color-status-error-bg: #fee2e2;
-    --color-status-unknown: #4b5563;
-    --color-status-unknown-bg: rgb(75 85 99 / 10%);
     --color-status-info: #1e40af;
 
     /* Escala de gráficos (light) — más saturada/oscura para contraste */
-    --g1: #b26a00;
-    --g2: #b5621f;
-    --g3: #c13b31;
-    --g4: #bc3f76;
-    --g5: #9a4fb0;
-    --g6: #6d45c4;
-    --g7: #4a55c2;
-    --g8: #3f6fc4;
-    --g9: #1c7e92;
-    --g10: #1f7e6e;
-    --g11: #197a43;
-    --g12: #5e7a1f;
 
     /* Semánticos de diagramas (light) */
-    --diagram-info: #3f6fc4;
-    --diagram-tip: #1f7e6e;
-    --diagram-success: #197a43;
-    --diagram-warning: #8a6a00;
-    --diagram-danger: #c13b31;
-    --diagram-highlight: #6d45c4;
 
     /* Sombras (light) — más suaves y cálidas */
     --sh-card: 0 24px 60px -28px rgb(40 38 30 / 28%);
@@ -361,7 +288,6 @@
   --color-primary-hover: #c07a10;
   --color-accent: #8f5300;
   --accent-hi: #c07a10;
-  --accent-hi-alt: #9a5f08;
   --accent-dim: rgb(156 93 0 / 10%);
   --accent-line: rgb(156 93 0 / 28%);
   --teal: #1f7e6e;
@@ -378,28 +304,7 @@
   --color-status-warning: #92400e;
   --color-status-warning-bg: #fef3c7;
   --color-status-error: #991b1b;
-  --color-status-error-bg: #fee2e2;
-  --color-status-unknown: #4b5563;
-  --color-status-unknown-bg: rgb(75 85 99 / 10%);
   --color-status-info: #1e40af;
-  --g1: #b26a00;
-  --g2: #b5621f;
-  --g3: #c13b31;
-  --g4: #bc3f76;
-  --g5: #9a4fb0;
-  --g6: #6d45c4;
-  --g7: #4a55c2;
-  --g8: #3f6fc4;
-  --g9: #1c7e92;
-  --g10: #1f7e6e;
-  --g11: #197a43;
-  --g12: #5e7a1f;
-  --diagram-info: #3f6fc4;
-  --diagram-tip: #1f7e6e;
-  --diagram-success: #197a43;
-  --diagram-warning: #8a6a00;
-  --diagram-danger: #c13b31;
-  --diagram-highlight: #6d45c4;
   --sh-card: 0 24px 60px -28px rgb(40 38 30 / 28%);
   --sh-pop: 0 18px 44px -16px rgb(40 38 30 / 32%);
   --scrim: rgb(40 38 30 / 38%);
@@ -428,7 +333,6 @@
   --color-primary-hover: #ffbb4d;
   --color-accent: #f5a623;
   --accent-hi: #ffbb4d;
-  --accent-hi-alt: #ffbb4d;
   --accent-dim: rgb(245 166 35 / 13%);
   --accent-line: rgb(245 166 35 / 32%);
   --teal: #46b8a6;
@@ -445,28 +349,7 @@
   --color-status-warning: #f59e0b;
   --color-status-warning-bg: rgb(245 158 11 / 10%);
   --color-status-error: #ef4444;
-  --color-status-error-bg: rgb(239 68 68 / 10%);
-  --color-status-unknown: #9ca3af;
-  --color-status-unknown-bg: rgb(156 163 175 / 10%);
   --color-status-info: #3b82f6;
-  --g1: #f5a623;
-  --g2: #ec8c46;
-  --g3: #e5655b;
-  --g4: #e0739f;
-  --g5: #c77fd6;
-  --g6: #b389f5;
-  --g7: #8a93e6;
-  --g8: #6e8fd6;
-  --g9: #49b9cc;
-  --g10: #46b8a6;
-  --g11: #57c98a;
-  --g12: #9cc560;
-  --diagram-info: #6e8fd6;
-  --diagram-tip: #46b8a6;
-  --diagram-success: #57c98a;
-  --diagram-warning: #e3b23c;
-  --diagram-danger: #e5655b;
-  --diagram-highlight: #b389f5;
   --sh-card: 0 30px 70px -30px rgb(0 0 0 / 80%);
   --sh-pop: 0 20px 50px -18px rgb(0 0 0 / 85%);
   --scrim: rgb(10 10 11 / 60%);

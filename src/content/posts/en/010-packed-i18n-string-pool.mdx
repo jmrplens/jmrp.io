@@ -74,7 +74,7 @@ So I wrote a generator to out-pack the linker. Then I learned the linker was alr
 
 The obvious generated form is a grid: one row per language, one column per string ID, each cell a pointer to a literal.
 
-<FileContent filename="strings_gen.cpp (the naïve version)" icon="devicon:cplusplus" language="cpp">
+<FileContent filename="strings_gen.cpp (the naïve version)" language="cpp">
 ```cpp
 // 5 languages × 273 ids
 const char* const kStrings[kLangCount][kStringCount] = {
@@ -210,7 +210,7 @@ The pool above holds the text — and it stays roughly the same size whether you
 
 The generated output is two `constexpr std::array`s: the blob, and a nested array of `uint16_t` offsets into it. Here is a real excerpt — note how, in the offset table, **`BRAND` (`"Kleidos"`) and `CommonOk` (`"OK"`) hold the same offset in every language** (they deduplicate to one stored copy), while `CommonCancel` diverges per language:
 
-<FileContent filename="strings_gen.cpp (packed)" icon="devicon:cplusplus" language="cpp">
+<FileContent filename="strings_gen.cpp (packed)" language="cpp">
 ```cpp
 // All translations concatenated into one flash blob — deduplicated and
 // tail-merged, emitted longest-first.
@@ -312,7 +312,7 @@ Every `tr()` call walks the same short path — from a UI call site down to a si
 
 Call sites pull the names into scope once, so they read cleanly — no `i18n::`, `StringId::`, or `Lang::` noise. Resolve a `StringId` into a variable and use it, exactly as before:
 
-<FileContent filename="src/ui/… (real call sites)" icon="devicon:cplusplus" language="cpp">
+<FileContent filename="src/ui/… (real call sites)" language="cpp">
 ```cpp
 using i18n::tr;
 using enum i18n::StringId;   // PinEnter, PopBattLow, CommonCancel, …
@@ -333,7 +333,7 @@ That `gen::string(1, 2)` is exactly what the disassembly does: the naïve table 
 
 The packing itself is a dozen lines of Python. The trick is to place strings **longest-first**, then, for each one, check whether its bytes (plus the NUL) already appear anywhere in the blob so far. If they do, it's a duplicate or a suffix of something already placed — reuse that position. If not, append it.
 
-<FileContent filename="scripts/gen_i18n.py (the packer)" icon="devicon:python" language="python">
+<FileContent filename="scripts/gen_i18n.py (the packer)" language="python">
 ```python
 # Unique strings, sorted longest-first so suffixes collapse onto longer strings.
 uniq = sorted(

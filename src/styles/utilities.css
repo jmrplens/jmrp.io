@@ -29,14 +29,6 @@
 }
 
 /* ===== Texto ================================================================ */
-.text-mono {
-  font-family: var(--font-mono);
-}
-
-.text-primary {
-  color: var(--color-primary);
-}
-
 .text-muted {
   color: var(--color-text-muted);
 }
@@ -67,12 +59,6 @@
 .surface {
   background: var(--color-bg-secondary);
   border: var(--border-1);
-  border-radius: var(--radius-md);
-}
-
-.surface-hair {
-  background: var(--color-bg-secondary);
-  border: var(--border-hair);
   border-radius: var(--radius-md);
 }
 
@@ -216,18 +202,6 @@
   border-radius: var(--radius-pill);
 }
 
-.chip--accent {
-  color: var(--color-accent);
-  background: var(--accent-dim);
-  border-color: var(--accent-line);
-}
-
-.chip--ok {
-  color: var(--teal-text);
-  background: color-mix(in srgb, var(--teal) 12%, transparent);
-  border-color: color-mix(in srgb, var(--teal) 32%, transparent);
-}
-
 /* Punto de estado dentro de un chip / fila */
 .status-dot {
   width: 7px;
@@ -302,59 +276,4 @@
    del body (isolation:isolate) para no tapar texto ni interceptar clics. */
 .lab-grid--page {
   z-index: -1;
-}
-
-/* =============================================================================
-   LOGOTIPO — prompt de terminal "❯ jmrp_"
-   chevron = teal (prompt) · jmrp = heading (comando) · _ = ámbar (cursor).
-   Marcado esperado:
-     <span class="jlogo">
-       <span style="color:var(--teal)">❯</span>
-       <span style="color:var(--color-text-heading)">jmrp</span>
-       <span class="jcur jund janim" aria-hidden="true"></span>
-     </span>
-   El cursor parpadea salvo prefers-reduced-motion.
-============================================================================= */
-.jlogo {
-  display: inline-flex;
-  align-items: center;
-  font-family: var(--font-mono);
-  font-weight: var(--fw-semibold);
-  line-height: 1;
-  letter-spacing: -0.01em;
-  white-space: nowrap;
-}
-
-.jcur {
-  display: inline-block;
-  background: var(--color-primary);
-  border-radius: 1px;
-}
-
-.jund {
-  align-self: flex-end;
-  width: 0.6em;
-  height: 0.12em;
-}
-
-.janim {
-  animation: jblink 1.15s steps(1) infinite;
-}
-
-@keyframes jblink {
-  0%,
-  46% {
-    opacity: 100%;
-  }
-
-  54%,
-  100% {
-    opacity: 0%;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .janim {
-    animation: none;
-  }
 }

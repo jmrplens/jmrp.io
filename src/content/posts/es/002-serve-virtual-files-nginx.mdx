@@ -147,7 +147,7 @@ Nginx evalúa los bloques location en un orden específico. Gana la primera coin
 
 Considera esta configuración:
 
-<FileContent filename="location-priority.conf" icon="devicon:nginx">
+<FileContent filename="location-priority.conf">
 ```nginx
 server {
     # Priority 5: Prefix (fallback)
@@ -251,7 +251,7 @@ Estas tres directivas determinan _dónde_ busca Nginx los archivos.
 
 La directiva `try_files` es increíblemente potente para archivos virtuales:
 
-<FileContent filename="try_files example" icon="devicon:nginx">
+<FileContent filename="try_files example">
 ```nginx
 location / {
     # Check if physical file exists, then directory, then fallback
@@ -307,7 +307,7 @@ Para contenido pequeño y sencillo, la directiva `return` es más eficiente que 
 
 ### Ejemplo de contenido inline
 
-<FileContent filename="return examples" icon="devicon:nginx">
+<FileContent filename="return examples">
 ```nginx
 server {
     # Simple text response
@@ -347,7 +347,7 @@ Las named locations (con prefijo `@`) permiten patrones de fallback sofisticados
 
 ### El patrón @fallback
 
-<FileContent filename="named-location.conf" icon="devicon:nginx">
+<FileContent filename="named-location.conf">
 ```nginx
 server {
     root /var/www/html;
@@ -371,7 +371,7 @@ server {
 
 Para aplicaciones React, Vue o Angular que usan enrutamiento del lado del cliente:
 
-<FileContent filename="spa-fallback.conf" icon="devicon:nginx">
+<FileContent filename="spa-fallback.conf">
 ```nginx
 server {
     root /var/www/app;
@@ -395,7 +395,7 @@ server {
 
 Usa la directiva `internal` para prevenir el acceso directo:
 
-<FileContent filename="internal-location.conf" icon="devicon:nginx">
+<FileContent filename="internal-location.conf">
 ```nginx
 location /protected-files/ {
     internal;  # Can only be reached via internal redirect
@@ -480,7 +480,7 @@ El archivo [robots.txt](https://developers.google.com/search/docs/crawling-index
 
 Da crédito a tu equipo con [humans.txt](https://humanstxt.org/):
 
-<FileContent filename="humans.txt location" icon="devicon:nginx">
+<FileContent filename="humans.txt location">
 ```nginx
 location = /humans.txt {
     default_type text/plain;
@@ -494,7 +494,7 @@ location = /humans.txt {
 
 Para la transparencia publicitaria y la prevención de fraude. La [especificación de IAB Tech Lab](https://iabtechlab.com/ads-txt/) requiere un formato CSV específico: `Domain, Publisher ID, Account Type, Certification Authority ID`.
 
-<FileContent filename="ads.txt location" icon="devicon:nginx">
+<FileContent filename="ads.txt location">
 ```nginx
 # Desktop ads.txt
 location = /ads.txt {
@@ -514,7 +514,7 @@ location = /app-ads.txt {
 
 Aunque los navegadores modernos prefieren SVG o PNG, `favicon.ico` sigue siendo solicitado por herramientas legacy y crawlers. Un único archivo `.ico` típicamente agrupa tamaños de 16x16, 32x32 y 48x48.
 
-<FileContent filename="favicon handling" icon="devicon:nginx">
+<FileContent filename="favicon handling">
 ```nginx
 # Serve from custom location
 location = /favicon.ico {
@@ -543,7 +543,7 @@ iOS usa este icono cuando un sitio web se añade a la pantalla de inicio. El est
 #### Android y Web App Manifest
 Android Chrome usa `site.webmanifest` para identificar los iconos de la aplicación (los tamaños estándar son 192x192 y 512x512).
 
-<FileContent filename="mobile-icons.conf" icon="devicon:nginx">
+<FileContent filename="mobile-icons.conf">
 ```nginx
 # Apple Touch Icon
 location = /apple-touch-icon.png {
@@ -584,7 +584,7 @@ El directorio [.well-known](https://www.iana.org/assignments/well-known-uris/wel
 
 Permite a los investigadores de seguridad reportar vulnerabilidades:
 
-<FileContent filename="security.txt" icon="devicon:nginx">
+<FileContent filename="security.txt">
 ```nginx
 location = /.well-known/security.txt {
     default_type text/plain;
@@ -602,7 +602,7 @@ location = /security.txt {
 
 Gestiona la validación de certificados entre múltiples servicios:
 
-<FileContent filename="acme-challenge.conf" icon="devicon:nginx">
+<FileContent filename="acme-challenge.conf">
 ```nginx
 # ACME Challenges - Choose only ONE of the following two location blocks:
 
@@ -623,7 +623,7 @@ location ^~ /.well-known/acme-challenge/ {
 
 Vincula tu sitio web a aplicaciones móviles:
 
-<FileContent filename="mobile-associations.conf" icon="devicon:nginx">
+<FileContent filename="mobile-associations.conf">
 ```nginx
 # Android App Links (assetlinks.json)
 location = /.well-known/assetlinks.json {
@@ -691,7 +691,7 @@ load_module modules/ngx_http_js_module.so;
 
 Sirve diferentes reglas de `robots.txt` según la petición (p. ej., bloqueando bots de IA dinámicamente):
 
-<FileContent filename="/etc/nginx/njs/virtual.js" icon="mdi:language-javascript">
+<FileContent filename="/etc/nginx/njs/virtual.js">
 ```javascript
 function robots(r) {
     const ua = r.headersIn['User-Agent'] || "";
@@ -708,7 +708,7 @@ export default { robots };
 ```
 </FileContent>
 
-<FileContent filename="njs-location.conf" icon="devicon:nginx">
+<FileContent filename="njs-location.conf">
 ```nginx
 http {
     js_import /etc/nginx/njs/virtual.js;
@@ -738,7 +738,7 @@ Críticos para la orquestación de containers y la observabilidad.
 
 ### Health check básico
 
-<FileContent filename="health-endpoint.conf" icon="devicon:nginx">
+<FileContent filename="health-endpoint.conf">
 ```nginx
 location = /health {
     access_log off;  # Don't spam logs
@@ -750,7 +750,7 @@ location = /health {
 
 ### Probes de Kubernetes
 
-<FileContent filename="k8s-probes.conf" icon="devicon:nginx">
+<FileContent filename="k8s-probes.conf">
 ```nginx
 # Liveness probe - is the process alive?
 location = /healthz {
@@ -781,7 +781,7 @@ Expone métricas internas de Nginx
 
  (requiere `ngx_http_stub_status_module`):
 
-<FileContent filename="stub_status.conf" icon="devicon:nginx">
+<FileContent filename="stub_status.conf">
 ```nginx
 location = /nginx_status {
     stub_status on;
@@ -816,7 +816,7 @@ Maximiza la eficiencia al servir archivos virtuales.
 
 ### Optimización del servicio de archivos
 
-<FileContent filename="performance.conf" icon="devicon:nginx">
+<FileContent filename="performance.conf">
 ```nginx
 http {
     # Zero-copy file transfers
@@ -839,7 +839,7 @@ http {
 
 ### Headers de caché
 
-<FileContent filename="caching.conf" icon="devicon:nginx">
+<FileContent filename="caching.conf">
 ```nginx
 # Static assets - cache aggressively
 location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg|woff2)$ {
@@ -870,7 +870,7 @@ Configuraciones del mundo real para infraestructura moderna.
 
 ### Patrón con Docker container
 
-<FileContent filename="docker-nginx.conf" icon="devicon:nginx">
+<FileContent filename="docker-nginx.conf">
 ```nginx
 upstream app {
     server app:3000;
@@ -910,7 +910,7 @@ server {
 
 ### Patrón de Kubernetes ingress
 
-<FileContent filename="k8s-ingress-nginx.conf" icon="devicon:nginx">
+<FileContent filename="k8s-ingress-nginx.conf">
 ```nginx
 server {
     listen 80;
@@ -948,7 +948,7 @@ server {
 
 Una configuración lista para producción que combina todas las técnicas:
 
-<FileContent filename="/etc/nginx/sites-available/example.com.conf" icon="devicon:nginx">
+<FileContent filename="/etc/nginx/sites-available/example.com.conf">
 ```nginx
 # Rate limiting zone (MUST be placed in http { } context, not inside server { } or location { })
 limit_req_zone $binary_remote_addr zone=general:10m rate=10r/s;

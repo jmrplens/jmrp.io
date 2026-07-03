@@ -184,7 +184,7 @@ Vamos a implementar una solución tarpit completa y lista para producción en [N
 
 Necesitamos definir nuestros formatos de log y variables map en el `nginx.conf` principal. Esta configuración permite **incluir IPs de confianza en una lista blanca** (como tu IP de casa o VPN) ¡para que no te atrapes a ti mismo!
 
-<FileContent filename="/etc/nginx/nginx.conf" icon="devicon:nginx" ariaLabel="Configuración de Nginx para maps y logging">
+<FileContent filename="/etc/nginx/nginx.conf" ariaLabel="Configuración de Nginx para maps y logging">
 ```nginx
 http {
     # ... existing config ...
@@ -237,7 +237,7 @@ Para mantener al atacante conectado, debemos enviar un status `200 OK`. Sin emba
 
 Crea un snippet reutilizable que gestione el throttle y el logging.
 
-<FileContent filename="/etc/nginx/snippets/tarpit.conf" icon="devicon:nginx" ariaLabel="Configuración del snippet del tarpit en Nginx">
+<FileContent filename="/etc/nginx/snippets/tarpit.conf" ariaLabel="Configuración del snippet del tarpit en Nginx">
 ```nginx
 # Log to dedicated tarpit log only for tarpitted requests
 access_log /var/log/nginx/tarpit_access.log tarpit_418_fixed if=$tarpit_loggable;
@@ -266,7 +266,7 @@ return 200 $slow_content;
 
 En lugar de añadir lógica de logging a cada location (lo cual es un lío), simplemente **devolvemos 418** para cualquier ruta sensible. Gestionaremos este código de error globalmente en el server block.
 
-<FileContent filename="/etc/nginx/snippets/sensitive_files_tarpit.conf" icon="devicon:nginx" collapsible ariaLabel="Configuración del tarpit para archivos sensibles">
+<FileContent filename="/etc/nginx/snippets/sensitive_files_tarpit.conf" collapsible ariaLabel="Configuración del tarpit para archivos sensibles">
 ```nginx
 # =============================================================================
 # Sensitive Files Tarpit Protection
@@ -301,7 +301,7 @@ location ~ /\.(?!well-known) {
 
 Ahora unimos todo usando `error_page 418`. Este es el "pegamento mágico" que hace que la arquitectura sea limpia.
 
-<FileContent filename="/etc/nginx/sites-available/example.com.conf" icon="devicon:nginx" ariaLabel="Server block completo con configuración de tarpit">
+<FileContent filename="/etc/nginx/sites-available/example.com.conf" ariaLabel="Server block completo con configuración de tarpit">
 ```nginx
 server {
     listen 443 ssl;
@@ -382,7 +382,7 @@ Mientras el tarpit malgasta el tiempo del atacante, podemos ir más allá **bane
 
 CrowdSec puede leer el archivo `/var/log/nginx/access.tarpit` para identificar IPs maliciosas:
 
-<FileContent filename="/etc/crowdsec/parsers/s02-enrich/nginx_tarpit.yaml" icon="mdi:file-cog" ariaLabel="Parser de CrowdSec para logs del tarpit">
+<FileContent filename="/etc/crowdsec/parsers/s02-enrich/nginx_tarpit.yaml" ariaLabel="Parser de CrowdSec para logs del tarpit">
 ```yaml
 name: crowdsec/nginx-tarpit
 description: "Parse Nginx tarpit access logs"
@@ -419,7 +419,7 @@ labels:
 
 Define cuándo banear una IP (por ejemplo, tras 3 impactos en el tarpit en 5 minutos):
 
-<FileContent filename="/etc/crowdsec/scenarios/nginx_tarpit_scan.yaml" icon="mdi:file-cog" ariaLabel="Escenario de CrowdSec para detección de tarpit">
+<FileContent filename="/etc/crowdsec/scenarios/nginx_tarpit_scan.yaml" ariaLabel="Escenario de CrowdSec para detección de tarpit">
 ```yaml
 type: leaky
 name: crowdsec/nginx-tarpit-scan
@@ -481,7 +481,7 @@ curl -G "https://api.abuseipdb.com/api/v2/check" \
 
 Crea un script para reportar automáticamente las capturas del tarpit:
 
-<FileContent filename="/usr/local/bin/report_tarpit_ips.sh" icon="mdi:file-code" ariaLabel="Script para reportar IPs del tarpit a AbuseIPDB">
+<FileContent filename="/usr/local/bin/report_tarpit_ips.sh" ariaLabel="Script para reportar IPs del tarpit a AbuseIPDB">
 ```bash
 #!/bin/bash
 # Report IPs from tarpit log to AbuseIPDB

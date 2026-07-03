@@ -343,7 +343,7 @@ Antes de generar, decide sobre estos parámetros:
 
 Crea un archivo de configuración completo de OpenSSL:
 
-<FileContent filename="/etc/nginx/pki/openssl.cnf" icon="mdi:file-cog">
+<FileContent filename="/etc/nginx/pki/openssl.cnf">
 ```ini
 # =============================================================
 # OpenSSL Configuration for mTLS Certificate Authority
@@ -813,7 +813,7 @@ La directiva `ssl_verify_client` controla cómo Nginx gestiona los certificados 
 
 ### Configuración completa de Nginx
 
-<FileContent filename="/etc/nginx/sites-available/secure.example.com.conf" icon="devicon:nginx">
+<FileContent filename="/etc/nginx/sites-available/secure.example.com.conf">
 ```nginx
 server {
     listen 443 ssl;
@@ -1006,7 +1006,7 @@ Una configuración TLS adecuada es fundamental para la seguridad.
 
 ### Configuración recomendada
 
-<FileContent filename="Ajustes de Seguridad TLS" icon="mdi:lock">
+<FileContent filename="Ajustes de Seguridad TLS">
 ```nginx
 # Only allow TLS 1.2 and 1.3
 ssl_protocols TLSv1.2 TLSv1.3;
@@ -1089,7 +1089,7 @@ Nginx expone estas variables para la información del certificado de cliente:
 
 Usa la directiva `map` para crear una lista de permitidos:
 
-<FileContent filename="/etc/nginx/conf.d/mtls-access.conf" icon="devicon:nginx">
+<FileContent filename="/etc/nginx/conf.d/mtls-access.conf">
 ```nginx
 # Place this OUTSIDE the server block (in nginx.conf or included file)
 
@@ -1110,7 +1110,7 @@ map $ssl_client_s_dn $mtls_access_allowed {
 
 Luego en tu bloque server:
 
-<FileContent filename="Control de Acceso en el Bloque Server" icon="devicon:nginx">
+<FileContent filename="Control de Acceso en el Bloque Server">
 ```nginx
 server {
     # ... SSL configuration ...
@@ -1142,7 +1142,7 @@ Puedes lograr esto en Nginx usando una directiva `map` para incluir en la lista 
 
 ### Ejemplo de configuración
 
-<FileContent filename="/etc/nginx/nginx.conf" icon="devicon:nginx">
+<FileContent filename="/etc/nginx/nginx.conf">
 ```nginx
 http {
     # ...
@@ -1258,7 +1258,7 @@ openssl crl -in crl/ca.crl -text -noout
 
 #### Paso 3: configurar Nginx
 
-<FileContent filename="Añadir al bloque server" icon="devicon:nginx">
+<FileContent filename="Añadir al bloque server">
 ```nginx
 # Enable CRL checking
 ssl_crl /etc/nginx/pki/crl/ca.crl;
@@ -1350,7 +1350,7 @@ Este script automatiza todo el proceso de creación
 
 : generando la clave, el CSR, firmándolo y exportando el paquete PKCS#12.
 
-<FileContent filename="/usr/local/bin/mtls-add-client.sh" icon="mdi:bash" collapsible={true}>
+<FileContent filename="/usr/local/bin/mtls-add-client.sh" collapsible={true}>
 ```bash
 #!/bin/bash
 set -e
@@ -1441,7 +1441,7 @@ Este script comprueba los certificados próximos a expirar
 
 , los revoca, refirma el CSR original y genera un nuevo paquete `.p12`.
 
-<FileContent filename="/usr/local/bin/mtls-renew.sh" icon="mdi:bash" collapsible={true}>
+<FileContent filename="/usr/local/bin/mtls-renew.sh" collapsible={true}>
 ```bash
 #!/bin/bash
 # mTLS Certificate Renewal Script
@@ -1555,7 +1555,7 @@ fi
 
 Programa esto en crontab para que se ejecute diariamente:
 
-<FileContent filename="crontab -e" icon="mdi:calendar-clock">
+<FileContent filename="crontab -e">
 ```text
 0 3 * * * /usr/local/bin/mtls-renew.sh >> /var/log/mtls-renew.log 2>&1
 ```

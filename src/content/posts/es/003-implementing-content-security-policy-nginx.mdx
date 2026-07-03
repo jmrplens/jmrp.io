@@ -124,7 +124,7 @@ Content Security Policy ha evolucionado significativamente desde su introducció
 
 Vamos a poner en marcha una CSP funcional ahora mismo. Abre tu configuración de Nginx y añade esta única cabecera:
 
-<FileContent filename="/etc/nginx/sites-available/example.com" icon="devicon:nginx">
+<FileContent filename="/etc/nginx/sites-available/example.com">
 ```nginx
 server {
     listen 443 ssl;
@@ -618,7 +618,7 @@ En lugar de escribir una CSP perfecta de golpe (lo que lleva a la frustración),
 
 Así es como se ve el Nivel 6 en la práctica:
 
-<FileContent filename="/etc/nginx/sites-available/example.com" icon="devicon:nginx">
+<FileContent filename="/etc/nginx/sites-available/example.com">
 ```nginx
 add_header Content-Security-Policy "
     default-src 'none';
@@ -791,7 +791,7 @@ sequenceDiagram
 
 En tus plantillas, usa un placeholder que Nginx reemplazará:
 
-<FileContent filename="src/layouts/BaseLayout.astro" icon="simple-icons:astro">
+<FileContent filename="src/layouts/BaseLayout.astro">
 ```astro
 ---
 // Layout component
@@ -813,7 +813,7 @@ En tus plantillas, usa un placeholder que Nginx reemplazará:
 
 ### Paso 2: configura Nginx
 
-<FileContent filename="/etc/nginx/sites-available/example.com" icon="devicon:nginx">
+<FileContent filename="/etc/nginx/sites-available/example.com">
 ```nginx
 server {
     listen 443 ssl;
@@ -1226,7 +1226,7 @@ flowchart LR
 
 ### Activar Trusted Types
 
-<FileContent filename="nginx.conf (CSP con Trusted Types)" icon="devicon:nginx">
+<FileContent filename="nginx.conf (CSP con Trusted Types)">
 ```nginx
 add_header Content-Security-Policy "
     default-src 'none';
@@ -1296,7 +1296,7 @@ Diferentes partes de tu sitio pueden necesitar políticas distintas:
 
 ### Implementación
 
-<FileContent filename="/etc/nginx/sites-available/example.com" icon="devicon:nginx">
+<FileContent filename="/etc/nginx/sites-available/example.com">
 ```nginx
 server {
     listen 443 ssl;
@@ -1445,7 +1445,7 @@ El reporting integrado de CSP te informa cuando se producen violaciones — es e
 
 ### Opción 1: Logging simple con Nginx
 
-<FileContent filename="/etc/nginx/sites-available/example.com" icon="devicon:nginx">
+<FileContent filename="/etc/nginx/sites-available/example.com">
 ```nginx
 # Reporting endpoint
 location /csp-reports {
@@ -1455,7 +1455,7 @@ location /csp-reports {
 ```
 </FileContent>
 
-<FileContent filename="Cabecera CSP con reporting" icon="devicon:nginx">
+<FileContent filename="Cabecera CSP con reporting">
 ```nginx
 # Modern Reporting API (Chrome 70+)
 add_header Reporting-Endpoints 'csp-endpoint="/csp-reports"' always;
@@ -1486,7 +1486,7 @@ report-to csp-endpoint;
 
 Los navegadores envían informes JSON como este:
 
-<FileContent filename="csp-violation-report.json" icon="mdi:code-json">
+<FileContent filename="csp-violation-report.json">
 ```json
 {
   "csp-report": {
@@ -1729,7 +1729,7 @@ location /assets/ {
 
 ## Ejemplo completo de producción
 
-<FileContent filename="/etc/nginx/sites-available/example.com" icon="devicon:nginx">
+<FileContent filename="/etc/nginx/sites-available/example.com">
 ```nginx
 server {
     listen 443 ssl;

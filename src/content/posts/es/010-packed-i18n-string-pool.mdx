@@ -75,7 +75,7 @@ Así que escribí un generador para _empaquetar mejor_ que el linker. Luego desc
 
 La forma generada obvia es una rejilla: una fila por idioma, una columna por ID de cadena, cada celda un puntero a un literal.
 
-<FileContent filename="strings_gen.cpp (versión básica)" icon="devicon:cplusplus" language="cpp">
+<FileContent filename="strings_gen.cpp (versión básica)" language="cpp">
 ```cpp
 // 5 languages × 273 ids
 const char* const kStrings[kLangCount][kStringCount] = {
@@ -211,7 +211,7 @@ El pool de arriba contiene el texto — y se mantiene más o menos igual de gran
 
 La salida generada son dos `constexpr std::array`: el blob, y un array anidado de offsets `uint16_t` dentro de él. Aquí va un extracto real — fíjate en cómo, en la tabla de offsets, **`BRAND` (`"Kleidos"`) y `CommonOk` (`"OK"`) tienen el mismo offset en todos los idiomas** (se deduplican a una sola copia almacenada), mientras que `CommonCancel` diverge por idioma:
 
-<FileContent filename="strings_gen.cpp (empaquetado)" icon="devicon:cplusplus" language="cpp">
+<FileContent filename="strings_gen.cpp (empaquetado)" language="cpp">
 ```cpp
 // All translations concatenated into one flash blob — deduplicated and
 // tail-merged, emitted longest-first.
@@ -313,7 +313,7 @@ Cada llamada a `tr()` recorre el mismo camino corto — desde un punto de llamad
 
 Los puntos de llamada traen los nombres al scope una vez, así que se leen limpios — sin ruido de `i18n::`, `StringId::` ni `Lang::`. Resuelve un `StringId` en una variable y úsalo, exactamente como antes:
 
-<FileContent filename="src/ui/… (puntos de llamada reales)" icon="devicon:cplusplus" language="cpp">
+<FileContent filename="src/ui/… (puntos de llamada reales)" language="cpp">
 ```cpp
 using i18n::tr;
 using enum i18n::StringId;   // PinEnter, PopBattLow, CommonCancel, …
@@ -334,7 +334,7 @@ Ese `gen::string(1, 2)` es exactamente lo que hace el desensamblado: la tabla b�
 
 El empaquetado en sí son una docena de líneas de Python. El truco es colocar las cadenas **de la más larga a la más corta** y, para cada una, comprobar si sus bytes (más el NUL) ya aparecen en alguna parte del blob construido hasta ese momento. Si aparecen, es un duplicado o un sufijo de algo ya colocado — reutiliza esa posición. Si no, la añade al final.
 
-<FileContent filename="scripts/gen_i18n.py (el empaquetador)" icon="devicon:python" language="python">
+<FileContent filename="scripts/gen_i18n.py (el empaquetador)" language="python">
 ```python
 # Unique strings, sorted longest-first so suffixes collapse onto longer strings.
 uniq = sorted(
