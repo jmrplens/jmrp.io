@@ -333,15 +333,17 @@ const personSchema = [
                 <span class="notes-date">
                   {formatDateDot(post.data.publishedDate)}
                 </span>
-                <a
-                  class="notes-title"
-                  href={translatePath(`/blog/${post.data.slug}/`)}
-                >
-                  {post.data.title}
-                </a>
-                {post.data.tags?.[0] && (
-                  <span class="notes-tag">{post.data.tags[0]}</span>
-                )}
+                <span class="notes-main">
+                  <a
+                    class="notes-title"
+                    href={translatePath(`/blog/${post.data.slug}/`)}
+                  >
+                    {post.data.title}
+                  </a>
+                  {post.data.tags?.[0] && (
+                    <span class="notes-tag">{post.data.tags[0]}</span>
+                  )}
+                </span>
               </li>
             ))}
           </ul>
@@ -736,11 +738,21 @@ const personSchema = [
 
   .notes-item {
     display: grid;
-    grid-template-columns: max-content 1fr max-content;
+    grid-template-columns: max-content 1fr;
     gap: var(--space-md);
-    align-items: center;
+    align-items: baseline;
     padding: var(--space-md) 0;
     border-bottom: 1px solid var(--color-hair);
+  }
+
+  /* Título + tag agrupados (P2): el tag vive junto al título, no en el borde
+     derecho — elimina el "río blanco" central de la fila. */
+  .notes-main {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: var(--space-sm);
+    min-width: 0;
   }
 
   .notes-item:last-child {
