@@ -223,7 +223,7 @@ const linesText = `${lineCount} ${t("ui.lines")}`;
   .jmrp-file__head {
     display: flex;
     gap: 12px;
-    align-items: flex-start;
+    align-items: center;
     justify-content: space-between;
     padding: var(--code-header-py) 12px var(--code-header-py) 16px;
     background: var(--color-surface-2);
@@ -234,7 +234,7 @@ const linesText = `${lineCount} ${t("ui.lines")}`;
     display: flex;
     flex: 1;
     gap: 9px;
-    align-items: flex-start;
+    align-items: center;
     min-width: 0;
     font-family: var(--font-mono);
     font-size: var(--code-filename-size);
@@ -244,7 +244,6 @@ const linesText = `${lineCount} ${t("ui.lines")}`;
 
   .jmrp-file__icon {
     flex: none;
-    margin-top: 1px;
     font-size: 15px;
     color: var(--color-text-muted);
   }
@@ -262,11 +261,10 @@ const linesText = `${lineCount} ${t("ui.lines")}`;
     display: flex;
     flex: none;
     gap: 8px;
-    align-items: flex-start;
+    align-items: center;
   }
 
   .jmrp-file__lines {
-    margin-top: 6px;
     font-family: var(--font-mono);
     font-size: 10.5px;
     color: var(--color-meta);
@@ -314,7 +312,6 @@ const linesText = `${lineCount} ${t("ui.lines")}`;
 
   .jmrp-file__chev {
     flex: none;
-    margin-top: 1px;
     color: var(--color-accent);
     transition: transform var(--dur-2) var(--ease-out);
   }
@@ -323,17 +320,21 @@ const linesText = `${lineCount} ${t("ui.lines")}`;
     transform: rotate(90deg);
   }
 
-  /* Copy button over the header top-right in the collapsible variant. :global
-     because the class lands on the child CopyButton's own element. */
+  /* Copy button pinned top-right of the collapsible variant, OUTSIDE <details>
+     (avoids a nested interactive control inside <summary>). :global because the
+     class lands on the child CopyButton's own element. Vertically aligned with
+     the header's first line. */
   :global(.jmrp-file__copy) {
     position: absolute;
-    top: 7px;
+    top: 5px;
     right: 10px;
     z-index: 1;
   }
 
-  .jmrp-file--collapsible .jmrp-file__id {
-    padding-right: 2rem; /* room for the absolute copy button */
+  /* Reserve room on the WHOLE summary row so the line count never slides under
+     the absolute copy button (they used to overlap). */
+  .jmrp-file--collapsible .jmrp-file__head {
+    padding-right: 46px;
   }
 
   @media (prefers-reduced-motion: reduce) {
