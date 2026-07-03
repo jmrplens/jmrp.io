@@ -1,9 +1,11 @@
 ---
 /**
- * TerminalCommand Component
- * Displays a shell command in a simulated terminal window.
+ * TerminalCommand — a CLI command to run, in a dark terminal card (both themes),
+ * with a copy button that copies the raw command (no prompt).
+ *
+ * Usage:
+ *   <TerminalCommand>sudo nginx -t && sudo systemctl reload nginx</TerminalCommand>
  */
-
 import { createHash } from "node:crypto";
 
 import { defaultLocale, type Locale } from "@i18n/config";
@@ -14,53 +16,27 @@ import * as cheerio from "cheerio";
 import CopyButton from "./CopyButton.astro";
 
 interface Props {
+  prompt?: string;
   ariaLabel?: string;
 }
+
+const { prompt = "❯", ariaLabel } = Astro.props;
 
 let lines: string[] = [];
 let rawContent = "";
 
-/**
- * Slot Rendering Pipeline:
- * MDX content is rendered to HTML by Astro, so we need to extract
- * pure text from the HTML output for display and copy functionality.
- *
- * Steps:
- * 1. Render the slot to get HTML output from MDX.
- * 2. Use cheerio to parse the HTML DOM.
- * 3. Convert block elements (br, p, div, etc.) to newlines.
- * 4. Extract pure text content.
- * 5. Decode HTML entities (e.g., &amp; -> &).
- * 6. Split into lines for rendering with prompts.
- */
 if (Astro.slots.has("default")) {
   const htmlContent = await Astro.slots.render("default");
-
-  // Parse rendered HTML using cheerio for robust text extraction
   const $ = cheerio.load(htmlContent);
-
-  // Convert common block elements and breaks to newlines
-  // This ensures multi-line commands are properly separated
   $("br").replaceWith("\n");
   $("p, div, li, h1, h2, h3, h4, h5, h6").each((_, el) => {
     $(el).append("\n");
   });
-
-  let processed = $.text();
-
-  // Decode HTML entities that MDX may have escaped (e.g., &amp;, &lt;)
-  processed = decodeHtml(processed);
-
-  const trimmed = processed.trim();
-  if (trimmed) {
-    lines = trimmed.split(/\r?\n/);
-  }
-
-  // Store the clean text for the copy button
+  const processed = decodeHtml($.text()).trim();
+  if (processed) lines = processed.split(/\r?\n/);
   rawContent = lines.join("\n");
 }
 
-// Pre-calculate line properties
 const renderedLines = lines.map((line) => {
   const trimmedLine = line.trim();
   return {
@@ -70,30 +46,22 @@ const renderedLines = lines.map((line) => {
   };
 });
 
-const { ariaLabel } = Astro.props;
-
 const locale = (Astro.currentLocale ?? defaultLocale) as Locale;
 const t = useTranslations(locale);
 
-// Generate a content-based test ID for uniqueness
-// Use a fixed fallback hash for empty content to ensure deterministic output
-const hashInput = rawContent || "empty-terminal-content";
 const contentHash = createHash("sha256")
-  .update(hashInput)
+  .update(rawContent || "empty-terminal-content")
   .digest("hex")
   .slice(0, 8);
 
-// Fallback to meaningful label when rawContent is empty or whitespace-only
 const trimmedRaw = rawContent.trim();
-
 let finalAriaLabel: string;
 if (ariaLabel) {
   finalAriaLabel = ariaLabel;
 } else if (trimmedRaw) {
-  const snippet = trimmedRaw.slice(0, 50);
   const suffix = trimmedRaw.length > 50 ? "..." : "";
   finalAriaLabel = t("components.terminal.commandAria", {
-    command: `${snippet}${suffix}`,
+    command: `${trimmedRaw.slice(0, 50)}${suffix}`,
   });
 } else {
   finalAriaLabel = t("components.terminal.noCommand");
@@ -101,159 +69,66 @@ if (ariaLabel) {
 ---
 
 <div
-  class="terminal-command-wrapper copy-container"
+  class="jmrp-term terminal-command-wrapper copy-container"
   data-testid={`terminal-${contentHash}`}
 >
-  <div class="action-area">
+  <div class="jmrp-term__head">
+    <span
+      class="jmrp-term__dots"
+      aria-hidden="true"
+    >
+      <i></i><i></i><i></i>
+    </span>
     <CopyButton
+      variant="terminal"
       content={rawContent}
       ariaLabel={t("components.terminal.copyCommand", {
         command: finalAriaLabel,
       })}
     />
   </div>
-
-  {
-    /* Accessible scrollable container: Using <pre> implies preformatted text/code, which is semantically correct and allows tabindex */
-  }
-  <section class="terminal-window-container">
-    {/* eslint-disable astro/jsx-a11y/no-noninteractive-tabindex */}
+  <div class="jmrp-term__body">
+    {
+      /* eslint-disable astro/jsx-a11y/no-noninteractive-tabindex -- focusable scroll region */
+    }
     <div
-      class="terminal-window"
+      class="jmrp-term__scroll"
       role="region"
       tabindex="0"
       aria-label={finalAriaLabel}
     >
       {/* eslint-enable astro/jsx-a11y/no-noninteractive-tabindex */}
       {
-        renderedLines.map((line) => (
-          <span class="command-line">
-            <span
-              class="prompt"
-              aria-hidden="true"
-            >
-              {!line.isEmpty && !line.isComment ? "$" : "\u{A0}"}
-            </span>
-            <span
-              class:list={["line-content", { "is-comment": line.isComment }]}
-            >
-              {line.text}
-            </span>
-          </span>
-        ))
+        renderedLines.map((line) =>
+          line.isComment || line.isEmpty ? (
+            <div class="jmrp-term__line">
+              <span class="term-out">{line.text}</span>
+            </div>
+          ) : (
+            <div class="jmrp-term__line">
+              <span
+                class="term-prompt"
+                aria-hidden="true"
+              >
+                {prompt}
+              </span>
+              <span class="term-cmd">{line.text}</span>
+            </div>
+          ),
+        )
       }
     </div>
-  </section>
-
-  {/* Hidden element for CopyButton to grab clean text without prompts */}
-  <div
-    class="copy-content"
-    style="display: none;"
-    aria-hidden="true"
-    set:text={rawContent}
-  />
+  </div>
 </div>
 
 <style>
-  .terminal-command-wrapper {
-    position: relative;
-    display: flex;
-    flex-direction: column;
-    margin: 1.5rem 0;
-    overflow: hidden;
-    background-color: var(--color-bg);
-    border: var(--border-1);
-    border-radius: var(--radius-lg); /* mockup card radius ~11-12px */
-  }
-
-  .action-area {
-    position: absolute;
-    top: 0.5rem;
-    right: 0.5rem;
-    z-index: 10;
-  }
-
-  /*
-   * Use display: contents to remove the section from layout flow while
-   * keeping it in the accessibility tree. Wrap in @supports for older browsers.
-   */
-  .terminal-window-container {
-    display: block; /* Fallback for unsupported browsers */
-  }
-
-  @supports (display: contents) {
-    .terminal-window-container {
-      display: contents;
-    }
-  }
-
-  .terminal-window {
-    display: block; /* Simpler block layout to avoid flex-related boosting */
-    width: 100%; /* Explicit width constraint */
-    min-width: 0;
-    max-width: 100%; /* Ensure it doesn't overflow parent calculation */
-    padding: 0.9375rem 1rem; /* 15px 16px */
-    padding-right: 2.75rem; /* room for absolute copy button */
-    margin: 0; /* Reset pre default margin */
+  .jmrp-term__scroll {
     overflow-x: auto;
-
-    /* Typography */
-    font-family: var(--font-mono);
-    font-size: 0.7813rem; /* 12.5px */
-    line-height: 1.6;
-
-    /* Mobile Fix: Prevent font inflation */
-    text-size-adjust: none;
+    outline: none;
   }
 
-  .terminal-window:focus-visible {
+  .jmrp-term__scroll:focus-visible {
     outline: 2px solid transparent;
-    box-shadow: inset 0 0 0 2px var(--color-primary);
-  }
-
-  /* High Contrast Mode support */
-  @media (forced-colors: active) {
-    .terminal-window:focus-visible {
-      outline: 2px solid CanvasText;
-      outline-offset: 2px;
-    }
-  }
-
-  .command-line {
-    display: flex;
-    align-items: flex-start;
-    min-height: 1.6em;
-    font-family: var(--font-mono);
-    font-size: 0.7813rem; /* 12.5px */
-    line-height: 1.6;
-    color: var(--color-text);
-    white-space: pre;
-
-    /* Mobile Fix: Prevent font inflation */
-    text-size-adjust: none;
-  }
-
-  .prompt {
-    flex-shrink: 0;
-    margin-right: 0.625rem; /* 10px */
-    font-family: inherit;
-    font-weight: var(--fw-bold);
-    color: var(--teal);
-    user-select: none;
-  }
-
-  .line-content {
-    flex-grow: 1;
-    font-family: inherit;
-    color: var(--color-text-heading);
-  }
-
-  .line-content.is-comment {
-    font-style: italic;
-    color: var(--color-text-muted);
-  }
-
-  :global(.terminal-command-wrapper .copy-button) {
-    position: static !important;
+    box-shadow: inset 0 0 0 2px var(--term-prompt);
   }
 </style>

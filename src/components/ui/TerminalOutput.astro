@@ -1,18 +1,17 @@
 ---
 /**
- * TerminalOutput Component
- * Displays the output of a shell command in a distinct visual style.
- *
- * NOTE: We use a <section> wrapper with 'white-space: pre-wrap' instead of a <pre> tag
- * to avoid nested <pre> tags when the slot contains code blocks.
+ * TerminalOutput — the output of a command (no prompt) in a dark terminal card
+ * (both themes), with a copy button.
  *
  * Usage:
- * <TerminalOutput title="Output">
- *   Package installed successfully.
- * </TerminalOutput>
+ *   <TerminalOutput title="Test results">All tests passed (43/43)</TerminalOutput>
  */
 import { defaultLocale, type Locale } from "@i18n/config";
 import { useTranslations } from "@i18n/utils";
+import { decodeHtml } from "@utils/html";
+import * as cheerio from "cheerio";
+
+import CopyButton from "./CopyButton.astro";
 
 interface Props {
   title?: string;
@@ -27,110 +26,71 @@ const t = useTranslations(locale);
 const slotContent = await Astro.slots.render("default");
 const trimmedContent = slotContent.trim();
 
-// Use descriptive fallback (avoid non-meaningful IDs for screen readers)
+// Plain text (for the copy button).
+const $ = cheerio.load(slotContent);
+$("br").replaceWith("\n");
+$("p, div, li").each((_, el) => {
+  $(el).append("\n");
+});
+const outputText = decodeHtml($.text()).trim();
+
+const label = title ?? t("ui.output");
 const finalAriaLabel =
   ariaLabel ||
   (title
     ? t("components.terminal.outputTitle", { title })
     : t("components.terminal.outputFallback"));
+const scrollAria = title
+  ? t("components.terminal.scrollableOutput", { title })
+  : t("components.terminal.scrollableFallback");
 ---
 
 <section
-  class="terminal-output-wrapper"
+  class="jmrp-term"
   role="log"
   aria-live="polite"
   aria-label={finalAriaLabel}
 >
-  {
-    title && (
-      <div
-        class="output-header"
-        aria-hidden="true"
-      >
-        <span class="i-mdi:chevron-right-box-outline output-icon" />
-        <span class="output-title">{title}</span>
-      </div>
-    )
-  }
-  {
-    /* eslint-disable astro/jsx-a11y/no-noninteractive-tabindex -- Focusable region for keyboard scrolling */
-  }
-  <div
-    class="output-body"
-    role="group"
-    tabindex="0"
-    aria-label={title
-      ? t("components.terminal.scrollableOutput", { title })
-      : t("components.terminal.scrollableFallback")}
-  >
-    {/* eslint-enable astro/jsx-a11y/no-noninteractive-tabindex */}
-    <div
-      class="terminal-content"
-      set:html={trimmedContent}
+  <div class="jmrp-term__head">
+    <span class="jmrp-term__label">{label}</span>
+    <CopyButton
+      variant="terminal"
+      content={outputText}
+      ariaLabel={t("components.terminal.copyCommand", { command: label })}
     />
+  </div>
+  <div class="jmrp-term__body">
+    {
+      /* eslint-disable astro/jsx-a11y/no-noninteractive-tabindex -- focusable scroll region */
+    }
+    <div
+      class="jmrp-term__scroll"
+      role="group"
+      tabindex="0"
+      aria-label={scrollAria}
+    >
+      {/* eslint-enable astro/jsx-a11y/no-noninteractive-tabindex */}
+      {
+        /* <div>, not <pre>: the output slot may contain block content (<p>,
+          <ul>, code fences) which is invalid inside <pre>. Pre-wrap comes from
+          the global .jmrp-term__out rule. */
+      }
+      <div
+        class="jmrp-term__out"
+        set:html={trimmedContent}
+      />
+    </div>
   </div>
 </section>
 
 <style>
-  .terminal-content {
-    word-break: normal;
-    overflow-wrap: break-word;
-    white-space: pre-wrap;
-  }
-
-  .terminal-output-wrapper {
-    margin: 1.5rem 0;
-    overflow: hidden;
-    background-color: var(--color-bg);
-    border: var(--border-1);
-    border-radius: var(--radius-lg); /* mockup card radius ~11-12px */
-  }
-
-  .output-body:focus-visible {
-    outline: 2px solid transparent;
-    box-shadow: inset 0 0 0 2px var(--color-primary);
-  }
-
-  .output-header {
-    display: flex;
-    gap: 0.5rem;
-    align-items: center;
-    padding: 0.6rem 1rem;
-    font-family: var(--font-mono);
-    font-size: 0.85rem;
-    color: var(--color-text-muted);
-    border-bottom: 1px solid var(--color-hair);
-  }
-
-  .output-icon {
-    font-size: 1.1rem;
-  }
-
-  .output-body {
-    padding: 0.9375rem 1rem; /* 15px 16px */
+  .jmrp-term__scroll {
     overflow-x: auto;
-    font-family: var(--font-mono);
-    font-size: 0.75rem; /* 12px */
-    line-height: 1.65;
-    color: var(--color-text-muted);
+    outline: none;
   }
 
-  .output-body :global(.custom-code-copy-btn) {
-    display: none !important;
-  }
-
-  .output-body :global(pre) {
-    padding: 0 !important;
-    margin: 0 !important;
-    font-size: inherit !important;
-    color: inherit !important;
-    background: none !important;
-    border: none !important;
-  }
-
-  .output-body :global(code) {
-    font-size: inherit !important;
-    color: inherit !important;
-    background-color: transparent !important;
+  .jmrp-term__scroll:focus-visible {
+    outline: 2px solid transparent;
+    box-shadow: inset 0 0 0 2px var(--term-prompt);
   }
 </style>

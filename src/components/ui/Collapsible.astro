@@ -18,17 +18,23 @@ interface Props {
   summary?: string;
   /** Alias for summary (backward compatibility) */
   title?: string;
+  /** Start expanded. */
+  open?: boolean;
+  class?: string;
 }
 
 const locale = (Astro.currentLocale ?? defaultLocale) as Locale;
 const t = useTranslations(locale);
 
-const { summary, title } = Astro.props;
+const { summary, title, open = false, class: className } = Astro.props;
 const summaryText =
   summary ?? title ?? t("components.collapsible.defaultSummary");
 ---
 
-<details class="collapsible-wrapper">
+<details
+  class:list={["collapsible-wrapper", className]}
+  open={open}
+>
   <summary>
     <span
       class="i-mdi:menu-right chevron"
@@ -47,8 +53,8 @@ const summaryText =
     overflow: clip; /* Use clip instead of hidden to allow focus ring */
     overflow-clip-margin: 4px; /* Allow focus ring to render outside */
     background-color: var(--color-bg-secondary);
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-md);
+    border: var(--border-1);
+    border-radius: var(--radius-lg);
   }
 
   summary {
@@ -104,6 +110,9 @@ const summaryText =
 
   .collapsible-content {
     padding: 0 18px 18px 42px;
+    font-size: 15px;
+    line-height: 1.65;
+    color: var(--color-text);
   }
 
   /* Handle nested margins gracefully */

@@ -1,73 +1,33 @@
 ---
 /**
- * TerminalSessionCommand Component
- * Renders command lines with prompts inside a TerminalSession.
- *
- * Must be used as a child of <TerminalSession>:
- * <TerminalSession>
- *   <TerminalSessionCommand>echo "hello"</TerminalSessionCommand>
- *   <TerminalSessionOutput title="Output">hello</TerminalSessionOutput>
- * </TerminalSession>
- *
- * In MDX files, use code fences for multi-line commands:
- * <TerminalSessionCommand>
- *
- * ```
- * # Install dependencies
- * npm install
- * npm run build
- * ```
- *
- * </TerminalSessionCommand>
- *
- * The cheerio pipeline extracts text from any HTML structure,
- * including Shiki-rendered code blocks.
- *
- * Accessibility:
- * - Focusable scrollable region for keyboard navigation.
- * - ARIA labels for screen readers.
- * - WCAG 2.2 AA compliant contrast.
+ * TerminalSessionCommand — a command line inside <TerminalSession>.
+ * Emits the raw text in a hidden .ts-command-raw for the parent's "copy
+ * commands" button, plus the visible prompt + command lines.
  */
-
 import { defaultLocale, type Locale } from "@i18n/config";
 import { useTranslations } from "@i18n/utils";
 import { decodeHtml } from "@utils/html";
 import * as cheerio from "cheerio";
 
 interface Props {
-  /** The prompt character shown before each command line. */
   prompt?: string;
-  /** Custom ARIA label for the command region. */
   ariaLabel?: string;
 }
 
-const { prompt = "$", ariaLabel } = Astro.props;
+const { prompt = "❯", ariaLabel } = Astro.props;
 
 let lines: string[] = [];
 let rawContent = "";
 
-/**
- * Slot Rendering Pipeline:
- * MDX/Astro slot content is rendered to HTML, so we extract
- * pure text via cheerio for display and copy functionality.
- */
 if (Astro.slots.has("default")) {
   const htmlContent = await Astro.slots.render("default");
   const $ = cheerio.load(htmlContent);
-
   $("br").replaceWith("\n");
   $("p, div, li, h1, h2, h3, h4, h5, h6").each((_, el) => {
     $(el).append("\n");
   });
-
-  let processed = $.text();
-  processed = decodeHtml(processed);
-
-  const trimmed = processed.trim();
-  if (trimmed) {
-    lines = trimmed.split(/\r?\n/);
-  }
-
+  const processed = decodeHtml($.text()).trim();
+  if (processed) lines = processed.split(/\r?\n/);
   rawContent = lines.join("\n");
 }
 
@@ -80,129 +40,51 @@ const renderedLines = lines.map((line) => {
   };
 });
 
-const trimmedRaw = rawContent.trim();
-
 const locale = (Astro.currentLocale ?? defaultLocale) as Locale;
 const t = useTranslations(locale);
-
-let finalAriaLabel: string;
+const trimmedRaw = rawContent.trim();
+let groupLabel: string;
 if (ariaLabel) {
-  finalAriaLabel = ariaLabel;
+  groupLabel = ariaLabel;
 } else if (trimmedRaw) {
-  const snippet = trimmedRaw.slice(0, 120);
   const suffix = trimmedRaw.length > 120 ? "..." : "";
-  finalAriaLabel = t("components.terminal.commandAria", {
-    command: `${snippet}${suffix}`,
+  groupLabel = t("components.terminal.commandAria", {
+    command: `${trimmedRaw.slice(0, 120)}${suffix}`,
   });
 } else {
-  finalAriaLabel = t("components.terminal.noCommand");
+  groupLabel = t("components.terminal.noCommand");
 }
 ---
 
-<section
-  class="ts-command-section"
-  data-ts="command"
+<div
+  class="ts-command"
+  role="group"
+  aria-label={groupLabel}
 >
-  {/* Hidden element with raw text for parent TerminalSession to extract */}
+  {/* Hidden raw text for the parent TerminalSession to extract. */}
   <div
     class="ts-command-raw"
-    style="display: none;"
+    hidden
     aria-hidden="true"
     set:text={rawContent}
   />
-
-  {/* eslint-disable astro/jsx-a11y/no-noninteractive-tabindex */}
-  <div
-    class="terminal-window"
-    tabindex="0"
-    role="region"
-    aria-label={finalAriaLabel}
-  >
-    {/* eslint-enable astro/jsx-a11y/no-noninteractive-tabindex */}
-    {
-      renderedLines.map((line) => (
-        <span class="command-line">
+  {
+    renderedLines.map((line) =>
+      line.isComment || line.isEmpty ? (
+        <div class="jmrp-term__line">
+          <span class="term-out">{line.text}</span>
+        </div>
+      ) : (
+        <div class="jmrp-term__line">
           <span
-            class="prompt"
+            class="term-prompt"
             aria-hidden="true"
           >
-            {!line.isEmpty && !line.isComment ? prompt : "\u{A0}"}
+            {prompt}
           </span>
-          <span class:list={["line-content", { "is-comment": line.isComment }]}>
-            {line.text}
-          </span>
-        </span>
-      ))
-    }
-  </div>
-</section>
-
-<style>
-  .ts-command-section {
-    display: block;
+          <span class="term-cmd">{line.text}</span>
+        </div>
+      ),
+    )
   }
-
-  @supports (display: contents) {
-    .ts-command-section {
-      display: contents;
-    }
-  }
-
-  .terminal-window {
-    display: block;
-    width: 100%;
-    min-width: 0;
-    max-width: 100%;
-    padding: 0.75rem 1rem;
-    margin: 0;
-    overflow-x: auto;
-    font-family: var(--font-mono);
-    font-size: 0.9rem;
-    line-height: 1.6;
-    text-size-adjust: none;
-  }
-
-  .terminal-window:focus-visible {
-    outline: 2px solid transparent;
-    box-shadow: inset 0 0 0 2px var(--color-primary);
-  }
-
-  @media (forced-colors: active) {
-    .terminal-window:focus-visible {
-      outline: 2px solid CanvasText;
-      outline-offset: 2px;
-    }
-  }
-
-  .command-line {
-    display: flex;
-    align-items: baseline;
-    min-height: 1.6em;
-    font-family: var(--font-mono);
-    font-size: 0.9rem;
-    line-height: 1.6;
-    color: var(--color-text);
-    white-space: pre;
-    text-size-adjust: none;
-  }
-
-  .prompt {
-    flex-shrink: 0;
-    margin-right: 0.75rem;
-    font-family: inherit;
-    font-weight: var(--fw-bold);
-    color: var(--teal);
-    user-select: none;
-  }
-
-  .line-content {
-    flex-grow: 1;
-    font-family: inherit;
-    color: var(--color-text-heading);
-  }
-
-  .line-content.is-comment {
-    font-style: italic;
-    color: var(--color-text-muted);
-  }
-</style>
+</div>

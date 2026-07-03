@@ -1,18 +1,13 @@
 ---
 /**
- * Code Component
- * Displays a code block with a header showing language, icon, and copy button.
- * Built at compile-time for static sites.
+ * Code — syntax-highlighted snippet with a header (language LED + title + copy).
+ *
+ * Syntax highlighting is Shiki with the project config (see @utils/shiki); this
+ * component only provides the chrome. For code without a header use <CodeBlock>.
  *
  * Usage:
- * <Code lang="nginx">
- *   server { listen 80; }
- * </Code>
- *
- * With custom aria-label:
- * <Code lang="bash" aria-label="Install dependencies">
- *   npm install
- * </Code>
+ *   <Code lang="nginx" title="nginx.conf">server { listen 80; }</Code>
+ *   <Code lang="bash" lineNumbers>npm install</Code>
  */
 import { createHash } from "node:crypto";
 
@@ -27,7 +22,8 @@ import CopyButton from "./CopyButton.astro";
 interface Props {
   lang?: BuiltinLanguage | SpecialLanguage | string;
   "aria-label"?: string;
-  title?: string; // Optional title for the code block
+  title?: string;
+  lineNumbers?: boolean;
   class?: string;
 }
 
@@ -35,67 +31,43 @@ const {
   lang = "text",
   "aria-label": ariaLabel,
   title,
+  lineNumbers = false,
   class: className,
 } = Astro.props;
 
 const locale = (Astro.currentLocale ?? defaultLocale) as Locale;
 const t = useTranslations(locale);
 
-// Render slot content
+// Render slot content (may be raw text or already-rendered <pre><code> HTML).
 const slotContent = await Astro.slots.render("default");
 const trimmedContent = slotContent.trim();
-
-// Check if content is already rendered HTML (matches pre/code wrapper tags from markdown)
-// Using stricter detection to avoid misclassifying code snippets that start with '<'
 const isHtml = /^<(?:pre|code)\b/i.test(trimmedContent);
-
-// Guard: Handle empty or whitespace-only content
-if (!trimmedContent) {
-  console.warn(
-    "Code component received empty content - this may indicate a build issue",
-  );
-}
-
-// Early return if empty to avoid rendering an empty code block
 const isEmpty = !trimmedContent;
 
-// Extract raw code for highlighting
+// Extract raw code for highlighting.
 let rawCode = trimmedContent;
-
 if (isHtml) {
-  // If it matches a generic MDX code block <pre><code>...</code></pre>, unwrap it
-  // This allows <Code lang="js"> ``` ... ``` </Code> to work by extracting the inner text
   const match = trimmedContent.match(
     /^<pre[^>]*><code[^>]*>([\s\S]*?)<\/code><\/pre>$/,
   );
-  if (match) {
-    const innerContent = match[1];
-    const stripped = innerContent.replaceAll(/<[^>]*>/g, "");
-    rawCode = decodeHtml(stripped);
-  } else {
-    // Fallback: decode everything to be safe for re-highlighting
-    const stripped = trimmedContent.replaceAll(/<[^>]*>/g, "");
-    rawCode = decodeHtml(stripped);
-  }
+  const inner = match ? match[1] : trimmedContent;
+  rawCode = decodeHtml(inner.replaceAll(/<[^>]*>/g, ""));
 } else {
-  // If it's just text, we still need to decode potentially escaped chars
   rawCode = decodeHtml(trimmedContent);
 }
 
-// Generate unique ID for testing
+// Stable id for tests.
 const uuid = createHash("sha256")
   .update(`${lang}-${rawCode}`)
   .digest("hex")
   .slice(0, 8);
 
-// Extract plain text for automatic aria-label (normalize whitespace for screen readers)
+// Auto aria-label: custom > title-based > snippet preview.
 let plainText = "";
 if (!ariaLabel) {
   plainText = rawCode.slice(0, 50).replaceAll(/\s+/g, " ").trim();
   if (rawCode.length > 50) plainText += "...";
 }
-
-// Final aria-label: custom > title-based > auto-generated (with fallback)
 const finalAriaLabel =
   ariaLabel ||
   (title
@@ -105,46 +77,42 @@ const finalAriaLabel =
         text: plainText || t("components.code.fallbackAria"),
       }));
 
-// Language display name (mockup shows lowercase, e.g. "python")
 const langDisplay = lang.toLowerCase();
 
-// Language "LED" square color (mockup uses an 8px rounded square in the
-// language's brand color, e.g. #3572A5 for python). Normalized to a CSS class
-// so no inline styles are emitted (CSP-safe). Falls back to the amber accent.
+// Language LED colour as a CSS class (no inline styles → CSP-safe).
 const KNOWN_LANG_DOTS = new Set([
+  "python",
+  "py",
+  "javascript",
+  "js",
+  "mjs",
+  "typescript",
+  "ts",
   "bash",
   "shell",
   "sh",
+  "zsh",
   "nginx",
-  "cpp",
-  "c",
-  "html",
-  "json",
-  "javascript",
-  "js",
-  "typescript",
-  "ts",
-  "ini",
-  "toml",
   "yaml",
   "yml",
-  "python",
-  "py",
-  "powershell",
-  "lua",
-  "astro",
+  "json",
+  "routeros",
+  "ini",
+  "toml",
+  "c",
+  "cpp",
+  "rust",
+  "rs",
+  "go",
+  "html",
   "css",
   "sql",
-  "rust",
-  "go",
-  "routeros",
-  "http",
   "docker",
   "dockerfile",
+  "diff",
 ]);
-const langDot = KNOWN_LANG_DOTS.has(langDisplay) ? langDisplay : "default";
+const langDotClass = KNOWN_LANG_DOTS.has(langDisplay) ? langDisplay : "default";
 
-// Highlight using the singleton Shiki instance (avoids creating N instances per page)
 const highlightedHtml = isEmpty
   ? ""
   : await highlightCode(rawCode, resolveShikiLanguage(lang));
@@ -154,227 +122,194 @@ const highlightedHtml = isEmpty
   isEmpty ? (
     <Fragment set:html="<!-- Empty code block skipped -->" />
   ) : (
-    <section
-      class:list={["code-block-wrapper", "copy-container", className]}
+    <figure
+      class:list={[
+        "jmrp-code",
+        "copy-container",
+        lineNumbers && "jmrp-code--ln",
+        className,
+      ]}
       aria-label={finalAriaLabel}
       data-testid={uuid}
     >
-      <div class="code-block-header">
-        <div class="code-lang-info">
+      <figcaption class="jmrp-code__head">
+        <span class="jmrp-code__id">
           <span
-            class:list={["code-lang-dot", `lang-${langDot}`]}
+            class:list={["jmrp-code__dot", `lang-${langDotClass}`]}
             aria-hidden="true"
           />
-          {title && <span class="code-title">{title}</span>}
-        </div>
-        <div class="code-header-actions">
-          <span class="code-language-label">{langDisplay}</span>
+          <span class="jmrp-code__name">{title ?? langDisplay}</span>
+        </span>
+        <span class="jmrp-code__meta">
+          {title && <span class="jmrp-code__lang">{langDisplay}</span>}
           <CopyButton
-            class="code-header-copy-btn"
+            content={rawCode}
             ariaLabel={t("components.code.copyAria", { label: finalAriaLabel })}
           />
-        </div>
-      </div>
-      <div class="code-body">
+        </span>
+      </figcaption>
+      {/* eslint-disable astro/jsx-a11y/no-noninteractive-tabindex -- focusable scroll region for keyboard access to wide code */}
+      <div
+        class="jmrp-code__scroll"
+        tabindex="0"
+        aria-label={finalAriaLabel}
+      >
+        {/* eslint-enable astro/jsx-a11y/no-noninteractive-tabindex */}
         <Fragment set:html={highlightedHtml} />
       </div>
-    </section>
+    </figure>
   )
 }
 
 <style>
-  .code-block-wrapper {
-    position: relative;
-    margin: 1.5rem 0;
+  .jmrp-code__scroll {
+    overflow-x: auto;
+    outline: none;
+  }
+
+  .jmrp-code__scroll:focus-visible {
+    outline: 2px solid transparent;
+    box-shadow: inset 0 0 0 2px var(--color-primary);
+  }
+
+  .jmrp-code {
+    margin: var(--space-md-lg) 0;
     overflow: hidden;
-    background-color: var(--color-bg-secondary);
+    background: var(--color-bg-secondary);
     border: var(--border-1);
-    border-radius: var(--radius-lg); /* mockup card radius ~11-12px */
+    border-radius: var(--radius-lg);
   }
 
-  .code-block-header {
+  .jmrp-code__head {
     display: flex;
-    gap: 0.75rem;
-    align-items: center;
+    gap: 12px;
+    align-items: flex-start;
     justify-content: space-between;
-    padding: 0.625rem 1rem; /* 10px 16px */
-    font-family: var(--font-mono);
-    background-color: var(--color-surface-2);
-    border-bottom: 1px solid var(--color-hair);
+    padding: var(--code-header-py) 12px var(--code-header-py) 16px;
+    background: var(--color-surface-2);
+    border-bottom: var(--border-hair);
   }
 
-  .code-lang-info {
+  .jmrp-code__id {
     display: flex;
-    gap: 0.5625rem; /* 9px */
+    gap: 9px;
     align-items: center;
     min-width: 0;
+    font-family: var(--font-mono);
+    font-size: var(--code-filename-size);
+    line-height: 1.5;
+    color: var(--color-text-heading);
   }
 
-  .code-header-actions {
-    display: flex;
-    flex-shrink: 0;
-    gap: 0.75rem; /* 12px */
-    align-items: center;
-  }
-
-  /* Language "LED" square (mockup: 8px rounded square in the language color) */
-  .code-lang-dot {
-    flex-shrink: 0;
+  .jmrp-code__dot {
+    flex: none;
     width: 8px;
     height: 8px;
-    background-color: var(--color-accent);
+    background: var(--color-accent);
     border-radius: 2px;
   }
 
-  /* GitHub-linguist-style language colors for the header LED. */
+  .jmrp-code__name {
+    overflow-wrap: anywhere;
+  }
+
+  .jmrp-code__meta {
+    display: flex;
+    flex: none;
+    gap: 8px;
+    align-items: center;
+  }
+
+  .jmrp-code__lang {
+    font-family: var(--font-mono);
+    font-size: var(--text-micro);
+    color: var(--color-accent);
+  }
+
+  /* Language LED colours (GitHub-linguist-ish). */
   .lang-python,
   .lang-py {
-    background-color: #3572a5;
-  }
-
-  .lang-bash,
-  .lang-shell,
-  .lang-sh {
-    background-color: #89e051;
-  }
-
-  .lang-nginx {
-    background-color: #009639;
-  }
-
-  .lang-cpp,
-  .lang-c {
-    background-color: #f34b7d;
-  }
-
-  .lang-html,
-  .lang-astro {
-    background-color: #e34c26;
-  }
-
-  .lang-json {
-    background-color: #cbcb41;
+    background: #3572a5;
   }
 
   .lang-javascript,
-  .lang-js {
-    background-color: #f1e05a;
+  .lang-js,
+  .lang-mjs {
+    background: #f1e05a;
   }
 
   .lang-typescript,
   .lang-ts {
-    background-color: #3178c6;
+    background: #3178c6;
+  }
+
+  .lang-bash,
+  .lang-shell,
+  .lang-sh,
+  .lang-zsh {
+    background: #4eaa25;
+  }
+
+  .lang-nginx {
+    background: #009639;
   }
 
   .lang-yaml,
   .lang-yml {
-    background-color: #cb171e;
+    background: #cb171e;
   }
 
-  .lang-ini,
+  .lang-json {
+    background: #cbcb41;
+  }
+
+  .lang-routeros {
+    background: #e3b23c;
+  }
+
+  .lang-ini {
+    background: #6e6d64;
+  }
+
   .lang-toml {
-    background-color: #6d8086;
+    background: #9c4221;
   }
 
-  /* Brightened vs the true brand navy so the LED reads on the dark header. */
-  .lang-lua {
-    background-color: #7c6ce0;
+  .lang-c {
+    background: #a8b9cc;
   }
 
-  .lang-powershell {
-    background-color: #5391fe;
+  .lang-cpp {
+    background: #f34b7d;
   }
 
-  .lang-css {
-    background-color: #639;
-  }
-
-  .lang-sql {
-    background-color: #e38c00;
-  }
-
-  .lang-rust {
-    background-color: #dea584;
+  .lang-rust,
+  .lang-rs {
+    background: #dea584;
   }
 
   .lang-go {
-    background-color: #00add8;
+    background: #00add8;
   }
 
-  .lang-routeros,
-  .lang-http,
+  .lang-html {
+    background: #e34c26;
+  }
+
+  .lang-css {
+    background: #563d7c;
+  }
+
+  .lang-sql {
+    background: #e38c00;
+  }
+
   .lang-docker,
   .lang-dockerfile {
-    background-color: #7b8fa3;
+    background: #2496ed;
   }
 
-  .code-language-label {
-    font-family: var(--font-mono);
-    font-size: 0.6875rem; /* 11px */
-    font-weight: var(--fw-medium);
-    color: var(--color-accent);
-    text-transform: none;
-    letter-spacing: 0;
-  }
-
-  .code-title {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    font-size: 0.7188rem; /* 11.5px */
-    color: var(--color-text-muted);
-    white-space: nowrap;
-  }
-
-  .code-body {
-    overflow-x: auto;
-  }
-
-  /*
-   * Shiki Override Styles
-   * ----------------------
-   * Multiple !important declarations are required to override Shiki's inline styles
-   * which have higher specificity. These overrides target padding, margin, background-color,
-   * border, and border-radius to ensure consistent visual appearance within our component.
-   * Do not remove without verifying Shiki styling behavior.
-   */
-  .code-body pre,
-  .code-body :global(pre.astro-code) {
-    padding: 1rem 1.125rem !important; /* 16px 18px */
-    margin: 0 !important;
-    overflow-x: auto;
-    font-family: var(--font-mono);
-    font-size: 0.8125rem; /* 13px */
-    line-height: 1.7;
-    color: var(--color-text);
-    background-color: transparent !important;
-    border: none !important;
-    border-radius: 0 !important;
-
-    /* Mobile Fix: Prevent font inflation */
-    text-size-adjust: none;
-  }
-
-  .code-body code {
-    font-family: inherit;
-    font-size: inherit;
-    line-height: inherit;
-    color: inherit;
-    white-space: pre;
-    background: none;
-  }
-
-  /* Copy button positioning - static in header context */
-  :global(.code-header-copy-btn) {
-    min-width: 32px;
-    min-height: 32px;
-    background-color: transparent;
-    border: none;
-    opacity: 80%;
-  }
-
-  :global(.code-header-copy-btn:hover),
-  :global(.code-header-copy-btn:focus-visible) {
-    background-color: var(--color-bg-subtle);
-    opacity: 100%;
+  .lang-diff {
+    background: #8c8a82;
   }
 </style>

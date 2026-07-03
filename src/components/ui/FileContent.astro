@@ -1,17 +1,14 @@
 ---
 /**
- * FileContent Component
- * Displays code content inside a file-like window frame with a filename header.
+ * FileContent — a real file's contents inside a file-like frame (icon + path +
+ * copy). `collapsible` turns the header into a native <details>/<summary>.
+ *
+ * Syntax highlighting is Shiki (project config); this only provides the chrome.
+ * The header GROWS if the path is long (wrap), never truncates with "…".
  *
  * Usage:
- * <FileContent filename="nginx.conf">
- *   ...code...
- * </FileContent>
- *
- * With explicit language for syntax highlighting:
- * <FileContent filename="config.txt" language="nginx">
- *   ...nginx config...
- * </FileContent>
+ *   <FileContent filename="/etc/nginx/security.conf" language="nginx">…</FileContent>
+ *   <FileContent filename="docker-compose.yml" collapsible>…</FileContent>
  */
 import { createHash } from "node:crypto";
 
@@ -26,9 +23,10 @@ import CopyButton from "./CopyButton.astro";
 
 interface Props {
   filename: string;
-  icon?: string; // e.g., 'mdi-file-document-outline' (prepends 'i-' internally)
-  language?: BuiltinLanguage | SpecialLanguage | string; // Override syntax highlighting language
+  icon?: string;
+  language?: BuiltinLanguage | SpecialLanguage | string;
   collapsible?: boolean;
+  open?: boolean;
   ariaLabel?: string;
 }
 
@@ -37,138 +35,111 @@ const {
   icon,
   language,
   collapsible = false,
+  open = false,
   ariaLabel,
 } = Astro.props;
 
 const locale = (Astro.currentLocale ?? defaultLocale) as Locale;
 const t = useTranslations(locale);
 
-// Infer icon from filename
 const finalIcon = icon || getIconForFile(filename);
+const iconClass = finalIcon.startsWith("i-") ? finalIcon : `i-${finalIcon}`;
 
-// Format filename to allow line breaks after path separators
-// Insert zero-width space (&#8203;) after slashes for smart wrapping
+// Zero-width space after "/" so long paths wrap cleanly (never truncated).
 const filenameFormatted = filename.replaceAll("/", "/&#8203;");
 
 const slotContent = await Astro.slots.render("default");
-// Remove tabindex from wrapper-level elements to prevent double focus (wrapper handles it)
-// Only target HTML tags with matching quote pairs for valid tabindex="0" or tabindex='0'
+// Strip wrapper-level tabindex to avoid double focus (the scroll region owns it).
 const trimmedContent = slotContent
   .trim()
   .replaceAll(/(<[^>]+)\s+tabindex=(["'])0\2/g, "$1");
+
+// Plain code text (for copy + line count), unwrapping any <pre><code> fence.
+const preCodeMatch = trimmedContent.match(
+  /<pre[^>]*><code[^>]*>([\s\S]*?)<\/code><\/pre>/,
+);
+const codeText = decodeHtml(
+  (preCodeMatch ? preCodeMatch[1] : trimmedContent).replaceAll(/<[^>]*>/g, ""),
+).trim();
+const lineCount = codeText ? codeText.split(/\r?\n/).length : 0;
+
 const uuid = createHash("sha256")
   .update(`${filename}-${trimmedContent}`)
   .digest("hex")
   .slice(0, 8);
+const uuidShort = uuid.slice(0, 4);
 
-// Extract plain text for accessibility label if no custom label provided
 let plainText = "";
 if (!ariaLabel) {
-  // FAST PATH: Use regex for simple content to avoid Cheerio overhead
-  const fullText =
-    !slotContent.includes("<") && !slotContent.includes(">")
-      ? slotContent.trim()
-      : decodeHtml(slotContent.replaceAll(/<[^>]+>/g, "").trim());
-  // Only truncate and add ellipsis if content exceeds 50 characters
-  plainText = fullText.length > 50 ? fullText.slice(0, 50) + "..." : fullText;
+  plainText = codeText.length > 50 ? codeText.slice(0, 50) + "..." : codeText;
 }
-
-// Include short uuid suffix in aria-label to ensure landmark uniqueness
-// when same file with similar content appears multiple times on a page
-const uuidShort = uuid.slice(0, 4);
 const finalAriaLabel =
   ariaLabel ||
   `${filename} - ${plainText}${plainText ? " " : ""}(id ${uuidShort})`;
 
-// If language is specified, extract raw code for Shiki re-rendering
-let rawCode = "";
-let useCustomHighlighting = false;
-
-if (language) {
-  useCustomHighlighting = true;
-  // Extract raw code from the rendered content
-  // Content may be wrapped in <pre><code>...</code></pre> from markdown
-  const preCodeMatch = trimmedContent.match(
-    /<pre[^>]*><code[^>]*>([\s\S]*?)<\/code><\/pre>/,
-  );
-  if (preCodeMatch) {
-    // Remove any remaining HTML tags and decode entities
-    const stripped = preCodeMatch[1].replaceAll(/<[^>]*>/g, "");
-    rawCode = decodeHtml(stripped);
-  } else {
-    // Fallback: strip all tags and decode
-    const stripped = trimmedContent.replaceAll(/<[^>]*>/g, "");
-    rawCode = decodeHtml(stripped);
-  }
-}
-
-// Highlight using the singleton Shiki instance (avoids per-render instance creation)
-const highlightedHtml =
-  useCustomHighlighting && language
-    ? await highlightCode(rawCode, resolveShikiLanguage(language))
-    : "";
+const highlightedHtml = language
+  ? await highlightCode(codeText, resolveShikiLanguage(language))
+  : "";
+const copyAria = t("components.fileContent.copyContent", { filename });
+const linesText = `${lineCount} ${t("ui.lines")}`;
 ---
 
 {
   collapsible ? (
     <div
-      class="file-content-wrapper copy-container collapsible"
+      class="jmrp-file file-content-wrapper jmrp-file--collapsible copy-container"
       data-testid={uuid}
     >
-      {/* Copy Button outside details to be always visible and avoid nested interactive violation */}
+      {/* Copy button OUTSIDE <details> to avoid a nested-interactive control. */}
       <CopyButton
-        class="file-header-copy-btn absolute-header"
-        ariaLabel={t("components.fileContent.copyContent", { filename })}
+        class="jmrp-file__copy"
+        content={codeText}
+        ariaLabel={copyAria}
       />
-      <details class="file-details">
-        {/* ARIA label moved to summary for better support */}
-        <summary
-          class="file-header"
-          aria-label={finalAriaLabel}
-        >
-          <span class="file-info">
+      <details
+        class="jmrp-file__details"
+        open={open}
+        aria-label={finalAriaLabel}
+      >
+        <summary class="jmrp-file__head">
+          <span class="jmrp-file__id">
+            <svg
+              class="jmrp-file__chev"
+              viewBox="0 0 24 24"
+              width="14"
+              height="14"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2.4"
+              aria-hidden="true"
+            >
+              <path d="m9 6 6 6-6 6" />
+            </svg>
             <span
-              class={`${finalIcon.startsWith("i-") ? finalIcon : `i-${finalIcon}`} file-icon`}
+              class={`${iconClass} jmrp-file__icon`}
+              aria-hidden="true"
             />
             <span
-              class="file-name"
+              class="jmrp-file__name"
               set:html={filenameFormatted}
             />
           </span>
-          <span class="header-actions">
-            <span
-              class="chevron-wrapper"
-              aria-hidden="true"
-            >
-              <svg
-                class="chevron-icon"
-                xmlns="http://www.w3.org/2000/svg"
-                width="20"
-                height="20"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              >
-                <polyline points="6 9 12 15 18 9" />
-              </svg>
-            </span>
+          <span class="jmrp-file__meta">
+            <span class="jmrp-file__lines">{linesText}</span>
           </span>
         </summary>
-        <div class="file-body">
-          {/* eslint-disable astro/jsx-a11y/no-noninteractive-tabindex -- Focusable region for keyboard scrolling */}
+        <div class="jmrp-file__body">
+          {/* eslint-disable astro/jsx-a11y/no-noninteractive-tabindex -- focusable scroll region */}
           <div
             role="region"
             tabindex="0"
             aria-label={t("aria.codeContent", {
               filename: `${filename} (${uuid})`,
             })}
-            class="file-code-container"
+            class="jmrp-file__scroll file-code-container"
           >
             {/* eslint-enable astro/jsx-a11y/no-noninteractive-tabindex */}
-            {useCustomHighlighting ? (
+            {language ? (
               <Fragment set:html={highlightedHtml} />
             ) : (
               <div set:html={trimmedContent} />
@@ -179,39 +150,41 @@ const highlightedHtml =
     </div>
   ) : (
     <section
-      class="file-content-wrapper copy-container"
+      class="jmrp-file file-content-wrapper copy-container"
       aria-label={finalAriaLabel}
       data-testid={uuid}
     >
-      <div class="file-header">
-        <div class="file-info">
+      <div class="jmrp-file__head">
+        <span class="jmrp-file__id">
           <span
-            class={`${finalIcon.startsWith("i-") ? finalIcon : `i-${finalIcon}`} file-icon`}
+            class={`${iconClass} jmrp-file__icon jmrp-file__icon--accent`}
+            aria-hidden="true"
           />
           <span
-            class="file-name"
+            class="jmrp-file__name"
             set:html={filenameFormatted}
           />
-        </div>
-        <div class="header-actions">
+        </span>
+        <span class="jmrp-file__meta">
+          <span class="jmrp-file__lines">{linesText}</span>
           <CopyButton
-            class="file-header-copy-btn"
-            ariaLabel={t("components.fileContent.copyContent", { filename })}
+            content={codeText}
+            ariaLabel={copyAria}
           />
-        </div>
+        </span>
       </div>
-      <div class="file-body">
-        {/* eslint-disable astro/jsx-a11y/no-noninteractive-tabindex -- Focusable region for keyboard scrolling */}
+      <div class="jmrp-file__body">
+        {/* eslint-disable astro/jsx-a11y/no-noninteractive-tabindex -- focusable scroll region */}
         <div
           role="region"
           tabindex="0"
           aria-label={t("aria.codeContent", {
             filename: `${filename} (${uuid})`,
           })}
-          class="file-code-container"
+          class="jmrp-file__scroll file-code-container"
         >
           {/* eslint-enable astro/jsx-a11y/no-noninteractive-tabindex */}
-          {useCustomHighlighting ? (
+          {language ? (
             <Fragment set:html={highlightedHtml} />
           ) : (
             <div set:html={trimmedContent} />
@@ -223,181 +196,139 @@ const highlightedHtml =
 }
 
 <style>
-  .file-content-wrapper {
+  .jmrp-file {
     position: relative;
-    margin: 1.5rem 0;
-    overflow: hidden; /* Keep children within rounded corners */
-    background-color: var(--color-bg-secondary);
+    margin: var(--space-md-lg) 0;
+    overflow: hidden;
+    background: var(--color-bg-secondary);
     border: var(--border-1);
-    border-radius: var(--radius-lg); /* mockup card radius ~11-12px */
+    border-radius: var(--radius-lg);
   }
 
-  .file-details {
+  .jmrp-file__details {
     display: block;
     width: 100%;
   }
 
-  .file-header {
+  .jmrp-file__head {
     display: flex;
-    gap: 0.5rem;
-    align-items: center;
-    justify-content: space-between; /* Push actions to the right */
-    padding: 0.625rem 1rem; /* 10px 16px */
-    font-family: var(--font-mono);
-    font-size: 0.75rem; /* 12px */
-    color: var(--color-text-heading);
-    background-color: var(--color-surface-2);
-    border-bottom: 1px solid var(--color-hair);
-    transition: background-color var(--dur-2) var(--ease-out);
+    gap: 12px;
+    align-items: flex-start;
+    justify-content: space-between;
+    padding: var(--code-header-py) 12px var(--code-header-py) 16px;
+    background: var(--color-surface-2);
+    border-bottom: var(--border-hair);
   }
 
-  .file-header:focus-visible {
-    outline: 2px solid transparent;
-    box-shadow: inset 0 0 0 2px var(--color-primary);
-  }
-
-  .file-content-wrapper.collapsible .file-header {
-    cursor: pointer;
-    list-style: none; /* Remove default marker */
-  }
-
-  .file-content-wrapper.collapsible .file-header::-webkit-details-marker {
-    display: none; /* Remove default marker for Safari */
-  }
-
-  .file-content-wrapper.collapsible .file-header:hover {
-    color: var(--color-text);
-    background-color: var(--color-bg-secondary);
-  }
-
-  .file-details[open] .file-header {
-    color: var(--color-text);
-    background-color: var(--color-bg-secondary);
-  }
-
-  .file-info {
+  .jmrp-file__id {
     display: flex;
     flex: 1;
-    gap: 0.5625rem; /* 9px */
-    align-items: center;
-    min-width: 0; /* Enable text truncation for flex children */
-  }
-
-  /* Reserve space for copy button + chevron in collapsible mode */
-  .file-content-wrapper.collapsible .file-info {
-    padding-right: 2.5rem; /* Space for copy button positioned absolutely */
-  }
-
-  .file-name {
-    font-weight: var(--fw-medium);
+    gap: 9px;
+    align-items: flex-start;
+    min-width: 0;
+    font-family: var(--font-mono);
+    font-size: var(--code-filename-size);
+    line-height: 1.5;
     color: var(--color-text-heading);
-    overflow-wrap: anywhere;
   }
 
-  .header-actions {
-    display: flex;
-    flex-shrink: 0;
-    gap: 0.75rem;
-    align-items: center;
+  .jmrp-file__icon {
+    flex: none;
+    margin-top: 1px;
+    font-size: 15px;
+    color: var(--color-text-muted);
   }
 
-  .file-icon {
-    flex-shrink: 0;
-    font-size: 0.875rem; /* 14px */
+  .jmrp-file__icon--accent {
     color: var(--color-accent);
   }
 
-  .chevron-wrapper {
+  .jmrp-file__name {
+    font-weight: var(--fw-medium);
+    overflow-wrap: anywhere; /* long paths wrap, never truncated */
+  }
+
+  .jmrp-file__meta {
     display: flex;
-    align-items: center;
-    justify-content: center;
-    color: var(--color-text-muted);
-    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    flex: none;
+    gap: 8px;
+    align-items: flex-start;
   }
 
-  .file-details[open] .chevron-wrapper {
-    transform: rotate(180deg);
-  }
-
-  .file-body {
-    padding: 0;
-
-    /* Removed overflow: hidden to allow child scrollbars to be fully visible/interactive */
-  }
-
-  .file-body > div {
-    /* Removed padding to let pre element fill the space naturally */
-    padding: 0;
+  .jmrp-file__lines {
+    margin-top: 6px;
     font-family: var(--font-mono);
-    font-size: var(--font-size-sm);
-    line-height: 1.6;
-
-    /* Removed white-space: pre-wrap; as it conflicts with pre's own handling */
-    outline: none;
+    font-size: 10.5px;
+    color: var(--color-meta);
   }
 
-  .file-code-container {
+  .jmrp-file__body {
+    padding: 0;
+  }
+
+  .jmrp-file__scroll {
     overflow-x: auto;
     outline: none;
   }
 
-  .file-code-container:focus-visible {
+  .jmrp-file__scroll:focus-visible {
     outline: 2px solid transparent;
     box-shadow: inset 0 0 0 2px var(--color-primary);
   }
 
-  /* Style the <pre> element that comes from the slot */
-  .file-body :global(pre),
-  .file-body :global(.astro-code) {
-    display: block;
-    width: 100%;
-    padding: 1rem 1.125rem !important; /* 16px 18px */
-    margin: 0 !important;
-    overflow-x: visible !important; /* Managed by parent container for a11y */
-
-    /* Typography */
+  /* Non-highlighted slot (no `language`) needs its own padding/typography since
+     it isn't a Shiki <pre> (which code-terminal.css pads). */
+  .jmrp-file__scroll > div:not(.astro-code) {
+    padding: var(--code-pad);
     font-family: var(--font-mono);
-    font-size: 0.8125rem; /* 13px */
-    line-height: 1.7;
-    border: none !important;
-    border-radius: 0 !important;
-    box-shadow: none !important;
-
-    /* Mobile Fix: Prevent font inflation */
-    text-size-adjust: none;
+    font-size: var(--code-font-size);
+    line-height: var(--code-line-height);
+    overflow-wrap: anywhere;
+    white-space: pre-wrap;
   }
 
-  /* Accessibility: Boost contrast in light mode */
-  :root:not([data-theme="dark"]) .file-content-wrapper {
-    background-color: var(--color-bg-secondary);
-    border-color: var(--color-border);
+  /* ---- collapsible ---- */
+  .jmrp-file--collapsible > .jmrp-file__details > summary {
+    cursor: pointer;
+    list-style: none;
   }
 
-  :root:not([data-theme="dark"]) .file-body :global(pre),
-  :root:not([data-theme="dark"]) .file-body :global(.astro-code) {
-    background-color: var(--color-bg-secondary) !important;
+  .jmrp-file--collapsible summary::-webkit-details-marker {
+    display: none;
   }
 
-  /* Dark mode adjustments */
-  :root[data-theme="dark"] .file-content-wrapper {
-    background-color: var(--color-bg-secondary);
+  .jmrp-file--collapsible summary:focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: -2px;
   }
 
-  :root[data-theme="dark"] .file-body :global(pre) {
-    background-color: transparent !important;
+  .jmrp-file__chev {
+    flex: none;
+    margin-top: 1px;
+    color: var(--color-accent);
+    transition: transform var(--dur-2) var(--ease-out);
   }
 
-  /* Override copy button positioning for header integration */
-  :global(.file-header-copy-btn) {
-    position: static !important;
+  .jmrp-file__details[open] > summary .jmrp-file__chev {
+    transform: rotate(90deg);
   }
 
-  :global(.file-header-copy-btn.absolute-header) {
-    --file-header-copy-offset: 2.8rem;
+  /* Copy button over the header top-right in the collapsible variant. :global
+     because the class lands on the child CopyButton's own element. */
+  :global(.jmrp-file__copy) {
+    position: absolute;
+    top: 7px;
+    right: 10px;
+    z-index: 1;
+  }
 
-    position: absolute !important;
-    top: 0.5rem;
-    right: var(--file-header-copy-offset);
-    z-index: 10;
+  .jmrp-file--collapsible .jmrp-file__id {
+    padding-right: 2rem; /* room for the absolute copy button */
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .jmrp-file__chev {
+      transition: none;
+    }
   }
 </style>

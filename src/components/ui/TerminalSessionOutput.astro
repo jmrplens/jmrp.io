@@ -1,77 +1,31 @@
 ---
 /**
- * TerminalSessionOutput Component
- * Renders command output inside a TerminalSession.
- *
- * Must be used as a child of <TerminalSession>:
- * <TerminalSession>
- *   <TerminalSessionCommand>echo "hello"</TerminalSessionCommand>
- *   <TerminalSessionOutput title="Output">hello</TerminalSessionOutput>
- * </TerminalSession>
- *
- * In MDX files, use code fences for multi-line output:
- * <TerminalSessionOutput title="Result">
- *
- * ```
- * line 1
- * line 2
- * line 3
- * ```
- *
- * </TerminalSessionOutput>
- *
- * In .astro files, use template literals for multi-line output:
- *   <TerminalSessionOutput title="Result">
- *     {`line 1\nline 2\nline 3`}
- *   </TerminalSessionOutput>
- *
- * The cheerio pipeline extracts text from any HTML structure,
- * including Shiki-rendered code blocks.
- *
- * Accessibility:
- * - Semantic <section> with role="log" for screen readers.
- * - Focusable scrollable region for keyboard navigation.
- * - ARIA live region for dynamic output.
+ * TerminalSessionOutput — the output of a command inside <TerminalSession>.
+ * Indented under the command and NOT included in "copy commands". Mark
+ * success/error lines with <span class="jmrp-term__ok|__err"> if desired.
  */
-
 import { defaultLocale, type Locale } from "@i18n/config";
 import { useTranslations } from "@i18n/utils";
 import { decodeHtml } from "@utils/html";
 import * as cheerio from "cheerio";
 
 interface Props {
-  /** Title shown in the output header bar. */
   title?: string;
-  /** Custom ARIA label for the output region. */
   ariaLabel?: string;
 }
 
 const { title, ariaLabel } = Astro.props;
 
 let lines: string[] = [];
-
-/**
- * Slot Rendering Pipeline:
- * Extract text via cheerio, split by newlines, and render each
- * line as a block element. This ensures line breaks survive
- * HTML minification (which collapses whitespace in text nodes).
- */
 if (Astro.slots.has("default")) {
   const htmlContent = await Astro.slots.render("default");
   const $ = cheerio.load(htmlContent);
-
   $("br").replaceWith("\n");
   $("p, div, li, h1, h2, h3, h4, h5, h6").each((_, el) => {
     $(el).append("\n");
   });
-
-  let processed = $.text();
-  processed = decodeHtml(processed);
-
-  const trimmed = processed.trim();
-  if (trimmed) {
-    lines = trimmed.split(/\r?\n/);
-  }
+  const processed = decodeHtml($.text()).trim();
+  if (processed) lines = processed.split(/\r?\n/);
 }
 
 const locale = (Astro.currentLocale ?? defaultLocale) as Locale;
@@ -85,8 +39,7 @@ const finalAriaLabel =
 ---
 
 <section
-  class="ts-output-section"
-  data-ts="output"
+  class="ts-output"
   role="log"
   aria-live="polite"
   aria-label={finalAriaLabel}
@@ -94,74 +47,35 @@ const finalAriaLabel =
   {
     title && (
       <div
-        class="output-header"
+        class="ts-output__title"
         aria-hidden="true"
       >
-        <span class="i-mdi:chevron-right-box-outline output-icon" />
-        <span class="output-title">{title}</span>
+        {title}
       </div>
     )
   }
-
-  {/* eslint-disable astro/jsx-a11y/no-noninteractive-tabindex */}
-  <div
-    class="output-body"
-    role="group"
-    tabindex="0"
-    aria-label={title
-      ? t("components.terminal.scrollableOutput", { title })
-      : t("components.terminal.scrollableFallback")}
-  >
-    {/* eslint-enable astro/jsx-a11y/no-noninteractive-tabindex */}
-    <div class="output-content">
-      {lines.map((line) => <span class="output-line">{line || "\u{A0}"}</span>)}
-    </div>
+  <div class="term-line-out">
+    {
+      /* One block per line so line breaks survive HTML minification. */
+      lines.map((line) => (
+        <span class="ts-output__line">{line || "\u{A0}"}</span>
+      ))
+    }
   </div>
 </section>
 
 <style>
-  .ts-output-section {
-    overflow: hidden;
-    border-top: 1px solid var(--color-hair);
-  }
-
-  .output-header {
-    display: flex;
-    gap: 0.5rem;
-    align-items: center;
-    padding: 0.6rem 1rem;
+  .ts-output__title {
+    padding: 6px 0 2px 20px;
     font-family: var(--font-mono);
-    font-size: 0.85rem;
-    color: var(--color-text-muted);
-    border-bottom: 1px solid var(--color-hair);
+    font-size: 10.5px;
+    color: var(--term-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
   }
 
-  .output-icon {
-    font-size: 1.1rem;
-  }
-
-  .output-body {
-    padding: 1rem;
-    overflow-x: auto;
-    font-family: var(--font-mono);
-    font-size: 0.85em;
-    color: var(--color-text-muted);
-  }
-
-  .output-body:focus-visible {
-    outline: 2px solid transparent;
-    box-shadow: inset 0 0 0 2px var(--color-primary);
-  }
-
-  .output-content {
-    word-break: normal;
-    overflow-wrap: break-word;
-  }
-
-  .output-line {
+  .ts-output__line {
     display: block;
     min-height: 1.4em;
-    line-height: 1.6;
-    white-space: pre-wrap;
   }
 </style>

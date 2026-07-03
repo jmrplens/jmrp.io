@@ -24,9 +24,10 @@ import type { BuiltinLanguage, SpecialLanguage } from "shiki";
 interface Props {
   lang?: BuiltinLanguage | SpecialLanguage | string;
   code?: string;
+  class?: string;
 }
 
-const { lang = "text", code } = Astro.props;
+const { lang = "text", code, class: className } = Astro.props;
 
 // Use code prop if provided, otherwise render slot content
 const slotContent = code ?? (await Astro.slots.render("default"));
@@ -53,4 +54,21 @@ const highlightedHtml = rawCode
   : "";
 ---
 
-{highlightedHtml && <Fragment set:html={highlightedHtml} />}
+{
+  highlightedHtml && (
+    <div class:list={["jmrp-code", "jmrp-code--bare", className]}>
+      <Fragment set:html={highlightedHtml} />
+    </div>
+  )
+}
+
+<style>
+  /* Bare: no header/copy, just the Shiki <pre> in a subtle box. The .jmrp-code
+     ancestor lets code-terminal.css apply the shared <pre> padding/typography. */
+  .jmrp-code--bare {
+    overflow: hidden;
+    background: var(--color-bg-secondary);
+    border: var(--border-hair);
+    border-radius: var(--radius-md);
+  }
+</style>
