@@ -25,9 +25,9 @@ const tags = getUniqueTags(posts);
 // tag page) is always kept visible even if it falls outside the top slice.
 let visible = tags.slice(0, limit);
 let overflow = tags.slice(limit);
-if (activeTag && !visible.some((x) => x.tag === activeTag)) {
+if (activeTag && visible.every((x) => x.tag !== activeTag)) {
   const idx = overflow.findIndex((x) => x.tag === activeTag);
-  if (idx >= 0) {
+  if (idx !== -1) {
     visible = [...visible, overflow[idx]];
     overflow = overflow.filter((_, i) => i !== idx);
   }
