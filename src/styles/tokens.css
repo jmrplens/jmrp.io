@@ -223,6 +223,33 @@
   --z-header: 1000;
   --z-backdrop: 1010;
   --z-drawer: 1020;
+
+  /* ===== CÓDIGO & TERMINAL ===============================================
+     Solo CHROME (marco, cabecera, botón copiar, terminal). El resaltado de
+     sintaxis lo hace Shiki (@utils/shiki) y NO se toca aquí. Geometría propia
+     del bloque; el resto de borde/radio/espaciado usa los tokens del sistema. */
+  --code-header-py: 10px; /* padding vertical de la cabecera */
+  --code-pad: var(--space-md) 18px; /* padding del <pre> (16 / 18) */
+  --code-font-size: var(--text-xs); /* 13px */
+  --code-line-height: 1.7;
+  --code-filename-size: 12px;
+  --copy-size: 28px; /* alto del botón de copiar */
+  --copy-icon: 14px;
+
+  /* Terminal — OSCURO EN AMBOS TEMAS (decisión de diseño). Color propio; la
+     geometría (radio/borde) usa tokens del sistema. Contraste interno AA
+     verificado contra --term-bg. */
+  --term-bg: #0c0c0e;
+  --term-border: #232329;
+  --term-fg: #e9e8e1; /* 15.2:1 sobre --term-bg */
+  --term-dim: #9a988f; /*  6.1:1 · salida / labels */
+  --term-prompt: #5fd196; /*  9.4:1 · prompt ❯ */
+  --term-path: #82aaff; /*  7.2:1 · rutas */
+  --term-ok: #5fd196; /*  éxito */
+  --term-err: #f08a80; /*  6.6:1 · error */
+  --term-dot-r: #e5655b;
+  --term-dot-y: #e3b23c;
+  --term-dot-g: #57c98a;
 }
 
 /* =============================================================================

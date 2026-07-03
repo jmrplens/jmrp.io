@@ -1,0 +1,204 @@
+/* ============================================================================
+   Code & Terminal — minimal global CSS
+   Imported once from global.css, after tokens.css/base.css. Chrome only. Syntax
+   highlighting is Shiki (@utils/shiki); its colours/themes live in base.css
+   (.astro-code) and are NOT touched here.
+
+   This is GLOBAL (not scoped) because Shiki HTML is injected with `set:html` and
+   terminal lines come from slots: none of them receive Astro's scope attribute.
+   ========================================================================== */
+
+/* Shiki wraps code in <pre class="astro-code">. base.css already makes it
+   transparent and margin-less globally; here we only add the component's
+   padding/typography (identical to .prose fences so a slot looks like a fence). */
+.jmrp-code pre.astro-code,
+.jmrp-file pre.astro-code {
+  padding: var(--code-pad);
+
+  /* The <pre> itself must NOT be an independent scroll region (Shiki's
+     transformer adds overflow-x:auto inline, and a scrollable <pre> is not
+     keyboard-focusable → axe scrollable-region-focusable). The component's
+     focusable wrapper (.jmrp-*__scroll, tabindex=0) does the scrolling. */
+  overflow-x: visible !important;
+  font-size: var(--code-font-size);
+  line-height: var(--code-line-height);
+  text-size-adjust: 100%; /* avoid mobile font-boosting */
+  tab-size: 2;
+}
+
+/* Code fences inside the always-dark terminal: force the dark syntax theme
+   (the terminal is dark regardless of page theme, so the light-theme token
+   colours would be invisible) and let the wrapper scroll, not the <pre>. */
+.jmrp-term pre.astro-code {
+  overflow-x: visible !important;
+}
+
+.jmrp-term .astro-code span {
+  font-style: var(--shiki-dark-font-style) !important;
+  font-weight: var(--shiki-dark-font-weight) !important;
+  color: var(--shiki-dark) !important;
+  text-decoration: var(--shiki-dark-text-decoration) !important;
+}
+
+/* ---- Line numbers (Code's `lineNumbers` option) ---------------------------
+   Shiki wraps each line in <span class="line">. The number is a CSS counter with
+   the component's own gutter (fixed width + border). Chrome only — token colours
+   are still Shiki's. */
+.jmrp-code--ln pre code {
+  counter-reset: ln;
+}
+
+.jmrp-code--ln .line {
+  display: inline-block;
+  width: 100%;
+  counter-increment: ln;
+}
+
+.jmrp-code--ln .line::before {
+  display: inline-block;
+  width: 2.5ch;
+  padding-right: 14px;
+  margin-right: var(--space-md);
+  color: var(--color-meta);
+  text-align: right;
+  user-select: none;
+  content: counter(ln);
+  border-right: var(--border-hair);
+}
+
+/* The trailing empty line Shiki sometimes emits doesn't count. */
+.jmrp-code--ln .line:last-child:empty {
+  counter-increment: none;
+}
+
+.jmrp-code--ln .line:last-child:empty::before {
+  content: "";
+  border: 0;
+}
+
+/* ---- Terminal (shared by TerminalCommand/Output/Session) -------------------
+   Dark in BOTH themes on purpose. Internal contrast verified AA against
+   --term-bg. */
+.jmrp-term {
+  overflow: hidden;
+  font-family: var(--font-mono);
+  color: var(--term-fg);
+  background: var(--term-bg);
+  border: 1px solid var(--term-border);
+  border-radius: var(--radius-lg);
+}
+
+.jmrp-term__head {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 10px 8px 14px;
+  border-bottom: 1px solid var(--term-border);
+}
+
+.jmrp-term__dots {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.jmrp-term__dots i {
+  display: block;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+}
+
+.jmrp-term__dots i:nth-child(1) {
+  background: var(--term-dot-r);
+}
+
+.jmrp-term__dots i:nth-child(2) {
+  background: var(--term-dot-y);
+}
+
+.jmrp-term__dots i:nth-child(3) {
+  background: var(--term-dot-g);
+}
+
+.jmrp-term__label {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  color: var(--term-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+
+.jmrp-term__body {
+  padding: 14px 16px;
+  font-size: 12.5px;
+  line-height: 1.65;
+}
+
+.jmrp-term__line {
+  display: flex;
+  gap: 10px;
+}
+
+.jmrp-term__line + .jmrp-term__line {
+  margin-top: 4px;
+}
+
+.term-prompt {
+  flex: none;
+  color: var(--term-prompt);
+}
+
+.term-cmd {
+  color: var(--term-fg);
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
+.term-out,
+.jmrp-term__out {
+  color: var(--term-dim);
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
+.jmrp-term .term-line-out {
+  padding: 4px 0 10px 20px;
+  color: var(--term-dim);
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
+.jmrp-term__ok {
+  color: var(--term-ok);
+}
+
+.jmrp-term__err {
+  color: var(--term-err);
+}
+
+.jmrp-term__path {
+  color: var(--term-path);
+}
+
+/* Links inside the always-dark terminal need a terminal-appropriate colour
+   (the page's link colour is theme-dependent and fails contrast on the dark
+   surface in light mode). Underlined so they stay distinguishable. */
+.jmrp-term a {
+  color: var(--term-path); /* 7.2:1 on --term-bg */
+  text-decoration: underline;
+}
+
+.jmrp-term a:hover {
+  color: var(--term-fg);
+}
+
+/* <code> inside the terminal (Shiki's <code>, or inline code in output) must be
+   transparent — the global inline-code chip background is light and would show
+   through on the dark terminal surface. */
+.jmrp-term code {
+  padding: 0;
+  color: inherit;
+  background: transparent !important;
+}
