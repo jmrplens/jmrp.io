@@ -121,7 +121,7 @@
     "rehype-mermaid": "^3.0.0",
     "rss-parser": "^3.13.0",
     "schema-dts": "^2.0.0",
-    "sharp": "^0.35.2",
+    "sharp": "^0.35.3",
     "sonar-scanner": "^3.1.0",
     "stylelint": "^17.14.0",
     "stylelint-config-html": "^1.1.0",
