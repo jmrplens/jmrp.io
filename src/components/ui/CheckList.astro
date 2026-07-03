@@ -58,18 +58,22 @@ const t = useTranslations(locale);
     list-style: none;
   }
 
-  /* Plain, inline status glyph (distinct shape per state) + label, no chrome. */
+  /* Plain, inline status glyph (distinct shape per state) + label, no chrome.
+     The glyph is absolutely positioned so the label stays normal inline flow —
+     otherwise `display:flex` turns every inline child (bold term, <code> chip,
+     text run) into its own squeezed flex column and the item breaks apart. */
   .checklist-items :global(li) {
-    display: flex;
-    gap: 11px;
-    align-items: center;
-    padding: 0;
+    position: relative;
+    padding: 0 0 0 24px;
   }
 
   .checklist-items :global(li::before) {
-    flex-shrink: 0;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 1em;
     font-size: 1em;
-    line-height: 1;
+    line-height: inherit;
   }
 
   /* Required / Check items - success */
