@@ -103,13 +103,18 @@ export default function HomelabKpi({
   }, []);
 
   const kpis = [
-    { v: `${servicesCount} / ${servicesCount}`, l: t.servicesOnline },
-    { v: String(nodesCount), l: t.monitoredNodes },
+    {
+      v: `${servicesCount} / ${servicesCount}`,
+      l: t.servicesOnline,
+      empty: false,
+    },
+    { v: String(nodesCount), l: t.monitoredNodes, empty: false },
     {
       v: threats === null ? "—" : threats.toLocaleString(),
       l: t.threatsBlocked,
+      empty: threats === null,
     },
-    { v: uptimeValue, l: t.uptime },
+    { v: uptimeValue, l: t.uptime, empty: false },
   ];
 
   return (
@@ -119,7 +124,15 @@ export default function HomelabKpi({
           key={k.l}
           className="kpi-card"
         >
-          <p className="kpi-card__value">{k.v}</p>
+          <p
+            className={
+              k.empty
+                ? "kpi-card__value kpi-card__value--empty"
+                : "kpi-card__value"
+            }
+          >
+            {k.v}
+          </p>
           <p className="kpi-card__label">{k.l}</p>
         </div>
       ))}

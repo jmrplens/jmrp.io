@@ -202,6 +202,13 @@
   letter-spacing: -0.02em;
 }
 
+/* No-data placeholder (e.g. counter unavailable) reads as intentional, not a
+   broken value (P7). The state is normally only seen off-origin (referer-gated
+   API); in production the figure loads. */
+.kpi-card__value--empty {
+  color: var(--color-meta);
+}
+
 .kpi-card__label {
   margin: 7px 0 0;
   font-family: var(--font-mono);
@@ -565,13 +572,19 @@
   color: var(--color-text-muted);
 }
 
+/* Flex (not grid) so an incomplete last row centers instead of leaving an
+   orphan card with a wide empty gap (P8). max-width keeps a lone card from
+   stretching full width. */
 .node-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(min(100%, 260px), 1fr));
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
   gap: var(--space-md);
 }
 
 .node-card {
+  flex: 1 1 260px;
+  max-width: 360px;
   padding: var(--space-md-lg);
   background: var(--color-bg-secondary);
   border: 1px solid var(--color-border);
