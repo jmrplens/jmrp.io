@@ -442,10 +442,10 @@ const cleanedBibtex = cleanBibtex(pub.bibtex);
     display: none !important;
   }
 
-  /* Coautores en color de cuerpo, subrayado revelado al hover — baja el ruido
-     cromático de la fila. El enlace sigue siendo accesible: subrayado al hover
-     + anillo de :focus-visible heredado. El énfasis se reserva al autor propio
-     y a las acciones (BibTeX/PDF/DOI). (P5) */
+  /* Co-authors in body-text color with the underline revealed on hover — lowers
+     the row's chromatic noise. The link stays accessible: underline on hover +
+     inherited :focus-visible ring. Emphasis is reserved for the site owner and
+     the actions (BibTeX/PDF/DOI). (P5) */
   .pub-authors a {
     color: var(--color-text);
     text-decoration-color: transparent;
@@ -456,7 +456,7 @@ const cleanedBibtex = cleanBibtex(pub.bibtex);
     text-decoration-color: currentcolor;
   }
 
-  /* Autor propio destacado: color de título + semibold (pista no-cromática). */
+  /* Site owner emphasized: heading color + semibold (non-color cue). */
   .pub-authors .pub-author-self {
     font-weight: var(--fw-semibold);
     color: var(--color-text-heading);

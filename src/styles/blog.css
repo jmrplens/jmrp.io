@@ -8,10 +8,10 @@
   margin: 0 auto;
 }
 
-/* Header de índice/tag: cada componente (BlogIndex, BlogTagPage, ToolLayout)
-   define su propio .page-header scoped (patrón kicker izquierda). Aquí NO hay
-   una definición global centrada — era CSS muerto que contradecía el patrón
-   real (P9). */
+/* Index/tag header: each consumer (BlogIndex, BlogTagPage, ToolLayout) defines
+   its own scoped .page-header (left kicker pattern). There is intentionally NO
+   centered global definition here — it was dead CSS that contradicted the real
+   pattern (P9). */
 
 .subtitle {
   font-size: 1.25rem;
