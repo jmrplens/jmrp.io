@@ -9,17 +9,17 @@ Restricciones DURAS respetadas: WCAG 2.2 AA (claro+oscuro), cero JS de cliente (
 las islas ya existentes), oscuro por defecto, CLS 0, EN/ES, CSP con nonce, `tokens.css`
 como fuente de verdad. Fuera de alcance (no tocado): diagramas embebidos y copys de posts.
 
-| P   | Estado     | Commit                                | Archivos                                                                            |
-| --- | ---------- | ------------------------------------- | ----------------------------------------------------------------------------------- |
-| P1  | ✅         | `fix(a11y): harden faint token…`      | `src/styles/tokens.css`, `src/components/layout/NavDrawer.astro`                    |
-| P2  | ✅         | `fix(home): group date·title·tag…`    | `src/components/pages/HomePage.astro`                                               |
-| P3  | ✅         | `fix(tools): subnet result styles…`   | `src/components/apps/SubnetCalculator.astro`                                        |
-| P4  | ✅         | `fix(about): real avatar + copy…`     | `src/components/pages/AboutPage.astro`                                              |
-| P5  | ✅         | `fix(publications): calm co-authors…` | `src/components/publications/PublicationItem.astro`                                 |
-| P6  | ✅         | `fix(blog): collapse tag cloud…`      | `src/components/blog/TagCloud.astro`, `BlogTagPage.astro`, `i18n/{en,es}/common.ts` |
-| P7  | ⚠️ parcial | `fix(homelab): …no-data KPI`          | `src/components/homelab/HomelabKpi.tsx`, `styles/components/homelab-components.css` |
-| P8  | ✅         | (mismo commit que P7)                 | `src/styles/components/homelab-components.css`                                      |
-| P9  | ✅         | `chore(blog): drop dead .page-header` | `src/styles/blog.css`                                                               |
+| P   | Estado | Commit                                | Archivos                                                                                                                                               |
+| --- | ------ | ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| P1  | ✅     | `fix(a11y): harden faint token…`      | `src/styles/tokens.css`, `src/components/layout/NavDrawer.astro`                                                                                       |
+| P2  | ✅     | `fix(home): group date·title·tag…`    | `src/components/pages/HomePage.astro`                                                                                                                  |
+| P3  | ✅     | `fix(tools): subnet result styles…`   | `src/components/apps/SubnetCalculator.astro`                                                                                                           |
+| P4  | ✅     | `fix(about): real avatar + copy…`     | `src/components/pages/AboutPage.astro`                                                                                                                 |
+| P5  | ✅     | `fix(publications): calm co-authors…` | `src/components/publications/PublicationItem.astro`                                                                                                    |
+| P6  | ✅     | `fix(blog): collapse tag cloud…`      | `src/components/blog/TagCloud.astro`, `BlogTagPage.astro`, `i18n/{en,es}/common.ts`                                                                    |
+| P7  | ✅     | `fix(homelab): localized 'no data'…`  | `homelab/{HomelabKpi,InfrastructureInsights,NodeCards}.tsx`, `HomelabPage.astro`, `i18n/{en,es}/common.ts`, `styles/components/homelab-components.css` |
+| P8  | ✅     | (mismo commit que P7)                 | `src/styles/components/homelab-components.css`                                                                                                         |
+| P9  | ✅     | `chore(blog): drop dead .page-header` | `src/styles/blog.css`                                                                                                                                  |
 
 ## Detalle
 
@@ -40,7 +40,11 @@ como fuente de verdad. Fuera de alcance (no tocado): diagramas embebidos y copys
   `net-*`, sin colisión) con el layout que pedía la revisión: rejilla 2 columnas
   `etiqueta · valor`, `column-gap` real, etiqueta en `--color-text-muted`, valor en
   `--color-text-heading`. **Alcance = solo Subnet:** HTTP Headers ya usaba `:global`
-  (no afectado); Timestamp/Hash no tienen ese patrón.
+  (no afectado); Timestamp/Hash no tienen ese patrón. **Hallazgo (arreglado):** el
+  mismo bug dejaba sin estilo el resto de la UI de Subnet construida en JS (visual de
+  bits, tabla VLSM, rango→CIDR). Como todo el bloque `<style>` es `.net-*` (cero
+  selectores de elemento), se pasó a `is:global` (sin colisión) → toda la herramienta
+  renderiza como se diseñó.
 
 - **P4 · about.** Slot «photo» vacío → avatar real de GitHub (`astro:assets` Image,
   dimensionado, sin CLS). Copy del hero diferenciado del de la home (titular + lead
@@ -60,12 +64,11 @@ como fuente de verdad. Fuera de alcance (no tocado): diagramas embebidos y copys
   columnas). `.node-grid` pasa a flex-wrap + `justify-content:center` con `max-width` de
   tarjeta → la fila incompleta se centra.
 
-- **P7 · homelab (parcial, prioridad baja).** El em dash de «no data» del KPI se estiliza
-  como estado intencional (`--color-meta`) en vez de parecer un valor roto. **Pendiente:**
-  el cambio completo `—`/`...` → «sin datos» dentro de las islas Preact (NodeCards,
-  InfrastructureInsights) requiere plumbing de i18n a través de los props de la isla, y
-  ese estado vacío es un **artefacto de captura** (API gated por _referer_; en producción
-  carga). Lo dejo documentado como pendiente menor, listo para un pase dedicado si lo quieres.
+- **P7 · homelab (completo).** Estado «no data» localizado en las tres islas: se pasa un
+  string `noData` («sin datos» / «no data») por los props de cada isla y se sustituyen los
+  glyphs `—`/`…` por texto intencional — figura del KPI (además en `--color-meta`), valores
+  de Infrastructure Insights, y CPU/RAM/Temp de cada NodeCard. Ese estado vacío es un
+  **artefacto de captura** (API gated por _referer_; en producción se rellena). axe limpio.
 
 - **P9 · higiene.** Eliminadas las reglas globales muertas `.page-header` centradas de
   `blog.css` (cada consumidor —BlogIndex, BlogTagPage, ToolLayout— ya define su propio
@@ -73,5 +76,9 @@ como fuente de verdad. Fuera de alcance (no tocado): diagramas embebidos y copys
 
 ## Pendientes
 
-- **P7 completo** (texto «sin datos» en las islas del homelab) — menor, artefacto de captura.
 - El copy del hero de About (P4) es borrador — dime si quieres otro tono/titular.
+
+## Hallazgos resueltos fuera de la lista P1–P9
+
+- **Subnet: toda la UI construida en JS estaba sin estilo** (mismo bug de scope que P3).
+  Arreglado con `is:global` en el bloque de estilos de la herramienta (ver P3).
