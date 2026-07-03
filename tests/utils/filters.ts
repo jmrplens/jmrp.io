@@ -85,7 +85,6 @@ export function shouldIgnoreError(text: string): boolean {
     (text.includes("/_astro/favicon") ||
       ((text.includes("/assets/") || text.includes("/pdf/")) &&
         text.includes(".pdf")) ||
-      text.includes("/assets/icons/") ||
       text.includes("/api/proxy/"));
 
   // Ignore 404 for external resources (e.g., author profile pages at universities)

@@ -736,7 +736,6 @@ Blog posts and tools content are **not currently translated** — MDX files exis
 | `verify-icons.mjs`              | UnoCSS icon consistency in dist/                        |
 | `csp-reporter.mjs`              | CSP violation receiver + Telegram notifications         |
 | `audit-aria-labels.mjs`         | Accessibility name audit on built HTML                  |
-| `optimize-favicons.mjs`         | Favicon generation from source with sharp               |
 | `preview-rss.mjs`               | RSS feed HTML preview                                   |
 | `rehype-link-disambiguator.mjs` | Rehype plugin: auto aria-labels for ambiguous links     |
 | `remark-mermaid-bypass.mjs`     | Remark plugin: mermaid-render → `<pre class="mermaid">` |
