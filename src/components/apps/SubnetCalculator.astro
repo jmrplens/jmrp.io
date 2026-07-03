@@ -2045,7 +2045,12 @@ const i18n = {
   })();
 </script>
 
-<style>
+<style is:global>
+  /* is:global (not scoped): this tool builds its results, tables and bit
+     visuals client-side via document.createElement, and Astro-scoped styles
+     never reach those nodes (they lack the data-astro attribute the scoping
+     relies on). Every selector below is .net-* namespaced, so global styling is
+     collision-free and lets the JS-built UI render as designed. */
   .net-calc {
     margin: 1.5rem 0;
     overflow: hidden;
@@ -2277,18 +2282,16 @@ const i18n = {
 
   /* ── Result grid ── */
 
-  /* Results are built client-side via document.createElement, so scoped styles
-     never reach them (Astro scoping needs the data-astro attribute the JS nodes
-     lack). Hence :global — the classes are net-* namespaced, so no collision.
-     Layout follows the design-review P3: a 2-column "label · value" grid with
-     real column-gap, label muted, value in heading color. */
-  :global(.net-result-grid) {
+  /* Design-review P3: results as a 2-column "label · value" grid — real
+     column-gap, label muted, value in heading color. (Now styled because the
+     block is is:global; see the note at the top of this <style>.) */
+  .net-result-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr));
     gap: 0.35rem var(--space-lg);
   }
 
-  :global(.net-result-item) {
+  .net-result-item {
     display: grid;
     grid-template-columns: minmax(9rem, max-content) 1fr;
     column-gap: var(--space-md);
@@ -2297,11 +2300,11 @@ const i18n = {
     border-bottom: 1px solid var(--color-hair);
   }
 
-  :global(.net-result-wide) {
+  .net-result-wide {
     grid-column: 1 / -1;
   }
 
-  :global(.net-result-label) {
+  .net-result-label {
     font-family: var(--font-mono);
     font-size: 0.7rem;
     font-weight: var(--fw-semibold);
@@ -2310,7 +2313,7 @@ const i18n = {
     letter-spacing: 0.03em;
   }
 
-  :global(.net-result-value) {
+  .net-result-value {
     font-family: var(--font-mono);
     font-size: 0.85rem;
     font-weight: var(--fw-medium);
@@ -2549,7 +2552,7 @@ const i18n = {
       max-width: none;
     }
 
-    :global(.net-result-grid) {
+    .net-result-grid {
       grid-template-columns: 1fr;
     }
 
