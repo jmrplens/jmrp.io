@@ -578,8 +578,8 @@
 .node-grid {
   display: flex;
   flex-wrap: wrap;
-  justify-content: center;
   gap: var(--space-md);
+  justify-content: center;
 }
 
 .node-card {
