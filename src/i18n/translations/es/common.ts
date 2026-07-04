@@ -15,7 +15,6 @@ export const common = {
     homelab: "Homelab",
     about: "Perfil",
     uses: "Uses",
-    now: "Ahora",
   },
   menu: {
     drawerLabel: "Menú de navegación",
@@ -828,11 +827,6 @@ export const common = {
       title: "Uses",
       description:
         "El hardware, software y servicios que José Manuel Requena Plens tiene en rotación — escritorio, herramientas de desarrollo y homelab.",
-    },
-    now: {
-      title: "Ahora",
-      description:
-        "En qué está centrado José Manuel Requena Plens ahora mismo — proyectos actuales, experimentos y lecturas.",
     },
     tools: {
       title: "Herramientas para desarrolladores",

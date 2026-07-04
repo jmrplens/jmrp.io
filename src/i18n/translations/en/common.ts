@@ -15,7 +15,6 @@ export const common = {
     homelab: "Homelab",
     about: "About",
     uses: "Uses",
-    now: "Now",
   },
   menu: {
     drawerLabel: "Navigation menu",
@@ -826,11 +825,6 @@ export const common = {
       title: "Uses",
       description:
         "The hardware, software, and services José Manuel Requena Plens keeps in rotation — desk, dev tools, and homelab.",
-    },
-    now: {
-      title: "Now",
-      description:
-        "What José Manuel Requena Plens is focused on right now — current projects, experiments, and reading.",
     },
     tools: {
       title: "Developer Tools",
