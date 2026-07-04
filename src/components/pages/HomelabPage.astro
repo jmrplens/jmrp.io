@@ -357,7 +357,10 @@ const servicesSchema = {
     aria-hidden="true"
   >
   </div>
-  <section aria-label={t("aria.homelabInfrastructure")}>
+  <section
+    class="homelab-page"
+    aria-label={t("aria.homelabInfrastructure")}
+  >
     <div class="container">
       <div class="homelab-hero">
         <div>
@@ -508,6 +511,12 @@ const servicesSchema = {
 </BaseLayout>
 
 <style>
+  /* Breathing room between the last node card and the footer (the footer uses
+     margin-top:auto, so the page content must provide its own bottom gap). */
+  .homelab-page {
+    padding-bottom: var(--space-xl);
+  }
+
   .homelab-hero {
     margin-bottom: var(--space-xl);
   }
