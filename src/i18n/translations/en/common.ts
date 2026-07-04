@@ -794,6 +794,8 @@ export const common = {
       other: "Other",
       abstract: "Abstract",
       bibtex: "BibTeX",
+      etAl: "et al.",
+      showAllAuthors: "Show all authors",
       statPublications: "publications",
       statJournals: "journal articles",
       statConferences: "conference papers",

@@ -41,6 +41,26 @@ const cleanBibtex = (bibtex: string) => {
 // Data Formatting
 const authors = pub.author || [];
 
+const isSelfAuthor = (a: any) => /requena[\s-]?plens/i.test(a?.family || "");
+
+// Collapse very long author lists to "first N + et al." (zero-JS <details>),
+// always keeping the site owner visible (PUB-01).
+const AUTHOR_COLLAPSE_MIN = 14;
+const AUTHOR_VISIBLE = 6;
+const collapseAuthors = authors.length >= AUTHOR_COLLAPSE_MIN;
+let visibleAuthors: any[] = authors;
+let hiddenAuthors: any[] = [];
+if (collapseAuthors) {
+  visibleAuthors = authors.slice(0, AUTHOR_VISIBLE);
+  hiddenAuthors = authors.slice(AUTHOR_VISIBLE);
+  // If the owner would be hidden (e.g. senior/last author), surface them.
+  if (!visibleAuthors.some(isSelfAuthor)) {
+    const i = hiddenAuthors.findIndex(isSelfAuthor);
+    if (i !== -1)
+      visibleAuthors = [...visibleAuthors, hiddenAuthors.splice(i, 1)[0]];
+  }
+}
+
 const venue =
   pub["container-title"] ||
   pub.publisher ||
@@ -86,34 +106,78 @@ const cleanedBibtex = cleanBibtex(pub.bibtex);
     <h3 class="pub-title">{pub.title}</h3>
     <div class="pub-authors">
       {
-        authors.map((author: any, index: number) => {
-          const isSelf = /requena[\s-]?plens/i.test(author.family || "");
-          const authorClass = isSelf ? "pub-author-self" : undefined;
-          return (
-            <>
-              {author.url ? (
-                <a
-                  class={authorClass}
-                  href={author.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  data-astro-prefetch="false"
-                  aria-label={t("aria.viewPublicationsBy", {
-                    author: `${author.given} ${author.family}`,
-                    title: pub.title,
-                  })}
-                >
-                  {author.given} {author.family}
-                </a>
-              ) : (
-                <span class={authorClass}>
-                  {author.given} {author.family}
-                </span>
-              )}
-              {index < authors.length - 1 && ", "}
-            </>
-          );
-        })
+        (collapseAuthors ? visibleAuthors : authors).map(
+          (author: any, index: number, arr: any[]) => {
+            const authorClass = isSelfAuthor(author)
+              ? "pub-author-self"
+              : undefined;
+            return (
+              <>
+                {author.url ? (
+                  <a
+                    class={authorClass}
+                    href={author.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    data-astro-prefetch="false"
+                    aria-label={t("aria.viewPublicationsBy", {
+                      author: `${author.given} ${author.family}`,
+                      title: pub.title,
+                    })}
+                  >
+                    {author.given} {author.family}
+                  </a>
+                ) : (
+                  <span class={authorClass}>
+                    {author.given} {author.family}
+                  </span>
+                )}
+                {(index < arr.length - 1 || collapseAuthors) && ", "}
+              </>
+            );
+          },
+        )
+      }
+      {
+        collapseAuthors && (
+          <details class="pub-etal">
+            <summary
+              class="pub-etal__toggle"
+              aria-label={t("pages.publications.showAllAuthors")}
+            >
+              {t("pages.publications.etAl")}
+            </summary>
+            {hiddenAuthors.map((author: any, index: number) => {
+              const authorClass = isSelfAuthor(author)
+                ? "pub-author-self"
+                : undefined;
+              return (
+                <>
+                  {index === 0 ? " " : ", "}
+                  {author.url ? (
+                    <a
+                      class={authorClass}
+                      href={author.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      data-astro-prefetch="false"
+                      aria-label={t("aria.viewPublicationsBy", {
+                        author: `${author.given} ${author.family}`,
+                        title: pub.title,
+                      })}
+                    >
+                      {author.given} {author.family}
+                    </a>
+                  ) : (
+                    <span class={authorClass}>
+                      {author.given} {author.family}
+                    </span>
+                  )}
+                </>
+              );
+            })}
+          </details>
+        )
       }
     </div>
 
@@ -343,6 +407,38 @@ const cleanedBibtex = cleanBibtex(pub.bibtex);
     font-size: var(--text-sm);
     line-height: 1.5;
     color: var(--color-text-muted);
+  }
+
+  /* "et al." expander for long author lists (zero-JS <details>, inline flow). */
+  .pub-etal {
+    display: inline;
+  }
+
+  .pub-etal__toggle {
+    display: inline;
+    color: var(--color-text);
+    text-decoration: underline dotted;
+    text-underline-offset: 3px;
+    cursor: pointer;
+    list-style: none;
+  }
+
+  .pub-etal__toggle::-webkit-details-marker {
+    display: none;
+  }
+
+  .pub-etal__toggle::marker {
+    content: "";
+  }
+
+  .pub-etal__toggle:hover {
+    color: var(--color-accent);
+  }
+
+  .pub-etal__toggle:focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+    border-radius: 2px;
   }
 
   .pub-actions {

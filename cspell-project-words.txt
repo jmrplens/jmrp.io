@@ -1,3 +1,4 @@
+
 aalarge
 Abbrechen
 abuseipdb
@@ -20,6 +21,7 @@ alginato
 algoritmos
 alimentario
 amazonbot
+ámbar
 amicro
 ancel
 Annulla
@@ -32,9 +34,11 @@ apikey
 apipa
 aplicable
 aplus
+apng
 apnic
 apparmor
 applebot
+aprox
 aquí
 arduino
 arrs
@@ -70,6 +74,8 @@ autogenere
 autorenew
 autosar
 avanti
+avanzado
+azul
 backlink
 baiduspider
 banea
@@ -78,6 +84,7 @@ baneando
 banear
 baneo
 baneos
+barras
 basados
 basetype
 bcast
@@ -115,6 +122,7 @@ carretilla
 Cascadia
 castells
 categoría
+caut
 CBOR
 cdns
 cebrecos
@@ -129,6 +137,7 @@ chacha
 characterisation
 charsets
 checkend
+chev
 chinanet
 chrono
 ciberseguridad
@@ -162,6 +171,7 @@ colorbrewer
 colour
 colours
 comando
+comilla
 compartición
 compartido
 compílalo
@@ -226,6 +236,7 @@ descárgalos
 Descífralo
 desconexión
 deseleccionar
+# Design re-audit — ES comment terms in .astro/.css (en-scoped) + token abbrevs
 desincronizando
 desolder
 desolders
@@ -236,6 +247,9 @@ deuteranopía
 devicon
 dfests
 dfmt
+día
+diagramas
+días
 diceware
 diffbot
 diffie
@@ -260,6 +274,7 @@ domcontentloaded
 domhandler
 domótica
 dorder
+downscales
 dport
 dproto
 drom
@@ -295,6 +310,7 @@ establécela
 establécelo
 estáticamente
 estudio
+etal
 ethernet
 euronoise
 exceptionresp
@@ -304,10 +320,12 @@ exfiltrada
 exfiltrado
 exfiltrated
 exfiltration
+experto
 externalagent
 facebookexternalhit
 fastcgi
 fastly
+faststart
 fasttrack
 fdir
 fediverse
@@ -351,7 +369,9 @@ goldschlag
 gonzález
 googlebot
 gorazdo
+gráfico
 greylisting
+greyscale
 groby
 grotesk
 groupby
@@ -359,6 +379,7 @@ gstatic
 guarinos
 guillem
 habilítalo
+hace
 halten
 hardvard
 hashcat
@@ -394,7 +415,10 @@ icmpv
 iconify
 idempotentes
 idempotently
+idioma
+idiomas
 igic
+ihdr
 imagesift
 impórtalo
 imprevisibilidad
@@ -424,7 +448,9 @@ iporhost
 ipsets
 iptv
 iseconds
+janim
 jblink
+jcur
 jeigiejeif
 jenaro
 jenkins
@@ -432,12 +458,14 @@ jesús
 jetbrains
 jfif
 jiménez
+jlogo
 jmrp
 jmrplens
 josé
 journalctl
 jssecurity
 JTAG
+jund
 kaspersky
 Kconfig
 KDBX
@@ -455,7 +483,9 @@ Krawczyk
 Krawczyk's
 labora
 laboratoire
+# Lab style-system logo class fragments + fonts + ES terms
 labview
+lanczos
 lans
 LAPI
 LAPI's
@@ -467,7 +497,9 @@ lexicográficamente
 leyendo
 lhci
 libkql
+libvpx
 libwww
+libx
 lighthouseci
 línea
 linearization
@@ -544,10 +576,12 @@ mobike
 modbus
 modicon
 modifica
+monaco
 monitorea
 monlist
 morcillo
 mosi
+movflags
 movistar
 mppe
 mrru
@@ -568,8 +602,10 @@ Namprempre
 Namprempre's
 nanomateriales
 nanomaterials
+nativo
 nbases
 nedry
+neofetch
 netwatch
 networkidle
 neutralises
@@ -592,6 +628,7 @@ noqa
 nosniff
 nosonar
 nospaces
+nownownow
 nsanitización
 nsecs
 ntor
@@ -600,6 +637,7 @@ nuxtjs
 nvtkaszpir
 nxdomain
 obfs
+objetivo
 observabilidad
 ocsp
 öffnen
@@ -612,6 +650,8 @@ omgilibot
 ondrej
 ondřej
 oneshot
+optimisation
+optimised
 optimizador
 optimizadores
 orcid
@@ -641,10 +681,13 @@ phishable
 phpinfo
 phpmyadmin
 picó
+pizarra
 pkill
 placa
 plens
+plex
 pluginutils
+pngquant
 politècnica
 poolprefix
 portarlos
@@ -657,6 +700,7 @@ precargado
 precertificate
 precommit
 precompartida
+precomposed
 predoctoral
 preferir
 preflights
@@ -698,6 +742,7 @@ quictls
 quimico
 raffi
 ramis
+rasterisation
 rdata
 rdnss
 readyz
@@ -756,6 +801,7 @@ resonadores
 respondedor
 respuestas
 restaura
+resto
 retipado
 retrocedarán
 retrorreferencias
@@ -798,6 +844,7 @@ segs
 seleccionable
 semiempírico
 sendfile
+seqmp
 serializa
 serialización
 servicios
@@ -818,6 +865,7 @@ smallstep
 smol
 snowden
 sobrecoste
+sobreescribimos
 sobrevenderlo
 sonarcloud
 sonarjs
@@ -841,12 +889,15 @@ subnetting
 subred
 subredes
 subresource
+subsetted
 subwavelength
 surý
 sysstat
 syverson
 tabler
+también
 tampermonkey
+tarjeta
 tarpit
 tarpiteadas
 tarpits
@@ -862,12 +913,14 @@ tieni
 tik's
 timedatectl
 timpibot
+tinified
 tinify
 Tiva
 tldr
 tlnp
 toctou
 toggleable
+tokenizado
 tootallnate
 topbar
 torproject
@@ -879,6 +932,7 @@ tresor
 trevorcox
 tritanopía
 trixie
+truecolor
 truenas
 ttfb
 uaaaaj
@@ -953,62 +1007,8 @@ xtensa
 yastatic
 youtube
 ytxt
+yuva
 zcvgkwkj
 zeroize
 zgrab
 zurück
-nownownow
-
-# Lab style-system logo class fragments + fonts + ES terms
-janim
-jcur
-jlogo
-jund
-monaco
-plex
-sobreescribimos
-tokenizado
-neofetch
-
-# Design re-audit — ES comment terms in .astro/.css (en-scoped) + token abbrevs
-ámbar
-aprox
-azul
-barras
-caut
-comilla
-idioma
-idiomas
-nativo
-objetivo
-avanzado
-experto
-hace
-día
-días
-rasterisation
-subsetted
-apng
-downscales
-faststart
-greyscale
-ihdr
-lanczos
-libvpx
-libx
-movflags
-optimisation
-optimised
-pngquant
-precomposed
-seqmp
-tinified
-truecolor
-yuva
-diagramas
-gráfico
-pizarra
-resto
-tarjeta
-también
-chev

@@ -796,6 +796,8 @@ export const common = {
       other: "Otros",
       abstract: "Resumen",
       bibtex: "BibTeX",
+      etAl: "et al.",
+      showAllAuthors: "Mostrar todos los autores",
       statPublications: "publicaciones",
       statJournals: "artículos de revista",
       statConferences: "ponencias en congresos",
