@@ -79,7 +79,10 @@ const algorithms = [
         <span>{t("tools.hashCalculator.generatedHashes")}</span>
       </div>
 
-      <div class="hash-results">
+      <div
+        class="hash-results"
+        aria-live="polite"
+      >
         {
           algorithms.map((algo) => (
             <div
