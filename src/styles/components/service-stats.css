@@ -10,7 +10,7 @@
 }
 
 :root[data-theme="light"] .status-text {
-  color: #000;
+  color: var(--color-text-heading);
 }
 
 /* Meshtastic key-value list (replaces the big-number grid) */

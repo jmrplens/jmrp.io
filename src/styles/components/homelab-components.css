@@ -34,8 +34,8 @@
   font-weight: var(--fw-bold);
   color: var(--color-primary);
   background: var(--color-bg-subtle);
-  border: 1px solid var(--color-border);
-  border-radius: 3px;
+  border: var(--border-1);
+  border-radius: 3px; /* tight micro-badge radius; below --radius-sm (6px), no token duplicated */
 }
 
 /* ===== Homelab hero + KPI band ===== */
@@ -69,7 +69,7 @@
 .kpi-card {
   padding: 16px 18px;
   background: var(--color-bg-secondary);
-  border: 1px solid var(--color-border);
+  border: var(--border-1);
   border-radius: var(--radius-md);
 }
 
@@ -123,7 +123,7 @@
   color: var(--color-accent);
   background: var(--accent-dim);
   border: 1px solid var(--accent-line);
-  border-radius: 100px;
+  border-radius: var(--radius-pill);
 }
 
 /* Unified spotlight card: accent hairline + subtle amber wash. */
@@ -145,7 +145,7 @@
   gap: var(--space-md-lg);
   align-items: center;
   padding: var(--space-md-lg);
-  border-bottom: 1px solid var(--color-hair);
+  border-bottom: var(--border-hair);
 }
 
 .edge-hero__icon {
@@ -158,7 +158,7 @@
   color: var(--color-accent);
   background: var(--accent-dim);
   border: 1px solid var(--accent-line);
-  border-radius: 13px;
+  border-radius: var(--radius-lg);
 }
 
 .edge-hero__lead {
@@ -220,7 +220,7 @@
   min-width: 96px;
   padding: 10px 14px;
   background: var(--color-bg);
-  border: 1px solid var(--color-border);
+  border: var(--border-1);
   border-radius: var(--radius-md);
 }
 
@@ -252,7 +252,7 @@
   font-size: 0.72rem;
   line-height: 1.6;
   color: var(--color-text-muted);
-  border-bottom: 1px solid var(--color-hair);
+  border-bottom: var(--border-hair);
 }
 
 /* Two source columns, divided internally (no individual card chrome). */
@@ -266,7 +266,7 @@
 }
 
 .edge-col:first-child {
-  border-right: 1px solid var(--color-hair);
+  border-right: var(--border-hair);
 }
 
 /* Explainer links below the card. */
@@ -296,7 +296,7 @@
   align-items: center;
   padding-bottom: var(--space-md);
   margin-bottom: var(--space-xs);
-  border-bottom: 1px solid var(--color-hair);
+  border-bottom: var(--border-hair);
 }
 
 .edge-col__icon {
@@ -334,7 +334,7 @@
   justify-content: space-between;
   padding: var(--space-sm) 0;
   font-size: 0.9rem;
-  border-bottom: 1px solid var(--color-hair);
+  border-bottom: var(--border-hair);
 }
 
 .edge-row:last-child {
@@ -361,7 +361,7 @@
   align-items: center;
   padding-top: var(--space-md);
   margin-top: var(--space-sm);
-  border-top: 1px solid var(--color-hair);
+  border-top: var(--border-hair);
 }
 
 .edge-regions__label {
@@ -382,7 +382,7 @@
   padding: var(--space-md-lg);
   margin-bottom: var(--space-md-lg);
   background: var(--color-bg-secondary);
-  border: 1px solid var(--color-border);
+  border: var(--border-1);
   border-radius: var(--radius-lg);
 }
 
@@ -448,7 +448,7 @@
   max-width: 360px;
   padding: var(--space-md-lg);
   background: var(--color-bg-secondary);
-  border: 1px solid var(--color-border);
+  border: var(--border-1);
   border-radius: var(--radius-md);
 }
 
@@ -488,7 +488,7 @@
   padding: 3px 9px;
   font-family: var(--font-mono);
   font-size: 0.6875rem;
-  border-radius: 100px;
+  border-radius: var(--radius-pill);
 }
 
 .node-card__status--ok {
@@ -507,7 +507,7 @@
   width: 7px;
   height: 7px;
   background: var(--teal);
-  border-radius: 50%;
+  border-radius: var(--radius-full);
 }
 
 .node-card__meters {
@@ -536,13 +536,13 @@
   height: 6px;
   overflow: hidden;
   background: var(--color-bg-subtle);
-  border-radius: 100px;
+  border-radius: var(--radius-pill);
 }
 
 .node-meter__fill {
   height: 100%;
   background: var(--teal);
-  border-radius: 100px;
+  border-radius: var(--radius-pill);
   transition: width var(--dur-3, 0.4s) var(--ease-out);
 }
 
@@ -558,7 +558,7 @@
   margin-top: 2px;
   font-family: var(--font-mono);
   font-size: 0.72rem;
-  border-top: 1px solid var(--color-hair);
+  border-top: var(--border-hair);
 }
 
 .node-card__temp-value {
@@ -612,7 +612,7 @@
   flex-direction: column;
   gap: var(--space-sm);
   padding-top: var(--space-sm);
-  border-top: 1px solid var(--color-hair);
+  border-top: var(--border-hair);
 }
 
 .tor-node__row {
