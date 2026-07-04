@@ -212,11 +212,11 @@ const navLabelKeyMap: Record<string, TranslationKey> = {
       checkbox.setAttribute("aria-expanded", "true");
       bgEls().forEach((el) => el.setAttribute("inert", ""));
       lockScroll();
-      // Focus the first non-input control so the mobile keyboard doesn't pop
-      // open immediately (the terminal input now sits at the top of the drawer).
-      const items = focusables();
-      const first = items.find((el) => el.id !== "term-input") || items[0];
-      if (first) first.focus({ preventScroll: true });
+      // Move focus into the dialog container itself (tabindex="-1") rather than
+      // any inner control. Focusing a nav link would paint a focus ring that
+      // competes with the current-section marker; focusing the input would pop
+      // the mobile keyboard. The container is the accessible, neutral target.
+      drawer.focus({ preventScroll: true });
     };
 
     const close = ({ restoreFocus } = { restoreFocus: true }) => {
