@@ -8,10 +8,10 @@ export interface HomelabKpiTranslations {
   servicesOnline: string;
   /** Label under the "monitored nodes" figure. */
   monitoredNodes: string;
-  /** Label under the "threats blocked (24h)" figure. */
-  threatsBlocked: string;
-  /** Label under the "uptime (24h)" figure. */
-  uptime: string;
+  /** Label under the "requests · 24h" figure. */
+  requests24h: string;
+  /** Label under the "WAN · 24h" figure. */
+  wan24h: string;
   /** Shown in place of a figure when its live value is unavailable. */
   noData: string;
 }
@@ -19,56 +19,80 @@ export interface HomelabKpiTranslations {
 /** Component props. */
 interface Props {
   readonly translations: HomelabKpiTranslations;
-  /** Number of public services rendered on the page (e.g. 3). */
+  /** Total number of public services rendered on the page (the denominator). */
   readonly servicesCount: number;
   /** Number of monitored infrastructure nodes (computed at build). */
   readonly nodesCount: number;
-  /** Stated availability figure — a headline flourish, not a live probe. */
-  readonly uptimeValue: string;
 }
 
-/**
- * Subset of the stats payload used for the "threats blocked · 24h" headline.
- * Only genuine 24h counters are summed — the MikroTik honeypot/blacklist/
- * CrowdSec figures are cumulative totals, so mixing them in would break the
- * "· 24h" label.
- */
-interface StatsSubset {
-  tarpit_hits_24h: number;
-  nginx_bans_24h: number;
+/** Health endpoint payload: real per-service up/down aggregated server-side. */
+interface HealthPayload {
+  online: number;
+  total: number;
 }
 
-/** Narrow an unknown payload to the numeric fields we sum. */
-function pickNumbers<T>(
-  data: unknown,
-  keys: readonly (keyof T & string)[],
-): T | null {
-  if (!data || typeof data !== "object") return null;
+/** Subset of the stats payload used for the KPI band (requests + WAN 24h). */
+interface StatsPayload {
+  requests_received_24h: number;
+  wan_rx_bytes_24h: number;
+}
+
+/** Narrow an unknown payload to the health shape. */
+function isHealth(data: unknown): data is HealthPayload {
+  if (!data || typeof data !== "object") return false;
   const d = data as Record<string, unknown>;
-  if (keys.some((k) => typeof d[k] !== "number")) return null;
-  return d as T;
+  return typeof d.online === "number" && typeof d.total === "number";
+}
+
+/** Narrow an unknown payload to the stats fields we read. */
+function isStats(data: unknown): data is StatsPayload {
+  if (!data || typeof data !== "object") return false;
+  const d = data as Record<string, unknown>;
+  return (
+    typeof d.requests_received_24h === "number" &&
+    typeof d.wan_rx_bytes_24h === "number"
+  );
 }
 
 /**
- * Homelab KPI band — the four headline figures above the edge-defense
- * spotlight. Three figures are structural (services, nodes, uptime) and passed
- * as props; the "threats blocked" figure is fetched live so the "vía API" claim
- * holds. A fetch failure simply leaves that one figure as an em dash.
+ * Formats a byte count into a compact human-readable string (e.g. "485 GB").
+ * @param bytes - The number of bytes.
+ */
+function formatBytes(bytes: number): string {
+  if (!Number.isFinite(bytes) || bytes <= 0) return "0 B";
+  const k = 1024;
+  const sizes = ["B", "KB", "MB", "GB", "TB"];
+  const i = Math.min(
+    Math.floor(Math.log(bytes) / Math.log(k)),
+    sizes.length - 1,
+  );
+  const value = bytes / Math.pow(k, i);
+  return `${Number.parseFloat(value.toFixed(value < 10 ? 1 : 0))} ${sizes[i]}`;
+}
+
+/**
+ * Homelab KPI band — four headline figures above the edge-defense spotlight.
+ * Two are structural (services total, nodes) and two are live: the real online
+ * count comes from the server-side `/api/homelab/health` aggregate, while the
+ * 24h requests + WAN figures piggyback on the `/api/homelab/stats` payload the
+ * band already fetches — so the whole band costs two cached requests. A failed
+ * fetch leaves the affected figure as an em dash.
  */
 export default function HomelabKpi({
   translations: t,
   servicesCount,
   nodesCount,
-  uptimeValue,
 }: Props) {
-  const [threats, setThreats] = useState<number | null>(null);
+  const [online, setOnline] = useState<number | null>(null);
+  const [requests, setRequests] = useState<number | null>(null);
+  const [wan, setWan] = useState<number | null>(null);
   const isFetchingRef = useRef(false);
 
   useEffect(() => {
     const controller = new AbortController();
     const REFRESH_INTERVAL = 30_000;
 
-    const fetchThreats = async () => {
+    const fetchKpis = async () => {
       if (isFetchingRef.current) return;
       isFetchingRef.current = true;
       try {
@@ -76,17 +100,28 @@ export default function HomelabKpi({
           document.querySelector<HTMLElement>("[data-homelab-token]")?.dataset
             .homelabToken ?? "";
         const headers = { "X-Homelab-Token": token };
-        const statsRes = await fetch("/api/homelab/stats", {
-          signal: controller.signal,
-          headers,
-        });
-        if (!statsRes.ok) return;
-        const stats = pickNumbers<StatsSubset>(await statsRes.json(), [
-          "tarpit_hits_24h",
-          "nginx_bans_24h",
+        const [healthRes, statsRes] = await Promise.all([
+          fetch("/api/homelab/health", {
+            signal: controller.signal,
+            headers,
+          }).catch(() => null),
+          fetch("/api/homelab/stats", {
+            signal: controller.signal,
+            headers,
+          }).catch(() => null),
         ]);
-        if (!stats) return;
-        setThreats(stats.tarpit_hits_24h + stats.nginx_bans_24h);
+
+        if (healthRes?.ok) {
+          const health = (await healthRes.json()) as unknown;
+          if (isHealth(health)) setOnline(health.online);
+        }
+        if (statsRes?.ok) {
+          const stats = (await statsRes.json()) as unknown;
+          if (isStats(stats)) {
+            setRequests(stats.requests_received_24h);
+            setWan(stats.wan_rx_bytes_24h);
+          }
+        }
       } catch (error: unknown) {
         if (error instanceof DOMException && error.name === "AbortError")
           return;
@@ -96,8 +131,8 @@ export default function HomelabKpi({
       }
     };
 
-    void fetchThreats();
-    const intervalId = setInterval(() => void fetchThreats(), REFRESH_INTERVAL);
+    void fetchKpis();
+    const intervalId = setInterval(() => void fetchKpis(), REFRESH_INTERVAL);
     return () => {
       clearInterval(intervalId);
       controller.abort();
@@ -106,17 +141,21 @@ export default function HomelabKpi({
 
   const kpis = [
     {
-      v: `${servicesCount} / ${servicesCount}`,
+      v: `${online === null ? "…" : online} / ${servicesCount}`,
       l: t.servicesOnline,
-      empty: false,
+      empty: online === null,
     },
     { v: String(nodesCount), l: t.monitoredNodes, empty: false },
     {
-      v: threats === null ? t.noData : threats.toLocaleString(),
-      l: t.threatsBlocked,
-      empty: threats === null,
+      v: requests === null ? t.noData : requests.toLocaleString(),
+      l: t.requests24h,
+      empty: requests === null,
     },
-    { v: uptimeValue, l: t.uptime, empty: false },
+    {
+      v: wan === null ? t.noData : formatBytes(wan),
+      l: t.wan24h,
+      empty: wan === null,
+    },
   ];
 
   return (

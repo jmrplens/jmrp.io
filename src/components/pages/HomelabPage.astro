@@ -68,7 +68,6 @@ const infrastructureTranslations: InfrastructureTranslations = {
   attackRegionsList: t("pages.homelab.attackRegionsList"),
   noAttackRegions: t("pages.homelab.noAttackRegions"),
   hits: t("pages.homelab.hits"),
-  availability: t("pages.homelab.availability"),
   rateLimits: t("pages.homelab.rateLimits"),
   systemStatus: t("pages.homelab.systemStatus"),
   nodeResourceLoad: t("pages.homelab.nodeResourceLoad"),
@@ -95,7 +94,6 @@ const infrastructureTranslations: InfrastructureTranslations = {
   activeConnections: t("pages.homelab.activeConnections"),
   wanTraffic: t("pages.homelab.wanTraffic"),
   crowdsecBlocked: t("pages.homelab.crowdsecBlocked"),
-  healthy: t("pages.homelab.healthy"),
   edgeDefenseChip: t("pages.homelab.edgeDefenseChip"),
   threatsBlocked: t("pages.homelab.kpiThreatsBlocked"),
   edgeDescription: t("pages.homelab.edgeDescription"),
@@ -108,8 +106,8 @@ const kpiTranslations: HomelabKpiTranslations = {
   servicesOnline: t("pages.homelab.kpiServicesOnline"),
   // Breakdown ("· N infra · M Tor") appended below, once nodeCards/torServices exist.
   monitoredNodes: t("pages.homelab.kpiMonitoredNodes"),
-  threatsBlocked: t("pages.homelab.kpiThreatsBlocked"),
-  uptime: t("pages.homelab.kpiUptime"),
+  requests24h: t("pages.homelab.kpiRequests24h"),
+  wan24h: t("pages.homelab.kpiWan24h"),
   noData: t("pages.homelab.noData"),
 };
 
@@ -382,7 +380,6 @@ const servicesSchema = {
           translations={kpiTranslations}
           servicesCount={services.length}
           nodesCount={monitoredNodesCount}
-          uptimeValue="99.98%"
         />
       </section>
 

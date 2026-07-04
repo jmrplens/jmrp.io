@@ -56,8 +56,6 @@ export interface InfrastructureTranslations {
   noAttackRegions: string;
   /** Unit label for hit counts in attack regions. */
   hits: string;
-  /** Label for the service availability metric. */
-  availability: string;
   /** Label for the rate-limited requests metric. */
   rateLimits: string;
   /** Heading for the system status section. */
@@ -120,8 +118,6 @@ export interface InfrastructureTranslations {
   wanTraffic: string;
   /** Label for the CrowdSec blocked-IPs metric. */
   crowdsecBlocked: string;
-  /** Status text shown when the WAF is healthy. */
-  healthy: string;
 }
 
 /** Component props */
@@ -468,12 +464,6 @@ export default function InfrastructureInsights({ translations: t }: Props) {
               <div className="edge-row">
                 <dt>{t.nginxBans}</dt>
                 <dd>{displayVal(stats?.nginx_bans_24h)}</dd>
-              </div>
-              <div className="edge-row">
-                <dt>{t.availability}</dt>
-                <dd>
-                  <span className="edge-status color-success">{t.healthy}</span>
-                </dd>
               </div>
             </dl>
             {countries.length > 0 && (
