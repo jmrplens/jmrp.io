@@ -1,4 +1,5 @@
-import { useEffect, useState } from "preact/hooks";
+import type { RefObject } from "preact";
+import { useEffect, useRef, useState } from "preact/hooks";
 
 /** Translations required by TorStats. Passed from Astro parent. */
 export interface TorStatsTranslations {
@@ -195,11 +196,13 @@ function TorNodeCard({
   translations: t,
   headlineLabel,
   headlineValue,
+  rootRef,
 }: {
   readonly data: TorNodeData | null;
   readonly translations: TorStatsTranslations;
   readonly headlineLabel: string;
   readonly headlineValue: string;
+  readonly rootRef: RefObject<HTMLDivElement>;
 }) {
   const isOffline = data !== null && !data.running;
   const bandwidth =
@@ -207,7 +210,10 @@ function TorNodeCard({
       ? "..."
       : formatBandwidth(data.advertised_bandwidth);
   return (
-    <div className="tor-node">
+    <div
+      className="tor-node"
+      ref={rootRef}
+    >
       <p className="tor-node__headline">
         <output
           className={`tor-node__num${isOffline ? " tor-node__num--off" : ""}`}
@@ -242,6 +248,24 @@ function TorNodeCard({
 export default function TorStats({ type, translations: t }: Props) {
   const [data, setData] = useState<TorNodeData | null>(null);
   const [error, setError] = useState(false);
+  const rootRef = useRef<HTMLDivElement>(null);
+
+  // Keep the surrounding ServiceCard's header pill coherent with the live node
+  // state (HOMELAB-01): the pill is server-rendered as "running" but the true
+  // state is only known here. When the node is offline, mark the pill offline so
+  // it never contradicts the headline (running pill vs offline body).
+  useEffect(() => {
+    const root = rootRef.current;
+    if (!root || data === null) return;
+    const pill = root
+      .closest(".service-card")
+      ?.querySelector(".service-status-pill");
+    if (!pill) return;
+    const offline = !data.running;
+    pill.classList.toggle("is-offline", offline);
+    const label = pill.querySelector(".service-status-label");
+    if (label) label.textContent = offline ? t.offline : t.running;
+  }, [data, t]);
 
   useEffect(() => {
     setData(null);
@@ -281,6 +305,7 @@ export default function TorStats({ type, translations: t }: Props) {
       translations={t}
       headlineLabel={headlineLabel}
       headlineValue={headlineValue}
+      rootRef={rootRef}
     />
   );
 }

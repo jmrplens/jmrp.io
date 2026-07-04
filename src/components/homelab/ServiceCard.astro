@@ -50,7 +50,7 @@ const t = useTranslations(locale);
             class="service-status-dot"
             aria-hidden="true"
           />
-          {statusText}
+          <span class="service-status-label">{statusText}</span>
         </span>
       )
     }
@@ -168,6 +168,21 @@ const t = useTranslations(locale);
     height: 6px;
     background: var(--teal);
     border-radius: 50%;
+  }
+
+  /* Offline variant: driven by an island (e.g. TorStats) reflecting live
+     `data.running===false`, so the header pill never contradicts the card body. */
+  .service-status-pill.is-offline {
+    color: var(--color-status-offline);
+    border-color: color-mix(
+      in srgb,
+      var(--color-status-offline) 40%,
+      transparent
+    );
+  }
+
+  .service-status-pill.is-offline .service-status-dot {
+    background: var(--color-status-offline);
   }
 
   /* Title on its own line below the header */
