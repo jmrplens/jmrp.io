@@ -1346,6 +1346,7 @@ export const tools = {
     addCustomDomainsAriaLabel: "Añadir dominios personalizados",
     addDomainPlaceholder: "Añadir dominio (ej., cdn.ejemplo.com)",
     addDomainAriaLabel: "Añadir dominio",
+    addDomainToDirective: "Añadir dominio a {directive}",
     // Sección de vista previa
     generatedPolicy: "Política generada",
     formatLabel: "Formato:",

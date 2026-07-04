@@ -522,6 +522,10 @@ const i18n = {
                                 placeholder={t(
                                   "tools.cspBuilder.addDomainPlaceholder",
                                 )}
+                                aria-label={t(
+                                  "tools.cspBuilder.addDomainToDirective",
+                                  { directive: directive.name },
+                                )}
                                 data-directive={directive.name}
                               />
                               <button
@@ -648,6 +652,10 @@ const i18n = {
                                 class="csp-custom-input"
                                 placeholder={t(
                                   "tools.cspBuilder.addDomainPlaceholder",
+                                )}
+                                aria-label={t(
+                                  "tools.cspBuilder.addDomainToDirective",
+                                  { directive: directive.name },
                                 )}
                                 data-directive={directive.name}
                               />

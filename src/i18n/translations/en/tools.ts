@@ -1318,6 +1318,7 @@ export const tools = {
     addCustomDomainsAriaLabel: "Add custom domains",
     addDomainPlaceholder: "Add domain (e.g., cdn.example.com)",
     addDomainAriaLabel: "Add domain",
+    addDomainToDirective: "Add domain to {directive}",
     // Preview section
     generatedPolicy: "Generated Policy",
     formatLabel: "Format:",
