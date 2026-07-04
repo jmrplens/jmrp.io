@@ -1,12 +1,9 @@
 /* --color-brand-mastodon now lives in tokens.css (single source of truth). */
 
 /* Styling for React ServiceStats component */
-.status-dot {
-  width: 6px;
-  height: 6px;
-  background: var(--color-status-online);
-  border-radius: 50%;
-}
+
+/* .status-dot: canonical (tokenized) in utilities.css (CSS-01 dedupe — this
+   copy was unused on the homelab page, which renders .service-status-dot). */
 
 .status-text {
   color: var(--color-text);

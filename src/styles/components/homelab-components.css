@@ -55,39 +55,9 @@
   color: var(--color-text);
 }
 
-.realtime-pill {
-  display: inline-flex;
-  flex: none;
-  gap: 0.6em;
-  align-items: center;
-  padding: 9px 16px;
-  margin: 0;
-  font-family: var(--font-mono);
-  font-size: 0.8125rem;
-  color: var(--teal-text);
-  border: 1px solid var(--color-border);
-  border-radius: 100px;
-}
-
-.realtime-pill__dot {
-  width: 8px;
-  height: 8px;
-  background: var(--teal);
-  border-radius: 50%;
-  box-shadow: 0 0 10px var(--teal);
-  animation: realtime-pulse 2.4s ease-in-out infinite;
-}
-
-@keyframes realtime-pulse {
-  0%,
-  100% {
-    opacity: 100%;
-  }
-
-  50% {
-    opacity: 40%;
-  }
-}
+/* .realtime-pill / __dot / @keyframes realtime-pulse: canonical tokenized
+   definition lives in utilities.css (CSS-01 dedupe — was duplicated here with
+   literal drift). */
 
 .kpi-band {
   display: grid;
@@ -125,12 +95,6 @@
   font-family: var(--font-mono);
   font-size: 0.72rem;
   color: var(--color-text-muted);
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .realtime-pill__dot {
-    animation: none;
-  }
 }
 
 @media (width <= 720px) {
@@ -442,22 +406,8 @@
   color: var(--color-text-muted);
 }
 
-/* Color utility classes - using variables only */
-.color-warning {
-  color: var(--color-status-warning);
-}
-
-.color-danger {
-  color: var(--color-status-error);
-}
-
-.color-info {
-  color: var(--color-status-info);
-}
-
-.color-success {
-  color: var(--color-status-online);
-}
+/* .color-warning/-danger/-info/-success: canonical (tokenized) in utilities.css
+   (CSS-01 dedupe). */
 
 /* ===== Infrastructure node cards (NodeCards) ===== */
 .nodes-section {
