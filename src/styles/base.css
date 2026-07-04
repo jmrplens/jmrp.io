@@ -164,13 +164,15 @@ h4 {
   margin-bottom: 1.375rem; /* 22px */
 }
 
-/* Inline code (una sola comilla invertida) — chip mono acento sobre surface2.
+/* Inline code (una sola comilla invertida) — chip mono neutro sobre surface2.
+   Texto en color-heading (sin tono) para que resalte por brillo/peso, no por
+   color: el ámbar queda reservado a enlaces y foco, evitando el ruido cromático.
    Excluye el código dentro de <pre> (bloques Shiki), que tiene su propio estilo. */
 .prose :not(pre) > code {
   padding: 1px 6px;
   font-family: var(--font-mono);
   font-size: 0.88em;
-  color: var(--color-accent);
+  color: var(--color-text-heading);
   overflow-wrap: break-word;
   background-color: var(--color-surface-2);
   border-radius: var(--radius-sm);

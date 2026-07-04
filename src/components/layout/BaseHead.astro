@@ -124,12 +124,11 @@ if (image) {
   }
 } else {
   // Per-route generated OG image (1200×630 branded PNG).
-  // Strip locale prefix and derive slug from the canonical pathname.
-  // Falls through to the Lab default image only for routes not enumerated
-  // in src/pages/og/[...slug].png.ts (e.g. future pages not yet added).
-  const cleanPath = Astro.url.pathname
-    .replace(/^\/es(?=\/|$)/, "") // strip /es locale prefix
-    .replaceAll(/^\/|\/$/g, ""); // strip leading / trailing slashes
+  // Derive the slug from the FULL pathname, locale included, so each locale
+  // gets its own translated card (`/es/…` → `/og/es/…png`). Mirrors the slugs
+  // enumerated in src/pages/og/[...slug].png.ts. Falls through to the Lab
+  // default image only for routes not enumerated there.
+  const cleanPath = Astro.url.pathname.replaceAll(/^\/|\/$/g, ""); // strip / edges
   const ogSlug = cleanPath || "home";
   resolvedImage = new URL(`/og/${ogSlug}.png`, getSiteUrl());
 }

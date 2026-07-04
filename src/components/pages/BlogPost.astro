@@ -234,7 +234,6 @@ const articleSchema = [
   title={post.data.title}
   description={post.data.description}
   type="article"
-  image={post.data.coverImage?.src}
   publishDate={post.data.publishedDate}
   modifiedDate={post.data.updatedDate}
   tags={post.data.tags}
@@ -333,9 +332,6 @@ const articleSchema = [
               <span class="byline__text">
                 <span class="byline__name">
                   {post.data.author || siteData.author}
-                </span>
-                <span class="byline__role">
-                  {t("pages.blogPost.authorRole")}
                 </span>
               </span>
             </div>
@@ -733,10 +729,6 @@ const articleSchema = [
   .byline__name {
     font-weight: var(--fw-medium);
     color: var(--color-text-heading);
-  }
-
-  .byline__role {
-    color: var(--color-text-muted);
   }
 
   .cover-image-container {

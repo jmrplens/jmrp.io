@@ -9,16 +9,21 @@
  *  - an optional subtitle in IBM Plex Mono
  *  - "jmrp.io" domain label
  *
- * Slug mapping mirrors how `BaseHead.astro` computes the per-route path:
- *   /           → `home`
- *   /blog/      → `blog`
- *   /blog/001-x/→ `blog/001-x`
- *   /tools/csp/ → `tools/csp-builder`
- *   /es/blog/   → (same as /blog/, locale stripped in BaseHead)
+ * Slug mapping mirrors how `BaseHead.astro` computes the per-route path
+ * (the full pathname, locale INCLUDED):
+ *   /            → `home`
+ *   /blog/       → `blog`
+ *   /blog/001-x/ → `blog/001-x`
+ *   /es/         → `es`
+ *   /es/blog/    → `es/blog`
+ *   /es/blog/001-x/ → `es/blog/001-x`
  *
- * Only EN slugs are generated; ES pages reference the same image file since
- * OG images are locale-agnostic for this project.
+ * Both locales are generated: the site is fully bilingual, so each ES card
+ * carries the post/tool/page title in Spanish.
  */
+
+import { readFileSync } from "node:fs";
+import path from "node:path";
 
 import { getUniqueTags } from "@utils/blog";
 import { generateOgImage } from "@utils/og-image";
@@ -30,136 +35,244 @@ interface OgProps {
   title: string;
   /** Optional muted subtitle in IBM Plex Mono. */
   subtitle?: string;
+  /** Optional raw cover-image bytes, cropped into the card's right panel. */
+  cover?: Buffer;
 }
 
-/** Tool category display names used in OG subtitles. */
-const CATEGORY_LABELS: Record<string, string> = {
-  security: "Security Tools",
-  developer: "Developer Tools",
-  network: "Network Tools",
-  embedded: "Embedded Tools",
-  mikrotik: "MikroTik Tools",
+// Map every blog cover's processed `.src` (hashed path, identical to the value
+// a post's `coverImage.src` resolves to) back to its on-disk source file, so we
+// can read the raw bytes at build time and feed them to the OG generator.
+const coverModules = import.meta.glob<{ src: string }>(
+  "/src/assets/images/blog/*.{webp,png,jpg,jpeg,avif}",
+  { eager: true, import: "default" },
+);
+const coverPathBySrc = new Map<string, string>();
+for (const key in coverModules) {
+  coverPathBySrc.set(coverModules[key].src, path.join(process.cwd(), key));
+}
+
+/**
+ * Reads a post cover's raw bytes from disk given its processed ImageMetadata.
+ * Returns undefined when the post has no cover or the source can't be resolved.
+ * @param coverImage - The post's `coverImage` ImageMetadata (or undefined).
+ */
+function readCover(coverImage?: { src: string }): Buffer | undefined {
+  if (!coverImage) return undefined;
+  const src = coverPathBySrc.get(coverImage.src);
+  return src ? readFileSync(src) : undefined;
+}
+
+type Locale = "en" | "es";
+const LOCALES: Locale[] = ["en", "es"];
+
+/** Tool category display names used in OG subtitles, per locale. */
+const CATEGORY_LABELS: Record<Locale, Record<string, string>> = {
+  en: {
+    security: "Security Tools",
+    developer: "Developer Tools",
+    network: "Network Tools",
+    embedded: "Embedded Tools",
+    mikrotik: "MikroTik Tools",
+  },
+  es: {
+    security: "Herramientas de seguridad",
+    developer: "Herramientas de desarrollo",
+    network: "Herramientas de red",
+    embedded: "Herramientas embebidas",
+    mikrotik: "Herramientas MikroTik",
+  },
+};
+
+/** Bespoke OG copy for the static (non-collection) pages, per locale. */
+const STATIC_PAGES: Record<string, Record<Locale, OgProps>> = {
+  home: {
+    en: {
+      title: "José M. Requena Plens",
+      subtitle: "R&D Engineer · Embedded Systems & IoT",
+    },
+    es: {
+      title: "José M. Requena Plens",
+      subtitle: "Ingeniero de I+D · Sistemas embebidos e IoT",
+    },
+  },
+  blog: {
+    en: { title: "Blog", subtitle: "Engineering notes & technical articles" },
+    es: { title: "Blog", subtitle: "Notas de ingeniería y artículos técnicos" },
+  },
+  tools: {
+    en: {
+      title: "Developer Tools",
+      subtitle: "Interactive browser-based utilities · jmrp.io",
+    },
+    es: {
+      title: "Herramientas para desarrolladores",
+      subtitle: "Utilidades interactivas en el navegador · jmrp.io",
+    },
+  },
+  cv: {
+    en: {
+      title: "Curriculum Vitae",
+      subtitle: "José M. Requena Plens · R&D Engineer",
+    },
+    es: {
+      title: "Currículum",
+      subtitle: "José M. Requena Plens · Ingeniero de I+D",
+    },
+  },
+  github: {
+    en: {
+      title: "GitHub Repositories",
+      subtitle: "Open source contributions · jmrp.io",
+    },
+    es: {
+      title: "Repositorios de GitHub",
+      subtitle: "Contribuciones de código abierto · jmrp.io",
+    },
+  },
+  homelab: {
+    en: {
+      title: "Homelab",
+      subtitle: "Self-hosted infrastructure & services · jmrp.io",
+    },
+    es: {
+      title: "Homelab",
+      subtitle: "Infraestructura y servicios autoalojados · jmrp.io",
+    },
+  },
+  publications: {
+    en: {
+      title: "Publications",
+      subtitle: "Academic & research papers · jmrp.io",
+    },
+    es: {
+      title: "Publicaciones",
+      subtitle: "Artículos académicos y de investigación · jmrp.io",
+    },
+  },
+  // Non-indexed pages still get a card so they don't 404 on scraping.
+  "404": {
+    en: { title: "Page Not Found", subtitle: "jmrp.io" },
+    es: { title: "Página no encontrada", subtitle: "jmrp.io" },
+  },
+};
+
+/** Localized "Blog" kicker for post + tag cards. */
+const BLOG_KICKER: Record<Locale, string> = {
+  en: "Blog · jmrp.io",
+  es: "Blog · jmrp.io",
+};
+
+/** Localized kicker for tool category cards. */
+const TOOLS_KICKER: Record<Locale, string> = {
+  en: "Interactive browser-based utilities · jmrp.io",
+  es: "Utilidades interactivas en el navegador · jmrp.io",
 };
 
 /**
- * Enumerates all routes that need a per-route OG image.
- * Returns static-path entries with { title, subtitle } props consumed by GET.
+ * Maps a locale + EN-canonical slug to the OG image path segment. ES mirrors
+ * the page URL (`/es/…`) so BaseHead — which no longer strips the locale — finds
+ * the matching translated card. The ES home lives at `es` (page URL `/es/`).
+ * @param locale - Target locale.
+ * @param base - EN canonical slug (e.g. "home", "blog/010-x", "tools/csp-builder").
+ */
+function ogSlug(locale: Locale, base: string): string {
+  if (locale === "en") return base;
+  return base === "home" ? "es" : `es/${base}`;
+}
+
+/**
+ * Truncates a tool description so satori keeps it on the single subtitle line.
+ * @param description - Full tool description.
+ */
+function toolSubtitle(description: string): string {
+  return description.length > 72 ? `${description.slice(0, 69)}…` : description;
+}
+
+/**
+ * Enumerates every route — in BOTH locales — that needs a per-route OG image.
+ * Post/tool titles come from each locale's collection entry (fully translated);
+ * static-page copy comes from STATIC_PAGES. Returns static-path entries with
+ * { title, subtitle, cover? } props consumed by GET.
  */
 export async function getStaticPaths() {
-  const [posts, tools] = await Promise.all([
-    // Only published EN posts (ES uses the same slug-based OG image)
-    getCollection("posts", ({ data }) => !data.draft && data.lang === "en"),
-    // Only EN tools — ES entries share the same data.slug and would produce
-    // duplicate static paths, causing a PrerenderRouteConflict error.
-    getCollection("tools", ({ data }) => data.lang === "en"),
+  const [postsByLocale, toolsByLocale] = await Promise.all([
+    Promise.all(
+      LOCALES.map((locale) =>
+        getCollection(
+          "posts",
+          ({ data }) => !data.draft && data.lang === locale,
+        ),
+      ),
+    ),
+    Promise.all(
+      LOCALES.map((locale) =>
+        getCollection("tools", ({ data }) => data.lang === locale),
+      ),
+    ),
   ]);
 
-  // ── Unique tags across all published posts ──────────────────────────────
-  const tags = getUniqueTags(posts).map(({ tag }) => tag);
+  const entries: { params: { slug: string }; props: OgProps }[] = [];
 
-  // ── Tool categories ─────────────────────────────────────────────────────
-  const categories = [...new Set(tools.map((t) => t.data.category as string))];
+  LOCALES.forEach((locale, index) => {
+    const posts = postsByLocale[index];
+    const tools = toolsByLocale[index];
+    const tags = getUniqueTags(posts).map(({ tag }) => tag);
+    const categories = [
+      ...new Set(tools.map((t) => t.data.category as string)),
+    ];
 
-  return [
     // ── Static pages ──────────────────────────────────────────────────────
-    {
-      params: { slug: "home" },
-      props: {
-        title: "José M. Requena Plens",
-        subtitle: "R&D Engineer · Embedded Systems & IoT",
-      } satisfies OgProps,
-    },
-    {
-      params: { slug: "blog" },
-      props: {
-        title: "Blog",
-        subtitle: "Engineering notes & technical articles",
-      } satisfies OgProps,
-    },
-    {
-      params: { slug: "tools" },
-      props: {
-        title: "Developer Tools",
-        subtitle: "Interactive browser-based utilities · jmrp.io",
-      } satisfies OgProps,
-    },
-    {
-      params: { slug: "cv" },
-      props: {
-        title: "Curriculum Vitae",
-        subtitle: "José M. Requena Plens · R&D Engineer",
-      } satisfies OgProps,
-    },
-    {
-      params: { slug: "github" },
-      props: {
-        title: "GitHub Repositories",
-        subtitle: "Open source contributions · jmrp.io",
-      } satisfies OgProps,
-    },
-    {
-      params: { slug: "homelab" },
-      props: {
-        title: "Homelab",
-        subtitle: "Self-hosted infrastructure & services · jmrp.io",
-      } satisfies OgProps,
-    },
-    {
-      params: { slug: "publications" },
-      props: {
-        title: "Publications",
-        subtitle: "Academic & research papers · jmrp.io",
-      } satisfies OgProps,
-    },
-    // Non-indexed pages still get a card so they don't 404 on scraping
-    {
-      params: { slug: "404" },
-      props: {
-        title: "Page Not Found",
-        subtitle: "jmrp.io",
-      } satisfies OgProps,
-    },
+    for (const [base, copy] of Object.entries(STATIC_PAGES)) {
+      entries.push({
+        params: { slug: ogSlug(locale, base) },
+        props: copy[locale],
+      });
+    }
 
-    // ── Blog posts ────────────────────────────────────────────────────────
-    ...posts.map((post) => ({
-      params: { slug: `blog/${post.data.slug}` },
-      props: {
-        title: post.data.title,
-        subtitle: "Blog · jmrp.io",
-      } satisfies OgProps,
-    })),
+    // ── Blog posts (cover art as background) ──────────────────────────────
+    for (const post of posts) {
+      entries.push({
+        params: { slug: ogSlug(locale, `blog/${post.data.slug}`) },
+        props: {
+          title: post.data.title,
+          subtitle: BLOG_KICKER[locale],
+          cover: readCover(post.data.coverImage),
+        },
+      });
+    }
 
     // ── Blog tag pages ────────────────────────────────────────────────────
-    ...tags.map((tag) => ({
-      params: { slug: `blog/tags/${tag}` },
-      props: {
-        title: `#${tag}`,
-        subtitle: "Blog · jmrp.io",
-      } satisfies OgProps,
-    })),
+    for (const tag of tags) {
+      entries.push({
+        params: { slug: ogSlug(locale, `blog/tags/${tag}`) },
+        props: { title: `#${tag}`, subtitle: BLOG_KICKER[locale] },
+      });
+    }
 
     // ── Tool pages ────────────────────────────────────────────────────────
-    ...tools.map((tool) => ({
-      params: { slug: `tools/${tool.data.slug}` },
-      props: {
-        title: tool.data.title,
-        // Description truncated: satori wraps at ~80 chars at 18px mono
-        subtitle:
-          tool.data.description.length > 72
-            ? `${tool.data.description.slice(0, 69)}…`
-            : tool.data.description,
-      } satisfies OgProps,
-    })),
+    for (const tool of tools) {
+      entries.push({
+        params: { slug: ogSlug(locale, `tools/${tool.data.slug}`) },
+        props: {
+          title: tool.data.title,
+          subtitle: toolSubtitle(tool.data.description),
+        },
+      });
+    }
 
     // ── Tool category pages ───────────────────────────────────────────────
-    ...categories.map((category) => ({
-      params: { slug: `tools/categories/${category}` },
-      props: {
-        title: CATEGORY_LABELS[category] ?? `${category} Tools`,
-        subtitle: "Interactive browser-based utilities · jmrp.io",
-      } satisfies OgProps,
-    })),
-  ];
+    for (const category of categories) {
+      entries.push({
+        params: { slug: ogSlug(locale, `tools/categories/${category}`) },
+        props: {
+          title: CATEGORY_LABELS[locale][category] ?? category,
+          subtitle: TOOLS_KICKER[locale],
+        },
+      });
+    }
+  });
+
+  return entries;
 }
 
 /**
@@ -167,7 +280,7 @@ export async function getStaticPaths() {
  * Returns the generated PNG as a binary HTTP response.
  */
 export async function GET({ props }: APIContext<OgProps>): Promise<Response> {
-  const png = await generateOgImage(props.title, props.subtitle);
+  const png = await generateOgImage(props.title, props.subtitle, props.cover);
   // Convert Node.js Buffer to Uint8Array so TypeScript resolves to BodyInit.
   return new Response(new Uint8Array(png), {
     headers: {

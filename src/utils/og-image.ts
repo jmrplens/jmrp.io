@@ -167,119 +167,189 @@ function buildLayout(
   title: string,
   subtitle: string | undefined,
   logo: { uri: string; ratio: number },
+  coverUri?: string,
 ): VNode {
   const fs = titleFontSize(title);
 
-  // Root container: full bleed, flex column, dark bg + grid
-  return el(
+  // Content column: logo (top) · title+subtitle (centre) · domain accent
+  // (bottom). Identical whether or not a cover is present — the cover only
+  // changes the backdrop behind it, never the composition (no collage).
+  const content = el(
     "div",
     {
       display: "flex",
       flexDirection: "column",
-      width: "100%",
-      height: "100%",
-      background: OG_BG,
-      backgroundImage: [
-        `linear-gradient(${OG_GRID} 1px, transparent 1px)`,
-        `linear-gradient(90deg, ${OG_GRID} 1px, transparent 1px)`,
-      ].join(", "),
-      backgroundSize: "40px 40px",
+      justifyContent: "space-between",
+      flex: "1",
+      padding: `${PAD_Y}px ${PAD_X}px`,
       position: "relative",
-      // Bottom teal accent bar via border
-      borderBottom: `3px solid ${OG_TEAL}`,
+      // Without a cover, keep the subtle vignette over the grid. With a cover,
+      // the dedicated scrim layer below already grounds the text.
+      background: coverUri
+        ? "transparent"
+        : "linear-gradient(160deg, rgba(10,10,11,0.30) 0%, transparent 55%, rgba(10,10,11,0.55) 100%)",
     },
-    // ── Inner padding container
+    // ── Top row: the real `❯ jmrp_` brand mark (embedded PNG)
+    {
+      type: "img",
+      key: null,
+      props: {
+        src: logo.uri,
+        width: Math.round(40 * logo.ratio),
+        height: 40,
+        style: { display: "flex" },
+      },
+    },
+    // ── Centre: title + subtitle
     el(
       "div",
       {
         display: "flex",
         flexDirection: "column",
-        justifyContent: "space-between",
-        flex: "1",
-        padding: `${PAD_Y}px ${PAD_X}px`,
-        // Subtle vignette to ground text without obscuring grid
-        background:
-          "linear-gradient(160deg, rgba(10,10,11,0.30) 0%, transparent 55%, rgba(10,10,11,0.55) 100%)",
+        gap: "16px",
+        // Keep the title on the darker left side when a cover shows through.
+        maxWidth: coverUri ? "680px" : "1040px",
       },
-      // ── Top row: the real `❯ jmrp_` brand mark (embedded PNG)
+      el(
+        "div",
+        {
+          fontFamily: "'Space Grotesk'",
+          fontSize: `${fs}px`,
+          fontWeight: "700",
+          color: OG_HEADING,
+          lineHeight: "1.15",
+          letterSpacing: "-0.025em",
+        },
+        title,
+      ),
+      subtitle
+        ? el(
+            "div",
+            {
+              fontFamily: "'IBM Plex Mono'",
+              fontSize: "18px",
+              fontWeight: "500",
+              color: coverUri ? OG_HEADING : OG_MUTED,
+              letterSpacing: "0.005em",
+            },
+            subtitle,
+          )
+        : el("span", { display: "none" }),
+    ),
+    // ── Bottom row: domain label + teal border accent
+    el(
+      "div",
+      {
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "flex-end",
+      },
+      // Left: decorative teal border accent element
+      el("div", {
+        width: "40px",
+        height: "2px",
+        background: OG_TEAL,
+        borderRadius: "1px",
+        opacity: "0.6",
+      }),
+      // Right: domain
+      el(
+        "div",
+        {
+          fontFamily: "'IBM Plex Mono'",
+          fontSize: "17px",
+          fontWeight: "500",
+          color: coverUri ? OG_HEADING : OG_MUTED,
+          letterSpacing: "0.02em",
+          // Thin top border above domain for visual separation
+          borderTop: `1px solid ${coverUri ? "rgba(255,255,255,0.35)" : OG_BORDER}`,
+          paddingTop: "12px",
+        },
+        "jmrp.io",
+      ),
+    ),
+  );
+
+  const rootStyle: StyleProp = {
+    display: "flex",
+    width: "100%",
+    height: "100%",
+    position: "relative",
+    background: OG_BG,
+    borderBottom: `3px solid ${OG_TEAL}`,
+  };
+
+  // ── Post cover: full-bleed background with a directional scrim ─────────────
+  if (coverUri) {
+    return el(
+      "div",
+      rootStyle,
+      // Layer 1: the cover art, covering the whole card
       {
         type: "img",
         key: null,
         props: {
-          src: logo.uri,
-          width: Math.round(40 * logo.ratio),
-          height: 40,
-          style: { display: "flex" },
+          src: coverUri,
+          width: W,
+          height: H,
+          style: {
+            position: "absolute",
+            top: 0,
+            left: 0,
+            objectFit: "cover",
+          },
         },
       },
-      // ── Centre: title + subtitle
-      el(
-        "div",
-        {
-          display: "flex",
-          flexDirection: "column",
-          gap: "16px",
-          maxWidth: "1040px",
-        },
-        el(
-          "div",
-          {
-            fontFamily: "'Space Grotesk'",
-            fontSize: `${fs}px`,
-            fontWeight: "700",
-            color: OG_HEADING,
-            lineHeight: "1.15",
-            letterSpacing: "-0.025em",
-          },
-          title,
-        ),
-        subtitle
-          ? el(
-              "div",
-              {
-                fontFamily: "'IBM Plex Mono'",
-                fontSize: "18px",
-                fontWeight: "500",
-                color: OG_MUTED,
-                letterSpacing: "0.005em",
-              },
-              subtitle,
-            )
-          : el("span", { display: "none" }),
-      ),
-      // ── Bottom row: domain label + teal border accent
-      el(
-        "div",
-        {
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "flex-end",
-        },
-        // Left: decorative teal border accent element
-        el("div", {
-          width: "40px",
-          height: "2px",
-          background: OG_TEAL,
-          borderRadius: "1px",
-          opacity: "0.6",
-        }),
-        // Right: domain
-        el(
-          "div",
-          {
-            fontFamily: "'IBM Plex Mono'",
-            fontSize: "17px",
-            fontWeight: "500",
-            color: OG_MUTED,
-            letterSpacing: "0.02em",
-            // Thin top border above domain for visual separation
-            borderTop: `1px solid ${OG_BORDER}`,
-            paddingTop: "12px",
-          },
-          "jmrp.io",
-        ),
-      ),
-    ),
+      // Layer 2: hairline grid — light translucent lines so the Lab grid reads
+      // over the artwork. Sitting UNDER the scrim, the directional scrim fades
+      // it out toward the dark left (the "gradient" effect) while it stays
+      // visible over the revealed art on the right.
+      el("div", {
+        display: "flex",
+        position: "absolute",
+        top: 0,
+        left: 0,
+        width: "100%",
+        height: "100%",
+        backgroundImage: [
+          "linear-gradient(rgba(255,255,255,0.08) 1px, transparent 1px)",
+          "linear-gradient(90deg, rgba(255,255,255,0.08) 1px, transparent 1px)",
+        ].join(", "),
+        backgroundSize: "40px 40px",
+      }),
+      // Layer 3: scrim — darker on the left (behind the title) and along the
+      // bottom (behind logo accent + domain), fading to reveal the art on the
+      // right. Keeps text legible over any cover.
+      el("div", {
+        display: "flex",
+        position: "absolute",
+        top: 0,
+        left: 0,
+        width: "100%",
+        height: "100%",
+        backgroundImage: [
+          "linear-gradient(90deg, rgba(10,10,11,0.94) 0%, rgba(10,10,11,0.82) 40%, rgba(10,10,11,0.42) 74%, rgba(10,10,11,0.30) 100%)",
+          "linear-gradient(0deg, rgba(10,10,11,0.72) 0%, rgba(10,10,11,0) 30%)",
+        ].join(", "),
+      }),
+      // Layer 4: content on top
+      content,
+    );
+  }
+
+  // ── No cover: dark bg + hairline grid (unchanged brand card) ───────────────
+  return el(
+    "div",
+    {
+      ...rootStyle,
+      flexDirection: "column",
+      backgroundImage: [
+        `linear-gradient(${OG_GRID} 1px, transparent 1px)`,
+        `linear-gradient(90deg, ${OG_GRID} 1px, transparent 1px)`,
+      ].join(", "),
+      backgroundSize: "40px 40px",
+    },
+    content,
   );
 }
 
@@ -290,12 +360,15 @@ function buildLayout(
  *
  * @param title - Page title, rendered large in Space Grotesk 700.
  * @param subtitle - Optional secondary line in IBM Plex Mono (e.g. section name or description).
+ * @param cover - Optional raw cover-image bytes (any format sharp decodes). When
+ *          provided, it is centre-cropped to the right-hand panel of the card.
  * @returns Node.js `Buffer` containing a PNG.  Wrap in `new Uint8Array(buf)` when
  *          passing as `BodyInit` to the Web `Response` constructor in Astro endpoints.
  */
 export async function generateOgImage(
   title: string,
   subtitle?: string,
+  cover?: ArrayBuffer | Buffer,
 ): Promise<Buffer> {
   const [spaceGrotesk, ibmPlexMono, logo] = await Promise.all([
     getSpaceGrotesk700(),
@@ -303,8 +376,22 @@ export async function generateOgImage(
     getLogo(),
   ]);
 
+  // Pre-crop the cover to the panel box with sharp (reliable crop + small
+  // data-URI). "attention" focuses the crop on the most salient region so
+  // landscape covers don't lose their subject to a naive centre cut.
+  let coverUri: string | undefined;
+  if (cover) {
+    const cropped = await sharp(Buffer.from(cover))
+      .resize(W, H, { fit: "cover", position: sharp.strategy.attention })
+      .jpeg({ quality: 82 })
+      .toBuffer();
+    coverUri = `data:image/jpeg;base64,${cropped.toString("base64")}`;
+  }
+
   const svg = await satori(
-    buildLayout(title, subtitle, logo) as Parameters<typeof satori>[0],
+    buildLayout(title, subtitle, logo, coverUri) as Parameters<
+      typeof satori
+    >[0],
     {
       width: W,
       height: H,
