@@ -184,6 +184,15 @@ export default [
   {
     ...playwright.configs["flat/recommended"],
     files: ["tests/**/*.{ts,tsx,js,jsx,mjs}"],
+    rules: {
+      ...playwright.configs["flat/recommended"].rules,
+      // `page.evaluate()` callbacks run in the browser context, where DOM
+      // globals (document, window, getComputedStyle, HTMLScriptElement…) are
+      // legitimately available. unicorn's new isolated-functions rule (v70)
+      // can't see the Node config lacks those globals and false-flags them.
+      // It still catches real closure bugs (referencing Node-side variables).
+      "unicorn/isolated-functions": "off",
+    },
   },
 
   // 8. React Hooks (Stability for Preact)

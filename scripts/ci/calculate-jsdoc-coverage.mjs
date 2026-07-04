@@ -176,12 +176,11 @@ async function calculateCoverage() {
       `❌ Coverage (${formattedPercentage}%) is below the threshold of ${THRESHOLD}%.`,
     );
     process.exit(1);
-  } else {
-    logger.info(
-      `✅ Coverage (${formattedPercentage}%) meets the threshold of ${THRESHOLD}%.`,
-    );
-    process.exit(0);
   }
+  logger.info(
+    `✅ Coverage (${formattedPercentage}%) meets the threshold of ${THRESHOLD}%.`,
+  );
+  process.exit(0);
 }
 
 /**
