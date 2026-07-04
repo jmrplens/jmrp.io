@@ -123,6 +123,7 @@ const serviceStatsTranslations: ServiceStatsTranslations = {
   viewMapAria: t("pages.homelab.viewMapAria"),
   viewMonitor: t("pages.homelab.viewMonitor"),
   viewMonitorAria: t("pages.homelab.viewMonitorAria"),
+  pdsNetworks: t("pages.homelab.pdsNetworks"),
 };
 
 const torAggregateTranslations: TorAggregateTranslations = {
@@ -165,7 +166,7 @@ interface Service {
   description: string;
   url: string;
   linkText: string;
-  statsType: "mastodon" | "matrix" | "meshtastic-combined";
+  statsType: "mastodon" | "matrix" | "meshtastic-combined" | "pds";
   provider: Provider;
   userInfo?: string;
 }
@@ -209,6 +210,18 @@ const services: Service[] = [
     linkText: t("pages.homelab.meshtasticLink"),
     statsType: "meshtastic-combined",
     provider: defaultProvider,
+  },
+  {
+    id: "pds",
+    name: t("pages.homelab.pdsName"),
+    title: "AT Protocol",
+    icon: "simple-icons:bluesky",
+    description: t("pages.homelab.pdsDescription"),
+    url: "https://bsky.app/profile/jmrp.io",
+    linkText: t("pages.homelab.pdsLink"),
+    statsType: "pds",
+    provider: defaultProvider,
+    userInfo: "@jmrp.io",
   },
 ];
 

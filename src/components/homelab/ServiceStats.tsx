@@ -20,11 +20,13 @@ export interface ServiceStatsTranslations {
   viewMonitor: string;
   /** ARIA label for the "view monitor" link. */
   viewMonitorAria: string;
+  /** PDS: caption for the headline "networks reached" number (distinct ASNs). */
+  pdsNetworks: string;
 }
 
 /** Component props for ServiceStats */
 interface Props {
-  readonly type: "mastodon" | "matrix" | "meshtastic-combined";
+  readonly type: "mastodon" | "matrix" | "meshtastic-combined" | "pds";
   readonly translations: ServiceStatsTranslations;
 }
 
@@ -62,6 +64,14 @@ interface MeshtasticStatsData {
   potatoNodes: number;
   meshmonitorNodes: number;
   potatoVersion: string;
+}
+
+/** AT Protocol PDS statistics data */
+interface PdsStatsData {
+  /** Number of distinct networks (ASNs) reaching the PDS — the headline reach. */
+  networks: number;
+  /** Running PDS software version. */
+  version: string;
 }
 
 /**
@@ -282,6 +292,50 @@ async function fetchPotatoVersion(): Promise<string> {
 }
 
 /**
+ * Fetch AT Protocol PDS statistics from the homelab API.
+ *
+ * @param setError - Callback to signal an error state.
+ */
+async function fetchPdsStats(
+  setError: (error: boolean) => void,
+): Promise<PdsStatsData> {
+  const fallback: PdsStatsData = { networks: 0, version: "Unknown" };
+  try {
+    const token =
+      document.querySelector<HTMLElement>("[data-homelab-token]")?.dataset
+        .homelabToken ?? "";
+    const homelabHeaders: HeadersInit = token
+      ? { "X-Homelab-Token": token }
+      : {};
+
+    const res = await fetch("/api/homelab/pds", {
+      headers: homelabHeaders,
+    }).catch(() => null);
+
+    const data = await safeFetchJson<{
+      version?: string;
+      distinct_asn?: number;
+    } | null>(res, "Failed to parse PDS homelab response", null);
+
+    if (!res?.ok || !data) {
+      setError(true);
+      return fallback;
+    }
+
+    return {
+      networks: data.distinct_asn ?? 0,
+      version: data.version || "Unknown",
+    };
+  } catch (error) {
+    if (import.meta.env.DEV) {
+      console.error("Failed to fetch PDS stats", error);
+    }
+    setError(true);
+    return fallback;
+  }
+}
+
+/**
  * Compact service-stats grid: two key stat pairs (value + label).
  * The status pill lives in the ServiceCard header; only the data grid is rendered here.
  */
@@ -378,6 +432,32 @@ function MeshtasticStats({
 }
 
 /**
+ * AT Protocol PDS: federation reach (distinct networks / ASNs that reach the
+ * node) + the running PDS version, in the same two-column big-number grid used
+ * by Mastodon/Matrix. A personal PDS holds little content, so the headline is
+ * the "self-hosted node with real network reach" story, not raw post counts.
+ */
+function PdsStats({
+  stats,
+  translations: t,
+}: {
+  readonly stats: PdsStatsData | null;
+  readonly translations: ServiceStatsTranslations;
+}) {
+  return (
+    <ServiceStatCard
+      stats={[
+        {
+          value: stats?.networks?.toLocaleString() ?? "...",
+          label: t.pdsNetworks,
+        },
+        { value: stats?.version || "...", label: "PDS" },
+      ]}
+    />
+  );
+}
+
+/**
  * Displays live statistics for a specific service (Mastodon, Matrix, or Meshtastic).
  * Fetches data on the client side and renders the appropriate sub-component.
  *
@@ -388,7 +468,11 @@ function MeshtasticStats({
  */
 export default function ServiceStats({ type, translations: t }: Props) {
   const [stats, setStats] = useState<
-    MastodonStatsData | MatrixStatsData | MeshtasticStatsData | null
+    | MastodonStatsData
+    | MatrixStatsData
+    | MeshtasticStatsData
+    | PdsStatsData
+    | null
   >(null);
   const [error, setError] = useState(false);
 
@@ -411,6 +495,10 @@ export default function ServiceStats({ type, translations: t }: Props) {
           }
           case "meshtastic-combined": {
             data = await fetchMeshtasticStats(setError);
+            break;
+          }
+          case "pds": {
+            data = await fetchPdsStats(setError);
             break;
           }
           default: {
@@ -456,6 +544,14 @@ export default function ServiceStats({ type, translations: t }: Props) {
       return (
         <MeshtasticStats
           stats={stats as MeshtasticStatsData | null}
+          translations={t}
+        />
+      );
+    }
+    case "pds": {
+      return (
+        <PdsStats
+          stats={stats as PdsStatsData | null}
           translations={t}
         />
       );

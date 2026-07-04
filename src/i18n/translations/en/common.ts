@@ -624,6 +624,10 @@ export const common = {
       meshtasticDescription:
         "Infrastructure for the Meshtastic mesh network. Includes Map, Node Database, and Network Monitors.",
       meshtasticLink: "Open Mesh Hub",
+      pdsName: "AT Protocol PDS",
+      pdsDescription:
+        "My self-hosted Personal Data Server on the AT Protocol network — the identity and data behind @jmrp.io on Bluesky.",
+      pdsLink: "View on Bluesky",
       opensInNewTab: "(opens in new tab)",
       // InfrastructureInsights
       statsAriaLabel: "Edge node real-time statistics",
@@ -677,6 +681,7 @@ export const common = {
       viewMapAria: "View Map on PotatoMesh",
       viewMonitor: "View Monitor",
       viewMonitorAria: "View Monitor on MeshMonitor",
+      pdsNetworks: "Networks",
       // ServerInsights — Matrix
       matrixNode: "Node: Matrix Homeserver",
       matrixStatsAriaLabel: "Matrix server real-time statistics",

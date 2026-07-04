@@ -381,7 +381,8 @@ export async function generateOgImage(
   // landscape covers don't lose their subject to a naive centre cut.
   let coverUri: string | undefined;
   if (cover) {
-    const cropped = await sharp(Buffer.from(cover))
+    const coverBuffer = Buffer.isBuffer(cover) ? cover : Buffer.from(cover);
+    const cropped = await sharp(coverBuffer)
       .resize(W, H, { fit: "cover", position: sharp.strategy.attention })
       .jpeg({ quality: 82 })
       .toBuffer();
