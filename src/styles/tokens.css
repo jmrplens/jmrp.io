@@ -71,6 +71,29 @@
   --danger-dim: color-mix(in srgb, var(--color-danger) 13%, transparent);
   --info-dim: color-mix(in srgb, var(--color-info) 13%, transparent);
 
+  /* ===== RAMPA GRÁFICO/DIAGRAMA (--dg-*) — CSS-02 ========================
+     Para nodos de diagrama (fill + text encima) y series de chart/tools.
+     -line reutiliza los semánticos (ya AA, temáticos). fill/text verificados
+     AA en claro y oscuro (texto/fill ≥4.5:1, line/fondo ≥3:1). */
+  --dg-success-line: var(--color-success);
+  --dg-warning-line: var(--color-warning);
+  --dg-danger-line: var(--color-danger);
+  --dg-info-line: var(--color-info);
+  --dg-accent-line: var(--violet);
+  --dg-neutral-line: var(--color-text-muted);
+  --dg-success-fill: #103a2a;
+  --dg-success-text: #6ee7b7;
+  --dg-warning-fill: #3a2c0d;
+  --dg-warning-text: #f0cf6a;
+  --dg-danger-fill: #45191b;
+  --dg-danger-text: #f4a5a0;
+  --dg-info-fill: #1a2a4a;
+  --dg-info-text: #a9c0f5;
+  --dg-accent-fill: #2e2350;
+  --dg-accent-text: #cbb2f9;
+  --dg-neutral-fill: #1c1c22;
+  --dg-neutral-text: #b6b5ae;
+
   /* ===== ESTADO DE INFRAESTRUCTURA (dark) — homelab / servicios =========
      Semántica convencional verde/ámbar/rojo para paneles de estado (online
      usa el teal del sistema). Centralizado aquí: los CSS de componentes NO
@@ -256,6 +279,20 @@
     --color-danger: #a5342a; /* rojo-naranja */
     --color-info: #2f57a6; /* azul pizarra */
 
+    /* Rampa gráfico/diagrama (light) — fill/text; -line hereda de :root. */
+    --dg-success-fill: #d7f2e3;
+    --dg-success-text: #0f6e3d;
+    --dg-warning-fill: #fbeecb;
+    --dg-warning-text: #7a5200;
+    --dg-danger-fill: #fbdedd;
+    --dg-danger-text: #9c1f1a;
+    --dg-info-fill: #dde7fb;
+    --dg-info-text: #274a91;
+    --dg-accent-fill: #ece3fb;
+    --dg-accent-text: #5b3aa6;
+    --dg-neutral-fill: #ececea;
+    --dg-neutral-text: #46453f;
+
     /* Estado de infraestructura (light) */
     --color-status-online: #12695a;
     --color-status-online-bg: rgb(31 126 110 / 12%);
@@ -309,6 +346,20 @@
   --color-warning: #6b5600;
   --color-danger: #a5342a;
   --color-info: #2f57a6;
+
+  /* Rampa gráfico/diagrama (light, override manual) — fill/text. */
+  --dg-success-fill: #d7f2e3;
+  --dg-success-text: #0f6e3d;
+  --dg-warning-fill: #fbeecb;
+  --dg-warning-text: #7a5200;
+  --dg-danger-fill: #fbdedd;
+  --dg-danger-text: #9c1f1a;
+  --dg-info-fill: #dde7fb;
+  --dg-info-text: #274a91;
+  --dg-accent-fill: #ece3fb;
+  --dg-accent-text: #5b3aa6;
+  --dg-neutral-fill: #ececea;
+  --dg-neutral-text: #46453f;
   --color-status-online: #12695a;
   --color-status-online-bg: rgb(31 126 110 / 12%);
   --color-status-offline: #374151;
@@ -354,6 +405,20 @@
   --color-warning: #e3b23c;
   --color-danger: #e5655b;
   --color-info: #6e8fd6;
+
+  /* Rampa gráfico/diagrama (dark, override manual) — fill/text. */
+  --dg-success-fill: #103a2a;
+  --dg-success-text: #6ee7b7;
+  --dg-warning-fill: #3a2c0d;
+  --dg-warning-text: #f0cf6a;
+  --dg-danger-fill: #45191b;
+  --dg-danger-text: #f4a5a0;
+  --dg-info-fill: #1a2a4a;
+  --dg-info-text: #a9c0f5;
+  --dg-accent-fill: #2e2350;
+  --dg-accent-text: #cbb2f9;
+  --dg-neutral-fill: #1c1c22;
+  --dg-neutral-text: #b6b5ae;
   --color-status-online: #46b8a6;
   --color-status-online-bg: rgb(70 184 166 / 12%);
   --color-status-offline: #6b7280;
