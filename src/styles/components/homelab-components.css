@@ -30,7 +30,7 @@
 
 .country-badge {
   padding: 1px 4px;
-  font-size: 0.7rem;
+  font-size: var(--text-micro);
   font-weight: var(--fw-bold);
   color: var(--color-primary);
   background: var(--color-bg-subtle);
@@ -50,7 +50,7 @@
 .homelab-hero__intro {
   max-width: 58ch;
   margin: 0;
-  font-size: 1.0625rem;
+  font-size: var(--text-md);
   line-height: 1.55;
   color: var(--color-text);
 }
@@ -76,7 +76,7 @@
 .kpi-card__value {
   margin: 0;
   font-family: var(--font-display);
-  font-size: 1.625rem;
+  font-size: var(--text-2xl);
   font-weight: var(--fw-bold);
   line-height: 1;
   color: var(--color-text-heading);
@@ -93,7 +93,7 @@
 .kpi-card__label {
   margin: 7px 0 0;
   font-family: var(--font-mono);
-  font-size: 0.72rem;
+  font-size: var(--text-micro);
   color: var(--color-text-muted);
 }
 
@@ -119,7 +119,7 @@
 .edge-defense__chip {
   padding: 3px 10px;
   font-family: var(--font-mono);
-  font-size: 0.6875rem;
+  font-size: var(--text-2xs);
   color: var(--color-accent);
   background: var(--accent-dim);
   border: 1px solid var(--accent-line);
@@ -154,7 +154,7 @@
   place-items: center;
   width: 50px;
   height: 50px;
-  font-size: 1.6rem;
+  font-size: var(--text-2xl);
   color: var(--color-accent);
   background: var(--accent-dim);
   border: 1px solid var(--accent-line);
@@ -184,14 +184,14 @@
 
 .edge-hero__label {
   font-family: var(--font-mono);
-  font-size: 0.875rem;
+  font-size: var(--text-sm);
   color: var(--color-text);
 }
 
 .edge-hero__desc {
   max-width: 62ch;
   margin: 6px 0 0;
-  font-size: 0.85rem;
+  font-size: var(--text-sm);
   line-height: 1.5;
   color: var(--color-text-muted);
 }
@@ -227,7 +227,7 @@
 .edge-metric__num {
   display: block;
   font-family: var(--font-display);
-  font-size: 1.2rem;
+  font-size: var(--text-xl);
   font-weight: var(--fw-bold);
   line-height: 1;
   color: var(--color-text-heading);
@@ -237,7 +237,7 @@
   display: block;
   margin-top: 5px;
   font-family: var(--font-mono);
-  font-size: 0.66rem;
+  font-size: var(--text-2xs);
   color: var(--color-text-muted);
 }
 
@@ -249,7 +249,7 @@
   padding: 11px var(--space-md-lg);
   margin: 0;
   font-family: var(--font-mono);
-  font-size: 0.72rem;
+  font-size: var(--text-micro);
   line-height: 1.6;
   color: var(--color-text-muted);
   border-bottom: var(--border-hair);
@@ -276,7 +276,7 @@
   gap: var(--space-md) var(--space-lg);
   margin-top: var(--space-md);
   font-family: var(--font-mono);
-  font-size: 0.78rem;
+  font-size: var(--text-label);
 }
 
 .edge-link {
@@ -300,7 +300,7 @@
 }
 
 .edge-col__icon {
-  font-size: 1.5rem;
+  font-size: var(--text-2xl);
   color: var(--color-accent);
 }
 
@@ -312,14 +312,14 @@
 
 .edge-col__title {
   font-family: var(--font-display);
-  font-size: 1.15rem;
+  font-size: var(--text-lg);
   font-weight: var(--fw-bold);
   color: var(--color-text-heading);
 }
 
 .edge-col__sub {
   font-family: var(--font-mono);
-  font-size: 0.75rem;
+  font-size: var(--text-micro);
   color: var(--color-text-muted);
 }
 
@@ -333,7 +333,7 @@
   align-items: center;
   justify-content: space-between;
   padding: var(--space-sm) 0;
-  font-size: 0.9rem;
+  font-size: var(--text-sm);
   border-bottom: var(--border-hair);
 }
 
@@ -366,7 +366,7 @@
 
 .edge-regions__label {
   font-family: var(--font-mono);
-  font-size: 0.75rem;
+  font-size: var(--text-micro);
   color: var(--color-text-muted);
 }
 
@@ -394,7 +394,7 @@
 
 .tor-agg-value {
   font-family: var(--font-display);
-  font-size: 1.6rem;
+  font-size: var(--text-2xl);
   font-weight: var(--fw-bold);
   color: var(--color-text-heading);
   letter-spacing: -0.01em;
@@ -402,7 +402,7 @@
 
 .tor-agg-label {
   font-family: var(--font-mono);
-  font-size: 0.75rem;
+  font-size: var(--text-micro);
   color: var(--color-text-muted);
 }
 
@@ -429,7 +429,7 @@
 
 .nodes-section__hint {
   font-family: var(--font-mono);
-  font-size: 0.72rem;
+  font-size: var(--text-micro);
   color: var(--color-text-muted);
 }
 
@@ -467,7 +467,7 @@
 .node-card__name {
   margin: 0;
   font-family: var(--font-display);
-  font-size: 1rem;
+  font-size: var(--text-md);
   font-weight: var(--fw-semibold);
   line-height: 1.15;
   color: var(--color-text-heading);
@@ -476,7 +476,7 @@
 .node-card__role {
   margin: 3px 0 0;
   font-family: var(--font-mono);
-  font-size: 0.6875rem;
+  font-size: var(--text-2xs);
   color: var(--color-text-muted);
 }
 
@@ -487,7 +487,7 @@
   align-items: center;
   padding: 3px 9px;
   font-family: var(--font-mono);
-  font-size: 0.6875rem;
+  font-size: var(--text-2xs);
   border-radius: var(--radius-pill);
 }
 
@@ -521,7 +521,7 @@
   justify-content: space-between;
   margin-bottom: 5px;
   font-family: var(--font-mono);
-  font-size: 0.6875rem;
+  font-size: var(--text-2xs);
 }
 
 .node-meter__label {
@@ -557,7 +557,7 @@
   padding-top: 11px;
   margin-top: 2px;
   font-family: var(--font-mono);
-  font-size: 0.72rem;
+  font-size: var(--text-micro);
   border-top: var(--border-hair);
 }
 
@@ -585,7 +585,7 @@
 .tor-node__num {
   display: block;
   font-family: var(--font-display);
-  font-size: 1.75rem;
+  font-size: var(--text-3xl);
   font-weight: var(--fw-bold);
   line-height: 1;
   color: var(--color-text-heading);
@@ -594,7 +594,7 @@
 
 /* Offline state: smaller muted text shows translated "offline" label in place of the metric */
 .tor-node__num--off {
-  font-size: 1.1rem;
+  font-size: var(--text-lg);
   font-weight: var(--fw-medium);
   color: var(--color-text-muted);
 }
@@ -603,7 +603,7 @@
   display: block;
   margin-top: 5px;
   font-family: var(--font-mono);
-  font-size: 0.7rem;
+  font-size: var(--text-micro);
   color: var(--color-text-muted);
 }
 
@@ -620,7 +620,7 @@
   align-items: baseline;
   justify-content: space-between;
   font-family: var(--font-mono);
-  font-size: 0.72rem;
+  font-size: var(--text-micro);
 }
 
 .tor-node__k {
@@ -652,7 +652,7 @@
 
 .svc-stat__value {
   font-family: var(--font-display);
-  font-size: 1.5rem;
+  font-size: var(--text-2xl);
   font-weight: var(--fw-bold);
   line-height: 1.05;
   color: var(--color-text-heading);
@@ -662,6 +662,6 @@
 
 .svc-stat__label {
   font-family: var(--font-mono);
-  font-size: 0.68rem;
+  font-size: var(--text-2xs);
   color: var(--color-text-muted);
 }

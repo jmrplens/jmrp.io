@@ -869,7 +869,7 @@ const i18n = {
 
   .spp-title {
     padding: 1rem 1.25rem;
-    font-size: 1.1rem;
+    font-size: var(--text-lg);
     font-weight: var(--fw-semibold);
     color: var(--color-text-heading);
     background: var(--color-bg-secondary);
@@ -898,7 +898,7 @@ const i18n = {
   .spp-mode-tab span {
     display: inline-block;
     padding: 0.4rem 0.9rem;
-    font-size: 0.85rem;
+    font-size: var(--text-sm);
     font-weight: var(--fw-medium);
     color: var(--color-text-muted);
     border-radius: var(--radius-sm);
@@ -938,7 +938,7 @@ const i18n = {
     gap: 0.5rem;
     align-items: center;
     margin-bottom: 0.5rem;
-    font-size: 0.85rem;
+    font-size: var(--text-sm);
     font-weight: var(--fw-semibold);
     color: var(--color-text-muted);
     text-transform: uppercase;
@@ -968,7 +968,7 @@ const i18n = {
     min-height: 180px;
     padding: 0.875rem;
     font-family: var(--font-mono);
-    font-size: 0.85rem;
+    font-size: var(--text-sm);
     line-height: 1.5;
     color: var(--color-text);
     resize: vertical;
@@ -988,7 +988,7 @@ const i18n = {
 
   .spp-hint {
     margin: 0.5rem 0 0;
-    font-size: 0.78rem;
+    font-size: var(--text-label);
     line-height: 1.5;
     color: var(--color-text-muted);
   }
@@ -1018,7 +1018,7 @@ const i18n = {
     display: flex;
     gap: 0.5rem;
     align-items: center;
-    font-size: 0.9rem;
+    font-size: var(--text-sm);
     color: var(--color-text);
     cursor: pointer;
   }
@@ -1034,7 +1034,7 @@ const i18n = {
     gap: 0.4rem;
     align-items: center;
     padding: 0.5rem 0.75rem;
-    font-size: 0.8rem;
+    font-size: var(--text-xs);
     font-weight: var(--fw-medium);
     color: var(--color-text);
     cursor: pointer;
@@ -1066,7 +1066,7 @@ const i18n = {
     gap: 0.5rem;
     align-items: center;
     margin-bottom: 0.75rem;
-    font-size: 0.85rem;
+    font-size: var(--text-sm);
     font-weight: var(--fw-semibold);
     color: var(--color-text-heading);
   }
@@ -1082,14 +1082,14 @@ const i18n = {
     display: flex;
     flex-direction: column;
     gap: 0.25rem;
-    font-size: 0.78rem;
+    font-size: var(--text-label);
     color: var(--color-text-muted);
   }
 
   .spp-select {
     padding: 0.4rem 0.6rem;
     font-family: var(--font-mono);
-    font-size: 0.85rem;
+    font-size: var(--text-sm);
     color: var(--color-text);
     background: var(--color-bg-subtle);
     border: var(--border-1);
@@ -1102,7 +1102,7 @@ const i18n = {
 
   .spp-lookup-out code {
     font-family: var(--font-mono);
-    font-size: 0.82rem;
+    font-size: var(--text-xs);
     color: var(--color-primary);
     overflow-wrap: anywhere;
   }
@@ -1110,7 +1110,7 @@ const i18n = {
   .spp-lookup-note {
     display: block;
     margin-top: 0.35rem;
-    font-size: 0.78rem;
+    font-size: var(--text-label);
     color: var(--color-text-muted);
   }
 
@@ -1146,13 +1146,13 @@ const i18n = {
 
   .spp-stat-value {
     font-family: var(--font-mono);
-    font-size: 1.35rem;
+    font-size: var(--text-xl);
     font-weight: var(--fw-bold);
     color: var(--color-primary);
   }
 
   .spp-stat-label {
-    font-size: 0.72rem;
+    font-size: var(--text-micro);
     color: var(--color-text-muted);
     text-transform: uppercase;
     letter-spacing: 0.03em;
@@ -1181,7 +1181,7 @@ const i18n = {
   }
 
   .spp-approach-head {
-    font-size: 0.85rem;
+    font-size: var(--text-sm);
     font-weight: var(--fw-semibold);
     color: var(--color-text-heading);
   }
@@ -1197,7 +1197,7 @@ const i18n = {
     display: flex;
     align-items: baseline;
     justify-content: space-between;
-    font-size: 0.82rem;
+    font-size: var(--text-xs);
   }
 
   .spp-row dt {
@@ -1253,7 +1253,7 @@ const i18n = {
   .spp-saving,
   .spp-guard {
     padding: 0.6rem 0.875rem;
-    font-size: 0.85rem;
+    font-size: var(--text-sm);
     font-weight: var(--fw-medium);
     text-align: center;
     border-radius: var(--radius-sm);
@@ -1286,7 +1286,7 @@ const i18n = {
 
   .spp-guard {
     font-family: var(--font-mono);
-    font-size: 0.78rem;
+    font-size: var(--text-label);
   }
 
   .spp-guard[data-state="good"] {
@@ -1300,7 +1300,7 @@ const i18n = {
     align-items: flex-start;
     padding: 0.75rem 0.875rem;
     margin: 0;
-    font-size: 0.82rem;
+    font-size: var(--text-xs);
     line-height: 1.5;
     color: var(--color-text-muted);
     background: var(--color-bg);
@@ -1318,7 +1318,7 @@ const i18n = {
 
   .spp-breakdown-head {
     margin-bottom: 0.5rem;
-    font-size: 0.85rem;
+    font-size: var(--text-sm);
     font-weight: var(--fw-semibold);
     color: var(--color-text-muted);
     text-transform: uppercase;
@@ -1334,7 +1334,7 @@ const i18n = {
 
   .spp-table {
     width: 100%;
-    font-size: 0.82rem;
+    font-size: var(--text-xs);
     border-collapse: collapse;
   }
 
@@ -1348,7 +1348,7 @@ const i18n = {
   .spp-table th {
     position: sticky;
     top: 0;
-    font-size: 0.72rem;
+    font-size: var(--text-micro);
     color: var(--color-text-muted);
     text-transform: uppercase;
     letter-spacing: 0.03em;
@@ -1374,7 +1374,7 @@ const i18n = {
   .spp-badge {
     display: inline-block;
     padding: 0.1rem 0.45rem;
-    font-size: 0.72rem;
+    font-size: var(--text-micro);
     font-weight: var(--fw-medium);
     border-radius: var(--radius-sm);
   }
@@ -1405,7 +1405,7 @@ const i18n = {
     align-items: center;
     padding: 0.875rem 1.25rem;
     margin: 0;
-    font-size: 0.8rem;
+    font-size: var(--text-xs);
     color: var(--color-text-muted);
     background: var(--color-bg-secondary);
     border-top: var(--border-1);

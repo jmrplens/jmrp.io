@@ -162,14 +162,14 @@ const ariaLabel = `${t("ui.download")}: ${name}${sizeLabel ? ` (${sizeLabel})` :
 
   .file-download__name {
     font-family: var(--font-mono);
-    font-size: 0.8125rem;
+    font-size: var(--text-xs);
     color: var(--color-text-heading);
     overflow-wrap: anywhere;
   }
 
   .file-download__sub {
     font-family: var(--font-mono);
-    font-size: 0.7188rem;
+    font-size: var(--text-micro);
     color: var(--color-text-muted);
   }
 
@@ -177,7 +177,7 @@ const ariaLabel = `${t("ui.download")}: ${name}${sizeLabel ? ` (${sizeLabel})` :
     padding: 7px 14px;
     margin-left: auto;
     font-family: var(--font-mono);
-    font-size: 0.75rem;
+    font-size: var(--text-micro);
     color: var(--color-on-primary);
     white-space: nowrap;
     text-decoration: none;

@@ -117,11 +117,23 @@
   --fw-bold: 700;
   --fw-extrabold: 800;
 
-  /* ===== TIPOGRAFÍA — escala de tamaños (fluida arriba, fija abajo) =======
-     Úsala en componentes; los estilos base de h1..h6 viven en base.css. */
-  --text-xs: 13px;
-  --text-label: 12.5px; /* kickers mono en mayúsculas */
+  /* ===== TIPOGRAFÍA — escala de tamaños (CSS-04) =========================
+     Escala única para los componentes (los literales sueltos se ajustan al
+     paso más cercano). Los estilos base de h1..h6 viven en base.css. El rango
+     10–12px se limita a --text-2xs + --text-micro. */
+  --text-2xs: 10.5px; /* micro-meta / country codes */
   --text-micro: 11.5px;
+  --text-label: 12.5px; /* kickers mono en mayúsculas */
+  --text-xs: 13px;
+  --text-sm: 14px;
+  --text-base: 15px;
+  --text-md: 16px;
+  --text-lg: 18px;
+  --text-xl: 20px;
+  --text-2xl: 24px;
+  --text-3xl: 28px;
+  --text-4xl: 32px;
+  --text-5xl: 36px;
 
   /* ===== ESPACIADO — escala rem canónica (la que usan los componentes) === */
   --space-xs: 0.25rem; /*  4px */

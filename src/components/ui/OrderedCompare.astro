@@ -180,7 +180,7 @@ const statusName: Record<Status, string> = {
 
   .ord-cmp__title {
     margin-bottom: 1rem;
-    font-size: 1rem;
+    font-size: var(--text-md);
     font-weight: var(--fw-semibold, 600);
     color: var(--color-text-heading);
   }
@@ -222,14 +222,14 @@ const statusName: Record<Status, string> = {
 
   .ord-cmp__label {
     margin: 0;
-    font-size: 0.92rem;
+    font-size: var(--text-base);
     font-weight: var(--fw-bold, 700);
     color: var(--color-text-heading);
   }
 
   .ord-cmp__verdict {
     margin: 0.2rem 0 0;
-    font-size: 0.78rem;
+    font-size: var(--text-label);
     font-style: italic;
     color: var(--color-text-muted);
   }
@@ -258,7 +258,7 @@ const statusName: Record<Status, string> = {
     justify-content: center;
     width: 1.5rem;
     height: 1.5rem;
-    font-size: 0.72rem;
+    font-size: var(--text-micro);
     font-weight: var(--fw-bold, 700);
     color: var(--oc-on);
     background: var(--oc-marker, var(--oc-neutral));
@@ -308,7 +308,7 @@ const statusName: Record<Status, string> = {
   }
 
   .ord-cmp__text {
-    font-size: 0.85rem;
+    font-size: var(--text-sm);
     line-height: 1.45;
     color: var(--color-text);
   }
@@ -320,13 +320,13 @@ const statusName: Record<Status, string> = {
 
   .ord-cmp__note {
     margin-top: 0.1rem;
-    font-size: 0.72rem;
+    font-size: var(--text-micro);
     color: var(--color-text-muted);
   }
 
   .ord-cmp__caption {
     margin-top: 1rem;
-    font-size: 0.8125rem;
+    font-size: var(--text-xs);
     font-style: italic;
     color: var(--color-text-muted);
     text-align: center;

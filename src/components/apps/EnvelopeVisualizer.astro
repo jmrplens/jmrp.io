@@ -1007,7 +1007,7 @@ const attacks = [
     display: flex;
     gap: 0.4rem;
     align-items: center;
-    font-size: 0.78rem;
+    font-size: var(--text-label);
     font-weight: var(--fw-semibold);
     color: var(--color-text-muted);
     text-transform: uppercase;
@@ -1023,7 +1023,7 @@ const attacks = [
     width: 100%;
     padding: 0.6rem 0.75rem;
     font-family: var(--font-mono);
-    font-size: 0.85rem;
+    font-size: var(--text-sm);
     color: var(--color-text);
     background: var(--color-bg);
     border: var(--border-1);
@@ -1045,7 +1045,7 @@ const attacks = [
 
   .ev-context-note {
     margin: 0.3rem 0 0.6rem;
-    font-size: 0.74rem;
+    font-size: var(--text-micro);
     color: var(--color-text-muted);
   }
 
@@ -1069,7 +1069,7 @@ const attacks = [
 
   .ev-ctx-label {
     font-family: var(--font-mono);
-    font-size: 0.7rem;
+    font-size: var(--text-micro);
     font-weight: var(--fw-semibold);
     color: var(--color-text-muted);
   }
@@ -1086,7 +1086,7 @@ const attacks = [
   }
 
   .ev-keys-note {
-    font-size: 0.72rem;
+    font-size: var(--text-micro);
     color: var(--color-text-muted);
   }
 
@@ -1098,7 +1098,7 @@ const attacks = [
 
   .ev-key-row code {
     font-family: var(--font-mono);
-    font-size: 0.78rem;
+    font-size: var(--text-label);
     color: var(--color-text);
     overflow-wrap: anywhere;
   }
@@ -1107,7 +1107,7 @@ const attacks = [
     flex-shrink: 0;
     padding: 0.1rem 0.4rem;
     font-family: var(--font-mono);
-    font-size: 0.68rem;
+    font-size: var(--text-2xs);
     font-weight: var(--fw-semibold);
     border-radius: var(--radius-sm);
   }
@@ -1123,7 +1123,7 @@ const attacks = [
   }
 
   .ev-total {
-    font-size: 0.72rem;
+    font-size: var(--text-micro);
     font-weight: var(--fw-medium);
     color: var(--color-text-muted);
   }
@@ -1136,7 +1136,7 @@ const attacks = [
   }
 
   .ev-section-title {
-    font-size: 0.8rem;
+    font-size: var(--text-xs);
     font-weight: var(--fw-semibold);
     color: var(--color-text-muted);
     text-transform: uppercase;
@@ -1148,7 +1148,7 @@ const attacks = [
     gap: 0.3rem;
     align-items: center;
     padding: 0.3rem 0.6rem;
-    font-size: 0.75rem;
+    font-size: var(--text-micro);
     color: var(--color-text);
     cursor: pointer;
     background: var(--color-bg);
@@ -1167,7 +1167,7 @@ const attacks = [
 
   .ev-tamper-hint {
     margin: 0.35rem 0 0.75rem;
-    font-size: 0.78rem;
+    font-size: var(--text-label);
     color: var(--color-text-muted);
   }
 
@@ -1185,7 +1185,7 @@ const attacks = [
 
   .ev-seg-label {
     font-family: var(--font-mono);
-    font-size: 0.68rem;
+    font-size: var(--text-2xs);
     font-weight: var(--fw-semibold);
     text-transform: uppercase;
     letter-spacing: 0.04em;
@@ -1217,7 +1217,7 @@ const attacks = [
     min-width: 1.7rem;
     padding: 0.2rem 0;
     font-family: var(--font-mono);
-    font-size: 0.72rem;
+    font-size: var(--text-micro);
     color: var(--color-text);
     text-align: center;
     cursor: pointer;
@@ -1271,7 +1271,7 @@ const attacks = [
     gap: 0.35rem;
     align-items: center;
     padding: 0.4rem 0.65rem;
-    font-size: 0.78rem;
+    font-size: var(--text-label);
     color: var(--color-text);
     cursor: pointer;
     background: var(--color-bg);
@@ -1314,12 +1314,12 @@ const attacks = [
   }
 
   .ev-mode-opt strong {
-    font-size: 0.85rem;
+    font-size: var(--text-sm);
     color: var(--color-text);
   }
 
   .ev-mode-opt small {
-    font-size: 0.74rem;
+    font-size: var(--text-micro);
     color: var(--color-text-muted);
   }
 
@@ -1329,7 +1329,7 @@ const attacks = [
     align-items: center;
     padding: 0.75rem 0.9rem;
     margin-top: 1rem;
-    font-size: 0.9rem;
+    font-size: var(--text-sm);
     border: 2px solid var(--color-border);
     border-radius: var(--radius-sm);
   }
@@ -1404,7 +1404,7 @@ const attacks = [
     gap: 0.4rem;
     align-items: center;
     padding: 0.5rem 0.8rem;
-    font-size: 0.82rem;
+    font-size: var(--text-xs);
     font-weight: var(--fw-medium);
     color: #fff;
     cursor: pointer;
@@ -1424,7 +1424,7 @@ const attacks = [
 
   .ev-oracle-status {
     margin: 0.6rem 0 0;
-    font-size: 0.8rem;
+    font-size: var(--text-xs);
     color: var(--color-text);
   }
 
@@ -1459,7 +1459,7 @@ const attacks = [
     min-width: 1.7rem;
     padding: 0.2rem 0;
     font-family: var(--font-mono);
-    font-size: 0.72rem;
+    font-size: var(--text-micro);
     color: var(--color-text-muted);
     text-align: center;
     background: var(--color-bg-subtle);
@@ -1476,7 +1476,7 @@ const attacks = [
   .ev-oracle-text {
     margin-top: 0.5rem;
     font-family: var(--font-mono);
-    font-size: 0.82rem;
+    font-size: var(--text-xs);
     color: var(--color-text-heading);
     overflow-wrap: anywhere;
   }
@@ -1484,7 +1484,7 @@ const attacks = [
   .ev-cbc-status {
     margin: 0;
     font-family: var(--font-mono);
-    font-size: 0.78rem;
+    font-size: var(--text-label);
     color: var(--color-text-muted);
     overflow-wrap: anywhere;
   }

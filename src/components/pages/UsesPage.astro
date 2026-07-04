@@ -162,7 +162,7 @@ const c = content[locale] ?? content.en;
   .uses-header__intro {
     max-width: 54ch;
     margin: 0;
-    font-size: 1.0625rem;
+    font-size: var(--text-md);
     line-height: 1.6;
     color: var(--color-text);
   }
@@ -176,7 +176,7 @@ const c = content[locale] ?? content.en;
   .uses-col__title {
     margin: 0 0 var(--space-md);
     font-family: var(--font-mono);
-    font-size: 0.78rem;
+    font-size: var(--text-label);
     font-weight: var(--fw-medium);
     color: var(--color-text-muted);
     text-transform: uppercase;
@@ -197,14 +197,14 @@ const c = content[locale] ?? content.en;
   }
 
   .uses-item__name {
-    font-size: 0.9rem;
+    font-size: var(--text-sm);
     color: var(--color-text-heading);
   }
 
   .uses-item__detail {
     margin-top: 3px;
     font-family: var(--font-mono);
-    font-size: 0.72rem;
+    font-size: var(--text-micro);
     color: var(--color-text-muted);
   }
 </style>

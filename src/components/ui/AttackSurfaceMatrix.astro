@@ -223,7 +223,7 @@ const ICON: Record<Lane["kind"], string> = {
 
   .asm__title {
     margin-bottom: 1rem;
-    font-size: 1rem;
+    font-size: var(--text-md);
     font-weight: var(--fw-semibold, 600);
     color: var(--color-text-heading);
   }
@@ -279,13 +279,13 @@ const ICON: Record<Lane["kind"], string> = {
   }
 
   .asm__lane-title {
-    font-size: 0.95rem;
+    font-size: var(--text-base);
     font-weight: var(--fw-bold, 700);
     color: var(--color-text-heading);
   }
 
   .asm__lane-subtitle {
-    font-size: 0.78rem;
+    font-size: var(--text-label);
     color: var(--color-text-muted);
   }
 
@@ -296,7 +296,7 @@ const ICON: Record<Lane["kind"], string> = {
     padding: 0.4rem 0.55rem;
     margin: 0 0 0.7rem;
     font-family: var(--font-mono);
-    font-size: 0.78rem;
+    font-size: var(--text-label);
     color: var(--color-text);
     background: var(--color-bg-secondary);
     border-radius: var(--radius-sm, 4px);
@@ -322,7 +322,7 @@ const ICON: Record<Lane["kind"], string> = {
     display: flex;
     gap: 0.45rem;
     align-items: baseline;
-    font-size: 0.82rem;
+    font-size: var(--text-xs);
     color: var(--color-text);
   }
 
@@ -348,7 +348,7 @@ const ICON: Record<Lane["kind"], string> = {
     align-items: flex-start;
     padding-top: 0.7rem;
     margin: auto 0 0;
-    font-size: 0.82rem;
+    font-size: var(--text-xs);
     color: var(--color-text);
     border-top: var(--border-1);
   }
@@ -362,7 +362,7 @@ const ICON: Record<Lane["kind"], string> = {
 
   .asm__stopped-label {
     display: block;
-    font-size: 0.7rem;
+    font-size: var(--text-micro);
     font-weight: var(--fw-bold, 700);
     color: var(--color-text-muted);
     text-transform: uppercase;
@@ -371,7 +371,7 @@ const ICON: Record<Lane["kind"], string> = {
 
   .asm__caption {
     margin-top: 1rem;
-    font-size: 0.8125rem;
+    font-size: var(--text-xs);
     font-style: italic;
     color: var(--color-text-muted);
     text-align: center;

@@ -153,7 +153,7 @@ const wrapperClasses = [
   :global(.table-wrapper caption.table-title) {
     padding: 0.75rem 1rem;
     font-family: var(--font-mono);
-    font-size: 0.8125rem;
+    font-size: var(--text-xs);
     font-weight: 600;
     color: var(--table-header-text);
     text-align: left;
@@ -173,7 +173,7 @@ const wrapperClasses = [
   table {
     width: 100%;
     min-width: 400px;
-    font-size: 0.9rem;
+    font-size: var(--text-sm);
     line-height: 1.5;
     color: var(--table-text);
     border-collapse: collapse;
@@ -196,7 +196,7 @@ const wrapperClasses = [
      =========================================== */
   :global(.table-wrapper thead th) {
     font-family: var(--font-mono);
-    font-size: 0.72rem;
+    font-size: var(--text-micro);
     font-weight: 500;
     color: var(--color-text-muted);
     text-transform: uppercase;
@@ -244,7 +244,7 @@ const wrapperClasses = [
     display: inline-block;
     padding: 3px 9px;
     font-family: var(--font-mono);
-    font-size: 0.72rem;
+    font-size: var(--text-micro);
     border-radius: var(--radius-sm);
   }
 
@@ -336,7 +336,7 @@ const wrapperClasses = [
      =========================================== */
   @media (width <= 600px) {
     table {
-      font-size: 0.8rem;
+      font-size: var(--text-xs);
     }
 
     :global(.table-wrapper th),
@@ -345,7 +345,7 @@ const wrapperClasses = [
     }
 
     :global(.table-wrapper thead th) {
-      font-size: 0.7rem;
+      font-size: var(--text-micro);
     }
   }
 </style>

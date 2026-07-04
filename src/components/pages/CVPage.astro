@@ -670,7 +670,7 @@ const SIDEBAR_LINK_KINDS = new Set([
 
     /* !important defeats the global mobile `h1 { font-size: 1.5em !important }`
        so the CV title stays a small mono kicker on narrow viewports. */
-    font-size: 0.8125rem !important;
+    font-size: var(--text-xs) !important;
     font-weight: var(--fw-medium);
     color: var(--color-accent);
     text-transform: uppercase;
@@ -701,7 +701,7 @@ const SIDEBAR_LINK_KINDS = new Set([
 
   .cv-headline {
     margin: var(--space-sm) 0 0;
-    font-size: 1.15rem;
+    font-size: var(--text-lg);
     font-weight: var(--fw-medium);
     color: var(--color-text-heading);
   }
@@ -714,7 +714,7 @@ const SIDEBAR_LINK_KINDS = new Set([
     align-items: center;
     margin: var(--space-sm) 0 0;
     font-family: var(--font-mono);
-    font-size: 0.85rem;
+    font-size: var(--text-sm);
     color: var(--color-text-muted);
   }
 
@@ -751,7 +751,7 @@ const SIDEBAR_LINK_KINDS = new Set([
   .cv-sb-eyebrow {
     margin: 0 0 0.8125rem; /* 13px */
     font-family: var(--font-mono);
-    font-size: var(--text-label); /* 12.5px */
+    font-size: var(--text-label);
     font-weight: var(--fw-medium);
     color: var(--color-text-muted);
     text-transform: uppercase;
@@ -778,7 +778,7 @@ const SIDEBAR_LINK_KINDS = new Set([
     gap: 0.5625rem; /* 9px */
     align-items: center;
     font-family: var(--font-mono);
-    font-size: var(--text-xs); /* 13px */
+    font-size: var(--text-xs);
     color: var(--color-text);
     text-decoration: none;
   }
@@ -818,7 +818,7 @@ const SIDEBAR_LINK_KINDS = new Set([
     display: inline-block;
     padding: 0.1875rem 0.5rem; /* 3px 8px */
     font-family: var(--font-mono);
-    font-size: var(--text-micro); /* 11.5px */
+    font-size: var(--text-micro);
     color: var(--color-accent);
     border: 1px solid var(--accent-line);
     border-radius: var(--radius-sm);
@@ -834,7 +834,7 @@ const SIDEBAR_LINK_KINDS = new Set([
     gap: var(--space-sm);
     justify-content: space-between;
     font-family: var(--font-mono);
-    font-size: var(--text-label); /* 12.5px */
+    font-size: var(--text-label);
   }
 
   .cv-sb-idioma-row + .cv-sb-idioma-row {
@@ -890,7 +890,7 @@ const SIDEBAR_LINK_KINDS = new Set([
     padding: 0;
     margin: 0;
     font-family: var(--font-mono);
-    font-size: 0.8125rem;
+    font-size: var(--text-xs);
     font-weight: var(--fw-medium);
     color: var(--color-accent);
     text-transform: uppercase;
@@ -953,7 +953,7 @@ const SIDEBAR_LINK_KINDS = new Set([
 
   .dl-badge {
     padding: 0.05rem 0.45rem;
-    font-size: 0.68rem;
+    font-size: var(--text-2xs);
     font-weight: var(--fw-medium);
     color: var(--color-on-primary);
     text-transform: uppercase;
@@ -963,7 +963,7 @@ const SIDEBAR_LINK_KINDS = new Set([
   }
 
   .dl-format-note {
-    font-size: 0.8rem;
+    font-size: var(--text-xs);
     color: var(--color-text-muted);
   }
 
@@ -979,7 +979,7 @@ const SIDEBAR_LINK_KINDS = new Set([
     gap: var(--space-xs);
     align-items: center;
     padding: var(--space-xs) var(--space-md);
-    font-size: 0.9rem;
+    font-size: var(--text-sm);
     color: var(--color-text);
     text-decoration: none;
     background-color: var(--color-bg-subtle);
@@ -1047,7 +1047,7 @@ const SIDEBAR_LINK_KINDS = new Set([
   .item-year {
     padding-top: 3px; /* align top with role title cap-height */
     font-family: var(--font-mono);
-    font-size: var(--text-label); /* 12.5px */
+    font-size: var(--text-label);
     color: var(--color-text-muted);
     overflow-wrap: break-word; /* allow long date ranges to wrap in 130 px column */
   }
@@ -1056,14 +1056,14 @@ const SIDEBAR_LINK_KINDS = new Set([
   .item-title {
     margin: 0;
     font-family: var(--font-display);
-    font-size: 1.1875rem; /* 19 px */
+    font-size: var(--text-lg);
     font-weight: var(--fw-medium); /* 500 */
     color: var(--color-text-heading);
   }
 
   .item-institution,
   .item-department {
-    font-size: 0.95rem;
+    font-size: var(--text-base);
     font-weight: var(--fw-semibold);
     color: var(--color-accent);
   }
@@ -1078,7 +1078,7 @@ const SIDEBAR_LINK_KINDS = new Set([
     align-items: center;
     margin-top: var(--space-xs);
     font-family: var(--font-mono);
-    font-size: 0.8rem;
+    font-size: var(--text-xs);
     color: var(--color-text-muted);
   }
 
@@ -1152,7 +1152,7 @@ const SIDEBAR_LINK_KINDS = new Set([
     align-items: center;
     margin-top: 1rem;
     font-family: var(--font-mono);
-    font-size: 0.6563rem; /* 10.5 px */
+    font-size: var(--text-2xs);
     color: var(--color-text-muted);
   }
 

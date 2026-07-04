@@ -665,7 +665,7 @@ function getBarColor(index: number, item: BarData): string {
 
   .bar-chart-title {
     margin-bottom: 1rem;
-    font-size: 1rem;
+    font-size: var(--text-md);
     font-weight: 600;
     color: var(--bar-chart-text);
     text-align: left;
@@ -695,7 +695,7 @@ function getBarColor(index: number, item: BarData): string {
     align-items: baseline;
     justify-content: space-between;
     font-family: var(--font-mono);
-    font-size: 0.75rem;
+    font-size: var(--text-micro);
   }
 
   .bar-label {
@@ -755,7 +755,7 @@ function getBarColor(index: number, item: BarData): string {
 
   .bar-chart-caption {
     margin-top: 1rem;
-    font-size: 0.8125rem;
+    font-size: var(--text-xs);
     font-style: italic;
     color: var(--bar-chart-text-muted);
     text-align: center;
@@ -764,7 +764,7 @@ function getBarColor(index: number, item: BarData): string {
   /* Responsive adjustments */
   @media (width <= 640px) {
     .bar-meta {
-      font-size: 0.6875rem;
+      font-size: var(--text-2xs);
     }
   }
 

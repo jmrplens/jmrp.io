@@ -44,7 +44,7 @@ const uniqueId = randomBytes(4).toString("hex");
   }
 
   .dt-question-text {
-    font-size: 0.95rem;
+    font-size: var(--text-base);
     font-weight: var(--fw-medium);
     line-height: 1.4;
     color: var(--color-text-heading);
@@ -70,7 +70,7 @@ const uniqueId = randomBytes(4).toString("hex");
     gap: 0.625rem;
     align-items: center;
     padding: 0.8rem 1.125rem;
-    font-size: 0.875rem;
+    font-size: var(--text-sm);
     color: var(--color-text);
     cursor: pointer;
     list-style: none;
@@ -109,7 +109,7 @@ const uniqueId = randomBytes(4).toString("hex");
   .dt-options :global(details > div),
   .dt-options :global(details > p) {
     padding: 0 1.125rem 0.875rem 2.5rem;
-    font-size: 0.875rem;
+    font-size: var(--text-sm);
     line-height: 1.6;
     color: var(--color-text);
   }

@@ -371,7 +371,7 @@ const collectionSchema = {
     position: relative;
     max-width: var(--max-width-prose);
     margin: 0 0 var(--space-lg);
-    font-size: 1.05rem;
+    font-size: var(--text-md);
     line-height: 1.6;
     color: var(--color-text-muted);
   }
@@ -401,7 +401,7 @@ const collectionSchema = {
   .pub-stat__value {
     margin: 0;
     font-family: var(--font-display);
-    font-size: 1.75rem;
+    font-size: var(--text-3xl);
     font-weight: var(--fw-bold);
     line-height: 1;
     color: var(--color-text-heading);
@@ -410,7 +410,7 @@ const collectionSchema = {
   .pub-stat__label {
     margin: 7px 0 0;
     font-family: var(--font-mono);
-    font-size: 0.68rem;
+    font-size: var(--text-2xs);
     color: var(--color-text-muted);
   }
 
@@ -440,7 +440,7 @@ const collectionSchema = {
     width: 100%;
     margin: 0;
     font-family: var(--font-mono);
-    font-size: 0.68rem;
+    font-size: var(--text-2xs);
     color: var(--color-text-muted);
     text-transform: uppercase;
     letter-spacing: 0.15em;
@@ -450,7 +450,7 @@ const collectionSchema = {
     width: 100%;
     padding: 6px 12px;
     font-family: var(--font-mono);
-    font-size: 0.78rem;
+    font-size: var(--text-label);
     color: var(--color-text);
     text-align: left;
     cursor: pointer;
@@ -485,7 +485,7 @@ const collectionSchema = {
     align-items: center;
     padding: 9px 12px;
     font-family: var(--font-mono);
-    font-size: 0.8125rem;
+    font-size: var(--text-xs);
     color: var(--color-text);
     text-decoration: none;
     border: 1px solid var(--color-border);
@@ -510,7 +510,7 @@ const collectionSchema = {
     padding-bottom: 12px;
     margin: 0 0 var(--space-xs); /* 4px gap before first item */
     font-family: var(--font-mono);
-    font-size: 0.875rem; /* 14px */
+    font-size: var(--text-sm);
     font-weight: var(--fw-medium);
     color: var(--color-accent);
     letter-spacing: 0;
@@ -525,7 +525,7 @@ const collectionSchema = {
   .pub-empty {
     padding: var(--space-lg) 0;
     font-family: var(--font-mono);
-    font-size: 0.9rem;
+    font-size: var(--text-sm);
     color: var(--color-text-muted);
   }
 

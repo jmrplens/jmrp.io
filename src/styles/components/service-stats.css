@@ -30,13 +30,13 @@
 
 .svc-kv__key {
   font-family: var(--font-mono);
-  font-size: 0.75rem;
+  font-size: var(--text-micro);
   color: var(--color-text);
 }
 
 .svc-kv__val {
   font-family: var(--font-mono);
-  font-size: 0.75rem;
+  font-size: var(--text-micro);
   color: var(--color-text-heading);
   text-align: right;
 }
