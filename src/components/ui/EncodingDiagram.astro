@@ -95,36 +95,18 @@ const summary =
 
 <style>
   .enc {
-    /* Categorical chip palette — mockup hues. Accent + teal ride the theme
-       tokens; the rest carry explicit light overrides below. Ink text flips
-       with the theme so bright (dark mode) / dark (light mode) chips stay AA. */
+    /* Categorical chip palette from central tokens (--dg-cat-* fill hues +
+       semantic warning/danger). Ink (--enc-on) flips with the theme via
+       --color-on-primary so chips stay AA in both modes. */
     --cat-1: var(--color-accent);
-    --cat-2: #6e8fd6;
+    --cat-2: var(--dg-cat-2);
     --cat-3: var(--teal);
-    --cat-4: #57c98a;
-    --cat-5: #e3b23c;
-    --cat-6: #e5655b;
-    --enc-on: #0a0a0b;
+    --cat-4: var(--dg-cat-6);
+    --cat-5: var(--color-warning);
+    --cat-6: var(--color-danger);
+    --enc-on: var(--color-on-primary);
 
     margin: 1.5rem 0;
-  }
-
-  :global(:root[data-theme="light"]) .enc {
-    --cat-2: #3f6fc4;
-    --cat-4: #197a43;
-    --cat-5: #8a6a00;
-    --cat-6: #c13b31;
-    --enc-on: #fff;
-  }
-
-  @media (prefers-color-scheme: light) {
-    :global(:root:not([data-theme="dark"])) .enc {
-      --cat-2: #3f6fc4;
-      --cat-4: #197a43;
-      --cat-5: #8a6a00;
-      --cat-6: #c13b31;
-      --enc-on: #fff;
-    }
   }
 
   .enc__title {

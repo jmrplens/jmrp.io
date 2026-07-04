@@ -95,33 +95,17 @@ const summary =
 
 <style>
   .pipeline {
-    /* Per-stage accent (top border). Categorical hues in the mockup's pipeline
-       order: blue · accent · green · gold · red · teal. Accent + teal ride the
-       theme tokens; the rest carry light overrides for legibility. */
-    --pl-1: #6e8fd6;
+    /* Per-stage accent (top border), categorical hues from central tokens:
+       blue · accent · green · gold · red · teal. All themed — no light overrides
+       needed. */
+    --pl-1: var(--dg-cat-2);
     --pl-2: var(--color-accent);
-    --pl-3: #57c98a;
-    --pl-4: #e3b23c;
-    --pl-5: #e5655b;
+    --pl-3: var(--dg-cat-6);
+    --pl-4: var(--color-warning);
+    --pl-5: var(--color-danger);
     --pl-6: var(--teal);
 
     margin: 1.5rem 0;
-  }
-
-  :global(:root[data-theme="light"]) .pipeline {
-    --pl-1: #3f6fc4;
-    --pl-3: #197a43;
-    --pl-4: #8a6a00;
-    --pl-5: #c13b31;
-  }
-
-  @media (prefers-color-scheme: light) {
-    :global(:root:not([data-theme="dark"])) .pipeline {
-      --pl-1: #3f6fc4;
-      --pl-3: #197a43;
-      --pl-4: #8a6a00;
-      --pl-5: #c13b31;
-    }
   }
 
   .pipeline__title {
