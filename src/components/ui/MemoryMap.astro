@@ -199,38 +199,17 @@ const summary =
 
 <style>
   .memory-map {
-    /* Categorical data-viz palette (dark-first), matching the design system's
-       diagram hues. Light-theme values are overridden below. */
-    --mm-1: #f5a623; /* amber */
-    --mm-2: #6e8fd6; /* blue */
-    --mm-3: #46b8a6; /* teal */
-    --mm-4: #b389f5; /* violet */
-    --mm-5: #e0739f; /* pink */
-    --mm-6: #57c98a; /* green */
+    /* Categorical palette from the central --dg-cat-* ramp (tokens.css). */
+    --mm-1: var(--dg-cat-1);
+    --mm-2: var(--dg-cat-2);
+    --mm-3: var(--dg-cat-3);
+    --mm-4: var(--dg-cat-4);
+    --mm-5: var(--dg-cat-5);
+    --mm-6: var(--dg-cat-6);
     --mm-track-bg: var(--color-surface-2);
     --mm-on-seg: var(--color-on-primary);
 
     margin: 1.5rem 0;
-  }
-
-  :root[data-theme="light"] .memory-map {
-    --mm-1: #8f5300; /* darkened amber: AA for white on-fill label text */
-    --mm-2: #3f6fc4;
-    --mm-3: #1f7e6e;
-    --mm-4: #6d45c4;
-    --mm-5: #bc3f76;
-    --mm-6: #197a43;
-  }
-
-  @media (prefers-color-scheme: light) {
-    :root:not([data-theme="dark"]) .memory-map {
-      --mm-1: #8f5300; /* darkened amber: AA for white on-fill label text */
-      --mm-2: #3f6fc4;
-      --mm-3: #1f7e6e;
-      --mm-4: #6d45c4;
-      --mm-5: #bc3f76;
-      --mm-6: #197a43;
-    }
   }
 
   .memory-map__title {

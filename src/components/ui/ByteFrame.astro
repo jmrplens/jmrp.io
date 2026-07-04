@@ -165,13 +165,13 @@ const summary =
 
 <style>
   .byte-frame {
-    /* Categorical data-viz palette (dark-first); light values overridden below. */
-    --bf-1: #f5a623; /* amber */
-    --bf-2: #6e8fd6; /* blue */
-    --bf-3: #46b8a6; /* teal */
-    --bf-4: #b389f5; /* violet */
-    --bf-5: #e0739f; /* pink */
-    --bf-6: #57c98a; /* green */
+    /* Categorical palette from the central --dg-cat-* ramp (tokens.css). */
+    --bf-1: var(--dg-cat-1);
+    --bf-2: var(--dg-cat-2);
+    --bf-3: var(--dg-cat-3);
+    --bf-4: var(--dg-cat-4);
+    --bf-5: var(--dg-cat-5);
+    --bf-6: var(--dg-cat-6);
     --bf-on: var(--color-on-primary);
 
     /* Diagonal hatch marks the variable-length field (not colour alone). */
@@ -182,26 +182,6 @@ const summary =
     );
 
     margin: 1.5rem 0;
-  }
-
-  :root[data-theme="light"] .byte-frame {
-    --bf-1: #8f5300; /* darkened amber: AA for white on-fill name text */
-    --bf-2: #3f6fc4;
-    --bf-3: #1f7e6e;
-    --bf-4: #6d45c4;
-    --bf-5: #bc3f76;
-    --bf-6: #197a43;
-  }
-
-  @media (prefers-color-scheme: light) {
-    :root:not([data-theme="dark"]) .byte-frame {
-      --bf-1: #8f5300; /* darkened amber: AA for white on-fill name text */
-      --bf-2: #3f6fc4;
-      --bf-3: #1f7e6e;
-      --bf-4: #6d45c4;
-      --bf-5: #bc3f76;
-      --bf-6: #197a43;
-    }
   }
 
   .byte-frame__title {

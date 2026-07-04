@@ -94,6 +94,17 @@
   --dg-neutral-fill: #1c1c22;
   --dg-neutral-text: #b6b5ae;
 
+  /* Paleta categórica de diagramas (--dg-cat-*, dark) — centraliza los
+     --pk/mm/rm/sp/bf-* que cada componente redefinía. */
+  --dg-cat-1: #f5a623; /* amber */
+  --dg-cat-2: #6e8fd6; /* blue */
+  --dg-cat-3: #46b8a6; /* teal */
+  --dg-cat-4: #b389f5; /* violet */
+  --dg-cat-5: #e0739f; /* pink */
+  --dg-cat-6: #57c98a; /* green */
+  --dg-cat-7: #ec8c46; /* orange */
+  --dg-cat-8: #49b9cc; /* cyan */
+
   /* ===== ESTADO DE INFRAESTRUCTURA (dark) — homelab / servicios =========
      Semántica convencional verde/ámbar/rojo para paneles de estado (online
      usa el teal del sistema). Centralizado aquí: los CSS de componentes NO
@@ -293,6 +304,17 @@
     --dg-neutral-fill: #ececea;
     --dg-neutral-text: #46453f;
 
+    /* Paleta categórica de diagramas (--dg-cat-*, light) — centraliza los
+       --pk/mm/rm/sp/bf-* que cada componente redefinía. */
+    --dg-cat-1: #8f5300; /* amber */
+    --dg-cat-2: #3f6fc4; /* blue */
+    --dg-cat-3: #1f7e6e; /* teal */
+    --dg-cat-4: #6d45c4; /* violet */
+    --dg-cat-5: #bc3f76; /* pink */
+    --dg-cat-6: #197a43; /* green */
+    --dg-cat-7: #8a4a15; /* orange */
+    --dg-cat-8: #1c7e92; /* cyan */
+
     /* Estado de infraestructura (light) */
     --color-status-online: #12695a;
     --color-status-online-bg: rgb(31 126 110 / 12%);
@@ -360,6 +382,17 @@
   --dg-accent-text: #5b3aa6;
   --dg-neutral-fill: #ececea;
   --dg-neutral-text: #46453f;
+
+  /* Paleta categórica de diagramas (--dg-cat-*, light) — centraliza los
+     --pk/mm/rm/sp/bf-* que cada componente redefinía. */
+  --dg-cat-1: #8f5300; /* amber */
+  --dg-cat-2: #3f6fc4; /* blue */
+  --dg-cat-3: #1f7e6e; /* teal */
+  --dg-cat-4: #6d45c4; /* violet */
+  --dg-cat-5: #bc3f76; /* pink */
+  --dg-cat-6: #197a43; /* green */
+  --dg-cat-7: #8a4a15; /* orange */
+  --dg-cat-8: #1c7e92; /* cyan */
   --color-status-online: #12695a;
   --color-status-online-bg: rgb(31 126 110 / 12%);
   --color-status-offline: #374151;
@@ -419,6 +452,17 @@
   --dg-accent-text: #cbb2f9;
   --dg-neutral-fill: #1c1c22;
   --dg-neutral-text: #b6b5ae;
+
+  /* Paleta categórica de diagramas (--dg-cat-*, dark) — centraliza los
+     --pk/mm/rm/sp/bf-* que cada componente redefinía. */
+  --dg-cat-1: #f5a623; /* amber */
+  --dg-cat-2: #6e8fd6; /* blue */
+  --dg-cat-3: #46b8a6; /* teal */
+  --dg-cat-4: #b389f5; /* violet */
+  --dg-cat-5: #e0739f; /* pink */
+  --dg-cat-6: #57c98a; /* green */
+  --dg-cat-7: #ec8c46; /* orange */
+  --dg-cat-8: #49b9cc; /* cyan */
   --color-status-online: #46b8a6;
   --color-status-online-bg: rgb(70 184 166 / 12%);
   --color-status-offline: #6b7280;

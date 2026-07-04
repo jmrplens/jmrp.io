@@ -245,13 +245,13 @@ const summary =
 
 <style>
   .register-map {
-    /* Categorical data-viz palette (dark-first); light values overridden below. */
-    --rm-1: #f5a623; /* amber */
-    --rm-2: #6e8fd6; /* blue */
-    --rm-3: #46b8a6; /* teal */
-    --rm-4: #b389f5; /* violet */
-    --rm-5: #e0739f; /* pink */
-    --rm-6: #57c98a; /* green */
+    /* Categorical palette from the central --dg-cat-* ramp (tokens.css). */
+    --rm-1: var(--dg-cat-1);
+    --rm-2: var(--dg-cat-2);
+    --rm-3: var(--dg-cat-3);
+    --rm-4: var(--dg-cat-4);
+    --rm-5: var(--dg-cat-5);
+    --rm-6: var(--dg-cat-6);
     --rm-on: var(--color-on-primary);
 
     /* Diagonal hatch marks "reserved" bits without relying on colour alone. */
@@ -262,26 +262,6 @@ const summary =
     );
 
     margin: 1.5rem 0;
-  }
-
-  :root[data-theme="light"] .register-map {
-    --rm-1: #b26a00;
-    --rm-2: #3f6fc4;
-    --rm-3: #1f7e6e;
-    --rm-4: #6d45c4;
-    --rm-5: #bc3f76;
-    --rm-6: #197a43;
-  }
-
-  @media (prefers-color-scheme: light) {
-    :root:not([data-theme="dark"]) .register-map {
-      --rm-1: #b26a00;
-      --rm-2: #3f6fc4;
-      --rm-3: #1f7e6e;
-      --rm-4: #6d45c4;
-      --rm-5: #bc3f76;
-      --rm-6: #197a43;
-    }
   }
 
   .register-map__title {

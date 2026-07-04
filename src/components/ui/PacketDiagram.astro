@@ -150,42 +150,18 @@ const summary =
 
 <style>
   .packet {
-    /* Categorical data-viz palette (dark-first); light values overridden below. */
-    --pk-1: #f5a623; /* amber */
-    --pk-2: #6e8fd6; /* blue */
-    --pk-3: #46b8a6; /* teal */
-    --pk-4: #e0739f; /* pink */
-    --pk-5: #57c98a; /* green */
-    --pk-6: #b389f5; /* violet */
-    --pk-7: #ec8c46; /* orange */
-    --pk-8: #49b9cc; /* cyan */
+    /* Categorical palette from the central --dg-cat-* ramp (tokens.css). */
+    --pk-1: var(--dg-cat-1);
+    --pk-2: var(--dg-cat-2);
+    --pk-3: var(--dg-cat-3);
+    --pk-4: var(--dg-cat-5);
+    --pk-5: var(--dg-cat-6);
+    --pk-6: var(--dg-cat-4);
+    --pk-7: var(--dg-cat-7);
+    --pk-8: var(--dg-cat-8);
     --pk-on: var(--color-on-primary);
 
     margin: 1.5rem 0;
-  }
-
-  :root[data-theme="light"] .packet {
-    --pk-1: #8f5300; /* darkened amber: AA for white on-fill text */
-    --pk-2: #3f6fc4;
-    --pk-3: #1f7e6e;
-    --pk-4: #bc3f76;
-    --pk-5: #197a43;
-    --pk-6: #6d45c4;
-    --pk-7: #8a4a15; /* darkened orange: AA for white on-fill text */
-    --pk-8: #1c7e92;
-  }
-
-  @media (prefers-color-scheme: light) {
-    :root:not([data-theme="dark"]) .packet {
-      --pk-1: #8f5300; /* darkened amber: AA for white on-fill text */
-      --pk-2: #3f6fc4;
-      --pk-3: #1f7e6e;
-      --pk-4: #bc3f76;
-      --pk-5: #197a43;
-      --pk-6: #6d45c4;
-      --pk-7: #8a4a15; /* darkened orange: AA for white on-fill text */
-      --pk-8: #1c7e92;
-    }
   }
 
   .packet__title {

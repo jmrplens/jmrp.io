@@ -223,13 +223,13 @@ const summary =
 
 <style>
   .struct-packing {
-    /* Categorical data-viz palette (dark-first); light values overridden below. */
-    --sp-1: #f5a623; /* amber */
-    --sp-2: #6e8fd6; /* blue */
-    --sp-3: #46b8a6; /* teal */
-    --sp-4: #b389f5; /* violet */
-    --sp-5: #e0739f; /* pink */
-    --sp-6: #57c98a; /* green */
+    /* Categorical palette from the central --dg-cat-* ramp (tokens.css). */
+    --sp-1: var(--dg-cat-1);
+    --sp-2: var(--dg-cat-2);
+    --sp-3: var(--dg-cat-3);
+    --sp-4: var(--dg-cat-4);
+    --sp-5: var(--dg-cat-5);
+    --sp-6: var(--dg-cat-6);
     --sp-on: var(--color-on-primary);
 
     /* Diagonal hatch marks alignment padding (not colour alone). */
@@ -241,26 +241,6 @@ const summary =
     );
 
     margin: 1.5rem 0;
-  }
-
-  :root[data-theme="light"] .struct-packing {
-    --sp-1: #8f5300; /* darkened amber: AA for white on-fill name text */
-    --sp-2: #3f6fc4;
-    --sp-3: #1f7e6e;
-    --sp-4: #6d45c4;
-    --sp-5: #bc3f76;
-    --sp-6: #197a43;
-  }
-
-  @media (prefers-color-scheme: light) {
-    :root:not([data-theme="dark"]) .struct-packing {
-      --sp-1: #8f5300; /* darkened amber: AA for white on-fill name text */
-      --sp-2: #3f6fc4;
-      --sp-3: #1f7e6e;
-      --sp-4: #6d45c4;
-      --sp-5: #bc3f76;
-      --sp-6: #197a43;
-    }
   }
 
   .struct-packing__title {
