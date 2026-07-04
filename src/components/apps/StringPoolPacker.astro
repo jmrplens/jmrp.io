@@ -1260,12 +1260,12 @@ const i18n = {
   }
 
   .spp-saving[data-state="good"] {
-    color: #065f46;
-    background: rgb(16 185 129 / 12%);
+    color: var(--color-success);
+    background: var(--success-dim);
   }
 
   :root[data-theme="dark"] .spp-saving[data-state="good"] {
-    color: #34d399;
+    color: var(--color-success);
   }
 
   .spp-saving[data-state="neutral"] {
@@ -1275,13 +1275,13 @@ const i18n = {
 
   .spp-saving[data-state="warn"],
   .spp-guard[data-state="warn"] {
-    color: #92400e;
-    background: rgb(245 158 11 / 14%);
+    color: var(--color-warning);
+    background: var(--warning-dim);
   }
 
   :root[data-theme="dark"] .spp-saving[data-state="warn"],
   :root[data-theme="dark"] .spp-guard[data-state="warn"] {
-    color: #fbbf24;
+    color: var(--color-warning);
   }
 
   .spp-guard {
@@ -1385,12 +1385,12 @@ const i18n = {
   }
 
   .spp-badge--tail {
-    color: #5b21b6;
+    color: var(--violet);
     background: rgb(139 92 246 / 14%);
   }
 
   :root[data-theme="dark"] .spp-badge--tail {
-    color: #c4b5fd;
+    color: var(--color-info);
   }
 
   .spp-truncated {

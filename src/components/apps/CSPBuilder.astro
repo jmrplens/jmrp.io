@@ -1503,7 +1503,7 @@ const i18n = {
     position: relative;
     width: 40px;
     height: 22px;
-    background: var(--color-bg-tertiary, #374151);
+    background: var(--color-surface-2);
     border-radius: 11px;
     transition: background 0.2s ease;
   }
@@ -1790,33 +1790,33 @@ const i18n = {
   }
 
   .csp-strict-badge {
-    color: #6d28d9; /* violet-700 for WCAG AA contrast */
+    color: var(--violet); /* violet-700 for WCAG AA contrast */
     background: rgb(124 58 237 / 12%);
   }
 
   :root[data-theme="dark"] .csp-strict-badge {
-    color: #a78bfa;
+    color: var(--violet);
     background: rgb(124 58 237 / 20%);
   }
 
   .csp-deprecated-badge {
-    color: #b91c1c; /* red-700 for WCAG AA contrast */
-    background: rgb(220 38 38 / 12%);
+    color: var(--color-danger); /* red-700 for WCAG AA contrast */
+    background: var(--danger-dim);
   }
 
   :root[data-theme="dark"] .csp-deprecated-badge {
-    color: #fca5a5;
-    background: rgb(220 38 38 / 20%);
+    color: var(--color-danger);
+    background: var(--danger-dim);
   }
 
   .csp-meta-badge {
-    color: #92400e; /* amber-800 for WCAG AA contrast */
-    background: rgb(217 119 6 / 12%);
+    color: var(--color-warning); /* amber-800 for WCAG AA contrast */
+    background: var(--warning-dim);
   }
 
   :root[data-theme="dark"] .csp-meta-badge {
-    color: #fcd34d;
-    background: rgb(217 119 6 / 20%);
+    color: var(--color-warning);
+    background: var(--warning-dim);
   }
 
   .csp-edit-btn {
@@ -2088,13 +2088,13 @@ const i18n = {
   }
 
   .csp-copy-btn.copied {
-    color: #10b981;
-    border-color: #10b981;
+    color: var(--color-success);
+    border-color: var(--color-success);
   }
 
   .csp-copy-btn.error {
-    color: #ef4444;
-    border-color: #ef4444;
+    color: var(--color-danger);
+    border-color: var(--color-danger);
   }
 
   .csp-rating {
@@ -2119,59 +2119,59 @@ const i18n = {
   }
 
   .csp-rating-badge.rating-a-plus {
-    color: #065f46;
-    background: #d1fae5;
+    color: var(--color-success);
+    background: var(--dg-success-fill);
   }
 
   :root[data-theme="dark"] .csp-rating-badge.rating-a-plus {
-    color: #6ee7b7;
-    background: rgb(6 95 70 / 40%);
+    color: var(--color-success);
+    background: var(--success-dim);
   }
 
   .csp-rating-badge.rating-a {
-    color: #047857;
-    background: #a7f3d0;
+    color: var(--color-success);
+    background: var(--color-success);
   }
 
   :root[data-theme="dark"] .csp-rating-badge.rating-a {
-    color: #6ee7b7;
-    background: rgb(4 120 87 / 40%);
+    color: var(--color-success);
+    background: var(--success-dim);
   }
 
   .csp-rating-badge.rating-b {
-    color: #92400e;
-    background: #fef3c7;
+    color: var(--color-warning);
+    background: var(--dg-warning-fill);
   }
 
   :root[data-theme="dark"] .csp-rating-badge.rating-b {
-    color: #fcd34d;
-    background: rgb(146 64 14 / 40%);
+    color: var(--color-warning);
+    background: var(--warning-dim);
   }
 
   .csp-rating-badge.rating-c {
-    color: #9a3412;
-    background: #fed7aa;
+    color: var(--color-danger);
+    background: var(--dg-warning-fill);
   }
 
   :root[data-theme="dark"] .csp-rating-badge.rating-c {
-    color: #fdba74;
-    background: rgb(154 52 18 / 40%);
+    color: var(--color-warning);
+    background: var(--danger-dim);
   }
 
   .csp-rating-badge.rating-d {
-    color: #991b1b;
-    background: #fecaca;
+    color: var(--color-danger);
+    background: var(--dg-danger-fill);
   }
 
   :root[data-theme="dark"] .csp-rating-badge.rating-d {
-    color: #fca5a5;
-    background: rgb(153 27 27 / 40%);
+    color: var(--color-danger);
+    background: var(--danger-dim);
   }
 
   /* Warnings */
   .csp-warnings {
     padding: 0.75rem;
-    background: rgb(251 191 36 / 10%);
+    background: var(--warning-dim);
     border: 1px solid rgb(251 191 36 / 30%);
     border-radius: var(--radius-sm);
   }
@@ -2183,11 +2183,11 @@ const i18n = {
     margin-bottom: 0.5rem;
     font-size: var(--text-sm);
     font-weight: var(--fw-semibold);
-    color: #92400e; /* amber-800 for WCAG AA contrast */
+    color: var(--color-warning); /* amber-800 for WCAG AA contrast */
   }
 
   :root[data-theme="dark"] .csp-warnings-header {
-    color: #fbbf24;
+    color: var(--color-warning);
   }
 
   .csp-warnings-header span[class^="i-"] {
@@ -2219,7 +2219,7 @@ const i18n = {
   }
 
   .csp-warning-warning span[class^="i-"] {
-    color: #92400e; /* amber-800 for WCAG AA contrast */
+    color: var(--color-warning); /* amber-800 for WCAG AA contrast */
   }
 
   .csp-warning-info span[class^="i-"] {

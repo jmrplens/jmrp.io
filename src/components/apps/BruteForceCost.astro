@@ -510,7 +510,7 @@ const charsets = [
   }
 
   .bfc-toggle-input:checked + .bfc-toggle-track {
-    background: #10b981;
+    background: var(--color-success);
   }
 
   .bfc-toggle-input:checked + .bfc-toggle-track::after {
@@ -606,29 +606,29 @@ const charsets = [
   }
 
   .bfc-headline--instant .bfc-headline-value {
-    color: #ef4444;
+    color: var(--color-danger);
   }
 
   .bfc-headline--short .bfc-headline-value {
-    color: #f59e0b;
+    color: var(--color-warning);
   }
 
   .bfc-headline--long .bfc-headline-value,
   .bfc-headline--bound .bfc-headline-value {
-    color: #10b981;
+    color: var(--color-success);
   }
 
   :root[data-theme="dark"] .bfc-headline--instant .bfc-headline-value {
-    color: #f87171;
+    color: var(--color-danger);
   }
 
   :root[data-theme="dark"] .bfc-headline--short .bfc-headline-value {
-    color: #fbbf24;
+    color: var(--color-warning);
   }
 
   :root[data-theme="dark"] .bfc-headline--long .bfc-headline-value,
   :root[data-theme="dark"] .bfc-headline--bound .bfc-headline-value {
-    color: #34d399;
+    color: var(--color-success);
   }
 
   .bfc-verdict {
@@ -644,40 +644,40 @@ const charsets = [
     flex-shrink: 0;
     width: 22px;
     height: 22px;
-    color: #10b981;
+    color: var(--color-success);
   }
 
   .bfc-verdict--instant {
-    color: #b91c1c;
-    background: rgb(239 68 68 / 8%);
+    color: var(--color-danger);
+    background: var(--danger-dim);
   }
 
   .bfc-verdict--short {
-    color: #92400e;
-    background: rgb(245 158 11 / 8%);
+    color: var(--color-warning);
+    background: var(--warning-dim);
   }
 
   .bfc-verdict--long {
-    color: #065f46;
-    background: rgb(16 185 129 / 8%);
+    color: var(--color-success);
+    background: var(--success-dim);
   }
 
   .bfc-verdict--bound {
-    color: #065f46;
-    background: rgb(16 185 129 / 10%);
+    color: var(--color-success);
+    background: var(--success-dim);
   }
 
   :root[data-theme="dark"] .bfc-verdict--instant {
-    color: #f87171;
+    color: var(--color-danger);
   }
 
   :root[data-theme="dark"] .bfc-verdict--short {
-    color: #fbbf24;
+    color: var(--color-warning);
   }
 
   :root[data-theme="dark"] .bfc-verdict--long,
   :root[data-theme="dark"] .bfc-verdict--bound {
-    color: #34d399;
+    color: var(--color-success);
   }
 
   .bfc-note {

@@ -956,33 +956,17 @@ const attacks = [
 
 <style>
   .ev {
-    --ev-ver: #fbbf24;
-    --ev-iv: #58d6df;
-    --ev-tag: #f0789b;
-    --ev-cipher: #b389f5;
+    /* Categorical field hues from the central --dg-cat-* ramp (themed AA). */
+    --ev-ver: var(--dg-cat-1);
+    --ev-iv: var(--dg-cat-8);
+    --ev-tag: var(--dg-cat-5);
+    --ev-cipher: var(--dg-cat-4);
 
     padding: 1.25rem;
     margin: 1.5rem 0;
     background: var(--color-bg-subtle);
     border: var(--border-1);
     border-radius: var(--radius-md);
-  }
-
-  /* Light-mode accents: the neon defaults fail WCAG AA on light backgrounds. */
-  @media (prefers-color-scheme: light) {
-    :root:not([data-theme="dark"]) .ev {
-      --ev-ver: #92400e;
-      --ev-iv: #155e75;
-      --ev-tag: #9d174d;
-      --ev-cipher: #6d28d9;
-    }
-  }
-
-  :root[data-theme="light"] .ev {
-    --ev-ver: #92400e;
-    --ev-iv: #155e75;
-    --ev-tag: #9d174d;
-    --ev-cipher: #6d28d9;
   }
 
   .ev-inputs {
@@ -1119,7 +1103,7 @@ const attacks = [
 
   .ev-key-tag--mac {
     color: var(--ev-tag);
-    background: rgb(240 120 155 / 14%);
+    background: var(--danger-dim);
   }
 
   .ev-total {
@@ -1252,8 +1236,8 @@ const attacks = [
 
   .ev-byte--flipped {
     color: #fff;
-    background: #ef4444;
-    border-color: #ef4444;
+    background: var(--color-danger);
+    border-color: var(--color-danger);
   }
 
   .ev-attacks-title {
@@ -1280,7 +1264,7 @@ const attacks = [
   }
 
   .ev-attack:hover {
-    border-color: #ef4444;
+    border-color: var(--color-danger);
   }
 
   .ev-attack-icon {
@@ -1351,33 +1335,33 @@ const attacks = [
   }
 
   .ev-verdict--ok {
-    color: #0f6e3d;
-    background: rgb(16 185 129 / 10%);
-    border-color: #10b981;
+    color: var(--color-success);
+    background: var(--success-dim);
+    border-color: var(--color-success);
   }
 
   .ev-verdict--fail {
-    color: #b91c1c;
-    background: rgb(239 68 68 / 10%);
-    border-color: #ef4444;
+    color: var(--color-danger);
+    background: var(--danger-dim);
+    border-color: var(--color-danger);
   }
 
   .ev-verdict--leak {
-    color: #92400e;
-    background: rgb(245 158 11 / 12%);
-    border-color: #f59e0b;
+    color: var(--color-warning);
+    background: var(--warning-dim);
+    border-color: var(--color-warning);
   }
 
   :root[data-theme="dark"] .ev-verdict--ok {
-    color: #34d399;
+    color: var(--color-success);
   }
 
   :root[data-theme="dark"] .ev-verdict--fail {
-    color: #f87171;
+    color: var(--color-danger);
   }
 
   :root[data-theme="dark"] .ev-verdict--leak {
-    color: #fbbf24;
+    color: var(--color-warning);
   }
 
   .ev-plain-label {
@@ -1408,13 +1392,13 @@ const attacks = [
     font-weight: var(--fw-medium);
     color: #fff;
     cursor: pointer;
-    background: #b91c1c;
+    background: var(--color-danger);
     border: none;
     border-radius: var(--radius-sm);
   }
 
   .ev-oracle-btn:hover {
-    background: #991b1b;
+    background: var(--color-danger);
   }
 
   .ev-oracle-btn:disabled {
@@ -1429,20 +1413,20 @@ const attacks = [
   }
 
   .ev-oracle-status--blocked {
-    color: #0f6e3d;
+    color: var(--color-success);
   }
 
   :root[data-theme="dark"] .ev-oracle-status--blocked {
-    color: #34d399;
+    color: var(--color-success);
   }
 
   .ev-oracle-status--done {
     font-weight: var(--fw-semibold);
-    color: #92400e;
+    color: var(--color-warning);
   }
 
   :root[data-theme="dark"] .ev-oracle-status--done {
-    color: #fbbf24;
+    color: var(--color-warning);
   }
 
   .ev-oracle-out {
@@ -1468,9 +1452,9 @@ const attacks = [
   }
 
   .ev-oracle-byte--got {
-    color: #1a1205;
-    background: #f59e0b;
-    border-color: #f59e0b;
+    color: var(--color-warning);
+    background: var(--color-warning);
+    border-color: var(--color-warning);
   }
 
   .ev-oracle-text {

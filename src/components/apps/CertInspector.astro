@@ -1632,27 +1632,27 @@ emyPxgcYxn/eR44/KJ4EBs+lVDR3veyJm+kXQ99b21/+jh5Xos1AnX5iItreGCc=
   }
 
   .cert-selector-pills :global(.cert-pill-valid) {
-    color: #047857;
+    color: var(--color-success);
   }
 
   .cert-selector-pills :global(.cert-pill-expiring) {
-    color: #92400e;
+    color: var(--color-warning);
   }
 
   .cert-selector-pills :global(.cert-pill-expired) {
-    color: #b91c1c;
+    color: var(--color-danger);
   }
 
   :root[data-theme="dark"] .cert-selector-pills :global(.cert-pill-valid) {
-    color: #34d399;
+    color: var(--color-success);
   }
 
   :root[data-theme="dark"] .cert-selector-pills :global(.cert-pill-expiring) {
-    color: #fbbf24;
+    color: var(--color-warning);
   }
 
   :root[data-theme="dark"] .cert-selector-pills :global(.cert-pill-expired) {
-    color: #f87171;
+    color: var(--color-danger);
   }
 
   .cert-textarea {
@@ -1704,8 +1704,8 @@ emyPxgcYxn/eR44/KJ4EBs+lVDR3veyJm+kXQ99b21/+jh5Xos1AnX5iItreGCc=
   .cert-results :global(.cert-error) {
     padding: 1rem;
     font-size: var(--text-sm);
-    color: #ef4444;
-    background: rgb(239 68 68 / 10%);
+    color: var(--color-danger);
+    background: var(--danger-dim);
     border-radius: var(--radius-sm);
   }
 
@@ -1757,17 +1757,17 @@ emyPxgcYxn/eR44/KJ4EBs+lVDR3veyJm+kXQ99b21/+jh5Xos1AnX5iItreGCc=
 
   .cert-results :global(.cert-status-valid) {
     font-weight: var(--fw-bold);
-    color: #047857;
+    color: var(--color-success);
   }
 
   .cert-results :global(.cert-status-warning) {
     font-weight: var(--fw-bold);
-    color: #92400e;
+    color: var(--color-warning);
   }
 
   .cert-results :global(.cert-status-expired) {
     font-weight: var(--fw-bold);
-    color: #b91c1c;
+    color: var(--color-danger);
   }
 
   .cert-results :global(.cert-ext-value) {
@@ -1775,16 +1775,16 @@ emyPxgcYxn/eR44/KJ4EBs+lVDR3veyJm+kXQ99b21/+jh5Xos1AnX5iItreGCc=
   }
 
   .cert-results :global(.cert-finding-pass) {
-    color: #047857;
+    color: var(--color-success);
   }
 
   .cert-results :global(.cert-finding-warning) {
-    color: #92400e;
+    color: var(--color-warning);
   }
 
   .cert-results :global(.cert-finding-critical) {
     font-weight: var(--fw-bold);
-    color: #b91c1c;
+    color: var(--color-danger);
   }
 
   .cert-results :global(.cert-finding-info) {
@@ -1793,17 +1793,17 @@ emyPxgcYxn/eR44/KJ4EBs+lVDR3veyJm+kXQ99b21/+jh5Xos1AnX5iItreGCc=
 
   :root[data-theme="dark"] .cert-results :global(.cert-status-valid),
   :root[data-theme="dark"] .cert-results :global(.cert-finding-pass) {
-    color: #34d399;
+    color: var(--color-success);
   }
 
   :root[data-theme="dark"] .cert-results :global(.cert-status-warning),
   :root[data-theme="dark"] .cert-results :global(.cert-finding-warning) {
-    color: #fbbf24;
+    color: var(--color-warning);
   }
 
   :root[data-theme="dark"] .cert-results :global(.cert-status-expired),
   :root[data-theme="dark"] .cert-results :global(.cert-finding-critical) {
-    color: #f87171;
+    color: var(--color-danger);
   }
 
   @media (width <= 640px) {

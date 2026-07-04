@@ -1392,14 +1392,14 @@ const formats = [
     padding: 0.25rem 0.75rem;
     margin-top: 0.25rem;
     font-size: var(--text-micro);
-    color: #047857;
-    background: #ecfdf5;
+    color: var(--color-success);
+    background: var(--dg-success-fill);
     border-radius: 999px;
   }
 
   :global(.dark) .enc-drop-privacy {
-    color: #34d399;
-    background: rgb(16 185 129 / 10%);
+    color: var(--color-success);
+    background: var(--success-dim);
   }
 
   .enc-drop-privacy span[class^="i-"] {
@@ -1515,7 +1515,7 @@ const formats = [
   }
 
   .enc-file-remove:hover {
-    color: #b91c1c;
+    color: var(--color-danger);
     background: var(--color-bg-secondary);
   }
 
@@ -1640,8 +1640,8 @@ const formats = [
   }
 
   .enc-copy-btn.copied {
-    color: #047857;
-    border-color: #10b981;
+    color: var(--color-success);
+    border-color: var(--color-success);
   }
 
   .enc-download-btn[hidden] {
@@ -1649,8 +1649,8 @@ const formats = [
   }
 
   .enc-download-btn:hover {
-    color: #047857;
-    border-color: #10b981;
+    color: var(--color-success);
+    border-color: var(--color-success);
   }
 
   .enc-info-row {
@@ -1668,7 +1668,7 @@ const formats = [
 
   .enc-error {
     font-weight: var(--fw-medium);
-    color: #b91c1c;
+    color: var(--color-danger);
   }
 
   @media (width <= 640px) {

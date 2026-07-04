@@ -310,10 +310,10 @@
     --dg-cat-2: #3f6fc4; /* blue */
     --dg-cat-3: #1f7e6e; /* teal */
     --dg-cat-4: #6d45c4; /* violet */
-    --dg-cat-5: #bc3f76; /* pink */
+    --dg-cat-5: #b33a6e; /* pink */
     --dg-cat-6: #197a43; /* green */
     --dg-cat-7: #8a4a15; /* orange */
-    --dg-cat-8: #1c7e92; /* cyan */
+    --dg-cat-8: #177387; /* cyan */
 
     /* Estado de infraestructura (light) */
     --color-status-online: #12695a;
@@ -389,10 +389,10 @@
   --dg-cat-2: #3f6fc4; /* blue */
   --dg-cat-3: #1f7e6e; /* teal */
   --dg-cat-4: #6d45c4; /* violet */
-  --dg-cat-5: #bc3f76; /* pink */
+  --dg-cat-5: #b33a6e; /* pink */
   --dg-cat-6: #197a43; /* green */
   --dg-cat-7: #8a4a15; /* orange */
-  --dg-cat-8: #1c7e92; /* cyan */
+  --dg-cat-8: #177387; /* cyan */
   --color-status-online: #12695a;
   --color-status-online-bg: rgb(31 126 110 / 12%);
   --color-status-offline: #374151;

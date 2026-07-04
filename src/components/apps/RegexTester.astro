@@ -1028,7 +1028,7 @@ const i18n = {
     white-space: pre-wrap;
     background: var(--color-bg);
     border: var(--border-1);
-    border-left: 3px solid var(--color-success, #10b981);
+    border-left: 3px solid var(--color-success, var(--color-success));
     border-radius: var(--radius-sm);
   }
 
@@ -1094,7 +1094,7 @@ const i18n = {
 
   /* Match highlight colors */
   .rgx-highlight-area :global(.rgx-hl-1) {
-    background: rgb(59 130 246 / 25%);
+    background: var(--info-dim);
     border-radius: 2px;
   }
 
@@ -1104,22 +1104,22 @@ const i18n = {
   }
 
   .rgx-highlight-area :global(.rgx-hl-3) {
-    background: rgb(16 185 129 / 25%);
+    background: var(--success-dim);
     border-radius: 2px;
   }
 
   .rgx-highlight-area :global(.rgx-hl-4) {
-    background: rgb(245 158 11 / 25%);
+    background: var(--warning-dim);
     border-radius: 2px;
   }
 
   .rgx-highlight-area :global(.rgx-hl-5) {
-    background: rgb(239 68 68 / 25%);
+    background: var(--danger-dim);
     border-radius: 2px;
   }
 
   .rgx-highlight-area :global(.rgx-hl-6) {
-    background: rgb(14 165 233 / 25%);
+    background: var(--info-dim);
     border-radius: 2px;
   }
 
@@ -1196,8 +1196,8 @@ const i18n = {
     align-items: center;
     padding: 0.625rem 0.75rem;
     font-size: var(--text-xs);
-    color: #b91c1c;
-    background: rgb(239 68 68 / 10%);
+    color: var(--color-danger);
+    background: var(--danger-dim);
     border: 1px solid rgb(239 68 68 / 30%);
     border-radius: var(--radius-sm);
   }
@@ -1332,37 +1332,37 @@ const i18n = {
 
   /* ── Dark mode contrast fixes ── */
   :root[data-theme="dark"] .rgx-match-count {
-    color: #c4b5fd;
+    color: var(--color-info);
     background: rgb(from var(--color-primary) r g b / 20%);
   }
 
   :root[data-theme="dark"] .rgx-highlight-area :global(.rgx-hl-1) {
-    color: #bfdbfe;
-    background: rgb(59 130 246 / 35%);
+    color: var(--color-info);
+    background: var(--info-dim);
   }
 
   :root[data-theme="dark"] .rgx-highlight-area :global(.rgx-hl-2) {
-    color: #e9d5ff;
+    color: var(--violet);
     background: rgb(168 85 247 / 35%);
   }
 
   :root[data-theme="dark"] .rgx-highlight-area :global(.rgx-hl-3) {
-    color: #a7f3d0;
-    background: rgb(16 185 129 / 35%);
+    color: var(--color-success);
+    background: var(--success-dim);
   }
 
   :root[data-theme="dark"] .rgx-highlight-area :global(.rgx-hl-4) {
-    color: #fde68a;
-    background: rgb(245 158 11 / 35%);
+    color: var(--color-warning);
+    background: var(--warning-dim);
   }
 
   :root[data-theme="dark"] .rgx-highlight-area :global(.rgx-hl-5) {
-    color: #fecaca;
-    background: rgb(239 68 68 / 35%);
+    color: var(--color-danger);
+    background: var(--danger-dim);
   }
 
   :root[data-theme="dark"] .rgx-highlight-area :global(.rgx-hl-6) {
-    color: #bae6fd;
-    background: rgb(14 165 233 / 35%);
+    color: var(--color-info);
+    background: var(--info-dim);
   }
 </style>
