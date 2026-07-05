@@ -126,27 +126,13 @@ const summary =
 
 <style>
   .float {
-    /* sign · exponent · mantissa — categorical diagram hues (dark-first). */
-    --fl-1: #e5655b; /* red — sign */
-    --fl-2: #6e8fd6; /* blue — exponent */
-    --fl-3: #f5a623; /* amber — mantissa */
+    /* sign · exponent · mantissa — categorical --dg-cat-* tokens (theme-aware). */
+    --fl-1: var(--dg-cat-1);
+    --fl-2: var(--dg-cat-2);
+    --fl-3: var(--dg-cat-3);
     --fl-on: var(--color-on-primary);
 
     margin: 1.5rem 0;
-  }
-
-  :root[data-theme="light"] .float {
-    --fl-1: #c13b31;
-    --fl-2: #3f6fc4;
-    --fl-3: #8f5300; /* darkened amber: AA for white on-fill text */
-  }
-
-  @media (prefers-color-scheme: light) {
-    :root:not([data-theme="dark"]) .float {
-      --fl-1: #c13b31;
-      --fl-2: #3f6fc4;
-      --fl-3: #8f5300; /* darkened amber: AA for white on-fill text */
-    }
   }
 
   .float__title {

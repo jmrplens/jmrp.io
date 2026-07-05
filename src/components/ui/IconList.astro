@@ -61,11 +61,11 @@ const icons: Record<IconItem["kind"], string> = {
 
 <style>
   .il {
-    /* Dark-first accent colours (match Callout's 400-scale). */
-    --il-pro: #34d399;
-    --il-con: #f87171;
-    --il-warn: #fbbf24;
-    --il-info: #60a5fa;
+    /* Semantic diagram tokens (tokens.css), theme-aware — matches Callout. */
+    --il-pro: var(--dg-success-line);
+    --il-con: var(--dg-danger-line);
+    --il-warn: var(--dg-warning-line);
+    --il-info: var(--dg-info-line);
   }
 
   .il__list {
@@ -110,22 +110,5 @@ const icons: Record<IconItem["kind"], string> = {
     font-size: var(--text-sm);
     line-height: 1.5;
     color: var(--color-text);
-  }
-
-  /* Light-mode contrast (>= 4.5:1), mirroring Callout's 700-scale overrides. */
-  @media (prefers-color-scheme: light) {
-    :root:not([data-theme="dark"]) .il {
-      --il-pro: #047857;
-      --il-con: #b91c1c;
-      --il-warn: #92400e;
-      --il-info: #1d4ed8;
-    }
-  }
-
-  :root[data-theme="light"] .il {
-    --il-pro: #047857;
-    --il-con: #b91c1c;
-    --il-warn: #92400e;
-    --il-info: #1d4ed8;
   }
 </style>
