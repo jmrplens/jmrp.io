@@ -979,16 +979,37 @@ async function timed(label, fn) {
 /**
  * Purges Cloudflare and notifies IndexNow/Bing Webmaster in parallel,
  * sharing a single sitemap URL collection pass. Never throws — every step
- * is individually non-fatal.
+ * (including the sitemap collection itself) is individually non-fatal, so a
+ * malformed `<loc>` or a sitemap read error can never take down the whole
+ * process after the swap/reload have already happened.
  *
  * @returns {Promise<void>}
  */
 async function runPublishNotifications() {
-  const sitemapStartedAt = performance.now();
-  const urlList = collectSitemapUrls(DIST_DIR);
-  console.log(
-    `deploy-live: collected ${urlList.length} sitemap URL(s) in ${elapsed(sitemapStartedAt)}.`,
-  );
+  // Skip reading/logging the sitemap entirely when none of the three
+  // consumers are configured (e.g. local/CI builds) — nothing would use it.
+  const needsSitemap =
+    Boolean(
+      process.env.PRIVATE_CF_ZONE_ID && process.env.PRIVATE_CF_API_TOKEN,
+    ) ||
+    Boolean(process.env.POSTBUILD_INDEXNOW) ||
+    Boolean(process.env.BING_WEBMASTER_API_KEY);
+
+  let urlList = [];
+  if (needsSitemap) {
+    const sitemapStartedAt = performance.now();
+    try {
+      urlList = collectSitemapUrls(DIST_DIR);
+      console.log(
+        `deploy-live: collected ${urlList.length} sitemap URL(s) in ${elapsed(sitemapStartedAt)}.`,
+      );
+    } catch (error) {
+      console.warn(
+        "deploy-live: failed to collect sitemap URLs; continuing with an empty list.",
+      );
+      console.warn(error instanceof Error ? error.message : String(error));
+    }
+  }
 
   await Promise.allSettled([
     timed("Cloudflare cache purge", () => purgeCloudflareCache()),
