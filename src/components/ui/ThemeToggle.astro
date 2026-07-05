@@ -9,12 +9,19 @@
 import { defaultLocale, type Locale } from "@i18n/config";
 import { useTranslations } from "@i18n/utils";
 
+interface Props {
+  /** Element id — must be unique per instance (header vs drawer). */
+  id?: string;
+}
+
+const { id = "theme-toggle" } = Astro.props;
+
 const locale = (Astro.currentLocale ?? defaultLocale) as Locale;
 const t = useTranslations(locale);
 ---
 
 <button
-  id="theme-toggle"
+  id={id}
   type="button"
   class="theme-toggle"
   aria-label={t("aria.toggleTheme")}
@@ -79,27 +86,33 @@ const t = useTranslations(locale);
 </style>
 
 <script>
+  // Class-based (not id) so multiple instances work — header + mobile drawer
+  // both call the global window.toggleTheme().
   const setup = () => {
-    const btn = document.getElementById("theme-toggle");
-    if (!btn) return;
+    const btns = document.querySelectorAll<HTMLButtonElement>(".theme-toggle");
+    if (!btns.length) return;
 
     const update = () => {
       const theme = document.documentElement.dataset.theme || "dark";
-      const label =
-        theme === "dark"
-          ? btn.getAttribute("data-label-light")
-          : btn.getAttribute("data-label-dark");
-      btn.setAttribute("aria-label", label || "Toggle theme");
+      for (const btn of btns) {
+        const label =
+          theme === "dark"
+            ? btn.getAttribute("data-label-light")
+            : btn.getAttribute("data-label-dark");
+        btn.setAttribute("aria-label", label || "Toggle theme");
+      }
     };
 
     update();
 
-    btn.onclick = (e) => {
-      e.preventDefault();
-      if (typeof (window as any).toggleTheme === "function") {
-        (window as any).toggleTheme();
-      }
-    };
+    for (const btn of btns) {
+      btn.onclick = (e) => {
+        e.preventDefault();
+        if (typeof (window as any).toggleTheme === "function") {
+          (window as any).toggleTheme();
+        }
+      };
+    }
 
     // React to changes from any source (including navigation fixes)
     window.addEventListener("theme-changed", update);

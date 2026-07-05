@@ -13,6 +13,7 @@
  * build time into a non-executable JSON island; the engine below reads it.
  */
 import LanguageSwitcher from "@components/layout/LanguageSwitcher.astro";
+import ThemeToggle from "@components/ui/ThemeToggle.astro";
 import Logo from "@components/layout/Logo.astro";
 import { defaultLocale, type Locale } from "@i18n/config";
 import {
@@ -401,6 +402,7 @@ const staticRecent = postData.slice(0, 6);
     </span>
     <div class="drawer__foot-right">
       <LanguageSwitcher />
+      <ThemeToggle id="theme-toggle-drawer" />
       <a
         href="https://github.com/jmrplens"
         class="drawer__gh"
