@@ -544,13 +544,41 @@ const aboutSchema = z.object({
   es: AboutLocale,
 });
 
+/** One entry in a Uses group. `href` is optional and, per the "only mine"
+ * link policy, is only set on the author's own projects/services (paths like
+ * `/homelab/` are localized at render; full URLs are used verbatim). */
+const UsesItem = z.object({
+  name: z.string(),
+  detail: z.string(),
+  href: z.string().optional(),
+});
+
+const UsesLocale = z.object({
+  kicker: z.string(),
+  title: z.string(),
+  intro: z.string(),
+  groups: z.array(
+    z.object({
+      label: z.string(),
+      intro: z.string(),
+      items: z.array(UsesItem),
+    }),
+  ),
+});
+
+const usesSchema = z.object({
+  type: z.literal("uses"),
+  en: UsesLocale,
+  es: UsesLocale,
+});
+
 const profile = defineCollection({
   loader: glob({
     pattern: "**/*.yaml",
     base: "./src/content/profile",
     generateId: ({ entry }) => stripExtension(entry),
   }),
-  schema: z.discriminatedUnion("type", [aboutSchema]),
+  schema: z.discriminatedUnion("type", [aboutSchema, usesSchema]),
 });
 
 export const collections = {

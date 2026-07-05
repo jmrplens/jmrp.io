@@ -1,104 +1,28 @@
 ---
 /**
- * Uses page ("// /USES") — hardware, software, and homelab in rotation,
- * grouped into three columns of cards. Content is inline bilingual prose.
+ * Uses page ("// /USES") — hardware, software, and self-hosted homelab in
+ * rotation, grouped into columns of cards with a per-section intro line. All
+ * content is a single localized source in `src/content/profile/uses.yaml`.
+ * Per the "only mine" link policy, only the author's own services/projects
+ * carry an `href` (internal paths are localized; full URLs used verbatim).
  */
 import { defaultLocale, type Locale } from "@i18n/config";
-import { useTranslations } from "@i18n/utils";
+import { useTranslatedPath, useTranslations } from "@i18n/utils";
 import BaseLayout from "@layouts/BaseLayout.astro";
+import { getEntry } from "astro:content";
 
 const locale = (Astro.currentLocale ?? defaultLocale) as Locale;
 const t = useTranslations(locale);
+const translatePath = useTranslatedPath(locale);
 
-interface UsesItem {
-  name: string;
-  detail: string;
-}
-interface UsesGroup {
-  label: string;
-  items: UsesItem[];
-}
+const usesEntry = await getEntry("profile", "uses");
+if (!usesEntry) throw new Error("Missing content: profile/uses.yaml");
+const c = usesEntry.data[locale];
 
-const content: Record<
-  Locale,
-  { kicker: string; title: string; intro: string; groups: UsesGroup[] }
-> = {
-  en: {
-    kicker: "/uses",
-    title: "What I use",
-    intro:
-      "Hardware, software, and services I keep in rotation. Updated now and then.",
-    groups: [
-      {
-        label: "// desk",
-        items: [
-          { name: "Mac mini M4 Pro", detail: "48 GB · daily driver" },
-          { name: '4K 27" monitor', detail: "+ 65% mechanical keyboard" },
-          { name: "Probes & iron", detail: "logic analyzer · PicoScope" },
-        ],
-      },
-      {
-        label: "// software",
-        items: [
-          { name: "Neovim · Zed", detail: "editing · IBM Plex Mono" },
-          { name: "ESP-IDF · PlatformIO", detail: "firmware" },
-          { name: "Astro · Go · Python", detail: "web · services · DSP" },
-        ],
-      },
-      {
-        label: "// homelab",
-        items: [
-          { name: "Proxmox · ZFS NAS", detail: "48 TB" },
-          {
-            name: "MikroTik · RouterOS",
-            detail: "VLANs · WireGuard · CrowdSec",
-          },
-          { name: "Docker · 24 services", detail: "see /homelab" },
-        ],
-      },
-    ],
-  },
-  es: {
-    kicker: "/uses",
-    title: "Lo que uso",
-    intro:
-      "Hardware, software y servicios que tengo en rotación. Actualizado de vez en cuando.",
-    groups: [
-      {
-        label: "// escritorio",
-        items: [
-          { name: "Mac mini M4 Pro", detail: "48 GB · daily driver" },
-          { name: 'Monitor 4K 27"', detail: "+ teclado mecánico 65%" },
-          {
-            name: "Sondas y soldador",
-            detail: "analizador lógico · PicoScope",
-          },
-        ],
-      },
-      {
-        label: "// software",
-        items: [
-          { name: "Neovim · Zed", detail: "edición · IBM Plex Mono" },
-          { name: "ESP-IDF · PlatformIO", detail: "firmware" },
-          { name: "Astro · Go · Python", detail: "web · servicios · DSP" },
-        ],
-      },
-      {
-        label: "// homelab",
-        items: [
-          { name: "Proxmox · NAS ZFS", detail: "48 TB" },
-          {
-            name: "MikroTik · RouterOS",
-            detail: "VLANs · WireGuard · CrowdSec",
-          },
-          { name: "Docker · 24 servicios", detail: "ver /homelab" },
-        ],
-      },
-    ],
-  },
-};
-
-const c = content[locale] ?? content.en;
+/** Internal paths get localized; full URLs pass through untouched. */
+const resolveHref = (href: string) =>
+  href.startsWith("/") ? translatePath(href) : href;
+const isExternal = (href: string) => !href.startsWith("/");
 ---
 
 <BaseLayout
@@ -120,10 +44,27 @@ const c = content[locale] ?? content.en;
             aria-label={group.label.replace("// ", "")}
           >
             <h2 class="uses-col__title">{group.label}</h2>
+            <p class="uses-col__intro">{group.intro}</p>
             <div class="uses-col__items">
               {group.items.map((item) => (
                 <div class="uses-item">
-                  <div class="uses-item__name">{item.name}</div>
+                  <div class="uses-item__name">
+                    {item.href ? (
+                      <a
+                        href={resolveHref(item.href)}
+                        {...(isExternal(item.href)
+                          ? {
+                              target: "_blank",
+                              rel: "external noopener noreferrer",
+                            }
+                          : {})}
+                      >
+                        {item.name}
+                      </a>
+                    ) : (
+                      item.name
+                    )}
+                  </div>
                   <div class="uses-item__detail">{item.detail}</div>
                 </div>
               ))}
@@ -160,7 +101,7 @@ const c = content[locale] ?? content.en;
   }
 
   .uses-header__intro {
-    max-width: 54ch;
+    max-width: 60ch;
     margin: 0;
     font-size: var(--text-md);
     line-height: 1.6;
@@ -169,18 +110,26 @@ const c = content[locale] ?? content.en;
 
   .uses-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
     gap: var(--space-lg);
+    align-items: start;
   }
 
   .uses-col__title {
-    margin: 0 0 var(--space-md);
+    margin: 0 0 var(--space-sm);
     font-family: var(--font-mono);
     font-size: var(--text-label);
     font-weight: var(--fw-medium);
     color: var(--color-text-muted);
     text-transform: uppercase;
     letter-spacing: 0.15em;
+  }
+
+  .uses-col__intro {
+    margin: 0 0 var(--space-md);
+    font-size: var(--text-sm);
+    line-height: 1.55;
+    color: var(--color-text-muted);
   }
 
   .uses-col__items {
@@ -199,6 +148,17 @@ const c = content[locale] ?? content.en;
   .uses-item__name {
     font-size: var(--text-sm);
     color: var(--color-text-heading);
+  }
+
+  .uses-item__name a {
+    color: inherit;
+    text-decoration: none;
+  }
+
+  .uses-item__name a:hover {
+    color: var(--color-accent);
+    text-decoration: underline;
+    text-underline-offset: 3px;
   }
 
   .uses-item__detail {

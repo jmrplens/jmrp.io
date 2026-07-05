@@ -1,0 +1,110 @@
+type: uses
+
+# Real inventory. Per the "only mine" link policy, `href` is set ONLY on the
+# author's own services/projects (homelab, repos) — never on third-party
+# products (MacBook, LG, VSCode, …). Paths starting with "/" are localized at
+# render; full URLs are used verbatim.
+
+en:
+  kicker: /uses
+  title: What I use
+  intro: >-
+    The hardware, software and self-hosted infrastructure I actually keep in
+    rotation — not aspirational, just what's on and in front of me. Updated now
+    and then.
+  groups:
+    - label: // desk
+      intro: The machine and peripherals I work from every day.
+      items:
+        - name: MacBook Pro
+          detail: Intel i9 · 64 GB RAM · Radeon Pro 5500M 8 GB · 2 TB SSD
+        - name: 2× LG 27"
+          detail: IPS · 4K · HDR
+        - name: Logitech K380S
+          detail: keyboard
+        - name: Kensington Expert Mouse
+          detail: trackball
+        - name: HomePod mini · AirPods
+          detail: audio
+    - label: // software
+      intro: The editors, systems and languages I actually reach for.
+      items:
+        - name: VS Code · Sublime Text · nano
+          detail: editors
+        - name: macOS 26 Tahoe · iOS
+          detail: daily
+        - name: Debian 12 · Debian 13
+          detail: servers
+        - name: Termius · Claude Code
+          detail: terminal · CLI & iOS
+        - name: C · C++ · Python · Go · TypeScript
+          detail: languages
+    - label: // homelab
+      intro: >-
+        Self-hosted infrastructure I run and maintain myself. The live view —
+        nodes, services and traffic — is at /homelab.
+      items:
+        - name: TrueNAS
+          detail: ZFS storage
+          href: /homelab/
+        - name: MikroTik · RouterOS
+          detail: VLANs · WireGuard · CrowdSec
+          href: /homelab/
+        - name: Docker
+          detail: self-hosted services · see /homelab
+          href: /homelab/
+        - name: nginx
+          detail: reverse proxy · CSP + SRI
+          href: /homelab/
+
+es:
+  kicker: /uses
+  title: Lo que uso
+  intro: >-
+    El hardware, el software y la infraestructura self-hosted que de verdad
+    tengo en rotación —nada aspiracional, solo lo que está encendido y delante
+    de mí—. Actualizado de vez en cuando.
+  groups:
+    - label: // escritorio
+      intro: La máquina y los periféricos con los que trabajo cada día.
+      items:
+        - name: MacBook Pro
+          detail: Intel i9 · 64 GB RAM · Radeon Pro 5500M 8 GB · 2 TB SSD
+        - name: 2× LG 27"
+          detail: IPS · 4K · HDR
+        - name: Logitech K380S
+          detail: teclado
+        - name: Kensington Expert Mouse
+          detail: trackball
+        - name: HomePod mini · AirPods
+          detail: audio
+    - label: // software
+      intro: Los editores, sistemas y lenguajes que uso de verdad.
+      items:
+        - name: VS Code · Sublime Text · nano
+          detail: editores
+        - name: macOS 26 Tahoe · iOS
+          detail: día a día
+        - name: Debian 12 · Debian 13
+          detail: servidores
+        - name: Termius · Claude Code
+          detail: terminal · CLI e iOS
+        - name: C · C++ · Python · Go · TypeScript
+          detail: lenguajes
+    - label: // homelab
+      intro: >-
+        Infraestructura self-hosted que administro yo mismo. La vista en vivo
+        —nodos, servicios y tráfico— está en /homelab.
+      items:
+        - name: TrueNAS
+          detail: almacenamiento ZFS
+          href: /homelab/
+        - name: MikroTik · RouterOS
+          detail: VLANs · WireGuard · CrowdSec
+          href: /homelab/
+        - name: Docker
+          detail: servicios self-hosted · ver /homelab
+          href: /homelab/
+        - name: nginx
+          detail: proxy inverso · CSP + SRI
+          href: /homelab/
