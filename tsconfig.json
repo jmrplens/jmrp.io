@@ -4,6 +4,7 @@
   "exclude": [
     "dist",
     "dist_new",
+    "builds",
     "node_modules",
     "public/scripts/cf-beacon.js",
     "src/assets/nedry-assets.ts"

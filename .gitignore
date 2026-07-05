@@ -4,9 +4,14 @@
 ###############################################################################
 
 # --- 1. CORE & BUILD ---
-# Main Astro build output
-dist/
+# Main Astro build output. No trailing slash: `dist` is now a symlink
+# (scripts/deploy-swap.mjs), and a `dist/`-style pattern only matches
+# real directories, not symlinks.
+dist
 dist_new/
+# Blue/green build output dirs (scripts/deploy-swap.mjs) + its atomic-swap temp symlink
+builds/
+.dist.tmp-*
 # Astro generated types and runtime cache
 .astro/
 # Optimized images cache (speeds up builds)

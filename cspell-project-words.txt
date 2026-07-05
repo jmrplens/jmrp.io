@@ -802,6 +802,8 @@ respondedor
 respuestas
 restaura
 resto
+retarget
+retargets
 retipado
 retrocedarán
 retrorreferencias

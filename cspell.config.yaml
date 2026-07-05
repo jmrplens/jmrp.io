@@ -49,6 +49,7 @@ ignorePaths:
   - dist
   - dist_new
   - dist_old
+  - builds
   - .git
   - plan/** # gitignored working notes (Spanish prose), not part of the project
   - CHANGELOG-review.md # Spanish design-review report, not project content

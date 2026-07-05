@@ -17,6 +17,8 @@ export default [
     ignores: [
       "**/dist/**",
       "**/dist_new/**",
+      "**/dist_old/**",
+      "**/builds/**",
       "**/dist-reports/**",
       "design-audit/**",
       "**/node_modules/**",
