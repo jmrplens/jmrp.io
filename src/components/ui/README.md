@@ -155,7 +155,8 @@ import FAQ from "@components/ui/FAQ.astro";
 **Props:**
 
 - `items: { question: string; answer: string }[]` - Q&A pairs (required)
-- `open?: boolean` - Outer block starts expanded (default: false)
+
+The section itself is not collapsible (a normal `<h2>` heading); each question is an individual `<details>` disclosure.
 
 **When to use:** Reach for the `faq` **frontmatter** on a post or tool rather than
 importing this component directly. The layout (`BlogPost.astro` / `ToolLayout.astro`)
