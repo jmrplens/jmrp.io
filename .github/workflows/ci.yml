@@ -189,6 +189,8 @@ jobs:
           name: log-stylelint
           path: stylelint.log
           retention-days: 1
+      - name: Check light/dark token sync
+        run: node scripts/ci/check-token-sync.mjs
 
   sa-jsdoc:
     name: "SA: JSDoc Coverage"

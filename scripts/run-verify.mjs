@@ -85,6 +85,10 @@ function runVerify() {
     { name: "Static: ESLint", command: "pnpm lint --max-warnings=0" },
     { name: "Static: Prettier", command: "pnpm exec prettier --check ." },
     { name: "Lint: CSS (Stylelint)", command: "pnpm lint:css" },
+    {
+      name: "Lint: Token sync",
+      command: "node scripts/ci/check-token-sync.mjs",
+    },
     { name: "Build: Production Build", command: "pnpm run build" },
     {
       name: "ATS: CV Compatibility",

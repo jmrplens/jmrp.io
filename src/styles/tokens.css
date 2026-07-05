@@ -10,6 +10,21 @@
    Este triple bloque replica el mecanismo YA existente en el repo; no lo
    simplifiques a uno solo o romperás el "auto + override manual".
 
+   SINCRONIZACIÓN: CSS plano no permite fusionar @media + selector sin
+   duplicar declaraciones, así que los pares que deben coincidir se marcan
+   con un comentario-centinela ("KEEP-IN-SYNC: <label>") justo antes de
+   cada bloque del par:
+     - "light-tokens": bloque @media (light) vs :root[data-theme="light"] —
+       deben declarar el MISMO set clave→valor (igualdad completa).
+     - "dark-tokens": :root (base) vs :root[data-theme="dark"] — el override
+       debe ser SUBCONJUNTO del base (toda clave del override existe en
+       :root con el mismo valor; :root puede tener claves extra que no
+       cambian con el tema).
+   `node scripts/ci/check-token-sync.mjs` verifica ambos pares (wired en
+   `pnpm verify` como "Lint: Token sync" y en el job sa-stylelint de CI). Si
+   tocas un color de tema, edítalo en los dos bloques del par o el check
+   fallará.
+
    Convención de nombres = la del repo (--color-*, --space-*, --radius-*,
    --font-*, --fw-*). El mapeo con los nombres del mockup de marca
    (--bg, --sp-N, --text-*, --r-*) está en README.md.
@@ -20,6 +35,7 @@
    Los tokens marcados "SOLO texto grande" NO llegan a 4.5:1 en cuerpo pequeño.
 ============================================================================= */
 
+/* KEEP-IN-SYNC: dark-tokens */
 :root {
   /* ===== NEUTRALES / SUPERFICIES (dark) ===================================
      Escala de elevación: bg < surface < surface-2. hair = separador tenue,
@@ -73,7 +89,13 @@
   /* ===== RAMPA GRÁFICO/DIAGRAMA (--dg-*) — CSS-02 ========================
      Para nodos de diagrama (fill + text encima) y series de chart/tools.
      -line reutiliza los semánticos (ya AA, temáticos). fill/text verificados
-     AA en claro y oscuro (texto/fill ≥4.5:1, line/fondo ≥3:1). */
+     AA en claro y oscuro (texto/fill ≥4.5:1, line/fondo ≥3:1).
+     NOTA: -fill/-text son API DISPONIBLE de la rampa, no tokens muertos —
+     -success/-warning/-danger-fill ya se consumen en varias apps (p. ej.
+     HTTPHeadersAnalyzer, CSPBuilder, Base64Encoder); el resto (-text,
+     -accent/-neutral-fill/-text) queda de reserva, con AA ya verificado,
+     para futuros componentes (chips/badges). Consérvalos aunque un grep no
+     encuentre consumidor hoy. */
   --dg-success-line: var(--color-success);
   --dg-warning-line: var(--color-warning);
   --dg-danger-line: var(--color-danger);
@@ -107,15 +129,11 @@
   /* ===== ESTADO DE INFRAESTRUCTURA (dark) — homelab / servicios =========
      Semántica convencional verde/ámbar/rojo para paneles de estado (online
      usa el teal del sistema). Centralizado aquí: los CSS de componentes NO
-     deben volver a declararlos. --color-status-warn es ALIAS de -warning. */
+     deben volver a declararlos. */
   --color-status-online: #46b8a6;
-  --color-status-online-bg: rgb(70 184 166 / 12%);
   --color-status-offline: #6b7280;
-  --color-status-offline-bg: rgb(107 114 128 / 10%);
   --color-status-warning: #f59e0b;
   --color-status-warning-bg: rgb(245 158 11 / 10%);
-  --color-status-warn: var(--color-status-warning); /* alias legado */
-  --color-status-warn-bg: var(--color-status-warning-bg); /* alias legado */
   --color-status-error: #ef4444;
   --color-status-info: #3b82f6;
 
@@ -129,9 +147,6 @@
   /* =========================================================================
      A PARTIR DE AQUÍ: tokens que NO cambian con el tema (una sola vez).
      ========================================================================= */
-
-  /* ===== MARCA PUNTUAL ===================================================== */
-  --color-brand-mastodon: #6364ff;
 
   /* ===== TIPOGRAFÍA — familias (gestionadas por Astro Fonts) ============== */
   --font-display:
@@ -251,6 +266,8 @@
    Se aplica salvo que el usuario haya forzado oscuro ([data-theme="dark"]).
    Solo se redefinen los tokens que cambian con el tema.
 ============================================================================= */
+
+/* KEEP-IN-SYNC: light-tokens */
 @media (prefers-color-scheme: light) {
   :root:not([data-theme="dark"]) {
     /* Neutrales / superficies (light) */
@@ -315,17 +332,11 @@
 
     /* Estado de infraestructura (light) */
     --color-status-online: #12695a;
-    --color-status-online-bg: rgb(31 126 110 / 12%);
     --color-status-offline: #374151;
-    --color-status-offline-bg: #f3f4f6;
     --color-status-warning: #92400e;
     --color-status-warning-bg: #fef3c7;
     --color-status-error: #991b1b;
     --color-status-info: #1e40af;
-
-    /* Escala de gráficos (light) — más saturada/oscura para contraste */
-
-    /* Semánticos de diagramas (light) */
 
     /* Sombras (light) — más suaves y cálidas */
     --sh-card: 0 24px 60px -28px rgb(40 38 30 / 28%);
@@ -339,6 +350,8 @@
 /* =============================================================================
    MODO CLARO — override manual (toggle). Mismos valores que el bloque @media.
 ============================================================================= */
+
+/* KEEP-IN-SYNC: light-tokens */
 :root[data-theme="light"] {
   --color-bg: #fafaf7;
   --color-bg-secondary: #fff;
@@ -391,9 +404,7 @@
   --dg-cat-7: #8a4a15; /* orange */
   --dg-cat-8: #177387; /* cyan */
   --color-status-online: #12695a;
-  --color-status-online-bg: rgb(31 126 110 / 12%);
   --color-status-offline: #374151;
-  --color-status-offline-bg: #f3f4f6;
   --color-status-warning: #92400e;
   --color-status-warning-bg: #fef3c7;
   --color-status-error: #991b1b;
@@ -408,6 +419,8 @@
    para ganar al bloque @media (prefers-color-scheme: light) cuando el SO
    está en claro pero el usuario fuerza oscuro.
 ============================================================================= */
+
+/* KEEP-IN-SYNC: dark-tokens */
 :root[data-theme="dark"] {
   --color-bg: #0a0a0b;
   --color-bg-secondary: #101013;
@@ -460,9 +473,7 @@
   --dg-cat-7: #ec8c46; /* orange */
   --dg-cat-8: #49b9cc; /* cyan */
   --color-status-online: #46b8a6;
-  --color-status-online-bg: rgb(70 184 166 / 12%);
   --color-status-offline: #6b7280;
-  --color-status-offline-bg: rgb(107 114 128 / 10%);
   --color-status-warning: #f59e0b;
   --color-status-warning-bg: rgb(245 158 11 / 10%);
   --color-status-error: #ef4444;

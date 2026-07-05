@@ -1,5 +1,3 @@
-/* --color-brand-mastodon now lives in tokens.css (single source of truth). */
-
 /* Styling for React ServiceStats component */
 
 /* .status-dot: canonical (tokenized) in utilities.css (CSS-01 dedupe — this
