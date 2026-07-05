@@ -168,35 +168,12 @@ const { title, lanes, caption, ariaLabel } = Astro.props as Props;
 
 <style>
   .eff {
-    --eff-sealed: #6ee7a8;
-    --eff-reachable: #fbbf24;
-    --eff-yes: #f0789b;
-    --eff-no: #6ee7a8;
+    --eff-sealed: var(--dg-success-line);
+    --eff-reachable: var(--dg-warning-line);
+    --eff-yes: var(--dg-danger-line);
+    --eff-no: var(--dg-success-line);
 
     margin: 1.5rem 0;
-  }
-
-  @media (prefers-color-scheme: light) {
-    .eff {
-      --eff-sealed: #0f6e3d;
-      --eff-reachable: #92400e;
-      --eff-yes: #be123c;
-      --eff-no: #0f6e3d;
-    }
-  }
-
-  :root[data-theme="dark"] .eff {
-    --eff-sealed: #6ee7a8;
-    --eff-reachable: #fbbf24;
-    --eff-yes: #f0789b;
-    --eff-no: #6ee7a8;
-  }
-
-  :root[data-theme="light"] .eff {
-    --eff-sealed: #0f6e3d;
-    --eff-reachable: #92400e;
-    --eff-yes: #be123c;
-    --eff-no: #0f6e3d;
   }
 
   .eff__title {

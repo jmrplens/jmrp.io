@@ -181,35 +181,12 @@ const rows = [
 
 <style>
   .kst {
-    --kst-keyspace: #fbbf24;
-    --kst-throughput: #f0789b;
-    --kst-good: #6ee7a8;
-    --kst-bad: #f0789b;
+    --kst-keyspace: var(--dg-warning-line);
+    --kst-throughput: var(--dg-danger-line);
+    --kst-good: var(--dg-success-line);
+    --kst-bad: var(--dg-danger-line);
 
     margin: 1.5rem 0;
-  }
-
-  @media (prefers-color-scheme: light) {
-    .kst {
-      --kst-keyspace: #92400e;
-      --kst-throughput: #be123c;
-      --kst-good: #15803d;
-      --kst-bad: #be123c;
-    }
-  }
-
-  :root[data-theme="dark"] .kst {
-    --kst-keyspace: #fbbf24;
-    --kst-throughput: #f0789b;
-    --kst-good: #6ee7a8;
-    --kst-bad: #f0789b;
-  }
-
-  :root[data-theme="light"] .kst {
-    --kst-keyspace: #92400e;
-    --kst-throughput: #be123c;
-    --kst-good: #15803d;
-    --kst-bad: #be123c;
   }
 
   .kst__title {

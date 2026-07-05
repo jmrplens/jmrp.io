@@ -190,35 +190,12 @@ const ICON: Record<Lane["kind"], string> = {
 
 <style>
   .asm {
-    --asm-online: #7aa2ff;
-    --asm-offline: #f0789b;
-    --asm-can: #6ee7a8;
-    --asm-cannot: #f0789b;
+    --asm-online: var(--dg-info-line);
+    --asm-offline: var(--dg-danger-line);
+    --asm-can: var(--dg-success-line);
+    --asm-cannot: var(--dg-danger-line);
 
     margin: 1.5rem 0;
-  }
-
-  @media (prefers-color-scheme: light) {
-    .asm {
-      --asm-online: #1d4ed8;
-      --asm-offline: #be123c;
-      --asm-can: #15803d;
-      --asm-cannot: #be123c;
-    }
-  }
-
-  :root[data-theme="dark"] .asm {
-    --asm-online: #7aa2ff;
-    --asm-offline: #f0789b;
-    --asm-can: #6ee7a8;
-    --asm-cannot: #f0789b;
-  }
-
-  :root[data-theme="light"] .asm {
-    --asm-online: #1d4ed8;
-    --asm-offline: #be123c;
-    --asm-can: #15803d;
-    --asm-cannot: #be123c;
   }
 
   .asm__title {
