@@ -17,6 +17,9 @@ const translatePath = useTranslatedPath(locale);
 
 const usesEntry = await getEntry("profile", "uses");
 if (!usesEntry) throw new Error("Missing content: profile/uses.yaml");
+// Narrow the profile discriminated union (about | uses) to the uses shape.
+if (usesEntry.data.type !== "uses")
+  throw new Error("profile/uses.yaml is not type: uses");
 const c = usesEntry.data[locale];
 
 /** Internal paths get localized; full URLs pass through untouched. */

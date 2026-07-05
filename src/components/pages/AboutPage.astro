@@ -22,6 +22,9 @@ const translatePath = useTranslatedPath(locale);
 
 const aboutEntry = await getEntry("profile", "about");
 if (!aboutEntry) throw new Error("Missing content: profile/about.yaml");
+// Narrow the profile discriminated union (about | uses) to the about shape.
+if (aboutEntry.data.type !== "about")
+  throw new Error("profile/about.yaml is not type: about");
 const about = aboutEntry.data;
 const c = about[locale];
 
