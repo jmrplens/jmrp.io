@@ -7,6 +7,7 @@ featuredProjects:
   - gitlab-mcp-server
   - PyOctaveBand
   - cs-routeros-bouncer
+  - TFG-TFM_EPS
 
 # Person facts → ProfilePage / Person JSON-LD (sameAs comes from site config).
 person:
@@ -32,9 +33,9 @@ en:
   kicker: Profile
   title: The engineer behind the notebook.
   lead:
-    - I'm José Manuel — a firmware and software engineer based in Valencia, Spain, working in R&D. Day to day that means industrial embedded firmware in C on STM32 and FreeRTOS for solar inverters and storage, with a focus on low-level optimization, industrial communications (Modbus) and hardware test automation.
-    - I came to engineering from acoustics and instrumentation — a degree in Telecommunication Engineering and a Master's in Acoustical Engineering, followed by predoctoral research at the UPV on ultrasound and acoustic metamaterials, before redirecting toward industrial software. I still gravitate to problems that sit where signal, system and software meet.
-    - I maintain open-source projects used by developers worldwide — a GitLab MCP server, signal-processing and network-security tooling — and I care about doing the work with engineering rigor and a focus on quality.
+    - I'm José Manuel — a firmware and software engineer based in Valencia, Spain, with an R&D background. Day to day I'm programming across a range of languages, building and maintaining open-source projects, and keeping up with what's new in software and the open-source world.
+    - I came to engineering from acoustics and instrumentation — a degree in Telecommunication Engineering and a Master's in Acoustical Engineering, followed by predoctoral research at the UPV on ultrasound and acoustic metamaterials, before redirecting toward software. I still gravitate to problems that sit where signal, system and software meet.
+    - Most recently I built industrial embedded firmware in C on STM32 and FreeRTOS for solar inverters and storage — low-level optimization, industrial communications (Modbus) and hardware test automation. The open-source projects I maintain are used by developers worldwide, and I care about doing the work with engineering rigor and a focus on quality.
   note: "This site is my notebook: what I learn I write down, what I build I publish."
   labels:
     build: I build
@@ -70,9 +71,9 @@ es:
   kicker: Perfil
   title: El ingeniero detrás del cuaderno.
   lead:
-    - Soy José Manuel, ingeniero de firmware y software en Valencia, trabajando en I+D. En el día a día eso es firmware embebido industrial en C sobre STM32 y FreeRTOS para inversores solares y almacenamiento, con foco en optimización de bajo nivel, comunicaciones industriales (Modbus) y automatización de pruebas sobre hardware.
-    - Llegué a la ingeniería desde la acústica y la instrumentación —un grado en Ingeniería de Telecomunicación y un Máster en Ingeniería Acústica, y después investigación predoctoral en la UPV sobre ultrasonidos y metamateriales acústicos— antes de reorientarme al software industrial. Sigo prefiriendo los problemas donde la señal, el sistema y el software se tocan.
-    - Mantengo proyectos open source usados por desarrolladores de todo el mundo —un servidor MCP para GitLab, herramientas de procesado de señal y de seguridad de red— con rigor de ingeniería y foco en la calidad.
+    - Soy José Manuel, ingeniero de firmware y software en Valencia, con base en I+D. En el día a día programo en varios lenguajes, construyo y mantengo proyectos open source, y me mantengo al día de las novedades del software y del mundo del código abierto.
+    - Llegué a la ingeniería desde la acústica y la instrumentación —un grado en Ingeniería de Telecomunicación y un Máster en Ingeniería Acústica, y después investigación predoctoral en la UPV sobre ultrasonidos y metamateriales acústicos— antes de reorientarme al software. Sigo prefiriendo los problemas donde la señal, el sistema y el software se tocan.
+    - Lo más reciente ha sido firmware embebido industrial en C sobre STM32 y FreeRTOS para inversores solares y almacenamiento —optimización de bajo nivel, comunicaciones industriales (Modbus) y automatización de pruebas sobre hardware—. Los proyectos open source que mantengo los usan desarrolladores de todo el mundo, y me importa hacer el trabajo con rigor de ingeniería y foco en la calidad.
   note: "Este sitio es mi cuaderno: lo que aprendo lo escribo, lo que construyo lo publico."
   labels:
     build: Construyo
