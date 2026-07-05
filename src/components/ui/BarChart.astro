@@ -5,6 +5,16 @@
  * A reusable horizontal bar chart component for displaying statistical data.
  * Supports theming (light/dark), custom colors, and various display options.
  *
+ * Palette note: this component deliberately does NOT use the `--dg-cat-*`
+ * category tokens that the zero-JS diagram components (MemoryMap, RegisterMap,
+ * Pipeline, etc.) share for structural/categorical diagram fills. BarChart
+ * plots real statistical data, so its default qualitative palettes
+ * (Okabe-Ito, Paul Tol's Bright) are chosen for colorblind-safety and
+ * perceptual uniformity on data series — properties `--dg-cat-*` was never
+ * designed to guarantee (it's tuned for a fixed, small set of diagram roles,
+ * not for scaling to N arbitrary data categories). Keep the two systems
+ * separate: do not migrate BarChart's series colors to `--dg-cat-*`.
+ *
  * @example
  * <BarChart
  *   title="Top Attacked Ports"

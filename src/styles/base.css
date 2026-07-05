@@ -72,10 +72,14 @@ a:hover {
   text-decoration-thickness: 2px;
 }
 
-/* ===== Foco visible (no se quita el outline sin sustituto) ================ */
-:focus-visible {
-  outline: 2px solid var(--color-primary);
+/* ===== Foco visible (no se quita el outline sin sustituto) ================
+   El outline se mantiene siempre (visible en Windows High Contrast, donde
+   box-shadow no se pinta); el ring (--focus-ring, token global promovido
+   desde Header.astro) añade el refuerzo visual en navegadores normales. */
+:is(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+  outline: 2px solid var(--color-accent);
   outline-offset: 2px;
+  box-shadow: var(--focus-ring);
 }
 
 /* ===== Selección de texto ================================================== */

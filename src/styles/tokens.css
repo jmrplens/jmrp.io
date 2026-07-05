@@ -219,6 +219,16 @@
      Uso: color-mix(in srgb, var(--color-accent) var(--a-12), transparent) */
   --a-12: 12%;
 
+  /* ===== FOCUS ============================================================
+     No cambia por tema: --color-accent ya resuelve por tema, así que este
+     token vive fuera de los pares KEEP-IN-SYNC (no requiere restatement en
+     :root[data-theme="dark"] — ver scripts/ci/check-token-sync.mjs, modo
+     "subset": el baseline puede tener claves extra que el override no
+     repite). Promovido desde Header.astro (3 bloques duplicados) — usar
+     junto al `outline` global de base.css, no en su lugar. */
+  --focus-ring: 0 0 0 3px
+    color-mix(in srgb, var(--color-accent) 55%, transparent);
+
   /* ===== LAYOUT =========================================================== */
   --header-height: 64px;
   --header-height-mobile: 58px; /* barra colapsada (móvil) */

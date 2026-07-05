@@ -353,8 +353,7 @@ const navLabelKeyMap: Record<string, TranslationKey> = {
 
   .nav-links a:focus-visible {
     outline: none;
-    box-shadow: 0 0 0 3px
-      color-mix(in srgb, var(--color-accent) 55%, transparent);
+    box-shadow: var(--focus-ring);
   }
 
   /* Active section: accent text, a `/` prefix, and a 2px amber underline. */
@@ -404,8 +403,7 @@ const navLabelKeyMap: Record<string, TranslationKey> = {
 
   .gh-link:focus-visible {
     outline: none;
-    box-shadow: 0 0 0 3px
-      color-mix(in srgb, var(--color-accent) 55%, transparent);
+    box-shadow: var(--focus-ring);
   }
 
   /* --- Burger (label toggling #nav-open) --- */
@@ -427,8 +425,7 @@ const navLabelKeyMap: Record<string, TranslationKey> = {
 
   /* Visible focus ring on the burger when the (sr-only) checkbox is focused. */
   .nav-open-cb:focus-visible + nav .menu-toggle {
-    box-shadow: 0 0 0 3px
-      color-mix(in srgb, var(--color-accent) 55%, transparent);
+    box-shadow: var(--focus-ring);
   }
 
   /* --- Scrim --- */
