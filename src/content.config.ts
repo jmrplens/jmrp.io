@@ -500,4 +500,64 @@ const tools = defineCollection({
   }),
 });
 
-export const collections = { posts, site_config, cv, publications_data, tools };
+/**
+ * Configuration for the 'profile' collection (About / Uses pages).
+ * Each YAML file is one document, discriminated by `type`. Bilingual prose is
+ * kept in `en`/`es` blocks so each page is a single localized source of truth.
+ */
+const LocalizedString = z.object({ en: z.string(), es: z.string() });
+
+const AboutLocale = z.object({
+  kicker: z.string(),
+  title: z.string(),
+  lead: z.array(z.string()),
+  note: z.string(),
+  labels: z.object({
+    build: z.string(),
+    writesAbout: z.string(),
+    projects: z.string(),
+    education: z.string(),
+    contact: z.string(),
+  }),
+  build: z.array(z.string()),
+  writesAbout: z.array(z.string()),
+  education: z.array(
+    z.object({
+      degree: z.string(),
+      org: z.string(),
+      year: z.string(),
+      note: z.string(),
+    }),
+  ),
+});
+
+const aboutSchema = z.object({
+  type: z.literal("about"),
+  /** Project names curated from the CV's "Open Source Projects" section. */
+  featuredProjects: z.array(z.string()),
+  person: z.object({
+    jobTitle: LocalizedString,
+    description: LocalizedString,
+    knowsAbout: z.array(z.string()),
+  }),
+  en: AboutLocale,
+  es: AboutLocale,
+});
+
+const profile = defineCollection({
+  loader: glob({
+    pattern: "**/*.yaml",
+    base: "./src/content/profile",
+    generateId: ({ entry }) => stripExtension(entry),
+  }),
+  schema: z.discriminatedUnion("type", [aboutSchema]),
+});
+
+export const collections = {
+  posts,
+  site_config,
+  cv,
+  publications_data,
+  tools,
+  profile,
+};

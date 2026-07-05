@@ -1,79 +1,55 @@
 ---
 /**
- * About page ("// PERFIL") — short bio, a portrait slot, and three summary
- * cards (build / write about / say hi). Bilingual content is kept inline
- * because it is page-specific prose rather than reusable UI chrome.
+ * About page ("// PROFILE") — bio, portrait, "I build / I write about / say hi"
+ * cards, featured open-source projects, and education. All content is a single
+ * localized source in `src/content/profile/about.yaml`; the featured projects are
+ * pulled from the CV collection so their data lives in one place. Emits a
+ * ProfilePage + Person JSON-LD to strengthen author-entity recognition.
  */
-import githubAvatar from "@assets/github-avatar.png";
+import mehomeImg from "@assets/mehome.webp";
 import { defaultLocale, type Locale } from "@i18n/config";
 import { useTranslatedPath, useTranslations } from "@i18n/utils";
 import BaseLayout from "@layouts/BaseLayout.astro";
+import type { SiteConfig } from "@src/types";
+import { buildSameAs, getAbsoluteUrl, getSiteUrl } from "@utils/site";
 import { Image } from "astro:assets";
+import { getEntry } from "astro:content";
+import type { ProfilePage } from "schema-dts";
 
 const locale = (Astro.currentLocale ?? defaultLocale) as Locale;
 const t = useTranslations(locale);
 const translatePath = useTranslatedPath(locale);
 
-const content = {
-  en: {
-    kicker: "Profile",
-    title: "The engineer behind the notebook.",
-    photoAlt: "José Manuel Requena Plens",
-    lead: "I'm José Manuel — a firmware and software engineer based in Valencia, Spain. Day to day that means secure embedded devices, open-source tooling, and the self-hosted infrastructure that keeps them running. I came to code from acoustics and instrumentation, and I still gravitate to problems that sit where signal, system and software meet.",
-    note: "This site is my notebook: what I learn I write down, what I build I publish.",
-    cards: [
-      {
-        label: "I build",
-        items: [
-          "Embedded firmware (ESP32, Arm)",
-          "MCP servers in Go",
-          "Network & security tooling",
-          "Self-hosted infrastructure",
-        ],
-      },
-      {
-        label: "I write about",
-        items: [
-          "Firmware & low level",
-          "Networking (MikroTik, nginx)",
-          "Homelab & CSP/security",
-          "Acoustics & DSP",
-        ],
-      },
-    ],
-    contactLabel: "Say hi",
-  },
-  es: {
-    kicker: "Perfil",
-    title: "El ingeniero detrás del cuaderno.",
-    photoAlt: "José Manuel Requena Plens",
-    lead: "Soy José Manuel, ingeniero de firmware y software en Valencia. En el día a día eso son dispositivos embebidos seguros, herramientas open-source y la infraestructura self-hosted que los mantiene en marcha. Llegué al código desde la acústica y la instrumentación, y sigo prefiriendo los problemas donde la señal, el sistema y el software se tocan.",
-    note: "Este sitio es mi cuaderno: lo que aprendo lo escribo, lo que construyo lo publico.",
-    cards: [
-      {
-        label: "Construyo",
-        items: [
-          "Firmware embebido (ESP32, Arm)",
-          "Servidores MCP en Go",
-          "Herramientas de red y seguridad",
-          "Infraestructura self-hosted",
-        ],
-      },
-      {
-        label: "Escribo sobre",
-        items: [
-          "Firmware y bajo nivel",
-          "Redes (MikroTik, nginx)",
-          "Homelab y CSP/seguridad",
-          "Acústica y DSP",
-        ],
-      },
-    ],
-    contactLabel: "Hablemos",
-  },
-} as const;
+const aboutEntry = await getEntry("profile", "about");
+if (!aboutEntry) throw new Error("Missing content: profile/about.yaml");
+const about = aboutEntry.data;
+const c = about[locale];
 
-const c = content[locale] ?? content.en;
+const siteEntry = await getEntry("site_config", "site");
+const siteData = (siteEntry?.data || {}) as SiteConfig;
+
+/** Featured open-source project shape as stored in the CV sections. */
+interface CvProject {
+  name: string;
+  tech?: string;
+  description?: string;
+  icon?: string;
+  links?: { label: string; url: string }[];
+}
+
+// Pull the curated featured projects from the CV collection (single source).
+const cvEntry = await getEntry("cv", locale);
+const cvSections = (cvEntry?.data.sections ?? []) as unknown as {
+  items?: CvProject[];
+}[];
+const cvItems = cvSections.flatMap((s) => s.items ?? []);
+const featuredProjects = about.featuredProjects
+  .map((name) => cvItems.find((item) => item?.name === name))
+  .filter((p): p is CvProject => Boolean(p));
+
+/** Primary (GitHub, else first) link for a project card. */
+const projectHref = (p: CvProject) =>
+  p.links?.find((l) => l.label === "GitHub")?.url ?? p.links?.[0]?.url;
 
 const contactLinks = [
   {
@@ -84,26 +60,48 @@ const contactLinks = [
   { key: "mail", value: "mail@jmrp.io", href: "mailto:mail@jmrp.io" },
   { key: "cv", value: "/cv", href: translatePath("/cv/") },
 ];
+
+const personSchema = {
+  "@type": "ProfilePage",
+  "@id": new URL("#profile", new URL(Astro.url.pathname, getSiteUrl())).href,
+  inLanguage: locale,
+  mainEntity: {
+    "@type": "Person",
+    "@id": new URL("#person", getSiteUrl()).href,
+    name: siteData.name ?? "José Manuel Requena Plens",
+    jobTitle: about.person.jobTitle[locale],
+    description: about.person.description[locale],
+    image: getAbsoluteUrl(mehomeImg.src),
+    url: getSiteUrl(),
+    sameAs: buildSameAs(siteData.social_links, siteData.person?.sameAs),
+    knowsAbout: about.person.knowsAbout,
+    alumniOf: c.education.map((edu) => ({
+      "@type": "EducationalOrganization",
+      name: edu.org,
+    })),
+  },
+} satisfies ProfilePage;
 ---
 
 <BaseLayout
   title={t("pages.about.title")}
   description={t("pages.about.description")}
   type="profile"
+  schema={personSchema}
 >
   <div class="about container">
     <section class="about-hero">
       <div>
         <p class="section-title">{c.kicker}</p>
         <h1 class="page-title about-hero__title">{c.title}</h1>
-        <p class="about-hero__lead">{c.lead}</p>
+        {c.lead.map((para) => <p class="about-hero__lead">{para}</p>)}
         <p class="about-hero__note">{c.note}</p>
       </div>
       <div class="about-portrait">
         <Image
           class="about-portrait__img"
-          src={githubAvatar}
-          alt={c.photoAlt}
+          src={mehomeImg}
+          alt={siteData.name ?? "José Manuel Requena Plens"}
           width={260}
           height={260}
           widths={[180, 260, 360]}
@@ -117,20 +115,20 @@ const contactLinks = [
       class="about-cards"
       aria-label={c.kicker}
     >
-      {
-        c.cards.map((card) => (
-          <div class="about-card">
-            <p class="about-card__label">{card.label}</p>
-            <ul class="about-card__list">
-              {card.items.map((item) => (
-                <li>{item}</li>
-              ))}
-            </ul>
-          </div>
-        ))
-      }
       <div class="about-card">
-        <p class="about-card__label">{c.contactLabel}</p>
+        <p class="about-card__label">{c.labels.build}</p>
+        <ul class="about-card__list">
+          {c.build.map((item) => <li>{item}</li>)}
+        </ul>
+      </div>
+      <div class="about-card">
+        <p class="about-card__label">{c.labels.writesAbout}</p>
+        <ul class="about-card__list">
+          {c.writesAbout.map((item) => <li>{item}</li>)}
+        </ul>
+      </div>
+      <div class="about-card">
+        <p class="about-card__label">{c.labels.contact}</p>
         <ul class="about-card__list about-card__list--mono">
           {
             contactLinks.map((link) => (
@@ -142,6 +140,72 @@ const contactLinks = [
           }
         </ul>
       </div>
+    </section>
+
+    {
+      featuredProjects.length > 0 && (
+        <section
+          class="about-section"
+          aria-labelledby="about-projects-title"
+        >
+          <h2
+            class="about-section__title"
+            id="about-projects-title"
+          >
+            {c.labels.projects}
+          </h2>
+          <div class="about-projects">
+            {featuredProjects.map((p) => {
+              const href = projectHref(p);
+              return (
+                <article class="proj-card">
+                  <div class="proj-card__head">
+                    {p.icon && (
+                      <span
+                        class={`i-${p.icon} proj-card__icon`}
+                        aria-hidden="true"
+                      />
+                    )}
+                    <h3 class="proj-card__name">
+                      {href ? <a href={href}>{p.name}</a> : p.name}
+                    </h3>
+                  </div>
+                  {p.tech && <p class="proj-card__tech">{p.tech}</p>}
+                  {p.description && (
+                    <p class="proj-card__desc">{p.description}</p>
+                  )}
+                </article>
+              );
+            })}
+          </div>
+        </section>
+      )
+    }
+
+    <section
+      class="about-section"
+      aria-labelledby="about-education-title"
+    >
+      <h2
+        class="about-section__title"
+        id="about-education-title"
+      >
+        {c.labels.education}
+      </h2>
+      <ul class="about-edu">
+        {
+          c.education.map((edu) => (
+            <li class="edu-row">
+              <span class="edu-row__year">{edu.year}</span>
+              <div class="edu-row__body">
+                <span class="edu-row__degree">{edu.degree}</span>
+                <span class="edu-row__org">{edu.org}</span>
+                <span class="edu-row__note">{edu.note}</span>
+              </div>
+            </li>
+          ))
+        }
+      </ul>
     </section>
   </div>
 </BaseLayout>
@@ -156,7 +220,7 @@ const contactLinks = [
     display: grid;
     grid-template-columns: 1.4fr 0.6fr;
     gap: var(--space-xl);
-    align-items: center;
+    align-items: start;
   }
 
   .about-hero .section-title {
@@ -179,7 +243,7 @@ const contactLinks = [
   }
 
   .about-hero__note {
-    margin: 0;
+    margin: var(--space-sm) 0 0;
     font-size: var(--text-base);
     line-height: 1.65;
     color: var(--color-text-muted);
@@ -255,6 +319,123 @@ const contactLinks = [
     text-underline-offset: 3px;
   }
 
+  /* Featured projects + education */
+  .about-section {
+    margin-top: var(--space-xl);
+  }
+
+  .about-section__title {
+    margin: 0 0 var(--space-md-lg);
+    font-family: var(--font-mono);
+    font-size: var(--text-label);
+    font-weight: var(--fw-medium);
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+  }
+
+  .about-projects {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: var(--space-md);
+  }
+
+  .proj-card {
+    padding: var(--space-md-lg);
+    background: var(--color-bg-secondary);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+  }
+
+  .proj-card__head {
+    display: flex;
+    gap: 0.5em;
+    align-items: center;
+    margin-bottom: 6px;
+  }
+
+  .proj-card__icon {
+    font-size: var(--text-lg);
+  }
+
+  .proj-card__name {
+    margin: 0;
+    font-family: var(--font-mono);
+    font-size: var(--text-md);
+    font-weight: var(--fw-medium);
+    color: var(--color-text-heading);
+  }
+
+  .proj-card__name a {
+    color: inherit;
+    text-decoration: none;
+  }
+
+  .proj-card__name a:hover {
+    color: var(--color-accent);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+
+  .proj-card__tech {
+    margin: 0 0 var(--space-sm);
+    font-family: var(--font-mono);
+    font-size: var(--text-micro);
+    color: var(--color-text-muted);
+  }
+
+  .proj-card__desc {
+    margin: 0;
+    font-size: var(--text-sm);
+    line-height: 1.55;
+    color: var(--color-text);
+  }
+
+  .about-edu {
+    padding: 0;
+    margin: 0;
+    list-style: none;
+    border-top: 1px solid var(--color-hair);
+  }
+
+  .edu-row {
+    display: grid;
+    grid-template-columns: 5.5rem 1fr;
+    gap: var(--space-md);
+    padding: var(--space-md-lg) 2px;
+    border-bottom: 1px solid var(--color-hair);
+  }
+
+  .edu-row__year {
+    font-family: var(--font-mono);
+    font-size: var(--text-label);
+    color: var(--color-accent);
+  }
+
+  .edu-row__body {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+
+  .edu-row__degree {
+    font-size: var(--text-sm);
+    font-weight: var(--fw-medium);
+    color: var(--color-text-heading);
+  }
+
+  .edu-row__org {
+    font-family: var(--font-mono);
+    font-size: var(--text-micro);
+    color: var(--color-text-muted);
+  }
+
+  .edu-row__note {
+    font-size: var(--text-xs);
+    line-height: 1.5;
+    color: var(--color-text);
+  }
+
   @media (width <= 720px) {
     .about-hero {
       grid-template-columns: 1fr;
@@ -262,6 +443,8 @@ const contactLinks = [
 
     .about-portrait {
       justify-self: start;
+      order: -1;
+      max-width: 160px;
     }
   }
 </style>

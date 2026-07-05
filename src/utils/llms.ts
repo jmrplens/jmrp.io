@@ -94,11 +94,13 @@ function sectionsBlock(siteUrl: string): string {
     "## Sections",
     "",
     `- [Blog](${siteUrl}/blog/): Technical articles on Nginx, MikroTik, networking, security, embedded firmware, and DevOps`,
+    `- [About](${siteUrl}/about/): Who José Manuel Requena Plens is — firmware & software engineer, background, and featured open-source projects`,
     `- [CV](${siteUrl}/cv/): Professional curriculum vitae and experience`,
     `- [Publications](${siteUrl}/publications/): Academic papers on acoustics, metamaterials, and ultrasound`,
     `- [Homelab](${siteUrl}/homelab/): Self-hosted infrastructure — Mastodon, Matrix, Meshtastic, Tor relays`,
     `- [GitHub](${siteUrl}/github/): Open source projects and contributions`,
     `- [Tools](${siteUrl}/tools/): Free browser-based developer tools (privacy-first, no server calls)`,
+    `- [Uses](${siteUrl}/uses/): Hardware, software, and homelab kept in rotation`,
   ].join("\n");
 }
 

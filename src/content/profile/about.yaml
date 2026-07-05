@@ -1,0 +1,105 @@
+type: about
+
+# Featured open-source projects: names pulled from the CV's "Open Source
+# Projects" section at build time (single source — edit the project data in
+# src/content/cv/{en,es}.yaml, curate the selection here).
+featuredProjects:
+  - gitlab-mcp-server
+  - PyOctaveBand
+  - cs-routeros-bouncer
+
+# Person facts → ProfilePage / Person JSON-LD (sameAs comes from site config).
+person:
+  jobTitle:
+    en: R&D · Firmware & Software Engineer
+    es: I+D · Ingeniero de Firmware y Software
+  description:
+    en: Firmware and software engineer in Valencia, Spain — industrial embedded systems, open-source tooling, and self-hosted infrastructure.
+    es: Ingeniero de firmware y software en Valencia — sistemas embebidos industriales, herramientas open source e infraestructura self-hosted.
+  knowsAbout:
+    - Embedded firmware
+    - STM32
+    - FreeRTOS
+    - Modbus
+    - Firmware testing
+    - Go
+    - Model Context Protocol
+    - Network security
+    - Acoustics
+    - Digital signal processing
+
+en:
+  kicker: Profile
+  title: The engineer behind the notebook.
+  lead:
+    - I'm José Manuel — a firmware and software engineer based in Valencia, Spain, working in R&D. Day to day that means industrial embedded firmware in C on STM32 and FreeRTOS for solar inverters and storage, with a focus on low-level optimization, industrial communications (Modbus) and hardware test automation.
+    - I came to engineering from acoustics and instrumentation — a degree in Telecommunication Engineering and a Master's in Acoustical Engineering, followed by predoctoral research at the UPV on ultrasound and acoustic metamaterials, before redirecting toward industrial software. I still gravitate to problems that sit where signal, system and software meet.
+    - I maintain open-source projects used by developers worldwide — a GitLab MCP server, signal-processing and network-security tooling — and I care about doing the work with engineering rigor and a focus on quality.
+  note: "This site is my notebook: what I learn I write down, what I build I publish."
+  labels:
+    build: I build
+    writesAbout: I write about
+    projects: Featured open source
+    education: Education
+    contact: Say hi
+  build:
+    - Embedded firmware (C, STM32, FreeRTOS)
+    - Industrial comms & test automation (Modbus)
+    - MCP servers & tooling in Go
+    - Self-hosted infrastructure & security
+  writesAbout:
+    - Firmware & low level
+    - Networking (MikroTik, nginx)
+    - Homelab & security (CSP)
+    - Acoustics & DSP
+  education:
+    - degree: Predoctoral research — Health & Wellness Technologies
+      org: UPV · i3M / UMIL
+      year: 2019–2023
+      note: Acoustic metamaterials & ultrasound imaging; redirected to industry.
+    - degree: Master's in Acoustical Engineering
+      org: UPV · EPSG Gandia
+      year: "2019"
+      note: Graduated with honors; thesis with special distinction.
+    - degree: Degree in Telecommunication Engineering (Sound & Image)
+      org: University of Alicante
+      year: "2018"
+      note: Acoustic Engineering + Audiovisual Technology.
+
+es:
+  kicker: Perfil
+  title: El ingeniero detrás del cuaderno.
+  lead:
+    - Soy José Manuel, ingeniero de firmware y software en Valencia, trabajando en I+D. En el día a día eso es firmware embebido industrial en C sobre STM32 y FreeRTOS para inversores solares y almacenamiento, con foco en optimización de bajo nivel, comunicaciones industriales (Modbus) y automatización de pruebas sobre hardware.
+    - Llegué a la ingeniería desde la acústica y la instrumentación —un grado en Ingeniería de Telecomunicación y un Máster en Ingeniería Acústica, y después investigación predoctoral en la UPV sobre ultrasonidos y metamateriales acústicos— antes de reorientarme al software industrial. Sigo prefiriendo los problemas donde la señal, el sistema y el software se tocan.
+    - Mantengo proyectos open source usados por desarrolladores de todo el mundo —un servidor MCP para GitLab, herramientas de procesado de señal y de seguridad de red— con rigor de ingeniería y foco en la calidad.
+  note: "Este sitio es mi cuaderno: lo que aprendo lo escribo, lo que construyo lo publico."
+  labels:
+    build: Construyo
+    writesAbout: Escribo sobre
+    projects: Open source destacado
+    education: Formación
+    contact: Hablemos
+  build:
+    - Firmware embebido (C, STM32, FreeRTOS)
+    - Comunicaciones industriales y automatización de pruebas (Modbus)
+    - Servidores MCP y herramientas en Go
+    - Infraestructura self-hosted y seguridad
+  writesAbout:
+    - Firmware y bajo nivel
+    - Redes (MikroTik, nginx)
+    - Homelab y seguridad (CSP)
+    - Acústica y DSP
+  education:
+    - degree: Investigación predoctoral — Tecnologías para la Salud y el Bienestar
+      org: UPV · i3M / UMIL
+      year: 2019–2023
+      note: Metamateriales acústicos e imagen por ultrasonidos; reorientado a la industria.
+    - degree: Máster en Ingeniería Acústica
+      org: UPV · EPSG Gandia
+      year: "2019"
+      note: Graduado con matrícula de honor; tesis con mención especial.
+    - degree: Grado en Ing. de Telecomunicación (Sonido e Imagen)
+      org: Universidad de Alicante
+      year: "2018"
+      note: Ingeniería Acústica + Tecnología Audiovisual.
