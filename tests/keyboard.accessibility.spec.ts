@@ -222,13 +222,18 @@ test.describe("Keyboard Navigation Accessibility", () => {
     await expect(tarpitLink).toBeVisible({ timeout: 10_000 });
     await expect(honeypotLink).toBeVisible({ timeout: 10_000 });
 
-    // Each link is focusable and carries a descriptive accessible name.
+    // Each link is focusable and carries a descriptive accessible name that
+    // satisfies WCAG 2.5.3 Label in Name — the aria-label must contain the
+    // visible link text, not replace it with unrelated wording.
     await tarpitLink.focus();
     await expect(tarpitLink).toBeFocused();
     await expect(tarpitLink).toHaveAttribute(
       "aria-label",
       /Read blog post about implementing Nginx Tarpit/i,
     );
+    const tarpitVisibleText = (await tarpitLink.innerText()).trim();
+    const tarpitAriaLabel = await tarpitLink.getAttribute("aria-label");
+    expect(tarpitAriaLabel).toContain(tarpitVisibleText);
 
     await honeypotLink.focus();
     await expect(honeypotLink).toBeFocused();
@@ -236,6 +241,9 @@ test.describe("Keyboard Navigation Accessibility", () => {
       "aria-label",
       /Read blog post about MikroTik Port Scanner Honeypot/i,
     );
+    const honeypotVisibleText = (await honeypotLink.innerText()).trim();
+    const honeypotAriaLabel = await honeypotLink.getAttribute("aria-label");
+    expect(honeypotAriaLabel).toContain(honeypotVisibleText);
 
     // Tab from a link advances focus to another focusable element.
     await tarpitLink.focus();

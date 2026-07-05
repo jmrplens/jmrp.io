@@ -36,7 +36,11 @@ export interface InfrastructureTranslations {
   blocks: string;
   /** Label for the Nginx ban count. */
   nginxBans: string;
-  /** ARIA label for the link to the tarpit blog post. */
+  /**
+   * Extra descriptive text composed after the visible link text to build an
+   * `aria-label` for the tarpit blog post link (WCAG 2.5.3 Label in Name:
+   * the visible text must remain the start of the accessible name).
+   */
   tarpitBlogAria: string;
   /** URL of the tarpit blog post. */
   tarpitBlogUrl: string;
@@ -44,7 +48,12 @@ export interface InfrastructureTranslations {
   tarpitHits: string;
   /** Unit label for tarpit hit counts. */
   tarpitHitsUnit: string;
-  /** ARIA label for the link to the port scanner blog post. */
+  /**
+   * Extra descriptive text composed after the visible link text to build an
+   * `aria-label` for the port scanner honeypot blog post link (WCAG 2.5.3
+   * Label in Name: the visible text must remain the start of the accessible
+   * name).
+   */
   portScannerBlogAria: string;
   /** URL of the port scanner blog post. */
   portScannerBlogUrl: string;
@@ -454,7 +463,7 @@ export default function InfrastructureInsights({ translations: t }: Props) {
                   <a
                     href={t.tarpitBlogUrl}
                     className="insight-link"
-                    aria-label={t.tarpitBlogAria}
+                    aria-label={`${t.tarpitHits} — ${t.tarpitBlogAria}`}
                   >
                     {t.tarpitHits}
                   </a>
@@ -494,14 +503,14 @@ export default function InfrastructureInsights({ translations: t }: Props) {
         <a
           href={t.tarpitBlogUrl}
           className="edge-link"
-          aria-label={t.tarpitBlogAria}
+          aria-label={`${t.linkTarpit} — ${t.tarpitBlogAria}`}
         >
           {t.linkTarpit}
         </a>
         <a
           href={t.portScannerBlogUrl}
           className="edge-link"
-          aria-label={t.portScannerBlogAria}
+          aria-label={`${t.linkHoneypot} — ${t.portScannerBlogAria}`}
         >
           {t.linkHoneypot}
         </a>
