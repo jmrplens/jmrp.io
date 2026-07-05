@@ -41,6 +41,11 @@ function getExtensionFromMime(mime: string): string {
   return sanitized || "bin";
 }
 
+// Kept in sync with the SVGO overrides in `astro.config.mjs`'s
+// `ViteImageOptimizer` config: `cleanupIDs`/`removeUselessDefs` stay disabled
+// here too, and `id`/`class` are no longer stripped, because a data-URI SVG
+// extracted here can be a Mermaid diagram whose arrow markers are referenced
+// via `id`/`url(#...)` — stripping them would silently break the arrowheads.
 const svgoConfig: Config = {
   multipass: true,
   plugins: [
@@ -54,9 +59,9 @@ const svgoConfig: Config = {
           removeViewBox: false,
           removeTitle: true,
           removeDesc: true,
-          removeUselessDefs: true,
+          removeUselessDefs: false, // KEEP definitions (markers for arrows)
           collapseGroups: true,
-          cleanupIDs: true,
+          cleanupIDs: false, // KEEP IDs (crucial for marker references)
           removeEmptyContainers: true,
           removeEmptyAttrs: true,
           cleanupAttrs: true,
@@ -70,7 +75,7 @@ const svgoConfig: Config = {
     {
       name: "removeAttrs",
       params: {
-        attrs: "(class|id|data-name)",
+        attrs: "(data-name)", // Only remove data-name, KEEP class and id
       },
     },
     {
