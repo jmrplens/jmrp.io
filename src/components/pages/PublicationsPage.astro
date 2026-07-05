@@ -105,6 +105,7 @@ const collectionSchema = {
   description: t("pages.publications.schemaDescription"),
   url: new URL(Astro.url.pathname, getSiteUrl()).href,
   inLanguage: locale,
+  isPartOf: { "@id": new URL("#website", getSiteUrl()).href },
   mainEntity: {
     "@type": "ItemList",
     numberOfItems: allPublications.length,

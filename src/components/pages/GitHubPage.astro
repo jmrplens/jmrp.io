@@ -40,11 +40,12 @@ const githubSchema = {
   description: t("pages.github.schemaDescription"),
   url: new URL(Astro.url.pathname, getSiteUrl()).href,
   inLanguage: locale,
+  // Reference the canonical #person entity (its @id) rather than minting a
+  // second, unlinked "José" node — the GitHub URL is already in #person.sameAs.
+  isPartOf: { "@id": new URL("#website", getSiteUrl()).href },
   mainEntity: {
     "@type": "Person",
-    name: profile.name ?? "José Manuel Requena Plens",
-    url: profile.html_url ?? "https://github.com/jmrplens",
-    sameAs: [profile.html_url ?? "https://github.com/jmrplens"],
+    "@id": new URL("#person", getSiteUrl()).href,
   },
 };
 ---

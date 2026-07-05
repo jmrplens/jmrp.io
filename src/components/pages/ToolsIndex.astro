@@ -56,12 +56,12 @@ const baseUrl = new URL(Astro.url.pathname, getSiteUrl());
 const collectionUrl = new URL("#collection", baseUrl).href;
 
 const toolsSchema = {
-  "@context": "https://schema.org",
   "@type": "CollectionPage",
   "@id": collectionUrl,
   name: t("pages.tools.title"),
   description: t("pages.tools.description"),
   inLanguage: locale,
+  isPartOf: { "@id": new URL("#website", getSiteUrl()).href },
   hasPart: allTools.map((tool) => {
     const toolUrl = new URL(`/tools/${tool.data.slug}/`, getSiteUrl()).href;
     return {

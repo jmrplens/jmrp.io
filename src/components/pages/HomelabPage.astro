@@ -153,6 +153,7 @@ const torStatsTranslations: TorStatsTranslations = {
 
 interface Provider {
   "@type": string;
+  "@id"?: string;
   name: string;
 }
 
@@ -169,8 +170,11 @@ interface Service {
   userInfo?: string;
 }
 
+// Reference the canonical #person entity so services are provided by the same
+// José node used site-wide (not a disconnected duplicate Person).
 const defaultProvider: Provider = {
   "@type": "Person",
+  "@id": new URL("#person", getSiteUrl()).href,
   name: "José Manuel Requena Plens",
 };
 
@@ -321,11 +325,11 @@ const nodeCardsTranslations: NodeCardsTranslations = {
 const monitoredNodesCount = nodeCards.length + torServices.length;
 
 const servicesSchema = {
-  "@context": "https://schema.org",
   "@type": "CollectionPage",
   "@id": new URL("#collection", new URL(Astro.url.pathname, getSiteUrl())).href,
   name: t("pages.homelab.schemaName"),
   inLanguage: locale,
+  isPartOf: { "@id": new URL("#website", getSiteUrl()).href },
   hasPart: [
     ...services.map((service) => ({
       "@type": "Service",

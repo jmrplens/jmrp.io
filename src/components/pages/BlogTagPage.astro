@@ -55,6 +55,7 @@ const schema = {
   }),
   url: new URL(Astro.url.pathname, getSiteUrl()).href,
   inLanguage: locale,
+  isPartOf: { "@id": new URL("#website", getSiteUrl()).href },
   mainEntity: {
     "@type": "ItemList",
     numberOfItems: posts.length,

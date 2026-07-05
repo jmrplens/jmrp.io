@@ -33,10 +33,24 @@ interface Props {
   faq?: { question: string; answer: string }[];
   /** Feature bullets — emitted as SoftwareApplication `featureList`. */
   features?: string[];
+  /** Publication date — emitted as SoftwareApplication `datePublished`. */
+  publishedDate?: Date;
+  /** Last-updated date — emitted as `dateModified` (falls back to publishedDate). */
+  updatedDate?: Date;
 }
 
-const { title, description, subtitle, icon, slug, extraSchema, faq, features } =
-  Astro.props;
+const {
+  title,
+  description,
+  subtitle,
+  icon,
+  slug,
+  extraSchema,
+  faq,
+  features,
+  publishedDate,
+  updatedDate,
+} = Astro.props;
 
 const locale = (Astro.currentLocale ?? defaultLocale) as Locale;
 const t = useTranslations(locale);
@@ -59,6 +73,10 @@ const baseToolSchema = {
   creator: { "@id": new URL("#person", getSiteUrl()).href },
   inLanguage: locale,
   ...(features && features.length > 0 && { featureList: features }),
+  ...(publishedDate && {
+    datePublished: publishedDate.toISOString(),
+    dateModified: (updatedDate ?? publishedDate).toISOString(),
+  }),
 } satisfies SoftwareApplication;
 const toolSchema = { ...baseToolSchema, ...extraSchema };
 

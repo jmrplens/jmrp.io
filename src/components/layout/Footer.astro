@@ -83,6 +83,15 @@ if (socials.mastodon_username) {
   });
 }
 
+if (socials.bluesky_handle) {
+  socialLinks.push({
+    url: `https://bsky.app/profile/${socials.bluesky_handle}`,
+    icon_name: "simple-icons:bluesky",
+    label: "Bluesky",
+    rel: "me noopener noreferrer",
+  });
+}
+
 if (socials.scholar_userid) {
   socialLinks.push({
     url: `https://scholar.google.com/citations?user=${socials.scholar_userid}`,

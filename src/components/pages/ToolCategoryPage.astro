@@ -81,8 +81,10 @@ const schema = {
   description: meta.description,
   url: new URL(Astro.url.pathname, getSiteUrl()).href,
   inLanguage: locale,
+  isPartOf: { "@id": new URL("#website", getSiteUrl()).href },
   mainEntity: {
     "@type": "ItemList",
+    numberOfItems: tools.length,
     itemListElement: tools.map(
       (tool: { data: { slug: string; title: string } }, index: number) => ({
         "@type": "ListItem",
