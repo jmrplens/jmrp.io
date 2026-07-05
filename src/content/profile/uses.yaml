@@ -1,9 +1,11 @@
 type: uses
 
 # Real inventory. Per the "only mine" link policy, `href` is set ONLY on the
-# author's own services/projects (homelab, repos) — never on third-party
-# products (MacBook, LG, VSCode, …). Paths starting with "/" are localized at
-# render; full URLs are used verbatim.
+# author's own services/infrastructure (homelab) — never on third-party
+# products (MacBook, LG, VS Code, …). Paths starting with "/" are localized at
+# render; full URLs are used verbatim. Homelab specs sourced from the fleet's
+# own server-info docs (TrueNAS i5-14400/64 GB, Mastodon Ryzen 3550H, edge
+# Ryzen 5500U, HA i3-7100U, 2× IONOS Tor VPS UK+ES).
 
 en:
   kicker: /uses
@@ -37,25 +39,72 @@ en:
           detail: servers
         - name: Termius · Claude Code
           detail: terminal · CLI & iOS
+        - name: Telegram · Element
+          detail: messaging
         - name: C · C++ · Python · Go · TypeScript
           detail: languages
+        - name: Bash · LaTeX · MATLAB
+          detail: scripting · docs · numerics
     - label: // homelab
       intro: >-
-        Self-hosted infrastructure I run and maintain myself. The live view —
-        nodes, services and traffic — is at /homelab.
+        The fleet I run and maintain myself — mini PCs, a NAS, the edge and two
+        VPS. The live view is at /homelab.
       items:
         - name: TrueNAS
-          detail: ZFS storage
+          detail: i5-14400 · 64 GB · ZFS (2× 18 TB + NVMe)
           href: /homelab/
-        - name: MikroTik · RouterOS
-          detail: VLANs · WireGuard · CrowdSec
+        - name: Mastodon node
+          detail: Ryzen 5 3550H · 64 GB · Debian
           href: /homelab/
-        - name: Docker
-          detail: self-hosted services · see /homelab
+        - name: Edge node
+          detail: Ryzen 5 5500U · nginx · CrowdSec
           href: /homelab/
-        - name: nginx
-          detail: reverse proxy · CSP + SRI
+        - name: Home Assistant node
+          detail: Core i3-7100U · HAOS
           href: /homelab/
+        - name: Tor relays
+          detail: 2× IONOS VPS · London + Spain
+          href: /homelab/
+        - name: Tor bridge
+          detail: mini PC · Campello
+          href: /homelab/
+        - name: MikroTik
+          detail: RouterOS · VLANs · WireGuard · CrowdSec
+          href: /homelab/
+    - label: // self-hosted
+      intro: The services running on that fleet — social, comms and media.
+      items:
+        - name: Mastodon
+          detail: Fediverse instance
+          href: /homelab/
+        - name: AT Protocol
+          detail: PDS · @jmrp.io
+          href: /homelab/
+        - name: Matrix
+          detail: Synapse homeserver
+          href: /homelab/
+        - name: Meshtastic
+          detail: LoRa mesh
+          href: /homelab/
+        - name: Tor
+          detail: relays + bridges
+          href: /homelab/
+        - name: Home Assistant
+          detail: home automation
+          href: /homelab/
+        - name: Immich
+          detail: photos
+          href: /homelab/
+        - name: Jellyfin
+          detail: media
+          href: /homelab/
+    - label: // off the desk
+      intro: When the screens are off.
+      items:
+        - name: Canyon Roadlite
+          detail: gravel
+        - name: Scott Genius 930
+          detail: MTB
 
 es:
   kicker: /uses
@@ -89,22 +138,69 @@ es:
           detail: servidores
         - name: Termius · Claude Code
           detail: terminal · CLI e iOS
+        - name: Telegram · Element
+          detail: mensajería
         - name: C · C++ · Python · Go · TypeScript
           detail: lenguajes
+        - name: Bash · LaTeX · MATLAB
+          detail: scripting · docs · cálculo
     - label: // homelab
       intro: >-
-        Infraestructura self-hosted que administro yo mismo. La vista en vivo
-        —nodos, servicios y tráfico— está en /homelab.
+        La flota que administro yo mismo —mini PCs, un NAS, el edge y dos VPS—.
+        La vista en vivo está en /homelab.
       items:
         - name: TrueNAS
-          detail: almacenamiento ZFS
+          detail: i5-14400 · 64 GB · ZFS (2× 18 TB + NVMe)
           href: /homelab/
-        - name: MikroTik · RouterOS
-          detail: VLANs · WireGuard · CrowdSec
+        - name: Nodo Mastodon
+          detail: Ryzen 5 3550H · 64 GB · Debian
           href: /homelab/
-        - name: Docker
-          detail: servicios self-hosted · ver /homelab
+        - name: Nodo edge
+          detail: Ryzen 5 5500U · nginx · CrowdSec
           href: /homelab/
-        - name: nginx
-          detail: proxy inverso · CSP + SRI
+        - name: Nodo Home Assistant
+          detail: Core i3-7100U · HAOS
           href: /homelab/
+        - name: Relays Tor
+          detail: 2× VPS IONOS · Londres + España
+          href: /homelab/
+        - name: Puente Tor
+          detail: mini PC · Campello
+          href: /homelab/
+        - name: MikroTik
+          detail: RouterOS · VLANs · WireGuard · CrowdSec
+          href: /homelab/
+    - label: // self-hosted
+      intro: Los servicios que corren sobre esa flota — social, comunicación y media.
+      items:
+        - name: Mastodon
+          detail: instancia Fediverse
+          href: /homelab/
+        - name: AT Protocol
+          detail: PDS · @jmrp.io
+          href: /homelab/
+        - name: Matrix
+          detail: homeserver Synapse
+          href: /homelab/
+        - name: Meshtastic
+          detail: malla LoRa
+          href: /homelab/
+        - name: Tor
+          detail: relays + puentes
+          href: /homelab/
+        - name: Home Assistant
+          detail: domótica
+          href: /homelab/
+        - name: Immich
+          detail: fotos
+          href: /homelab/
+        - name: Jellyfin
+          detail: media
+          href: /homelab/
+    - label: // fuera del escritorio
+      intro: Cuando las pantallas se apagan.
+      items:
+        - name: Canyon Roadlite
+          detail: gravel
+        - name: Scott Genius 930
+          detail: MTB
