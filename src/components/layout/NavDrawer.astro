@@ -1021,6 +1021,11 @@ const staticRecent = postData.slice(0, 6);
 
 <style>
   .nav-drawer {
+    /* Local token so the decorative shadow can be re-asserted verbatim in
+       the :focus/:focus-visible override below without duplicating the
+       literal (see that rule for why it must win explicitly). */
+    --nd-shadow: -30px 0 60px -30px rgb(0 0 0 / 55%);
+
     position: fixed;
     top: 0;
     right: 0;
@@ -1033,17 +1038,24 @@ const staticRecent = postData.slice(0, 6);
     height: 100dvh;
     background: color-mix(in srgb, var(--color-bg-secondary) 88%, transparent);
     border-left: 1px solid var(--color-border);
-    box-shadow: -30px 0 60px -30px rgb(0 0 0 / 55%);
+    box-shadow: var(--nd-shadow);
     backdrop-filter: blur(16px);
     transform: translateX(110%);
     transition: transform var(--dur-3) var(--ease-out);
   }
 
   /* Programmatic focus target on open — the dialog itself, no visible ring
-     (aria-modal + role=dialog convey context; it isn't a tabbable control). */
+     (aria-modal + role=dialog convey context; it isn't a tabbable control).
+     `#nav-drawer` has [tabindex] and matches the global
+     `:is(a, button, input, select, textarea, summary, [tabindex]):focus-visible`
+     rule in base.css, which ties this selector's specificity (0,2,0) and
+     sets `box-shadow: var(--focus-ring)`. Re-declaring the decorative
+     shadow here explicitly (instead of relying on source-order luck) keeps
+     "no ring on the dialog container" correct regardless of bundling order. */
   .nav-drawer:focus,
   .nav-drawer:focus-visible {
     outline: none;
+    box-shadow: var(--nd-shadow);
   }
 
   /* Open state: zero-JS via the checkbox, plus the JS `.open` class. */
@@ -1767,14 +1779,12 @@ const staticRecent = postData.slice(0, 6);
   .term-live :global(.term-chip:focus-visible),
   .term-live :global(.term-nedry__back:focus-visible) {
     outline: none;
-    box-shadow: 0 0 0 3px
-      color-mix(in srgb, var(--color-accent) 55%, transparent);
+    box-shadow: var(--focus-ring);
   }
 
   .term-input-line:focus-within {
     border-radius: var(--radius-sm);
-    box-shadow: 0 0 0 3px
-      color-mix(in srgb, var(--color-accent) 55%, transparent);
+    box-shadow: var(--focus-ring);
   }
 
   /* ≥44px touch targets (project rule). */
