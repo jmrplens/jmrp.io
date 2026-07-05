@@ -1,6 +1,8 @@
 const fs = require("node:fs");
 const path = require("node:path");
 
+const { AUDIT_PATHS } = require("./scripts/utils/audit-urls.cjs");
+
 /**
  * Filters URLs by the LOCALE_FILTER env var.
  * @param {string[]} urls - Full list of URLs.
@@ -41,15 +43,9 @@ const getUrls = () => {
     const sitemapPath = path.join(__dirname, "dist", "sitemap-0.xml");
     if (!fs.existsSync(sitemapPath)) {
       console.warn("⚠️ Sitemap not found at " + sitemapPath);
-      return [
-        "http://localhost:4321/",
-        "http://localhost:4321/homelab/",
-        "http://localhost:4321/tools/",
-        "http://localhost:4321/cv/",
-        "http://localhost:4321/publications/",
-        "http://localhost:4321/github/",
-        "http://localhost:4321/blog/",
-      ];
+      return AUDIT_PATHS.map(
+        (auditPath) => `http://localhost:4321${auditPath}`,
+      );
     }
 
     const content = fs.readFileSync(sitemapPath, "utf-8");

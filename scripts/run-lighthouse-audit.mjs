@@ -1,25 +1,26 @@
 import { execFileSync } from "node:child_process";
 import fs from "node:fs";
+import { createRequire } from "node:module";
 import path from "node:path";
+
+const require = createRequire(import.meta.url);
+/** @type {{ AUDIT_PATHS: string[] }} */
+const { AUDIT_PATHS } = require("./utils/audit-urls.cjs");
 
 const RESULTS_DIR = "lighthouse-results";
 const TARGET_SCORE = 0.99;
+const DIST_DIR = process.env.DIST_DIR ?? "./dist";
 
 // Get parameters
 const isProd = process.argv.includes("--prod");
-const BASE_URL = isProd ? "https://jmrp.io" : "http://localhost:4321";
+const BASE_URL =
+  process.env.BASE_URL ??
+  (isProd ? "https://jmrp.io" : "http://localhost:4321");
 
 const getUrls = () => {
-  const baseUrls = [
-    `${BASE_URL}/`,
-    `${BASE_URL}/services/`,
-    `${BASE_URL}/cv/`,
-    `${BASE_URL}/publications/`,
-    `${BASE_URL}/github/`,
-    `${BASE_URL}/blog/`,
-  ];
+  const baseUrls = AUDIT_PATHS.map((auditPath) => `${BASE_URL}${auditPath}`);
 
-  const postsDir = "dist/blog";
+  const postsDir = path.join(DIST_DIR, "blog");
   const postUrls = fs.existsSync(postsDir)
     ? fs
         .readdirSync(postsDir, { withFileTypes: true })
@@ -138,7 +139,11 @@ const runAudit = async () => {
     }
   });
 
-  if (totalIssues === 0) console.log("✨ MOBILE COMBINATIONS PASSED 99%!");
+  if (totalIssues === 0) {
+    console.log("✨ MOBILE COMBINATIONS PASSED 99%!");
+  } else {
+    process.exitCode = 1;
+  }
 };
 
 await runAudit();

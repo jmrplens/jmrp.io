@@ -1,8 +1,14 @@
 import { readdirSync, readFileSync, statSync } from "node:fs";
 import { extname, join } from "node:path";
 
-const DIST_DIR = "./dist";
+const DIST_DIR = process.env.DIST_DIR ?? "./dist";
 
+/**
+ * Recursively walks a directory, invoking `callback` for every file found.
+ * @param {string} dir - Directory to walk.
+ * @param {(filePath: string) => void} callback - Called with each file path.
+ * @returns {void}
+ */
 function walk(dir, callback) {
   readdirSync(dir).forEach((f) => {
     const dirPath = join(dir, f);
@@ -15,7 +21,9 @@ function walk(dir, callback) {
   });
 }
 
-console.log("Analyzing icons in 'dist'...");
+console.log(`Analyzing icons in '${DIST_DIR}'...`);
+
+let totalMissingCss = 0;
 
 walk(DIST_DIR, (filePath) => {
   if (extname(filePath) !== ".html") return;
@@ -64,6 +72,7 @@ walk(DIST_DIR, (filePath) => {
   });
 
   if (missingCss.length > 0) {
+    totalMissingCss += missingCss.length;
     console.log(`\nPage: ${filePath}`);
     console.log(
       `  Found ${uniqueIcons.length} icons, but ${missingCss.length} lack CSS rules:`,
@@ -71,3 +80,12 @@ walk(DIST_DIR, (filePath) => {
     missingCss.forEach((icon) => console.log(`    - ${icon}`));
   }
 });
+
+if (totalMissingCss > 0) {
+  console.log(
+    `\n❌ Found ${totalMissingCss} icon(s) without CSS rules across the build.`,
+  );
+  process.exitCode = 1;
+} else {
+  console.log("\n✨ All icons have matching CSS rules.");
+}
