@@ -44,14 +44,37 @@ export default defineConfig({
       ],
     },
     {
+      name: "performance",
+      use: { ...devices["Desktop Chrome"] },
+      testMatch: /(^|\/)performance\.spec\.ts/,
+      timeout: 60_000,
+      retries: process.env.CI ? 2 : 1,
+    },
+    {
       name: "mobile-functional",
       use: { ...devices["Pixel 5"] },
-      testMatch: /functional\.spec\.ts/,
+      // Anchored regex no longer matches tools.functional.spec.ts (the old
+      // unanchored /functional\.spec\.ts/ did), so it's listed explicitly to
+      // keep tools running on mobile too.
+      testMatch: [
+        /(^|\/)functional\.spec\.ts/,
+        /(^|\/)tools\.functional\.spec\.ts/,
+      ],
     },
     {
       name: "accessibility",
       use: { ...devices["Desktop Chrome"] },
-      testMatch: /accessibility\.spec\.ts/,
+      testMatch: /(^|\/)accessibility\.spec\.ts/,
+      timeout: 30_000,
+    },
+    {
+      name: "a11y-static",
+      use: { ...devices["Desktop Chrome"] },
+      testMatch: [
+        /deep\.accessibility\.spec\.ts/,
+        /keyboard\.accessibility\.spec\.ts/,
+        /tabs\.accessibility\.spec\.ts/,
+      ],
       timeout: 30_000,
     },
   ],

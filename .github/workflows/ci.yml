@@ -518,7 +518,7 @@ jobs:
         if: steps.playwright-cache.outputs.cache-hit != 'true'
         run: pnpm exec playwright install --with-deps chromium
       - name: Run Playwright tests
-        run: pnpm exec playwright test --project=functional --project=mobile-functional
+        run: pnpm exec playwright test --project=functional --project=mobile-functional --project=a11y-static --project=performance
       - name: Upload functional report
         uses: actions/upload-artifact@v7
         with:

@@ -454,6 +454,7 @@ export default function InfrastructureInsights({ translations: t }: Props) {
                   <a
                     href={t.tarpitBlogUrl}
                     className="insight-link"
+                    aria-label={t.tarpitBlogAria}
                   >
                     {t.tarpitHits}
                   </a>
@@ -493,12 +494,14 @@ export default function InfrastructureInsights({ translations: t }: Props) {
         <a
           href={t.tarpitBlogUrl}
           className="edge-link"
+          aria-label={t.tarpitBlogAria}
         >
           {t.linkTarpit}
         </a>
         <a
           href={t.portScannerBlogUrl}
           className="edge-link"
+          aria-label={t.portScannerBlogAria}
         >
           {t.linkHoneypot}
         </a>
