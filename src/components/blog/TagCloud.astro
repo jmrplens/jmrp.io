@@ -85,6 +85,8 @@ if (activeTag && visible.every((x) => x.tag !== activeTag)) {
     flex-wrap: wrap;
     gap: var(--space-sm);
     width: 100%;
+    /* Breathing room below the header's bottom divider (was flush against it). */
+    margin-block-start: var(--space-md-lg);
     font-family: var(--font-mono);
     font-size: var(--text-label);
   }
@@ -150,5 +152,49 @@ if (activeTag && visible.every((x) => x.tag !== activeTag)) {
     flex-wrap: wrap;
     gap: var(--space-sm);
     margin-top: var(--space-sm);
+  }
+
+  /* Mobile: collapse the wrapping cloud (~5 rows) into a single swipeable row.
+     The "+N more" disclosure is flattened into the scroll track so every tag
+     stays reachable by swiping; a right-edge fade hints there's more. */
+  @media (width <= 640px) {
+    .tag-filter {
+      flex-wrap: nowrap;
+      overflow-x: auto;
+      /* overflow-x:auto forces overflow-y:auto — pad so focus rings aren't
+         clipped and no phantom vertical scrollbar appears. */
+      padding-block: 4px;
+      padding-inline-end: var(--space-lg);
+      scrollbar-width: none;
+      -webkit-mask-image: linear-gradient(
+        to right,
+        #000 calc(100% - 2.25rem),
+        transparent
+      );
+      mask-image: linear-gradient(
+        to right,
+        #000 calc(100% - 2.25rem),
+        transparent
+      );
+    }
+
+    .tag-filter::-webkit-scrollbar {
+      display: none;
+    }
+
+    .tag-pill {
+      flex: none;
+    }
+
+    /* Flatten the zero-JS <details> so its summary is hidden and every overflow
+       pill joins the single scroll row. */
+    .tag-more,
+    .tag-more__list {
+      display: contents;
+    }
+
+    .tag-more > summary {
+      display: none;
+    }
   }
 </style>
