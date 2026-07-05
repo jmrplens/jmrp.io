@@ -5,6 +5,7 @@ import { loadEnv } from "vite";
 
 import { GITHUB_AVATAR_PATH, setupGithubAvatar } from "./pre-build/avatar.js";
 import { setupCfBeacon } from "./pre-build/beacon.js";
+import { timed } from "./timing.js";
 
 /**
  * Creates the jmrp-pre-build Astro integration.
@@ -33,14 +34,18 @@ export default function preBuildIntegration(): AstroIntegration {
             !fs.existsSync(GITHUB_AVATAR_PATH);
 
           if (shouldRunGithubAvatar) {
-            await setupGithubAvatar(logger);
+            await timed("setupGithubAvatar", logger, () =>
+              setupGithubAvatar(logger),
+            );
           } else {
             logger.info("GitHub avatar exists locally. Skipping fetch.");
           }
 
           // Only fetch beacon if we are building for production
           if (command === "build") {
-            await setupCfBeacon(env.PUBLIC_CF_BEACON_TOKEN, logger);
+            await timed("setupCfBeacon", logger, () =>
+              setupCfBeacon(env.PUBLIC_CF_BEACON_TOKEN, logger),
+            );
           }
 
           // Always setup icons detection to ensure UnoCSS finds them

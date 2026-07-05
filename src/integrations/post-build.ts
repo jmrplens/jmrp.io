@@ -27,6 +27,7 @@ import { extractCssDataUris } from "./post-build/css.js";
 import { processHtmlFiles } from "./post-build/html.js";
 import { optimizeImages } from "./post-build/images.js";
 import type { CspData } from "./post-build/types.js";
+import { timed } from "./timing.js";
 
 /**
  * Default secure PATH for executing system commands.
@@ -61,7 +62,9 @@ export default function postBuildIntegration(): AstroIntegration {
         };
 
         try {
-          await extractCssDataUris(distDir, logger);
+          await timed("extractCssDataUris", logger, () =>
+            extractCssDataUris(distDir, logger),
+          );
 
           const systemNginxPath =
             process.env.POSTBUILD_NGINX_SNIPPETS_PATH || "";
@@ -71,16 +74,26 @@ export default function postBuildIntegration(): AstroIntegration {
           // whether we deploy them to a system Nginx later.
           const enableCsp = true;
 
-          await processHtmlFiles(distDir, cspData, enableCsp, logger);
-          await finalizeCspConfig(distDir, cspData, logger);
+          await timed("processHtmlFiles", logger, () =>
+            processHtmlFiles(distDir, cspData, enableCsp, logger),
+          );
+          await timed("finalizeCspConfig", logger, () =>
+            finalizeCspConfig(distDir, cspData, logger),
+          );
 
-          await optimizeImages(distDir, logger);
-          await compressAssets(distDir, logger);
+          await timed("optimizeImages", logger, () =>
+            optimizeImages(distDir, logger),
+          );
+          await timed("compressAssets", logger, () =>
+            compressAssets(distDir, logger),
+          );
 
           if (systemNginxPath) {
             // Only fix permissions when deploying to Nginx (requires sudo and www-data user).
             // The actual copy-to-Nginx + reload happens post-swap in scripts/deploy-live.mjs.
-            fixPermissions(distDir, logger);
+            await timed("fixPermissions", logger, () =>
+              fixPermissions(distDir, logger),
+            );
           } else {
             logger.info(
               "Skipping permission fix (POSTBUILD_NGINX_SNIPPETS_PATH not set).",
