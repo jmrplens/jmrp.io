@@ -20,6 +20,15 @@
  * live `dist/` symlink still pointed at the OLD content. Moving it here,
  * after the swap, closes that window.
  *
+ * Production-root guard:
+ * - This repo is checked out in multiple worktrees (e.g. the production
+ *   tree at `/var/www/jmrp.io` and a `beta.jmrp.io` worktree) that share the
+ *   same Nginx snippets path and Cloudflare zone. Every action below is a
+ *   PRODUCTION side effect, so the entire script exits immediately (before
+ *   any work, including sitemap collection) unless `process.cwd()` matches
+ *   `PRODUCTION_ROOT` (default `/var/www/jmrp.io`, overridable via
+ *   `DEPLOY_LIVE_PRODUCTION_ROOT`) or `DEPLOY_LIVE_FORCE=1` is set.
+ *
  * Gating (identical to the previous in-hook behavior):
  * - Nginx deploy: skipped unless `POSTBUILD_NGINX_SNIPPETS_PATH` is set.
  * - Cloudflare purge: skipped unless `PRIVATE_CF_ZONE_ID` and
@@ -43,6 +52,33 @@ import { performance } from "node:perf_hooks";
 
 const ROOT = process.cwd();
 const DIST_DIR = path.join(ROOT, "dist");
+
+/**
+ * Filesystem root of the production checkout that is allowed to run publish
+ * actions (Nginx snippet deploy + reload, Cloudflare purge, IndexNow, Bing).
+ * Overridable via `DEPLOY_LIVE_PRODUCTION_ROOT` for exceptional cases (e.g.
+ * relocating the production checkout) — normally left at its default.
+ */
+const PRODUCTION_ROOT =
+  process.env.DEPLOY_LIVE_PRODUCTION_ROOT || "/var/www/jmrp.io";
+
+/**
+ * Guards against running publish actions (Nginx deploy/reload, Cloudflare
+ * purge, IndexNow, Bing) from a non-production checkout. This repo lives in
+ * multiple worktrees (e.g. `/var/www/jmrp-redesign` serving beta.jmrp.io)
+ * that share the same Nginx snippets and Cloudflare zone as production — a
+ * `pnpm build` run from a worktree must never purge production's CDN cache
+ * or reload production's Nginx config. Set `DEPLOY_LIVE_FORCE=1` to bypass
+ * (e.g. for intentional production-root maintenance from a script/CI runner
+ * that legitimately runs outside `PRODUCTION_ROOT`).
+ *
+ * @returns {boolean} `true` if publish actions should proceed, `false` if
+ *   the caller must skip everything and exit cleanly.
+ */
+function isProductionDeployAllowed() {
+  if (process.env.DEPLOY_LIVE_FORCE === "1") return true;
+  return ROOT === PRODUCTION_ROOT;
+}
 
 /**
  * Default secure PATH for executing system commands.
@@ -1019,12 +1055,21 @@ async function runPublishNotifications() {
 }
 
 /**
- * Entry point: deploys Nginx (fatal on failure), then runs the
- * publish notifications (never fatal).
+ * Entry point: exits immediately (no publish actions run) unless the
+ * current checkout is the production root (see {@link isProductionDeployAllowed}),
+ * then deploys Nginx (fatal on failure), then runs the publish
+ * notifications (never fatal).
  *
  * @returns {Promise<void>}
  */
 async function main() {
+  if (!isProductionDeployAllowed()) {
+    console.log(
+      `deploy-live: skipping — non-production worktree detected (cwd=${ROOT}, expected ${PRODUCTION_ROOT}); set DEPLOY_LIVE_FORCE=1 to override.`,
+    );
+    return;
+  }
+
   const startedAt = performance.now();
   console.log(
     `deploy-live: publishing from [${path.relative(ROOT, DIST_DIR) || "dist"}]...`,
