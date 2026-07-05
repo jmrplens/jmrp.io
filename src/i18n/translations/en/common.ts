@@ -99,7 +99,6 @@ export const common = {
   },
   aria: {
     mainNav: "Main Navigation",
-    homeLogo: "Home - JMRP",
     toggleNav: "Toggle Navigation",
     toggleTheme: "Toggle theme",
     switchToDark: "Switch to dark theme",

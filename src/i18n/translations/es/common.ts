@@ -98,7 +98,6 @@ export const common = {
   },
   aria: {
     mainNav: "Navegación principal",
-    homeLogo: "Inicio - JMRP",
     toggleNav: "Alternar navegación",
     toggleTheme: "Alternar tema",
     switchToDark: "Cambiar a tema oscuro",

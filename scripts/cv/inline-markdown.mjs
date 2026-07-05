@@ -146,7 +146,11 @@ export function markdownToHtml(md) {
     link: (text, url, title) => {
       // Drop the link (keep the text) when the scheme isn't allowlisted.
       if (!isSafeHref(url)) return escapeHtml(text);
-      const aria = title ? ` aria-label="${escapeAttr(title)}"` : "";
+      // The optional title enriches the accessible name, but it must still
+      // CONTAIN the visible text (WCAG 2.5.3, label-in-name) — so prepend it.
+      const aria = title
+        ? ` aria-label="${escapeAttr(`${text} — ${title}`)}"`
+        : "";
       return `<a href="${escapeAttr(url)}" target="_blank" rel="external noopener noreferrer"${aria}>${escapeHtml(text)}</a>`;
     },
     bold: (text) => `<strong>${escapeHtml(text)}</strong>`,

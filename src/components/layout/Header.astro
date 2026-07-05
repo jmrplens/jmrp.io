@@ -64,9 +64,7 @@ const navLabelKeyMap: Record<string, TranslationKey> = {
     type="checkbox"
     id="nav-open"
     class="nav-open-cb sr-only"
-    role="button"
     aria-label={t("aria.toggleNav")}
-    aria-haspopup="dialog"
     aria-controls="nav-drawer"
     aria-expanded="false"
   />
@@ -78,7 +76,6 @@ const navLabelKeyMap: Record<string, TranslationKey> = {
     <a
       href={translatePath("/")}
       class="logo"
-      aria-label={t("aria.homeLogo")}
     >
       <Logo />
     </a>
@@ -130,8 +127,6 @@ const navLabelKeyMap: Record<string, TranslationKey> = {
         id="menu-toggle"
         class="menu-toggle"
         aria-label={t("aria.toggleNav")}
-        aria-controls="nav-drawer"
-        aria-expanded="false"
       >
         <span
           class="i-fa-solid:bars icon-bars"
@@ -208,7 +203,8 @@ const navLabelKeyMap: Record<string, TranslationKey> = {
 
     const open = () => {
       drawer.classList.add("open");
-      toggle.setAttribute("aria-expanded", "true");
+      // aria-expanded lives on the checkbox (the focusable control); the burger
+      // <label> must not carry it (aria-allowed-attr / label-role limitation).
       checkbox.setAttribute("aria-expanded", "true");
       bgEls().forEach((el) => el.setAttribute("inert", ""));
       lockScroll();
@@ -222,7 +218,6 @@ const navLabelKeyMap: Record<string, TranslationKey> = {
     const close = ({ restoreFocus } = { restoreFocus: true }) => {
       checkbox.checked = false;
       drawer.classList.remove("open");
-      toggle.setAttribute("aria-expanded", "false");
       checkbox.setAttribute("aria-expanded", "false");
       bgEls().forEach((el) => el.removeAttribute("inert"));
       unlockScroll();

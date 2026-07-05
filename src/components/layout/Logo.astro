@@ -7,8 +7,11 @@
  * cursor. The path only reflects the first URL segment (never deep post/tool
  * slugs). The cursor animation respects `prefers-reduced-motion`.
  *
- * The accessible name is provided by the wrapping anchor (`aria-label`), so the
- * visible glyphs here are presentational; the cursor is `aria-hidden`.
+ * The visible wordmark IS the accessible name (WCAG 2.5.3 label-in-name: an
+ * `aria-label` on the wrapping anchor would not contain the visible breadcrumb
+ * text and axe counts rendered text even inside `aria-hidden`). Only the blinking
+ * cursor is `aria-hidden` — it carries no text. Decorative usages (e.g. the drawer
+ * header) hide the whole mark at the call site instead.
  */
 import { stripLocalePrefix } from "@i18n/utils";
 

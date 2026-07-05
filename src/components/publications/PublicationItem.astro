@@ -141,10 +141,7 @@ const cleanedBibtex = cleanBibtex(pub.bibtex);
       {
         collapseAuthors && (
           <details class="pub-etal">
-            <summary
-              class="pub-etal__toggle"
-              aria-label={t("pages.publications.showAllAuthors")}
-            >
+            <summary class="pub-etal__toggle">
               {t("pages.publications.etAl")}
             </summary>
             {hiddenAuthors.map((author: any, index: number) => {

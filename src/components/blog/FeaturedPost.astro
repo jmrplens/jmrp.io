@@ -31,7 +31,6 @@ const haystack = [
 <a
   class="featured-post"
   href={translatePath(`/blog/${post.data.slug}/`)}
-  aria-label={t("aria.readArticle", { title: post.data.title })}
   data-post
   data-featured
   data-tags={(post.data.tags ?? []).map((tag) => tag.toLowerCase()).join(" ")}
@@ -42,7 +41,8 @@ const haystack = [
       post.data.coverImage && (
         <Image
           src={post.data.coverImage}
-          alt={post.data.title}
+          alt=""
+          role="presentation"
           format="webp"
           class="featured-post__image"
           width={640}
