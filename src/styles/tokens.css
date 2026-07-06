@@ -219,15 +219,30 @@
      Uso: color-mix(in srgb, var(--color-accent) var(--a-12), transparent) */
   --a-12: 12%;
 
-  /* ===== FOCUS ============================================================
-     No cambia por tema: --color-accent ya resuelve por tema, así que este
-     token vive fuera de los pares KEEP-IN-SYNC (no requiere restatement en
-     :root[data-theme="dark"] — ver scripts/ci/check-token-sync.mjs, modo
-     "subset": el baseline puede tener claves extra que el override no
-     repite). Promovido desde Header.astro (3 bloques duplicados) — usar
-     junto al `outline` global de base.css, no en su lugar. */
+  /* ===== FOCUS =============================================================
+     --focus-ring en sí vive fuera de los pares KEEP-IN-SYNC (una sola
+     declaración en :root; no requiere restatement en :root[data-theme=
+     "dark"] — ver scripts/ci/check-token-sync.mjs, modo "subset"). Promovido
+     desde Header.astro (3 bloques duplicados) — usar junto al `outline`
+     global de base.css, no en su lugar.
+     --focus-ring-mix SÍ es temático (declarado en los 4 bloques, par
+     dark-tokens aquí/:root[data-theme="dark"] y par light-tokens en los
+     otros dos): el ring es un refuerzo AAA sobre el `outline` opaco, que ya
+     cumple 1.4.11/2.4.13 por sí solo, pero el ring compuesto (color-mix con
+     transparent) también debe llegar a ≥3:1 de contraste no-textual. Con
+     55% sobre el bg oscuro (#0a0a0b) y el accent oscuro (#f5a623) da ~3.6:1
+     — OK, no se toca. Con el MISMO 55% sobre el bg claro (#fafaf7) y el
+     accent claro, ya oscurecido a AA como texto (#8f5300), el ring compuesto
+     caía a ~2.4:1 (<3:1) porque el accent claro es mucho más oscuro y el mix
+     con transparente lo aclara de vuelta hacia el bg. Subir a 75% en claro
+     compensa: efectivo ≈ mix(0.75·#8f5300 + 0.25·#fafaf7) → L≈0.235 vs
+     L(bg)≈0.955 → ratio ≈ 3.53:1 (fórmula de luminancia relativa WCAG,
+     mismo método que los comentarios de contraste de texto de este
+     fichero). El oscuro se deja en 55% (ya cumple, no hace falta oscurecer
+     más el ring). */
+  --focus-ring-mix: 55%;
   --focus-ring: 0 0 0 3px
-    color-mix(in srgb, var(--color-accent) 55%, transparent);
+    color-mix(in srgb, var(--color-accent) var(--focus-ring-mix), transparent);
 
   /* ===== LAYOUT =========================================================== */
   --header-height: 64px;
@@ -354,6 +369,9 @@
 
     /* Scrim (light) */
     --scrim: rgb(40 38 30 / 38%);
+
+    /* Focus (light) — ver comentario junto a --focus-ring en :root. */
+    --focus-ring-mix: 75%;
   }
 }
 
@@ -422,6 +440,9 @@
   --sh-card: 0 24px 60px -28px rgb(40 38 30 / 28%);
   --sh-pop: 0 18px 44px -16px rgb(40 38 30 / 32%);
   --scrim: rgb(40 38 30 / 38%);
+
+  /* Focus (light, override manual) — ver comentario junto a --focus-ring en :root. */
+  --focus-ring-mix: 75%;
 }
 
 /* =============================================================================
@@ -491,4 +512,7 @@
   --sh-card: 0 30px 70px -30px rgb(0 0 0 / 80%);
   --sh-pop: 0 20px 50px -18px rgb(0 0 0 / 85%);
   --scrim: rgb(10 10 11 / 60%);
+
+  /* Focus (dark, override manual) — ver comentario junto a --focus-ring en :root. */
+  --focus-ring-mix: 55%;
 }

@@ -55,14 +55,6 @@ const ROW_GAP = 20;
 const PAD_X = 8;
 const PAD_TOP = 8;
 const PAD_BOTTOM = 8;
-const DATA_PALETTE = [
-  "var(--dg-cat-8)",
-  "var(--dg-cat-4)",
-  "var(--dg-cat-6)",
-  "var(--dg-cat-1)",
-  "var(--dg-cat-5)",
-  "var(--dg-cat-2)",
-];
 
 const uid = `td-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36)}`;
 const maxLen = Math.max(...signals.map((s) => s.wave.length), 1);
@@ -82,7 +74,8 @@ interface Box {
   x: number;
   w: number;
   label: string;
-  fill: string | null;
+  /** Whether this box is a data-bus segment (envelope styling) vs a don't-care segment (hatch pattern). */
+  fill: boolean;
 }
 interface Rendered {
   name: string;
@@ -125,10 +118,15 @@ function resolveUnits(wave: string, data?: string[]): Unit[] {
   return units;
 }
 
-function dataFill(u: Unit): string | null {
-  if (u.kind !== "data") return null;
-  if (u.val === "=") return DATA_PALETTE[0];
-  return DATA_PALETTE[(Number(u.val) - 2) % DATA_PALETTE.length];
+/**
+ * Whether a unit renders as a data-bus segment. The visual design is
+ * deliberately monochrome for data buses — an open envelope in the
+ * signal's own colour (see the `.timing__data` style below), not a
+ * per-value fill colour — so this only needs to answer "is this a data
+ * unit?" (vs a don't-care unit, which gets the hatch pattern instead).
+ */
+function isDataUnit(u: Unit): boolean {
+  return u.kind === "data";
 }
 
 function wireSeg(
@@ -200,7 +198,7 @@ function buildRow(sig: Signal, si: number): Rendered {
         x: bx,
         w: xAt(runEnd(units, i) + 1) - bx,
         label: u.label ?? "",
-        fill: dataFill(u),
+        fill: isDataUnit(u),
       });
       prevY = null;
     }
