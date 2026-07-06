@@ -97,17 +97,17 @@ test("markdownToHtml: link keeps relative url and sets rel/target", () => {
   );
 });
 
-test("markdownToHtml: link title becomes aria-label", () => {
+test("markdownToHtml: link title becomes aria-label prefixed with the visible text (WCAG 2.5.3 label-in-name)", () => {
   assert.equal(
     markdownToHtml('[PE](https://x.io "Power Electronics web")'),
-    '<a href="https://x.io" target="_blank" rel="external noopener noreferrer" aria-label="Power Electronics web">PE</a>',
+    '<a href="https://x.io" target="_blank" rel="external noopener noreferrer" aria-label="PE — Power Electronics web">PE</a>',
   );
 });
 
 test("markdownToHtml: attribute value is escaped", () => {
   assert.equal(
     markdownToHtml('[t](https://x.io "a & b")'),
-    '<a href="https://x.io" target="_blank" rel="external noopener noreferrer" aria-label="a &amp; b">t</a>',
+    '<a href="https://x.io" target="_blank" rel="external noopener noreferrer" aria-label="t — a &amp; b">t</a>',
   );
 });
 

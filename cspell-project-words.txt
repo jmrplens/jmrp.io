@@ -11,7 +11,10 @@ acústicos
 acusticox
 addrlist
 adminer
+Afee
 afmt
+Ahrefs
+ahrefsbot
 aiohttp
 aire
 ajústala
@@ -47,6 +50,7 @@ artesano
 articulators
 asonaman
 asonoman
+aspiracional
 aspnet
 aspnetmvc
 assetlinks
@@ -57,6 +61,8 @@ attributify
 autenticador
 autenticarlo
 autoalojada
+autoalojado
+autoalojados
 autoalojamiento
 autoasignada
 autoasignadas
@@ -75,6 +81,7 @@ autorenew
 autosar
 avanti
 avanzado
+avcdn
 azul
 backlink
 baiduspider
@@ -99,6 +106,8 @@ biomédicas
 biomedicina
 biomédico
 biomédicos
+bitdefender
+Bitdefender
 bitfield
 bitnum
 bitop
@@ -148,6 +157,7 @@ ciphertext
 ciphertexts
 clases
 claude
+claudebot
 CLDR
 clearsign
 clearsigned
@@ -184,6 +194,7 @@ computacionalmente
 comsol
 configurables
 configurarlas
+Consérvalos
 consolas
 constexpr
 contenedores
@@ -204,9 +215,11 @@ csic
 csirt
 cstack
 cstdint
+Csvg
 curso
 d'acoustique
 dakfl
+dataforseo
 datos
 dcid
 ddns
@@ -222,6 +235,7 @@ deduplican
 deduplicar
 deduplicaron
 deepcode
+deepl
 defence
 defensivamente
 degradarla
@@ -284,6 +298,7 @@ dualstack
 dwyer
 ecssmet
 editables
+edítalo
 educativo
 efuse
 ekus
@@ -303,6 +318,8 @@ epoll
 epsg
 escanéalo
 escartí
+eset
+ESET
 Espace
 español
 espressif
@@ -369,6 +386,7 @@ goldschlag
 gonzález
 googlebot
 gorazdo
+gptbot
 gráfico
 greylisting
 greyscale
@@ -420,6 +438,7 @@ idiomas
 igic
 ihdr
 imagesift
+Immich
 impórtalo
 imprevisibilidad
 imprimible
@@ -436,12 +455,14 @@ inicio
 innest
 Inplace
 inputname
+inspectiontool
 instálalo
 instituto
 intégralos
 integridad
 interp
 invassat
+IONOS
 ipcalc
 ipdb
 iporhost
@@ -452,6 +473,7 @@ janim
 jblink
 jcur
 jeigiejeif
+Jellyfin
 jenaro
 jenkins
 jesús
@@ -470,6 +492,7 @@ kaspersky
 Kconfig
 KDBX
 keil
+Kensington
 keyid
 Keyoxide
 keypair
@@ -497,10 +520,12 @@ lexicográficamente
 leyendo
 lhci
 libkql
+libvips
 libvpx
 libwww
 libx
 lighthouseci
+lighthouserc
 línea
 linearization
 linkedin
@@ -520,6 +545,8 @@ macbook
 mackey
 malformado
 malformados
+malwarebytes
+Malwarebytes
 manejador
 mantenible
 mantiene
@@ -539,6 +566,7 @@ mbed
 mbedtls
 mbpoll
 mbus
+mcafee
 mcpservers
 mdnwebdocs
 medkit
@@ -673,6 +701,7 @@ pdfs
 pégala
 pelín
 perjudicial
+perplexitybot
 persístela
 personalízalo
 pfctl
@@ -740,6 +769,7 @@ qube
 quickref
 quictls
 quimico
+Radeon
 raffi
 ramis
 rasterisation
@@ -791,6 +821,7 @@ renderizan
 renderizando
 renderizar
 renegocia
+reorientarme
 replaceability
 representación
 reqs
@@ -803,6 +834,7 @@ respuestas
 restaura
 resto
 retarget
+retargeted
 retargets
 retipado
 retrocedarán
@@ -815,6 +847,7 @@ reverberado
 reverberante
 rgpd
 rmem
+Roadlite
 robótico
 rodata
 rowhead
@@ -826,6 +859,7 @@ rslave
 rubén
 rustc
 ruta
+Ryzen
 sacrificable
 saes
 salesianos
@@ -840,11 +874,14 @@ scannerwork
 scid
 sclk
 scts
+searchbot
 securepassword
 segoe
 segs
 seleccionable
 semiempírico
+Semrush
+semrushbot
 sendfile
 seqmp
 serializa
@@ -878,6 +915,7 @@ spamd
 spanish
 spañol
 speculationrules
+spidering
 sqlmap
 srcnat
 srvx
@@ -894,6 +932,7 @@ subresource
 subsetted
 subwavelength
 surý
+swipeable
 sysstat
 syverson
 tabler
@@ -908,6 +947,7 @@ tarpitting
 tecniacústica
 telemetría
 temporización
+Termius
 testeable
 texto
 thrs
@@ -999,6 +1039,9 @@ Wikidata
 winbox
 withastro
 wmem
+wordmark
+worktree
+worktrees
 writemultiple
 writesinglecoil
 writesingleregister
