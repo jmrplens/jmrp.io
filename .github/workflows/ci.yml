@@ -55,12 +55,7 @@ jobs:
           key: optimized-images-${{ runner.os }}-${{ hashFiles('astro.config.mjs', 'pnpm-lock.yaml', 'src/**/*.{png,jpg,jpeg,webp,avif,gif,svg}', 'public/**/*.{png,jpg,jpeg,webp,avif,gif,svg}') }}
           restore-keys: |
             optimized-images-${{ runner.os }}-
-      - uses: pnpm/action-setup@v6
-      - uses: actions/setup-node@v6
-        with:
-          node-version: 24
-          cache: "pnpm"
-      - run: pnpm install --frozen-lockfile --prefer-offline
+      - uses: ./.github/actions/setup
       - name: Install Playwright Browsers
         if: steps.playwright-cache.outputs.cache-hit != 'true'
         run: pnpm exec playwright install --with-deps chromium
@@ -79,15 +74,9 @@ jobs:
     name: "SA: Astro Check"
     runs-on: ubuntu-latest
     timeout-minutes: 5
-    needs: build
     steps:
       - uses: actions/checkout@v7
-      - uses: pnpm/action-setup@v6
-      - uses: actions/setup-node@v6
-        with:
-          node-version: 24
-          cache: "pnpm"
-      - run: pnpm install --frozen-lockfile --prefer-offline
+      - uses: ./.github/actions/setup
       - name: Run Astro Check
         run: pnpm exec astro check 2>&1 | tee astro-check.log
       - name: Upload Astro Check log
@@ -102,15 +91,9 @@ jobs:
     name: "SA: Prettier"
     runs-on: ubuntu-latest
     timeout-minutes: 5
-    needs: build
     steps:
       - uses: actions/checkout@v7
-      - uses: pnpm/action-setup@v6
-      - uses: actions/setup-node@v6
-        with:
-          node-version: 24
-          cache: "pnpm"
-      - run: pnpm install --frozen-lockfile --prefer-offline
+      - uses: ./.github/actions/setup
       - name: Run Prettier check
         run: pnpm exec prettier --check . 2>&1 | tee prettier.log
       - name: Upload Prettier log
@@ -125,15 +108,9 @@ jobs:
     name: "SA: ESLint"
     runs-on: ubuntu-latest
     timeout-minutes: 5
-    needs: build
     steps:
       - uses: actions/checkout@v7
-      - uses: pnpm/action-setup@v6
-      - uses: actions/setup-node@v6
-        with:
-          node-version: 24
-          cache: "pnpm"
-      - run: pnpm install --frozen-lockfile --prefer-offline
+      - uses: ./.github/actions/setup
       - name: Run ESLint
         run: pnpm exec eslint . --max-warnings=0 2>&1 | tee eslint.log
       - name: Upload ESLint log
@@ -148,15 +125,9 @@ jobs:
     name: "SA: Security Audit"
     runs-on: ubuntu-latest
     timeout-minutes: 5
-    needs: build
     steps:
       - uses: actions/checkout@v7
-      - uses: pnpm/action-setup@v6
-      - uses: actions/setup-node@v6
-        with:
-          node-version: 24
-          cache: "pnpm"
-      - run: pnpm install --frozen-lockfile --prefer-offline
+      - uses: ./.github/actions/setup
       - name: Run Security Audit
         run: pnpm audit --audit-level=high 2>&1 | tee security-audit.log
       - name: Upload Audit log
@@ -171,15 +142,9 @@ jobs:
     name: "SA: Stylelint"
     runs-on: ubuntu-latest
     timeout-minutes: 5
-    needs: build
     steps:
       - uses: actions/checkout@v7
-      - uses: pnpm/action-setup@v6
-      - uses: actions/setup-node@v6
-        with:
-          node-version: 24
-          cache: "pnpm"
-      - run: pnpm install --frozen-lockfile --prefer-offline
+      - uses: ./.github/actions/setup
       - name: Run Stylelint
         run: pnpm exec stylelint "src/**/*.{astro,css}" 2>&1 | tee stylelint.log
       - name: Upload Stylelint log
@@ -196,17 +161,11 @@ jobs:
     name: "SA: JSDoc Coverage"
     runs-on: ubuntu-latest
     timeout-minutes: 5
-    needs: build
     outputs:
       coverage: ${{ steps.jsdoc_calc.outputs.coverage }}
     steps:
       - uses: actions/checkout@v7
-      - uses: pnpm/action-setup@v6
-      - uses: actions/setup-node@v6
-        with:
-          node-version: 24
-          cache: "pnpm"
-      - run: pnpm install --frozen-lockfile --prefer-offline
+      - uses: ./.github/actions/setup
       - name: Calculate JSDoc Coverage
         id: jsdoc_calc
         run: |
@@ -233,6 +192,7 @@ jobs:
     needs: build
     steps:
       - uses: actions/checkout@v7
+      - uses: ./.github/actions/setup
       - name: Restore lychee cache
         uses: actions/cache@v6
         with:
@@ -270,15 +230,9 @@ jobs:
     name: "SA: Spell Checker"
     runs-on: ubuntu-latest
     timeout-minutes: 5
-    needs: build
     steps:
       - uses: actions/checkout@v7
-      - uses: pnpm/action-setup@v6
-      - uses: actions/setup-node@v6
-        with:
-          node-version-file: package.json
-          cache: pnpm
-      - run: pnpm install --frozen-lockfile --prefer-offline
+      - uses: ./.github/actions/setup
       - name: Run CSpell
         run: pnpm exec cspell lint "." --no-progress 2>&1 | tee cspell.log
       - name: Upload CSpell log
@@ -319,12 +273,7 @@ jobs:
         with:
           name: dist-build
           path: dist
-      - uses: pnpm/action-setup@v6
-      - uses: actions/setup-node@v6
-        with:
-          node-version: 24
-          cache: "pnpm"
-      - run: pnpm install --frozen-lockfile --prefer-offline
+      - uses: ./.github/actions/setup
       - name: Analyze bundle size
         run: node scripts/ci/analyze-bundle-size.mjs 2>&1 | tee bundle-size.log
       - name: Upload bundle log
@@ -353,12 +302,7 @@ jobs:
         with:
           name: dist-build
           path: dist
-      - uses: pnpm/action-setup@v6
-      - uses: actions/setup-node@v6
-        with:
-          node-version: 24
-          cache: "pnpm"
-      - run: pnpm install --frozen-lockfile --prefer-offline
+      - uses: ./.github/actions/setup
       - name: Validate HTML5
         # Two html-validate runs:
         # 1. JSON formatter with || true: Always produce a best-effort JSON report for dashboard
@@ -396,12 +340,7 @@ jobs:
         with:
           name: dist-build
           path: dist
-      - uses: pnpm/action-setup@v6
-      - uses: actions/setup-node@v6
-        with:
-          node-version: 24
-          cache: "pnpm"
-      - run: pnpm install --frozen-lockfile --prefer-offline
+      - uses: ./.github/actions/setup
       - name: Validate RSS feed
         run: |
           set -e -o pipefail
@@ -438,12 +377,7 @@ jobs:
         with:
           name: dist-build
           path: dist
-      - uses: pnpm/action-setup@v6
-      - uses: actions/setup-node@v6
-        with:
-          node-version: 24
-          cache: "pnpm"
-      - run: pnpm install --frozen-lockfile --prefer-offline
+      - uses: ./.github/actions/setup
       # Schema.org correctness is enforced via schema-dts types (`satisfies`)
       # on every JSON-LD builder — the official Google Schema.org TypeScript
       # vocabulary — validated by `astro check`. This is far more thorough than
@@ -472,12 +406,7 @@ jobs:
         with:
           name: dist-build
           path: dist
-      - uses: pnpm/action-setup@v6
-      - uses: actions/setup-node@v6
-        with:
-          node-version: 24
-          cache: "pnpm"
-      - run: pnpm install --frozen-lockfile --prefer-offline
+      - uses: ./.github/actions/setup
       - name: Analyze images
         run: |
           echo "## 🖼️ Image Optimization Analysis" >> $GITHUB_STEP_SUMMARY
@@ -504,12 +433,7 @@ jobs:
         with:
           name: dist-build
           path: dist
-      - uses: pnpm/action-setup@v6
-      - uses: actions/setup-node@v6
-        with:
-          node-version: 24
-          cache: "pnpm"
-      - run: pnpm install --frozen-lockfile --prefer-offline
+      - uses: ./.github/actions/setup
       - name: Cache Playwright Browsers
         id: playwright-cache
         uses: actions/cache@v6
@@ -545,12 +469,7 @@ jobs:
         with:
           name: dist-build
           path: dist
-      - uses: pnpm/action-setup@v6
-      - uses: actions/setup-node@v6
-        with:
-          node-version: 24
-          cache: "pnpm"
-      - run: pnpm install --frozen-lockfile --prefer-offline
+      - uses: ./.github/actions/setup
       - name: Cache Playwright Browsers
         id: playwright-cache
         uses: actions/cache@v6
@@ -588,12 +507,7 @@ jobs:
         with:
           name: dist-build
           path: dist
-      - uses: pnpm/action-setup@v6
-      - uses: actions/setup-node@v6
-        with:
-          node-version: 24
-          cache: "pnpm"
-      - run: pnpm install --frozen-lockfile --prefer-offline
+      - uses: ./.github/actions/setup
       - name: Run Lighthouse CI
         shell: bash
         env:
@@ -663,12 +577,7 @@ jobs:
     if: always()
     steps:
       - uses: actions/checkout@v7
-      - uses: pnpm/action-setup@v6
-      - uses: actions/setup-node@v6
-        with:
-          node-version: 24
-          cache: "pnpm"
-      - run: pnpm install --frozen-lockfile --prefer-offline
+      - uses: ./.github/actions/setup
       # Download each locale separately to avoid summary JSON overwrites
       - name: Download Axe Results (Light EN)
         uses: actions/download-artifact@v8
@@ -770,12 +679,7 @@ jobs:
     if: always()
     steps:
       - uses: actions/checkout@v7
-      - uses: pnpm/action-setup@v6
-      - uses: actions/setup-node@v6
-        with:
-          node-version: 24
-          cache: "pnpm"
-      - run: pnpm install --frozen-lockfile --prefer-offline
+      - uses: ./.github/actions/setup
       - name: Download LH Results (Light - Mobile - EN)
         uses: actions/download-artifact@v8
         continue-on-error: true
@@ -928,13 +832,7 @@ jobs:
         with:
           name: lychee-report
           path: .
-      - uses: pnpm/action-setup@v6
-      - uses: actions/setup-node@v6
-        with:
-          node-version: 24
-          cache: "pnpm"
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile --prefer-offline
+      - uses: ./.github/actions/setup
       - name: Download Logs
         uses: actions/download-artifact@v8
         continue-on-error: true
