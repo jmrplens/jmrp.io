@@ -103,6 +103,71 @@ function maskComments(css) {
  */
 
 /**
+ * Checks whether a single character may appear in a `--custom-property` name
+ * (word character or hyphen). A one-character check has no quantifier, so —
+ * unlike a `[\w-]+`-shaped regex — it carries no backtracking risk (Sonar
+ * S8786: a regex must not let two quantifiers ambiguously repartition the
+ * same input).
+ *
+ * @param {string} ch - A single character.
+ * @returns {boolean} `true` when `ch` is a valid custom-property name character.
+ */
+function isNameChar(ch) {
+  return /[\w-]/.test(ch);
+}
+
+/**
+ * Extracts `--custom-property: value;` declarations from a CSS rule body by
+ * scanning with `indexOf` and manual index walks instead of a single regex
+ * with adjacent quantifiers (Sonar S8786). Behaviorally identical to the
+ * `/(--[\w-]+)\s*:([^;]+);/g` loop this replaces: same property names,
+ * trimmed values, and per-declaration source lines.
+ *
+ * @param {string} body - The `{ ... }` rule body (comments already blanked by {@link maskComments}).
+ * @param {number} braceStart - Absolute offset of `body[0]` within `maskedCss` (for line-number math).
+ * @param {string} maskedCss - The full masked file (for computing line numbers).
+ * @returns {Map<string, DeclarationInfo>} Custom property name → value + source line.
+ */
+function extractDeclarations(body, braceStart, maskedCss) {
+  const declarations = new Map();
+  let cursor = 0;
+  for (;;) {
+    const nameStart = body.indexOf("--", cursor);
+    if (nameStart === -1) break;
+
+    let nameEnd = nameStart + 2;
+    while (nameEnd < body.length && isNameChar(body[nameEnd])) nameEnd++;
+    if (nameEnd === nameStart + 2) {
+      // Bare "--" with no name characters after it — not a declaration.
+      cursor = nameStart + 2;
+      continue;
+    }
+
+    let valueStart = nameEnd;
+    while (valueStart < body.length && /\s/.test(body[valueStart])) {
+      valueStart++;
+    }
+    if (body[valueStart] !== ":") {
+      // No colon (after optional whitespace) — not a declaration; resume
+      // scanning right after the name so it can't be matched again.
+      cursor = nameEnd;
+      continue;
+    }
+
+    const semiIndex = body.indexOf(";", valueStart + 1);
+    if (semiIndex === -1) break; // No terminating `;` left in this rule.
+
+    const name = body.slice(nameStart, nameEnd);
+    const rawValue = body.slice(valueStart + 1, semiIndex);
+    const absoluteIndex = braceStart + nameStart;
+    const line = maskedCss.slice(0, absoluteIndex).split("\n").length;
+    declarations.set(name, { value: rawValue.trim(), line });
+    cursor = semiIndex + 1;
+  }
+  return declarations;
+}
+
+/**
  * Extracts the `--custom-property: value;` declarations from the CSS rule
  * that immediately follows a `KEEP-IN-SYNC` sentinel comment.
  *
@@ -146,18 +211,94 @@ function extractBlockAfterSentinel(maskedCss, label, fromIndex) {
   }
 
   const body = maskedCss.slice(braceStart, braceEnd + 1);
-  const declarations = new Map();
-  const declRegex = /(--[\w-]+)\s*:\s*([^;]+);/g;
-  let match;
-  while ((match = declRegex.exec(body))) {
-    const [, name, rawValue] = match;
-    const absoluteIndex = braceStart + match.index;
-    const line = maskedCss.slice(0, absoluteIndex).split("\n").length;
-    declarations.set(name, { value: rawValue.trim(), line });
-  }
+  const declarations = extractDeclarations(body, braceStart, maskedCss);
 
   const line = maskedCss.slice(0, sentinelIndex).split("\n").length;
   return { declarations, nextIndex: braceEnd + 1, line };
+}
+
+/**
+ * Diffs a single key present in the override/second block (`infoB`) against
+ * its counterpart in the baseline/first block (`infoA`, absent when the key
+ * only exists in the override). Shared by both sync modes since a missing-
+ * or-differing check against the baseline is identical either way; only the
+ * message wording (and whether the reverse direction is also checked) differs.
+ *
+ * @param {string} key - Custom property name being compared.
+ * @param {DeclarationInfo | undefined} infoA - Baseline declaration, if any.
+ * @param {DeclarationInfo} infoB - Override/second-block declaration.
+ * @param {number} firstLine - Sentinel line of the baseline block (for "missing" messages).
+ * @param {boolean} isSubset - `true` for "subset" mode wording, `false` for "equal" mode wording.
+ * @returns {string | undefined} A diff line, or `undefined` when the key matches.
+ */
+function diffKeyAgainstBaseline(key, infoA, infoB, firstLine, isSubset) {
+  if (!infoA) {
+    return isSubset
+      ? `  - ${key}: declared at line ${infoB.line} (override), missing from baseline near line ${firstLine}`
+      : `  - ${key}: declared at line ${infoB.line}, missing from the block near line ${firstLine}`;
+  }
+  if (infoA.value !== infoB.value) {
+    return isSubset
+      ? `  - ${key}: baseline line ${infoA.line} = "${infoA.value}" vs override line ${infoB.line} = "${infoB.value}"`
+      : `  - ${key}: line ${infoA.line} = "${infoA.value}" vs line ${infoB.line} = "${infoB.value}"`;
+  }
+}
+
+/**
+ * "equal" mode diff: the two blocks must declare the exact same set of keys
+ * with the exact same values — checked in both directions.
+ *
+ * @param {Map<string, DeclarationInfo>} a - First/baseline block declarations.
+ * @param {Map<string, DeclarationInfo>} b - Second/override block declarations.
+ * @param {ExtractedBlock} first - First block metadata (for line references).
+ * @param {ExtractedBlock} second - Second block metadata (for line references).
+ * @returns {string[]} Diff lines; empty when both blocks match exactly.
+ */
+function diffEqual(a, b, first, second) {
+  const issues = [];
+  for (const [key, infoA] of a) {
+    const diff = diffKeyAgainstBaseline(
+      key,
+      infoA,
+      b.get(key),
+      second.line,
+      false,
+    );
+    if (diff) issues.push(diff);
+  }
+  for (const [key, infoB] of b) {
+    if (!a.has(key)) {
+      issues.push(
+        `  - ${key}: declared at line ${infoB.line}, missing from the block near line ${first.line}`,
+      );
+    }
+  }
+  return issues;
+}
+
+/**
+ * "subset" mode diff: every key declared in the override (second block) must
+ * exist in the baseline (first block) with an identical value. Extra keys
+ * that only exist in the baseline are expected, not an error.
+ *
+ * @param {Map<string, DeclarationInfo>} a - Baseline block declarations.
+ * @param {Map<string, DeclarationInfo>} b - Override block declarations.
+ * @param {ExtractedBlock} first - Baseline block metadata (for line references).
+ * @returns {string[]} Diff lines; empty when the override is a valid subset.
+ */
+function diffSubset(a, b, first) {
+  const issues = [];
+  for (const [key, infoB] of b) {
+    const diff = diffKeyAgainstBaseline(
+      key,
+      a.get(key),
+      infoB,
+      first.line,
+      true,
+    );
+    if (diff) issues.push(diff);
+  }
+  return issues;
 }
 
 /**
@@ -169,49 +310,11 @@ function extractBlockAfterSentinel(maskedCss, label, fromIndex) {
  * @returns {string[]} Human-readable diff lines; empty when the pair is in sync.
  */
 function diffPair(pair, first, second) {
-  const issues = [];
   const a = first.declarations;
   const b = second.declarations;
-
-  if (pair.mode === "equal") {
-    for (const [key, infoA] of a) {
-      const infoB = b.get(key);
-      if (!infoB) {
-        issues.push(
-          `  - ${key}: declared at line ${infoA.line}, missing from the block near line ${second.line}`,
-        );
-      } else if (infoB.value !== infoA.value) {
-        issues.push(
-          `  - ${key}: line ${infoA.line} = "${infoA.value}" vs line ${infoB.line} = "${infoB.value}"`,
-        );
-      }
-    }
-    for (const [key, infoB] of b) {
-      if (!a.has(key)) {
-        issues.push(
-          `  - ${key}: declared at line ${infoB.line}, missing from the block near line ${first.line}`,
-        );
-      }
-    }
-  } else {
-    // subset: every key declared in the override (second block) must exist
-    // in the baseline (first block) with an identical value. Extra keys
-    // that only exist in the baseline are expected, not an error.
-    for (const [key, infoB] of b) {
-      const infoA = a.get(key);
-      if (!infoA) {
-        issues.push(
-          `  - ${key}: declared at line ${infoB.line} (override), missing from baseline near line ${first.line}`,
-        );
-      } else if (infoA.value !== infoB.value) {
-        issues.push(
-          `  - ${key}: baseline line ${infoA.line} = "${infoA.value}" vs override line ${infoB.line} = "${infoB.value}"`,
-        );
-      }
-    }
-  }
-
-  return issues;
+  return pair.mode === "equal"
+    ? diffEqual(a, b, first, second)
+    : diffSubset(a, b, first);
 }
 
 /**

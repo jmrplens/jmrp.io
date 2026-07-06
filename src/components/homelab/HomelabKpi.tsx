@@ -141,7 +141,7 @@ export default function HomelabKpi({
 
   const kpis = [
     {
-      v: `${online === null ? "…" : online} / ${servicesCount}`,
+      v: `${online ?? "…"} / ${servicesCount}`,
       l: t.servicesOnline,
       empty: online === null,
     },

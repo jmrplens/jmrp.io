@@ -81,11 +81,19 @@ function isProductionDeployAllowed() {
 }
 
 /**
- * Default secure PATH for executing system commands.
- * Prioritizes standard system directories to mitigate PATH injection risks.
+ * Default secure PATH for executing system commands (Sonar S4036: a spawned
+ * command's PATH must resolve only through directories that are not
+ * writable by non-root users).
+ *
+ * Deliberately narrowed to `/usr/bin:/bin` — every command this script
+ * resolves itself (`stat`, `sudo`) lives there. `nginx`, `find`, `chown`,
+ * `mv`, `rm`, and `cp` are all invoked as *arguments to* `sudo`, so their
+ * lookup is governed by `sudoers`' own `secure_path`
+ * (`/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin` here),
+ * not by this env var — this PATH never needs to include `/usr/sbin` or the
+ * `/usr/local/*` directories for those to keep working.
  */
-const DEFAULT_SECURE_PATH =
-  "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin";
+const DEFAULT_SECURE_PATH = "/usr/bin:/bin";
 
 const INDEXNOW_ENDPOINT = "https://api.indexnow.org/indexnow";
 /** IndexNow verification key — must match the filename of `public/<key>.txt`. */
@@ -205,10 +213,11 @@ function createSecureSpawnOptions() {
  * @returns {string | null} The owning username, or `null` on failure.
  */
 function getOwnerUsername(targetPath) {
-  const result = spawnSync("stat", ["-c", "%U", targetPath], {
-    encoding: "utf8",
-    env: { ...process.env, PATH: DEFAULT_SECURE_PATH },
-  });
+  const result = spawnSync(
+    "stat", // NOSONAR
+    ["-c", "%U", targetPath],
+    { encoding: "utf8", env: { ...process.env, PATH: DEFAULT_SECURE_PATH } },
+  );
   if (result.error || result.status !== 0) return null;
   return result.stdout.trim();
 }
@@ -276,10 +285,10 @@ function clearNginxCache(systemNginxCachePath) {
 
     // We use -mindepth 1 to delete everything INSIDE jmrp_cache, but keep the folder itself
     const clearResult = spawnSync(
-      "sudo",
+      "sudo", // NOSONAR
       ["find", targetCachePath, "-mindepth", "1", "-delete"],
       secureOpts,
-    ); // NOSONAR
+    );
 
     if (clearResult.error || clearResult.status !== 0) {
       const errorMsg =
@@ -305,7 +314,7 @@ function clearNginxCache(systemNginxCachePath) {
     `deploy-live: ensuring ownership of cache path: ${systemNginxCachePath}`,
   );
   const chownResult = spawnSync(
-    "sudo",
+    "sudo", // NOSONAR
     ["chown", "-R", "www-data:www-data", systemNginxCachePath],
     createSecureSpawnOptions(),
   );
@@ -334,10 +343,10 @@ function verifyRollbackState(execOptions) {
     : ["-t"];
 
   const finalTestResult = spawnSync(
-    "sudo",
+    "sudo", // NOSONAR suppressed: external command usage is intentional
     ["nginx", ...finalTestArgs],
     execOptions,
-  ); // NOSONAR suppressed: external command usage is intentional
+  );
   if (finalTestResult.error) {
     throw finalTestResult.error;
   }
@@ -372,10 +381,10 @@ function performRollback(systemNginxPath, originalContent, assetsRollback) {
   }
 
   const mvResult = spawnSync(
-    "sudo",
+    "sudo", // NOSONAR
     ["mv", tempPath, systemNginxPath],
     secureOpts,
-  ); // NOSONAR
+  );
   if (mvResult.status !== 0 || mvResult.error) {
     // Clean up orphaned temp file before throwing
     cleanupTempFile(tempPath);
@@ -388,10 +397,10 @@ function performRollback(systemNginxPath, originalContent, assetsRollback) {
 
   if (assetsRollback.created) {
     const rmResult = spawnSync(
-      "sudo",
+      "sudo", // NOSONAR
       ["rm", "-f", assetsRollback.path],
       secureOpts,
-    ); // NOSONAR
+    );
     if (rmResult.status !== 0 || rmResult.error) {
       throw new Error(
         `Rollback failed: Could not remove created assets file ${assetsRollback.path}. Stderr: ${rmResult.stderr?.toString()}`,
@@ -410,10 +419,10 @@ function performRollback(systemNginxPath, originalContent, assetsRollback) {
       );
     }
     const mvAssetsResult = spawnSync(
-      "sudo",
+      "sudo", // NOSONAR
       ["mv", tempAssetsPath, assetsRollback.path],
       secureOpts,
-    ); // NOSONAR
+    );
     if (mvAssetsResult.status !== 0 || mvAssetsResult.error) {
       // Clean up orphaned temp file before throwing
       cleanupTempFile(tempAssetsPath);
@@ -567,7 +576,7 @@ function performNginxDeployment(
 
     // Use sudo to copy files since Nginx path usually requires root privileges
     const copyResult = spawnSync(
-      "sudo",
+      "sudo", // NOSONAR
       ["cp", generatedPath, systemNginxPath],
       secureOpts,
     );
@@ -584,7 +593,7 @@ function performNginxDeployment(
         assetsCreated = true;
       }
       const copyAssetsResult = spawnSync(
-        "sudo",
+        "sudo", // NOSONAR
         ["cp", generatedAssetsPath, systemNginxAssetsPath],
         secureOpts,
       );

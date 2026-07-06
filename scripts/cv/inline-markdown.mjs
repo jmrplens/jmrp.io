@@ -148,9 +148,8 @@ export function markdownToHtml(md) {
       if (!isSafeHref(url)) return escapeHtml(text);
       // The optional title enriches the accessible name, but it must still
       // CONTAIN the visible text (WCAG 2.5.3, label-in-name) — so prepend it.
-      const aria = title
-        ? ` aria-label="${escapeAttr(`${text} — ${title}`)}"`
-        : "";
+      const accessibleName = `${text} — ${title}`;
+      const aria = title ? ` aria-label="${escapeAttr(accessibleName)}"` : "";
       return `<a href="${escapeAttr(url)}" target="_blank" rel="external noopener noreferrer"${aria}>${escapeHtml(text)}</a>`;
     },
     bold: (text) => `<strong>${escapeHtml(text)}</strong>`,

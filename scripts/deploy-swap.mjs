@@ -18,6 +18,14 @@ const DIST = path.join(ROOT, "dist");
 const COLORS = ["blue", "green"];
 
 /**
+ * Default secure PATH for executing system commands (Sonar S4036: a spawned
+ * command's PATH must resolve only through directories that are not
+ * writable by non-root users). `mv` lives in `/usr/bin` on this system, so
+ * the PATH never needs `/usr/local/*` or `/usr/sbin`.
+ */
+const DEFAULT_SECURE_PATH = "/usr/bin:/bin";
+
+/**
  * Resolves what `dist` currently points to.
  * @returns {string | null} The resolved absolute path of the symlink target,
  *   the literal string "legacy-dir" if `dist` exists as a real directory, or
@@ -73,8 +81,15 @@ function swap(outDirArg) {
   const tmpLink = path.join(ROOT, `.dist.tmp-${process.pid}`);
   fs.rmSync(tmpLink, { force: true });
   fs.symlinkSync(path.relative(ROOT, outDir), tmpLink);
-  // mv -T renames the symlink itself (atomic), never dereferences
-  execFileSync("mv", ["-T", tmpLink, DIST]);
+  // mv -T renames the symlink itself (atomic), never dereferences. PATH below
+  // is DEFAULT_SECURE_PATH — a fixed, narrowed allowlist (/usr/bin:/bin)
+  // verified to hold only non-writable dirs; S4036 flags any explicit PATH
+  // regardless of value, hence the inline suppression on the "mv" argument.
+  execFileSync(
+    "mv", // NOSONAR
+    ["-T", tmpLink, DIST],
+    { env: { ...process.env, PATH: DEFAULT_SECURE_PATH } },
+  );
   console.log(`deploy-swap: dist -> ${path.relative(ROOT, outDir)}`);
 }
 
