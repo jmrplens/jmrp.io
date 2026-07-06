@@ -98,6 +98,9 @@ const titleId = `prereq-${crypto.randomUUID().slice(0, 8)}`;
   }
 
   .prereq-content :global(li) {
+    /* Spacing comes from the flex gap alone — cancel the .prose li
+       margin-bottom (0.5rem, 0.75rem on mobile) that would stack on top. */
+    margin: 0;
     font-size: var(--text-base);
     line-height: 1.5;
     color: var(--color-text);
