@@ -3,6 +3,8 @@ import path from "node:path";
 
 import { type AstroIntegrationLogger } from "astro";
 
+import { safeStringify } from "../shared.js";
+
 const USERNAME = "jmrplens";
 const OUTPUT_DIR = "src/assets";
 const OUTPUT_FILE = "github-avatar.png";
@@ -136,20 +138,6 @@ async function fetchGitHubAvatarBuffer(): Promise<Buffer> {
   const buffer = Buffer.concat(chunks);
 
   return buffer;
-}
-
-/**
- * Safely serializes an unknown value to a string.
- * Handles strings directly, uses JSON.stringify with a try/catch fallback
- * to prevent crashes on circular references, BigInt, or throwing toJSON.
- */
-function safeStringify(value: unknown): string {
-  if (typeof value === "string") return value;
-  try {
-    return JSON.stringify(value) ?? String(value);
-  } catch {
-    return String(value);
-  }
 }
 
 /**

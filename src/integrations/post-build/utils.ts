@@ -65,33 +65,38 @@ export function writeHtml(filePath: string, html: string) {
 }
 
 /**
- * Generates integrity hashes (SHA-256 and SHA-512) for the specified content.
+ * Gets the file extension from a MIME type with sanitization.
+ * Maps known complex types (including fonts) and falls back to a sanitized
+ * subtype extraction, ensuring safe output for arbitrary/unknown MIME types.
  *
- * @param {string} content - The string content to hash.
- * @returns {string[]} An array of hashes in 'algo-...' format.
+ * @param {string} mime - The MIME type string to evaluate.
+ * @returns {string} The appropriate file extension (e.g., 'png', 'svg', 'woff2') or 'bin' if unknown.
  */
-export function getDualHashes(content: string): string[] {
-  if (!content.trim()) return [];
+export function getExtensionFromMime(mime: string): string {
+  const mimeMap: Record<string, string> = {
+    "image/png": "png",
+    "image/jpeg": "jpg",
+    "image/gif": "gif",
+    "image/webp": "webp",
+    "image/svg+xml": "svg",
+    "font/woff": "woff",
+    "font/woff2": "woff2",
+    "application/font-woff": "woff",
+    "application/font-woff2": "woff2",
+  };
 
-  const sha256 = crypto.createHash("sha256").update(content).digest("base64");
-  const sha512 = crypto.createHash("sha512").update(content).digest("base64");
+  const normalizedMime = mime.toLowerCase().trim();
+  if (mimeMap[normalizedMime]) {
+    return mimeMap[normalizedMime];
+  }
 
-  return [`'sha256-${sha256}'`, `'sha512-${sha512}'`];
-}
-
-/**
- * Resolves a MIME type to a corresponding file extension.
- *
- * @param {string} mimeType - The MIME type string to evaluate.
- * @returns {string} The appropriate file extension (e.g., 'png', 'svg') or 'bin' if unknown.
- */
-export function getExtensionFromMime(mimeType: string): string {
-  if (mimeType.includes("svg")) return "svg";
-  if (mimeType.includes("png")) return "png";
-  if (mimeType.includes("jpeg") || mimeType.includes("jpg")) return "jpg";
-  if (mimeType.includes("gif")) return "gif";
-  if (mimeType.includes("webp")) return "webp";
-  return "bin";
+  // Extract subtype and sanitize
+  const subtype = normalizedMime.split("/", 2)[1] || "";
+  // Remove +suffix (e.g., svg+xml -> svg)
+  const basetype = subtype.split("+", 1)[0];
+  // Strip non-alphanumeric and limit length
+  const sanitized = basetype.replaceAll(/[^a-z0-9]/gi, "").slice(0, 10);
+  return sanitized || "bin";
 }
 
 /**

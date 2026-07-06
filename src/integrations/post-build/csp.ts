@@ -3,6 +3,7 @@ import path from "node:path";
 
 import { type AstroIntegrationLogger } from "astro";
 
+import { NGINX_CSP_NONCE_VARIABLE } from "./constants.js";
 import type { CspData } from "./types.js";
 
 /**
@@ -60,8 +61,8 @@ export async function finalizeCspConfig(
   // fall back to the blocked default-src.
   const cspHeader = [
     "default-src 'none'",
-    "script-src 'self' 'nonce-$cspNonce' 'strict-dynamic'",
-    "style-src 'self' 'nonce-$cspNonce'",
+    `script-src 'self' 'nonce-${NGINX_CSP_NONCE_VARIABLE}' 'strict-dynamic'`,
+    `style-src 'self' 'nonce-${NGINX_CSP_NONCE_VARIABLE}'`,
     "worker-src 'self'",
     ...commonCspDirectives,
   ]

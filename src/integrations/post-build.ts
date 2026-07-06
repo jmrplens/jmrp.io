@@ -81,12 +81,18 @@ export default function postBuildIntegration(): AstroIntegration {
             finalizeCspConfig(distDir, cspData, logger),
           );
 
-          await timed("optimizeImages", logger, () =>
-            optimizeImages(distDir, logger),
-          );
-          await timed("compressAssets", logger, () =>
-            compressAssets(distDir, logger),
-          );
+          // optimizeImages (re-compresses PNGs) and compressAssets (gzip/brotli
+          // over js/css/svg/json/xml/txt) touch disjoint file sets — PNG is not
+          // in compressAssets' extension list — so they can run concurrently
+          // instead of back-to-back.
+          await Promise.all([
+            timed("optimizeImages", logger, () =>
+              optimizeImages(distDir, logger),
+            ),
+            timed("compressAssets", logger, () =>
+              compressAssets(distDir, logger),
+            ),
+          ]);
 
           if (systemNginxPath) {
             // Only fix permissions when deploying to Nginx (requires sudo and www-data user).

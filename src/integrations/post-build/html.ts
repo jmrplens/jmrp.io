@@ -11,6 +11,7 @@ import { minify } from "html-minifier-terser";
 import {
   ASSET_FILENAME_HASH_LENGTH,
   ASSETS_DIR,
+  NGINX_CSP_NONCE_PLACEHOLDER,
   STYLE_CLASS_HASH_LENGTH,
 } from "./constants.js";
 import type { CspData } from "./types.js";
@@ -110,7 +111,36 @@ function extractDataUri(
 }
 
 /**
+ * Number of HTML files processed concurrently per batch in
+ * {@link processHtmlFiles}. Each file's transformation is CPU/IO bound
+ * (cheerio parse, hashing, minify) and fully independent of every other
+ * file's — the only shared state is the `hashCache` Map and the
+ * `cspData.imageDomains` Set, both of which are safe to mutate from
+ * concurrently-awaiting single-threaded JS (see the function doc for the
+ * ordering analysis). Mirrors the batching pattern used in
+ * `compression.ts`.
+ */
+const HTML_PROCESSING_CONCURRENCY = 8;
+
+/**
  * Performs a consolidated pass over all HTML files in the distribution directory.
+ *
+ * Files are processed in concurrent batches (see
+ * {@link HTML_PROCESSING_CONCURRENCY}). This is safe because:
+ * - Each file only reads its own content and writes back to its own path.
+ * - `hashCache` (file path -> integrity hash) and `cspData.imageDomains`
+ *   (a Set of hostnames) are accumulative and idempotent: a concurrent
+ *   cache miss for the same key just recomputes the same deterministic
+ *   value twice, and Set/Map mutation never interleaves at the byte level
+ *   in single-threaded JS.
+ * - Data-URI extraction (`findAndExtractDataUris`) is synchronous (uses
+ *   `fs.existsSync`/`writeFileSync`, not the promise APIs), so for every
+ *   file in a batch, `Promise.all(batch.map(...))` runs each file's fully
+ *   synchronous prefix (parsing, image/style/SRI processing, data-URI
+ *   writes) back-to-back with no interleaving *before* any of them
+ *   suspends at the first `await` (the `minify()` call) — so even the
+ *   `fs.existsSync` + `writeFileSync` check-then-write for a duplicate
+ *   embedded asset across two files in the same batch cannot race.
  */
 export async function processHtmlFiles(
   distDir: string,
@@ -130,19 +160,26 @@ export async function processHtmlFiles(
   let updatedSriTags = 0;
   let extractedImages = 0;
 
-  for (const file of htmlFiles) {
-    const result = await processSingleHtmlFile(
-      file,
-      distDir,
-      targetDir,
-      cspData,
-      hashCache,
-      enableCsp,
-      logger,
+  for (let i = 0; i < htmlFiles.length; i += HTML_PROCESSING_CONCURRENCY) {
+    const batch = htmlFiles.slice(i, i + HTML_PROCESSING_CONCURRENCY);
+    const results = await Promise.all(
+      batch.map((file) =>
+        processSingleHtmlFile(
+          file,
+          distDir,
+          targetDir,
+          cspData,
+          hashCache,
+          enableCsp,
+          logger,
+        ),
+      ),
     );
-    if (result.modified) modifiedFilesCount++;
-    updatedSriTags += result.updatedSriTags;
-    extractedImages += result.extractedImages;
+    for (const result of results) {
+      if (result.modified) modifiedFilesCount++;
+      updatedSriTags += result.updatedSriTags;
+      extractedImages += result.extractedImages;
+    }
   }
 
   logger.info(`  ✓ Updated ${updatedSriTags} tags with SRI.`);
@@ -276,7 +313,7 @@ async function processSingleHtmlFile(
   });
 
   const $minified = cheerio.load(minifiedHtml);
-  if (collectInlineHashes($minified, cspData, enableCsp)) isModified = true;
+  if (collectInlineHashes($minified, enableCsp)) isModified = true;
 
   writeHtml(file, $minified.html());
   return { modified: isModified, updatedSriTags, extractedImages };
@@ -379,7 +416,9 @@ function processStyles($: cheerio.CheerioAPI, enableCsp: boolean): boolean {
         .replaceAll("*/", String.raw`\2a \2f `);
       cssRules += `.${className}{${sanitizedStyle}}`;
     }
-    const styleNonce = enableCsp ? ' nonce="NGINX_CSP_NONCE"' : "";
+    const styleNonce = enableCsp
+      ? ` nonce="${NGINX_CSP_NONCE_PLACEHOLDER}"`
+      : "";
     $("head").append(
       `<style${styleNonce} data-generated-style="true">${cssRules}</style>`,
     );
@@ -486,7 +525,7 @@ function addNonce(
   type: "script" | "link",
 ): boolean {
   if (type === "script" && !$el.attr("nonce")) {
-    $el.attr("nonce", "NGINX_CSP_NONCE");
+    $el.attr("nonce", NGINX_CSP_NONCE_PLACEHOLDER);
     return true;
   }
   return false;
@@ -494,7 +533,6 @@ function addNonce(
 
 function collectInlineHashes(
   $: cheerio.CheerioAPI,
-  _cspData: CspData,
   enableCsp: boolean,
 ): boolean {
   if (!enableCsp) return false;
@@ -505,7 +543,7 @@ function collectInlineHashes(
   $("style").each((_, el) => {
     const $el = $(el);
     if (!$el.attr("nonce")) {
-      $el.attr("nonce", "NGINX_CSP_NONCE");
+      $el.attr("nonce", NGINX_CSP_NONCE_PLACEHOLDER);
       modified = true;
     }
   });
@@ -513,7 +551,7 @@ function collectInlineHashes(
   $("script:not([src])").each((_, el) => {
     const $el = $(el);
     if (!$el.attr("nonce")) {
-      $el.attr("nonce", "NGINX_CSP_NONCE");
+      $el.attr("nonce", NGINX_CSP_NONCE_PLACEHOLDER);
       modified = true;
     }
   });
