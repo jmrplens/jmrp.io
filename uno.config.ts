@@ -9,16 +9,12 @@ import { defineConfig, presetIcons, presetWind4 } from "unocss";
 const iconCollections = [
   "fa-solid",
   "fa-brands",
-  "fa-regular",
   "mdi",
   "logos",
   "simple-icons",
   "vscode-icons",
   "devicon",
-  "carbon",
   "tabler",
-  "heroicons",
-  "lucide",
 ];
 
 export default defineConfig({
