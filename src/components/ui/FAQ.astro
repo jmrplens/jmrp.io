@@ -63,9 +63,11 @@ const headingId = `faq-${crypto.getRandomValues(new Uint32Array(1))[0]}`;
 }
 
 <style>
+  /* Section rhythm mirrors References.astro (.references-section/.header):
+     same top separation and the same 1.5rem gap under the heading. */
   .faq {
-    padding-block-start: var(--space-md);
-    margin-block-start: var(--space-lg);
+    padding-block-start: var(--space-lg);
+    margin-block-start: var(--space-xl);
     border-block-start: var(--border-hair);
   }
 
@@ -73,7 +75,7 @@ const headingId = `faq-${crypto.getRandomValues(new Uint32Array(1))[0]}`;
     display: flex;
     gap: var(--space-sm);
     align-items: center;
-    margin: 0 0 var(--space-md);
+    margin: 0 0 var(--space-md-lg);
     color: var(--color-text-heading);
   }
 
