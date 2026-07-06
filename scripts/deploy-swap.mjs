@@ -28,7 +28,7 @@ function currentTarget() {
       return path.resolve(ROOT, fs.readlinkSync(DIST));
     }
   } catch (error) {
-    if (error && error.code === "ENOENT") return null;
+    if (error?.code === "ENOENT") return null;
     throw new Error(
       `deploy-swap: failed to inspect ${DIST}: ${error instanceof Error ? error.message : String(error)}`,
       { cause: error },

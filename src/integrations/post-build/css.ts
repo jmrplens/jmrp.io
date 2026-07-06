@@ -173,7 +173,11 @@ function loadAssetCacheManifest(
       fs.mkdirSync(ASSET_CACHE_DIR, { recursive: true });
     }
   } catch {
-    // Missing or invalid manifest: start fresh.
+    // Missing or invalid manifest: start fresh, and drop any blobs left
+    // over from it since they can no longer be trusted against the
+    // (unreadable) manifest that recorded them.
+    fs.rmSync(ASSET_CACHE_DIR, { recursive: true, force: true });
+    fs.mkdirSync(ASSET_CACHE_DIR, { recursive: true });
   }
   return {};
 }
@@ -285,6 +289,15 @@ export async function extractCssDataUris(
   let assetsFromCache = 0;
 
   /**
+   * Whether `filename` can be safely reused from {@link ASSET_CACHE_DIR}:
+   * the blob must exist on disk *and* be tracked in the loaded manifest, so
+   * an orphaned blob left over from a config change the manifest was reset
+   * for (see {@link loadAssetCacheManifest}) is never replayed.
+   */
+  const isAssetCacheHit = (filename: string, cachedAssetPath: string) =>
+    Object.hasOwn(assetManifest, filename) && fs.existsSync(cachedAssetPath);
+
+  /**
    * Helper to optimize (if SVG) and save an asset to disk, reusing a
    * previously-computed result from {@link ASSET_CACHE_DIR} when available.
    */
@@ -295,7 +308,7 @@ export async function extractCssDataUris(
     filename: string,
   ) => {
     const cachedAssetPath = path.join(ASSET_CACHE_DIR, filename);
-    if (fs.existsSync(cachedAssetPath)) {
+    if (isAssetCacheHit(filename, cachedAssetPath)) {
       const cachedBytes = fs.readFileSync(cachedAssetPath);
       writeFileAtomicSync(filePath, cachedBytes);
       assetManifest[filename] = { lastUsed: Date.now() };
