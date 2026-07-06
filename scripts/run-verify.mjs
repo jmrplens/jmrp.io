@@ -61,8 +61,12 @@ const colors = {
 
 /**
  * Runs a single verification step as a child process and resolves with its
- * outcome — it never rejects, so it composes cleanly with
- * `Promise.allSettled` for parallel phases.
+ * outcome — it never rejects and never throws synchronously, so it composes
+ * cleanly with `Promise.allSettled` for parallel phases. In particular, a
+ * `condition` function that throws is caught and reported as a failed step
+ * rather than escaping the (synchronous) `Array.prototype.map` call in
+ * {@link runParallel}, which would otherwise abort the remaining steps in
+ * that batch before they even ran.
  *
  * Two output modes:
  * - `stream: false` (default) — output is captured silently and only
@@ -79,8 +83,22 @@ const colors = {
  */
 function runStep(name, command, options = {}) {
   const { stream = false } = options;
-  let condition = options.condition ?? true;
-  if (typeof condition === "function") condition = condition();
+  let condition;
+  try {
+    condition = options.condition ?? true;
+    if (typeof condition === "function") condition = condition();
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    console.error(
+      `${colors.red}❌ ${name} failed! condition() threw: ${message}${colors.reset}\n`,
+    );
+    return Promise.resolve({
+      name,
+      success: false,
+      status: null,
+      output: message,
+    });
+  }
 
   if (!condition) {
     console.log(

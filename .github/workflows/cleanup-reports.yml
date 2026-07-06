@@ -19,12 +19,7 @@ jobs:
     if: github.repository == 'jmrplens/jmrp.io'
     steps:
       - uses: actions/checkout@v7
-      - uses: pnpm/action-setup@v6
-      - uses: actions/setup-node@v6
-        with:
-          node-version: 24
-          cache: "pnpm"
-      - run: pnpm install --frozen-lockfile --prefer-offline
+      - uses: ./.github/actions/setup
       - name: Remove PR Reports from Vercel
         env:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}

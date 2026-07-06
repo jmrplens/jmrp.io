@@ -245,6 +245,25 @@ test.describe("Keyboard Navigation Accessibility", () => {
     const honeypotAriaLabel = await honeypotLink.getAttribute("aria-label");
     expect(honeypotAriaLabel).toContain(honeypotVisibleText);
 
+    // The footer explainer row (.edge-links) also carries its own "How the
+    // tarpit works" link to the same post — a second, distinct anchor from
+    // the in-column one (.edge-col) checked above — and it needs the same
+    // label-in-name coverage.
+    const tarpitFooterLink = section.locator(
+      '.edge-links a[href*="implementing-tarpit-nginx"]',
+    );
+    await expect(tarpitFooterLink).toBeVisible({ timeout: 10_000 });
+    await tarpitFooterLink.focus();
+    await expect(tarpitFooterLink).toBeFocused();
+    await expect(tarpitFooterLink).toHaveAttribute(
+      "aria-label",
+      /Read blog post about implementing Nginx Tarpit/i,
+    );
+    const tarpitFooterVisibleText = (await tarpitFooterLink.innerText()).trim();
+    const tarpitFooterAriaLabel =
+      await tarpitFooterLink.getAttribute("aria-label");
+    expect(tarpitFooterAriaLabel).toContain(tarpitFooterVisibleText);
+
     // Tab from a link advances focus to another focusable element.
     await tarpitLink.focus();
     await page.keyboard.press("Tab");

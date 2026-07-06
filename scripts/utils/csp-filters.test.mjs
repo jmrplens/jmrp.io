@@ -48,6 +48,28 @@ test("isBotUserAgent: ordinary browser UAs are not flagged (no false positives)"
   }
 });
 
+test("isBotUserAgent: word-boundary regex avoids false positives on words merely containing a bot keyword", () => {
+  // "bot" is a substring of "robot"/"robotics" but never a standalone word in
+  // these UAs — the word-boundary regex (\b(bot|crawl|spider|slurp)\b) must
+  // not match, and none of these strings contain any SPECIFIC_BOT_UA_TOKENS
+  // or trip the Chrome-less AppleWebKit/537.36 heuristic.
+  const nonBotUserAgents = [
+    // "robot" — vacuum/appliance UA that happens to mention the device kind.
+    "Mozilla/5.0 (compatible; RobotVacuum/3.2; +https://example.com/robotvacuum)",
+    // "automotive" — real in-car infotainment browser UA (Chrome/ present).
+    "Mozilla/5.0 (Linux; automotive; InfotainmentOS 4.0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36",
+    // "Robotics" — capitalized, embeds "bot" with no boundary before it.
+    "Mozilla/5.0 (compatible; RoboticsControlPanel/2.1; +https://example.com/robotics)",
+  ];
+  for (const ua of nonBotUserAgents) {
+    assert.equal(
+      isBotUserAgent(ua),
+      false,
+      `expected non-bot UA (word-boundary false positive): ${ua}`,
+    );
+  }
+});
+
 test("isExtensionViolation: AV_EXTENSION_HOSTS (antivirus/security-suite hosts)", () => {
   const avHosts = [
     "kaspersky-labs.com",

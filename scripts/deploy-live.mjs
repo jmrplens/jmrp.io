@@ -1031,12 +1031,12 @@ async function timed(label, fn) {
  * @returns {Promise<void>}
  */
 async function runPublishNotifications() {
-  // Skip reading/logging the sitemap entirely when none of the three
-  // consumers are configured (e.g. local/CI builds) — nothing would use it.
+  // Skip reading/logging the sitemap entirely when neither URL-list consumer
+  // is configured (e.g. local/CI builds) — nothing would use it. Cloudflare
+  // is deliberately excluded here: purgeCloudflareCache() always purges the
+  // whole zone (purge_everything) and never reads urlList, so it has no
+  // dependency on the sitemap collection below.
   const needsSitemap =
-    Boolean(
-      process.env.PRIVATE_CF_ZONE_ID && process.env.PRIVATE_CF_API_TOKEN,
-    ) ||
     Boolean(process.env.POSTBUILD_INDEXNOW) ||
     Boolean(process.env.BING_WEBMASTER_API_KEY);
 
