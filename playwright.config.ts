@@ -1,5 +1,11 @@
 import { defineConfig, devices } from "@playwright/test";
 
+// Preview-server port. Overridable via PW_PORT so test runs can dodge an
+// unrelated server already bound to 4321 on this shared host (with
+// reuseExistingServer enabled, Playwright would otherwise silently test
+// whatever site that foreign server is serving).
+const PORT = process.env.PW_PORT ?? "4321";
+
 export default defineConfig({
   testDir: "./tests",
   fullyParallel: true,
@@ -17,7 +23,7 @@ export default defineConfig({
     : [["list"], ["html", { open: "never" }]],
 
   use: {
-    baseURL: "http://localhost:4321",
+    baseURL: `http://localhost:${PORT}`,
     trace: "on-first-retry",
     video: "on-first-retry",
     screenshot: "only-on-failure",
@@ -80,8 +86,8 @@ export default defineConfig({
   ],
 
   webServer: {
-    command: "pnpm astro preview",
-    url: "http://localhost:4321",
+    command: `pnpm astro preview --port ${PORT}`,
+    url: `http://localhost:${PORT}`,
     reuseExistingServer: !process.env.CI,
     timeout: 120 * 1000,
   },
