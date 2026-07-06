@@ -17,16 +17,37 @@ const OWN_ORIGIN = /(^|\.)jmrp\.io$/i;
 /** Browser/extension origins the site never references but that are injected
  *  by in-browser translators and extensions (fonts, icons, iframes, beacons). */
 const TRANSLATOR_EXTENSION_HOSTS =
-  /(^|\.)(translate\.google\.com|translate\.googleapis\.com|gstatic\.com|yastatic\.net|r2cdn\.perplexity\.ai|div\.show)$/i;
+  /(^|\.)(translate\.google\.com|translate\.googleapis\.com|gstatic\.com|yastatic\.net|r2cdn\.perplexity\.ai|div\.show|translator\.microsoft\.com|edge\.microsoft\.com|deepl\.com)$/i;
 
-/** Lower-case substrings that unambiguously identify a crawler/bot/automation
- *  user-agent. Matched with String.includes to keep the test cheap and simple. */
-const BOT_UA_TOKENS = [
-  "bot",
-  "crawl",
-  "spider",
-  "slurp",
-  "bytespider",
+/** Antivirus/security-suite hosts known to inject `<script>`/`<style>`
+ *  elements into pages under their protection (Kaspersky Protection, Avast
+ *  Online Security, AVG, ESET, McAfee WebAdvisor, Malwarebytes Browser
+ *  Guard, Bitdefender TrafficLight, …). */
+const AV_EXTENSION_HOSTS =
+  /(^|\.)(kaspersky-labs\.com|avast\.com|avcdn\.net|avg\.com|eset\.com|mcafee\.com|malwarebytes\.com|bitdefender\.net|bitdefender\.com)$/i;
+
+/**
+ * Generic bot/crawler keywords, matched with a word-boundary regex (built
+ * below) rather than `String.includes`, to avoid false positives on ordinary
+ * words that merely contain them ("robot", "automotive", "spidering", …).
+ */
+const GENERIC_BOT_UA_KEYWORDS = ["bot", "crawl", "spider", "slurp"];
+
+/** Word-boundary regex built from {@link GENERIC_BOT_UA_KEYWORDS}. */
+const GENERIC_BOT_UA_REGEX = new RegExp(
+  String.raw`\b(${GENERIC_BOT_UA_KEYWORDS.join("|")})\b`,
+  "i",
+);
+
+/**
+ * Specific bot/tool user-agent identifiers matched with plain `String.includes`.
+ * Needed for names that embed a generic keyword without a word boundary
+ * before it (e.g. "GPTBot", "AhrefsBot", "ByteSpider" — the "B"/"S" is
+ * preceded by a letter, not a boundary, so the generic regex above can't see
+ * it) as well as identifiers that aren't generic keywords at all.
+ */
+const SPECIFIC_BOT_UA_TOKENS = [
+  // Automation / scraping tools and HTTP libraries.
   "facebookexternalhit",
   "meta-externalagent",
   "embedly",
@@ -45,6 +66,22 @@ const BOT_UA_TOKENS = [
   "node-fetch",
   "curl/",
   "wget/",
+  // AI crawlers / assistants.
+  "bytespider",
+  "gptbot",
+  "oai-searchbot",
+  "chatgpt-user",
+  "claudebot",
+  "claude-web",
+  "anthropic-ai",
+  "perplexitybot",
+  "amazonbot",
+  "applebot",
+  // SEO / indexing crawlers.
+  "ahrefsbot",
+  "semrushbot",
+  "dataforseo",
+  "google-inspectiontool",
 ];
 
 /**
@@ -89,10 +126,11 @@ export function isExtensionViolation(r) {
   // Chromium reports extension-sandboxed code with this synthetic source-file.
   if (source === "sandbox eval code") return true;
 
-  // Antivirus/security suites that inject scripts into pages (Kaspersky Protection).
+  // Antivirus/security suites that inject scripts into pages (Kaspersky
+  // Protection, Avast, AVG, ESET, McAfee, Malwarebytes, Bitdefender, …).
   // Extract hostname to avoid substring artifacts, then check domain suffix.
   const host = hostOf(source);
-  return Boolean(host && /kaspersky-labs\.com$/i.test(host));
+  return Boolean(host && AV_EXTENSION_HOSTS.test(host));
 }
 
 /**
@@ -176,9 +214,10 @@ export function isBotUserAgent(ua) {
   const lower = ua.toLowerCase();
   // Use word-boundary regex for "bot/crawl/spider" to avoid false positives on
   // "robot", "robotic", "automotive", etc. Other tokens are unambiguous identifiers.
-  if (/\b(bot|crawl|spider|slurp)\b/i.test(ua)) return true;
-  // Check exact matches for unambiguous bot/tool identifiers
-  if (BOT_UA_TOKENS.slice(4).some((token) => lower.includes(token)))
+  if (GENERIC_BOT_UA_REGEX.test(ua)) return true;
+  // Check substring matches for unambiguous bot/tool identifiers, including
+  // names a word-boundary match can't see (e.g. "GPTBot").
+  if (SPECIFIC_BOT_UA_TOKENS.some((token) => lower.includes(token)))
     return true;
 
   // Chromium UA template missing the mandatory "Chrome/" token → scraper/render

@@ -61,6 +61,36 @@ const MAX_BODY_SIZE = 32 * 1024; // 32KB limit for CSP reports
 // In-memory cache for rate limiting: { "ip:blocked-uri": last_timestamp }
 const reportCache = new Map();
 
+// Discarded-report metrics: { reason -> count }. Discarded reports (known
+// false positives — extensions, AV suites, bots, …) never reach the log file
+// or Telegram, so without a counter their volume and mix is invisible.
+// Dumped to the console every DISCARD_LOG_INTERVAL discards.
+const discardCounts = new Map();
+let totalDiscards = 0;
+const DISCARD_LOG_INTERVAL = 100;
+
+/**
+ * Records a discarded CSP report under its reason and periodically logs a
+ * summary of all discard reasons seen so far.
+ *
+ * @param {string} reason - Short reason string from `getDiscardReason()`.
+ * @returns {void}
+ */
+function recordDiscard(reason) {
+  discardCounts.set(reason, (discardCounts.get(reason) ?? 0) + 1);
+  totalDiscards += 1;
+
+  if (totalDiscards % DISCARD_LOG_INTERVAL === 0) {
+    const summary = [...discardCounts]
+      .sort((a, b) => b[1] - a[1])
+      .map(([r, count]) => `${r}=${count}`)
+      .join(", ");
+    console.log(
+      `[CSP Reporter] Discarded ${totalDiscards} reports so far (${summary})`,
+    );
+  }
+}
+
 if (!TELEGRAM_BOT_TOKEN || !TELEGRAM_CHAT_ID) {
   const missingVars = [];
   if (!TELEGRAM_BOT_TOKEN) missingVars.push("TELEGRAM_BOT_TOKEN");
@@ -147,7 +177,9 @@ function processReport(report, ip, ua) {
   // extension/translator-injected resources). The site's own pages are verified
   // CSP-clean on a real browser, so these never indicate an actionable issue.
   // See scripts/utils/csp-filters.mjs and docs/CSP_REPORTER.md.
-  if (getDiscardReason(report, ua)) {
+  const discardReason = getDiscardReason(report, ua);
+  if (discardReason) {
+    recordDiscard(discardReason);
     return;
   }
 
