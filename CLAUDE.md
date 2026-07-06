@@ -77,8 +77,8 @@
 │   ├── utils/                  # Shared utilities
 │   └── languages/              # Custom Shiki grammars (RouterOS)
 ├── scripts/
-│   ├── ci/                     # 20 CI automation scripts
-│   └── *.mjs                   # Development tools (11 scripts)
+│   ├── ci/                     # ~13 CI automation scripts
+│   └── *.mjs                   # Development + deploy tools (deploy-swap, deploy-live, etc.)
 ├── tests/                      # 17 Playwright test suites + utils
 ├── docs/                       # Extended documentation
 ├── public/                     # Static assets (favicons, llms.txt, PDFs)
@@ -245,7 +245,7 @@ interface Props {
 
 - **Title truncation**: ≤65 chars with progressive fallback (`title | author` → `title | JMRP` → `title`)
 - **OG Image**: Optimized to WebP 1200×630 via `getImage()`. Default: `mehome_landscape.webp`
-- **Fonts**: Geist Sans + Geist Mono via Astro Fonts API, CSS vars `--font-geist-sans`, `--font-geist-mono`
+- **Fonts**: Space Grotesk (display) + IBM Plex Sans (body) + IBM Plex Mono (mono) via Astro Fonts API (`fontProviders.fontsource()`), CSS vars `--font-space-grotesk`, `--font-ibm-plex-sans`, `--font-ibm-plex-mono`
 - **Favicons**: WebP + PNG (32×32), Apple Touch Icon (180×180)
 - **Cloudflare Analytics**: `cf-beacon.js` injected only in production with `PUBLIC_CF_BEACON_TOKEN`
 
@@ -305,7 +305,7 @@ All JSON-LD wrapped in `safeJsonLd()` — escapes `<`, `>`, `&`, `\u2028`, `\u20
 --color-bg-header: #eaeff2;
 ```
 
-**Typography**: `--font-body: var(--font-geist-sans)`, `--font-mono: var(--font-geist-mono)`. Weights: `--fw-normal` (400), `--fw-medium` (500), `--fw-semibold` (600), `--fw-bold` (700), `--fw-extrabold` (800).
+**Typography**: `--font-display: var(--font-space-grotesk)` (headings, large numbers, card titles), `--font-body: var(--font-ibm-plex-sans)` (paragraphs, UI text), `--font-mono: var(--font-ibm-plex-mono)` (kickers, code, data, the logo). Weights: `--fw-normal` (400), `--fw-medium` (500), `--fw-semibold` (600), `--fw-bold` (700), `--fw-extrabold` (800).
 
 **Border radii**: `--radius-sm` (4px), `--radius-md` (8px), `--radius-lg` (16px).
 
@@ -503,12 +503,21 @@ presetIcons({
 
 ## Build System
 
-### Build Command (Atomic Swap)
+### Build Command (Blue/Green Symlink Swap)
 
 ```bash
 pnpm build
-# Internally: build → dist_new → swap → dist (zero-downtime)
+# package.json "build" wiring:
+#   pnpm run build:cv
+#   && DIST_DIR=$(node scripts/deploy-swap.mjs prepare)   # picks builds/blue or builds/green (whichever is inactive), empties it
+#   && astro build --outDir $DIST_DIR                      # Astro builds straight into that dir; post-build hooks run here
+#   && node scripts/deploy-swap.mjs swap $DIST_DIR          # atomically retargets the `dist` symlink (ln -sfn + mv -T / rename(2))
+#   && node scripts/deploy-live.mjs                         # publish actions AFTER the swap (see Deployment below)
 ```
+
+`dist` is a symlink to `builds/blue` or `builds/green` (never a real directory once bootstrapped) — Nginx always resolves it to a fully-built tree, so there's no window where `dist/` is empty or half-written. `scripts/deploy-swap.mjs` also auto-migrates a legacy real `dist/` directory into `builds/<color>` the first time it runs.
+
+> ⚠️ No lock guards concurrent builds — running `pnpm build` twice in parallel on the same worktree can race on `deploy-swap.mjs prepare`/`swap`. Not currently an issue (builds are triggered manually/serially), but don't script concurrent invocations without adding one.
 
 ### Pre-Build Integrations
 
@@ -517,15 +526,17 @@ pnpm build
 | `avatar.ts` | Fetches GitHub avatar with fallback |
 | `beacon.ts` | Cloudflare beacon analytics setup   |
 
-### Post-Build Pipeline (Sequential)
+### Post-Build Pipeline (`astro:build:done`, `src/integrations/post-build.ts`)
+
+Runs **inside** the build, before the swap — it only transforms the not-yet-live `builds/<color>` output. Each step is wrapped in a `timed()` helper (`src/integrations/timing.ts`) that logs `⏱ {step}: {seconds}s` for baseline telemetry.
 
 1. `extractCssDataUris()` — CSS data URI extraction to physical files
 2. `processHtmlFiles()` — SRI integrity hashes, nonce attributes, inline style → class, data URI extraction, HTML minification
 3. `finalizeCspConfig()` — Generates `security_headers.conf` + `security_headers_assets.conf` for Nginx
-4. `optimizeImages()` — Image optimization (PNG, JPEG, WebP, AVIF)
-5. `compressAssets()` — Gzip + Brotli pre-compression
-6. `fixPermissions()` + `deploySecurityHeaders()` — Copy headers to Nginx path + reload (if configured)
-7. `purgeCloudflareCache()` — Purge via API (if configured)
+4. `optimizeImages()` + `compressAssets()` **run concurrently** (`Promise.all`) — they touch disjoint file sets (PNG re-optimization vs gzip/Brotli over js/css/svg/json/xml/txt). Both are backed by a content-hash (SHA-256) cache under `.cache/postbuild-png*` / `.cache/postbuild-compression*`, keyed by a config signature so a settings/dependency change invalidates stale cache entries instead of serving them forever.
+5. `fixPermissions()` — chown/chmod for Nginx (`www-data`), only if `POSTBUILD_NGINX_SNIPPETS_PATH` is set
+
+> **Publish actions moved out**: copying `security_headers*.conf` to the system Nginx path + `nginx -t` + reload, and the Cloudflare cache purge, no longer run inside this hook (pre-swap). They now run from `scripts/deploy-live.mjs`, invoked by `pnpm build` *after* `deploy-swap.mjs` has retargeted `dist/` — see Deployment below.
 
 ### Vite Plugin: Prefetch Nonce
 
@@ -570,7 +581,7 @@ i18n: { defaultLocale: "en", locales: ["en", "es"] }
 build: { inlineStylesheets: "always", concurrency: 2 }
 // Image: remote patterns for Google favicons, responsiveStyles: true
 // Vite: chunkSizeWarningLimit: 1000, SSR external: citation-js
-// Fonts: Geist Sans + Geist Mono via fontsource, optimizedFallbacks: true
+// Fonts: Space Grotesk + IBM Plex Sans + IBM Plex Mono via fontsource, optimizedFallbacks: true
 ```
 
 ---
@@ -714,7 +725,7 @@ Blog posts and tools content are **not currently translated** — MDX files exis
 
 ### Playwright Config
 
-3 projects: `functional` (Desktop Chrome), `mobile-functional` (Pixel 5), `accessibility` (Desktop Chrome, 30s timeout). WebServer: `pnpm astro preview` on port 4321. Permissions: clipboard-read/write.
+5 projects: `functional` (Desktop Chrome — functional/integration/seo/prerender/security/icons/i18n/tools/schema/content-integrity/ui-components/edge-cases specs), `performance` (Desktop Chrome, 60s timeout, 1-2 retries — `performance.spec.ts` split out so its LCP/lazy-loading assertions aren't starved by the rest of the suite), `mobile-functional` (Pixel 5 — functional + tools specs), `accessibility` (Desktop Chrome, 30s timeout — `accessibility.spec.ts`, axe-core per-page), `a11y-static` (Desktop Chrome, 30s timeout — `deep.accessibility.spec.ts` + `keyboard.accessibility.spec.ts` + `tabs.accessibility.spec.ts`, split out of the `functional` project so `fullyParallel` accessibility runs aren't quadrupled across projects). WebServer: `pnpm astro preview` on port 4321. Permissions: clipboard-read/write.
 
 ### Test Utils
 
@@ -741,10 +752,12 @@ Blog posts and tools content are **not currently translated** — MDX files exis
 | `remark-mermaid-bypass.mjs`     | Remark plugin: mermaid-render → `<pre class="mermaid">` |
 | `run-lighthouse-audit.mjs`      | Lighthouse audits against localhost/production          |
 | `test-mermaid.mjs`              | Verify mermaid-isomorphic SSR works                     |
+| `deploy-swap.mjs`               | Blue/green build dir selection + atomic `dist` symlink swap |
+| `deploy-live.mjs`               | Post-swap publish actions: Nginx headers/reload, Cloudflare purge, IndexNow/Bing submission (production-root guarded) |
 
 ### CI (`scripts/ci/`)
 
-20 scripts: bundle analysis, accessibility/Lighthouse/schema/HTML/image/link reports, JSDoc coverage, SonarQube issues, RSS validation, schema validation, CI dashboard generation, PR comment updates, deployment cleanup, health score calculation, deploy report.
+~13 scripts: bundle analysis, accessibility/Lighthouse/HTML/image/link reports, JSDoc coverage, SonarQube issues, RSS validation, token-sync check, CI dashboard generation, PR comment updates, deployment cleanup. Dead report-formatting scripts (`deploy-report.mjs`, `format-accessibility-report.mjs`, `format-lighthouse-report.mjs`, `format-schema-report.mjs`, `utils/github.mjs`) were removed as unused; the `schema-validation` CI job itself still exists but no longer calls a standalone script — it just re-runs `pnpm typecheck`, since Schema.org correctness is enforced via `schema-dts` types checked there.
 
 ---
 
@@ -756,9 +769,9 @@ Blog posts and tools content are **not currently translated** — MDX files exis
 ci-setup → build → [parallel quality checks] → [parallel tests] → reporting
 ```
 
-### Quality Checks (12 parallel jobs)
+### Quality Checks (parallel jobs)
 
-`astro check`, Prettier, ESLint, pnpm audit, Stylelint, JSDoc coverage, Lychee (links), CSpell, SonarQube, bundle size, HTML validation, RSS validation.
+`astro check`, Prettier, ESLint, pnpm audit, Stylelint, JSDoc coverage, Lychee (links), CSpell, SonarQube, bundle size, HTML validation, RSS validation, schema validation, image optimization. Since T14, jobs that don't consume the build artifact (`sa-astro`, `sa-prettier`, `sa-eslint`, `sa-audit`, `sa-jsdoc`, `sa-cspell`, `sa-stylelint`) no longer `needs: build` — they run immediately off a shared composite setup action (`.github/actions/setup`), instead of waiting on the production build.
 
 ### Tests
 
@@ -802,8 +815,12 @@ pnpm exec sonar-scanner
 | `TELEGRAM_BOT_TOKEN`            | Server   | CSP reporter Telegram bot            |
 | `TELEGRAM_CHAT_ID`              | Server   | CSP reporter Telegram chat           |
 | `LOCALE_FILTER`                 | CI/Test  | Filter test pages by locale (`en` or `es`). Used in accessibility and Lighthouse CI matrices |
+| `BING_WEBMASTER_API_KEY`        | Secret   | Bing Webmaster URL Submission API key, used by `deploy-live.mjs` |
+| `POSTBUILD_INDEXNOW`            | Optional | Enables IndexNow sitemap submission in `deploy-live.mjs` (unset = skipped) |
+| `DEPLOY_LIVE_FORCE`             | Optional | Set to `1` to force `deploy-live.mjs` publish actions outside the production root |
+| `DEPLOY_LIVE_PRODUCTION_ROOT`   | Optional | Overrides the production-root guard path in `deploy-live.mjs` (default `/var/www/jmrp.io`) |
 
-> None of these variables are required for local development. `SONAR_TOKEN` and `SONAR_PROJECT_KEY` are only needed to run SonarCloud steps 12–13 of `pnpm verify`; those steps are skipped automatically when the variables are absent.
+> None of these variables are required for local development. `SONAR_TOKEN` and `SONAR_PROJECT_KEY` are only needed to run the Sonar phase of `pnpm verify` (SonarCloud Analysis + Issues); that phase is skipped automatically when the variables are absent. `deploy-live.mjs`'s publish actions are additionally gated behind the production-root guard (see Deployment).
 
 ---
 
@@ -840,17 +857,25 @@ Extends: `stylelint-config-standard`, `stylelint-config-recess-order`, `stylelin
 No Docker. Direct SSG deployment on the production server:
 
 - **Project root**: `/var/www/jmrp.io/`
-- **Nginx document root**: `/var/www/jmrp.io/dist/` — Nginx serves this directory directly as `jmrp.io`
-- **Build output**: `pnpm build` uses atomic swap (`dist_new` → `dist_old` → `dist`) for zero-downtime deploys
+- **Nginx document root**: `/var/www/jmrp.io/dist/` — a **symlink** to `builds/blue` or `builds/green`, never a real directory; Nginx serves whatever it currently resolves to as `jmrp.io`
+- **Build output**: `pnpm build` builds into the *inactive* color dir (`builds/blue` or `builds/green`), then atomically retargets `dist` to it (`scripts/deploy-swap.mjs` — `ln -sfn` + `mv -T`/`rename(2)`), for zero-downtime deploys
 - **Live update**: Running `pnpm build` on the server immediately updates the live website — no git push, CI pipeline, or separate deploy step is needed
 
-Steps:
+Steps (`pnpm build` = `scripts/deploy-swap.mjs prepare` → `astro build --outDir <color>` → `scripts/deploy-swap.mjs swap <color>` → `scripts/deploy-live.mjs`):
 
-1. `pnpm build` → `dist/` (atomic swap: `dist_new` → `dist_old` → `dist`)
-2. Post-build copies `security_headers.conf` to Nginx snippets path
-3. Verifies Nginx config (`nginx -t`) and reloads
-4. Purges Cloudflare cache via API
+1. `deploy-swap.mjs prepare` picks and empties the inactive `builds/<color>` dir
+2. `astro build --outDir builds/<color>` — includes the pre-build + post-build integrations (see Build System above); the site is fully built but not yet live
+3. `deploy-swap.mjs swap builds/<color>` — atomically retargets the `dist` symlink; the new build is now live
+4. `deploy-live.mjs` runs **after** the swap and performs the publish side effects:
+   - Copies `security_headers.conf` + `security_headers_assets.conf` to the Nginx snippets path, verifies config (`nginx -t`), reloads Nginx, clears the site's Nginx cache — rolls back the config on failure
+   - Purges the Cloudflare cache via API
+   - Submits sitemap URLs to IndexNow and the Bing Webmaster API
 5. CSP Reporter runs as separate service (`scripts/csp-reporter.mjs`)
+
+> **Production-root guard**: This repo is checked out in multiple worktrees (production at `/var/www/jmrp.io`, plus e.g. a `beta.jmrp.io` worktree) sharing the same Nginx snippets path and Cloudflare zone. `deploy-live.mjs` is a no-op — skipped entirely, before doing any work — unless `process.cwd()` matches the production root (default `/var/www/jmrp.io`, override via `DEPLOY_LIVE_PRODUCTION_ROOT`) or `DEPLOY_LIVE_FORCE=1` is set. Individual actions are further gated on their own env vars being present (Nginx deploy on `POSTBUILD_NGINX_SNIPPETS_PATH`, Cloudflare purge on `PRIVATE_CF_ZONE_ID`/`PRIVATE_CF_API_TOKEN`, IndexNow on `POSTBUILD_INDEXNOW`, Bing on `BING_WEBMASTER_API_KEY`).
+>
+> **First production deploy after merging this branch**: production's `/var/www/jmrp.io/dist` is still a real directory (legacy layout). `deploy-swap.mjs swap` auto-migrates it into `builds/<color>` on first run (rename the real dir out of the way, then symlink in the new build) — but that rename-then-symlink isn't atomic as *one* step, so there's a sub-millisecond window where `dist` exists as neither the old dir nor the new symlink. In practice this is negligible, but to eliminate it entirely, pre-convert `dist` to a symlink by hand before the first post-merge build (e.g. `mv dist builds/blue && ln -s builds/blue dist`).
+> **No lock for concurrent builds**: nothing prevents two `pnpm build` invocations from racing on `deploy-swap.mjs`; keep deploys serial.
 
 ---
 
@@ -858,9 +883,9 @@ Steps:
 
 ```bash
 pnpm dev              # Start dev server (port 4321)
-pnpm build            # Production build (atomic swap)
+pnpm build            # Production build (blue/green symlink swap, then deploy-live.mjs)
 pnpm preview          # Preview production build
-pnpm verify           # FULL QA pipeline — 13 steps (run before PR)
+pnpm verify           # FULL QA pipeline — static → build → dist → Sonar → E2E (run before PR)
 pnpm typecheck        # astro check
 pnpm lint             # ESLint
 pnpm lint:css         # Stylelint
@@ -880,25 +905,30 @@ pnpm exec prettier --check .  # Format check (runs at end of build)
 
 ### `pnpm verify` Pipeline Detail (`scripts/run-verify.mjs`)
 
-13 sequential steps, fail-fast (except SonarCloud):
+5 phases. The first and third run their steps **concurrently** via `Promise.allSettled`, accumulating every failure instead of stopping at the first one; Build and E2E are always serial:
 
-1. **Astro Check** — `pnpm typecheck --minimumFailingSeverity warning` (also validates all JSON-LD `@graph` builders against Schema.org via `schema-dts` `satisfies` types — the official Google Schema.org TypeScript vocabulary)
-2. **ESLint** — `pnpm lint --max-warnings=0`
-3. **Prettier** — `pnpm exec prettier --check .`
-4. **Stylelint** — `pnpm lint:css`
-5. **Production Build** — `pnpm run build` (includes pre-build + post-build integrations)
-6. **HTML5 Validation** — `pnpm lint:html`
-7. **RSS Feed Validation** — `node scripts/ci/validate-rss.mjs dist`
-8. **Spelling (CSpell)** — `pnpm exec cspell lint .`
-9. **Broken Links (Lychee)** — `lychee --config lychee.toml --root-dir dist dist/**/*.html`
-10. **JSDoc Coverage** — `node scripts/ci/calculate-jsdoc-coverage.mjs`
-11. **SonarCloud Analysis** — `pnpm exec sonar-scanner` *(conditional: requires `SONAR_TOKEN`)*
-12. **SonarCloud Issues** — `node scripts/ci/get-sonar-issues.mjs` *(conditional: requires `SONAR_TOKEN` + `SONAR_PROJECT_KEY`)*
-13. **Playwright E2E** — `pnpm test:e2e`
+1. **Static phase (parallel, accumulate)** — never touches `dist/`; any failure here stops the run before the build starts:
+   - **Astro Check** — `pnpm typecheck --minimumFailingSeverity warning` (also validates all JSON-LD `@graph` builders against Schema.org via `schema-dts` `satisfies` types — the official Google Schema.org TypeScript vocabulary)
+   - **ESLint** — `pnpm lint --max-warnings=0`
+   - **Prettier** — `pnpm exec prettier --check .`
+   - **Stylelint** — `pnpm lint:css`
+   - **Token sync** — `node scripts/ci/check-token-sync.mjs`
+   - **Spelling (CSpell)** — `pnpm exec cspell lint .`
+   - **JSDoc Coverage** — `node scripts/ci/calculate-jsdoc-coverage.mjs`
+2. **Build phase (serial, hard stop)** — `pnpm run build` (includes pre-build + post-build integrations, blue/green swap, `deploy-live.mjs`); a failure here skips dist-dependent checks, Sonar, and E2E entirely.
+3. **Dist phase (parallel, accumulate)** — only reads `dist/`, so failures here are recorded but don't block Sonar/E2E:
+   - **ATS: CV Compatibility** — `node scripts/cv/verify-ats.mjs`
+   - **HTML5 Validation** — `pnpm lint:html`
+   - **RSS Feed Validation** — `node scripts/ci/validate-rss.mjs dist`
+   - **Broken Links (Lychee)** — `lychee --config lychee.toml --root-dir dist dist/**/*.html`
+4. **Sonar phase (serial, non-blocking)**:
+   - **SonarCloud Analysis** — `pnpm exec sonar-scanner` *(conditional: requires `SONAR_TOKEN`; warns but never blocks)*
+   - **SonarCloud Issues** — `node scripts/ci/get-sonar-issues.mjs` *(conditional: requires `SONAR_TOKEN`; recorded as a failure at the end but doesn't block E2E)*
+5. **E2E phase (serial, always last)** — **Playwright E2E** — `pnpm test:e2e`
 
-> **Schema.org validation**: JSON-LD correctness is enforced at build via `schema-dts` types on every schema builder (`BaseHead`, `BlogPost`, `ToolLayout`, `HomePage`, `CVPage`, `PublicationsPage`, `BlogIndex`, `BlogTagPage`), checked by step 1. This replaced a hand-rolled output checker that had no cases for TechArticle/FAQPage/HowTo/SoftwareApplication/CollectionPage and wrongly rejected valid JSON-LD `@id` node references.
+> **Schema.org validation**: JSON-LD correctness is enforced at build via `schema-dts` types on every schema builder (`BaseHead`, `BlogPost`, `ToolLayout`, `HomePage`, `CVPage`, `PublicationsPage`, `BlogIndex`, `BlogTagPage`), checked in phase 1. This replaced a hand-rolled output checker that had no cases for TechArticle/FAQPage/HowTo/SoftwareApplication/CollectionPage and wrongly rejected valid JSON-LD `@id` node references.
 
-Steps 5-13 require a prior build. Steps 11-12 are skipped without env vars. Pre-run cleanup: removes `html-validation.json`, `rss-validation.json`.
+The final report lists every failed step across all phases (not just the first encountered), so a single run surfaces the complete picture. Phases 3-5 require a prior build. Phase 4 is skipped without `SONAR_TOKEN`. Pre-run cleanup: removes `html-validation.json`, `rss-validation.json`.
 
 ---
 

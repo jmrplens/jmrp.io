@@ -432,8 +432,12 @@ export default defineConfig({
   build: {
     // Inline critical CSS to improve performance
     inlineStylesheets: "always",
-    // Parallelize page rendering (default: 1). Improves build time
-    // for large sites with many pages (EN + ES).
+    // Parallelize page rendering (default: 1). The real ceiling here is NOT
+    // page count (EN + ES) but Chromium RAM: Mermaid SSR runs via Puppeteer
+    // (rehype-mermaid), spawning one headless Chromium instance per
+    // concurrent page that contains a diagram. Raise only after measuring
+    // peak memory (e.g. `/usr/bin/time -v` around `pnpm build`) to confirm
+    // headroom — untested increases risk OOM-killing the build.
     concurrency: 2,
   },
 
