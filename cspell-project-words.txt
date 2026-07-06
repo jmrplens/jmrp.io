@@ -437,6 +437,7 @@ idioma
 idiomas
 igic
 ihdr
+imagequant
 imagesift
 Immich
 impórtalo
@@ -519,6 +520,7 @@ lenval
 lexicográficamente
 leyendo
 lhci
+libimagequant
 libkql
 libvips
 libvpx
