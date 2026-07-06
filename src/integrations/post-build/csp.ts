@@ -29,7 +29,15 @@ export async function finalizeCspConfig(
 ) {
   logger.info("Finalizing CSP and Security Headers (nonce-only strategy)...");
 
-  const imgSrc = [...cspData.imageDomains].map((d) => `https://${d}`).join(" ");
+  // Sorted for a deterministic .conf across builds — `cspData.imageDomains`
+  // is a Set populated in HTML-processing order (which varies with the
+  // glob/batch scheduling in `processHtmlFiles`), so without sorting the
+  // img-src directive's domain order — and thus the generated file's bytes —
+  // could differ between two builds of identical content.
+  const imgSrc = [...cspData.imageDomains]
+    .sort((a, b) => a.localeCompare(b))
+    .map((d) => `https://${d}`)
+    .join(" ");
 
   // Common CSP directives used across HTML and assets
   const commonCspDirectives = [

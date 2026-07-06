@@ -51,6 +51,23 @@ function decodeData(
 }
 
 /**
+ * Writes an extracted asset to disk atomically: writes to a uniquely-named
+ * temp file in the same directory, then `rename`s it into place, so a
+ * concurrent reader (or another file in the same batch extracting the same
+ * duplicate asset) can never observe a partially-written blob. Kept fully
+ * synchronous — like the rest of `extractDataUri`'s check-then-write — to
+ * preserve the ordering guarantee documented on {@link processHtmlFiles}.
+ *
+ * @param destPath - Final absolute path for the asset.
+ * @param data - Bytes to write.
+ */
+function writeAssetAtomicSync(destPath: string, data: Buffer): void {
+  const tmpPath = `${destPath}.${crypto.randomUUID()}.tmp`;
+  fs.writeFileSync(tmpPath, data);
+  fs.renameSync(tmpPath, destPath);
+}
+
+/**
  * Generates a stable filename for an asset based on its content hash.
  * Validates hash length to ensure unique filenames.
  */
@@ -98,7 +115,7 @@ function extractDataUri(
     const filePath = path.join(targetDir, filename);
 
     if (!fs.existsSync(filePath)) {
-      fs.writeFileSync(filePath, buffer);
+      writeAssetAtomicSync(filePath, buffer);
       return { url: "/" + ASSETS_DIR + "/" + filename, extracted: true };
     }
 
@@ -302,6 +319,7 @@ async function processSingleHtmlFile(
 
   // Minify HTML
   const rawHtml = $.html();
+  // LOAD-BEARING: no await may run before this point — the synchronous prefix serializes data-URI check-then-write across the batch (see JSDoc above).
   const minifiedHtml = await minify(rawHtml, {
     removeComments: true,
     collapseWhitespace: true,
