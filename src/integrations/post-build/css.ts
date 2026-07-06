@@ -79,10 +79,22 @@ export async function extractCssDataUris(
   const cssFiles = await glob("**/*.css", { cwd: distDir, absolute: true });
   const htmlFiles = await glob("**/*.html", { cwd: distDir, absolute: true });
 
-  // Regex that correctly handles optional quotes and prevents over-capturing unquoted URIs
-  // Optimized to avoid ReDoS and unnecessary escapes
+  // Regex that correctly handles optional quotes and prevents over-capturing unquoted URIs.
+  //
+  // The quoted branch uses a lazy `[\s\S]*?` (not a `[^"']+` character class)
+  // bounded by a backreference to the *opening* quote. UnoCSS's icon preset
+  // emits data URIs wrapped in double quotes whose encoded SVG payload
+  // contains *literal, unescaped single quotes* for its own attribute
+  // quoting (e.g. `url("data:image/svg+xml;utf8,%3Csvg viewBox='0 0 24
+  // 24' ...")`). A character class excluding both quote types stops at the
+  // first embedded quote regardless of which delimiter opened the match,
+  // so it never reaches the real closing `"` — the match silently fails
+  // and zero data URIs get extracted. Only excluding the *matching* quote
+  // (via the backreference) lets the other quote type appear freely inside.
+  // Optimized to avoid ReDoS: the lazy quantifier is anchored by the
+  // backreference + literal `)`, so it cannot backtrack catastrophically.
   const DATA_URI_REGEX =
-    /url\(\s*(?:(['"])(data:[^"']+)\1|(data:[^'")\s]+))\s*\)/gi;
+    /url\(\s*(?:(['"])(data:[\s\S]*?)\1|(data:[^'")\s]+))\s*\)/gi;
 
   let extracted = 0;
 
