@@ -1,5 +1,5 @@
 name: Setup pnpm + Node
-description: Checkout deps setup shared by all jobs
+description: Shared pnpm + Node setup (run after actions/checkout)
 
 runs:
   using: composite

@@ -34,6 +34,7 @@ export default [
       "**/temp_workflow/**",
       "**/lh-deploy/**",
       "**/.scannerwork/**",
+      "lighthouse-results/**",
       "src/assets/nedry-assets.ts", // Base64-encoded assets (large file, no logic)
     ],
   },

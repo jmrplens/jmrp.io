@@ -733,6 +733,7 @@ const articleSchema = [
 
   .cover-image-container {
     width: 100%;
+
     /* No forced aspect-ratio: covers ship in mixed ratios (1:1, 3:2, 16:9), so
        pinning 16/9 + object-fit:cover cropped the non-16:9 ones. Let each cover
        keep its natural ratio — the img's width/height attrs reserve space (no CLS). */

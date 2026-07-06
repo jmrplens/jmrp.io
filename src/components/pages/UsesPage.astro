@@ -49,28 +49,31 @@ const isExternal = (href: string) => !href.startsWith("/");
             <h2 class="uses-col__title">{group.label}</h2>
             <p class="uses-col__intro">{group.intro}</p>
             <div class="uses-col__items">
-              {group.items.map((item) => (
-                <div class="uses-item">
-                  <div class="uses-item__name">
-                    {item.href ? (
-                      <a
-                        href={resolveHref(item.href)}
-                        {...(isExternal(item.href)
-                          ? {
-                              target: "_blank",
-                              rel: "external noopener noreferrer",
-                            }
-                          : {})}
-                      >
-                        {item.name}
-                      </a>
-                    ) : (
-                      item.name
-                    )}
+              {group.items.map((item) => {
+                // Hoisted out of the JSX attribute spread below: sonarjs
+                // flags a ternary nested inside another ternary's branch.
+                const externalLinkProps =
+                  item.href && isExternal(item.href)
+                    ? { target: "_blank", rel: "external noopener noreferrer" }
+                    : {};
+                return (
+                  <div class="uses-item">
+                    <div class="uses-item__name">
+                      {item.href ? (
+                        <a
+                          href={resolveHref(item.href)}
+                          {...externalLinkProps}
+                        >
+                          {item.name}
+                        </a>
+                      ) : (
+                        item.name
+                      )}
+                    </div>
+                    <div class="uses-item__detail">{item.detail}</div>
                   </div>
-                  <div class="uses-item__detail">{item.detail}</div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </section>
         ))

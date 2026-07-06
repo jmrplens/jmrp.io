@@ -808,12 +808,6 @@ jobs:
         with:
           name: rss-validation-report
           path: .
-      - name: Download Schema Report
-        uses: actions/download-artifact@v8
-        continue-on-error: true
-        with:
-          name: schema-validation-report
-          path: .
       - name: Download Image Report
         uses: actions/download-artifact@v8
         continue-on-error: true
