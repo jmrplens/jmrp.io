@@ -176,11 +176,7 @@ function runVerify() {
 
 // Ensure reports are cleaned before starting
 try {
-  const reportFiles = [
-    "schema-report.json",
-    "html-validation.json",
-    "rss-validation.json",
-  ];
+  const reportFiles = ["html-validation.json", "rss-validation.json"];
   for (const f of reportFiles) {
     if (fs.existsSync(f)) fs.unlinkSync(f);
   }
