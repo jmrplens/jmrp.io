@@ -56,6 +56,182 @@ const svgoConfig: Config = {
   ] as PluginConfig[],
 };
 
+/** Cache entries not reused by a build in this long are pruned (30 days). Mirrors `compression.ts`/`images.ts`. */
+const CACHE_MAX_AGE_MS = 30 * 24 * 60 * 60 * 1000;
+
+/**
+ * Persistent, content-addressed cache of already-extracted asset bytes
+ * (SVGO-optimized for SVG, raw otherwise), keyed by the asset's own
+ * filename — itself a hash of the *decoded, pre-optimization* buffer (see
+ * {@link ASSET_FILENAME_HASH_LENGTH}), so it never changes for a given
+ * embedded asset regardless of SVGO settings. Survives across builds since
+ * `dist` is rebuilt from scratch every time, so without this every build
+ * re-decodes and re-runs SVGO over every embedded icon/diagram, even ones
+ * byte-identical to a previous build.
+ *
+ * (A second, whole-file-content cache — keyed by each CSS/HTML file's own
+ * raw bytes, to skip the regex/cheerio pass entirely — was prototyped and
+ * measured, then deliberately dropped; see the "css.ts whole-file cache"
+ * finding in the wave report for why.)
+ */
+const ASSET_CACHE_DIR = path.resolve(
+  process.cwd(),
+  ".cache",
+  "postbuild-css-assets",
+);
+const ASSET_CACHE_MANIFEST_PATH = path.resolve(
+  process.cwd(),
+  ".cache",
+  "postbuild-css-assets.json",
+);
+
+/**
+ * Returns the installed `svgo` package version, or `"unknown"` if it can't
+ * be read (e.g. an unusual `node_modules` layout). Folded into
+ * {@link ASSET_CACHE_CONFIG} so an `svgo` upgrade — which can change
+ * optimization output even with identical plugin params — invalidates the
+ * cache instead of silently replaying bytes produced by the old version.
+ *
+ * `svgo`'s `package.json` isn't an exported subpath (its `exports` map only
+ * lists `.` and `./browser`), so it can't be `import`ed directly under
+ * Node's ESM resolution — read it off disk instead, same as `sharp` is
+ * queried via its own `versions` API elsewhere in this pipeline.
+ */
+function getSvgoVersion(): string {
+  try {
+    const pkgPath = path.resolve(
+      process.cwd(),
+      "node_modules",
+      "svgo",
+      "package.json",
+    );
+    const pkg = JSON.parse(fs.readFileSync(pkgPath, "utf-8")) as {
+      version?: string;
+    };
+    return pkg.version ?? "unknown";
+  } catch {
+    return "unknown";
+  }
+}
+
+/**
+ * Config knobs affecting the *bytes* written for an extracted asset.
+ * Hashed into a signature (see {@link computeAssetCacheConfigSignature})
+ * that invalidates {@link ASSET_CACHE_DIR} on change. `version` is a manual
+ * escape hatch: bump it if `saveAsset`'s logic changes in a way that isn't
+ * captured by the other fields (e.g. a new non-SVG optimization step).
+ */
+const ASSET_CACHE_CONFIG = {
+  version: 1,
+  svgo: svgoConfig,
+  svgoVersion: getSvgoVersion(),
+};
+
+function computeAssetCacheConfigSignature(): string {
+  return crypto
+    .createHash("sha256")
+    .update(JSON.stringify(ASSET_CACHE_CONFIG))
+    .digest("hex");
+}
+
+/** Per-asset-filename manifest entry: last time a build reused/created it. */
+interface AssetCacheEntry {
+  lastUsed: number;
+}
+type AssetCacheManifest = Record<string, AssetCacheEntry>;
+interface AssetCacheManifestFile {
+  configSignature: string;
+  entries: AssetCacheManifest;
+}
+
+/**
+ * Loads the asset cache manifest, tolerating a missing/corrupt file. Drops
+ * the whole cache (manifest + blobs) if the config signature changed.
+ */
+function loadAssetCacheManifest(
+  logger: AstroIntegrationLogger,
+): AssetCacheManifest {
+  const currentSignature = computeAssetCacheConfigSignature();
+  try {
+    const raw = fs.readFileSync(ASSET_CACHE_MANIFEST_PATH, "utf-8");
+    const parsed: unknown = JSON.parse(raw);
+    if (
+      parsed &&
+      typeof parsed === "object" &&
+      !Array.isArray(parsed) &&
+      "configSignature" in parsed &&
+      "entries" in parsed
+    ) {
+      const manifestFile = parsed as AssetCacheManifestFile;
+      if (manifestFile.configSignature === currentSignature) {
+        return manifestFile.entries;
+      }
+      logger.info(
+        "  SVGO/asset config changed since last build — invalidating CSS asset cache.",
+      );
+      fs.rmSync(ASSET_CACHE_DIR, { recursive: true, force: true });
+      fs.mkdirSync(ASSET_CACHE_DIR, { recursive: true });
+    }
+  } catch {
+    // Missing or invalid manifest: start fresh.
+  }
+  return {};
+}
+
+/** Persists the asset cache manifest, tagged with the current config signature. */
+function saveAssetCacheManifest(manifest: AssetCacheManifest): void {
+  const manifestFile: AssetCacheManifestFile = {
+    configSignature: computeAssetCacheConfigSignature(),
+    entries: manifest,
+  };
+  fs.mkdirSync(path.dirname(ASSET_CACHE_MANIFEST_PATH), { recursive: true });
+  fs.writeFileSync(
+    ASSET_CACHE_MANIFEST_PATH,
+    JSON.stringify(manifestFile, null, 2),
+  );
+}
+
+/**
+ * Removes asset cache entries (and their blobs) not reused by any build in
+ * the last {@link CACHE_MAX_AGE_MS}. Mirrors `pruneStaleEntries` in
+ * `compression.ts`/`images.ts`.
+ */
+function pruneStaleAssetCacheEntries(
+  manifest: AssetCacheManifest,
+  logger: AstroIntegrationLogger,
+): boolean {
+  const now = Date.now();
+  const staleFilenames = Object.entries(manifest)
+    .filter(([, entry]) => now - entry.lastUsed > CACHE_MAX_AGE_MS)
+    .map(([filename]) => filename);
+
+  if (staleFilenames.length === 0) return false;
+
+  for (const filename of staleFilenames) {
+    delete manifest[filename];
+    fs.rmSync(path.join(ASSET_CACHE_DIR, filename), { force: true });
+  }
+
+  logger.info(
+    `  Pruned ${staleFilenames.length} stale CSS asset cache entries (>30 days unused).`,
+  );
+  return true;
+}
+
+/**
+ * Writes a file atomically: writes to a uniquely-named temp file in the
+ * same directory, then `rename`s it into place, so a reader can never
+ * observe a partially-written file. Synchronous, matching the rest of this
+ * module's I/O style (the CSS/HTML transform loops are sequential, not
+ * batched, so there's no concurrency to guard against here — this is about
+ * crash-safety, not races).
+ */
+function writeFileAtomicSync(destPath: string, data: Buffer): void {
+  const tmpPath = `${destPath}.${crypto.randomUUID()}.tmp`;
+  fs.writeFileSync(tmpPath, data);
+  fs.renameSync(tmpPath, destPath);
+}
+
 /**
  * Extracts embedded Data URIs from CSS and HTML files into standalone physical assets.
  *
@@ -64,6 +240,11 @@ const svgoConfig: Config = {
  * 2. Enables better caching of assets.
  * 3. Supports strict CSP by removing inline data: URIs where they might be problematic.
  * 4. Automatically optimizes extracted SVG assets using SVGO.
+ *
+ * Extracted asset bytes are cached on disk (see {@link ASSET_CACHE_DIR}) so a
+ * build re-encountering a byte-identical embedded asset (e.g. the same icon,
+ * used again in a later build) skips the SVGO/decode work and just replays
+ * the cached bytes.
  *
  * @param {string} distDir - The absolute path to the production build output.
  * @param {AstroIntegrationLogger} logger - The Astro logger instance.
@@ -78,6 +259,10 @@ export async function extractCssDataUris(
 
   const cssFiles = await glob("**/*.css", { cwd: distDir, absolute: true });
   const htmlFiles = await glob("**/*.html", { cwd: distDir, absolute: true });
+
+  fs.mkdirSync(ASSET_CACHE_DIR, { recursive: true });
+  const assetManifest = loadAssetCacheManifest(logger);
+  let assetManifestDirty = false;
 
   // Regex that correctly handles optional quotes and prevents over-capturing unquoted URIs.
   //
@@ -97,9 +282,11 @@ export async function extractCssDataUris(
     /url\(\s*(?:(['"])(data:[\s\S]*?)\1|(data:[^'")\s]+))\s*\)/gi;
 
   let extracted = 0;
+  let assetsFromCache = 0;
 
   /**
-   * Helper to optimize (if SVG) and save an asset to disk.
+   * Helper to optimize (if SVG) and save an asset to disk, reusing a
+   * previously-computed result from {@link ASSET_CACHE_DIR} when available.
    */
   const saveAsset = (
     filePath: string,
@@ -107,6 +294,18 @@ export async function extractCssDataUris(
     ext: string,
     filename: string,
   ) => {
+    const cachedAssetPath = path.join(ASSET_CACHE_DIR, filename);
+    if (fs.existsSync(cachedAssetPath)) {
+      const cachedBytes = fs.readFileSync(cachedAssetPath);
+      writeFileAtomicSync(filePath, cachedBytes);
+      assetManifest[filename] = { lastUsed: Date.now() };
+      assetManifestDirty = true;
+      extracted++;
+      assetsFromCache++;
+      return;
+    }
+
+    let finalBytes: Buffer;
     if (ext === "svg") {
       const svgString = buffer.toString("utf-8");
       try {
@@ -120,9 +319,9 @@ export async function extractCssDataUris(
           logger.warn(
             `SVGO optimization returned error for ${filename}: ${errorMsg}`,
           );
-          fs.writeFileSync(filePath, buffer);
+          finalBytes = buffer;
         } else {
-          fs.writeFileSync(filePath, optimized.data);
+          finalBytes = Buffer.from(optimized.data);
         }
       } catch (svgoError) {
         const svgoErrorMsg =
@@ -130,11 +329,16 @@ export async function extractCssDataUris(
         logger.warn(
           `SVGO optimization failed for extracted asset ${filename}: ${svgoErrorMsg}`,
         );
-        fs.writeFileSync(filePath, buffer);
+        finalBytes = buffer;
       }
     } else {
-      fs.writeFileSync(filePath, buffer);
+      finalBytes = buffer;
     }
+
+    writeFileAtomicSync(filePath, finalBytes);
+    writeFileAtomicSync(cachedAssetPath, finalBytes);
+    assetManifest[filename] = { lastUsed: Date.now() };
+    assetManifestDirty = true;
     extracted++;
   };
 
@@ -248,5 +452,11 @@ export async function extractCssDataUris(
     }
   }
 
-  logger.info(`  ✓ Extracted ${extracted} assets from CSS/HTML.`);
+  if (pruneStaleAssetCacheEntries(assetManifest, logger))
+    assetManifestDirty = true;
+  if (assetManifestDirty) saveAssetCacheManifest(assetManifest);
+
+  logger.info(
+    `  ✓ Extracted ${extracted} assets from CSS/HTML (${assetsFromCache} from cache).`,
+  );
 }

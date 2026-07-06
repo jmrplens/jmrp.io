@@ -23,25 +23,44 @@ const MANIFEST_PATH = path.resolve(
   "postbuild-png.json",
 );
 
-/** Shape of the on-disk manifest: source-content hash -> bytes saved. */
-type PngManifest = Record<string, number>;
+/**
+ * Per-hash manifest entry: how many bytes optimization saved (0 = tried and
+ * found not to help this content, no blob stored) and the last time a build
+ * reused or created this entry — drives {@link pruneStaleEntries}.
+ */
+interface PngManifestEntry {
+  savedBytes: number;
+  lastUsed: number;
+}
+
+/** Shape of the on-disk manifest: source-content hash -> entry. */
+type PngManifest = Record<string, PngManifestEntry>;
 
 /** Threshold (bytes) below which a PNG is treated as a "small icon" for palette quantization. */
 const SMALL_ICON_BYTE_THRESHOLD = 51_200;
 
+/** Cache entries not reused by a build in this long are pruned (30 days). Mirrors `compression.ts`. */
+const CACHE_MAX_AGE_MS = 30 * 24 * 60 * 60 * 1000;
+
 /**
  * Sharp/pngquant options used for the palette re-optimization pass, plus the
- * small-icon size threshold and the installed libvips version. Hashed into
- * `configSignature` (see {@link computeConfigSignature}) so that changing any
- * of these — or upgrading `sharp`, which bundles its own libvips build —
- * invalidates the entire on-disk cache instead of silently serving blobs
- * produced under a stale configuration forever.
+ * small-icon size threshold and the installed libvips + libimagequant
+ * versions. Hashed into `configSignature` (see {@link computeConfigSignature})
+ * so that changing any of these — or upgrading `sharp`, which bundles its own
+ * libvips/libimagequant build — invalidates the entire on-disk cache instead
+ * of silently serving blobs produced under a stale configuration forever.
+ *
+ * `imagequant` (not `vips`) is the library that actually performs the
+ * palette quantization requested via `png({ palette: true })`, so it is the
+ * more direct dependency to pin here; `vips` is kept too since it still
+ * governs the (lossless) `compressionLevel` encoding path.
  */
 const PNG_OPTIMIZE_CONFIG = {
   compressionLevel: 9,
   quality: 80,
   iconThreshold: SMALL_ICON_BYTE_THRESHOLD,
   vips: sharp.versions.vips,
+  imagequant: sharp.versions.imagequant ?? "unknown",
 };
 
 /**
@@ -145,6 +164,45 @@ async function writeBlobAtomic(destPath: string, data: Buffer): Promise<void> {
 }
 
 /**
+ * Removes manifest entries (and their cached `.png` blobs, if any) not
+ * reused by any build in the last {@link CACHE_MAX_AGE_MS}. Mirrors
+ * `pruneStaleEntries` in `compression.ts`; the PNG cache has no other
+ * eviction mechanism, so without this it grows without bound as the site's
+ * image set changes over time.
+ *
+ * @param manifest - The manifest entries map, mutated in place.
+ * @param logger - The Astro logger instance.
+ * @returns Whether any entry was pruned (i.e. the manifest needs saving).
+ */
+async function pruneStaleEntries(
+  manifest: PngManifest,
+  logger: AstroIntegrationLogger,
+): Promise<boolean> {
+  const now = Date.now();
+  const staleHashes = Object.entries(manifest)
+    .filter(([, entry]) => now - entry.lastUsed > CACHE_MAX_AGE_MS)
+    .map(([hash]) => hash);
+
+  if (staleHashes.length === 0) return false;
+
+  await Promise.all(
+    staleHashes.map((hash) => {
+      delete manifest[hash];
+      // Entries with savedBytes === 0 never had a blob written; `force`
+      // makes the removal a no-op in that case instead of throwing.
+      return fs.promises.rm(path.join(CACHE_BLOBS_DIR, `${hash}.png`), {
+        force: true,
+      });
+    }),
+  );
+
+  logger.info(
+    `  Pruned ${staleHashes.length} stale PNG cache entries (>30 days unused).`,
+  );
+  return true;
+}
+
+/**
  * Optimizes images in the distribution directory.
  *
  * `ViteImageOptimizer` (see `astro.config.mjs`) already runs Sharp over every
@@ -196,9 +254,12 @@ export async function optimizeImages(
 
       if (Object.hasOwn(manifest, hash)) {
         // We've already tried optimizing this exact byte content before.
-        const cachedSaved = manifest[hash];
-        if (cachedSaved === 0) {
-          // Known outcome: optimization does not help this content. Skip.
+        const cachedEntry = manifest[hash];
+        if (cachedEntry.savedBytes === 0) {
+          // Known outcome: optimization does not help this content. Skip,
+          // but refresh lastUsed so this entry survives pruning.
+          manifest[hash] = { ...cachedEntry, lastUsed: Date.now() };
+          manifestDirty = true;
           return { optimized: false, saved: 0, cached: true };
         }
 
@@ -206,7 +267,13 @@ export async function optimizeImages(
         try {
           const cachedBuffer = await fs.promises.readFile(cachedBlobPath);
           await fs.promises.writeFile(file, cachedBuffer);
-          return { optimized: true, saved: cachedSaved, cached: true };
+          manifest[hash] = { ...cachedEntry, lastUsed: Date.now() };
+          manifestDirty = true;
+          return {
+            optimized: true,
+            saved: cachedEntry.savedBytes,
+            cached: true,
+          };
         } catch {
           // Cached blob missing/unreadable (e.g. cache dir cleared
           // manually): fall through and re-run Sharp below.
@@ -231,7 +298,10 @@ export async function optimizeImages(
           path.join(CACHE_BLOBS_DIR, `${hash}.png`),
           optimizedBuffer,
         );
-        manifest[hash] = originalSize - optimizedBuffer.length;
+        manifest[hash] = {
+          savedBytes: originalSize - optimizedBuffer.length,
+          lastUsed: Date.now(),
+        };
         manifestDirty = true;
         return {
           optimized: true,
@@ -240,7 +310,7 @@ export async function optimizeImages(
         };
       }
 
-      manifest[hash] = 0;
+      manifest[hash] = { savedBytes: 0, lastUsed: Date.now() };
       manifestDirty = true;
     } catch (error) {
       logger.warn(
@@ -265,6 +335,7 @@ export async function optimizeImages(
     }
   }
 
+  if (await pruneStaleEntries(manifest, logger)) manifestDirty = true;
   if (manifestDirty) {
     await saveManifest(manifest);
   }
