@@ -91,6 +91,19 @@ function isIsoDate(value: unknown): value is string {
   return !Number.isNaN(d.getTime()) && value.includes("T");
 }
 
+/**
+ * Extract the URL from an `image` value that may be a plain string or a
+ * schema.org `ImageObject` (the canonical Person and Article nodes both emit
+ * `image` as an ImageObject with width/height, not a bare URL string).
+ */
+function imageUrl(value: unknown): unknown {
+  if (typeof value === "string") return value;
+  if (value && typeof value === "object" && "url" in value) {
+    return (value as Record<string, unknown>).url;
+  }
+  return undefined;
+}
+
 import { blockCloudflare } from "./utils";
 
 // ─── Common Schemas ──────────────────────────────────────────────────
@@ -202,7 +215,10 @@ test.describe("Article schema", () => {
     expect(isNonEmptyStr(author["@id"])).toBe(true);
     expect(author["@id"]).toContain("#person");
 
-    expect(isValidUrl(post.image)).toBe(true);
+    // image is an ImageObject (with width/height), not a bare URL string.
+    const postImage = post.image as JsonLdSchema;
+    expect(postImage["@type"]).toBe("ImageObject");
+    expect(isValidUrl(imageUrl(postImage))).toBe(true);
     expect(isNonEmptyStr(post.inLanguage)).toBe(true);
 
     const mainEntity = post.mainEntityOfPage as JsonLdSchema;
@@ -213,33 +229,55 @@ test.describe("Article schema", () => {
   });
 });
 
-// ─── ProfilePage (Homepage) ──────────────────────────────────────────
+// ─── ProfilePage (Homepage → WebPage; canonical ProfilePage lives at /about/) ──
 
 test.describe("ProfilePage schema on homepage", () => {
-  test("validates ProfilePage with Person mainEntity", async ({ page }) => {
+  test("homepage emits WebPage referencing #person, not a duplicate ProfilePage", async ({
+    page,
+  }) => {
     await blockCloudflare(page);
     await page.goto("/");
     const jsonLd = await getJsonLd(page);
 
-    const profile = findInGraph(jsonLd, "ProfilePage");
-    expect(profile).not.toBeNull();
-    if (!profile) return;
+    // The home page must NOT emit its own ProfilePage: the canonical
+    // author-entity page is /about/ (see AboutPage.astro). A second
+    // ProfilePage here would duplicate the identity data across pages.
+    expect(findInGraph(jsonLd, "ProfilePage")).toBeNull();
 
-    // mainEntity is a typed reference to the canonical #person node, which is
-    // defined once as the WebSite publisher (avoids a duplicate, thinner Person
-    // sharing the same @id). Resolve the reference and validate the full node.
-    const ref = profile.mainEntity as JsonLdSchema;
-    expect(ref["@type"]).toBe("Person");
+    const homePage = findInGraph(jsonLd, "WebPage");
+    expect(homePage).not.toBeNull();
+    if (!homePage) return;
+
+    expect(isValidUrl(homePage["@id"])).toBe(true);
+    expect(isValidUrl(homePage.url)).toBe(true);
+    expect(isNonEmptyStr(homePage.name)).toBe(true);
+    expect(isNonEmptyStr(homePage.description)).toBe(true);
+    expect(isNonEmptyStr(homePage.inLanguage)).toBe(true);
+
+    const isPartOf = homePage.isPartOf as JsonLdSchema;
+    expect(isNonEmptyStr(isPartOf["@id"])).toBe(true);
+    expect(isPartOf["@id"]).toContain("#website");
+
+    // `about` is a typed reference to the canonical #person node, which is
+    // defined once as the WebSite publisher (avoids a duplicate, thinner
+    // Person sharing the same @id). Resolve the reference and validate it.
+    const about = homePage.about as JsonLdSchema;
+    expect(isNonEmptyStr(about["@id"])).toBe(true);
+    expect(about["@id"]).toContain("#person");
 
     const website = findInGraph(jsonLd, "WebSite");
     expect(website).not.toBeNull();
     const person = (website?.publisher ?? {}) as JsonLdSchema;
-    expect(person["@id"]).toBe(ref["@id"]);
+    expect(person["@id"]).toBe(about["@id"]);
     expect(person["@type"]).toBe("Person");
     expect(isNonEmptyStr(person.name)).toBe(true);
     expect(isValidUrl(person.url)).toBe(true);
-    expect(isValidUrl(person.image)).toBe(true);
     expect(isNonEmptyStr(person.jobTitle)).toBe(true);
+
+    // image is an ImageObject (with width/height), not a bare URL string.
+    const personImage = person.image as JsonLdSchema;
+    expect(personImage["@type"]).toBe("ImageObject");
+    expect(isValidUrl(imageUrl(personImage))).toBe(true);
 
     const sameAs = person.sameAs as string[];
     expect(Array.isArray(sameAs)).toBe(true);
@@ -248,34 +286,101 @@ test.describe("ProfilePage schema on homepage", () => {
       expect(isValidUrl(url)).toBe(true);
     }
   });
-});
 
-// ─── ProfilePage (CV) ────────────────────────────────────────────────
-
-test.describe("ProfilePage schema on CV page", () => {
-  test("validates detailed Person with education and occupation", async ({
-    page,
-  }) => {
+  test("the canonical ProfilePage lives at /about/", async ({ page }) => {
     await blockCloudflare(page);
-    await page.goto("/cv");
+    await page.goto("/about/");
     const jsonLd = await getJsonLd(page);
 
     const profile = findInGraph(jsonLd, "ProfilePage");
     expect(profile).not.toBeNull();
     if (!profile) return;
 
-    const person = profile.mainEntity as JsonLdSchema;
-    expect(person["@type"]).toBe("Person");
-    expect(isNonEmptyStr(person.name)).toBe(true);
+    expect(isNonEmptyStr(profile["@id"])).toBe(true);
+    expect(profile["@id"]).toContain("#profile");
+    expect(isIsoDate(profile.dateModified)).toBe(true);
 
-    expect(Array.isArray(person.knowsAbout)).toBe(true);
-    expect((person.knowsAbout as unknown[]).length).toBeGreaterThan(0);
+    // mainEntity is a typed reference to the same canonical #person node
+    // used as the WebSite publisher — it must resolve to the exact same @id.
+    const ref = profile.mainEntity as JsonLdSchema;
+    expect(ref["@type"]).toBe("Person");
+    expect(isNonEmptyStr(ref["@id"])).toBe(true);
+    expect(ref["@id"]).toContain("#person");
 
-    expect(Array.isArray(person.alumniOf)).toBe(true);
-    expect((person.alumniOf as unknown[]).length).toBeGreaterThan(0);
+    const website = findInGraph(jsonLd, "WebSite");
+    expect(website).not.toBeNull();
+    const person = (website?.publisher ?? {}) as JsonLdSchema;
+    expect(person["@id"]).toBe(ref["@id"]);
+  });
+});
 
-    expect(Array.isArray(person.hasOccupation)).toBe(true);
-    expect((person.hasOccupation as unknown[]).length).toBeGreaterThan(0);
+// ─── Person (CV) ─────────────────────────────────────────────────────
+
+test.describe("Person schema on CV page", () => {
+  test("validates the additive Person node plus the canonical #person it augments", async ({
+    page,
+  }) => {
+    await blockCloudflare(page);
+    await page.goto("/cv");
+    const jsonLd = await getJsonLd(page);
+
+    // /cv/ is not the canonical ProfilePage (that's /about/) — it emits a
+    // plain WebPage plus a SEPARATE, additive Person node.
+    expect(findInGraph(jsonLd, "ProfilePage")).toBeNull();
+
+    const webPage = findInGraph(jsonLd, "WebPage");
+    expect(webPage).not.toBeNull();
+    if (webPage) {
+      const mainEntity = webPage.mainEntity as JsonLdSchema;
+      expect(isNonEmptyStr(mainEntity["@id"])).toBe(true);
+      expect(mainEntity["@id"]).toContain("#person");
+    }
+
+    // The additive top-level Person node only carries occupation/education/
+    // credential facts — findInGraph only matches top-level @graph entries,
+    // so this resolves to the CV-specific node, not the nested WebSite publisher.
+    const additivePerson = findInGraph(jsonLd, "Person");
+    expect(additivePerson).not.toBeNull();
+    if (!additivePerson) return;
+
+    expect(isNonEmptyStr(additivePerson["@id"])).toBe(true);
+    expect(additivePerson["@id"]).toContain("#person");
+
+    expect(Array.isArray(additivePerson.alumniOf)).toBe(true);
+    expect((additivePerson.alumniOf as unknown[]).length).toBeGreaterThan(0);
+
+    expect(Array.isArray(additivePerson.hasOccupation)).toBe(true);
+    expect((additivePerson.hasOccupation as unknown[]).length).toBeGreaterThan(
+      0,
+    );
+
+    expect(Array.isArray(additivePerson.hasCredential)).toBe(true);
+    expect((additivePerson.hasCredential as unknown[]).length).toBeGreaterThan(
+      0,
+    );
+
+    // The additive node must NOT redefine identity fields owned by the
+    // canonical #person — otherwise two divergent copies of the same @id
+    // would coexist in the graph.
+    expect(additivePerson.name).toBeUndefined();
+    expect(additivePerson.jobTitle).toBeUndefined();
+    expect(additivePerson.image).toBeUndefined();
+    expect(additivePerson.knowsAbout).toBeUndefined();
+    expect(additivePerson.sameAs).toBeUndefined();
+
+    // The canonical, fully-populated #person lives once, nested as the
+    // WebSite publisher — it carries the identity fields the additive
+    // node deliberately omits.
+    const website = findInGraph(jsonLd, "WebSite");
+    expect(website).not.toBeNull();
+    const canonicalPerson = (website?.publisher ?? {}) as JsonLdSchema;
+    expect(canonicalPerson["@id"]).toBe(additivePerson["@id"]);
+    expect(canonicalPerson["@type"]).toBe("Person");
+    expect(isNonEmptyStr(canonicalPerson.name)).toBe(true);
+    expect(isNonEmptyStr(canonicalPerson.jobTitle)).toBe(true);
+
+    expect(Array.isArray(canonicalPerson.knowsAbout)).toBe(true);
+    expect((canonicalPerson.knowsAbout as unknown[]).length).toBeGreaterThan(0);
   });
 });
 
@@ -402,6 +507,15 @@ test.describe("URL correctness in schemas", () => {
       "identifier", // ORCID PropertyValue.url points to orcid.org by design
     ]);
 
+    // Wikidata's canonical entity concept URI (http, not https, by design —
+    // the standard Linked Data identifier). The Person's `knowsAbout` emits
+    // these as `@id` values (see BaseHead.astro `KNOWS_ABOUT_WIKIDATA`); it is
+    // a legitimate, deliberate exception to the site's https-only own-domain
+    // URLs, not a key-scoped external subtree like `sameAs`/`alumniOf`.
+    const isWikidataEntityUri = (value: string): boolean =>
+      // eslint-disable-next-line unicorn/prefer-https, sonarjs/no-clear-text-protocols -- see comment above
+      value.startsWith("http://www.wikidata.org/entity/");
+
     /** Collect @id and url values (skip external subtrees) */
     const collectSiteUrls = (obj: unknown, insideExternal = false): void => {
       if (typeof obj !== "object" || obj === null) return;
@@ -417,7 +531,8 @@ test.describe("URL correctness in schemas", () => {
           !isExtKey &&
           ["@id", "url", "item"].includes(key) &&
           typeof val === "string" &&
-          isValidUrl(val)
+          isValidUrl(val) &&
+          !isWikidataEntityUri(val)
         ) {
           siteUrls.push(val);
         }
