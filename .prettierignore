@@ -5,6 +5,7 @@
 # --- Build & Dependencies ---
 dist/
 builds/
+plan/
 node_modules/
 .astro/
 src/assets/

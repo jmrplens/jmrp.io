@@ -4,6 +4,7 @@
 
 dist/
 builds/
+plan/
 dist-reports/
 node_modules/
 .astro/

@@ -19,6 +19,7 @@ export default [
       "**/dist_new/**",
       "**/dist_old/**",
       "**/builds/**",
+      "plan/**",
       "**/dist-reports/**",
       "design-audit/**",
       "**/node_modules/**",
