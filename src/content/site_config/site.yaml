@@ -13,7 +13,10 @@ twitter_creator: "@jmrplens"
 # Person Schema defaults for JSON-LD
 person:
   name: "José Manuel Requena Plens"
-  jobTitle: "R&D Engineer"
+  # Non-localized fallback only — the canonical, localized jobTitle is sourced
+  # from `src/content/profile/about.yaml` (`person.jobTitle[locale]`) by
+  # BaseHead.astro. This value is used solely if that entry is unavailable.
+  jobTitle: "R&D · Firmware & Software Engineer"
   # Canonical academic/identity profiles for JSON-LD `sameAs` (not shown as footer icons).
   # Merged with `social_links` to strengthen AI entity recognition.
   sameAs:
@@ -21,10 +24,18 @@ person:
     - "https://orcid.org/0000-0003-1250-6212"
     - "https://www.researchgate.net/profile/Jose-Requena-Plens-2"
     - "https://www.mathworks.com/matlabcentral/profile/authors/5890853"
-  # Expertise topics emitted as Person `knowsAbout` site-wide.
+  # Expertise topics emitted as the canonical Person `knowsAbout`, site-wide, by
+  # BaseHead.astro. Merged from the former site-config list + about.yaml's
+  # embedded-firmware specifics so a single list covers the whole entity —
+  # page builders must NOT redefine `knowsAbout` locally (see CLAUDE.md GEO
+  # audit notes). Terms with a verified Wikidata Q-id are rendered as `Thing`
+  # objects by BaseHead; the rest stay as plain strings (mixing is valid).
   knowsAbout:
     - "Embedded Systems"
     - "Firmware"
+    - "STM32"
+    - "FreeRTOS"
+    - "Modbus"
     - "Cryptography"
     - "Network Security"
     - "Nginx"

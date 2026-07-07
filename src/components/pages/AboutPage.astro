@@ -11,7 +11,7 @@ import { defaultLocale, type Locale } from "@i18n/config";
 import { useTranslatedPath, useTranslations } from "@i18n/utils";
 import BaseLayout from "@layouts/BaseLayout.astro";
 import type { SiteConfig } from "@src/types";
-import { buildSameAs, getAbsoluteUrl, getSiteUrl } from "@utils/site";
+import { getSiteUrl } from "@utils/site";
 import { Image } from "astro:assets";
 import { getEntry } from "astro:content";
 import type { ProfilePage } from "schema-dts";
@@ -64,20 +64,22 @@ const contactLinks = [
   { key: "cv", value: "/cv", href: translatePath("/cv/") },
 ];
 
+// /about/ is the canonical author-entity page: THE ProfilePage for the site
+// (home and cv only reference #person by @id — see HomePage.astro/CVPage.astro).
+// `mainEntity` only ADDS to the canonical #person node (alumniOf) — it must
+// NOT redefine name/jobTitle/description/image/sameAs/knowsAbout, which are
+// now defined once in BaseHead.astro (sourced from this very file's
+// `person.jobTitle`/`person.description`, so there is no divergence).
 const personSchema = {
   "@type": "ProfilePage",
   "@id": new URL("#profile", new URL(Astro.url.pathname, getSiteUrl())).href,
   inLanguage: locale,
+  // Build-time freshness signal: this page has no per-field lastmod source,
+  // so `dateModified` uses the current build time rather than an invented date.
+  dateModified: new Date().toISOString(),
   mainEntity: {
     "@type": "Person",
     "@id": new URL("#person", getSiteUrl()).href,
-    name: siteData.name ?? "José Manuel Requena Plens",
-    jobTitle: about.person.jobTitle[locale],
-    description: about.person.description[locale],
-    image: getAbsoluteUrl(mehomeImg.src),
-    url: getSiteUrl(),
-    sameAs: buildSameAs(siteData.social_links, siteData.person?.sameAs),
-    knowsAbout: about.person.knowsAbout,
     alumniOf: c.education.map((edu) => ({
       "@type": "EducationalOrganization",
       name: edu.org,

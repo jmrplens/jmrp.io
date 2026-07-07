@@ -15,22 +15,17 @@ import SkillGroup from "@components/cv/SkillGroup.astro";
 import { defaultLocale, type Locale } from "@i18n/config";
 import { useTranslations } from "@i18n/utils";
 import BaseLayout from "@layouts/BaseLayout.astro";
-import type { SiteConfig } from "@src/types";
 import { getCVData } from "@utils/cv";
 import { fetchRepoStats, formatStats, githubSlug } from "@utils/cv-github";
 import { markdownToHtml } from "@utils/cv-markdown";
 import { stripToText } from "@utils/html";
-import { buildSameAs, getAbsoluteUrl, getSiteUrl } from "@utils/site";
-import { getEntry } from "astro:content";
-import type { ProfilePage } from "schema-dts";
+import { getAbsoluteUrl, getSiteUrl } from "@utils/site";
+import type { Person, WebPage } from "schema-dts";
 
 const locale = (Astro.currentLocale ?? defaultLocale) as Locale;
 const t = useTranslations(locale);
 
 const { basics, downloads, sections } = await getCVData(locale);
-
-const siteEntry = await getEntry("site_config", "site");
-const siteData = (siteEntry?.data || {}) as SiteConfig;
 
 /** Generates a URL slug from arbitrary text. */
 const generateSlug = (text: string) =>
@@ -117,62 +112,66 @@ if (projectsSection?.kind === "projects") {
   );
 }
 
-// Sections used to build the ProfilePage JSON-LD.
+// Sections used to build the CV JSON-LD (WebPage + additive Person facts).
 const experience = sections.find((s) => s.kind === "experience");
 const education = sections.find((s) => s.kind === "education");
-const skills = sections.find((s) => s.kind === "skills");
 const certificates = sections.find((s) => s.kind === "certificates");
 
-const personSchema = {
-  "@type": "ProfilePage",
-  "@id": new URL("#profile", new URL(Astro.url.pathname, getSiteUrl())).href,
+// /cv/ is not the canonical ProfilePage (that's /about/ — see AboutPage.astro)
+// so it emits a plain WebPage referencing the canonical #person node, plus a
+// SEPARATE Person node that only ADDS occupation/education/credential facts —
+// it must never redefine name/jobTitle/description/image/sameAs/knowsAbout,
+// which are now defined once in BaseHead.astro.
+const cvWebPage = {
+  "@type": "WebPage",
+  "@id": new URL("#webpage", new URL(Astro.url.pathname, getSiteUrl())).href,
+  name: t("pages.cv.title"),
+  description: t("pages.cv.description"),
+  url: new URL(Astro.url.pathname, getSiteUrl()).href,
   inLanguage: locale,
-  mainEntity: {
-    "@type": "Person",
-    "@id": new URL("#person", getSiteUrl()).href,
-    name: basics.name,
-    jobTitle: t("seo.jobTitle"),
-    description: t("pages.cv.schemaDescription"),
-    sameAs: buildSameAs(siteData.social_links, siteData.person?.sameAs),
-    knowsAbout:
-      skills?.kind === "skills"
-        ? skills.groups.flatMap((g) => g.items.map((i) => i.name))
-        : [],
-    alumniOf:
-      education?.kind === "education"
-        ? education.items.map((edu) => ({
-            "@type": "EducationalOrganization",
-            name: edu.org[0]?.name,
-            department: edu.department?.name,
-          }))
-        : [],
-    hasOccupation:
-      experience?.kind === "experience"
-        ? experience.items.map((job) => ({
-            "@type": "Occupation",
-            name: job.role,
-            description: job.summary
-              ? stripToText(markdownToHtml(job.summary))
-              : undefined,
-          }))
-        : [],
-    hasCredential:
-      certificates?.kind === "certificates"
-        ? certificates.groups.flatMap((group) =>
-            group.items.map((cert) => ({
-              "@type": "EducationalOccupationalCredential",
-              name: cert.name,
-              credentialCategory: group.category,
-              recognizedBy: {
-                "@type": "Organization",
-                name: cert.school,
-              },
-              ...(cert.url && { url: getAbsoluteUrl(cert.url) }),
-            })),
-          )
-        : [],
-  },
-} satisfies ProfilePage;
+  isPartOf: { "@id": new URL("#website", getSiteUrl()).href },
+  mainEntity: { "@id": new URL("#person", getSiteUrl()).href },
+} satisfies WebPage;
+
+const cvPersonFacts = {
+  "@type": "Person",
+  "@id": new URL("#person", getSiteUrl()).href,
+  alumniOf:
+    education?.kind === "education"
+      ? education.items.map((edu) => ({
+          "@type": "EducationalOrganization",
+          name: edu.org[0]?.name,
+          department: edu.department?.name,
+        }))
+      : [],
+  hasOccupation:
+    experience?.kind === "experience"
+      ? experience.items.map((job) => ({
+          "@type": "Occupation",
+          name: job.role,
+          description: job.summary
+            ? stripToText(markdownToHtml(job.summary))
+            : undefined,
+        }))
+      : [],
+  hasCredential:
+    certificates?.kind === "certificates"
+      ? certificates.groups.flatMap((group) =>
+          group.items.map((cert) => ({
+            "@type": "EducationalOccupationalCredential",
+            name: cert.name,
+            credentialCategory: group.category,
+            recognizedBy: {
+              "@type": "Organization",
+              name: cert.school,
+            },
+            ...(cert.url && { url: getAbsoluteUrl(cert.url) }),
+          })),
+        )
+      : [],
+} satisfies Person;
+
+const cvSchema = [cvWebPage, cvPersonFacts];
 
 /**
  * Link kinds displayed in the sidebar contact block.
@@ -191,7 +190,7 @@ const SIDEBAR_LINK_KINDS = new Set([
   title={t("pages.cv.title")}
   description={t("pages.cv.description")}
   type="profile"
-  schema={personSchema}
+  schema={cvSchema}
 >
   <div class="container">
     <h1 class="page-title cv-title">{t("pages.cv.heading")}</h1>

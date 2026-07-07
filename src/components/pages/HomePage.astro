@@ -17,7 +17,7 @@ import {
 import { sanitize } from "@utils/html";
 import { getSiteUrl } from "@utils/site";
 import { getEntry } from "astro:content";
-import type { ProfilePage } from "schema-dts";
+import type { WebPage } from "schema-dts";
 
 const locale = (Astro.currentLocale ?? defaultLocale) as Locale;
 const t = useTranslations(locale);
@@ -31,12 +31,6 @@ const hero = {
   title: t("pages.home.heroTitle"),
   subtitle: t("pages.home.heroSubtitle"),
   bio: [t("pages.home.heroBio1"), t("pages.home.heroBio2")],
-};
-
-// Use centralized person config with fallbacks
-const person = siteData.person || {
-  name: siteData.author || "José Manuel Requena Plens",
-  jobTitle: t("seo.jobTitle"),
 };
 
 // Fetch data concurrently with error handling for external API
@@ -107,27 +101,27 @@ const whoami = {
   repos: ghProfile ? String(ghProfile.public_repos) : "—",
 };
 
-const personSchema = [
-  {
-    "@type": "ProfilePage",
-    "@id": new URL("#profile", getSiteUrl()).href,
-    name: person.name,
-    url: getSiteUrl(),
-    inLanguage: locale,
-    // Typed reference to the single, fully-populated #person node (defined as
-    // the WebSite publisher in BaseHead) instead of re-emitting a thinner copy.
-    mainEntity: {
-      "@type": "Person",
-      "@id": new URL("#person", getSiteUrl()).href,
-    },
-  } satisfies ProfilePage,
-];
+// The canonical author-entity page is /about/ (see AboutPage.astro's
+// ProfilePage). The homepage only needs a lightweight WebPage node pointing
+// at the single, fully-populated #person node (defined as the WebSite
+// publisher in BaseHead) — emitting a second ProfilePage here would just
+// duplicate that identity data across pages.
+const homeSchema = {
+  "@type": "WebPage",
+  "@id": new URL("#webpage", getSiteUrl()).href,
+  url: getSiteUrl(),
+  name: t("seo.siteTitle"),
+  description: t("seo.siteDescription"),
+  inLanguage: locale,
+  isPartOf: { "@id": new URL("#website", getSiteUrl()).href },
+  about: { "@id": new URL("#person", getSiteUrl()).href },
+} satisfies WebPage;
 ---
 
 <BaseLayout
   title={t("seo.siteTitle")}
   description={t("seo.siteDescription")}
-  schema={personSchema}
+  schema={homeSchema}
 >
   <section class="hero">
     <div

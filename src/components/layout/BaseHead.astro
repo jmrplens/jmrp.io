@@ -12,7 +12,7 @@ import "@styles/global.css";
 
 import appleTouchIconSrc from "@assets/apple-touch-icon.png";
 import faviconSrc from "@assets/favicon.png";
-import defaultOgImage from "@assets/og-lab.webp";
+import mehomeImg from "@assets/mehome.webp";
 import { defaultLocale, type Locale, locales } from "@i18n/config";
 import {
   getAlternateLinks,
@@ -60,6 +60,20 @@ const appleTouchIcon = await getImage({
 const siteEntry = await getEntry("site_config", "site");
 const siteData = (siteEntry?.data || {}) as SiteConfig;
 
+// The canonical Person entity's name/description come from `profile/about.yaml`
+// (the richest, most current identity copy) so home/about/cv never redefine
+// them locally with divergent values — see CLAUDE.md GEO audit notes.
+const aboutEntry = await getEntry("profile", "about");
+const aboutData =
+  aboutEntry?.data.type === "about" ? aboutEntry.data : undefined;
+
+const personImage = await getImage({
+  src: mehomeImg,
+  format: "webp",
+  width: 800,
+  height: 800,
+});
+
 interface Props {
   title: string;
   description?: string;
@@ -103,6 +117,13 @@ const fullTitle = (() => {
   }
   return title;
 })();
+
+// og:image:alt / twitter:image:alt — append the author only when the title
+// doesn't already include it (e.g. the homepage title IS "Name | Job Title"),
+// otherwise the alt text repeats the name twice ("Name | Job Title - Name").
+const imageAlt = title.includes(siteData.author)
+  ? title
+  : `${title} - ${siteData.author}`;
 
 // Image resolution logic
 let resolvedImage;
@@ -158,6 +179,60 @@ const siteRoot = new URL("/", getSiteUrl()).href;
 const orcidUrl = siteData.person?.sameAs?.find((u) => u.includes("orcid.org"));
 const orcidId = /orcid\.org\/([\dX-]+)/i.exec(orcidUrl ?? "")?.[1];
 
+// --- Canonical Person entity (single source, referenced by @id everywhere) ---
+// `jobTitle`/`description` are sourced from the richest, most current copy
+// (profile/about.yaml) with a non-localized fallback in site.yaml. Page
+// builders (Home/About/CV/GitHub) must reference `{"@id": "#person"}` or add
+// ADDITIVE properties only (alumniOf, hasOccupation, hasCredential) — they
+// must never redefine name/jobTitle/description/image/knowsAbout locally.
+const personJobTitle =
+  aboutData?.person.jobTitle[locale] ??
+  siteData.person?.jobTitle ??
+  siteData.jobTitle ??
+  t("seo.jobTitle");
+const personDescription =
+  aboutData?.person.description[locale] ?? t("pages.cv.schemaDescription");
+
+/**
+ * Wikidata Q-ids for `knowsAbout` terms, verified via the `wbsearchentities`
+ * API (label + description cross-checked against the term — see
+ * plan/geo-audit/wave-b-report.md). Terms without a verified, unambiguous
+ * match are intentionally left out and rendered as plain strings below —
+ * mixing `Thing` objects and strings in `knowsAbout` is valid Schema.org.
+ */
+const KNOWS_ABOUT_WIKIDATA: Readonly<Record<string, string>> = {
+  "Embedded Systems": "Q193040",
+  Firmware: "Q104851",
+  STM32: "Q7394773",
+  FreeRTOS: "Q1186761",
+  Modbus: "Q1135322",
+  Cryptography: "Q8789",
+  "Network Security": "Q989632",
+  Nginx: "Q306144",
+  "MikroTik RouterOS": "Q12036888",
+  WireGuard: "Q28975568",
+  IPv6: "Q2551624",
+  Acoustics: "Q82811",
+  "Signal Processing": "Q208163",
+  Go: "Q37227",
+  "Model Context Protocol": "Q133436854",
+  "Software Testing": "Q188522",
+  ESP32: "Q27921668",
+};
+const personKnowsAbout = siteData.person?.knowsAbout?.map((topic) => {
+  const qid = KNOWS_ABOUT_WIKIDATA[topic];
+  // Wikidata's canonical entity concept URI uses a plain, non-secure scheme by
+  // design — the standard Linked Data identifier, not a fetchable link.
+  return qid
+    ? {
+        "@type": "Thing" as const,
+        name: topic,
+        // eslint-disable-next-line unicorn/prefer-https -- see comment above
+        "@id": `http://www.wikidata.org/entity/${qid}`,
+      }
+    : topic;
+});
+
 // 1. WebSite Schema (Global)
 const websiteSchema = {
   "@type": "WebSite",
@@ -170,10 +245,15 @@ const websiteSchema = {
     "@type": "Person",
     "@id": new URL("#person", getSiteUrl()).href,
     name: siteData.author,
-    jobTitle: siteData.person?.jobTitle ?? siteData.jobTitle,
-    description: t("pages.cv.schemaDescription"),
+    jobTitle: personJobTitle,
+    description: personDescription,
     url: siteRoot,
-    image: new URL(defaultOgImage.src, getSiteUrl()).href,
+    image: {
+      "@type": "ImageObject",
+      url: new URL(personImage.src, getSiteUrl()).href,
+      width: "800",
+      height: "800",
+    },
     ...(siteData.person?.worksFor && {
       worksFor: {
         "@type": "Organization",
@@ -183,9 +263,10 @@ const websiteSchema = {
         }),
       },
     }),
-    ...(siteData.person?.knowsAbout && {
-      knowsAbout: siteData.person.knowsAbout,
-    }),
+    ...(personKnowsAbout &&
+      personKnowsAbout.length > 0 && {
+        knowsAbout: personKnowsAbout,
+      }),
     ...(orcidId && {
       identifier: {
         "@type": "PropertyValue",
@@ -451,7 +532,7 @@ const jsonLD = {
 />
 <meta
   property="og:image:alt"
-  content={`${title} - ${siteData.author}`}
+  content={imageAlt}
 />
 <meta
   property="og:locale"
@@ -535,7 +616,7 @@ const jsonLD = {
 />
 <meta
   name="twitter:image:alt"
-  content={`${title} - ${siteData.author}`}
+  content={imageAlt}
 />
 
 <!-- Cloudflare Web Analytics (Static with SRI) -->
