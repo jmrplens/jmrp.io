@@ -8,6 +8,7 @@
  */
 import { getCVData } from "@utils/cv";
 import { getPublications, stripTrailingPunctuation } from "@utils/publications";
+import type { CollectionEntry } from "astro:content";
 import { getCollection } from "astro:content";
 
 /** Curated, site-level narrative reused by both files. */
@@ -27,7 +28,7 @@ const CONTACT = [
 ];
 
 const TECHNICAL_DETAILS = [
-  "Built with Astro 6 (Static Site Generation)",
+  "Built with Astro 7 (Static Site Generation)",
   "Bilingual: English (default) and Spanish — all content available in both languages under the /es/ prefix",
   "Zero client-side JavaScript (except progressive enhancement islands)",
   "WCAG 2.2 AA/AAA accessibility compliant",
@@ -89,6 +90,17 @@ async function getSortedTools() {
   return tools.sort((a, b) => a.data.title.localeCompare(b.data.title));
 }
 
+/**
+ * Builds the locale-aware absolute URL for a tool entry — `/tools/<slug>/`
+ * for English entries, `/es/tools/<slug>/` for Spanish entries. The tools
+ * collection mixes both locales (see `getSortedTools()`), so the URL must
+ * always be derived from `tool.data.lang`, never assumed to be English.
+ */
+function toolUrl(siteUrl: string, tool: CollectionEntry<"tools">): string {
+  const localePrefix = tool.data.lang === "es" ? "/es" : "";
+  return `${siteUrl}${localePrefix}/tools/${tool.data.slug}/`;
+}
+
 function sectionsBlock(siteUrl: string): string {
   return [
     "## Sections",
@@ -137,7 +149,7 @@ export async function generateLlmsTxt(siteUrl: string): Promise<string> {
     "",
     ...tools.map(
       (t) =>
-        `- [${t.data.title}](${siteUrl}/tools/${t.data.slug}/): ${t.data.description}`,
+        `- [${t.data.title}](${toolUrl(siteUrl, t)}): ${t.data.description}`,
     ),
     "",
     "## Contact",
@@ -208,7 +220,7 @@ export async function generateLlmsFullTxt(siteUrl: string): Promise<string> {
   const toolSection = tools.flatMap((t) => [
     `### ${t.data.title}`,
     "",
-    `URL: ${siteUrl}/tools/${t.data.slug}/`,
+    `URL: ${toolUrl(siteUrl, t)}`,
     `Category: ${t.data.category}`,
     t.data.description,
     "",

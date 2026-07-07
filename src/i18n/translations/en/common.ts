@@ -438,7 +438,7 @@ export const common = {
       heroSubtitle:
         "Embedded Firmware & Software Engineer. <br>Bridging the gap between <strong>firmware</strong>, software, and applied research.",
       heroBio1:
-        "I'm a multidisciplinary engineer who enjoys solving problems where embedded firmware, software and applied research meet. My path runs from academic research in acoustics to industrial firmware development — and that breadth is what motivates me the most.",
+        "I'm José Manuel Requena Plens, an R&D engineer based in Valencia, Spain, specializing in embedded firmware (C/C++, STM32/ESP32), industrial software development, and applied acoustics research. My path runs from academic research in acoustics to industrial firmware development — and that breadth is what motivates me the most.",
       heroBio2:
         "I thrive on integrating hardware and software end to end. I'm an active Open Source contributor whose tools are used by developers around the world, and a passionate self-hoster, constantly refining my homelab and building tools for the community. <a href='/cv/'>Check out my CV</a> to see the full journey.",
       viewCV: "View CV",
@@ -790,6 +790,9 @@ export const common = {
         "Academic publications and research papers by José Manuel Requena Plens. Topics include acoustics, metamaterials, ultrasound, and noise mitigation for ESA.",
       schemaDescription:
         "Academic publications and research by José Manuel Requena Plens.",
+      periodNote:
+        "Research output from my academic period (2017–2021), before moving to industry.",
+      orcidLink: "ORCID",
       journalArticles: "Journal articles",
       conferencePapers: "Conference and workshop papers",
       thesis: "Thesis",

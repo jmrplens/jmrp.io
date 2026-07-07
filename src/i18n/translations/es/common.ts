@@ -439,7 +439,7 @@ export const common = {
       heroSubtitle:
         "Ingeniero de Firmware y Software. <br>Tendiendo puentes entre el <strong>firmware</strong>, el software y la I+D.",
       heroBio1:
-        "Soy un ingeniero multidisciplinar que disfruta resolviendo problemas allá donde se cruzan el firmware, el software y la I+D. Mi trayectoria va desde la investigación académica en acústica hasta el desarrollo de firmware industrial, y esa amplitud es la que más me motiva.",
+        "Soy José Manuel Requena Plens, ingeniero de I+D en Valencia, España, especializado en firmware embebido (C/C++, STM32/ESP32), desarrollo de software industrial e investigación en acústica aplicada. Mi trayectoria va desde la investigación académica en acústica hasta el desarrollo de firmware industrial, y esa amplitud es la que más me motiva.",
       heroBio2:
         "Disfruto integrando hardware y software de principio a fin. Contribuyo activamente al Open Source —con herramientas usadas por desarrolladores de todo el mundo— y soy un apasionado del self-hosting, siempre mejorando mi homelab y aportando proyectos a la comunidad. <a href='/es/cv/'>Consulta mi CV</a> para ver la trayectoria completa.",
       viewCV: "Ver CV",
@@ -792,6 +792,9 @@ export const common = {
         "Publicaciones académicas de José Manuel Requena Plens. Temas: acústica, metamateriales, ultrasonidos y mitigación de ruido para la ESA.",
       schemaDescription:
         "Publicaciones académicas e investigación de José Manuel Requena Plens.",
+      periodNote:
+        "Producción investigadora de mi etapa académica (2017–2021), previa a mi paso a la industria.",
+      orcidLink: "ORCID",
       journalArticles: "Artículos de revista",
       conferencePapers: "Ponencias en congresos y talleres",
       thesis: "Tesis",

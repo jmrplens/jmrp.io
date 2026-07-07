@@ -100,6 +100,14 @@ if (socials.scholar_userid) {
   });
 }
 
+if (socials.orcid_id) {
+  socialLinks.push({
+    url: `https://orcid.org/${socials.orcid_id}`,
+    icon: "simple-icons:orcid",
+    label: "ORCID",
+  });
+}
+
 if (socials.matrix_id) {
   socialLinks.push({
     url: `https://matrix.to/#/${socials.matrix_id}`,

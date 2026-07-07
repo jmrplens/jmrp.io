@@ -21,6 +21,13 @@ import type { CollectionPage, ListItem } from "schema-dts";
 const locale = (Astro.currentLocale ?? defaultLocale) as Locale;
 const t = useTranslations(locale);
 
+const socialsEntry = await getEntry("site_config", "socials");
+const orcidId =
+  socialsEntry?.data && "orcid_id" in socialsEntry.data
+    ? socialsEntry.data.orcid_id
+    : undefined;
+const orcidUrl = orcidId ? `https://orcid.org/${orcidId}` : undefined;
+
 const publicationGroups = await getPublications(locale);
 
 const allPublications = publicationGroups.flatMap((group) => group.items);
@@ -189,6 +196,26 @@ const collectionSchema = {
       <p class="section-title">{t("pages.publications.kicker")}</p>
       <h1 class="pub-page-title">{t("pages.publications.title")}</h1>
       <p class="pub-subtitle">{t("pages.publications.description")}</p>
+      <p class="pub-period-note">
+        {t("pages.publications.periodNote")}
+        {
+          orcidUrl && (
+            <a
+              href={orcidUrl}
+              class="pub-orcid-link"
+              rel="external noopener noreferrer"
+              target="_blank"
+              aria-label={t("aria.visitProfile", { name: "ORCID" })}
+            >
+              <span
+                class="i-simple-icons:orcid pub-orcid-link__icon"
+                aria-hidden="true"
+              />
+              {t("pages.publications.orcidLink")}
+            </a>
+          )
+        }
+      </p>
       <div class="pub-stats">
         {
           stats.map((stat) => (
@@ -375,6 +402,39 @@ const collectionSchema = {
     font-size: var(--text-md);
     line-height: 1.6;
     color: var(--color-text-muted);
+  }
+
+  .pub-period-note {
+    position: relative;
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-sm);
+    align-items: center;
+    max-width: var(--max-width-prose);
+    margin: calc(-1 * var(--space-md)) 0 var(--space-lg);
+    font-size: var(--text-sm);
+    line-height: 1.6;
+    color: var(--color-text-muted);
+  }
+
+  .pub-orcid-link {
+    display: inline-flex;
+    gap: 0.35em;
+    align-items: center;
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    color: var(--color-accent);
+    text-decoration: none;
+    white-space: nowrap;
+  }
+
+  .pub-orcid-link:hover {
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+
+  .pub-orcid-link__icon {
+    font-size: 1.1em;
   }
 
   /* Headline stats band */
