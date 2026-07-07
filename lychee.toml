@@ -54,6 +54,9 @@ exclude = [
     'http://search\.yahoo\.com/mrss/',
     # Localhost
     'http://localhost.*',
+    # Third-party site with intermittent availability (500s/timeouts observed
+    # 2026-07-05..07); caused repeated false reds in verify. Linked from the CV.
+    'https://acusticox\.com/',
 ]
 
 # File globs to check (used locally)
