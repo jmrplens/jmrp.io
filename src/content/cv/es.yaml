@@ -634,15 +634,21 @@ sections:
               url: https://jmrplens.github.io/gitlab-mcp-server/es/,
             }
       - name: phonometry
-        tech: Python · Procesado de señal
+        tech: Python · DSP · Acústica
         icon: logos:python
         description: >-
-          Biblioteca de filtrado por bandas de octava y fracciones de octava para
-          señales en el dominio del tiempo, publicada en PyPI.
+          Toolkit de medición acústica: bancos de filtros de octava fraccionaria,
+          ponderación A/C/Z y Fast/Slow/Impulse, y metrología de niveles sonoros
+          (Leq, percentiles), con conformidad verificada frente a IEC 61260-1 e
+          IEC 61672-1 en tolerancias de clase 1. Antes PyOctaveBand.
         metrics: [PyPI]
         links:
           - { label: GitHub, url: https://github.com/jmrplens/phonometry }
           - { label: PyPI, url: https://pypi.org/project/phonometry/ }
+          - {
+              label: Documentación,
+              url: https://jmrplens.github.io/phonometry/es/,
+            }
       - name: cs-routeros-bouncer
         tech: Go · Firewall · MikroTik · WAF
         icon: logos:go

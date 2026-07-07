@@ -631,15 +631,18 @@ sections:
             }
           - { label: Docs, url: https://jmrplens.github.io/gitlab-mcp-server/ }
       - name: phonometry
-        tech: Python · Signal processing
+        tech: Python · DSP · Acoustics
         icon: logos:python
         description: >-
-          Octave-band and fractional octave-band filtering library for time-domain
-          signals, published on PyPI.
+          Acoustic measurement toolkit: fractional octave-band filter banks, A/C/Z
+          and Fast/Slow/Impulse weighting, and sound level metrology (Leq,
+          percentiles), conformance-tested against IEC 61260-1 and IEC 61672-1
+          class 1 tolerances. Formerly PyOctaveBand.
         metrics: [PyPI]
         links:
           - { label: GitHub, url: https://github.com/jmrplens/phonometry }
           - { label: PyPI, url: https://pypi.org/project/phonometry/ }
+          - { label: Docs, url: https://jmrplens.github.io/phonometry/ }
       - name: cs-routeros-bouncer
         tech: Go · Firewall · MikroTik · WAF
         icon: logos:go
