@@ -5,7 +5,7 @@ description: "Implementa Mutual TLS (mTLS) con Nginx — crea una CA, genera cer
 author: "José Manuel Requena Plens"
 authorEmail: "mail@jmrp.io"
 publishedDate: 2025-12-16
-updatedDate: 2025-12-16
+updatedDate: 2026-07-07
 draft: false
 lang: "es"
 coverImage: "../../../assets/images/blog/mtls-auth.webp"
@@ -80,7 +80,7 @@ En esta guía completa, te guiaré a través de la implementación de mTLS en Ng
 <TLDRSummary title="TL;DR — mTLS en Nginx de un vistazo">
 - **mTLS no puede ser víctima de phishing** porque el cliente debe presentar un certificado firmado por tu propia CA; la clave privada nunca sale del dispositivo ni se transmite, así que Nginx rechaza las conexiones sin un certificado válido **antes** de que la aplicación se cargue.
 - **Crea tu propia PKI**: genera una CA **RSA de 4096 bits** válida 10 años y firma certificados de cliente por dispositivo (mínimo 2048 bits, validez de 1 año), distribuyéndolos como paquetes **PKCS12 (.p12)** protegidos por contraseña.
-- **Actívalo en Nginx** con `ssl_client_certificate` (tu CA), `ssl_verify_client on` y `ssl_verify_depth`; nunca uses `optional_no_ca` en producción. Restringe a **TLS 1.2/1.3** con cipher suites ECDHE fuertes.
+- **Actívalo en Nginx** con `ssl_client_certificate` (tu CA), `ssl_verify_client on` y `ssl_verify_depth` — o `optional` más un `map` para exigirlo solo en rutas críticas (ver mi despliegue más abajo); nunca uses `optional_no_ca` en producción. Restringe a **TLS 1.2/1.3** con cipher suites ECDHE fuertes.
 - **Añade control granular** con un `map` sobre `$ssl_client_s_dn` para listas de permitidos por CN, y usa `$ssl_client_verify` para que los clientes autenticados **eviten el rate limiting**.
 - **Revoca certificados comprometidos** mediante **CRL** (`openssl ca -revoke` + `-gencrl`, luego `ssl_crl`) para despliegues pequeños u **OCSP** para los más grandes — regenera el CRL y recarga Nginx cada vez. Automatiza la creación y renovación con scripts.
 </TLDRSummary>
@@ -149,6 +149,33 @@ A diferencia de las contraseñas, los certificados de cliente:
 </Callout>
 
 ---
+
+## Cómo lo ejecuto en mi propia infraestructura
+
+Nada de lo que sigue es teoría: este blog se sirve desde el mismo servidor donde mTLS protege mis servicios sensibles desde enero de 2025. Mi CA privada ("JMRP DNS CA", emitida con una validez de 10 años) firma los certificados de cliente que dan acceso a cuatro servicios: el panel de Grafana, la galería de fotos (Immich), el NAS y la propia interfaz de administración de Nginx.
+
+Un detalle que ningún tutorial me contó y que solo aprendí desplegándolo: en producción **no** uso `ssl_verify_client on` a secas. Uso `optional` combinado con un `map` y enforcement selectivo por *location*:
+
+```nginx
+map $ssl_client_verify $client_verified {
+    "SUCCESS" 1;
+    default   0;
+}
+
+# En las rutas críticas (p. ej. la API de subida de Immich):
+location = /api/assets {
+    if ($client_verified = 0) {
+        return 403 "Invalid certificate";
+    }
+    # ...
+}
+```
+
+¿Por qué? Con `on` a nivel de servidor, cualquier cliente sin certificado recibe un error TLS críptico antes de llegar siquiera a Nginx — imposible de depurar para un usuario no técnico y sin posibilidad de degradar a otra capa de autenticación. Con `optional` + `map`, el handshake siempre se completa y soy yo quien decide, ruta a ruta, qué exige certificado (las APIs de escritura devuelven un 403 explícito) y qué puede caer a una segunda capa. Esa segunda capa existe: las peticiones desde mi LAN pasan por un allowlist de red independiente, de modo que el certificado nunca es el único control — defensa en profundidad, no una llave maestra única.
+
+En cuanto a la emisión: mantengo un flujo con OpenSSL por dispositivo (un CSR, una config y una ficha de metadatos por cliente), con `ssl_verify_depth 2` en el servidor. Hoy hay tres certificados activos, cada uno ligado a un dispositivo y una persona concretos — cuando un dispositivo se retira, su certificado se retira con él.
+
+Una confesión honesta: **no publico CRL ni OCSP**. Con tres certificados en dispositivos que controlo físicamente, revocar a esta escala significa reemitir desde la CA — un compromiso razonable aquí que sería inaceptable con decenas de clientes. Si tu flota crece, `ssl_crl` deja de ser opcional.
 
 ## TLS Unidireccional vs Mutual TLS
 

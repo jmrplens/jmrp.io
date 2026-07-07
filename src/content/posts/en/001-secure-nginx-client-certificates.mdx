@@ -5,7 +5,7 @@ description: "Implement Mutual TLS (mTLS) with Nginx — create a CA, generate c
 author: "José Manuel Requena Plens"
 authorEmail: "mail@jmrp.io"
 publishedDate: 2025-12-16
-updatedDate: 2025-12-16
+updatedDate: 2026-07-07
 draft: false
 coverImage: "../../../assets/images/blog/mtls-auth.webp"
 tags: ["Nginx", "Security", "mTLS"]
@@ -79,7 +79,7 @@ In this comprehensive guide, I'll walk you through implementing mTLS on Nginx, c
 <TLDRSummary title="TL;DR — mTLS on Nginx in a nutshell">
 - **mTLS is unphishable** because the client must present a certificate signed by your own CA; the private key never leaves the device and is never transmitted, so Nginx rejects connections without a valid cert **before** the app loads.
 - **Build your own PKI**: create a **4096-bit RSA** CA valid for 10 years, then sign per-device client certs (2048-bit minimum, 1-year validity) and distribute them as password-protected **PKCS12 (.p12)** bundles.
-- **Enable it in Nginx** with `ssl_client_certificate` (your CA), `ssl_verify_client on`, and `ssl_verify_depth`; never use `optional_no_ca` in production. Restrict to **TLS 1.2/1.3** with strong ECDHE ciphers.
+- **Enable it in Nginx** with `ssl_client_certificate` (your CA), `ssl_verify_client on`, and `ssl_verify_depth` — or `optional` plus a `map` to enforce it only on critical routes (see my deployment below); never use `optional_no_ca` in production. Restrict to **TLS 1.2/1.3** with strong ECDHE ciphers.
 - **Add fine-grained control** with a `map` on `$ssl_client_s_dn` for CN allowlists, and use `$ssl_client_verify` to let authenticated clients **bypass rate limiting**.
 - **Revoke compromised certs** via **CRL** (`openssl ca -revoke` + `-gencrl`, then `ssl_crl`) for small setups or **OCSP** for larger ones — regenerate the CRL and reload Nginx every time. Automate creation and renewal with scripts.
 </TLDRSummary>
@@ -148,6 +148,33 @@ Unlike passwords, client certificates:
 </Callout>
 
 ---
+
+## How I run this on my own infrastructure
+
+None of what follows is theory: this blog is served from the same box where mTLS has been protecting my sensitive services since January 2025. My private CA ("JMRP DNS CA", issued with a 10-year lifetime) signs the client certificates that grant access to four services: the Grafana panel, my photo library (Immich), the NAS, and Nginx's own admin interface.
+
+One detail no tutorial told me, and that I only learned by deploying it: in production I do **not** use a bare `ssl_verify_client on`. I run `optional` combined with a `map` and per-location enforcement:
+
+```nginx
+map $ssl_client_verify $client_verified {
+    "SUCCESS" 1;
+    default   0;
+}
+
+# On critical routes (e.g. Immich's upload API):
+location = /api/assets {
+    if ($client_verified = 0) {
+        return 403 "Invalid certificate";
+    }
+    # ...
+}
+```
+
+Why? With `on` at the server level, any client without a certificate gets a cryptic TLS error before ever reaching Nginx — impossible for a non-technical user to debug, and with no way to fall back to another authentication layer. With `optional` + `map`, the handshake always completes and I decide, route by route, what requires a certificate (write APIs return an explicit 403) and what can fall through to a second authentication layer. That second layer exists: requests from my LAN pass an independent network allowlist, so the certificate is never the only control — defense in depth, not a single master key.
+
+As for issuance: I keep a per-device OpenSSL workflow (a CSR, a config, and a metadata sheet per client), with `ssl_verify_depth 2` on the server. Three certificates are active today, each tied to one specific device and person — when a device is retired, its certificate is retired with it.
+
+An honest confession: **I publish no CRL and no OCSP**. With three certificates on devices I physically control, revocation at this scale means reissuing from the CA — a reasonable trade-off here that would be unacceptable with dozens of clients. If your fleet grows, `ssl_crl` stops being optional.
 
 ## One-Way TLS vs Mutual TLS
 
