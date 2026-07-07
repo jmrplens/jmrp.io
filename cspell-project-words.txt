@@ -208,6 +208,7 @@ crawlable
 credentialless
 cripto
 crlnumber
+crossref
 crowdsec
 crowdsecurity
 cscli

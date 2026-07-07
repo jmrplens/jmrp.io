@@ -14,7 +14,7 @@ import {
   PUBLICATION_KIND_LABEL_KEY,
   stripTrailingPunctuation,
 } from "@utils/publications";
-import { getSiteUrl } from "@utils/site";
+import { getAbsoluteUrl, getSiteUrl } from "@utils/site";
 import { getEntry } from "astro:content";
 import type { CollectionPage, ListItem } from "schema-dts";
 
@@ -103,80 +103,117 @@ const formatIssuedDate = (issued?: {
   return String(year);
 };
 
+/** Resolves a bare DOI (e.g. `10.1000/xyz`) to its `https://doi.org/` URL, or passes an already-absolute DOI URL through unchanged. */
+const toDoiUrl = (doi: string): string =>
+  doi.startsWith("http") ? doi : `https://doi.org/${doi}`;
+
+/** Resolves a `pdf` field (site-relative path or already-absolute URL) to an absolute URL. */
+const toAbsolutePdfUrl = (pdfPath: string): string =>
+  pdfPath.startsWith("http") ? pdfPath : getAbsoluteUrl(pdfPath);
+
 // `@context` omitted: merged into the page-level @graph (BaseLayout) which
 // already declares the context.
+const collectionUrl = new URL(Astro.url.pathname, getSiteUrl()).href;
+
 const collectionSchema = {
   "@type": "CollectionPage",
-  "@id": new URL("#collection", new URL(Astro.url.pathname, getSiteUrl())).href,
+  "@id": `${collectionUrl}#collection`,
   name: t("pages.publications.title"),
   description: t("pages.publications.schemaDescription"),
-  url: new URL(Astro.url.pathname, getSiteUrl()).href,
+  url: collectionUrl,
   inLanguage: locale,
   isPartOf: { "@id": new URL("#website", getSiteUrl()).href },
   mainEntity: {
     "@type": "ItemList",
     numberOfItems: allPublications.length,
-    itemListElement: allPublications.map((pub, index): ListItem => ({
-      "@type": "ListItem",
-      position: index + 1,
-      item: {
-        "@type": "ScholarlyArticle",
-        headline: pub.title,
-        name: pub.title,
-        datePublished: formatIssuedDate(pub.issued),
-        author:
-          pub.author?.map((a: { family: string; given?: string }) => ({
-            "@type": "Person",
-            // Link the site owner's own author node to the canonical #person
-            // entity. Match the full surname "Requena-Plens"/"Requena Plens"
-            // (not a bare "Requena") so a co-author is never mis-attributed.
-            ...(/requena[\s-]?plens/i.test(a.family) && {
-              "@id": new URL("#person", getSiteUrl()).href,
-            }),
-            ...(a.given && { givenName: a.given }),
-            familyName: a.family,
-            name: a.given ? `${a.given} ${a.family}` : a.family,
-          })) || [],
-        // Schema.org: an article `isPartOf` its venue. A journal is a
-        // Periodical; conference proceedings are a CreativeWork (Periodical
-        // would wrongly imply a recurring magazine). Standalone works
-        // (theses/reports) have no journal/proceedings parent, so omit it.
-        ...(() => {
-          const venue = stripTrailingPunctuation(
-            String(pub["container-title"] || pub.publisher || ""),
-          ).trim();
-          const isJournal = [
-            "article-journal",
-            "article",
-            "article-magazine",
-          ].includes(pub.type);
-          const isConference = pub.type === "paper-conference";
-          if (!venue || (!isJournal && !isConference)) return {};
-          return {
-            isPartOf: {
-              "@type": isJournal ? "Periodical" : "CreativeWork",
-              name: venue,
-            },
-          };
-        })(),
-        abstract:
-          typeof pub.abstract === "string"
-            ? stripHtml(pub.abstract)
-            : undefined,
-        ...(() => {
-          const doi = typeof pub.doi === "string" ? pub.doi : undefined;
-          let doiUrl: string | undefined;
-          if (doi) {
-            doiUrl = doi.startsWith("http") ? doi : `https://doi.org/${doi}`;
-          }
-          const pubUrl = typeof pub.url === "string" ? pub.url : undefined;
-          return {
-            url: pubUrl || doiUrl || undefined,
-            ...(doiUrl && { sameAs: [doiUrl] }),
-          };
-        })(),
-      },
-    })),
+    itemListElement: allPublications.map((pub, index): ListItem => {
+      // citation-js exposes CSL-JSON fields in their canonical (uppercase)
+      // casing — `DOI`/`URL`/`ISBN`, not `doi`/`url`/`isbn`. None of the 14
+      // entries in papers.bib currently carry a verified DOI (checked against
+      // Crossref — see plan/geo-audit/wave-b-report.md); this wiring picks
+      // one up automatically the moment a `doi = {...}` field is added.
+      const doi = typeof pub.DOI === "string" ? pub.DOI : undefined;
+      const doiUrl = doi ? toDoiUrl(doi) : undefined;
+      const pubUrl = typeof pub.URL === "string" ? pub.URL : undefined;
+      const pdfPath = typeof pub.pdf === "string" ? pub.pdf : undefined;
+      const pdfUrl = pdfPath ? toAbsolutePdfUrl(pdfPath) : undefined;
+      const isbn = typeof pub.ISBN === "string" ? pub.ISBN : undefined;
+      const resolvedUrl = doiUrl ?? pubUrl ?? pdfUrl;
+      const identifiers = [
+        ...(doi
+          ? [
+              {
+                "@type": "PropertyValue" as const,
+                propertyID: "DOI",
+                value: doi,
+              },
+            ]
+          : []),
+        ...(isbn
+          ? [
+              {
+                "@type": "PropertyValue" as const,
+                propertyID: "ISBN",
+                value: isbn,
+              },
+            ]
+          : []),
+      ];
+
+      return {
+        "@type": "ListItem",
+        position: index + 1,
+        item: {
+          "@type": "ScholarlyArticle",
+          "@id": `${collectionUrl}#pub-${pub.id}`,
+          headline: pub.title,
+          name: pub.title,
+          datePublished: formatIssuedDate(pub.issued),
+          author:
+            pub.author?.map((a: { family: string; given?: string }) => ({
+              "@type": "Person",
+              // Link the site owner's own author node to the canonical #person
+              // entity. Match the full surname "Requena-Plens"/"Requena Plens"
+              // (not a bare "Requena") so a co-author is never mis-attributed.
+              ...(/requena[\s-]?plens/i.test(a.family) && {
+                "@id": new URL("#person", getSiteUrl()).href,
+              }),
+              ...(a.given && { givenName: a.given }),
+              familyName: a.family,
+              name: a.given ? `${a.given} ${a.family}` : a.family,
+            })) || [],
+          // Schema.org: an article `isPartOf` its venue. A journal is a
+          // Periodical; conference proceedings are a CreativeWork (Periodical
+          // would wrongly imply a recurring magazine). Standalone works
+          // (theses/reports) have no journal/proceedings parent, so omit it.
+          ...(() => {
+            const venue = stripTrailingPunctuation(
+              String(pub["container-title"] || pub.publisher || ""),
+            ).trim();
+            const isJournal = [
+              "article-journal",
+              "article",
+              "article-magazine",
+            ].includes(pub.type);
+            const isConference = pub.type === "paper-conference";
+            if (!venue || (!isJournal && !isConference)) return {};
+            return {
+              isPartOf: {
+                "@type": isJournal ? "Periodical" : "CreativeWork",
+                name: venue,
+              },
+            };
+          })(),
+          abstract:
+            typeof pub.abstract === "string"
+              ? stripHtml(pub.abstract)
+              : undefined,
+          ...(resolvedUrl && { url: resolvedUrl }),
+          ...(doiUrl && { sameAs: [doiUrl] }),
+          ...(identifiers.length > 0 && { identifier: identifiers }),
+        },
+      };
+    }),
   },
 } satisfies CollectionPage;
 ---
