@@ -591,6 +591,7 @@ metasuperficie
 metasuperficies
 metasurface
 metasurfaces
+metrología
 Mezclarlo
 microcontroller
 microcontrollers
@@ -709,6 +710,7 @@ personalízalo
 pfctl
 pfwp
 phishable
+phonometry
 phpinfo
 phpmyadmin
 picó
