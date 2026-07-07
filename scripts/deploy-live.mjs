@@ -22,7 +22,7 @@
  *
  * Production-root guard:
  * - This repo is checked out in multiple worktrees (e.g. the production
- *   tree at `/var/www/jmrp.io` and a `beta.jmrp.io` worktree) that share the
+ *   tree at `/var/www/jmrp.io` and any staging worktree) that share the
  *   same Nginx snippets path and Cloudflare zone. Every action below is a
  *   PRODUCTION side effect, so the entire script exits immediately (before
  *   any work, including sitemap collection) unless `process.cwd()` matches
@@ -65,7 +65,7 @@ const PRODUCTION_ROOT =
 /**
  * Guards against running publish actions (Nginx deploy/reload, Cloudflare
  * purge, IndexNow, Bing) from a non-production checkout. This repo lives in
- * multiple worktrees (e.g. `/var/www/jmrp-redesign` serving beta.jmrp.io)
+ * multiple worktrees (e.g. a staging worktree serving a preview domain)
  * that share the same Nginx snippets and Cloudflare zone as production — a
  * `pnpm build` run from a worktree must never purge production's CDN cache
  * or reload production's Nginx config. Set `DEPLOY_LIVE_FORCE=1` to bypass
