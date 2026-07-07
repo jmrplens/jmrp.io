@@ -689,7 +689,7 @@ sections:
   - kind: education
     title: Education
     items:
-      - degree: PhD in Health and Wellness Technologies
+      - degree: PhD program in Health and Wellness Technologies (discontinued)
         org:
           - {
               name: Polytechnic University of Valencia,
@@ -703,22 +703,21 @@ sections:
             url: https://i3m.csic.upv.es/,
           }
         location: Valencia, Spain
-        period: 2023
+        period: 2019–2023
         summary: >-
-          Industrial and biomedical applications of metamaterials for the control of
-          acoustic beams. In this project, we propose to combine new air-coupled
-          ultrasound transducers with hyperbolic metamaterials to design vision
-          systems that exceed the imaging capabilities of traditional systems.
+          Before completing the doctorate, I redirected my career toward industrial
+          software development, applying my foundation in data analysis, programming
+          and analytical problem-solving. The discontinued program focused on
+          industrial and biomedical applications of metamaterials for the control of
+          acoustic beams, combining new air-coupled ultrasound transducers with
+          hyperbolic metamaterials to design vision systems that exceed the imaging
+          capabilities of traditional systems.
         bullets:
           - Biomedical signal processing and acoustic analysis algorithms.
           - Ultrasound characterization for medical applications.
           - Computational modeling and simulation of acoustic phenomena.
           - Development of experimental methodologies for biomedical studies.
           - Publication of results in specialized conferences and journals.
-          - >-
-            Before completing the doctorate, I redirected my career toward industrial
-            software development, applying my foundation in data analysis, programming
-            and analytical problem-solving.
         documents:
           - {
               label: Academic record (ENG),

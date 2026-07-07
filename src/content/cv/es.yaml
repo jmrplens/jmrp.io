@@ -696,7 +696,7 @@ sections:
   - kind: education
     title: Formación Académica
     items:
-      - degree: Doctorado en Tecnologías para la Salud y el Bienestar
+      - degree: Estudios de doctorado en Tecnologías para la Salud y el Bienestar (no finalizados)
         org:
           - {
               name: Universitat Politècnica de València,
@@ -710,23 +710,22 @@ sections:
             url: https://i3m.csic.upv.es/,
           }
         location: Valencia, España
-        period: 2023
+        period: 2019–2023
         summary: >-
-          Aplicaciones industriales y biomédicas de metamateriales para el control
-          de haces acústicos. En este proyecto, proponemos combinar nuevos
+          Antes de finalizar el doctorado, redirigí mi carrera hacia el desarrollo
+          de software industrial, aplicando mi base en análisis de datos,
+          programación y resolución analítica de problemas. El programa, no
+          finalizado, se centraba en aplicaciones industriales y biomédicas de
+          metamateriales para el control de haces acústicos, combinando nuevos
           transductores de ultrasonidos acoplados por aire con metamateriales
-          hiperbólicos para diseñar sistemas de visión que superen las capacidades
-          de imagen de los sistemas tradicionales.
+          hiperbólicos para diseñar sistemas de visión que superasen las
+          capacidades de imagen de los sistemas tradicionales.
         bullets:
           - Procesamiento de señales biomédicas y algoritmos de análisis acústico.
           - Caracterización ultrasónica para aplicaciones médicas.
           - Modelado computacional y simulación de fenómenos acústicos.
           - Desarrollo de metodologías experimentales para estudios biomédicos.
           - Publicación de resultados en conferencias y revistas especializadas.
-          - >-
-            Antes de finalizar el doctorado, redirigí mi carrera hacia el desarrollo
-            de software industrial, aplicando mi base en análisis de datos,
-            programación y resolución analítica de problemas.
         documents:
           - {
               label: Expediente académico (ING),
