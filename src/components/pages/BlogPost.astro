@@ -89,6 +89,11 @@ const finalReferences = collectedRefsFromMarkdown.filter((ref) => {
 
 // --- Image Optimization (JSON-LD) ---
 let jsonLdImage = "/default-blog-cover.webp";
+// Height of the fallback cover (public/default-blog-cover.webp, 1200×800);
+// overwritten below when a per-post `coverImage` is optimized instead (which
+// is always rendered at the same 1200px width, just a different aspect ratio).
+let jsonLdImageHeight = 800;
+const jsonLdImageWidth = 1200;
 
 const coverImageWidths = [400, 540, 600, 712, 800, 1080, 1200];
 // Narrow 760px stacked header: 760px max-width minus 2×24px side padding = 712px.
@@ -104,6 +109,7 @@ if (post.data.coverImage) {
     quality: 60,
   });
   jsonLdImage = schemaImage.src;
+  jsonLdImageHeight = 675;
 }
 
 // Canonical page URL — trailing slash so `@id`/`mainEntityOfPage` reconcile with
@@ -135,7 +141,12 @@ const articleNode = {
   ).toISOString(),
   publisher: personRef,
   author: personRef,
-  image: new URL(jsonLdImage, getSiteUrl()).href,
+  image: {
+    "@type": "ImageObject",
+    url: new URL(jsonLdImage, getSiteUrl()).href,
+    width: String(jsonLdImageWidth),
+    height: String(jsonLdImageHeight),
+  },
   mainEntityOfPage: {
     "@type": "WebPage",
     "@id": postUrl,
@@ -152,18 +163,23 @@ const articleNode = {
     articleSection: post.data.tags[0],
   }),
   // Topic entities linked to Wikidata: first = about (primary), rest = mentions.
+  // `@id` uses Wikidata's canonical entity concept URI scheme (plain,
+  // non-secure scheme by design — the standard Linked Data identifier, not a
+  // fetchable link; see the inline disable comments below).
   ...(post.data.topics &&
     post.data.topics.length > 0 && {
       about: {
         "@type": "Thing",
         name: post.data.topics[0].name,
-        "@id": `https://www.wikidata.org/wiki/${post.data.topics[0].wikidata}`,
+        // eslint-disable-next-line unicorn/prefer-https -- see comment above
+        "@id": `http://www.wikidata.org/entity/${post.data.topics[0].wikidata}`,
       },
       ...(post.data.topics.length > 1 && {
         mentions: post.data.topics.slice(1).map((topic) => ({
           "@type": "Thing",
           name: topic.name,
-          "@id": `https://www.wikidata.org/wiki/${topic.wikidata}`,
+          // eslint-disable-next-line unicorn/prefer-https -- see comment above
+          "@id": `http://www.wikidata.org/entity/${topic.wikidata}`,
         })),
       }),
     }),
