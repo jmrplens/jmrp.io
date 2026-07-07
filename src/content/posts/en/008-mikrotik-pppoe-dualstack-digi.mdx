@@ -2,6 +2,7 @@
 title: "MikroTik PPPoE + DHCPv6-PD: Dual-Stack for DIGI Spain"
 slug: "008-mikrotik-pppoe-dualstack-digi"
 publishedDate: 2026-02-15
+updatedDate: 2026-07-07
 description: "Configure PPPoE with DHCPv6 Prefix Delegation on MikroTik RouterOS for DIGI Spain. VLAN tagging, SLAAC, prefix change handling, and firewall rules."
 author: "José Manuel Requena Plens"
 authorEmail: "mail@jmrp.io"
@@ -82,11 +83,12 @@ import Collapsible from "@components/ui/Collapsible.astro";
 This guide covers the complete configuration of a [MikroTik](https://mikrotik.com/) router for DIGI's network, including automatic handling of prefix changes—a challenge when your ISP assigns dynamic prefixes that can change on each reconnection.
 
 <TLDRSummary title="What You'll Configure">
-  - **PPPoE over VLAN 20** for DIGI Spain fiber authentication
+  - **PPPoE over VLAN 20** with the `identifier@digi` username format for DIGI Spain fiber authentication
   - **Dynamic IPv4** with automatic default route and peer DNS
   - **DHCPv6 Prefix Delegation** (/56 prefix) for native IPv6 connectivity
   - **SLAAC** for automatic IPv6 address assignment on LAN devices
   - **Automatic prefix change handling** with DHCPv6 script that updates addresses on reconnection
+  - **MTU negotiated down to 1480** via LCP regardless of `max-mtu=1500` — that setting is only the client's upper limit, not the real link MTU
   - **Production-ready firewall** with input, forward chains for both IPv4 and IPv6
   - **Tested on RouterOS 7.x** with RB5009, but applicable to any MikroTik router
 </TLDRSummary>
