@@ -630,7 +630,7 @@ sections:
               url: https://cursor.directory/plugins/gitlab-mcp-server,
             }
           - { label: Docs, url: https://jmrplens.github.io/gitlab-mcp-server/ }
-      - name: PyOctaveBand
+      - name: phonometry
         tech: Python · Signal processing
         icon: logos:python
         description: >-
@@ -638,8 +638,8 @@ sections:
           signals, published on PyPI.
         metrics: [PyPI]
         links:
-          - { label: GitHub, url: https://github.com/jmrplens/PyOctaveBand }
-          - { label: PyPI, url: https://pypi.org/project/PyOctaveBand/ }
+          - { label: GitHub, url: https://github.com/jmrplens/phonometry }
+          - { label: PyPI, url: https://pypi.org/project/phonometry/ }
       - name: cs-routeros-bouncer
         tech: Go · Firewall · MikroTik · WAF
         icon: logos:go

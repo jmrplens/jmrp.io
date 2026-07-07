@@ -5,7 +5,7 @@ type: about
 # src/content/cv/{en,es}.yaml, curate the selection here).
 featuredProjects:
   - gitlab-mcp-server
-  - PyOctaveBand
+  - phonometry
   - cs-routeros-bouncer
   - TFG-TFM_EPS
 
