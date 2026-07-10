@@ -94,7 +94,7 @@
     "domhandler": "^6.0.1",
     "eslint": "^10.6.0",
     "eslint-plugin-astro": "^2.1.1",
-    "eslint-plugin-jsdoc": "^63.0.12",
+    "eslint-plugin-jsdoc": "^63.0.13",
     "eslint-plugin-jsx-a11y": "^6.10.2",
     "eslint-plugin-no-secrets": "^2.3.3",
     "eslint-plugin-playwright": "^2.10.5",
