@@ -5,6 +5,7 @@ import { loadEnv } from "vite";
 
 import { GITHUB_AVATAR_PATH, setupGithubAvatar } from "./pre-build/avatar.js";
 import { setupCfBeacon } from "./pre-build/beacon.js";
+import { setupDownloads } from "./pre-build/downloads.js";
 import { timed } from "./timing.js";
 
 /**
@@ -41,10 +42,15 @@ export default function preBuildIntegration(): AstroIntegration {
             logger.info("GitHub avatar exists locally. Skipping fetch.");
           }
 
-          // Only fetch beacon if we are building for production
+          // Only fetch beacon + download totals when building for production.
+          // Both keep their last committed value on failure, so the checked-in
+          // baselines cover dev and offline builds.
           if (command === "build") {
             await timed("setupCfBeacon", logger, () =>
               setupCfBeacon(env.PUBLIC_CF_BEACON_TOKEN, logger),
+            );
+            await timed("setupDownloads", logger, () =>
+              setupDownloads(logger, env.GITHUB_TOKEN),
             );
           }
 
