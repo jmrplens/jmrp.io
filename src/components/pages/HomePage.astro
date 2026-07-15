@@ -124,6 +124,13 @@ const homeSchema = {
   inLanguage: locale,
   isPartOf: { "@id": new URL("#website", getSiteUrl()).href },
   about: { "@id": new URL("#person", getSiteUrl()).href },
+  // Marks the hero identity block as the citable/answer-target summary for
+  // "who is José Manuel Requena Plens?" queries — same speakable pattern the
+  // blog posts use for their header + TL;DR.
+  speakable: {
+    "@type": "SpeakableSpecification",
+    cssSelector: [".hero__title", ".hero__subtitle", ".hero__bio"],
+  },
 } satisfies WebPage;
 ---
 

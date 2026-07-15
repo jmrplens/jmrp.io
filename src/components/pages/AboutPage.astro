@@ -11,6 +11,7 @@ import { defaultLocale, type Locale } from "@i18n/config";
 import { useTranslatedPath, useTranslations } from "@i18n/utils";
 import BaseLayout from "@layouts/BaseLayout.astro";
 import type { SiteConfig } from "@src/types";
+import { CANONICAL_ALUMNI_OF } from "@utils/person";
 import { getSiteUrl } from "@utils/site";
 import { Image } from "astro:assets";
 import { getEntry } from "astro:content";
@@ -80,10 +81,7 @@ const personSchema = {
   mainEntity: {
     "@type": "Person",
     "@id": new URL("#person", getSiteUrl()).href,
-    alumniOf: c.education.map((edu) => ({
-      "@type": "EducationalOrganization",
-      name: edu.org,
-    })),
+    alumniOf: CANONICAL_ALUMNI_OF,
   },
 } satisfies ProfilePage;
 ---

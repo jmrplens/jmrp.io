@@ -218,6 +218,8 @@ const KNOWS_ABOUT_WIKIDATA: Readonly<Record<string, string>> = {
   "Model Context Protocol": "Q133436854",
   "Software Testing": "Q188522",
   ESP32: "Q27921668",
+  "CI/CD": "Q28136854",
+  DevSecOps: "Q108525696",
 };
 const personKnowsAbout = siteData.person?.knowsAbout?.map((topic) => {
   const qid = KNOWS_ABOUT_WIKIDATA[topic];
