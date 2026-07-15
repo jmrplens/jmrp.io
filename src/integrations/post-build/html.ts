@@ -375,7 +375,7 @@ function findAndExtractDataUris(
       const parts = srcset.split(",");
       const newParts = parts.map((part) => {
         const trimmed = part.trim();
-        const [url, descriptor] = trimmed.split(/\s+/);
+        const [url, descriptor] = trimmed.split(/\s+/, 2);
         if (url?.startsWith("data:")) {
           const extracted = extractDataUri(url, targetDir, logger, fileName);
           if (extracted) {

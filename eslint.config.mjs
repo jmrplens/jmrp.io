@@ -68,6 +68,8 @@ export default [
       "unicorn/no-unreadable-for-of-expression": "off", // stylistic
       "unicorn/prefer-minimal-ternary": "off", // stylistic
       "unicorn/prefer-hoisting-branch-code": "off", // stylistic
+      "unicorn/prefer-simple-condition-first": "off", // v72: reorders && operands, clashing with intentional cheap-guard-first short-circuits (e.g. `import.meta.env.DEV &&`)
+      "unicorn/prefer-dom-node-html-methods": "off", // v72: .getHTML() serializes differently than .innerHTML — not a drop-in replacement
       // Buffer.from(x, "base64") is standard Node and is the right type for the
       // crypto/fs (Buffer) flows in post-build; the Uint8Array.fromBase64 form
       // is adopted where it's a clean swap (scripts/preview-rss.mjs).
@@ -315,6 +317,12 @@ export default [
       "sonarjs/no-nested-template-literals": "off",
       "sonarjs/slow-regex": "off",
       "sonarjs/os-command": "off", // CI scripts need to execute OS commands
+      // sonarjs v4.2 added no-fixed-wait-in-tests, flagging every
+      // `waitForTimeout`. Fixed waits are deliberate in these E2E specs
+      // (animation settle, debounce, hydration); rewriting ~55 to observable
+      // conditions is out of scope for a dependency bump — scoped off here
+      // (after sonarjs.configs.recommended re-enables it globally).
+      "sonarjs/no-fixed-wait-in-tests": "off",
     },
   },
   {
