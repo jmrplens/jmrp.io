@@ -679,7 +679,7 @@ export const common = {
       viewMapAria: "Ver Mapa en PotatoMesh",
       viewMonitor: "Ver Monitor",
       viewMonitorAria: "Ver Monitor en MeshMonitor",
-      pdsNetworks: "Redes",
+      pdsRecords: "Registros",
       // ServerInsights — Matrix
       matrixNode: "Nodo: Servidor Matrix",
       matrixStatsAriaLabel: "Estadísticas en tiempo real del servidor Matrix",
