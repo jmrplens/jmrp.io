@@ -109,8 +109,14 @@ async function fetchDockerHubPulls(slug: string): Promise<number> {
   });
   if (!res.ok) throw new Error(`Docker Hub ${slug}: ${res.status}`);
 
-  const repo = (await res.json()) as DockerHubRepo;
-  return typeof repo.pull_count === "number" ? repo.pull_count : 0;
+  // Optional chaining guards a null/malformed 200 body; throwing (rather than
+  // returning 0) keeps the refresh atomic — the caller's catch then preserves
+  // the last good total instead of persisting a partial one.
+  const repo = (await res.json()) as DockerHubRepo | null;
+  if (typeof repo?.pull_count !== "number") {
+    throw new TypeError(`Docker Hub ${slug}: missing pull_count`);
+  }
+  return repo.pull_count;
 }
 
 /**
