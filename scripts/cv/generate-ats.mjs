@@ -424,7 +424,7 @@ async function main() {
   const outDir = path.join(REPO_ROOT, "cv_latex", "generated");
   fs.mkdirSync(outDir, { recursive: true });
   for (const [key, filename] of Object.entries(OUTPUT_NAMES)) {
-    const [locale, profile] = key.split(":");
+    const [locale, profile] = key.split(":", 2);
     const outPath = path.join(outDir, filename);
     fs.writeFileSync(outPath, await buildDocument(locale, profile), "utf8");
     console.log(`✓ ${path.relative(REPO_ROOT, outPath)}`);

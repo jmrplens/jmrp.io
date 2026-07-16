@@ -115,3 +115,9 @@ featured_projects:
   - "phonometry"
   - "Cloudflare-DNS-Updater"
   - "TFG-TFM_EPS"
+
+# Language-neutral technical facts for the homepage hero "whoami" terminal.
+# `role` is localized copy and lives in the i18n layer (pages.home.terminalRole).
+terminal:
+  focus: "Firmware · Acoustics · DevSecOps"
+  base: "Valencia, ES"

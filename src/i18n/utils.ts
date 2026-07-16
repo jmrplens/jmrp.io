@@ -45,7 +45,7 @@ export type TranslationKey = FlattenKeys<Translations>;
  * @returns The detected locale, falling back to `defaultLocale`.
  */
 export function getLangFromUrl(url: URL): Locale {
-  const [, maybeLang] = url.pathname.split("/");
+  const [, maybeLang] = url.pathname.split("/", 2);
   if (maybeLang && (locales as readonly string[]).includes(maybeLang)) {
     return maybeLang as Locale;
   }

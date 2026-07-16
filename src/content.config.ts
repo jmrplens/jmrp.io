@@ -181,6 +181,15 @@ const site_config = defineCollection({
         bio: z.array(z.string()),
       }),
       featured_projects: z.array(z.string()).optional(),
+      // Language-neutral technical facts shown in the homepage hero "whoami"
+      // terminal. Localized copy (e.g. `role`) stays in the i18n layer; these
+      // are data, not prose, so they live here (like `sameAs`).
+      terminal: z
+        .object({
+          focus: z.string(),
+          base: z.string(),
+        })
+        .optional(),
       shortcuts: z
         .array(
           z.object({

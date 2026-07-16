@@ -146,7 +146,7 @@ export async function highlightCode(
           const classVal = String(node.properties.class ?? "");
           node.properties.class = classVal.replaceAll("shiki", "astro-code");
 
-          const styleVal = String(node.properties.style ?? "");
+          const styleVal = node.properties.style ?? "";
           node.properties.style = styleVal + "; overflow-x: auto;";
 
           node.properties.dataLanguage = langName;

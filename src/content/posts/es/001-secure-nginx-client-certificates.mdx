@@ -5,7 +5,7 @@ description: "Implementa Mutual TLS (mTLS) con Nginx — crea una CA, genera cer
 author: "José Manuel Requena Plens"
 authorEmail: "mail@jmrp.io"
 publishedDate: 2025-12-16
-updatedDate: 2026-07-07
+updatedDate: 2026-07-15
 draft: false
 lang: "es"
 coverImage: "../../../assets/images/blog/mtls-auth.webp"
@@ -326,7 +326,7 @@ echo 1000 | sudo tee crlnumber > /dev/null
 
 
 
-Una CA es la raíz de confianza en tu PKI.
+Una CA es la raíz de confianza en tu PKI. Los certificados que emite siguen el perfil [X.509 v3](https://www.rfc-editor.org/rfc/rfc5280) (RFC 5280), el mismo estándar sobre el que se asienta la PKI pública de la web.
 
  Todos los certificados de cliente deben estar firmados por esta CA para que Nginx los acepte.
 
@@ -998,6 +998,8 @@ Una configuración TLS adecuada es fundamental para la seguridad.
  Esto es lo que hace cada ajuste:
 
 ### Selección de versión de protocolo
+
+En una configuración moderna solo caben TLS 1.2 y TLS 1.3. [TLS 1.3](https://www.rfc-editor.org/rfc/rfc8446) (RFC 8446) es el estándar actual, con un handshake más rápido y conjuntos de cifrado exclusivamente AEAD:
 
 <Table title="Versiones del Protocolo TLS">
   <thead>

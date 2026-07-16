@@ -20,8 +20,8 @@ export interface ServiceStatsTranslations {
   viewMonitor: string;
   /** ARIA label for the "view monitor" link. */
   viewMonitorAria: string;
-  /** PDS: caption for the headline "networks reached" number (distinct ASNs). */
-  pdsNetworks: string;
+  /** PDS: caption for the headline self-hosted repo-records count. */
+  pdsRecords: string;
 }
 
 /** Component props for ServiceStats */
@@ -68,8 +68,10 @@ interface MeshtasticStatsData {
 
 /** AT Protocol PDS statistics data */
 interface PdsStatsData {
-  /** Number of distinct networks (ASNs) reaching the PDS — the headline reach. */
-  networks: number;
+  /** Total records in the self-hosted repo (posts, follows, likes…) — a
+   * monotonic-ish counter that grows with activity, unlike the transient ASN
+   * reach it replaced. */
+  records: number;
   /** Running PDS software version. */
   version: string;
 }
@@ -299,7 +301,7 @@ async function fetchPotatoVersion(): Promise<string> {
 async function fetchPdsStats(
   setError: (error: boolean) => void,
 ): Promise<PdsStatsData> {
-  const fallback: PdsStatsData = { networks: 0, version: "Unknown" };
+  const fallback: PdsStatsData = { records: 0, version: "Unknown" };
   try {
     const token =
       document.querySelector<HTMLElement>("[data-homelab-token]")?.dataset
@@ -314,7 +316,7 @@ async function fetchPdsStats(
 
     const data = await safeFetchJson<{
       version?: string;
-      distinct_asn?: number;
+      records?: number;
     } | null>(res, "Failed to parse PDS homelab response", null);
 
     if (!res?.ok || !data) {
@@ -323,7 +325,7 @@ async function fetchPdsStats(
     }
 
     return {
-      networks: data.distinct_asn ?? 0,
+      records: data.records ?? 0,
       version: data.version || "Unknown",
     };
   } catch (error) {
@@ -432,10 +434,10 @@ function MeshtasticStats({
 }
 
 /**
- * AT Protocol PDS: federation reach (distinct networks / ASNs that reach the
- * node) + the running PDS version, in the same two-column big-number grid used
- * by Mastodon/Matrix. A personal PDS holds little content, so the headline is
- * the "self-hosted node with real network reach" story, not raw post counts.
+ * AT Protocol PDS: self-hosted repo size (total records — posts, follows,
+ * likes… — a counter that grows with activity) + the running PDS version, in
+ * the same two-column big-number grid used by Mastodon/Matrix. Replaces the
+ * former distinct-ASN "reach" figure, which jittered on a 30-minute window.
  */
 function PdsStats({
   stats,
@@ -448,8 +450,8 @@ function PdsStats({
     <ServiceStatCard
       stats={[
         {
-          value: stats?.networks?.toLocaleString() ?? "...",
-          label: t.pdsNetworks,
+          value: stats?.records?.toLocaleString() ?? "...",
+          label: t.pdsRecords,
         },
         { value: stats?.version || "...", label: "PDS" },
       ]}

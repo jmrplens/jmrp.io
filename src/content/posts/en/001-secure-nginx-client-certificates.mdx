@@ -5,7 +5,7 @@ description: "Implement Mutual TLS (mTLS) with Nginx — create a CA, generate c
 author: "José Manuel Requena Plens"
 authorEmail: "mail@jmrp.io"
 publishedDate: 2025-12-16
-updatedDate: 2026-07-07
+updatedDate: 2026-07-15
 draft: false
 coverImage: "../../../assets/images/blog/mtls-auth.webp"
 tags: ["Nginx", "Security", "mTLS"]
@@ -325,7 +325,7 @@ echo 1000 | sudo tee crlnumber > /dev/null
 
 
 
-A CA is the root of trust in your PKI.
+A CA is the root of trust in your PKI. The certificates it issues follow the [X.509 v3](https://www.rfc-editor.org/rfc/rfc5280) (RFC 5280) profile that underpins the public web PKI.
 
  All client certificates must be signed by this CA for Nginx to accept them.
 
@@ -997,6 +997,8 @@ Proper TLS configuration is critical for security.
  Here's what each setting does:
 
 ### Protocol version selection
+
+Only TLS 1.2 and TLS 1.3 belong in a modern configuration. [TLS 1.3](https://www.rfc-editor.org/rfc/rfc8446) (RFC 8446) is the current standard, with a faster handshake and AEAD-only cipher suites:
 
 <Table title="TLS Protocol Versions">
   <thead>

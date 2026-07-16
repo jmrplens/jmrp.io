@@ -4,6 +4,7 @@
  * Displays the hero section, biography, and quick links.
  * Content is configured via `src/content/site_config/site.yaml`.
  */
+import downloadsData from "@data/downloads.json";
 import { defaultLocale, type Locale } from "@i18n/config";
 import { useTranslatedPath, useTranslations } from "@i18n/utils";
 import BaseLayout from "@layouts/BaseLayout.astro";
@@ -89,16 +90,24 @@ function formatDaysAgo(days: number, lang: Locale): string {
   return days === 1 ? "1 day ago" : `${days} days ago`;
 }
 
+/**
+ * Compact human-readable count: 52311 → "52.3k", 980 → "980".
+ * Used for the terminal download total (a large cumulative figure).
+ */
+function formatCompact(n: number): string {
+  if (n < 1000) return String(n);
+  return `${(n / 1000).toFixed(1).replace(/\.0$/, "")}k`;
+}
+
 // Terminal "whoami" card — language-neutral technical facts (data, not prose).
-// The system-status lines mix a real signal (public repo count from the GitHub
-// API) with the site's own stated figures; they are a hero flourish, not a live
-// dashboard.
+// `focus`/`base` come from site.yaml; the metrics below are all real signals:
+// cumulative downloads (pre-build fetch, src/data/downloads.json), public repo
+// count (GitHub API), and days since the last post (content).
 const whoami = {
-  focus: "ESP32 · RouterOS · MCP",
-  base: "Valencia, ES",
-  uptime: "99.98%",
-  services: "24",
+  focus: siteData.terminal?.focus ?? "Firmware · Acoustics · DevSecOps",
+  base: siteData.terminal?.base ?? "Valencia, ES",
   repos: ghProfile ? String(ghProfile.public_repos) : "—",
+  downloads: downloadsData.total > 0 ? formatCompact(downloadsData.total) : "—",
 };
 
 // The canonical author-entity page is /about/ (see AboutPage.astro's
@@ -115,6 +124,13 @@ const homeSchema = {
   inLanguage: locale,
   isPartOf: { "@id": new URL("#website", getSiteUrl()).href },
   about: { "@id": new URL("#person", getSiteUrl()).href },
+  // Marks the hero identity block as the citable/answer-target summary for
+  // "who is José Manuel Requena Plens?" queries — same speakable pattern the
+  // blog posts use for their header + TL;DR.
+  speakable: {
+    "@type": "SpeakableSpecification",
+    cssSelector: [".hero__title", ".hero__subtitle", ".hero__bio"],
+  },
 } satisfies WebPage;
 ---
 
@@ -205,12 +221,8 @@ const homeSchema = {
           </dl>
           <div class="terminal__metrics">
             <div class="terminal__metric">
-              <span>homelab.uptime</span>
-              <span class="terminal__ok">{whoami.uptime}</span>
-            </div>
-            <div class="terminal__metric">
-              <span>services.live</span>
-              <span class="terminal__num">{whoami.services}</span>
+              <span>downloads.total</span>
+              <span class="terminal__num">{whoami.downloads}</span>
             </div>
             <div class="terminal__metric">
               <span>repos.public</span>
@@ -542,10 +554,6 @@ const homeSchema = {
     display: flex;
     justify-content: space-between;
     color: var(--color-text-muted);
-  }
-
-  .terminal__ok {
-    color: var(--teal-text);
   }
 
   .terminal__num {

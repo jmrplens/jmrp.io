@@ -19,6 +19,7 @@ import { getCVData } from "@utils/cv";
 import { fetchRepoStats, formatStats, githubSlug } from "@utils/cv-github";
 import { markdownToHtml } from "@utils/cv-markdown";
 import { stripToText } from "@utils/html";
+import { CANONICAL_ALUMNI_OF } from "@utils/person";
 import { getAbsoluteUrl, getSiteUrl } from "@utils/site";
 import type { Person, WebPage } from "schema-dts";
 
@@ -114,7 +115,6 @@ if (projectsSection?.kind === "projects") {
 
 // Sections used to build the CV JSON-LD (WebPage + additive Person facts).
 const experience = sections.find((s) => s.kind === "experience");
-const education = sections.find((s) => s.kind === "education");
 const certificates = sections.find((s) => s.kind === "certificates");
 
 // /cv/ is not the canonical ProfilePage (that's /about/ — see AboutPage.astro)
@@ -136,14 +136,7 @@ const cvWebPage = {
 const cvPersonFacts = {
   "@type": "Person",
   "@id": new URL("#person", getSiteUrl()).href,
-  alumniOf:
-    education?.kind === "education"
-      ? education.items.map((edu) => ({
-          "@type": "EducationalOrganization",
-          name: edu.org[0]?.name,
-          department: edu.department?.name,
-        }))
-      : [],
+  alumniOf: CANONICAL_ALUMNI_OF,
   hasOccupation:
     experience?.kind === "experience"
       ? experience.items.map((job) => ({
