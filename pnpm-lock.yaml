@@ -75,8 +75,8 @@ importers:
         specifier: ^1.2.3
         version: 1.2.3
       '@iconify-json/simple-icons':
-        specifier: ^1.2.90
-        version: 1.2.90
+        specifier: ^1.2.91
+        version: 1.2.91
       '@unocss/astro':
         specifier: ^66.7.5
         version: 66.7.5(vite@8.1.4(@types/node@26.1.1)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.49.0)(tsx@4.21.0)(yaml@2.9.0))
@@ -127,8 +127,8 @@ importers:
         specifier: ^1.2.62
         version: 1.2.62
       '@iconify-json/tabler':
-        specifier: ^1.2.35
-        version: 1.2.35
+        specifier: ^1.2.37
+        version: 1.2.37
       '@iconify-json/vscode-icons':
         specifier: ^1.2.67
         version: 1.2.67
@@ -1597,11 +1597,11 @@ packages:
   '@iconify-json/mdi@1.2.3':
     resolution: {integrity: sha512-O3cLwbDOK7NNDf2ihaQOH5F9JglnulNDFV7WprU2dSoZu3h3cWH//h74uQAB87brHmvFVxIOkuBX2sZSzYhScg==}
 
-  '@iconify-json/simple-icons@1.2.90':
-    resolution: {integrity: sha512-zt2o2ZvQpHVvZJARIkZ51RnaHY2oqcPJMvHE+mVnxkSr+c33fnX4gciiXu+wyX5ei+s0qbVX1wD0DWBbaGBYMA==}
+  '@iconify-json/simple-icons@1.2.91':
+    resolution: {integrity: sha512-plQJHZxzpkIXaeYjJF0Sc9nkzYF32EDX9olx7j1hcKYFaiTrQXbcngZmvzuV0pG6uZPU3ZuA/GIsgxSHOm6jrQ==}
 
-  '@iconify-json/tabler@1.2.35':
-    resolution: {integrity: sha512-/sJMqHvh5ZWrEERVfDCT5NjVDeKJdhosFtKjJofAVl+P/3AzLiryOQw7WvrfDF25Xa5N/eoOQ15Y1jnhYXxBoQ==}
+  '@iconify-json/tabler@1.2.37':
+    resolution: {integrity: sha512-tXc0jGhrxec6eTKxMI9We/r3cEItyU5dG8ngDOEKsL36a6+/xwk4sR7PIZROVajzxmvyUBsn659adDIfcswiUw==}
 
   '@iconify-json/vscode-icons@1.2.67':
     resolution: {integrity: sha512-/fObxEkBtqK2e1qf1IRjuZ4drWknAnzykdT2ngGAKESf35tCcj0Lx3MdsxYBneE5YbgvsUfOl0hbZ59R5s19vw==}
@@ -9588,11 +9588,11 @@ snapshots:
     dependencies:
       '@iconify/types': 2.0.0
 
-  '@iconify-json/simple-icons@1.2.90':
+  '@iconify-json/simple-icons@1.2.91':
     dependencies:
       '@iconify/types': 2.0.0
 
-  '@iconify-json/tabler@1.2.35':
+  '@iconify-json/tabler@1.2.37':
     dependencies:
       '@iconify/types': 2.0.0
 
