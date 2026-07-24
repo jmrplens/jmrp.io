@@ -113,7 +113,7 @@
     "opentype.js": "^2.0.0",
     "pdf-parse": "^2.4.5",
     "playwright": "^1.61.1",
-    "prettier": "^3.9.5",
+    "prettier": "^3.9.6",
     "prettier-plugin-astro": "^0.14.1",
     "puppeteer": "^25.3.0",
     "rehype-mermaid": "^3.0.0",
