@@ -1,0 +1,240 @@
+type: projects
+
+# Open-source projects surfaced on /projects/ (and /es/projects/).
+#
+# This file is the SINGLE SOURCE for both the rendered page and the
+# SoftwareApplication / SoftwareSourceCode JSON-LD nodes that link the
+# canonical `https://jmrp.io/#person` entity to the software it authors.
+#
+# ── Rules for editing ────────────────────────────────────────────────────
+# * `id` is the GitHub repo name. `softwareId` is derived as
+#   `https://github.com/jmrplens/<id>#software` — the SAME @id the project's
+#   own documentation site publishes, so both documents describe ONE node.
+# * `name` and `summary.en` MUST match, verbatim, the `name`/`description`
+#   the project's own site publishes for that @id. Divergent values on a
+#   shared @id contradict each other and weaken the entity instead of
+#   reinforcing it. Verified against the live sites on 2026-07-26 for:
+#   gitlab-mcp-server, libgen-mcp, phonometry, cs-routeros-bouncer,
+#   Cloudflare-DNS-Updater. Projects without a docs site use the repo/CV copy.
+# * `summary.es` is display-only. JSON-LD always emits `summary.en`, on both
+#   locales, because the software entity is language-neutral and its
+#   canonical description must not fork per page.
+# * `topics[].wikidata` Q-ids are verified against the Wikidata
+#   `wbgetentities` API (label + description read, not just search hit).
+#   First topic → `about`, the rest → `mentions`.
+
+projects:
+  # ── Active ─────────────────────────────────────────────────────────────
+  - id: gitlab-mcp-server
+    name: GitLab MCP Server
+    status: active
+    schemaType: SoftwareApplication
+    applicationCategory: DeveloperApplication
+    applicationSubCategory: Version Control
+    language: Go
+    license: MIT
+    repo: https://github.com/jmrplens/gitlab-mcp-server
+    docs: https://jmrplens.github.io/gitlab-mcp-server/
+    docsEs: https://jmrplens.github.io/gitlab-mcp-server/es/
+    sameAs:
+      - https://glama.ai/mcp/servers/jmrplens/gitlab-mcp-server
+      - https://cursor.directory/plugins/gitlab-mcp-server
+      - https://mcp.so/server/gitlab-mcp-server/jmrplens
+    topics:
+      - { name: Model Context Protocol, wikidata: Q133436854 }
+      - { name: GitLab, wikidata: Q16639197 }
+      - { name: Go, wikidata: Q37227 }
+      - { name: DevOps, wikidata: Q3025536 }
+    summary:
+      en: Model Context Protocol server that exposes more than 1,000 GitLab operations as AI-accessible tools.
+      es: Servidor Model Context Protocol que expone más de 1.000 operaciones de GitLab como herramientas accesibles para asistentes de IA.
+
+  - id: phonometry
+    name: phonometry
+    status: active
+    schemaType: SoftwareApplication
+    applicationCategory: DeveloperApplication
+    applicationSubCategory: Scientific/Engineering
+    language: Python
+    license: MIT
+    repo: https://github.com/jmrplens/phonometry
+    docs: https://jmrplens.github.io/phonometry/
+    docsEs: https://jmrplens.github.io/phonometry/es/
+    sameAs:
+      - https://pypi.org/project/phonometry/
+      - https://doi.org/10.5281/zenodo.21215280
+    topics:
+      - { name: Acoustics, wikidata: Q82811 }
+      - { name: Signal processing, wikidata: Q208163 }
+      - { name: Sound level meter, wikidata: Q1140661 }
+      - { name: Octave band, wikidata: Q2270252 }
+      - { name: Python, wikidata: Q28865 }
+    summary:
+      en: Fractional octave filter banks, IEC 61672-1 weighting, Leq/LN levels and octave spectrograms for Python signals in the time domain.
+      es: Bancos de filtros de octava fraccionaria, ponderación IEC 61672-1, niveles Leq/LN y espectrogramas de octava para señales en el dominio del tiempo en Python.
+
+  - id: cs-routeros-bouncer
+    name: cs-routeros-bouncer
+    status: active
+    schemaType: SoftwareApplication
+    applicationCategory: SecurityApplication
+    language: Go
+    license: MIT
+    repo: https://github.com/jmrplens/cs-routeros-bouncer
+    docs: https://jmrplens.github.io/cs-routeros-bouncer/
+    sameAs:
+      - https://app.crowdsec.net/hub/author/jmrplens/remediation-components/cs-routeros-bouncer
+    topics:
+      - { name: Network security, wikidata: Q989632 }
+      - { name: RouterOS, wikidata: Q12036888 }
+      - { name: Firewall, wikidata: Q80998 }
+      - { name: Intrusion detection system, wikidata: Q745881 }
+      - { name: Go, wikidata: Q37227 }
+    summary:
+      en: CrowdSec bouncer for MikroTik RouterOS — automatic firewall management via the RouterOS API
+      es: Bouncer de CrowdSec para MikroTik RouterOS — gestión automática del firewall a través de la API de RouterOS
+
+  - id: Cloudflare-DNS-Updater
+    name: Cloudflare DNS Updater
+    status: active
+    schemaType: SoftwareApplication
+    applicationCategory: UtilitiesApplication
+    applicationSubCategory: Networking
+    language: Bash
+    license: MIT
+    repo: https://github.com/jmrplens/Cloudflare-DNS-Updater
+    docs: https://jmrplens.github.io/Cloudflare-DNS-Updater/
+    topics:
+      - { name: Dynamic DNS, wikidata: Q1268848 }
+      - { name: Cloudflare, wikidata: Q4778915 }
+      - { name: GNU Bash, wikidata: Q189248 }
+      - { name: IPv6, wikidata: Q2551624 }
+    summary:
+      en: Bash-based dynamic DNS updater that keeps Cloudflare A and AAAA records pointed at your current public IP.
+      es: Cliente de DNS dinámico en Bash que mantiene los registros A y AAAA de Cloudflare apuntando a tu IP pública actual.
+
+  - id: libgen-mcp
+    name: libgen-mcp
+    status: active
+    schemaType: SoftwareApplication
+    applicationCategory: DeveloperApplication
+    applicationSubCategory: Search Tools
+    language: Go
+    license: MIT
+    repo: https://github.com/jmrplens/libgen-mcp
+    docs: https://jmrplens.github.io/libgen-mcp/
+    sameAs:
+      - https://glama.ai/mcp/servers/jmrplens/libgen-mcp
+      - https://cursor.directory/plugins/libgen-mcp
+    topics:
+      - { name: Model Context Protocol, wikidata: Q133436854 }
+      - { name: Library Genesis, wikidata: Q22017206 }
+      - { name: Digital library, wikidata: Q212805 }
+      - { name: Open access, wikidata: Q232932 }
+      - { name: Go, wikidata: Q37227 }
+    summary:
+      en: MCP server to search and download books, research papers, comics, magazines and standards from Library Genesis. No account required.
+      es: Servidor MCP para buscar y descargar libros, artículos de investigación, cómics, revistas y normas desde Library Genesis. Sin necesidad de cuenta.
+
+  - id: TFG-TFM_EPS
+    name: TFG-TFM_EPS
+    status: active
+    schemaType: SoftwareSourceCode
+    language: LaTeX
+    license: MIT
+    repo: https://github.com/jmrplens/TFG-TFM_EPS
+    docs: https://github.com/jmrplens/TFG-TFM_EPS#readme
+    topics:
+      - { name: LaTeX, wikidata: Q5310 }
+      - { name: Thesis, wikidata: Q1266946 }
+      - { name: University of Alicante, wikidata: Q2037040 }
+    summary:
+      en: LaTeX template for Bachelor's and Master's theses at the University of Alicante (EPS), with an automated CI build pipeline.
+      es: Plantilla LaTeX para Trabajos Fin de Grado y Fin de Máster en la Universidad de Alicante (EPS), con pipeline de compilación automatizado en CI.
+
+  # ── Archived ───────────────────────────────────────────────────────────
+  # No longer maintained, kept public and read-only. They stay in the graph
+  # because they are genuinely this person's work and carry real usage
+  # (stars/forks), which is exactly the authorship evidence the entity needs.
+  - id: A-Lab
+    name: A-Lab
+    status: archived
+    schemaType: SoftwareApplication
+    applicationCategory: DeveloperApplication
+    applicationSubCategory: Scientific/Engineering
+    language: MATLAB
+    license: GPL-3.0
+    repo: https://github.com/jmrplens/A-Lab
+    docs: https://github.com/jmrplens/A-Lab#readme
+    topics:
+      - { name: Acoustics, wikidata: Q82811 }
+      - { name: Acoustic impedance, wikidata: Q975684 }
+      - { name: MATLAB, wikidata: Q169478 }
+    summary:
+      en: Matlab-based software for measuring acoustic parameters and experiments.
+      es: Software en MATLAB para la medición de parámetros acústicos y de experimentos.
+
+  - id: mastodon_official_profiles
+    name: mastodon_official_profiles
+    status: archived
+    schemaType: SoftwareSourceCode
+    language: Python
+    license: AGPL-3.0
+    repo: https://github.com/jmrplens/mastodon_official_profiles
+    docs: https://jmrplens.github.io/mastodon_official_profiles/
+    topics:
+      - { name: Mastodon, wikidata: Q27986619 }
+      - { name: Fediverse, wikidata: Q30325419 }
+      - { name: Python, wikidata: Q28865 }
+    summary:
+      en: List of official profiles on Mastodon.
+      es: Lista de perfiles oficiales en Mastodon.
+
+  - id: SetFigPaper
+    name: SetFigPaper
+    status: archived
+    schemaType: SoftwareSourceCode
+    language: MATLAB
+    license: GPL-3.0
+    repo: https://github.com/jmrplens/SetFigPaper
+    docs: https://github.com/jmrplens/SetFigPaper#readme
+    topics:
+      - { name: Data visualization, wikidata: Q6504956 }
+      - { name: MATLAB, wikidata: Q169478 }
+    summary:
+      en: Function to modify the style of the graphical representations of MATLAB.
+      es: Función para modificar el estilo de las representaciones gráficas de MATLAB.
+
+  - id: LoVE-BASS
+    name: LoVE-BASS
+    status: archived
+    schemaType: SoftwareApplication
+    applicationCategory: DeveloperApplication
+    applicationSubCategory: Scientific/Engineering
+    language: MATLAB
+    license: GPL-3.0
+    repo: https://github.com/jmrplens/LoVE-BASS
+    docs: https://github.com/jmrplens/LoVE-BASS#readme
+    topics:
+      - { name: Loudspeaker, wikidata: Q570 }
+      - { name: Loudspeaker enclosure, wikidata: Q59123 }
+      - { name: Acoustics, wikidata: Q82811 }
+    summary:
+      en: "Loudspeakers for Vented Enclosures: a Backwards Approach for Speaker Selection. MATLAB (App Designer)."
+      es: "Loudspeakers for Vented Enclosures: un enfoque inverso para la selección de altavoces. MATLAB (App Designer)."
+
+  - id: FDTDexamples
+    name: FDTDexamples
+    status: archived
+    schemaType: SoftwareSourceCode
+    language: MATLAB
+    license: GPL-3.0
+    repo: https://github.com/jmrplens/FDTDexamples
+    docs: https://github.com/jmrplens/FDTDexamples#readme
+    topics:
+      - { name: Finite-difference time-domain method, wikidata: Q1417308 }
+      - { name: Aeroacoustics, wikidata: Q381331 }
+      - { name: MATLAB, wikidata: Q169478 }
+    summary:
+      en: Simple and complex FDTD aeroacoustics models for MATLAB 2019b or newer.
+      es: Modelos FDTD de aeroacústica simples y complejos para MATLAB 2019b o superior.

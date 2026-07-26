@@ -12,6 +12,7 @@ export const common = {
     cv: "CV",
     publications: "Publications",
     repositories: "Repositories",
+    projects: "Projects",
     homelab: "Homelab",
     about: "About",
     uses: "Uses",
@@ -827,6 +828,28 @@ export const common = {
       title: "Uses",
       description:
         "The hardware, software, and services José Manuel Requena Plens keeps in rotation — desk, dev tools, and homelab.",
+    },
+    projects: {
+      title: "Projects",
+      description:
+        "Open-source projects by José Manuel Requena Plens — MCP servers, acoustics tooling and network security, each with source, docs and license.",
+      schemaDescription:
+        "Curated index of the open-source software authored and maintained by José Manuel Requena Plens, with language, license, source repository and documentation for each project.",
+      kicker: "PROJECTS",
+      heading: "What I build, and where it lives.",
+      intro:
+        "The open-source projects I author and maintain — MCP servers and developer tooling in Go, acoustics and signal-processing libraries, network security and infrastructure scripts. Every entry links to its source and its documentation.",
+      activeHeading: "// MAINTAINED",
+      activeIntro:
+        "Actively developed. These get releases, issue triage and documentation.",
+      archivedHeading: "// ARCHIVED",
+      archivedIntro:
+        "No longer maintained, kept public and read-only. Mostly research and instrumentation work from the acoustics years.",
+      language: "Language",
+      license: "License",
+      repo: "Source",
+      docs: "Docs",
+      topicsLabel: "Topics covered by {project}",
     },
     tools: {
       title: "Developer Tools",

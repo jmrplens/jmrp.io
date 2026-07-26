@@ -12,6 +12,7 @@ export const common = {
     cv: "CV",
     publications: "Publicaciones",
     repositories: "Repositorios",
+    projects: "Proyectos",
     homelab: "Homelab",
     about: "Perfil",
     uses: "Uses",
@@ -829,6 +830,28 @@ export const common = {
       title: "Uses",
       description:
         "El hardware, software y servicios que José Manuel Requena Plens tiene en rotación — escritorio, herramientas de desarrollo y homelab.",
+    },
+    projects: {
+      title: "Proyectos",
+      description:
+        "Proyectos open source de José Manuel Requena Plens: servidores MCP, herramientas de acústica y seguridad de red, con código, docs y licencia.",
+      schemaDescription:
+        "Índice curado del software open source escrito y mantenido por José Manuel Requena Plens, con lenguaje, licencia, repositorio de código y documentación de cada proyecto.",
+      kicker: "PROYECTOS",
+      heading: "Lo que construyo, y dónde vive.",
+      intro:
+        "Los proyectos open source que escribo y mantengo: servidores MCP y herramientas para desarrolladores en Go, librerías de acústica y procesado de señal, y scripts de seguridad de red e infraestructura. Cada entrada enlaza a su código y a su documentación.",
+      activeHeading: "// EN MANTENIMIENTO",
+      activeIntro:
+        "En desarrollo activo. Tienen releases, seguimiento de issues y documentación.",
+      archivedHeading: "// ARCHIVADOS",
+      archivedIntro:
+        "Ya sin mantenimiento, públicos y en solo lectura. Sobre todo trabajo de investigación e instrumentación de la etapa de acústica.",
+      language: "Lenguaje",
+      license: "Licencia",
+      repo: "Código",
+      docs: "Docs",
+      topicsLabel: "Temas que cubre {project}",
     },
     tools: {
       title: "Herramientas para desarrolladores",

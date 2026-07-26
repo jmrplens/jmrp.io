@@ -1,0 +1,365 @@
+---
+/**
+ * Projects page ("// /PROJECTS") — the curated, human-readable index of the
+ * open-source software behind the `#person` entity.
+ *
+ * Every fact rendered here is also emitted as JSON-LD (a `CollectionPage` +
+ * `ItemList` wrapping one `SoftwareApplication`/`SoftwareSourceCode` node per
+ * project), so the visible page corroborates the structured data rather than
+ * asserting something only a parser can see. Content lives in
+ * `src/content/profile/projects.yaml`; the graph rationale is documented in
+ * `@utils/projects`.
+ *
+ * Unlike /github/, which mirrors the GitHub API at build time, this page is
+ * hand-curated: only projects with their own documentation, real usage, or
+ * both — no experiments, forks or scratch repos.
+ */
+import { defaultLocale, type Locale } from "@i18n/config";
+import { useTranslations } from "@i18n/utils";
+import BaseLayout from "@layouts/BaseLayout.astro";
+import {
+  buildProjectSchema,
+  getProjects,
+  licenseUrl,
+  type Project,
+  softwareId,
+} from "@utils/projects";
+import { getSiteUrl } from "@utils/site";
+import type { CollectionPage } from "schema-dts";
+
+const locale = (Astro.currentLocale ?? defaultLocale) as Locale;
+const t = useTranslations(locale);
+
+const projects = await getProjects();
+const active = projects.filter((p) => p.status === "active");
+const archived = projects.filter((p) => p.status === "archived");
+
+const pageUrl = new URL(Astro.url.pathname, getSiteUrl()).href;
+
+/** Localized documentation URL — falls back to the English docs entry point. */
+const docsHref = (project: Project) =>
+  locale === "es" && project.docsEs ? project.docsEs : project.docs;
+
+/**
+ * CollectionPage → ItemList → each `#software` node. The ItemList references
+ * the software by @id only; the full nodes are appended to the same @graph
+ * below, so the list stays a pure ordering over entities defined once.
+ */
+const projectsPageSchema = {
+  "@type": "CollectionPage",
+  "@id": `${pageUrl}#projects`,
+  name: t("pages.projects.title"),
+  description: t("pages.projects.schemaDescription"),
+  url: pageUrl,
+  inLanguage: locale,
+  isPartOf: { "@id": new URL("#website", getSiteUrl()).href },
+  about: { "@id": new URL("#person", getSiteUrl()).href },
+  mainEntity: {
+    "@type": "ItemList",
+    "@id": `${pageUrl}#project-list`,
+    name: t("pages.projects.title"),
+    numberOfItems: projects.length,
+    itemListOrder: "https://schema.org/ItemListUnordered",
+    itemListElement: projects.map((project, index) => ({
+      "@type": "ListItem" as const,
+      position: index + 1,
+      item: { "@id": softwareId(project) },
+    })),
+  },
+} satisfies CollectionPage;
+
+const schema = [projectsPageSchema, ...projects.map(buildProjectSchema)];
+
+const groups = [
+  {
+    key: "active",
+    heading: t("pages.projects.activeHeading"),
+    intro: t("pages.projects.activeIntro"),
+    items: active,
+  },
+  {
+    key: "archived",
+    heading: t("pages.projects.archivedHeading"),
+    intro: t("pages.projects.archivedIntro"),
+    items: archived,
+  },
+];
+---
+
+<BaseLayout
+  title={t("pages.projects.title")}
+  description={t("pages.projects.description")}
+  schema={schema}
+>
+  <div class="projects container">
+    <header class="projects-header">
+      <p class="section-title">{t("pages.projects.kicker")}</p>
+      <h1 class="page-title projects-header__title">
+        {t("pages.projects.heading")}
+      </h1>
+      <p class="projects-header__intro">{t("pages.projects.intro")}</p>
+    </header>
+
+    {
+      groups.map((group) => (
+        <section
+          class="projects-group"
+          aria-labelledby={`projects-${group.key}`}
+        >
+          <h2
+            class="projects-group__title"
+            id={`projects-${group.key}`}
+          >
+            {group.heading}
+          </h2>
+          <p class="projects-group__intro">{group.intro}</p>
+
+          <ul class="projects-grid">
+            {group.items.map((project) => (
+              <li class="proj-card">
+                <h3 class="proj-card__name">{project.name}</h3>
+                {project.name !== project.id && (
+                  <p class="proj-card__repo-name">{project.id}</p>
+                )}
+                <p class="proj-card__summary">{project.summary[locale]}</p>
+
+                <dl class="proj-card__meta">
+                  <div class="proj-card__meta-pair">
+                    <dt>{t("pages.projects.language")}</dt>
+                    <dd>{project.language}</dd>
+                  </div>
+                  <div class="proj-card__meta-pair">
+                    <dt>{t("pages.projects.license")}</dt>
+                    <dd>
+                      <a
+                        href={licenseUrl(project.license)}
+                        target="_blank"
+                        rel="external noopener noreferrer"
+                      >
+                        {project.license}
+                      </a>
+                    </dd>
+                  </div>
+                </dl>
+
+                <ul
+                  class="proj-card__topics"
+                  aria-label={t("pages.projects.topicsLabel", {
+                    project: project.name,
+                  })}
+                >
+                  {project.topics.map((topic) => (
+                    <li class="proj-card__topic">{topic.name}</li>
+                  ))}
+                </ul>
+
+                <p class="proj-card__links">
+                  <a
+                    href={project.repo}
+                    target="_blank"
+                    rel="external noopener noreferrer"
+                  >
+                    <span
+                      class="i-fa-brands:github"
+                      aria-hidden="true"
+                    />
+                    {t("pages.projects.repo")}
+                    <span class="sr-only"> — {project.name}</span>
+                  </a>
+                  <a
+                    href={docsHref(project)}
+                    target="_blank"
+                    rel="external noopener noreferrer"
+                  >
+                    <span
+                      class="i-mdi:book-open-variant"
+                      aria-hidden="true"
+                    />
+                    {t("pages.projects.docs")}
+                    <span class="sr-only"> — {project.name}</span>
+                  </a>
+                </p>
+              </li>
+            ))}
+          </ul>
+        </section>
+      ))
+    }
+  </div>
+</BaseLayout>
+
+<style>
+  .projects {
+    padding-top: var(--space-xl);
+    padding-bottom: var(--space-xl);
+  }
+
+  .projects-header {
+    padding-bottom: var(--space-lg);
+    margin-bottom: var(--space-lg);
+    border-bottom: 1px solid var(--color-hair);
+  }
+
+  .projects-header .section-title {
+    margin-bottom: var(--space-sm);
+  }
+
+  .projects-header__title {
+    padding-bottom: 0;
+    margin: 0 0 var(--space-md);
+    font-size: clamp(1.9rem, 4.5vw, 2.75rem);
+    line-height: 1.05;
+    border-bottom: 0;
+  }
+
+  .projects-header__intro {
+    max-width: 60ch;
+    margin: 0;
+    font-size: var(--text-md);
+    line-height: 1.6;
+    color: var(--color-text);
+  }
+
+  .projects-group + .projects-group {
+    margin-top: var(--space-lg-xl);
+  }
+
+  .projects-group__title {
+    margin: 0 0 var(--space-sm);
+    font-family: var(--font-mono);
+    font-size: var(--text-label);
+    font-weight: var(--fw-medium);
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+  }
+
+  .projects-group__intro {
+    max-width: 60ch;
+    margin: 0 0 var(--space-md);
+    font-size: var(--text-sm);
+    line-height: 1.55;
+    color: var(--color-text-muted);
+  }
+
+  .projects-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr));
+    gap: var(--space-md);
+    padding: 0;
+    margin: 0;
+    list-style: none;
+  }
+
+  .proj-card {
+    display: flex;
+    flex-direction: column;
+    padding: var(--space-md);
+    background: var(--color-bg-secondary);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+  }
+
+  .proj-card__name {
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: var(--text-lg);
+    font-weight: var(--fw-semibold);
+    color: var(--color-text-heading);
+    letter-spacing: -0.01em;
+    overflow-wrap: anywhere;
+  }
+
+  .proj-card__repo-name {
+    margin: 2px 0 0;
+    font-family: var(--font-mono);
+    font-size: var(--text-micro);
+    color: var(--color-text-muted);
+    overflow-wrap: anywhere;
+  }
+
+  .proj-card__summary {
+    margin: var(--space-sm) 0 var(--space-md);
+    font-size: var(--text-sm);
+    line-height: 1.55;
+    color: var(--color-text);
+  }
+
+  .proj-card__meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-md);
+    margin: 0 0 var(--space-sm);
+  }
+
+  .proj-card__meta-pair {
+    display: flex;
+    gap: var(--space-xs);
+    align-items: baseline;
+  }
+
+  .proj-card__meta dt {
+    font-family: var(--font-mono);
+    font-size: var(--text-micro);
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  .proj-card__meta dd {
+    margin: 0;
+    font-family: var(--font-mono);
+    font-size: var(--text-micro);
+    color: var(--color-text);
+  }
+
+  .proj-card__meta dd a {
+    color: inherit;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+
+  .proj-card__meta dd a:hover {
+    color: var(--color-accent);
+  }
+
+  .proj-card__topics {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-xs);
+    padding: 0;
+    margin: 0 0 var(--space-md);
+    list-style: none;
+  }
+
+  .proj-card__topic {
+    padding: 2px 8px;
+    font-family: var(--font-mono);
+    font-size: var(--text-micro);
+    color: var(--color-text-muted);
+    border: 1px solid var(--color-hair);
+    border-radius: var(--radius-sm);
+  }
+
+  .proj-card__links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-md);
+    margin: auto 0 0;
+  }
+
+  .proj-card__links a {
+    display: inline-flex;
+    gap: 6px;
+    align-items: center;
+    font-family: var(--font-mono);
+    font-size: var(--text-sm);
+    color: var(--color-accent);
+    text-decoration: none;
+  }
+
+  .proj-card__links a:hover {
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+</style>
