@@ -505,6 +505,10 @@ test.describe("URL correctness in schemas", () => {
       "hasCredential",
       "memberOf",
       "identifier", // ORCID PropertyValue.url points to orcid.org by design
+      // Person.owns references the projects' `#software` entities, whose
+      // canonical @id is the GitHub repo URL — the SAME identifier each
+      // project's own docs site publishes. Off-domain by design.
+      "owns",
     ]);
 
     // Wikidata's canonical entity concept URI (http, not https, by design —

@@ -11,6 +11,8 @@ acústicos
 acusticox
 addrlist
 adminer
+aeroacoustics
+aeroacústica
 Afee
 afmt
 Ahrefs
@@ -348,6 +350,8 @@ fastly
 faststart
 fasttrack
 fdir
+FDTD
+FDTDexamples
 fediverse
 fediverso
 feedly
@@ -523,6 +527,7 @@ lenval
 lexicográficamente
 leyendo
 lhci
+libgen
 libimagequant
 libkql
 libvips
@@ -760,6 +765,7 @@ proplist
 protanopía
 protégela
 protocolos
+proyectos
 pruébalo
 pseudoaleatoria
 pubgroup
@@ -1031,6 +1037,7 @@ vlsm
 volcarla
 volcarlo
 volver
+wbgetentities
 wbsearchentities
 wcag
 webfinger

@@ -582,13 +582,65 @@ const usesSchema = z.object({
   es: UsesLocale,
 });
 
+/**
+ * A Wikidata-grounded subject of a project. `wikidata` is a Q-id verified via
+ * the `wbgetentities` API (label AND description read before adoption), so a
+ * search engine that has never seen the project can still place it in a field
+ * it does know. The first topic becomes schema.org `about`, the rest
+ * `mentions` — the same split blog posts use.
+ */
+const ProjectTopic = z.object({
+  name: z.string(),
+  wikidata: z.string().regex(/^Q\d+$/, "Wikidata Q-id, e.g. Q37227"),
+});
+
+/**
+ * One open-source project shown on /projects/ and emitted as a JSON-LD node
+ * authored by the canonical `#person`. See the header comment in
+ * `src/content/profile/projects.yaml` for the editing rules — in particular,
+ * `name`/`summary.en` must not contradict what the project's own docs site
+ * publishes for the same `#software` @id.
+ */
+const ProjectEntry = z.object({
+  /** GitHub repo name; also derives the `#software` @id. */
+  id: z.string(),
+  /** Canonical entity name (may differ from the repo name). */
+  name: z.string(),
+  status: z.enum(["active", "archived"]),
+  schemaType: z.enum(["SoftwareApplication", "SoftwareSourceCode"]),
+  /** SoftwareApplication only — omitted for SoftwareSourceCode nodes. */
+  applicationCategory: z.string().optional(),
+  applicationSubCategory: z.string().optional(),
+  language: z.string(),
+  /** SPDX-style identifier; mapped to a license URL in `@utils/projects`. */
+  license: z.string(),
+  repo: z.url(),
+  /** Documentation entry point (a docs site, or the repo README anchor). */
+  docs: z.url(),
+  /** Spanish documentation, when the project publishes a translated site. */
+  docsEs: z.url().optional(),
+  /** Extra canonical URLs for the software entity (registries, PyPI, DOI). */
+  sameAs: z.array(z.url()).optional(),
+  topics: z.array(ProjectTopic).min(1),
+  summary: LocalizedString,
+});
+
+const projectsSchema = z.object({
+  type: z.literal("projects"),
+  projects: z.array(ProjectEntry).min(1),
+});
+
 const profile = defineCollection({
   loader: glob({
     pattern: "**/*.yaml",
     base: "./src/content/profile",
     generateId: ({ entry }) => stripExtension(entry),
   }),
-  schema: z.discriminatedUnion("type", [aboutSchema, usesSchema]),
+  schema: z.discriminatedUnion("type", [
+    aboutSchema,
+    usesSchema,
+    projectsSchema,
+  ]),
 });
 
 export const collections = {

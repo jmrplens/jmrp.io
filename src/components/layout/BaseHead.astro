@@ -22,6 +22,7 @@ import {
 } from "@i18n/utils";
 import type { SiteConfig } from "@src/types";
 import { safeJsonLd } from "@utils/html";
+import { getProjects, softwareId } from "@utils/projects";
 import { buildSameAs, getSiteUrl } from "@utils/site";
 // Variable Fonts (managed by Astro Experimental Fonts)
 import type { ImageMetadata } from "astro";
@@ -221,6 +222,22 @@ const KNOWS_ABOUT_WIKIDATA: Readonly<Record<string, string>> = {
   "CI/CD": "Q28136854",
   DevSecOps: "Q108525696",
 };
+/**
+ * The open-source software this Person authors, as bare `@id` references to
+ * the `#software` nodes fully described on /projects/ (and, for most of them,
+ * on the project's own documentation site, which publishes the SAME @id with
+ * `author: { @id: #person }`).
+ *
+ * schema.org defines no forward "works made by" property on Person — only the
+ * reverse edge from the CreativeWork — so `owns` carries the identity-side
+ * half of the relation here; see `@utils/projects` for the full rationale.
+ * Emitted site-wide and reference-only: every page connects the identity to
+ * the body of work without repeating the project descriptions.
+ */
+const personProjects = (await getProjects()).map((project) => ({
+  "@id": softwareId(project),
+}));
+
 const personKnowsAbout = siteData.person?.knowsAbout?.map((topic) => {
   const qid = KNOWS_ABOUT_WIKIDATA[topic];
   // Wikidata's canonical entity concept URI uses a plain, non-secure scheme by
@@ -269,6 +286,7 @@ const websiteSchema = {
       personKnowsAbout.length > 0 && {
         knowsAbout: personKnowsAbout,
       }),
+    ...(personProjects.length > 0 && { owns: personProjects }),
     ...(orcidId && {
       identifier: {
         "@type": "PropertyValue",
@@ -289,6 +307,7 @@ const navLabelKeyMap: Record<string, TranslationKey> = {
   "/tools/": "nav.tools",
   "/cv/": "nav.cv",
   "/publications/": "nav.publications",
+  "/projects/": "nav.projects",
   "/github/": "nav.repositories",
 };
 const navSchema = (siteData.nav || []).map((item): SiteNavigationElement => ({
