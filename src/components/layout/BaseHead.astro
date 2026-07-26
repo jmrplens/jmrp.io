@@ -171,7 +171,19 @@ const ogImageMime = (() => {
 const siteRoot = new URL("/", getSiteUrl()).href;
 
 // Machine-readable ORCID identifier for the Person, derived from sameAs.
-const orcidUrl = siteData.person?.sameAs?.find((u) => u.includes("orcid.org"));
+// Matched on the parsed hostname, not a substring: `url.includes("orcid.org")`
+// would also accept `https://evil.example/?ref=orcid.org`
+// (CodeQL js/incomplete-url-substring-sanitization). Kept identical to the
+// same helper in scripts/ci/build-identity.mjs so both Person nodes agree.
+const isOrcidUrl = (value: string): boolean => {
+  try {
+    const { hostname } = new URL(value);
+    return hostname === "orcid.org" || hostname === "www.orcid.org";
+  } catch {
+    return false;
+  }
+};
+const orcidUrl = siteData.person?.sameAs?.find(isOrcidUrl);
 const orcidId = /orcid\.org\/([\dX-]+)/i.exec(orcidUrl ?? "")?.[1];
 
 // --- Canonical Person entity (single source, referenced by @id everywhere) ---

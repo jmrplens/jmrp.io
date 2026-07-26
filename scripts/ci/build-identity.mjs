@@ -70,6 +70,28 @@ const IMAGE = {
 };
 
 /**
+ * Whether a URL points at ORCID, matched on the parsed hostname.
+ *
+ * A substring test (`url.includes("orcid.org")`) would also accept
+ * `https://evil.example/?ref=orcid.org` — flagged by CodeQL as
+ * `js/incomplete-url-substring-sanitization`. The input here is a
+ * repo-committed YAML list rather than user input, so it was not exploitable,
+ * but the hostname check is both correct and free. Kept identical to the same
+ * helper in BaseHead.astro so the two Person nodes stay byte-equal.
+ *
+ * @param value - Candidate URL from `person.sameAs`.
+ * @returns True when the URL's host is ORCID.
+ */
+const isOrcidUrl = (value) => {
+  try {
+    const { hostname } = new URL(value);
+    return hostname === "orcid.org" || hostname === "www.orcid.org";
+  } catch {
+    return false;
+  }
+};
+
+/**
  * Reads and parses a YAML file relative to the repository root.
  *
  * @param relativePath - Path from the repo root, e.g. "src/content/…".
@@ -95,7 +117,7 @@ function buildIdentityDocument() {
     readFileSync(join(ROOT, "src/data/knows-about-wikidata.json"), "utf8"),
   );
 
-  const orcidUrl = site.person?.sameAs?.find((u) => u.includes("orcid.org"));
+  const orcidUrl = site.person?.sameAs?.find(isOrcidUrl);
   const orcidId = /orcid\.org\/([\dX-]+)/i.exec(orcidUrl ?? "")?.[1];
 
   const knowsAbout = site.person?.knowsAbout?.map((topic) =>
