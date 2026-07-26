@@ -203,6 +203,7 @@ contenedores
 contenido
 continuar
 conversor
+copytruncate
 cplusplus
 cppreference
 crackeo
@@ -243,6 +244,7 @@ deepl
 defence
 defensivamente
 degradarla
+delaycompress
 delega
 demostrablemente
 denorms
@@ -611,6 +613,7 @@ mikrotik
 milisegundo
 milisegundos
 misra
+missingok
 mobike
 modbus
 modicon
@@ -669,6 +672,7 @@ noqa
 nosniff
 nosonar
 nospaces
+notifempty
 nownownow
 nsanitización
 nsecs

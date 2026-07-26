@@ -152,6 +152,19 @@ They are filtered at the **notification** layer rather than in Nginx or the disc
 - **`isBotUserAgent(ua)`** — crawler/automation user-agents. The keyword regex matches `bot`/`crawl`/`crawler`/`spider`/`slurp` as a token _suffix_ (`(?![a-z])`), because crawler names end with the keyword (`Googlebot`, `YandexBot`, `bingbot`, `YisouSpider`) and a leading `\b` never matches there. Names like `RobotVacuum` or `Robotics`, where letters follow, are not matched. Also matches an explicit token list (`curl/`, `python-requests`, `GPTBot`, `meta-externalagent`, …) and the bare Chromium template `AppleWebKit/537.36 … Safari/537.36` with no `Chrome/` token. Checked against all 411 distinct user-agents that have ever POSTed to `/csp-report`: 15 matched, all from Yandex, Google, Microsoft, Amazon, Facebook, Chinanet or `curl` — no browser was flagged.
 - **`isCrawlerNetwork(ip)`** — Google and Yandex crawler netblocks, for fetchers that render with a browser user-agent. Google **Cloud** customer ranges (`34/35.x`) are deliberately excluded: those are rented VMs, i.e. exactly where a scanner or attacker would run from.
 
+### Log rotation
+
+Because crawler reports are now _logged_ rather than discarded, `logs/csp-violations.log` grows steadily (~11 entries/day). `deploy/logrotate/csp-reporter` is the rotation config; install it on the host:
+
+```bash
+sudo cp deploy/logrotate/csp-reporter /etc/logrotate.d/csp-reporter
+sudo logrotate -d /etc/logrotate.d/csp-reporter   # dry run
+```
+
+It needs neither `copytruncate` nor a signal to the service: the reporter writes with `fs.appendFile`, which opens and closes the file per entry, so it simply recreates the path after logrotate renames it.
+
+> The file lives in the repo so the host configuration is reviewable and survives a server rebuild — but installing it is still a manual step, and a rebuilt host without it would grow this log unbounded.
+
 ### Verifying a policy change
 
 `scripts/csp-replay.mjs` replays a real log through the filter chain and notification policy and prints notifications before/after, the reason for every filtered report, the user-agents the crawler tier silenced, and a PASS/FAIL check that no non-crawler violation _kind_ stopped being notified:
