@@ -242,6 +242,9 @@ const websiteSchema = {
     "@type": "Person",
     "@id": new URL("#person", getSiteUrl()).href,
     name: siteData.author,
+    ...(siteData.person?.alternateName && {
+      alternateName: siteData.person.alternateName,
+    }),
     jobTitle: personJobTitle,
     description: personDescription,
     url: siteRoot,
