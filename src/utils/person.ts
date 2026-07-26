@@ -1,4 +1,7 @@
-import type { EducationalOrganization } from "schema-dts";
+import type {
+  EducationalOccupationalCredential,
+  EducationalOrganization,
+} from "schema-dts";
 
 /**
  * The canonical avatar for the `#person` entity.
@@ -47,5 +50,32 @@ export const CANONICAL_ALUMNI_OF: EducationalOrganization[] = [
     "@type": "EducationalOrganization",
     name: "Universitat Politècnica de València",
     sameAs: "https://www.wikidata.org/wiki/Q2003976",
+  },
+];
+
+/**
+ * Canonical degree list for the `#person` entity: the two degrees on the
+ * public ORCID record (0000-0003-1250-6212), each recognized by the matching
+ * `CANONICAL_ALUMNI_OF` institution so knowledge-graph builders resolve the
+ * school to one entity whichever property they walk in from.
+ *
+ * These ship in the canonical `#person` node itself (BaseHead and
+ * `scripts/ci/build-identity.mjs`, which downstream project sites splice in
+ * verbatim), unlike the page-scoped additive facts on /cv/: a degree is a
+ * stable biographical claim, not a page concern. Mirror any change here in
+ * `build-identity.mjs` — the schema-validation spec fails if the two drift.
+ */
+export const CANONICAL_CREDENTIALS: EducationalOccupationalCredential[] = [
+  {
+    "@type": "EducationalOccupationalCredential",
+    name: "Telecommunications Engineer in Sound and Image",
+    credentialCategory: "degree",
+    recognizedBy: CANONICAL_ALUMNI_OF[0],
+  },
+  {
+    "@type": "EducationalOccupationalCredential",
+    name: "MSc in Acoustics Engineering",
+    credentialCategory: "degree",
+    recognizedBy: CANONICAL_ALUMNI_OF[1],
   },
 ];

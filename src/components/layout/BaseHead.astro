@@ -22,7 +22,11 @@ import {
 } from "@i18n/utils";
 import type { SiteConfig } from "@src/types";
 import { safeJsonLd } from "@utils/html";
-import { CANONICAL_PERSON_IMAGE } from "@utils/person";
+import {
+  CANONICAL_ALUMNI_OF,
+  CANONICAL_CREDENTIALS,
+  CANONICAL_PERSON_IMAGE,
+} from "@utils/person";
 import { getProjects, softwareId } from "@utils/projects";
 import { buildSameAs, getSiteUrl } from "@utils/site";
 // Variable Fonts (managed by Astro Experimental Fonts)
@@ -263,6 +267,12 @@ const websiteSchema = {
         }),
       },
     }),
+    // Education travels in the canonical node (not as a page-scoped additive
+    // fact like /cv/'s certificates): a degree is a stable biographical claim
+    // every consumer of this entity should receive, including the project
+    // documentation sites that splice /identity/person.jsonld in verbatim.
+    alumniOf: CANONICAL_ALUMNI_OF,
+    hasCredential: CANONICAL_CREDENTIALS,
     ...(personKnowsAbout &&
       personKnowsAbout.length > 0 && {
         knowsAbout: personKnowsAbout,

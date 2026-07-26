@@ -70,6 +70,40 @@ const IMAGE = {
 };
 
 /**
+ * Mirrors `CANONICAL_ALUMNI_OF` and `CANONICAL_CREDENTIALS` in
+ * `src/utils/person.ts` (a .astro/.ts module cannot be imported here). Kept
+ * in sync by the schema-validation spec, which compares this document against
+ * the node BaseHead renders.
+ */
+const ALUMNI_OF = [
+  {
+    "@type": "EducationalOrganization",
+    name: "University of Alicante",
+    sameAs: "https://www.wikidata.org/wiki/Q2037040",
+  },
+  {
+    "@type": "EducationalOrganization",
+    name: "Universitat Politècnica de València",
+    sameAs: "https://www.wikidata.org/wiki/Q2003976",
+  },
+];
+
+const CREDENTIALS = [
+  {
+    "@type": "EducationalOccupationalCredential",
+    name: "Telecommunications Engineer in Sound and Image",
+    credentialCategory: "degree",
+    recognizedBy: ALUMNI_OF[0],
+  },
+  {
+    "@type": "EducationalOccupationalCredential",
+    name: "MSc in Acoustics Engineering",
+    credentialCategory: "degree",
+    recognizedBy: ALUMNI_OF[1],
+  },
+];
+
+/**
  * Whether a URL points at ORCID, matched on the parsed hostname.
  *
  * A substring test (`url.includes("orcid.org")`) would also accept
@@ -162,6 +196,8 @@ function buildIdentityDocument() {
       width: String(IMAGE.width),
       height: String(IMAGE.height),
     },
+    alumniOf: ALUMNI_OF,
+    hasCredential: CREDENTIALS,
     ...(knowsAbout && knowsAbout.length > 0 && { knowsAbout }),
     ...(owns.length > 0 && { owns }),
     ...(orcidId && {
