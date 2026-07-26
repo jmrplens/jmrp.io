@@ -41,6 +41,8 @@
     "typecheck": "astro check",
     "typecheck:tsc": "tsc --noEmit",
     "test:e2e": "playwright test",
+    "test:unit": "node --test \"scripts/**/*.test.mjs\"",
+    "csp:replay": "node scripts/csp-replay.mjs",
     "identity:build": "node scripts/ci/build-identity.mjs",
     "verify-icons": "node scripts/verify-icons.mjs",
     "verify": "node scripts/run-verify.mjs"
