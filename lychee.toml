@@ -43,6 +43,9 @@ exclude = [
     'youtube\.com/embed/',
     'mathworks\.com',                  # AUTOSAR rule pages — 403 to bots
     'gnu\.org/software/gettext',       # gettext .mo manual — 429 rate-limit
+    'gnu\.org/licenses/',              # GPL/AGPL texts — 429 rate-limit (linked
+                                       # as SoftwareApplication `license` from
+                                       # every GPL project on /projects/)
     'cursor\.directory',               # Cursor directory — 429 rate-limit to bots
     'glama\.ai',                       # Glama MCP directory — slow, times out in CI
     'cs\.android\.com',                # Android Code Search — JS SPA, 404s to bots
