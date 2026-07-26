@@ -54,9 +54,12 @@ const CONTRADICTABLE = [
  * @returns {Promise<Record<string, unknown>[]>} Flattened graph nodes.
  */
 async function graphOf(url) {
-  const html = await fetch(url, { signal: AbortSignal.timeout(20_000) }).then(
-    (r) => r.text(),
-  );
+  const response = await fetch(url, { signal: AbortSignal.timeout(20_000) });
+  // Without this, a 404 or 5xx page parses as ordinary HTML with no JSON-LD in
+  // it, and a dead site would be reported as "publishes no #software node" —
+  // indistinguishable from a healthy site that simply never published one.
+  if (!response.ok) throw new Error(`HTTP ${response.status}`);
+  const html = await response.text();
   const nodes = [];
   for (const m of html.matchAll(
     /<script type="application\/ld\+json"[^>]*>([\s\S]*?)<\/script>/g,
@@ -83,6 +86,7 @@ const LICENSE_URLS = {
 
 let contradictions = 0;
 let unreachable = 0;
+let missingNodes = 0;
 
 for (const project of projects) {
   // Only projects with their own documentation site can contradict anything;
@@ -113,7 +117,7 @@ for (const project of projects) {
       `\n⚠ ${project.id}: ${project.docs} publishes no ${softwareId} node — ` +
         `projects.yaml is the only source for it`,
     );
-    unreachable++;
+    missingNodes++;
     continue;
   }
 
@@ -158,8 +162,14 @@ for (const project of projects) {
   }
 }
 
+// Three distinct outcomes, deliberately not collapsed into one number: a site
+// that would not respond says nothing about drift and may be fixed by rerunning,
+// whereas a healthy site with no `#software` node means projects.yaml is now the
+// sole publisher for that entity — a standing fact, not a transient failure.
 console.log(
-  `\n${contradictions} contradiction(s), ${unreachable} site(s) unreadable.`,
+  `\n${contradictions} contradiction(s), ` +
+    `${unreachable} site(s) unreadable, ` +
+    `${missingNodes} readable site(s) with no #software node.`,
 );
 if (contradictions > 0) {
   console.log(
