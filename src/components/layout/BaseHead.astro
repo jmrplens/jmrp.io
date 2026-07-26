@@ -12,7 +12,7 @@ import "@styles/global.css";
 
 import appleTouchIconSrc from "@assets/apple-touch-icon.png";
 import faviconSrc from "@assets/favicon.png";
-import mehomeImg from "@assets/mehome.webp";
+import knowsAboutWikidata from "@data/knows-about-wikidata.json";
 import { defaultLocale, type Locale, locales } from "@i18n/config";
 import {
   getAlternateLinks,
@@ -22,6 +22,7 @@ import {
 } from "@i18n/utils";
 import type { SiteConfig } from "@src/types";
 import { safeJsonLd } from "@utils/html";
+import { CANONICAL_PERSON_IMAGE } from "@utils/person";
 import { getProjects, softwareId } from "@utils/projects";
 import { buildSameAs, getSiteUrl } from "@utils/site";
 // Variable Fonts (managed by Astro Experimental Fonts)
@@ -67,13 +68,6 @@ const siteData = (siteEntry?.data || {}) as SiteConfig;
 const aboutEntry = await getEntry("profile", "about");
 const aboutData =
   aboutEntry?.data.type === "about" ? aboutEntry.data : undefined;
-
-const personImage = await getImage({
-  src: mehomeImg,
-  format: "webp",
-  width: 800,
-  height: 800,
-});
 
 interface Props {
   title: string;
@@ -195,34 +189,6 @@ const personDescription =
   aboutData?.person.description[locale] ?? t("pages.cv.schemaDescription");
 
 /**
- * Wikidata Q-ids for `knowsAbout` terms, verified via the `wbsearchentities`
- * API (label + description cross-checked against the term — see
- * plan/geo-audit/wave-b-report.md). Terms without a verified, unambiguous
- * match are intentionally left out and rendered as plain strings below —
- * mixing `Thing` objects and strings in `knowsAbout` is valid Schema.org.
- */
-const KNOWS_ABOUT_WIKIDATA: Readonly<Record<string, string>> = {
-  "Embedded Systems": "Q193040",
-  Firmware: "Q104851",
-  STM32: "Q7394773",
-  FreeRTOS: "Q1186761",
-  Modbus: "Q1135322",
-  Cryptography: "Q8789",
-  "Network Security": "Q989632",
-  Nginx: "Q306144",
-  "MikroTik RouterOS": "Q12036888",
-  WireGuard: "Q28975568",
-  IPv6: "Q2551624",
-  Acoustics: "Q82811",
-  "Signal Processing": "Q208163",
-  Go: "Q37227",
-  "Model Context Protocol": "Q133436854",
-  "Software Testing": "Q188522",
-  ESP32: "Q27921668",
-  "CI/CD": "Q28136854",
-  DevSecOps: "Q108525696",
-};
-/**
  * The open-source software this Person authors, as bare `@id` references to
  * the `#software` nodes fully described on /projects/ (and, for most of them,
  * on the project's own documentation site, which publishes the SAME @id with
@@ -239,7 +205,7 @@ const personProjects = (await getProjects()).map((project) => ({
 }));
 
 const personKnowsAbout = siteData.person?.knowsAbout?.map((topic) => {
-  const qid = KNOWS_ABOUT_WIKIDATA[topic];
+  const qid = (knowsAboutWikidata as Record<string, string>)[topic];
   // Wikidata's canonical entity concept URI uses a plain, non-secure scheme by
   // design — the standard Linked Data identifier, not a fetchable link.
   return qid
@@ -269,9 +235,9 @@ const websiteSchema = {
     url: siteRoot,
     image: {
       "@type": "ImageObject",
-      url: new URL(personImage.src, getSiteUrl()).href,
-      width: "800",
-      height: "800",
+      url: CANONICAL_PERSON_IMAGE.url,
+      width: String(CANONICAL_PERSON_IMAGE.width),
+      height: String(CANONICAL_PERSON_IMAGE.height),
     },
     ...(siteData.person?.worksFor && {
       worksFor: {

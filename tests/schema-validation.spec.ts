@@ -106,6 +106,57 @@ function imageUrl(value: unknown): unknown {
 
 import { blockCloudflare } from "./utils";
 
+// ─── Canonical identity document ─────────────────────────────────────
+
+test.describe("Canonical identity document", () => {
+  /**
+   * `/identity/person.jsonld` is the standalone description of the `#person`
+   * entity, consumed at BUILD time by the five project documentation sites
+   * that restate the same `@id`.
+   *
+   * It is produced by `scripts/ci/build-identity.mjs`, which re-implements the
+   * assembly that also lives in `BaseHead.astro` — a .astro component cannot be
+   * imported from a plain Node script. `--check` in that script only proves the
+   * file matches its YAML sources; it cannot prove the script and the component
+   * agree. This test closes that gap: if the two ever diverge, whichever is
+   * wrong, CI fails here.
+   */
+  test("matches the Person node rendered by BaseHead", async ({ page }) => {
+    await blockCloudflare(page);
+
+    const response = await page.request.get("/identity/person.jsonld");
+    expect(response.status()).toBe(200);
+    expect(response.headers()["content-type"]).toContain("application/ld+json");
+
+    const { "@context": context, ...document } =
+      (await response.json()) as Record<string, unknown>;
+    // Standalone documents must carry their own context; the page `@graph`
+    // declares it once for every node, which is why it is stripped here.
+    expect(context).toBe("https://schema.org");
+
+    await page.goto("/");
+    const jsonLd = await getJsonLd(page);
+    const website = findInGraph(jsonLd, "WebSite");
+    expect(website).toBeTruthy();
+
+    expect(website?.publisher).toEqual(document);
+  });
+
+  test("advertises a reachable, non-fingerprinted avatar", async ({ page }) => {
+    await blockCloudflare(page);
+    const response = await page.request.get("/identity/person.jsonld");
+    const document = (await response.json()) as {
+      image?: { url?: string };
+    };
+
+    // A fingerprinted /_astro/ URL rots the moment this site rebuilds, which
+    // is precisely how a downstream project site ended up publishing a dead
+    // image. See CANONICAL_PERSON_IMAGE in src/utils/person.ts.
+    expect(document.image?.url).not.toContain("/_astro/");
+    expect(document.image?.url).toBe("https://github.com/jmrplens.png");
+  });
+});
+
 // ─── Common Schemas ──────────────────────────────────────────────────
 
 test.describe("Common schemas on representative pages", () => {
@@ -520,6 +571,14 @@ test.describe("URL correctness in schemas", () => {
       // eslint-disable-next-line unicorn/prefer-https, sonarjs/no-clear-text-protocols -- see comment above
       value.startsWith("http://www.wikidata.org/entity/");
 
+    // The canonical Person avatar is deliberately hosted off-domain: Astro
+    // fingerprints built assets, so a /_astro/ URL rots on every deploy and
+    // poisons the project sites that copy this node. Exempted by exact value
+    // rather than by adding "image" to externalKeys, which would stop checking
+    // every other image URL on the site (article covers, OG images) too.
+    const isCanonicalAvatarUrl = (value: string): boolean =>
+      value === "https://github.com/jmrplens.png";
+
     /** Collect @id and url values (skip external subtrees) */
     const collectSiteUrls = (obj: unknown, insideExternal = false): void => {
       if (typeof obj !== "object" || obj === null) return;
@@ -536,7 +595,8 @@ test.describe("URL correctness in schemas", () => {
           ["@id", "url", "item"].includes(key) &&
           typeof val === "string" &&
           isValidUrl(val) &&
-          !isWikidataEntityUri(val)
+          !isWikidataEntityUri(val) &&
+          !isCanonicalAvatarUrl(val)
         ) {
           siteUrls.push(val);
         }

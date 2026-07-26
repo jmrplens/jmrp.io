@@ -1,0 +1,21 @@
+{
+  "Embedded Systems": "Q193040",
+  "Firmware": "Q104851",
+  "STM32": "Q7394773",
+  "FreeRTOS": "Q1186761",
+  "Modbus": "Q1135322",
+  "Cryptography": "Q8789",
+  "Network Security": "Q989632",
+  "Nginx": "Q306144",
+  "MikroTik RouterOS": "Q12036888",
+  "WireGuard": "Q28975568",
+  "IPv6": "Q2551624",
+  "Acoustics": "Q82811",
+  "Signal Processing": "Q208163",
+  "Go": "Q37227",
+  "Model Context Protocol": "Q133436854",
+  "Software Testing": "Q188522",
+  "ESP32": "Q27921668",
+  "CI/CD": "Q28136854",
+  "DevSecOps": "Q108525696"
+}
