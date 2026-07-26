@@ -159,10 +159,12 @@ if (entries.length === 0) {
   process.exit(1);
 }
 
+// Extracted rather than interpolated inline: a template literal nested inside
+// another is hard to read and flagged by Sonar (javascript:S4624).
+const skippedNote = skipped ? ` (${skipped} unparsable)` : "";
+
 console.log(`Log:      ${logPath}`);
-console.log(
-  `Entries:  ${entries.length}${skipped ? ` (${skipped} unparsable)` : ""}`,
-);
+console.log(`Entries:  ${entries.length}${skippedNote}`);
 console.log(`Range:    ${entries[0].timestamp} → ${entries.at(-1).timestamp}`);
 
 // "Before": crawler reports notified like any other, rate limit keyed on the IP.
