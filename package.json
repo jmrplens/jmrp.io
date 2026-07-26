@@ -44,6 +44,7 @@
     "test:unit": "node --test \"scripts/**/*.test.mjs\"",
     "csp:replay": "node scripts/csp-replay.mjs",
     "identity:build": "node scripts/ci/build-identity.mjs",
+    "check:software-drift": "node scripts/ci/check-software-drift.mjs",
     "verify-icons": "node scripts/verify-icons.mjs",
     "verify": "node scripts/run-verify.mjs"
   },
