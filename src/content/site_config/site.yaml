@@ -38,6 +38,20 @@ person:
     - "https://orcid.org/0000-0003-1250-6212"
     - "https://www.researchgate.net/profile/Jose-Requena-Plens-2"
     - "https://www.mathworks.com/matlabcentral/profile/authors/5890853"
+    # Forge accounts whose ownership is asserted by a signed `proof@ariadne.id`
+    # notation in the OpenPGP key 0A993B26…91FC — the strongest ownership
+    # evidence any profile here has.
+    #
+    # Verify against the key served over WKD (openpgpkey.jmrp.io, what Keyoxide
+    # reads), NOT against keys.openpgp.org: that keyserver still holds an older
+    # upload carrying a seventh, now-dead keybase.io proof that the current key
+    # no longer declares.
+    - "https://codeberg.org/jmrplens"
+    - "https://gitlab.com/jmrp"
+    # Package registries where the software in `owns` is published, tying the
+    # identity to the artifacts rather than only to their source repos.
+    - "https://pypi.org/user/jmrplens/"
+    - "https://hub.docker.com/u/jmrplens"
   # Expertise topics emitted as the canonical Person `knowsAbout`, site-wide, by
   # BaseHead.astro. Merged from the former site-config list + about.yaml's
   # embedded-firmware specifics so a single list covers the whole entity —

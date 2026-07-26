@@ -503,11 +503,13 @@ Kconfig
 KDBX
 keil
 Kensington
+keybase
 keyid
 Keyoxide
 keypair
 keypairs
 keypoint
+keyserver
 keyspace
 kleidos
 kolkata
@@ -695,6 +697,8 @@ omgilibot
 ondrej
 ondřej
 oneshot
+openpgp
+openpgpkey
 optimisation
 optimised
 optimizador
