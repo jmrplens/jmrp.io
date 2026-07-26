@@ -133,7 +133,7 @@
     "stylelint-order": "^8.1.1",
     "svgo": "^4.0.2",
     "tinify": "^1.8.3",
-    "typescript": "^6.0.3",
+    "typescript": "^7.0.2",
     "typescript-eslint": "^8.65.0",
     "unist-util-visit": "^5.1.0",
     "vercel": "^57.0.0",
