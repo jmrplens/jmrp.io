@@ -140,6 +140,13 @@ const site_config = defineCollection({
       person: z
         .object({
           name: z.string(),
+          /**
+           * Observed name variants (handle, citation forms, ASCII folds)
+           * emitted as Person `alternateName`. Multi-valued: schema.org places
+           * no cardinality limit on it, and each spelling is a real alias an
+           * index may hold. Only add forms seen in the wild.
+           */
+          alternateName: z.array(z.string()).min(1).optional(),
           jobTitle: z.string(),
           worksFor: z
             .object({

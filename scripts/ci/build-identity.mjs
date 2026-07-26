@@ -150,6 +150,9 @@ function buildIdentityDocument() {
     "@type": "Person",
     "@id": PERSON_ID,
     name: site.author,
+    ...(site.person?.alternateName && {
+      alternateName: site.person.alternateName,
+    }),
     jobTitle: about.person.jobTitle.en,
     description: about.person.description.en,
     url: `${SITE_URL}/`,

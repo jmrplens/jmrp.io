@@ -13,6 +13,20 @@ twitter_creator: "@jmrplens"
 # Person Schema defaults for JSON-LD
 person:
   name: "José Manuel Requena Plens"
+  # Name variants emitted as Person `alternateName`, so an engine indexing a
+  # paper, a profile or a repo under a different spelling still resolves to
+  # this entity. Every entry below was OBSERVED in the wild — none invented:
+  # a wrong or speculative variant makes the entity fuzzier, not richer.
+  # The `name` above stays the single canonical form.
+  alternateName:
+    - "jmrplens" # handle: GitHub, Mastodon, ORCID other-name
+    - "José M. Requena-Plens" # citation form in every entry of papers.bib
+    - "Jose M. Requena-Plens" # ASCII fold of the citation form
+    - "José M. Requena Plens" # Mastodon display name
+    - "Jose M. Requena Plens" # Bluesky display name
+    - "José Manuel Requena-Plens" # hyphenated form of the canonical name
+    - "Jose Manuel Requena-Plens" # ASCII fold of the above
+    - "Jose Manuel Requena Plens" # ASCII fold of the canonical name
   # Non-localized fallback only — the canonical, localized jobTitle is sourced
   # from `src/content/profile/about.yaml` (`person.jobTitle[locale]`) by
   # BaseHead.astro. This value is used solely if that entry is unavailable.
