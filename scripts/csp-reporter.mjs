@@ -19,7 +19,11 @@ import https from "node:https";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { getDiscardReason } from "./utils/csp-filters.mjs";
+import {
+  getDiscardReason,
+  getNotificationKey,
+  getNotifySuppressReason,
+} from "./utils/csp-filters.mjs";
 import { escapeHtml } from "./utils/html.mjs";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -58,35 +62,39 @@ const LOG_FILE = join(__dirname, "../logs/csp-violations.log");
 const RATE_LIMIT_WINDOW = 10 * 60 * 1000; // 10 minutes window for repeated reports
 const MAX_BODY_SIZE = 32 * 1024; // 32KB limit for CSP reports
 
-// In-memory cache for rate limiting: { "ip:blocked-uri": last_timestamp }
+// In-memory cache for notification rate limiting, keyed by violation signature
+// (see getNotificationKey()) rather than by client IP.
 const reportCache = new Map();
 
-// Discarded-report metrics: { reason -> count }. Discarded reports (known
-// false positives — extensions, AV suites, bots, …) never reach the log file
-// or Telegram, so without a counter their volume and mix is invisible.
-// Dumped to the console every DISCARD_LOG_INTERVAL discards.
-const discardCounts = new Map();
-let totalDiscards = 0;
-const DISCARD_LOG_INTERVAL = 100;
+// Filtered-report metrics: { "stage:reason" -> count }. Filtered reports
+// (discarded false positives, plus crawler reports that are logged but never
+// notified) are invisible on Telegram, so without a counter their volume and
+// mix cannot be reviewed. Dumped to the console every FILTER_LOG_INTERVAL hits.
+const filterCounts = new Map();
+let totalFiltered = 0;
+const FILTER_LOG_INTERVAL = 100;
 
 /**
- * Records a discarded CSP report under its reason and periodically logs a
- * summary of all discard reasons seen so far.
+ * Records a filtered CSP report and periodically logs a summary of every
+ * filter reason seen so far.
  *
- * @param {string} reason - Short reason string from `getDiscardReason()`.
+ * @param {"discard"|"no-notify"} stage - Whether the report was dropped
+ *   entirely or only kept off Telegram.
+ * @param {string} reason - Short reason string from the filter chain.
  * @returns {void}
  */
-function recordDiscard(reason) {
-  discardCounts.set(reason, (discardCounts.get(reason) ?? 0) + 1);
-  totalDiscards += 1;
+function recordFiltered(stage, reason) {
+  const key = `${stage}:${reason}`;
+  filterCounts.set(key, (filterCounts.get(key) ?? 0) + 1);
+  totalFiltered += 1;
 
-  if (totalDiscards % DISCARD_LOG_INTERVAL === 0) {
-    const summary = [...discardCounts]
+  if (totalFiltered % FILTER_LOG_INTERVAL === 0) {
+    const summary = [...filterCounts]
       .sort((a, b) => b[1] - a[1])
       .map(([r, count]) => `${r}=${count}`)
       .join(", ");
     console.log(
-      `[CSP Reporter] Discarded ${totalDiscards} reports so far (${summary})`,
+      `[CSP Reporter] Filtered ${totalFiltered} reports so far (${summary})`,
     );
   }
 }
@@ -172,19 +180,17 @@ function processReport(report, ip, ua) {
   const r = report["csp-report"] || report;
   if (!r || typeof r !== "object") return;
 
-  // Silently discard known false positives (browser extensions, antivirus,
-  // userscripts, browser-internal pages, prefetch quirks, bots/crawlers and
-  // extension/translator-injected resources). The site's own pages are verified
-  // CSP-clean on a real browser, so these never indicate an actionable issue.
-  // See scripts/utils/csp-filters.mjs and docs/CSP_REPORTER.md.
-  const discardReason = getDiscardReason(report, ua);
+  // Silently discard reports that cannot describe the site's own behavior
+  // (browser extensions, antivirus, userscripts, browser-internal pages,
+  // prefetch quirks and extension/translator-injected resources). The site's
+  // own pages are verified CSP-clean on a real browser, so these never indicate
+  // an actionable issue. See scripts/utils/csp-filters.mjs and docs/CSP_REPORTER.md.
+  const discardReason = getDiscardReason(report);
   if (discardReason) {
-    recordDiscard(discardReason);
+    recordFiltered("discard", discardReason);
     return;
   }
 
-  const blockedUri = r["blocked-uri"] || "inline/eval";
-  const cacheKey = `${ip}:${blockedUri}`;
   const now = Date.now();
 
   // Log everything to file for audit history
@@ -200,7 +206,16 @@ function processReport(report, ip, ua) {
     if (err) console.error("Error writing to log file:", err);
   });
 
+  // Crawler traffic is kept in the log above but never notified: it was 95% of
+  // the Telegram volume and none of it is reproducible in a browser.
+  const suppressReason = getNotifySuppressReason(report, ua, ip);
+  if (suppressReason) {
+    recordFiltered("no-notify", suppressReason);
+    return;
+  }
+
   // Rate limit Telegram notifications to prevent flooding during attacks or dev issues
+  const cacheKey = getNotificationKey(report);
   const lastReport = reportCache.get(cacheKey);
   if (lastReport && now - lastReport < RATE_LIMIT_WINDOW) {
     return;

@@ -1,0 +1,19 @@
+# CSP violation forensic log written by scripts/csp-reporter.mjs.
+#
+# Since jmrplens/jmrp.io#367 the reporter also records crawler traffic that it
+# deliberately does NOT notify about (classifying a request as a crawler is an
+# inference, so the evidence is kept), which turned this file into a slowly but
+# steadily growing one — roughly 11 entries a day.
+#
+# No `copytruncate` and no service signal: the reporter writes with
+# `fs.appendFile`, which opens and closes the file on every entry, so it simply
+# recreates the path after logrotate renames it.
+/var/www/jmrp.io/logs/csp-violations.log {
+	weekly
+	missingok
+	rotate 52
+	compress
+	delaycompress
+	notifempty
+	create 0640 root adm
+}

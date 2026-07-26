@@ -332,6 +332,18 @@ export default [
     },
   },
   {
+    files: [
+      "scripts/utils/csp-filters.mjs",
+      "scripts/utils/csp-filters.test.mjs",
+    ],
+    rules: {
+      // The published Google/Yandex crawler netblocks — and the production
+      // addresses the tests pin them against — are the data this module exists
+      // to encode; there is nothing to externalize into configuration.
+      "sonarjs/no-hardcoded-ip": "off",
+    },
+  },
+  {
     files: ["src/components/ui/*.astro"],
     rules: {
       "sonarjs/no-nested-template-literals": "off",
