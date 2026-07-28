@@ -611,10 +611,10 @@ sections:
         tech: Go · Servidor Model Context Protocol
         icon: logos:go
         description: >-
-          Servidor MCP de GitLab de código abierto que expone más de 1.000
-          operaciones a asistentes de IA mediante un diseño dinámico de 2
-          herramientas (find/execute), con transportes stdio/HTTP/OAuth y modos
-          seguro y de solo lectura.
+          Servidor MCP de GitLab de código abierto que expone más de 850 acciones
+          de GitLab (más de 1.000 en Enterprise) a asistentes de IA mediante un
+          diseño dinámico de 2 herramientas (find/execute), con transportes
+          stdio/HTTP/OAuth y modos seguro y de solo lectura.
         metrics: ["Listado en Glama, mcp.so, Cursor y mcpservers.org"]
         links:
           - {
@@ -637,10 +637,11 @@ sections:
         tech: Python · DSP · Acústica
         icon: logos:python
         description: >-
-          Toolkit de medición acústica: bancos de filtros de octava fraccionaria,
-          ponderación A/C/Z y Fast/Slow/Impulse, y metrología de niveles sonoros
-          (Leq, percentiles), con conformidad verificada frente a IEC 61260-1 e
-          IEC 61672-1 en tolerancias de clase 1. Antes PyOctaveBand.
+          Biblioteca de acústica conforme a normas: metrología de niveles
+          sonoros, psicoacústica, acústica de salas, edificación, ambiental y
+          subacuática, vibración, electroacústica y simulación de ondas — cada
+          método implementado desde la norma, con 429 comprobaciones de
+          conformidad en CI frente a 279 normas. Antes PyOctaveBand.
         metrics: [PyPI]
         links:
           - { label: GitHub, url: https://github.com/jmrplens/phonometry }

@@ -650,9 +650,9 @@ nativo
 nbases
 nedry
 neofetch
-netwatch
 netblock
 netblocks
+netwatch
 networkidle
 neutralises
 newcerts
@@ -778,6 +778,8 @@ protocolos
 proyectos
 pruébalo
 pseudoaleatoria
+psicoacústica
+psychoacoustics
 pubgroup
 publicaciones
 publickey
@@ -948,6 +950,7 @@ ssllabs
 sslv
 startswith
 strs
+subacuática
 subclaves
 subnetting
 subred
