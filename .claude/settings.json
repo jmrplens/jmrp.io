@@ -30,12 +30,15 @@
       "Bash(ls *)"
     ],
     "deny": [
+      "Read(.env)",
       "Read(.env.*)",
       "Write(pnpm-lock.yaml)",
       "Write(dist/**)",
+      "Write(.env)",
       "Write(.env.*)",
       "Edit(pnpm-lock.yaml)",
       "Edit(dist/**)",
+      "Edit(.env)",
       "Edit(.env.*)"
     ]
   },
