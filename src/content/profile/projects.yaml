@@ -13,7 +13,7 @@ type: projects
 # * `name` and `summary.en` MUST match, verbatim, the `name`/`description`
 #   the project's own site publishes for that @id. Divergent values on a
 #   shared @id contradict each other and weaken the entity instead of
-#   reinforcing it. Verified against the live sites on 2026-07-26 for:
+#   reinforcing it. Verified against the live sites on 2026-07-28 for:
 #   gitlab-mcp-server, libgen-mcp, phonometry, cs-routeros-bouncer,
 #   Cloudflare-DNS-Updater. Projects without a docs site use the repo/CV copy.
 # * `summary.es` is display-only. JSON-LD always emits `summary.en`, on both
@@ -70,8 +70,8 @@ projects:
       - { name: Octave band, wikidata: Q2270252 }
       - { name: Python, wikidata: Q28865 }
     summary:
-      en: Fractional octave filter banks, IEC 61672-1 weighting, Leq/LN levels and octave spectrograms for Python signals in the time domain.
-      es: Bancos de filtros de octava fraccionaria, ponderación IEC 61672-1, niveles Leq/LN y espectrogramas de octava para señales en el dominio del tiempo en Python.
+      en: "Acoustic measurement, analysis and prediction for Python: sound level metrology, psychoacoustics, room and building acoustics, materials, vibration, environmental and transport noise, underwater acoustics, electroacoustics and wave simulation, with 429 CI-enforced conformance checks across 53 domains and 279 standards."
+      es: "Medición, análisis y predicción acústica para Python: metrología de niveles sonoros, psicoacústica, acústica de salas y edificación, materiales, vibración, ruido ambiental y de transporte, acústica subacuática, electroacústica y simulación de ondas, con 429 comprobaciones de conformidad en CI sobre 53 dominios y 279 normas."
 
   - id: cs-routeros-bouncer
     name: cs-routeros-bouncer

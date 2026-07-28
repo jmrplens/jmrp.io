@@ -39,8 +39,7 @@
       "Edit(pnpm-lock.yaml)",
       "Edit(dist/**)",
       "Edit(.env)",
-      "Edit(.env.*)",
-      "Bash(npm *)"
+      "Edit(.env.*)"
     ]
   },
   "hooks": {

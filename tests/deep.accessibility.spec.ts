@@ -41,6 +41,13 @@ test.describe("Deep Accessibility & Interaction Tests", () => {
     // 2. Type "portfolio" (guaranteed to be in description of jmrp.io repo)
     await page.keyboard.type("portfolio");
 
+    // The filter runs behind a 150 ms debounce — wait until it has hidden at
+    // least one non-matching card before measuring visibility, otherwise the
+    // snapshot below races the filter and reads the unfiltered grid.
+    await expect(
+      page.locator('.repo-card[style*="display: none"]').first(),
+    ).toBeAttached();
+
     // 3. Verify filtering happened (visual check logic via code)
     // We expect repos *not* matching "portfolio" to be hidden.
     // This assumes there's at least one repo that doesn't match "portfolio"
