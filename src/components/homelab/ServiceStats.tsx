@@ -10,23 +10,13 @@ export interface ServiceStatsTranslations {
   knownServers: string;
   /** Heading for the trending topics section. */
   trendingNow: string;
-  /** Label for the node count in Meshtastic stats. */
-  nodes: string;
-  /** Visible text for the "view map" link. */
-  viewMap: string;
-  /** ARIA label for the "view map" link. */
-  viewMapAria: string;
-  /** Visible text for the "view monitor" link. */
-  viewMonitor: string;
-  /** ARIA label for the "view monitor" link. */
-  viewMonitorAria: string;
   /** PDS: caption for the headline self-hosted repo-records count. */
   pdsRecords: string;
 }
 
 /** Component props for ServiceStats */
 interface Props {
-  readonly type: "mastodon" | "matrix" | "meshtastic-combined" | "pds";
+  readonly type: "mastodon" | "matrix" | "pds";
   readonly translations: ServiceStatsTranslations;
 }
 
@@ -57,13 +47,6 @@ interface MatrixFed {
 interface MatrixStatsData {
   matrixData: MatrixData;
   matrixFed: MatrixFed | null;
-}
-
-/** Combined Meshtastic network statistics data */
-interface MeshtasticStatsData {
-  potatoNodes: number;
-  meshmonitorNodes: number;
-  potatoVersion: string;
 }
 
 /** AT Protocol PDS statistics data */
@@ -217,83 +200,6 @@ async function fetchMatrixStats(setError: (error: boolean) => void) {
 }
 
 /**
- * Fetch Meshtastic combined service statistics
- *
- * @param setError - Callback to signal an error state.
- */
-async function fetchMeshtasticStats(
-  setError: (error: boolean) => void,
-): Promise<MeshtasticStatsData> {
-  try {
-    const [resPotato, resMeshmonitor, potatoVersion] = await Promise.all([
-      fetch("/api/proxy/potato/nodes").catch(() => null),
-      fetch("/api/proxy/mesh/meshmonitor").catch(() => null),
-      fetchPotatoVersion(),
-    ]);
-
-    const potatoData = await safeFetchJson<unknown[]>(
-      resPotato,
-      "Failed to parse Meshtastic Potato response",
-      [],
-    );
-    const potatoNodes = Array.isArray(potatoData) ? potatoData.length : 0;
-
-    const meshmonitorData = await safeFetchJson<{
-      data?: { activeNodes: number };
-    } | null>(
-      resMeshmonitor,
-      "Failed to parse Meshtastic MeshMonitor response",
-      null,
-    );
-    const meshmonitorNodes = meshmonitorData?.data?.activeNodes ?? 0;
-
-    // Signal error if both main data fetches failed
-    if (!resPotato?.ok && !resMeshmonitor?.ok) {
-      setError(true);
-    }
-
-    return { potatoNodes, meshmonitorNodes, potatoVersion };
-  } catch (error) {
-    if (import.meta.env.DEV) {
-      console.error("Failed to fetch Meshtastic stats", error);
-    }
-    setError(true);
-    return { potatoNodes: 0, meshmonitorNodes: 0, potatoVersion: "" };
-  }
-}
-
-/**
- * Fetch PotatoMesh version
- */
-async function fetchPotatoVersion(): Promise<string> {
-  let potatoVersion = "";
-  try {
-    const resVer = await fetch("/api/proxy/potato/version");
-    if (resVer.ok) {
-      const contentType = resVer.headers.get("content-type");
-      if (contentType?.includes("application/json")) {
-        try {
-          const verJson = (await resVer.json()) as { version: string };
-          const ver = verJson.version;
-          potatoVersion = ver || "";
-        } catch (error) {
-          if (import.meta.env.DEV) {
-            console.error("Failed to parse Potato version response", error);
-          }
-        }
-      } else {
-        potatoVersion = await resVer.text();
-      }
-    }
-  } catch (error) {
-    if (import.meta.env.DEV) {
-      console.error("Failed to fetch Potato version", error);
-    }
-  }
-  return potatoVersion;
-}
-
-/**
  * Fetch AT Protocol PDS statistics from the homelab API.
  *
  * @param setError - Callback to signal an error state.
@@ -404,36 +310,6 @@ function MatrixStats({
 }
 
 /**
- * Meshtastic: PotatoMesh + MeshMonitor node counts as a key-value list.
- * The mockup shows these as two rows (label left, count right) rather than the
- * two-column big-number grid used by Mastodon/Matrix.
- */
-function MeshtasticStats({
-  stats,
-  translations: t,
-}: {
-  readonly stats: MeshtasticStatsData | null;
-  readonly translations: ServiceStatsTranslations;
-}) {
-  return (
-    <dl className="svc-kv">
-      <div className="svc-kv__row">
-        <dt className="svc-kv__key">PotatoMesh</dt>
-        <dd className="svc-kv__val">
-          {stats?.potatoNodes?.toLocaleString() ?? "…"} {t.nodes}
-        </dd>
-      </div>
-      <div className="svc-kv__row">
-        <dt className="svc-kv__key">MeshMonitor</dt>
-        <dd className="svc-kv__val">
-          {stats?.meshmonitorNodes?.toLocaleString() ?? "…"} {t.nodes}
-        </dd>
-      </div>
-    </dl>
-  );
-}
-
-/**
  * AT Protocol PDS: self-hosted repo size (total records — posts, follows,
  * likes… — a counter that grows with activity) + the running PDS version, in
  * the same two-column big-number grid used by Mastodon/Matrix. Replaces the
@@ -460,7 +336,7 @@ function PdsStats({
 }
 
 /**
- * Displays live statistics for a specific service (Mastodon, Matrix, or Meshtastic).
+ * Displays live statistics for a specific service (Mastodon, Matrix, or PDS).
  * Fetches data on the client side and renders the appropriate sub-component.
  *
  * @param props - Component properties.
@@ -470,11 +346,7 @@ function PdsStats({
  */
 export default function ServiceStats({ type, translations: t }: Props) {
   const [stats, setStats] = useState<
-    | MastodonStatsData
-    | MatrixStatsData
-    | MeshtasticStatsData
-    | PdsStatsData
-    | null
+    MastodonStatsData | MatrixStatsData | PdsStatsData | null
   >(null);
   const [error, setError] = useState(false);
 
@@ -493,10 +365,6 @@ export default function ServiceStats({ type, translations: t }: Props) {
           }
           case "matrix": {
             data = await fetchMatrixStats(setError);
-            break;
-          }
-          case "meshtastic-combined": {
-            data = await fetchMeshtasticStats(setError);
             break;
           }
           case "pds": {
@@ -538,14 +406,6 @@ export default function ServiceStats({ type, translations: t }: Props) {
       return (
         <MatrixStats
           stats={stats as MatrixStatsData | null}
-          translations={t}
-        />
-      );
-    }
-    case "meshtastic-combined": {
-      return (
-        <MeshtasticStats
-          stats={stats as MeshtasticStatsData | null}
           translations={t}
         />
       );

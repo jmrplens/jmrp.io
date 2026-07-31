@@ -11,33 +11,8 @@
   color: var(--color-text-heading);
 }
 
-/* Meshtastic key-value list (replaces the big-number grid) */
-.svc-kv {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-sm);
-  margin: 0;
-}
-
-.svc-kv__row {
-  display: flex;
-  gap: var(--space-sm);
-  align-items: center;
-  justify-content: space-between;
-}
-
-.svc-kv__key {
-  font-family: var(--font-mono);
-  font-size: var(--text-micro);
-  color: var(--color-text);
-}
-
-.svc-kv__val {
-  font-family: var(--font-mono);
-  font-size: var(--text-micro);
-  color: var(--color-text-heading);
-  text-align: right;
-}
+/* .svc-kv* removed on 2026-07-31 with the mesh-network service card: the
+   key-value list was only ever rendered by that card's stats component. */
 
 .stats-error {
   width: 100%;

@@ -606,7 +606,7 @@ export const common = {
       title: "Homelab",
       schemaName: "Homelab Infrastructure",
       description:
-        "Self-hosted infrastructure status — Mastodon, Matrix, and Meshtastic services running on a personal homelab. Real-time availability and statistics.",
+        "Self-hosted infrastructure status — Mastodon, Matrix, AT Protocol, and Tor services running on a personal homelab. Real-time availability and statistics.",
       intro:
         "I maintain a homelab to support decentralized networks, personal infrastructure, and continuous learning. Below is the real-time status of my public services.",
       nginxNode: "Node: NGINX Edge Security & Analytics",
@@ -619,10 +619,6 @@ export const common = {
       matrixDescription:
         "Secure, decentralized communication. My Server: matrix.jmrp.io",
       matrixLink: "Chat on Matrix",
-      meshtasticName: "Meshtastic Infrastructure",
-      meshtasticDescription:
-        "Infrastructure for the Meshtastic mesh network. Includes Map, Node Database, and Network Monitors.",
-      meshtasticLink: "Open Mesh Hub",
       pdsName: "AT Protocol PDS",
       pdsDescription:
         "My self-hosted Personal Data Server on the AT Protocol network — the identity and data behind @jmrp.io on Bluesky.",
@@ -674,11 +670,6 @@ export const common = {
       knownInstances: "Known Instances",
       knownServers: "Known Servers",
       trendingNow: "Trending Now",
-      nodes: "Nodes",
-      viewMap: "View Map",
-      viewMapAria: "View Map on PotatoMesh",
-      viewMonitor: "View Monitor",
-      viewMonitorAria: "View Monitor on MeshMonitor",
       pdsRecords: "Records",
       // ServerInsights — Matrix
       matrixNode: "Node: Matrix Homeserver",

@@ -116,11 +116,6 @@ const serviceStatsTranslations: ServiceStatsTranslations = {
   knownInstances: t("pages.homelab.knownInstances"),
   knownServers: t("pages.homelab.knownServers"),
   trendingNow: t("pages.homelab.trendingNow"),
-  nodes: t("pages.homelab.nodes"),
-  viewMap: t("pages.homelab.viewMap"),
-  viewMapAria: t("pages.homelab.viewMapAria"),
-  viewMonitor: t("pages.homelab.viewMonitor"),
-  viewMonitorAria: t("pages.homelab.viewMonitorAria"),
   pdsRecords: t("pages.homelab.pdsRecords"),
 };
 
@@ -165,7 +160,7 @@ interface Service {
   description: string;
   url: string;
   linkText: string;
-  statsType: "mastodon" | "matrix" | "meshtastic-combined" | "pds";
+  statsType: "mastodon" | "matrix" | "pds";
   provider: Provider;
   userInfo?: string;
 }
@@ -201,17 +196,6 @@ const services: Service[] = [
     statsType: "matrix",
     provider: defaultProvider,
     userInfo: "@jmrplens:matrix.jmrp.io",
-  },
-  {
-    id: "meshtastic",
-    name: t("pages.homelab.meshtasticName"),
-    title: "Meshtastic",
-    icon: "fa-solid:broadcast-tower",
-    description: t("pages.homelab.meshtasticDescription"),
-    url: "https://mesh.jmrp.io",
-    linkText: t("pages.homelab.meshtasticLink"),
-    statsType: "meshtastic-combined",
-    provider: defaultProvider,
   },
   {
     id: "pds",
