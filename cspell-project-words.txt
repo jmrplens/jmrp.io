@@ -587,8 +587,6 @@ medkit
 mehome
 membrana
 menlo
-meshmonitor
-meshtastic
 metacarácter
 metacharacter
 metadiffuser
