@@ -8,7 +8,7 @@
  */
 export const series = {
   ui: {
-    kicker: "// SERIE",
+    kicker: "SERIE",
     partLabel: "Parte {position}",
     articlesLabel: "Artículos de esta serie",
     countLabel: "{count} artículos",

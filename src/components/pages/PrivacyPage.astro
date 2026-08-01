@@ -9,6 +9,7 @@
  * cross-origin `src` on any page, and the two tools that do make a network
  * request are named explicitly rather than hidden behind the blanket claim.
  */
+import ObfuscatedEmail from "@components/ui/ObfuscatedEmail.astro";
 import { defaultLocale, type Locale } from "@i18n/config";
 import type { TranslationKey } from "@i18n/utils";
 import { useTranslations } from "@i18n/utils";
@@ -144,9 +145,7 @@ const privacySchema = {
       </h2>
       <p class="privacy-section__body">{t("pages.privacy.contactBody1")}</p>
       <p class="privacy-section__links">
-        <a href="mailto:mail@jmrp.io">
-          {t("pages.privacy.contactMailLabel")}
-        </a>
+        <ObfuscatedEmail address="mail@jmrp.io" />
         <a
           href="/.well-known/security.txt"
           data-astro-prefetch="false"

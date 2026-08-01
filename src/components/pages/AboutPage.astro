@@ -7,6 +7,7 @@
  * ProfilePage + Person JSON-LD to strengthen author-entity recognition.
  */
 import mehomeImg from "@assets/mehome.webp";
+import ObfuscatedEmail from "@components/ui/ObfuscatedEmail.astro";
 import { defaultLocale, type Locale } from "@i18n/config";
 import type { TranslationKey } from "@i18n/utils";
 import { useTranslatedPath, useTranslations } from "@i18n/utils";
@@ -72,7 +73,8 @@ const contactLinks = [
     value: "github.com/jmrplens",
     href: "https://github.com/jmrplens",
   },
-  { key: "mail", value: "mail@jmrp.io", href: "mailto:mail@jmrp.io" },
+  // No `mailto:` and no literal address in the markup — see ObfuscatedEmail.
+  { key: "mail", value: "mail@jmrp.io", href: null, email: true },
   { key: "cv", value: "/cv", href: translatePath("/cv/") },
 ];
 
@@ -148,7 +150,11 @@ const personSchema = {
             contactLinks.map((link) => (
               <li>
                 <span class="about-card__key">{link.key} ·</span>{" "}
-                <a href={link.href}>{link.value}</a>
+                {link.email ? (
+                  <ObfuscatedEmail address={link.value} />
+                ) : (
+                  <a href={link.href}>{link.value}</a>
+                )}
               </li>
             ))
           }
@@ -239,9 +245,7 @@ const personSchema = {
         ))
       }
       <p class="about-editorial__links">
-        <a href="mailto:mail@jmrp.io">
-          {t("pages.about.editorialReportLabel")}
-        </a>
+        <ObfuscatedEmail address="mail@jmrp.io" />
         <a
           href="/.well-known/security.txt"
           data-astro-prefetch="false"

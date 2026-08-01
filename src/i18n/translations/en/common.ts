@@ -816,7 +816,7 @@ export const common = {
       title: "Privacy",
       description:
         "What this site measures and what it does not: self-hosted analytics, no cookies, no third-party scripts, no ads, no cross-site tracking.",
-      kicker: "// PRIVACY",
+      kicker: "PRIVACY",
       heading: "What this site knows about you",
       intro:
         "No cookies, no third-party scripts, no ad network, no cross-site tracking. This page states exactly what happens when you load a page here — including the parts that do leave your browser — and how to verify each claim yourself.",

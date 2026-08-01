@@ -336,7 +336,7 @@ bool constantTimeEqual(const uint8_t* a, const uint8_t* b, size_t len) {
 ```
 </Code>
 
-The vault doesn't hand-write that loop — it calls Mbed TLS's [`mbedtls_ct_memcmp`](https://mbed-tls.readthedocs.io/projects/api/en/development/api/file/constant__time_8h/), the library's constant-time comparison primitive, which does exactly this. If you've never seen why this matters, Coda Hale's [*A Lesson In Timing Attacks*](https://codahale.com/a-lesson-in-timing-attacks/) is the classic five-minute explanation; [BearSSL's constant-time notes](https://www.bearssl.org/constanttime.html) go deeper.
+The vault doesn't hand-write that loop — it calls Mbed TLS's [`mbedtls_ct_memcmp`](https://mbed-tls.readthedocs.io/projects/api/en/development/api/file/constant__time_8h/), the library's constant-time comparison primitive, which does exactly this. If you've never seen why this matters, Coda Hale's [*A Lesson In Timing Attacks*](https://web.archive.org/web/2023/https://codahale.com/a-lesson-in-timing-attacks/) is the classic five-minute explanation; [BearSSL's constant-time notes](https://www.bearssl.org/constanttime.html) go deeper.
 
 ### Second: fail-closed by design
 

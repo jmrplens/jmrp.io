@@ -818,7 +818,7 @@ export const common = {
       title: "Privacidad",
       description:
         "Qué mide este sitio y qué no: analítica autoalojada, sin cookies, sin scripts de terceros, sin publicidad y sin rastreo entre sitios.",
-      kicker: "// PRIVACIDAD",
+      kicker: "PRIVACIDAD",
       heading: "Qué sabe este sitio de ti",
       intro:
         "Sin cookies, sin scripts de terceros, sin red publicitaria y sin rastreo entre sitios. Esta página explica exactamente qué ocurre cuando cargas una página aquí —incluidas las partes que sí salen de tu navegador— y cómo comprobar cada afirmación por tu cuenta.",
