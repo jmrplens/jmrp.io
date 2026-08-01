@@ -1,0 +1,199 @@
+---
+/**
+ * Series index ("// SERIES") — the parent of the editorial series hubs.
+ *
+ * Exists for two reasons: readers arriving at one hub need a way to see the
+ * others, and the breadcrumb emitted on `/blog/series/<slug>/` names this path
+ * as an ancestor — without it the graph would point at a 404.
+ */
+import { defaultLocale, type Locale } from "@i18n/config";
+import type { TranslationKey } from "@i18n/utils";
+import { useTranslatedPath, useTranslations } from "@i18n/utils";
+import BaseLayout from "@layouts/BaseLayout.astro";
+import { getSiteUrl } from "@utils/site";
+import type { CollectionPage, ListItem } from "schema-dts";
+
+interface Props {
+  /** Series slugs with their member counts, in curated order. */
+  entries: { slug: string; count: number }[];
+}
+
+const { entries } = Astro.props;
+
+const locale = (Astro.currentLocale ?? defaultLocale) as Locale;
+const t = useTranslations(locale);
+const translatePath = useTranslatedPath(locale);
+
+const items = entries.map((entry) => ({
+  ...entry,
+  href: translatePath(`/blog/series/${entry.slug}/`),
+  title: t(`series.${entry.slug}.title` as TranslationKey),
+  description: t(`series.${entry.slug}.description` as TranslationKey),
+}));
+
+const pageUrl = new URL(translatePath("/blog/series/"), getSiteUrl()).href;
+
+const indexSchema = {
+  "@type": "CollectionPage",
+  "@id": `${pageUrl}#collection`,
+  url: pageUrl,
+  name: t("series.ui.indexTitle"),
+  description: t("series.ui.indexDescription"),
+  inLanguage: locale,
+  isPartOf: { "@id": new URL("#website", getSiteUrl()).href },
+  about: { "@id": new URL("#person", getSiteUrl()).href },
+  mainEntity: {
+    "@type": "ItemList",
+    numberOfItems: items.length,
+    itemListElement: items.map((item, index): ListItem => ({
+      "@type": "ListItem",
+      position: index + 1,
+      // Each hub already declares its own CollectionPage node; reference it.
+      item: { "@id": `${new URL(item.href, getSiteUrl()).href}#collection` },
+    })),
+  },
+} satisfies CollectionPage;
+---
+
+<BaseLayout
+  title={t("series.ui.indexTitle")}
+  description={t("series.ui.indexDescription")}
+  schema={indexSchema}
+>
+  <div class="series-index container">
+    <header class="series-index__header">
+      <p class="section-title">{t("series.ui.kicker")}</p>
+      <h1 class="page-title series-index__title">
+        {t("series.ui.indexTitle")}
+      </h1>
+      <p class="series-index__lead">{t("series.ui.indexLead")}</p>
+    </header>
+
+    <ul
+      class="series-index__list"
+      aria-label={t("series.ui.indexListLabel")}
+    >
+      {
+        items.map((item) => (
+          <li class="series-card">
+            <h2 class="series-card__title">
+              <a href={item.href}>{item.title}</a>
+            </h2>
+            <p class="series-card__count">
+              {t("series.ui.countLabel", { count: item.count })}
+            </p>
+            <p class="series-card__desc">{item.description}</p>
+          </li>
+        ))
+      }
+    </ul>
+
+    <p class="series-index__back">
+      <a href={translatePath("/blog/")}>{t("series.ui.backToBlog")}</a>
+    </p>
+  </div>
+</BaseLayout>
+
+<style>
+  .series-index {
+    padding-top: var(--space-xl);
+    padding-bottom: var(--space-xl);
+  }
+
+  .series-index__header {
+    padding-bottom: var(--space-lg);
+    margin-bottom: var(--space-lg);
+    border-bottom: 1px solid var(--color-hair);
+  }
+
+  .series-index__header .section-title {
+    margin-bottom: var(--space-sm);
+  }
+
+  .series-index__title {
+    padding-bottom: 0;
+    margin: 0 0 var(--space-md);
+    font-size: clamp(1.9rem, 4.5vw, 2.75rem);
+    line-height: 1.05;
+    border-bottom: 0;
+  }
+
+  .series-index__lead {
+    max-width: var(--max-width-prose);
+    margin: 0;
+    font-size: var(--text-md);
+    line-height: 1.6;
+    color: var(--color-text);
+  }
+
+  .series-index__list {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: var(--space-md);
+    padding: 0;
+    margin: 0;
+    list-style: none;
+  }
+
+  .series-card {
+    padding: var(--space-md-lg);
+    background: var(--color-bg-secondary);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+  }
+
+  .series-card__title {
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: var(--text-md);
+    font-weight: var(--fw-bold);
+    line-height: 1.3;
+    color: var(--color-text-heading);
+  }
+
+  .series-card__title a {
+    color: inherit;
+    text-decoration: none;
+  }
+
+  .series-card__title a:hover,
+  .series-card__title a:focus-visible {
+    color: var(--color-accent);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+
+  .series-card__count {
+    margin: var(--space-xs) 0 var(--space-sm);
+    font-family: var(--font-mono);
+    font-size: var(--text-micro);
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+  }
+
+  .series-card__desc {
+    margin: 0;
+    font-size: var(--text-sm);
+    line-height: 1.6;
+    color: var(--color-text);
+  }
+
+  .series-index__back {
+    margin-top: var(--space-lg-xl);
+    font-family: var(--font-mono);
+    font-size: var(--text-sm);
+  }
+
+  .series-index__back a {
+    color: var(--color-text-muted);
+    text-decoration: none;
+  }
+
+  .series-index__back a:hover,
+  .series-index__back a:focus-visible {
+    color: var(--color-accent);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+</style>

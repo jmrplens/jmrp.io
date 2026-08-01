@@ -1,0 +1,31 @@
+---
+/**
+ * Página pilar de serie — ruta ES `/es/blog/series/[series]/`.
+ * Mantiene getStaticPaths, delega renderizado a SeriesPage.
+ */
+import SeriesPage from "@components/pages/SeriesPage.astro";
+import { getPostsForLocale } from "@utils/blog";
+import { getSeriesPosts, SERIES, type Series } from "@utils/series";
+import type { CollectionEntry } from "astro:content";
+
+export async function getStaticPaths() {
+  const entries = await getPostsForLocale("es");
+  const allPosts = entries.map((e) => e.post);
+  return SERIES.map((series) => ({
+    params: { series: series.slug },
+    props: { series, posts: getSeriesPosts(series, allPosts) },
+  }));
+}
+
+interface Props {
+  series: Series;
+  posts: CollectionEntry<"posts">[];
+}
+
+const { series, posts } = Astro.props;
+---
+
+<SeriesPage
+  series={series}
+  posts={posts}
+/>

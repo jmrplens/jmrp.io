@@ -1,0 +1,17 @@
+---
+/**
+ * Índice de series — ruta ES `/es/blog/series/`.
+ * Resuelve el número de artículos por serie y delega en SeriesIndexPage.
+ */
+import SeriesIndexPage from "@components/pages/SeriesIndexPage.astro";
+import { getPostsForLocale } from "@utils/blog";
+import { getSeriesPosts, SERIES } from "@utils/series";
+
+const allPosts = (await getPostsForLocale("es")).map((e) => e.post);
+const entries = SERIES.map((series) => ({
+  slug: series.slug,
+  count: getSeriesPosts(series, allPosts).length,
+}));
+---
+
+<SeriesIndexPage entries={entries} />
