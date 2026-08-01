@@ -114,7 +114,24 @@ if (post.data.coverImage) {
 
 // Canonical page URL — trailing slash so `@id`/`mainEntityOfPage` reconcile with
 // the page canonical (broken links between the article entity and its page otherwise).
-const postUrl = new URL(`/blog/${post.data.slug}/`, getSiteUrl()).href;
+// Locale-aware: ES pages must emit the /es/ canonical, not the EN one — otherwise
+// the ES article collapses into the EN entity (same @id, two headlines).
+const postUrl = new URL(translatePath(`/blog/${post.data.slug}/`), getSiteUrl())
+  .href;
+
+// The same post in the other locale. Both files share the numeric slug, so the
+// counterpart URL is derivable without a lookup. Linking them with
+// workTranslation/translationOfWork tells consumers these are two renderings of
+// one work, not two competing entities.
+const counterpartUrl = new URL(
+  locale === "es" ? `/blog/${post.data.slug}/` : `/es/blog/${post.data.slug}/`,
+  getSiteUrl(),
+).href;
+
+const translationLink =
+  locale === "es"
+    ? { translationOfWork: { "@id": `${counterpartUrl}#article` } }
+    : { workTranslation: { "@id": `${counterpartUrl}#article` } };
 
 // Approximate body word count (code blocks already stripped in `bodyWithoutCode`).
 const wordCount = bodyWithoutCode
@@ -183,6 +200,7 @@ const articleNode = {
         })),
       }),
     }),
+  ...translationLink,
   // Surface the lead/summary to voice assistants and AI readers.
   speakable: {
     "@type": "SpeakableSpecification",

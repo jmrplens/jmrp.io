@@ -413,6 +413,65 @@ test.describe("i18n: JSON-LD inLanguage", () => {
 });
 
 // ---------------------------------------------------------------------------
+// Breadcrumbs per locale
+// ---------------------------------------------------------------------------
+
+/** Locate the BreadcrumbList node in a parsed JSON-LD `@graph` document. */
+function findBreadcrumbList(schema: {
+  "@graph"?: Array<{
+    "@type"?: string | string[];
+    itemListElement?: Array<{ name: string; item: string }>;
+  }>;
+}) {
+  return schema["@graph"]?.find((item) => {
+    const type = item["@type"];
+    return (
+      type === "BreadcrumbList" ||
+      (Array.isArray(type) && type.includes("BreadcrumbList"))
+    );
+  });
+}
+
+test.describe("i18n: BreadcrumbList", () => {
+  test("ES breadcrumbs root at the ES home and omit the locale segment", async ({
+    page,
+  }) => {
+    await page.goto("/es/about/");
+    const jsonLd = page.locator('script[type="application/ld+json"]');
+    const content = await jsonLd.first().evaluate((el) => el.textContent);
+    expect(content).toBeTruthy();
+
+    const schema = JSON.parse(content) as Parameters<
+      typeof findBreadcrumbList
+    >[0];
+    const crumbs = findBreadcrumbList(schema);
+    expect(crumbs).toBeTruthy();
+
+    const names = crumbs?.itemListElement?.map((i) => i.name) ?? [];
+    expect(names).not.toContain("Es");
+    expect(crumbs?.itemListElement?.[0]?.item).toBe("https://jmrp.io/es/");
+  });
+
+  test("EN breadcrumbs still root at the EN home (no locale-segment regression)", async ({
+    page,
+  }) => {
+    await page.goto("/about/");
+    const jsonLd = page.locator('script[type="application/ld+json"]');
+    const content = await jsonLd.first().evaluate((el) => el.textContent);
+    expect(content).toBeTruthy();
+
+    const schema = JSON.parse(content) as Parameters<
+      typeof findBreadcrumbList
+    >[0];
+    const crumbs = findBreadcrumbList(schema);
+    expect(crumbs).toBeTruthy();
+
+    expect(crumbs?.itemListElement?.length).toBeGreaterThan(1);
+    expect(crumbs?.itemListElement?.[0]?.item).toBe("https://jmrp.io/");
+  });
+});
+
+// ---------------------------------------------------------------------------
 // Manifest per locale
 // ---------------------------------------------------------------------------
 
