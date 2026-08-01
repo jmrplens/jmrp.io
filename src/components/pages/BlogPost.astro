@@ -167,8 +167,18 @@ const articleNode = {
   image: {
     "@type": "ImageObject",
     url: new URL(jsonLdImage, getSiteUrl()).href,
-    width: String(jsonLdImageWidth),
-    height: String(jsonLdImageHeight),
+    // Numeric, not a quoted string: schema.org types MediaObject width/height
+    // as Distance | QuantitativeValue, never Text. E37 = pixel (UN/CEFACT).
+    width: {
+      "@type": "QuantitativeValue",
+      value: jsonLdImageWidth,
+      unitCode: "E37",
+    },
+    height: {
+      "@type": "QuantitativeValue",
+      value: jsonLdImageHeight,
+      unitCode: "E37",
+    },
   },
   mainEntityOfPage: {
     "@type": "WebPage",

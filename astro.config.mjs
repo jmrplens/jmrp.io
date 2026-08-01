@@ -430,8 +430,12 @@ export default defineConfig({
 
   // Build configuration
   build: {
-    // Inline critical CSS to improve performance
-    inlineStylesheets: "always",
+    // "auto" keeps small sheets inline and moves large ones to /_astro/, which
+    // is served with `max-age=31536000, immutable`. HTML is `no-store`, so
+    // inlining the big sheet meant re-downloading it on every navigation.
+    // CSP-safe: `style-src 'self' 'nonce-…'` already allows a same-origin
+    // <link rel="stylesheet">; the nonce is only needed for inline <style>.
+    inlineStylesheets: "auto",
     // Parallelize page rendering (default: 1). The real ceiling here is NOT
     // page count (EN + ES) but Chromium RAM: Mermaid SSR runs via Puppeteer
     // (rehype-mermaid), spawning one headless Chromium instance per

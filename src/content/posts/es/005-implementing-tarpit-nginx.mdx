@@ -78,7 +78,7 @@ Si alguna vez has revisado los logs de tu servidor, seguramente habrás visto in
 
 ## ¿Qué es un tarpit?
 
-Un **[tarpit](https://en.wikipedia.org/wiki/Tarpit_(networking))** (también conocido como "tar pit" o "[sticky honeypot](/es/blog/006-implementing-mikrotik-honeypot/)") es un mecanismo de seguridad de red diseñado para **ralentizar a los atacantes** respondiendo deliberadamente a sus request a una velocidad extremadamente lenta. El nombre proviene del fenómeno natural de los pozos de alquitrán — formaciones geológicas donde los animales quedan atrapados en alquitrán viscoso y no pueden escapar.
+Un **[tarpit](https://en.wikipedia.org/wiki/Tarpit_%28networking%29)** (también conocido como "tar pit" o "[sticky honeypot](/es/blog/006-implementing-mikrotik-honeypot/)") es un mecanismo de seguridad de red diseñado para **ralentizar a los atacantes** respondiendo deliberadamente a sus request a una velocidad extremadamente lenta. El nombre proviene del fenómeno natural de los pozos de alquitrán — formaciones geológicas donde los animales quedan atrapados en alquitrán viscoso y no pueden escapar.
 
 En ciberseguridad, un tarpit hace lo mismo digitalmente: acepta conexiones entrantes de actores maliciosos pero **gotea datos tan lentamente** que las herramientas del atacante se quedan atascadas, desperdiciando su tiempo y recursos mientras esperan una response que nunca llega a completarse. Para más contexto, consulta [la excelente visión general de Hedgehog Security](https://www.hedgehogsecurity.co.uk/blog/what-are-tarpits).
 
@@ -92,7 +92,7 @@ A diferencia del bloqueo tradicional (que rechaza las request inmediatamente), u
 
 El concepto de tarpit en ciberseguridad surgió a finales de los años 90 y principios de los 2000, durante un período en el que los gusanos de red y las herramientas de escaneo automatizado comenzaron a proliferar. El tarpit más famoso fue **[LaBrea](https://labrea.sourceforge.net/)**, creado por [Tom Liston](https://www.giac.org/paper/gsec/1895/labrea-approach-securing-networks/103112) alrededor de 2001.
 
-LaBrea funcionaba a nivel de red, respondiendo a paquetes TCP SYN dirigidos a direcciones IP sin usar y creando "máquinas virtuales pegajosas" que atrapaban a los escáneres de gusanos. Cuando los gusanos [Code Red](https://en.wikipedia.org/wiki/Code_Red_(computer_worm)) y [Nimda](https://en.wikipedia.org/wiki/Nimda) se estaban propagando rápidamente, LaBrea demostró ser notablemente eficaz para frenar su expansión.
+LaBrea funcionaba a nivel de red, respondiendo a paquetes TCP SYN dirigidos a direcciones IP sin usar y creando "máquinas virtuales pegajosas" que atrapaban a los escáneres de gusanos. Cuando los gusanos [Code Red](https://en.wikipedia.org/wiki/Code_Red_%28computer_worm%29) y [Nimda](https://en.wikipedia.org/wiki/Nimda) se estaban propagando rápidamente, LaBrea demostró ser notablemente eficaz para frenar su expansión.
 
 ### Evolución de los tarpits
 

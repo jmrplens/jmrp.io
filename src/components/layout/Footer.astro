@@ -17,6 +17,15 @@ const translatePath = useTranslatedPath(locale);
 const footerNav = [
   { label: t("nav.about"), href: translatePath("/about/") },
   { label: t("nav.uses"), href: translatePath("/uses/") },
+  { label: t("nav.privacy"), href: translatePath("/privacy/") },
+  // Points at the contact section rather than carrying a `mailto:`: a literal
+  // address in the global footer is on every page and is the single easiest
+  // thing for a harvester to scrape. The address itself lives there, split by
+  // ObfuscatedEmail.
+  {
+    label: t("nav.contact"),
+    href: `${translatePath("/privacy/")}#privacy-contact`,
+  },
 ];
 
 const today = new Date();

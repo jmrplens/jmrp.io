@@ -1,0 +1,376 @@
+---
+/**
+ * Editorial series hub ("// SERIES") — a curated cluster of posts with original
+ * framing: why the cluster exists, in what order to read it, and what decision
+ * each member settles.
+ *
+ * Distinct from a tag page, which is a listing and cannot make an argument. The
+ * emitted `ItemList` references the existing `#article` node of each member by
+ * `@id` instead of redeclaring anonymous entities, so the hub adds an edge to
+ * the graph rather than a second, competing description of the same articles.
+ */
+import { defaultLocale, type Locale } from "@i18n/config";
+import type { TranslationKey } from "@i18n/utils";
+import { useTranslatedPath, useTranslations } from "@i18n/utils";
+import BaseLayout from "@layouts/BaseLayout.astro";
+import { formatDateDot, getReadingTime } from "@utils/blog";
+import { SERIES, type Series } from "@utils/series";
+import { getSiteUrl } from "@utils/site";
+import type { CollectionEntry } from "astro:content";
+import type { CollectionPage, ListItem } from "schema-dts";
+
+interface Props {
+  /** The series being rendered. */
+  series: Series;
+  /** Member posts, already in the curated reading order. */
+  posts: CollectionEntry<"posts">[];
+}
+
+const { series, posts } = Astro.props;
+
+const locale = (Astro.currentLocale ?? defaultLocale) as Locale;
+const t = useTranslations(locale);
+const translatePath = useTranslatedPath(locale);
+
+// Series copy lives under `series.<slug>.*`; the slug is only known at runtime,
+// so the key is assembled here rather than written as a literal.
+const key = (suffix: string) =>
+  `series.${series.slug}.${suffix}` as TranslationKey;
+
+/** Numeric prefix shared by both locales of the same article ("001"). */
+const prefixOf = (post: CollectionEntry<"posts">) => post.data.slug.slice(0, 3);
+
+const entries = posts.map((post, index) => ({
+  post,
+  position: index + 1,
+  href: translatePath(`/blog/${post.data.slug}/`),
+  note: t(key(`notes.p${prefixOf(post)}`)),
+  readingTime: getReadingTime(post),
+}));
+
+const otherSeries = SERIES.filter((s) => s.slug !== series.slug);
+
+const seriesUrl = new URL(
+  translatePath(`/blog/series/${series.slug}/`),
+  getSiteUrl(),
+).href;
+
+const seriesSchema = {
+  "@type": "CollectionPage",
+  "@id": `${seriesUrl}#collection`,
+  url: seriesUrl,
+  name: t(key("title")),
+  description: t(key("description")),
+  inLanguage: locale,
+  isPartOf: { "@id": new URL("#website", getSiteUrl()).href },
+  about: { "@id": new URL("#person", getSiteUrl()).href },
+  mainEntity: {
+    "@type": "ItemList",
+    numberOfItems: entries.length,
+    itemListOrder: "https://schema.org/ItemListOrderAscending",
+    itemListElement: entries.map((entry): ListItem => ({
+      "@type": "ListItem",
+      position: entry.position,
+      // Reference the article entity the post page already defines, rather
+      // than restating headline/url here as a detached anonymous node.
+      item: {
+        "@id": `${new URL(entry.href, getSiteUrl()).href}#article`,
+      },
+    })),
+  },
+} satisfies CollectionPage;
+
+/** Prose blocks, in reading order. */
+const whyBlocks = ["why1", "why2", "why3"];
+const afterBlocks = ["after1", "after2"];
+---
+
+<BaseLayout
+  title={t(key("title"))}
+  description={t(key("description"))}
+  schema={seriesSchema}
+>
+  <div class="series container">
+    <header class="series-header">
+      <p class="section-title">{t("series.ui.kicker")}</p>
+      <h1 class="page-title series-header__title">{t(key("title"))}</h1>
+      <p class="series-header__lead">{t(key("lead"))}</p>
+      <p class="series-header__meta">
+        {t("series.ui.countLabel", { count: entries.length })}
+      </p>
+    </header>
+
+    <section
+      class="series-section"
+      aria-labelledby="series-why"
+    >
+      <h2
+        class="series-section__title"
+        id="series-why"
+      >
+        {t(key("whyTitle"))}
+      </h2>
+      {whyBlocks.map((block) => <p class="series-prose">{t(key(block))}</p>)}
+    </section>
+
+    <section
+      class="series-section"
+      aria-labelledby="series-order"
+    >
+      <h2
+        class="series-section__title"
+        id="series-order"
+      >
+        {t(key("orderTitle"))}
+      </h2>
+      <p class="series-prose">{t(key("orderIntro"))}</p>
+      <ol
+        class="series-list"
+        aria-label={t("series.ui.articlesLabel")}
+      >
+        {
+          entries.map((entry) => (
+            <li class="series-entry">
+              <p class="series-entry__part">
+                {t("series.ui.partLabel", { position: entry.position })}
+              </p>
+              <h3 class="series-entry__title">
+                <a href={entry.href}>{entry.post.data.title}</a>
+              </h3>
+              <p class="series-entry__meta">
+                <span>{formatDateDot(entry.post.data.publishedDate)}</span>
+                <span aria-hidden="true">·</span>
+                <span>
+                  {entry.readingTime} {t("pages.blog.minRead")}
+                </span>
+              </p>
+              <p class="series-entry__note">{entry.note}</p>
+            </li>
+          ))
+        }
+      </ol>
+    </section>
+
+    <section
+      class="series-section"
+      aria-labelledby="series-after"
+    >
+      <h2
+        class="series-section__title"
+        id="series-after"
+      >
+        {t(key("afterTitle"))}
+      </h2>
+      {afterBlocks.map((block) => <p class="series-prose">{t(key(block))}</p>)}
+    </section>
+
+    <section
+      class="series-section"
+      aria-labelledby="series-limits"
+    >
+      <h2
+        class="series-section__title"
+        id="series-limits"
+      >
+        {t(key("limitsTitle"))}
+      </h2>
+      <p class="series-prose">{t(key("limits1"))}</p>
+    </section>
+
+    <nav
+      class="series-section"
+      aria-labelledby="series-more"
+    >
+      <h2
+        class="series-section__title"
+        id="series-more"
+      >
+        {t("series.ui.moreTitle")}
+      </h2>
+      <ul class="series-more">
+        {
+          otherSeries.map((other) => (
+            <li>
+              <a href={translatePath(`/blog/series/${other.slug}/`)}>
+                {t(`series.${other.slug}.title` as TranslationKey)}
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+    </nav>
+
+    <p class="series-back">
+      <a href={translatePath("/blog/")}>{t("series.ui.backToBlog")}</a>
+    </p>
+  </div>
+</BaseLayout>
+
+<style>
+  .series {
+    padding-top: var(--space-xl);
+    padding-bottom: var(--space-xl);
+  }
+
+  .series-header {
+    padding-bottom: var(--space-lg);
+    margin-bottom: var(--space-lg);
+    border-bottom: 1px solid var(--color-hair);
+  }
+
+  .series-header .section-title {
+    margin-bottom: var(--space-sm);
+  }
+
+  .series-header__title {
+    padding-bottom: 0;
+    margin: 0 0 var(--space-md);
+    font-size: clamp(1.9rem, 4.5vw, 2.75rem);
+    line-height: 1.05;
+    border-bottom: 0;
+  }
+
+  .series-header__lead {
+    max-width: var(--max-width-prose);
+    margin: 0 0 var(--space-md);
+    font-size: var(--text-md);
+    line-height: 1.6;
+    color: var(--color-text);
+  }
+
+  .series-header__meta {
+    margin: 0;
+    font-family: var(--font-mono);
+    font-size: var(--text-micro);
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+  }
+
+  .series-section {
+    max-width: var(--max-width-prose);
+    margin-top: var(--space-lg-xl);
+  }
+
+  .series-section__title {
+    margin: 0 0 var(--space-md);
+    font-family: var(--font-mono);
+    font-size: var(--text-label);
+    font-weight: var(--fw-medium);
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+  }
+
+  .series-prose {
+    margin: 0 0 var(--space-md);
+    font-size: var(--text-base);
+    line-height: 1.7;
+    color: var(--color-text);
+  }
+
+  .series-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
+    padding: 0;
+    margin: var(--space-md-lg) 0 0;
+    list-style: none;
+    counter-reset: series;
+  }
+
+  .series-entry {
+    padding: var(--space-md-lg);
+    background: var(--color-bg-secondary);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+  }
+
+  .series-entry__part {
+    margin: 0 0 var(--space-xs);
+    font-family: var(--font-mono);
+    font-size: var(--text-micro);
+    color: var(--color-accent);
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+  }
+
+  .series-entry__title {
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: var(--text-md);
+    font-weight: var(--fw-bold);
+    line-height: 1.3;
+    color: var(--color-text-heading);
+  }
+
+  .series-entry__title a {
+    color: inherit;
+    text-decoration: none;
+  }
+
+  .series-entry__title a:hover,
+  .series-entry__title a:focus-visible {
+    color: var(--color-accent);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+
+  .series-entry__meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-sm);
+    margin: var(--space-xs) 0 var(--space-sm);
+    font-family: var(--font-mono);
+    font-size: var(--text-micro);
+    color: var(--color-text-muted);
+  }
+
+  .series-entry__note {
+    margin: 0;
+    font-size: var(--text-sm);
+    line-height: 1.65;
+    color: var(--color-text);
+  }
+
+  .series-more {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-md);
+    padding: 0;
+    margin: 0;
+    font-family: var(--font-mono);
+    font-size: var(--text-sm);
+    list-style: none;
+  }
+
+  .series-more a {
+    font-weight: var(--fw-medium);
+    color: var(--color-accent);
+    text-decoration: none;
+  }
+
+  .series-more a:hover,
+  .series-more a:focus-visible {
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+
+  .series-back {
+    margin-top: var(--space-lg-xl);
+    font-family: var(--font-mono);
+    font-size: var(--text-sm);
+  }
+
+  .series-back a {
+    color: var(--color-text-muted);
+    text-decoration: none;
+  }
+
+  .series-back a:hover,
+  .series-back a:focus-visible {
+    color: var(--color-accent);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+</style>

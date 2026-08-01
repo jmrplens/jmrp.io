@@ -15,6 +15,8 @@ export const common = {
     homelab: "Homelab",
     about: "About",
     uses: "Uses",
+    privacy: "Privacy",
+    contact: "Contact",
   },
   menu: {
     drawerLabel: "Navigation menu",
@@ -491,6 +493,7 @@ export const common = {
       authorAvatarAlt: "Photo of {author}",
       aiDisclosure:
         "Drafted with AI assistance; reviewed, tested, and verified by the author.",
+      editorialPolicyLink: "Editorial & corrections policy",
     },
     blogTags: {
       titlePrefix: "Blog - #",
@@ -792,11 +795,74 @@ export const common = {
       title: "About",
       description:
         "José Manuel Requena Plens — firmware and software engineer in Valencia building secure embedded devices, open-source tools, and self-hosted infrastructure.",
+      editorialTitle: "// EDITORIAL & CORRECTIONS",
+      editorialBody1:
+        "Everything published here comes from work actually done: commands run on real hardware and real servers, configuration quoted from systems that are running it, and the software version each guide was written against stated in the article. Claims that are not mine to make — protocol behavior, cryptographic properties, vendor defaults — are checked against primary sources (RFCs, standards bodies, vendor documentation) and cited, and every link is re-checked automatically on each build.",
+      editorialBody2:
+        "Each post carries an AI-assistance disclosure, so here is exactly what it means. AI tools help with drafting, structure, copy-editing and the Spanish translation. They do not decide what is true: every command, configuration snippet and measurement is executed and verified by me before it ships, and nothing is published straight from a model's output. The Spanish version is a translation of the same verified material, not a separately generated article.",
+      editorialBody3:
+        "If something here is wrong, tell me. A short email with the article and the problem is enough — no account, no form. Vulnerability reports have their own channel and PGP key in security.txt.",
+      editorialBody4:
+        "Corrections are made in the article itself rather than in a comment thread. A fix that changes the technical substance updates the article's revision date, which is shown on the page and in its structured data, and the change is noted in the article so a returning reader can see what moved. Typos are simply fixed. The full edit history of this site is public in its repository.",
+      editorialReportLabel: "Report an error",
+      editorialSecurityLabel: "security.txt",
     },
     uses: {
       title: "Uses",
       description:
         "The hardware, software, and services José Manuel Requena Plens keeps in rotation — desk, dev tools, and homelab.",
+    },
+    privacy: {
+      title: "Privacy",
+      description:
+        "What this site measures and what it does not: self-hosted analytics, no cookies, no third-party scripts, no ads, no cross-site tracking.",
+      kicker: "PRIVACY",
+      heading: "What this site knows about you",
+      intro:
+        "No cookies, no third-party scripts, no ad network, no cross-site tracking. This page states exactly what happens when you load a page here — including the parts that do leave your browser — and how to verify each claim yourself.",
+      analyticsTitle: "Analytics",
+      analyticsBody1:
+        "Page views are counted with Cloudflare Web Analytics. The measurement script is not loaded from Cloudflare: it is downloaded at build time and served from this domain as /scripts/cf-beacon.js. Rendering a page therefore requires no request to any third-party host.",
+      analyticsBody2:
+        "What the script does send is an aggregate page-view event to Cloudflare's analytics endpoint. It sets no cookie, assigns no identifier and builds no profile, so there is nothing that could follow you to another site.",
+      analyticsBody3:
+        "The beacon is wrapped in a guard that disables it on localhost, and it is only injected into production builds. Development and preview runs never report anything.",
+      analyticsBody4:
+        "These numbers exist to tell me which articles are worth keeping up to date. That is their only use.",
+      cookiesTitle: "Cookies",
+      cookiesBody1:
+        "This site sets no cookies at all — not for analytics, not for preferences, not for consent to cookies that do not exist. No response from this domain carries a Set-Cookie header.",
+      cookiesBody2:
+        "Your theme choice (dark or light) is stored in localStorage, on your own device. It is never transmitted and never leaves the browser.",
+      thirdPartyTitle: "Third-party requests",
+      thirdPartyBody1:
+        "Fonts, images, stylesheets and scripts are all served from this domain. There are no CDN script tags, no embedded widgets, no social buttons and no externally hosted web fonts on any page.",
+      thirdPartyBody2:
+        "A Content Security Policy enforces this from the server side rather than relying on discipline: scripts and styles are accepted only from this origin, and only with a per-request nonce.",
+      logsTitle: "Server logs",
+      logsBody1:
+        "The web server keeps ordinary access logs: timestamp, requested path, response status, user agent and IP address. This site runs an active tarpit and blocklist stack, which cannot work without knowing who is knocking.",
+      logsBody2:
+        "Those logs are operational and security data. They are not joined with analytics, not used to build reader profiles and not shared with anyone.",
+      toolsTitle: "The tools",
+      toolsBody1:
+        "The interactive tools run in your browser. Hashes, passwords, regular expressions, subnets, certificates you paste in — the computation happens on your machine, and the input is never uploaded.",
+      toolsBody2:
+        "Two tools are deliberate, visible exceptions, because they cannot work otherwise. The certificate inspector queries public Certificate Transparency logs (Cert Spotter and crt.sh) for the hostname you type. The HTTP header analyzer sends the URL you submit to a small proxy on this same domain, because a browser is not allowed to read another site's response headers.",
+      toolsBody3:
+        "In both cases the request carries only what you typed, and only when you press the button. Nothing you enter into a tool is stored or associated with you.",
+      adsTitle: "No ads, no affiliates",
+      adsBody1:
+        "There is no advertising, no affiliate link, no sponsored content and no mailing list here. Nothing on this site is monetized, so there is no incentive to collect anything about you.",
+      verifyTitle: "Verify it yourself",
+      verifyBody1:
+        "Open your browser's network panel on any page and read the request list: every entry is same-origin. Open the storage panel: there is no cookie to delete. The source of this site is public, including the build step that downloads the analytics script and the configuration that generates the security headers.",
+      verifySourceLabel: "Site source on GitHub",
+      contactTitle: "Contact",
+      contactBody1:
+        "For anything privacy-related, write to me directly. Security reports have their own channel, with a PGP key and disclosure policy.",
+      contactMailLabel: "mail@jmrp.io",
+      contactSecurityLabel: "security.txt",
     },
     projects: {
       title: "Projects",

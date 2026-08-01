@@ -1,9 +1,16 @@
 ---
 /**
- * References component (Simple).
- * Renders a flat, bordered list of reference links (Lab mockup): an accent ↗
- * marker + the reference title. No favicon cards / hover lift. Off-site links
- * open in a new tab; same-site ones (another post, a tool) do not.
+ * References component.
+ *
+ * Renders the auto-collected citations of a post as a numbered bibliography:
+ * one entry per source, showing the cited title and the publisher derived from
+ * the host. Previously this was an unnumbered run of bare anchors, which read
+ * as a link farm even though the sources are RFCs, IETF drafts, NIST and IACR
+ * papers and vendor documentation — naming the publisher is what makes a
+ * bibliography legible to a reader and attributable to a machine.
+ *
+ * Off-site links open in a new tab; same-site ones (another post, a tool) do
+ * not.
  */
 import { defaultLocale, type Locale } from "@i18n/config";
 import { useTranslations } from "@i18n/utils";
@@ -29,10 +36,113 @@ const t = useTranslations(locale);
 // dropped from the list entirely.
 const siteUrl = getSiteUrl();
 const siteOrigin = new URL(siteUrl).origin;
+
+/**
+ * Human-readable publisher per host, for the sources actually cited across the
+ * blog. A host with no entry falls back to the bare hostname, which is still an
+ * attribution — the map exists to name the institution behind a domain that
+ * does not carry it ("csrc.nist.gov" → NIST), not to whitelist anything.
+ */
+// cspell:ignore IACR datatracker nvlpubs iacr cisa cheatsheetseries opengroup archlinux
+const PUBLISHER: Record<string, string> = {
+  "rfc-editor.org": "RFC Editor",
+  "datatracker.ietf.org": "IETF",
+  "iana.org": "IANA",
+  "csrc.nist.gov": "NIST",
+  "nvlpubs.nist.gov": "NIST",
+  "nvd.nist.gov": "NVD",
+  "iacr.org": "IACR",
+  "eprint.iacr.org": "IACR ePrint",
+  "attack.mitre.org": "MITRE ATT&CK",
+  "cve.mitre.org": "MITRE",
+  "cisa.gov": "CISA",
+  "owasp.org": "OWASP",
+  "cheatsheetseries.owasp.org": "OWASP",
+  "w3.org": "W3C",
+  "developer.mozilla.org": "MDN Web Docs",
+  "web.dev": "web.dev",
+  "developers.google.com": "Google",
+  "research.google": "Google Research",
+  "learn.microsoft.com": "Microsoft",
+  "nginx.org": "Nginx",
+  "mikrotik.com": "MikroTik",
+  "help.mikrotik.com": "MikroTik",
+  "docs.espressif.com": "Espressif",
+  "docs.platformio.org": "PlatformIO",
+  "mbed-tls.readthedocs.io": "Mbed TLS",
+  "docs.openssl.org": "OpenSSL",
+  "openssl-library.org": "OpenSSL",
+  "gcc.gnu.org": "GCC",
+  "gnu.org": "GNU",
+  "en.cppreference.com": "cppreference",
+  "pubs.opengroup.org": "The Open Group",
+  "docs.oracle.com": "Oracle",
+  "wireguard.com": "WireGuard",
+  "torproject.org": "Tor Project",
+  "community.torproject.org": "Tor Project",
+  "spec.torproject.org": "Tor Project",
+  "gitlab.torproject.org": "Tor Project",
+  "metrics.torproject.org": "Tor Metrics",
+  "crowdsec.net": "CrowdSec",
+  "docs.crowdsec.net": "CrowdSec",
+  "cloudflare.com": "Cloudflare",
+  "en.wikipedia.org": "Wikipedia",
+  "github.com": "GitHub",
+  "abuseipdb.com": "AbuseIPDB",
+  "ssllabs.com": "Qualys SSL Labs",
+  "man.archlinux.org": "Arch Linux",
+  "man.openbsd.org": "OpenBSD",
+};
+
+/**
+ * Resolves the publisher shown next to a reference.
+ *
+ * @param url - The already-parsed reference URL.
+ * @returns The mapped publisher, else the bare hostname.
+ */
+function publisherFor(url: URL): string {
+  const host = url.hostname.replace(/^www\./, "");
+  return PUBLISHER[host] ?? host;
+}
+
+/** Parsed, validated entries — invalid URLs are dropped, as before. */
+const entries = references
+  .map((ref) => {
+    let urlObj: URL;
+    try {
+      urlObj = new URL(ref.url, siteUrl);
+      const allowedProtocols = ["http:", "https:", "mailto:", "tel:"];
+      if (!allowedProtocols.includes(urlObj.protocol)) {
+        throw new Error(`Invalid protocol: ${urlObj.protocol}`);
+      }
+    } catch {
+      console.warn(
+        `[References] Invalid URL for reference "${ref.text}": ${ref.url}`,
+      );
+      return null;
+    }
+
+    // Off-site only: a site-relative reference resolves against our own base,
+    // so testing the protocol alone would flag it as external and send an
+    // internal link to a new tab.
+    const isExternalLink =
+      (urlObj.protocol === "http:" || urlObj.protocol === "https:") &&
+      urlObj.origin !== siteOrigin;
+
+    return {
+      href: ref.url,
+      // Always give the anchor an accessible name: fall back to the hostname
+      // (then the raw URL) when a reference has empty text.
+      label: ref.text?.trim() || urlObj.hostname || ref.url,
+      publisher: publisherFor(urlObj),
+      isExternalLink,
+    };
+  })
+  .filter((entry) => entry !== null);
 ---
 
 {
-  references.length > 0 && (
+  entries.length > 0 && (
     <div class="references-section">
       <div class="header">
         <span
@@ -41,56 +151,25 @@ const siteOrigin = new URL(siteUrl).origin;
         />
         <h3>{t("components.references.title")}</h3>
       </div>
-      <div class="references-list">
-        {references.map((ref) => {
-          let urlObj: URL | null = null;
-
-          try {
-            urlObj = new URL(ref.url, siteUrl);
-            const allowedProtocols = ["http:", "https:"];
-            if (
-              !allowedProtocols.includes(urlObj.protocol) &&
-              urlObj.protocol !== "mailto:" &&
-              urlObj.protocol !== "tel:"
-            ) {
-              throw new Error(`Invalid protocol: ${urlObj.protocol}`);
-            }
-          } catch {
-            console.warn(
-              `[References] Invalid URL for reference "${ref.text}": ${ref.url}`,
-            );
-            return null;
-          }
-
-          // Off-site only: a site-relative reference resolves against our own
-          // base, so testing the protocol alone would flag it as external and
-          // send an internal link to a new tab.
-          const isExternalLink =
-            (urlObj?.protocol === "http:" || urlObj?.protocol === "https:") &&
-            urlObj.origin !== siteOrigin;
-
-          // Always give the anchor an accessible name: fall back to the
-          // hostname (then the raw URL) when a reference has empty text.
-          const label = ref.text?.trim() || urlObj?.hostname || ref.url;
-
-          return (
-            <a
-              href={ref.url}
-              {...(isExternalLink
-                ? { target: "_blank", rel: "noopener noreferrer" }
-                : {})}
-              data-astro-prefetch="false"
-              class="reference-link"
-            >
-              <span
-                class="i-mdi:arrow-top-right ref-marker"
-                aria-hidden="true"
-              />
-              <span class="ref-text">{label}</span>
-            </a>
-          );
-        })}
-      </div>
+      <ol class="references-list">
+        {entries.map((entry) => (
+          <li class="reference-item">
+            <cite class="ref-cite">
+              <a
+                href={entry.href}
+                {...(entry.isExternalLink
+                  ? { target: "_blank", rel: "noopener noreferrer" }
+                  : {})}
+                data-astro-prefetch="false"
+                class="reference-link"
+              >
+                {entry.label}
+              </a>
+            </cite>
+            <span class="ref-publisher">{entry.publisher}</span>
+          </li>
+        ))}
+      </ol>
     </div>
   )
 }
@@ -121,41 +200,42 @@ const siteOrigin = new URL(siteUrl).origin;
     font-size: var(--text-xl);
   }
 
-  /* Flat bordered container holding a simple vertical link list (mockup). */
+  /* Flat bordered container holding the numbered bibliography. */
   .references-list {
     display: flex;
     flex-direction: column;
     gap: 12px;
-    padding: 16px 18px;
+    padding: 16px 18px 16px 40px;
+    margin: 0;
     background: var(--color-bg-secondary);
     border: 1px solid var(--color-border);
     border-radius: var(--radius-lg);
   }
 
+  .reference-item {
+    font-size: var(--text-sm);
+    line-height: 1.45;
+    color: var(--color-text-muted);
+  }
+
+  .reference-item::marker {
+    font-family: var(--font-mono);
+    font-size: var(--text-micro);
+    color: var(--color-accent);
+  }
+
+  .ref-cite {
+    font-style: normal;
+  }
+
   .reference-link {
-    display: flex;
-    gap: 11px;
-    align-items: baseline;
+    color: var(--color-text-heading);
     text-decoration: none;
     transition: color var(--dur-2) var(--ease-out);
   }
 
-  .ref-marker {
-    flex-shrink: 0;
-    width: 0.95em;
-    height: 0.95em;
-    color: var(--color-accent);
-    transform: translateY(0.12em);
-  }
-
-  .ref-text {
-    font-size: var(--text-sm);
-    line-height: 1.4;
-    color: var(--color-text-heading);
-  }
-
-  .reference-link:hover .ref-text,
-  .reference-link:focus-visible .ref-text {
+  .reference-link:hover,
+  .reference-link:focus-visible {
     color: var(--color-accent);
     text-decoration: underline;
     text-underline-offset: 2px;
@@ -165,6 +245,13 @@ const siteOrigin = new URL(siteUrl).origin;
     outline: 2px solid var(--color-primary);
     outline-offset: 3px;
     border-radius: var(--radius-sm);
+  }
+
+  .ref-publisher {
+    display: block;
+    font-family: var(--font-mono);
+    font-size: var(--text-micro);
+    color: var(--color-text-muted);
   }
 
   @media (prefers-reduced-motion: reduce) {

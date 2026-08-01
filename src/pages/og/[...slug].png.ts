@@ -25,8 +25,11 @@
 import { readFileSync } from "node:fs";
 import path from "node:path";
 
+import type { TranslationKey } from "@i18n/utils";
+import { useTranslations } from "@i18n/utils";
 import { getUniqueTags } from "@utils/blog";
 import { generateOgImage } from "@utils/og-image";
+import { SERIES } from "@utils/series";
 import type { APIContext } from "astro";
 import { getCollection } from "astro:content";
 
@@ -149,6 +152,40 @@ const STATIC_PAGES: Record<string, Record<Locale, OgProps>> = {
       subtitle: "Artículos académicos y de investigación · jmrp.io",
     },
   },
+  about: {
+    en: {
+      title: "About",
+      subtitle: "José M. Requena Plens · R&D Engineer",
+    },
+    es: {
+      title: "Perfil",
+      subtitle: "José M. Requena Plens · Ingeniero de I+D",
+    },
+  },
+  uses: {
+    en: {
+      title: "Uses",
+      subtitle: "Hardware, software & homelab in rotation · jmrp.io",
+    },
+    es: {
+      title: "Uses",
+      subtitle: "Hardware, software y homelab en rotación · jmrp.io",
+    },
+  },
+  privacy: {
+    en: {
+      title: "Privacy",
+      subtitle: "Self-hosted analytics, no cookies, no trackers · jmrp.io",
+    },
+    es: {
+      title: "Privacidad",
+      subtitle: "Analítica autoalojada, sin cookies ni rastreadores · jmrp.io",
+    },
+  },
+  "blog/series": {
+    en: { title: "Series", subtitle: "Curated reading paths · jmrp.io" },
+    es: { title: "Series", subtitle: "Itinerarios de lectura · jmrp.io" },
+  },
   // Non-indexed pages still get a card so they don't 404 on scraping.
   "404": {
     en: { title: "Page Not Found", subtitle: "jmrp.io" },
@@ -160,6 +197,12 @@ const STATIC_PAGES: Record<string, Record<Locale, OgProps>> = {
 const BLOG_KICKER: Record<Locale, string> = {
   en: "Blog · jmrp.io",
   es: "Blog · jmrp.io",
+};
+
+/** Localized kicker for editorial series hub cards. */
+const SERIES_KICKER: Record<Locale, string> = {
+  en: "Series · jmrp.io",
+  es: "Serie · jmrp.io",
 };
 
 /** Localized kicker for tool category cards. */
@@ -237,6 +280,18 @@ export async function getStaticPaths() {
           title: post.data.title,
           subtitle: BLOG_KICKER[locale],
           cover: readCover(post.data.coverImage),
+        },
+      });
+    }
+
+    // ── Editorial series hubs ─────────────────────────────────────────────
+    const t = useTranslations(locale);
+    for (const series of SERIES) {
+      entries.push({
+        params: { slug: ogSlug(locale, `blog/series/${series.slug}`) },
+        props: {
+          title: t(`series.${series.slug}.title` as TranslationKey),
+          subtitle: SERIES_KICKER[locale],
         },
       });
     }

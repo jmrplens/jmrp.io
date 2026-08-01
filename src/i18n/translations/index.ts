@@ -6,14 +6,16 @@
  */
 import type { Locale } from "../config";
 import { common as enCommon } from "./en/common";
+import { series as enSeries } from "./en/series";
 import { tools as enTools } from "./en/tools";
 import { common as esCommon } from "./es/common";
+import { series as esSeries } from "./es/series";
 import { tools as esTools } from "./es/tools";
 
 /** All translation namespaces merged into a single object per locale. */
 export const translations = {
-  en: { ...enCommon, tools: enTools },
-  es: { ...esCommon, tools: esTools },
+  en: { ...enCommon, tools: enTools, series: enSeries },
+  es: { ...esCommon, tools: esTools, series: esSeries },
 } as const;
 
 /** The full translation tree type — recursively maps to string leaves. */

@@ -667,7 +667,7 @@ For `<script>` blocks that need translated strings, inject via `data-*` attribut
 
 ### Content i18n
 
-Blog posts and tools content are **not currently translated** — MDX files exist only in English. The translation system covers all UI chrome, navigation, SEO metadata, schemas, and ARIA labels.
+Blog posts and tools content **are fully translated**. `src/content/posts/{en,es}/` hold 12 posts each and `src/content/tools/{en,es}/` mirror every tool. Structural parity is enforced: identical FAQ counts, identical `topics` Wikidata Q-ids, and `<TLDRSummary>` on every post in both locales. The translation system additionally covers all UI chrome, navigation, SEO metadata, schemas, and ARIA labels.
 
 ---
 

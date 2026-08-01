@@ -18,9 +18,17 @@
   "url": "https://jmrp.io/",
   "image": {
     "@type": "ImageObject",
-    "url": "https://github.com/jmrplens.png",
-    "width": "460",
-    "height": "460"
+    "url": "https://jmrp.io/identity/avatar.png",
+    "width": {
+      "@type": "QuantitativeValue",
+      "value": 460,
+      "unitCode": "E37"
+    },
+    "height": {
+      "@type": "QuantitativeValue",
+      "value": 460,
+      "unitCode": "E37"
+    }
   },
   "alumniOf": [
     {

@@ -77,7 +77,7 @@ If you've ever looked at your server logs, you've likely seen countless attempts
 
 ## What is a tarpit?
 
-A **[tarpit](https://en.wikipedia.org/wiki/Tarpit_(networking))** (also known as a "tar pit" or "[sticky honeypot](/blog/006-implementing-mikrotik-honeypot/)") is a network security mechanism designed to **slow down attackers** by deliberately responding to their requests at an extremely slow rate. The name comes from the natural phenomenon of tar pits—geological formations where animals become trapped in viscous tar and cannot escape.
+A **[tarpit](https://en.wikipedia.org/wiki/Tarpit_%28networking%29)** (also known as a "tar pit" or "[sticky honeypot](/blog/006-implementing-mikrotik-honeypot/)") is a network security mechanism designed to **slow down attackers** by deliberately responding to their requests at an extremely slow rate. The name comes from the natural phenomenon of tar pits—geological formations where animals become trapped in viscous tar and cannot escape.
 
 In cybersecurity, a tarpit does the same thing digitally: it accepts incoming connections from malicious actors but **drip-feeds data so slowly** that the attacker's tools become stuck, wasting their time and resources while they wait for a response that never fully arrives. For more background, see [Hedgehog Security's excellent overview](https://www.hedgehogsecurity.co.uk/blog/what-are-tarpits).
 
@@ -91,7 +91,7 @@ Unlike traditional blocking (which immediately rejects requests), a tarpit *pret
 
 The concept of tarpits in cybersecurity emerged in the late 1990s and early 2000s during a period when network worms and automated scanning tools began proliferating. The most famous early tarpit was **[LaBrea](https://labrea.sourceforge.net/)**, created by [Tom Liston](https://www.giac.org/paper/gsec/1895/labrea-approach-securing-networks/103112) around 2001.
 
-LaBrea worked at the network layer, responding to TCP SYN packets for unused IP addresses and creating "virtual sticky machines" that would trap worm scanners. When the [Code Red](https://en.wikipedia.org/wiki/Code_Red_(computer_worm)) and [Nimda](https://en.wikipedia.org/wiki/Nimda) worms were spreading rapidly, LaBrea proved remarkably effective at slowing their propagation.
+LaBrea worked at the network layer, responding to TCP SYN packets for unused IP addresses and creating "virtual sticky machines" that would trap worm scanners. When the [Code Red](https://en.wikipedia.org/wiki/Code_Red_%28computer_worm%29) and [Nimda](https://en.wikipedia.org/wiki/Nimda) worms were spreading rapidly, LaBrea proved remarkably effective at slowing their propagation.
 
 ### Evolution of tarpits
 

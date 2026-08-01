@@ -1,0 +1,73 @@
+---
+/**
+ * Email address split across elements so the literal string never appears in
+ * the served HTML.
+ *
+ * Harvesters regex the raw bytes for an `x@y.z` pattern or for `mailto:`.
+ * Here the `@` and the final `.` are drawn by CSS `::before`, and the
+ * remaining parts are separate elements, so no contiguous address exists in
+ * the markup and there is no `mailto:` to scrape.
+ *
+ * Why not HTML entities: the post-build pipeline round-trips every page
+ * through cheerio (`cheerio.load()` → `$.html()`), which decodes numeric
+ * character references back into literal characters. Entity-based obfuscation
+ * silently reverts to plaintext in `dist/`. This approach survives it because
+ * the address is never one string to begin with.
+ *
+ * Trade-off, chosen deliberately: the address is NOT clickable. Readers can
+ * still read and select it, and screen readers announce CSS `content` in every
+ * current engine, so the address is spoken in full.
+ */
+interface Props {
+  /** Address to display, e.g. `name@example.com`. */
+  address: string;
+  class?: string;
+}
+
+const { address, class: className } = Astro.props;
+
+const [localPart, domainPart = ""] = address.split("@", 2);
+const lastDot = domainPart.lastIndexOf(".");
+const domainName = lastDot === -1 ? domainPart : domainPart.slice(0, lastDot);
+const tld = lastDot === -1 ? "" : domainPart.slice(lastDot + 1);
+---
+
+<span class:list={["obfuscated-email", className]}>
+  <span>{localPart}</span><i
+    class="obfuscated-email__at"
+    aria-hidden="true"
+  ></i><span>{domainName}</span>{
+    tld && (
+      <>
+        <i
+          class="obfuscated-email__dot"
+          aria-hidden="true"
+        />
+        <span>{tld}</span>
+      </>
+    )
+  }
+</span>
+
+<style>
+  .obfuscated-email {
+    font-family: var(--font-mono);
+    overflow-wrap: anywhere;
+
+    /* The parts are inline-level and must not gain gaps from source newlines. */
+    white-space: nowrap;
+  }
+
+  .obfuscated-email__at,
+  .obfuscated-email__dot {
+    font-style: normal;
+  }
+
+  .obfuscated-email__at::before {
+    content: "@";
+  }
+
+  .obfuscated-email__dot::before {
+    content: ".";
+  }
+</style>

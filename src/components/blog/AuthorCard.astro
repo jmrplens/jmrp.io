@@ -87,7 +87,12 @@ const externalRel = "external noopener noreferrer";
         )
       }
     </nav>
-    <p class="author-card__disclosure">{t("pages.blogPost.aiDisclosure")}</p>
+    <p class="author-card__disclosure">
+      {t("pages.blogPost.aiDisclosure")}{" "}
+      <a href={`${translatePath("/about/")}#editorial`}>
+        {t("pages.blogPost.editorialPolicyLink")}
+      </a>
+    </p>
   </div>
 </aside>
 
@@ -176,5 +181,16 @@ const externalRel = "external noopener noreferrer";
     font-size: var(--text-micro);
     font-style: italic;
     color: var(--color-text-muted);
+  }
+
+  .author-card__disclosure a {
+    color: var(--color-accent);
+    text-decoration: none;
+  }
+
+  .author-card__disclosure a:hover,
+  .author-card__disclosure a:focus-visible {
+    text-decoration: underline;
+    text-underline-offset: 2px;
   }
 </style>

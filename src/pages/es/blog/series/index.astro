@@ -1,0 +1,17 @@
+---
+/**
+ * Series index — ES route `/es/blog/series/`.
+ * Resolves member counts per series, delegates rendering to SeriesIndexPage.
+ */
+import SeriesIndexPage from "@components/pages/SeriesIndexPage.astro";
+import { getPostsForLocale } from "@utils/blog";
+import { getSeriesPosts, SERIES } from "@utils/series";
+
+const allPosts = (await getPostsForLocale("es")).map((e) => e.post);
+const entries = SERIES.map((series) => ({
+  slug: series.slug,
+  count: getSeriesPosts(series, allPosts).length,
+}));
+---
+
+<SeriesIndexPage entries={entries} />

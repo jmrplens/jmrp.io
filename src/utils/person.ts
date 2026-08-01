@@ -4,26 +4,28 @@ import type {
 } from "schema-dts";
 
 /**
- * The canonical avatar for the `#person` entity.
+ * The canonical avatar for the `#person` entity: 460x460 PNG, served from this
+ * origin at a fixed path.
  *
- * Deliberately NOT an asset on jmrp.io. Astro fingerprints built assets, so a
+ * It must NOT be an `import`ed asset. Astro fingerprints those, so a
  * `/_astro/mehome.<hash>.webp` URL changes on every deploy — fine for this
  * site, which regenerates it, but poison for the five project documentation
  * sites that restate this same `@id`: a copied hash 404s the moment jmrp.io
  * rebuilds. That is exactly how Cloudflare-DNS-Updater ended up advertising a
  * dead image (fixed in jmrplens/Cloudflare-DNS-Updater#139).
  *
- * GitHub's avatar endpoint is stable across deploys, is not behind this
- * server's own WAF/CrowdSec stack (so a crawler blocked here can still resolve
- * it), and is already the value the other project sites publish.
+ * `public/identity/avatar.png` satisfies both constraints at once: it is
+ * copied verbatim, so the URL is as stable across deploys as the GitHub avatar
+ * endpoint it replaces, and the identity it advertises is now hosted by the
+ * entity that claims it, next to `/identity/person.jsonld` — which a consumer
+ * already has to reach this origin to fetch.
  *
- * Note: the `.png` path serves a 460x460 JPEG via a 302 to
- * `avatars.githubusercontent.com`. The extension is cosmetic — consumers use
- * the `Content-Type` header. This redirecting form is MORE stable than the
- * redirect target, whose `?v=N` query bumps whenever the avatar changes.
+ * Site-root-relative on purpose: consumers absolutize it against the site URL
+ * (`BaseHead.astro`, `scripts/ci/build-identity.mjs`), so there is one literal
+ * path and no hard-coded hostname to drift.
  */
 export const CANONICAL_PERSON_IMAGE = {
-  url: "https://github.com/jmrplens.png",
+  path: "/identity/avatar.png",
   width: 460,
   height: 460,
 } as const;
