@@ -78,6 +78,12 @@ jobs:
         with:
           name: dist-build
           path: dist/
+          # The build emits /.well-known/security.txt, and upload-artifact
+          # drops dotfiles unless told otherwise. Without this the artifact is
+          # not a faithful copy of the site, and every downstream job that
+          # consumes it (link check, HTML validation) sees a file that exists
+          # in production as missing.
+          include-hidden-files: true
           retention-days: 1
 
   # --- Stage: Quality & Security Checks (Parallel) ---
