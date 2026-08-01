@@ -86,7 +86,11 @@ test.describe("Integration Flows", () => {
     // Verify first card has expected structure
     const firstCard = projectCards.first();
     await expect(firstCard.locator(".proj-card__name")).toBeVisible(); // Project name
-    await expect(firstCard.locator("a").first()).toHaveAttribute("href", /.+/); // Link to repo
+    // Scoped to the links row: the card's first anchor overall is the licence
+    // link, so an unscoped locator passes even with no repository link.
+    await expect(
+      firstCard.locator(".proj-card__links a").first(),
+    ).toHaveAttribute("href", /^https?:\/\//); // Link to repo
   });
 
   test("Publications page renders publication cards", async ({ page }) => {

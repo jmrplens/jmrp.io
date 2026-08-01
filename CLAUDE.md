@@ -71,7 +71,7 @@
 │   ├── layouts/                # BaseLayout, ToolLayout
 │   ├── styles/                 # Global CSS, design tokens
 │   ├── integrations/
-│   │   ├── pre-build/          # Avatar fetch, beacon setup
+│   │   ├── pre-build/          # Beacon setup, download totals
 │   │   └── post-build/         # CSP, compression, HTML minify
 │   ├── utils/                  # Shared utilities
 │   └── languages/              # Custom Shiki grammars (RouterOS)

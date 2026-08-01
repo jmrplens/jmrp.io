@@ -111,6 +111,11 @@ const toDoiUrl = (doi: string): string =>
 const toAbsoluteUrl = (value: string): string =>
   value.startsWith("http") ? value : getAbsoluteUrl(value);
 
+const siteOrigin = new URL(getSiteUrl()).origin;
+
+/** True when an already-absolute URL points somewhere other than this site. */
+const isOffSite = (url: string): boolean => new URL(url).origin !== siteOrigin;
+
 // `@context` omitted: merged into the page-level @graph (BaseLayout) which
 // already declares the context.
 const collectionUrl = new URL(Astro.url.pathname, getSiteUrl()).href;
@@ -131,8 +136,9 @@ const collectionSchema = {
       // casing — `DOI`/`URL`/`ISBN`, not `doi`/`url`/`isbn`. 13 of the 14
       // entries in papers.bib carry a Zenodo *concept* DOI, which always
       // resolves to the latest version of the deposit rather than pinning one
-      // immutable file; `escartiECSSMET2021` has no deposit, so its `url`/`pdf`
-      // fallback below is what identifies it.
+      // immutable file. `escartiECSSMET2021` has no deposit and carries no
+      // `url`/`pdf` either, so it is the one entry whose node has no `url` at
+      // all — title, authors and venue are all that identify it.
       const doi = typeof pub.DOI === "string" ? pub.DOI : undefined;
       const doiUrl = doi ? toDoiUrl(doi) : undefined;
       const pubUrl =
@@ -141,17 +147,18 @@ const collectionSchema = {
       const pdfUrl = pdfPath ? toAbsoluteUrl(pdfPath) : undefined;
       const isbn = typeof pub.ISBN === "string" ? pub.ISBN : undefined;
       const resolvedUrl = doiUrl ?? pubUrl ?? pdfUrl;
-      // `url` can only carry one address, so the DOI wins it. A distinct
-      // landing page for the same work (institutional repository, handle)
-      // stays discoverable through `sameAs` instead of being dropped — but
-      // not when `url` merely repeats the locally hosted PDF, which is the
-      // file itself rather than a reference page identifying the work.
+      // `url` can only carry one address, so the DOI wins it. Any other
+      // off-site landing page for the same work stays discoverable through
+      // `sameAs` instead of being dropped. What is excluded is the locally
+      // hosted PDF — that is the file itself, not a reference page
+      // identifying the work — whichever BibTeX field it arrived in.
+      // `ramis2018aprendizaje` is why both fields are checked: its handle
+      // (hdl.handle.net) lives in `pdf`, not `url`.
+      const landingPages = [pubUrl, pdfUrl].filter(
+        (u): u is string => u !== undefined && isOffSite(u),
+      );
       const sameAs = [
-        ...new Set(
-          [doiUrl, pubUrl === pdfUrl ? undefined : pubUrl].filter(
-            (u): u is string => Boolean(u),
-          ),
-        ),
+        ...new Set([...(doiUrl ? [doiUrl] : []), ...landingPages]),
       ];
       const identifiers = [
         ...(doi
