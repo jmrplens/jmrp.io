@@ -789,3 +789,36 @@ test.describe("CollectionPage schema on the uses page", () => {
     expect(about["@id"]).toBe("https://jmrp.io/#person");
   });
 });
+
+// ─── Person (owns) ─────────────────────────────────────────────────────
+
+test.describe("Person.owns scoping", () => {
+  test("owns is emitted only on /projects/, in both locales", async ({
+    page,
+  }) => {
+    await blockCloudflare(page);
+
+    // The #software nodes referenced by `owns` are defined solely on
+    // /projects/, so every other page must omit the property rather than
+    // emit dangling @id references into a namespace this site doesn't own.
+    for (const url of ["/", "/cv"]) {
+      await page.goto(url);
+      const jsonLd = await getJsonLd(page);
+      const website = findInGraph(jsonLd, "WebSite");
+      const person = (website?.publisher ?? {}) as JsonLdSchema;
+      expect(person.owns, `owns should be absent on ${url}`).toBeUndefined();
+    }
+
+    for (const url of ["/projects/", "/es/projects/"]) {
+      await page.goto(url);
+      const jsonLd = await getJsonLd(page);
+      const website = findInGraph(jsonLd, "WebSite");
+      const person = (website?.publisher ?? {}) as JsonLdSchema;
+      expect(
+        Array.isArray(person.owns),
+        `owns should be an array on ${url}`,
+      ).toBe(true);
+      expect((person.owns as unknown[]).length).toBeGreaterThan(0);
+    }
+  });
+});
