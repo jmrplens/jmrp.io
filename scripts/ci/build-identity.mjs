@@ -64,7 +64,7 @@ const PERSON_ID = `${SITE_URL}/#person`;
  * BaseHead renders from that constant.
  */
 const IMAGE = {
-  url: "https://github.com/jmrplens.png",
+  url: `${SITE_URL}/identity/avatar.png`,
   width: 460,
   height: 460,
 };
@@ -193,8 +193,20 @@ function buildIdentityDocument() {
     image: {
       "@type": "ImageObject",
       url: IMAGE.url,
-      width: String(IMAGE.width),
-      height: String(IMAGE.height),
+      // Numeric QuantitativeValue, not a quoted string — schema.org types
+      // MediaObject width/height as Distance | QuantitativeValue, never Text.
+      // E37 = pixel (UN/CEFACT). Must mirror BaseHead.astro exactly: the
+      // schema-validation spec compares this document to the rendered node.
+      width: {
+        "@type": "QuantitativeValue",
+        value: IMAGE.width,
+        unitCode: "E37",
+      },
+      height: {
+        "@type": "QuantitativeValue",
+        value: IMAGE.height,
+        unitCode: "E37",
+      },
     },
     alumniOf: ALUMNI_OF,
     hasCredential: CREDENTIALS,

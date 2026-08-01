@@ -205,8 +205,8 @@ const collectionSchema = {
             })) || [],
           // Schema.org: an article `isPartOf` its venue. A journal is a
           // Periodical; conference proceedings are a CreativeWork (Periodical
-          // would wrongly imply a recurring magazine). Standalone works
-          // (theses/reports) have no journal/proceedings parent, so omit it.
+          // would wrongly imply a recurring magazine). A thesis has no such
+          // parent — its awarding school becomes `publisher` instead.
           ...(() => {
             const venue = stripTrailingPunctuation(
               String(pub["container-title"] || pub.publisher || ""),
@@ -217,7 +217,17 @@ const collectionSchema = {
               "article-magazine",
             ].includes(pub.type);
             const isConference = pub.type === "paper-conference";
-            if (!venue || (!isJournal && !isConference)) return {};
+            if (!venue) return {};
+            if (!isJournal && !isConference) {
+              // Standalone works (theses) have no journal/proceedings parent,
+              // but they are not venue-less: BibTeX `school` arrives as the CSL
+              // publisher, and dropping it left two entries with no institution
+              // attached at all. `publisher` is the correct edge for the
+              // awarding university.
+              return {
+                publisher: { "@type": "CollegeOrUniversity", name: venue },
+              };
+            }
             return {
               isPartOf: {
                 "@type": isJournal ? "Periodical" : "CreativeWork",

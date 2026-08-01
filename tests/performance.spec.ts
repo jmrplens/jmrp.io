@@ -219,6 +219,9 @@ test.describe("Content Integrity", () => {
         url.includes("/blog/") &&
         !url.startsWith("/es/") &&
         !url.includes("/tags/") &&
+        // Editorial series hubs live under /blog/ but are curated index pages,
+        // not articles — a feed of posts must not be expected to list them.
+        !url.includes("/series/") &&
         !url.endsWith("/blog/") &&
         !url.includes("999-testing"),
     );
@@ -261,6 +264,8 @@ test.describe("Content Integrity", () => {
         url.startsWith("/es/") &&
         url.includes("/blog/") &&
         !url.includes("/tags/") &&
+        // See the EN case: series hubs are index pages, not feed items.
+        !url.includes("/series/") &&
         !url.endsWith("/blog/") &&
         !url.includes("999-testing"),
     );

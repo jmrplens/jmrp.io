@@ -140,6 +140,7 @@ caut
 CBOR
 cdns
 cebrecos
+CEFACT
 Ceedling
 certbot
 certspotter

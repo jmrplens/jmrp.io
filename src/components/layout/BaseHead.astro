@@ -256,9 +256,20 @@ const websiteSchema = {
     url: siteRoot,
     image: {
       "@type": "ImageObject",
-      url: CANONICAL_PERSON_IMAGE.url,
-      width: String(CANONICAL_PERSON_IMAGE.width),
-      height: String(CANONICAL_PERSON_IMAGE.height),
+      url: new URL(CANONICAL_PERSON_IMAGE.path, getSiteUrl()).href,
+      // Numeric, not a quoted string: schema.org types MediaObject
+      // width/height as Distance | QuantitativeValue, never Text, so "460" was
+      // simply the wrong datatype. E37 is the UN/CEFACT code for "pixel".
+      width: {
+        "@type": "QuantitativeValue",
+        value: CANONICAL_PERSON_IMAGE.width,
+        unitCode: "E37",
+      },
+      height: {
+        "@type": "QuantitativeValue",
+        value: CANONICAL_PERSON_IMAGE.height,
+        unitCode: "E37",
+      },
     },
     ...(siteData.person?.worksFor && {
       worksFor: {

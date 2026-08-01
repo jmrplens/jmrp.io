@@ -151,9 +151,16 @@ test.describe("Canonical identity document", () => {
 
     // A fingerprinted /_astro/ URL rots the moment this site rebuilds, which
     // is precisely how a downstream project site ended up publishing a dead
-    // image. See CANONICAL_PERSON_IMAGE in src/utils/person.ts.
+    // image. The avatar therefore lives at a fixed path under public/, on this
+    // origin. See CANONICAL_PERSON_IMAGE in src/utils/person.ts.
     expect(document.image?.url).not.toContain("/_astro/");
-    expect(document.image?.url).toBe("https://github.com/jmrplens.png");
+    expect(document.image?.url).toBe("https://jmrp.io/identity/avatar.png");
+
+    // Advertised, therefore fetchable: a 404 here is the exact failure this
+    // whole arrangement exists to prevent.
+    const avatar = await page.request.get("/identity/avatar.png");
+    expect(avatar.status()).toBe(200);
+    expect(avatar.headers()["content-type"]).toContain("image/png");
   });
 });
 
@@ -687,14 +694,6 @@ test.describe("URL correctness in schemas", () => {
       // eslint-disable-next-line unicorn/prefer-https, sonarjs/no-clear-text-protocols -- see comment above
       value.startsWith("http://www.wikidata.org/entity/");
 
-    // The canonical Person avatar is deliberately hosted off-domain: Astro
-    // fingerprints built assets, so a /_astro/ URL rots on every deploy and
-    // poisons the project sites that copy this node. Exempted by exact value
-    // rather than by adding "image" to externalKeys, which would stop checking
-    // every other image URL on the site (article covers, OG images) too.
-    const isCanonicalAvatarUrl = (value: string): boolean =>
-      value === "https://github.com/jmrplens.png";
-
     /** Collect @id and url values (skip external subtrees) */
     const collectSiteUrls = (obj: unknown, insideExternal = false): void => {
       if (typeof obj !== "object" || obj === null) return;
@@ -711,8 +710,7 @@ test.describe("URL correctness in schemas", () => {
           ["@id", "url", "item"].includes(key) &&
           typeof val === "string" &&
           isValidUrl(val) &&
-          !isWikidataEntityUri(val) &&
-          !isCanonicalAvatarUrl(val)
+          !isWikidataEntityUri(val)
         ) {
           siteUrls.push(val);
         }
