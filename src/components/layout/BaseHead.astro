@@ -279,14 +279,7 @@ const websiteSchema = {
       personKnowsAbout.length > 0 && {
         knowsAbout: personKnowsAbout,
       }),
-    // `owns` emits reference-only nodes whose @id values are defined solely
-    // on /projects/ (the software `#software` nodes live there). Emitting
-    // them on every other page leaves 11 dangling references in a namespace
-    // (github.com) this site does not control.
-    ...(personProjects.length > 0 &&
-      Astro.url.pathname.replace(/^\/es/, "") === "/projects/" && {
-        owns: personProjects,
-      }),
+    ...(personProjects.length > 0 && { owns: personProjects }),
     ...(orcidId && {
       // Array, not a bare object: the graph must be able to carry more than
       // one identifier (Wikidata Q-id when it exists) without silently
