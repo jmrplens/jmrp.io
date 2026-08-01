@@ -8,7 +8,7 @@
  * The list is every top-level section that actually exists in the current
  * build, verified with `ls dist/` (and `ls dist/es/` for the Spanish
  * mirror): `/`, `/about/`, `/homelab/`, `/tools/`, `/uses/`, `/cv/`,
- * `/publications/`, `/github/`, `/blog/`. `/services/` was checked and does
+ * `/publications/`, `/projects/`, `/blog/`. `/services/` was checked and does
  * NOT exist as a page in this redesign, so it is intentionally excluded.
  */
 
@@ -21,7 +21,7 @@ const AUDIT_PATHS = [
   "/uses/",
   "/cv/",
   "/publications/",
-  "/github/",
+  "/projects/",
   "/blog/",
 ];
 

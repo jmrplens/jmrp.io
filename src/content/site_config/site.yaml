@@ -130,8 +130,6 @@ nav:
     href: "/publications/"
   - label: "Projects"
     href: "/projects/"
-  - label: "Repositories"
-    href: "/github/"
 
 hero:
   title: "Hi, I'm José Manuel."

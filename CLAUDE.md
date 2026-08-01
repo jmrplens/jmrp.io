@@ -66,7 +66,6 @@
 │   │   ├── homelab/            # Preact islands (InfrastructureInsights, ServiceStats)
 │   │   ├── blog/               # PostCard, PostGrid, TagCloud
 │   │   ├── cv/                 # CV-specific components
-│   │   ├── github/             # GitHubSearch, RepoCard
 │   │   └── publications/       # PublicationItem
 │   ├── pages/                  # File-based routing
 │   ├── layouts/                # BaseLayout, ToolLayout
@@ -523,7 +522,6 @@ pnpm build
 
 | Integration | Purpose                             |
 | ----------- | ----------------------------------- |
-| `avatar.ts` | Fetches GitHub avatar with fallback |
 | `beacon.ts` | Cloudflare beacon analytics setup   |
 
 ### Post-Build Pipeline (`astro:build:done`, `src/integrations/post-build.ts`)
@@ -642,7 +640,7 @@ export const common = {
   blog: { publishedOn: "Published on {date}", ... },
   seo: { titleSuffix: "JMRP", ... },
   footer: { copyright: "© {year}", ... },
-  pages: { github: { ... }, cv: { ... }, ... },
+  pages: { projects: { ... }, cv: { ... }, ... },
 };
 ```
 
@@ -683,7 +681,7 @@ Blog posts and tools content are **not currently translated** — MDX files exis
 | `/blog/[slug]/`           | `blog/[...slug].astro`              | Blog post (auto-collects all references from content) |
 | `/blog/tags/[tag]/`       | `blog/tags/[tag].astro`             | Posts filtered by tag                                 |
 | `/cv`                     | `cv.astro`                          | Curriculum Vitae                                      |
-| `/github`                 | `github.astro`                      | GitHub profile + repos                                |
+| `/projects`               | `projects.astro`                    | Curated open-source projects                          |
 | `/homelab`                | `homelab.astro`                     | Self-hosted infrastructure                            |
 | `/publications`           | `publications.astro`                | Academic publications (BibTeX)                        |
 | `/tools/`                 | `tools/index.astro`                 | Tools index (grouped by category)                     |

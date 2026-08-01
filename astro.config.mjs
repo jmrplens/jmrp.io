@@ -185,7 +185,7 @@ export default defineConfig({
           ) {
             priority = 0.7;
             changefreq = "yearly";
-          } else if (/^\/(cv|publications|github|homelab)(\/|$)/.test(path)) {
+          } else if (/^\/(cv|publications|projects|homelab)(\/|$)/.test(path)) {
             priority = 0.6;
           } else if (path.includes("/tags/") || path.includes("/categories/")) {
             priority = 0.3;

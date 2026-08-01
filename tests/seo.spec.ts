@@ -52,6 +52,7 @@ const VALID_SCHEMA_TYPES = [
   "Occupation",
   "EducationalOccupationalCredential",
   "SoftwareApplication",
+  "SoftwareSourceCode",
   "Offer",
   "Service",
 ] as const;
@@ -372,7 +373,7 @@ test.describe("SEO & Metadata Checks", () => {
 
   test("JSON-LD schema on secondary pages", async ({ page }) => {
     // Verify structured data exists on all key section pages
-    const keyPages = ["/cv", "/publications", "/github"];
+    const keyPages = ["/cv", "/publications", "/projects"];
 
     for (const pageUrl of keyPages) {
       await page.goto(pageUrl);

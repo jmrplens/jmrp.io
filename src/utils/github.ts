@@ -86,39 +86,13 @@ export async function fetchGitHubProfile(): Promise<GitHubProfile> {
       login: USERNAME,
       bio: "R&D Engineer | Embedded Systems & Acoustics | Software Engineer",
       html_url: `https://github.com/${USERNAME}`,
-      avatar_url: "/github-avatar.png", // Fallback to local asset
+      avatar_url: `https://github.com/${USERNAME}.png`, // Stable redirecting avatar endpoint
       location: "Valencia, Spain",
       public_repos: 0,
       followers: 0,
       following: 0,
     };
     return fallback;
-  }
-}
-
-/**
- * Fetches the top repositories for the configured user, sorted by last update.
- */
-export async function fetchTopRepositories(limit = 12): Promise<GitHubRepo[]> {
-  const headers = getGitHubHeaders();
-
-  try {
-    const res = await fetch(
-      `https://api.github.com/users/${USERNAME}/repos?sort=updated&per_page=${limit}`,
-      { headers },
-    );
-
-    if (!res.ok) {
-      throw new Error(`GitHub API error: ${res.status}`);
-    }
-
-    return (await res.json()) as GitHubRepo[];
-  } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    console.warn(
-      `Failed to fetch GitHub repos, using empty list: ${errorMessage}`,
-    );
-    return [];
   }
 }
 

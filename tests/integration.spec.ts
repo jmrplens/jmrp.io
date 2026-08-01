@@ -4,7 +4,7 @@
  * Tests user flows and page interactions across the site:
  * - Navigation flows (Home → Blog → Post)
  * - Page content verification (CV sections, Homelab)
- * - Component rendering (GitHub repos, Publications)
+ * - Component rendering (Projects, Publications)
  * - Cross-page functionality
  */
 
@@ -70,30 +70,23 @@ test.describe("Integration Flows", () => {
     await expect(page.locator(".infrastructure-section").first()).toBeVisible();
   });
 
-  test("GitHub page renders repository cards", async ({ page }) => {
-    await page.goto("/github");
+  test("Projects page renders project cards", async ({ page }) => {
+    await page.goto("/projects");
 
     // Verify page title
     await expect(page.locator("h1")).toBeVisible();
 
-    // Check that repo cards are rendered
-    const repoCards = page.locator(".repo-card");
-    // Wait for the first card to appear (auto-retrying) to avoid race conditions with JS fetch
-    await repoCards.first().waitFor({ state: "visible" });
+    // Check that project cards are rendered
+    const projectCards = page.locator(".proj-card");
+    await projectCards.first().waitFor({ state: "visible" });
 
-    const cardCount = await repoCards.count();
+    const cardCount = await projectCards.count();
     expect(cardCount).toBeGreaterThan(0);
 
     // Verify first card has expected structure
-    const firstCard = repoCards.first();
-    await expect(firstCard.locator("h3, h4")).toBeVisible(); // Repo name
-    await expect(firstCard.locator("a")).toHaveAttribute("href", /.+/); // Link to repo
-
-    // Verify search input exists
-    const searchInput = page.getByRole("searchbox", {
-      name: /search/i,
-    });
-    await expect(searchInput).toBeVisible();
+    const firstCard = projectCards.first();
+    await expect(firstCard.locator(".proj-card__name")).toBeVisible(); // Project name
+    await expect(firstCard.locator("a").first()).toHaveAttribute("href", /.+/); // Link to repo
   });
 
   test("Publications page renders publication cards", async ({ page }) => {
@@ -210,7 +203,7 @@ test.describe("Integration Flows", () => {
         href.startsWith("/tools/") ||
         href.startsWith("/cv") ||
         href.startsWith("/publications") ||
-        href.startsWith("/github") ||
+        href.startsWith("/projects") ||
         href.startsWith("/homelab"),
     );
 

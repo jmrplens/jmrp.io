@@ -119,16 +119,6 @@ const STATIC_PAGES: Record<string, Record<Locale, OgProps>> = {
       subtitle: "José M. Requena Plens · Ingeniero de I+D",
     },
   },
-  github: {
-    en: {
-      title: "GitHub Repositories",
-      subtitle: "Open source contributions · jmrp.io",
-    },
-    es: {
-      title: "Repositorios de GitHub",
-      subtitle: "Contribuciones de código abierto · jmrp.io",
-    },
-  },
   projects: {
     en: {
       title: "Projects",
