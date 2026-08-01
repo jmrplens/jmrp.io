@@ -4,12 +4,17 @@ slug: "008-mikrotik-pppoe-dualstack-digi"
 lang: "es"
 publishedDate: 2026-02-15
 updatedDate: 2026-07-07
+lastVerified:
+  date: 2026-08-01
+  versions:
+    - RouterOS 7.23.2
+    - RB5009UG+S+
 description: "Configura PPPoE con DHCPv6 Prefix Delegation en MikroTik RouterOS para DIGI España. VLAN tagging, SLAAC, gestión de cambios de prefix y firewall."
 author: "José Manuel Requena Plens"
 authorEmail: "mail@jmrp.io"
 draft: false
 coverImage: "../../../assets/images/blog/pppoe-dualstack.webp"
-tags: ["MikroTik", "PPPoE", "IPv6", "DHCPv6-PD", "Networking"]
+tags: ["MikroTik", "IPv6", "Networking"]
 faq:
   - question: "¿Qué VLAN usa DIGI España para PPPoE?"
     answer: "DIGI España requiere VLAN tagging 802.1Q en la VLAN 20 para el tráfico PPPoE de internet. Si conectas directamente sin VLAN tagging, la autenticación PPPoE fallará."

@@ -477,6 +477,7 @@ export const common = {
       schemaName: "Blog - José Manuel Requena Plens",
       relatedTitle: "Related on this site",
       relatedTools: "Try the tool",
+      lastVerified: "Last verified {date}",
     },
     blogPost: {
       backToBlog: "Back to Blog",
@@ -507,6 +508,36 @@ export const common = {
       schemaDescription: "Browse {count} articles about {tag}.",
       metaDescription:
         "Browse {count} technical {articleWord} about {tag}. In-depth tutorials and guides by José Manuel Requena Plens covering practical {tag} implementations.",
+      // Short original prose per surviving tag (see BlogTagPage.astro), keyed
+      // by the lowercase tag as returned by getUniqueTags(). Only tags that
+      // currently label at least one post need an entry here.
+      tagIntro: {
+        security:
+          "Hardening notes from real production deployments — mutual TLS, Content Security Policy, and deception techniques like tarpits and honeypots that slow down or trap malicious traffic before it reaches anything that matters.",
+        nginx:
+          "Nginx configuration deep dives, from access control and security headers to serving files without touching disk and enabling QUIC/HTTP/3 in production.",
+        mikrotik:
+          "RouterOS configurations tested on real home-lab hardware — VPN tunnels, dual-stack ISP setups, and defensive tricks running on a MikroTik router.",
+        firmware:
+          "Firmware engineering notes for resource-constrained microcontrollers: packing strings, deriving device-bound keys, and building an authenticated storage vault in C++.",
+        esp32:
+          "Practical firmware work on the ESP32 — memory-constrained C++ techniques verified on real hardware rather than a simulator.",
+        ipv6: "Dual-stack configurations that treat IPv6 as a first-class citizen alongside IPv4, from prefix delegation on a residential ISP to routing it over a VPN tunnel.",
+        networking:
+          "Protocol-level notes on how traffic actually moves — from QUIC's transport-layer redesign to VPN tunnels and deliberately hostile behavior aimed at scanners.",
+        cryptography:
+          "Applied cryptography as it shows up in real systems: certificate-based authentication, CSP nonces, and key derivation and authenticated encryption on embedded hardware.",
+        devops:
+          "Deployment and infrastructure patterns for running services without unnecessary disk I/O or container image bloat — including Kubernetes health endpoints served straight from configuration.",
+        embedded:
+          "Notes from building software that has to fit in kilobytes of flash and RAM, where every string and byte layout is a deliberate choice.",
+        linux:
+          "Linux system administration as encountered running actual self-hosted services, not textbook examples.",
+        privacy:
+          "Running privacy infrastructure for real — a Tor bridge relay operated and documented from first setup through ongoing maintenance.",
+        "c++":
+          "C++ as used in firmware: manual memory layout, avoiding heap allocation where possible, and code verified against real embedded targets.",
+      },
     },
     cv: {
       title: "CV",

@@ -3,9 +3,13 @@ title: "Content Security Policy (CSP) with Nginx: The Complete Guide"
 slug: "003-implementing-content-security-policy-nginx"
 publishedDate: 2025-12-19
 updatedDate: 2026-02-06
+lastVerified:
+  date: 2026-08-01
+  versions:
+    - nginx (jmrp.io production)
 description: "Master Content Security Policy from zero to A+ — nonces, hashes, strict-dynamic, Trusted Types, bypass prevention, and production Nginx configs."
 coverImage: "../../../assets/images/blog/csp-shield.webp"
-tags: ["Nginx", "Security", "CSP"]
+tags: ["Nginx", "Security", "Cryptography"]
 faq:
   - question: "What is the simplest CSP to start with on Nginx?"
     answer: "Add the single header `add_header Content-Security-Policy \"default-src 'self'\" always;` to your server block. This tells the browser to only allow resources from your exact origin (same scheme, host, and port), immediately blocking external scripts, inline scripts, and inline styles."

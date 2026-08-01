@@ -8,7 +8,7 @@ author: "José Manuel Requena Plens"
 authorEmail: "mail@jmrp.io"
 draft: false
 coverImage: "../../../assets/images/blog/string-pool.webp"
-tags: ["Firmware", "C++", "Embedded", "ESP32", "i18n"]
+tags: ["Firmware", "C++", "Embedded", "ESP32"]
 faq:
   - question: "What is a packed i18n string pool?"
     answer: "It replaces the naïve table of const char* pointers with two pieces of generated data: a single flash blob holding every NUL-terminated translation, and a per-language table of uint16_t offsets into that blob. An offset is just the byte where a C string begins, so tr() still returns a plain const char*."

@@ -8,7 +8,12 @@ import "@styles/blog.css";
 import PostGrid from "@components/blog/PostGrid.astro";
 import TagCloud from "@components/blog/TagCloud.astro";
 import { defaultLocale, type Locale } from "@i18n/config";
-import { pluralize, useTranslatedPath, useTranslations } from "@i18n/utils";
+import {
+  pluralize,
+  type TranslationKey,
+  useTranslatedPath,
+  useTranslations,
+} from "@i18n/utils";
 import BaseLayout from "@layouts/BaseLayout.astro";
 import { getSiteUrl } from "@utils/site";
 import type { CollectionEntry } from "astro:content";
@@ -43,6 +48,15 @@ const articleWord = pluralize(
   },
   locale,
 );
+
+// Short intro prose per surviving tag, turning a pure listing page into one
+// with its own content. `tag` is already lowercased by getUniqueTags(), which
+// matches the tagIntro key casing below. Not every tag necessarily has one
+// (e.g. new tags added before prose is written), so fall back to omitting the
+// paragraph rather than showing the raw, unresolved key.
+const tagIntroKey = `pages.blogTags.tagIntro.${tag}` as TranslationKey;
+const tagIntro = t(tagIntroKey);
+const hasTagIntro = tagIntro !== tagIntroKey;
 
 // Schema.org: CollectionPage with ItemList
 const schema = {
@@ -88,6 +102,7 @@ const schema = {
       </div>
       <p class="kicker section-title">{t("pages.blog.kicker")}</p>
       <h1>#{tag}</h1>
+      {hasTagIntro && <p class="tag-intro">{tagIntro}</p>}
       <p class="subtitle">
         {posts.length}
         {postWord}
@@ -138,6 +153,14 @@ const schema = {
     font-weight: var(--fw-semibold);
     color: var(--color-text-heading);
     letter-spacing: -0.01em;
+  }
+
+  .tag-intro {
+    max-width: 65ch;
+    margin-bottom: var(--space-sm);
+    font-size: var(--text-md);
+    line-height: 1.6;
+    color: var(--color-text);
   }
 
   .subtitle {

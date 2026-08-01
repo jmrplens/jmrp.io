@@ -6,9 +6,13 @@ author: "José Manuel Requena Plens"
 authorEmail: "mail@jmrp.io"
 publishedDate: 2026-01-14
 updatedDate: 2026-01-14
+lastVerified:
+  date: 2026-08-01
+  versions:
+    - nginx (jmrp.io production)
 draft: false
 coverImage: "../../../assets/images/blog/http3-quic.webp"
-tags: ["Nginx", "HTTP3", "Performance"]
+tags: ["Nginx", "Networking", "Security"]
 faq:
   - question: "What do I need to enable HTTP/3 in Nginx?"
     answer: "You need Nginx 1.25.0 or newer (HTTP/3 support was added mid-2023) compiled with the --with-http_v3_module, plus an SSL library with QUIC support such as OpenSSL 3.5.1+, BoringSSL, QuicTLS, or LibreSSL 3.6+. TLS 1.3 is required for QUIC."
