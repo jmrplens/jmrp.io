@@ -543,14 +543,33 @@ test.describe("SoftwareApplication schema on tool pages", () => {
 
     expect(isNonEmptyStr(app.name)).toBe(true);
     expect(isNonEmptyStr(app.description)).toBe(true);
-    expect(app.applicationCategory).toBe("WebApplication");
+    // password-generator's collection `category` is "security".
+    expect(app.applicationCategory).toBe("SecurityApplication");
     expect(app.operatingSystem).toBe("Web Browser");
 
     const offers = app.offers as JsonLdSchema;
     expect(offers["@type"]).toBe("Offer");
     // price is a string per schema.org Offer (spec-correct), paired with isAccessibleForFree.
     expect(offers.price).toBe("0");
+    expect(offers.availability).toBe("https://schema.org/InStock");
+    expect(isValidUrl(offers.url)).toBe(true);
     expect(app.isAccessibleForFree).toBe(true);
+  });
+
+  test("tools use Google application categories", async ({ page }) => {
+    await blockCloudflare(page);
+    await page.goto("/tools/csp-builder/");
+    const jsonLd = await getJsonLd(page);
+
+    const app = findInGraph(jsonLd, "SoftwareApplication");
+    expect(app).not.toBeNull();
+    if (!app) return;
+
+    // csp-builder's collection `category` is "security".
+    expect(app.applicationCategory).toBe("SecurityApplication");
+
+    const offers = app.offers as JsonLdSchema;
+    expect(offers.availability).toBe("https://schema.org/InStock");
   });
 });
 

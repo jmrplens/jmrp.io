@@ -14,7 +14,26 @@ import { defaultLocale, type Locale } from "@i18n/config";
 import { useTranslatedPath, useTranslations } from "@i18n/utils";
 import BaseLayout from "@layouts/BaseLayout.astro";
 import { getSiteUrl } from "@utils/site";
+import type { CollectionEntry } from "astro:content";
 import type { FAQPage, SoftwareApplication } from "schema-dts";
+
+/**
+ * Google's SoftwareApplication `applicationCategory` values, keyed by the
+ * tool's collection `category`. These are the values Google's Rich Results
+ * documentation recognizes for software rich results — NOT schema.org type
+ * names (e.g. `WebApplication` is a @type, not a valid category value).
+ * @see https://developers.google.com/search/docs/appearance/structured-data/software-app
+ */
+const APPLICATION_CATEGORY: Record<
+  CollectionEntry<"tools">["data"]["category"],
+  string
+> = {
+  security: "SecurityApplication",
+  developer: "DeveloperApplication",
+  network: "NetworkApplication",
+  embedded: "DeveloperApplication",
+  mikrotik: "NetworkApplication",
+};
 
 interface Props {
   /** Page <title> and visible <h1>. */
@@ -27,6 +46,8 @@ interface Props {
   icon: string;
   /** URL slug used for the canonical URL, e.g. `regex-tester`. */
   slug: string;
+  /** Tool category — mapped to a Google `applicationCategory` value. */
+  category: CollectionEntry<"tools">["data"]["category"];
   /** Optional extra schema fields merged into the generated SoftwareApplication schema. */
   extraSchema?: Record<string, unknown>;
   /** FAQ pairs — rendered as an accessible section + emitted as FAQPage JSON-LD. */
@@ -45,6 +66,7 @@ const {
   subtitle,
   icon,
   slug,
+  category,
   extraSchema,
   faq,
   features,
@@ -65,9 +87,15 @@ const baseToolSchema = {
   name: title,
   description,
   url: toolUrl,
-  applicationCategory: "WebApplication",
+  applicationCategory: APPLICATION_CATEGORY[category] ?? "DeveloperApplication",
   operatingSystem: "Web Browser",
-  offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
+  offers: {
+    "@type": "Offer",
+    price: "0",
+    priceCurrency: "USD",
+    availability: "https://schema.org/InStock",
+    url: toolUrl,
+  },
   isAccessibleForFree: true,
   author: { "@id": new URL("#person", getSiteUrl()).href },
   creator: { "@id": new URL("#person", getSiteUrl()).href },
