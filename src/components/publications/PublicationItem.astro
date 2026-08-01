@@ -78,6 +78,10 @@ const doi =
     ? `https://doi.org/${rawDoi.replace(/^(doi:|\/)+/, "")}`
     : rawDoi;
 const pdf = pub.pdf || pub.PDF || "";
+// A DOI no longer hides `url`: a distinct landing page (institutional
+// repository, handle) is a different destination and stays reachable. It is
+// only suppressed when it repeats the PDF, which the PDF button already links.
+const showUrl = Boolean(url) && url !== pdf;
 const slides = pub.slides || "";
 const poster = pub.poster || "";
 
@@ -239,7 +243,7 @@ const cleanedBibtex = cleanBibtex(pub.bibtex);
         )
       }
       {
-        url && !doi && (
+        showUrl && (
           <a
             href={url}
             class="btn-sm"

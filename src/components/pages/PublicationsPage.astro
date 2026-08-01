@@ -129,8 +129,9 @@ const collectionSchema = {
     itemListElement: allPublications.map((pub, index): ListItem => {
       // citation-js exposes CSL-JSON fields in their canonical (uppercase)
       // casing — `DOI`/`URL`/`ISBN`, not `doi`/`url`/`isbn`. 13 of the 14
-      // entries in papers.bib carry a Zenodo DOI (registered under the
-      // author's ORCID); `escartiECSSMET2021` has none, so its `url`/`pdf`
+      // entries in papers.bib carry a Zenodo *concept* DOI, which always
+      // resolves to the latest version of the deposit rather than pinning one
+      // immutable file; `escartiECSSMET2021` has no deposit, so its `url`/`pdf`
       // fallback below is what identifies it.
       const doi = typeof pub.DOI === "string" ? pub.DOI : undefined;
       const doiUrl = doi ? toDoiUrl(doi) : undefined;
