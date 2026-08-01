@@ -19,6 +19,18 @@ permissions:
 env:
   NODE_OPTIONS: "--no-deprecation"
 
+# GitHub's default shell is `bash -e {0}` — no `pipefail`. Every static-analysis
+# job pipes its tool into `tee` to keep a log artifact, so the step's exit code
+# was `tee`'s (always 0) and those jobs could never fail: `SA: Spell Checker`
+# passed a commit that CSpell rejects locally, and `SA: Security Audit` reported
+# success while `pnpm audit --audit-level=high` exited 1. Setting the default
+# here fixes all of them at once, and any step added later. `-u` is deliberately
+# left out: it is not GitHub's default either, and would break steps that test
+# unset variables.
+defaults:
+  run:
+    shell: bash -eo pipefail {0}
+
 jobs:
   ci-setup:
     name: "🚀 Initialize CI Report"
