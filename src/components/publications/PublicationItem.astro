@@ -18,6 +18,9 @@ const kind = getPublicationKind(pub.type);
 const chipLabel = t(PUBLICATION_KIND_LABEL_KEY[kind]);
 
 // Function to clean BibTeX
+// `doi` is deliberately kept: it is the canonical, permanent identifier of the
+// work, so anyone copying the entry into their own bibliography should get it.
+// Site-local artifacts (pdf/slides/poster) and bulky prose are what get dropped.
 const cleanBibtex = (bibtex: string) => {
   if (!bibtex) return "";
   const lines = bibtex.split("\n");
@@ -27,7 +30,6 @@ const cleanBibtex = (bibtex: string) => {
       !l.startsWith("file") &&
       !l.startsWith("abstract") &&
       !l.startsWith("keywords") &&
-      !l.startsWith("doi") &&
       !l.startsWith("url") &&
       !l.startsWith("pdf") &&
       !l.startsWith("slides") &&
