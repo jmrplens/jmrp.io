@@ -320,6 +320,109 @@ test.describe("SEO & Metadata Checks", () => {
     expect(content).toContain("## Contact");
   });
 
+  /* eslint-disable playwright/no-conditional-in-test -- fence/heading parsing
+     needs branching to walk the file line by line */
+  test("llms-full.txt nests post/tool body headings below their own title, respecting code fences", async ({
+    page,
+  }) => {
+    // `page.request` performs a plain HTTP fetch decoded as UTF-8, unlike
+    // `page.goto()` + `response.text()`, which goes through the browser's
+    // network stack and mis-decodes accented characters when the server's
+    // `Content-Type` charset gets stripped in preview.
+    const response = await page.request.get("/llms-full.txt");
+    const content = await response.text();
+    expect(content).toBeDefined();
+
+    // Fenced code blocks must be skipped: a leading `#` inside a fence is a
+    // shell comment, not a heading, and counting it would corrupt the result.
+    let inFence = false;
+    const structural: string[] = [];
+    for (const line of content.split("\n")) {
+      if (/^\s*```/.test(line)) {
+        inFence = !inFence;
+        continue;
+      }
+      if (inFence) continue;
+      const match = /^(#{1,6})\s+(.*)/.exec(line);
+      if (match && match[1].length === 2) structural.push(match[2]);
+    }
+
+    // Only true document sections may be H2 — post and tool bodies must be
+    // demoted below their own title, or H2-boundary chunkers would detach
+    // every section from its article.
+    expect(structural).toEqual([
+      "About the Author",
+      "Blog Posts",
+      "Blog Posts (Español)",
+      "Developer Tools",
+      "Developer Tools (Español)",
+      "Curriculum Vitae",
+      "Publications",
+      "Contact",
+      "Technical Details",
+    ]);
+  });
+  /* eslint-enable playwright/no-conditional-in-test */
+
+  test("llms.txt declares both locales in separate sections", async ({
+    page,
+  }) => {
+    const response = await page.request.get("/llms.txt");
+    const content = await response.text();
+    expect(content).toBeDefined();
+
+    expect(content).toContain("## Blog Posts (Español)");
+    expect(content).toContain("## Developer Tools (Español)");
+
+    const esPosts =
+      content.match(/]\(https:\/\/jmrp\.io\/es\/blog\/\d{3}-/g) ?? [];
+    expect(esPosts).toHaveLength(12);
+  });
+
+  test("llms-full.txt includes Spanish post bodies", async ({ page }) => {
+    const response = await page.request.get("/llms-full.txt");
+    const content = await response.text();
+    expect(content).toBeDefined();
+
+    expect(content).toContain("## Blog Posts (Español)");
+    expect(content).toContain("Un PIN de 4 dígitos basta");
+  });
+
+  test("llms.txt has a single header blockquote, markdown-link contacts, and an Optional section", async ({
+    page,
+  }) => {
+    const response = await page.request.get("/llms.txt");
+    const content = await response.text();
+    expect(content).toBeDefined();
+
+    // Only the site description remains a blockquote; "Last updated" and the
+    // llms-full.txt pointer are now plain lines.
+    const blockquotes = content.split("\n").filter((l) => l.startsWith(">"));
+    expect(blockquotes).toHaveLength(1);
+
+    // Contacts are markdown links, not "Label: url" plain text.
+    expect(content).toMatch(/\[GitHub]\(https:\/\/github\.com\/jmrplens\)/);
+    expect(content).toMatch(/\[Email]\(mailto:mail@jmrp\.io\)/);
+
+    // The person entity and both RSS feeds are discoverable from the index.
+    // Generated links always point at the production origin (from `SITE`),
+    // regardless of which host actually serves this request in tests.
+    expect(content).toContain("## Optional");
+    expect(content).toContain("https://jmrp.io/identity/person.jsonld");
+    expect(content).toContain("https://jmrp.io/rss.xml");
+    expect(content).toContain("https://jmrp.io/es/rss.xml");
+  });
+
+  test("person entity JSON-LD is linked from the page head", async ({
+    page,
+  }) => {
+    await page.goto("/");
+    const link = page.locator(
+      'link[rel="alternate"][type="application/ld+json"]',
+    );
+    await expect(link).toHaveAttribute("href", "/identity/person.jsonld");
+  });
+
   test("Structured data (JSON-LD) is present on key pages", async ({
     page,
   }) => {
