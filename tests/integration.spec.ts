@@ -86,7 +86,7 @@ test.describe("Integration Flows", () => {
     // Verify first card has expected structure
     const firstCard = projectCards.first();
     await expect(firstCard.locator(".proj-card__name")).toBeVisible(); // Project name
-    // Scoped to the links row: the card's first anchor overall is the licence
+    // Scoped to the links row: the card's first anchor overall is the license
     // link, so an unscoped locator passes even with no repository link.
     await expect(
       firstCard.locator(".proj-card__links a").first(),

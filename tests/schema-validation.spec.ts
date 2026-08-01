@@ -644,9 +644,11 @@ test.describe("ScholarlyArticle schema on the publications page", () => {
     // A landing page hosted elsewhere (institutional repository, handle) is a
     // distinct reference for the work and must survive alongside the DOI. This
     // one arrives in the BibTeX `pdf` field rather than `url`.
+    // Matched on the parsed hostname, not a substring: "hdl.handle.net" can
+    // appear anywhere in an arbitrary URL's path.
     const handles = articles.flatMap((a) =>
-      ((a.sameAs as string[] | undefined) ?? []).filter((u) =>
-        u.includes("hdl.handle.net"),
+      ((a.sameAs as string[] | undefined) ?? []).filter(
+        (u) => new URL(u).hostname === "hdl.handle.net",
       ),
     );
     expect(handles.length).toBeGreaterThan(0);
@@ -656,7 +658,10 @@ test.describe("ScholarlyArticle schema on the publications page", () => {
     for (const article of articles) {
       for (const url of (article.sameAs as string[] | undefined) ?? []) {
         expect(url).toMatch(/^https?:\/\//);
-        expect(url).not.toMatch(/jmrp\.io\/pdf\//);
+        const parsed = new URL(url);
+        expect(
+          parsed.hostname === "jmrp.io" && parsed.pathname.startsWith("/pdf/"),
+        ).toBe(false);
       }
     }
   });
