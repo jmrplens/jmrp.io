@@ -201,12 +201,17 @@ function buildIdentityDocument() {
     ...(knowsAbout && knowsAbout.length > 0 && { knowsAbout }),
     ...(owns.length > 0 && { owns }),
     ...(orcidId && {
-      identifier: {
-        "@type": "PropertyValue",
-        propertyID: "ORCID",
-        value: orcidId,
-        url: orcidUrl,
-      },
+      // Array, not a bare object: the entity must be able to carry more than one
+      // identifier without silently dropping all but the first. Mirrors the same
+      // shape in BaseHead.astro — the two are compared in schema-validation.spec.ts.
+      identifier: [
+        {
+          "@type": "PropertyValue",
+          propertyID: "ORCID",
+          value: orcidId,
+          url: orcidUrl,
+        },
+      ],
     }),
     sameAs,
   };

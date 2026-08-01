@@ -278,6 +278,74 @@ test.describe("Article schema", () => {
     const isPartOf = post.isPartOf as JsonLdSchema;
     expect(isPartOf["@id"]).toBeDefined();
   });
+
+  test("article @id matches page canonical in both locales", async ({
+    page,
+  }) => {
+    await blockCloudflare(page);
+
+    await page.goto("/blog/012-device-bound-key-derivation/");
+    const enJsonLd = await getJsonLd(page);
+    const enArticle =
+      findInGraph(enJsonLd, "TechArticle") ??
+      findInGraph(enJsonLd, "BlogPosting");
+    expect(enArticle).not.toBeNull();
+    const enCanonical = await page
+      .locator('link[rel="canonical"]')
+      .getAttribute("href");
+    if (enArticle) {
+      expect(enArticle["@id"]).toBe(`${enCanonical}#article`);
+      const enMainEntity = enArticle.mainEntityOfPage as JsonLdSchema;
+      expect(enMainEntity["@id"]).toBe(enCanonical);
+    }
+
+    await page.goto("/es/blog/012-device-bound-key-derivation/");
+    const esJsonLd = await getJsonLd(page);
+    const esArticle =
+      findInGraph(esJsonLd, "TechArticle") ??
+      findInGraph(esJsonLd, "BlogPosting");
+    expect(esArticle).not.toBeNull();
+    const esCanonical = await page
+      .locator('link[rel="canonical"]')
+      .getAttribute("href");
+    if (esArticle) {
+      expect(esArticle["@id"]).toBe(`${esCanonical}#article`);
+      const esMainEntity = esArticle.mainEntityOfPage as JsonLdSchema;
+      expect(esMainEntity["@id"]).toBe(esCanonical);
+    }
+  });
+
+  test("EN and ES articles cross-reference as translations", async ({
+    page,
+  }) => {
+    await blockCloudflare(page);
+
+    await page.goto("/blog/012-device-bound-key-derivation/");
+    const enJsonLd = await getJsonLd(page);
+    const enArticle =
+      findInGraph(enJsonLd, "TechArticle") ??
+      findInGraph(enJsonLd, "BlogPosting");
+    expect(enArticle).not.toBeNull();
+    if (enArticle) {
+      const workTranslation = enArticle.workTranslation as JsonLdSchema;
+      expect(workTranslation["@id"]).toBe(
+        "https://jmrp.io/es/blog/012-device-bound-key-derivation/#article",
+      );
+    }
+
+    await page.goto("/es/blog/012-device-bound-key-derivation/");
+    const esJsonLd = await getJsonLd(page);
+    const esArticle =
+      findInGraph(esJsonLd, "TechArticle") ??
+      findInGraph(esJsonLd, "BlogPosting");
+    expect(esArticle).not.toBeNull();
+    if (esArticle) {
+      const translationOfWork = esArticle.translationOfWork as JsonLdSchema;
+      expect(translationOfWork["@id"]).toBe(
+        "https://jmrp.io/blog/012-device-bound-key-derivation/#article",
+      );
+    }
+  });
 });
 
 // ─── ProfilePage (Homepage → WebPage; canonical ProfilePage lives at /about/) ──
@@ -335,6 +403,35 @@ test.describe("ProfilePage schema on homepage", () => {
     expect(sameAs.length).toBeGreaterThan(0);
     for (const url of sameAs) {
       expect(isValidUrl(url)).toBe(true);
+    }
+  });
+
+  test("Person.identifier is an array and sameAs excludes opted-out networks", async ({
+    page,
+  }) => {
+    await blockCloudflare(page);
+    await page.goto("/");
+    const jsonLd = await getJsonLd(page);
+
+    const website = findInGraph(jsonLd, "WebSite");
+    expect(website).not.toBeNull();
+    const person = (website?.publisher ?? {}) as JsonLdSchema;
+
+    // Must stay an array: a bare object silently drops any identifier past
+    // the first (e.g. a future Wikidata Q-id alongside ORCID).
+    expect(Array.isArray(person.identifier)).toBe(true);
+    const identifiers = person.identifier as Array<{ propertyID: string }>;
+    expect(identifiers.length).toBeGreaterThan(0);
+    expect(identifiers[0].propertyID).toBe("ORCID");
+
+    // Networks the site owner has deliberately opted out of. They exist, but he
+    // does not want them referenced anywhere on the site — an audit tool
+    // suggesting "add the profiles we found" is not grounds to publish them.
+    const OPTED_OUT = ["x.com", "twitter.com", "ko-fi.com"];
+    for (const host of OPTED_OUT) {
+      expect((person.sameAs as string[]).some((u) => u.includes(host))).toBe(
+        false,
+      );
     }
   });
 
@@ -449,14 +546,33 @@ test.describe("SoftwareApplication schema on tool pages", () => {
 
     expect(isNonEmptyStr(app.name)).toBe(true);
     expect(isNonEmptyStr(app.description)).toBe(true);
-    expect(app.applicationCategory).toBe("WebApplication");
+    // password-generator's collection `category` is "security".
+    expect(app.applicationCategory).toBe("SecurityApplication");
     expect(app.operatingSystem).toBe("Web Browser");
 
     const offers = app.offers as JsonLdSchema;
     expect(offers["@type"]).toBe("Offer");
     // price is a string per schema.org Offer (spec-correct), paired with isAccessibleForFree.
     expect(offers.price).toBe("0");
+    expect(offers.availability).toBe("https://schema.org/InStock");
+    expect(isValidUrl(offers.url)).toBe(true);
     expect(app.isAccessibleForFree).toBe(true);
+  });
+
+  test("tools use Google application categories", async ({ page }) => {
+    await blockCloudflare(page);
+    await page.goto("/tools/csp-builder/");
+    const jsonLd = await getJsonLd(page);
+
+    const app = findInGraph(jsonLd, "SoftwareApplication");
+    expect(app).not.toBeNull();
+    if (!app) return;
+
+    // csp-builder's collection `category` is "security".
+    expect(app.applicationCategory).toBe("SecurityApplication");
+
+    const offers = app.offers as JsonLdSchema;
+    expect(offers.availability).toBe("https://schema.org/InStock");
   });
 });
 
@@ -664,5 +780,34 @@ test.describe("ScholarlyArticle schema on the publications page", () => {
         ).toBe(false);
       }
     }
+  });
+});
+
+// ─── CollectionPage (Uses) ───────────────────────────────────────────
+
+test.describe("CollectionPage schema on the uses page", () => {
+  test("uses page emits a CollectionPage entity referencing #person", async ({
+    page,
+  }) => {
+    await blockCloudflare(page);
+    await page.goto("/uses/");
+    const jsonLd = await getJsonLd(page);
+
+    const collection = findInGraph(jsonLd, "CollectionPage");
+    expect(collection).not.toBeNull();
+    if (!collection) return;
+
+    expect(collection["@id"]).toBe("https://jmrp.io/uses/#collection");
+    expect(collection.url).toBe("https://jmrp.io/uses/");
+    expect(isNonEmptyStr(collection.name)).toBe(true);
+    expect(isNonEmptyStr(collection.description)).toBe(true);
+    expect(isNonEmptyStr(collection.inLanguage)).toBe(true);
+
+    const isPartOf = collection.isPartOf as JsonLdSchema;
+    expect(isNonEmptyStr(isPartOf["@id"])).toBe(true);
+    expect(isPartOf["@id"]).toContain("#website");
+
+    const about = collection.about as JsonLdSchema;
+    expect(about["@id"]).toBe("https://jmrp.io/#person");
   });
 });

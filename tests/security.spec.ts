@@ -338,4 +338,21 @@ test.describe("Build Output Verification", () => {
     expect(cspPolicy).toContain("object-src 'none'");
     expect(cspPolicy).toContain("frame-ancestors 'none'");
   });
+
+  test("no dummy session cookies on HTML responses", () => {
+    const distDir = path.resolve("dist");
+    const headersPath = path.join(distDir, "security_headers.conf");
+
+    expect(
+      fs.existsSync(headersPath),
+      `security_headers.conf should exist at ${headersPath}`,
+    ).toBe(true);
+
+    const content = fs.readFileSync(headersPath, "utf-8");
+
+    // Both were pinned to the constant 1 with no session or preference
+    // behind them: dead overhead on every HTML response.
+    expect(content).not.toContain("__Host-Session");
+    expect(content).not.toContain("__Secure-Pref");
+  });
 });

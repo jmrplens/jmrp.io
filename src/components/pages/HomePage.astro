@@ -117,8 +117,8 @@ const whoami = {
 // duplicate that identity data across pages.
 const homeSchema = {
   "@type": "WebPage",
-  "@id": new URL("#webpage", getSiteUrl()).href,
-  url: getSiteUrl(),
+  "@id": new URL(`${translatePath("/")}#webpage`, getSiteUrl()).href,
+  url: new URL(translatePath("/"), getSiteUrl()).href,
   name: t("seo.siteTitle"),
   description: t("seo.siteDescription"),
   inLanguage: locale,

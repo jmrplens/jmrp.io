@@ -18,6 +18,7 @@ import {
   getAlternateLinks,
   getOgLocale,
   type TranslationKey,
+  useTranslatedPath,
   useTranslations,
 } from "@i18n/utils";
 import type { SiteConfig } from "@src/types";
@@ -42,6 +43,7 @@ import type {
 
 const locale = (Astro.currentLocale ?? defaultLocale) as Locale;
 const t = useTranslations(locale);
+const translatePath = useTranslatedPath(locale);
 const alternateLinks = getAlternateLinks(Astro.url.pathname, getSiteUrl());
 
 const favicon = await getImage({
@@ -279,12 +281,17 @@ const websiteSchema = {
       }),
     ...(personProjects.length > 0 && { owns: personProjects }),
     ...(orcidId && {
-      identifier: {
-        "@type": "PropertyValue",
-        propertyID: "ORCID",
-        value: orcidId,
-        url: orcidUrl,
-      },
+      // Array, not a bare object: the graph must be able to carry more than
+      // one identifier (Wikidata Q-id when it exists) without silently
+      // dropping all but the first.
+      identifier: [
+        {
+          "@type": "PropertyValue",
+          propertyID: "ORCID",
+          value: orcidId,
+          url: orcidUrl,
+        },
+      ],
     }),
     sameAs: buildSameAs(siteData.social_links, siteData.person?.sameAs),
   },
@@ -307,7 +314,15 @@ const navSchema = (siteData.nav || []).map((item): SiteNavigationElement => ({
 }));
 
 // 3. Breadcrumb Schema (Automatic)
-const pathSegments = Astro.url.pathname.split("/").filter(Boolean);
+// Drop the locale prefix: the trail for /es/about/ is home > profile, not
+// home > "Es" > profile. The root item must also point at the localized
+// home, otherwise the Spanish trail is rooted at the English page. In EN,
+// rawSegments[0] is never equal to `locale` ("en" never appears as a URL
+// segment), so this branch never activates there.
+const rawSegments = Astro.url.pathname.split("/").filter(Boolean);
+const pathSegments =
+  rawSegments[0] === locale ? rawSegments.slice(1) : rawSegments;
+const breadcrumbRoot = new URL(translatePath("/"), getSiteUrl()).href;
 const breadcrumbList = {
   "@type": "BreadcrumbList",
   // Page-scoped @id so each page's breadcrumb trail is a distinct graph node
@@ -318,10 +333,12 @@ const breadcrumbList = {
       "@type": "ListItem",
       position: 1,
       name: t("nav.home"),
-      item: siteRoot,
+      item: breadcrumbRoot,
     },
     ...pathSegments.map((segment, index): ListItem => {
-      const path = `/${pathSegments.slice(0, index + 1).join("/")}/`;
+      const path = translatePath(
+        `/${pathSegments.slice(0, index + 1).join("/")}/`,
+      );
       const isLastSegment = index === pathSegments.length - 1;
       const absoluteUrl = new URL(path, getSiteUrl()).href;
 

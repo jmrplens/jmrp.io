@@ -9,7 +9,9 @@
 import { defaultLocale, type Locale } from "@i18n/config";
 import { useTranslatedPath, useTranslations } from "@i18n/utils";
 import BaseLayout from "@layouts/BaseLayout.astro";
+import { getSiteUrl } from "@utils/site";
 import { getEntry } from "astro:content";
+import type { CollectionPage } from "schema-dts";
 
 const locale = (Astro.currentLocale ?? defaultLocale) as Locale;
 const t = useTranslations(locale);
@@ -26,11 +28,27 @@ const c = usesEntry.data[locale];
 const resolveHref = (href: string) =>
   href.startsWith("/") ? translatePath(href) : href;
 const isExternal = (href: string) => !href.startsWith("/");
+
+// /uses/ is pure structured-fact content (hardware, software, homelab in
+// rotation) — exactly what AI answer engines look to cite — but previously
+// emitted no page-level entity in its @graph. This CollectionPage ties it to
+// the canonical #person node so it can be resolved as "what this person uses".
+const usesSchema = {
+  "@type": "CollectionPage",
+  "@id": new URL(`${translatePath("/uses/")}#collection`, getSiteUrl()).href,
+  url: new URL(translatePath("/uses/"), getSiteUrl()).href,
+  name: t("pages.uses.title"),
+  description: t("pages.uses.description"),
+  inLanguage: locale,
+  isPartOf: { "@id": new URL("#website", getSiteUrl()).href },
+  about: { "@id": new URL("#person", getSiteUrl()).href },
+} satisfies CollectionPage;
 ---
 
 <BaseLayout
   title={t("pages.uses.title")}
   description={t("pages.uses.description")}
+  schema={usesSchema}
 >
   <div class="uses container">
     <header class="uses-header">
