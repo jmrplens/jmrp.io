@@ -406,6 +406,32 @@ test.describe("ProfilePage schema on homepage", () => {
     }
   });
 
+  test("Person.identifier is an array and sameAs covers X and Ko-fi", async ({
+    page,
+  }) => {
+    await blockCloudflare(page);
+    await page.goto("/");
+    const jsonLd = await getJsonLd(page);
+
+    const website = findInGraph(jsonLd, "WebSite");
+    expect(website).not.toBeNull();
+    const person = (website?.publisher ?? {}) as JsonLdSchema;
+
+    // Must stay an array: a bare object silently drops any identifier past
+    // the first (e.g. a future Wikidata Q-id alongside ORCID).
+    expect(Array.isArray(person.identifier)).toBe(true);
+    const identifiers = person.identifier as Array<{ propertyID: string }>;
+    expect(identifiers.length).toBeGreaterThan(0);
+    expect(identifiers[0].propertyID).toBe("ORCID");
+
+    expect(person.sameAs as string[]).toEqual(
+      expect.arrayContaining([
+        "https://x.com/jmrplens",
+        "https://ko-fi.com/jmrplens",
+      ]),
+    );
+  });
+
   test("the canonical ProfilePage lives at /about/", async ({ page }) => {
     await blockCloudflare(page);
     await page.goto("/about/");

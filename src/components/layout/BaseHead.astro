@@ -279,12 +279,17 @@ const websiteSchema = {
       }),
     ...(personProjects.length > 0 && { owns: personProjects }),
     ...(orcidId && {
-      identifier: {
-        "@type": "PropertyValue",
-        propertyID: "ORCID",
-        value: orcidId,
-        url: orcidUrl,
-      },
+      // Array, not a bare object: the graph must be able to carry more than
+      // one identifier (Wikidata Q-id when it exists) without silently
+      // dropping all but the first.
+      identifier: [
+        {
+          "@type": "PropertyValue",
+          propertyID: "ORCID",
+          value: orcidId,
+          url: orcidUrl,
+        },
+      ],
     }),
     sameAs: buildSameAs(siteData.social_links, siteData.person?.sameAs),
   },
