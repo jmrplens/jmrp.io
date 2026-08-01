@@ -81,6 +81,8 @@ First, the threat. This is a device you can hold in your hand, and the credentia
 
 That's what makes decrypt-first dangerous. The intuitive design is the wrong one: you have ciphertext, you want plaintext, so you decrypt — and only then, maybe, you check whether the result "looks right." To see why that order is fatal, you have to look at what happens inside.
 
+### How CBC padding becomes an oracle
+
 Start with the basics: AES is a *block cipher* — it only knows how to work on fixed-size chunks, 16 bytes each. Since your data almost never lands on an exact multiple of 16, the last chunk is topped up with filler bytes — the *padding* — until it fills the block. [PKCS#7](https://www.rfc-editor.org/rfc/rfc5652#section-6.3) does this by a simple rule: if 5 bytes are missing, append five `0x05` bytes; if 11 are missing, eleven `0x0B`. When decrypting, the very last thing the algorithm does is look at that padding and check it's well-formed.
 
 Now the part that makes it dangerous. AES in [CBC mode](https://en.wikipedia.org/wiki/Block_cipher_mode_of_operation#Cipher_block_chaining_\(CBC\)) chains the blocks: each ciphertext block is mixed (with an XOR) into the *next* one's decryption. Think of a row of dominoes — nudge one and you move its neighbor. That hands the attacker a lever: tamper with one ciphertext block and you control, byte by byte, what comes out of the block after it — including that final padding the decryptor is about to inspect.
@@ -116,6 +118,8 @@ And here's the trap: *whether the padding is valid is something the system gives
   ]}
 />
 
+### From Lucky Thirteen to the Doom Principle
+
 That is the [padding oracle attack](https://www.iacr.org/archive/eurocrypt2002/23320530/cbc02_e02d.pdf), first described by Serge Vaudenay in 2002, and it has been breaking real protocols for two decades: [Lucky Thirteen](https://www.ieee-security.org/TC/SP2013/papers/4977a526.pdf) against TLS in 2013, [POODLE](https://openssl-library.org/files/ssl-poodle.pdf) against SSL 3.0 in 2014.
 
 Moxie Marlinspike distilled the lesson into [The Cryptographic Doom Principle](https://moxie.org/2011/12/13/the-cryptographic-doom-principle.html): *"if you have to perform any cryptographic operation before verifying the MAC on a message you've received, it will somehow inevitably lead to doom."* Decryption is a cryptographic operation. So the MAC check has to come first.
@@ -129,6 +133,8 @@ The dangerous version and the safe version use the *same primitives* — AES-CBC
 Encrypting solves **confidentiality** — nobody can read the secret — but not **integrity** — knowing nobody tampered with it along the way. That's the **MAC**'s job. Think of it as the _wax seal_ on an old letter: the sender stamps the seal with a signet only they hold (the key), and the recipient checks it's still intact before opening; if someone intercepted and rewrote the letter, the seal no longer matches and it's discarded unread. HMAC is that seal in cryptographic form: with a key it produces a short _tag_ from the message, and changing a single byte invalidates it.
 
 Authenticated encryption therefore needs both pieces — a cipher (for confidentiality) and a MAC (for integrity) — but there are exactly three ways to bolt them together, and they are **not** equally safe. The canonical analysis is Bellare and Namprempre's [*Authenticated Encryption: Relations among Notions and Analysis of the Generic Composition Paradigm*](https://eprint.iacr.org/2000/025) ([J. Cryptology, 2008](https://doi.org/10.1007/s00145-008-9026-x)), reinforced for secure channels by Hugo Krawczyk's [*The Order of Encryption and Authentication for Protecting Communications*](https://eprint.iacr.org/2001/045).
+
+### The three generic compositions
 
 <Table title="The three generic compositions">
   <thead>
@@ -164,6 +170,8 @@ Authenticated encryption therefore needs both pieces — a cipher (for confident
 Encrypt-then-MAC is the only one where you can authenticate the message **without touching the cipher** — the tag is computed over the ciphertext, so checking it requires no decryption. That property is exactly what kills the padding oracle: a tampered file never reaches the decrypt path. So that is what the vault uses.
 
 Put the two orderings side by side and the doom is obvious. The composition isn't an academic taxonomy — it's a decision about *which step runs first when an attacker hands you bytes*:
+
+### Same primitives, opposite outcomes
 
 <OrderedCompare
   title="Same primitives, opposite outcomes"
@@ -270,6 +278,8 @@ Note the wiping. The plaintext, the keys, and the scratch buffers all hold secre
 
 ## Reading a record: verify, _then_ decrypt
 
+### The five-step read path
+
 This is the section the whole format exists for. When the vault loads a credential, it does five things in a strict order, and **any** failure at **any** step returns nothing:
 
 <Callout type="tip" title="The golden rule, in one line">
@@ -310,6 +320,8 @@ return decodeCredential(plainBuf.data(), plainLen, out);
 
 Two details make this safe rather than merely sequential.
 
+### First: the constant-time compare
+
 First, the **constant-time compare**. Imagine a combination lock that gave a little _click_ — and took a hair longer to answer — each time you got a digit right: guessing it blind would stop being hopeless, because the lock itself keeps whispering "warmer, warmer." An ordinary byte comparison leaks exactly that hint. "Constant-time" here means concrete: the comparison takes the *same amount of work regardless of the data*, so its duration tells an observer nothing about the secret. A naïve `memcmp` does the opposite — it returns the instant it finds the first differing byte. Feed it a guessed tag and the time it takes to say "no" reveals *how many leading bytes you got right*: a tag matching the first 3 bytes returns measurably later than one that's wrong at byte 0. An attacker who can measure that turns tag forgery into a byte-at-a-time search, ~256 tries per byte instead of 2<sup>256</sup> for the whole tag. The vault never uses `memcmp` on secret-dependent data; it uses a branch-free comparison that XOR-accumulates every byte difference into one value and only checks that value at the very end — same number of operations whether the tag matches on byte 0 or byte 31:
 
 <Code lang="cpp" title="What a constant-time compare boils down to">
@@ -325,6 +337,8 @@ bool constantTimeEqual(const uint8_t* a, const uint8_t* b, size_t len) {
 </Code>
 
 The vault doesn't hand-write that loop — it calls Mbed TLS's [`mbedtls_ct_memcmp`](https://mbed-tls.readthedocs.io/projects/api/en/development/api/file/constant__time_8h/), the library's constant-time comparison primitive, which does exactly this. If you've never seen why this matters, Coda Hale's [*A Lesson In Timing Attacks*](https://codahale.com/a-lesson-in-timing-attacks/) is the classic five-minute explanation; [BearSSL's constant-time notes](https://www.bearssl.org/constanttime.html) go deeper.
+
+### Second: fail-closed by design
 
 Second, **fail-closed**. The record is wiped *before* anything is read, so there is no code path — not a bad size, not a bad version, not a MAC mismatch, not a decrypt failure, not a malformed record — that can leave a partially-populated credential in the caller's buffer. The function either returns `true` with a complete record or `false` with nothing.
 
@@ -345,6 +359,8 @@ Second, **fail-closed**. The record is wiped *before* anything is read, so there
 ## What the tag really binds: slot, type, and freshness
 
 A tag over `ver ‖ iv ‖ cipher` proves the ciphertext is genuine — but it says nothing about three things the format also needs to promise: *which* slot a file belongs to, *what kind* of record it is, and *how recent* it is. An attacker with raw flash write (a programmer or the debug port) but **no PIN** can turn each silence into an attack — and each maps to something mundane: dropping a letter in the **wrong mailbox** (wrong slot), **relabeling a box** so it passes for another kind (wrong type), or sliding **last month's receipt** back in as if it were today's (a stale revision):
+
+### Three gaps a ciphertext-only tag leaves open
 
 <Table title="Three gaps a ciphertext-only tag leaves open">
   <thead>
@@ -368,6 +384,8 @@ A tag over `ver ‖ iv ‖ cipher` proves the ciphertext is genuine — but it s
     </tr>
   </tbody>
 </Table>
+
+### Binding the missing context into the tag
 
 The fix binds the missing context *into the tag itself*. This is exactly the role of [associated data](https://www.rfc-editor.org/rfc/rfc5116#section-2.1) in an AEAD scheme — context that must be **authenticated but not encrypted** — except here it's folded directly into the encrypt-then-MAC tag rather than passed to a single-pass cipher. The 7-byte prefix is centralized in one place, so every record module — and the re-key path — computes it bit-identically:
 
@@ -530,6 +548,8 @@ deriveMacKey(masterKey, hmacSalt, out.mac);  // label || per-vault hmacSalt
     { name: "pinVerifier", note: 'HMAC(·, "vault-pin")' },
   ]}
 />
+
+### The PIN verifier: checking a PIN without storing it
 
 The third sub-key, the PIN verifier, is how the device checks the PIN without storing it: unlock derives the master key from the entered PIN, computes the verifier, and compares it — again in constant time — against the stored value. A wrong PIN simply produces a different verifier, with no hint about *how* wrong it was. (The verifier sits in the `meta.bin` header alongside the salts; the PIN itself is never written anywhere.)
 

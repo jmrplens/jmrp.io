@@ -476,6 +476,8 @@ export const common = {
       description:
         "Artículos técnicos y tutoriales sobre Nginx, MikroTik, redes, seguridad y DevOps. Guías prácticas desde la perspectiva de un ingeniero de I+D.",
       schemaName: "Blog - José Manuel Requena Plens",
+      relatedTitle: "Relacionado en este sitio",
+      relatedTools: "Prueba la herramienta",
     },
     blogPost: {
       backToBlog: "Volver al Blog",
