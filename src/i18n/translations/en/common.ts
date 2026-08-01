@@ -477,6 +477,7 @@ export const common = {
       schemaName: "Blog - José Manuel Requena Plens",
       relatedTitle: "Related on this site",
       relatedTools: "Try the tool",
+      lastVerified: "Last verified {date}",
     },
     blogPost: {
       backToBlog: "Back to Blog",

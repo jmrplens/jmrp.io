@@ -98,6 +98,18 @@ const posts = defineCollection({
           ),
         })
         .optional(),
+      /**
+       * When the instructions were last re-tested, and against what versions.
+       * Distinct from `updatedDate`, which also covers typo/prose fixes with
+       * no re-verification behind them. Only set this when a re-test actually
+       * happened — an invented date turns a trust signal into a checkable lie.
+       */
+      lastVerified: z
+        .object({
+          date: z.coerce.date(),
+          versions: z.array(z.string()).default([]),
+        })
+        .optional(),
     }),
 });
 

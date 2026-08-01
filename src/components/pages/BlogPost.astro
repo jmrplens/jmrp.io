@@ -383,6 +383,18 @@ const articleSchema = [
                 <span class="byline__name">
                   {post.data.author || siteData.author}
                 </span>
+                {
+                  post.data.lastVerified && (
+                    <span class="post-verified">
+                      {t("pages.blog.lastVerified", {
+                        date: formatDate(post.data.lastVerified.date, locale),
+                      })}
+                      {post.data.lastVerified.versions.length > 0 && (
+                        <> · {post.data.lastVerified.versions.join(" · ")}</>
+                      )}
+                    </span>
+                  )
+                }
               </span>
             </div>
           </div>
@@ -783,6 +795,12 @@ const articleSchema = [
   .byline__name {
     font-weight: var(--fw-medium);
     color: var(--color-text-heading);
+  }
+
+  /* Verified-against-version line below the author name — distinct from the
+     "updated on" date, which also covers typo/prose fixes with no re-test. */
+  .post-verified {
+    color: var(--color-text-muted);
   }
 
   .cover-image-container {
