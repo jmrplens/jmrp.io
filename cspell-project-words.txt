@@ -472,6 +472,7 @@ inicial
 inicialización
 inicio
 innest
+inoperativo
 Inplace
 inputname
 inspectiontool
@@ -814,6 +815,7 @@ reaplicarlas
 recalcula
 recalculado
 recalcular
+recalcularlo
 recompila
 recompilaciones
 recompiles
