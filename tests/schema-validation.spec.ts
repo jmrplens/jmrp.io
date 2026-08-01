@@ -406,7 +406,7 @@ test.describe("ProfilePage schema on homepage", () => {
     }
   });
 
-  test("Person.identifier is an array and sameAs covers X and Ko-fi", async ({
+  test("Person.identifier is an array and sameAs excludes opted-out networks", async ({
     page,
   }) => {
     await blockCloudflare(page);
@@ -424,12 +424,15 @@ test.describe("ProfilePage schema on homepage", () => {
     expect(identifiers.length).toBeGreaterThan(0);
     expect(identifiers[0].propertyID).toBe("ORCID");
 
-    expect(person.sameAs as string[]).toEqual(
-      expect.arrayContaining([
-        "https://x.com/jmrplens",
-        "https://ko-fi.com/jmrplens",
-      ]),
-    );
+    // Networks the site owner has deliberately opted out of. They exist, but he
+    // does not want them referenced anywhere on the site — an audit tool
+    // suggesting "add the profiles we found" is not grounds to publish them.
+    const OPTED_OUT = ["x.com", "twitter.com", "ko-fi.com"];
+    for (const host of OPTED_OUT) {
+      expect((person.sameAs as string[]).some((u) => u.includes(host))).toBe(
+        false,
+      );
+    }
   });
 
   test("the canonical ProfilePage lives at /about/", async ({ page }) => {

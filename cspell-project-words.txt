@@ -512,7 +512,6 @@ keypoint
 keyserver
 keyspace
 kleidos
-kofi
 kolkata
 kpii
 Krawczyk

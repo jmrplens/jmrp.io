@@ -103,12 +103,6 @@ social_links:
     url: "https://keyoxide.org/0A993B268654DBBA52B7E8D3FCF653391E2C91FC"
     icon: "i-mdi:key"
     rel: "me noopener noreferrer"
-  - name: "X"
-    url: "https://x.com/jmrplens"
-    icon: "i-simple-icons:x"
-  - name: "Ko-fi"
-    url: "https://ko-fi.com/jmrplens"
-    icon: "i-simple-icons:kofi"
 
 shortcuts:
   - name: "Blog"

@@ -226,7 +226,7 @@ Ese string es un nombre de _tipo_ de schema.org, no uno de los valores de catego
 - **B3** — Migas de pan en español mal formadas: posición 1 enraíza en la home **inglesa**, posición 2 es el segmento literal capitalizado `"Es"`.
 - **B4** — Nombres de pasos `HowTo` que no aparecen en la página visible (5 de 8 en el post 003). Derivarlos del H2/H3 real o añadir anclas `url`.
 - **B5** — `proficiencyLevel: "Beginner"` en el post 003, que es el más complejo del corpus (6.461 palabras, 75 encabezados). Debe ser `Intermediate`.
-- **B6** — `sameAs` omite dos perfiles vivos hallados en búsqueda: `x.com/jmrplens` y `ko-fi.com/jmrplens`.
+- **B6** — ~~`sameAs` omite dos perfiles vivos hallados en búsqueda.~~ **DESCARTADO por el titular**: no quiere esas redes referenciadas en ningún sitio. Que una auditoría encuentre perfiles no es razón para publicarlos — qué identidades se enlazan es decisión suya. Un test bloquea ahora su reaparición.
 - **B7** — `/identity/person.jsonld` existe y coincide con `#person`, pero nada lo enlaza y no está en el sitemap.
 - **B8** — Valores numéricos como strings: `image.width: "460"`, `offers.price: "0"`.
 - **B9** — La imagen de `Person` hotlinkea `https://github.com/jmrplens.png` (fuera de origen, sin hash estable).
