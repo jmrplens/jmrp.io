@@ -116,6 +116,21 @@ async function getSortedTools() {
   return tools.sort((a, b) => a.data.title.localeCompare(b.data.title));
 }
 
+/** Published posts for one locale, ordered by numbered slug (chronological). */
+async function getPostsByLocale(lang: "en" | "es") {
+  const posts = await getCollection(
+    "posts",
+    (p) => p.data.lang === lang && !p.data.draft,
+  );
+  return posts.sort((a, b) => a.data.slug.localeCompare(b.data.slug));
+}
+
+/** Tools for one locale, alphabetical within that locale. */
+async function getToolsByLocale(lang: "en" | "es") {
+  const tools = await getCollection("tools", (t) => t.data.lang === lang);
+  return tools.sort((a, b) => a.data.title.localeCompare(b.data.title));
+}
+
 /**
  * Builds the locale-aware absolute URL for a tool entry — `/tools/<slug>/`
  * for English entries, `/es/tools/<slug>/` for Spanish entries. The tools
@@ -144,8 +159,10 @@ function sectionsBlock(siteUrl: string): string {
 
 /** Generates the concise `llms.txt` index. */
 export async function generateLlmsTxt(siteUrl: string): Promise<string> {
-  const posts = await getEnglishPosts();
-  const tools = await getSortedTools();
+  const postsEn = await getPostsByLocale("en");
+  const postsEs = await getPostsByLocale("es");
+  const toolsEn = await getToolsByLocale("en");
+  const toolsEs = await getToolsByLocale("es");
 
   const lines = [
     "# jmrp.io",
@@ -164,16 +181,32 @@ export async function generateLlmsTxt(siteUrl: string): Promise<string> {
     "",
     "## Blog Posts",
     "",
-    ...posts.map(
+    ...postsEn.map(
       (p) =>
         `- [${p.data.title}](${siteUrl}/blog/${p.data.slug}/)${
           p.data.description ? `: ${p.data.description}` : ""
         }`,
     ),
     "",
+    "## Blog Posts (Español)",
+    "",
+    ...postsEs.map(
+      (p) =>
+        `- [${p.data.title}](${siteUrl}/es/blog/${p.data.slug}/)${
+          p.data.description ? `: ${p.data.description}` : ""
+        }`,
+    ),
+    "",
     "## Developer Tools",
     "",
-    ...tools.map(
+    ...toolsEn.map(
+      (t) =>
+        `- [${t.data.title}](${toolUrl(siteUrl, t)}): ${t.data.description}`,
+    ),
+    "",
+    "## Developer Tools (Español)",
+    "",
+    ...toolsEs.map(
       (t) =>
         `- [${t.data.title}](${toolUrl(siteUrl, t)}): ${t.data.description}`,
     ),

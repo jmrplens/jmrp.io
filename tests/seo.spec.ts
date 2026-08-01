@@ -364,6 +364,21 @@ test.describe("SEO & Metadata Checks", () => {
   });
   /* eslint-enable playwright/no-conditional-in-test */
 
+  test("llms.txt declares both locales in separate sections", async ({
+    page,
+  }) => {
+    const response = await page.request.get("/llms.txt");
+    const content = await response.text();
+    expect(content).toBeDefined();
+
+    expect(content).toContain("## Blog Posts (Español)");
+    expect(content).toContain("## Developer Tools (Español)");
+
+    const esPosts =
+      content.match(/]\(https:\/\/jmrp\.io\/es\/blog\/\d{3}-/g) ?? [];
+    expect(esPosts).toHaveLength(12);
+  });
+
   test("Structured data (JSON-LD) is present on key pages", async ({
     page,
   }) => {
