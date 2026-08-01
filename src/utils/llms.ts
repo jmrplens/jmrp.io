@@ -68,11 +68,15 @@ function mdxToText(body: string): string {
         return line;
       }
       if (inFence) return line;
-      const match = /^(#{1,4})(\s+.*)$/.exec(line);
+      // `\s` matches exactly one character and the remainder is taken with
+      // slice() rather than a second capture group: `(\s+.*)` lets both parts
+      // consume whitespace, so the engine backtracks over every split of a
+      // long run of spaces (super-linear, flagged by SonarCloud as ReDoS).
+      const match = /^(#{1,4})\s/.exec(line);
       if (!match) return line;
       // Cap at H6 so deeply nested source headings stay valid markdown.
       const depth = Math.min(match[1].length + 2, 6);
-      return `${"#".repeat(depth)}${match[2]}`;
+      return `${"#".repeat(depth)}${line.slice(match[1].length)}`;
     })
     .join("\n");
 }
