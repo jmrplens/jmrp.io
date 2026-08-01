@@ -391,3 +391,36 @@ test.describe("CV FAB Menu", () => {
     await expect(drawer).not.toHaveClass(/open/);
   });
 });
+
+// ─── References ──────────────────────────────────────────────────────
+
+test.describe("References", () => {
+  test("lists site-relative references alongside external ones", async ({
+    page,
+  }) => {
+    await blockCloudflare(page);
+    await page.goto("/blog/006-implementing-mikrotik-honeypot/");
+
+    const references = page.locator(".references-list .reference-link");
+    await expect(references.first()).toBeVisible();
+
+    // The post links to the tarpit post in its prose, so that internal link
+    // belongs in the reference list too — it is a cited source like any other.
+    const hrefs = await references.evaluateAll((links) =>
+      links.map((l) => l.getAttribute("href")),
+    );
+    expect(hrefs).toContain("/blog/005-implementing-tarpit-nginx/");
+  });
+
+  test("keeps internal references in the same tab", async ({ page }) => {
+    await blockCloudflare(page);
+    await page.goto("/blog/006-implementing-mikrotik-honeypot/");
+
+    const internal = page.locator(
+      '.references-list a[href="/blog/005-implementing-tarpit-nginx/"]',
+    );
+    await expect(internal).toHaveCount(1);
+    // Only off-site references open in a new tab.
+    await expect(internal).not.toHaveAttribute("target", "_blank");
+  });
+});

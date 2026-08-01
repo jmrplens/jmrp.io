@@ -5,7 +5,7 @@
  * focuses on deep, manual-style interaction tests to verify complex behaviors:
  *
  * 1. Semantic Structure: Validating landmarks (nav, main, footer) and heading hierarchy.
- * 2. Interactive Components: Testing keyboard accessibility for search, tabs, and copy buttons.
+ * 2. Interactive Components: Testing keyboard accessibility for tabs and copy buttons.
  * 3. Skip Links: Verifying skip-to-content functionality.
  */
 
@@ -24,55 +24,6 @@ test.describe("Deep Accessibility & Interaction Tests", () => {
     // 2. Headings hierarchy
     // Ensure we have one H1
     await expect(page.locator("h1")).toHaveCount(1);
-  });
-
-  test("GitHub Search Keyboard Interaction", async ({ page }) => {
-    await page.goto("/github");
-
-    const searchInput = page.getByRole("searchbox", {
-      name: "Search repositories",
-    });
-    await expect(searchInput).toBeVisible();
-
-    // 1. Focus Search
-    await searchInput.focus();
-    await expect(searchInput).toBeFocused();
-
-    // 2. Type "portfolio" (guaranteed to be in description of jmrp.io repo)
-    await page.keyboard.type("portfolio");
-
-    // The filter runs behind a 150 ms debounce — wait until it has hidden at
-    // least one non-matching card before measuring visibility, otherwise the
-    // snapshot below races the filter and reads the unfiltered grid.
-    await expect(
-      page.locator('.repo-card[style*="display: none"]').first(),
-    ).toBeAttached();
-
-    // 3. Verify filtering happened (visual check logic via code)
-    // We expect repos *not* matching "portfolio" to be hidden.
-    // This assumes there's at least one repo that doesn't match "portfolio"
-
-    const visibleCards = page.locator(".repo-card");
-    const visibleIndices = await visibleCards.evaluateAll((cards) =>
-      cards
-        .map((c, i) => {
-          const style = globalThis.getComputedStyle(c);
-          return style.display !== "none" && style.visibility !== "hidden"
-            ? i
-            : -1;
-        })
-        .filter((i) => i !== -1),
-    );
-    expect(visibleIndices.length).toBeGreaterThan(0); // Should still show something
-    const firstVisibleIndex = visibleIndices[0];
-
-    // 4. Verify we can tab from search to the first result
-    await page.keyboard.press("Tab");
-
-    // The logic depends on DOM order. GitHubSearch puts grid after input.
-    // First focusable element in grid is the link in h3 inside repo-card.
-    const firstRepoLink = visibleCards.nth(firstVisibleIndex).locator("a");
-    await expect(firstRepoLink).toBeFocused();
   });
 
   test("Blog Post Code Block Keyboard Interaction", async ({ page }) => {

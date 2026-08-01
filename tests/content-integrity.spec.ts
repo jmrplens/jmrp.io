@@ -78,7 +78,7 @@ test.describe("External Links Security", () => {
     "/blog/001-secure-nginx-client-certificates/",
     "/cv",
     "/tools/",
-    "/github/",
+    "/projects/",
   ];
 
   for (const url of samplePages) {

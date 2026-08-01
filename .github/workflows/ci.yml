@@ -19,6 +19,18 @@ permissions:
 env:
   NODE_OPTIONS: "--no-deprecation"
 
+# GitHub's default shell is `bash -e {0}` — no `pipefail`. Every static-analysis
+# job pipes its tool into `tee` to keep a log artifact, so the step's exit code
+# was `tee`'s (always 0) and those jobs could never fail: `SA: Spell Checker`
+# passed a commit that CSpell rejects locally, and `SA: Security Audit` reported
+# success while `pnpm audit --audit-level=high` exited 1. Setting the default
+# here fixes all of them at once, and any step added later. `-u` is deliberately
+# left out: it is not GitHub's default either, and would break steps that test
+# unset variables.
+defaults:
+  run:
+    shell: bash -eo pipefail {0}
+
 jobs:
   ci-setup:
     name: "🚀 Initialize CI Report"
@@ -111,6 +123,14 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - uses: ./.github/actions/setup
+      # Typed linting needs `.astro/*.d.ts`. Without it `astro:content` cannot
+      # be resolved, every value from `getCollection()` degrades to an error
+      # type, and the `no-unsafe-*` rules fire — 33 of them in
+      # `src/pages/og/[...slug].png.ts` alone. This job does not consume the
+      # build artifact, so nothing else generates them here. `astro check`
+      # syncs on its own, which is why `SA: Astro Check` was unaffected.
+      - name: Generate Astro content types
+        run: pnpm exec astro sync
       - name: Run ESLint
         run: pnpm exec eslint . --max-warnings=0 2>&1 | tee eslint.log
       - name: Upload ESLint log

@@ -615,3 +615,54 @@ test.describe("URL correctness in schemas", () => {
     expect(origins.length).toBeLessThanOrEqual(1);
   });
 });
+
+// ─── Publications ────────────────────────────────────────────────────
+
+test.describe("ScholarlyArticle schema on the publications page", () => {
+  test("identifies works by DOI and keeps off-site landing pages in sameAs", async ({
+    page,
+  }) => {
+    await blockCloudflare(page);
+    await page.goto("/publications/");
+    const jsonLd = await getJsonLd(page);
+
+    const collection = findInGraph(jsonLd, "CollectionPage");
+    expect(collection).not.toBeNull();
+    if (!collection) return;
+
+    const itemList = collection.mainEntity as JsonLdSchema;
+    const listItems = itemList.itemListElement as JsonLdSchema[];
+    const articles = listItems.map((li) => li.item as JsonLdSchema);
+    expect(articles.length).toBeGreaterThan(0);
+
+    // Every work that has a DOI is identified by it.
+    const withDoi = articles.filter(
+      (a) => isNonEmptyStr(a.url) && a.url.startsWith("https://doi.org/"),
+    );
+    expect(withDoi.length).toBeGreaterThan(0);
+
+    // A landing page hosted elsewhere (institutional repository, handle) is a
+    // distinct reference for the work and must survive alongside the DOI. This
+    // one arrives in the BibTeX `pdf` field rather than `url`.
+    // Matched on the parsed hostname, not a substring: "hdl.handle.net" can
+    // appear anywhere in an arbitrary URL's path.
+    const handles = articles.flatMap((a) =>
+      ((a.sameAs as string[] | undefined) ?? []).filter(
+        (u) => new URL(u).hostname === "hdl.handle.net",
+      ),
+    );
+    expect(handles.length).toBeGreaterThan(0);
+
+    // sameAs must never carry a relative path or a PDF hosted on this site:
+    // that is the file itself, not a reference page identifying the work.
+    for (const article of articles) {
+      for (const url of (article.sameAs as string[] | undefined) ?? []) {
+        expect(url).toMatch(/^https?:\/\//);
+        const parsed = new URL(url);
+        expect(
+          parsed.hostname === "jmrp.io" && parsed.pathname.startsWith("/pdf/"),
+        ).toBe(false);
+      }
+    }
+  });
+});

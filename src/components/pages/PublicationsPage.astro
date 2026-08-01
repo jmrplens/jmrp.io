@@ -107,9 +107,14 @@ const formatIssuedDate = (issued?: {
 const toDoiUrl = (doi: string): string =>
   doi.startsWith("http") ? doi : `https://doi.org/${doi}`;
 
-/** Resolves a `pdf` field (site-relative path or already-absolute URL) to an absolute URL. */
-const toAbsolutePdfUrl = (pdfPath: string): string =>
-  pdfPath.startsWith("http") ? pdfPath : getAbsoluteUrl(pdfPath);
+/** Resolves a BibTeX `url`/`pdf` field (site-relative path or already-absolute URL) to an absolute URL. */
+const toAbsoluteUrl = (value: string): string =>
+  value.startsWith("http") ? value : getAbsoluteUrl(value);
+
+const siteOrigin = new URL(getSiteUrl()).origin;
+
+/** True when an already-absolute URL points somewhere other than this site. */
+const isOffSite = (url: string): boolean => new URL(url).origin !== siteOrigin;
 
 // `@context` omitted: merged into the page-level @graph (BaseLayout) which
 // already declares the context.
@@ -128,17 +133,33 @@ const collectionSchema = {
     numberOfItems: allPublications.length,
     itemListElement: allPublications.map((pub, index): ListItem => {
       // citation-js exposes CSL-JSON fields in their canonical (uppercase)
-      // casing — `DOI`/`URL`/`ISBN`, not `doi`/`url`/`isbn`. None of the 14
-      // entries in papers.bib currently carry a verified DOI (checked against
-      // Crossref — see plan/geo-audit/wave-b-report.md); this wiring picks
-      // one up automatically the moment a `doi = {...}` field is added.
+      // casing — `DOI`/`URL`/`ISBN`, not `doi`/`url`/`isbn`. 13 of the 14
+      // entries in papers.bib carry a Zenodo *concept* DOI, which always
+      // resolves to the latest version of the deposit rather than pinning one
+      // immutable file. `escartiECSSMET2021` has no deposit and carries no
+      // `url`/`pdf` either, so it is the one entry whose node has no `url` at
+      // all — title, authors and venue are all that identify it.
       const doi = typeof pub.DOI === "string" ? pub.DOI : undefined;
       const doiUrl = doi ? toDoiUrl(doi) : undefined;
-      const pubUrl = typeof pub.URL === "string" ? pub.URL : undefined;
+      const pubUrl =
+        typeof pub.URL === "string" ? toAbsoluteUrl(pub.URL) : undefined;
       const pdfPath = typeof pub.pdf === "string" ? pub.pdf : undefined;
-      const pdfUrl = pdfPath ? toAbsolutePdfUrl(pdfPath) : undefined;
+      const pdfUrl = pdfPath ? toAbsoluteUrl(pdfPath) : undefined;
       const isbn = typeof pub.ISBN === "string" ? pub.ISBN : undefined;
       const resolvedUrl = doiUrl ?? pubUrl ?? pdfUrl;
+      // `url` can only carry one address, so the DOI wins it. Any other
+      // off-site landing page for the same work stays discoverable through
+      // `sameAs` instead of being dropped. What is excluded is the locally
+      // hosted PDF — that is the file itself, not a reference page
+      // identifying the work — whichever BibTeX field it arrived in.
+      // `ramis2018aprendizaje` is why both fields are checked: its handle
+      // (hdl.handle.net) lives in `pdf`, not `url`.
+      const landingPages = [pubUrl, pdfUrl].filter(
+        (u): u is string => u !== undefined && isOffSite(u),
+      );
+      const sameAs = [
+        ...new Set([...(doiUrl ? [doiUrl] : []), ...landingPages]),
+      ];
       const identifiers = [
         ...(doi
           ? [
@@ -209,7 +230,7 @@ const collectionSchema = {
               ? stripHtml(pub.abstract)
               : undefined,
           ...(resolvedUrl && { url: resolvedUrl }),
-          ...(doiUrl && { sameAs: [doiUrl] }),
+          ...(sameAs.length > 0 && { sameAs }),
           ...(identifiers.length > 0 && { identifier: identifiers }),
         },
       };

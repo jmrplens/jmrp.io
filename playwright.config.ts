@@ -71,7 +71,10 @@ export default defineConfig({
       name: "accessibility",
       use: { ...devices["Desktop Chrome"] },
       testMatch: /(^|\/)accessibility\.spec\.ts/,
-      timeout: 30_000,
+      // 60s, not 30s: a full axe-core scan of the heaviest blog posts takes
+      // ~29s even with the machine to itself, so 30s left no headroom and the
+      // longest posts timed out whenever the run was parallel.
+      timeout: 60_000,
     },
     {
       name: "a11y-static",

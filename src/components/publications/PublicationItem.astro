@@ -18,6 +18,12 @@ const kind = getPublicationKind(pub.type);
 const chipLabel = t(PUBLICATION_KIND_LABEL_KEY[kind]);
 
 // Function to clean BibTeX
+// `doi` is deliberately kept: it is the canonical, permanent identifier of the
+// work, so anyone copying the entry into their own bibliography should get it.
+// Dropped are the file pointers (`pdf`/`slides`/`poster`/`file`), which are
+// mostly paths on this site and meaningless in someone else's bibliography,
+// `url` for the same reason (it too can hold a local PDF path), the render
+// flag, and bulky prose (`abstract`/`keywords`).
 const cleanBibtex = (bibtex: string) => {
   if (!bibtex) return "";
   const lines = bibtex.split("\n");
@@ -27,7 +33,6 @@ const cleanBibtex = (bibtex: string) => {
       !l.startsWith("file") &&
       !l.startsWith("abstract") &&
       !l.startsWith("keywords") &&
-      !l.startsWith("doi") &&
       !l.startsWith("url") &&
       !l.startsWith("pdf") &&
       !l.startsWith("slides") &&
@@ -76,6 +81,10 @@ const doi =
     ? `https://doi.org/${rawDoi.replace(/^(doi:|\/)+/, "")}`
     : rawDoi;
 const pdf = pub.pdf || pub.PDF || "";
+// A DOI no longer hides `url`: a distinct landing page (institutional
+// repository, handle) is a different destination and stays reachable. It is
+// only suppressed when it repeats the PDF, which the PDF button already links.
+const showUrl = Boolean(url) && url !== pdf;
 const slides = pub.slides || "";
 const poster = pub.poster || "";
 
@@ -237,7 +246,7 @@ const cleanedBibtex = cleanBibtex(pub.bibtex);
         )
       }
       {
-        url && !doi && (
+        showUrl && (
           <a
             href={url}
             class="btn-sm"

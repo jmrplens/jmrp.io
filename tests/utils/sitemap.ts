@@ -162,7 +162,7 @@ const FALLBACK_PAGES: PageInfo[] = [
   { name: "Home", url: "/" },
   { name: "Publications", url: "/publications" },
   { name: "CV", url: "/cv" },
-  { name: "GitHub", url: "/github" },
+  { name: "Projects", url: "/projects" },
   { name: "Services", url: "/services" },
   { name: "Blog Index", url: "/blog" },
 ];

@@ -193,7 +193,7 @@ const mainPages = [
   { name: "Tools", path: "/tools/" },
   { name: "CV", path: "/cv/" },
   { name: "Publications", path: "/publications/" },
-  { name: "Repositories", path: "/github/" },
+  { name: "Projects", path: "/projects/" },
 ];
 
 /**

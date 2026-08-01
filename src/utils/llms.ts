@@ -111,7 +111,6 @@ function sectionsBlock(siteUrl: string): string {
     `- [Publications](${siteUrl}/publications/): Academic papers on acoustics, metamaterials, and ultrasound`,
     `- [Homelab](${siteUrl}/homelab/): Self-hosted infrastructure — Mastodon, Matrix, AT Protocol PDS, Tor relays`,
     `- [Projects](${siteUrl}/projects/): Curated open-source software he authors and maintains — MCP servers, acoustics tooling, network security; language, license, source and docs per project`,
-    `- [GitHub](${siteUrl}/github/): Open source projects and contributions`,
     `- [Tools](${siteUrl}/tools/): Free browser-based developer tools (privacy-first, no server calls)`,
     `- [Uses](${siteUrl}/uses/): Hardware, software, and homelab kept in rotation`,
   ].join("\n");

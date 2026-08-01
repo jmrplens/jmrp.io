@@ -142,7 +142,7 @@ const t = useTranslations(locale);
 
 <article
   data-code-fallback={t("pages.blogPost.codeFallback")}
-  data-no-results={t("pages.github.noReposFound")}
+  data-no-results={t("ui.noResults")}
 >
   <!-- Content -->
 </article>
@@ -225,7 +225,7 @@ export const common = {
     tools: "Tools",
     cv: "CV",
     publications: "Publications",
-    repositories: "Repositories",
+    projects: "Projects",
     homelab: "Homelab",
   },
   ui: {
@@ -237,7 +237,7 @@ export const common = {
   },
   aria: {
     mainNav: "Main Navigation",
-    searchRepos: "Search repositories",
+    toggleTheme: "Toggle theme",
     // ... all ARIA labels
   },
   blog: {
@@ -251,7 +251,6 @@ export const common = {
     // ... SEO strings
   },
   pages: {
-    github: { findRepoPlaceholder: "Find a repository...", ... },
     cv: { schemaDescription: "...", ... },
     publications: { abstract: "Abstract", bibtex: "BibTeX" },
     toolsCategory: { securityDesc: "...", ... },
@@ -461,17 +460,17 @@ const t = useTranslations(locale);
 ```astro
 ---
 import { pluralize } from "@i18n/utils";
-const starText = pluralize(
+const postText = pluralize(
   count,
   {
-    one: t("pages.github.starSingular"),
-    other: t("pages.github.starPlural"),
+    one: t("pages.blogTags.postSingular"),
+    other: t("pages.blogTags.postPlural"),
   },
   locale,
 );
 ---
 
-<span>{count} {starText}</span>
+<span>{count} {postText}</span>
 ```
 
 ## Anti-Patterns
