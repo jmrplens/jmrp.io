@@ -101,6 +101,8 @@ That `11.16 MH/s` figure is not hypothetical. It comes straight from a published
 
 The difference between **online** and **offline** is everything here. _Online_ is the thief standing at your door trying keys: you can slam it shut after a few tries. _Offline_ is the thief who took a copy of the lock back to their workshop, where they file keys unwatched, with all the time in the world. So the only thing that makes a short PIN viable is making sure the attacker **can't get offline** — and bounding how fast they can guess **online**.
 
+### Online vs offline: two different attackers
+
 <AttackSurfaceMatrix
   title="Online vs offline: two different attackers, two different controls"
   ariaLabel="The online attacker holds the device and types PINs on the keypad; they are stopped by the brute-force guard that locks out and wipes after 10 attempts. The offline attacker has dumped the flash and grinds guesses on a GPU; they are stopped by device-bound key derivation, because the per-chip secret cannot be reproduced off the chip."
@@ -136,6 +138,8 @@ The difference between **online** and **offline** is everything here. _Online_ i
     },
   ]}
 />
+
+### The online ceiling: lockout, then wipe
 
 The online side is the easy half, and it's the one most products get right. My firmware tracks consecutive failed attempts in NVS so the count survives a reboot or a deep-sleep cycle, and it escalates: nothing for the first three tries, a 30-second lockout for attempts four through six, a 300-second lockout for seven through nine, and a **full vault wipe on the tenth**. The lockout deadline is stored against the real-time clock, so yanking the power doesn't reset the timer.
 
@@ -178,6 +182,8 @@ The textbook answer to "my secret has low entropy" is a [password-based KDF](htt
 
 It breaks on a microcontroller for a simple physical reason: **the work factor slows down the legitimate device far more than it slows down the attacker.** The iteration count has to be small enough that the *user's* unlock is bearable, and on this silicon that ceiling is low. My production builds use **35,000 iterations on the ESP32-S3 and 25,000 on classic ESP32**, each sized for roughly a **2-second** unlock. The OWASP-recommended 600,000 would push a single unlock to about **32 seconds** on the S3 — and around **47 seconds** on classic ESP32. Nobody is going to wait half a minute to open their password manager, so that count is physically unusable as a UX, not just inconvenient.
 
+### What raising the iteration count actually costs the user
+
 <DeltaCompare
   title="What raising the iteration count actually costs the user"
   unit=" s"
@@ -202,6 +208,8 @@ Iteration count buys real time against a *high-entropy* password being attacked 
 If you can't make each offline guess slow enough, make each offline guess **need something the attacker doesn't have**. After PBKDF2 produces the master key from the PIN and salt, I mix in a 32-byte `deviceSecret` that only the original chip can produce. The verifier stored on flash is then derived from that *bound* master key. An attacker who dumps the flash has the ciphertext and the salt, but recomputing the key for any PIN guess now requires the per-chip secret — and that secret never appears on the flash they copied.
 
 It's like requiring, on top of the PIN, an ingredient that exists only in *this one* chip and can't be copied: however perfect the flash copy the thief walks off with, without that ingredient their 10,000 tries go nowhere. This is the whole trick, and it changes the attack from *linear* to *categorical*. Before binding, the offline attacker needs 10,000 cheap PBKDF2 evaluations and wins. After binding, they need a secret that physically does not leave the chip, so the offline attack doesn't get slower — it stops existing. The only place a guess can be checked is back on the device, where the lockout-and-wipe guard is waiting.
+
+### Where binding slots into the KDF chain
 
 <Pipeline
   title="Where binding slots into the KDF chain"
@@ -309,6 +317,8 @@ Think of a sealed black box with a secret inside: you can hand it a message and 
   ]}
 />
 
+### Driving the HMAC peripheral through PSA Crypto
+
 ESP-IDF 6.x drives the HMAC peripheral through the [PSA Crypto](https://docs.espressif.com/projects/esp-idf/en/stable/esp32s3/api-reference/peripherals/hmac.html) opaque-key interface rather than the old `esp_hmac_calculate` call, and that's exactly the path the firmware takes. The trick is `psa_import_key` of a tiny struct that holds the eFuse *key id* — a **reference** to the key block, not key bytes — under the `PSA_KEY_LIFETIME_ESP_HMAC_VOLATILE` lifetime. PSA then routes `psa_mac_compute` into the peripheral, which does the HMAC over my message internally and hands back only the result.
 
 <Code lang="cpp" title="device_secret.cpp — computeEFuseSecret() (trimmed)">
@@ -399,6 +409,8 @@ The construction is the canonical two-step:
 />
 
 The salt is the device secret and the input key material is the PBKDF2 master, so `PRK = HKDF-Extract(salt = deviceSecret, IKM = master)` and then `boundMaster = HKDF-Expand(PRK, info = "vault-device-bind-v1", L = 32)`. The versioned `info` string is domain separation: if I ever change the binding construction, a different `info` makes the new keys provably distinct from the old ones.
+
+### One HMAC primitive, byte-identical on both backends
 
 Here's the engineering beat I'm proudest of. My HKDF is built on the firmware's own `VaultCrypto::hmacSha256`, not on a library's HKDF module — and that's a feature, not reinvention. The device runs PSA Crypto on mbedTLS 4.0; the native host tests run a legacy mbedTLS. Crucially, **mbedTLS 4.0 removed the legacy `mbedtls_hkdf` module** (you're expected to drive `psa_key_derivation_*` with `PSA_ALG_HKDF` instead), so a portable HKDF that calls the old module just won't compile on the device, and one that calls only the PSA path won't run on the host. By building HKDF on one HMAC primitive that exists on both backends, I get **byte-identical output everywhere** and sidestep the 3.6→4.0 API churn entirely.
 

@@ -7,6 +7,7 @@
 import "@styles/blog.css";
 
 import AuthorCard from "@components/blog/AuthorCard.astro";
+import RelatedContent from "@components/blog/RelatedContent.astro";
 import TableOfContentsDrawer from "@components/layout/TableOfContentsDrawer.astro";
 import Callout from "@components/ui/Callout.astro";
 import Code from "@components/ui/Code.astro";
@@ -21,6 +22,7 @@ import { formatDate, useTranslatedPath, useTranslations } from "@i18n/utils";
 import BaseLayout from "@layouts/BaseLayout.astro";
 import type { SiteConfig } from "@src/types";
 import { formatDateDot, getReadingTime } from "@utils/blog";
+import { getRelatedContent } from "@utils/related";
 import { getSiteUrl } from "@utils/site";
 import { getImage, Picture } from "astro:assets";
 import { type CollectionEntry, getEntry, render } from "astro:content";
@@ -49,6 +51,10 @@ const { Content, headings } = await render(post);
 // (the full tag list lives in the JSON-LD / tag pages, not the header).
 const readingMin = getReadingTime(post);
 const primaryTags = (post.data.tags ?? []).slice(0, 2);
+
+// Curated related posts/tools, keyed by the post's numeric slug prefix.
+const postNumber = /^(\d{3})-/.exec(post.data.slug)?.[1] ?? "";
+const relatedContent = await getRelatedContent(postNumber, locale);
 
 // --- Reference Collection Logic ---
 const bodyWithoutCode = (post.body || "")
@@ -433,6 +439,10 @@ const articleSchema = [
             <FAQ items={post.data.faq} />
           )
         }
+        <RelatedContent
+          posts={relatedContent.posts}
+          tools={relatedContent.tools}
+        />
         <References references={finalReferences} />
         <AuthorCard />
       </div>
