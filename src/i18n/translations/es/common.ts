@@ -509,6 +509,36 @@ export const common = {
       schemaDescription: "Explora {count} artículos sobre {tag}.",
       metaDescription:
         "Explora {count} {articleWord} técnicos sobre {tag}. Tutoriales detallados y guías de José Manuel Requena Plens con implementaciones prácticas de {tag}.",
+      // Short original prose per surviving tag (see BlogTagPage.astro), keyed
+      // by the lowercase tag as returned by getUniqueTags(). Only tags that
+      // currently label at least one post need an entry here.
+      tagIntro: {
+        security:
+          "Notas de endurecimiento extraídas de despliegues reales en producción: TLS mutuo, Content Security Policy y técnicas de engaño como tarpits y honeypots que frenan o atrapan el tráfico malicioso antes de que llegue a algo importante.",
+        nginx:
+          "Inmersiones en la configuración de Nginx, desde el control de acceso y las cabeceras de seguridad hasta servir ficheros sin tocar disco y habilitar QUIC/HTTP/3 en producción.",
+        mikrotik:
+          "Configuraciones de RouterOS probadas en hardware real de homelab: túneles VPN, configuraciones dual-stack con el ISP y trucos defensivos ejecutados en un router MikroTik.",
+        firmware:
+          "Notas de ingeniería de firmware para microcontroladores con recursos limitados: empaquetar cadenas, derivar claves ligadas al dispositivo y construir un almacén autenticado en C++.",
+        esp32:
+          "Trabajo práctico de firmware sobre el ESP32: técnicas en C++ con memoria limitada, verificadas en hardware real y no en un simulador.",
+        ipv6: "Configuraciones dual-stack que tratan IPv6 como ciudadano de primera clase junto a IPv4, desde la delegación de prefijos con un ISP residencial hasta enrutarlo por un túnel VPN.",
+        networking:
+          "Notas a nivel de protocolo sobre cómo se mueve el tráfico en realidad: desde el rediseño de la capa de transporte de QUIC hasta túneles VPN y comportamientos deliberadamente hostiles pensados para escáneres.",
+        cryptography:
+          "Criptografía aplicada tal como aparece en sistemas reales: autenticación basada en certificados, nonces de CSP, y derivación de claves y cifrado autenticado en hardware embebido.",
+        devops:
+          "Patrones de despliegue e infraestructura para ejecutar servicios sin I/O de disco innecesario ni imágenes de contenedor infladas, incluyendo endpoints de salud de Kubernetes servidos directamente desde la configuración.",
+        embedded:
+          "Notas sobre construir software que debe caber en kilobytes de flash y RAM, donde cada cadena y cada byte de layout es una decisión deliberada.",
+        linux:
+          "Administración de sistemas Linux tal como se encuentra al operar servicios autoalojados reales, no en ejemplos de libro de texto.",
+        privacy:
+          "Infraestructura de privacidad operada de verdad: un relay bridge de Tor gestionado y documentado desde la configuración inicial hasta el mantenimiento continuo.",
+        "c++":
+          "C++ tal como se usa en firmware: layout de memoria manual, evitando la asignación en el heap cuando es posible, y código verificado en objetivos embebidos reales.",
+      },
     },
     cv: {
       title: "CV",

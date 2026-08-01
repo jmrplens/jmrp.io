@@ -328,6 +328,7 @@ endlessh
 enero
 enrutables
 enrutado
+enrutarlo
 entradilla
 epoll
 epsg
@@ -821,6 +822,7 @@ reconexión
 reconexiones
 recursión
 redibujado
+rediseño
 redirección
 redirecciones
 Rediseñé

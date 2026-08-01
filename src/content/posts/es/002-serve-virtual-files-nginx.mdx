@@ -9,7 +9,7 @@ updatedDate: 2025-12-18
 draft: false
 lang: "es"
 coverImage: "../../../assets/images/blog/virtual-files.webp"
-tags: ["Nginx", "DevOps", "Containers", "Kubernetes"]
+tags: ["Nginx", "DevOps", "Security"]
 faq:
   - question: "¿Cómo sirvo robots.txt o un health check en Nginx sin un archivo en disco?"
     answer: "Usa un bloque location con la directiva return para enviar contenido inline, por ejemplo `location = /robots.txt { default_type text/plain; return 200 \"User-agent: *\\nAllow: /\\n\"; }`. Esto sirve el contenido directamente desde la configuración sin ningún archivo físico, ideal para containers y plataformas gestionadas donde no puedes modificar la imagen ni el filesystem."

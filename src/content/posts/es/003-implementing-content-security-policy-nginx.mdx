@@ -10,7 +10,7 @@ lastVerified:
     - nginx (jmrp.io production)
 description: "Domina Content Security Policy de cero a A+ — nonces, hashes, strict-dynamic, Trusted Types, prevención de bypass y configuraciones Nginx en producción."
 coverImage: "../../../assets/images/blog/csp-shield.webp"
-tags: ["Nginx", "Security", "CSP"]
+tags: ["Nginx", "Security", "Cryptography"]
 faq:
   - question: "¿Cuál es la CSP más sencilla para empezar en Nginx?"
     answer: "Añade la única cabecera `add_header Content-Security-Policy \"default-src 'self'\" always;` a tu bloque server. Esto le indica al navegador que solo permita recursos de tu mismo origen (mismo esquema, host y puerto), bloqueando inmediatamente los scripts externos, los scripts inline y los estilos inline."
