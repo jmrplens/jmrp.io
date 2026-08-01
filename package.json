@@ -35,7 +35,7 @@
     "verify:ats": "node scripts/cv/verify-ats.mjs",
     "preview": "astro preview",
     "astro": "astro",
-    "lint": "eslint .",
+    "lint": "astro sync && eslint .",
     "lint:css": "stylelint \"src/**/*.{astro,css}\"",
     "lint:html": "html-validate -c .htmlvalidate.json dist",
     "typecheck": "astro check",

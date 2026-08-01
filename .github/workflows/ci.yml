@@ -123,6 +123,14 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - uses: ./.github/actions/setup
+      # Typed linting needs `.astro/*.d.ts`. Without it `astro:content` cannot
+      # be resolved, every value from `getCollection()` degrades to an error
+      # type, and the `no-unsafe-*` rules fire — 33 of them in
+      # `src/pages/og/[...slug].png.ts` alone. This job does not consume the
+      # build artifact, so nothing else generates them here. `astro check`
+      # syncs on its own, which is why `SA: Astro Check` was unaffected.
+      - name: Generate Astro content types
+        run: pnpm exec astro sync
       - name: Run ESLint
         run: pnpm exec eslint . --max-warnings=0 2>&1 | tee eslint.log
       - name: Upload ESLint log
