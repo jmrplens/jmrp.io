@@ -102,20 +102,6 @@ function cvToText(node: unknown, out: string[] = []): string[] {
   return out;
 }
 
-/** Published English posts, ordered by their numbered slug (chronological). */
-async function getEnglishPosts() {
-  const posts = await getCollection(
-    "posts",
-    (p) => p.data.lang === "en" && !p.data.draft,
-  );
-  return posts.sort((a, b) => a.data.slug.localeCompare(b.data.slug));
-}
-
-async function getSortedTools() {
-  const tools = await getCollection("tools");
-  return tools.sort((a, b) => a.data.title.localeCompare(b.data.title));
-}
-
 /** Published posts for one locale, ordered by numbered slug (chronological). */
 async function getPostsByLocale(lang: "en" | "es") {
   const posts = await getCollection(
@@ -133,9 +119,10 @@ async function getToolsByLocale(lang: "en" | "es") {
 
 /**
  * Builds the locale-aware absolute URL for a tool entry — `/tools/<slug>/`
- * for English entries, `/es/tools/<slug>/` for Spanish entries. The tools
- * collection mixes both locales (see `getSortedTools()`), so the URL must
- * always be derived from `tool.data.lang`, never assumed to be English.
+ * for English entries, `/es/tools/<slug>/` for Spanish entries. Callers pass
+ * already locale-filtered lists (see `getToolsByLocale()`), but the URL is
+ * still derived from `tool.data.lang` rather than the caller's intent, so it
+ * stays correct even if that invariant ever drifts.
  */
 function toolUrl(siteUrl: string, tool: CollectionEntry<"tools">): string {
   const localePrefix = tool.data.lang === "es" ? "/es" : "";
@@ -223,10 +210,58 @@ export async function generateLlmsTxt(siteUrl: string): Promise<string> {
   return lines.join("\n");
 }
 
+/** Renders one locale's posts as `### title` blocks with body, for llms-full. */
+function buildPostSection(
+  posts: CollectionEntry<"posts">[],
+  siteUrl: string,
+  localePrefix: "" | "/es",
+): string[] {
+  return posts.flatMap((p) => {
+    const d = p.data;
+    return [
+      `### ${d.title}`,
+      "",
+      `URL: ${siteUrl}${localePrefix}/blog/${d.slug}/`,
+      `Type: ${d.articleType}`,
+      ...(d.description ? [`Summary: ${d.description}`] : []),
+      ...(d.tags.length > 0 ? [`Tags: ${d.tags.join(", ")}`] : []),
+      ...(d.faq && d.faq.length > 0
+        ? ["", "Questions answered:", ...d.faq.map((f) => `- ${f.question}`)]
+        : []),
+      ...((d.howto?.steps?.length ?? 0) > 0
+        ? [
+            "",
+            `Steps (${d.howto?.name}):`,
+            ...(d.howto?.steps ?? []).map((s, i) => `${i + 1}. ${s.name}`),
+          ]
+        : []),
+      ...(p.body ? ["", "---", "", mdxToText(p.body)] : []),
+      "",
+    ];
+  });
+}
+
+/** Renders one locale's tools as `### title` blocks with metadata, for llms-full. */
+function buildToolSection(
+  tools: CollectionEntry<"tools">[],
+  siteUrl: string,
+): string[] {
+  return tools.flatMap((t) => [
+    `### ${t.data.title}`,
+    "",
+    `URL: ${toolUrl(siteUrl, t)}`,
+    `Category: ${t.data.category}`,
+    t.data.description,
+    "",
+  ]);
+}
+
 /** Generates the enriched `llms-full.txt` with per-post detail. */
 export async function generateLlmsFullTxt(siteUrl: string): Promise<string> {
-  const posts = await getEnglishPosts();
-  const tools = await getSortedTools();
+  const postsEn = await getPostsByLocale("en");
+  const postsEs = await getPostsByLocale("es");
+  const toolsEn = await getToolsByLocale("en");
+  const toolsEs = await getToolsByLocale("es");
   const cv = await getCVData();
   const publicationGroups = await getPublications();
 
@@ -252,38 +287,10 @@ export async function generateLlmsFullTxt(siteUrl: string): Promise<string> {
     "",
   ]);
 
-  const postSection = posts.flatMap((p) => {
-    const d = p.data;
-    return [
-      `### ${d.title}`,
-      "",
-      `URL: ${siteUrl}/blog/${d.slug}/`,
-      `Type: ${d.articleType}`,
-      ...(d.description ? [`Summary: ${d.description}`] : []),
-      ...(d.tags.length > 0 ? [`Tags: ${d.tags.join(", ")}`] : []),
-      ...(d.faq && d.faq.length > 0
-        ? ["", "Questions answered:", ...d.faq.map((f) => `- ${f.question}`)]
-        : []),
-      ...((d.howto?.steps?.length ?? 0) > 0
-        ? [
-            "",
-            `Steps (${d.howto?.name}):`,
-            ...(d.howto?.steps ?? []).map((s, i) => `${i + 1}. ${s.name}`),
-          ]
-        : []),
-      ...(p.body ? ["", "---", "", mdxToText(p.body)] : []),
-      "",
-    ];
-  });
-
-  const toolSection = tools.flatMap((t) => [
-    `### ${t.data.title}`,
-    "",
-    `URL: ${toolUrl(siteUrl, t)}`,
-    `Category: ${t.data.category}`,
-    t.data.description,
-    "",
-  ]);
+  const postSectionEn = buildPostSection(postsEn, siteUrl, "");
+  const postSectionEs = buildPostSection(postsEs, siteUrl, "/es");
+  const toolSectionEn = buildToolSection(toolsEn, siteUrl);
+  const toolSectionEs = buildToolSection(toolsEs, siteUrl);
 
   const lines = [
     "# jmrp.io — Full Context",
@@ -298,10 +305,16 @@ export async function generateLlmsFullTxt(siteUrl: string): Promise<string> {
     "",
     "## Blog Posts",
     "",
-    ...postSection,
+    ...postSectionEn,
+    "## Blog Posts (Español)",
+    "",
+    ...postSectionEs,
     "## Developer Tools",
     "",
-    ...toolSection,
+    ...toolSectionEn,
+    "## Developer Tools (Español)",
+    "",
+    ...toolSectionEs,
     "## Curriculum Vitae",
     "",
     ...cvSection,

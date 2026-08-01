@@ -379,6 +379,15 @@ test.describe("SEO & Metadata Checks", () => {
     expect(esPosts).toHaveLength(12);
   });
 
+  test("llms-full.txt includes Spanish post bodies", async ({ page }) => {
+    const response = await page.request.get("/llms-full.txt");
+    const content = await response.text();
+    expect(content).toBeDefined();
+
+    expect(content).toContain("## Blog Posts (Español)");
+    expect(content).toContain("Un PIN de 4 dígitos basta");
+  });
+
   test("Structured data (JSON-LD) is present on key pages", async ({
     page,
   }) => {

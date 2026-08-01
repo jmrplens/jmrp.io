@@ -96,6 +96,7 @@ baneos
 barras
 basados
 basetype
+basta
 bcast
 bearb
 Bellare
@@ -277,6 +278,7 @@ diffbot
 diffie
 diffs
 difusores
+dígitos
 digi
 dingledine
 dios
