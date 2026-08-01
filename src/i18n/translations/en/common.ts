@@ -16,6 +16,7 @@ export const common = {
     about: "About",
     uses: "Uses",
     privacy: "Privacy",
+    contact: "Contact",
   },
   menu: {
     drawerLabel: "Navigation menu",
@@ -490,6 +491,7 @@ export const common = {
       authorAvatarAlt: "Photo of {author}",
       aiDisclosure:
         "Drafted with AI assistance; reviewed, tested, and verified by the author.",
+      editorialPolicyLink: "Editorial & corrections policy",
     },
     blogTags: {
       titlePrefix: "Blog - #",
@@ -791,6 +793,17 @@ export const common = {
       title: "About",
       description:
         "José Manuel Requena Plens — firmware and software engineer in Valencia building secure embedded devices, open-source tools, and self-hosted infrastructure.",
+      editorialTitle: "// EDITORIAL & CORRECTIONS",
+      editorialBody1:
+        "Everything published here comes from work actually done: commands run on real hardware and real servers, configuration quoted from systems that are running it, and the software version each guide was written against stated in the article. Claims that are not mine to make — protocol behavior, cryptographic properties, vendor defaults — are checked against primary sources (RFCs, standards bodies, vendor documentation) and cited, and every link is re-checked automatically on each build.",
+      editorialBody2:
+        "Each post carries an AI-assistance disclosure, so here is exactly what it means. AI tools help with drafting, structure, copy-editing and the Spanish translation. They do not decide what is true: every command, configuration snippet and measurement is executed and verified by me before it ships, and nothing is published straight from a model's output. The Spanish version is a translation of the same verified material, not a separately generated article.",
+      editorialBody3:
+        "If something here is wrong, tell me. A short email with the article and the problem is enough — no account, no form. Vulnerability reports have their own channel and PGP key in security.txt.",
+      editorialBody4:
+        "Corrections are made in the article itself rather than in a comment thread. A fix that changes the technical substance updates the article's revision date, which is shown on the page and in its structured data, and the change is noted in the article so a returning reader can see what moved. Typos are simply fixed. The full edit history of this site is public in its repository.",
+      editorialReportLabel: "Report an error",
+      editorialSecurityLabel: "security.txt",
     },
     uses: {
       title: "Uses",

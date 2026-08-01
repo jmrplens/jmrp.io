@@ -16,6 +16,7 @@ export const common = {
     about: "Perfil",
     uses: "Uses",
     privacy: "Privacidad",
+    contact: "Contacto",
   },
   menu: {
     drawerLabel: "Menú de navegación",
@@ -491,6 +492,7 @@ export const common = {
       authorAvatarAlt: "Foto de {author}",
       aiDisclosure:
         "Redactado con asistencia de IA; revisado, probado y verificado por el autor.",
+      editorialPolicyLink: "Política editorial y de correcciones",
     },
     blogTags: {
       titlePrefix: "Blog - #",
@@ -793,6 +795,17 @@ export const common = {
       title: "Perfil",
       description:
         "Ingeniero de firmware y software en Valencia: dispositivos embebidos seguros, herramientas open-source e infraestructura self-hosted.",
+      editorialTitle: "// EDITORIAL Y CORRECCIONES",
+      editorialBody1:
+        "Todo lo que se publica aquí sale de trabajo realmente hecho: comandos ejecutados en hardware y servidores reales, configuración citada de sistemas que la están ejecutando y, en cada guía, la versión del software contra la que se escribió. Las afirmaciones que no son mías —comportamiento de un protocolo, propiedades criptográficas, valores por defecto de un fabricante— se contrastan con fuentes primarias (RFC, organismos de estandarización, documentación del fabricante) y se citan, y todos los enlaces se vuelven a comprobar automáticamente en cada compilación.",
+      editorialBody2:
+        "Cada post lleva una declaración de asistencia por IA, así que esto es exactamente lo que significa. Las herramientas de IA ayudan a redactar, estructurar, pulir el texto y traducir al español. No deciden qué es cierto: cada comando, fragmento de configuración y medición se ejecuta y se verifica antes de publicarse, y nada sale directamente de la salida de un modelo. La versión en español es una traducción del mismo material verificado, no un artículo generado aparte.",
+      editorialBody3:
+        "Si algo de aquí está mal, dímelo. Basta con un correo breve indicando el artículo y el problema: sin cuenta y sin formulario. Los informes de vulnerabilidades tienen su propio canal y su clave PGP en security.txt.",
+      editorialBody4:
+        "Las correcciones se hacen en el propio artículo, no en un hilo de comentarios. Un arreglo que cambie el fondo técnico actualiza la fecha de revisión del artículo, que se muestra en la página y en sus datos estructurados, y el cambio se anota en el texto para que quien vuelva vea qué se ha movido. Las erratas simplemente se corrigen. El historial completo de ediciones de este sitio es público en su repositorio.",
+      editorialReportLabel: "Reportar un error",
+      editorialSecurityLabel: "security.txt",
     },
     uses: {
       title: "Uses",

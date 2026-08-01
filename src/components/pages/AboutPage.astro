@@ -8,6 +8,7 @@
  */
 import mehomeImg from "@assets/mehome.webp";
 import { defaultLocale, type Locale } from "@i18n/config";
+import type { TranslationKey } from "@i18n/utils";
 import { useTranslatedPath, useTranslations } from "@i18n/utils";
 import BaseLayout from "@layouts/BaseLayout.astro";
 import type { SiteConfig } from "@src/types";
@@ -54,6 +55,16 @@ const featuredProjects = about.featuredProjects
 /** Primary (GitHub, else first) link for a project card. */
 const projectHref = (p: CvProject) =>
   p.links?.find((l) => l.label === "GitHub")?.url ?? p.links?.[0]?.url;
+
+// Editorial & corrections policy (#editorial). The site discloses AI assistance
+// on every post, which makes the absence of a stated verification and
+// correction process conspicuous; the AuthorCard disclosure line links here.
+const editorialParagraphs: TranslationKey[] = [
+  "pages.about.editorialBody1",
+  "pages.about.editorialBody2",
+  "pages.about.editorialBody3",
+  "pages.about.editorialBody4",
+];
 
 const contactLinks = [
   {
@@ -209,6 +220,35 @@ const personSchema = {
           ))
         }
       </ul>
+    </section>
+
+    <section
+      class="about-section"
+      id="editorial"
+      aria-labelledby="about-editorial-title"
+    >
+      <h2
+        class="about-section__title"
+        id="about-editorial-title"
+      >
+        {t("pages.about.editorialTitle")}
+      </h2>
+      {
+        editorialParagraphs.map((key) => (
+          <p class="about-editorial__body">{t(key)}</p>
+        ))
+      }
+      <p class="about-editorial__links">
+        <a href="mailto:mail@jmrp.io">
+          {t("pages.about.editorialReportLabel")}
+        </a>
+        <a
+          href="/.well-known/security.txt"
+          data-astro-prefetch="false"
+        >
+          {t("pages.about.editorialSecurityLabel")}
+        </a>
+      </p>
     </section>
   </div>
 </BaseLayout>
@@ -437,6 +477,35 @@ const personSchema = {
     font-size: var(--text-xs);
     line-height: 1.5;
     color: var(--color-text);
+  }
+
+  .about-editorial__body {
+    max-width: var(--max-width-prose);
+    margin: 0 0 var(--space-md);
+    font-size: var(--text-base);
+    line-height: 1.7;
+    color: var(--color-text);
+  }
+
+  .about-editorial__links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-md);
+    margin: 0;
+    font-family: var(--font-mono);
+    font-size: var(--text-sm);
+  }
+
+  .about-editorial__links a {
+    font-weight: var(--fw-medium);
+    color: var(--color-accent);
+    text-decoration: none;
+  }
+
+  .about-editorial__links a:hover,
+  .about-editorial__links a:focus-visible {
+    text-decoration: underline;
+    text-underline-offset: 3px;
   }
 
   @media (width <= 720px) {

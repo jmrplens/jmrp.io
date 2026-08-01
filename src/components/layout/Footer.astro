@@ -18,6 +18,9 @@ const footerNav = [
   { label: t("nav.about"), href: translatePath("/about/") },
   { label: t("nav.uses"), href: translatePath("/uses/") },
   { label: t("nav.privacy"), href: translatePath("/privacy/") },
+  // Direct reporting channel for the editorial/corrections policy: a reader who
+  // spots an error should not have to hunt for an address.
+  { label: t("nav.contact"), href: "mailto:mail@jmrp.io" },
 ];
 
 const today = new Date();
