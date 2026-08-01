@@ -1,0 +1,235 @@
+---
+/**
+ * Privacy page ("// PRIVACY") — what the site measures and what it does not.
+ *
+ * Exists because the site loads a Cloudflare Web Analytics beacon (self-hosted
+ * from `/scripts/cf-beacon.js`) and presents its tools as "privacy-first,
+ * client-side only", with no page stating either fact. Every claim rendered
+ * here is checkable from the outside: no `Set-Cookie` on any response, no
+ * cross-origin `src` on any page, and the two tools that do make a network
+ * request are named explicitly rather than hidden behind the blanket claim.
+ */
+import { defaultLocale, type Locale } from "@i18n/config";
+import type { TranslationKey } from "@i18n/utils";
+import { useTranslations } from "@i18n/utils";
+import BaseLayout from "@layouts/BaseLayout.astro";
+import { getSiteUrl } from "@utils/site";
+import type { WebPage } from "schema-dts";
+
+const locale = (Astro.currentLocale ?? defaultLocale) as Locale;
+const t = useTranslations(locale);
+
+/** Prose sections, in reading order. Keys are literal so they stay type-checked. */
+const sections: { title: TranslationKey; body: TranslationKey[] }[] = [
+  {
+    title: "pages.privacy.analyticsTitle",
+    body: [
+      "pages.privacy.analyticsBody1",
+      "pages.privacy.analyticsBody2",
+      "pages.privacy.analyticsBody3",
+      "pages.privacy.analyticsBody4",
+    ],
+  },
+  {
+    title: "pages.privacy.cookiesTitle",
+    body: ["pages.privacy.cookiesBody1", "pages.privacy.cookiesBody2"],
+  },
+  {
+    title: "pages.privacy.thirdPartyTitle",
+    body: ["pages.privacy.thirdPartyBody1", "pages.privacy.thirdPartyBody2"],
+  },
+  {
+    title: "pages.privacy.logsTitle",
+    body: ["pages.privacy.logsBody1", "pages.privacy.logsBody2"],
+  },
+  {
+    title: "pages.privacy.toolsTitle",
+    body: [
+      "pages.privacy.toolsBody1",
+      "pages.privacy.toolsBody2",
+      "pages.privacy.toolsBody3",
+    ],
+  },
+  {
+    title: "pages.privacy.adsTitle",
+    body: ["pages.privacy.adsBody1"],
+  },
+];
+
+/** Stable heading id so each section is linkable and labelled. */
+const sectionId = (key: TranslationKey) =>
+  `privacy-${key.split(".").pop()?.replace("Title", "").toLowerCase()}`;
+
+const pageUrl = new URL(Astro.url.pathname, getSiteUrl()).href;
+
+const privacySchema = {
+  "@type": "WebPage",
+  "@id": `${pageUrl}#webpage`,
+  url: pageUrl,
+  name: t("pages.privacy.title"),
+  description: t("pages.privacy.description"),
+  inLanguage: locale,
+  isPartOf: { "@id": new URL("#website", getSiteUrl()).href },
+  publisher: { "@id": new URL("#person", getSiteUrl()).href },
+  // No per-field lastmod source for a hand-written policy page, so the build
+  // time is the honest freshness signal rather than an invented date.
+  dateModified: new Date().toISOString(),
+} satisfies WebPage;
+---
+
+<BaseLayout
+  title={t("pages.privacy.title")}
+  description={t("pages.privacy.description")}
+  schema={privacySchema}
+>
+  <div class="privacy container">
+    <header class="privacy-header">
+      <p class="section-title">{t("pages.privacy.kicker")}</p>
+      <h1 class="page-title privacy-header__title">
+        {t("pages.privacy.heading")}
+      </h1>
+      <p class="privacy-header__intro">{t("pages.privacy.intro")}</p>
+    </header>
+
+    {
+      sections.map((section) => (
+        <section
+          class="privacy-section"
+          aria-labelledby={sectionId(section.title)}
+        >
+          <h2
+            class="privacy-section__title"
+            id={sectionId(section.title)}
+          >
+            {t(section.title)}
+          </h2>
+          {section.body.map((key) => (
+            <p class="privacy-section__body">{t(key)}</p>
+          ))}
+        </section>
+      ))
+    }
+
+    <section
+      class="privacy-section"
+      aria-labelledby="privacy-verify"
+    >
+      <h2
+        class="privacy-section__title"
+        id="privacy-verify"
+      >
+        {t("pages.privacy.verifyTitle")}
+      </h2>
+      <p class="privacy-section__body">{t("pages.privacy.verifyBody1")}</p>
+      <p class="privacy-section__links">
+        <a
+          href="https://github.com/jmrplens/jmrp.io"
+          target="_blank"
+          rel="external noopener noreferrer"
+        >
+          {t("pages.privacy.verifySourceLabel")}
+        </a>
+      </p>
+    </section>
+
+    <section
+      class="privacy-section"
+      aria-labelledby="privacy-contact"
+    >
+      <h2
+        class="privacy-section__title"
+        id="privacy-contact"
+      >
+        {t("pages.privacy.contactTitle")}
+      </h2>
+      <p class="privacy-section__body">{t("pages.privacy.contactBody1")}</p>
+      <p class="privacy-section__links">
+        <a href="mailto:mail@jmrp.io">
+          {t("pages.privacy.contactMailLabel")}
+        </a>
+        <a
+          href="/.well-known/security.txt"
+          data-astro-prefetch="false"
+        >
+          {t("pages.privacy.contactSecurityLabel")}
+        </a>
+      </p>
+    </section>
+  </div>
+</BaseLayout>
+
+<style>
+  .privacy {
+    padding-top: var(--space-xl);
+    padding-bottom: var(--space-xl);
+  }
+
+  .privacy-header {
+    padding-bottom: var(--space-lg);
+    margin-bottom: var(--space-lg);
+    border-bottom: 1px solid var(--color-hair);
+  }
+
+  .privacy-header .section-title {
+    margin-bottom: var(--space-sm);
+  }
+
+  .privacy-header__title {
+    padding-bottom: 0;
+    margin: 0 0 var(--space-md);
+    font-size: clamp(1.9rem, 4.5vw, 2.75rem);
+    line-height: 1.05;
+    border-bottom: 0;
+  }
+
+  .privacy-header__intro {
+    max-width: var(--max-width-prose);
+    margin: 0;
+    font-size: var(--text-md);
+    line-height: 1.6;
+    color: var(--color-text);
+  }
+
+  .privacy-section {
+    max-width: var(--max-width-prose);
+    margin-top: var(--space-lg-xl);
+  }
+
+  .privacy-section__title {
+    margin: 0 0 var(--space-md);
+    font-family: var(--font-mono);
+    font-size: var(--text-label);
+    font-weight: var(--fw-medium);
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+  }
+
+  .privacy-section__body {
+    margin: 0 0 var(--space-md);
+    font-size: var(--text-base);
+    line-height: 1.7;
+    color: var(--color-text);
+  }
+
+  .privacy-section__links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-md);
+    margin: 0;
+    font-family: var(--font-mono);
+    font-size: var(--text-sm);
+  }
+
+  .privacy-section__links a {
+    font-weight: var(--fw-medium);
+    color: var(--color-accent);
+    text-decoration: none;
+  }
+
+  .privacy-section__links a:hover,
+  .privacy-section__links a:focus-visible {
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+</style>

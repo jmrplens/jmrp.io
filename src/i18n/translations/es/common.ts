@@ -15,6 +15,7 @@ export const common = {
     homelab: "Homelab",
     about: "Perfil",
     uses: "Uses",
+    privacy: "Privacidad",
   },
   menu: {
     drawerLabel: "Menú de navegación",
@@ -797,6 +798,58 @@ export const common = {
       title: "Uses",
       description:
         "El hardware, software y servicios que José Manuel Requena Plens tiene en rotación — escritorio, herramientas de desarrollo y homelab.",
+    },
+    privacy: {
+      title: "Privacidad",
+      description:
+        "Qué mide este sitio y qué no: analítica autoalojada, sin cookies, sin scripts de terceros, sin publicidad y sin rastreo entre sitios.",
+      kicker: "// PRIVACIDAD",
+      heading: "Qué sabe este sitio de ti",
+      intro:
+        "Sin cookies, sin scripts de terceros, sin red publicitaria y sin rastreo entre sitios. Esta página explica exactamente qué ocurre cuando cargas una página aquí —incluidas las partes que sí salen de tu navegador— y cómo comprobar cada afirmación por tu cuenta.",
+      analyticsTitle: "Analítica",
+      analyticsBody1:
+        "Las visitas se cuentan con Cloudflare Web Analytics. El script de medición no se carga desde Cloudflare: se descarga durante la compilación y se sirve desde este mismo dominio como /scripts/cf-beacon.js. Renderizar una página no requiere, por tanto, ninguna petición a un tercero.",
+      analyticsBody2:
+        "Lo que el script sí envía es un evento agregado de visita al endpoint de analítica de Cloudflare. No pone ninguna cookie, no asigna ningún identificador y no construye ningún perfil, así que no hay nada que pueda seguirte a otro sitio.",
+      analyticsBody3:
+        "El beacon lleva una guarda que lo desactiva en localhost y solo se inyecta en las compilaciones de producción. Las ejecuciones de desarrollo y de vista previa nunca reportan nada.",
+      analyticsBody4:
+        "Estos números existen para saber qué artículos merece la pena mantener actualizados. Ese es su único uso.",
+      cookiesTitle: "Cookies",
+      cookiesBody1:
+        "Este sitio no pone ninguna cookie: ni para analítica, ni para preferencias, ni para pedir consentimiento sobre cookies que no existen. Ninguna respuesta de este dominio incluye una cabecera Set-Cookie.",
+      cookiesBody2:
+        "Tu elección de tema (oscuro o claro) se guarda en localStorage, en tu propio dispositivo. Nunca se transmite ni sale del navegador.",
+      thirdPartyTitle: "Peticiones a terceros",
+      thirdPartyBody1:
+        "Las tipografías, las imágenes, las hojas de estilo y los scripts se sirven todos desde este dominio. No hay etiquetas de script a ningún CDN, ni widgets embebidos, ni botones sociales, ni tipografías alojadas fuera en ninguna página.",
+      thirdPartyBody2:
+        "Una Content Security Policy lo impone desde el servidor en vez de confiar en la disciplina: los scripts y los estilos solo se aceptan desde este origen y solo con un nonce por petición.",
+      logsTitle: "Registros del servidor",
+      logsBody1:
+        "El servidor web mantiene registros de acceso corrientes: marca de tiempo, ruta solicitada, código de respuesta, user agent y dirección IP. Este sitio ejecuta un tarpit activo y una pila de listas de bloqueo, que no pueden funcionar sin saber quién está llamando a la puerta.",
+      logsBody2:
+        "Esos registros son datos de operación y seguridad. No se cruzan con la analítica, no se usan para construir perfiles de lectores y no se comparten con nadie.",
+      toolsTitle: "Las herramientas",
+      toolsBody1:
+        "Las herramientas interactivas se ejecutan en tu navegador. Hashes, contraseñas, expresiones regulares, subredes, certificados que pegues: el cálculo ocurre en tu máquina y la entrada nunca se sube a ningún sitio.",
+      toolsBody2:
+        "Dos herramientas son excepciones deliberadas y visibles, porque no pueden funcionar de otro modo. El inspector de certificados consulta los registros públicos de Certificate Transparency (Cert Spotter y crt.sh) para el nombre de host que escribas. El analizador de cabeceras HTTP envía la URL que le indiques a un pequeño proxy de este mismo dominio, porque un navegador no puede leer las cabeceras de respuesta de otro sitio.",
+      toolsBody3:
+        "En ambos casos la petición lleva solo lo que has escrito, y solo cuando pulsas el botón. Nada de lo que introduces en una herramienta se almacena ni se asocia contigo.",
+      adsTitle: "Sin publicidad ni afiliados",
+      adsBody1:
+        "Aquí no hay publicidad, ni enlaces de afiliado, ni contenido patrocinado, ni lista de correo. Nada de este sitio está monetizado, así que no hay ningún incentivo para recopilar nada sobre ti.",
+      verifyTitle: "Compruébalo tú",
+      verifyBody1:
+        "Abre el panel de red de tu navegador en cualquier página y lee la lista de peticiones: todas son del mismo origen. Abre el panel de almacenamiento: no hay ninguna cookie que borrar. El código de este sitio es público, incluido el paso de compilación que descarga el script de analítica y la configuración que genera las cabeceras de seguridad.",
+      verifySourceLabel: "Código del sitio en GitHub",
+      contactTitle: "Contacto",
+      contactBody1:
+        "Para cualquier asunto de privacidad, escríbeme directamente. Los informes de seguridad tienen su propio canal, con clave PGP y política de divulgación.",
+      contactMailLabel: "mail@jmrp.io",
+      contactSecurityLabel: "security.txt",
     },
     projects: {
       title: "Proyectos",

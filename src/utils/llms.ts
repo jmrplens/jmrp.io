@@ -145,6 +145,7 @@ function sectionsBlock(siteUrl: string): string {
     `- [Projects](${siteUrl}/projects/): Curated open-source software he authors and maintains — MCP servers, acoustics tooling, network security; language, license, source and docs per project`,
     `- [Tools](${siteUrl}/tools/): Free browser-based developer tools (privacy-first, no server calls)`,
     `- [Uses](${siteUrl}/uses/): Hardware, software, and homelab kept in rotation`,
+    `- [Privacy](${siteUrl}/privacy/): What the site measures — self-hosted analytics beacon, no cookies, no third-party requests, no ads`,
   ].join("\n");
 }
 
