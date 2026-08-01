@@ -54,13 +54,14 @@ const today = () => new Date().toISOString().slice(0, 10);
  * legitimately contain `<` / `>`.
  */
 function mdxToText(body: string): string {
-  const stripped = body
-    .replaceAll(/^import [^\n]*/gm, "")
-    .replaceAll(/\n{3,}/g, "\n\n")
-    .trim();
-
+  // Fence state is tracked in a single pass so that BOTH transforms respect
+  // it. Stripping `import` lines up front (as this once did) also deleted the
+  // `import csv` / `import os` lines from the Python sample in post 010,
+  // shipping a broken snippet to the very consumer llms-full.txt exists for.
   let inFence = false;
-  return stripped
+  return body
+    .replaceAll(/\n{3,}/g, "\n\n")
+    .trim()
     .split("\n")
     .map((line) => {
       if (/^\s*```/.test(line)) {
@@ -68,6 +69,9 @@ function mdxToText(body: string): string {
         return line;
       }
       if (inFence) return line;
+      // MDX component imports are page scaffolding, not prose — but only
+      // outside fenced code.
+      if (line.startsWith("import ")) return "";
       // `\s` matches exactly one character and the remainder is taken with
       // slice() rather than a second capture group: `(\s+.*)` lets both parts
       // consume whitespace, so the engine backtracks over every split of a
@@ -143,7 +147,7 @@ function sectionsBlock(siteUrl: string): string {
     `- [Publications](${siteUrl}/publications/): Academic papers on acoustics, metamaterials, and ultrasound`,
     `- [Homelab](${siteUrl}/homelab/): Self-hosted infrastructure — Mastodon, Matrix, AT Protocol PDS, Tor relays`,
     `- [Projects](${siteUrl}/projects/): Curated open-source software he authors and maintains — MCP servers, acoustics tooling, network security; language, license, source and docs per project`,
-    `- [Tools](${siteUrl}/tools/): Free browser-based developer tools (privacy-first, no server calls)`,
+    `- [Tools](${siteUrl}/tools/): Free browser-based developer tools; all run in the browser except the certificate inspector and HTTP header analyzer, which fetch the target you ask them to inspect`,
     `- [Uses](${siteUrl}/uses/): Hardware, software, and homelab kept in rotation`,
     `- [Privacy](${siteUrl}/privacy/): What the site measures — self-hosted analytics beacon, no cookies, no third-party requests, no ads`,
   ].join("\n");

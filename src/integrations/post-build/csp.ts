@@ -50,7 +50,10 @@ export async function finalizeCspConfig(
     "manifest-src 'self'",
     "frame-src 'none'",
     "object-src 'none'",
-    "base-uri 'self'",
+    // 'none', not 'self': no page on this site uses <base>, and post 003
+    // calls base-uri 'none' mandatory for a strict CSP. Production was the
+    // laxer of the two until the PR #380 review surfaced the mismatch.
+    "base-uri 'none'",
     "form-action 'self'",
     "frame-ancestors 'none'",
     "upgrade-insecure-requests",

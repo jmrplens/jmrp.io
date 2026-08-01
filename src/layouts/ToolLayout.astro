@@ -78,7 +78,11 @@ const locale = (Astro.currentLocale ?? defaultLocale) as Locale;
 const t = useTranslations(locale);
 const translatePath = useTranslatedPath(locale);
 
-const toolUrl = new URL(`/tools/${slug}/`, getSiteUrl()).href;
+// Locale-aware: ToolLayout serves both /tools/… and /es/tools/…. Without
+// translatePath the Spanish page emits the English @id and url, collapsing
+// both locales into one entity with two names — the same defect fixed for
+// blog posts in #375.
+const toolUrl = new URL(translatePath(`/tools/${slug}/`), getSiteUrl()).href;
 // `@context` is intentionally omitted: this node is merged into the page-level
 // JSON-LD `@graph`, which already declares the context.
 const baseToolSchema = {
