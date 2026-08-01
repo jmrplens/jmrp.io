@@ -734,3 +734,32 @@ test.describe("ScholarlyArticle schema on the publications page", () => {
     }
   });
 });
+
+// ─── CollectionPage (Uses) ───────────────────────────────────────────
+
+test.describe("CollectionPage schema on the uses page", () => {
+  test("uses page emits a CollectionPage entity referencing #person", async ({
+    page,
+  }) => {
+    await blockCloudflare(page);
+    await page.goto("/uses/");
+    const jsonLd = await getJsonLd(page);
+
+    const collection = findInGraph(jsonLd, "CollectionPage");
+    expect(collection).not.toBeNull();
+    if (!collection) return;
+
+    expect(collection["@id"]).toBe("https://jmrp.io/uses/#collection");
+    expect(collection.url).toBe("https://jmrp.io/uses/");
+    expect(isNonEmptyStr(collection.name)).toBe(true);
+    expect(isNonEmptyStr(collection.description)).toBe(true);
+    expect(isNonEmptyStr(collection.inLanguage)).toBe(true);
+
+    const isPartOf = collection.isPartOf as JsonLdSchema;
+    expect(isNonEmptyStr(isPartOf["@id"])).toBe(true);
+    expect(isPartOf["@id"]).toContain("#website");
+
+    const about = collection.about as JsonLdSchema;
+    expect(about["@id"]).toBe("https://jmrp.io/#person");
+  });
+});
