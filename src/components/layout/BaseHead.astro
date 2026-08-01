@@ -437,6 +437,16 @@ const jsonLD = {
       );
     })
 }
+{
+  /* Canonical identity document — the same #person node BaseHead renders inline,
+    exposed as a standalone, machine-readable JSON-LD file for direct fetch. */
+}
+<link
+  rel="alternate"
+  type="application/ld+json"
+  href="/identity/person.jsonld"
+  title="Person entity (JSON-LD)"
+/>
 <meta
   name="generator"
   content={Astro.generator}

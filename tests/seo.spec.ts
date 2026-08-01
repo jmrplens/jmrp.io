@@ -388,6 +388,41 @@ test.describe("SEO & Metadata Checks", () => {
     expect(content).toContain("Un PIN de 4 dígitos basta");
   });
 
+  test("llms.txt has a single header blockquote, markdown-link contacts, and an Optional section", async ({
+    page,
+  }) => {
+    const response = await page.request.get("/llms.txt");
+    const content = await response.text();
+    expect(content).toBeDefined();
+
+    // Only the site description remains a blockquote; "Last updated" and the
+    // llms-full.txt pointer are now plain lines.
+    const blockquotes = content.split("\n").filter((l) => l.startsWith(">"));
+    expect(blockquotes).toHaveLength(1);
+
+    // Contacts are markdown links, not "Label: url" plain text.
+    expect(content).toMatch(/\[GitHub]\(https:\/\/github\.com\/jmrplens\)/);
+    expect(content).toMatch(/\[Email]\(mailto:mail@jmrp\.io\)/);
+
+    // The person entity and both RSS feeds are discoverable from the index.
+    // Generated links always point at the production origin (from `SITE`),
+    // regardless of which host actually serves this request in tests.
+    expect(content).toContain("## Optional");
+    expect(content).toContain("https://jmrp.io/identity/person.jsonld");
+    expect(content).toContain("https://jmrp.io/rss.xml");
+    expect(content).toContain("https://jmrp.io/es/rss.xml");
+  });
+
+  test("person entity JSON-LD is linked from the page head", async ({
+    page,
+  }) => {
+    await page.goto("/");
+    const link = page.locator(
+      'link[rel="alternate"][type="application/ld+json"]',
+    );
+    await expect(link).toHaveAttribute("href", "/identity/person.jsonld");
+  });
+
   test("Structured data (JSON-LD) is present on key pages", async ({
     page,
   }) => {

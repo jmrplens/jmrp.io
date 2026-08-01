@@ -19,12 +19,12 @@ const ABOUT =
   "José Manuel Requena Plens (JMRP) is a multidisciplinary engineer working across firmware, embedded systems, and applied research. Background in solar-inverter firmware and industrial control systems, Acoustics research, noise mitigation for the European Space Agency (ESA), and biomedical ultrasound at UPV. Active open source contributor and self-hoster.";
 
 const CONTACT = [
-  "GitHub: https://github.com/jmrplens",
-  "LinkedIn: https://www.linkedin.com/in/jmrplens",
-  "Google Scholar: https://scholar.google.com/citations?user=9b0kPaUAAAAJ",
-  "ORCID: https://orcid.org/0000-0003-1250-6212",
-  "Mastodon: https://mstdn.jmrp.io/@jmrplens",
-  "Email: mail@jmrp.io",
+  "[GitHub](https://github.com/jmrplens)",
+  "[LinkedIn](https://www.linkedin.com/in/jmrplens)",
+  "[Google Scholar](https://scholar.google.com/citations?user=9b0kPaUAAAAJ)",
+  "[ORCID](https://orcid.org/0000-0003-1250-6212)",
+  "[Mastodon](https://mstdn.jmrp.io/@jmrplens)",
+  "[Email](mailto:mail@jmrp.io)",
 ];
 
 const TECHNICAL_DETAILS = [
@@ -156,9 +156,9 @@ export async function generateLlmsTxt(siteUrl: string): Promise<string> {
     "",
     `> ${DESCRIPTION}`,
     "",
-    `> Last updated: ${today()}`,
+    `Last updated: ${today()}`,
     "",
-    `> For comprehensive context including blog post topics, FAQs, and tool features, see [llms-full.txt](${siteUrl}/llms-full.txt).`,
+    `For comprehensive context including blog post topics, FAQs, and tool features, see [llms-full.txt](${siteUrl}/llms-full.txt).`,
     "",
     "## About",
     "",
@@ -205,6 +205,12 @@ export async function generateLlmsTxt(siteUrl: string): Promise<string> {
     "## Technical Details",
     "",
     ...TECHNICAL_DETAILS.map((d) => `- ${d}`),
+    "",
+    "## Optional",
+    "",
+    `- [Person entity (JSON-LD)](${siteUrl}/identity/person.jsonld): Machine-readable identity node for the author`,
+    `- [RSS feed (EN)](${siteUrl}/rss.xml): English blog feed`,
+    `- [RSS feed (ES)](${siteUrl}/es/rss.xml): Spanish blog feed`,
     "",
   ];
   return lines.join("\n");
