@@ -1,0 +1,146 @@
+---
+/**
+ * Curated "related content" block rendered at the end of every post, just
+ * before the references list.
+ *
+ * The relations are hand-picked (`src/utils/related.ts`) rather than
+ * tag-derived: 20 of 28 tags hold a single post, so tag overlap is a poor
+ * proxy for topical relatedness. The pairs encode the actual editorial
+ * clusters (Nginx TLS stack, CrowdSec-backed defence, MikroTik dual-stack,
+ * Kleidos firmware trilogy) and point every post at the tool(s) built for
+ * exactly that workflow.
+ */
+import {
+  getLangFromUrl,
+  useTranslatedPath,
+  useTranslations,
+} from "@i18n/utils";
+import type { RelatedEntry } from "@utils/related";
+
+interface Props {
+  /** Sibling posts related to the current one, already locale-resolved. */
+  posts: RelatedEntry[];
+  /** Tools related to the current post, already locale-resolved. */
+  tools: RelatedEntry[];
+}
+
+const { posts, tools } = Astro.props;
+
+const locale = getLangFromUrl(Astro.url);
+const t = useTranslations(locale);
+const translatePath = useTranslatedPath(locale);
+
+const headingId = `related-${crypto.getRandomValues(new Uint32Array(1))[0]}`;
+---
+
+{
+  (posts.length > 0 || tools.length > 0) && (
+    <nav
+      class="related"
+      aria-labelledby={headingId}
+    >
+      <div class="header">
+        <span
+          class="i-mdi:link-variant header-icon"
+          aria-hidden="true"
+        />
+        <h2 id={headingId}>{t("pages.blog.relatedTitle")}</h2>
+      </div>
+      <ul class="related__list">
+        {posts.map((p) => (
+          <li>
+            <a href={translatePath(`/blog/${p.slug}/`)}>{p.title}</a>
+          </li>
+        ))}
+        {tools.map((tool) => (
+          <li>
+            <a href={translatePath(`/tools/${tool.slug}/`)}>
+              <span
+                class="i-mdi:tools related__tool-icon"
+                aria-hidden="true"
+              />
+              {t("pages.blog.relatedTools")}: {tool.title}
+            </a>
+          </li>
+        ))}
+      </ul>
+    </nav>
+  )
+}
+
+<style>
+  .related {
+    padding-top: 2rem;
+    margin-top: 4rem;
+    border-top: 1px dashed var(--color-border);
+  }
+
+  .header {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    color: var(--color-text-heading);
+  }
+
+  .header-icon {
+    font-size: var(--text-2xl);
+    color: var(--color-primary);
+  }
+
+  .header h2 {
+    margin: 0;
+    font-size: var(--text-xl);
+  }
+
+  .related__list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 16px 18px;
+    margin: 0;
+    list-style: none;
+    background: var(--color-bg-secondary);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+  }
+
+  .related__list a {
+    display: inline-flex;
+    gap: 0.4em;
+    align-items: baseline;
+    font-size: var(--text-sm);
+    line-height: 1.4;
+    color: var(--color-text-heading);
+    text-decoration: none;
+    transition: color var(--dur-2) var(--ease-out);
+  }
+
+  .related__list a:hover,
+  .related__list a:focus-visible {
+    color: var(--color-accent);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+
+  .related__list a:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 3px;
+    border-radius: var(--radius-sm);
+  }
+
+  .related__tool-icon {
+    flex-shrink: 0;
+    width: 0.95em;
+    height: 0.95em;
+    color: var(--color-accent);
+    transform: translateY(0.12em);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .related__list a {
+      transition: none;
+    }
+  }
+</style>

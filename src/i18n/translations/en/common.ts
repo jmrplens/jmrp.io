@@ -473,6 +473,8 @@ export const common = {
       description:
         "Technical articles and tutorials on Nginx, MikroTik, networking, security, and DevOps. Practical guides from an R&D engineer's perspective.",
       schemaName: "Blog - José Manuel Requena Plens",
+      relatedTitle: "Related on this site",
+      relatedTools: "Try the tool",
     },
     blogPost: {
       backToBlog: "Back to Blog",
