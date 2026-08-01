@@ -6,7 +6,7 @@ description: "Inmersión profunda en QUIC y HTTP/3 — arquitectura técnica, se
 author: "José Manuel Requena Plens"
 authorEmail: "mail@jmrp.io"
 publishedDate: 2026-01-14
-updatedDate: 2026-01-14
+updatedDate: 2026-08-02
 lastVerified:
   date: 2026-08-01
   versions:
@@ -86,6 +86,14 @@ En esta guía completa, exploraremos la historia y la arquitectura de QUIC, ente
   - **Configuración base**: añade `listen 443 quic reuseport;`, activa `http3 on`, TLS 1.3 y la cabecera `Alt-Svc`; `reuseport` debe aparecer en exactamente un listener por dirección:puerto.
   - **Abre UDP/443 en el firewall** (servidor y proveedor cloud) o QUIC fallará silenciosamente y los clientes retrocederán a HTTP/2; verifica con `curl --http3`, las DevTools o `quic="h3"` en el log de acceso.
 </TLDRSummary>
+
+---
+
+## Cómo lo ejecuto en mi propia infraestructura
+
+jmrp.io sirve HTTP/3 en sí mismo: los dos server blocks en producción llevan `listen 443 quic;` junto a los listeners TCP habituales, de modo que el sitio acepta conexiones QUIC y TLS-sobre-TCP en paralelo, según lo que soporte realmente el cliente — y lo que haya entre el cliente y el servidor.
+
+No me fié de la palabra de la cabecera `Alt-Svc`. Ejecutar `curl --http3` directamente contra el sitio en vivo devuelve `HTTP/3 200`: un handshake QUIC completado, no una inferencia sacada de una cabecera de respuesta que un servidor mal configurado podría seguir enviando mientras cae en silencio a HTTP/2 por debajo. Esa distinción importa — muchas listas de comprobación de "HTTP/3 activado" se quedan en la cabecera y nunca confirman que el protocolo se negoció de verdad. Es un detalle pequeño de verificar, y también es la única forma de saber que un despliegue QUIC es real y no aspiracional: la cabecera no cuesta nada añadir, pero solo un handshake desde el lado del cliente demuestra que UDP/443 está realmente abierto y negociando de extremo a extremo.
 
 ---
 

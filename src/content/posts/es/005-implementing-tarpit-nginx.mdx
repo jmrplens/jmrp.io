@@ -3,6 +3,7 @@ title: "Implementar un Tarpit en Nginx: Atrapa a los Escáneres Maliciosos"
 slug: "005-implementing-tarpit-nginx"
 lang: "es"
 publishedDate: 2026-01-16
+updatedDate: 2026-08-02
 description: "Implementa un tarpit en Nginx para ralentizar bots maliciosos, escáneres de vulnerabilidades y ataques de fuerza bruta. Integración con CrowdSec incluida."
 author: "José Manuel Requena Plens"
 authorEmail: "mail@jmrp.io"
@@ -75,6 +76,89 @@ Si alguna vez has revisado los logs de tu servidor, seguramente habrás visto in
 - **Un map de IPs de confianza** fija la rate a 0 y devuelve un 403 normal, de modo que el tráfico de administración nunca queda atrapado accidentalmente.
 - **CrowdSec banea automáticamente** a los reincidentes mediante un parser y un escenario leaky (p. ej. 3 impactos en 5 minutos); Fail2Ban y el reporte a AbuseIPDB son alternativas.
 </TLDRSummary>
+
+---
+
+## Lo que descubrí al medir de verdad mi propio tarpit
+
+El tarpit de arriba no es un ejercicio de laboratorio: lleva tiempo corriendo en este sitio en producción, registrando `418` en cada captura mientras sirve `200` para mantener enganchado al cliente, tal y como se describe más arriba. Hace poco descubrí que llevaba un tiempo sin cumplir la segunda mitad de ese trabajo, y nada en los logs lo delataba: cada captura seguía mostrando el reparto esperado de `200`/`418`, así que sobre el papel parecía funcionar perfectamente.
+
+### El fallo: la compresión anulaba el estrangulamiento
+
+Mi tarpit de producción no sirve la cadena aleatoria de Perl de la guía — sirve una página animada de señuelo, `nedry.html` (255.864 bytes), seguida de unos 10 MB de relleno con bytes a cero, para un payload combinado de 10.255.882 bytes. `limit_rate` solo estrangula los bytes que realmente viajan por la red, y Nginx lo aplica *después* de que se ejecute la compresión. Brotli reducía esa respuesta de ~10 MB a 189.208 bytes (los 189.368 que se ven en el log en crudo incluyen las cabeceras HTTP), y mi `limit_rate_after` estaba fijado en 300 KB — cómodamente por encima del tamaño comprimido, pero muy lejos del payload real. El estrangulamiento sencillamente nunca se activaba: cada escáner descargaba los 10,25 MB completos a máxima velocidad, en una fracción de segundo, y seguía su camino. El umbral de 300 KB en sí estaba bien elegido — `nedry.html` por sí solo pesa ~250 KB, calculado para que la animación visible siga cargando rápido para quien no esté siendo atrapado — el relleno es lo que lo rompía en silencio.
+
+### El arreglo, y lo que cambió
+
+El arreglo fue una línea, `gzip off; brotli off;`, en el snippet del tarpit, validada con `nginx -t` y recargada.
+
+<Table title="La misma petición atrapada, antes y después del arreglo">
+  <thead>
+    <tr>
+      <th scope="col">Métrica</th>
+      <th scope="col">Antes</th>
+      <th scope="col">Después</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Tiempo hasta completarse</td>
+      <td>0,23 s</td>
+      <td>20 s (timeout del cliente)</td>
+    </tr>
+    <tr>
+      <td>Bytes recibidos</td>
+      <td>10.255.882</td>
+      <td>255.872 (la animación, nada más)</td>
+    </tr>
+  </tbody>
+</Table>
+
+La imagen a nivel de log coincide. Comparando las 14 horas antes del arreglo con una ventana de 9 horas después, la **mediana de bytes servidos por captura pasó de 189.368 a 306.948** — por primera vez, por encima del umbral de `limit_rate_after`, que es exactamente el aspecto que tiene "el estrangulamiento por fin se activa". También esperaba que las capturas por hora cayeran con fuerza a medida que los escáneres se quedaran atascados en vez de disparar decenas de peticiones rápidas, y así fue (266/hora antes, 14/hora después) — pero no presento esa cifra como algo probado por sí sola: la ventana "después" se adentra en la noche, cuando el tráfico de escaneo es naturalmente menor, así que parte de la caída podría deberse simplemente al ciclo diario de escaneo y no al arreglo. Confirmarlo de forma rigurosa exige comparar las mismas horas en días distintos, no dos tramos consecutivos. Las cifras de bytes no tienen ese problema — son consecuencia directa y mecánica de desactivar la compresión, algo que la variación de tráfico no podría producir.
+
+### Cómo verificar que tu propio tarpit funciona de verdad
+
+La lección transferible aquí: un tarpit que sirve contenido compresible puede estar completamente inoperativo mientras sus logs parecen perfectamente sanos, porque el status code y el recuento de capturas no cambian. Si tienes uno corriendo, comprueba estas tres cosas en vez de fiarte solo del log.
+
+<TerminalCommand>
+```bash
+# 1. ¿Cuánto tarda realmente un cliente atrapado y cuánto llega a recibir?
+curl -s -o /dev/null -m 20 \
+  -w 'status=%{http_code} t=%{time_total}s bytes=%{size_download} v=%{speed_download} B/s\n' \
+  https://tu-sitio/.env
+```
+</TerminalCommand>
+
+<TerminalCommand>
+```bash
+# 2. ¿Se puede comprimir el payload? Esta es la trampa silenciosa.
+gzip -c /ruta/al/payload.html | wc -c
+brotli -c -q 5 /ruta/al/payload.html | wc -c
+# Si cualquiera de los dos resultados es menor que limit_rate_after,
+# el tarpit no ralentiza a nadie.
+```
+</TerminalCommand>
+
+<TerminalCommand>
+```bash
+# 3. ¿Qué se está sirviendo realmente, según el access log?
+awk '{for(i=1;i<=NF;i++) if($i=="418"){print $(i+1);break}}' tarpit_access.log \
+  | sort -n | uniq -c | sort -rn | head
+# Un único valor repetido en casi todas las capturas apunta a un techo
+# artificial, no a un abandono real del cliente -- el abandono genuino
+# produce una dispersión de tamaños, no un número dominante.
+```
+</TerminalCommand>
+
+### Dos formas de rellenar el payload, y su compromiso
+
+Hay dos formas honestas de construir el relleno de varios megabytes, y ninguna es gratis — presento las dos en vez de fingir que la que uso hoy es sencillamente "la correcta":
+
+1. **Relleno de bytes a cero con la compresión desactivada** (lo que corre hoy). Simple de generar y fácil de razonar, pero frágil: depende de que nada en la cadena vuelva a comprimir la respuesta. Cualquier proxy intermedio que aplique su propio gzip o Brotli colapsa de nuevo los 10 MB a ~189 KB y anula el tarpit en silencio — sin error, sin alerta, solo un estrangulamiento que deja de estrangular sin avisar.
+2. **Bytes aleatorios en lugar de ceros.** Incompresibles por construcción, así que el tarpit funciona haya o no compresión activa en cualquier punto de la cadena, y sobrevive a proxies intermedios que el relleno de ceros no soporta. El coste: el fichero nunca comprime, ni siquiera en los casos en que interesaría (por ejemplo, al servirlo por un enlace lento), y generar y regenerar unos megabytes de aleatoriedad genuina cuesta más trabajo que un flujo de ceros.
+
+Hoy uso la opción 1 porque era lo que podía desplegar de inmediato tras encontrar el fallo — pero es la más frágil de las dos, y ahora sé exactamente qué aspecto tiene "frágil" cuando falla en silencio.
+
+---
 
 ## ¿Qué es un tarpit?
 

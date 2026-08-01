@@ -2,7 +2,7 @@
 title: "Content Security Policy (CSP) with Nginx: The Complete Guide"
 slug: "003-implementing-content-security-policy-nginx"
 publishedDate: 2025-12-19
-updatedDate: 2026-02-06
+updatedDate: 2026-08-02
 lastVerified:
   date: 2026-08-01
   versions:
@@ -104,6 +104,16 @@ This guide takes you from zero to a production-ready, **A+ rated** CSP configura
   - Access to your Nginx configuration files
   - A website to protect (static or dynamic)
 </Prerequisite>
+
+---
+
+## How I run this on my own infrastructure
+
+This isn't a hypothetical — jmrp.io itself is the reference implementation for everything above. Production Nginx sets `set $cspNonce $request_id;` and rewrites the placeholder with `sub_filter NGINX_CSP_NONCE $cspNonce;`, so every response carries a fresh nonce tied to that request. The header this site actually serves is nonce-only: `default-src 'none'`, `script-src 'self' 'nonce-…' 'strict-dynamic'`, `style-src 'self' 'nonce-…'`, plus `frame-ancestors 'none'`, `base-uri 'self'`, and `report-uri /csp-report` — zero `unsafe-inline`, zero domain allowlists to maintain.
+
+Violations don't disappear into a log nobody reads: I run my own receiver (`scripts/csp-reporter.mjs`) that surfaces them as they happen, instead of relying on a third party to tell me what's breaking.
+
+Measured against the current Mozilla Observatory API (v5), this configuration earns an **A+ rating: a score of 140, with all 10 tests passing and zero failures**. That's the number as of writing — not the 145 you might see referenced elsewhere on this site from a December 2025 commit. That older total included a 5-point bonus Observatory grants for serving cookies with `Secure`/`HttpOnly`/`SameSite`; those cookies were two placeholder values that did nothing useful, and removing them — so this site's `/privacy/` page can honestly claim no response ever sets `Set-Cookie` — cost 5 cosmetic points on a policy that already fails nothing. That trade was obviously worth it.
 
 ---
 
@@ -1830,7 +1840,7 @@ server {
 </StepByStep>
 
 <Callout type="success" icon="mdi:trophy">
-  **Result:** Following this guide, you can achieve an A+ rating on [Mozilla Observatory](https://observatory.mozilla.org/) while maintaining full site functionality and protecting your users from XSS attacks.
+  **Result:** This is exactly the configuration running in production on this site — an A+ rating with a score of 140 and all 10 tests passing on [Mozilla Observatory](https://observatory.mozilla.org/), full site functionality intact, and users protected from XSS attacks.
 </Callout>
 
 

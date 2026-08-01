@@ -2,6 +2,7 @@
 title: "Implementing a Tarpit in Nginx: Trap Malicious Scanners"
 slug: "005-implementing-tarpit-nginx"
 publishedDate: 2026-01-16
+updatedDate: 2026-08-02
 description: "Implement an Nginx tarpit to slow down and trap malicious bots, vulnerability scanners, and brute-force attackers. Includes CrowdSec integration."
 author: "José Manuel Requena Plens"
 authorEmail: "mail@jmrp.io"
@@ -74,6 +75,88 @@ If you've ever looked at your server logs, you've likely seen countless attempts
 - **A trusted-IP map** sets the rate to 0 and returns a normal 403, so admin traffic is never accidentally trapped.
 - **CrowdSec auto-bans** repeat offenders via a parser plus a leaky-bucket scenario (e.g. 3 hits in 5 minutes); Fail2Ban and AbuseIPDB reporting are alternatives.
 </TLDRSummary>
+
+---
+
+## What I found when I actually measured my own tarpit
+
+The tarpit above isn't a lab exercise — it's been running on this site in production, logging `418` for every capture while serving `200` to keep the client hooked, exactly as described above. Recently I found out it had stopped doing the second half of that job for a while, and nothing in the logs gave it away: every capture still showed the expected `200`/`418` split, so on paper it looked like it was working perfectly.
+
+### The bug: compression undid the throttle
+
+My production tarpit doesn't serve the guide's random Perl string — it serves an animated decoy page, `nedry.html` (255,864 bytes), followed by roughly 10 MB of zero-byte padding, for a combined payload of 10,255,882 bytes. `limit_rate` only throttles bytes that actually cross the wire, and Nginx applies it *after* compression runs. Brotli reduced that entire ~10 MB response down to 189,208 bytes (the 189,368 you'll see in the raw log includes HTTP headers), and my `limit_rate_after` was set to 300 KB — comfortably above the compressed size, but nowhere near the true payload. The throttle simply never engaged: every scanner downloaded the full 10.25 MB at full speed, in a fraction of a second, and moved on. The 300 KB threshold itself was correctly chosen — `nedry.html` alone is ~250 KB, sized so the visible animation still loads fast for anyone who isn't being tarpitted — the padding is what quietly broke it.
+
+### The fix, and what changed
+
+The fix was one line, `gzip off; brotli off;`, in the tarpit snippet, validated with `nginx -t` and reloaded.
+
+<Table title="Same trapped request, before and after the fix">
+  <thead>
+    <tr>
+      <th scope="col">Metric</th>
+      <th scope="col">Before</th>
+      <th scope="col">After</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Time to complete</td>
+      <td>0.23 s</td>
+      <td>20 s (client timeout)</td>
+    </tr>
+    <tr>
+      <td>Bytes received</td>
+      <td>10,255,882</td>
+      <td>255,872 (the animation, nothing more)</td>
+    </tr>
+  </tbody>
+</Table>
+
+The log-level picture agrees. Comparing the 14 hours before the fix against a 9-hour window afterward, the **median bytes served per capture jumped from 189,368 to 306,948** — for the first time, above the `limit_rate_after` threshold, which is exactly what "the throttle is finally engaging" looks like. I'd also expected captures-per-hour to fall sharply as scanners got stuck instead of firing dozens of quick requests, and it did (266/hour before, 14/hour after) — but I'm not presenting that number as proven on its own: the "after" window runs into the night, when scan traffic is naturally lower, so part of the drop could simply be the daily scanning cycle rather than the fix. Confirming it properly means comparing the same hours across different days, not two consecutive windows. The byte figures don't have that problem — they're a direct, mechanical consequence of turning compression off, not something traffic variation could produce.
+
+### How to verify your own tarpit is actually working
+
+The transferable lesson here: a tarpit serving compressible content can be completely inert while its logs look perfectly healthy, because the status code and the capture count never change. If you run one, check these three things instead of trusting the log alone.
+
+<TerminalCommand>
+```bash
+# 1. How long does a trapped client actually take, and how much does it receive?
+curl -s -o /dev/null -m 20 \
+  -w 'status=%{http_code} t=%{time_total}s bytes=%{size_download} v=%{speed_download} B/s\n' \
+  https://your-site/.env
+```
+</TerminalCommand>
+
+<TerminalCommand>
+```bash
+# 2. Is the payload compressible? This is the silent trap.
+gzip -c /path/to/payload.html | wc -c
+brotli -c -q 5 /path/to/payload.html | wc -c
+# If either result is smaller than limit_rate_after, the tarpit throttles no one.
+```
+</TerminalCommand>
+
+<TerminalCommand>
+```bash
+# 3. What's actually being served, per the access log?
+awk '{for(i=1;i<=NF;i++) if($i=="418"){print $(i+1);break}}' tarpit_access.log \
+  | sort -n | uniq -c | sort -rn | head
+# One value repeated across nearly every capture points to an artificial
+# ceiling, not real client abandonment -- genuine abandonment produces a
+# spread of sizes, not a single dominant number.
+```
+</TerminalCommand>
+
+### Two ways to pad the payload, and the trade-off
+
+There are two honest ways to build the multi-megabyte filler, and neither is a free lunch — I'm presenting both rather than pretending the one I run today is simply "the right one":
+
+1. **Zero-byte padding with compression disabled** (what's running now). Simple to generate and easy to reason about, but fragile: it depends on nothing downstream ever re-compressing the response. Any intermediate proxy that applies its own gzip or Brotli collapses the 10 MB back down to ~189 KB and silently defeats the tarpit again — no error, no alert, just a throttle that quietly stops throttling.
+2. **Random bytes instead of zeros.** Incompressible by construction, so the tarpit works whether or not compression is active anywhere in the chain, and survives intermediate proxies that zero padding doesn't. The cost: the file never compresses even in cases where that would help (say, serving it over a slow uplink), and a few megabytes of genuine randomness is more work to generate and regenerate than a stream of zeros.
+
+I'm running option 1 today because it's what I could ship immediately after finding the bug — but it's the more fragile of the two, and now I know exactly what "fragile" looks like when it fails silently.
+
+---
 
 ## What is a tarpit?
 

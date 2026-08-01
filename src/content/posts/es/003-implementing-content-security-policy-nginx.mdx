@@ -3,7 +3,7 @@ title: "Content Security Policy (CSP) con Nginx: La Guía Completa"
 slug: "003-implementing-content-security-policy-nginx"
 lang: "es"
 publishedDate: 2025-12-19
-updatedDate: 2026-02-06
+updatedDate: 2026-08-02
 lastVerified:
   date: 2026-08-01
   versions:
@@ -105,6 +105,16 @@ Esta guía te lleva desde cero hasta una configuración CSP lista para producci�
   - Acceso a los archivos de configuración de Nginx
   - Un sitio web que proteger (estático o dinámico)
 </Prerequisite>
+
+---
+
+## Cómo lo ejecuto en mi propia infraestructura
+
+Esto no es hipotético — jmrp.io es en sí mismo la implementación de referencia de todo lo anterior. En producción, Nginx fija `set $cspNonce $request_id;` y reescribe el marcador con `sub_filter NGINX_CSP_NONCE $cspNonce;`, de modo que cada respuesta lleva un nonce fresco atado a esa petición. La cabecera que este sitio sirve realmente es nonce-only: `default-src 'none'`, `script-src 'self' 'nonce-…' 'strict-dynamic'`, `style-src 'self' 'nonce-…'`, más `frame-ancestors 'none'`, `base-uri 'self'` y `report-uri /csp-report` — cero `unsafe-inline`, cero listas de dominios que mantener.
+
+Las violaciones no se pierden en un log que nadie lee: tengo mi propio receptor (`scripts/csp-reporter.mjs`) que las saca a la luz en cuanto ocurren, en vez de depender de un servicio de terceros para saber qué se está rompiendo.
+
+Medido contra la API actual de Mozilla Observatory (v5), esta configuración obtiene una **calificación A+: puntuación 140, con los 10 tests pasados y cero fallos**. Esa es la cifra a día de hoy — no el 145 que puedes ver referenciado en otra parte de este sitio, de un commit de diciembre de 2025. Aquel total incluía un bonus de 5 puntos que Observatory concede por servir cookies con `Secure`/`HttpOnly`/`SameSite`; esas cookies eran dos valores dummy que no hacían nada útil, y eliminarlas —para que la página `/privacy/` de este sitio pueda afirmar honestamente que ninguna respuesta fija `Set-Cookie`— costó 5 puntos cosméticos en una política que ya no falla ni un solo test. Ese cambio mereció claramente la pena.
 
 ---
 
@@ -1831,5 +1841,5 @@ server {
 </StepByStep>
 
 <Callout type="success" icon="mdi:trophy">
-  **Resultado:** Siguiendo esta guía, puedes conseguir una calificación A+ en [Mozilla Observatory](https://observatory.mozilla.org/) manteniendo la funcionalidad completa del sitio y protegiendo a tus usuarios de ataques XSS.
+  **Resultado:** Esta es exactamente la configuración que corre en producción en este sitio — una calificación A+ con puntuación 140 y los 10 tests pasados en [Mozilla Observatory](https://observatory.mozilla.org/), con la funcionalidad completa del sitio intacta y los usuarios protegidos de ataques XSS.
 </Callout>
