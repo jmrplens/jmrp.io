@@ -1,11 +1,13 @@
 ---
 /**
  * References component (Simple).
- * Renders a flat, bordered list of external reference links (Lab mockup):
- * an accent ↗ marker + the reference title. No favicon cards / hover lift.
+ * Renders a flat, bordered list of reference links (Lab mockup): an accent ↗
+ * marker + the reference title. No favicon cards / hover lift. Off-site links
+ * open in a new tab; same-site ones (another post, a tool) do not.
  */
 import { defaultLocale, type Locale } from "@i18n/config";
 import { useTranslations } from "@i18n/utils";
+import { getSiteUrl } from "@utils/site";
 
 interface Reference {
   text: string;
@@ -20,6 +22,13 @@ const { references = [] } = Astro.props;
 
 const locale = (Astro.currentLocale ?? defaultLocale) as Locale;
 const t = useTranslations(locale);
+
+// References are collected verbatim from the post body, so a cited source can
+// be site-relative ("/blog/005-…/") just as legitimately as absolute. Parsing
+// those needs a base — without one `new URL()` throws and the reference is
+// dropped from the list entirely.
+const siteUrl = getSiteUrl();
+const siteOrigin = new URL(siteUrl).origin;
 ---
 
 {
@@ -37,7 +46,7 @@ const t = useTranslations(locale);
           let urlObj: URL | null = null;
 
           try {
-            urlObj = new URL(ref.url);
+            urlObj = new URL(ref.url, siteUrl);
             const allowedProtocols = ["http:", "https:"];
             if (
               !allowedProtocols.includes(urlObj.protocol) &&
@@ -53,9 +62,12 @@ const t = useTranslations(locale);
             return null;
           }
 
-          // Determine if this is an external link (http/https)
+          // Off-site only: a site-relative reference resolves against our own
+          // base, so testing the protocol alone would flag it as external and
+          // send an internal link to a new tab.
           const isExternalLink =
-            urlObj?.protocol === "http:" || urlObj?.protocol === "https:";
+            (urlObj?.protocol === "http:" || urlObj?.protocol === "https:") &&
+            urlObj.origin !== siteOrigin;
 
           // Always give the anchor an accessible name: fall back to the
           // hostname (then the raw URL) when a reference has empty text.
