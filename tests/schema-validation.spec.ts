@@ -278,6 +278,74 @@ test.describe("Article schema", () => {
     const isPartOf = post.isPartOf as JsonLdSchema;
     expect(isPartOf["@id"]).toBeDefined();
   });
+
+  test("article @id matches page canonical in both locales", async ({
+    page,
+  }) => {
+    await blockCloudflare(page);
+
+    await page.goto("/blog/012-device-bound-key-derivation/");
+    const enJsonLd = await getJsonLd(page);
+    const enArticle =
+      findInGraph(enJsonLd, "TechArticle") ??
+      findInGraph(enJsonLd, "BlogPosting");
+    expect(enArticle).not.toBeNull();
+    const enCanonical = await page
+      .locator('link[rel="canonical"]')
+      .getAttribute("href");
+    if (enArticle) {
+      expect(enArticle["@id"]).toBe(`${enCanonical}#article`);
+      const enMainEntity = enArticle.mainEntityOfPage as JsonLdSchema;
+      expect(enMainEntity["@id"]).toBe(enCanonical);
+    }
+
+    await page.goto("/es/blog/012-device-bound-key-derivation/");
+    const esJsonLd = await getJsonLd(page);
+    const esArticle =
+      findInGraph(esJsonLd, "TechArticle") ??
+      findInGraph(esJsonLd, "BlogPosting");
+    expect(esArticle).not.toBeNull();
+    const esCanonical = await page
+      .locator('link[rel="canonical"]')
+      .getAttribute("href");
+    if (esArticle) {
+      expect(esArticle["@id"]).toBe(`${esCanonical}#article`);
+      const esMainEntity = esArticle.mainEntityOfPage as JsonLdSchema;
+      expect(esMainEntity["@id"]).toBe(esCanonical);
+    }
+  });
+
+  test("EN and ES articles cross-reference as translations", async ({
+    page,
+  }) => {
+    await blockCloudflare(page);
+
+    await page.goto("/blog/012-device-bound-key-derivation/");
+    const enJsonLd = await getJsonLd(page);
+    const enArticle =
+      findInGraph(enJsonLd, "TechArticle") ??
+      findInGraph(enJsonLd, "BlogPosting");
+    expect(enArticle).not.toBeNull();
+    if (enArticle) {
+      const workTranslation = enArticle.workTranslation as JsonLdSchema;
+      expect(workTranslation["@id"]).toBe(
+        "https://jmrp.io/es/blog/012-device-bound-key-derivation/#article",
+      );
+    }
+
+    await page.goto("/es/blog/012-device-bound-key-derivation/");
+    const esJsonLd = await getJsonLd(page);
+    const esArticle =
+      findInGraph(esJsonLd, "TechArticle") ??
+      findInGraph(esJsonLd, "BlogPosting");
+    expect(esArticle).not.toBeNull();
+    if (esArticle) {
+      const translationOfWork = esArticle.translationOfWork as JsonLdSchema;
+      expect(translationOfWork["@id"]).toBe(
+        "https://jmrp.io/blog/012-device-bound-key-derivation/#article",
+      );
+    }
+  });
 });
 
 // ─── ProfilePage (Homepage → WebPage; canonical ProfilePage lives at /about/) ──

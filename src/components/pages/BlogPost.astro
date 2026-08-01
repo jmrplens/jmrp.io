@@ -114,7 +114,10 @@ if (post.data.coverImage) {
 
 // Canonical page URL — trailing slash so `@id`/`mainEntityOfPage` reconcile with
 // the page canonical (broken links between the article entity and its page otherwise).
-const postUrl = new URL(`/blog/${post.data.slug}/`, getSiteUrl()).href;
+// Locale-aware: ES pages must emit the /es/ canonical, not the EN one — otherwise
+// the ES article collapses into the EN entity (same @id, two headlines).
+const postUrl = new URL(translatePath(`/blog/${post.data.slug}/`), getSiteUrl())
+  .href;
 
 // Approximate body word count (code blocks already stripped in `bodyWithoutCode`).
 const wordCount = bodyWithoutCode
