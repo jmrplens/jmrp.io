@@ -5,6 +5,21 @@ no_progress = true
 
 # Exclude specific domains/URLs (Timeouts prevent checking)
 exclude = [
+    # --- Anti-bot 403s: these serve fine to real readers ---------------------
+    # Each verified by hand from this server: a plain `curl` with a browser
+    # user-agent returns 200 while lychee gets 403. Sending a browser UA in
+    # lychee was tried and made things worse (it tripped additional blocks,
+    # including doi.org), so the domains are skipped instead.
+    'https://eprint\.iacr\.org/.*',
+    'https://www\.iacr\.org/.*',
+    'https://gitlab\.torproject\.org/.*',
+    'https://www\.abuseipdb\.com/.*',
+    # The 404 page legitimately answers 404; it is its own canonical. The
+    # language switcher on it points at the other locale's 404, which Astro
+    # emits as `404.html` rather than `404/index.html`, so the filesystem
+    # check cannot resolve it. Nginx serves a 404 there, which is correct.
+    'https://jmrp\.io/404/',
+    'file://.*/404$',
     'https://profdent\.es/.*',
     'https://mstdn\.jmrp\.io/.*',
     'https://mesh\.jmrp\.io/.*',
