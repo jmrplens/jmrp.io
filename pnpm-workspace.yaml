@@ -40,7 +40,8 @@ overrides:
   "@vercel/blob>undici": "^6.24.0"
   "@vercel/fun>@tootallnate/once": "^3.0.1"
   "@vercel/fun>tar": "^7.5.11"
-  "@vercel/node>undici": "^5.29.0"
+  "@vercel/node>undici": "^6.27.0"
+  "@vercel/python-analysis>js-yaml": "^4.3.0"
   "@vercel/python-analysis>minimatch": "^10.2.3"
   "@vercel/python-analysis>smol-toml": "^1.6.1"
   "@vercel/rust>smol-toml": "^1.6.1"
@@ -53,9 +54,13 @@ overrides:
   "get-uri>basic-ftp": "^5.2.1"
   "mermaid>dompurify": "^3.3.2"
   "micromatch>picomatch": "^2.3.2"
+  # Only minimatch@3 pulls the vulnerable brace-expansion 1.x; 9 and 10 are
+  # already on 5.x, so the parent is version-scoped to leave them alone.
+  "minimatch@3>brace-expansion": "^1.1.17"
   "patch-package>yaml": "^2.8.3"
   "tinyglobby>picomatch": "^4.0.4"
   "vercel>smol-toml": "^1.6.1"
+  "vercel>undici": "^6.27.0"
   "yaml-language-server>yaml": "^2.8.3"
 
 peerDependencyRules:
