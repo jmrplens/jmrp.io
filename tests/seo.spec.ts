@@ -320,6 +320,50 @@ test.describe("SEO & Metadata Checks", () => {
     expect(content).toContain("## Contact");
   });
 
+  /* eslint-disable playwright/no-conditional-in-test -- fence/heading parsing
+     needs branching to walk the file line by line */
+  test("llms-full.txt nests post/tool body headings below their own title, respecting code fences", async ({
+    page,
+  }) => {
+    // `page.request` performs a plain HTTP fetch decoded as UTF-8, unlike
+    // `page.goto()` + `response.text()`, which goes through the browser's
+    // network stack and mis-decodes accented characters when the server's
+    // `Content-Type` charset gets stripped in preview.
+    const response = await page.request.get("/llms-full.txt");
+    const content = await response.text();
+    expect(content).toBeDefined();
+
+    // Fenced code blocks must be skipped: a leading `#` inside a fence is a
+    // shell comment, not a heading, and counting it would corrupt the result.
+    let inFence = false;
+    const structural: string[] = [];
+    for (const line of content.split("\n")) {
+      if (/^\s*```/.test(line)) {
+        inFence = !inFence;
+        continue;
+      }
+      if (inFence) continue;
+      const match = /^(#{1,6})\s+(.*)/.exec(line);
+      if (match && match[1].length === 2) structural.push(match[2]);
+    }
+
+    // Only true document sections may be H2 — post and tool bodies must be
+    // demoted below their own title, or H2-boundary chunkers would detach
+    // every section from its article.
+    expect(structural).toEqual([
+      "About the Author",
+      "Blog Posts",
+      "Blog Posts (Español)",
+      "Developer Tools",
+      "Developer Tools (Español)",
+      "Curriculum Vitae",
+      "Publications",
+      "Contact",
+      "Technical Details",
+    ]);
+  });
+  /* eslint-enable playwright/no-conditional-in-test */
+
   test("Structured data (JSON-LD) is present on key pages", async ({
     page,
   }) => {

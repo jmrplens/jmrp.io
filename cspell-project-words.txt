@@ -151,6 +151,7 @@ checkend
 chev
 chinanet
 chrono
+chunkers
 ciberseguridad
 cifrador
 cilíndricos

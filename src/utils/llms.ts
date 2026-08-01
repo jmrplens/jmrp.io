@@ -40,15 +40,41 @@ const today = () => new Date().toISOString().slice(0, 10);
 
 /**
  * Best-effort conversion of a post's MDX body to plain-ish markdown for AI
- * ingestion: strips `import` statements and collapses excess blank lines.
- * Component tags are left in place (harmless noise) to avoid corrupting code
- * blocks that legitimately contain `<` / `>`.
+ * ingestion: strips `import` statements, collapses excess blank lines, and
+ * demotes the post's own headings by two levels.
+ *
+ * The demotion matters: post bodies are inlined under an `### <post title>`
+ * node, so their native `##` sections would otherwise sit one level ABOVE the
+ * title they belong to. Any retrieval pipeline that chunks on H2 boundaries
+ * would then detach every section from its article and lose attribution.
+ *
+ * Fenced code blocks are skipped — a leading `#` there is a shell comment, not
+ * a heading, and rewriting it would corrupt the snippet. Component tags are
+ * left in place (harmless noise) to avoid corrupting code blocks that
+ * legitimately contain `<` / `>`.
  */
 function mdxToText(body: string): string {
-  return body
+  const stripped = body
     .replaceAll(/^import [^\n]*/gm, "")
     .replaceAll(/\n{3,}/g, "\n\n")
     .trim();
+
+  let inFence = false;
+  return stripped
+    .split("\n")
+    .map((line) => {
+      if (/^\s*```/.test(line)) {
+        inFence = !inFence;
+        return line;
+      }
+      if (inFence) return line;
+      const match = /^(#{1,4})(\s+.*)$/.exec(line);
+      if (!match) return line;
+      // Cap at H6 so deeply nested source headings stay valid markdown.
+      const depth = Math.min(match[1].length + 2, 6);
+      return `${"#".repeat(depth)}${match[2]}`;
+    })
+    .join("\n");
 }
 
 /**
