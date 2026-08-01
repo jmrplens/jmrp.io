@@ -2,6 +2,7 @@
 title: "MikroTik WireGuard VPN: Complete Dual-Stack IPv4/IPv6 Configuration"
 slug: "007-mikrotik-wireguard-dual-stack-vpn"
 publishedDate: 2026-02-14
+updatedDate: 2026-08-02
 lastVerified:
   date: 2026-08-01
   versions:
@@ -107,6 +108,14 @@ Throughout this guide, values that **you must replace** with your own are clearl
 - **Client keys** — Always generate unique keypairs per device
 - **`your-domain.com`** — Your public IP or DDNS hostname
 </Callout>
+
+---
+
+## How I run this on my own infrastructure
+
+The configuration above isn't a lab exercise — it's the WireGuard setup running today on my own RB5009UG+S+ on RouterOS 7.23.2, with `wg_devices` on UDP port 53537 exactly as used throughout this guide, serving 3 active peers at the standard 1500 MTU.
+
+Honestly, there isn't an incident to report. I'd like to hand you a war story about MSS clamping gone wrong or a handshake that silently failed, but that's not what happened here: this tunnel has been running for a while without a single usage problem, with good throughput and full dual-stack connectivity — IPv4 and IPv6 both work end to end, every time. If your deployment follows the steps above, that's the boring, reliable outcome you should expect too.
 
 ---
 
