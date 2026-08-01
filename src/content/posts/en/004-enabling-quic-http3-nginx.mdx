@@ -5,7 +5,7 @@ description: "Deep dive into QUIC and HTTP/3 — technical architecture, securit
 author: "José Manuel Requena Plens"
 authorEmail: "mail@jmrp.io"
 publishedDate: 2026-01-14
-updatedDate: 2026-01-14
+updatedDate: 2026-08-02
 lastVerified:
   date: 2026-08-01
   versions:
@@ -85,6 +85,14 @@ In this comprehensive guide, we'll explore the history and architecture of QUIC,
   - **Core config**: add `listen 443 quic reuseport;`, enable `http3 on`, TLS 1.3, and the `Alt-Svc` header; `reuseport` must appear on exactly one listener per address:port.
   - **Open UDP/443 on the firewall** (server and cloud provider) or QUIC fails silently and clients fall back to HTTP/2; verify with `curl --http3`, DevTools, or `quic="h3"` in the access log.
 </TLDRSummary>
+
+---
+
+## How I run this on my own infrastructure
+
+jmrp.io serves HTTP/3 itself: both server blocks in production carry `listen 443 quic;` alongside the standard TCP listeners, so the site accepts QUIC and TLS-over-TCP connections side by side depending on what the client — and whatever sits between the client and the server — actually supports.
+
+I didn't take the `Alt-Svc` header's word for it. Running `curl --http3` straight against the live site returns `HTTP/3 200`: a completed QUIC handshake, not an inference drawn from a response header that a misconfigured server could still send while quietly falling back to HTTP/2 underneath. That distinction matters — plenty of "HTTP/3 enabled" checklists stop at the header and never confirm the protocol actually negotiated. It's a small thing to verify, and it's also the only way to know a QUIC deployment is real instead of aspirational: the header costs nothing to add, but only a client-side handshake proves UDP/443 is actually open and negotiating end to end.
 
 ---
 

@@ -2,7 +2,7 @@
 title: "MikroTik PPPoE + DHCPv6-PD: Dual-Stack for DIGI Spain"
 slug: "008-mikrotik-pppoe-dualstack-digi"
 publishedDate: 2026-02-15
-updatedDate: 2026-07-07
+updatedDate: 2026-08-02
 lastVerified:
   date: 2026-08-01
   versions:
@@ -110,6 +110,16 @@ This guide is written for **DIGI Spain**, but the PPPoE + DHCPv6-PD setup applie
 
 If your ISP doesn't use VLAN tagging, skip Step 2 and set the PPPoE client interface directly to the physical port.
 </Callout>
+
+---
+
+## How I run this on my own infrastructure
+
+This isn't theoretical: my own RB5009UG+S+, running RouterOS 7.23.2, runs exactly this PPPoE + DHCPv6-PD setup against DIGI, with the WAN VLAN tagged `vlan-id=20` (`VLAN_DIGI`) just as described above.
+
+The prefix-change handling in Step 5 isn't defensive programming for an edge case — it's the normal case. Every time I restart the PPPoE interface, or the router itself, DIGI hands me a new /56 prefix. Not occasionally: every single time. That's exactly why the LAN addressing can't hardcode a prefix and has to re-derive it on reconnection; anything that assumes a static prefix breaks on the very first reboot. The trade-off is a few seconds of dropped sessions while the interface renegotiates — the same brief interruption you'd see from any external disconnection.
+
+The negotiated MTU of 1480 isn't a guess either. I've confirmed it three separate ways: DIGI's own published documentation, the configuration shipped on DIGI's stock router, and by directly testing different MTU values on my own connection. All three agree on 1480, not the 1500 that `max-mtu` merely allows as an upper limit.
 
 ---
 
