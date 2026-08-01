@@ -53,6 +53,7 @@ const tld = lastDot === -1 ? "" : domainPart.slice(lastDot + 1);
   .obfuscated-email {
     font-family: var(--font-mono);
     overflow-wrap: anywhere;
+
     /* The parts are inline-level and must not gain gaps from source newlines. */
     white-space: nowrap;
   }
