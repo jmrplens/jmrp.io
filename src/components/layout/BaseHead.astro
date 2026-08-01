@@ -314,9 +314,9 @@ const navSchema = (siteData.nav || []).map((item): SiteNavigationElement => ({
 }));
 
 // 3. Breadcrumb Schema (Automatic)
-// Drop the locale prefix: /es/about/ is "Inicio > Perfil", not "Inicio >
-// Es > Perfil". The root item must also point at the localized home,
-// otherwise the Spanish trail is rooted at the English page. In EN,
+// Drop the locale prefix: the trail for /es/about/ is home > profile, not
+// home > "Es" > profile. The root item must also point at the localized
+// home, otherwise the Spanish trail is rooted at the English page. In EN,
 // rawSegments[0] is never equal to `locale` ("en" never appears as a URL
 // segment), so this branch never activates there.
 const rawSegments = Astro.url.pathname.split("/").filter(Boolean);
