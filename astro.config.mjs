@@ -15,7 +15,7 @@ import { rehypeLinkDisambiguator } from "./scripts/rehype-link-disambiguator.mjs
 import { remarkMermaidBypass } from "./scripts/remark-mermaid-bypass.mjs";
 import postBuildIntegration from "./src/integrations/post-build.ts";
 import preBuildIntegration from "./src/integrations/pre-build.ts";
-import { getPostDateMap } from "./src/integrations/sitemap-post-dates.ts";
+import { createLastmodResolver } from "./src/integrations/sitemap-post-dates.ts";
 import { vitePrefetchNoncePlugin } from "./src/integrations/vite-plugin-prefetch-nonce.ts";
 import routerosGrammar from "./src/languages/routeros.tmLanguage.json";
 
@@ -153,11 +153,18 @@ export default defineConfig({
         // Exclude 404 and test/draft pages from sitemap
         !page.includes("/404") &&
         !page.includes("/998-") &&
-        !page.includes("/999-"),
+        !page.includes("/999-") &&
+        // Tag pages now render `noindex, follow` (see BlogTagPage.astro for
+        // why). Listing a noindexed URL in the sitemap sends a crawler two
+        // contradictory instructions — "index this" and "do not index this" —
+        // so they come out of here too. They stay crawlable via the in-page
+        // links, which is what `follow` is for.
+        !page.includes("/blog/tags/"),
       serialize: (() => {
-        const buildTimestamp = new Date().toISOString();
-        // Real per-post modification dates (frontmatter), keyed by slug.
-        const postDates = getPostDateMap();
+        // Content-derived modification dates for EVERY url, not just posts.
+        // See `sitemap-post-dates.ts` for why the old build-timestamp fallback
+        // was actively harmful.
+        const lastmodFor = createLastmodResolver();
         return (item) => {
           const url = item.url;
           // Strip locale prefix for pattern matching
@@ -191,18 +198,30 @@ export default defineConfig({
             priority = 0.3;
           }
 
-          // Use the real post date when this is a blog post; otherwise the
-          // build timestamp (static/index/tool pages regenerate every build).
-          const postSlugMatch = /^\/blog\/([^/]+)\/?$/.exec(path);
-          const lastmod =
-            (postSlugMatch && postDates.get(postSlugMatch[1])) ||
-            buildTimestamp;
+          const lastmod = lastmodFor(path);
+
+          // `x-default` alternate, to match what every page already emits in
+          // its <head>. @astrojs/sitemap's i18n option generates one
+          // xhtml:link per configured locale and has no x-default option, so
+          // the sitemap advertised two alternates where the HTML advertised
+          // three. Engines that read only the sitemap were left without the
+          // fallback declaration. The unprefixed (English) URL is the default,
+          // matching `getAlternateLinks()`.
+          const links = item.links && [
+            ...item.links,
+            {
+              lang: "x-default",
+              url: item.links.find((l) => l.lang === "en")?.url ?? item.url,
+            },
+          ];
 
           return /** @type {import("@astrojs/sitemap").SitemapItem} */ ({
             ...item,
             priority,
             changefreq,
-            lastmod,
+            // Omitted rather than faked when no content date can be resolved.
+            ...(lastmod && { lastmod }),
+            ...(links && { links }),
           });
         };
       })(),

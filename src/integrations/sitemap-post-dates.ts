@@ -1,14 +1,25 @@
 /**
- * Sitemap per-post lastmod dates.
+ * Sitemap lastmod dates, derived from content rather than from the build clock.
  *
  * The `@astrojs/sitemap` `serialize` callback only receives the page URL, with
- * no access to content-collection data. To emit a real `<lastmod>` per blog
- * post (instead of a single uniform build timestamp), we parse each post's
- * frontmatter from disk once and expose a `slug → ISO date` map.
+ * no access to content-collection data, so everything it needs is resolved here
+ * once and exposed as lookup maps.
  *
- * Non-post pages keep the build timestamp, which is appropriate since they are
- * regenerated on every build.
+ * ── Why this covers more than posts now ──────────────────────────────────
+ * This module used to answer for blog posts only, and every other URL fell back
+ * to a single build timestamp. On this site `pnpm build` is the deploy, so that
+ * meant 98 of 122 URLs advertised a brand-new `lastmod` on every deploy —
+ * identical to the millisecond — including 18 tool pages that simultaneously
+ * declared `changefreq: yearly`. Crawlers discount `lastmod` from sources that
+ * behave that way, which devalued the signal on the 24 post URLs where it was
+ * accurate.
+ *
+ * Each page now answers from whatever actually determines its content:
+ * frontmatter dates where they exist, the git history of the source file
+ * otherwise, and for index/tag/category pages the newest date among the items
+ * they list — a listing really is modified when a new entry appears in it.
  */
+import { execFileSync } from "node:child_process";
 import { readdirSync, readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
@@ -83,4 +94,154 @@ export function getPostDateMap(): Map<string, string> {
   }
 
   return map;
+}
+
+const REPO_ROOT = new URL("../../", import.meta.url);
+
+/**
+ * Last commit date for a repo-relative path, as a full ISO timestamp.
+ *
+ * Returns undefined when git cannot answer (shallow checkout, untracked file)
+ * so callers can fall back deliberately instead of inheriting a wrong date.
+ */
+function gitDate(repoRelativePath: string): string | undefined {
+  try {
+    const stdout = execFileSync(
+      // eslint-disable-next-line sonarjs/no-os-command-from-path -- PATH is pinned below to /usr/bin:/bin, both root-owned
+      "git",
+      ["log", "-1", "--format=%cI", "--", repoRelativePath],
+      {
+        cwd: fileURLToPath(REPO_ROOT),
+        encoding: "utf8",
+        stdio: ["ignore", "pipe", "ignore"],
+        // Root-owned PATH only, so `git` cannot be shadowed by a writable
+        // directory inherited from the build shell. Mirrors
+        // `DEFAULT_SECURE_PATH` in `scripts/deploy-live.mjs`.
+        env: { ...process.env, PATH: "/usr/bin:/bin" }, // NOSONAR
+      },
+    ).trim();
+    return stdout ? new Date(stdout).toISOString() : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+/**
+ * Newest of a set of ISO strings, ignoring undefined entries.
+ *
+ * ISO-8601 timestamps sort correctly as plain strings, but the comparator is
+ * explicit so the ordering does not silently depend on that property.
+ */
+function newest(...dates: (string | undefined)[]): string | undefined {
+  return dates
+    .filter((d): d is string => Boolean(d))
+    .sort((a, b) => a.localeCompare(b))
+    .at(-1);
+}
+
+/**
+ * Tool slug → lastmod, from frontmatter when present and git history otherwise.
+ * Tool pages are hand-maintained MDX, so their real modification date is the
+ * last time someone edited that MDX — never the deploy that happened to follow.
+ */
+function getToolDateMap(): Map<string, string> {
+  const map = new Map<string, string>();
+  const toolsDir = new URL("../content/tools/", import.meta.url);
+
+  for (const locale of LOCALE_DIRS) {
+    const dir = new URL(`${locale}/`, toolsDir);
+    let files: string[];
+    try {
+      files = readdirSync(fileURLToPath(dir));
+    } catch {
+      continue;
+    }
+    for (const file of files) {
+      if (!file.endsWith(".mdx") || file.startsWith("_")) continue;
+      const raw = readFileSync(fileURLToPath(new URL(file, dir)), "utf8");
+      const fm = parseFrontmatter(raw);
+      const slug = fm?.slug ?? file.replace(/\.mdx$/, "");
+      const front = fm?.updatedDate ?? fm?.publishedDate;
+      const iso = front
+        ? new Date(front).toISOString()
+        : gitDate(`src/content/tools/${locale}/${file}`);
+      if (!iso || Number.isNaN(Date.parse(iso))) continue;
+      map.set(slug, newest(map.get(slug), iso) ?? iso);
+    }
+  }
+
+  return map;
+}
+
+/**
+ * Resolves `<lastmod>` for any sitemap URL from its real content source.
+ *
+ * @returns A function taking the locale-stripped path and returning an ISO
+ *   timestamp, or undefined when nothing can be determined (the caller then
+ *   omits `lastmod` — an absent element is valid and honest, whereas the build
+ *   clock is a claim that the page changed when it did not).
+ */
+export function createLastmodResolver(): (path: string) => string | undefined {
+  const postDates = getPostDateMap();
+  const toolDates = getToolDateMap();
+
+  const newestPost = newest(...postDates.values());
+  const newestTool = newest(...toolDates.values());
+
+  // Static pages, each keyed to whatever file actually holds its content.
+  const staticSources: Record<string, string[]> = {
+    "/about/": ["src/content/profile/about.yaml"],
+    "/uses/": ["src/content/profile/uses.yaml"],
+    "/projects/": ["src/content/profile/projects.yaml"],
+    "/cv/": ["src/content/cv/en.yaml", "src/content/cv/es.yaml"],
+    "/publications/": [
+      "src/content/publications_data/papers.bib",
+      "src/content/publications_data/coauthors.yaml",
+    ],
+    "/homelab/": ["src/pages/homelab.astro"],
+    "/privacy/": [
+      "src/i18n/translations/en/common.ts",
+      "src/i18n/translations/es/common.ts",
+    ],
+  };
+  const staticDates = new Map<string, string | undefined>(
+    Object.entries(staticSources).map(([path, sources]) => [
+      path,
+      newest(...sources.map((source) => gitDate(source))),
+    ]),
+  );
+
+  return (rawPath) => {
+    const path = rawPath === "" ? "/" : rawPath;
+
+    // Home: the newest thing it surfaces. It is a shop window onto the posts,
+    // so it genuinely changes when they do.
+    if (path === "/") return newest(newestPost, newestTool);
+
+    // `[^/]+` also matches the section roots `/blog/series/` and `/blog/tags/`,
+    // which are not post slugs — without this guard they resolved to
+    // `postDates.get("series")` (undefined) and returned early, so those two
+    // URLs shipped with no <lastmod> at all and were resubmitted to IndexNow on
+    // every single deploy as "unknown, assume changed".
+    const postSlug = /^\/blog\/([^/]+)\/?$/.exec(path);
+    if (postSlug && !["series", "tags"].includes(postSlug[1]))
+      return postDates.get(postSlug[1]);
+
+    const toolSlug = /^\/tools\/([^/]+)\/?$/.exec(path);
+    if (toolSlug && toolSlug[1] !== "categories")
+      return toolDates.get(toolSlug[1]);
+
+    // Listings are modified when their contents are. Tag and category pages
+    // resolve to the newest item of their kind rather than the newest item
+    // carrying that exact tag: the sitemap has no tag index to consult here,
+    // and over-reporting within the same corpus is far cheaper than the build
+    // clock this replaces.
+    if (path === "/blog/" || path.startsWith("/blog/tags/")) return newestPost;
+    if (path === "/blog/series/" || path.startsWith("/blog/series/"))
+      return newestPost;
+    if (path === "/tools/" || path.startsWith("/tools/categories/"))
+      return newestTool;
+
+    return staticDates.get(path);
+  };
 }

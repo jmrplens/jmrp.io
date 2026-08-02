@@ -14,6 +14,7 @@ import { defaultLocale, type Locale } from "@i18n/config";
 import type { TranslationKey } from "@i18n/utils";
 import { useTranslations } from "@i18n/utils";
 import BaseLayout from "@layouts/BaseLayout.astro";
+import { lastCommitDate } from "@utils/content-date";
 import { getSiteUrl } from "@utils/site";
 import type { WebPage } from "schema-dts";
 
@@ -63,6 +64,14 @@ const sectionId = (key: TranslationKey) =>
 
 const pageUrl = new URL(Astro.url.pathname, getSiteUrl()).href;
 
+const privacyModified = [
+  lastCommitDate(`src/i18n/translations/${locale}/common.ts`),
+  lastCommitDate("src/components/pages/PrivacyPage.astro"),
+]
+  .filter((date): date is string => Boolean(date))
+  .sort((a, b) => a.localeCompare(b))
+  .at(-1);
+
 const privacySchema = {
   "@type": "WebPage",
   "@id": `${pageUrl}#webpage`,
@@ -72,9 +81,14 @@ const privacySchema = {
   inLanguage: locale,
   isPartOf: { "@id": new URL("#website", getSiteUrl()).href },
   publisher: { "@id": new URL("#person", getSiteUrl()).href },
-  // No per-field lastmod source for a hand-written policy page, so the build
-  // time is the honest freshness signal rather than an invented date.
-  dateModified: new Date().toISOString(),
+  // Freshness from git, not the build clock — `new Date()` here restamped the
+  // policy as modified on every deploy. The policy text lives in the locale's
+  // translation bundle and its markup in this component, so the later of the
+  // two is the date. Known over-trigger: `common.ts` also holds unrelated UI
+  // strings, so an unrelated translation edit can bump this by a day. That is
+  // a bounded imprecision in the right direction; the build clock was a
+  // guaranteed falsehood on every deploy. Omitted when git cannot answer.
+  ...(privacyModified && { dateModified: privacyModified }),
 } satisfies WebPage;
 ---
 
