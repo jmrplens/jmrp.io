@@ -54,35 +54,57 @@ const today = () => new Date().toISOString().slice(0, 10);
  * legitimately contain `<` / `>`.
  */
 function mdxToText(body: string): string {
-  // Fence state is tracked in a single pass so that BOTH transforms respect
-  // it. Stripping `import` lines up front (as this once did) also deleted the
-  // `import csv` / `import os` lines from the Python sample in post 010,
-  // shipping a broken snippet to the very consumer llms-full.txt exists for.
+  // EVERY transform here runs inside one fence-aware pass, deliberately.
+  // Each one that was hoisted out of it corrupted snippets: stripping `import`
+  // up front deleted the `import csv` / `import os` lines from the Python
+  // sample in post 010, and collapsing blank runs up front squashed the
+  // spacing inside code blocks. Both shipped broken code to the very consumer
+  // llms-full.txt exists for. Nothing may touch a line while `inFence`.
   let inFence = false;
-  return body
-    .replaceAll(/\n{3,}/g, "\n\n")
-    .trim()
-    .split("\n")
-    .map((line) => {
-      if (/^\s*```/.test(line)) {
-        inFence = !inFence;
-        return line;
-      }
-      if (inFence) return line;
-      // MDX component imports are page scaffolding, not prose — but only
-      // outside fenced code.
-      if (line.startsWith("import ")) return "";
-      // `\s` matches exactly one character and the remainder is taken with
-      // slice() rather than a second capture group: `(\s+.*)` lets both parts
-      // consume whitespace, so the engine backtracks over every split of a
-      // long run of spaces (super-linear, flagged by SonarCloud as ReDoS).
-      const match = /^(#{1,4})\s/.exec(line);
-      if (!match) return line;
-      // Cap at H6 so deeply nested source headings stay valid markdown.
-      const depth = Math.min(match[1].length + 2, 6);
-      return `${"#".repeat(depth)}${line.slice(match[1].length)}`;
-    })
-    .join("\n");
+  let blankRun = 0;
+  const out: string[] = [];
+
+  for (const line of body.trim().split("\n")) {
+    if (/^\s*```/.test(line)) {
+      inFence = !inFence;
+      blankRun = 0;
+      out.push(line);
+      continue;
+    }
+    if (inFence) {
+      out.push(line);
+      continue;
+    }
+
+    // MDX component imports are page scaffolding, not prose. Dropping the line
+    // outright (rather than emitting "") keeps the import block from turning
+    // into a run of blank lines.
+    if (line.startsWith("import ")) continue;
+
+    // Collapse runs of blank lines to at most one, outside fences only.
+    if (line.trim() === "") {
+      blankRun += 1;
+      if (blankRun > 1) continue;
+      out.push(line);
+      continue;
+    }
+    blankRun = 0;
+
+    // `\s` matches exactly one character and the remainder is taken with
+    // slice() rather than a second capture group: `(\s+.*)` lets both parts
+    // consume whitespace, so the engine backtracks over every split of a
+    // long run of spaces (super-linear, flagged by SonarCloud as ReDoS).
+    const match = /^(#{1,4})\s/.exec(line);
+    if (!match) {
+      out.push(line);
+      continue;
+    }
+    // Cap at H6 so deeply nested source headings stay valid markdown.
+    const depth = Math.min(match[1].length + 2, 6);
+    out.push(`${"#".repeat(depth)}${line.slice(match[1].length)}`);
+  }
+
+  return out.join("\n");
 }
 
 /**

@@ -859,8 +859,8 @@ test.describe("Locale-scoped entity @ids", () => {
    */
   function canonicalOf(html: string): string | null {
     for (const tag of html.match(/<link\b[^>]*>/g) ?? []) {
-      if (!/\brel=("?)canonical\1/.test(tag)) continue;
-      return /\bhref="([^"]*)"/.exec(tag)?.[1] ?? null;
+      if (!/\brel=(["']?)canonical\1/.test(tag)) continue;
+      return /\bhref=(["'])(.*?)\1/.exec(tag)?.[2] ?? null;
     }
     return null;
   }
