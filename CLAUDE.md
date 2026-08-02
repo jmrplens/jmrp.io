@@ -547,7 +547,7 @@ Nginx replaces `NGINX_CSP_NONCE` placeholder with `$cspNonce` per-request. Two h
 - `security_headers.conf`: For HTML (nonce in script-src + style-src + strict-dynamic)
 - `security_headers_assets.conf`: For static assets (default-src 'none', no nonces)
 
-Additional security headers: HSTS (2 years), X-Content-Type-Options, X-Frame-Options DENY, Referrer-Policy, COOP, COEP, CORP, Permissions-Policy (18 features disabled).
+Additional security headers: HSTS (1 year, `includeSubDomains; preload`), X-Content-Type-Options, X-Frame-Options DENY, Referrer-Policy, COOP, COEP, CORP, Permissions-Policy (18 features disabled).
 
 ---
 

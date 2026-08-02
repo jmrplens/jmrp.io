@@ -365,6 +365,27 @@ const servicesSchema = {
         </p>
       </div>
 
+      {
+        /*
+          Server-rendered prose, above the live metrics.
+
+          Every metric on this page is a Preact island hydrated from
+          /api/homelab/*, so the static HTML contained no numbers and no
+          description — a crawler, or anyone without JS, received the site's
+          most distinctive page as an empty shell. These paragraphs state only
+          facts that hold between deploys, so they need no fetch and cannot go
+          stale the way a frozen snapshot of the live counters would.
+        */
+      }
+      <section
+        class="homelab-summary"
+        aria-label={t("pages.homelab.summaryAriaLabel")}
+      >
+        <p>{t("pages.homelab.summary1")}</p>
+        <p>{t("pages.homelab.summary2")}</p>
+        <p>{t("pages.homelab.summary3")}</p>
+      </section>
+
       <section aria-label={t("pages.homelab.kpiAriaLabel")}>
         <HomelabKpi
           client:visible
@@ -507,6 +528,22 @@ const servicesSchema = {
 
   .homelab-hero {
     margin-bottom: var(--space-xl);
+  }
+
+  /* Standing description above the live metrics. Constrained to the prose
+     measure because it is prose, unlike the full-width metric grids below. */
+  .homelab-summary {
+    max-width: var(--max-width-prose);
+    margin-bottom: var(--space-lg);
+  }
+
+  .homelab-summary p {
+    margin-bottom: var(--space-md);
+    color: var(--color-text);
+  }
+
+  .homelab-summary p:last-child {
+    margin-bottom: 0;
   }
 
   .homelab-hero .section-title {

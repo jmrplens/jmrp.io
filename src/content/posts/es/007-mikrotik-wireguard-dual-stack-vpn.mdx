@@ -10,6 +10,7 @@ lastVerified:
     - RouterOS 7.23.2
     - RB5009UG+S+
 description: "Configura WireGuard en MikroTik RouterOS con dual-stack IPv4/IPv6 completo. Accede a tu red doméstica con IPv6 nativo desde cualquier conexión."
+lead: "WireGuard en RouterOS con dual-stack de verdad: los clientes VPN reciben direcciones IPv6 ULA que NAT66 traduce al prefijo global de tu ISP. Probado en RouterOS 7 sobre un RB5009."
 author: "José Manuel Requena Plens"
 authorEmail: "mail@jmrp.io"
 draft: false
@@ -89,13 +90,13 @@ import Collapsible from "@components/ui/Collapsible.astro";
 
 Esta guía muestra cómo configurar un **WireGuard VPN listo para producción** en MikroTik RouterOS con **soporte dual-stack IPv4/IPv6**. ¿El resultado? Puedes conectarte desde cualquier red —incluso sin IPv6— y disfrutar de conectividad IPv6 completa a través de tu router doméstico.
 
-<TLDRSummary title="Lo que vas a construir">
-  - Un **servidor WireGuard VPN** en MikroTik RouterOS con soporte completo dual-stack IPv4 + IPv6
-  - **IPv6 mediante ULA + NAT66**: los clientes VPN reciben direcciones ULA privadas traducidas al prefix global de tu ISP
-  - **Reglas de firewall**: input, forward, NAT/masquerade, MSS clamping y optimizaciones en la tabla RAW
-  - **Soporte multi-cliente**: cada dispositivo recibe claves únicas y un par de IPs dedicado (IPv4 + IPv6)
-  - **Full tunnel o split tunnel**: encamina todo el tráfico por la VPN o solo el de la red doméstica
-  - **Probado en RouterOS 7.x** con RB5009, pero aplicable a cualquier router MikroTik con soporte WireGuard
+<TLDRSummary title="TL;DR — WireGuard dual-stack en RouterOS">
+  - **WireGuard viene integrado en RouterOS 7**, así que un servidor VPN dual-stack no necesita contenedor ni paquete adicional: la interfaz escucha en un puerto UDP alto no estándar (**53537** aquí, no el 51820 por defecto, para esquivar los escaneos automáticos) y cada peer recibe una dirección IPv4 y una IPv6.
+  - **El IPv6 va por ULA más NAT66, no por prefix delegado.** Los clientes reciben direcciones `fd00::/8` que el router traduce al prefix global de tu ISP, de modo que el túnel sobrevive a que ese prefix cambie por debajo.
+  - **Hay que fijar el MSS de TCP a 1420 o las descargas grandes se atascan.** El MSS es la MTU menos los 40 bytes de cabecera IPv6 menos los 20 de cabecera TCP, y 1420 es el valor conservador que aguanta en ambas pilas.
+  - **Cada dispositivo tiene su propio par de claves y su par de direcciones.** Revocar un cliente es borrar un peer; no hay que reemitir nada más.
+  - **El split tunnel se decide en el `AllowedIPs` del cliente**, no en el servidor: lista solo los prefixes de casa para encaminar el tráfico doméstico, o `0.0.0.0/0, ::/0` para encaminarlo todo.
+  - **Probado en RouterOS 7.x sobre un RB5009**, y aplicable a cualquier router MikroTik cuya build de RouterOS incluya WireGuard.
 </TLDRSummary>
 
 <Callout type="important" title="Valores que debes personalizar">

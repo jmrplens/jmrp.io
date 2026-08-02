@@ -56,3 +56,27 @@ export function getSeriesPosts(
     )
     .filter((post): post is CollectionEntry<"posts"> => Boolean(post));
 }
+
+/**
+ * The series a post belongs to, and its position within it.
+ *
+ * The inverse of {@link getSeriesPosts}, and the reason it exists: the hubs
+ * linked down to their members but nothing linked back up, so a reader arriving
+ * at part 2 straight from a search result had no way to learn there were four
+ * more parts or which one came first. The data to say so was already here.
+ *
+ * @param prefix - The post's `NNN` filename prefix.
+ * @returns The owning series with a 1-based position and the member count, or
+ *   undefined for posts that are deliberately standalone.
+ */
+export function getSeriesForPost(
+  prefix: string,
+): { series: Series; position: number; total: number } | undefined {
+  for (const series of SERIES) {
+    const index = series.posts.indexOf(prefix);
+    if (index !== -1) {
+      return { series, position: index + 1, total: series.posts.length };
+    }
+  }
+  return undefined;
+}

@@ -9,6 +9,7 @@ lastVerified:
     - RouterOS 7.23.2
     - RB5009UG+S+
 description: "Configure PPPoE with DHCPv6 Prefix Delegation on MikroTik RouterOS for DIGI Spain. VLAN tagging, SLAAC, prefix change handling, and firewall rules."
+lead: "DIGI Spain hands the PPPoE session out on VLAN 20 and delegates a /56 by DHCPv6-PD — and the link MTU negotiates down to 1480 through LCP no matter what you set max-mtu to."
 author: "José Manuel Requena Plens"
 authorEmail: "mail@jmrp.io"
 draft: false
@@ -87,15 +88,13 @@ import Collapsible from "@components/ui/Collapsible.astro";
 
 This guide covers the complete configuration of a [MikroTik](https://mikrotik.com/) router for DIGI's network, including automatic handling of prefix changes—a challenge when your ISP assigns dynamic prefixes that can change on each reconnection.
 
-<TLDRSummary title="What You'll Configure">
-  - **PPPoE over VLAN 20** with the `identifier@digi` username format for DIGI Spain fiber authentication
-  - **Dynamic IPv4** with automatic default route and peer DNS
-  - **DHCPv6 Prefix Delegation** (/56 prefix) for native IPv6 connectivity
-  - **SLAAC** for automatic IPv6 address assignment on LAN devices
-  - **Automatic prefix change handling** with DHCPv6 script that updates addresses on reconnection
-  - **MTU negotiated down to 1480** via LCP regardless of `max-mtu=1500` — that setting is only the client's upper limit, not the real link MTU
-  - **Production-ready firewall** with input, forward chains for both IPv4 and IPv6
-  - **Tested on RouterOS 7.x** with RB5009, but applicable to any MikroTik router
+<TLDRSummary title="TL;DR — DIGI Spain dual-stack on RouterOS">
+  - **DIGI delivers the PPPoE session on VLAN 20.** Put the PPPoE client on a VLAN interface over the WAN port, not on the port itself, or authentication fails with no useful error — this is the single most common reason these setups do not come up.
+  - **The username format is `identifier@digi`**, and IPv4 arrives dynamically with the default route and peer DNS from the session.
+  - **IPv6 is a delegated `/56`, not a `/64`.** Request the prefix with DHCPv6-PD and carve a `/64` out of it per LAN; pointing the `/56` straight at a bridge does not work.
+  - **The link MTU negotiates down to 1480 via LCP no matter what.** `max-mtu=1500` is only the client's upper limit, not the resulting MTU, so clamp MSS or half the web loads and the other half hangs.
+  - **The delegated prefix changes on reconnection**, so a DHCPv6 script has to rewrite the LAN addresses; without it IPv6 dies silently after an outage while IPv4 keeps working.
+  - **Tested on RouterOS 7.23.2 on an RB5009**, and applicable to any MikroTik router.
 </TLDRSummary>
 
 <Callout type="important" title="DIGI-Specific vs Generic Values">

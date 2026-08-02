@@ -564,6 +564,19 @@ export const common = {
     },
     homelab: {
       kicker: "Infrastructure",
+      // Standing description of the infrastructure, server-rendered.
+      // Everything else on this page is a client-side island, so the static
+      // HTML a crawler or a non-JS reader receives had no substance at all —
+      // the one page carrying first-party measurements was also the emptiest.
+      // These are facts that do not expire between deploys, so they can be
+      // stated without a live fetch; the live numbers still arrive on hydration.
+      summaryAriaLabel: "What runs in this homelab",
+      summary1:
+        "Everything described here runs on hardware I own and pay for, on a domestic fibre line in Valencia, Spain — not on a managed platform. The router is a MikroTik RB5009 terminating the ISP link over PPPoE with a delegated IPv6 prefix; the services sit behind it on mini PCs and a NAS, with two VPS for the parts that need to be reachable when the house is not.",
+      summary2:
+        "The self-hosted services include a Mastodon instance, a Matrix homeserver, an AT Protocol PDS, file sync, media streaming and monitoring. Four Tor nodes run alongside them: two bridges in Spain speaking obfs4 and WebTunnel, and a middle relay in the United Kingdom.",
+      summary3:
+        "Security is one pipeline rather than a set of unrelated rules. A honeypot on the router turns a scanner's first packet into an address-list entry, nginx tarpits and pattern matches on the web tier, both feed CrowdSec, and CrowdSec drives bouncers back on the router and the reverse proxy. The counters above are what that pipeline actually stopped.",
       realtimePill: "Live · via API",
       kpiAriaLabel: "Homelab headline metrics",
       kpiServicesOnline: "services online",
@@ -580,7 +593,13 @@ export const common = {
       nodesUnit: "nodes",
       nodesLiveHint: "live load · via API",
       nodesAriaLabel: "Infrastructure node resource load",
-      noData: "no data",
+      // An em-dash, not "no data". These are the initial values of the
+      // client-side islands, so the static HTML a crawler receives contained
+      // the literal string "no data" 31 times on the one page carrying the
+      // site's only first-party measurements. A placeholder should be empty,
+      // not an assertion that there is nothing to measure. Matches the
+      // convention already used elsewhere in this file.
+      noData: "—",
       nodeCpu: "CPU",
       nodeRam: "RAM",
       nodeTempOptimal: "Temp · Optimal",
@@ -828,7 +847,7 @@ export const common = {
         "José Manuel Requena Plens — firmware and software engineer in Valencia building secure embedded devices, open-source tools, and self-hosted infrastructure.",
       editorialTitle: "// EDITORIAL & CORRECTIONS",
       editorialBody1:
-        "Everything published here comes from work actually done: commands run on real hardware and real servers, configuration quoted from systems that are running it, and the software version each guide was written against stated in the article. Claims that are not mine to make — protocol behavior, cryptographic properties, vendor defaults — are checked against primary sources (RFCs, standards bodies, vendor documentation) and cited, and every link is re-checked automatically on each build.",
+        "Everything published here comes from work actually done: commands run on real hardware and real servers, configuration quoted from systems that are running it, and, where a guide depends on a specific software version, that version stated in the article. Claims that are not mine to make — protocol behavior, cryptographic properties, vendor defaults — are checked against primary sources (RFCs, standards bodies, vendor documentation) and cited, and every link is re-checked automatically on each build.",
       editorialBody2:
         "Each post carries an AI-assistance disclosure, so here is exactly what it means. AI tools help with drafting, structure, copy-editing and the Spanish translation. They do not decide what is true: every command, configuration snippet and measurement is executed and verified by me before it ships, and nothing is published straight from a model's output. The Spanish version is a translation of the same verified material, not a separately generated article.",
       editorialBody3:
