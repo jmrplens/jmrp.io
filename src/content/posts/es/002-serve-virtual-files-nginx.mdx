@@ -1188,8 +1188,9 @@ location = /blog/tags/mtls/  { return 301 /blog/tags/security/; }
 location = /blog/tags/mtls   { return 301 /blog/tags/security/; }
 ```
 
-Ahora mismo hay veintiocho de esos bloques en producción. Son coincidencias `=`
-a propósito: una coincidencia por prefijo sobre `/blog/tags/` se tragaría las
+Ahora mismo están los sesenta en producción: quince etiquetas, cada una escrita
+dos veces para las formas con y sin barra final, en los dos idiomas. Son
+coincidencias `=` a propósito: una coincidencia por prefijo sobre `/blog/tags/` se tragaría las
 etiquetas que siguen existiendo, y además la forma `=` hace que nginx deje de
 buscar, que es la regla de prioridad del principio de este artículo trabajando
 de verdad.

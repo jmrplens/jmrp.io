@@ -574,7 +574,7 @@ export const common = {
       summary1:
         "Everything described here runs on hardware I own and pay for, on a domestic fibre line in Valencia, Spain — not on a managed platform. The router is a MikroTik RB5009 terminating the ISP link over PPPoE with a delegated IPv6 prefix; the services sit behind it on mini PCs and a NAS, with two VPS for the parts that need to be reachable when the house is not.",
       summary2:
-        "The self-hosted services include a Mastodon instance, a Matrix homeserver, an AT Protocol PDS, file sync, media streaming and monitoring. Four Tor nodes run alongside them: two bridges in Spain speaking obfs4 and WebTunnel, and a middle relay in the United Kingdom.",
+        "The self-hosted services include a Mastodon instance, a Matrix homeserver, an AT Protocol PDS, file sync, media streaming and monitoring. Four Tor nodes run alongside them: two bridges in Spain speaking obfs4 and WebTunnel, and two middle relays, one in the United Kingdom and one in Spain.",
       summary3:
         "Security is one pipeline rather than a set of unrelated rules. A honeypot on the router turns a scanner's first packet into an address-list entry, nginx tarpits and pattern matches on the web tier, both feed CrowdSec, and CrowdSec drives bouncers back on the router and the reverse proxy. The counters above are what that pipeline actually stopped.",
       realtimePill: "Live · via API",

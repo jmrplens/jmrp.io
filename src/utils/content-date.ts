@@ -1,7 +1,39 @@
 import { execFileSync } from "node:child_process";
+import { existsSync } from "node:fs";
+import path from "node:path";
+import process from "node:process";
+import { fileURLToPath } from "node:url";
 
 /**
- * Last time a source file actually changed, as an ISO date (`YYYY-MM-DD`).
+ * Repository root, resolved by checking candidates rather than assuming one.
+ *
+ * The paths callers pass are documented as repo-root-relative, so `git log`
+ * has to run from the repo root for that contract to hold — and a mismatch
+ * fails silently, because `git log -- <path>` returns an empty result rather
+ * than an error, so every date would quietly become `undefined`.
+ *
+ * Two candidates, both of which are wrong in some context:
+ *
+ * - `process.cwd()` is the project root for every Astro build and every script
+ *   run through pnpm, but nothing guarantees it in an unusual invocation.
+ * - Walking up from `import.meta.url` is stable against the working directory,
+ *   but NOT against bundling: this module is imported by `.astro` components,
+ *   so Vite may relocate it and `../../` then points outside the repo
+ *   entirely. Pinning to it alone silently disabled every date on /about/ and
+ *   /privacy/ — observed, not hypothetical.
+ *
+ * So each candidate is validated by looking for `.git` (a directory in a normal
+ * clone, a file in a worktree, hence `existsSync` rather than a stat on a dir),
+ * and the first that holds up wins. `undefined` when neither does, which the
+ * caller already handles by omitting the date.
+ */
+const REPO_ROOT = [
+  fileURLToPath(new URL("../../", import.meta.url)),
+  process.cwd(),
+].find((candidate) => existsSync(path.join(candidate, ".git")));
+
+/**
+ * Last time a source file actually changed, as an ISO 8601 timestamp.
  *
  * ── Why this exists ──────────────────────────────────────────────────────
  * `/about/` and `/privacy/` used to publish `dateModified: new Date()`, which
@@ -34,12 +66,14 @@ import { execFileSync } from "node:child_process";
  * @returns ISO 8601 timestamp, or undefined when git cannot answer.
  */
 export function lastCommitDate(repoRelativePath: string): string | undefined {
+  if (!REPO_ROOT) return undefined;
   try {
     const stdout = execFileSync(
       // eslint-disable-next-line sonarjs/no-os-command-from-path -- PATH is pinned below to /usr/bin:/bin, both root-owned
       "git",
       ["log", "-1", "--format=%cI", "--", repoRelativePath],
       {
+        cwd: REPO_ROOT,
         encoding: "utf8",
         stdio: ["ignore", "pipe", "ignore"],
         // Resolve `git` only through root-owned directories, so the binary

@@ -542,6 +542,7 @@ jmrp
 jmrplens
 josé
 journalctl
+jsonld
 jssecurity
 jund
 kaspersky
@@ -1050,6 +1051,7 @@ unocss
 unpad
 unparseable
 unphishable
+untransmitted
 urandom
 urlencode
 usar

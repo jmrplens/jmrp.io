@@ -1187,7 +1187,8 @@ location = /blog/tags/mtls/  { return 301 /blog/tags/security/; }
 location = /blog/tags/mtls   { return 301 /blog/tags/security/; }
 ```
 
-Twenty-eight of those blocks are live right now. They are `=` matches on
+All sixty blocks are live right now — fifteen tags, each written twice for the
+with- and without-trailing-slash forms, in both locales. They are `=` matches on
 purpose: a prefix match on `/blog/tags/` would swallow the tags that still
 exist, and the `=` form also stops nginx searching any further, which is the
 priority rule from the top of this article doing real work.

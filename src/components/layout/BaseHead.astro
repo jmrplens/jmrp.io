@@ -23,6 +23,7 @@ import {
 } from "@i18n/utils";
 import type { SiteConfig } from "@src/types";
 import { safeJsonLd } from "@utils/html";
+import type { LanguageTaggedValue } from "@utils/person";
 import {
   CANONICAL_ALUMNI_OF,
   CANONICAL_CREDENTIALS,
@@ -214,17 +215,18 @@ const orcidId = /orcid\.org\/([\dX-]+)/i.exec(orcidUrl ?? "")?.[1];
  * Mirrors `localizedValues` in `scripts/ci/build-identity.mjs`; the
  * schema-validation spec deep-compares the two, so drift fails CI.
  */
-// The `as unknown as Text` casts below are all this one gap: `schema-dts`
-// models every Text-valued property as a bare `string`, so it rejects
-// language-tagged literals even though they are core JSON-LD 1.1 (§4.2.4) and
-// plain RDF. The runtime value is correct and valid; the cast only tells the
-// checker about a shape its types decline to model. Confined to the three
-// genuinely per-language properties — see `Multilingual` in `@utils/person`.
+// `schema-dts` models every Text-valued property as a bare `string`, so it
+// rejects language-tagged literals even though they are core JSON-LD 1.1
+// (§4.2.4) and plain RDF. `Multilingual<Text>` is the named widening for
+// exactly that gap; the single cast lives here rather than at each call site,
+// so the three per-language properties below stay ordinarily typed.
 const localizedValues = (pair: { en: string; es: string }) =>
   [
     { "@value": pair.en, "@language": "en" },
     { "@value": pair.es, "@language": "es" },
-  ] as unknown as Text;
+    // `satisfies` first, so the literal is still checked against the shape it
+    // claims to be; the cast then narrows it to what schema-dts will accept.
+  ] satisfies LanguageTaggedValue[] as unknown as Text;
 
 const personJobTitle = aboutData?.person.jobTitle
   ? localizedValues(aboutData.person.jobTitle)

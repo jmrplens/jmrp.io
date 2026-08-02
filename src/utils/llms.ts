@@ -53,40 +53,82 @@ const today = () => new Date().toISOString().slice(0, 10);
  * into a static document, and stating a number here that the page no longer
  * shows would be worse than stating none.
  */
-const PROFILE_SECTIONS: { title: string; url: string; lines: string[] }[] = [
+const PROFILE_SECTIONS: {
+  url: string;
+  en: { title: string; lines: string[] };
+  es: { title: string; lines: string[] };
+}[] = [
   {
-    title: "Projects",
     url: "/projects/",
-    lines: [
-      "Open-source software authored and maintained by the author, each entry listing language, license, source repository and documentation site.",
-      "Includes: gitlab-mcp-server (Model Context Protocol server exposing over 1,000 GitLab operations to AI assistants, Go), phonometry (Python acoustics library validated against 362 published standards), cs-routeros-bouncer (CrowdSec bouncer for MikroTik RouterOS, Go), Cloudflare-DNS-Updater (dynamic DNS updater), libgen-mcp, and TFG-TFM_EPS (LaTeX thesis template for the Universitat Politècnica de València).",
-    ],
+    en: {
+      title: "Projects",
+      lines: [
+        "Open-source software authored and maintained by the author, each entry listing language, license, source repository and documentation site.",
+        "Includes: gitlab-mcp-server (Model Context Protocol server exposing over 1,000 GitLab operations to AI assistants, Go), phonometry (Python acoustics library validated against 362 published standards), cs-routeros-bouncer (CrowdSec bouncer for MikroTik RouterOS, Go), Cloudflare-DNS-Updater (dynamic DNS updater), libgen-mcp, and TFG-TFM_EPS (LaTeX thesis template for the Universitat Politècnica de València).",
+      ],
+    },
+    es: {
+      title: "Proyectos",
+      lines: [
+        "Software de código abierto escrito y mantenido por el autor; cada entrada indica lenguaje, licencia, repositorio de código y sitio de documentación.",
+        "Incluye: gitlab-mcp-server (servidor Model Context Protocol que expone más de 1.000 operaciones de GitLab a asistentes de IA, en Go), phonometry (biblioteca de acústica en Python validada contra 362 normas publicadas), cs-routeros-bouncer (bouncer de CrowdSec para MikroTik RouterOS, en Go), Cloudflare-DNS-Updater (actualizador de DNS dinámico), libgen-mcp y TFG-TFM_EPS (plantilla LaTeX de tesis para la Universitat Politècnica de València).",
+      ],
+    },
   },
   {
-    title: "Homelab",
     url: "/homelab/",
-    lines: [
-      "Self-hosted infrastructure run by the author on his own hardware and connections, with live metrics on the page.",
-      "Services include a Mastodon instance (mstdn.jmrp.io), a Matrix homeserver, an AT Protocol PDS, Nextcloud, Jellyfin, and monitoring.",
-      "Tor: two bridges in Spain running obfs4 and WebTunnel, plus a middle relay in the United Kingdom.",
-      "Security pipeline: a MikroTik honeypot and nginx pattern matching feed CrowdSec, which drives bouncers on the router and the web tier.",
-    ],
+    en: {
+      title: "Homelab",
+      lines: [
+        "Self-hosted infrastructure run by the author on his own hardware and connections, with live metrics on the page.",
+        "Services include a Mastodon instance (mstdn.jmrp.io), a Matrix homeserver, an AT Protocol PDS, Nextcloud, Jellyfin, and monitoring.",
+        "Tor: four nodes — two bridges in Spain running obfs4 and WebTunnel, and two middle relays, one in the United Kingdom and one in Spain.",
+        "Security pipeline: a MikroTik honeypot and nginx pattern matching feed CrowdSec, which drives bouncers on the router and the web tier.",
+      ],
+    },
+    es: {
+      title: "Homelab",
+      lines: [
+        "Infraestructura autoalojada que el autor opera sobre su propio hardware y sus propias conexiones, con métricas en tiempo real en la página.",
+        "Entre los servicios hay una instancia de Mastodon (mstdn.jmrp.io), un homeserver de Matrix, un PDS de AT Protocol, Nextcloud, Jellyfin y monitorización.",
+        "Tor: cuatro nodos — dos puentes en España que ejecutan obfs4 y WebTunnel, y dos relays intermedios, uno en Reino Unido y otro en España.",
+        "Tubería de seguridad: un honeypot en MikroTik y la coincidencia de patrones de nginx alimentan a CrowdSec, que a su vez acciona los bouncers del router y de la capa web.",
+      ],
+    },
   },
   {
-    title: "Uses",
     url: "/uses/",
-    lines: [
-      "The hardware, software and services actually in rotation: router and network gear, servers and mini PCs, development tools, and the self-hosted services listed under Homelab.",
-    ],
+    en: {
+      title: "Uses",
+      lines: [
+        "The hardware, software and services actually in rotation: router and network gear, servers and mini PCs, development tools, and the self-hosted services listed under Homelab.",
+      ],
+    },
+    es: {
+      title: "Uses",
+      lines: [
+        "El hardware, el software y los servicios que están realmente en uso: router y equipamiento de red, servidores y mini PCs, herramientas de desarrollo y los servicios autoalojados que aparecen en Homelab.",
+      ],
+    },
   },
   {
-    title: "Privacy",
     url: "/privacy/",
-    lines: [
-      "No cookies, no third-party scripts, no advertising network, no cross-site tracking, and no mailing list.",
-      "The only measurement is a privacy-preserving analytics beacon; the page invites the reader to verify the claim directly by opening the browser storage panel and finding nothing to delete.",
-      "Nothing on the site is monetized: no advertising, no affiliate links and no sponsored content, stated explicitly as a conflict-of-interest declaration.",
-    ],
+    en: {
+      title: "Privacy",
+      lines: [
+        "No cookies, no third-party scripts, no advertising network, no cross-site tracking, and no mailing list.",
+        "The only measurement is a privacy-preserving analytics beacon; the page invites the reader to verify the claim directly by opening the browser storage panel and finding nothing to delete.",
+        "Nothing on the site is monetized: no advertising, no affiliate links and no sponsored content, stated explicitly as a conflict-of-interest declaration.",
+      ],
+    },
+    es: {
+      title: "Privacidad",
+      lines: [
+        "Sin cookies, sin scripts de terceros, sin red publicitaria, sin rastreo entre sitios y sin lista de correo.",
+        "La única medición es un beacon de analítica respetuoso con la privacidad; la página invita a comprobarlo abriendo el panel de almacenamiento del navegador y no encontrando nada que borrar.",
+        "Nada del sitio está monetizado: ni publicidad, ni enlaces de afiliado, ni contenido patrocinado, declarado explícitamente como conflicto de intereses.",
+      ],
+    },
   },
 ];
 
@@ -94,17 +136,26 @@ const PROFILE_SECTIONS: { title: string; url: string; lines: string[] }[] = [
  * Renders {@link PROFILE_SECTIONS} as llms-full.txt blocks.
  *
  * @param siteUrl - Absolute site origin.
+ * @param locale - Which language to render, matching the document being built.
+ *   Without this the Spanish document carried English profile prose under
+ *   Spanish section headings, which is worse than omitting it.
  * @returns Markdown lines, ready to splice into the document.
  */
-function buildProfileSections(siteUrl: string): string[] {
-  return PROFILE_SECTIONS.flatMap((section) => [
-    `## ${section.title}`,
-    "",
-    `URL: ${siteUrl}${section.url}`,
-    "",
-    ...section.lines,
-    "",
-  ]);
+function buildProfileSections(
+  siteUrl: string,
+  locale: "en" | "es" = "en",
+): string[] {
+  return PROFILE_SECTIONS.flatMap((section) => {
+    const localized = locale === "es" ? section.es : section.en;
+    return [
+      `## ${localized.title}`,
+      "",
+      `URL: ${siteUrl}${locale === "es" ? "/es" : ""}${section.url}`,
+      "",
+      ...localized.lines,
+      "",
+    ];
+  });
 }
 
 /**
@@ -441,7 +492,7 @@ export async function generateLlmsFullTxt(
     "",
     ...publicationsSection,
     // The four sections llms.txt advertises but this file used to skip.
-    ...buildProfileSections(siteUrl),
+    ...buildProfileSections(siteUrl, onlyLocale === "es" ? "es" : "en"),
     "## Contact",
     "",
     ...CONTACT.map((c) => `- ${c}`),

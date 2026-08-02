@@ -947,7 +947,8 @@ async function submitToIndexNow(urlList) {
     console.log(
       "deploy-live: skipping IndexNow submission (POSTBUILD_INDEXNOW not set).",
     );
-    return;
+    // Disabled is not failed: a skipped submitter must not block the ledger.
+    return true;
   }
 
   const siteUrl = (process.env.PUBLIC_SITE_URL || "https://jmrp.io").replace(
@@ -962,7 +963,7 @@ async function submitToIndexNow(urlList) {
     console.warn(
       "deploy-live: IndexNow: no sitemap URLs found, skipping submission.",
     );
-    return;
+    return true;
   }
 
   console.log(
@@ -995,15 +996,18 @@ async function submitToIndexNow(urlList) {
       console.log(
         `deploy-live: ✓ IndexNow accepted ${submittedUrls.length} URLs.`,
       );
-    } else {
-      console.warn(
-        `deploy-live: ⚠ IndexNow responded with ${response.status}: ${await response.text()}`,
-      );
+      // Truncation counts as a failure so the untransmitted tail is retried.
+      return submittedUrls.length === urlList.length;
     }
+    console.warn(
+      `deploy-live: ⚠ IndexNow responded with ${response.status}: ${await response.text()}`,
+    );
+    return false;
   } catch (error) {
     // Non-fatal: IndexNow failure must never break a deploy.
     console.warn("deploy-live: ⚠ Failed to submit to IndexNow.");
     console.warn(error instanceof Error ? error.message : String(error));
+    return false;
   }
 }
 
@@ -1026,7 +1030,8 @@ async function submitToBingWebmaster(urlList) {
     console.log(
       "deploy-live: skipping Bing Webmaster submission (BING_WEBMASTER_API_KEY not set).",
     );
-    return;
+    // Disabled or nothing to send is not a failure.
+    return true;
   }
 
   const siteUrl = (process.env.PUBLIC_SITE_URL || "https://jmrp.io").replace(
@@ -1037,7 +1042,8 @@ async function submitToBingWebmaster(urlList) {
     console.warn(
       "deploy-live: Bing Webmaster: no sitemap URLs found, skipping submission.",
     );
-    return;
+    // Disabled or nothing to send is not a failure.
+    return true;
   }
 
   console.log(
@@ -1070,15 +1076,17 @@ async function submitToBingWebmaster(urlList) {
       console.log(
         `deploy-live: ✓ Bing Webmaster accepted ${urlList.length} URLs.`,
       );
-    } else {
-      console.warn(
-        `deploy-live: ⚠ Bing Webmaster responded with ${response.status}: ${await response.text()}`,
-      );
+      return true;
     }
+    console.warn(
+      `deploy-live: ⚠ Bing Webmaster responded with ${response.status}: ${await response.text()}`,
+    );
+    return false;
   } catch (error) {
     // Non-fatal: a Bing submission failure must never break a deploy.
     console.warn("deploy-live: ⚠ Failed to submit to Bing Webmaster.");
     console.warn(error instanceof Error ? error.message : String(error));
+    return false;
   }
 }
 
@@ -1152,15 +1160,31 @@ async function runPublishNotifications() {
     }
   }
 
-  await Promise.allSettled([
+  const [, indexNow, bing] = await Promise.allSettled([
     timed("Cloudflare cache purge", () => purgeCloudflareCache()),
     timed("IndexNow submission", () => submitToIndexNow(urlList)),
     timed("Bing Webmaster submission", () => submitToBingWebmaster(urlList)),
   ]);
 
-  // Recorded after the submitters run, so a crash mid-submit leaves the old
-  // ledger in place and the next deploy re-announces rather than skipping.
-  if (sitemapEntries.size > 0) writeSubmissionLedger(sitemapEntries);
+  // The ledger records what the search APIs have been TOLD, so it must only be
+  // written when they were actually told. Both submitters swallow their errors
+  // to keep a deploy from failing over a search-engine ping, which means
+  // allSettled reports "fulfilled" even for an HTTP 500 or a timeout — so they
+  // now return an explicit outcome and it is checked here. Writing the ledger
+  // regardless would mark a failed URL as announced and never retry it.
+  // A disabled submitter reports success: skipped is not failed.
+  const announced = (result) =>
+    result.status === "fulfilled" && result.value !== false;
+  const allAnnounced = announced(indexNow) && announced(bing);
+
+  if (sitemapEntries.size === 0) return;
+  if (allAnnounced) {
+    writeSubmissionLedger(sitemapEntries);
+  } else {
+    console.warn(
+      "deploy-live: a submitter failed; leaving the ledger untouched so the affected URLs are retried on the next deploy.",
+    );
+  }
 }
 
 /**

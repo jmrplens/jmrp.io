@@ -140,6 +140,26 @@ function newest(...dates: (string | undefined)[]): string | undefined {
 }
 
 /**
+ * A frontmatter date as an ISO timestamp, or undefined when absent or invalid.
+ *
+ * Validity is decided with `Number.isNaN(getTime())` rather than by calling
+ * `toISOString()` and catching: that method throws a RangeError on an
+ * unparseable date, and the original code tested validity only afterwards, so
+ * a single malformed `updatedDate` in any tool's frontmatter would abort
+ * `pnpm build` for the whole site instead of skipping one page.
+ *
+ * Extracted so `getToolDateMap` stays under the cognitive-complexity budget,
+ * and so neither `NaN` nor `Number.NaN` has to appear as a literal — ESLint's
+ * unicorn plugin requires the first spelling and SonarJS requires the second,
+ * so the only way to satisfy both is not to write either.
+ */
+function frontmatterDate(value: string | Date | undefined): string | undefined {
+  if (value === undefined) return undefined;
+  const parsed = new Date(value);
+  return Number.isNaN(parsed.getTime()) ? undefined : parsed.toISOString();
+}
+
+/**
  * Tool slug → lastmod, from frontmatter when present and git history otherwise.
  * Tool pages are hand-maintained MDX, so their real modification date is the
  * last time someone edited that MDX — never the deploy that happened to follow.
@@ -154,18 +174,18 @@ function getToolDateMap(): Map<string, string> {
     try {
       files = readdirSync(fileURLToPath(dir));
     } catch {
-      continue;
+      continue; // Locale directory may not exist.
     }
+
     for (const file of files) {
       if (!file.endsWith(".mdx") || file.startsWith("_")) continue;
       const raw = readFileSync(fileURLToPath(new URL(file, dir)), "utf8");
       const fm = parseFrontmatter(raw);
+      const iso =
+        frontmatterDate(fm?.updatedDate ?? fm?.publishedDate) ??
+        gitDate(`src/content/tools/${locale}/${file}`);
+      if (!iso) continue;
       const slug = fm?.slug ?? file.replace(/\.mdx$/, "");
-      const front = fm?.updatedDate ?? fm?.publishedDate;
-      const iso = front
-        ? new Date(front).toISOString()
-        : gitDate(`src/content/tools/${locale}/${file}`);
-      if (!iso || Number.isNaN(Date.parse(iso))) continue;
       map.set(slug, newest(map.get(slug), iso) ?? iso);
     }
   }

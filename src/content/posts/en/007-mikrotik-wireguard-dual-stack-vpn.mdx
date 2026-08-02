@@ -92,7 +92,7 @@ This guide demonstrates how to configure a **production-ready WireGuard VPN** on
 <TLDRSummary title="TL;DR — dual-stack WireGuard on RouterOS">
   - **WireGuard is built into RouterOS 7**, so a dual-stack VPN server needs no container and no extra package — the interface listens on a high non-standard UDP port (**53537** here, not the default 51820, to sidestep automated scans) and each peer gets one IPv4 and one IPv6 address.
   - **IPv6 goes through ULA plus NAT66, not a delegated prefix.** Clients receive `fd00::/8` addresses that the router translates to your ISP's global prefix, so the tunnel survives the prefix changing underneath it.
-  - **Clamp TCP MSS to 1420 or large downloads stall.** MSS is MTU minus the 40-byte IPv6 header minus the 20-byte TCP header, and 1420 is the conservative value that holds on both stacks.
+  - **Clamp TCP MSS or large downloads stall.** With the interface at MTU 1500 the computed ceilings are 1460 for IPv4 (1500 − 20 IP − 20 TCP) and 1440 for IPv6 (1500 − 40 − 20); `new-mss=1420` sits below both, which is why one value works on either stack.
   - **Each device gets its own key pair and address pair.** Revoking one client is deleting one peer; nothing else has to be reissued.
   - **Split tunnel is an `AllowedIPs` decision on the client**, not a server setting: list only the home prefixes to route home traffic, or `0.0.0.0/0, ::/0` to route everything.
   - **Tested on RouterOS 7.x on an RB5009**, and applicable to any MikroTik router whose RouterOS build includes WireGuard.

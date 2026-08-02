@@ -5,7 +5,7 @@ lang: "es"
 publishedDate: 2026-03-30
 updatedDate: 2026-08-02
 description: "Guía para ejecutar bridges Tor obfs4 y WebTunnel en Linux con camuflaje Nginx, firewall, monitoreo Prometheus e integración CrowdSec."
-lead: "Un mismo puente ejecutando obfs4 y WebTunnel a la vez, con Nginx haciendo que la mitad WebTunnel sea indistinguible de HTTPS normal. Running y Valid llegan en una hora; Stable exige 7 días de uptime continuo y Guard unos 8."
+lead: "Un mismo puente ejecutando obfs4 y WebTunnel a la vez, con Nginx haciendo que la mitad WebTunnel sea indistinguible de HTTPS normal. Running y Valid llegan en menos de una hora; Stable y Guard tardaron aquí alrededor de una semana, porque se puntúan por fiabilidad sostenida y no por un contador de uptime."
 author: "José Manuel Requena Plens"
 authorEmail: "mail@jmrp.io"
 draft: false
@@ -98,7 +98,7 @@ Esta guía te enseñará todo lo que necesitas saber sobre la red Tor, el enruta
 <TLDRSummary title="TL;DR — un puente, dos pluggable transports">
 - **Un mismo puente puede ejecutar obfs4 y WebTunnel a la vez**, y merece la pena porque fallan en sitios distintos: obfs4 aleatoriza el tráfico para que no se parezca a ningún protocolo, mientras que WebTunnel se esconde dentro de HTTPS normal en el puerto 443 y sobrevive a los censores que bloquean de plano todo el tráfico "inclasificable".
 - **Nginx es lo que hace creíble a WebTunnel.** Se pone delante del puente en el 443 y sirve un sitio web real en todas las rutas salvo la secreta, así que un censor que sondee el host ve una web normal en vez de un endpoint que responde raro.
-- **Los flags del consenso tardan días, no minutos.** Running y Valid llegan en torno a una hora, pero Stable exige unos 7 días de uptime continuo y Guard unos 8: un puente que se reinicia cada dos días no los consigue nunca.
+- **Los flags del consenso tardan días, no minutos.** Running y Valid llegan en menos de una hora; Stable y Guard tardaron alrededor de una semana en este despliegue. Se puntúan a partir de un tiempo medio entre fallos ponderado y, en el caso de Guard, también de ancho de banda y familiaridad —no de un contador de uptime—, así que un puente que se reinicia cada dos días no los consigue nunca.
 - **Detrás de NAT hay que reenviar los TCP 9001, 4443 y 443** —ORPort, obfs4 y WebTunnel respectivamente— y abrirlos en el firewall del host; el autotest del ORPort falla en silencio si el router no lo hace.
 - **Dile a tu IDS que deje en paz a los clientes de Tor.** CrowdSec ve muchas conexiones desde muchas direcciones y banea a usuarios legítimos si no se excluyen los puertos del puente.
 - **Todo corre bajo systemd**, así que el stack vuelve solo tras un reinicio, que es justo lo que exigen los flags basados en uptime.
@@ -1502,15 +1502,16 @@ Esto es normal para puentes nuevos. BridgeDB distribuye puentes gradualmente:
 
 ## Cómo lo tengo montado
 
-Tres nodos Tor, que es justo el motivo de que esta guía exista en lugar de ser
+Cuatro nodos Tor, que es justo el motivo de que esta guía exista en lugar de ser
 un resumen del manual.
 
-El puente corre en un mini PC en casa, en Campello, sobre la misma línea de
-fibra doméstica que todo lo demás de la [página del homelab](/es/homelab/), y
-por detrás del router MikroTik: de ahí que la sección de NAT y reenvío de
-puertos de más arriba esté escrita como está. Los dos relays son instancias VPS
-de IONOS, una en Londres y otra en España, porque un relay quiere ancho de banda
-estable y una línea residencial no lo da de forma fiable.
+Dos puentes corren en España, uno de ellos en un mini PC en casa, en Campello,
+sobre la misma línea de fibra doméstica que todo lo demás de la [página del
+homelab](/es/homelab/), y por detrás del router MikroTik: de ahí que la sección
+de NAT y reenvío de puertos de más arriba esté escrita como está. Los dos relays
+intermedios son instancias VPS de IONOS, una en Londres y otra en España, porque
+un relay quiere ancho de banda estable y una línea residencial no lo da de forma
+fiable.
 
 Sinceramente, no hay ningún incidente que contar. No ha pasado nada dramático:
 ni una notificación de retirada, ni una queja por abuso, ni la visita de nadie.
@@ -1523,9 +1524,14 @@ Dos cosas sí me sorprendieron, y ambas están en esta guía por eso.
 
 La primera es lo que tardan los flags del consenso. Yo esperaba que el puente
 estuviera "funcionando" en una hora, y en sentido estricto lo estaba: Running y
-Valid llegan enseguida. Pero Stable exige una semana de uptime *continuo*, así
-que un reinicio temprano para cambiar una línea de configuración reinicia el
-contador. Si vas a trastear, trastea en la primera hora y luego déjalo en paz.
+Valid llegan enseguida. Stable tardó aquí alrededor de una semana, y Guard algo
+más. Son observaciones de este despliegue, no un calendario: las autoridades de
+directorio asignan Stable a partir de un tiempo medio entre fallos ponderado, no
+de un contador de uptime a secas, y Guard exige además Stable, Fast,
+familiaridad y ancho de banda suficiente, así que tus fechas serán otras. La
+lección práctica se sostiene igual: un reinicio para cambiar una línea de
+configuración retrasa la medición, así que trastea en la primera hora y luego
+déjalo en paz.
 
 La segunda es que CrowdSec baneó a mis propios clientes de Tor antes de que se
 me ocurriera excluir los puertos del puente. Desde el punto de vista del IDS, un

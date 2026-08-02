@@ -17,19 +17,17 @@ import type {
  * properties that genuinely carry one value per language on a single `@id`
  * (`jobTitle`, `description`, `Occupation.name`) — never to smuggle an
  * otherwise ill-typed value past the checker.
+ *
+ * A `Multilingual<T> = T | LanguageTaggedValue[]` alias was tried and removed: the
+ * Person node is emitted inside an object checked with `satisfies WebSite`, and a
+ * union that admits the array shape is not assignable to schema-dts's `Text`, so
+ * the alias could never actually be applied at the one call site that needed it.
+ * The single documented cast in BaseHead.astro is the honest version.
  */
 export interface LanguageTaggedValue {
   "@value": string;
   "@language": string;
 }
-
-/**
- * Widens a `schema-dts` property type to also accept language-tagged literals.
- *
- * Keeps the rest of the node fully type-checked: only the annotated property
- * opts out of the `Text`-is-a-`string` assumption.
- */
-export type Multilingual<T> = T | LanguageTaggedValue[];
 
 /**
  * The canonical avatar for the `#person` entity: 460x460 PNG, served from this
