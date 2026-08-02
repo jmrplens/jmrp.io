@@ -1,7 +1,14 @@
 User-agent: *
 # Content Signals (https://contentsignals.org/) — explicit intent: this site
-# welcomes search indexing, AI retrieval/RAG, and AI training.
-Content-Signal: search=yes, ai-input=yes, ai-retrieval=yes, ai-train=yes
+# welcomes search indexing, AI input (RAG / grounding an answer), and AI
+# training.
+#
+# Exactly three keys are defined by the specification: `search`, `ai-input` and
+# `ai-train`. An earlier version of this file also declared `ai-retrieval`,
+# which is not in the vocabulary — unknown signals are ignored, so it never did
+# anything except suggest a stricter policy than the spec can express. Do not
+# re-add keys that are not in the published list.
+Content-Signal: search=yes, ai-input=yes, ai-train=yes
 Allow: /
 
 # --- Search Engine Bots (explicit allow for clarity) ---
@@ -36,6 +43,17 @@ User-agent: OAI-SearchBot
 Allow: /
 
 User-agent: ClaudeBot
+Allow: /
+
+# Anthropic splits its crawling by purpose: ClaudeBot (training), Claude-User
+# (a fetch triggered by a user's question) and Claude-SearchBot (search
+# indexing). Naming all three means the policy stays explicit if the wildcard
+# block is ever tightened. Anthropic-AI is the legacy token, kept for older
+# stacks that still send it.
+User-agent: Claude-User
+Allow: /
+
+User-agent: Claude-SearchBot
 Allow: /
 
 User-agent: Anthropic-AI
@@ -94,9 +112,16 @@ Allow: /
 
 # --- Discovery ---
 
-Host: https://jmrp.io
+# `Host:` was removed here on purpose. It is a Yandex-only extension that
+# Yandex itself retired in 2018, no other crawler ever implemented, and whose
+# syntax expected a bare hostname rather than a URL — so the line was both
+# obsolete and malformed. Canonical host selection is done properly by the
+# self-referencing <link rel="canonical"> on every page and by the 301 from
+# www.jmrp.io, neither of which depends on this file.
 Sitemap: https://jmrp.io/sitemap-index.xml
 
 # LLM context (llmstxt.org standard)
 # https://jmrp.io/llms.txt
-# https://jmrp.io/llms-full.txt
+# https://jmrp.io/llms-full.txt          — both languages, ~1.2 MB
+# https://jmrp.io/llms-full-en.txt       — English corpus only
+# https://jmrp.io/llms-full-es.txt       — Spanish corpus only
