@@ -23,9 +23,15 @@ import { execFileSync } from "node:child_process";
  * `dateModified` in that case rather than substituting the build time: an
  * absent freshness signal is honest, a fabricated one is not.
  *
+ * ── Precision ────────────────────────────────────────────────────────────
+ * The full ISO timestamp, not a truncated `YYYY-MM-DD`. schema.org accepts
+ * either, but every other `dateModified` on this site is a datetime, and git
+ * already knows the commit time — throwing that precision away would make this
+ * one property inconsistent with the rest of the graph for no gain.
+ *
  * @param repoRelativePath - Path from the repository root, e.g.
  *   "src/content/profile/about.yaml".
- * @returns ISO date string, or undefined when git cannot answer.
+ * @returns ISO 8601 timestamp, or undefined when git cannot answer.
  */
 export function lastCommitDate(repoRelativePath: string): string | undefined {
   try {
@@ -47,7 +53,7 @@ export function lastCommitDate(repoRelativePath: string): string | undefined {
     ).trim();
     // An empty result means the path is untracked or has no commits — not an
     // error, but not a date either.
-    return stdout ? stdout.slice(0, 10) : undefined;
+    return stdout ? new Date(stdout).toISOString() : undefined;
   } catch {
     return undefined;
   }

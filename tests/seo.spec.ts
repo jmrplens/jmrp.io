@@ -358,6 +358,13 @@ test.describe("SEO & Metadata Checks", () => {
       "Developer Tools (Español)",
       "Curriculum Vitae",
       "Publications",
+      // Advertised by llms.txt under "## Sections" and previously missing from
+      // this document entirely, so a model that followed the index found
+      // nothing for four of the sections it had just been promised.
+      "Projects",
+      "Homelab",
+      "Uses",
+      "Privacy",
       "Contact",
       "Technical Details",
     ]);
