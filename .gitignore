@@ -44,7 +44,8 @@ pnpm-debug.log*
 # missed `csp-violations.log.1`, which reached a public commit carrying 543
 # visitor IP addresses from the CSP violation receiver.
 logs/
-html-errors.log
+# Trailing `*` for the same reason: rotation appends a suffix.
+html-errors.log*
 
 # --- 4. SECURITY & ENVIRONMENT ---
 # Local environment variables (NEVER COMMIT)
