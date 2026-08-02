@@ -13,6 +13,9 @@
 /* eslint-disable playwright/no-conditional-in-test -- Schema structure requires null checks */
 /* eslint-disable playwright/no-conditional-expect -- Conditional expects after schema null guards */
 
+import fs from "node:fs";
+import path from "node:path";
+
 import type { Page } from "@playwright/test";
 import { expect, test } from "@playwright/test";
 
@@ -807,5 +810,100 @@ test.describe("CollectionPage schema on the uses page", () => {
 
     const about = collection.about as JsonLdSchema;
     expect(about["@id"]).toBe("https://jmrp.io/#person");
+  });
+});
+
+test.describe("Locale-scoped entity @ids", () => {
+  /**
+   * Every entity a page DEFINES must be identified under that page's own
+   * canonical URL.
+   *
+   * This invariant has been broken twice by the same mistake — building a URL
+   * from a hardcoded `/blog/…` or `/tools/…` literal in a component that
+   * serves both locales, so the Spanish page publishes the English `@id`. Each
+   * time, two documents collapsed into a single entity carrying two names, two
+   * languages and both sets of FAQ answers. Both times a human spotted it in
+   * review rather than a test catching it, which is why this sweeps every
+   * Spanish page rather than sampling.
+   *
+   * It reads `dist/` instead of driving a browser: 71 navigations blow the
+   * per-test timeout, and nothing here needs a rendered page — the graph is
+   * server-emitted.
+   *
+   * A node is a DEFINITION when it carries `@type`; a bare `{"@id": …}` is a
+   * reference and may legitimately point elsewhere — that is exactly how
+   * `workTranslation` links the two locales. Fragment `@id`s name entities
+   * scoped to the current document, so their base must be the canonical.
+   * `#person` and `#website` are the deliberate exceptions: one identity and
+   * one site, shared across every page and both locales.
+   */
+  const SITE_WIDE_IDS = new Set([
+    "https://jmrp.io/#person",
+    "https://jmrp.io/#website",
+  ]);
+
+  /** Recursively collect every `.html` file under a directory. */
+  function htmlFilesIn(dir: string, found: string[] = []): string[] {
+    if (!fs.existsSync(dir)) return found;
+    for (const entry of fs.readdirSync(dir)) {
+      const full = path.join(dir, entry);
+      if (fs.statSync(full).isDirectory()) htmlFilesIn(full, found);
+      else if (entry.endsWith(".html")) found.push(full);
+    }
+    return found;
+  }
+
+  /**
+   * Reads the canonical href. Attribute order is not stable: the post-build
+   * minifier sorts attributes, so `rel` may precede or follow `href`.
+   */
+  function canonicalOf(html: string): string | null {
+    for (const tag of html.match(/<link\b[^>]*>/g) ?? []) {
+      if (!/\brel=("?)canonical\1/.test(tag)) continue;
+      return /\bhref="([^"]*)"/.exec(tag)?.[1] ?? null;
+    }
+    return null;
+  }
+
+  test("every Spanish page scopes its own entities under /es/", () => {
+    const esDir = path.join(path.resolve("dist"), "es");
+    const pages = htmlFilesIn(esDir);
+    expect(pages.length, "No Spanish pages found in dist/es").toBeGreaterThan(
+      0,
+    );
+
+    const offenders: string[] = [];
+
+    for (const file of pages) {
+      const html = fs.readFileSync(file, "utf-8");
+      const canonical = canonicalOf(html);
+      // Anchored to <script>: a <link rel="alternate" type="application/ld+json">
+      // also matches the bare media type, and would capture from there to the
+      // next </script> — i.e. markup, not the graph.
+      const raw =
+        /<script\b[^>]*application\/ld\+json[^>]*>([\s\S]*?)<\/script>/.exec(
+          html,
+        )?.[1];
+      if (!raw) continue;
+
+      const graph =
+        (JSON.parse(raw) as JsonLdDocument)["@graph"] ?? ([] as JsonLdSchema[]);
+
+      for (const node of graph) {
+        const id = node["@id"];
+        if (!node["@type"] || !id) continue;
+        if (!id.startsWith("https://jmrp.io/") || !id.includes("#")) continue;
+        if (SITE_WIDE_IDS.has(id)) continue;
+        if (canonical && id.startsWith(canonical)) continue;
+        offenders.push(
+          `${path.relative("dist", file)} → ${String(node["@type"])} ${id}`,
+        );
+      }
+    }
+
+    expect(
+      offenders,
+      `Entities defined under a URL that is not their page's canonical:\n${offenders.join("\n")}`,
+    ).toEqual([]);
   });
 });
