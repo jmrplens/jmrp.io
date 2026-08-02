@@ -54,7 +54,6 @@ ignorePaths:
   - .git
   - plan/** # gitignored working notes (Spanish prose), not part of the project
   - CHANGELOG-review.md # Spanish design-review report, not project content
-  - GEO-AUDIT-REPORT.md # Spanish GEO audit report, not project content
   - design-audit/** # temporary generated screenshots + HTML for the design review
   - pnpm-lock.yaml
   - package-lock.json
