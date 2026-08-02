@@ -13,9 +13,29 @@
     "Jose Manuel Requena-Plens",
     "Jose Manuel Requena Plens"
   ],
-  "jobTitle": "R&D · Firmware & Software Engineer",
-  "description": "Firmware and software engineer in Valencia, Spain — industrial embedded systems, open-source tooling, and self-hosted infrastructure.",
+  "jobTitle": [
+    {
+      "@value": "R&D · Firmware & Software Engineer",
+      "@language": "en"
+    },
+    {
+      "@value": "I+D · Ingeniero de Firmware y Software",
+      "@language": "es"
+    }
+  ],
+  "description": [
+    {
+      "@value": "Firmware and software engineer in Valencia, Spain — industrial embedded systems, open-source tooling, and self-hosted infrastructure.",
+      "@language": "en"
+    },
+    {
+      "@value": "Ingeniero de firmware y software en Valencia — sistemas embebidos industriales, herramientas open source e infraestructura self-hosted.",
+      "@language": "es"
+    }
+  ],
+  "email": "mail@jmrp.io",
   "url": "https://jmrp.io/",
+  "mainEntityOfPage": "https://jmrp.io/about/",
   "image": {
     "@type": "ImageObject",
     "url": "https://jmrp.io/identity/avatar.png",
@@ -64,6 +84,40 @@
       }
     }
   ],
+  "hasOccupation": {
+    "@type": "Occupation",
+    "name": [
+      {
+        "@value": "Firmware & Software Engineer",
+        "@language": "en"
+      },
+      {
+        "@value": "Ingeniero de Firmware y Software",
+        "@language": "es"
+      }
+    ]
+  },
+  "knowsLanguage": [
+    {
+      "@type": "Language",
+      "name": "Spanish",
+      "alternateName": "es"
+    },
+    {
+      "@type": "Language",
+      "name": "English",
+      "alternateName": "en"
+    }
+  ],
+  "homeLocation": {
+    "@type": "Place",
+    "address": {
+      "@type": "PostalAddress",
+      "addressLocality": "Valencia",
+      "addressRegion": "Valencian Community",
+      "addressCountry": "ES"
+    }
+  },
   "knowsAbout": [
     {
       "@type": "Thing",

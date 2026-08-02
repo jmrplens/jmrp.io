@@ -17,6 +17,38 @@ person:
   description:
     en: Firmware and software engineer in Valencia, Spain — industrial embedded systems, open-source tooling, and self-hosted infrastructure.
     es: Ingeniero de firmware y software en Valencia — sistemas embebidos industriales, herramientas open source e infraestructura self-hosted.
+
+  # Machine-readable contact for the canonical entity. Already public in
+  # plaintext in public/.well-known/security.txt, so this exposes nothing new —
+  # it only makes the address reachable by a consumer parsing the graph instead
+  # of scraping the page. The VISIBLE address stays obfuscated by
+  # ObfuscatedEmail.astro (CSS pseudo-elements); that is a separate layer and
+  # must not be "simplified" to match this one.
+  email: mail@jmrp.io
+
+  # The profession, deliberately NOT `worksFor`. schema.org's `worksFor` reads
+  # as present tense, and the last employment ended — asserting it here would
+  # publish a stale employer to this site AND to the six project documentation
+  # sites that splice this entity in verbatim. `hasOccupation` states what he
+  # does without claiming who currently pays for it.
+  occupation:
+    en: Firmware & Software Engineer
+    es: Ingeniero de Firmware y Software
+
+  # Languages, as BCP-47 tags. schema.org defines no standard proficiency
+  # property on Language, so "native" is deliberately not encoded rather than
+  # invented — Spanish is listed first, which is the only ordering signal the
+  # vocabulary actually supports.
+  knowsLanguage:
+    - { name: Spanish, code: es }
+    - { name: English, code: en }
+
+  # City-level only, on purpose: enough to disambiguate the entity
+  # geographically without publishing a home address.
+  homeLocation:
+    locality: Valencia
+    region: Valencian Community
+    country: ES
   knowsAbout:
     - Embedded firmware
     - STM32

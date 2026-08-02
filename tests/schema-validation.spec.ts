@@ -244,6 +244,21 @@ test.describe("Common schemas on representative pages", () => {
         expect(isNonEmptyStr(nav.name)).toBe(true);
         expect(isValidUrl(nav.url)).toBe(true);
       }
+
+      // Regression guard: Spanish pages once emitted translated nav labels
+      // pointing at English URLs, so the schema contradicted the rendered
+      // <nav> on every /es/ page. Asserting the locale prefix here is what
+      // makes that specific bug impossible to reintroduce silently — the
+      // generic "is a URL" checks above all passed while it was broken.
+      if (url.startsWith("/es")) {
+        for (const nav of navItems) {
+          const path = new URL(String(nav.url)).pathname;
+          expect(
+            path === "/es/" || path.startsWith("/es/"),
+            `Spanish nav entry "${String(nav.name)}" points at ${path}, which is not under /es/`,
+          ).toBe(true);
+        }
+      }
     });
   }
 });
