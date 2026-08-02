@@ -54,31 +54,57 @@ const today = () => new Date().toISOString().slice(0, 10);
  * legitimately contain `<` / `>`.
  */
 function mdxToText(body: string): string {
-  const stripped = body
-    .replaceAll(/^import [^\n]*/gm, "")
-    .replaceAll(/\n{3,}/g, "\n\n")
-    .trim();
-
+  // EVERY transform here runs inside one fence-aware pass, deliberately.
+  // Each one that was hoisted out of it corrupted snippets: stripping `import`
+  // up front deleted the `import csv` / `import os` lines from the Python
+  // sample in post 010, and collapsing blank runs up front squashed the
+  // spacing inside code blocks. Both shipped broken code to the very consumer
+  // llms-full.txt exists for. Nothing may touch a line while `inFence`.
   let inFence = false;
-  return stripped
-    .split("\n")
-    .map((line) => {
-      if (/^\s*```/.test(line)) {
-        inFence = !inFence;
-        return line;
-      }
-      if (inFence) return line;
-      // `\s` matches exactly one character and the remainder is taken with
-      // slice() rather than a second capture group: `(\s+.*)` lets both parts
-      // consume whitespace, so the engine backtracks over every split of a
-      // long run of spaces (super-linear, flagged by SonarCloud as ReDoS).
-      const match = /^(#{1,4})\s/.exec(line);
-      if (!match) return line;
-      // Cap at H6 so deeply nested source headings stay valid markdown.
-      const depth = Math.min(match[1].length + 2, 6);
-      return `${"#".repeat(depth)}${line.slice(match[1].length)}`;
-    })
-    .join("\n");
+  let blankRun = 0;
+  const out: string[] = [];
+
+  for (const line of body.trim().split("\n")) {
+    if (/^\s*```/.test(line)) {
+      inFence = !inFence;
+      blankRun = 0;
+      out.push(line);
+      continue;
+    }
+    if (inFence) {
+      out.push(line);
+      continue;
+    }
+
+    // MDX component imports are page scaffolding, not prose. Dropping the line
+    // outright (rather than emitting "") keeps the import block from turning
+    // into a run of blank lines.
+    if (line.startsWith("import ")) continue;
+
+    // Collapse runs of blank lines to at most one, outside fences only.
+    if (line.trim() === "") {
+      blankRun += 1;
+      if (blankRun > 1) continue;
+      out.push(line);
+      continue;
+    }
+    blankRun = 0;
+
+    // `\s` matches exactly one character and the remainder is taken with
+    // slice() rather than a second capture group: `(\s+.*)` lets both parts
+    // consume whitespace, so the engine backtracks over every split of a
+    // long run of spaces (super-linear, flagged by SonarCloud as ReDoS).
+    const match = /^(#{1,4})\s/.exec(line);
+    if (!match) {
+      out.push(line);
+      continue;
+    }
+    // Cap at H6 so deeply nested source headings stay valid markdown.
+    const depth = Math.min(match[1].length + 2, 6);
+    out.push(`${"#".repeat(depth)}${line.slice(match[1].length)}`);
+  }
+
+  return out.join("\n");
 }
 
 /**
@@ -143,7 +169,7 @@ function sectionsBlock(siteUrl: string): string {
     `- [Publications](${siteUrl}/publications/): Academic papers on acoustics, metamaterials, and ultrasound`,
     `- [Homelab](${siteUrl}/homelab/): Self-hosted infrastructure — Mastodon, Matrix, AT Protocol PDS, Tor relays`,
     `- [Projects](${siteUrl}/projects/): Curated open-source software he authors and maintains — MCP servers, acoustics tooling, network security; language, license, source and docs per project`,
-    `- [Tools](${siteUrl}/tools/): Free browser-based developer tools (privacy-first, no server calls)`,
+    `- [Tools](${siteUrl}/tools/): Free browser-based developer tools; all run in the browser except the certificate inspector and HTTP header analyzer, which fetch the target you ask them to inspect`,
     `- [Uses](${siteUrl}/uses/): Hardware, software, and homelab kept in rotation`,
     `- [Privacy](${siteUrl}/privacy/): What the site measures — self-hosted analytics beacon, no cookies, no third-party requests, no ads`,
   ].join("\n");

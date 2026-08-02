@@ -336,6 +336,9 @@ test.describe("Build Output Verification", () => {
     expect(cspPolicy).toContain("worker-src 'self'");
     expect(cspPolicy).toContain("frame-src 'none'");
     expect(cspPolicy).toContain("object-src 'none'");
+    // Value, not just presence: post 003 calls base-uri 'none' mandatory for a
+    // strict CSP, and production shipped the laxer 'self' until #381.
+    expect(cspPolicy).toContain("base-uri 'none'");
     expect(cspPolicy).toContain("frame-ancestors 'none'");
   });
 
