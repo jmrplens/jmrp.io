@@ -572,7 +572,7 @@ export const common = {
       summary1:
         "Todo lo que se describe aquí corre en hardware que es mío y que pago yo, sobre una línea de fibra doméstica en Valencia, España, y no en una plataforma gestionada. El router es un MikroTik RB5009 que termina el enlace del ISP por PPPoE con un prefijo IPv6 delegado; los servicios cuelgan de él en mini PCs y un NAS, con dos VPS para lo que tiene que seguir accesible cuando la casa no lo está.",
       summary2:
-        "Entre los servicios autoalojados hay una instancia de Mastodon, un homeserver de Matrix, un PDS de AT Protocol, sincronización de ficheros, streaming multimedia y monitorización. Junto a ellos corren cuatro nodos Tor: dos puentes en España que hablan obfs4 y WebTunnel, y dos relays intermedios, uno en Reino Unido y otro en España.",
+        "Entre los servicios autoalojados hay una instancia de Mastodon, un homeserver de Matrix, un PDS de AT Protocol, sincronización de ficheros, streaming multimedia y monitorización. Junto a ellos corren cuatro nodos Tor: dos puentes que hablan obfs4 y WebTunnel, uno en Valencia y otro en Alicante, y dos relays intermedios en VPS de IONOS, uno en Londres y otro en Madrid.",
       summary3:
         "La seguridad es una sola tubería, no un conjunto de reglas sueltas. Un honeypot en el router convierte el primer paquete de un escáner en una entrada de address-list, nginx aplica tarpit y coincidencia de patrones en la capa web, ambos alimentan a CrowdSec, y CrowdSec acciona los bouncers de vuelta en el router y en el proxy inverso. Los contadores de arriba son lo que esa tubería ha detenido de verdad.",
       realtimePill: "En tiempo real · vía API",
@@ -762,13 +762,13 @@ export const common = {
       // Tor Network
       torBridgeName: "Bridge Tor (ES0)",
       torBridgeDescription:
-        "Puente de transporte pluggable que ayuda a usuarios censurados a acceder a la red Tor. Ejecuta obfs4 y WebTunnel.",
+        "Puente de transporte pluggable que ayuda a usuarios censurados a acceder a la red Tor desde Valencia. Ejecuta obfs4 y WebTunnel.",
       torRelayName: "Relay Tor (UK)",
       torRelayDescription:
         "Relay intermedio que reenvía tráfico cifrado dentro de la red Tor desde Reino Unido.",
       torRelayEsName: "Relay Tor (ES)",
       torRelayEsDescription:
-        "Relay intermedio que reenvía tráfico cifrado dentro de la red Tor desde España.",
+        "Relay intermedio que reenvía tráfico cifrado dentro de la red Tor desde Madrid.",
       torBridgeEs1Name: "Bridge Tor (ES1)",
       torBridgeEs1Description:
         "Bridge de transporte pluggable que ayuda a usuarios censurados a acceder a la red Tor desde Alicante. Ejecuta obfs4 y WebTunnel.",

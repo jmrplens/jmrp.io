@@ -1099,14 +1099,21 @@ async function submitToBingWebmaster(urlList) {
  * Rejections are swallowed here (each step already logs its own failure
  * internally) so a single settled entry never aborts the others.
  *
+ * The step's own return value is passed through: the submitters report whether
+ * they actually reached the API, and the caller needs that to decide whether
+ * the submission ledger may be updated. This helper used to discard it, which
+ * silently defeated that check — `undefined` is not `false`, so every failed
+ * submission still looked successful.
+ *
+ * @template T
  * @param {string} label - Human-readable step name for logging.
- * @param {() => Promise<void>} fn - The async publish step to run.
- * @returns {Promise<void>}
+ * @param {() => Promise<T>} fn - The async publish step to run.
+ * @returns {Promise<T | undefined>} The step's result, or undefined if it threw.
  */
 async function timed(label, fn) {
   const startedAt = performance.now();
   try {
-    await fn();
+    return await fn();
   } catch (error) {
     console.warn(`deploy-live: ${label} threw unexpectedly.`);
     console.warn(error instanceof Error ? error.message : String(error));
@@ -1172,9 +1179,12 @@ async function runPublishNotifications() {
   // allSettled reports "fulfilled" even for an HTTP 500 or a timeout — so they
   // now return an explicit outcome and it is checked here. Writing the ledger
   // regardless would mark a failed URL as announced and never retry it.
-  // A disabled submitter reports success: skipped is not failed.
+  // Strictly `=== true`: a step that threw comes back as undefined from
+  // `timed()`, and treating anything-but-false as success is exactly the bug
+  // this check was written to prevent. A disabled submitter returns true
+  // explicitly — skipped is not failed.
   const announced = (result) =>
-    result.status === "fulfilled" && result.value !== false;
+    result.status === "fulfilled" && result.value === true;
   const allAnnounced = announced(indexNow) && announced(bing);
 
   if (sitemapEntries.size === 0) return;

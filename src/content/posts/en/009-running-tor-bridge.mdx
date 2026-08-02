@@ -97,7 +97,7 @@ This guide will teach you everything you need to know about the Tor network, oni
 <TLDRSummary title="TL;DR — one bridge, two pluggable transports">
 - **One bridge can run obfs4 and WebTunnel at the same time**, which is worth doing because they fail in different places: obfs4 randomizes the traffic so it matches no protocol, while WebTunnel hides inside ordinary HTTPS on port 443 and survives censors that block "unclassifiable" traffic outright.
 - **Nginx is what makes WebTunnel credible.** It fronts the bridge on 443 and serves a real website on every path except the secret one, so a censor probing the host sees a normal site rather than an endpoint that answers oddly.
-- **The consensus flags take days, not minutes.** Running and Valid arrive within the hour; Stable and Guard took about a week on this deployment. They are scored from weighted mean time between failures and, for Guard, bandwidth and familiarity too — not a plain uptime counter — so a bridge restarted every other day never earns them.
+- **The consensus flags take days, not minutes.** Running and Valid arrive within the hour; Stable and Guard took about a week on this deployment. They are scored from weighted mean time between failures and, for Guard, bandwidth and familiarity too — not a plain uptime counter — so a bridge restarted every other day keeps resetting the evidence they are scored on, and may not reach them at all.
 - **Behind NAT, forward TCP 9001, 4443 and 443** — ORPort, obfs4 and WebTunnel respectively — and open them on the host firewall; the ORPort self-test fails silently if the router does not.
 - **Tell your IDS to leave Tor clients alone.** CrowdSec sees many connections from many addresses and bans legitimate users unless the bridge ports are excluded.
 - **Everything runs under systemd**, so the stack comes back after a reboot without intervention — which is exactly what the uptime-based flags require.
@@ -1519,11 +1519,11 @@ This is normal for new bridges. BridgeDB distributes bridges gradually:
 Four Tor nodes, which is the whole reason this guide exists rather than being a
 summary of the manual.
 
-Two bridges run in Spain, one of them on a mini PC at home in Campello, on the
-same domestic fibre line as everything else on the [homelab page](/homelab/) —
+Two bridges: one in Valencia, on the same server that serves this page, and one
+in Alicante on a mini PC at home — that second one sits on a domestic fibre line
 behind the MikroTik router, which is why the NAT and port-forwarding section
 above is written the way it is. The two middle relays are IONOS VPS instances,
-one in London and one in Spain, because a relay wants stable bandwidth and a
+one in London and one in Madrid, because a relay wants stable bandwidth and a
 residential line does not reliably provide it.
 
 Honestly, there is no incident to report. Nothing dramatic has happened: no

@@ -574,7 +574,7 @@ export const common = {
       summary1:
         "Everything described here runs on hardware I own and pay for, on a domestic fibre line in Valencia, Spain — not on a managed platform. The router is a MikroTik RB5009 terminating the ISP link over PPPoE with a delegated IPv6 prefix; the services sit behind it on mini PCs and a NAS, with two VPS for the parts that need to be reachable when the house is not.",
       summary2:
-        "The self-hosted services include a Mastodon instance, a Matrix homeserver, an AT Protocol PDS, file sync, media streaming and monitoring. Four Tor nodes run alongside them: two bridges in Spain speaking obfs4 and WebTunnel, and two middle relays, one in the United Kingdom and one in Spain.",
+        "The self-hosted services include a Mastodon instance, a Matrix homeserver, an AT Protocol PDS, file sync, media streaming and monitoring. Four Tor nodes run alongside them: two bridges speaking obfs4 and WebTunnel, one in Valencia and one in Alicante, and two middle relays on IONOS VPS instances, one in London and one in Madrid.",
       summary3:
         "Security is one pipeline rather than a set of unrelated rules. A honeypot on the router turns a scanner's first packet into an address-list entry, nginx tarpits and pattern matches on the web tier, both feed CrowdSec, and CrowdSec drives bouncers back on the router and the reverse proxy. The counters above are what that pipeline actually stopped.",
       realtimePill: "Live · via API",
@@ -768,13 +768,13 @@ export const common = {
       // Tor Network
       torBridgeName: "Tor Bridge (ES0)",
       torBridgeDescription:
-        "Pluggable transport bridge helping censored users access the Tor network. Running obfs4 and WebTunnel.",
+        "Pluggable transport bridge helping censored users access the Tor network from Valencia. Running obfs4 and WebTunnel.",
       torRelayName: "Tor Relay (UK)",
       torRelayDescription:
         "Middle relay forwarding encrypted traffic within the Tor network from United Kingdom.",
       torRelayEsName: "Tor Relay (ES)",
       torRelayEsDescription:
-        "Middle relay forwarding encrypted traffic within the Tor network from Spain.",
+        "Middle relay forwarding encrypted traffic within the Tor network from Madrid.",
       torBridgeEs1Name: "Tor Bridge (ES1)",
       torBridgeEs1Description:
         "Pluggable transport bridge helping censored users access the Tor network from Alicante. Running obfs4 and WebTunnel.",

@@ -82,7 +82,7 @@ const PROFILE_SECTIONS: {
       lines: [
         "Self-hosted infrastructure run by the author on his own hardware and connections, with live metrics on the page.",
         "Services include a Mastodon instance (mstdn.jmrp.io), a Matrix homeserver, an AT Protocol PDS, Nextcloud, Jellyfin, and monitoring.",
-        "Tor: four nodes — two bridges in Spain running obfs4 and WebTunnel, and two middle relays, one in the United Kingdom and one in Spain.",
+        "Tor: four nodes — two bridges running obfs4 and WebTunnel, one in Valencia and one in Alicante, and two middle relays on IONOS VPS instances, one in London and one in Madrid.",
         "Security pipeline: a MikroTik honeypot and nginx pattern matching feed CrowdSec, which drives bouncers on the router and the web tier.",
       ],
     },
@@ -91,7 +91,7 @@ const PROFILE_SECTIONS: {
       lines: [
         "Infraestructura autoalojada que el autor opera sobre su propio hardware y sus propias conexiones, con métricas en tiempo real en la página.",
         "Entre los servicios hay una instancia de Mastodon (mstdn.jmrp.io), un homeserver de Matrix, un PDS de AT Protocol, Nextcloud, Jellyfin y monitorización.",
-        "Tor: cuatro nodos — dos puentes en España que ejecutan obfs4 y WebTunnel, y dos relays intermedios, uno en Reino Unido y otro en España.",
+        "Tor: cuatro nodos — dos puentes que ejecutan obfs4 y WebTunnel, uno en Valencia y otro en Alicante, y dos relays intermedios en VPS de IONOS, uno en Londres y otro en Madrid.",
         "Tubería de seguridad: un honeypot en MikroTik y la coincidencia de patrones de nginx alimentan a CrowdSec, que a su vez acciona los bouncers del router y de la capa web.",
       ],
     },

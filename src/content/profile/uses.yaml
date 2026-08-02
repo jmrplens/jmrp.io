@@ -62,11 +62,11 @@ en:
         - name: Home Assistant node
           detail: Core i3-7100U · HAOS
           href: /homelab/
-        - name: Tor relays
-          detail: 2× IONOS VPS · London + Spain
+        - name: Tor bridges
+          detail: ES0 · Valencia · ES1 · Alicante
           href: /homelab/
-        - name: Tor bridge
-          detail: mini PC · Campello
+        - name: Tor relays
+          detail: 2× IONOS VPS · London + Madrid
           href: /homelab/
         - name: MikroTik
           detail: RouterOS · VLANs · WireGuard · CrowdSec
@@ -158,11 +158,11 @@ es:
         - name: Nodo Home Assistant
           detail: Core i3-7100U · HAOS
           href: /homelab/
-        - name: Relays Tor
-          detail: 2× VPS IONOS · Londres + España
+        - name: Puentes Tor
+          detail: ES0 · Valencia · ES1 · Alicante
           href: /homelab/
-        - name: Puente Tor
-          detail: mini PC · Campello
+        - name: Relays Tor
+          detail: 2× VPS IONOS · Londres + Madrid
           href: /homelab/
         - name: MikroTik
           detail: RouterOS · VLANs · WireGuard · CrowdSec
