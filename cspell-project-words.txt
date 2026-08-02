@@ -118,8 +118,8 @@ bitop
 bjmrp
 blackhole
 blinkmacsystemfont
-blockquotes
 blocklists
+blockquotes
 brea
 brettel
 brotlied
@@ -140,8 +140,8 @@ caut
 CBOR
 cdns
 cebrecos
-CEFACT
 Ceedling
+CEFACT
 certbot
 certspotter
 cfgm
@@ -282,8 +282,8 @@ diffbot
 diffie
 diffs
 difusores
-dígitos
 digi
+dígitos
 dingledine
 dios
 direccionado
@@ -656,6 +656,7 @@ Namprempre's
 nanomateriales
 nanomaterials
 nativo
+navigations
 nbases
 nedry
 neofetch
@@ -824,10 +825,10 @@ reconexión
 reconexiones
 recursión
 redibujado
-rediseño
 redirección
 redirecciones
 Rediseñé
+rediseño
 reemitir
 reempaqueta
 reenvíos
