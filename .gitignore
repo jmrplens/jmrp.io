@@ -40,8 +40,10 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
-# Project custom logs
-logs/*.log
+# Project custom logs. The glob must cover ROTATED files too: `logs/*.log`
+# missed `csp-violations.log.1`, which reached a public commit carrying 543
+# visitor IP addresses from the CSP violation receiver.
+logs/
 html-errors.log
 
 # --- 4. SECURITY & ENVIRONMENT ---
