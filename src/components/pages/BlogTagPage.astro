@@ -84,6 +84,28 @@ const schema = {
 } satisfies CollectionPage;
 ---
 
+{
+  /*
+    `noindex, follow` — deliberate, and evidence-based rather than a blanket
+    "listings are thin" rule.
+
+    Tag pages were observed taking the citation slot from the articles whose
+    text was being quoted: on a query about encrypt-then-MAC, an AI answer
+    reproduced post 011's wording while citing /blog/tags/cryptography/, and
+    post 011 itself never surfaced. The tag page adds no prose of its own — it
+    is titles and dates over content that already exists at a canonical URL —
+    so when it outranks its own members it costs a citation and returns
+    nothing.
+
+    `follow` is the important half: these pages stay fully crawlable and keep
+    passing signal to the posts they list. Only the listing is withheld from
+    the index, not the paths through it.
+
+    The curated series hubs under /blog/series/ are NOT treated this way. They
+    carry original framing that exists nowhere else, which is exactly the thing
+    a tag page lacks.
+  */
+}
 <BaseLayout
   title={`${t("pages.blogTags.titlePrefix")}${tag}`}
   description={t("pages.blogTags.metaDescription", {
@@ -92,6 +114,7 @@ const schema = {
     tag,
   })}
   schema={schema}
+  noIndex={true}
 >
   <div class="content-wrapper">
     <header class="page-header">

@@ -2,7 +2,9 @@
 title: "MikroTik Honeypot: Trap & Auto-Block Port Scanners"
 slug: "006-implementing-mikrotik-honeypot"
 publishedDate: 2026-01-19
+updatedDate: 2026-08-02
 description: "Configure a MikroTik honeypot to detect port scanners, log malicious activity, and auto-block attackers using firewall address lists and the RAW table."
+lead: "A RAW-table rule drops a blacklisted scanner before connection tracking allocates anything, so its first reconnaissance packet is also its last. Over 1,000 unique IPs trapped in 24 hours on a domestic line."
 author: "José Manuel Requena Plens"
 authorEmail: "mail@jmrp.io"
 draft: false
@@ -862,7 +864,7 @@ To give you an idea of what to expect, here are actual statistics from my home n
   ]}
   showPercentage={true}
   showValue={true}
-  caption="Data collected from all time alerts on my home connection"
+  caption="Data collected over 24 hours on my home connection"
   ariaLabel="Bar chart showing distribution of port scan attempts"
 />
 

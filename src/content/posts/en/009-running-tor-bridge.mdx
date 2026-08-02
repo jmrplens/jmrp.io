@@ -1,8 +1,10 @@
 ---
-title: "Running a Tor Bridge on Linux: Complete obfs4 & WebTunnel Guide"
+title: "Running a Tor Bridge on Linux: obfs4 and WebTunnel Guide"
 slug: "009-running-tor-bridge"
 publishedDate: 2026-03-30
+updatedDate: 2026-08-02
 description: "Guide to running obfs4 and WebTunnel Tor bridges on Linux with Nginx camouflage, firewall hardening, Prometheus monitoring, and CrowdSec."
+lead: "One bridge running obfs4 and WebTunnel at once, with Nginx making the WebTunnel half indistinguishable from ordinary HTTPS. Running and Valid arrive within the hour; Stable and Guard took about a week here, because they are scored on sustained reliability rather than a plain uptime counter."
 author: "José Manuel Requena Plens"
 authorEmail: "mail@jmrp.io"
 draft: false
@@ -92,13 +94,13 @@ The problem? There are only about **2,000 bridges** serving those millions of us
 
 This guide will teach you everything you need to know about the Tor network, onion routing, and how to set up a **production-ready obfs4 + WebTunnel bridge** on Linux — complete with Nginx camouflage, firewall hardening, Prometheus monitoring, and CrowdSec integration.
 
-<TLDRSummary title="TL;DR — What You'll Build">
-- A Tor bridge running two pluggable transports simultaneously: **obfs4** (randomized traffic) and **WebTunnel** (HTTPS camouflage)
-- An **Nginx reverse proxy** that makes WebTunnel traffic indistinguishable from normal HTTPS browsing
-- **Port forwarding** and firewall rules for NAT environments
-- **Prometheus metrics** exportable to Grafana for real-time monitoring
-- **CrowdSec bypass** rules so your IDS doesn't block legitimate Tor clients
-- A **systemd-managed** service stack that survives reboots
+<TLDRSummary title="TL;DR — one bridge, two pluggable transports">
+- **One bridge can run obfs4 and WebTunnel at the same time**, which is worth doing because they fail in different places: obfs4 randomizes the traffic so it matches no protocol, while WebTunnel hides inside ordinary HTTPS on port 443 and survives censors that block "unclassifiable" traffic outright.
+- **Nginx is what makes WebTunnel credible.** It fronts the bridge on 443 and serves a real website on every path except the secret one, so a censor probing the host sees a normal site rather than an endpoint that answers oddly.
+- **The consensus flags take days, not minutes.** Running and Valid arrive within the hour; Stable and Guard took about a week on this deployment. They are scored from weighted mean time between failures and, for Guard, bandwidth and familiarity too — not a plain uptime counter — so a bridge restarted every other day keeps resetting the evidence they are scored on, and may not reach them at all.
+- **Behind NAT, forward TCP 9001, 4443 and 443** — ORPort, obfs4 and WebTunnel respectively — and open them on the host firewall; the ORPort self-test fails silently if the router does not.
+- **Tell your IDS to leave Tor clients alone.** CrowdSec sees many connections from many addresses and bans legitimate users unless the bridge ports are excluded.
+- **Everything runs under systemd**, so the stack comes back after a reboot without intervention — which is exactly what the uptime-based flags require.
 </TLDRSummary>
 
 ---
@@ -1509,6 +1511,47 @@ This is normal for new bridges. BridgeDB distributes bridges gradually:
 4. Give it up to a week before worrying
 </details>
 </DecisionTree>
+
+---
+
+## How I run this
+
+Four Tor nodes, which is the whole reason this guide exists rather than being a
+summary of the manual.
+
+Two bridges: one in Valencia, on the same server that serves this page, and one
+in Alicante on a mini PC at home — that second one sits on a domestic fibre line
+behind the MikroTik router, which is why the NAT and port-forwarding section
+above is written the way it is. The two middle relays are IONOS VPS instances,
+one in London and one in Madrid, because a relay wants stable bandwidth and a
+residential line does not reliably provide it.
+
+Honestly, there is no incident to report. Nothing dramatic has happened: no
+takedown notice, no abuse complaint, no visit from anyone. The bridge and the
+relays have simply run. That is worth stating plainly, because the question
+people actually ask before running one is "what happens to me if I do this",
+and the answer here, from a domestic line in Spain, has been: nothing.
+
+Two things did surprise me, and both are in this guide because of it.
+
+The first is how long the consensus flags take. I expected the bridge to be
+"working" within the hour, and in the narrow sense it was — Running and Valid
+arrive quickly. Stable took about a week here, and Guard a little longer. Those
+are observations from this deployment, not a schedule: the directory authorities
+assign Stable from a weighted mean time between failures rather than a plain
+uptime counter, and Guard additionally wants Stable, Fast, familiarity and
+enough bandwidth, so your dates will differ. The practical lesson holds either
+way — a restart to change one config line sets the measurement back, so tinker
+in the first hour and then leave it alone.
+
+The second is that CrowdSec banned my own Tor clients before I thought to
+exclude the bridge ports. From the IDS's point of view a bridge is exactly what
+an attack looks like: many connections, many addresses, no pattern. It was
+doing its job correctly and the result was still wrong, which is the failure
+mode worth remembering — the rule that fires here is the same one described in
+the [MikroTik honeypot](/blog/006-implementing-mikrotik-honeypot/) and
+[nginx tarpit](/blog/005-implementing-tarpit-nginx/) write-ups, pointed at
+traffic I actually wanted.
 
 ---
 

@@ -23,6 +23,7 @@ import {
 } from "@i18n/utils";
 import type { SiteConfig } from "@src/types";
 import { safeJsonLd } from "@utils/html";
+import type { LanguageTaggedValue } from "@utils/person";
 import {
   CANONICAL_ALUMNI_OF,
   CANONICAL_CREDENTIALS,
@@ -38,6 +39,7 @@ import type {
   BreadcrumbList,
   ListItem,
   SiteNavigationElement,
+  Text,
   WebSite,
 } from "schema-dts";
 
@@ -198,13 +200,40 @@ const orcidId = /orcid\.org\/([\dX-]+)/i.exec(orcidUrl ?? "")?.[1];
 // builders (Home/About/CV/GitHub) must reference `{"@id": "#person"}` or add
 // ADDITIVE properties only (alumniOf, hasOccupation, hasCredential) — they
 // must never redefine name/jobTitle/description/image/knowsAbout locally.
-const personJobTitle =
-  aboutData?.person.jobTitle[locale] ??
-  siteData.person?.jobTitle ??
-  siteData.jobTitle ??
-  t("seo.jobTitle");
-const personDescription =
-  aboutData?.person.description[locale] ?? t("pages.cv.schemaDescription");
+/**
+ * Turns an `{ en, es }` pair into JSON-LD language-tagged values.
+ *
+ * The canonical `#person` node is locale-neutral: it carries ONE `@id`, so it
+ * must not change its `jobTitle` depending on which page a consumer crawled.
+ * It used to do exactly that — emitting an untagged string picked by `locale`,
+ * which left the same entity holding two contradictory titles across the site.
+ * Tagged values let both be true at once.
+ *
+ * English first so a consumer that ignores language tags and takes the first
+ * entry still reads what this node published before it went bilingual.
+ *
+ * Mirrors `localizedValues` in `scripts/ci/build-identity.mjs`; the
+ * schema-validation spec deep-compares the two, so drift fails CI.
+ */
+// `schema-dts` models every Text-valued property as a bare `string`, so it
+// rejects language-tagged literals even though they are core JSON-LD 1.1
+// (§4.2.4) and plain RDF. `Multilingual<Text>` is the named widening for
+// exactly that gap; the single cast lives here rather than at each call site,
+// so the three per-language properties below stay ordinarily typed.
+const localizedValues = (pair: { en: string; es: string }) =>
+  [
+    { "@value": pair.en, "@language": "en" },
+    { "@value": pair.es, "@language": "es" },
+    // `satisfies` first, so the literal is still checked against the shape it
+    // claims to be; the cast then narrows it to what schema-dts will accept.
+  ] satisfies LanguageTaggedValue[] as unknown as Text;
+
+const personJobTitle = aboutData?.person.jobTitle
+  ? localizedValues(aboutData.person.jobTitle)
+  : (siteData.person?.jobTitle ?? siteData.jobTitle ?? t("seo.jobTitle"));
+const personDescription = aboutData?.person.description
+  ? localizedValues(aboutData.person.description)
+  : t("pages.cv.schemaDescription");
 
 /**
  * The open-source software this Person authors, as bare `@id` references to
@@ -253,7 +282,14 @@ const websiteSchema = {
     }),
     jobTitle: personJobTitle,
     description: personDescription,
+    ...(aboutData?.person.email && { email: aboutData.person.email }),
     url: siteRoot,
+    // /about/ emits `ProfilePage.mainEntity → #person`; this is the inverse
+    // half of that pair. A plain URL rather than the `#profile` node id, so
+    // the downstream sites that splice this node into a graph without that
+    // node do not inherit a dangling reference. Unprefixed on purpose: the
+    // entity is locale-neutral, like `#person` and `#website`.
+    mainEntityOfPage: new URL("/about/", getSiteUrl()).href,
     image: {
       "@type": "ImageObject",
       url: new URL(CANONICAL_PERSON_IMAGE.path, getSiteUrl()).href,
@@ -286,6 +322,33 @@ const websiteSchema = {
     // documentation sites that splice /identity/person.jsonld in verbatim.
     alumniOf: CANONICAL_ALUMNI_OF,
     hasCredential: CANONICAL_CREDENTIALS,
+    // The profession, not the employer: `worksFor` reads as present tense and
+    // the last role has ended, so asserting it would publish a stale employer
+    // here and to every project site that splices this node in.
+    ...(aboutData?.person.occupation && {
+      hasOccupation: {
+        "@type": "Occupation" as const,
+        name: localizedValues(aboutData.person.occupation),
+      },
+    }),
+    ...(aboutData?.person.knowsLanguage && {
+      knowsLanguage: aboutData.person.knowsLanguage.map((language) => ({
+        "@type": "Language" as const,
+        name: language.name,
+        alternateName: language.code,
+      })),
+    }),
+    ...(aboutData?.person.homeLocation && {
+      homeLocation: {
+        "@type": "Place" as const,
+        address: {
+          "@type": "PostalAddress" as const,
+          addressLocality: aboutData.person.homeLocation.locality,
+          addressRegion: aboutData.person.homeLocation.region,
+          addressCountry: aboutData.person.homeLocation.country,
+        },
+      },
+    }),
     ...(personKnowsAbout &&
       personKnowsAbout.length > 0 && {
         knowsAbout: personKnowsAbout,
@@ -321,7 +384,12 @@ const navLabelKeyMap: Record<string, TranslationKey> = {
 const navSchema = (siteData.nav || []).map((item): SiteNavigationElement => ({
   "@type": "SiteNavigationElement",
   name: navLabelKeyMap[item.href] ? t(navLabelKeyMap[item.href]) : item.label,
-  url: new URL(item.href, getSiteUrl()).href,
+  // Localized, like the label beside it. This used to emit the raw `item.href`,
+  // so Spanish pages advertised Spanish nav names pointing at English URLs
+  // ("Herramientas" → /tools/) while the rendered <nav> correctly linked to
+  // /es/tools/ — the schema contradicted the DOM on all 61 ES pages. Same class
+  // of bug as the ES `@id` collision, in the one place that was missed.
+  url: new URL(translatePath(item.href), getSiteUrl()).href,
 }));
 
 // 3. Breadcrumb Schema (Automatic)
@@ -474,6 +542,18 @@ const jsonLD = {
   type="application/ld+json"
   href="/identity/person.jsonld"
   title="Person entity (JSON-LD)"
+/>
+{
+  /* llms.txt discovery. robots.txt already points at these files, but only as
+    comments, which nothing parses. Declaring them here means a client that
+    fetched the page — rather than the robots file — can still find the AI
+    context index without guessing the well-known path. */
+}
+<link
+  rel="alternate"
+  type="text/plain"
+  href="/llms.txt"
+  title="LLM context index (llmstxt.org)"
 />
 <meta
   name="generator"

@@ -39,6 +39,126 @@ const TECHNICAL_DETAILS = [
 const today = () => new Date().toISOString().slice(0, 10);
 
 /**
+ * Site sections that `llms.txt` advertises under "## Sections" but that
+ * `llms-full.txt` used to omit entirely.
+ *
+ * The index promised Homelab, Projects, Uses and Privacy; the full document
+ * expanded only About, Blog, Tools, CV and Publications, so a model that
+ * followed the index into the full file found nothing for four of them —
+ * including /privacy/, which carries some of the most quotable prose on the
+ * site because its claims are falsifiable rather than promotional.
+ *
+ * Written as standing facts rather than generated from the pages: /homelab/'s
+ * figures are live metrics that would be stale the moment they were written
+ * into a static document, and stating a number here that the page no longer
+ * shows would be worse than stating none.
+ */
+const PROFILE_SECTIONS: {
+  url: string;
+  en: { title: string; lines: string[] };
+  es: { title: string; lines: string[] };
+}[] = [
+  {
+    url: "/projects/",
+    en: {
+      title: "Projects",
+      lines: [
+        "Open-source software authored and maintained by the author, each entry listing language, license, source repository and documentation site.",
+        "Includes: gitlab-mcp-server (Model Context Protocol server exposing over 1,000 GitLab operations to AI assistants, Go), phonometry (Python acoustics library validated against 362 published standards), cs-routeros-bouncer (CrowdSec bouncer for MikroTik RouterOS, Go), Cloudflare-DNS-Updater (dynamic DNS updater), libgen-mcp, and TFG-TFM_EPS (LaTeX thesis template for the Universitat Politècnica de València).",
+      ],
+    },
+    es: {
+      title: "Proyectos",
+      lines: [
+        "Software de código abierto escrito y mantenido por el autor; cada entrada indica lenguaje, licencia, repositorio de código y sitio de documentación.",
+        "Incluye: gitlab-mcp-server (servidor Model Context Protocol que expone más de 1.000 operaciones de GitLab a asistentes de IA, en Go), phonometry (biblioteca de acústica en Python validada contra 362 normas publicadas), cs-routeros-bouncer (bouncer de CrowdSec para MikroTik RouterOS, en Go), Cloudflare-DNS-Updater (actualizador de DNS dinámico), libgen-mcp y TFG-TFM_EPS (plantilla LaTeX de tesis para la Universitat Politècnica de València).",
+      ],
+    },
+  },
+  {
+    url: "/homelab/",
+    en: {
+      title: "Homelab",
+      lines: [
+        "Self-hosted infrastructure run by the author on his own hardware and connections, with live metrics on the page.",
+        "Services include a Mastodon instance (mstdn.jmrp.io), a Matrix homeserver, an AT Protocol PDS, Nextcloud, Jellyfin, and monitoring.",
+        "Tor: four nodes — two bridges running obfs4 and WebTunnel, one in Valencia and one in Alicante, and two middle relays on IONOS VPS instances, one in London and one in Madrid.",
+        "Security pipeline: a MikroTik honeypot and nginx pattern matching feed CrowdSec, which drives bouncers on the router and the web tier.",
+      ],
+    },
+    es: {
+      title: "Homelab",
+      lines: [
+        "Infraestructura autoalojada que el autor opera sobre su propio hardware y sus propias conexiones, con métricas en tiempo real en la página.",
+        "Entre los servicios hay una instancia de Mastodon (mstdn.jmrp.io), un homeserver de Matrix, un PDS de AT Protocol, Nextcloud, Jellyfin y monitorización.",
+        "Tor: cuatro nodos — dos puentes que ejecutan obfs4 y WebTunnel, uno en Valencia y otro en Alicante, y dos relays intermedios en VPS de IONOS, uno en Londres y otro en Madrid.",
+        "Tubería de seguridad: un honeypot en MikroTik y la coincidencia de patrones de nginx alimentan a CrowdSec, que a su vez acciona los bouncers del router y de la capa web.",
+      ],
+    },
+  },
+  {
+    url: "/uses/",
+    en: {
+      title: "Uses",
+      lines: [
+        "The hardware, software and services actually in rotation: router and network gear, servers and mini PCs, development tools, and the self-hosted services listed under Homelab.",
+      ],
+    },
+    es: {
+      title: "Uses",
+      lines: [
+        "El hardware, el software y los servicios que están realmente en uso: router y equipamiento de red, servidores y mini PCs, herramientas de desarrollo y los servicios autoalojados que aparecen en Homelab.",
+      ],
+    },
+  },
+  {
+    url: "/privacy/",
+    en: {
+      title: "Privacy",
+      lines: [
+        "No cookies, no third-party scripts, no advertising network, no cross-site tracking, and no mailing list.",
+        "The only measurement is a privacy-preserving analytics beacon; the page invites the reader to verify the claim directly by opening the browser storage panel and finding nothing to delete.",
+        "Nothing on the site is monetized: no advertising, no affiliate links and no sponsored content, stated explicitly as a conflict-of-interest declaration.",
+      ],
+    },
+    es: {
+      title: "Privacidad",
+      lines: [
+        "Sin cookies, sin scripts de terceros, sin red publicitaria, sin rastreo entre sitios y sin lista de correo.",
+        "La única medición es un beacon de analítica respetuoso con la privacidad; la página invita a comprobarlo abriendo el panel de almacenamiento del navegador y no encontrando nada que borrar.",
+        "Nada del sitio está monetizado: ni publicidad, ni enlaces de afiliado, ni contenido patrocinado, declarado explícitamente como conflicto de intereses.",
+      ],
+    },
+  },
+];
+
+/**
+ * Renders {@link PROFILE_SECTIONS} as llms-full.txt blocks.
+ *
+ * @param siteUrl - Absolute site origin.
+ * @param locale - Which language to render, matching the document being built.
+ *   Without this the Spanish document carried English profile prose under
+ *   Spanish section headings, which is worse than omitting it.
+ * @returns Markdown lines, ready to splice into the document.
+ */
+function buildProfileSections(
+  siteUrl: string,
+  locale: "en" | "es" = "en",
+): string[] {
+  return PROFILE_SECTIONS.flatMap((section) => {
+    const localized = locale === "es" ? section.es : section.en;
+    return [
+      `## ${localized.title}`,
+      "",
+      `URL: ${siteUrl}${locale === "es" ? "/es" : ""}${section.url}`,
+      "",
+      ...localized.lines,
+      "",
+    ];
+  });
+}
+
+/**
  * Best-effort conversion of a post's MDX body to plain-ish markdown for AI
  * ingestion: strips `import` statements, collapses excess blank lines, and
  * demotes the post's own headings by two levels.
@@ -240,6 +360,9 @@ export async function generateLlmsTxt(siteUrl: string): Promise<string> {
     "## Optional",
     "",
     `- [Person entity (JSON-LD)](${siteUrl}/identity/person.jsonld): Machine-readable identity node for the author`,
+    `- [Full context](${siteUrl}/llms-full.txt): Every post and tool expanded, both languages in one document (~1.2 MB)`,
+    `- [Full context, English only](${siteUrl}/llms-full-en.txt): The same document scoped to the English corpus, for pipelines that cap document size`,
+    `- [Full context, Spanish only](${siteUrl}/llms-full-es.txt): The same document scoped to the Spanish corpus`,
     `- [RSS feed (EN)](${siteUrl}/rss.xml): English blog feed`,
     `- [RSS feed (ES)](${siteUrl}/es/rss.xml): Spanish blog feed`,
     "",
@@ -294,11 +417,26 @@ function buildToolSection(
 }
 
 /** Generates the enriched `llms-full.txt` with per-post detail. */
-export async function generateLlmsFullTxt(siteUrl: string): Promise<string> {
-  const postsEn = await getPostsByLocale("en");
-  const postsEs = await getPostsByLocale("es");
-  const toolsEn = await getToolsByLocale("en");
-  const toolsEs = await getToolsByLocale("es");
+export async function generateLlmsFullTxt(
+  siteUrl: string,
+  /**
+   * Restrict the document to one locale's posts and tools.
+   *
+   * The combined file is ~1.2 MB. Several AI ingestion pipelines cap a single
+   * document below that and truncate silently, and because the Spanish corpus
+   * is emitted after the English one, the half that gets dropped is always the
+   * same half. The per-locale variants exist so each corpus fits comfortably;
+   * the combined document stays published unchanged for consumers already
+   * fetching it.
+   */
+  onlyLocale?: "en" | "es",
+): Promise<string> {
+  const wantEn = onlyLocale !== "es";
+  const wantEs = onlyLocale !== "en";
+  const postsEn = wantEn ? await getPostsByLocale("en") : [];
+  const postsEs = wantEs ? await getPostsByLocale("es") : [];
+  const toolsEn = wantEn ? await getToolsByLocale("en") : [];
+  const toolsEs = wantEs ? await getToolsByLocale("es") : [];
   const cv = await getCVData();
   const publicationGroups = await getPublications();
 
@@ -340,18 +478,12 @@ export async function generateLlmsFullTxt(siteUrl: string): Promise<string> {
     "",
     ABOUT,
     "",
-    "## Blog Posts",
-    "",
-    ...postSectionEn,
-    "## Blog Posts (Español)",
-    "",
-    ...postSectionEs,
-    "## Developer Tools",
-    "",
-    ...toolSectionEn,
-    "## Developer Tools (Español)",
-    "",
-    ...toolSectionEs,
+    // Locale sections are omitted entirely rather than emitted empty when the
+    // document is scoped, so a per-locale file has no dangling headings.
+    ...(wantEn ? ["## Blog Posts", "", ...postSectionEn] : []),
+    ...(wantEs ? ["## Blog Posts (Español)", "", ...postSectionEs] : []),
+    ...(wantEn ? ["## Developer Tools", "", ...toolSectionEn] : []),
+    ...(wantEs ? ["## Developer Tools (Español)", "", ...toolSectionEs] : []),
     "## Curriculum Vitae",
     "",
     ...cvSection,
@@ -359,6 +491,8 @@ export async function generateLlmsFullTxt(siteUrl: string): Promise<string> {
     "## Publications",
     "",
     ...publicationsSection,
+    // The four sections llms.txt advertises but this file used to skip.
+    ...buildProfileSections(siteUrl, onlyLocale === "es" ? "es" : "en"),
     "## Contact",
     "",
     ...CONTACT.map((c) => `- ${c}`),

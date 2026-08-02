@@ -87,6 +87,29 @@ function isValidUrl(value: unknown): value is string {
   }
 }
 
+/**
+ * Check a Text-valued property that may carry one value per language.
+ *
+ * The canonical `#person` node has ONE `@id`, so properties like `jobTitle`
+ * cannot change with the page locale — they are JSON-LD language-tagged
+ * literals (`[{ "@value": …, "@language": "en" }, …]`) rather than a bare
+ * string, which is what the site emitted before and what left the same entity
+ * holding two contradictory job titles depending on which page was crawled.
+ * Both shapes are accepted here so the assertion describes the contract rather
+ * than the encoding.
+ */
+function isNonEmptyText(value: unknown): boolean {
+  if (isNonEmptyStr(value)) return true;
+  if (!Array.isArray(value) || value.length === 0) return false;
+  return value.every(
+    (entry: unknown) =>
+      typeof entry === "object" &&
+      entry !== null &&
+      isNonEmptyStr((entry as Record<string, unknown>)["@value"]) &&
+      isNonEmptyStr((entry as Record<string, unknown>)["@language"]),
+  );
+}
+
 /** Check if value is a valid ISO date string */
 function isIsoDate(value: unknown): value is string {
   if (typeof value !== "string") return false;
@@ -244,6 +267,21 @@ test.describe("Common schemas on representative pages", () => {
         expect(isNonEmptyStr(nav.name)).toBe(true);
         expect(isValidUrl(nav.url)).toBe(true);
       }
+
+      // Regression guard: Spanish pages once emitted translated nav labels
+      // pointing at English URLs, so the schema contradicted the rendered
+      // <nav> on every /es/ page. Asserting the locale prefix here is what
+      // makes that specific bug impossible to reintroduce silently — the
+      // generic "is a URL" checks above all passed while it was broken.
+      if (url.startsWith("/es")) {
+        for (const nav of navItems) {
+          const path = new URL(String(nav.url)).pathname;
+          expect(
+            path === "/es/" || path.startsWith("/es/"),
+            `Spanish nav entry "${String(nav.name)}" points at ${path}, which is not under /es/`,
+          ).toBe(true);
+        }
+      }
     });
   }
 });
@@ -285,8 +323,20 @@ test.describe("Article schema", () => {
     const mainEntity = post.mainEntityOfPage as JsonLdSchema;
     expect(mainEntity["@type"]).toBe("WebPage");
 
-    const isPartOf = post.isPartOf as JsonLdSchema;
-    expect(isPartOf["@id"]).toBeDefined();
+    // `isPartOf` is a single node for standalone posts and an array for posts
+    // that also belong to a curated series (post 001 opens nginx-hardening).
+    // Both shapes are valid JSON-LD; normalize before asserting.
+    const isPartOf = [post.isPartOf].flat() as JsonLdSchema[];
+    expect(isPartOf.length).toBeGreaterThan(0);
+    for (const node of isPartOf) expect(isValidUrl(node["@id"])).toBe(true);
+    expect(
+      isPartOf.some((node) => String(node["@id"]).endsWith("#website")),
+    ).toBe(true);
+    // The series edge is the half that used to be missing: hubs linked down to
+    // their members and nothing linked back up.
+    expect(
+      isPartOf.some((node) => String(node["@id"]).includes("/blog/series/")),
+    ).toBe(true);
   });
 
   test("article @id matches page canonical in both locales", async ({
@@ -401,7 +451,7 @@ test.describe("ProfilePage schema on homepage", () => {
     expect(person["@type"]).toBe("Person");
     expect(isNonEmptyStr(person.name)).toBe(true);
     expect(isValidUrl(person.url)).toBe(true);
-    expect(isNonEmptyStr(person.jobTitle)).toBe(true);
+    expect(isNonEmptyText(person.jobTitle)).toBe(true);
 
     // image is an ImageObject (with width/height), not a bare URL string.
     const personImage = person.image as JsonLdSchema;
@@ -535,7 +585,7 @@ test.describe("Person schema on CV page", () => {
     expect(canonicalPerson["@id"]).toBe(additivePerson["@id"]);
     expect(canonicalPerson["@type"]).toBe("Person");
     expect(isNonEmptyStr(canonicalPerson.name)).toBe(true);
-    expect(isNonEmptyStr(canonicalPerson.jobTitle)).toBe(true);
+    expect(isNonEmptyText(canonicalPerson.jobTitle)).toBe(true);
 
     expect(Array.isArray(canonicalPerson.knowsAbout)).toBe(true);
     expect((canonicalPerson.knowsAbout as unknown[]).length).toBeGreaterThan(0);

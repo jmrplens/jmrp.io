@@ -2,10 +2,11 @@
 title: "Domina los archivos virtuales en Nginx: Guía completa"
 slug: "002-serve-virtual-files-nginx"
 description: "Sirve archivos virtuales en Nginx sin I/O de disco. Cubre root vs alias vs try_files, named locations, endpoints de salud en Kubernetes y containers."
+lead: "Nginx puede servir robots.txt, security.txt y sondas de salud de Kubernetes desde la propia configuración, sin ningún fichero en disco — y el matching de location gana por prioridad, no por el orden en que escribiste los bloques."
 author: "José Manuel Requena Plens"
 authorEmail: "mail@jmrp.io"
 publishedDate: 2025-12-18
-updatedDate: 2025-12-18
+updatedDate: 2026-08-02
 draft: false
 lang: "es"
 coverImage: "../../../assets/images/blog/virtual-files.webp"
@@ -1171,6 +1172,56 @@ A veces necesitas más que simples cadenas estáticas. Así se comparan las prin
     </tr>
   </tbody>
 </Table>
+
+---
+
+## Cómo lo uso en mi propia infraestructura
+
+Este sitio retiró quince etiquetas del blog de una vez, lo que dejó sesenta URLs
+que estaban indexadas y enlazadas apuntando a páginas que ya no existían. Cada
+una de ellas es un bloque `location` de coincidencia exacta en la configuración
+de nginx que hay delante de esta misma página: la técnica que describe este
+artículo aplicada a un problema real, no a uno de ejemplo.
+
+```nginx
+location = /blog/tags/mtls/  { return 301 /blog/tags/security/; }
+location = /blog/tags/mtls   { return 301 /blog/tags/security/; }
+```
+
+Ahora mismo están los sesenta en producción: quince etiquetas, cada una escrita
+dos veces para las formas con y sin barra final, en los dos idiomas. Son
+coincidencias `=` a propósito: una coincidencia por prefijo sobre `/blog/tags/` se tragaría las
+etiquetas que siguen existiendo, y además la forma `=` hace que nginx deje de
+buscar, que es la regla de prioridad del principio de este artículo trabajando
+de verdad.
+
+Uno de ellos me costó una tarde. La etiqueta retirada `key derivation` lleva un
+espacio, así que la URL es `/blog/tags/key%20derivation/`. El bloque evidente no
+funciona:
+
+```nginx
+# No coincide nunca. nginx decodifica la URI *antes* de compararla con el
+# valor de un `location =`, así que cuando llega la comparación la ruta
+# contiene un espacio literal y este patrón contiene "%20".
+location = /blog/tags/key%20derivation/ { return 301 /blog/tags/cryptography/; }
+```
+
+La URI se normaliza y se decodifica antes de la coincidencia de location, de
+modo que el valor en la configuración tiene que ser aquello a lo que la ruta
+*decodifica* —un espacio literal—, que a su vez hay que entrecomillar para que
+nginx llegue siquiera a parsear la directiva:
+
+```nginx
+location = "/blog/tags/key derivation/" { return 301 /blog/tags/cryptography/; }
+location = "/blog/tags/key derivation"  { return 301 /blog/tags/cryptography/; }
+```
+
+Esa es la versión que corre ahora, y
+`curl -I "https://jmrp.io/blog/tags/key%20derivation/"` devuelve el 301. Conviene
+saberlo antes de escribir un bloque de coincidencia exacta para cualquier ruta
+que pueda contener un carácter codificado, porque el fallo es silencioso: nginx
+acepta la configuración, `nginx -t` pasa, y la regla simplemente no se dispara
+nunca.
 
 ---
 

@@ -4,6 +4,32 @@ import type {
 } from "schema-dts";
 
 /**
+ * A JSON-LD language-tagged literal: `{ "@value": …, "@language": … }`.
+ *
+ * `schema-dts` models every `Text`-valued property as a bare `string`, so it
+ * rejects this shape — but the shape is not an extension, it is core JSON-LD
+ * 1.1 (§4.2.4 "Language-Tagged Strings") and plain RDF. The library's types are
+ * simply narrower than the specification they describe; Google's own
+ * documentation shows language-tagged values for multilingual entities.
+ *
+ * Declared here, once, so the widening is a named and explained concept rather
+ * than an `as unknown as` scattered across the schema builders. Use it ONLY for
+ * properties that genuinely carry one value per language on a single `@id`
+ * (`jobTitle`, `description`, `Occupation.name`) — never to smuggle an
+ * otherwise ill-typed value past the checker.
+ *
+ * A `Multilingual<T> = T | LanguageTaggedValue[]` alias was tried and removed: the
+ * Person node is emitted inside an object checked with `satisfies WebSite`, and a
+ * union that admits the array shape is not assignable to schema-dts's `Text`, so
+ * the alias could never actually be applied at the one call site that needed it.
+ * The single documented cast in BaseHead.astro is the honest version.
+ */
+export interface LanguageTaggedValue {
+  "@value": string;
+  "@language": string;
+}
+
+/**
  * The canonical avatar for the `#person` entity: 460x460 PNG, served from this
  * origin at a fixed path.
  *

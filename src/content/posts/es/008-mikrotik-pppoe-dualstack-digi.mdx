@@ -10,6 +10,7 @@ lastVerified:
     - RouterOS 7.23.2
     - RB5009UG+S+
 description: "Configura PPPoE con DHCPv6 Prefix Delegation en MikroTik RouterOS para DIGI España. VLAN tagging, SLAAC, gestión de cambios de prefix y firewall."
+lead: "DIGI España entrega la sesión PPPoE en la VLAN 20 y delega un /56 por DHCPv6-PD — y la MTU del enlace se negocia a la baja hasta 1480 por LCP, pongas lo que pongas en max-mtu."
 author: "José Manuel Requena Plens"
 authorEmail: "mail@jmrp.io"
 draft: false
@@ -88,15 +89,13 @@ import Collapsible from "@components/ui/Collapsible.astro";
 
 Esta guía cubre la configuración completa de un router [MikroTik](https://mikrotik.com/) para la red de DIGI, incluyendo la gestión automática de cambios de prefix, un reto habitual cuando tu ISP asigna prefixes dinámicos que pueden cambiar en cada reconexión.
 
-<TLDRSummary title="Lo que vas a configurar">
-  - **PPPoE sobre VLAN 20** con el formato de usuario `identificador@digi` para la autenticación en la fibra de DIGI España
-  - **IPv4 dinámico** con default route automática y DNS del ISP
-  - **DHCPv6 Prefix Delegation** (prefix /56) para conectividad IPv6 nativa
-  - **SLAAC** para asignación automática de direcciones IPv6 en dispositivos LAN
-  - **Gestión automática de cambios de prefix** con script DHCPv6 que actualiza las direcciones en cada reconexión
-  - **MTU negociado a 1480** vía LCP independientemente de `max-mtu=1500` — ese parámetro es solo el límite superior del cliente, no el MTU real del enlace
-  - **Firewall listo para producción** con cadenas input y forward para IPv4 e IPv6
-  - **Probado en RouterOS 7.x** con RB5009, pero aplicable a cualquier router MikroTik
+<TLDRSummary title="TL;DR — dual-stack de DIGI España en RouterOS">
+  - **DIGI entrega la sesión PPPoE en la VLAN 20.** Pon el cliente PPPoE sobre una interfaz VLAN encima del puerto WAN, no sobre el puerto directamente, o la autenticación falla sin ningún error útil: es con diferencia el motivo más habitual de que esto no levante.
+  - **El formato de usuario es `identificador@digi`**, y el IPv4 llega dinámicamente con la default route y el DNS del ISP desde la propia sesión.
+  - **El IPv6 es un `/56` delegado, no un `/64`.** Pide el prefix con DHCPv6-PD y talla un `/64` por cada LAN; apuntar el `/56` directamente a un bridge no funciona.
+  - **La MTU del enlace se negocia a la baja hasta 1480 por LCP, pase lo que pase.** `max-mtu=1500` es solo el límite superior del cliente, no la MTU resultante, así que hay que fijar el MSS o media web carga y la otra media se queda colgada.
+  - **El prefix delegado cambia al reconectar**, así que hace falta un script DHCPv6 que reescriba las direcciones de la LAN; sin él, el IPv6 muere en silencio tras un corte mientras el IPv4 sigue funcionando.
+  - **Probado en RouterOS 7.23.2 sobre un RB5009**, y aplicable a cualquier router MikroTik.
 </TLDRSummary>
 
 <Callout type="important" title="Valores específicos de DIGI vs genéricos">

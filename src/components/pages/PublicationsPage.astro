@@ -186,7 +186,21 @@ const collectionSchema = {
         position: index + 1,
         item: {
           "@type": "ScholarlyArticle",
-          "@id": `${collectionUrl}#pub-${pub.id}`,
+          // The DOI is the paper's identity, so it is the `@id`.
+          //
+          // This used to be `${collectionUrl}#pub-${id}`, derived from the URL
+          // of the page doing the describing — which meant /publications/ and
+          // /es/publications/ published the SAME paper, same DOI, same English
+          // abstract, under two different `@id`s. Fourteen papers became
+          // twenty-eight nodes. That is the mirror image of the ES `@id`
+          // collision fixed earlier: there, one identifier was reused for two
+          // works; here, two identifiers were minted for one.
+          //
+          // A paper is one entity no matter which page describes it, and it
+          // already carries its DOI in `identifier` and `sameAs`, so nothing is
+          // invented by promoting it. The surrounding CollectionPage stays
+          // locale-scoped — the listing really is per-locale, the papers are not.
+          "@id": doiUrl ?? `${collectionUrl}#pub-${pub.id}`,
           headline: pub.title,
           name: pub.title,
           datePublished: formatIssuedDate(pub.issued),

@@ -107,6 +107,10 @@ overrides:
   # OG image generator has per-locale (ES+EN) titles/subtitles/category labels
   - filename: "src/pages/og/**"
     language: es,en
+  # llms.txt/llms-full.txt generator carries the per-locale profile prose that
+  # feeds the Spanish AI-context document, same as the *Page.astro files above
+  - filename: "src/utils/llms.ts"
+    language: es,en
   # PDF metadata script has Spanish certificate/course names
   - filename: "scripts/optimize-pdf-metadata.py"
     language: es,en

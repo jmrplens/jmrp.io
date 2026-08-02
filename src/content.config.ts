@@ -34,6 +34,25 @@ const posts = defineCollection({
       // recent post is used as the fallback.
       featured: z.boolean().default(false),
       description: z.string().optional(),
+      /**
+       * The visible subtitle under the H1, when it should differ from
+       * `description`.
+       *
+       * These two used to be the same string: the meta description was
+       * rendered as the lead paragraph. They pull in opposite directions.
+       * `description` is written for the SERP — under 155 characters,
+       * descriptive, listing what the article covers. The lead is inside
+       * `speakable`, so it is an explicit extraction target for voice
+       * assistants and AI answers, and a description-style topic label
+       * ("Deep dive into QUIC and HTTP/3 — technical architecture, security
+       * features…") gives an answer engine nothing to quote because it makes
+       * no claim.
+       *
+       * Use a self-contained declarative sentence, ideally carrying the
+       * article's most concrete number. Falls back to `description` when
+       * absent, so posts that have not been rewritten keep working.
+       */
+      lead: z.string().optional(),
       author: z.string().optional(),
       authorEmail: z.email().optional(),
       coverImage: image().optional(),
@@ -568,6 +587,33 @@ const aboutSchema = z.object({
     jobTitle: LocalizedString,
     description: LocalizedString,
     knowsAbout: z.array(z.string()),
+    /**
+     * Machine-readable contact emitted as Person `email`. Already public in
+     * `public/.well-known/security.txt`; the visible address stays obfuscated.
+     */
+    email: z.email().optional(),
+    /**
+     * The profession, emitted as `hasOccupation`. Deliberately separate from
+     * `worksFor` (site.yaml), which reads as present tense — the canonical
+     * entity must not claim a current employer it no longer has.
+     */
+    occupation: LocalizedString.optional(),
+    /**
+     * Languages emitted as `knowsLanguage`. `code` is a BCP-47 tag. schema.org
+     * has no proficiency property, so fluency is expressed by order only,
+     * never invented as a field.
+     */
+    knowsLanguage: z
+      .array(z.object({ name: z.string(), code: z.string() }))
+      .optional(),
+    /** City-level home location emitted as `homeLocation`; no street address. */
+    homeLocation: z
+      .object({
+        locality: z.string(),
+        region: z.string().optional(),
+        country: z.string(),
+      })
+      .optional(),
   }),
   en: AboutLocale,
   es: AboutLocale,

@@ -71,10 +71,20 @@ export default defineConfig({
       name: "accessibility",
       use: { ...devices["Desktop Chrome"] },
       testMatch: /(^|\/)accessibility\.spec\.ts/,
-      // 60s, not 30s: a full axe-core scan of the heaviest blog posts takes
-      // ~29s even with the machine to itself, so 30s left no headroom and the
-      // longest posts timed out whenever the run was parallel.
-      timeout: 60_000,
+      // 90s. This budget has been raised twice, both times for the same
+      // reason: a full axe-core scan of the heaviest posts is slow, and the
+      // margin that looks generous when the machine is idle disappears once
+      // the whole suite runs in parallel.
+      //
+      // 30s → 60s: the longest posts took ~29s alone, leaving no headroom.
+      // 60s → 90s: post 003 (7.2k words, Mermaid diagrams and two interactive
+      // apps — the heaviest page on the site) takes ~36s in isolation but
+      // exceeded 60s under full-suite contention, in both locales.
+      //
+      // Raising the ceiling rather than excluding the page: 003 is exactly the
+      // kind of page where an accessibility regression would matter most, so
+      // the fix is to let the scan finish, not to stop scanning it.
+      timeout: 90_000,
     },
     {
       name: "a11y-static",

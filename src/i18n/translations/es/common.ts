@@ -565,6 +565,16 @@ export const common = {
     },
     homelab: {
       kicker: "Infraestructura",
+      // Descripción estable de la infraestructura, renderizada en servidor.
+      // Ver la nota en la versión inglesa: sin esto, el HTML estático de la
+      // página no contenía ningún dato.
+      summaryAriaLabel: "Qué corre en este homelab",
+      summary1:
+        "Todo lo que se describe aquí corre en hardware que es mío y que pago yo, sobre una línea de fibra doméstica en Valencia, España, y no en una plataforma gestionada. El router es un MikroTik RB5009 que termina el enlace del ISP por PPPoE con un prefijo IPv6 delegado; los servicios cuelgan de él en mini PCs y un NAS, con dos VPS para lo que tiene que seguir accesible cuando la casa no lo está.",
+      summary2:
+        "Entre los servicios autoalojados hay una instancia de Mastodon, un homeserver de Matrix, un PDS de AT Protocol, sincronización de ficheros, streaming multimedia y monitorización. Junto a ellos corren cuatro nodos Tor: dos puentes que hablan obfs4 y WebTunnel, uno en Valencia y otro en Alicante, y dos relays intermedios en VPS de IONOS, uno en Londres y otro en Madrid.",
+      summary3:
+        "La seguridad es una sola tubería, no un conjunto de reglas sueltas. Un honeypot en el router convierte el primer paquete de un escáner en una entrada de address-list, nginx aplica tarpit y coincidencia de patrones en la capa web, ambos alimentan a CrowdSec, y CrowdSec acciona los bouncers de vuelta en el router y en el proxy inverso. Los contadores de arriba son lo que esa tubería ha detenido de verdad.",
       realtimePill: "En tiempo real · vía API",
       kpiAriaLabel: "Métricas destacadas del homelab",
       kpiServicesOnline: "servicios online",
@@ -581,7 +591,8 @@ export const common = {
       nodesUnit: "nodos",
       nodesLiveHint: "carga en vivo · vía API",
       nodesAriaLabel: "Carga de recursos de los nodos de infraestructura",
-      noData: "sin datos",
+      // Guion largo, no "sin datos": ver la nota en la versión inglesa.
+      noData: "—",
       nodeCpu: "CPU",
       nodeRam: "RAM",
       nodeTempOptimal: "Temp · Óptimo",
@@ -751,13 +762,13 @@ export const common = {
       // Tor Network
       torBridgeName: "Bridge Tor (ES0)",
       torBridgeDescription:
-        "Puente de transporte pluggable que ayuda a usuarios censurados a acceder a la red Tor. Ejecuta obfs4 y WebTunnel.",
+        "Puente de transporte pluggable que ayuda a usuarios censurados a acceder a la red Tor desde Valencia. Ejecuta obfs4 y WebTunnel.",
       torRelayName: "Relay Tor (UK)",
       torRelayDescription:
         "Relay intermedio que reenvía tráfico cifrado dentro de la red Tor desde Reino Unido.",
       torRelayEsName: "Relay Tor (ES)",
       torRelayEsDescription:
-        "Relay intermedio que reenvía tráfico cifrado dentro de la red Tor desde España.",
+        "Relay intermedio que reenvía tráfico cifrado dentro de la red Tor desde Madrid.",
       torBridgeEs1Name: "Bridge Tor (ES1)",
       torBridgeEs1Description:
         "Bridge de transporte pluggable que ayuda a usuarios censurados a acceder a la red Tor desde Alicante. Ejecuta obfs4 y WebTunnel.",
@@ -830,7 +841,7 @@ export const common = {
         "Ingeniero de firmware y software en Valencia: dispositivos embebidos seguros, herramientas open-source e infraestructura self-hosted.",
       editorialTitle: "// EDITORIAL Y CORRECCIONES",
       editorialBody1:
-        "Todo lo que se publica aquí sale de trabajo realmente hecho: comandos ejecutados en hardware y servidores reales, configuración citada de sistemas que la están ejecutando y, en cada guía, la versión del software contra la que se escribió. Las afirmaciones que no son mías —comportamiento de un protocolo, propiedades criptográficas, valores por defecto de un fabricante— se contrastan con fuentes primarias (RFC, organismos de estandarización, documentación del fabricante) y se citan, y todos los enlaces se vuelven a comprobar automáticamente en cada compilación.",
+        "Todo lo que se publica aquí sale de trabajo realmente hecho: comandos ejecutados en hardware y servidores reales, configuración citada de sistemas que la están ejecutando y, cuando una guía depende de una versión concreta del software, esa versión indicada en el artículo. Las afirmaciones que no son mías —comportamiento de un protocolo, propiedades criptográficas, valores por defecto de un fabricante— se contrastan con fuentes primarias (RFC, organismos de estandarización, documentación del fabricante) y se citan, y todos los enlaces se vuelven a comprobar automáticamente en cada compilación.",
       editorialBody2:
         "Cada post lleva una declaración de asistencia por IA, así que esto es exactamente lo que significa. Las herramientas de IA ayudan a redactar, estructurar, pulir el texto y traducir al español. No deciden qué es cierto: cada comando, fragmento de configuración y medición se ejecuta y se verifica antes de publicarse, y nada sale directamente de la salida de un modelo. La versión en español es una traducción del mismo material verificado, no un artículo generado aparte.",
       editorialBody3:

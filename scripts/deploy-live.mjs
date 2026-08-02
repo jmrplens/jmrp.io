@@ -819,28 +819,114 @@ function extractLocs(xml) {
 }
 
 /**
- * Collects all page URLs from the generated sitemaps in the dist directory.
+ * Collects `loc → lastmod` for every URL in the generated sitemaps.
  * Resolves the sitemap index to its child sitemaps, then de-duplicates.
  * Computed once and shared by both IndexNow and Bing Webmaster submitters.
  *
+ * `lastmod` is the empty string when a URL carries none, which is a valid
+ * sitemap and simply means "no change signal available" — such URLs are then
+ * treated as always-changed by {@link selectChangedUrls}, which is the safe
+ * direction.
+ *
  * @param {string} distDir - The build output directory containing the sitemaps.
- * @returns {string[]} The de-duplicated list of sitemap URLs.
+ * @returns {Map<string, string>} De-duplicated loc → lastmod.
  */
-function collectSitemapUrls(distDir) {
-  const urls = new Set();
+function collectSitemapEntries(distDir) {
+  /** @type {Map<string, string>} */
+  const entries = new Map();
   const indexPath = path.join(distDir, "sitemap-index.xml");
-  if (!fs.existsSync(indexPath)) return [];
+  if (!fs.existsSync(indexPath)) return entries;
 
   const childSitemaps = extractLocs(fs.readFileSync(indexPath, "utf8"));
   for (const sitemapUrl of childSitemaps) {
     const fileName = path.basename(new URL(sitemapUrl).pathname);
     const childPath = path.join(distDir, fileName);
     if (!fs.existsSync(childPath)) continue;
-    for (const loc of extractLocs(fs.readFileSync(childPath, "utf8"))) {
-      urls.add(loc);
+    const xml = fs.readFileSync(childPath, "utf8");
+    for (const block of xml.matchAll(/<url>([\s\S]*?)<\/url>/g)) {
+      const loc = /<loc>([^<]+)<\/loc>/.exec(block[1])?.[1]?.trim();
+      if (!loc) continue;
+      const lastmod =
+        /<lastmod>([^<]+)<\/lastmod>/.exec(block[1])?.[1]?.trim() ?? "";
+      entries.set(loc, lastmod);
     }
   }
-  return [...urls];
+  return entries;
+}
+
+/**
+ * Path of the ledger recording what was last announced to the search APIs.
+ *
+ * Lives in `.cache/` (git-ignored, survives builds, wiped by a cache clear —
+ * at which point the next deploy re-announces everything, which is harmless).
+ */
+const SUBMISSION_LEDGER = path.join(
+  ROOT,
+  ".cache",
+  "url-submission-ledger.json",
+);
+
+/**
+ * Narrows a full URL list down to the ones that actually changed since the
+ * previous deploy.
+ *
+ * ── Why this exists ──────────────────────────────────────────────────────
+ * Every deploy used to announce all 122 URLs to IndexNow and Bing regardless
+ * of whether anything had changed. Bing's URL Submission API is quota-limited,
+ * and IndexNow's documentation is explicit that repeatedly submitting URLs
+ * that have not changed reduces the trust a search engine places in the
+ * source. The site was spending a finite budget to say "nothing happened".
+ *
+ * The ledger stores the `loc → lastmod` map that was last announced. A URL is
+ * resubmitted when it is new, when its `lastmod` moved, or when it has no
+ * `lastmod` at all. On the very first run — no ledger — everything is
+ * submitted, which is the correct bootstrap.
+ *
+ * @param {Map<string, string>} current - loc → lastmod from this build.
+ * @returns {{changed: string[], total: number, isBootstrap: boolean}}
+ */
+function selectChangedUrls(current) {
+  /** @type {Record<string, string>} */
+  let previous = {};
+  let isBootstrap = true;
+  try {
+    previous = JSON.parse(fs.readFileSync(SUBMISSION_LEDGER, "utf8"));
+    isBootstrap = false;
+  } catch {
+    // No ledger yet (first deploy, or the cache was cleared): announce all.
+  }
+
+  const changed = isBootstrap
+    ? [...current.keys()]
+    : [...current.entries()]
+        .filter(([loc, lastmod]) => !lastmod || previous[loc] !== lastmod)
+        .map(([loc]) => loc);
+
+  return { changed, total: current.size, isBootstrap };
+}
+
+/**
+ * Records the announced state so the next deploy can diff against it.
+ *
+ * Written only after the submitters have run, and never fatal: a failed write
+ * just means the next deploy re-announces, which costs quota but is correct.
+ *
+ * @param {Map<string, string>} current - loc → lastmod from this build.
+ * @returns {void}
+ */
+function writeSubmissionLedger(current) {
+  try {
+    fs.mkdirSync(path.dirname(SUBMISSION_LEDGER), { recursive: true });
+    fs.writeFileSync(
+      SUBMISSION_LEDGER,
+      `${JSON.stringify(Object.fromEntries(current), null, 2)}\n`,
+    );
+  } catch (error) {
+    console.warn(
+      "deploy-live: could not write the URL submission ledger; the next deploy will resubmit everything.",
+    );
+    console.warn(error instanceof Error ? error.message : String(error));
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -853,7 +939,7 @@ function collectSitemapUrls(distDir) {
  * crawl. Gated behind `POSTBUILD_INDEXNOW` so local/CI builds never ping
  * the API. Never throws — failures are logged as warnings.
  *
- * @param {string[]} urlList - Pre-collected sitemap URLs (see {@link collectSitemapUrls}).
+ * @param {string[]} urlList - Pre-collected sitemap URLs (see {@link collectSitemapEntries}).
  * @returns {Promise<void>}
  */
 async function submitToIndexNow(urlList) {
@@ -861,7 +947,8 @@ async function submitToIndexNow(urlList) {
     console.log(
       "deploy-live: skipping IndexNow submission (POSTBUILD_INDEXNOW not set).",
     );
-    return;
+    // Disabled is not failed: a skipped submitter must not block the ledger.
+    return true;
   }
 
   const siteUrl = (process.env.PUBLIC_SITE_URL || "https://jmrp.io").replace(
@@ -876,7 +963,7 @@ async function submitToIndexNow(urlList) {
     console.warn(
       "deploy-live: IndexNow: no sitemap URLs found, skipping submission.",
     );
-    return;
+    return true;
   }
 
   console.log(
@@ -909,15 +996,18 @@ async function submitToIndexNow(urlList) {
       console.log(
         `deploy-live: ✓ IndexNow accepted ${submittedUrls.length} URLs.`,
       );
-    } else {
-      console.warn(
-        `deploy-live: ⚠ IndexNow responded with ${response.status}: ${await response.text()}`,
-      );
+      // Truncation counts as a failure so the untransmitted tail is retried.
+      return submittedUrls.length === urlList.length;
     }
+    console.warn(
+      `deploy-live: ⚠ IndexNow responded with ${response.status}: ${await response.text()}`,
+    );
+    return false;
   } catch (error) {
     // Non-fatal: IndexNow failure must never break a deploy.
     console.warn("deploy-live: ⚠ Failed to submit to IndexNow.");
     console.warn(error instanceof Error ? error.message : String(error));
+    return false;
   }
 }
 
@@ -931,7 +1021,7 @@ async function submitToIndexNow(urlList) {
  * Webmaster quota. Gated behind `BING_WEBMASTER_API_KEY`. Never throws —
  * failures are logged as warnings.
  *
- * @param {string[]} urlList - Pre-collected sitemap URLs (see {@link collectSitemapUrls}).
+ * @param {string[]} urlList - Pre-collected sitemap URLs (see {@link collectSitemapEntries}).
  * @returns {Promise<void>}
  */
 async function submitToBingWebmaster(urlList) {
@@ -940,7 +1030,8 @@ async function submitToBingWebmaster(urlList) {
     console.log(
       "deploy-live: skipping Bing Webmaster submission (BING_WEBMASTER_API_KEY not set).",
     );
-    return;
+    // Disabled or nothing to send is not a failure.
+    return true;
   }
 
   const siteUrl = (process.env.PUBLIC_SITE_URL || "https://jmrp.io").replace(
@@ -951,7 +1042,8 @@ async function submitToBingWebmaster(urlList) {
     console.warn(
       "deploy-live: Bing Webmaster: no sitemap URLs found, skipping submission.",
     );
-    return;
+    // Disabled or nothing to send is not a failure.
+    return true;
   }
 
   console.log(
@@ -984,15 +1076,17 @@ async function submitToBingWebmaster(urlList) {
       console.log(
         `deploy-live: ✓ Bing Webmaster accepted ${urlList.length} URLs.`,
       );
-    } else {
-      console.warn(
-        `deploy-live: ⚠ Bing Webmaster responded with ${response.status}: ${await response.text()}`,
-      );
+      return true;
     }
+    console.warn(
+      `deploy-live: ⚠ Bing Webmaster responded with ${response.status}: ${await response.text()}`,
+    );
+    return false;
   } catch (error) {
     // Non-fatal: a Bing submission failure must never break a deploy.
     console.warn("deploy-live: ⚠ Failed to submit to Bing Webmaster.");
     console.warn(error instanceof Error ? error.message : String(error));
+    return false;
   }
 }
 
@@ -1005,14 +1099,21 @@ async function submitToBingWebmaster(urlList) {
  * Rejections are swallowed here (each step already logs its own failure
  * internally) so a single settled entry never aborts the others.
  *
+ * The step's own return value is passed through: the submitters report whether
+ * they actually reached the API, and the caller needs that to decide whether
+ * the submission ledger may be updated. This helper used to discard it, which
+ * silently defeated that check — `undefined` is not `false`, so every failed
+ * submission still looked successful.
+ *
+ * @template T
  * @param {string} label - Human-readable step name for logging.
- * @param {() => Promise<void>} fn - The async publish step to run.
- * @returns {Promise<void>}
+ * @param {() => Promise<T>} fn - The async publish step to run.
+ * @returns {Promise<T | undefined>} The step's result, or undefined if it threw.
  */
 async function timed(label, fn) {
   const startedAt = performance.now();
   try {
-    await fn();
+    return await fn();
   } catch (error) {
     console.warn(`deploy-live: ${label} threw unexpectedly.`);
     console.warn(error instanceof Error ? error.message : String(error));
@@ -1041,13 +1142,23 @@ async function runPublishNotifications() {
     Boolean(process.env.BING_WEBMASTER_API_KEY);
 
   let urlList = [];
+  /** @type {Map<string, string>} */
+  let sitemapEntries = new Map();
   if (needsSitemap) {
     const sitemapStartedAt = performance.now();
     try {
-      urlList = collectSitemapUrls(DIST_DIR);
-      console.log(
-        `deploy-live: collected ${urlList.length} sitemap URL(s) in ${elapsed(sitemapStartedAt)}.`,
-      );
+      sitemapEntries = collectSitemapEntries(DIST_DIR);
+      const { changed, total, isBootstrap } = selectChangedUrls(sitemapEntries);
+      urlList = changed;
+      if (isBootstrap) {
+        console.log(
+          `deploy-live: no submission ledger yet — announcing all ${total} URL(s) in ${elapsed(sitemapStartedAt)}.`,
+        );
+      } else {
+        console.log(
+          `deploy-live: ${changed.length} of ${total} URL(s) changed since the last deploy (${elapsed(sitemapStartedAt)}); the rest are not resubmitted.`,
+        );
+      }
     } catch (error) {
       console.warn(
         "deploy-live: failed to collect sitemap URLs; continuing with an empty list.",
@@ -1056,11 +1167,34 @@ async function runPublishNotifications() {
     }
   }
 
-  await Promise.allSettled([
+  const [, indexNow, bing] = await Promise.allSettled([
     timed("Cloudflare cache purge", () => purgeCloudflareCache()),
     timed("IndexNow submission", () => submitToIndexNow(urlList)),
     timed("Bing Webmaster submission", () => submitToBingWebmaster(urlList)),
   ]);
+
+  // The ledger records what the search APIs have been TOLD, so it must only be
+  // written when they were actually told. Both submitters swallow their errors
+  // to keep a deploy from failing over a search-engine ping, which means
+  // allSettled reports "fulfilled" even for an HTTP 500 or a timeout — so they
+  // now return an explicit outcome and it is checked here. Writing the ledger
+  // regardless would mark a failed URL as announced and never retry it.
+  // Strictly `=== true`: a step that threw comes back as undefined from
+  // `timed()`, and treating anything-but-false as success is exactly the bug
+  // this check was written to prevent. A disabled submitter returns true
+  // explicitly — skipped is not failed.
+  const announced = (result) =>
+    result.status === "fulfilled" && result.value === true;
+  const allAnnounced = announced(indexNow) && announced(bing);
+
+  if (sitemapEntries.size === 0) return;
+  if (allAnnounced) {
+    writeSubmissionLedger(sitemapEntries);
+  } else {
+    console.warn(
+      "deploy-live: a submitter failed; leaving the ledger untouched so the affected URLs are retried on the next deploy.",
+    );
+  }
 }
 
 /**

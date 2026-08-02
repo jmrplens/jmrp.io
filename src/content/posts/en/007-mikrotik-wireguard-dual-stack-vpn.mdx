@@ -1,5 +1,5 @@
 ---
-title: "MikroTik WireGuard VPN: Complete Dual-Stack IPv4/IPv6 Configuration"
+title: "MikroTik WireGuard VPN: Dual-Stack IPv4/IPv6 Configuration"
 slug: "007-mikrotik-wireguard-dual-stack-vpn"
 publishedDate: 2026-02-14
 updatedDate: 2026-08-02
@@ -9,6 +9,7 @@ lastVerified:
     - RouterOS 7.23.2
     - RB5009UG+S+
 description: "Configure WireGuard VPN on MikroTik RouterOS with full IPv4/IPv6 dual-stack. Access your home network with native IPv6 from any connection."
+lead: "WireGuard on RouterOS with real dual-stack: VPN clients get ULA IPv6 addresses translated to your ISP's global prefix through NAT66, tested on RouterOS 7 on an RB5009."
 author: "José Manuel Requena Plens"
 authorEmail: "mail@jmrp.io"
 draft: false
@@ -88,13 +89,13 @@ import Collapsible from "@components/ui/Collapsible.astro";
 
 This guide demonstrates how to configure a **production-ready WireGuard VPN** on MikroTik RouterOS with **dual-stack IPv4/IPv6 support**. The result? You can connect from any network—even those without IPv6—and enjoy full IPv6 connectivity through your home router.
 
-<TLDRSummary title="What You'll Build">
-  - A **WireGuard VPN server** on MikroTik RouterOS with full IPv4 + IPv6 dual-stack support
-  - **IPv6 via ULA + NAT66**: VPN clients get private ULA addresses translated to your ISP's global prefix
-  - **Firewall rules**: Input, forward, NAT/masquerade, MSS clamping, and RAW table optimizations
-  - **Multi-client support**: Each device gets unique keys and a dedicated IP pair (IPv4 + IPv6)
-  - **Full tunnel or split tunnel**: Route all traffic through VPN, or only home network traffic
-  - **Tested on RouterOS 7.x** with RB5009, but applicable to any MikroTik router with WireGuard support
+<TLDRSummary title="TL;DR — dual-stack WireGuard on RouterOS">
+  - **WireGuard is built into RouterOS 7**, so a dual-stack VPN server needs no container and no extra package — the interface listens on a high non-standard UDP port (**53537** here, not the default 51820, to sidestep automated scans) and each peer gets one IPv4 and one IPv6 address.
+  - **IPv6 goes through ULA plus NAT66, not a delegated prefix.** Clients receive `fd00::/8` addresses that the router translates to your ISP's global prefix, so the tunnel survives the prefix changing underneath it.
+  - **Clamp TCP MSS or large downloads stall.** With the interface at MTU 1500 the computed ceilings are 1460 for IPv4 (1500 − 20 IP − 20 TCP) and 1440 for IPv6 (1500 − 40 − 20); `new-mss=1420` sits below both, which is why one value works on either stack.
+  - **Each device gets its own key pair and address pair.** Revoking one client is deleting one peer; nothing else has to be reissued.
+  - **Split tunnel is an `AllowedIPs` decision on the client**, not a server setting: list only the home prefixes to route home traffic, or `0.0.0.0/0, ::/0` to route everything.
+  - **Tested on RouterOS 7.x on an RB5009**, and applicable to any MikroTik router whose RouterOS build includes WireGuard.
 </TLDRSummary>
 
 <Callout type="important" title="Values You Must Customize">

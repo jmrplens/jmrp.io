@@ -23,10 +23,33 @@
  * Same bytes, two paths, and the build path never touches this server.
  *
  * ── Language ─────────────────────────────────────────────────────────────
- * English only, deliberately. The entity has ONE `@id`; publishing a Spanish
- * description from a second URL would fork the node it is meant to unify. The
- * site's own /es/ pages still render Spanish prose for their readers — that is
- * a per-page localization, not a second canonical claim.
+ * Bilingual, via JSON-LD language-tagged values on `jobTitle`, `description`
+ * and `hasOccupation.name`:
+ *
+ *   "jobTitle": [
+ *     { "@value": "R&D · Firmware & Software Engineer",     "@language": "en" },
+ *     { "@value": "I+D · Ingeniero de Firmware y Software", "@language": "es" }
+ *   ]
+ *
+ * This document used to be English-only, on the reasoning that "publishing a
+ * Spanish description from a SECOND URL would fork the node". That reasoning
+ * was right, but it rules out a different technique than the one used here.
+ * Forking happens when a second *document* re-declares the entity; language
+ * tags live INSIDE the one document under the one `@id`, which is precisely
+ * what RDF language-tagged literals are for. One node, two labels, no fork.
+ *
+ * It also fixes a real defect the English-only rule created: the site emitted
+ * `jobTitle` as an untagged string whose value changed with the page locale, so
+ * the same `@id` accumulated two contradictory titles depending on which page a
+ * consumer crawled. Tagged values make both true simultaneously.
+ *
+ * This matters downstream: all six project documentation sites are bilingual
+ * and splice this node into their `@graph` verbatim, so they inherit both
+ * labels instead of hard-coding an English one next to Spanish prose. They
+ * consume the node as JSON-LD only (none renders these values as display
+ * text), so the array shape is safe for them — verified 2026-08-02 across
+ * gitlab-mcp-server, phonometry, cs-routeros-bouncer, Cloudflare-DNS-Updater,
+ * libgen-mcp and jmrplens.github.io.
  *
  * ── Drift protection ─────────────────────────────────────────────────────
  * Two independent guards, because this file duplicates assembly logic that
@@ -135,6 +158,24 @@ const readYaml = (relativePath) =>
   loadYaml(readFileSync(join(ROOT, relativePath), "utf8"));
 
 /**
+ * Turns an `{ en, es }` YAML pair into JSON-LD language-tagged values.
+ *
+ * English first so a consumer that ignores language tags and naively takes the
+ * first entry still gets the same string this document published when it was
+ * English-only — the shape changes, the default answer does not.
+ *
+ * Mirrors `localizedValues` in BaseHead.astro. The schema-validation spec
+ * compares the two outputs, so a change here that is not mirrored fails CI.
+ *
+ * @param pair - Object with `en` and `es` strings.
+ * @returns Array of language-tagged value objects.
+ */
+const localizedValues = (pair) => [
+  { "@value": pair.en, "@language": "en" },
+  { "@value": pair.es, "@language": "es" },
+];
+
+/**
  * Builds the canonical Person node.
  *
  * Property order and value shapes intentionally match the node emitted by
@@ -187,9 +228,21 @@ function buildIdentityDocument() {
     ...(site.person?.alternateName && {
       alternateName: site.person.alternateName,
     }),
-    jobTitle: about.person.jobTitle.en,
-    description: about.person.description.en,
+    jobTitle: localizedValues(about.person.jobTitle),
+    description: localizedValues(about.person.description),
+    ...(about.person.email && { email: about.person.email }),
     url: `${SITE_URL}/`,
+    // The page that IS about this entity, not merely one that mentions it:
+    // /about/ emits `ProfilePage.mainEntity → #person`, while the home page
+    // only emits `WebPage.about → #person`. Declaring the inverse here
+    // completes the reciprocal pair, the same way the article nodes pair
+    // `translationOfWork`/`workTranslation`.
+    //
+    // A plain URL, not the `#profile` node reference: the six downstream sites
+    // splice this document into a graph that does NOT contain that node, so an
+    // `@id` reference would dangle for them. Unprefixed (EN) on purpose — the
+    // entity is locale-neutral, like `#person` and `#website` themselves.
+    mainEntityOfPage: `${SITE_URL}/about/`,
     image: {
       "@type": "ImageObject",
       url: IMAGE.url,
@@ -210,6 +263,30 @@ function buildIdentityDocument() {
     },
     alumniOf: ALUMNI_OF,
     hasCredential: CREDENTIALS,
+    ...(about.person.occupation && {
+      hasOccupation: {
+        "@type": "Occupation",
+        name: localizedValues(about.person.occupation),
+      },
+    }),
+    ...(about.person.knowsLanguage && {
+      knowsLanguage: about.person.knowsLanguage.map((language) => ({
+        "@type": "Language",
+        name: language.name,
+        alternateName: language.code,
+      })),
+    }),
+    ...(about.person.homeLocation && {
+      homeLocation: {
+        "@type": "Place",
+        address: {
+          "@type": "PostalAddress",
+          addressLocality: about.person.homeLocation.locality,
+          addressRegion: about.person.homeLocation.region,
+          addressCountry: about.person.homeLocation.country,
+        },
+      },
+    }),
     ...(knowsAbout && knowsAbout.length > 0 && { knowsAbout }),
     ...(owns.length > 0 && { owns }),
     ...(orcidId && {

@@ -2,10 +2,11 @@
 title: "Mastering Virtual Files in Nginx: A Complete Guide"
 slug: "002-serve-virtual-files-nginx"
 description: "Serve virtual files in Nginx without disk I/O. Covers root vs alias vs try_files, named locations, Kubernetes health endpoints, and containers."
+lead: "Nginx can serve robots.txt, security.txt and Kubernetes health probes from the config itself, with no file on disk — and location matching picks the winner by priority, not by the order you wrote the blocks in."
 author: "José Manuel Requena Plens"
 authorEmail: "mail@jmrp.io"
 publishedDate: 2025-12-18
-updatedDate: 2025-12-18
+updatedDate: 2026-08-02
 draft: false
 coverImage: "../../../assets/images/blog/virtual-files.webp"
 tags: ["Nginx", "DevOps", "Security"]
@@ -1170,6 +1171,53 @@ Sometimes you need more than just static strings. Here is how the main scripting
     </tr>
   </tbody>
 </Table>
+
+---
+
+## How I run this on my own infrastructure
+
+This site retired fifteen blog tags in one pass, which left sixty URLs that had
+been indexed and linked pointing at pages that no longer existed. Every one of
+them is an exact-match `location` block in the nginx config in front of this
+page — the technique this article describes, applied to a real problem rather
+than an illustrative one:
+
+```nginx
+location = /blog/tags/mtls/  { return 301 /blog/tags/security/; }
+location = /blog/tags/mtls   { return 301 /blog/tags/security/; }
+```
+
+All sixty blocks are live right now — fifteen tags, each written twice for the
+with- and without-trailing-slash forms, in both locales. They are `=` matches on
+purpose: a prefix match on `/blog/tags/` would swallow the tags that still
+exist, and the `=` form also stops nginx searching any further, which is the
+priority rule from the top of this article doing real work.
+
+One of them cost me an afternoon. The retired tag `key derivation` contains a
+space, so the URL is `/blog/tags/key%20derivation/`. The obvious block does not
+work:
+
+```nginx
+# Never matches. nginx decodes the URI *before* comparing it to a
+# `location =` value, so by the time matching happens the path holds a
+# literal space and this pattern holds "%20".
+location = /blog/tags/key%20derivation/ { return 301 /blog/tags/cryptography/; }
+```
+
+The URI is normalized and percent-decoded before location matching, so the
+value in the config has to be what the path decodes *to* — a literal space,
+which then needs quoting for nginx to parse the directive at all:
+
+```nginx
+location = "/blog/tags/key derivation/" { return 301 /blog/tags/cryptography/; }
+location = "/blog/tags/key derivation"  { return 301 /blog/tags/cryptography/; }
+```
+
+That is the version running now, and
+`curl -I "https://jmrp.io/blog/tags/key%20derivation/"` returns the 301. Worth
+knowing before you write an exact-match block for any path that can contain an
+encoded character, because the failure is silent: nginx accepts the config,
+`nginx -t` passes, and the rule simply never fires.
 
 ---
 

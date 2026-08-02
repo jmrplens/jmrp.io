@@ -18,11 +18,13 @@ import TabPanel from "@components/ui/TabPanel.astro";
 import Tabs from "@components/ui/Tabs.astro";
 import YouTube from "@components/ui/YouTube.astro";
 import { defaultLocale, type Locale } from "@i18n/config";
+import type { TranslationKey } from "@i18n/utils";
 import { formatDate, useTranslatedPath, useTranslations } from "@i18n/utils";
 import BaseLayout from "@layouts/BaseLayout.astro";
 import type { SiteConfig } from "@src/types";
 import { formatDateDot, getReadingTime } from "@utils/blog";
 import { getRelatedContent } from "@utils/related";
+import { getSeriesForPost } from "@utils/series";
 import { getSiteUrl } from "@utils/site";
 import { getImage, Picture } from "astro:assets";
 import { type CollectionEntry, getEntry, render } from "astro:content";
@@ -55,6 +57,20 @@ const primaryTags = (post.data.tags ?? []).slice(0, 2);
 // Curated related posts/tools, keyed by the post's numeric slug prefix.
 const postNumber = /^(\d{3})-/.exec(post.data.slug)?.[1] ?? "";
 const relatedContent = await getRelatedContent(postNumber, locale);
+
+// The series this post belongs to, if any. The hubs under /blog/series/ linked
+// down to their members while nothing linked back up, so a reader landing on
+// part 2 from a search result had no way to discover the other four. `undefined`
+// for deliberately standalone posts — 009 is one; it uses Nginx, but as HTTPS
+// camouflage for a Tor bridge, which is not what the Nginx-hardening series is
+// about, and filing it there to avoid an orphan would misdescribe both.
+const seriesInfo = getSeriesForPost(postNumber);
+const seriesUrl = seriesInfo
+  ? new URL(
+      translatePath(`/blog/series/${seriesInfo.series.slug}/`),
+      getSiteUrl(),
+    ).href
+  : undefined;
 
 // --- Reference Collection Logic ---
 const bodyWithoutCode = (post.body || "")
@@ -222,9 +238,22 @@ const articleNode = {
     "@type": "SpeakableSpecification",
     cssSelector: [".post-header h1", ".post-header .lead", ".tldr-content"],
   },
-  isPartOf: {
-    "@id": new URL("#website", getSiteUrl()).href,
-  },
+  // Both the site and, when the post is part of a curated reading path, the
+  // series hub. `isPartOf` is multi-valued, so naming the series does not
+  // displace the website membership — it adds the edge that lets a consumer
+  // walk from this article to its siblings, which until now only existed as
+  // one-way links from the hub down.
+  // `#collection` is the fragment the hub actually publishes
+  // (`SeriesPage.astro`); pointing at a `#series` node that does not exist
+  // would be a dangling reference dressed up as a relation.
+  isPartOf: seriesUrl
+    ? [
+        { "@id": new URL("#website", getSiteUrl()).href },
+        { "@id": `${seriesUrl}#collection` },
+      ]
+    : {
+        "@id": new URL("#website", getSiteUrl()).href,
+      },
 } satisfies BlogPosting | TechArticle;
 
 // Secondary graph nodes: FAQPage (from `faq`) and HowTo (from `howto`).
@@ -368,8 +397,44 @@ const articleSchema = [
 
         <div class="header-grid">
           <div class="header-content">
+            {
+              seriesInfo && (
+                <a
+                  class="series-band"
+                  href={translatePath(
+                    `/blog/series/${seriesInfo.series.slug}/`,
+                  )}
+                >
+                  <span
+                    class="i-mdi:bookmark-multiple-outline"
+                    aria-hidden="true"
+                  />
+                  <span>
+                    {t("series.ui.partLabel", {
+                      position: String(seriesInfo.position),
+                    })}
+                    {" / "}
+                    {seriesInfo.total} ·{" "}
+                    {/* Series copy lives under `series.<slug>.*` and the slug
+                        is only known at runtime; same cast as SeriesPage.astro. */}
+                    {t(
+                      `series.${seriesInfo.series.slug}.title` as TranslationKey,
+                    )}
+                  </span>
+                </a>
+              )
+            }
             <h1>{post.data.title}</h1>
-            <p class="lead">{post.data.description}</p>
+            {
+              /*
+              `lead` when the post defines one, `description` otherwise. This
+              element is named in the `speakable` selector below, so it is an
+              extraction target — see the `lead` field docs in
+              content.config.ts for why reusing the SERP description here made
+              a poor one.
+            */
+            }
+            <p class="lead">{post.data.lead ?? post.data.description}</p>
             <div class="byline">
               {
                 /* Monogram initials avatar — decorative; author name in adjacent text */
@@ -748,6 +813,27 @@ const articleSchema = [
     color: var(--color-text-heading);
     letter-spacing: -0.025em;
     text-wrap: balance;
+  }
+
+  /* Series membership, above the H1: "Part 2 / 5 · Hardening Nginx, edge
+     inward". Sits before the title because it is context for the title, not a
+     footnote to it — a reader who arrived from a search result needs to know
+     they are mid-sequence before they start reading. */
+  .series-band {
+    display: inline-flex;
+    gap: var(--space-sm);
+    align-items: center;
+    margin-bottom: var(--space-sm);
+    font-family: var(--font-mono);
+    font-size: var(--text-sm);
+    color: var(--color-text-muted);
+    text-decoration: none;
+  }
+
+  .series-band:hover,
+  .series-band:focus-visible {
+    color: var(--color-primary);
+    text-decoration: underline;
   }
 
   .lead {
