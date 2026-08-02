@@ -82,7 +82,10 @@ const toolsSchema = {
   inLanguage: locale,
   isPartOf: { "@id": new URL("#website", getSiteUrl()).href },
   hasPart: allTools.map((tool) => {
-    const toolUrl = new URL(`/tools/${tool.data.slug}/`, getSiteUrl()).href;
+    const toolUrl = new URL(
+      translatePath(`/tools/${tool.data.slug}/`),
+      getSiteUrl(),
+    ).href;
     return {
       "@type": "SoftwareApplication",
       name: tool.data.title,
