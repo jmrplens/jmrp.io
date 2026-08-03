@@ -48,6 +48,10 @@ export interface NodeSsrValues {
   readonly cpuBar: string;
   /** CSS class(es) for the RAM meter fill width. */
   readonly memBar: string;
+  /** Status-pill class, threshold-aware, injected by nginx (see ssr-tokens.ts). */
+  readonly statusClass: string;
+  /** Status-pill icon class, injected the same way. */
+  readonly statusIcon: string;
 }
 
 /** Component props. */
@@ -183,9 +187,15 @@ export default function NodeCards({ translations: t, nodes, ssr }: Props) {
                   <h3 className="node-card__name">{node.name}</h3>
                   <p className="node-card__role">{node.role}</p>
                 </div>
-                <span className="node-card__status node-card__status--ok">
+                {/* Class and icon are injected tokens, so the pill's color
+                    and shape stay coherent with the injected "High load" /
+                    "Optimal" text — the component itself cannot compute them
+                    at build time. */}
+                <span
+                  className={`node-card__status ${v?.statusClass ?? "node-card__status--ok"}`}
+                >
                   <span
-                    className="node-card__dot"
+                    className={v?.statusIcon ?? "node-card__dot"}
                     aria-hidden="true"
                   />
                   {v?.status ?? t.statusOptimal}

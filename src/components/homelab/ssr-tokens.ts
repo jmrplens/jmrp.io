@@ -66,11 +66,30 @@ export interface NodeSsr {
   readonly cpuBar: string;
   /** Same as `cpuBar`, for the RAM meter. */
   readonly memBar: string;
+  /**
+   * Full CSS class for the status pill ("node-card__status--ok" or
+   * "node-card__status--warn"), injected by nginx because the SSR component
+   * cannot branch on serve-time values — at build time these props hold the
+   * raw tokens, not numbers.
+   */
+  readonly statusClass: string;
+  /** Icon class for the pill: "node-card__dot" or "i-mdi:alert-outline". */
+  readonly statusIcon: string;
 }
 
 /**
+ * Requests received in the last 24 h. Declared once and shared: the SAME
+ * figure is legitimately rendered in two places (the KPI band and the
+ * edge-defense column), so both reference this constant instead of minting a
+ * second token for one metric.
+ */
+const REQ_24H = "HLM_REQ_24H";
+
+/**
  * The token registry. Keys are grouped by the component that renders them.
- * Every literal MUST be unique and match `^HLM_[A-Z0-9_]+$`.
+ * Every literal MUST match `^HLM_[A-Z0-9_]+$` and be unique PER METRIC — one
+ * metric rendered in several places shares one token (see `REQ_24H` above),
+ * but two different metrics must never share a literal.
  */
 export const HLM = {
   /** KPI band (HomelabKpi). */
@@ -78,7 +97,7 @@ export const HLM = {
     /** Services currently online (numerator; the denominator is static). */
     online: "HLM_ONLINE",
     /** HTTP requests received in the last 24 h. */
-    requests: "HLM_REQ_24H",
+    requests: REQ_24H,
     /** WAN download traffic in the last 24 h. */
     wan: "HLM_WAN_24H",
   },
@@ -102,7 +121,7 @@ export const HLM = {
     /** Active connections tracked by the router. */
     activeConnections: "HLM_ACTIVE_CONNECTIONS",
     /** Requests received, 24 h (same figure as the KPI band). */
-    requests: "HLM_REQ_24H",
+    requests: REQ_24H,
   },
 
   /** Per-service stat pairs (ServiceStats). */
@@ -159,6 +178,8 @@ export const HLM = {
       tempLabel: "HLM_NODE_NGINX_TEMP_LABEL",
       cpuBar: "HLM_NODE_NGINX_CPU_BAR",
       memBar: "HLM_NODE_NGINX_RAM_BAR",
+      statusClass: "HLM_NODE_NGINX_STATUS_CLASS",
+      statusIcon: "HLM_NODE_NGINX_STATUS_ICON",
     },
     matrix: {
       cpu: "HLM_NODE_MATRIX_CPU",
@@ -168,6 +189,8 @@ export const HLM = {
       tempLabel: "HLM_NODE_MATRIX_TEMP_LABEL",
       cpuBar: "HLM_NODE_MATRIX_CPU_BAR",
       memBar: "HLM_NODE_MATRIX_RAM_BAR",
+      statusClass: "HLM_NODE_MATRIX_STATUS_CLASS",
+      statusIcon: "HLM_NODE_MATRIX_STATUS_ICON",
     },
     mastodon: {
       cpu: "HLM_NODE_MASTODON_CPU",
@@ -177,6 +200,8 @@ export const HLM = {
       tempLabel: "HLM_NODE_MASTODON_TEMP_LABEL",
       cpuBar: "HLM_NODE_MASTODON_CPU_BAR",
       memBar: "HLM_NODE_MASTODON_RAM_BAR",
+      statusClass: "HLM_NODE_MASTODON_STATUS_CLASS",
+      statusIcon: "HLM_NODE_MASTODON_STATUS_ICON",
     },
     truenas: {
       cpu: "HLM_NODE_TRUENAS_CPU",
@@ -186,6 +211,8 @@ export const HLM = {
       tempLabel: "HLM_NODE_TRUENAS_TEMP_LABEL",
       cpuBar: "HLM_NODE_TRUENAS_CPU_BAR",
       memBar: "HLM_NODE_TRUENAS_RAM_BAR",
+      statusClass: "HLM_NODE_TRUENAS_STATUS_CLASS",
+      statusIcon: "HLM_NODE_TRUENAS_STATUS_ICON",
     },
     mikrotik: {
       cpu: "HLM_NODE_MIKROTIK_CPU",
@@ -195,6 +222,8 @@ export const HLM = {
       tempLabel: "HLM_NODE_MIKROTIK_TEMP_LABEL",
       cpuBar: "HLM_NODE_MIKROTIK_CPU_BAR",
       memBar: "HLM_NODE_MIKROTIK_RAM_BAR",
+      statusClass: "HLM_NODE_MIKROTIK_STATUS_CLASS",
+      statusIcon: "HLM_NODE_MIKROTIK_STATUS_ICON",
     },
   } satisfies Record<string, NodeSsr>,
 
