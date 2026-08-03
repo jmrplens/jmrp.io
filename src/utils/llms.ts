@@ -341,7 +341,7 @@ function sectionsBlockEs(siteUrl: string): string {
     "",
     `- [Inicio](${siteUrl}/es/): Versión en español del sitio completo`,
     `- [Blog](${siteUrl}/es/blog/): Artículos técnicos sobre Nginx, MikroTik, redes, seguridad, firmware embebido y DevOps`,
-    `- [Sobre mí](${siteUrl}/es/about/): Quién es José Manuel Requena Plens — ingeniero de firmware y software, trayectoria y proyectos destacados`,
+    `- [Perfil](${siteUrl}/es/about/): Quién es José Manuel Requena Plens — ingeniero de firmware y software, trayectoria y proyectos destacados`,
     `- [CV](${siteUrl}/es/cv/): Currículum profesional y experiencia`,
     `- [Publicaciones](${siteUrl}/es/publications/): Artículos académicos sobre acústica, metamateriales y ultrasonidos`,
     `- [Homelab](${siteUrl}/es/homelab/): Infraestructura autoalojada — Mastodon, Matrix, PDS de AT Protocol, relés Tor`,

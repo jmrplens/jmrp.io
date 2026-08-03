@@ -1019,9 +1019,21 @@ test.describe("Locale-scoped entity @ids", () => {
 
           for (const candidate of candidates) {
             if (typeof candidate !== "string") continue;
-            if (!candidate.startsWith("https://jmrp.io")) continue;
 
-            const { pathname } = new URL(candidate);
+            // Parse first and compare the hostname, rather than
+            // `startsWith("https://jmrp.io")` — that prefix also matches
+            // `https://jmrp.io.example.com/…` (CodeQL
+            // js/incomplete-url-substring-sanitization). Same idiom as
+            // `isOrcidUrl` in BaseHead.astro.
+            let parsed;
+            try {
+              parsed = new URL(candidate);
+            } catch {
+              continue; // Not an absolute URL: nothing to locale-check.
+            }
+            if (parsed.hostname !== "jmrp.io") continue;
+
+            const { pathname } = parsed;
             // The site root is a legitimate breadcrumb ancestor, and
             // /publications/ is the deliberately locale-neutral identifier
             // for the one paper with no DOI — both locales must mint the

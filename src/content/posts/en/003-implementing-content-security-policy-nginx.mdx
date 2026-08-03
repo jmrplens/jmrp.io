@@ -8,14 +8,14 @@ lastVerified:
   versions:
     - nginx 1.31.2
 description: "Master Content Security Policy from zero to A+ — nonces, hashes, strict-dynamic, Trusted Types, bypass prevention, and production Nginx configs."
-lead: "94.72% of allowlist-based CSPs can be bypassed, according to Google's own research; a nonce-based policy with strict-dynamic is what actually stops injected script and earns an A+."
+lead: "75.81% of CSP policies use script allowlists an attacker can bypass, according to Google's own research; a nonce-based policy with strict-dynamic is what actually stops injected script and earns an A+."
 coverImage: "../../../assets/images/blog/csp-shield.webp"
 tags: ["Nginx", "Security", "Cryptography"]
 faq:
   - question: "What is the simplest CSP to start with on Nginx?"
     answer: "Add the single header `add_header Content-Security-Policy \"default-src 'self'\" always;` to your server block. This tells the browser to only allow resources from your exact origin (same scheme, host, and port), immediately blocking external scripts, inline scripts, and inline styles."
   - question: "Why are nonces better than domain allowlists for CSP?"
-    answer: "Google research found that 94.72% of allowlist-based CSPs can be bypassed, because trusted CDNs often host JSONP endpoints, open redirects, or script gadgets that attackers abuse. Nonces are cryptographically random per-request tokens that an attacker cannot guess, so they provide real XSS protection regardless of which libraries are loaded."
+    answer: "Google research bypassed 94.72% of all distinct CSP policies, and 75.81% of them rely on script allowlists an attacker can bypass, because trusted CDNs often host JSONP endpoints, open redirects, or script gadgets that attackers abuse. Nonces are cryptographically random per-request tokens that an attacker cannot guess, so they provide real XSS protection regardless of which libraries are loaded."
   - question: "How can static sites use nonces if HTML is built ahead of time?"
     answer: "Put a placeholder like `CSP_NONCE_NGINX` in your templates at build time, then have Nginx generate a unique nonce per request with `set $cspNonce $request_id;` and replace the placeholder using `sub_filter`. The same `$cspNonce` value goes into the CSP header, so the nonce in the HTML and the header always match."
   - question: "What does 'strict-dynamic' do in a CSP?"
@@ -83,20 +83,20 @@ import DirectiveCard from "@components/ui/DirectiveCard.astro";
 import CSPBuilder from "@components/apps/CSPBuilder.astro";
 import HashCalculator from "@components/apps/HashCalculator.astro";
 
-**Cross-Site Scripting (XSS)** remains one of the most devastating web vulnerabilities, consistently ranking in OWASP's Top 10 and accounting for approximately **40% of all reported web application security issues**. According to [Google's security research](https://research.google/pubs/csp-is-dead-long-live-csp-on-the-insecurity-of-whitelists-and-the-future-of-content-security-policy/), even websites with CSP often fail to implement it correctly—**94.72% of allowlist-based CSPs can be bypassed**.
+**Cross-Site Scripting (XSS)** remains one of the most devastating web vulnerabilities, consistently ranking in OWASP's Top 10 and accounting for approximately **40% of all reported web application security issues**. According to [Google's security research](https://research.google/pubs/csp-is-dead-long-live-csp-on-the-insecurity-of-whitelists-and-the-future-of-content-security-policy/), even websites with CSP often fail to implement it correctly — Google found bypasses in **94.72% of all distinct policies**, and **75.81%** rely on script allowlists an attacker can bypass.
 
 **Content Security Policy (CSP)** is your browser-level defense against these attacks. Think of it as a strict "guest list" for your website—you explicitly tell the browser which resources (scripts, styles, images) are allowed to execute. Anything not on the list gets blocked, even if an attacker manages to inject malicious code.
 
 This guide takes you from zero to a production-ready, **A+ rated** CSP configuration. You'll learn not just the "how" but the "why" behind each directive, understand modern bypass techniques and how to prevent them, and discover advanced topics like Trusted Types for DOM-based XSS prevention.
 
 <TLDRSummary title="TL;DR — a nonce-based CSP on Nginx">
-  - **Allowlists do not hold.** Google's own research found **94.72% of allowlist-based CSPs bypassable**, because trusted CDNs host JSONP endpoints and outdated libraries that turn an allowed origin into an execution path.
-  - **A nonce is per-request and unguessable**, so an injected `<script>` has no valid token and never runs — which is what an allowlist cannot promise.
+  - **Allowlists do not hold.** Google found bypasses in **94.72% of all distinct CSP policies**, and **75.81%** rely specifically on script allowlists an attacker can bypass — because trusted CDNs host JSONP endpoints and outdated libraries that turn an allowed origin into an execution path.
+  - **A nonce is per-request and unguessable**, so an injected `<script>` carries no valid token and is refused — which is what an allowlist cannot promise. It is not a blanket guarantee: `strict-dynamic` still lets an already-trusted script load more, a leaked nonce is a valid nonce, and DOM sinks need Trusted Types (below).
   - **A static site can still use nonces.** Nginx generates one per request and `sub_filter` substitutes the placeholder in the response body, so no application server is involved. That is exactly how this page is served.
   - **`strict-dynamic` propagates trust** from a nonced script to whatever it loads, which is what makes the policy survive bundlers and dynamic imports without reopening the allowlist.
   - **`object-src 'none'` and `base-uri 'none'` are not optional** — without them a strict policy is still bypassable through plugin content and `<base>` injection.
   - **Trusted Types (CSP Level 3) closes the DOM sink**, the class of XSS that a script-source policy cannot reach on its own.
-  - **The measured result:** an **A+ on Mozilla Observatory with a score of 140 and all 10 tests passed**, reached by running `Content-Security-Policy-Report-Only` with a `report-uri` for one to two weeks before enforcing.
+  - **The measured result at the time of writing:** an **A+ on Mozilla Observatory with a score of 140 and all 10 tests passed**, reached by running `Content-Security-Policy-Report-Only` with a `report-uri` for one to two weeks before enforcing.
 </TLDRSummary>
 
 <Prerequisite title="Before You Start">
@@ -110,7 +110,7 @@ This guide takes you from zero to a production-ready, **A+ rated** CSP configura
 
 ## How I run this on my own infrastructure
 
-This isn't a hypothetical — jmrp.io itself is the reference implementation for everything above. Production Nginx sets `set $cspNonce $request_id;` and rewrites the placeholder with `sub_filter NGINX_CSP_NONCE $cspNonce;`, so every response carries a fresh nonce tied to that request. The header this site actually serves is nonce-only: `default-src 'none'`, `script-src 'self' 'nonce-…' 'strict-dynamic'`, `style-src 'self' 'nonce-…'`, plus `frame-ancestors 'none'`, `base-uri 'self'`, and `report-uri /csp-report` — zero `unsafe-inline`, zero domain allowlists to maintain.
+This isn't a hypothetical — jmrp.io itself is the reference implementation for everything above. Production Nginx sets `set $cspNonce $request_id;` and rewrites the placeholder with `sub_filter NGINX_CSP_NONCE $cspNonce;`, so every response carries a fresh nonce tied to that request. The header this site actually serves is nonce-only: `default-src 'none'`, `script-src 'self' 'nonce-…' 'strict-dynamic'`, `style-src 'self' 'nonce-…'`, plus `frame-ancestors 'none'`, `base-uri 'none'`, and `report-uri /csp-report` — zero `unsafe-inline`, zero domain allowlists to maintain.
 
 Violations don't disappear into a log nobody reads: I run my own receiver (`scripts/csp-reporter.mjs`) that surfaces them as they happen, instead of relying on a third party to tell me what's breaking.
 
@@ -126,7 +126,7 @@ Content Security Policy has evolved significantly since its introduction. Unders
   { date: "2010", type: "default", title: "X-Content-Security-Policy", description: "Mozilla introduces the first CSP implementation as an experimental header. [Mozilla Security Blog](https://blog.mozilla.org/security/2009/06/19/shutting-down-xss-with-content-security-policy/)" },
   { date: "2012", type: "milestone", title: "CSP Level 1", description: "W3C standardizes CSP with basic fetch directives (script-src, style-src, etc.). [W3C CSP 1.0 Spec](https://www.w3.org/TR/CSP1/)" },
   { date: "2016", type: "milestone", title: "CSP Level 2", description: "Introduces nonces, hashes, and frame-ancestors. 'unsafe-inline' can be overridden by nonces. [W3C CSP Level 2](https://www.w3.org/TR/CSP2/)" },
-  { date: "2016", type: "warning", title: "Google Research", description: "Google publishes 'CSP Is Dead, Long Live CSP' showing 94.72% of allowlist CSPs are bypassable. [Research Paper](https://research.google/pubs/csp-is-dead-long-live-csp-on-the-insecurity-of-whitelists-and-the-future-of-content-security-policy/)" },
+  { date: "2016", type: "warning", title: "Google Research", description: "Google publishes 'CSP Is Dead, Long Live CSP' showing bypasses in 94.72% of all distinct policies, 75.81% of them using bypassable script allowlists. [Research Paper](https://research.google/pubs/csp-is-dead-long-live-csp-on-the-insecurity-of-whitelists-and-the-future-of-content-security-policy/)" },
   { date: "2018", type: "success", title: "strict-dynamic", description: "New keyword allows trusted scripts to load dependencies without explicit allowlisting. [MDN strict-dynamic](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy/script-src#strict-dynamic)" },
   { date: "2023+", type: "milestone", title: "CSP Level 3 (Working Draft)", description: "Introduces Trusted Types, report-to, and improved WebAssembly support. [W3C CSP Level 3](https://www.w3.org/TR/CSP3/)" },
   { date: "2024+", type: "success", title: "Trusted Types Adoption", description: "Browser support matures; enterprises begin adopting for DOM-XSS prevention. [web.dev Trusted Types](https://web.dev/articles/trusted-types)" },

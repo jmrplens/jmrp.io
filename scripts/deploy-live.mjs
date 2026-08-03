@@ -1157,7 +1157,17 @@ async function runPublishNotifications() {
       sitemapEntries = collectSitemapEntries(DIST_DIR);
       const { changed, total, isBootstrap } = selectChangedUrls(sitemapEntries);
       urlList = changed;
-      if (isBootstrap) {
+      if (total === 0) {
+        // An empty `urlList` normally means "nothing changed", and the
+        // submitters say exactly that. It would be the wrong story if the
+        // sitemap itself came back empty — a missing sitemap-index.xml, or an
+        // index whose children are absent, both yield zero entries without
+        // throwing. Diagnose it here so the downstream message is never
+        // mistaken for a healthy no-op.
+        console.warn(
+          `deploy-live: no URLs in the sitemaps under ${DIST_DIR} — check sitemap-index.xml and its children.`,
+        );
+      } else if (isBootstrap) {
         console.log(
           `deploy-live: no submission ledger yet — announcing all ${total} URL(s) in ${elapsed(sitemapStartedAt)}.`,
         );
