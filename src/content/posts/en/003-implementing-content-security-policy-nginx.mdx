@@ -83,7 +83,7 @@ import DirectiveCard from "@components/ui/DirectiveCard.astro";
 import CSPBuilder from "@components/apps/CSPBuilder.astro";
 import HashCalculator from "@components/apps/HashCalculator.astro";
 
-**Cross-Site Scripting (XSS)** remains one of the most devastating web vulnerabilities, consistently ranking in OWASP's Top 10 and accounting for approximately **40% of all reported web application security issues**. According to [Google's security research](https://research.google/pubs/csp-is-dead-long-live-csp-on-the-insecurity-of-whitelists-and-the-future-of-content-security-policy/), even websites with CSP often fail to implement it correctly — Google found bypasses in **94.72% of all distinct policies**, and **75.81%** rely on script allowlists an attacker can bypass.
+**Cross-Site Scripting (XSS)** remains one of the most devastating web vulnerabilities. In the [OWASP Top 10 2021](https://owasp.org/Top10/2021/A03_2021-Injection/) it sits inside **A03: Injection** as CWE-79 — a category with 33 mapped CWEs, 274,228 recorded occurrences and a maximum incidence rate of **19.09%** across the applications tested. According to [Google's security research](https://research.google/pubs/csp-is-dead-long-live-csp-on-the-insecurity-of-whitelists-and-the-future-of-content-security-policy/), even websites with CSP often fail to implement it correctly — Google found bypasses in **94.72% of all distinct policies**, and **75.81%** rely on script allowlists an attacker can bypass.
 
 **Content Security Policy (CSP)** is your browser-level defense against these attacks. Think of it as a strict "guest list" for your website—you explicitly tell the browser which resources (scripts, styles, images) are allowed to execute. Anything not on the list gets blocked, even if an attacker manages to inject malicious code.
 
@@ -110,7 +110,7 @@ This guide takes you from zero to a production-ready, **A+ rated** CSP configura
 
 ## How I run this on my own infrastructure
 
-This isn't a hypothetical — jmrp.io itself is the reference implementation for everything above. Production Nginx sets `set $cspNonce $request_id;` and rewrites the placeholder with `sub_filter NGINX_CSP_NONCE $cspNonce;`, so every response carries a fresh nonce tied to that request. The header this site actually serves is nonce-only: `default-src 'none'`, `script-src 'self' 'nonce-…' 'strict-dynamic'`, `style-src 'self' 'nonce-…'`, plus `frame-ancestors 'none'`, `base-uri 'none'`, and `report-uri /csp-report` — zero `unsafe-inline`, zero domain allowlists to maintain.
+This isn't a hypothetical — jmrp.io itself is the reference implementation for everything above. Production Nginx sets `set $cspNonce $request_id;` and rewrites the placeholder with `sub_filter NGINX_CSP_NONCE $cspNonce;`, so every response carries a fresh nonce tied to that request. The header this site actually serves is nonce-based: `default-src 'none'`, `script-src 'self' 'nonce-…' 'strict-dynamic'`, `style-src 'self' 'nonce-…'`, plus `frame-ancestors 'none'`, `base-uri 'none'`, and `report-uri /csp-report`. The `'self'` in there is a same-origin fallback for browsers that don't support `strict-dynamic`; where it is supported the browser ignores `'self'` and the nonce is the only thing that grants execution. Zero `unsafe-inline`, zero third-party domain allowlists to maintain.
 
 Violations don't disappear into a log nobody reads: I run my own receiver (`scripts/csp-reporter.mjs`) that surfaces them as they happen, instead of relying on a third party to tell me what's breaking.
 

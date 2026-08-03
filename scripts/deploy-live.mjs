@@ -829,19 +829,34 @@ function extractLocs(xml) {
  * direction.
  *
  * @param {string} distDir - The build output directory containing the sitemaps.
- * @returns {Map<string, string>} De-duplicated loc → lastmod.
+ * @returns {{entries: Map<string, string>, complete: boolean}} De-duplicated
+ *   loc → lastmod, plus whether every sitemap listed in the index was read.
  */
 function collectSitemapEntries(distDir) {
   /** @type {Map<string, string>} */
   const entries = new Map();
   const indexPath = path.join(distDir, "sitemap-index.xml");
-  if (!fs.existsSync(indexPath)) return entries;
+  // `complete` is what makes the caller able to fail closed. A partial read is
+  // worse than an empty one: it yields a positive total, so the URLs from the
+  // missing child look like "unchanged" and — once the ledger is written from
+  // that truncated map — they are never announced again.
+  if (!fs.existsSync(indexPath)) {
+    console.warn(`deploy-live: no sitemap-index.xml under ${distDir}.`);
+    return { entries, complete: false };
+  }
 
+  let complete = true;
   const childSitemaps = extractLocs(fs.readFileSync(indexPath, "utf8"));
   for (const sitemapUrl of childSitemaps) {
     const fileName = path.basename(new URL(sitemapUrl).pathname);
     const childPath = path.join(distDir, fileName);
-    if (!fs.existsSync(childPath)) continue;
+    if (!fs.existsSync(childPath)) {
+      console.warn(
+        `deploy-live: sitemap-index.xml lists ${fileName}, but it is missing from ${distDir}.`,
+      );
+      complete = false;
+      continue;
+    }
     const xml = fs.readFileSync(childPath, "utf8");
     for (const block of xml.matchAll(/<url>([\s\S]*?)<\/url>/g)) {
       const loc = /<loc>([^<]+)<\/loc>/.exec(block[1])?.[1]?.trim();
@@ -851,7 +866,7 @@ function collectSitemapEntries(distDir) {
       entries.set(loc, lastmod);
     }
   }
-  return entries;
+  return { entries, complete };
 }
 
 /**
@@ -1138,6 +1153,62 @@ async function timed(label, fn) {
  *
  * @returns {Promise<void>}
  */
+/**
+ * Reads the built sitemaps and works out which URLs still need announcing.
+ *
+ * Extracted from `runPublishNotifications` so that function stays under the
+ * cognitive-complexity budget: the branching here is all about *diagnosing*
+ * the sitemap, which is a separate concern from orchestrating the publish
+ * steps.
+ *
+ * @returns {{urlList: string[], sitemapEntries: Map<string, string>, sitemapComplete: boolean}}
+ *   The URLs to announce, the full loc → lastmod map, and whether every
+ *   sitemap listed in the index was read (only then may the ledger be written).
+ */
+function resolveUrlsToAnnounce() {
+  const startedAt = performance.now();
+  try {
+    const { entries, complete } = collectSitemapEntries(DIST_DIR);
+    const { changed, total, isBootstrap } = selectChangedUrls(entries);
+
+    if (!complete) {
+      // Fail closed. A partial read still produces a positive total, so
+      // submitting from it would announce a truncated set — and writing the
+      // ledger from it would mark the URLs we never read as "already
+      // announced", leaving them unannounced on every future deploy.
+      console.warn(
+        "deploy-live: sitemap collection was incomplete; skipping submissions and leaving the ledger untouched.",
+      );
+      return { urlList: [], sitemapEntries: entries, sitemapComplete: false };
+    }
+
+    if (total === 0) {
+      // An empty list normally means "nothing changed", and the submitters say
+      // exactly that. It would be the wrong story if the sitemap itself came
+      // back empty, so diagnose that case separately.
+      console.warn(
+        `deploy-live: no URLs in the sitemaps under ${DIST_DIR} — check sitemap-index.xml and its children.`,
+      );
+    } else if (isBootstrap) {
+      console.log(
+        `deploy-live: no submission ledger yet — announcing all ${total} URL(s) in ${elapsed(startedAt)}.`,
+      );
+    } else {
+      console.log(
+        `deploy-live: ${changed.length} of ${total} URL(s) changed since the last deploy (${elapsed(startedAt)}); the rest are not resubmitted.`,
+      );
+    }
+
+    return { urlList: changed, sitemapEntries: entries, sitemapComplete: true };
+  } catch (error) {
+    console.warn(
+      "deploy-live: failed to collect sitemap URLs; continuing with an empty list.",
+    );
+    console.warn(error instanceof Error ? error.message : String(error));
+    return { urlList: [], sitemapEntries: new Map(), sitemapComplete: false };
+  }
+}
+
 async function runPublishNotifications() {
   // Skip reading/logging the sitemap entirely when neither URL-list consumer
   // is configured (e.g. local/CI builds) — nothing would use it. Cloudflare
@@ -1148,41 +1219,9 @@ async function runPublishNotifications() {
     Boolean(process.env.POSTBUILD_INDEXNOW) ||
     Boolean(process.env.BING_WEBMASTER_API_KEY);
 
-  let urlList = [];
-  /** @type {Map<string, string>} */
-  let sitemapEntries = new Map();
-  if (needsSitemap) {
-    const sitemapStartedAt = performance.now();
-    try {
-      sitemapEntries = collectSitemapEntries(DIST_DIR);
-      const { changed, total, isBootstrap } = selectChangedUrls(sitemapEntries);
-      urlList = changed;
-      if (total === 0) {
-        // An empty `urlList` normally means "nothing changed", and the
-        // submitters say exactly that. It would be the wrong story if the
-        // sitemap itself came back empty — a missing sitemap-index.xml, or an
-        // index whose children are absent, both yield zero entries without
-        // throwing. Diagnose it here so the downstream message is never
-        // mistaken for a healthy no-op.
-        console.warn(
-          `deploy-live: no URLs in the sitemaps under ${DIST_DIR} — check sitemap-index.xml and its children.`,
-        );
-      } else if (isBootstrap) {
-        console.log(
-          `deploy-live: no submission ledger yet — announcing all ${total} URL(s) in ${elapsed(sitemapStartedAt)}.`,
-        );
-      } else {
-        console.log(
-          `deploy-live: ${changed.length} of ${total} URL(s) changed since the last deploy (${elapsed(sitemapStartedAt)}); the rest are not resubmitted.`,
-        );
-      }
-    } catch (error) {
-      console.warn(
-        "deploy-live: failed to collect sitemap URLs; continuing with an empty list.",
-      );
-      console.warn(error instanceof Error ? error.message : String(error));
-    }
-  }
+  const { urlList, sitemapEntries, sitemapComplete } = needsSitemap
+    ? resolveUrlsToAnnounce()
+    : { urlList: [], sitemapEntries: new Map(), sitemapComplete: true };
 
   const [, indexNow, bing] = await Promise.allSettled([
     timed("Cloudflare cache purge", () => purgeCloudflareCache()),
@@ -1205,6 +1244,7 @@ async function runPublishNotifications() {
   const allAnnounced = announced(indexNow) && announced(bing);
 
   if (sitemapEntries.size === 0) return;
+  if (!sitemapComplete) return;
   if (allAnnounced) {
     writeSubmissionLedger(sitemapEntries);
   } else {
