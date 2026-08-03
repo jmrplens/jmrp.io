@@ -3,7 +3,7 @@ title: "Ejecutando un Bridge Tor en Linux: Guía Completa obfs4 y WebTunnel"
 slug: "009-running-tor-bridge"
 lang: "es"
 publishedDate: 2026-03-30
-updatedDate: 2026-08-02
+updatedDate: 2026-08-03
 description: "Guía para ejecutar bridges Tor obfs4 y WebTunnel en Linux con camuflaje Nginx, firewall, monitoreo Prometheus e integración CrowdSec."
 lead: "Un mismo puente ejecutando obfs4 y WebTunnel a la vez, con Nginx haciendo que la mitad WebTunnel sea indistinguible de HTTPS normal. Running y Valid llegan en menos de una hora; Stable y Guard tardaron aquí alrededor de una semana, porque se puntúan por fiabilidad sostenida y no por un contador de uptime."
 author: "José Manuel Requena Plens"
@@ -52,22 +52,31 @@ howto:
   steps:
     - name: "Instalar Tor del repositorio oficial"
       text: "Añade la clave GPG y el repositorio APT del Proyecto Tor, luego instala tor, deb.torproject.org-keyring y obfs4proxy. Los paquetes de distribución suelen estar desactualizados, así que usa siempre el repositorio oficial."
+      anchor: "paso-1-instalar-tor-del-repositorio-oficial"
     - name: "Compilar e instalar el servidor WebTunnel"
       text: "Instala Go, clona el código fuente de WebTunnel y compila el binario webtunnel-server en /usr/local/bin. El binario aún no está empaquetado para Debian, por lo que se compila desde la fuente."
+      anchor: "paso-2-instalar-webtunnel-opcional-pero-recomendado"
     - name: "Configurar el bridge de Tor en torrc"
       text: "Haz una copia de seguridad de /etc/tor/torrc y establece BridgeRelay 1, ORPort 0.0.0.0:9001 y los plugins de transporte obfs4 y WebTunnel. Genera una ruta secreta de URL de 24 caracteres para WebTunnel."
+      anchor: "paso-3-configurar-tu-bridge-de-tor"
     - name: "Configurar Nginx para el camuflaje de WebTunnel"
       text: "Crea un sitio web de camuflaje simple, obtén un certificado TLS de Let's Encrypt y añade un bloque de servidor Nginx que haga proxy inverso de la ruta secreta al puerto local de WebTunnel con cabeceras de actualización WebSocket."
+      anchor: "paso-4-configurar-nginx-para-camuflaje-webtunnel"
     - name: "Configurar el reenvío de puertos y el firewall"
       text: "Reenvía TCP 9001, 4443 y 443 desde el router al servidor y permítelos en UFW o iptables. IPv6 necesita reglas de firewall que permitan el tráfico en lugar de reenvío NAT."
+      anchor: "paso-5-configurar-el-reenvío-de-puertos"
     - name: "Permitir obfs4proxy en AppArmor"
       text: "En Debian/Ubuntu, pon el perfil de obfs4proxy en modo complain o añade una regla de permiso explícita para que AppArmor no bloquee la ejecución."
+      anchor: "paso-6-configuración-de-apparmor"
     - name: "Iniciar el bridge y verificar que funciona"
       text: "Reinicia Tor, observa los logs para confirmar un bootstrap exitoso y el self-test del ORPort, comprueba que tor, obfs4proxy y webtunnel-server estén en ejecución y en escucha, y recupera la huella digital del bridge."
+      anchor: "paso-7-iniciar-y-verificar"
     - name: "Configurar el monitoreo con Prometheus y Grafana"
       text: "Añade un target de scrape de Prometheus para el MetricsPort (9052), restringe el acceso a tu servidor de monitoreo y construye paneles de Grafana para ancho de banda, conexiones, banderas de relay y salud."
+      anchor: "paso-8-monitorización-con-prometheus-y-grafana"
     - name: "Integrar CrowdSec sin bloquear clientes de Tor"
       text: "Añade un bypass de tres capas — reglas ACCEPT de iptables antes de CROWDSEC_CHAIN, una excepción Lua de Nginx para el dominio de Tor y una lista blanca del parser de CrowdSec — y persiste las reglas de iptables mediante un servicio systemd."
+      anchor: "paso-9-integración-con-crowdsec-si-aplica"
 ---
 
 import Callout from "@components/ui/Callout.astro";
@@ -106,7 +115,7 @@ Esta guía te enseñará todo lo que necesitas saber sobre la red Tor, el enruta
 
 ---
 
-## La Red Tor: Una Introducción
+## La red Tor: una introducción
 
 ### ¿Qué es Tor?
 
@@ -199,7 +208,7 @@ Detalles técnicos clave de la [construcción de circuitos](https://spec.torproj
 
 ---
 
-## El Ecosistema Tor: Tipos de Voluntarios
+## El ecosistema Tor: tipos de voluntarios
 
 La red Tor está compuesta por diferentes tipos de nodos operados por voluntarios, cada uno sirviendo un propósito distinto:
 
@@ -329,7 +338,7 @@ En esta guía, configuraremos **tanto obfs4 como WebTunnel** en el mismo servido
 
 ---
 
-## Requisitos Previos
+## Requisitos previos
 
 <Prerequisite>
 ### Requisitos de Hardware
@@ -354,7 +363,7 @@ En esta guía, configuraremos **tanto obfs4 como WebTunnel** en el mismo servido
 
 ---
 
-## Paso 1: Instalar Tor del Repositorio Oficial
+## Paso 1: instalar Tor del repositorio oficial
 
 <Callout type="warning" title="Siempre Usa el Repositorio Oficial de Tor">
 Los paquetes de distribución (por ejemplo, `apt install tor`) a menudo están desactualizados por meses o incluso años. El Proyecto Tor mantiene su propio [repositorio Debian/Ubuntu](https://community.torproject.org/relay/setup/bridge/) con los lanzamientos estables más recientes, parches de seguridad y claves de firma. Siempre úsalo.
@@ -433,7 +442,7 @@ obfs4proxy-0.0.14
 
 ---
 
-## Paso 2: Instalar WebTunnel (Opcional pero Recomendado)
+## Paso 2: instalar WebTunnel (opcional pero recomendado)
 
 WebTunnel es un pluggable transport más nuevo que disfraza conexiones de Tor como tráfico HTTPS regular. A diferencia de obfs4 (que se ve como datos aleatorios), WebTunnel realmente usa actualizaciones de WebSocket sobre HTTPS, haciéndolo **casi indistinguible de la navegación web legítima**. El Proyecto Tor proporciona [instrucciones de configuración oficiales](https://community.torproject.org/relay/setup/webtunnel/) y una guía para [construir desde la fuente](https://community.torproject.org/relay/setup/webtunnel/source/).
 
@@ -492,7 +501,7 @@ sudo chmod +x /usr/local/bin/webtunnel-server
 
 ---
 
-## Paso 3: Configurar Tu Bridge de Tor
+## Paso 3: configurar tu bridge de Tor
 
 Ahora para la configuración principal. El archivo `torrc` controla todo el comportamiento de Tor.
 
@@ -628,7 +637,7 @@ Usa este valor en dos lugares:
 
 ---
 
-## Paso 4: Configurar Nginx para Camuflaje WebTunnel
+## Paso 4: configurar Nginx para camuflaje WebTunnel
 
 La belleza de WebTunnel es que tu servidor se ve como un **sitio web completamente normal**. Los visitantes ven una página HTML regular; solo aquellos que conocen la ruta secreta pueden conectarse al bridge de Tor. Esto se llama **camuflaje** o **domain fronting**.
 
@@ -796,7 +805,7 @@ Connection: Upgrade
 
 ---
 
-## Paso 5: Configurar Reenvío de Puertos
+## Paso 5: configurar el reenvío de puertos
 
 Si tu servidor está detrás de un router (común en configuraciones domésticas), necesitas reenviar los siguientes puertos desde la IP pública de tu router a tu IP local de servidor:
 
@@ -903,7 +912,7 @@ nc -6zv TU_DIRECCIÓN_IPV6 9001
 
 ---
 
-## Paso 6: Configuración de AppArmor
+## Paso 6: configuración de AppArmor
 
 En sistemas Debian/Ubuntu, AppArmor puede restringir lo que Tor y obfs4proxy pueden hacer. Necesitas asegurar que el perfil de obfs4proxy permita la ejecución:
 
@@ -923,7 +932,7 @@ sudo apparmor_parser -r /etc/apparmor.d/system_tor
 
 ---
 
-## Paso 7: Iniciar y Verificar
+## Paso 7: iniciar y verificar
 
 <StepByStep title="Iniciar el Puente">
 <li>
@@ -1033,7 +1042,7 @@ Tor realiza su propio self-test de accesibilidad durante el bootstrap. Si ves `S
 
 ---
 
-## Paso 8: Monitoreo con Prometheus y Grafana
+## Paso 8: monitorización con Prometheus y Grafana
 
 Tor expone un conjunto rico de métricas vía su `MetricsPort` en formato Prometheus. Estas métricas te permiten monitorear el uso de ancho de banda, conexiones, construcción de circuitos y la salud del relay en tiempo real.
 
@@ -1163,7 +1172,7 @@ sudo -u debian-tor nyx
 
 ---
 
-## Paso 9: Integración con CrowdSec (Si Aplica)
+## Paso 9: integración con CrowdSec (si aplica)
 
 Si ejecutas [CrowdSec](https://www.crowdsec.net/) en el mismo servidor (común cuando ejecutas Nginx), enfrentarás un desafío: CrowdSec está diseñado para bloquear IPs maliciosas, pero **los clientes del puente Tor pueden desencadenar falsos positivos**. Los usuarios legítimos de Tor que se conectan a tu puente podrían ser bloqueados por tu propio IDS.
 
@@ -1300,7 +1309,7 @@ sudo systemctl enable --now tor-bypass-crowdsec.service
 
 ---
 
-## Descripción General de la Arquitectura
+## Descripción general de la arquitectura
 
 Aquí está la arquitectura completa de lo que has construido:
 
@@ -1367,7 +1376,7 @@ flowchart TB
 
 ---
 
-## Lista de Verificación
+## Lista de verificación
 
 Después de que todo esté configurado, repasa esta lista de verificación para confirmar que tu bridge funciona completamente:
 
@@ -1392,7 +1401,7 @@ Después de que todo esté configurado, repasa esta lista de verificación para 
 
 ---
 
-## Notas Operacionales
+## Notas operativas
 
 ### Qué Sucede Después de Que Comiences
 
@@ -1433,7 +1442,7 @@ sudo tar czf /root/tor-bridge-backup-$(date +%Y%m%d).tar.gz \
 
 ---
 
-## Solución de Problemas
+## Solución de problemas
 
 <DecisionTree question="¿Algo no funciona? Vamos a diagnosticar:">
 <details>
@@ -1544,7 +1553,7 @@ que sí quería.
 
 ---
 
-## La Red Te Necesita
+## La red te necesita
 
 Ejecutar un bridge de Tor es una de las cosas más impactantes que puedes hacer por la libertad de Internet. Cada bridge que operas es una **línea de vida directa** para gente bajo censura — periodistas en Irán, activistas en China, estudiantes en Rusia, ciudadanos en Myanmar. La barrera técnica es modesta; el impacto humano es inmensurable.
 

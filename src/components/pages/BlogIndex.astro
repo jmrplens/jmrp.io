@@ -101,6 +101,21 @@ const schema = {
         <p class="kicker section-title">{t("pages.blog.kicker")}</p>
         <h1>{t("pages.blog.title")}</h1>
         <p class="subtitle">{t("pages.blog.subtitle")}</p>
+        {
+          /* The series index was a genuine orphan: the only link to it
+             anywhere in the 96-page site was the language switcher on its own
+             counterpart. It is not in the nav or the footer, and no post links
+             up to it — only to its individual hubs. */
+        }
+        <p class="series-pointer">
+          <a href={translatePath("/blog/series/")}>
+            {t("pages.blog.seriesLink")}
+            <span
+              class="i-mdi:arrow-right"
+              aria-hidden="true"
+            ></span>
+          </a>
+        </p>
       </div>
       <div class="page-header__controls">
         <div class="blog-search">
@@ -116,9 +131,14 @@ const schema = {
             data-blog-search
           />
         </div>
+        {
+          /* Was hardcoded to /rss.xml, so the Spanish blog index offered the
+             English feed under a Spanish label. Both feeds exist and are
+             already declared as <link rel="alternate"> in the head. */
+        }
         <a
           class="blog-rss"
-          href="/rss.xml"
+          href={translatePath("/rss.xml")}
           aria-label={t("pages.blog.rssLabel")}
         >
           <span
@@ -291,6 +311,31 @@ const schema = {
     max-width: 52ch;
     font-size: var(--text-md);
     color: var(--color-text);
+  }
+
+  .series-pointer {
+    margin: var(--space-sm) 0 0;
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+  }
+
+  .series-pointer a {
+    display: inline-flex;
+    gap: var(--space-xs);
+    align-items: center;
+    color: var(--color-text-muted);
+    text-decoration: none;
+    transition: color var(--dur-1) var(--ease-out);
+  }
+
+  .series-pointer a:hover,
+  .series-pointer a:focus-visible {
+    color: var(--color-primary);
+  }
+
+  .series-pointer span[class*="i-"] {
+    width: 0.9rem;
+    height: 0.9rem;
   }
 
   .ai-disclaimer {

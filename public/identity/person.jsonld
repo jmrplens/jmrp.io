@@ -121,12 +121,12 @@
   "knowsAbout": [
     {
       "@type": "Thing",
-      "name": "Embedded Systems",
+      "name": "embedded system",
       "@id": "http://www.wikidata.org/entity/Q193040"
     },
     {
       "@type": "Thing",
-      "name": "Firmware",
+      "name": "firmware",
       "@id": "http://www.wikidata.org/entity/Q104851"
     },
     {
@@ -146,22 +146,22 @@
     },
     {
       "@type": "Thing",
-      "name": "Cryptography",
+      "name": "cryptography",
       "@id": "http://www.wikidata.org/entity/Q8789"
     },
     {
       "@type": "Thing",
-      "name": "Network Security",
+      "name": "network security",
       "@id": "http://www.wikidata.org/entity/Q989632"
     },
     {
       "@type": "Thing",
-      "name": "Nginx",
+      "name": "nginx",
       "@id": "http://www.wikidata.org/entity/Q306144"
     },
     {
       "@type": "Thing",
-      "name": "MikroTik RouterOS",
+      "name": "RouterOS",
       "@id": "http://www.wikidata.org/entity/Q12036888"
     },
     {
@@ -176,12 +176,12 @@
     },
     {
       "@type": "Thing",
-      "name": "Acoustics",
+      "name": "acoustics",
       "@id": "http://www.wikidata.org/entity/Q82811"
     },
     {
       "@type": "Thing",
-      "name": "Signal Processing",
+      "name": "signal processing",
       "@id": "http://www.wikidata.org/entity/Q208163"
     },
     {
@@ -206,7 +206,7 @@
     },
     {
       "@type": "Thing",
-      "name": "Software Testing",
+      "name": "software testing",
       "@id": "http://www.wikidata.org/entity/Q188522"
     },
     {

@@ -27,7 +27,7 @@
     "node": ">=24.0.0",
     "pnpm": ">=11"
   },
-  "packageManager": "pnpm@11.13.0",
+  "packageManager": "pnpm@11.18.0",
   "scripts": {
     "dev": "astro dev",
     "build": "pnpm run build:cv && DIST_DIR=$(node scripts/deploy-swap.mjs prepare) && astro build --outDir \"$DIST_DIR\" && node scripts/deploy-swap.mjs swap \"$DIST_DIR\" && node scripts/deploy-live.mjs",

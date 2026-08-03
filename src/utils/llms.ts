@@ -6,8 +6,10 @@
  * a concise link index; `llms-full.txt` enriches each post with its description,
  * tags, FAQ questions, and HowTo step names (all sourced from frontmatter).
  */
+import { type TranslationKey, useTranslations } from "@i18n/utils";
 import { getCVData } from "@utils/cv";
 import { getPublications, stripTrailingPunctuation } from "@utils/publications";
+import { SERIES } from "@utils/series";
 import type { CollectionEntry } from "astro:content";
 import { getCollection } from "astro:content";
 
@@ -279,6 +281,36 @@ function toolUrl(siteUrl: string, tool: CollectionEntry<"tools">): string {
   return `${siteUrl}${localePrefix}/tools/${tool.data.slug}/`;
 }
 
+/**
+ * The editorial series hubs, as an `llms.txt` section.
+ *
+ * These were missing entirely: the file had zero references to `/blog/series/`
+ * or any hub. They are, after the posts themselves, the densest citable pages
+ * on the site — a tag page can only list articles, whereas a hub states why
+ * the cluster exists, in what order to read it, and what it deliberately does
+ * not cover. That framing is exactly what a model needs to summarize a topic
+ * rather than a single post.
+ */
+function seriesBlock(siteUrl: string, locale: "en" | "es"): string {
+  const t = useTranslations(locale);
+  const prefix = locale === "es" ? "/es" : "";
+  const heading = locale === "es" ? "## Series (Español)" : "## Series";
+  return [
+    heading,
+    "",
+    `- [${t("series.ui.indexTitle")}](${siteUrl}${prefix}/blog/series/): ${t(
+      "series.ui.indexDescription",
+    )}`,
+    // The slug is only known at runtime, so the key is cast — the same
+    // pattern SeriesPage.astro uses for `series.<slug>.*`.
+    ...SERIES.map(({ slug }) => {
+      const title = t(`series.${slug}.title` as TranslationKey);
+      const description = t(`series.${slug}.description` as TranslationKey);
+      return `- [${title}](${siteUrl}${prefix}/blog/series/${slug}/): ${description}`;
+    }),
+  ].join("\n");
+}
+
 function sectionsBlock(siteUrl: string): string {
   return [
     "## Sections",
@@ -292,6 +324,31 @@ function sectionsBlock(siteUrl: string): string {
     `- [Tools](${siteUrl}/tools/): Free browser-based developer tools; all run in the browser except the certificate inspector and HTTP header analyzer, which fetch the target you ask them to inspect`,
     `- [Uses](${siteUrl}/uses/): Hardware, software, and homelab kept in rotation`,
     `- [Privacy](${siteUrl}/privacy/): What the site measures — self-hosted analytics beacon, no cookies, no third-party requests, no ads`,
+  ].join("\n");
+}
+
+/**
+ * The same section map under `/es/`.
+ *
+ * Posts and tools were already listed in both languages, but `## Sections` was
+ * English-only, so none of the nine Spanish landing pages — including the ES
+ * homepage — appeared anywhere in the index. Every one of them exists and is
+ * in the sitemap.
+ */
+function sectionsBlockEs(siteUrl: string): string {
+  return [
+    "## Sections (Español)",
+    "",
+    `- [Inicio](${siteUrl}/es/): Versión en español del sitio completo`,
+    `- [Blog](${siteUrl}/es/blog/): Artículos técnicos sobre Nginx, MikroTik, redes, seguridad, firmware embebido y DevOps`,
+    `- [Perfil](${siteUrl}/es/about/): Quién es José Manuel Requena Plens — ingeniero de firmware y software, trayectoria y proyectos destacados`,
+    `- [CV](${siteUrl}/es/cv/): Currículum profesional y experiencia`,
+    `- [Publicaciones](${siteUrl}/es/publications/): Artículos académicos sobre acústica, metamateriales y ultrasonidos`,
+    `- [Homelab](${siteUrl}/es/homelab/): Infraestructura autoalojada — Mastodon, Matrix, PDS de AT Protocol, relés Tor`,
+    `- [Proyectos](${siteUrl}/es/projects/): Software libre que escribe y mantiene — servidores MCP, herramientas de acústica, seguridad de red`,
+    `- [Herramientas](${siteUrl}/es/tools/): Herramientas gratuitas que se ejecutan en el navegador, salvo el inspector de certificados y el analizador de cabeceras HTTP, que consultan el destino que les indiques`,
+    `- [Uses](${siteUrl}/es/uses/): Hardware, software e infraestructura en uso`,
+    `- [Privacidad](${siteUrl}/es/privacy/): Qué mide el sitio — beacon de analítica autoalojado, sin cookies, sin peticiones a terceros, sin anuncios`,
   ].join("\n");
 }
 
@@ -316,6 +373,12 @@ export async function generateLlmsTxt(siteUrl: string): Promise<string> {
     ABOUT,
     "",
     sectionsBlock(siteUrl),
+    "",
+    sectionsBlockEs(siteUrl),
+    "",
+    seriesBlock(siteUrl, "en"),
+    "",
+    seriesBlock(siteUrl, "es"),
     "",
     "## Blog Posts",
     "",

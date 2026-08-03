@@ -315,8 +315,13 @@ const servicesSchema = {
   inLanguage: locale,
   isPartOf: { "@id": new URL("#website", getSiteUrl()).href },
   hasPart: [
+    // Stable `@id`s so the EN and ES pages describe ONE service each rather
+    // than fourteen anonymous nodes for seven services. Anchored to the
+    // locale-neutral /homelab/ URL: the listing is per-locale, the service is
+    // not — the same reasoning already applied to publication identifiers.
     ...services.map((service) => ({
       "@type": "Service",
+      "@id": new URL(`/homelab/#service-${service.id}`, getSiteUrl()).href,
       name: service.name,
       description: service.description,
       url: service.url,
@@ -324,6 +329,7 @@ const servicesSchema = {
     })),
     ...torServices.map((service) => ({
       "@type": "Service",
+      "@id": new URL(`/homelab/#service-${service.id}`, getSiteUrl()).href,
       name: service.name,
       description: service.description,
       url: service.url,

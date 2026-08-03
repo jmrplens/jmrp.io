@@ -89,7 +89,12 @@ const schema = {
       (tool: { data: { slug: string; title: string } }, index: number) => ({
         "@type": "ListItem",
         position: index + 1,
-        url: new URL(`/tools/${tool.data.slug}/`, getSiteUrl()).href,
+        // translatePath, or the ES pages emit a Spanish `name` next to an
+        // English `url` — the same defect already fixed on
+        // SiteNavigationElement. The markup below has always used it; only
+        // this JSON-LD line was missed.
+        url: new URL(translatePath(`/tools/${tool.data.slug}/`), getSiteUrl())
+          .href,
         name: tool.data.title,
       }),
     ),
@@ -123,6 +128,12 @@ const schema = {
       </div>
       <p class="section-title">{meta.short}</p>
       <h1 class="cat-title">{meta.name}</h1>
+      {
+        /* Render the category description as body copy, not only in <head> and
+          JSON-LD. Without it these pages were 46-222 words of heading and link
+          grid, with no sentence saying what the category is. */
+      }
+      <p class="cat-lead">{meta.description}</p>
       <p class="subtitle">
         {tools.length}
         {
@@ -250,6 +261,14 @@ const schema = {
     line-height: 1.08;
     color: var(--color-text-heading);
     letter-spacing: -0.02em;
+  }
+
+  .cat-lead {
+    max-width: var(--max-width-prose);
+    margin: 0 0 var(--space-sm);
+    font-size: var(--text-md);
+    line-height: 1.6;
+    color: var(--color-text);
   }
 
   .subtitle {

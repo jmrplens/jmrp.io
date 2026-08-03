@@ -33,6 +33,8 @@ interface PostFrontmatter {
   publishedDate?: string | Date;
   updatedDate?: string | Date;
   draft?: boolean;
+  /** Tools only: the Astro component that actually implements the tool. */
+  appComponent?: string;
 }
 
 /** Extracts and parses the YAML frontmatter block from raw MDX content. */
@@ -181,9 +183,18 @@ function getToolDateMap(): Map<string, string> {
       if (!file.endsWith(".mdx") || file.startsWith("_")) continue;
       const raw = readFileSync(fileURLToPath(new URL(file, dir)), "utf8");
       const fm = parseFrontmatter(raw);
-      const iso =
-        frontmatterDate(fm?.updatedDate ?? fm?.publishedDate) ??
-        gitDate(`src/content/tools/${locale}/${file}`);
+      // A tool page is its interactive component far more than its MDX prose.
+      // Keyed to frontmatter alone, all 46 tool URLs reported 2026-06-23 while
+      // e.g. SubnetCalculator.astro had changed on 2026-08-01 — understating
+      // freshness and suppressing recrawl of genuinely changed pages. Take the
+      // newest of: frontmatter, the MDX file, and the component itself.
+      const iso = newest(
+        frontmatterDate(fm?.updatedDate ?? fm?.publishedDate),
+        gitDate(`src/content/tools/${locale}/${file}`),
+        fm?.appComponent
+          ? gitDate(`src/components/apps/${fm.appComponent}.astro`)
+          : undefined,
+      );
       if (!iso) continue;
       const slug = fm?.slug ?? file.replace(/\.mdx$/, "");
       map.set(slug, newest(map.get(slug), iso) ?? iso);
@@ -218,7 +229,17 @@ export function createLastmodResolver(): (path: string) => string | undefined {
       "src/content/publications_data/papers.bib",
       "src/content/publications_data/coauthors.yaml",
     ],
-    "/homelab/": ["src/pages/homelab.astro"],
+    // The page shell almost never changes; every rendered metric, service
+    // card and island lives in src/components/homelab/. Keyed to the shell
+    // alone, the sitemap claimed February for a page whose content changed in
+    // July (de6d9f1, "Retire Meshtastic from the homelab") — the oldest and
+    // least truthful lastmod in the file. gitDate() accepts a directory
+    // pathspec, and newest() folds the two together.
+    "/homelab/": [
+      "src/pages/homelab.astro",
+      "src/components/homelab",
+      "src/components/pages/HomelabPage.astro",
+    ],
     "/privacy/": [
       "src/i18n/translations/en/common.ts",
       "src/i18n/translations/es/common.ts",

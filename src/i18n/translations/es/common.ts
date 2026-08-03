@@ -462,6 +462,7 @@ export const common = {
       title: "Blog",
       kicker: "Notas",
       subtitle: "Reflexiones, tutoriales y notas de ingeniería.",
+      seriesLink: "Algunas se escribieron como conjunto — léelas en orden",
       topicsTitle: "Temas",
       allPosts: "todos",
       moreTopics: "+{count} más",
@@ -574,7 +575,7 @@ export const common = {
       summary2:
         "Entre los servicios autoalojados hay una instancia de Mastodon, un homeserver de Matrix, un PDS de AT Protocol, sincronización de ficheros, streaming multimedia y monitorización. Junto a ellos corren cuatro nodos Tor: dos puentes que hablan obfs4 y WebTunnel, uno en Valencia y otro en Alicante, y dos relays intermedios en VPS de IONOS, uno en Londres y otro en Madrid.",
       summary3:
-        "La seguridad es una sola tubería, no un conjunto de reglas sueltas. Un honeypot en el router convierte el primer paquete de un escáner en una entrada de address-list, nginx aplica tarpit y coincidencia de patrones en la capa web, ambos alimentan a CrowdSec, y CrowdSec acciona los bouncers de vuelta en el router y en el proxy inverso. Los contadores de arriba son lo que esa tubería ha detenido de verdad.",
+        "La seguridad es una sola tubería, no un conjunto de reglas sueltas. Un honeypot en el router convierte el primer paquete de un escáner en una entrada de address-list, nginx aplica tarpit y coincidencia de patrones en la capa web, ambos alimentan a CrowdSec, y CrowdSec acciona los bouncers de vuelta en el router y en el proxy inverso. Los contadores de arriba indican lo que esa tubería está deteniendo; son cifras en vivo que se piden desde tu navegador, así que quien no tenga JavaScript verá marcadores en lugar de números.",
       realtimePill: "En tiempo real · vía API",
       kpiAriaLabel: "Métricas destacadas del homelab",
       kpiServicesOnline: "servicios online",
@@ -821,6 +822,8 @@ export const common = {
       statPublications: "publicaciones",
       statJournals: "artículos de revista",
       statConferences: "ponencias en congresos",
+      statTheses: "tesis",
+      statOther: "otros trabajos",
       statCitations: "citas",
       statHIndex: "índice h",
       statCoauthors: "coautores",
@@ -841,7 +844,7 @@ export const common = {
         "Ingeniero de firmware y software en Valencia: dispositivos embebidos seguros, herramientas open-source e infraestructura self-hosted.",
       editorialTitle: "// EDITORIAL Y CORRECCIONES",
       editorialBody1:
-        "Todo lo que se publica aquí sale de trabajo realmente hecho: comandos ejecutados en hardware y servidores reales, configuración citada de sistemas que la están ejecutando y, cuando una guía depende de una versión concreta del software, esa versión indicada en el artículo. Las afirmaciones que no son mías —comportamiento de un protocolo, propiedades criptográficas, valores por defecto de un fabricante— se contrastan con fuentes primarias (RFC, organismos de estandarización, documentación del fabricante) y se citan, y todos los enlaces se vuelven a comprobar automáticamente en cada compilación.",
+        "Todo lo que se publica aquí sale de trabajo realmente hecho: comandos ejecutados en hardware y servidores reales, configuración citada de sistemas que la están ejecutando y, cuando una guía depende de una versión concreta del software, esa versión indicada en el artículo. Las afirmaciones que no son mías —comportamiento de un protocolo, propiedades criptográficas, valores por defecto de un fabricante— se contrastan con fuentes primarias (RFC, organismos de estandarización, documentación del fabricante) y se citan, y todos los enlaces se vuelven a comprobar automáticamente en cada ejecución de CI.",
       editorialBody2:
         "Cada post lleva una declaración de asistencia por IA, así que esto es exactamente lo que significa. Las herramientas de IA ayudan a redactar, estructurar, pulir el texto y traducir al español. No deciden qué es cierto: cada comando, fragmento de configuración y medición se ejecuta y se verifica antes de publicarse, y nada sale directamente de la salida de un modelo. La versión en español es una traducción del mismo material verificado, no un artículo generado aparte.",
       editorialBody3:
@@ -968,13 +971,13 @@ export const common = {
       inCategory: "en esta categoría",
       backToTools: "← Volver a todas las herramientas",
       securityDesc:
-        "Herramientas de seguridad online gratuitas — constructor CSP, calculadora SRI, inspector de certificados y codificación Base64/hex. Sin envío de datos.",
+        "Herramientas de seguridad gratuitas — constructor de políticas y calculadora de hashes CSP, inspector de certificados, analizador de cabeceras y más.",
       developerDesc:
         "Utilidades gratuitas para desarrolladores — codificador Base64, probador regex, constructor cron, conversor timestamps y comprobador de contraste.",
       networkDesc:
-        "Herramientas de red online gratuitas — calculadora de subredes IP/CIDR, generadores de configuración Nginx y DNS. Procesamiento local.",
+        "Herramientas de red gratuitas — generador de configuración Nginx y calculadora de subredes IPv4/IPv6 con VLSM y DNS inverso. Todo en tu navegador.",
       embeddedDesc:
-        "Herramientas embebidas online gratuitas — constructor de tramas Modbus RTU/TCP y calculadora CRC para automatización industrial y desarrollo SCADA.",
+        "Herramientas embebidas gratuitas — constructor de tramas Modbus RTU/TCP con CRC y empaquetador de string pool para traducciones de firmware.",
       mikrotikDesc:
         "Herramientas gratuitas para MikroTik RouterOS — generador de configuración WireGuard VPN para configuraciones dual-stack. Procesamiento local.",
       fallbackDesc: "Herramientas en la categoría {category}.",

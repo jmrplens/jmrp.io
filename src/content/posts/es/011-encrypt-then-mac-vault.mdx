@@ -4,6 +4,7 @@ slug: "011-encrypt-then-mac-vault"
 lang: "es"
 publishedDate: 2026-06-16
 description: "Cómo un gestor de contraseñas hardware autentica cada fichero antes de descifrar: Encrypt-then-MAC, verificación antes de descifrar y bloqueo ante fallos."
+lead: "El tag se verifica antes de descifrar un solo byte, así que un fichero reubicado, retipado o revertido falla el MAC — incluso para quien tenga la flash en crudo pero no el PIN."
 coverImage: "../../../assets/images/blog/etm-vault.webp"
 author: "José Manuel Requena Plens"
 authorEmail: "mail@jmrp.io"
@@ -18,6 +19,10 @@ faq:
     answer: "El HMAC autentica un prefijo de contexto — ver ‖ recordType ‖ slotId ‖ generation — así que un fichero movido a otro slot, retipado o sustituido por una revisión más antigua falla el tag, incluso frente a un atacante con acceso en bruto a la flash y sin PIN."
   - question: "¿Necesita encrypt-then-MAC claves separadas?"
     answer: "Sí. El cifrado y la autenticación usan claves independientes derivadas del PIN. Reutilizar una sola clave para el cifrador y para el MAC debilita la construcción y debe evitarse."
+  - question: "¿Por qué AES-256-CBC más HMAC en lugar de AES-GCM?"
+    answer: "Por uniformidad de backend, no por preferencia criptográfica: en un protocolo nuevo GCM o ChaCha20-Poly1305 serían la elección obvia. Con la misma clave, IV y texto plano — como en los vectores de prueba fijos — el mismo código debe producir una salida byte a byte idéntica en la compilación de host contra la API antigua de Mbed TLS y en el dispositivo contra la API PSA Crypto de Mbed TLS 4.0. (Las escrituras reales usan un IV aleatorio nuevo, así que sus textos cifrados difieren por diseño.) CBC, HMAC y una comparación en tiempo constante son deterministas en ambos; las reglas de gestión de nonces de GCM entre dos backends son un riesgo mayor. Encrypt-then-MAC es la composición genéricamente segura, y es lo que usan también IPsec en su configuración estándar y KDBX 4."
+  - question: "¿Cómo lista la bóveda las credenciales sin descifrarlas todas?"
+    answer: "Un único index.bin cifrado, en el mismo sobre [ver][iv][hmacTag][cipher], guarda solo los metadatos no secretos que necesita una vista de lista: id, nombre, usuario, marca y un par de flags. Nunca contiene contraseñas, URLs, notas ni secretos TOTP, así que listar la bóveda cuesta un solo descifrado con independencia de cuántas credenciales haya, y no expone ningún secreto en RAM solo para pintar una lista."
 topics:
   - name: "Authenticated encryption"
     wikidata: "Q15263584"
@@ -214,7 +219,7 @@ Pon los dos órdenes uno al lado del otro y la perdición es evidente. La compos
   }}
 />
 
-## El sobre: `[ver][iv][hmacTag][cipher]`
+## El sobre: 49 bytes de cabecera antes del texto cifrado AES-256-CBC
 
 Cada fichero cifrado de la bóveda —cada credencial, cada secreto TOTP, el índice de listado— es un **sobre** autocontenido. La imagen es la de un sobre de correo: por fuera lleva en claro solo lo justo para manejarlo y verificarlo (la versión, el IV y el tag que hace de sello), y dentro viaja la carta cifrada. Todos siguen el mismo prefijo fijo:
 

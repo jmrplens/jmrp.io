@@ -16,6 +16,7 @@ Cascadia
 Ceedling
 Consérvalos
 Csvg
+desactualizadas
 DSCP
 Descífralo
 ESET
@@ -25,6 +26,7 @@ FDTDexamples
 Fragmento
 Funkolab
 Glama
+grafana
 IONOS
 Immich
 Ingeniero
@@ -41,14 +43,17 @@ LAPI
 LAPI's
 Malwarebytes
 Marlinspike
+Meshtastic
 Mezclarlo
 Namprempre
 Namprempre's
 Nextcloud
 ORCID
 Owasp
+pathspec
 PRIO
 Radeon
+recrawl
 Rediseñé
 Roadlite
 Ryzen

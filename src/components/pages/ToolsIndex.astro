@@ -87,7 +87,13 @@ const toolsSchema = {
       getSiteUrl(),
     ).href;
     return {
+      // Without an `@id` these were 34 anonymous nodes shadowing the canonical
+      // `…/tools/<slug>/#software` entities described on each tool page. `url`
+      // is not an identifier in JSON-LD, so nothing reconciled them: one tool
+      // appeared as two unrelated applications. The id makes this listing a
+      // reference to the real entity rather than a rival description of it.
       "@type": "SoftwareApplication",
+      "@id": `${toolUrl}#software`,
       name: tool.data.title,
       description: tool.data.description,
       url: toolUrl,
