@@ -576,7 +576,7 @@ RouterOS grammar at `src/languages/routeros.tmLanguage.json`. Aliases: `routeros
 experimental: { clientPrerender: true, contentIntellisense: true, chromeDevtoolsWorkspace: true }
 prefetch: { prefetchAll: true, defaultStrategy: "viewport" }
 i18n: { defaultLocale: "en", locales: ["en", "es"] }
-build: { inlineStylesheets: "always", concurrency: 2 }
+build: { inlineStylesheets: "always", concurrency: 2 }  // experimento 2026-08-03: inline elimina el CSS render-blocking; revierte "auto" (PR #378) — ver comentario en astro.config.mjs
 // Image: remote patterns for Google favicons, responsiveStyles: true
 // Vite: chunkSizeWarningLimit: 1000, SSR external: citation-js
 // Fonts: Space Grotesk + IBM Plex Sans + IBM Plex Mono via fontsource, optimizedFallbacks: true
