@@ -856,7 +856,7 @@ server {
     add_header Content-Security-Policy "
         default-src 'none';
         script-src 'self' 'nonce-$cspNonce' 'strict-dynamic';
-        style-src 'self' 'unsafe-inline';
+        style-src 'self' 'nonce-$cspNonce';
         img-src 'self' data:;
         font-src 'self';
         connect-src 'self';
@@ -1246,7 +1246,7 @@ flowchart LR
 add_header Content-Security-Policy "
     default-src 'none';
     script-src 'self' 'nonce-$cspNonce' 'strict-dynamic';
-    style-src 'self' 'unsafe-inline';
+    style-src 'self' 'nonce-$cspNonce';
     img-src 'self' data:;
     font-src 'self';
     connect-src 'self';
@@ -1404,7 +1404,7 @@ server {
 add_header Content-Security-Policy-Report-Only "
     default-src 'none';
     script-src 'self' 'nonce-$cspNonce' 'strict-dynamic';
-    style-src 'self' 'unsafe-inline';
+    style-src 'self' 'nonce-$cspNonce';
     img-src 'self' data:;
     font-src 'self';
     connect-src 'self';
@@ -1413,7 +1413,7 @@ add_header Content-Security-Policy-Report-Only "
     frame-ancestors 'none';
     form-action 'self';
     upgrade-insecure-requests;
-    report-uri /csp-reports;
+    report-uri /csp-report;
 " always;
 ```
 </Code>
@@ -1463,8 +1463,8 @@ El reporting integrado de CSP te informa cuando se producen violaciones — es e
 <FileContent filename="/etc/nginx/sites-available/example.com">
 ```nginx
 # Reporting endpoint
-location /csp-reports {
-    access_log /var/log/nginx/csp-reports.log;
+location /csp-report {
+    access_log /var/log/nginx/csp-report.log;
     return 204;
 }
 ```
@@ -1473,14 +1473,14 @@ location /csp-reports {
 <FileContent filename="Cabecera CSP con reporting">
 ```nginx
 # Modern Reporting API (Chrome 70+)
-add_header Reporting-Endpoints 'csp-endpoint="/csp-reports"' always;
+add_header Reporting-Endpoints 'csp-endpoint="/csp-report"' always;
 
 # CSP with both legacy and modern reporting
 add_header Content-Security-Policy "
     default-src 'none';
     script-src 'self' 'nonce-$cspNonce' 'strict-dynamic';
     ...
-    report-uri /csp-reports;
+    report-uri /csp-report;
     report-to csp-endpoint;
 " always;
 ```
@@ -1768,7 +1768,7 @@ server {
     # ================================================
     set $csp "default-src 'none'; ";
     set $csp "${csp}script-src 'self' 'nonce-${cspNonce}' 'strict-dynamic'; ";
-    set $csp "${csp}style-src 'self' 'unsafe-inline'; ";
+    set $csp "${csp}style-src 'self' 'nonce-${cspNonce}'; ";
     set $csp "${csp}img-src 'self' data:; ";
     set $csp "${csp}font-src 'self'; ";
     set $csp "${csp}connect-src 'self'; ";
@@ -1778,13 +1778,13 @@ server {
     set $csp "${csp}frame-ancestors 'none'; ";
     set $csp "${csp}form-action 'self'; ";
     set $csp "${csp}upgrade-insecure-requests; ";
-    set $csp "${csp}report-uri /csp-reports; ";
+    set $csp "${csp}report-uri /csp-report; ";
     set $csp "${csp}report-to csp-endpoint";
     
     # ================================================
     # Security Headers
     # ================================================
-    add_header Reporting-Endpoints 'csp-endpoint="/csp-reports"' always;
+    add_header Reporting-Endpoints 'csp-endpoint="/csp-report"' always;
     add_header Content-Security-Policy $csp always;
     add_header X-Content-Type-Options "nosniff" always;
     add_header X-Frame-Options "DENY" always;
@@ -1805,8 +1805,8 @@ server {
     }
     
     # CSP Violation Reporting Endpoint
-    location /csp-reports {
-        access_log /var/log/nginx/csp-reports.log;
+    location /csp-report {
+        access_log /var/log/nginx/csp-report.log;
         return 204;
     }
     
