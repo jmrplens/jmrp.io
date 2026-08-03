@@ -306,6 +306,12 @@ const pageSchema = faqNode ? [toolSchema, faqNode] : toolSchema;
   /* Info section (full width) */
   .tool-info {
     padding: var(--space-lg);
+
+    /* La documentación queda siempre bajo la herramienta (bajo el pliegue):
+       aquí sí funciona a nivel de contenedor — se salta su layout entero
+       hasta que el usuario baja. */
+    contain-intrinsic-size: auto 2000px;
+    content-visibility: auto;
     background: var(--color-bg-secondary);
     border: 1px solid var(--color-hair);
     border-radius: var(--radius-lg);

@@ -131,11 +131,28 @@ h4 {
    Space Grotesk con peso MEDIO (500), no negrita — los títulos de sección del
    diseño son medium; sólo los títulos hero/post (h1) van en 700. */
 .prose {
-  /* Optimización: salta el layout del contenido fuera de pantalla */
-  contain-intrinsic-size: 1px 5000px;
-  content-visibility: auto;
   font-size: 1.0625rem; /* 17px */
   line-height: 1.78;
+}
+
+/* Optimización: saltar el layout del contenido fuera de pantalla.
+   Debe aplicarse a los HIJOS, no al contenedor: el artículo empieza dentro
+   del viewport, así que un `content-visibility: auto` en .prose entero
+   interseca siempre y no se salta nada (medido: 3,8 s de Style & Layout en
+   el post 003 con la regla en el contenedor). Por hijo, cada bloque bajo el
+   pliegue se salta individualmente. `contain-intrinsic-size: auto <est>`
+   deja que el navegador recuerde el tamaño real tras el primer render.
+   Nota: esto desactiva el colapso de márgenes entre hermanos del prose —
+   verificado que el delta de altura total del documento es insignificante. */
+.prose > * {
+  contain-intrinsic-size: auto 170px; /* ≈ altura media real de un hijo del prose (43.7k px / 256) — cuanto más fiel, menor error de scroll-a-ancla sobre contenido aún no renderizado */
+  content-visibility: auto;
+}
+
+@media print {
+  .prose > * {
+    content-visibility: visible;
+  }
 }
 
 .prose h1 {

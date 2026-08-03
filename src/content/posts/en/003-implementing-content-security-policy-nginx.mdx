@@ -80,8 +80,6 @@ import StepByStep from "@components/ui/StepByStep.astro";
 import Prerequisite from "@components/ui/Prerequisite.astro";
 import Timeline from "@components/ui/Timeline.astro";
 import DirectiveCard from "@components/ui/DirectiveCard.astro";
-import CSPBuilder from "@components/apps/CSPBuilder.astro";
-import HashCalculator from "@components/apps/HashCalculator.astro";
 
 **Cross-Site Scripting (XSS)** remains one of the most devastating web vulnerabilities. In the [OWASP Top 10 2021](https://owasp.org/Top10/2021/A03_2021-Injection/) it sits inside **A03: Injection** as CWE-79 — a category with 33 mapped CWEs, 274,228 recorded occurrences and a maximum incidence rate of **19.09%** across the applications tested. According to [Google's security research](https://research.google/pubs/csp-is-dead-long-live-csp-on-the-insecurity-of-whitelists-and-the-future-of-content-security-policy/), even websites with CSP often fail to implement it correctly — Google found bypasses in **94.72% of all distinct policies**, and **75.81%** rely on script allowlists an attacker can bypass.
 
@@ -730,13 +728,7 @@ The cleanest approach—move inline code to `.js` files:
 
 ### Solution 2: Use Hashes
 
-Generate a SHA-256 hash of your script content and add it to your CSP. Try it yourself:
-
-<HashCalculator
-  title="Generate Your Script Hash"
-  defaultCode="const theme = localStorage.getItem('theme') || 'system';
-document.documentElement.classList.add(theme);"
-/>
+Generate a SHA-256 hash of your script content and add it to your CSP. You can compute it right in your browser with the [Hash Calculator](/tools/hash-calculator/) — paste the exact script content and copy the `sha256-…` value into your policy.
 
 <Callout type="tip">
   **How to get the hash from browser:** When CSP blocks a script, the browser console shows the required hash:
@@ -1050,9 +1042,7 @@ Common bypass vectors include:
 
 ## Interactive: Build Your CSP
 
-Use this interactive builder to construct a policy and see your security rating in real-time:
-
-<CSPBuilder title="CSP Policy Builder" />
+Use the interactive [CSP Policy Builder](/tools/csp-builder/) to construct a policy directive by directive and see its security rating in real time — it flags unsafe sources and generates the matching Nginx `add_header` line for you.
 
 ---
 
