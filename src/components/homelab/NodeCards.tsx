@@ -32,10 +32,38 @@ export interface NodeConfig {
   role: string;
 }
 
+/** Per-node server-injected display strings. Mirrors `NodeSsr` in `ssr-tokens.ts`. */
+export interface NodeSsrValues {
+  /** CPU usage, pre-formatted (e.g. "6.4%"). */
+  readonly cpu: string;
+  /** RAM usage, pre-formatted. */
+  readonly mem: string;
+  /** CPU temperature, pre-formatted (e.g. "44°C"). */
+  readonly temp: string;
+  /** Localized status-pill text, computed against the high-load threshold by nginx. */
+  readonly status: string;
+  /** Localized temperature label, computed the same way. */
+  readonly tempLabel: string;
+  /** CSS class(es) for the CPU meter fill width (see ssr-tokens.ts). */
+  readonly cpuBar: string;
+  /** CSS class(es) for the RAM meter fill width. */
+  readonly memBar: string;
+}
+
 /** Component props. */
 interface Props {
   readonly translations: NodeCardsTranslations;
   readonly nodes: readonly NodeConfig[];
+  /**
+   * Server-injected mode: per-node pre-formatted display strings keyed by
+   * `NodeConfig.key` (the `HLM_*` tokens from `ssr-tokens.ts`, replaced by
+   * nginx at serve time). When set, the component renders them verbatim,
+   * fetches nothing, and is expected to be mounted WITHOUT a `client:*`
+   * directive. The meter-bar widths are driven by stepped `.hlm-w*` CSS
+   * classes (injected by nginx like every other token) rather than inline
+   * styles, which the page CSP blocks.
+   */
+  readonly ssr?: Readonly<Record<string, NodeSsrValues>>;
 }
 
 /** Live resource figures for a single node. */
@@ -78,11 +106,13 @@ function clampPct(value: number): number {
  * high-load threshold; the status pill and temperature label mirror that state
  * with a shape (dot vs triangle) as well as colour.
  */
-export default function NodeCards({ translations: t, nodes }: Props) {
+export default function NodeCards({ translations: t, nodes, ssr }: Props) {
   const [loads, setLoads] = useState<Record<string, NodeLoad | null>>({});
   const isFetchingRef = useRef(false);
 
   useEffect(() => {
+    // Server-injected mode: values arrive in the HTML itself; nothing to fetch.
+    if (ssr) return;
     const controller = new AbortController();
     const REFRESH_INTERVAL = 30_000;
 
@@ -130,7 +160,69 @@ export default function NodeCards({ translations: t, nodes }: Props) {
       clearInterval(intervalId);
       controller.abort();
     };
-  }, [nodes]);
+  }, [nodes, ssr]);
+
+  // Server-injected mode: same card markup; values verbatim, bars unfilled
+  // (see the `ssr` prop doc), pill/labels pre-localized by nginx.
+  if (ssr) {
+    return (
+      <div className="node-grid">
+        {nodes.map((node) => {
+          const v = ssr[node.key];
+          const meters = [
+            { label: t.cpu, value: v?.cpu ?? t.noData, bar: v?.cpuBar ?? "" },
+            { label: t.ram, value: v?.mem ?? t.noData, bar: v?.memBar ?? "" },
+          ];
+          return (
+            <article
+              key={node.key}
+              className="node-card"
+            >
+              <header className="node-card__head">
+                <div className="node-card__id">
+                  <h3 className="node-card__name">{node.name}</h3>
+                  <p className="node-card__role">{node.role}</p>
+                </div>
+                <span className="node-card__status node-card__status--ok">
+                  <span
+                    className="node-card__dot"
+                    aria-hidden="true"
+                  />
+                  {v?.status ?? t.statusOptimal}
+                </span>
+              </header>
+
+              <div className="node-card__meters">
+                {meters.map((m) => (
+                  <div
+                    className="node-meter"
+                    key={m.label}
+                  >
+                    <div className="node-meter__head">
+                      <span className="node-meter__label">{m.label}</span>
+                      <span className="node-meter__value">{m.value}</span>
+                    </div>
+                    <div className="node-meter__track">
+                      <div className={`node-meter__fill ${m.bar}`} />
+                    </div>
+                  </div>
+                ))}
+
+                <div className="node-card__temp">
+                  <span className="node-meter__label">
+                    {v?.tempLabel ?? t.tempOptimal}
+                  </span>
+                  <span className="node-card__temp-value">
+                    {v?.temp ?? t.noData}
+                  </span>
+                </div>
+              </div>
+            </article>
+          );
+        })}
+      </div>
+    );
+  }
 
   return (
     <div className="node-grid">

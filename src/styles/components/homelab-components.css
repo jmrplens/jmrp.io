@@ -546,6 +546,95 @@
   transition: width var(--dur-3, 0.4s) var(--ease-out);
 }
 
+/* Stepped width classes for the SSR meter bars.
+   The metric pipeline is JS-free: nginx injects an `hlm-wNN` class (5% steps,
+   see the bar-class formatter in /etc/nginx/lua/homelab_ssr_metrics.lua)
+   because the page CSP blocks inline `style` attributes, so a width can only
+   travel as a class. Keep the step set in sync with the lua side. */
+.hlm-w0 {
+  width: 0%;
+}
+
+.hlm-w5 {
+  width: 5%;
+}
+
+.hlm-w10 {
+  width: 10%;
+}
+
+.hlm-w15 {
+  width: 15%;
+}
+
+.hlm-w20 {
+  width: 20%;
+}
+
+.hlm-w25 {
+  width: 25%;
+}
+
+.hlm-w30 {
+  width: 30%;
+}
+
+.hlm-w35 {
+  width: 35%;
+}
+
+.hlm-w40 {
+  width: 40%;
+}
+
+.hlm-w45 {
+  width: 45%;
+}
+
+.hlm-w50 {
+  width: 50%;
+}
+
+.hlm-w55 {
+  width: 55%;
+}
+
+.hlm-w60 {
+  width: 60%;
+}
+
+.hlm-w65 {
+  width: 65%;
+}
+
+.hlm-w70 {
+  width: 70%;
+}
+
+.hlm-w75 {
+  width: 75%;
+}
+
+.hlm-w80 {
+  width: 80%;
+}
+
+.hlm-w85 {
+  width: 85%;
+}
+
+.hlm-w90 {
+  width: 90%;
+}
+
+.hlm-w95 {
+  width: 95%;
+}
+
+.hlm-w100 {
+  width: 100%;
+}
+
 .node-meter__fill--warn {
   background: var(--color-accent);
 }

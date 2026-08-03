@@ -577,8 +577,8 @@ export const common = {
       summary2:
         "The self-hosted services include a Mastodon instance, a Matrix homeserver, an AT Protocol PDS, file sync, media streaming and monitoring. Four Tor nodes run alongside them: two bridges speaking obfs4 and WebTunnel, one in Valencia and one in Alicante, and two middle relays on IONOS VPS instances, one in London and one in Madrid.",
       summary3:
-        "Security is one pipeline rather than a set of unrelated rules. A honeypot on the router turns a scanner's first packet into an address-list entry, nginx tarpits and pattern matches on the web tier, both feed CrowdSec, and CrowdSec drives bouncers back on the router and the reverse proxy. The counters above report what that pipeline is stopping; they are live figures fetched in your browser, so a reader without JavaScript sees placeholders rather than numbers.",
-      realtimePill: "Live · via API",
+        "Security is one pipeline rather than a set of unrelated rules. A honeypot on the router turns a scanner's first packet into an address-list entry, nginx tarpits and pattern matches on the web tier, both feed CrowdSec, and CrowdSec drives bouncers back on the router and the reverse proxy. The counters above report what that pipeline is stopping. The figures are injected into this page by the edge server itself as it responds — no JavaScript involved — so every reader and every crawler sees the same numbers, stamped with the time they were captured.",
+      realtimePill: "Live · injected at serve time",
       kpiAriaLabel: "Homelab headline metrics",
       kpiServicesOnline: "services online",
       kpiMonitoredNodes: "monitored nodes",
@@ -592,7 +592,7 @@ export const common = {
       linkHoneypot: "Honeypot & CrowdSec ↗",
       servicesKicker: "Public services",
       nodesUnit: "nodes",
-      nodesLiveHint: "live load · via API",
+      nodesLiveHint: "live load · injected at serve time",
       nodesAriaLabel: "Infrastructure node resource load",
       // An em-dash, not "no data". These are the initial values of the
       // client-side islands, so the static HTML a crawler receives contained

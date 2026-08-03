@@ -18,6 +18,15 @@ export interface ServiceStatsTranslations {
 interface Props {
   readonly type: "mastodon" | "matrix" | "pds";
   readonly translations: ServiceStatsTranslations;
+  /**
+   * Server-injected mode: the two pre-formatted display strings for this
+   * service (the `HLM_*` tokens from `ssr-tokens.ts`, replaced by nginx at
+   * serve time). When set, the component renders them verbatim, fetches
+   * nothing, and is expected to be mounted WITHOUT a `client:*` directive.
+   * `primary` is the big figure (peers / federation servers / records);
+   * `secondary` is the running software version.
+   */
+  readonly ssr?: { readonly primary: string; readonly secondary: string };
 }
 
 /** Data structure for Mastodon statistics */
@@ -344,13 +353,15 @@ function PdsStats({
  * @param props.translations - Translated strings for the component.
  * @returns The rendered stats component.
  */
-export default function ServiceStats({ type, translations: t }: Props) {
+export default function ServiceStats({ type, translations: t, ssr }: Props) {
   const [stats, setStats] = useState<
     MastodonStatsData | MatrixStatsData | PdsStatsData | null
   >(null);
   const [error, setError] = useState(false);
 
   useEffect(() => {
+    // Server-injected mode: values arrive in the HTML itself; nothing to fetch.
+    if (ssr) return;
     // Reset state immediately when type changes to avoid stale data
     setStats(null);
     setError(false);
@@ -385,10 +396,32 @@ export default function ServiceStats({ type, translations: t }: Props) {
     };
 
     void fetchData();
-  }, [type]);
+  }, [type, ssr]);
 
   if (error) {
     return <div className="stats-error">{t.serviceUnavailable}</div>;
+  }
+
+  // Server-injected mode: same two-column grid, values rendered verbatim.
+  if (ssr) {
+    const primaryLabel = {
+      mastodon: t.knownInstances,
+      matrix: t.knownServers,
+      pds: t.pdsRecords,
+    }[type];
+    const secondaryLabel = {
+      mastodon: "Mastodon",
+      matrix: "Synapse",
+      pds: "PDS",
+    }[type];
+    return (
+      <ServiceStatCard
+        stats={[
+          { value: ssr.primary, label: primaryLabel },
+          { value: ssr.secondary, label: secondaryLabel },
+        ]}
+      />
+    );
   }
 
   // Route to appropriate component based on type

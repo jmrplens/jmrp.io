@@ -18,6 +18,7 @@ import NodeCards from "@components/homelab/NodeCards";
 import ServiceCard from "@components/homelab/ServiceCard.astro";
 import type { ServiceStatsTranslations } from "@components/homelab/ServiceStats";
 import ServiceStats from "@components/homelab/ServiceStats";
+import { HLM } from "@components/homelab/ssr-tokens";
 import type { TorAggregateTranslations } from "@components/homelab/TorAggregate";
 import TorAggregate from "@components/homelab/TorAggregate";
 import type {
@@ -344,13 +345,6 @@ const servicesSchema = {
   description={t("pages.homelab.description")}
   schema={servicesSchema}
 >
-  {/* HMAC token injected by Nginx sub_filter at serve time for API auth */}
-  <div
-    data-homelab-token="NGINX_HOMELAB_TOKEN"
-    hidden
-    aria-hidden="true"
-  >
-  </div>
   <section
     class="homelab-page"
     aria-label={t("aria.homelabInfrastructure")}
@@ -367,20 +361,27 @@ const servicesSchema = {
             class="realtime-pill__dot"
             aria-hidden="true"
           ></span>
-          {t("pages.homelab.realtimePill")}
+          {
+            /* HLM.asOf is replaced by nginx with the capture time (UTC).
+              See src/components/homelab/ssr-tokens.ts for the contract. */
+          }
+          {t("pages.homelab.realtimePill")} · {HLM.asOf}
         </p>
       </div>
 
       {
         /*
-          Server-rendered prose, above the live metrics.
+          Server-rendered prose, above the metrics.
 
-          Every metric on this page is a Preact island hydrated from
-          /api/homelab/*, so the static HTML contained no numbers and no
-          description — a crawler, or anyone without JS, received the site's
-          most distinctive page as an empty shell. These paragraphs state only
-          facts that hold between deploys, so they need no fetch and cannot go
-          stale the way a frozen snapshot of the live counters would.
+          The metrics on this page carry no client-side JavaScript at all:
+          every figure is a `HLM_*` placeholder baked into the static HTML and
+          replaced by nginx at serve time with a fresh, locale-formatted value
+          (see src/components/homelab/ssr-tokens.ts for the contract and
+          /etc/nginx/lua/homelab_ssr_metrics.lua for the other half). Crawlers
+          and readers without JS therefore see the same numbers a browser
+          does. These paragraphs still state only facts that hold between
+          deploys, so they complement the injected figures rather than
+          duplicating them.
         */
       }
       <section
@@ -394,10 +395,10 @@ const servicesSchema = {
 
       <section aria-label={t("pages.homelab.kpiAriaLabel")}>
         <HomelabKpi
-          client:visible
           translations={kpiTranslations}
           servicesCount={services.length}
           nodesCount={monitoredNodesCount}
+          ssr={HLM.kpi}
         />
       </section>
 
@@ -406,8 +407,8 @@ const servicesSchema = {
         aria-label={t("pages.homelab.edgeDefense")}
       >
         <InfrastructureInsights
-          client:visible
           translations={infrastructureTranslations}
+          ssr={HLM.edge}
         />
       </section>
 
@@ -446,9 +447,9 @@ const servicesSchema = {
                   class="stats-container"
                 >
                   <ServiceStats
-                    client:visible
                     type={service.statsType}
                     translations={serviceStatsTranslations}
+                    ssr={HLM.services[service.statsType]}
                   />
                 </div>
               </ServiceCard>
@@ -469,8 +470,8 @@ const servicesSchema = {
           {t("pages.homelab.nodesUnit")}
         </h2>
         <TorAggregate
-          client:visible
           translations={torAggregateTranslations}
+          ssr={{ nodesCount: torServices.length, ...HLM.torAggregate }}
         />
         <div class="services-grid">
           {
@@ -488,9 +489,9 @@ const servicesSchema = {
                   class="stats-container"
                 >
                   <TorStats
-                    client:visible
                     type={service.torType}
                     translations={torStatsTranslations}
+                    ssr={HLM.torNodes[service.torType]}
                   />
                 </div>
               </ServiceCard>
@@ -516,9 +517,9 @@ const servicesSchema = {
           </span>
         </div>
         <NodeCards
-          client:visible
           translations={nodeCardsTranslations}
           nodes={nodeCards}
+          ssr={HLM.nodes}
         />
       </section>
     </div>

@@ -23,6 +23,18 @@ interface Props {
   readonly servicesCount: number;
   /** Number of monitored infrastructure nodes (computed at build). */
   readonly nodesCount: number;
+  /**
+   * Server-injected mode: pre-formatted display strings (the `HLM_*` tokens
+   * from `ssr-tokens.ts`, replaced by nginx at serve time). When set, the
+   * component renders them verbatim and performs no fetching — it is expected
+   * to be mounted WITHOUT a `client:*` directive. See `ssr-tokens.ts` for the
+   * full contract.
+   */
+  readonly ssr?: {
+    readonly online: string;
+    readonly requests: string;
+    readonly wan: string;
+  };
 }
 
 /** Health endpoint payload: real per-service up/down aggregated server-side. */
@@ -82,6 +94,7 @@ export default function HomelabKpi({
   translations: t,
   servicesCount,
   nodesCount,
+  ssr,
 }: Props) {
   const [online, setOnline] = useState<number | null>(null);
   const [requests, setRequests] = useState<number | null>(null);
@@ -89,6 +102,8 @@ export default function HomelabKpi({
   const isFetchingRef = useRef(false);
 
   useEffect(() => {
+    // Server-injected mode: values arrive in the HTML itself; nothing to fetch.
+    if (ssr) return;
     const controller = new AbortController();
     const REFRESH_INTERVAL = 30_000;
 
@@ -137,26 +152,38 @@ export default function HomelabKpi({
       clearInterval(intervalId);
       controller.abort();
     };
-  }, []);
+  }, [ssr]);
 
-  const kpis = [
-    {
-      v: `${online ?? "…"} / ${servicesCount}`,
-      l: t.servicesOnline,
-      empty: online === null,
-    },
-    { v: String(nodesCount), l: t.monitoredNodes, empty: false },
-    {
-      v: requests === null ? t.noData : requests.toLocaleString(),
-      l: t.requests24h,
-      empty: requests === null,
-    },
-    {
-      v: wan === null ? t.noData : formatBytes(wan),
-      l: t.wan24h,
-      empty: wan === null,
-    },
-  ];
+  // Server-injected values are already formatted; render them verbatim.
+  const kpis = ssr
+    ? [
+        {
+          v: `${ssr.online} / ${servicesCount}`,
+          l: t.servicesOnline,
+          empty: false,
+        },
+        { v: String(nodesCount), l: t.monitoredNodes, empty: false },
+        { v: ssr.requests, l: t.requests24h, empty: false },
+        { v: ssr.wan, l: t.wan24h, empty: false },
+      ]
+    : [
+        {
+          v: `${online ?? "…"} / ${servicesCount}`,
+          l: t.servicesOnline,
+          empty: online === null,
+        },
+        { v: String(nodesCount), l: t.monitoredNodes, empty: false },
+        {
+          v: requests === null ? t.noData : requests.toLocaleString(),
+          l: t.requests24h,
+          empty: requests === null,
+        },
+        {
+          v: wan === null ? t.noData : formatBytes(wan),
+          l: t.wan24h,
+          empty: wan === null,
+        },
+      ];
 
   return (
     <div className="kpi-band">

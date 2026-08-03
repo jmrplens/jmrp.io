@@ -63,7 +63,7 @@
 │   │   ├── apps/               # Interactive tools (vanilla JS, no Preact)
 │   │   ├── ui/                 # 53 reusable UI components
 │   │   ├── layout/             # BaseHead, Header, Footer, ToC
-│   │   ├── homelab/            # Preact islands (InfrastructureInsights, ServiceStats)
+│   │   ├── homelab/            # Preact components, SSR-only (metrics injected by nginx — see ssr-tokens.ts)
 │   │   ├── blog/               # PostCard, PostGrid, TagCloud
 │   │   ├── cv/                 # CV-specific components
 │   │   └── publications/       # PublicationItem
@@ -183,7 +183,7 @@ Auto-generates `SoftwareApplication` JSON-LD. Slots: `default` (tool component),
 
 Located in `src/components/apps/`. Each is **Astro-only** using `<script is:inline>` with DOM manipulation via `data-*` attributes. IDs generated with `crypto.getRandomValues()`. Examples: `CSPBuilder.astro` (2213 lines), `HashCalculator.astro` (577 lines).
 
-> **Important**: Tools do NOT use Preact. Preact islands are used **exclusively** in `src/components/homelab/` for real-time data (InfrastructureInsights, ServiceStats).
+> **Important**: Tools do NOT use Preact. The `src/components/homelab/` components are Preact but render **SSR-only** (no `client:*` directives, zero JS shipped): every metric is an `HLM_*` placeholder token that **nginx replaces at serve time** with a fresh, locale-formatted value (stale-while-revalidate, ~60 s). The token registry is `src/components/homelab/ssr-tokens.ts`; its mirror — data sources, formatting, and the substitution filter — lives OUTSIDE the repo in `/etc/nginx/lua/homelab_ssr_metrics.lua`. Keep both in sync when adding/removing a metric; an out-of-sync token degrades to "—". In `astro preview`/E2E the raw `HLM_*` tokens are visible on `/homelab/` — expected, only nginx substitutes them.
 
 ---
 
