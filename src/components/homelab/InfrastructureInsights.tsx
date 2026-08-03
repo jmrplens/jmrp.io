@@ -132,6 +132,25 @@ export interface InfrastructureTranslations {
 /** Component props */
 interface Props {
   readonly translations: InfrastructureTranslations;
+  /**
+   * Server-injected mode: pre-formatted display strings (the `HLM_*` tokens
+   * from `ssr-tokens.ts`, replaced by nginx at serve time). When set, the
+   * component renders them verbatim, fetches nothing, and is expected to be
+   * mounted WITHOUT a `client:*` directive. The attack-regions list is not
+   * available in this mode (it needs a variable-length payload, not a scalar
+   * token) and is simply omitted. See `ssr-tokens.ts` for the full contract.
+   */
+  readonly ssr?: {
+    readonly threats: string;
+    readonly honeypot: string;
+    readonly tarpit: string;
+    readonly nginxBans: string;
+    readonly crowdsec: string;
+    readonly blacklist: string;
+    readonly wanRx: string;
+    readonly activeConnections: string;
+    readonly requests: string;
+  };
 }
 
 interface Country {
@@ -230,13 +249,18 @@ function formatBytes(bytes: number | string) {
  *
  * @param props - Component properties including translations.
  */
-export default function InfrastructureInsights({ translations: t }: Props) {
+export default function InfrastructureInsights({
+  translations: t,
+  ssr,
+}: Props) {
   const [stats, setStats] = useState<HomelabStats | null>(null);
   const [mikrotik, setMikrotik] = useState<MikrotikStats | null>(null);
   const [error, setError] = useState(false);
   const isFetchingRef = useRef(false);
 
   useEffect(() => {
+    // Server-injected mode: values arrive in the HTML itself; nothing to fetch.
+    if (ssr) return;
     const controller = new AbortController();
     // Refresh interval in milliseconds (30 seconds)
     const REFRESH_INTERVAL = 30_000;
@@ -312,7 +336,7 @@ export default function InfrastructureInsights({ translations: t }: Props) {
       clearInterval(intervalId);
       controller.abort();
     };
-  }, []);
+  }, [ssr]);
 
   const displayVal = (
     val: number | null | undefined,
@@ -322,19 +346,51 @@ export default function InfrastructureInsights({ translations: t }: Props) {
     return formatter ? formatter(val) : val.toLocaleString();
   };
 
-  const countries = stats?.top_security_countries || [];
+  // The attack-regions list needs a variable-length payload, so it exists
+  // only in hydrated mode; the server-injected page omits the block.
+  const countries = ssr ? [] : stats?.top_security_countries || [];
 
   // Aggregate headline: same honest 24h sum as the KPI band (tarpit + nginx).
+  // Pre-formatted strings in ssr mode; live numbers otherwise.
   const threats24h =
     stats == null ? null : stats.tarpit_hits_24h + stats.nginx_bans_24h;
+  const threatsDisplay = ssr ? ssr.threats : displayVal(threats24h);
 
   // Four headline sub-metrics shown in the hero band (all distinct real fields).
-  const fwTop = [
-    { label: t.honeypotHits, value: displayVal(mikrotik?.honeypot_hits) },
-    { label: t.tarpitHits, value: displayVal(stats?.tarpit_hits_24h) },
-    { label: t.nginxBans, value: displayVal(stats?.nginx_bans_24h) },
-    { label: t.crowdsecBlocked, value: displayVal(mikrotik?.crowdsec_blocked) },
-  ];
+  const fwTop = ssr
+    ? [
+        { label: t.honeypotHits, value: ssr.honeypot },
+        { label: t.tarpitHits, value: ssr.tarpit },
+        { label: t.nginxBans, value: ssr.nginxBans },
+        { label: t.crowdsecBlocked, value: ssr.crowdsec },
+      ]
+    : [
+        { label: t.honeypotHits, value: displayVal(mikrotik?.honeypot_hits) },
+        { label: t.tarpitHits, value: displayVal(stats?.tarpit_hits_24h) },
+        { label: t.nginxBans, value: displayVal(stats?.nginx_bans_24h) },
+        {
+          label: t.crowdsecBlocked,
+          value: displayVal(mikrotik?.crowdsec_blocked),
+        },
+      ];
+
+  // Rows of the two layer columns, unified so the JSX below stays identical
+  // in both modes.
+  let wanRx = "...";
+  if (ssr) wanRx = `${ssr.wanRx} ↓`;
+  else if (mikrotik) wanRx = `${formatBytes(mikrotik.wan_rx_bytes)} ↓`;
+
+  const rows = {
+    blacklist: ssr ? ssr.blacklist : displayVal(mikrotik?.blacklist_scanners),
+    wanRx,
+    activeConnections: ssr
+      ? ssr.activeConnections
+      : displayVal(mikrotik?.active_connections),
+    crowdsec: ssr ? ssr.crowdsec : displayVal(mikrotik?.crowdsec_blocked),
+    requests: ssr ? ssr.requests : displayVal(stats?.requests_received_24h),
+    tarpit: ssr ? ssr.tarpit : displayVal(stats?.tarpit_hits_24h),
+    nginxBans: ssr ? ssr.nginxBans : displayVal(stats?.nginx_bans_24h),
+  };
 
   if (error) {
     return (
@@ -365,9 +421,7 @@ export default function InfrastructureInsights({ translations: t }: Props) {
           />
           <div className="edge-hero__lead">
             <div className="edge-hero__headline">
-              <output className="edge-hero__num">
-                {displayVal(threats24h)}
-              </output>
+              <output className="edge-hero__num">{threatsDisplay}</output>
               <span className="edge-hero__label">{t.threatsBlocked}</span>
             </div>
             <p className="edge-hero__desc">{t.edgeDescription}</p>
@@ -414,17 +468,15 @@ export default function InfrastructureInsights({ translations: t }: Props) {
                   "Port Scanners" row has been removed per §E. */}
               <div className="edge-row">
                 <dt>{t.blacklistScanners}</dt>
-                <dd>{displayVal(mikrotik?.blacklist_scanners)}</dd>
+                <dd>{rows.blacklist}</dd>
               </div>
               <div className="edge-row">
                 <dt>{t.wanTraffic}</dt>
-                <dd>
-                  {mikrotik ? `${formatBytes(mikrotik.wan_rx_bytes)} ↓` : "..."}
-                </dd>
+                <dd>{rows.wanRx}</dd>
               </div>
               <div className="edge-row">
                 <dt>{t.activeConnections}</dt>
-                <dd>{displayVal(mikrotik?.active_connections)}</dd>
+                <dd>{rows.activeConnections}</dd>
               </div>
             </dl>
           </article>
@@ -452,11 +504,11 @@ export default function InfrastructureInsights({ translations: t }: Props) {
             <dl className="edge-rows">
               <div className="edge-row">
                 <dt>{t.crowdsecBlocked}</dt>
-                <dd>{displayVal(mikrotik?.crowdsec_blocked)}</dd>
+                <dd>{rows.crowdsec}</dd>
               </div>
               <div className="edge-row">
                 <dt>{t.requestsReceived}</dt>
-                <dd>{displayVal(stats?.requests_received_24h)}</dd>
+                <dd>{rows.requests}</dd>
               </div>
               <div className="edge-row">
                 <dt>
@@ -468,11 +520,11 @@ export default function InfrastructureInsights({ translations: t }: Props) {
                     {t.tarpitHits}
                   </a>
                 </dt>
-                <dd>{displayVal(stats?.tarpit_hits_24h)}</dd>
+                <dd>{rows.tarpit}</dd>
               </div>
               <div className="edge-row">
                 <dt>{t.nginxBans}</dt>
-                <dd>{displayVal(stats?.nginx_bans_24h)}</dd>
+                <dd>{rows.nginxBans}</dd>
               </div>
             </dl>
             {countries.length > 0 && (

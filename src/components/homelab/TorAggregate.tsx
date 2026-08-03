@@ -15,6 +15,19 @@ export interface TorAggregateTranslations {
 /** Props for TorAggregate. */
 interface Props {
   readonly translations: TorAggregateTranslations;
+  /**
+   * Server-injected mode: pre-formatted display strings (the `HLM_*` tokens
+   * from `ssr-tokens.ts`, replaced by nginx at serve time) plus the static
+   * node count, which is known at build time from the page's own node list.
+   * When set, the component renders them verbatim, fetches nothing, and is
+   * expected to be mounted WITHOUT a `client:*` directive.
+   */
+  readonly ssr?: {
+    readonly nodesCount: number;
+    readonly clients: string;
+    readonly bandwidth: string;
+    readonly traffic: string;
+  };
 }
 
 /** Per-node fields the aggregate band reads (subset of the Tor API node). */
@@ -61,10 +74,12 @@ function isValidAggregate(data: unknown): data is TorAggregateData {
  * @param props - Component properties including translations.
  * @returns The rendered aggregate band.
  */
-export default function TorAggregate({ translations: t }: Props) {
+export default function TorAggregate({ translations: t, ssr }: Props) {
   const [data, setData] = useState<TorAggregateData | null>(null);
 
   useEffect(() => {
+    // Server-injected mode: values arrive in the HTML itself; nothing to fetch.
+    if (ssr) return;
     const controller = new AbortController();
     const load = async () => {
       try {
@@ -87,10 +102,33 @@ export default function TorAggregate({ translations: t }: Props) {
     };
     void load();
     return () => controller.abort();
-  }, []);
+  }, [ssr]);
 
   const num = (v: number | undefined) =>
     v === undefined ? "..." : v.toLocaleString();
+
+  // Server-injected mode: same band markup, values rendered verbatim.
+  if (ssr) {
+    const items = [
+      { value: String(ssr.nodesCount), label: t.nodes },
+      { value: ssr.clients, label: t.clients },
+      { value: ssr.bandwidth, label: t.bandwidth },
+      { value: ssr.traffic, label: t.traffic },
+    ];
+    return (
+      <div className="tor-aggregate">
+        {items.map((item) => (
+          <div
+            className="tor-agg-item"
+            key={item.label}
+          >
+            <span className="tor-agg-value">{item.value}</span>
+            <span className="tor-agg-label">{item.label}</span>
+          </div>
+        ))}
+      </div>
+    );
+  }
 
   const totalClients =
     data === null

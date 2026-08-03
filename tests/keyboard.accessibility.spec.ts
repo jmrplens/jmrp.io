@@ -153,59 +153,18 @@ test.describe("Keyboard Navigation Accessibility", () => {
   });
 
   test("Homelab Infrastructure Keyboard Navigation", async ({ page }) => {
-    // Mock the API response to ensure the component renders the links
-    await page.route("**/api/homelab/stats", async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: "application/json",
-        body: JSON.stringify({
-          requests_received_24h: 1000,
-          responses_sent_24h: 900,
-          upstream_sent_24h: 800,
-          bandwidth_sent_24h: 1024 * 1024,
-          bandwidth_recv_24h: 2048 * 1024,
-          tarpit_hits_24h: 50,
-          nginx_bans_24h: 10,
-          mikrotik_scans_total: 500,
-          rate_limited_503_24h: 5,
-          cpu_usage_avg: 15.5,
-          mem_used_percent: 45.2,
-          cpu_temp: 42,
-          top_security_countries: [{ code: "US", count: 100 }],
-        }),
-      });
-    });
-
-    // The edge-defense spotlight also pulls the MikroTik (network-layer) data.
-    await page.route("**/api/homelab/mikrotik", async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: "application/json",
-        body: JSON.stringify({
-          honeypot_hits: 700,
-          port_scanners_dropped: 500,
-          blacklist_scanners: 60,
-          crowdsec_blocked: 12_000,
-          active_connections: 300,
-          wan_rx_bytes: 1024 * 1024 * 1024,
-          wan_tx_bytes: 512 * 1024 * 1024,
-        }),
-      });
-    });
-
+    // No API mocks and no hydration wait: the homelab metrics ship no
+    // client-side JavaScript any more. The components render statically with
+    // HLM_* placeholder tokens that NGINX substitutes at serve time (see
+    // src/components/homelab/ssr-tokens.ts) — `astro preview` has no nginx,
+    // so this test sees the raw tokens, and every link it exercises is plain
+    // server-rendered markup available immediately.
     await page.goto("/homelab/");
 
     // 1. Find the infrastructure section (first one is InfrastructureInsights/Nginx)
     const section = page.locator(".infrastructure-section").first();
     await expect(section).toBeVisible();
-
-    // Ensure component hydration triggers (client:visible)
     await section.scrollIntoViewIfNeeded();
-
-    // Wait for data to load (ensures hydration is complete). Uses honeypot_hits
-    // (700) — the Port-Scanners row that once showed 500 was removed (it duplicated
-    // the same backend counter as Honeypot hits).
-    await expect(section).toContainText("700", { timeout: 10_000 });
 
     // 2. Verify the section's blog links are keyboard-focusable and named.
     // The in-column "Port Scanners" row was removed (it duplicated Honeypot

@@ -575,8 +575,8 @@ export const common = {
       summary2:
         "Entre los servicios autoalojados hay una instancia de Mastodon, un homeserver de Matrix, un PDS de AT Protocol, sincronización de ficheros, streaming multimedia y monitorización. Junto a ellos corren cuatro nodos Tor: dos puentes que hablan obfs4 y WebTunnel, uno en Valencia y otro en Alicante, y dos relays intermedios en VPS de IONOS, uno en Londres y otro en Madrid.",
       summary3:
-        "La seguridad es una sola tubería, no un conjunto de reglas sueltas. Un honeypot en el router convierte el primer paquete de un escáner en una entrada de address-list, nginx aplica tarpit y coincidencia de patrones en la capa web, ambos alimentan a CrowdSec, y CrowdSec acciona los bouncers de vuelta en el router y en el proxy inverso. Los contadores de arriba indican lo que esa tubería está deteniendo; son cifras en vivo que se piden desde tu navegador, así que quien no tenga JavaScript verá marcadores en lugar de números.",
-      realtimePill: "En tiempo real · vía API",
+        "La seguridad es una sola tubería, no un conjunto de reglas sueltas. Un honeypot en el router convierte el primer paquete de un escáner en una entrada de address-list, nginx aplica tarpit y coincidencia de patrones en la capa web, ambos alimentan a CrowdSec, y CrowdSec acciona los bouncers de vuelta en el router y en el proxy inverso. Los contadores de arriba indican lo que esa tubería está deteniendo. Las cifras las inyecta el propio servidor perimetral al responder — sin JavaScript de por medio — así que cada lector y cada crawler ve los mismos números, sellados con la hora en que se capturaron.",
+      realtimePill: "En vivo · inyectado al servir",
       kpiAriaLabel: "Métricas destacadas del homelab",
       kpiServicesOnline: "servicios online",
       kpiMonitoredNodes: "nodos monitorizados",
@@ -590,7 +590,7 @@ export const common = {
       linkHoneypot: "Honeypot & CrowdSec ↗",
       servicesKicker: "Servicios públicos",
       nodesUnit: "nodos",
-      nodesLiveHint: "carga en vivo · vía API",
+      nodesLiveHint: "carga en vivo · inyectada al servir",
       nodesAriaLabel: "Carga de recursos de los nodos de infraestructura",
       // Guion largo, no "sin datos": ver la nota en la versión inglesa.
       noData: "—",

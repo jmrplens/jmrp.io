@@ -44,6 +44,18 @@ interface Props {
   /** The node type: `"bridge"` (obfs4/WebTunnel, UK), `"bridge-es1"` (obfs4/WebTunnel, ES), `"relay"` (UK middle relay), or `"relay-es"` (ES middle relay). */
   readonly type: TorType;
   readonly translations: TorStatsTranslations;
+  /**
+   * Server-injected mode: pre-formatted display strings (the `HLM_*` tokens
+   * from `ssr-tokens.ts`, replaced by nginx at serve time). When set, the
+   * component renders them verbatim, fetches nothing, and is expected to be
+   * mounted WITHOUT a `client:*` directive. If the node is offline, nginx
+   * substitutes the headline with an em dash rather than a stale count.
+   */
+  readonly ssr?: {
+    readonly headline: string;
+    readonly location: string;
+    readonly bandwidth: string;
+  };
 }
 
 /** Tor node data from the API */
@@ -245,7 +257,7 @@ function TorNodeCard({
  * @param props.translations - Translated strings for the component.
  * @returns The rendered compact Tor node card.
  */
-export default function TorStats({ type, translations: t }: Props) {
+export default function TorStats({ type, translations: t, ssr }: Props) {
   const [data, setData] = useState<TorNodeData | null>(null);
   const [error, setError] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
@@ -255,6 +267,7 @@ export default function TorStats({ type, translations: t }: Props) {
   // state is only known here. When the node is offline, mark the pill offline so
   // it never contradicts the headline (running pill vs offline body).
   useEffect(() => {
+    if (ssr) return;
     const root = rootRef.current;
     if (!root || data === null) return;
     const pill = root
@@ -265,9 +278,11 @@ export default function TorStats({ type, translations: t }: Props) {
     pill.classList.toggle("is-offline", offline);
     const label = pill.querySelector(".service-status-label");
     if (label) label.textContent = offline ? t.offline : t.running;
-  }, [data, t]);
+  }, [data, t, ssr]);
 
   useEffect(() => {
+    // Server-injected mode: values arrive in the HTML itself; nothing to fetch.
+    if (ssr) return;
     setData(null);
     setError(false);
 
@@ -287,17 +302,40 @@ export default function TorStats({ type, translations: t }: Props) {
     };
 
     void load();
-  }, [type]);
+  }, [type, ssr]);
 
   if (error) {
     return <div className="stats-error">{t.serviceUnavailable}</div>;
   }
 
   const isBridge = type === "bridge" || type === "bridge-es1";
+  const headlineLabel = isBridge ? t.clients24h : t.connections24h;
+
+  // Server-injected mode: same card markup, values rendered verbatim.
+  if (ssr) {
+    return (
+      <div className="tor-node">
+        <p className="tor-node__headline">
+          <output className="tor-node__num">{ssr.headline}</output>
+          <span className="tor-node__label">{headlineLabel}</span>
+        </p>
+        <div className="tor-node__rows">
+          <div className="tor-node__row">
+            <span className="tor-node__k">{t.location}</span>
+            <span className="tor-node__v">{ssr.location}</span>
+          </div>
+          <div className="tor-node__row">
+            <span className="tor-node__k">{t.advertisedBandwidth}</span>
+            <span className="tor-node__v">{ssr.bandwidth}</span>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   const headlineValue = isBridge
     ? (data?.clients_24h?.toLocaleString() ?? "...")
     : (data?.connections_24h?.toLocaleString() ?? "...");
-  const headlineLabel = isBridge ? t.clients24h : t.connections24h;
 
   return (
     <TorNodeCard
