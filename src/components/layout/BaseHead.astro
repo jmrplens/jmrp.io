@@ -31,6 +31,7 @@ import {
 } from "@utils/person";
 import { getProjects, softwareId } from "@utils/projects";
 import { buildSameAs, getSiteUrl } from "@utils/site";
+import { wikidataEntityUri, wikidataLabel } from "@utils/wikidata";
 // Variable Fonts (managed by Astro Experimental Fonts)
 import type { ImageMetadata } from "astro";
 import { Font, getImage } from "astro:assets";
@@ -258,9 +259,11 @@ const personKnowsAbout = siteData.person?.knowsAbout?.map((topic) => {
   return qid
     ? {
         "@type": "Thing" as const,
-        name: topic,
-        // eslint-disable-next-line unicorn/prefer-https -- see comment above
-        "@id": `http://www.wikidata.org/entity/${qid}`,
+        // The authored string stays the display label in the nav drawer; the
+        // graph publishes Wikidata's own label so this `@id` cannot disagree
+        // with the same `@id` emitted from posts or projects.
+        name: wikidataLabel(qid, topic),
+        "@id": wikidataEntityUri(qid),
       }
     : topic;
 });
@@ -271,8 +274,16 @@ const websiteSchema = {
   "@id": new URL("#website", getSiteUrl()).href,
   url: siteRoot,
   name: siteData.author,
-  description: t("seo.siteDescription"),
-  inLanguage: locale,
+  // One `@id` is emitted from both locales, so a plain `t()` string meant the
+  // EN and ES pages asserted two different, untagged `description` values —
+  // and two different `inLanguage` values — for the same node. That is the
+  // last surviving instance of the collision class already fixed at page
+  // level. The site genuinely is bilingual, so both are declared.
+  description: localizedValues({
+    en: useTranslations("en")("seo.siteDescription"),
+    es: useTranslations("es")("seo.siteDescription"),
+  }),
+  inLanguage: ["en", "es"],
   publisher: {
     "@type": "Person",
     "@id": new URL("#person", getSiteUrl()).href,
@@ -570,9 +581,18 @@ const jsonLD = {
   content="#fafaf7"
   media="(prefers-color-scheme: light)"
 />
+<!--
+  max-snippet:-1 / max-image-preview:large lift the default caps on how much
+  of a page a search engine may quote and how large a preview image it may
+  show. For a site whose whole posture is "please quote me", the conservative
+  defaults work against the goal. They are omitted on noindex pages, where
+  they would be meaningless.
+-->
 <meta
   name="robots"
-  content={noIndex ? "noindex, follow" : "index, follow"}
+  content={noIndex
+    ? "noindex, follow"
+    : "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1"}
 />
 
 <!-- SEO -->

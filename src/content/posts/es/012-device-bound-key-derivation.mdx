@@ -4,6 +4,7 @@ slug: "012-device-bound-key-derivation"
 lang: "es"
 publishedDate: 2026-06-22
 description: "Por qué las iteraciones de PBKDF2 no protegen un PIN de 4 dígitos en un MCU, y cómo un secreto del dispositivo más HKDF frenan la fuerza bruta offline."
+lead: "Una RTX 5090 barre los 10.000 PIN de cuatro dígitos en bastante menos de un milisegundo offline, así que la defensa es un secreto eFuse por chip mezclado con HKDF, no más iteraciones."
 coverImage: "../../../assets/images/blog/device-bound-keys.webp"
 author: "José Manuel Requena Plens"
 authorEmail: "mail@jmrp.io"
@@ -79,7 +80,7 @@ Entonces, ¿cómo es eso seguro? La respuesta honesta es que en un microcontrola
 
 ---
 
-## Un PIN de 4 dígitos no tiene entropía
+## Un PIN de 4 dígitos son 13,3 bits: 10.000 combinaciones que una RTX 5090 barre en menos de un milisegundo
 
 Seamos directos con el espacio de claves. Cuatro dígitos decimales son 10<sup>4</sup>, exactamente diez mil valores: aproximadamente **13,3 bits** de _entropía_ (la jerga para "cuánto cuesta adivinarlo") si cada PIN fuera igual de probable — y no lo son, porque los humanos eligen `1234`, `0000` y su año de nacimiento mucho más a menudo de lo que sugeriría el azar. Un PIN de 4 dígitos es, en el fondo, un candado de bici de 10.000 posiciones: de sobra contra alguien que prueba a mano, ridículo ante una máquina que las recorre todas en un suspiro. No hay KDF ingenioso, ni cifrador, ni cantidad de salt que añada entropía a un secreto tan pequeño. El secreto es el secreto.
 

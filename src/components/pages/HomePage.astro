@@ -69,26 +69,20 @@ const PROJECT_META: Readonly<
   Kleidos: { category: "hardware · embedded", tag: "ESP-IDF" },
 };
 
-/** Days elapsed since the most recent post; drives the terminal `last.post` metric. */
-const lastPost = latestPosts.at(0) ?? null;
-const daysSinceLastPost: number | null = lastPost
-  ? Math.floor(
-      (Date.now() - new Date(lastPost.data.publishedDate).getTime()) /
-        86_400_000,
-    )
-  : null;
-
 /**
- * Returns a locale-aware "N days ago" string.
- * Intentionally inline rather than via `t()` — the terminal widget treats this
- * as technical data, consistent with `whoami.base = "Valencia, ES"`.
+ * Date of the most recent post; drives the terminal `last.post` metric.
+ *
+ * Deliberately an absolute ISO date rather than a relative "N days ago". The
+ * relative form was computed with `Date.now()` at build time, so the HTML
+ * shipped a literal "41 days ago" that was true on the day of the build and
+ * quietly decayed afterwards — every crawl between deploys read a stale claim.
+ * An ISO date is also the natural register for the terminal widget and is
+ * machine-readable inside <time datetime>.
  */
-function formatDaysAgo(days: number, lang: Locale): string {
-  if (lang === "es") {
-    return days === 1 ? "hace 1 día" : `hace ${days} días`;
-  }
-  return days === 1 ? "1 day ago" : `${days} days ago`;
-}
+const lastPost = latestPosts.at(0) ?? null;
+const lastPostDate: string | null = lastPost
+  ? new Date(lastPost.data.publishedDate).toISOString().slice(0, 10)
+  : null;
 
 /**
  * Compact human-readable count: 52311 → "52.3k", 980 → "980".
@@ -229,12 +223,15 @@ const homeSchema = {
               <span class="terminal__num">{whoami.repos}</span>
             </div>
             {
-              daysSinceLastPost !== null && (
+              lastPostDate !== null && (
                 <div class="terminal__metric">
                   <span>last.post</span>
-                  <span class="terminal__num">
-                    {formatDaysAgo(daysSinceLastPost, locale)}
-                  </span>
+                  <time
+                    class="terminal__num"
+                    datetime={lastPostDate}
+                  >
+                    {lastPostDate}
+                  </time>
                 </div>
               )
             }

@@ -218,8 +218,14 @@ test.describe("Common schemas on representative pages", () => {
       expect(isValidUrl(website["@id"])).toBe(true);
       expect(isValidUrl(website.url)).toBe(true);
       expect(isNonEmptyStr(website.name)).toBe(true);
-      expect(isNonEmptyStr(website.description)).toBe(true);
-      expect(isNonEmptyStr(website.inLanguage)).toBe(true);
+      // Same reasoning as the canonical #person node: #website has ONE `@id`,
+      // so a bare per-locale string made the EN and ES pages assert two
+      // contradictory descriptions — and two contradictory languages — for
+      // one entity. The description is now a language-tagged literal and
+      // `inLanguage` declares both languages, because the site genuinely is
+      // both. See `localizedValues` in BaseHead.astro.
+      expect(isNonEmptyText(website.description)).toBe(true);
+      expect(website.inLanguage).toEqual(["en", "es"]);
 
       const publisher = website.publisher as JsonLdSchema | undefined;
       expect(publisher).toBeDefined();
@@ -656,8 +662,12 @@ test.describe("EN/ES schema parity", () => {
 
     expect(enTypes).toEqual(esTypes);
 
-    expect(findInGraph(enJsonLd, "WebSite")?.inLanguage).toBe("en");
-    expect(findInGraph(esJsonLd, "WebSite")?.inLanguage).toBe("es");
+    // #website is ONE entity shared by both locales, so it must NOT report a
+    // different language depending on which page was crawled. Both pages
+    // declare the same bilingual value; the per-page language lives on the
+    // page-scoped nodes (WebPage/ProfilePage/TechArticle) instead.
+    expect(findInGraph(enJsonLd, "WebSite")?.inLanguage).toEqual(["en", "es"]);
+    expect(findInGraph(esJsonLd, "WebSite")?.inLanguage).toEqual(["en", "es"]);
   });
 
   test("CV schemas match between locales", async ({ page }) => {
@@ -677,8 +687,12 @@ test.describe("EN/ES schema parity", () => {
 
     expect(enTypes).toEqual(esTypes);
 
-    expect(findInGraph(enJsonLd, "WebSite")?.inLanguage).toBe("en");
-    expect(findInGraph(esJsonLd, "WebSite")?.inLanguage).toBe("es");
+    // #website is ONE entity shared by both locales, so it must NOT report a
+    // different language depending on which page was crawled. Both pages
+    // declare the same bilingual value; the per-page language lives on the
+    // page-scoped nodes (WebPage/ProfilePage/TechArticle) instead.
+    expect(findInGraph(enJsonLd, "WebSite")?.inLanguage).toEqual(["en", "es"]);
+    expect(findInGraph(esJsonLd, "WebSite")?.inLanguage).toEqual(["en", "es"]);
   });
 });
 
@@ -954,6 +968,84 @@ test.describe("Locale-scoped entity @ids", () => {
     expect(
       offenders,
       `Entities defined under a URL that is not their page's canonical:\n${offenders.join("\n")}`,
+    ).toEqual([]);
+  });
+
+  /**
+   * Same defect class, different node type.
+   *
+   * SiteNavigationElement once shipped Spanish labels on English URLs; that
+   * was fixed and guarded. The identical bug then reappeared in
+   * ToolCategoryPage, whose ListItem URLs were built without translatePath(),
+   * pairing a Spanish `name` with an English `url` on 17 entries across the
+   * five ES category pages. The per-page guard on the sample list above would
+   * never have caught it — no category page is in that list — so this walks
+   * every built Spanish page instead.
+   */
+  test("every Spanish page keeps its ListItem URLs under /es/", () => {
+    const esDir = path.join(path.resolve("dist"), "es");
+    const pages = htmlFilesIn(esDir);
+    expect(pages.length, "No Spanish pages found in dist/es").toBeGreaterThan(
+      0,
+    );
+
+    const offenders: string[] = [];
+
+    for (const file of pages) {
+      const html = fs.readFileSync(file, "utf-8");
+      const raw =
+        /<script\b[^>]*application\/ld\+json[^>]*>([\s\S]*?)<\/script>/.exec(
+          html,
+        )?.[1];
+      if (!raw) continue;
+
+      const collect = (node: unknown): void => {
+        if (Array.isArray(node)) {
+          for (const child of node) collect(child);
+          return;
+        }
+        if (!node || typeof node !== "object") return;
+        const record = node as Record<string, unknown>;
+
+        if (matchesType(record["@type"], "ListItem")) {
+          const target = record.item;
+          const candidates = [
+            record.url,
+            typeof target === "string" ? target : undefined,
+            target && typeof target === "object"
+              ? (target as Record<string, unknown>)["@id"]
+              : undefined,
+          ];
+
+          for (const candidate of candidates) {
+            if (typeof candidate !== "string") continue;
+            if (!candidate.startsWith("https://jmrp.io")) continue;
+
+            const { pathname } = new URL(candidate);
+            // The site root is a legitimate breadcrumb ancestor, and
+            // /publications/ is the deliberately locale-neutral identifier
+            // for the one paper with no DOI — both locales must mint the
+            // same id there or the work splits into two entities.
+            if (pathname === "/" || pathname.startsWith("/publications/")) {
+              continue;
+            }
+            if (pathname.startsWith("/es/")) continue;
+
+            offenders.push(
+              `${path.relative("dist", file)} → "${String(record.name)}" → ${pathname}`,
+            );
+          }
+        }
+
+        for (const value of Object.values(record)) collect(value);
+      };
+
+      collect(JSON.parse(raw));
+    }
+
+    expect(
+      offenders,
+      `Spanish ListItem entries pointing outside /es/:\n${offenders.join("\n")}`,
     ).toEqual([]);
   });
 });

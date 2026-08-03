@@ -29,6 +29,11 @@ const githubUrl = siteData.social_links?.find((l) => l.name === "GitHub")?.url;
 const scholarUrl = siteData.person?.sameAs?.find((u) =>
   u.includes("scholar.google"),
 );
+// ORCID is in the JSON-LD `sameAs` on every page but was not a visible link
+// anywhere on a post. It is the strongest machine-verifiable credential the
+// author has (14 works, resolvable identifier), and this card is where a
+// reader decides whether to trust the article.
+const orcidUrl = siteData.person?.sameAs?.find((u) => u.includes("orcid.org"));
 
 const headingId = `author-${crypto.getRandomValues(new Uint32Array(1))[0]}`;
 const externalRel = "external noopener noreferrer";
@@ -83,6 +88,17 @@ const externalRel = "external noopener noreferrer";
             rel={externalRel}
           >
             Google Scholar
+          </a>
+        )
+      }
+      {
+        orcidUrl && (
+          <a
+            href={orcidUrl}
+            target="_blank"
+            rel={externalRel}
+          >
+            ORCID
           </a>
         )
       }

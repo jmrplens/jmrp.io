@@ -461,6 +461,7 @@ export const common = {
       title: "Blog",
       kicker: "Notes",
       subtitle: "Thoughts, tutorials, and engineering notes.",
+      seriesLink: "Some of these were written as a set — read them in order",
       topicsTitle: "Topics",
       allPosts: "all",
       moreTopics: "+{count} more",
@@ -576,7 +577,7 @@ export const common = {
       summary2:
         "The self-hosted services include a Mastodon instance, a Matrix homeserver, an AT Protocol PDS, file sync, media streaming and monitoring. Four Tor nodes run alongside them: two bridges speaking obfs4 and WebTunnel, one in Valencia and one in Alicante, and two middle relays on IONOS VPS instances, one in London and one in Madrid.",
       summary3:
-        "Security is one pipeline rather than a set of unrelated rules. A honeypot on the router turns a scanner's first packet into an address-list entry, nginx tarpits and pattern matches on the web tier, both feed CrowdSec, and CrowdSec drives bouncers back on the router and the reverse proxy. The counters above are what that pipeline actually stopped.",
+        "Security is one pipeline rather than a set of unrelated rules. A honeypot on the router turns a scanner's first packet into an address-list entry, nginx tarpits and pattern matches on the web tier, both feed CrowdSec, and CrowdSec drives bouncers back on the router and the reverse proxy. The counters above report what that pipeline is stopping; they are live figures fetched in your browser, so a reader without JavaScript sees placeholders rather than numbers.",
       realtimePill: "Live · via API",
       kpiAriaLabel: "Homelab headline metrics",
       kpiServicesOnline: "services online",
@@ -827,6 +828,8 @@ export const common = {
       statPublications: "publications",
       statJournals: "journal articles",
       statConferences: "conference papers",
+      statTheses: "theses",
+      statOther: "other works",
       statCitations: "citations",
       statHIndex: "h-index",
       statCoauthors: "co-authors",
@@ -847,7 +850,7 @@ export const common = {
         "José Manuel Requena Plens — firmware and software engineer in Valencia building secure embedded devices, open-source tools, and self-hosted infrastructure.",
       editorialTitle: "// EDITORIAL & CORRECTIONS",
       editorialBody1:
-        "Everything published here comes from work actually done: commands run on real hardware and real servers, configuration quoted from systems that are running it, and, where a guide depends on a specific software version, that version stated in the article. Claims that are not mine to make — protocol behavior, cryptographic properties, vendor defaults — are checked against primary sources (RFCs, standards bodies, vendor documentation) and cited, and every link is re-checked automatically on each build.",
+        "Everything published here comes from work actually done: commands run on real hardware and real servers, configuration quoted from systems that are running it, and, where a guide depends on a specific software version, that version stated in the article. Claims that are not mine to make — protocol behavior, cryptographic properties, vendor defaults — are checked against primary sources (RFCs, standards bodies, vendor documentation) and cited, and every link is re-checked automatically on every CI run.",
       editorialBody2:
         "Each post carries an AI-assistance disclosure, so here is exactly what it means. AI tools help with drafting, structure, copy-editing and the Spanish translation. They do not decide what is true: every command, configuration snippet and measurement is executed and verified by me before it ships, and nothing is published straight from a model's output. The Spanish version is a translation of the same verified material, not a separately generated article.",
       editorialBody3:
@@ -973,13 +976,13 @@ export const common = {
       inCategory: "in this category",
       backToTools: "← Back to all tools",
       securityDesc:
-        "Free online security tools — CSP policy builder, SRI hash calculator, certificate inspector, and Base64/hex encoding. No data sent to servers.",
+        "Free security tools that run entirely in your browser — CSP policy builder and hash calculator, certificate inspector, HTTP header analyzer, and more.",
       developerDesc:
         "Free online developer utilities — Base64 encoder, regex tester, cron expression builder, Unix timestamp converter, and color contrast checker.",
       networkDesc:
-        "Free online network tools — IP/CIDR subnet calculator, Nginx and Apache config generators, and DNS lookup utilities. All processing runs locally.",
+        "Free network tools — an Nginx config generator and an IPv4/IPv6 subnet calculator with VLSM planning and reverse DNS. Both run in your browser.",
       embeddedDesc:
-        "Free online embedded tools — Modbus RTU/TCP frame builder and CRC calculator for industrial automation and SCADA systems development.",
+        "Free embedded tools — a Modbus RTU/TCP frame builder with CRC, and a string-pool packer for firmware translation tables. Both run in your browser.",
       mikrotikDesc:
         "Free MikroTik RouterOS tools — WireGuard VPN config generator for dual-stack setups. All processing runs locally in your browser.",
       fallbackDesc: "Tools in the {category} category.",

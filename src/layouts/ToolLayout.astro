@@ -83,6 +83,18 @@ const translatePath = useTranslatedPath(locale);
 // both locales into one entity with two names — the same defect fixed for
 // blog posts in #375.
 const toolUrl = new URL(translatePath(`/tools/${slug}/`), getSiteUrl()).href;
+
+// The per-locale `@id` split was applied here, but not the reciprocal link
+// that BlogPost.astro emits for articles — leaving 34 disconnected entities
+// for 17 tools. Both locales share the slug, so the counterpart is derivable.
+const counterpartToolUrl = new URL(
+  locale === "es" ? `/tools/${slug}/` : `/es/tools/${slug}/`,
+  getSiteUrl(),
+).href;
+const toolTranslationLink =
+  locale === "es"
+    ? { translationOfWork: { "@id": `${counterpartToolUrl}#software` } }
+    : { workTranslation: { "@id": `${counterpartToolUrl}#software` } };
 // `@context` is intentionally omitted: this node is merged into the page-level
 // JSON-LD `@graph`, which already declares the context.
 const baseToolSchema = {
@@ -104,6 +116,7 @@ const baseToolSchema = {
   author: { "@id": new URL("#person", getSiteUrl()).href },
   creator: { "@id": new URL("#person", getSiteUrl()).href },
   inLanguage: locale,
+  ...toolTranslationLink,
   ...(features && features.length > 0 && { featureList: features }),
   ...(publishedDate && {
     datePublished: publishedDate.toISOString(),
@@ -118,6 +131,7 @@ const faqNode =
     ? ({
         "@type": "FAQPage",
         "@id": `${toolUrl}#faq`,
+        inLanguage: locale,
         isPartOf: { "@id": `${toolUrl}#software` },
         mainEntity: faq.map((item) => ({
           "@type": "Question",

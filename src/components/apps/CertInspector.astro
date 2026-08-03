@@ -236,8 +236,8 @@ emyPxgcYxn/eR44/KJ4EBs+lVDR3veyJm+kXQ99b21/+jh5Xos1AnX5iItreGCc=
         rows="8"
         placeholder={t("tools.certInspector.pastePemPlaceholder")}
         spellcheck="false"
-        >{sampleCert}</textarea
-      >
+        data-sample-pem={sampleCert}
+      ></textarea>
       <button
         type="button"
         class="cert-inspect-btn"
@@ -1451,6 +1451,17 @@ emyPxgcYxn/eR44/KJ4EBs+lVDR3veyJm+kXQ99b21/+jh5Xos1AnX5iItreGCc=
     }
 
     inspectBtn.addEventListener("click", inspect);
+
+    // Seed the demo certificate from a data attribute rather than shipping it
+    // as the textarea's child text. As child text it was the first ~1,856
+    // characters of this page's extractable content — 14% of the total, and
+    // ahead of every word of prose, so a retrieval system chunking the page
+    // led with a base64 blob. In an attribute it still renders identically
+    // for the reader but no longer front-loads the text extraction.
+    if (!textarea.value) {
+      var samplePem = textarea.getAttribute("data-sample-pem");
+      if (samplePem) textarea.value = samplePem;
+    }
 
     // Auto-inspect on load
     inspect();

@@ -5,7 +5,7 @@
  */
 import PublicationItem from "@components/publications/PublicationItem.astro";
 import { defaultLocale, type Locale } from "@i18n/config";
-import { useTranslations } from "@i18n/utils";
+import { type TranslationKey, useTranslations } from "@i18n/utils";
 import BaseLayout from "@layouts/BaseLayout.astro";
 import { stripHtml } from "@utils/html";
 import {
@@ -46,19 +46,29 @@ for (const pub of allPublications) {
 const coauthorsEntry = await getEntry("publications_data", "coauthors");
 const coauthorsCount = Object.keys(coauthorsEntry?.data ?? {}).length;
 
+// Derived from typeCounts rather than hardcoded, so the per-type figures
+// always sum to the total. Hardcoding journal + conference published
+// "14 publications / 1 journal articles / 11 conference papers" — the two
+// theses had no counter and 1 + 11 never reached 14. Kinds with a zero count
+// are omitted so the band stays tight.
+const kindLabels: Record<string, TranslationKey> = {
+  journal: "pages.publications.statJournals",
+  conference: "pages.publications.statConferences",
+  thesis: "pages.publications.statTheses",
+  other: "pages.publications.statOther",
+};
+
 const stats = [
   {
     value: String(allPublications.length),
     label: t("pages.publications.statPublications"),
   },
-  {
-    value: String(typeCounts.get("journal") ?? 0),
-    label: t("pages.publications.statJournals"),
-  },
-  {
-    value: String(typeCounts.get("conference") ?? 0),
-    label: t("pages.publications.statConferences"),
-  },
+  ...Object.entries(kindLabels)
+    .filter(([kind]) => (typeCounts.get(kind) ?? 0) > 0)
+    .map(([kind, labelKey]) => ({
+      value: String(typeCounts.get(kind)),
+      label: t(labelKey),
+    })),
   {
     value: String(coauthorsCount),
     label: t("pages.publications.statCoauthors"),
@@ -128,6 +138,13 @@ const collectionSchema = {
   url: collectionUrl,
   inLanguage: locale,
   isPartOf: { "@id": new URL("#website", getSiteUrl()).href },
+  // The framing prose only — the paper list itself is a citation grid that
+  // reads badly aloud, but "what is this research record and when was it
+  // produced" is a genuine spoken-answer target.
+  speakable: {
+    "@type": "SpeakableSpecification",
+    cssSelector: [".pub-page-title", ".pub-subtitle", ".pub-period-note"],
+  },
   mainEntity: {
     "@type": "ItemList",
     numberOfItems: allPublications.length,
@@ -200,23 +217,45 @@ const collectionSchema = {
           // already carries its DOI in `identifier` and `sameAs`, so nothing is
           // invented by promoting it. The surrounding CollectionPage stays
           // locale-scoped — the listing really is per-locale, the papers are not.
-          "@id": doiUrl ?? `${collectionUrl}#pub-${pub.id}`,
+          // The fallback is deliberately locale-NEUTRAL (always /publications/,
+          // never /es/publications/). 13 of 14 papers carry a DOI and are
+          // already unified by it; the one conference paper without a DOI was
+          // still minting two identifiers — the last surviving instance of the
+          // split this comment describes.
+          "@id":
+            doiUrl ??
+            new URL(`/publications/#pub-${pub.id}`, getSiteUrl()).href,
           headline: pub.title,
           name: pub.title,
           datePublished: formatIssuedDate(pub.issued),
           author:
-            pub.author?.map((a: { family: string; given?: string }) => ({
-              "@type": "Person",
-              // Link the site owner's own author node to the canonical #person
-              // entity. Match the full surname "Requena-Plens"/"Requena Plens"
-              // (not a bare "Requena") so a co-author is never mis-attributed.
-              ...(/requena[\s-]?plens/i.test(a.family) && {
-                "@id": new URL("#person", getSiteUrl()).href,
-              }),
-              ...(a.given && { givenName: a.given }),
-              familyName: a.family,
-              name: a.given ? `${a.given} ${a.family}` : a.family,
-            })) || [],
+            pub.author?.map(
+              (a: { family: string; given?: string; url?: string }) => {
+                // The site owner is emitted as a BARE reference. Re-describing
+                // the node here re-asserted `name: "José M. Requena-Plens"` on
+                // the canonical `@id`, which already asserts
+                // "José Manuel Requena Plens" — two conflicting names for one
+                // entity on merge. The byline variant is already covered by
+                // that node's `alternateName`. Match the full surname
+                // "Requena-Plens"/"Requena Plens" (not a bare "Requena") so a
+                // co-author is never mis-attributed.
+                if (/requena[\s-]?plens/i.test(a.family)) {
+                  return { "@id": new URL("#person", getSiteUrl()).href };
+                }
+                return {
+                  "@type": "Person" as const,
+                  // coauthors.yaml already carries a homepage for most
+                  // co-authors and processAuthors() attaches it. Using it as
+                  // the `@id` turns anonymous blank nodes into resolvable
+                  // entities, which is what academic entity reconciliation
+                  // actually keys on.
+                  ...(a.url && { "@id": a.url, url: a.url }),
+                  ...(a.given && { givenName: a.given }),
+                  familyName: a.family,
+                  name: a.given ? `${a.given} ${a.family}` : a.family,
+                };
+              },
+            ) || [],
           // Schema.org: an article `isPartOf` its venue. A journal is a
           // Periodical; conference proceedings are a CreativeWork (Periodical
           // would wrongly imply a recurring magazine). A thesis has no such

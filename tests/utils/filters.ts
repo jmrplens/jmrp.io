@@ -103,8 +103,20 @@ export function shouldIgnoreError(text: string): boolean {
   const isGeneric404 =
     text.includes("Failed to load resource") && text.includes("status of 404");
 
+  // Transient network-stack failures, not site defects: the OS network
+  // configuration changed or the socket was suspended mid-request. These
+  // surface under parallel load (a full `pnpm verify` run hit
+  // ERR_NETWORK_CHANGED once on one mobile page, and the same test then
+  // passed 3/3 in isolation). Deliberately narrow — only the two codes whose
+  // meaning is "the machine's network moved underneath us", never a generic
+  // connection failure, which could hide a real problem.
+  const isTransientNetworkChange =
+    text.includes("net::ERR_NETWORK_CHANGED") ||
+    text.includes("net::ERR_NETWORK_IO_SUSPENDED");
+
   return (
     isCloudflareInsightsError(text) ||
+    isTransientNetworkChange ||
     isExpectedCorsError ||
     isResource404 ||
     isExternalResource404 ||

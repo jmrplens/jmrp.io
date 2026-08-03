@@ -131,6 +131,14 @@ const cvWebPage = {
   inLanguage: locale,
   isPartOf: { "@id": new URL("#website", getSiteUrl()).href },
   mainEntity: { "@id": new URL("#person", getSiteUrl()).href },
+  // Every blog post declares a speakable region; the CV — the page an
+  // assistant is most likely to be asked to read out about this person — had
+  // none. Points at the identity line only: the section grids below are
+  // tabular and read badly aloud.
+  speakable: {
+    "@type": "SpeakableSpecification",
+    cssSelector: [".cv-title", ".cv-name", ".cv-headline"],
+  },
 } satisfies WebPage;
 
 const cvPersonFacts = {

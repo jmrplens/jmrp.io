@@ -22,6 +22,7 @@
  * YAML requires `name`/`summary.en` to match those sites verbatim.
  */
 import { getSiteUrl } from "@utils/site";
+import { wikidataEntityUri, wikidataLabel } from "@utils/wikidata";
 import { getEntry } from "astro:content";
 import type {
   SoftwareApplication,
@@ -101,9 +102,11 @@ export async function getProjects(): Promise<Project[]> {
  */
 const topicThing = (topic: ProjectTopic): Thing => ({
   "@type": "Thing",
-  name: topic.name,
-  // eslint-disable-next-line unicorn/prefer-https -- see comment above
-  "@id": `http://www.wikidata.org/entity/${topic.wikidata}`,
+  // The chip on /projects/ keeps the authored spelling; the graph publishes
+  // Wikidata's own label so this `@id` agrees with the same `@id` emitted
+  // from post topics and from #person.knowsAbout.
+  name: wikidataLabel(topic.wikidata, topic.name),
+  "@id": wikidataEntityUri(topic.wikidata),
 });
 
 /**

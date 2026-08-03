@@ -2,7 +2,7 @@
 title: "Running a Tor Bridge on Linux: obfs4 and WebTunnel Guide"
 slug: "009-running-tor-bridge"
 publishedDate: 2026-03-30
-updatedDate: 2026-08-02
+updatedDate: 2026-08-03
 description: "Guide to running obfs4 and WebTunnel Tor bridges on Linux with Nginx camouflage, firewall hardening, Prometheus monitoring, and CrowdSec."
 lead: "One bridge running obfs4 and WebTunnel at once, with Nginx making the WebTunnel half indistinguishable from ordinary HTTPS. Running and Valid arrive within the hour; Stable and Guard took about a week here, because they are scored on sustained reliability rather than a plain uptime counter."
 author: "José Manuel Requena Plens"
@@ -51,22 +51,31 @@ howto:
   steps:
     - name: "Install Tor from the official repository"
       text: "Add the Tor Project GPG key and APT repository, then install tor, deb.torproject.org-keyring, and obfs4proxy. Distribution packages are often outdated, so always use the official repo."
+      anchor: "step-1-install-tor-from-the-official-repository"
     - name: "Compile and install the WebTunnel server"
       text: "Install Go, then clone the WebTunnel source and build the webtunnel-server binary into /usr/local/bin. The binary is not yet packaged for Debian, so it is compiled from source."
+      anchor: "step-2-install-webtunnel-optional-but-recommended"
     - name: "Configure the Tor bridge in torrc"
       text: "Back up /etc/tor/torrc and set BridgeRelay 1, ORPort 0.0.0.0:9001, and the obfs4 and WebTunnel transport plugins. Generate a 24-character secret URL path for WebTunnel."
+      anchor: "step-3-configure-the-tor-bridge"
     - name: "Configure Nginx for WebTunnel camouflage"
       text: "Create a plain camouflage website, obtain a Let's Encrypt TLS certificate, and add an Nginx server block that reverse-proxies the secret path to the local WebTunnel port with WebSocket upgrade headers."
+      anchor: "step-4-configure-nginx-for-webtunnel-camouflage"
     - name: "Configure port forwarding and the firewall"
       text: "Forward TCP 9001, 4443, and 443 from the router to the server and allow them in UFW or iptables. IPv6 needs firewall allow rules instead of NAT forwarding."
+      anchor: "step-5-configure-port-forwarding"
     - name: "Allow obfs4proxy in AppArmor"
       text: "On Debian/Ubuntu, set the obfs4proxy profile to complain mode or add an explicit allow rule so AppArmor does not block execution."
+      anchor: "step-6-apparmor-configuration"
     - name: "Start the bridge and verify it works"
       text: "Restart Tor, watch the logs for a successful bootstrap and ORPort self-test, confirm tor, obfs4proxy, and webtunnel-server are running and listening, and retrieve the bridge fingerprint."
+      anchor: "step-7-start-and-verify"
     - name: "Set up Prometheus and Grafana monitoring"
       text: "Add a Prometheus scrape target for the MetricsPort (9052), restrict access to your monitoring server, and build Grafana panels for bandwidth, connections, relay flags, and health."
+      anchor: "step-8-monitoring-with-prometheus-and-grafana"
     - name: "Integrate CrowdSec without blocking Tor clients"
       text: "Add a three-layer bypass — iptables ACCEPT rules before CROWDSEC_CHAIN, an Nginx Lua exception for the Tor domain, and a CrowdSec parser whitelist — and persist the iptables rules via a systemd service."
+      anchor: "step-9-crowdsec-integration-if-applicable"
 ---
 
 import Callout from "@components/ui/Callout.astro";

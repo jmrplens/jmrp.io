@@ -3,11 +3,11 @@ title: "Content Security Policy (CSP) con Nginx: La Guía Completa"
 slug: "003-implementing-content-security-policy-nginx"
 lang: "es"
 publishedDate: 2025-12-19
-updatedDate: 2026-08-02
+updatedDate: 2026-08-03
 lastVerified:
   date: 2026-08-01
   versions:
-    - nginx (jmrp.io production)
+    - nginx 1.31.2
 description: "Domina Content Security Policy de cero a A+ — nonces, hashes, strict-dynamic, Trusted Types, prevención de bypass y configuraciones Nginx en producción."
 lead: "El 94,72 % de las CSP basadas en listas de permitidos se pueden eludir, según la propia investigación de Google; lo que de verdad detiene el script inyectado —y saca un A+— es una política con nonce y strict-dynamic."
 coverImage: "../../../assets/images/blog/csp-shield.webp"
@@ -90,14 +90,14 @@ import HashCalculator from "@components/apps/HashCalculator.astro";
 
 Esta guía te lleva desde cero hasta una configuración CSP lista para producción con **calificación A+**. Aprenderás no solo el "cómo" sino el "por qué" detrás de cada directiva, comprenderás las técnicas modernas de bypass y cómo prevenirlas, y descubrirás temas avanzados como Trusted Types para la prevención de XSS basado en DOM.
 
-<TLDRSummary title="Lo que aprenderás">
-  - **Empieza con una línea**: `default-src 'self'` te ofrece protección inmediata
-  - **Usa nonces, no allowlists**: el 94,72 % de las CSP basadas en allowlist se pueden eludir; los nonces son criptográficamente seguros
-  - **Los sitios estáticos pueden usar nonces**: el `sub_filter` de Nginx reemplaza placeholders en cada petición
-  - **Adopta `strict-dynamic`**: la confianza se propaga desde los scripts con nonce a los cargados dinámicamente
-  - **Incluye hardening de seguridad**: `object-src 'none'` y `base-uri 'none'` son obligatorios para una CSP estricta
-  - **Trusted Types**: la siguiente evolución para la prevención de XSS basado en DOM (CSP Level 3)
-  - **Despliega de forma segura**: empieza siempre en modo report-only antes de aplicar la política
+<TLDRSummary title="TL;DR — una CSP basada en nonces sobre Nginx">
+  - **Las allowlists no aguantan.** La propia investigación de Google encontró que el **94,72 % de las CSP basadas en allowlist se pueden eludir**, porque los CDN de confianza alojan endpoints JSONP y librerías desactualizadas que convierten un origen permitido en una vía de ejecución.
+  - **Un nonce es por petición e impredecible**, así que un `<script>` inyectado no tiene token válido y nunca se ejecuta — que es justo lo que una allowlist no puede prometer.
+  - **Un sitio estático también puede usar nonces.** Nginx genera uno por petición y `sub_filter` sustituye el placeholder en el cuerpo de la respuesta, sin servidor de aplicación de por medio. Así se sirve exactamente esta página.
+  - **`strict-dynamic` propaga la confianza** de un script con nonce a lo que este cargue, que es lo que permite que la política sobreviva a bundlers e imports dinámicos sin volver a abrir la allowlist.
+  - **`object-src 'none'` y `base-uri 'none'` no son opcionales**: sin ellos una política estricta sigue siendo eludible mediante contenido de plugins e inyección de `<base>`.
+  - **Trusted Types (CSP Level 3) cierra el sink del DOM**, la clase de XSS a la que una política de origen de scripts no llega por sí sola.
+  - **El resultado medido:** una **A+ en Mozilla Observatory con 140 puntos y los 10 tests superados**, alcanzada tras ejecutar `Content-Security-Policy-Report-Only` con `report-uri` durante una o dos semanas antes de aplicarla.
 </TLDRSummary>
 
 <Prerequisite title="Antes de empezar">

@@ -239,7 +239,14 @@ test.describe("Edge Cases: Overflow Detection", () => {
     // Test first 3 blog posts for efficiency
     for (const post of blogPosts.slice(0, 3)) {
       await page.goto(post.url);
-      await page.waitForLoadState("networkidle");
+      // NOT networkidle. With `prefetch: { prefetchAll: true }` and
+      // `clientPrerender` the browser keeps speculatively fetching linked
+      // pages, so on a heavily-linked blog post the network may never go idle
+      // inside the 30 s timeout when the suite runs fullyParallel — this test
+      // timed out in a loaded run and then passed 4/4 in isolation at 8.2 s.
+      // A horizontal-overflow measurement only needs layout to be final, and
+      // the one thing that still moves it after `load` is webfont swap.
+      await page.evaluate(() => document.fonts.ready);
       const hasOverflow = await page.evaluate(() => {
         return document.documentElement.scrollWidth > globalThis.innerWidth;
       });

@@ -130,11 +130,16 @@ test.describe("SEO Per-Page Checks", () => {
           `Description too long (${descContent!.length} chars): ${descContent!.substring(0, 50)}...`,
         ).toBeLessThanOrEqual(160);
 
-        // Robots meta tag should be present
+        // Robots meta tag should be present. Indexable pages additionally
+        // lift the default snippet/preview caps — the site's whole posture is
+        // to be quotable, so the conservative defaults work against it. The
+        // trailing group is optional because noindex pages omit it, where the
+        // directives would be meaningless. Still anchored at both ends so a
+        // malformed value cannot slip through.
         const robotsMeta = page.locator('meta[name="robots"]');
         await expect(robotsMeta).toHaveAttribute(
           "content",
-          /^(no)?index, (no)?follow$/,
+          /^(no)?index, (no)?follow(?:, max-snippet:-1, max-image-preview:large, max-video-preview:-1)?$/,
         );
 
         await expect(page.locator('meta[property="og:title"]')).toHaveAttribute(

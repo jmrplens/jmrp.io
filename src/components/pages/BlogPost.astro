@@ -26,6 +26,7 @@ import { formatDateDot, getReadingTime } from "@utils/blog";
 import { getRelatedContent } from "@utils/related";
 import { getSeriesForPost } from "@utils/series";
 import { getSiteUrl } from "@utils/site";
+import { wikidataEntityUri, wikidataLabel } from "@utils/wikidata";
 import { getImage, Picture } from "astro:assets";
 import { type CollectionEntry, getEntry, render } from "astro:content";
 import * as cheerio from "cheerio";
@@ -219,16 +220,20 @@ const articleNode = {
     post.data.topics.length > 0 && {
       about: {
         "@type": "Thing",
-        name: post.data.topics[0].name,
-        // eslint-disable-next-line unicorn/prefer-https -- see comment above
-        "@id": `http://www.wikidata.org/entity/${post.data.topics[0].wikidata}`,
+        // Wikidata's own label, so one `@id` never carries two names across
+        // the posts, projects and knowsAbout emitters. These names are not
+        // rendered anywhere — they exist only in the graph.
+        name: wikidataLabel(
+          post.data.topics[0].wikidata,
+          post.data.topics[0].name,
+        ),
+        "@id": wikidataEntityUri(post.data.topics[0].wikidata),
       },
       ...(post.data.topics.length > 1 && {
         mentions: post.data.topics.slice(1).map((topic) => ({
           "@type": "Thing",
-          name: topic.name,
-          // eslint-disable-next-line unicorn/prefer-https -- see comment above
-          "@id": `http://www.wikidata.org/entity/${topic.wikidata}`,
+          name: wikidataLabel(topic.wikidata, topic.name),
+          "@id": wikidataEntityUri(topic.wikidata),
         })),
       }),
     }),
@@ -263,6 +268,9 @@ const faqNode =
     ? ({
         "@type": "FAQPage",
         "@id": `${postUrl}#faq`,
+        // The ES nodes carry Spanish Q&A; without inLanguage a consumer has to
+        // guess the language of the answer it is about to quote.
+        inLanguage: isFallback ? "en" : locale,
         isPartOf: { "@id": `${postUrl}#article` },
         mainEntity: post.data.faq.map((item) => ({
           "@type": "Question",
@@ -277,6 +285,15 @@ const howtoNode = post.data.howto
       "@type": "HowTo",
       "@id": `${postUrl}#howto`,
       name: post.data.howto.name,
+      // The sibling FAQPage stitches itself to #article; the HowTo did not, so
+      // all 18 of them floated in the graph with no owning page and no
+      // language. (Step anchors are supported by the frontmatter schema via
+      // `steps[].anchor` and mapped below — no post supplies one yet, which is
+      // a content gap rather than a code one.)
+      inLanguage: isFallback ? "en" : locale,
+      isPartOf: { "@id": `${postUrl}#article` },
+      mainEntityOfPage: { "@id": `${postUrl}#article` },
+      description: post.data.description,
       ...(post.data.howto.totalTime && {
         totalTime: post.data.howto.totalTime,
       }),

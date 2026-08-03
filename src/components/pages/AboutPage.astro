@@ -88,9 +88,24 @@ const contactLinks = [
 // Both locales render from the same YAML, so both share its modification date.
 const aboutModified = lastCommitDate("src/content/profile/about.yaml");
 
+// The EN/ES counterpart of this page, so the two ProfilePage nodes can point
+// at each other the way BlogPost.astro already pairs article translations.
+// Without it, /about/ and /es/about/ were two unrelated nodes describing the
+// same page — on the one page that exists to anchor the author entity.
+const profileAltUrl = new URL(
+  locale === "es" ? "/about/#profile" : "/es/about/#profile",
+  getSiteUrl(),
+).href;
+
 const personSchema = {
   "@type": "ProfilePage",
   "@id": new URL("#profile", new URL(Astro.url.pathname, getSiteUrl())).href,
+  name: t("pages.about.title"),
+  url: new URL(Astro.url.pathname, getSiteUrl()).href,
+  isPartOf: { "@id": new URL("#website", getSiteUrl()).href },
+  ...(locale === "es"
+    ? { translationOfWork: { "@id": profileAltUrl } }
+    : { workTranslation: { "@id": profileAltUrl } }),
   inLanguage: locale,
   // Freshness from the content's own git history, not the build clock. Using
   // `new Date()` here restamped the page as modified on every deploy even when

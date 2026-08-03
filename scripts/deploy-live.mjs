@@ -960,8 +960,14 @@ async function submitToIndexNow(urlList) {
 
   const submittedUrls = urlList.slice(0, INDEXNOW_MAX_URLS);
   if (submittedUrls.length === 0) {
-    console.warn(
-      "deploy-live: IndexNow: no sitemap URLs found, skipping submission.",
+    // `urlList` is the DIFF against the ledger, not the sitemap. Empty almost
+    // always means "nothing changed since the last deploy", which is the whole
+    // point of the differential submission — not a missing or empty sitemap.
+    // The previous wording said "no sitemap URLs found" and sent a reader off
+    // debugging sitemap generation that was working fine. The line above
+    // already reports the real counts ("N of M URL(s) changed").
+    console.log(
+      "deploy-live: IndexNow: nothing changed since the last deploy, skipping submission.",
     );
     return true;
   }
@@ -1039,8 +1045,9 @@ async function submitToBingWebmaster(urlList) {
     "",
   );
   if (urlList.length === 0) {
-    console.warn(
-      "deploy-live: Bing Webmaster: no sitemap URLs found, skipping submission.",
+    // Same as IndexNow above: this is the ledger diff, not the sitemap.
+    console.log(
+      "deploy-live: Bing Webmaster: nothing changed since the last deploy, skipping submission.",
     );
     // Disabled or nothing to send is not a failure.
     return true;

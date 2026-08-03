@@ -191,6 +191,18 @@ function buildIdentityDocument() {
   const wikidata = JSON.parse(
     readFileSync(join(ROOT, "src/data/knows-about-wikidata.json"), "utf8"),
   );
+  // Canonical Wikidata labels, so the Thing nodes here carry exactly the same
+  // `name` as the ones BaseHead.astro emits for the same `@id`. Without this
+  // the two implementations drift and schema-validation.spec.ts fails — which
+  // is precisely how this line came to exist.
+  const wikidataLabels = JSON.parse(
+    readFileSync(join(ROOT, "src/data/wikidata-labels.json"), "utf8"),
+  );
+  // Must stay identical to LABEL_OVERRIDES in src/utils/wikidata.ts — see the
+  // rationale there. A .astro component cannot be imported from a plain Node
+  // script, which is why this small table is duplicated rather than shared;
+  // schema-validation.spec.ts compares the two outputs and fails on drift.
+  const labelOverrides = { Q1135322: "Modbus", Q3025536: "DevOps" };
 
   const orcidUrl = site.person?.sameAs?.find(isOrcidUrl);
   const orcidId = /orcid\.org\/([\dX-]+)/i.exec(orcidUrl ?? "")?.[1];
@@ -199,7 +211,10 @@ function buildIdentityDocument() {
     wikidata[topic]
       ? {
           "@type": "Thing",
-          name: topic,
+          name:
+            labelOverrides[wikidata[topic]] ??
+            wikidataLabels[wikidata[topic]] ??
+            topic,
           // Wikidata's canonical entity concept URI is http by design — it is
           // the Linked Data identifier, not a fetchable link. Mirrors the same
           // suppression in BaseHead.astro.
