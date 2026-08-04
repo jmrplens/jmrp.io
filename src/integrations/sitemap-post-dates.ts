@@ -290,6 +290,11 @@ export function createLastmodResolver(): (path: string) => string | undefined {
     if (path === "/tools/" || path.startsWith("/tools/categories/"))
       return newestTool;
 
+    // /feeds/ lists the five newest posts, so a new or updated post changes
+    // the page just as much as an edit to its own copy does. Same shop-window
+    // reasoning as "/" above, folded with its static sources.
+    if (path === "/feeds/") return newest(staticDates.get(path), newestPost);
+
     return staticDates.get(path);
   };
 }
