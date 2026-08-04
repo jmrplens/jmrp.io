@@ -60,6 +60,12 @@
 }
 
 .back-link a {
+  /* En BlogTagPage/ToolCategoryPage .back-link es un div contenedor: el
+     área táctil debe ir también en el ancla anidada (WCAG 2.5.8). */
+  display: inline-flex;
+  gap: inherit;
+  align-items: center;
+  min-height: 24px;
   color: inherit;
   text-decoration: inherit;
 }

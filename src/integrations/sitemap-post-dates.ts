@@ -244,6 +244,13 @@ export function createLastmodResolver(): (path: string) => string | undefined {
       "src/i18n/translations/en/common.ts",
       "src/i18n/translations/es/common.ts",
     ],
+    // Same reasoning as /privacy/: the page copy lives in the translation
+    // bundles; the component holds the structure.
+    "/feeds/": [
+      "src/components/pages/FeedsPage.astro",
+      "src/i18n/translations/en/common.ts",
+      "src/i18n/translations/es/common.ts",
+    ],
   };
   const staticDates = new Map<string, string | undefined>(
     Object.entries(staticSources).map(([path, sources]) => [
