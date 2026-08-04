@@ -439,6 +439,10 @@ export default defineConfig({
       // Increased threshold to accommodate large rendering (mermaid) chunks.
       // Optimization is handled via ViteImageOptimizer and CSS extraction in post-build.
       chunkSizeWarningLimit: 1000,
+      // No calcules el gzip de cada chunk solo para decorar el log del build:
+      // los presupuestos de tamaño los vigila el job de bundle-size en CI y
+      // la compresión real (brotli 11) ocurre en el post-build.
+      reportCompressedSize: false,
     },
     server: {},
     ssr: {
