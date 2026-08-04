@@ -22,7 +22,7 @@ import type { TranslationKey } from "@i18n/utils";
 import { formatDate, useTranslatedPath, useTranslations } from "@i18n/utils";
 import BaseLayout from "@layouts/BaseLayout.astro";
 import type { SiteConfig } from "@src/types";
-import { formatDateDot, getReadingTime } from "@utils/blog";
+import { formatDateDot, getReadingTime, tagUrlSegment } from "@utils/blog";
 import { getRelatedContent } from "@utils/related";
 import { getSeriesForPost } from "@utils/series";
 import { getSiteUrl } from "@utils/site";
@@ -366,9 +366,7 @@ const articleSchema = [
                 <div class="tags">
                   {primaryTags.map((tag) => (
                     <a
-                      href={translatePath(
-                        `/blog/tags/${encodeURIComponent(tag.toLowerCase())}/`,
-                      )}
+                      href={translatePath(`/blog/tags/${tagUrlSegment(tag)}/`)}
                       class="tag-chip"
                       aria-label={t("aria.viewTaggedPosts", { tag })}
                     >

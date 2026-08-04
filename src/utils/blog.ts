@@ -84,6 +84,17 @@ export function getReadingTime(post: CollectionEntry<"posts">): number {
 }
 
 /**
+ * URL segment for a tag page link. Encodes anything unsafe for a path segment
+ * but keeps `+` literal: in a path, `+` is a legal literal character (it only
+ * means "space" inside query strings), so `c++` links as /blog/tags/c++/
+ * instead of the uglier /blog/tags/c%2B%2B/. Both forms resolve to the same
+ * page; this keeps every generator on the pretty canonical form.
+ */
+export function tagUrlSegment(tag: string): string {
+  return encodeURIComponent(tag.toLowerCase()).replaceAll("%2B", "+");
+}
+
+/**
  * Processes a collection of blog posts to extract all unique tags and their occurrence counts.
  */
 export function getUniqueTags(posts: CollectionEntry<"posts">[]) {

@@ -1,7 +1,7 @@
 ---
 import { defaultLocale, type Locale } from "@i18n/config";
 import { useTranslatedPath, useTranslations } from "@i18n/utils";
-import { getPostsForLocale, getUniqueTags } from "@utils/blog";
+import { getPostsForLocale, getUniqueTags, tagUrlSegment } from "@utils/blog";
 
 interface Props {
   /** Marks the matching pill active (tag pages). Empty = "all posts" active. */
@@ -49,7 +49,7 @@ if (activeTag && visible.every((x) => x.tag !== activeTag)) {
   {
     visible.map(({ tag }) => (
       <a
-        href={translatePath(`/blog/tags/${encodeURIComponent(tag)}/`)}
+        href={translatePath(`/blog/tags/${tagUrlSegment(tag)}/`)}
         class:list={["tag-pill", { "is-active": tag === activeTag }]}
         data-tag={tag}
       >
@@ -66,7 +66,7 @@ if (activeTag && visible.every((x) => x.tag !== activeTag)) {
         <div class="tag-more__list">
           {overflow.map(({ tag }) => (
             <a
-              href={translatePath(`/blog/tags/${encodeURIComponent(tag)}/`)}
+              href={translatePath(`/blog/tags/${tagUrlSegment(tag)}/`)}
               class:list={["tag-pill", { "is-active": tag === activeTag }]}
               data-tag={tag}
             >

@@ -22,7 +22,12 @@ import {
   useTranslatedPath,
   useTranslations,
 } from "@i18n/utils";
-import { formatDateDot, getPostsForLocale, getUniqueTags } from "@utils/blog";
+import {
+  formatDateDot,
+  getPostsForLocale,
+  getUniqueTags,
+  tagUrlSegment,
+} from "@utils/blog";
 import { safeJsonLd } from "@utils/html";
 import { getToolsForLocale } from "@utils/tools";
 import { getEntry } from "astro:content";
@@ -92,7 +97,7 @@ const toolData = (await getToolsForLocale(locale)).map((e) => ({
 const allTags = getUniqueTags(posts).map(({ tag, count }) => ({
   tag,
   count,
-  href: translatePath(`/blog/tags/${tag}/`),
+  href: translatePath(`/blog/tags/${tagUrlSegment(tag)}/`),
 }));
 
 // Identity / social for whoami · neofetch · social (no current employer).
