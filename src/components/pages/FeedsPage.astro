@@ -233,6 +233,13 @@ const feedsSchema = {
     padding-block: var(--space-xs);
   }
 
+  /* WCAG 2.5.8: enlaces independientes → área táctil >=24px */
+  .feeds-latest__item a,
+  .feeds-latest__more {
+    display: inline-block;
+    padding-block: 2px;
+  }
+
   .feeds-latest__date {
     flex: none;
     font-family: var(--font-mono);

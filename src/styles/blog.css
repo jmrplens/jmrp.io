@@ -44,6 +44,10 @@
   display: inline-flex;
   gap: var(--space-sm);
   align-items: center;
+
+  /* WCAG 2.5.8: enlace independiente → área táctil >=24px (texto: 21px) */
+  min-height: 24px;
+  padding-block: 2px;
   margin-bottom: var(--space-md);
   font-size: 0.9rem;
   color: var(--color-text-muted);

@@ -325,6 +325,9 @@ const socialLinksWithType = socialLinks.map((link) => {
   }
 
   .footer-nav__link {
+    /* WCAG 2.5.8: enlace independiente → área táctil >=24px (texto: 21px) */
+    display: inline-block;
+    padding-block: 4px;
     color: var(--color-text-muted);
     text-decoration: none;
     transition: color 0.2s;

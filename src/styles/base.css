@@ -22,6 +22,10 @@
 }
 
 html {
+  /* Reserva el hueco de la barra de scroll en escritorio con barras
+     clásicas: al navegar entre una página corta (sin scroll) y una larga el
+     ancho útil no cambia, y las View Transitions no "saltan" lateralmente. */
+  scrollbar-gutter: stable;
   font-family: var(--font-body);
   font-size: 100%; /* 16px base — respeta el zoom del usuario */
   line-height: 1.6;
@@ -110,6 +114,11 @@ h6 {
   line-height: 1.15;
   color: var(--color-text-heading);
   letter-spacing: -0.02em;
+
+  /* Reparte las palabras entre líneas en títulos multilínea (evita una
+     última línea con una sola palabra). Mejora progresiva; los navegadores
+     sin soporte lo ignoran. */
+  text-wrap: balance;
   scroll-margin-top: calc(var(--header-height) + 1rem);
 }
 
@@ -193,6 +202,9 @@ h4 {
 
 .prose p {
   margin-bottom: 1.375rem; /* 22px */
+
+  /* Evita palabras huérfanas al final de los párrafos (mejora progresiva). */
+  text-wrap: pretty;
 }
 
 /* Inline code (una sola comilla invertida) — chip mono neutro sobre surface2.
