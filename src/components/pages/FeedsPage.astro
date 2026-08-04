@@ -1,0 +1,261 @@
+---
+/**
+ * Feeds page ("// FEEDS") — human landing for the RSS feeds.
+ *
+ * Browsers navigating to /rss.xml (Sec-Fetch-Dest: document) are redirected
+ * here by the edge worker (and by nginx as fallback), so a person clicking
+ * the RSS button gets an explanation and copyable feed URLs instead of raw
+ * XML on the screen. Feed readers keep fetching the unchanged XML at the
+ * same URLs — they never send Sec-Fetch-Dest: document.
+ *
+ * The feed URLs are deliberately NOT rendered as links: clicking them would
+ * bounce straight back to this page. They are shown as text with a copy
+ * button, which is exactly what a reader app needs.
+ */
+import CopyButton from "@components/ui/CopyButton.astro";
+import { defaultLocale, type Locale } from "@i18n/config";
+import { useTranslatedPath, useTranslations } from "@i18n/utils";
+import BaseLayout from "@layouts/BaseLayout.astro";
+import { formatDateDot, getPostsForLocale } from "@utils/blog";
+import { getSiteUrl } from "@utils/site";
+import type { WebPage } from "schema-dts";
+
+const locale = (Astro.currentLocale ?? defaultLocale) as Locale;
+const t = useTranslations(locale);
+const translatePath = useTranslatedPath(locale);
+
+const siteUrl = getSiteUrl();
+const feedEn = new URL("/rss.xml", siteUrl).href;
+const feedEs = new URL("/es/rss.xml", siteUrl).href;
+
+// Current locale's feed first.
+const feeds =
+  locale === "es"
+    ? [
+        { label: t("pages.feeds.feedSpanish"), url: feedEs },
+        { label: t("pages.feeds.feedEnglish"), url: feedEn },
+      ]
+    : [
+        { label: t("pages.feeds.feedEnglish"), url: feedEn },
+        { label: t("pages.feeds.feedSpanish"), url: feedEs },
+      ];
+
+const entries = await getPostsForLocale(locale);
+const latest = entries
+  .map((e) => e.post)
+  .sort(
+    (a, b) => b.data.publishedDate.getTime() - a.data.publishedDate.getTime(),
+  )
+  .slice(0, 5);
+
+const pageUrl = new URL(Astro.url.pathname, siteUrl).href;
+const feedsSchema = {
+  "@type": "WebPage",
+  "@id": `${pageUrl}#webpage`,
+  url: pageUrl,
+  name: t("pages.feeds.title"),
+  description: t("pages.feeds.description"),
+  inLanguage: locale,
+  isPartOf: { "@id": new URL("#website", siteUrl).href },
+  publisher: { "@id": new URL("#person", siteUrl).href },
+} satisfies WebPage;
+---
+
+<BaseLayout
+  title={t("pages.feeds.title")}
+  description={t("pages.feeds.description")}
+  schema={feedsSchema}
+>
+  <div class="feeds container">
+    <header class="feeds-header">
+      <p class="section-title">{t("pages.feeds.kicker")}</p>
+      <h1 class="page-title feeds-header__title">
+        {t("pages.feeds.heading")}
+      </h1>
+      <p class="feeds-header__intro">{t("pages.feeds.intro")}</p>
+    </header>
+
+    <aside
+      class="feeds-note"
+      role="note"
+      aria-label={t("pages.feeds.landedTitle")}
+    >
+      <p class="feeds-note__title">{t("pages.feeds.landedTitle")}</p>
+      <p class="feeds-note__body">{t("pages.feeds.landedBody")}</p>
+    </aside>
+
+    <ul class="feeds-list">
+      {
+        feeds.map((feed) => (
+          <li class="feed-card">
+            <span class="feed-card__label">{feed.label}</span>
+            <span class="feed-card__row copy-container">
+              <code class="feed-card__url">{feed.url}</code>
+              <CopyButton
+                content={feed.url}
+                ariaLabel={`${t("pages.feeds.copyUrl")} — ${feed.label}`}
+                text={t("pages.feeds.copyUrl")}
+              />
+            </span>
+          </li>
+        ))
+      }
+    </ul>
+
+    <section
+      class="feeds-latest"
+      aria-labelledby="feeds-latest-title"
+    >
+      <h2
+        class="feeds-latest__title"
+        id="feeds-latest-title"
+      >
+        {t("pages.feeds.latestTitle")}
+      </h2>
+      <ul class="feeds-latest__list">
+        {
+          latest.map((post) => (
+            <li class="feeds-latest__item">
+              <time
+                class="feeds-latest__date"
+                datetime={post.data.publishedDate.toISOString()}
+              >
+                {formatDateDot(post.data.publishedDate)}
+              </time>
+              <a href={translatePath(`/blog/${post.data.slug}/`)}>
+                {post.data.title}
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+      <a
+        class="feeds-latest__more"
+        href={translatePath("/blog/")}
+      >
+        {t("pages.feeds.backToBlog")} →
+      </a>
+    </section>
+  </div>
+</BaseLayout>
+
+<style>
+  .feeds {
+    max-width: var(--max-width-prose);
+    padding-block: var(--space-xl);
+  }
+
+  .feeds-header {
+    margin-bottom: var(--space-lg);
+  }
+
+  .feeds-header__intro {
+    margin-top: var(--space-sm);
+    line-height: 1.7;
+    color: var(--color-text-muted);
+  }
+
+  .feeds-note {
+    padding: var(--space-md);
+    margin-bottom: var(--space-lg);
+    background: var(--color-bg-subtle);
+    border: 1px solid var(--color-border);
+    border-left: 3px solid var(--color-accent);
+    border-radius: var(--radius-md);
+  }
+
+  .feeds-note__title {
+    margin-bottom: var(--space-xs);
+    font-weight: var(--fw-semibold);
+    color: var(--color-text-heading);
+  }
+
+  .feeds-note__body {
+    color: var(--color-text-muted);
+  }
+
+  .feeds-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
+    padding: 0;
+    margin: 0 0 var(--space-lg);
+    list-style: none;
+  }
+
+  .feed-card {
+    padding: var(--space-md);
+    background: var(--color-bg-secondary);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+  }
+
+  .feed-card__label {
+    display: block;
+    margin-bottom: var(--space-xs);
+    font-family: var(--font-mono);
+    font-size: var(--text-sm);
+    color: var(--color-text-muted);
+  }
+
+  .feed-card__row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-sm);
+    align-items: center;
+  }
+
+  .feed-card__url {
+    padding: 4px 10px;
+    overflow-x: auto;
+    font-family: var(--font-mono);
+    font-size: var(--text-sm);
+    color: var(--color-text-heading);
+    white-space: nowrap;
+    background: var(--color-bg-subtle);
+    border-radius: var(--radius-sm);
+  }
+
+  .feeds-latest__title {
+    margin-bottom: var(--space-md);
+  }
+
+  .feeds-latest__list {
+    padding: 0;
+    margin: 0 0 var(--space-md);
+    list-style: none;
+  }
+
+  .feeds-latest__item {
+    display: flex;
+    gap: var(--space-md);
+    align-items: baseline;
+    padding-block: var(--space-xs);
+  }
+
+  /* WCAG 2.5.8: enlaces independientes → área táctil >=24px */
+  .feeds-latest__item a,
+  .feeds-latest__more {
+    display: inline-block;
+    padding-block: 2px;
+  }
+
+  .feeds-latest__date {
+    flex: none;
+    font-family: var(--font-mono);
+    font-size: var(--text-sm);
+    color: var(--color-text-muted);
+  }
+
+  .feeds-latest__more {
+    font-family: var(--font-mono);
+    font-size: var(--text-sm);
+  }
+
+  @media (width <= 640px) {
+    .feeds-latest__item {
+      flex-direction: column;
+      gap: 2px;
+    }
+  }
+</style>

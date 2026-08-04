@@ -81,8 +81,6 @@ import StepByStep from "@components/ui/StepByStep.astro";
 import Prerequisite from "@components/ui/Prerequisite.astro";
 import Timeline from "@components/ui/Timeline.astro";
 import DirectiveCard from "@components/ui/DirectiveCard.astro";
-import CSPBuilder from "@components/apps/CSPBuilder.astro";
-import HashCalculator from "@components/apps/HashCalculator.astro";
 
 **Cross-Site Scripting (XSS)** sigue siendo una de las vulnerabilidades web más devastadoras. En el [OWASP Top 10 2021](https://owasp.org/Top10/2021/A03_2021-Injection/) está dentro de **A03: Injection** como CWE-79 — una categoría con 33 CWE mapeadas, 274.228 apariciones registradas y una tasa de incidencia máxima del **19,09 %** en las aplicaciones analizadas. Según la [investigación de seguridad de Google](https://research.google/pubs/csp-is-dead-long-live-csp-on-the-insecurity-of-whitelists-and-the-future-of-content-security-policy/), incluso los sitios web con CSP a menudo fallan en implementarla correctamente: Google logró eludir el **94,72 % de todas las políticas distintas**, y el **75,81 %** se apoya en listas de permitidos de scripts que un atacante puede eludir.
 
@@ -731,13 +729,7 @@ El enfoque más limpio — mover el código inline a archivos `.js`:
 
 ### Solución 2: usar hashes
 
-Genera un hash SHA-256 del contenido de tu script y añádelo a tu CSP. Pruébalo tú mismo:
-
-<HashCalculator
-  title="Genera el hash de tu script"
-  defaultCode="const theme = localStorage.getItem('theme') || 'system';
-document.documentElement.classList.add(theme);"
-/>
+Genera un hash SHA-256 del contenido de tu script y añádelo a tu CSP. Puedes calcularlo directamente en tu navegador con la [calculadora de hashes](/es/tools/hash-calculator/): pega el contenido exacto del script y copia el valor `sha256-…` en tu política.
 
 <Callout type="tip">
   **Cómo obtener el hash desde el navegador:** cuando CSP bloquea un script, la consola del navegador muestra el hash necesario:
@@ -1051,9 +1043,7 @@ Los vectores de bypass más comunes incluyen:
 
 ## Interactivo: Construye tu CSP
 
-Usa este constructor interactivo para crear una política y ver tu puntuación de seguridad en tiempo real:
-
-<CSPBuilder title="Constructor de políticas CSP" />
+Usa el [constructor de políticas CSP](/es/tools/csp-builder/) interactivo para crear una política directiva a directiva y ver su puntuación de seguridad en tiempo real: marca las fuentes inseguras y genera por ti la línea `add_header` de Nginx correspondiente.
 
 ---
 

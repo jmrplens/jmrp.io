@@ -285,6 +285,14 @@ const summary =
     overflow-wrap: break-word;
   }
 
+  /* Los nodos de rama llevan un tinte de acento al 12% de fondo que hunde el
+     muted (#8c8a82, calibrado AA para superficies estándar) a 4.22:1 en tema
+     oscuro — texto de 11.5px necesita 4.5. Sobre el chip tintado la nota usa
+     el color de texto principal. */
+  .fj__node--branch .fj__note {
+    color: var(--color-text);
+  }
+
   .fj__branches {
     display: grid;
     grid-template-columns: repeat(var(--fj-cols, 2), 1fr);

@@ -865,6 +865,23 @@ export const common = {
       description:
         "The hardware, software, and services José Manuel Requena Plens keeps in rotation — desk, dev tools, and homelab.",
     },
+    feeds: {
+      title: "Feeds",
+      description:
+        "Subscribe to this site with RSS: feed URLs for the English and Spanish blogs, what RSS is in two sentences, and the latest posts.",
+      kicker: "FEEDS",
+      heading: "Subscribe with RSS",
+      intro:
+        "RSS lets a reader app check this site for new posts so you don't have to. Copy a feed URL below into any reader (Feedbin, Miniflux, NetNewsWire, Thunderbird…) and new articles will arrive on their own — no account, no algorithm, no email.",
+      landedTitle: "Expected raw XML?",
+      landedBody:
+        "This page appears when you open the feed in a browser. Your RSS reader still receives the plain XML feed at the very same URL — nothing changed for it.",
+      feedEnglish: "English blog feed",
+      feedSpanish: "Spanish blog feed",
+      copyUrl: "Copy feed URL",
+      latestTitle: "Latest posts",
+      backToBlog: "Browse the blog",
+    },
     privacy: {
       title: "Privacy",
       description:

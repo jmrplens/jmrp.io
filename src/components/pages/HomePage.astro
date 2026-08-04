@@ -611,6 +611,9 @@ const homeSchema = {
   }
 
   .home-section__link {
+    /* WCAG 2.5.8: enlace independiente → área táctil >=24px (texto: 21px) */
+    display: inline-block;
+    padding-block: 4px;
     font-family: var(--font-mono);
     font-size: var(--text-xs);
     font-weight: var(--fw-medium);

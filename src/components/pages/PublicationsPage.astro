@@ -683,7 +683,12 @@ const collectionSchema = {
   }
 
   .pub-year-group {
+    /* Saltar el layout de los años bajo el pliegue (mismo patrón que
+       .prose > * en base.css); el filtro por tipo usa [hidden] por ítem y
+       no depende del render de los grupos. */
+    contain-intrinsic-size: auto 600px;
     margin-bottom: var(--space-lg);
+    content-visibility: auto;
   }
 
   /* Year label: small mono kicker with hairline rule below — matches mockup

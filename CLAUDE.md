@@ -507,7 +507,9 @@ presetIcons({
 ```bash
 pnpm build
 # package.json "build" wiring:
-#   pnpm run build:cv
+#   pnpm run build:cv   # content-hash cache (.cache/cv-build.json): skips the ~70s LaTeX compile
+#                       # unless CV YAML / cv_latex sources / scripts changed; `pnpm build:cv --force`
+#                       # (or CV_BUILD_FORCE=1) recompiles and refreshes the embedded GitHub stats
 #   && DIST_DIR=$(node scripts/deploy-swap.mjs prepare)   # picks builds/blue or builds/green (whichever is inactive), empties it
 #   && astro build --outDir $DIST_DIR                      # Astro builds straight into that dir; post-build hooks run here
 #   && node scripts/deploy-swap.mjs swap $DIST_DIR          # atomically retargets the `dist` symlink (ln -sfn + mv -T / rename(2))
@@ -576,7 +578,7 @@ RouterOS grammar at `src/languages/routeros.tmLanguage.json`. Aliases: `routeros
 experimental: { clientPrerender: true, contentIntellisense: true, chromeDevtoolsWorkspace: true }
 prefetch: { prefetchAll: true, defaultStrategy: "viewport" }
 i18n: { defaultLocale: "en", locales: ["en", "es"] }
-build: { inlineStylesheets: "always", concurrency: 2 }
+build: { inlineStylesheets: "always", concurrency: 2 }  // experimento 2026-08-03: inline elimina el CSS render-blocking; revierte "auto" (PR #378) — ver comentario en astro.config.mjs
 // Image: remote patterns for Google favicons, responsiveStyles: true
 // Vite: chunkSizeWarningLimit: 1000, SSR external: citation-js
 // Fonts: Space Grotesk + IBM Plex Sans + IBM Plex Mono via fontsource, optimizedFallbacks: true

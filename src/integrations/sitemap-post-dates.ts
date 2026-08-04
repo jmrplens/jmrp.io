@@ -244,6 +244,13 @@ export function createLastmodResolver(): (path: string) => string | undefined {
       "src/i18n/translations/en/common.ts",
       "src/i18n/translations/es/common.ts",
     ],
+    // Same reasoning as /privacy/: the page copy lives in the translation
+    // bundles; the component holds the structure.
+    "/feeds/": [
+      "src/components/pages/FeedsPage.astro",
+      "src/i18n/translations/en/common.ts",
+      "src/i18n/translations/es/common.ts",
+    ],
   };
   const staticDates = new Map<string, string | undefined>(
     Object.entries(staticSources).map(([path, sources]) => [
@@ -282,6 +289,11 @@ export function createLastmodResolver(): (path: string) => string | undefined {
       return newestPost;
     if (path === "/tools/" || path.startsWith("/tools/categories/"))
       return newestTool;
+
+    // /feeds/ lists the five newest posts, so a new or updated post changes
+    // the page just as much as an edit to its own copy does. Same shop-window
+    // reasoning as "/" above, folded with its static sources.
+    if (path === "/feeds/") return newest(staticDates.get(path), newestPost);
 
     return staticDates.get(path);
   };

@@ -323,7 +323,14 @@ async function processSingleHtmlFile(
   const minifiedHtml = await minify(rawHtml, {
     removeComments: true,
     collapseWhitespace: true,
-    minifyCSS: true,
+    // minifyCSS is off on purpose: every <style> block here was already
+    // minified by Vite/lightningcss during the Astro build, so clean-css only
+    // re-parses what it cannot improve. Verified over the whole corpus (126
+    // pages): output is byte-identical with it on or off, and it costs ~30%
+    // of the minify time. That cost grew when the site moved to
+    // inlineStylesheets:"always" and every page started carrying ~69 KiB of
+    // inline CSS. Turn it back on if raw, unminified CSS ever reaches dist.
+    minifyCSS: false,
     minifyJS: true,
     ignoreCustomComments: [/^\* jmrp-beacon-hardened \*/, /^!/],
     sortAttributes: true,

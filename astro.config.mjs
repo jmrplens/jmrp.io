@@ -439,6 +439,10 @@ export default defineConfig({
       // Increased threshold to accommodate large rendering (mermaid) chunks.
       // Optimization is handled via ViteImageOptimizer and CSS extraction in post-build.
       chunkSizeWarningLimit: 1000,
+      // No calcules el gzip de cada chunk solo para decorar el log del build:
+      // los presupuestos de tamaño los vigila el job de bundle-size en CI y
+      // la compresión real (brotli 11) ocurre en el post-build.
+      reportCompressedSize: false,
     },
     server: {},
     ssr: {
@@ -454,7 +458,12 @@ export default defineConfig({
     // inlining the big sheet meant re-downloading it on every navigation.
     // CSP-safe: `style-src 'self' 'nonce-…'` already allows a same-origin
     // <link rel="stylesheet">; the nonce is only needed for inline <style>.
-    inlineStylesheets: "auto",
+    // Decisión 2026-08-04: "always" elimina el CSS render-blocking y la primera
+    // visita pesa menos (27 KiB br en 1 petición vs ~37 KiB en 3). Revierte el
+    // "auto" del PR #378: aquel priorizaba CSS externo cacheable entre páginas,
+    // pero con el worker edge-nonce cacheando el HTML completo en el edge ese
+    // beneficio ya no compensa las 2 peticiones bloqueantes.
+    inlineStylesheets: "always",
     // Parallelize page rendering (default: 1). The real ceiling here is NOT
     // page count (EN + ES) but Chromium RAM: Mermaid SSR runs via Puppeteer
     // (rehype-mermaid), spawning one headless Chromium instance per

@@ -11,7 +11,21 @@
   box-sizing: border-box;
 }
 
+/* El atributo hidden solo aplica display:none desde la hoja del NAVEGADOR
+   (origen UA), así que cualquier `display: flex/grid` de autor lo anula: los
+   filtros de tags/búsqueda del blog y el de publicaciones ponían
+   `el.hidden = true` sin efecto visual (.post-card es flex, .featured-post es
+   grid). Regla estándar de endurecimiento del reset; until-found se excluye
+   para no romper la búsqueda-en-página nativa si algún día se usa. */
+[hidden]:not([hidden="until-found"]) {
+  display: none !important;
+}
+
 html {
+  /* Reserva el hueco de la barra de scroll en escritorio con barras
+     clásicas: al navegar entre una página corta (sin scroll) y una larga el
+     ancho útil no cambia, y las View Transitions no "saltan" lateralmente. */
+  scrollbar-gutter: stable;
   font-family: var(--font-body);
   font-size: 100%; /* 16px base — respeta el zoom del usuario */
   line-height: 1.6;
@@ -100,6 +114,11 @@ h6 {
   line-height: 1.15;
   color: var(--color-text-heading);
   letter-spacing: -0.02em;
+
+  /* Reparte las palabras entre líneas en títulos multilínea (evita una
+     última línea con una sola palabra). Mejora progresiva; los navegadores
+     sin soporte lo ignoran. */
+  text-wrap: balance;
   scroll-margin-top: calc(var(--header-height) + 1rem);
 }
 
@@ -131,11 +150,28 @@ h4 {
    Space Grotesk con peso MEDIO (500), no negrita — los títulos de sección del
    diseño son medium; sólo los títulos hero/post (h1) van en 700. */
 .prose {
-  /* Optimización: salta el layout del contenido fuera de pantalla */
-  contain-intrinsic-size: 1px 5000px;
-  content-visibility: auto;
   font-size: 1.0625rem; /* 17px */
   line-height: 1.78;
+}
+
+/* Optimización: saltar el layout del contenido fuera de pantalla.
+   Debe aplicarse a los HIJOS, no al contenedor: el artículo empieza dentro
+   del viewport, así que un `content-visibility: auto` en .prose entero
+   interseca siempre y no se salta nada (medido: 3,8 s de Style & Layout en
+   el post 003 con la regla en el contenedor). Por hijo, cada bloque bajo el
+   pliegue se salta individualmente. `contain-intrinsic-size: auto <est>`
+   deja que el navegador recuerde el tamaño real tras el primer render.
+   Nota: esto desactiva el colapso de márgenes entre hermanos del prose —
+   verificado que el delta de altura total del documento es insignificante. */
+.prose > * {
+  contain-intrinsic-size: auto 170px; /* ≈ altura media real de un hijo del prose (43.7k px / 256) — cuanto más fiel, menor error de scroll-a-ancla sobre contenido aún no renderizado */
+  content-visibility: auto;
+}
+
+@media print {
+  .prose > * {
+    content-visibility: visible;
+  }
 }
 
 .prose h1 {
@@ -166,6 +202,9 @@ h4 {
 
 .prose p {
   margin-bottom: 1.375rem; /* 22px */
+
+  /* Evita palabras huérfanas al final de los párrafos (mejora progresiva). */
+  text-wrap: pretty;
 }
 
 /* Inline code (una sola comilla invertida) — chip mono neutro sobre surface2.

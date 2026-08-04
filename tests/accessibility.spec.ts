@@ -57,6 +57,27 @@ test.describe("Accessibility Tests (Axe-core WCAG 2.1 AA)", () => {
 
       await browserPage.evaluate(() => document.fonts.ready);
 
+      // content-visibility:auto skips rendering below-fold blocks, and axe
+      // then pairs text against geometrically-estimated backdrops — it
+      // reported a <li> in post 009 as sitting on the terminal block BELOW
+      // it (phantom 1.12:1). Walking the page first materializes every
+      // block with its real geometry, so axe measures the colours users
+      // actually see; scrollHeight is re-read each step because it grows as
+      // estimated sizes are corrected.
+      await browserPage.evaluate(async () => {
+        const step = window.innerHeight;
+        for (let y = 0; y < document.body.scrollHeight; y += step) {
+          window.scrollTo(0, y);
+          await new Promise((resolve) =>
+            requestAnimationFrame(() => resolve(null)),
+          );
+        }
+        window.scrollTo(0, 0);
+        await new Promise((resolve) =>
+          requestAnimationFrame(() => resolve(null)),
+        );
+      });
+
       const accessibilityScanResults = await new AxeBuilder({
         page: browserPage,
       })

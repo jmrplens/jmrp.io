@@ -73,7 +73,7 @@ if (socials.github_username) {
 
 if (socials.linkedin_username) {
   socialLinks.push({
-    url: `https://linkedin.com/in/${socials.linkedin_username}`,
+    url: `https://www.linkedin.com/in/${socials.linkedin_username}`,
     icon: "fa-brands:linkedin",
     label: "LinkedIn",
   });
@@ -325,6 +325,9 @@ const socialLinksWithType = socialLinks.map((link) => {
   }
 
   .footer-nav__link {
+    /* WCAG 2.5.8: enlace independiente → área táctil >=24px (texto: 21px) */
+    display: inline-block;
+    padding-block: 4px;
     color: var(--color-text-muted);
     text-decoration: none;
     transition: color 0.2s;
