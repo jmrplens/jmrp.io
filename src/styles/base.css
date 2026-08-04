@@ -11,6 +11,16 @@
   box-sizing: border-box;
 }
 
+/* El atributo hidden solo aplica display:none desde la hoja del NAVEGADOR
+   (origen UA), así que cualquier `display: flex/grid` de autor lo anula: los
+   filtros de tags/búsqueda del blog y el de publicaciones ponían
+   `el.hidden = true` sin efecto visual (.post-card es flex, .featured-post es
+   grid). Regla estándar de endurecimiento del reset; until-found se excluye
+   para no romper la búsqueda-en-página nativa si algún día se usa. */
+[hidden]:not([hidden="until-found"]) {
+  display: none !important;
+}
+
 html {
   font-family: var(--font-body);
   font-size: 100%; /* 16px base — respeta el zoom del usuario */
