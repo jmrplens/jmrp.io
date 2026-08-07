@@ -59,7 +59,7 @@
     "@iconify-json/mdi": "^1.2.3",
     "@iconify-json/simple-icons": "^1.2.92",
     "@unocss/astro": "^66.7.5",
-    "astro": "7.1.5",
+    "astro": "7.1.6",
     "citation-js": "^0.8.2",
     "mermaid": "^11.16.0",
     "preact": "^10.29.7",
