@@ -72,7 +72,7 @@ en:
           detail: RouterOS · VLANs · WireGuard · CrowdSec
           href: /homelab/
     - label: // self-hosted
-      intro: The services running on that fleet — social, comms and media.
+      intro: The services running on that fleet — social, comms, media and MCP.
       items:
         - name: Mastodon
           detail: Fediverse instance
@@ -95,6 +95,9 @@ en:
         - name: Jellyfin
           detail: media
           href: /homelab/
+        - name: MCP servers
+          detail: libgen + gitlab · mcp.jmrp.io
+          href: https://mcp.jmrp.io/
     - label: // off the desk
       intro: When the screens are off.
       items:
@@ -168,7 +171,9 @@ es:
           detail: RouterOS · VLANs · WireGuard · CrowdSec
           href: /homelab/
     - label: // self-hosted
-      intro: Los servicios que corren sobre esa flota — social, comunicación y media.
+      intro: >-
+        Los servicios que corren sobre esa flota — social, comunicación, media
+        y MCP.
       items:
         - name: Mastodon
           detail: instancia Fediverse
@@ -191,6 +196,9 @@ es:
         - name: Jellyfin
           detail: media
           href: /homelab/
+        - name: Servidores MCP
+          detail: libgen + gitlab · mcp.jmrp.io
+          href: https://mcp.jmrp.io/
     - label: // fuera del escritorio
       intro: Cuando las pantallas se apagan.
       items:

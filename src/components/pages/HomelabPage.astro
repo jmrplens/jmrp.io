@@ -161,9 +161,26 @@ interface Service {
   description: string;
   url: string;
   linkText: string;
-  statsType: "mastodon" | "matrix" | "pds";
+  /**
+   * Live stat pair to render, when the service publishes one. Optional: the
+   * MCP card has no meaningful pair to show yet, and an empty `ServiceStats`
+   * would render two "—" placeholders that look like a broken probe.
+   */
+  statsType?: "mastodon" | "matrix" | "pds";
   provider: Provider;
   userInfo?: string;
+  /** Callable endpoints listed verbatim in the card, for services that expose them. */
+  endpoints?: string[];
+  /**
+   * Whether nginx's `/stats/health` probe reports on this service.
+   *
+   * It gates BOTH the "online" pill and the KPI denominator, because the KPI
+   * renders `<probed-online> / <servicesCount>`: counting a service the probe
+   * never looks at would render "3 / 4" and tell the reader something is down.
+   * A card with `probed: false` is shown without a status claim instead of
+   * with an unverified one.
+   */
+  probed: boolean;
 }
 
 // Reference the canonical #person entity so services are provided by the same
@@ -185,6 +202,7 @@ const services: Service[] = [
     linkText: t("pages.homelab.mastodonLink"),
     statsType: "mastodon",
     provider: defaultProvider,
+    probed: true,
   },
   {
     id: "matrix",
@@ -196,6 +214,7 @@ const services: Service[] = [
     linkText: t("pages.homelab.matrixLink"),
     statsType: "matrix",
     provider: defaultProvider,
+    probed: true,
     userInfo: "@jmrplens:matrix.jmrp.io",
   },
   {
@@ -208,7 +227,20 @@ const services: Service[] = [
     linkText: t("pages.homelab.pdsLink"),
     statsType: "pds",
     provider: defaultProvider,
+    probed: true,
     userInfo: "@jmrp.io",
+  },
+  {
+    id: "mcp",
+    name: t("pages.homelab.mcpName"),
+    title: "MCP",
+    icon: "simple-icons:modelcontextprotocol",
+    description: t("pages.homelab.mcpDescription"),
+    url: "https://mcp.jmrp.io/",
+    linkText: t("pages.homelab.mcpLink"),
+    provider: defaultProvider,
+    probed: true,
+    endpoints: ["mcp.jmrp.io/libgen", "mcp.jmrp.io/gitlab"],
   },
 ];
 
@@ -309,6 +341,10 @@ const nodeCardsTranslations: NodeCardsTranslations = {
 // the rendered arrays so the figure never drifts from what the page shows.
 const monitoredNodesCount = nodeCards.length + torServices.length;
 
+// KPI denominator: only what nginx's health probe actually reports on, so the
+// numerator it injects can never exceed it. See `Service.probed`.
+const probedServices = services.filter((service) => service.probed);
+
 const servicesSchema = {
   "@type": "CollectionPage",
   "@id": new URL("#collection", new URL(Astro.url.pathname, getSiteUrl())).href,
@@ -396,7 +432,7 @@ const servicesSchema = {
       <section aria-label={t("pages.homelab.kpiAriaLabel")}>
         <HomelabKpi
           translations={kpiTranslations}
-          servicesCount={services.length}
+          servicesCount={probedServices.length}
           nodesCount={monitoredNodesCount}
           ssr={HLM.kpi}
         />
@@ -431,7 +467,9 @@ const servicesSchema = {
                 description={service.description}
                 link={service.url}
                 linkText={service.linkText}
-                statusText={t("pages.homelab.online")}
+                statusText={
+                  service.probed ? t("pages.homelab.online") : undefined
+                }
               >
                 {service.userInfo && (
                   <div
@@ -442,16 +480,32 @@ const servicesSchema = {
                     <code>{service.userInfo}</code>
                   </div>
                 )}
-                <div
-                  id={`${service.id}-stats`}
-                  class="stats-container"
-                >
-                  <ServiceStats
-                    type={service.statsType}
-                    translations={serviceStatsTranslations}
-                    ssr={HLM.services[service.statsType]}
-                  />
-                </div>
+                {service.endpoints && (
+                  <div
+                    slot="extra"
+                    class="user-info"
+                  >
+                    {t("pages.homelab.endpointsLabel")}{" "}
+                    {service.endpoints.map((endpoint, i) => (
+                      <>
+                        {i > 0 && " · "}
+                        <code>{endpoint}</code>
+                      </>
+                    ))}
+                  </div>
+                )}
+                {service.statsType && (
+                  <div
+                    id={`${service.id}-stats`}
+                    class="stats-container"
+                  >
+                    <ServiceStats
+                      type={service.statsType}
+                      translations={serviceStatsTranslations}
+                      ssr={HLM.services[service.statsType]}
+                    />
+                  </div>
+                )}
               </ServiceCard>
             ))
           }

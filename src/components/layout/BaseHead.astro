@@ -11,7 +11,6 @@
 import "@styles/global.css";
 
 import appleTouchIconSrc from "@assets/apple-touch-icon.png";
-import faviconSrc from "@assets/favicon.png";
 import knowsAboutWikidata from "@data/knows-about-wikidata.json";
 import { defaultLocale, type Locale, locales } from "@i18n/config";
 import {
@@ -49,18 +48,6 @@ const t = useTranslations(locale);
 const translatePath = useTranslatedPath(locale);
 const alternateLinks = getAlternateLinks(Astro.url.pathname, getSiteUrl());
 
-const favicon = await getImage({
-  src: faviconSrc,
-  format: "png",
-  width: 32,
-  height: 32,
-});
-const faviconWebp = await getImage({
-  src: faviconSrc,
-  format: "webp",
-  width: 32,
-  height: 32,
-});
 const appleTouchIcon = await getImage({
   src: appleTouchIconSrc,
   format: "png",
@@ -248,9 +235,19 @@ const personDescription = aboutData?.person.description
  * Emitted site-wide and reference-only: every page connects the identity to
  * the body of work without repeating the project descriptions.
  */
-const personProjects = (await getProjects()).map((project) => ({
-  "@id": softwareId(project),
-}));
+const personProjects = [
+  ...(await getProjects()).map((project) => ({
+    "@id": softwareId(project),
+  })),
+  // The deployed MCP endpoints are entities of their own: `[WebAPI,
+  // SoftwareApplication]` nodes canonically published by mcp.jmrp.io, which
+  // already point back here via `provider`/`author`. These two references are
+  // the missing reverse edge — from the identity, a consumer reaches the
+  // running services and not just their source repositories. Mirrored in
+  // scripts/ci/build-identity.mjs; the drift guards keep both in lockstep.
+  { "@id": "https://mcp.jmrp.io/libgen#api" },
+  { "@id": "https://mcp.jmrp.io/gitlab#api" },
+];
 
 const personKnowsAbout = siteData.person?.knowsAbout?.map((topic) => {
   const qid = (knowsAboutWikidata as Record<string, string>)[topic];
@@ -493,6 +490,33 @@ const jsonLD = {
   preload={[{ weight: "500", style: "normal" }]}
 />
 
+{
+  /*
+  Favicon set, ordered and typed for BOTH audiences.
+
+  Search engines are the constraint here, not browsers. They read these tags
+  and mostly understand two formats — ICO and PNG — so the `.ico` is declared
+  first and explicitly: it was always served at the root, but nothing in the
+  markup pointed at it, and a crawler that trusts the declarations over the
+  `/favicon.ico` convention only ever saw formats it could not decode. The
+  WebP entry that used to sit here was exactly that trap: no search engine
+  accepts a WebP favicon.
+
+  Sizes are declared so a consumer can choose without downloading each file,
+  and the PNGs are the stable, unhashed files from `public/` rather than
+  `getImage()` output: a favicon URL that moves when an asset hash changes is
+  a favicon a crawler may re-fetch into a 404. 48×48 is there because Google
+  documents a multiple of 48 as its minimum.
+
+  The SVG stays for browsers that prefer it (it is the animated one); ICO and
+  PNG cover everything that is not a browser.
+*/
+}
+<link
+  rel="icon"
+  href="/favicon.ico"
+  sizes="any"
+/>
 <link
   rel="icon"
   type="image/svg+xml"
@@ -500,13 +524,15 @@ const jsonLD = {
 />
 <link
   rel="icon"
-  type="image/webp"
-  href={faviconWebp.src}
+  type="image/png"
+  sizes="48x48"
+  href="/favicon-48x48.png"
 />
 <link
   rel="icon"
   type="image/png"
-  href={favicon.src}
+  sizes="32x32"
+  href="/favicon-32x32.png"
 />
 <link
   rel="apple-touch-icon"

@@ -248,6 +248,12 @@
     },
     {
       "@id": "https://github.com/jmrplens/FDTDexamples#software"
+    },
+    {
+      "@id": "https://mcp.jmrp.io/libgen#api"
+    },
+    {
+      "@id": "https://mcp.jmrp.io/gitlab#api"
     }
   ],
   "identifier": [

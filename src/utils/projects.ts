@@ -49,6 +49,9 @@ export interface Project {
   repo: string;
   docs: string;
   docsEs?: string;
+  /** Page documenting a public running instance (see the schema for why it stays out of JSON-LD). */
+  hosted?: string;
+  hostedEs?: string;
   sameAs?: string[];
   topics: ProjectTopic[];
   summary: { en: string; es: string };

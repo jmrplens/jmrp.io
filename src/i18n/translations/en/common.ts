@@ -638,7 +638,7 @@ export const common = {
       title: "Homelab",
       schemaName: "Homelab Infrastructure",
       description:
-        "Self-hosted infrastructure status — Mastodon, Matrix, AT Protocol, and Tor services running on a personal homelab. Real-time availability and statistics.",
+        "Self-hosted infrastructure status — Mastodon, Matrix, AT Protocol, MCP and Tor services on a personal homelab. Real-time availability and statistics.",
       intro:
         "I maintain a homelab to support decentralized networks, personal infrastructure, and continuous learning. Below is the real-time status of my public services.",
       nginxNode: "Node: NGINX Edge Security & Analytics",
@@ -655,6 +655,11 @@ export const common = {
       pdsDescription:
         "My self-hosted Personal Data Server on the AT Protocol network — the identity and data behind @jmrp.io on Bluesky.",
       pdsLink: "View on Bluesky",
+      mcpName: "MCP Servers",
+      mcpDescription:
+        "Model Context Protocol servers I run and expose publicly, so an AI client can call them over HTTP without installing anything.",
+      mcpLink: "Open mcp.jmrp.io",
+      endpointsLabel: "Endpoints:",
       opensInNewTab: "(opens in new tab)",
       // InfrastructureInsights
       statsAriaLabel: "Edge node real-time statistics",
@@ -943,7 +948,7 @@ export const common = {
       kicker: "PROJECTS",
       heading: "What I build, and where it lives.",
       intro:
-        "The open-source projects I author and maintain — MCP servers and developer tooling in Go, acoustics and signal-processing libraries, network security and infrastructure scripts. Every entry links to its source and its documentation.",
+        "The open-source projects I author and maintain — MCP servers and developer tooling in Go, acoustics and signal-processing libraries, network security and infrastructure scripts. Every entry links to its source and its documentation, and the hosted MCP servers also link to a running instance you can call.",
       activeHeading: "// MAINTAINED",
       activeIntro:
         "Actively developed. These get releases, issue triage and documentation.",
@@ -954,6 +959,7 @@ export const common = {
       license: "License",
       repo: "Source",
       docs: "Docs",
+      hosted: "Live instance",
       topicsLabel: "Topics covered by {project}",
     },
     tools: {

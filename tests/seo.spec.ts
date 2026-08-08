@@ -370,6 +370,10 @@ test.describe("SEO & Metadata Checks", () => {
       "Homelab",
       "Uses",
       "Privacy",
+      // Not a page of this site: the author's MCP endpoints live on
+      // mcp.jmrp.io. Its own H2 because these are callable endpoints, not
+      // prose to read — see MCP_BLOCK in `@utils/llms`.
+      "MCP Servers (self-hosted, different domain)",
       "Contact",
       "Technical Details",
     ]);

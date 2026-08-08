@@ -631,7 +631,7 @@ export const common = {
       title: "Homelab",
       schemaName: "Infraestructura del Homelab",
       description:
-        "Estado de la infraestructura autoalojada — Mastodon, Matrix, AT Protocol y Tor en un homelab personal. Disponibilidad y estadísticas en tiempo real.",
+        "Estado de la infraestructura autoalojada — Mastodon, Matrix, AT Protocol, MCP y Tor en un homelab personal. Disponibilidad y estadísticas en tiempo real.",
       intro:
         "Mantengo un homelab para dar soporte a redes descentralizadas, infraestructura personal y aprendizaje continuo. A continuación se muestra el estado en tiempo real de mis servicios públicos.",
       nginxNode: "Nodo: NGINX Edge Security & Analytics",
@@ -648,6 +648,11 @@ export const common = {
       pdsDescription:
         "Mi Personal Data Server autoalojado en la red AT Protocol — la identidad y los datos tras @jmrp.io en Bluesky.",
       pdsLink: "Ver en Bluesky",
+      mcpName: "Servidores MCP",
+      mcpDescription:
+        "Servidores Model Context Protocol que ejecuto y expongo públicamente, para que un cliente de IA pueda llamarlos por HTTP sin instalar nada.",
+      mcpLink: "Abrir mcp.jmrp.io",
+      endpointsLabel: "Endpoints:",
       opensInNewTab: "(se abre en nueva pestaña)",
       // InfrastructureInsights
       statsAriaLabel: "Estadísticas en tiempo real del nodo edge",
@@ -937,7 +942,7 @@ export const common = {
       kicker: "PROYECTOS",
       heading: "Lo que construyo, y dónde vive.",
       intro:
-        "Los proyectos open source que escribo y mantengo: servidores MCP y herramientas para desarrolladores en Go, librerías de acústica y procesado de señal, y scripts de seguridad de red e infraestructura. Cada entrada enlaza a su código y a su documentación.",
+        "Los proyectos open source que escribo y mantengo: servidores MCP y herramientas para desarrolladores en Go, librerías de acústica y procesado de señal, y scripts de seguridad de red e infraestructura. Cada entrada enlaza a su código y a su documentación, y los servidores MCP alojados enlazan además a una instancia en marcha que puedes llamar.",
       activeHeading: "// EN MANTENIMIENTO",
       activeIntro:
         "En desarrollo activo. Tienen releases, seguimiento de issues y documentación.",
@@ -948,6 +953,7 @@ export const common = {
       license: "Licencia",
       repo: "Código",
       docs: "Docs",
+      hosted: "Instancia en vivo",
       topicsLabel: "Temas que cubre {project}",
     },
     tools: {
