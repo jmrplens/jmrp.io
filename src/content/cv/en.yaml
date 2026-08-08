@@ -629,6 +629,7 @@ sections:
               label: Cursor,
               url: https://cursor.directory/plugins/gitlab-mcp-server,
             }
+          - { label: Live, url: "https://mcp.jmrp.io/#gitlab" }
           - { label: Docs, url: https://jmrplens.github.io/gitlab-mcp-server/ }
       - name: phonometry
         tech: Python · DSP · Acoustics
