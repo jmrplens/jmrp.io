@@ -1,8 +1,8 @@
 {
-  "total": 91762,
-  "generatedAt": "2026-08-08T10:25:54.376Z",
+  "total": 100344,
+  "generatedAt": "2026-08-12T23:57:56.528Z",
   "sources": {
-    "githubReleases": 88523,
-    "dockerHub": 3239
+    "githubReleases": 97046,
+    "dockerHub": 3298
   }
 }
