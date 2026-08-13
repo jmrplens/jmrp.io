@@ -483,7 +483,10 @@ export async function generateLlmsTxt(siteUrl: string): Promise<string> {
         `- [${t.data.title}](${toolUrl(siteUrl, t)}): ${t.data.description}`,
     ),
     "",
+    // Both languages, like every other section of this bilingual index.
     await mcpBlock("en"),
+    "",
+    await mcpBlock("es"),
     "",
     "## Contact",
     "",
@@ -629,8 +632,10 @@ export async function generateLlmsFullTxt(
     ...publicationsSection,
     // The four sections llms.txt advertises but this file used to skip.
     ...buildProfileSections(siteUrl, onlyLocale === "es" ? "es" : "en"),
-    await mcpBlock(onlyLocale === "es" ? "es" : "en"),
-    "",
+    // Per-locale like the post/tool sections: the combined document carries
+    // both languages, each per-locale variant only its own.
+    ...(wantEn ? [await mcpBlock("en"), ""] : []),
+    ...(wantEs ? [await mcpBlock("es"), ""] : []),
     "## Contact",
     "",
     ...CONTACT.map((c) => `- ${c}`),

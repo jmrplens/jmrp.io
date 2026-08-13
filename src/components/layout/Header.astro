@@ -166,6 +166,20 @@ const navLabelKeyMap: Record<string, TranslationKey> = {
     const drawer = document.getElementById("nav-drawer");
     if (!checkbox || !toggle || !drawer) return;
 
+    // Swap the drawer's close <label> (pointer-only: labels are not
+    // focusable) for its <button> twin, so the close action sits inside the
+    // focus trap and works with Enter/Space. See the markup comment in
+    // NavDrawer.astro for why the button ships hidden.
+    const closeLabel = drawer.querySelector("label.drawer__close");
+    const closeButton = drawer.querySelector("button.drawer__close--js");
+    if (closeLabel && closeButton) {
+      closeLabel.hidden = true;
+      closeButton.hidden = false;
+      // close() is declared below; the listener only fires on user clicks,
+      // long after setup has finished.
+      closeButton.addEventListener("click", () => close(), { signal });
+    }
+
     let savedScrollY = 0;
 
     const lockScroll = () => {

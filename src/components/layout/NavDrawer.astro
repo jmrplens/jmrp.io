@@ -243,6 +243,26 @@ const staticRecent = postData.slice(0, 6);
         aria-hidden="true"
       ></span>
     </label>
+    {
+      /* JS twin of the close label: a label is not focusable, so once the
+         enhancement script's focus trap is active a keyboard user could only
+         close via Esc. The script (Header.astro) swaps the label for this
+         real <button> (focusable, native Enter/Space; clicking it unchecks
+         #nav-open through the same close() flow). Hidden without JS on
+         purpose — there is no trap then, the checkbox stays reachable, and a
+         dead button would be worse than none. */
+    }
+    <button
+      type="button"
+      class="drawer__close drawer__close--js"
+      hidden
+    >
+      <span class="sr-only">{t("aria.closeMenu")}</span>
+      <span
+        class="i-fa-solid:times"
+        aria-hidden="true"
+      ></span>
+    </button>
   </div>
 
   {
@@ -1087,14 +1107,23 @@ const staticRecent = postData.slice(0, 6);
     place-items: center;
     width: 44px;
     height: 44px;
+    /* Button resets, inert on the <label> variant. */
+    padding: 0;
     color: var(--color-text-muted);
     cursor: pointer;
+    background: none;
+    border: 0;
     border-radius: var(--radius-sm);
   }
 
   .drawer__close:hover {
     color: var(--color-text-heading);
     background: var(--color-surface-2);
+  }
+
+  .drawer__close:focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
   }
 
   .drawer__close > span {
