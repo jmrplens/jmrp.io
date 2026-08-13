@@ -1209,3 +1209,5 @@ visita
 debe
 ancla
 anidada
+GHSA
+ignoreGhsas

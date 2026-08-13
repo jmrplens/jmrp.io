@@ -74,3 +74,11 @@ overrides:
 peerDependencyRules:
   allowedVersions:
     eslint: ">=10"
+
+auditConfig:
+  ignoreGhsas:
+    # extract-zip symlink advisory: the "patched" 2.0.2 is unpublished (latest
+    # on npm is still 2.0.1). Dev-only chain (lighthouse > puppeteer-core >
+    # @puppeteer/browsers) extracting Google-served Chrome archives. Remove
+    # this entry as soon as extract-zip >2.0.1 ships. Reviewed 2026-08-13.
+    - GHSA-jmr9-qjv8-65gv
