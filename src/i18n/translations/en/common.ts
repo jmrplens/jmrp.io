@@ -559,6 +559,7 @@ export const common = {
       downloadRecommended: "recommended",
       availability: "Availability",
       sidebarAriaLabel: "CV sidebar: contact, objective and languages",
+      projectLinksAriaLabel: "{project} links",
       sidebarContact: "Contact",
       sidebarObjective: "Objective",
       sidebarLanguages: "Languages",

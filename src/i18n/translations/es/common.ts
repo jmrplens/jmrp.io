@@ -560,6 +560,7 @@ export const common = {
       downloadRecommended: "recomendado",
       availability: "Disponibilidad",
       sidebarAriaLabel: "Barra lateral del CV: contacto, objetivo e idiomas",
+      projectLinksAriaLabel: "Enlaces de {project}",
       sidebarContact: "Contacto",
       sidebarObjective: "Objetivo",
       sidebarLanguages: "Idiomas",
