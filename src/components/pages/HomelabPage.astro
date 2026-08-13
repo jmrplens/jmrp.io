@@ -357,6 +357,14 @@ const monitoredNodesCount = nodeCards.length + torServices.length;
 // numerator it injects can never exceed it. See `Service.probed`.
 const probedServices = services.filter((service) => service.probed);
 
+// Per-service pill tokens, widened so `service.id` (a string) can index the
+// registry; a probed card with no token entry simply renders no pill rather
+// than a stale build-time claim.
+const serviceStatusTokens: Record<
+  string,
+  { status: string; statusClass: string } | undefined
+> = HLM.serviceStatus;
+
 const servicesSchema = {
   "@type": "CollectionPage",
   "@id": new URL("#collection", new URL(Astro.url.pathname, getSiteUrl())).href,
@@ -480,7 +488,14 @@ const servicesSchema = {
                 link={service.url}
                 linkText={service.linkText}
                 statusText={
-                  service.probed ? t("pages.homelab.online") : undefined
+                  service.probed
+                    ? serviceStatusTokens[service.id]?.status
+                    : undefined
+                }
+                statusClass={
+                  service.probed
+                    ? serviceStatusTokens[service.id]?.statusClass
+                    : undefined
                 }
               >
                 {service.userInfo && (

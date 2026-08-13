@@ -24,10 +24,24 @@ interface Props {
   id?: string;
   /** Optional status label rendered as a minimal top-right pill in the header row, e.g. "Online". */
   statusText?: string;
+  /**
+   * Optional extra class for the pill. The homelab cards pass an `HLM_*`
+   * token here that nginx replaces at serve time with "is-online" or
+   * "is-offline" (see ssr-tokens.ts), so the pill state is live without JS.
+   */
+  statusClass?: string;
 }
 
-const { title, icon, description, link, linkText, id, statusText } =
-  Astro.props;
+const {
+  title,
+  icon,
+  description,
+  link,
+  linkText,
+  id,
+  statusText,
+  statusClass,
+} = Astro.props;
 
 const locale = (Astro.currentLocale ?? defaultLocale) as Locale;
 const t = useTranslations(locale);
@@ -45,7 +59,7 @@ const t = useTranslations(locale);
     ></span>
     {
       statusText && (
-        <span class="service-status-pill">
+        <span class:list={["service-status-pill", statusClass]}>
           <span
             class="service-status-dot"
             aria-hidden="true"

@@ -697,7 +697,10 @@ export const common = {
       statusUnknown: "Desconocido",
       // ServiceStats
       serviceUnavailable: "Servicio No Disponible",
+      // Espejado por SERVICE_WORDS en /etc/nginx/lua/homelab_ssr_metrics.lua:
+      // nginx inyecta estas palabras por servicio al servir (HLM_SVC_*).
       online: "En Línea",
+      offline: "Inactivo",
       knownInstances: "Instancias Conocidas",
       knownServers: "Servidores Conocidos",
       trendingNow: "Tendencias Ahora",
