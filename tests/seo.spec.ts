@@ -372,8 +372,10 @@ test.describe("SEO & Metadata Checks", () => {
       "Privacy",
       // Not a page of this site: the author's MCP endpoints live on
       // mcp.jmrp.io. Its own H2 because these are callable endpoints, not
-      // prose to read — see MCP_BLOCK in `@utils/llms`.
+      // prose to read — see mcpBlock() in `@utils/llms`. Both languages in
+      // the combined document, like the post/tool sections above.
       "MCP Servers (self-hosted, different domain)",
+      "Servidores MCP (autoalojados, en otro dominio)",
       "Contact",
       "Technical Details",
     ]);

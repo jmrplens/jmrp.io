@@ -54,11 +54,14 @@ const navLabelKeyMap: Record<string, TranslationKey> = {
 
 <header>
   {/* Zero-JS drawer state: focusable checkbox toggled by the burger/scrim. */}
+  {
+    /* Named by the burger label's sr-only text (an aria-label here would be
+      redundant with it — html-validate no-redundant-aria-label). */
+  }
   <input
     type="checkbox"
     id="nav-open"
     class="nav-open-cb sr-only"
-    aria-label={t("aria.toggleNav")}
     aria-controls="nav-drawer"
     aria-expanded="false"
   />

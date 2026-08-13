@@ -236,6 +236,7 @@ const staticRecent = postData.slice(0, 6);
     <label
       for="nav-open"
       class="drawer__close"
+      aria-hidden="true"
     >
       <span class="sr-only">{t("aria.closeMenu")}</span>
       <span
@@ -1107,6 +1108,7 @@ const staticRecent = postData.slice(0, 6);
     place-items: center;
     width: 44px;
     height: 44px;
+
     /* Button resets, inert on the <label> variant. */
     padding: 0;
     color: var(--color-text-muted);
