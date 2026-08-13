@@ -28,7 +28,7 @@ overrides:
   "lodash-es": ">=4.17.23"
   "@vercel/blob": ">=2.2.0"
   "path-to-regexp": ">=6.3.0"
-  "shiki": "^4.3.1"
+  "shiki": "^4.4.3"
   # Scoped (range-selector) overrides: only the vulnerable instances are
   # remapped, so old-major consumers (minimatch's brace-expansion@1, eslint's
   # ajv@6) keep the version they were built against.
@@ -37,8 +37,8 @@ overrides:
   "esbuild@>=0.27.3 <0.28.1": ">=0.28.1"
   "fast-uri@>=3.0.0 <3.1.5": ">=3.1.5"
   "undici@>=6.0.0 <6.28.0": "^6.28.0"
-  "eslint": "^10.8.0"
-  "vite": "^8.1.5"
+  "eslint": "^10.8.1"
+  "vite": "^8.2.1"
   "@astrojs/markdown-remark>smol-toml": "^1.6.1"
   "@astrojs/yaml2ts>yaml": "^2.8.3"
   "@mapbox/node-pre-gyp>tar": "^7.5.11"
