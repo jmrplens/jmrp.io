@@ -107,12 +107,12 @@ const summary =
       }));
 ---
 
-<figure
+<div
   class="memory-map"
   role="img"
   aria-label={summary}
 >
-  {title && <figcaption class="memory-map__title">{title}</figcaption>}
+  {title && <div class="memory-map__title">{title}</div>}
 
   <div class="memory-map__bars">
     {
@@ -195,7 +195,7 @@ const summary =
   </table>
 
   {caption && <p class="memory-map__caption">{caption}</p>}
-</figure>
+</div>
 
 <style>
   .memory-map {

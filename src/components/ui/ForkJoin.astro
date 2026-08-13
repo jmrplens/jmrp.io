@@ -94,12 +94,12 @@ const summary =
     : t("components.forkJoin.ariaWithoutTitle"));
 ---
 
-<figure
+<div
   class="fj"
   role="img"
   aria-label={summary}
 >
-  {title && <figcaption class="fj__title">{title}</figcaption>}
+  {title && <div class="fj__title">{title}</div>}
 
   {beforeLabel && <span class="fj__phase">{beforeLabel}</span>}
 
@@ -205,7 +205,7 @@ const summary =
   {afterLabel && <span class="fj__phase fj__phase--end">{afterLabel}</span>}
 
   {caption && <p class="fj__caption">{caption}</p>}
-</figure>
+</div>
 
 <style>
   .fj {

@@ -79,12 +79,12 @@ const ICON: Record<Lane["kind"], string> = {
 };
 ---
 
-<figure
+<div
   class="asm"
   role="img"
   aria-label={ariaLabel}
 >
-  {title && <figcaption class="asm__title">{title}</figcaption>}
+  {title && <div class="asm__title">{title}</div>}
 
   <div class="asm__lanes">
     {
@@ -186,7 +186,7 @@ const ICON: Record<Lane["kind"], string> = {
   </table>
 
   {caption && <p class="asm__caption">{caption}</p>}
-</figure>
+</div>
 
 <style>
   .asm {

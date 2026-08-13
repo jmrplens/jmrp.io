@@ -77,12 +77,12 @@ const cellWord: Record<Cell, string> = {
 };
 ---
 
-<figure
+<div
   class="cap-mx"
   role="img"
   aria-label={ariaLabel}
 >
-  {title && <figcaption class="cap-mx__title">{title}</figcaption>}
+  {title && <div class="cap-mx__title">{title}</div>}
 
   <div class="cap-mx__scroll">
     <table class="cap-mx__table">
@@ -137,7 +137,7 @@ const cellWord: Record<Cell, string> = {
   </div>
 
   {caption && <p class="cap-mx__caption">{caption}</p>}
-</figure>
+</div>
 
 <style>
   .cap-mx {

@@ -229,11 +229,15 @@ const staticRecent = postData.slice(0, 6);
     >
       <Logo showPath={false} />
     </span>
+    {
+      /* `label` is naming-prohibited (no aria-label without a role), so the
+        accessible name is sr-only text content instead. */
+    }
     <label
       for="nav-open"
       class="drawer__close"
-      aria-label={t("aria.closeMenu")}
     >
+      <span class="sr-only">{t("aria.closeMenu")}</span>
       <span
         class="i-fa-solid:times"
         aria-hidden="true"

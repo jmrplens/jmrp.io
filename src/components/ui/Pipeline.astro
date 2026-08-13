@@ -65,12 +65,12 @@ const summary =
       }));
 ---
 
-<figure
+<div
   class="pipeline"
   role="img"
   aria-label={summary}
 >
-  {title && <figcaption class="pipeline__title">{title}</figcaption>}
+  {title && <div class="pipeline__title">{title}</div>}
 
   <ol class="pipeline__flow">
     {
@@ -91,7 +91,7 @@ const summary =
   </ol>
 
   {caption && <p class="pipeline__caption">{caption}</p>}
-</figure>
+</div>
 
 <style>
   .pipeline {

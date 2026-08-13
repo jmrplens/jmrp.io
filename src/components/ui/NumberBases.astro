@@ -58,12 +58,12 @@ const summary =
     : t("components.numberBases.ariaWithoutTitle"));
 ---
 
-<figure
+<div
   class="nbases"
   role="img"
   aria-label={summary}
 >
-  {title && <figcaption class="nbases__title">{title}</figcaption>}
+  {title && <div class="nbases__title">{title}</div>}
 
   <dl class="nbases__grid">
     {
@@ -85,7 +85,7 @@ const summary =
   </dl>
 
   {caption && <p class="nbases__caption">{caption}</p>}
-</figure>
+</div>
 
 <style>
   .nbases {

@@ -228,12 +228,12 @@ const summary =
       }));
 ---
 
-<figure
+<div
   class="timing"
   role="img"
   aria-label={summary}
 >
-  {title && <figcaption class="timing__title">{title}</figcaption>}
+  {title && <div class="timing__title">{title}</div>}
 
   <div class="timing__scroll">
     <svg
@@ -309,7 +309,7 @@ const summary =
   </div>
 
   {caption && <p class="timing__caption">{caption}</p>}
-</figure>
+</div>
 
 <style>
   .timing {

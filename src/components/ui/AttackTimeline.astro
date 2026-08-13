@@ -66,12 +66,12 @@ const kindName: Record<Kind, string> = {
 };
 ---
 
-<figure
+<div
   class="atk-tl"
   role="img"
   aria-label={ariaLabel}
 >
-  {title && <figcaption class="atk-tl__title">{title}</figcaption>}
+  {title && <div class="atk-tl__title">{title}</div>}
 
   <ol class="atk-tl__list">
     {
@@ -124,7 +124,7 @@ const kindName: Record<Kind, string> = {
   </table>
 
   {caption && <p class="atk-tl__caption">{caption}</p>}
-</figure>
+</div>
 
 <style>
   .atk-tl {

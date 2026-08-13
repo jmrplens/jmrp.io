@@ -113,12 +113,12 @@ const summary =
     : t("components.bitwiseOp.ariaWithoutTitle", { bits: String(width) }));
 ---
 
-<figure
+<div
   class="bitop"
   role="img"
   aria-label={summary}
 >
-  {title && <figcaption class="bitop__title">{title}</figcaption>}
+  {title && <div class="bitop__title">{title}</div>}
 
   <div class="bitop__scroll">
     <div class="bitop__rows">
@@ -166,7 +166,7 @@ const summary =
   </div>
 
   {caption && <p class="bitop__caption">{caption}</p>}
-</figure>
+</div>
 
 <style>
   .bitop {

@@ -67,12 +67,12 @@ const summary =
     : t("components.subnetSplit.ariaWithoutTitle"));
 ---
 
-<figure
+<div
   class="subnet"
   role="img"
   aria-label={summary}
 >
-  {title && <figcaption class="subnet__title">{title}</figcaption>}
+  {title && <div class="subnet__title">{title}</div>}
 
   <div class="subnet__octets">
     {
@@ -136,7 +136,7 @@ const summary =
   </dl>
 
   {caption && <p class="subnet__caption">{caption}</p>}
-</figure>
+</div>
 
 <style>
   /* Flat bordered card (mockup). Net = accent, host = teal; ink text flips

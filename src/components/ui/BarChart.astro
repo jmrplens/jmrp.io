@@ -188,7 +188,7 @@ function getBarColor(index: number, item: BarData): string {
 }
 ---
 
-<figure
+<div
   class="bar-chart-container"
   role="img"
   aria-label={ariaLabel ||
@@ -202,7 +202,7 @@ function getBarColor(index: number, item: BarData): string {
         }))}
   data-animated="false"
 >
-  {title && <figcaption class="bar-chart-title">{title}</figcaption>}
+  {title && <div class="bar-chart-title">{title}</div>}
 
   <ul class="bar-chart">
     {
@@ -294,7 +294,7 @@ function getBarColor(index: number, item: BarData): string {
   </table>
 
   {caption && <p class="bar-chart-caption">{caption}</p>}
-</figure>
+</div>
 
 <script>
   // Animate bars only when they become visible in the viewport

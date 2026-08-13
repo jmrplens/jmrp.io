@@ -95,12 +95,12 @@ const summary =
       }));
 ---
 
-<figure
+<div
   class="packet"
   role="img"
   aria-label={summary}
 >
-  {title && <figcaption class="packet__title">{title}</figcaption>}
+  {title && <div class="packet__title">{title}</div>}
 
   <div class="packet__scroll">
     <div
@@ -146,7 +146,7 @@ const summary =
   </ul>
 
   {caption && <p class="packet__caption">{caption}</p>}
-</figure>
+</div>
 
 <style>
   .packet {

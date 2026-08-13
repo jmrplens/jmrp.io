@@ -65,12 +65,12 @@ const summary =
       }));
 ---
 
-<figure
+<div
   class="layers"
   role="img"
   aria-label={summary}
 >
-  {title && <figcaption class="layers__title">{title}</figcaption>}
+  {title && <div class="layers__title">{title}</div>}
 
   <ol class="layers__stack">
     {
@@ -87,7 +87,7 @@ const summary =
   </ol>
 
   {caption && <p class="layers__caption">{caption}</p>}
-</figure>
+</div>
 
 <style>
   .layers {

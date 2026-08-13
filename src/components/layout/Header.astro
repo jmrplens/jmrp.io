@@ -116,12 +116,16 @@ const navLabelKeyMap: Record<string, TranslationKey> = {
           aria-hidden="true"
         ></span>
       </a>
+      {
+        /* `label` is naming-prohibited (no aria-label without a role), so the
+          accessible name is sr-only text content instead. */
+      }
       <label
         for="nav-open"
         id="menu-toggle"
         class="menu-toggle"
-        aria-label={t("aria.toggleNav")}
       >
+        <span class="sr-only">{t("aria.toggleNav")}</span>
         <span
           class="i-fa-solid:bars icon-bars"
           aria-hidden="true"
@@ -134,12 +138,17 @@ const navLabelKeyMap: Record<string, TranslationKey> = {
     </div>
   </nav>
 
-  {/* Scrim (zero-JS close via label) + the terminal drawer. */}
+  {
+    /* Scrim (zero-JS close via label) + the terminal drawer. Pointer-only,
+      redundant with the drawer's close control, so hidden from AT. */
+  }
   <label
     for="nav-open"
     class="menu-backdrop"
-    aria-label={t("aria.closeMenu")}
-  ></label>
+    aria-hidden="true"
+  >
+    <span class="sr-only">{t("aria.closeMenu")}</span>
+  </label>
   <NavDrawer />
 </header>
 

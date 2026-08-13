@@ -91,12 +91,12 @@ const summary =
       }));
 ---
 
-<figure
+<div
   class="delta"
   role="img"
   aria-label={summary}
 >
-  {title && <figcaption class="delta__title">{title}</figcaption>}
+  {title && <div class="delta__title">{title}</div>}
 
   <div class="delta__rows">
     {
@@ -181,7 +181,7 @@ const summary =
   </table>
 
   {caption && <p class="delta__caption">{caption}</p>}
-</figure>
+</div>
 
 <style>
   .delta {
