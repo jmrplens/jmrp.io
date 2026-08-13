@@ -82,9 +82,8 @@ export function shouldIgnoreError(text: string): boolean {
 
   const isResource404 =
     text.includes("status of 404") &&
-    (text.includes("/_astro/favicon") ||
-      ((text.includes("/assets/") || text.includes("/pdf/")) &&
-        text.includes(".pdf")) ||
+    (((text.includes("/assets/") || text.includes("/pdf/")) &&
+      text.includes(".pdf")) ||
       text.includes("/api/proxy/"));
 
   // Ignore 404 for external resources (e.g., author profile pages at universities)
@@ -98,7 +97,8 @@ export function shouldIgnoreError(text: string): boolean {
   // Generic "Failed to load resource" errors with 404 status
   // Suppress ALL 404 resource failures because:
   // 1. External resources can fail randomly and are not our responsibility
-  // 2. Internal resources are validated by lychee, sitemap, and html-validate
+  // 2. Internal resources are validated by lychee, sitemap, and html-validate,
+  //    and the head-linked favicons by the content-integrity existence guard
   // 3. Browser often omits the URL in these messages, making it impossible to distinguish
   const isGeneric404 =
     text.includes("Failed to load resource") && text.includes("status of 404");

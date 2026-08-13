@@ -54,11 +54,14 @@ const navLabelKeyMap: Record<string, TranslationKey> = {
 
 <header>
   {/* Zero-JS drawer state: focusable checkbox toggled by the burger/scrim. */}
+  {
+    /* Named by the burger label's sr-only text (an aria-label here would be
+      redundant with it — html-validate no-redundant-aria-label). */
+  }
   <input
     type="checkbox"
     id="nav-open"
     class="nav-open-cb sr-only"
-    aria-label={t("aria.toggleNav")}
     aria-controls="nav-drawer"
     aria-expanded="false"
   />
@@ -116,12 +119,16 @@ const navLabelKeyMap: Record<string, TranslationKey> = {
           aria-hidden="true"
         ></span>
       </a>
+      {
+        /* `label` is naming-prohibited (no aria-label without a role), so the
+          accessible name is sr-only text content instead. */
+      }
       <label
         for="nav-open"
         id="menu-toggle"
         class="menu-toggle"
-        aria-label={t("aria.toggleNav")}
       >
+        <span class="sr-only">{t("aria.toggleNav")}</span>
         <span
           class="i-fa-solid:bars icon-bars"
           aria-hidden="true"
@@ -134,12 +141,17 @@ const navLabelKeyMap: Record<string, TranslationKey> = {
     </div>
   </nav>
 
-  {/* Scrim (zero-JS close via label) + the terminal drawer. */}
+  {
+    /* Scrim (zero-JS close via label) + the terminal drawer. Pointer-only,
+      redundant with the drawer's close control, so hidden from AT. */
+  }
   <label
     for="nav-open"
     class="menu-backdrop"
-    aria-label={t("aria.closeMenu")}
-  ></label>
+    aria-hidden="true"
+  >
+    <span class="sr-only">{t("aria.closeMenu")}</span>
+  </label>
   <NavDrawer />
 </header>
 
@@ -156,6 +168,20 @@ const navLabelKeyMap: Record<string, TranslationKey> = {
     const toggle = document.getElementById("menu-toggle");
     const drawer = document.getElementById("nav-drawer");
     if (!checkbox || !toggle || !drawer) return;
+
+    // Swap the drawer's close <label> (pointer-only: labels are not
+    // focusable) for its <button> twin, so the close action sits inside the
+    // focus trap and works with Enter/Space. See the markup comment in
+    // NavDrawer.astro for why the button ships hidden.
+    const closeLabel = drawer.querySelector("label.drawer__close");
+    const closeButton = drawer.querySelector("button.drawer__close--js");
+    if (closeLabel && closeButton) {
+      closeLabel.hidden = true;
+      closeButton.hidden = false;
+      // close() is declared below; the listener only fires on user clicks,
+      // long after setup has finished.
+      closeButton.addEventListener("click", () => close(), { signal });
+    }
 
     let savedScrollY = 0;
 

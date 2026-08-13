@@ -98,12 +98,12 @@ const rows = [
 ];
 ---
 
-<figure
+<div
   class="kst"
   role="img"
   aria-label={ariaLabel}
 >
-  {title && <figcaption class="kst__title">{title}</figcaption>}
+  {title && <div class="kst__title">{title}</div>}
 
   <div class="kst__rows">
     {
@@ -177,7 +177,7 @@ const rows = [
   </table>
 
   {caption && <p class="kst__caption">{caption}</p>}
-</figure>
+</div>
 
 <style>
   .kst {

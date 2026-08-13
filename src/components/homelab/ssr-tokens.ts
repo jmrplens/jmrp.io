@@ -134,6 +134,33 @@ export const HLM = {
     pds: { primary: "HLM_PDS_RECORDS", secondary: "HLM_PDS_VERSION" },
   },
 
+  /**
+   * Per-service status pill (ServiceCard), keyed by the `services` array ids
+   * in HomelabPage.astro — one entry per `probed: true` card, sourced from
+   * the same `/stats/health` probe that feeds `kpi.online`, so the pill can
+   * never contradict the KPI.
+   */
+  serviceStatus: {
+    mastodon: {
+      /** Localized pill word ("Online"/"Offline"), live from the probe. */
+      status: "HLM_SVC_MASTODON_STATUS",
+      /** Pill state class: "is-online" or "is-offline" (styled in ServiceCard). */
+      statusClass: "HLM_SVC_MASTODON_STATUS_CLASS",
+    },
+    matrix: {
+      status: "HLM_SVC_MATRIX_STATUS",
+      statusClass: "HLM_SVC_MATRIX_STATUS_CLASS",
+    },
+    pds: {
+      status: "HLM_SVC_PDS_STATUS",
+      statusClass: "HLM_SVC_PDS_STATUS_CLASS",
+    },
+    mcp: {
+      status: "HLM_SVC_MCP_STATUS",
+      statusClass: "HLM_SVC_MCP_STATUS_CLASS",
+    },
+  } satisfies Record<string, { status: string; statusClass: string }>,
+
   /** Tor aggregate band (TorAggregate). */
   torAggregate: {
     /** Clients helped across all nodes, 24 h. */

@@ -62,12 +62,12 @@ const summary =
     : t("components.encodingDiagram.ariaWithoutTitle"));
 ---
 
-<figure
+<div
   class="enc"
   role="img"
   aria-label={summary}
 >
-  {title && <figcaption class="enc__title">{title}</figcaption>}
+  {title && <div class="enc__title">{title}</div>}
 
   <ul class="enc__rows">
     {
@@ -91,7 +91,7 @@ const summary =
   </ul>
 
   {caption && <p class="enc__caption">{caption}</p>}
-</figure>
+</div>
 
 <style>
   .enc {

@@ -684,6 +684,31 @@ const ProjectEntry = z.object({
   docs: z.url(),
   /** Spanish documentation, when the project publishes a translated site. */
   docsEs: z.url().optional(),
+  /**
+   * Where a public, already-running instance of this software is documented
+   * and can be tried (currently the MCP servers on mcp.jmrp.io). It points at
+   * that page, NOT at the raw endpoint: the MCP endpoints answer 405 to the
+   * `GET` a browser would send, so linking them directly would hand the reader
+   * an error page instead of the thing.
+   *
+   * Rendered as a card link only, never emitted in JSON-LD: the running
+   * instance is a different entity from the program, and the site that hosts
+   * it already publishes that node and ties it to this project's `#software`
+   * @id through `targetProduct`.
+   */
+  hosted: z.url().optional(),
+  /** Spanish page for the hosted instance, when it publishes one. */
+  hostedEs: z.url().optional(),
+  /**
+   * The raw, callable endpoint of the running instance (currently the MCP
+   * servers on mcp.jmrp.io). Presence of this field is what marks a project
+   * as part of the self-hosted MCP fleet: BaseHead's `owns` and
+   * `scripts/ci/build-identity.mjs` derive the `<endpoint>#api` @ids from it,
+   * the /homelab/ MCP card lists it, and llms.txt's MCP section iterates it —
+   * one YAML edit is all a new server needs. Unlike `hosted`, this URL is for
+   * MACHINES (`POST` transport; a browser `GET` answers 405 by design).
+   */
+  endpoint: z.url().optional(),
   /** Extra canonical URLs for the software entity (registries, PyPI, DOI). */
   sameAs: z.array(z.url()).optional(),
   topics: z.array(ProjectTopic).min(1),

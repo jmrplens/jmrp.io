@@ -152,7 +152,17 @@ test.describe("Build Compression", () => {
 test.describe("Favicon Files", () => {
   test("required favicon files exist in dist", () => {
     const distDir = join(process.cwd(), "dist");
-    const required = ["favicon.ico", "favicon.png", "apple-touch-icon.png"];
+    // Every file hand-linked from BaseHead's <head> plus the RSS channel
+    // image (favicon.png, src/utils/rss.ts) — these are static public/ URLs
+    // with no build-time coupling, so this guard is what catches a deletion.
+    const required = [
+      "favicon.ico",
+      "favicon.svg",
+      "favicon-48x48.png",
+      "favicon-32x32.png",
+      "favicon.png",
+      "apple-touch-icon.png",
+    ];
 
     for (const file of required) {
       expect(existsSync(join(distDir, file)), `Missing: ${file}`).toBe(true);

@@ -83,12 +83,12 @@ const summary =
     : t("components.floatLayout.ariaWithoutTitle"));
 ---
 
-<figure
+<div
   class="float"
   role="img"
   aria-label={summary}
 >
-  {title && <figcaption class="float__title">{title}</figcaption>}
+  {title && <div class="float__title">{title}</div>}
 
   <div class="float__bar">
     {
@@ -122,7 +122,7 @@ const summary =
   </p>
 
   {caption && <p class="float__caption">{caption}</p>}
-</figure>
+</div>
 
 <style>
   .float {

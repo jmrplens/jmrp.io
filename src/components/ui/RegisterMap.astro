@@ -138,12 +138,12 @@ const summary =
       }));
 ---
 
-<figure
+<div
   class="register-map"
   role="img"
   aria-label={summary}
 >
-  {title && <figcaption class="register-map__title">{title}</figcaption>}
+  {title && <div class="register-map__title">{title}</div>}
 
   <div class="register-map__scroll">
     <div
@@ -241,7 +241,7 @@ const summary =
   </table>
 
   {caption && <p class="register-map__caption">{caption}</p>}
-</figure>
+</div>
 
 <style>
   .register-map {

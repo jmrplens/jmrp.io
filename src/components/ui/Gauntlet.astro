@@ -75,12 +75,12 @@ const summary =
   });
 ---
 
-<figure
+<div
   class="gt"
   role="img"
   aria-label={summary}
 >
-  {title && <figcaption class="gt__title">{title}</figcaption>}
+  {title && <div class="gt__title">{title}</div>}
 
   <div class="gt__body">
     <div class="gt__chain">
@@ -151,7 +151,7 @@ const summary =
       }
     </tbody>
   </table>
-</figure>
+</div>
 
 <style>
   .gt {

@@ -129,12 +129,12 @@ const summary =
       }));
 ---
 
-<figure
+<div
   class="struct-packing"
   role="img"
   aria-label={summary}
 >
-  {title && <figcaption class="struct-packing__title">{title}</figcaption>}
+  {title && <div class="struct-packing__title">{title}</div>}
 
   <div class="struct-packing__track">
     {
@@ -219,7 +219,7 @@ const summary =
   </table>
 
   {caption && <p class="struct-packing__caption">{caption}</p>}
-</figure>
+</div>
 
 <style>
   .struct-packing {

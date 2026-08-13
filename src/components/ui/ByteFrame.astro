@@ -88,12 +88,12 @@ const summary =
       }));
 ---
 
-<figure
+<div
   class="byte-frame"
   role="img"
   aria-label={summary}
 >
-  {title && <figcaption class="byte-frame__title">{title}</figcaption>}
+  {title && <div class="byte-frame__title">{title}</div>}
 
   <div class="byte-frame__track">
     {
@@ -161,7 +161,7 @@ const summary =
   </table>
 
   {caption && <p class="byte-frame__caption">{caption}</p>}
-</figure>
+</div>
 
 <style>
   .byte-frame {

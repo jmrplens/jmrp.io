@@ -8,6 +8,7 @@
  */
 import { type TranslationKey, useTranslations } from "@i18n/utils";
 import { getCVData } from "@utils/cv";
+import { getMcpServers, type McpServer } from "@utils/projects";
 import { getPublications, stripTrailingPunctuation } from "@utils/publications";
 import { SERIES } from "@utils/series";
 import type { CollectionEntry } from "astro:content";
@@ -19,6 +20,72 @@ const DESCRIPTION =
 
 const ABOUT =
   "José Manuel Requena Plens (JMRP) is a multidisciplinary engineer working across firmware, embedded systems, and applied research. Background in solar-inverter firmware and industrial control systems, Acoustics research, noise mitigation for the European Space Agency (ESA), and biomedical ultrasound at UPV. Active open source contributor and self-hoster.";
+
+/*
+ * The MCP section gets its own H2 rather than a line under `## Sections`
+ * because these are not pages to read: they are endpoints a client can CALL.
+ * An agent that follows `servers.json` gets the same list as machine-readable
+ * JSON, which is the form it actually needs. The site they belong to
+ * (mcp.jmrp.io) publishes its own `llms.txt`; the block exists so the
+ * connection is discoverable from jmrp.io, whose graph already claims
+ * authorship of the servers.
+ */
+
+/**
+ * Endpoint-specific prose per fleet member, keyed by project id. Richer than
+ * the language-neutral `summary` in projects.yaml because it can state the
+ * calling contract (credentials, headers). A server with no entry here still
+ * gets a bullet — `mcpBlock` falls back to the YAML summary — so growing the
+ * fleet never silently drops a line from this section.
+ */
+const MCP_PROSE: Record<string, { en: string; es: string }> = {
+  "libgen-mcp": {
+    en: "Search and download books, papers, comics, magazines and standards from Library Genesis. No credentials required.",
+    es: "Busca y descarga libros, artículos, cómics, revistas y normas de Library Genesis. Sin credenciales.",
+  },
+  "gitlab-mcp-server": {
+    en: "Over 1,000 GitLab operations as tools. Needs a `PRIVATE-TOKEN` header per request; the token is never stored server-side.",
+    es: "Más de 1.000 operaciones de GitLab como tools. Requiere una cabecera `PRIVATE-TOKEN` por petición; el token nunca se guarda en el servidor.",
+  },
+};
+
+const MCP_INTRO = {
+  en: [
+    "## MCP Servers (self-hosted, different domain)",
+    "",
+    "- [mcp.jmrp.io](https://mcp.jmrp.io/): Public Model Context Protocol servers the author runs on his own infrastructure, with a browser inspector to try them. Streamable HTTP transport; `POST` only — a `GET` on an endpoint returns 405 by design.",
+  ],
+  es: [
+    "## Servidores MCP (autoalojados, en otro dominio)",
+    "",
+    "- [mcp.jmrp.io](https://mcp.jmrp.io/es/): Servidores públicos de Model Context Protocol que el autor ejecuta en su propia infraestructura, con un inspector en el navegador para probarlos. Transporte Streamable HTTP; solo `POST` — un `GET` a un endpoint devuelve 405 por diseño.",
+  ],
+};
+
+/** One `- [name](endpoint): prose Source: [repo].` bullet for a fleet member. */
+function mcpBullet(server: McpServer, locale: "en" | "es"): string {
+  const label =
+    new URL(server.endpoint).pathname.split("/").findLast(Boolean) ?? server.id;
+  const prose = MCP_PROSE[server.id]?.[locale] ?? server.summary[locale];
+  const source = locale === "es" ? "Código" : "Source";
+  return `- [${label}](${server.endpoint}): ${prose} ${source}: [${server.id}](${server.repo}).`;
+}
+
+/**
+ * The author's self-hosted MCP fleet as an `llms.txt` section, driven by the
+ * `endpoint` field in projects.yaml (the same source BaseHead's `owns` and the
+ * /homelab/ card consume).
+ */
+async function mcpBlock(locale: "en" | "es"): Promise<string> {
+  const servers = await getMcpServers();
+  return [
+    ...MCP_INTRO[locale],
+    ...servers.map((server) => mcpBullet(server, locale)),
+    locale === "es"
+      ? "- [servers.json](https://mcp.jmrp.io/servers.json): La misma lista como JSON legible por máquina, para clientes automáticos."
+      : "- [servers.json](https://mcp.jmrp.io/servers.json): The same list as machine-readable JSON, for automatic clients.",
+  ].join("\n");
+}
 
 const CONTACT = [
   "[GitHub](https://github.com/jmrplens)",
@@ -67,6 +134,7 @@ const PROFILE_SECTIONS: {
       lines: [
         "Open-source software authored and maintained by the author, each entry listing language, license, source repository and documentation site.",
         "Includes: gitlab-mcp-server (Model Context Protocol server exposing over 1,000 GitLab operations to AI assistants, Go), phonometry (Python acoustics library validated against 362 published standards), cs-routeros-bouncer (CrowdSec bouncer for MikroTik RouterOS, Go), Cloudflare-DNS-Updater (dynamic DNS updater), libgen-mcp, and TFG-TFM_EPS (LaTeX thesis template for the Universitat Politècnica de València).",
+        "Both MCP servers also run as public hosted endpoints at mcp.jmrp.io, so a client can call them without building or installing anything.",
       ],
     },
     es: {
@@ -74,6 +142,7 @@ const PROFILE_SECTIONS: {
       lines: [
         "Software de código abierto escrito y mantenido por el autor; cada entrada indica lenguaje, licencia, repositorio de código y sitio de documentación.",
         "Incluye: gitlab-mcp-server (servidor Model Context Protocol que expone más de 1.000 operaciones de GitLab a asistentes de IA, en Go), phonometry (biblioteca de acústica en Python validada contra 362 normas publicadas), cs-routeros-bouncer (bouncer de CrowdSec para MikroTik RouterOS, en Go), Cloudflare-DNS-Updater (actualizador de DNS dinámico), libgen-mcp y TFG-TFM_EPS (plantilla LaTeX de tesis para la Universitat Politècnica de València).",
+        "Los dos servidores MCP corren además como endpoints públicos alojados en mcp.jmrp.io, así que un cliente puede llamarlos sin compilar ni instalar nada.",
       ],
     },
   },
@@ -84,6 +153,7 @@ const PROFILE_SECTIONS: {
       lines: [
         "Self-hosted infrastructure run by the author on his own hardware and connections, with live metrics on the page.",
         "Services include a Mastodon instance (mstdn.jmrp.io), a Matrix homeserver, an AT Protocol PDS, Nextcloud, Jellyfin, and monitoring.",
+        "Model Context Protocol servers are published at mcp.jmrp.io, running on the same infrastructure: libgen (no credentials) and gitlab (per-request token).",
         "Tor: four nodes — two bridges running obfs4 and WebTunnel, one in Valencia and one in Alicante, and two middle relays on IONOS VPS instances, one in London and one in Madrid.",
         "Security pipeline: a MikroTik honeypot and nginx pattern matching feed CrowdSec, which drives bouncers on the router and the web tier.",
       ],
@@ -93,6 +163,7 @@ const PROFILE_SECTIONS: {
       lines: [
         "Infraestructura autoalojada que el autor opera sobre su propio hardware y sus propias conexiones, con métricas en tiempo real en la página.",
         "Entre los servicios hay una instancia de Mastodon (mstdn.jmrp.io), un homeserver de Matrix, un PDS de AT Protocol, Nextcloud, Jellyfin y monitorización.",
+        "Los servidores Model Context Protocol se publican en mcp.jmrp.io, sobre la misma infraestructura: libgen (sin credenciales) y gitlab (token por petición).",
         "Tor: cuatro nodos — dos puentes que ejecutan obfs4 y WebTunnel, uno en Valencia y otro en Alicante, y dos relays intermedios en VPS de IONOS, uno en Londres y otro en Madrid.",
         "Tubería de seguridad: un honeypot en MikroTik y la coincidencia de patrones de nginx alimentan a CrowdSec, que a su vez acciona los bouncers del router y de la capa web.",
       ],
@@ -319,7 +390,7 @@ function sectionsBlock(siteUrl: string): string {
     `- [About](${siteUrl}/about/): Who José Manuel Requena Plens is — firmware & software engineer, background, and featured open-source projects`,
     `- [CV](${siteUrl}/cv/): Professional curriculum vitae and experience`,
     `- [Publications](${siteUrl}/publications/): Academic papers on acoustics, metamaterials, and ultrasound`,
-    `- [Homelab](${siteUrl}/homelab/): Self-hosted infrastructure — Mastodon, Matrix, AT Protocol PDS, Tor relays`,
+    `- [Homelab](${siteUrl}/homelab/): Self-hosted infrastructure — Mastodon, Matrix, AT Protocol PDS, MCP servers, Tor relays`,
     `- [Projects](${siteUrl}/projects/): Curated open-source software he authors and maintains — MCP servers, acoustics tooling, network security; language, license, source and docs per project`,
     `- [Tools](${siteUrl}/tools/): Free browser-based developer tools; all run in the browser except the certificate inspector and HTTP header analyzer, which fetch the target you ask them to inspect`,
     `- [Uses](${siteUrl}/uses/): Hardware, software, and homelab kept in rotation`,
@@ -344,7 +415,7 @@ function sectionsBlockEs(siteUrl: string): string {
     `- [Perfil](${siteUrl}/es/about/): Quién es José Manuel Requena Plens — ingeniero de firmware y software, trayectoria y proyectos destacados`,
     `- [CV](${siteUrl}/es/cv/): Currículum profesional y experiencia`,
     `- [Publicaciones](${siteUrl}/es/publications/): Artículos académicos sobre acústica, metamateriales y ultrasonidos`,
-    `- [Homelab](${siteUrl}/es/homelab/): Infraestructura autoalojada — Mastodon, Matrix, PDS de AT Protocol, relés Tor`,
+    `- [Homelab](${siteUrl}/es/homelab/): Infraestructura autoalojada — Mastodon, Matrix, PDS de AT Protocol, servidores MCP, relés Tor`,
     `- [Proyectos](${siteUrl}/es/projects/): Software libre que escribe y mantiene — servidores MCP, herramientas de acústica, seguridad de red`,
     `- [Herramientas](${siteUrl}/es/tools/): Herramientas gratuitas que se ejecutan en el navegador, salvo el inspector de certificados y el analizador de cabeceras HTTP, que consultan el destino que les indiques`,
     `- [Uses](${siteUrl}/es/uses/): Hardware, software e infraestructura en uso`,
@@ -411,6 +482,11 @@ export async function generateLlmsTxt(siteUrl: string): Promise<string> {
       (t) =>
         `- [${t.data.title}](${toolUrl(siteUrl, t)}): ${t.data.description}`,
     ),
+    "",
+    // Both languages, like every other section of this bilingual index.
+    await mcpBlock("en"),
+    "",
+    await mcpBlock("es"),
     "",
     "## Contact",
     "",
@@ -556,6 +632,10 @@ export async function generateLlmsFullTxt(
     ...publicationsSection,
     // The four sections llms.txt advertises but this file used to skip.
     ...buildProfileSections(siteUrl, onlyLocale === "es" ? "es" : "en"),
+    // Per-locale like the post/tool sections: the combined document carries
+    // both languages, each per-locale variant only its own.
+    ...(wantEn ? [await mcpBlock("en"), ""] : []),
+    ...(wantEs ? [await mcpBlock("es"), ""] : []),
     "## Contact",
     "",
     ...CONTACT.map((c) => `- ${c}`),

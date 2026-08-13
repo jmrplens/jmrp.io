@@ -103,5 +103,12 @@ export default defineConfig({
     url: `http://localhost:${PORT}`,
     reuseExistingServer: !process.env.CI,
     timeout: 120 * 1000,
+    env: {
+      ...(process.env as Record<string, string>),
+      // Astro 7.2 auto-daemonizes dev/preview when it detects an AI-agent
+      // environment; the parent then exits and Playwright reports "Process
+      // from config.webServer exited early". Force foreground mode.
+      ASTRO_PREVIEW_BACKGROUND: "0",
+    },
   },
 });

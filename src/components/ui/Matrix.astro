@@ -70,12 +70,12 @@ const summary =
       }));
 ---
 
-<figure
+<div
   class="matrix"
   role="img"
   aria-label={summary}
 >
-  {title && <figcaption class="matrix__title">{title}</figcaption>}
+  {title && <div class="matrix__title">{title}</div>}
 
   <div class="matrix__scroll">
     <table class="matrix__table">
@@ -126,7 +126,7 @@ const summary =
   </div>
 
   {caption && <p class="matrix__caption">{caption}</p>}
-</figure>
+</div>
 
 <style>
   .matrix {

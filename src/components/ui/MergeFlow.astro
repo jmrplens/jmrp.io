@@ -63,12 +63,12 @@ const summary =
   });
 ---
 
-<figure
+<div
   class="mf"
   role="img"
   aria-label={summary}
 >
-  {title && <figcaption class="mf__title">{title}</figcaption>}
+  {title && <div class="mf__title">{title}</div>}
 
   <ol class="mf__stages">
     {
@@ -145,7 +145,7 @@ const summary =
       }
     </tbody>
   </table>
-</figure>
+</div>
 
 <style>
   .mf {

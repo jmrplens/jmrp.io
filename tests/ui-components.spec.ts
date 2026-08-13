@@ -277,7 +277,9 @@ test.describe("Mobile Menu", () => {
     await expect(navLinks).toHaveClass(/open/);
 
     // Close via the drawer's ✕ (the burger sits behind the open drawer).
-    await page.locator(".drawer__close").click();
+    // Two twins share the class — the pointer <label> and the JS <button>
+    // the enhancement script swaps in — so target whichever is visible.
+    await page.locator(".drawer__close:visible").click();
     await page.waitForTimeout(300);
     await expect(navLinks).not.toHaveClass(/open/);
   });

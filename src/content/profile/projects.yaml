@@ -19,6 +19,15 @@ type: projects
 # * `summary.es` is display-only. JSON-LD always emits `summary.en`, on both
 #   locales, because the software entity is language-neutral and its
 #   canonical description must not fork per page.
+# * `hosted`/`hostedEs` point at the PAGE documenting a public running
+#   instance, not at the endpoint itself — the MCP endpoints answer 405 to a
+#   browser's GET. Card link only, never JSON-LD: the running instance is a
+#   different entity from the program, and mcp.jmrp.io already publishes that
+#   node and links it to this project's `#software` @id via `targetProduct`.
+# * `endpoint` is the raw callable MCP URL and the single source of truth for
+#   the fleet: BaseHead/build-identity derive `<endpoint>#api` owns @ids from
+#   it, the /homelab/ MCP card lists it, and llms.txt iterates it. Adding a
+#   server = adding this field (mcp.jmrp.io/servers.json must list it too).
 # * `topics[].wikidata` Q-ids are verified against the Wikidata
 #   `wbgetentities` API (label + description read, not just search hit).
 #   First topic → `about`, the rest → `mentions`.
@@ -36,6 +45,9 @@ projects:
     repo: https://github.com/jmrplens/gitlab-mcp-server
     docs: https://jmrplens.github.io/gitlab-mcp-server/
     docsEs: https://jmrplens.github.io/gitlab-mcp-server/es/
+    hosted: https://mcp.jmrp.io/#gitlab
+    hostedEs: https://mcp.jmrp.io/es/#gitlab
+    endpoint: https://mcp.jmrp.io/gitlab
     sameAs:
       - https://glama.ai/mcp/servers/jmrplens/gitlab-mcp-server
       - https://cursor.directory/plugins/gitlab-mcp-server
@@ -123,6 +135,9 @@ projects:
     license: MIT
     repo: https://github.com/jmrplens/libgen-mcp
     docs: https://jmrplens.github.io/libgen-mcp/
+    hosted: https://mcp.jmrp.io/#libgen
+    hostedEs: https://mcp.jmrp.io/es/#libgen
+    endpoint: https://mcp.jmrp.io/libgen
     sameAs:
       - https://glama.ai/mcp/servers/jmrplens/libgen-mcp
       - https://cursor.directory/plugins/libgen-mcp

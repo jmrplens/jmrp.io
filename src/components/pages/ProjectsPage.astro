@@ -41,6 +41,14 @@ const docsHref = (project: Project) =>
   locale === "es" && project.docsEs ? project.docsEs : project.docs;
 
 /**
+ * Localized page for the project's public running instance. Only rendered when
+ * `hosted` is set; see `projects.yaml` for why this links the page rather than
+ * the endpoint.
+ */
+const hostedHref = (project: Project) =>
+  locale === "es" && project.hostedEs ? project.hostedEs : project.hosted;
+
+/**
  * CollectionPage → ItemList → each `#software` node. The ItemList references
  * the software by @id only; the full nodes are appended to the same @graph
  * below, so the list stays a pure ordering over entities defined once.
@@ -178,6 +186,20 @@ const groups = [
                     {t("pages.projects.docs")}
                     <span class="sr-only"> — {project.name}</span>
                   </a>
+                  {project.hosted && (
+                    <a
+                      href={hostedHref(project)}
+                      target="_blank"
+                      rel="external noopener noreferrer"
+                    >
+                      <span
+                        class="i-mdi:api"
+                        aria-hidden="true"
+                      />
+                      {t("pages.projects.hosted")}
+                      <span class="sr-only"> — {project.name}</span>
+                    </a>
+                  )}
                 </p>
               </li>
             ))}

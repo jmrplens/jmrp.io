@@ -224,9 +224,19 @@ function buildIdentityDocument() {
       : topic,
   );
 
-  const owns = projects.projects.map((project) => ({
-    "@id": `https://github.com/jmrplens/${project.id}#software`,
-  }));
+  const owns = [
+    ...projects.projects.map((project) => ({
+      "@id": `https://github.com/jmrplens/${project.id}#software`,
+    })),
+    // Same entries and rationale as BaseHead.astro (the drift guards keep
+    // them in lockstep): the deployed MCP endpoints, whose canonical nodes
+    // live on mcp.jmrp.io and point back via `provider`/`author`. Derived
+    // from the same `endpoint` field of projects.yaml BaseHead reads, in
+    // YAML order, so the two emitters cannot disagree.
+    ...projects.projects
+      .filter((project) => typeof project.endpoint === "string")
+      .map((project) => ({ "@id": `${project.endpoint}#api` })),
+  ];
 
   const sameAs = [
     ...new Set([

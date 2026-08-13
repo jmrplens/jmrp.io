@@ -68,12 +68,12 @@ const summary =
       }));
 ---
 
-<figure
+<div
   class="cstack"
   role="img"
   aria-label={summary}
 >
-  {title && <figcaption class="cstack__title">{title}</figcaption>}
+  {title && <div class="cstack__title">{title}</div>}
 
   <ol class="cstack__frames">
     {
@@ -98,7 +98,7 @@ const summary =
   </p>
 
   {caption && <p class="cstack__caption">{caption}</p>}
-</figure>
+</div>
 
 <style>
   .cstack {

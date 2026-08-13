@@ -109,11 +109,26 @@ test.describe("Keyboard Navigation Accessibility", () => {
     );
     expect(focusInDrawer).toBe(true);
 
-    // 4. Close with Escape.
+    // 4. The drawer's ✕ is keyboard-reachable: with JS active the pointer
+    //    <label> is swapped for a real <button> inside the focus trap, with a
+    //    localized accessible name.
+    const closeButton = page.locator("button.drawer__close--js");
+    await expect(closeButton).toBeVisible();
+    await expect(closeButton).toHaveAccessibleName(/close menu/i);
+    await closeButton.focus();
+    await expect(closeButton).toBeFocused();
+
+    // 5. Enter on the ✕ closes the drawer and focus returns to the trigger
+    //    control (the #nav-open checkbox).
+    await page.keyboard.press("Enter");
+    await expect(drawer).not.toHaveClass(/open/);
+    await expect(checkbox).toBeFocused();
+
+    // 6. Reopen and close with Escape; focus returns to the trigger again.
+    await menuToggle.click();
+    await expect(drawer).toHaveClass(/open/);
     await page.keyboard.press("Escape");
     await expect(drawer).not.toHaveClass(/open/);
-
-    // 5. Focus returns to the trigger control (the #nav-open checkbox).
     await expect(checkbox).toBeFocused();
   });
 

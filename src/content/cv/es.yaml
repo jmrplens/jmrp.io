@@ -629,6 +629,7 @@ sections:
               label: Cursor,
               url: https://cursor.directory/plugins/gitlab-mcp-server,
             }
+          - { label: En vivo, url: "https://mcp.jmrp.io/es/#gitlab" }
           - {
               label: Documentación,
               url: https://jmrplens.github.io/gitlab-mcp-server/es/,

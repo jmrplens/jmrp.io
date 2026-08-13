@@ -93,12 +93,12 @@ const statusName: Record<Status, string> = {
 };
 ---
 
-<figure
+<div
   class="ord-cmp"
   role="img"
   aria-label={ariaLabel}
 >
-  {title && <figcaption class="ord-cmp__title">{title}</figcaption>}
+  {title && <div class="ord-cmp__title">{title}</div>}
 
   <div class="ord-cmp__grid">
     {
@@ -166,7 +166,7 @@ const statusName: Record<Status, string> = {
   </table>
 
   {caption && <p class="ord-cmp__caption">{caption}</p>}
-</figure>
+</div>
 
 <style>
   .ord-cmp {

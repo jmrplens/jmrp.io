@@ -74,12 +74,12 @@ const t = useTranslations(locale);
 const { title, lanes, caption, ariaLabel } = Astro.props as Props;
 ---
 
-<figure
+<div
   class="eff"
   role="img"
   aria-label={ariaLabel}
 >
-  {title && <figcaption class="eff__title">{title}</figcaption>}
+  {title && <div class="eff__title">{title}</div>}
 
   <div class="eff__lanes">
     {
@@ -164,7 +164,7 @@ const { title, lanes, caption, ariaLabel } = Astro.props as Props;
   </table>
 
   {caption && <p class="eff__caption">{caption}</p>}
-</figure>
+</div>
 
 <style>
   .eff {

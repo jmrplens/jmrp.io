@@ -29,6 +29,7 @@ import TorStats from "@components/homelab/TorStats";
 import { defaultLocale, type Locale } from "@i18n/config";
 import { useTranslatedPath, useTranslations } from "@i18n/utils";
 import BaseLayout from "@layouts/BaseLayout.astro";
+import { getMcpServers } from "@utils/projects";
 import { getSiteUrl } from "@utils/site";
 
 const locale = (Astro.currentLocale ?? defaultLocale) as Locale;
@@ -161,9 +162,33 @@ interface Service {
   description: string;
   url: string;
   linkText: string;
-  statsType: "mastodon" | "matrix" | "pds";
+  /**
+   * Live stat pair to render, when the service publishes one. Optional: the
+   * MCP card has no meaningful pair to show yet, and an empty `ServiceStats`
+   * would render two "—" placeholders that look like a broken probe.
+   */
+  statsType?: "mastodon" | "matrix" | "pds";
   provider: Provider;
   userInfo?: string;
+  /** Callable endpoints listed verbatim in the card, for services that expose them. */
+  endpoints?: string[];
+  /**
+   * Whether nginx's `/stats/health` probe reports on this service.
+   *
+   * It gates BOTH the card's "online" pill and the KPI denominator, because
+   * the KPI renders `<probe-online> / <count of probed cards>`: counting a
+   * service the probe never looks at would render "3 / 4" and tell the reader
+   * something is down. A card with `probed: false` is shown without a status
+   * claim instead of with an unverified one.
+   *
+   * Note the pill itself is a build-time string gated by this flag — only the
+   * KPI numerator is live (HLM_ONLINE, injected by nginx at serve time). The
+   * probe's roster lives OUT of this repo (/etc/nginx/lua/homelab_health.lua,
+   * which checks the MCP fleet via its public per-server health endpoints);
+   * `scripts/ci/check-homelab-probe.mjs` (pnpm verify, production host only)
+   * asserts these flags and that roster are the same set.
+   */
+  probed: boolean;
 }
 
 // Reference the canonical #person entity so services are provided by the same
@@ -185,6 +210,7 @@ const services: Service[] = [
     linkText: t("pages.homelab.mastodonLink"),
     statsType: "mastodon",
     provider: defaultProvider,
+    probed: true,
   },
   {
     id: "matrix",
@@ -196,6 +222,7 @@ const services: Service[] = [
     linkText: t("pages.homelab.matrixLink"),
     statsType: "matrix",
     provider: defaultProvider,
+    probed: true,
     userInfo: "@jmrplens:matrix.jmrp.io",
   },
   {
@@ -208,7 +235,24 @@ const services: Service[] = [
     linkText: t("pages.homelab.pdsLink"),
     statsType: "pds",
     provider: defaultProvider,
+    probed: true,
     userInfo: "@jmrp.io",
+  },
+  {
+    id: "mcp",
+    name: t("pages.homelab.mcpName"),
+    title: "MCP",
+    icon: "simple-icons:modelcontextprotocol",
+    description: t("pages.homelab.mcpDescription"),
+    url: "https://mcp.jmrp.io/",
+    linkText: t("pages.homelab.mcpLink"),
+    provider: defaultProvider,
+    probed: true,
+    // The fleet from projects.yaml (`endpoint` field), shown scheme-less: the
+    // card lists callable addresses, not clickable pages.
+    endpoints: (await getMcpServers()).map((server) =>
+      server.endpoint.replace(/^https?:\/\//, ""),
+    ),
   },
 ];
 
@@ -309,6 +353,18 @@ const nodeCardsTranslations: NodeCardsTranslations = {
 // the rendered arrays so the figure never drifts from what the page shows.
 const monitoredNodesCount = nodeCards.length + torServices.length;
 
+// KPI denominator: only what nginx's health probe actually reports on, so the
+// numerator it injects can never exceed it. See `Service.probed`.
+const probedServices = services.filter((service) => service.probed);
+
+// Per-service pill tokens, widened so `service.id` (a string) can index the
+// registry; a probed card with no token entry simply renders no pill rather
+// than a stale build-time claim.
+const serviceStatusTokens: Record<
+  string,
+  { status: string; statusClass: string } | undefined
+> = HLM.serviceStatus;
+
 const servicesSchema = {
   "@type": "CollectionPage",
   "@id": new URL("#collection", new URL(Astro.url.pathname, getSiteUrl())).href,
@@ -396,7 +452,7 @@ const servicesSchema = {
       <section aria-label={t("pages.homelab.kpiAriaLabel")}>
         <HomelabKpi
           translations={kpiTranslations}
-          servicesCount={services.length}
+          servicesCount={probedServices.length}
           nodesCount={monitoredNodesCount}
           ssr={HLM.kpi}
         />
@@ -431,7 +487,16 @@ const servicesSchema = {
                 description={service.description}
                 link={service.url}
                 linkText={service.linkText}
-                statusText={t("pages.homelab.online")}
+                statusText={
+                  service.probed
+                    ? serviceStatusTokens[service.id]?.status
+                    : undefined
+                }
+                statusClass={
+                  service.probed
+                    ? serviceStatusTokens[service.id]?.statusClass
+                    : undefined
+                }
               >
                 {service.userInfo && (
                   <div
@@ -442,16 +507,32 @@ const servicesSchema = {
                     <code>{service.userInfo}</code>
                   </div>
                 )}
-                <div
-                  id={`${service.id}-stats`}
-                  class="stats-container"
-                >
-                  <ServiceStats
-                    type={service.statsType}
-                    translations={serviceStatsTranslations}
-                    ssr={HLM.services[service.statsType]}
-                  />
-                </div>
+                {service.endpoints && (
+                  <div
+                    slot="extra"
+                    class="user-info"
+                  >
+                    {t("pages.homelab.endpointsLabel")}{" "}
+                    {service.endpoints.map((endpoint, i) => (
+                      <>
+                        {i > 0 && " · "}
+                        <code>{endpoint}</code>
+                      </>
+                    ))}
+                  </div>
+                )}
+                {service.statsType && (
+                  <div
+                    id={`${service.id}-stats`}
+                    class="stats-container"
+                  >
+                    <ServiceStats
+                      type={service.statsType}
+                      translations={serviceStatsTranslations}
+                      ssr={HLM.services[service.statsType]}
+                    />
+                  </div>
+                )}
               </ServiceCard>
             ))
           }
