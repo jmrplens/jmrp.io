@@ -430,9 +430,8 @@ fs.writeFileSync(
 fs.writeFileSync(path.join(PUBLIC, "icon-192.png"), await square(192));
 fs.writeFileSync(path.join(PUBLIC, "icon-512.png"), await square(512));
 
-// Source masters actually used by BaseHead.astro + manifest.ts (getImage()).
-fs.writeFileSync(path.join(ASSETS, "favicon.png"), await rounded(512));
-fs.writeFileSync(path.join(ASSETS, "apple-touch-icon.png"), await square(512));
+// Source masters actually used by manifest.ts (getImage()). BaseHead links
+// the stable files in public/ directly, so it needs no asset master.
 fs.writeFileSync(path.join(PWA, "icon-192.png"), await square(512));
 fs.writeFileSync(path.join(PWA, "icon-512.png"), await square(512));
 

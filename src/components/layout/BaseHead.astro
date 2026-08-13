@@ -10,7 +10,6 @@
  */
 import "@styles/global.css";
 
-import appleTouchIconSrc from "@assets/apple-touch-icon.png";
 import knowsAboutWikidata from "@data/knows-about-wikidata.json";
 import { defaultLocale, type Locale, locales } from "@i18n/config";
 import {
@@ -47,13 +46,6 @@ const locale = (Astro.currentLocale ?? defaultLocale) as Locale;
 const t = useTranslations(locale);
 const translatePath = useTranslatedPath(locale);
 const alternateLinks = getAlternateLinks(Astro.url.pathname, getSiteUrl());
-
-const appleTouchIcon = await getImage({
-  src: appleTouchIconSrc,
-  format: "png",
-  width: 180,
-  height: 180,
-});
 
 const siteEntry = await getEntry("site_config", "site");
 const siteData = (siteEntry?.data || {}) as SiteConfig;
@@ -509,18 +501,21 @@ const jsonLD = {
   documents a multiple of 48 as its minimum.
 
   The SVG stays for browsers that prefer it (it is the animated one); ICO and
-  PNG cover everything that is not a browser.
+  PNG cover everything that is not a browser. Chromium scores `sizes="any"`
+  as "scalable" and would pick the ICO over the SVG if the ICO carried it, so
+  the ICO is pinned to `32x32` and `any` goes on the SVG instead.
 */
 }
 <link
   rel="icon"
   href="/favicon.ico"
-  sizes="any"
+  sizes="32x32"
 />
 <link
   rel="icon"
   type="image/svg+xml"
   href="/favicon.svg"
+  sizes="any"
 />
 <link
   rel="icon"
@@ -536,7 +531,7 @@ const jsonLD = {
 />
 <link
   rel="apple-touch-icon"
-  href={appleTouchIcon.src}
+  href="/apple-touch-icon.png"
 />
 <link
   rel="manifest"
