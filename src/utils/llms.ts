@@ -8,6 +8,7 @@
  */
 import { type TranslationKey, useTranslations } from "@i18n/utils";
 import { getCVData } from "@utils/cv";
+import { getMcpServers, type McpServer } from "@utils/projects";
 import { getPublications, stripTrailingPunctuation } from "@utils/publications";
 import { SERIES } from "@utils/series";
 import type { CollectionEntry } from "astro:content";
@@ -20,34 +21,71 @@ const DESCRIPTION =
 const ABOUT =
   "José Manuel Requena Plens (JMRP) is a multidisciplinary engineer working across firmware, embedded systems, and applied research. Background in solar-inverter firmware and industrial control systems, Acoustics research, noise mitigation for the European Space Agency (ESA), and biomedical ultrasound at UPV. Active open source contributor and self-hoster.";
 
-/**
- * The author's self-hosted MCP endpoints, as an `llms.txt` section.
- *
- * Its own H2 rather than a line under `## Sections` because these are not
- * pages to read: they are endpoints a client can CALL. An agent that follows
- * `servers.json` gets the same list as machine-readable JSON, which is the
- * form it actually needs. The site they belong to (mcp.jmrp.io) publishes its
- * own `llms.txt`; this block exists so the connection is discoverable from
- * jmrp.io, whose graph already claims authorship of both servers.
+/*
+ * The MCP section gets its own H2 rather than a line under `## Sections`
+ * because these are not pages to read: they are endpoints a client can CALL.
+ * An agent that follows `servers.json` gets the same list as machine-readable
+ * JSON, which is the form it actually needs. The site they belong to
+ * (mcp.jmrp.io) publishes its own `llms.txt`; the block exists so the
+ * connection is discoverable from jmrp.io, whose graph already claims
+ * authorship of the servers.
  */
-const MCP_BLOCK = {
+
+/**
+ * Endpoint-specific prose per fleet member, keyed by project id. Richer than
+ * the language-neutral `summary` in projects.yaml because it can state the
+ * calling contract (credentials, headers). A server with no entry here still
+ * gets a bullet — `mcpBlock` falls back to the YAML summary — so growing the
+ * fleet never silently drops a line from this section.
+ */
+const MCP_PROSE: Record<string, { en: string; es: string }> = {
+  "libgen-mcp": {
+    en: "Search and download books, papers, comics, magazines and standards from Library Genesis. No credentials required.",
+    es: "Busca y descarga libros, artículos, cómics, revistas y normas de Library Genesis. Sin credenciales.",
+  },
+  "gitlab-mcp-server": {
+    en: "Over 1,000 GitLab operations as tools. Needs a `PRIVATE-TOKEN` header per request; the token is never stored server-side.",
+    es: "Más de 1.000 operaciones de GitLab como tools. Requiere una cabecera `PRIVATE-TOKEN` por petición; el token nunca se guarda en el servidor.",
+  },
+};
+
+const MCP_INTRO = {
   en: [
     "## MCP Servers (self-hosted, different domain)",
     "",
     "- [mcp.jmrp.io](https://mcp.jmrp.io/): Public Model Context Protocol servers the author runs on his own infrastructure, with a browser inspector to try them. Streamable HTTP transport; `POST` only — a `GET` on an endpoint returns 405 by design.",
-    "- [libgen](https://mcp.jmrp.io/libgen): Search and download books, papers, comics, magazines and standards from Library Genesis. No credentials required. Source: [libgen-mcp](https://github.com/jmrplens/libgen-mcp).",
-    "- [gitlab](https://mcp.jmrp.io/gitlab): Over 1,000 GitLab operations as tools. Needs a `PRIVATE-TOKEN` header per request; the token is never stored server-side. Source: [gitlab-mcp-server](https://github.com/jmrplens/gitlab-mcp-server).",
-    "- [servers.json](https://mcp.jmrp.io/servers.json): The same list as machine-readable JSON, for automatic clients.",
-  ].join("\n"),
+  ],
   es: [
     "## Servidores MCP (autoalojados, en otro dominio)",
     "",
     "- [mcp.jmrp.io](https://mcp.jmrp.io/es/): Servidores públicos de Model Context Protocol que el autor ejecuta en su propia infraestructura, con un inspector en el navegador para probarlos. Transporte Streamable HTTP; solo `POST` — un `GET` a un endpoint devuelve 405 por diseño.",
-    "- [libgen](https://mcp.jmrp.io/libgen): Busca y descarga libros, artículos, cómics, revistas y normas de Library Genesis. Sin credenciales. Código: [libgen-mcp](https://github.com/jmrplens/libgen-mcp).",
-    "- [gitlab](https://mcp.jmrp.io/gitlab): Más de 1.000 operaciones de GitLab como tools. Requiere una cabecera `PRIVATE-TOKEN` por petición; el token nunca se guarda en el servidor. Código: [gitlab-mcp-server](https://github.com/jmrplens/gitlab-mcp-server).",
-    "- [servers.json](https://mcp.jmrp.io/servers.json): La misma lista como JSON legible por máquina, para clientes automáticos.",
-  ].join("\n"),
+  ],
 };
+
+/** One `- [name](endpoint): prose Source: [repo].` bullet for a fleet member. */
+function mcpBullet(server: McpServer, locale: "en" | "es"): string {
+  const label =
+    new URL(server.endpoint).pathname.split("/").findLast(Boolean) ?? server.id;
+  const prose = MCP_PROSE[server.id]?.[locale] ?? server.summary[locale];
+  const source = locale === "es" ? "Código" : "Source";
+  return `- [${label}](${server.endpoint}): ${prose} ${source}: [${server.id}](${server.repo}).`;
+}
+
+/**
+ * The author's self-hosted MCP fleet as an `llms.txt` section, driven by the
+ * `endpoint` field in projects.yaml (the same source BaseHead's `owns` and the
+ * /homelab/ card consume).
+ */
+async function mcpBlock(locale: "en" | "es"): Promise<string> {
+  const servers = await getMcpServers();
+  return [
+    ...MCP_INTRO[locale],
+    ...servers.map((server) => mcpBullet(server, locale)),
+    locale === "es"
+      ? "- [servers.json](https://mcp.jmrp.io/servers.json): La misma lista como JSON legible por máquina, para clientes automáticos."
+      : "- [servers.json](https://mcp.jmrp.io/servers.json): The same list as machine-readable JSON, for automatic clients.",
+  ].join("\n");
+}
 
 const CONTACT = [
   "[GitHub](https://github.com/jmrplens)",
@@ -445,7 +483,7 @@ export async function generateLlmsTxt(siteUrl: string): Promise<string> {
         `- [${t.data.title}](${toolUrl(siteUrl, t)}): ${t.data.description}`,
     ),
     "",
-    MCP_BLOCK.en,
+    await mcpBlock("en"),
     "",
     "## Contact",
     "",
@@ -591,7 +629,7 @@ export async function generateLlmsFullTxt(
     ...publicationsSection,
     // The four sections llms.txt advertises but this file used to skip.
     ...buildProfileSections(siteUrl, onlyLocale === "es" ? "es" : "en"),
-    MCP_BLOCK[onlyLocale === "es" ? "es" : "en"],
+    await mcpBlock(onlyLocale === "es" ? "es" : "en"),
     "",
     "## Contact",
     "",

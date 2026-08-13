@@ -1211,3 +1211,5 @@ ancla
 anidada
 GHSA
 ignoreGhsas
+daemonizes
+misparses

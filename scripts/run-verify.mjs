@@ -252,6 +252,10 @@ async function runVerify() {
       name: "Lint: Token sync",
       command: "node scripts/ci/check-token-sync.mjs",
     },
+    {
+      name: "Lint: Homelab probe sync",
+      command: "node scripts/ci/check-homelab-probe.mjs",
+    },
     { name: "Lint: Spelling (CSpell)", command: "pnpm exec cspell lint ." },
     {
       name: "Lint: JSDoc Coverage",

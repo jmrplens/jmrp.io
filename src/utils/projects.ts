@@ -52,6 +52,8 @@ export interface Project {
   /** Page documenting a public running instance (see the schema for why it stays out of JSON-LD). */
   hosted?: string;
   hostedEs?: string;
+  /** Raw callable MCP endpoint; presence marks the project as part of the fleet (see the schema). */
+  endpoint?: string;
   sameAs?: string[];
   topics: ProjectTopic[];
   summary: { en: string; es: string };
@@ -94,6 +96,33 @@ export async function getProjects(): Promise<Project[]> {
     throw new Error("profile/projects.yaml is not type: projects");
   return entry.data.projects;
 }
+
+/** A project narrowed to the MCP fleet (its `endpoint` is present). */
+export type McpServer = Project & { endpoint: string };
+
+/**
+ * The self-hosted MCP fleet, in YAML order: every project that declares a
+ * callable `endpoint`. Single source for BaseHead's `owns` @ids, the
+ * /homelab/ MCP card and llms.txt — a new server only edits `projects.yaml`
+ * (`scripts/ci/build-identity.mjs` reads the same field from the raw YAML).
+ */
+export async function getMcpServers(): Promise<McpServer[]> {
+  return (await getProjects()).filter(
+    (project): project is McpServer => typeof project.endpoint === "string",
+  );
+}
+
+/**
+ * The @id of a deployed MCP endpoint's `[WebAPI, SoftwareApplication]` node,
+ * canonically published by mcp.jmrp.io (which points back to `#person` via
+ * `provider`/`author`). NOT a fetchable link — the shared identifier both
+ * sites describe the same node under.
+ *
+ * @param server - The fleet member (or its raw endpoint URL).
+ * @returns The canonical `#api` @id.
+ */
+export const mcpApiId = (server: McpServer | string): string =>
+  `${typeof server === "string" ? server : server.endpoint}#api`;
 
 /**
  * Wikidata's canonical entity concept URI uses a plain, non-secure scheme by

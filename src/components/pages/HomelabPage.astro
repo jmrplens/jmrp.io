@@ -29,6 +29,7 @@ import TorStats from "@components/homelab/TorStats";
 import { defaultLocale, type Locale } from "@i18n/config";
 import { useTranslatedPath, useTranslations } from "@i18n/utils";
 import BaseLayout from "@layouts/BaseLayout.astro";
+import { getMcpServers } from "@utils/projects";
 import { getSiteUrl } from "@utils/site";
 
 const locale = (Astro.currentLocale ?? defaultLocale) as Locale;
@@ -174,11 +175,18 @@ interface Service {
   /**
    * Whether nginx's `/stats/health` probe reports on this service.
    *
-   * It gates BOTH the "online" pill and the KPI denominator, because the KPI
-   * renders `<probed-online> / <servicesCount>`: counting a service the probe
-   * never looks at would render "3 / 4" and tell the reader something is down.
-   * A card with `probed: false` is shown without a status claim instead of
-   * with an unverified one.
+   * It gates BOTH the card's "online" pill and the KPI denominator, because
+   * the KPI renders `<probe-online> / <count of probed cards>`: counting a
+   * service the probe never looks at would render "3 / 4" and tell the reader
+   * something is down. A card with `probed: false` is shown without a status
+   * claim instead of with an unverified one.
+   *
+   * Note the pill itself is a build-time string gated by this flag — only the
+   * KPI numerator is live (HLM_ONLINE, injected by nginx at serve time). The
+   * probe's roster lives OUT of this repo (/etc/nginx/lua/homelab_health.lua,
+   * which checks the MCP fleet via its public per-server health endpoints);
+   * `scripts/ci/check-homelab-probe.mjs` (pnpm verify, production host only)
+   * asserts these flags and that roster are the same set.
    */
   probed: boolean;
 }
@@ -240,7 +248,11 @@ const services: Service[] = [
     linkText: t("pages.homelab.mcpLink"),
     provider: defaultProvider,
     probed: true,
-    endpoints: ["mcp.jmrp.io/libgen", "mcp.jmrp.io/gitlab"],
+    // The fleet from projects.yaml (`endpoint` field), shown scheme-less: the
+    // card lists callable addresses, not clickable pages.
+    endpoints: (await getMcpServers()).map((server) =>
+      server.endpoint.replace(/^https?:\/\//, ""),
+    ),
   },
 ];
 

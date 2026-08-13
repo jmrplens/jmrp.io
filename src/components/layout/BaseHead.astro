@@ -27,7 +27,12 @@ import {
   CANONICAL_CREDENTIALS,
   CANONICAL_PERSON_IMAGE,
 } from "@utils/person";
-import { getProjects, softwareId } from "@utils/projects";
+import {
+  getMcpServers,
+  getProjects,
+  mcpApiId,
+  softwareId,
+} from "@utils/projects";
 import { buildSameAs, getSiteUrl } from "@utils/site";
 import { wikidataEntityUri, wikidataLabel } from "@utils/wikidata";
 // Variable Fonts (managed by Astro Experimental Fonts)
@@ -233,12 +238,12 @@ const personProjects = [
   })),
   // The deployed MCP endpoints are entities of their own: `[WebAPI,
   // SoftwareApplication]` nodes canonically published by mcp.jmrp.io, which
-  // already point back here via `provider`/`author`. These two references are
+  // already point back here via `provider`/`author`. These references are
   // the missing reverse edge — from the identity, a consumer reaches the
-  // running services and not just their source repositories. Mirrored in
-  // scripts/ci/build-identity.mjs; the drift guards keep both in lockstep.
-  { "@id": "https://mcp.jmrp.io/libgen#api" },
-  { "@id": "https://mcp.jmrp.io/gitlab#api" },
+  // running services and not just their source repositories. Derived from
+  // `endpoint` in projects.yaml (mirrored in scripts/ci/build-identity.mjs;
+  // the drift guards keep both in lockstep).
+  ...(await getMcpServers()).map((server) => ({ "@id": mcpApiId(server) })),
 ];
 
 const personKnowsAbout = siteData.person?.knowsAbout?.map((topic) => {
