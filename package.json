@@ -65,7 +65,7 @@
     "preact": "^10.29.8",
     "rehype-external-links": "^3.0.0",
     "rehype-raw": "^7.0.0",
-    "sanitize-html": "^2.17.6",
+    "sanitize-html": "^2.17.7",
     "shiki": "^4.4.3",
     "unocss": "^66.7.5",
     "vite": "^8.2.1"
