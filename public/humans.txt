@@ -16,7 +16,12 @@
 
 /* NOTE */
 
-    Statically generated, no client-side JavaScript except where a page
-    genuinely needs it. No trackers, no cookies, no analytics that follow
-    you around. See /.well-known/gpc.json and robots.txt for the policies
-    that back that claim up.
+    Statically generated, with client-side JavaScript only where a page
+    genuinely needs it. Analytics are aggregate and cookie-less, and
+    nothing here follows you from site to site.
+
+    Two of those policies are written down and machine-readable:
+    /.well-known/gpc.json declares that the Global Privacy Control signal
+    is honoured, and robots.txt declares what crawlers and AI systems may
+    do with this content. Neither covers cookies or analytics — that
+    claim stands on how the site is built, not on those files.

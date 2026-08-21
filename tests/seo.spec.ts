@@ -532,4 +532,37 @@ test.describe("SEO & Metadata Checks", () => {
     expect(content).toContain("GPTBot");
     expect(content).toContain("ClaudeBot");
   });
+
+  test("ai.txt and robots.txt declare the same AI policy", async ({ page }) => {
+    // These two files say the same thing in different vocabularies, so they can
+    // drift apart silently: robots.txt speaks Content Signals, ai.txt speaks the
+    // Spawning dialect. A disagreement between them is worse than having only
+    // one, because each is authoritative for a different set of crawlers. This
+    // test is the thing that forces them to be edited together.
+    const robots = await (await page.goto("/robots.txt"))?.text();
+    const ai = await (await page.goto("/ai.txt"))?.text();
+
+    expect(robots).toMatch(
+      /Content-Signal:\s*search=yes,\s*ai-input=yes,\s*ai-train=yes/i,
+    );
+
+    // ai.txt must grant what robots.txt just promised.
+    expect(ai).toMatch(/^User-Agent:\s*\*/im);
+    expect(ai).toMatch(/^Allow:\s*\/\s*$/im);
+    expect(ai).not.toMatch(/^Disallow:\s*\/\s*$/im);
+  });
+
+  test("traffic-advice opts in to prefetch proxies", async ({ page }) => {
+    // The file only means anything if `disallow` is false: with `true` we would
+    // be turning the Chrome prefetch proxy away, which is the opposite of why
+    // it exists here.
+    const body = await (await page.goto("/.well-known/traffic-advice"))?.text();
+    const advice = JSON.parse(body ?? "[]") as {
+      user_agent?: string;
+      disallow?: boolean;
+    }[];
+    const proxy = advice.find((entry) => entry.user_agent === "prefetch-proxy");
+    expect(proxy).toBeDefined();
+    expect(proxy?.disallow).toBe(false);
+  });
 });

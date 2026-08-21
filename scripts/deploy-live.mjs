@@ -78,8 +78,19 @@ import { performance } from "node:perf_hooks";
  */
 try {
   process.loadEnvFile(new URL("../.env", import.meta.url));
-} catch {
-  // No .env, or unreadable — fall back to the ambient environment.
+} catch (error) {
+  // A MISSING .env is normal (CI, a fresh clone) and every action below is
+  // gated on its own variable anyway, so that case stays silent. Anything else
+  // — unreadable file, malformed syntax — must not be: it would strip the
+  // variables just as effectively as not loading them at all, sending us back
+  // to the exact silent failure this call exists to fix.
+  if (error?.code !== "ENOENT") {
+    console.warn(
+      `deploy-live: could not read .env (${error?.message ?? String(error)}); ` +
+        "continuing with the ambient environment only — publish actions whose " +
+        "variables live only in .env will be skipped.",
+    );
+  }
 }
 
 const ROOT = process.cwd();
