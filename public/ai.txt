@@ -1,0 +1,14 @@
+# ai.txt — https://site.spawning.ai/spawning-ai-txt
+#
+# This site allows AI training, retrieval and grounding without restriction.
+# The authoritative statement lives in robots.txt, which carries the same
+# intent in the Content Signals vocabulary:
+#
+#     Content-Signal: search=yes, ai-input=yes, ai-train=yes
+#
+# This file exists because some agents look here first and treat a 404 as
+# ambiguous. If the policy ever changes, robots.txt and this file MUST be
+# changed together — a disagreement between them is worse than either alone.
+
+User-Agent: *
+Allow: /

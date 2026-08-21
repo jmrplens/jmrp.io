@@ -1,0 +1,27 @@
+/* TEAM */
+
+    Engineer: José Manuel Requena Plens
+    Contact: mail [at] jmrp.io
+    Mastodon: @jmrplens@mstdn.jmrp.io
+    GitHub: @jmrplens
+    Site: https://jmrp.io
+
+/* SITE */
+
+    Last update: 2026-08-21
+    Language: English / Español
+    Standards: HTML5, CSS3, WCAG 2.2 AA
+    Components: Astro, MDX, UnoCSS, Preact, Shiki
+    Software: nginx, Cloudflare Workers
+
+/* NOTE */
+
+    Statically generated, with client-side JavaScript only where a page
+    genuinely needs it. Analytics are aggregate and cookie-less, and
+    nothing here follows you from site to site.
+
+    Two of those policies are written down and machine-readable:
+    /.well-known/gpc.json declares that the Global Privacy Control signal
+    is honoured, and robots.txt declares what crawlers and AI systems may
+    do with this content. Neither covers cookies or analytics — that
+    claim stands on how the site is built, not on those files.
