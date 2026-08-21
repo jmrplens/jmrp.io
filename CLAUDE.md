@@ -821,6 +821,8 @@ pnpm exec sonar-scanner
 | `DEPLOY_LIVE_PRODUCTION_ROOT`   | Optional | Overrides the production-root guard path in `deploy-live.mjs` (default `/var/www/jmrp.io`) |
 
 > None of these variables are required for local development. `SONAR_TOKEN` and `SONAR_PROJECT_KEY` are only needed to run the Sonar phase of `pnpm verify` (SonarCloud Analysis + Issues); that phase is skipped automatically when the variables are absent. `deploy-live.mjs`'s publish actions are additionally gated behind the production-root guard (see Deployment).
+>
+> **Where these come from at deploy time**: the post-build hook runs *inside* `astro build`, so it inherits the `.env` that Astro/Vite loads. `deploy-live.mjs` does **not** — it is a separate Node process spawned after `astro build` exits, so it calls `process.loadEnvFile()` on the project's `.env` itself. Without that it only saw variables exported in the shell, which silently disabled the Nginx header deploy and the Bing submission from the 2026-07-05 refactor until 2026-08-21 (`.env` defined them; the shell did not). `loadEnvFile` never overwrites an already-set variable, so precedence is **shell > `.env`**: exporting a variable as an empty string is how a worktree opts out of an action (e.g. `POSTBUILD_NGINX_SNIPPETS_PATH=` to leave Nginx alone) — though the production-root guard already covers the worktree case.
 
 ---
 

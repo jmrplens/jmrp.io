@@ -1,0 +1,22 @@
+/* TEAM */
+
+    Engineer: José Manuel Requena Plens
+    Contact: mail [at] jmrp.io
+    Mastodon: @jmrplens@mstdn.jmrp.io
+    GitHub: @jmrplens
+    Site: https://jmrp.io
+
+/* SITE */
+
+    Last update: 2026-08-21
+    Language: English / Español
+    Standards: HTML5, CSS3, WCAG 2.2 AA
+    Components: Astro, MDX, UnoCSS, Preact, Shiki
+    Software: nginx, Cloudflare Workers
+
+/* NOTE */
+
+    Statically generated, no client-side JavaScript except where a page
+    genuinely needs it. No trackers, no cookies, no analytics that follow
+    you around. See /.well-known/gpc.json and robots.txt for the policies
+    that back that claim up.

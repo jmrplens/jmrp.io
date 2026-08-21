@@ -29,7 +29,10 @@
  *   `PRODUCTION_ROOT` (default `/var/www/jmrp.io`, overridable via
  *   `DEPLOY_LIVE_PRODUCTION_ROOT`) or `DEPLOY_LIVE_FORCE=1` is set.
  *
- * Gating (identical to the previous in-hook behavior):
+ * Gating (identical to the previous in-hook behavior). Every variable below is
+ * read from `process.env` AFTER the project's `.env` has been merged into it
+ * (see the `loadEnvFile` call at the top) — an exported value, empty string
+ * included, still wins over `.env`:
  * - Nginx deploy: skipped unless `POSTBUILD_NGINX_SNIPPETS_PATH` is set.
  * - Cloudflare purge: skipped unless `PRIVATE_CF_ZONE_ID` and
  *   `PRIVATE_CF_API_TOKEN` are set.
@@ -49,6 +52,35 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { performance } from "node:perf_hooks";
+
+/**
+ * Load the project's `.env` into `process.env`.
+ *
+ * Unlike the post-build hook, this script is a SEPARATE Node process spawned
+ * by `pnpm build` after `astro build` has exited, so it never inherited the
+ * `.env` that Astro/Vite loads for the build. The result was silent: from the
+ * 2026-07-05 refactor that moved publish actions out of the build hook until
+ * 2026-08-21, every deploy logged "skipping Nginx deployment
+ * (POSTBUILD_NGINX_SNIPPETS_PATH not set)" even though `.env` defined it —
+ * so the freshly generated `security_headers*.conf` were never copied to
+ * Nginx. The Cloudflare purge kept working only by luck, because those
+ * variables happen to be exported in the shell profile too.
+ *
+ * `loadEnvFile` does NOT overwrite variables already present in the
+ * environment, which is exactly the precedence we want: `.env` supplies the
+ * defaults, and exporting a variable (including as an EMPTY string) still
+ * overrides it — that is how a worktree opts out of touching Nginx.
+ *
+ * Resolved relative to this file, not `cwd`, so the script behaves the same
+ * however it is invoked. A missing `.env` is normal (CI, fresh clone) and
+ * must not be fatal: every action below is independently gated on its own
+ * variable being set.
+ */
+try {
+  process.loadEnvFile(new URL("../.env", import.meta.url));
+} catch {
+  // No .env, or unreadable — fall back to the ambient environment.
+}
 
 const ROOT = process.cwd();
 const DIST_DIR = path.join(ROOT, "dist");
