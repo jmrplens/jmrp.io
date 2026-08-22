@@ -956,6 +956,21 @@ Your test IP should appear with the timeout countdown.
 
 ---
 
+## What this honeypot has actually caught
+
+This guide describes the honeypot running on my own edge router, and its counter
+is public: the [homelab page](/homelab/) publishes the hit count alongside the
+CrowdSec ban list, injected by the edge server as it responds rather than by
+JavaScript — the crawler and the reader see the same number. It read **3,341
+honeypot hits** when this note was written (2026-08-22), and it will read
+something else by the time you get here, which is rather the point of leaving
+the counter live instead of freezing a figure into this paragraph.
+
+Worth knowing before you read too much into any single number: a honeypot on a
+residential IP counts *indiscriminate* scanning, not attacks aimed at you. The
+value is in the pattern — which ports, from where, how the volume moves — not in
+the total.
+
 ## What's next?
 
 You now have a self-defending router that:

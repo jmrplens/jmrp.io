@@ -957,6 +957,21 @@ Tu IP de prueba debería aparecer con la cuenta atrás del timeout.
 
 ---
 
+## Lo que este honeypot ha capturado de verdad
+
+Esta guía describe el honeypot que corre en mi propio router de borde, y su
+contador es público: la [página del homelab](/es/homelab/) publica los hits
+junto a la lista de baneos de CrowdSec, inyectados por el servidor de borde al
+responder y no por JavaScript — el rastreador y tú veis el mismo número.
+Marcaba **3.341 hits** cuando se escribió esta nota (22-08-2026), y marcará otra
+cosa cuando llegues aquí, que es justamente el motivo de dejar el contador vivo
+en lugar de congelar una cifra en este párrafo.
+
+Conviene saberlo antes de leer demasiado en un número suelto: un honeypot en una
+IP residencial cuenta escaneo *indiscriminado*, no ataques dirigidos a ti. El
+valor está en el patrón —qué puertos, desde dónde, cómo evoluciona el volumen—,
+no en el total.
+
 ## Siguientes pasos
 
 Ahora tienes un router que se defiende a sí mismo y que:

@@ -763,6 +763,16 @@ Implementar la **arquitectura lista para producción** con logging forzado a 418
 - **Protección de recursos:** El bypass de rate limit garantiza que el tráfico válido fluya sin problemas mientras los atacantes se quedan atascados en el carril lento.
 - **Integración con CrowdSec:** La lógica del parser se volvió trivial — simplemente hacer coincidir `status == 418` es suficiente para banear una IP, independientemente de la ruta solicitada.
 
+<Callout type="keypoint" title="Lo que este tarpit ha atrapado de verdad">
+Los cuatro puntos de arriba son cualitativos, así que aquí va la cifra. Este
+sitio ejecuta el tarpit que describe esta guía, y el contador está en la
+[página del homelab](/es/homelab/) — lo inyecta el servidor de borde al
+responder, no JavaScript, así que lo que lees es lo que el servidor tenía en ese
+instante. Marcaba **1.318 hits de tarpit y 90 baneos de Nginx** cuando se
+escribió esta nota (22-08-2026); cuando la leas, la cifra en vivo será otra. Esa
+es justo la idea: la medición es la página, no esta frase.
+</Callout>
+
 <Callout type="success" title="El Factor Satisfacción">
 Hay cierta satisfacción en saber que mientras duermes, los atacantes están descargando caracteres aleatorios a 10 bytes por segundo. ¡Dulces sueños!
 </Callout>

@@ -8,41 +8,61 @@ User-agent: *
 # which is not in the vocabulary — unknown signals are ignored, so it never did
 # anything except suggest a stricter policy than the spec can express. Do not
 # re-add keys that are not in the published list.
+#
+# The signal is REPEATED in every named group below, and that repetition is
+# load-bearing rather than clutter. Under RFC 9309 a crawler obeys exactly one
+# group — the most specific one that matches it — and ignores the rest,
+# including `*`. With the signal declared only here, the ~30 agents that have a
+# group of their own (GPTBot, ClaudeBot, PerplexityBot, Google-Extended…) were
+# precisely the ones that never saw it: the opt-in was invisible to its own
+# audience (GEO audit 2026-08-22, M6). The spec does not state whether signals
+# are scoped per group; this assumes the conservative reading. When adding a
+# new agent group, copy the line into it.
 Content-Signal: search=yes, ai-input=yes, ai-train=yes
 Allow: /
 
 # --- Search Engine Bots (explicit allow for clarity) ---
 
 User-agent: Googlebot
+Content-Signal: search=yes, ai-input=yes, ai-train=yes
 Allow: /
 
 User-agent: Bingbot
+Content-Signal: search=yes, ai-input=yes, ai-train=yes
 Allow: /
 
 User-agent: YandexBot
+Content-Signal: search=yes, ai-input=yes, ai-train=yes
 Allow: /
 
 User-agent: Baiduspider
+Content-Signal: search=yes, ai-input=yes, ai-train=yes
 Allow: /
 
 User-agent: DuckDuckBot
+Content-Signal: search=yes, ai-input=yes, ai-train=yes
 Allow: /
 
 User-agent: Applebot
+Content-Signal: search=yes, ai-input=yes, ai-train=yes
 Allow: /
 
 # --- AI / LLM Bots (explicitly allowed for training & indexing) ---
 
 User-agent: GPTBot
+Content-Signal: search=yes, ai-input=yes, ai-train=yes
 Allow: /
 
 User-agent: ChatGPT-User
+Content-Signal: search=yes, ai-input=yes, ai-train=yes
 Allow: /
 
 User-agent: OAI-SearchBot
+Content-Signal: search=yes, ai-input=yes, ai-train=yes
 Allow: /
 
 User-agent: ClaudeBot
+Content-Signal: search=yes, ai-input=yes, ai-train=yes
 Allow: /
 
 # Anthropic splits its crawling by purpose: ClaudeBot (training), Claude-User
@@ -51,63 +71,83 @@ Allow: /
 # block is ever tightened. Anthropic-AI is the legacy token, kept for older
 # stacks that still send it.
 User-agent: Claude-User
+Content-Signal: search=yes, ai-input=yes, ai-train=yes
 Allow: /
 
 User-agent: Claude-SearchBot
+Content-Signal: search=yes, ai-input=yes, ai-train=yes
 Allow: /
 
 User-agent: Anthropic-AI
+Content-Signal: search=yes, ai-input=yes, ai-train=yes
 Allow: /
 
 User-agent: Google-Extended
+Content-Signal: search=yes, ai-input=yes, ai-train=yes
 Allow: /
 
 User-agent: PerplexityBot
+Content-Signal: search=yes, ai-input=yes, ai-train=yes
 Allow: /
 
 User-agent: Perplexity-User
+Content-Signal: search=yes, ai-input=yes, ai-train=yes
 Allow: /
 
 User-agent: Bytespider
+Content-Signal: search=yes, ai-input=yes, ai-train=yes
 Allow: /
 
 User-agent: CCBot
+Content-Signal: search=yes, ai-input=yes, ai-train=yes
 Allow: /
 
 User-agent: cohere-ai
+Content-Signal: search=yes, ai-input=yes, ai-train=yes
 Allow: /
 
 User-agent: Meta-ExternalAgent
+Content-Signal: search=yes, ai-input=yes, ai-train=yes
 Allow: /
 
 User-agent: FacebookBot
+Content-Signal: search=yes, ai-input=yes, ai-train=yes
 Allow: /
 
 User-agent: Applebot-Extended
+Content-Signal: search=yes, ai-input=yes, ai-train=yes
 Allow: /
 
 User-agent: YouBot
+Content-Signal: search=yes, ai-input=yes, ai-train=yes
 Allow: /
 
 User-agent: Amazonbot
+Content-Signal: search=yes, ai-input=yes, ai-train=yes
 Allow: /
 
 User-agent: AI2Bot
+Content-Signal: search=yes, ai-input=yes, ai-train=yes
 Allow: /
 
 User-agent: Diffbot
+Content-Signal: search=yes, ai-input=yes, ai-train=yes
 Allow: /
 
 User-agent: Omgilibot
+Content-Signal: search=yes, ai-input=yes, ai-train=yes
 Allow: /
 
 User-agent: ImagesiftBot
+Content-Signal: search=yes, ai-input=yes, ai-train=yes
 Allow: /
 
 User-agent: PetalBot
+Content-Signal: search=yes, ai-input=yes, ai-train=yes
 Allow: /
 
 User-agent: Timpibot
+Content-Signal: search=yes, ai-input=yes, ai-train=yes
 Allow: /
 
 # --- Discovery ---
@@ -122,6 +162,12 @@ Sitemap: https://jmrp.io/sitemap-index.xml
 
 # LLM context (llmstxt.org standard)
 # https://jmrp.io/llms.txt
-# https://jmrp.io/llms-full.txt          — both languages, ~1.2 MB
+# https://jmrp.io/llms-full.txt          — both languages, index + everything
+#                                          except post bodies (~43 KB)
 # https://jmrp.io/llms-full-en.txt       — English corpus only
 # https://jmrp.io/llms-full-es.txt       — Spanish corpus only
+# https://jmrp.io/llms-blog-<locale>-<slug>.txt
+#                                        — one file per post, full body. Linked
+#                                          from the index above; kept separate
+#                                          so no ingestion cap truncates a guide
+#                                          mid-way.

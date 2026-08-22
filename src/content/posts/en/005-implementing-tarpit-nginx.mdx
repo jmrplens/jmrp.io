@@ -761,6 +761,16 @@ Implementing the **production-grade architecture** with forced 418 logging has s
 - **Resource Protection:** The rate limit bypass ensures valid traffic flows smoothly while attackers are stuck in the slow lane.
 - **CrowdSec Integration:** The parser logic became trivial—simply matching `status == 418` is enough to ban an IP, regardless of the requested path.
 
+<Callout type="keypoint" title="What this tarpit has actually caught">
+The four points above are qualitative, so here is the number. This site runs the
+tarpit described here, and the counter is on the [homelab page](/homelab/) —
+injected by the edge server as it responds, not by JavaScript, so what you read
+is what the server had at that moment. It stood at **1,318 tarpit hits and 90
+Nginx bans** when this note was written (2026-08-22); by the time you read it,
+the live figure will differ. That is the point: the page is the measurement, not
+this sentence.
+</Callout>
+
 <Callout type="success" title="The Satisfaction Factor">
 There's a certain satisfaction in knowing that while you're sleeping, attackers are stuck downloading random characters at 10 bytes per second. Sweet dreams!
 </Callout>
