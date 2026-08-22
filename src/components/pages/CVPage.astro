@@ -222,28 +222,36 @@ const experienceEs = cvEs.sections.find((s) => s.kind === "experience");
  * "Predoctoral researcher" with nothing to tell them apart — the dates and the
  * organisation now do.
  *
- * One node per (role, organisation) pair: three of these roles are joint
- * appointments across UPV, CSIC and Hospital La Fe, and a role cannot carry
- * three employers. Nothing here is invented — every field comes from the CV.
+ * One node per position, naming only the FIRST organisation of the entry.
+ * Three roles are joint appointments (UPV / CSIC / Hospital La Fe) and the CV
+ * lists them in order of primacy, so the first is the employer of record —
+ * author's call, and it keeps one employment from reading as three. The
+ * abbreviation travels as `alternateName`, which is how "UPV" stays a
+ * resolvable alias for "Universitat Politècnica de València".
+ *
+ * Nothing here is invented — every field comes from the CV.
  */
 const cvWorksFor =
   experienceEn?.kind === "experience" && experienceEs?.kind === "experience"
     ? experienceEn.items.flatMap((job, index) => {
         const jobEs = experienceEs.items[index];
         const dates = parsePeriod(job.period);
-        return (job.org ?? []).map((org, orgIndex) => {
-          const orgEs = jobEs?.org?.[orgIndex];
-          return {
+        const org = job.org?.[0];
+        const orgEs = jobEs?.org?.[0];
+        if (!org) return [];
+        return [
+          {
             "@type": "OrganizationRole" as const,
             roleName: bilingual(job.role, jobEs?.role ?? job.role),
             ...dates,
             worksFor: {
               "@type": "Organization" as const,
               name: bilingual(org.name, orgEs?.name ?? org.name),
+              ...(org.short && { alternateName: org.short }),
               ...(org.url && { url: org.url }),
             },
-          };
-        });
+          },
+        ];
       })
     : [];
 
