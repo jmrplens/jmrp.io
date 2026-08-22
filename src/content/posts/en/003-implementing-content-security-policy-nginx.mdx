@@ -108,7 +108,15 @@ This guide takes you from zero to a production-ready, **A+ rated** CSP configura
 
 ## How I run this on my own infrastructure
 
-This isn't a hypothetical — jmrp.io itself is the reference implementation for everything above. Production Nginx sets `set $cspNonce $request_id;` and rewrites the placeholder with `sub_filter NGINX_CSP_NONCE $cspNonce;`, so every response carries a fresh nonce tied to that request. The header this site actually serves is nonce-based: `default-src 'none'`, `script-src 'self' 'nonce-…' 'strict-dynamic'`, `style-src 'self' 'nonce-…'`, plus `frame-ancestors 'none'`, `base-uri 'none'`, and `report-uri /csp-report`. The `'self'` in there is a same-origin fallback for browsers that don't support `strict-dynamic`; where it is supported the browser ignores `'self'` and the nonce is the only thing that grants execution. Zero `unsafe-inline`, zero third-party domain allowlists to maintain.
+{/* The <span> inside this <code> is LOAD-BEARING, not a typo. This sentence names the
+    placeholder production actually uses, and production's own `sub_filter` rewrites that
+    literal on the way out — so writing it contiguously made the page serve a live nonce in
+    place of the token (GEO audit 2026-08-22, K1). Splitting it keeps the rendered and copied
+    text identical while the served bytes never match. Backticks will NOT work here: cheerio
+    re-decodes HTML entities, so `&#67;` is not an escape either — verified. Everywhere else in
+    this post the token is deliberately written inverted, as CSP_NONCE_NGINX. */}
+
+This isn't a hypothetical — jmrp.io itself is the reference implementation for everything above. Production Nginx sets `set $cspNonce $request_id;` and rewrites the placeholder with <code>sub_filter NGINX_CSP_<span>NONCE</span> $cspNonce;</code>, so every response carries a fresh nonce tied to that request. The header this site actually serves is nonce-based: `default-src 'none'`, `script-src 'self' 'nonce-…' 'strict-dynamic'`, `style-src 'self' 'nonce-…'`, plus `frame-ancestors 'none'`, `base-uri 'none'`, and `report-uri /csp-report`. The `'self'` in there is a same-origin fallback for browsers that don't support `strict-dynamic`; where it is supported the browser ignores `'self'` and the nonce is the only thing that grants execution. Zero `unsafe-inline`, zero third-party domain allowlists to maintain.
 
 Violations don't disappear into a log nobody reads: I run my own receiver (`scripts/csp-reporter.mjs`) that surfaces them as they happen, instead of relying on a third party to tell me what's breaking.
 

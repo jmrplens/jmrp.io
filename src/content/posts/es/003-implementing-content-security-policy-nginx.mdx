@@ -109,7 +109,15 @@ Esta guía te lleva desde cero hasta una configuración CSP lista para producci�
 
 ## Cómo lo ejecuto en mi propia infraestructura
 
-Esto no es hipotético — jmrp.io es en sí mismo la implementación de referencia de todo lo anterior. En producción, Nginx fija `set $cspNonce $request_id;` y reescribe el marcador con `sub_filter NGINX_CSP_NONCE $cspNonce;`, de modo que cada respuesta lleva un nonce fresco atado a esa petición. La cabecera que este sitio sirve realmente está basada en nonces: `default-src 'none'`, `script-src 'self' 'nonce-…' 'strict-dynamic'`, `style-src 'self' 'nonce-…'`, más `frame-ancestors 'none'`, `base-uri 'none'` y `report-uri /csp-report`. El `'self'` que aparece ahí es un respaldo de mismo origen para navegadores sin soporte de `strict-dynamic`; donde sí lo soportan, el navegador ignora `'self'` y el nonce es lo único que autoriza la ejecución. Cero `unsafe-inline`, cero listas de dominios de terceros que mantener.
+{/* El <span> dentro de este <code> es FUNCIONAL, no una errata. Esta frase nombra el marcador
+    que usa producción de verdad, y el propio `sub_filter` de producción reescribe ese literal
+    al servir — escribirlo contiguo hacía que la página publicara un nonce en vivo en lugar del
+    token (auditoría GEO 2026-08-22, K1). Partirlo deja el texto renderizado y copiado idéntico
+    mientras los bytes servidos nunca coinciden. Con backticks NO funciona, y `&#67;` tampoco:
+    cheerio vuelve a decodificar las entidades — verificado. En el resto del post el token se
+    escribe deliberadamente invertido, como CSP_NONCE_NGINX. */}
+
+Esto no es hipotético — jmrp.io es en sí mismo la implementación de referencia de todo lo anterior. En producción, Nginx fija `set $cspNonce $request_id;` y reescribe el marcador con <code>sub_filter NGINX_CSP_<span>NONCE</span> $cspNonce;</code>, de modo que cada respuesta lleva un nonce fresco atado a esa petición. La cabecera que este sitio sirve realmente está basada en nonces: `default-src 'none'`, `script-src 'self' 'nonce-…' 'strict-dynamic'`, `style-src 'self' 'nonce-…'`, más `frame-ancestors 'none'`, `base-uri 'none'` y `report-uri /csp-report`. El `'self'` que aparece ahí es un respaldo de mismo origen para navegadores sin soporte de `strict-dynamic`; donde sí lo soportan, el navegador ignora `'self'` y el nonce es lo único que autoriza la ejecución. Cero `unsafe-inline`, cero listas de dominios de terceros que mantener.
 
 Las violaciones no se pierden en un log que nadie lee: tengo mi propio receptor (`scripts/csp-reporter.mjs`) que las saca a la luz en cuanto ocurren, en vez de depender de un servicio de terceros para saber qué se está rompiendo.
 
