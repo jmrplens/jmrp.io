@@ -19,7 +19,7 @@ faq:
   - question: "How do I calculate the number of usable hosts in a subnet?"
     answer: "Usable hosts equal the total addresses in the prefix minus the network and broadcast addresses, so a /24 has 254 usable hosts (256 − 2). Enter the IP and CIDR prefix and the tool reports usable hosts, host range, broadcast, and mask automatically."
   - question: "What is the difference between a /30 and a /31 subnet?"
-    answer: "A /30 has 4 addresses with 2 usable hosts after reserving network and broadcast, while a /31 (RFC 3021) uses both of its 2 addresses for a point-to-point link with no broadcast. Both are common for router-to-router links."
+    answer: "A /30 has 4 addresses with 2 usable hosts after reserving network and broadcast, while a /31 ([RFC 3021](https://datatracker.ietf.org/doc/html/rfc3021)) uses both of its 2 addresses for a point-to-point link with no broadcast. Both are common for router-to-router links."
   - question: "Why is /64 the standard subnet size for IPv6?"
     answer: "A /64 prefix is required by SLAAC, which derives the 64-bit interface identifier from the host, so it is the standard size for almost every IPv6 subnet. The tool uses BigInt math to handle these 128-bit calculations accurately."
   - question: "How do I convert an arbitrary IP range into CIDR blocks?"
@@ -56,7 +56,7 @@ import {
     auto-splits the prefix
   </li>
   <li>
-    <strong>Address type detection</strong> — Private (RFC 1918), CGNAT,
+    <strong>Address type detection</strong> — Private ([RFC 1918](https://datatracker.ietf.org/doc/html/rfc1918)), CGNAT,
     Loopback, Link-Local, Multicast, Documentation, ULA, Teredo, 6to4, and more
   </li>
   <li>
@@ -393,7 +393,7 @@ import {
         <code>/10</code>
       </td>
       <td>CGNAT / Shared</td>
-      <td>RFC 6598</td>
+      <td>[RFC 6598](https://datatracker.ietf.org/doc/html/rfc6598)</td>
     </tr>
     <tr>
       <td>
@@ -403,7 +403,7 @@ import {
         <code>/8</code>
       </td>
       <td>Loopback</td>
-      <td>RFC 1122</td>
+      <td>[RFC 1122](https://datatracker.ietf.org/doc/html/rfc1122)</td>
     </tr>
     <tr>
       <td>
@@ -413,7 +413,7 @@ import {
         <code>/16</code>
       </td>
       <td>Link-Local / APIPA</td>
-      <td>RFC 3927</td>
+      <td>[RFC 3927](https://datatracker.ietf.org/doc/html/rfc3927)</td>
     </tr>
     <tr>
       <td>
@@ -423,7 +423,7 @@ import {
         <code>/24</code>
       </td>
       <td>Documentation (TEST-NET-1)</td>
-      <td>RFC 5737</td>
+      <td>[RFC 5737](https://datatracker.ietf.org/doc/html/rfc5737)</td>
     </tr>
     <tr>
       <td>
@@ -453,7 +453,7 @@ import {
         <code>/4</code>
       </td>
       <td>Multicast</td>
-      <td>RFC 5771</td>
+      <td>[RFC 5771](https://datatracker.ietf.org/doc/html/rfc5771)</td>
     </tr>
   </tbody>
 </table>
@@ -482,7 +482,7 @@ import {
         <code>/127</code>
       </td>
       <td>2</td>
-      <td>Point-to-point link (RFC 6164)</td>
+      <td>Point-to-point link ([RFC 6164](https://datatracker.ietf.org/doc/html/rfc6164))</td>
     </tr>
     <tr>
       <td>
@@ -538,7 +538,7 @@ import {
         <code>::/128</code>
       </td>
       <td>Unspecified</td>
-      <td>RFC 4291</td>
+      <td>[RFC 4291](https://datatracker.ietf.org/doc/html/rfc4291)</td>
     </tr>
     <tr>
       <td>
@@ -559,28 +559,28 @@ import {
         <code>64:ff9b::/96</code>
       </td>
       <td>NAT64 translation</td>
-      <td>RFC 6052</td>
+      <td>[RFC 6052](https://datatracker.ietf.org/doc/html/rfc6052)</td>
     </tr>
     <tr>
       <td>
         <code>2001:db8::/32</code>
       </td>
       <td>Documentation</td>
-      <td>RFC 3849</td>
+      <td>[RFC 3849](https://datatracker.ietf.org/doc/html/rfc3849)</td>
     </tr>
     <tr>
       <td>
         <code>2002::/16</code>
       </td>
       <td>6to4 tunneling</td>
-      <td>RFC 3056</td>
+      <td>[RFC 3056](https://datatracker.ietf.org/doc/html/rfc3056)</td>
     </tr>
     <tr>
       <td>
         <code>fc00::/7</code>
       </td>
       <td>Unique Local Address (ULA)</td>
-      <td>RFC 4193</td>
+      <td>[RFC 4193](https://datatracker.ietf.org/doc/html/rfc4193)</td>
     </tr>
     <tr>
       <td>
