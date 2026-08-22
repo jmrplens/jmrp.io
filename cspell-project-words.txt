@@ -136,6 +136,8 @@ blinkmacsystemfont
 blocklists
 blockquotes
 bloqueantes
+bluesky
+Bluesky
 brea
 brettel
 brotlied
@@ -830,6 +832,7 @@ picó
 pizarra
 pkill
 placa
+plantéate
 plens
 plex
 pliegue

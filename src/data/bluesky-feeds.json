@@ -1,0 +1,54 @@
+{
+  "$comment": "The author's Bluesky feed generators, one per language. Source of truth is the AT Protocol record set under the account's DID — regenerate with: curl 'https://public.api.bsky.app/xrpc/app.bsky.feed.getActorFeeds?actor=jmrp.io'. Checked-in rather than fetched at build so a Bluesky outage cannot break the build; names and descriptions are the records' own, verbatim, each in its feed's language. Snapshot: 2026-08-22.",
+  "did": "did:plc:jder4wkjnwh6mzhrx4n5ebti",
+  "feeds": [
+    {
+      "rkey": "foss-en",
+      "lang": "en",
+      "name": "Dev, FOSS & Homelab EN",
+      "description": "For developers, makers and engineers: open source, programming languages (C, C++, Python, Rust, Go…), compilers, IDEs and editors, Linux, DevOps, self-hosting, homelab, Docker, Kubernetes, Proxmox, NAS. Automated curation + human review. Sibling feeds: ES·DE·FR."
+    },
+    {
+      "rkey": "foss-es",
+      "lang": "es",
+      "name": "Dev, FOSS y Homelab ES",
+      "description": "Para desarrolladores, makers e ingenieros: open source, lenguajes de programación (C, C++, Python, Rust, Go…), compiladores, IDEs, Linux, DevOps, self-hosting, homelab, Docker, Kubernetes, Proxmox, NAS. En español y lenguas de España. Curación automática + revisión humana. Hermanos: EN·DE·FR."
+    },
+    {
+      "rkey": "foss-de",
+      "lang": "de",
+      "name": "Dev, FOSS & Homelab DE",
+      "description": "Für Entwickler, Maker und Ingenieure: Open Source, Programmiersprachen (C, C++, Python, Rust, Go…), Compiler, IDEs und Editoren, Linux, DevOps, Self-Hosting, Homelab, Docker, Kubernetes, Proxmox, NAS. Automatische Kuratierung + manuelle Prüfung. Schwester-Feeds: ES·EN·FR."
+    },
+    {
+      "rkey": "foss-fr",
+      "lang": "fr",
+      "name": "Dev, FOSS & Homelab FR",
+      "description": "Pour développeurs, makers et ingénieurs : open source, langages de programmation (C, C++, Python, Rust, Go…), compilateurs, IDE et éditeurs, Linux, DevOps, self-hosting, homelab, Docker, Kubernetes, Proxmox, NAS. Curation automatique + révision humaine. Feeds jumeaux : ES·EN·DE."
+    },
+    {
+      "rkey": "foss-it",
+      "lang": "it",
+      "name": "Dev, FOSS & Homelab IT",
+      "description": "Per sviluppatori, maker e ingegneri: open source, linguaggi di programmazione (C, C++, Python, Rust, Go…), compilatori, IDE ed editor, Linux, DevOps, self-hosting, homelab, Docker, Kubernetes, Proxmox, NAS. Curation automatica + revisione umana. Feed gemelli: ES·EN·DE·FR."
+    },
+    {
+      "rkey": "foss-ja",
+      "lang": "ja",
+      "name": "Dev, FOSS & Homelab JA",
+      "description": "開発者・メイカー・エンジニア向け: オープンソース、プログラミング言語 (C, C++, Python, Rust, Go…)、コンパイラ、IDE、Linux、DevOps、セルフホスティング、homelab、Docker、Kubernetes、Proxmox、NAS。自動キュレーション＋人手レビュー。姉妹フィード: ES·EN·DE·FR."
+    },
+    {
+      "rkey": "foss-nl",
+      "lang": "nl",
+      "name": "Dev, FOSS & Homelab NL",
+      "description": "Voor ontwikkelaars, makers en ingenieurs: open source, programmeertalen (C, C++, Python, Rust, Go…), compilers, IDE's en editors, Linux, DevOps, self-hosting, homelab, Docker, Kubernetes, Proxmox, NAS. Automatische curatie + menselijke review. Zusterfeeds: ES·EN·DE·FR."
+    },
+    {
+      "rkey": "foss-pt",
+      "lang": "pt",
+      "name": "Dev, FOSS & Homelab PT",
+      "description": "Para programadores, makers e engenheiros: open source, linguagens de programação (C, C++, Python, Rust, Go…), compiladores, IDEs e editores, Linux, DevOps, self-hosting, homelab, Docker, Kubernetes, Proxmox, NAS. Curadoria automática + revisão humana. Feeds irmãos: ES·EN·DE·FR."
+    }
+  ]
+}

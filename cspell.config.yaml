@@ -53,6 +53,10 @@ ignorePaths:
   - plan
   - .git
   - plan/** # gitignored working notes (Spanish prose), not part of the project
+  # Verbatim snapshot of the Bluesky feed-generator records: names and
+  # descriptions in eight languages (de, fr, it, ja, nl, pt…), copied exactly
+  # as published. Spell-checking EN/ES dictionaries against them is all noise.
+  - src/data/bluesky-feeds.json
   - CHANGELOG-review.md # Spanish design-review report, not project content
   - design-audit/** # temporary generated screenshots + HTML for the design review
   - pnpm-lock.yaml

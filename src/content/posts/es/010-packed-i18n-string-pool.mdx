@@ -66,7 +66,7 @@ Mi firmware habla cinco idiomas en un microcontrolador con dos botones y una pan
 
 Así que escribí un generador para _empaquetar mejor_ que el linker. Luego descubrí que el linker ya hacía casi todo lo que yo había reinventado — y di con la única cosa que de verdad _no puede_ hacer, que resultó ser la mejora que valía la pena conservar. Esta es esa historia: un pool de cadenas empaquetado y con _tail-merge_ (fusión por sufijos), indexado con offsets `uint16_t`, lo que ahorró de verdad, y una contabilidad honesta de dónde vienen realmente los ahorros.
 
-<TLDRSummary title="TL;DR">
+<TLDRSummary title="TL;DR — empaqueta las cadenas, reduce la tabla a la mitad">
 - El esquema i18n básico es un `const char* table[langs][ids]` — en un MCU de 32 bits eso son **5.460 bytes de índice de punteros** para 5×273 cadenas, con independencia del texto.
 - Un generador en tiempo de compilación emite un **pool de cadenas empaquetado, deduplicado y con tail-merge** más una **tabla de offsets `uint16_t`** — el índice baja a **2.730 bytes (−50%)**, y las **1.365 relocations** de la tabla básica (una dirección que fijar por celda) pasan a **cero**.
 - El firmware encogió **2.224 B** netos en el `-Os` de producción, sin cambios de API ni en los puntos de llamada — y el empaquetado se mantiene más pequeño en **todos** los niveles de optimización, de `-O0` a `-O3`.

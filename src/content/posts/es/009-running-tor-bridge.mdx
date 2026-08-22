@@ -612,13 +612,22 @@ Analicemos las secciones críticas:
 Si tu servidor está detrás de un router (NAT), usar `ORPort 127.0.0.1:auto` **fallará** en la prueba de auto-accesibilidad. Tor necesita verificar que su ORPort sea accesible desde Internet, y vincular a localhost previene esto. Siempre usa `ORPort 0.0.0.0:9001` (o tu IP específica de LAN) y reenvía el puerto 9001 desde tu router.
 </Callout>
 
-<Callout type="info" title="Dual-Stack: IPv4 + IPv6">
-Si tu ISP proporciona una dirección IPv6 global, puedes añadir una segunda línea `ORPort` con tu dirección IPv6. Esto permite que tu bridge acepte conexiones tanto IPv4 como IPv6, aumentando la accesibilidad para usuarios censurados. Para encontrar tu IPv6:
-<TerminalCommand ariaLabel="Encontrar tu dirección IPv6 global">
+<Callout type="tip" title="Dual-Stack: IPv4 + IPv6">
+Si tu ISP proporciona un prefijo IPv6, **plantéate seriamente añadir un ORPort IPv6**. Un bridge dual-stack puede servir a más usuarios, porque algunas redes solo tienen conectividad IPv6. Para encontrar la dirección IPv6 global de tu servidor:
+
+<TerminalCommand ariaLabel="Encontrar la dirección IPv6 global de tu servidor">
 ```bash
-ip -6 addr show scope global | grep inet6 | awk '{print $2}' | cut -d/ -f1 | head -1
+ip -6 addr show scope global | grep inet6
 ```
 </TerminalCommand>
+
+Usa la dirección (sin el prefijo `/64`) en tu `torrc`:
+
+```ini
+ORPort [2001:db8::1]:9001
+```
+
+A diferencia de IPv4, las direcciones IPv6 son **enrutables globalmente** — no hace falta NAT ni redirección de puertos. Solo necesitas que tu firewall permita TCP entrante al puerto 9001 en esa dirección.
 </Callout>
 
 ### Generar una Ruta Secreta de WebTunnel

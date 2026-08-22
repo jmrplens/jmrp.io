@@ -25,6 +25,13 @@ const t = useTranslations(locale);
 const translatePath = useTranslatedPath(locale);
 
 const siteUrl = getSiteUrl();
+// The author's Bluesky feed generators — checked-in snapshot of the AT
+// Protocol records (see the file's $comment for how to regenerate). The page
+// existed to publish "the feeds" and only knew about the two RSS ones; these
+// eight are feeds in the same sense, just on another protocol.
+import blueskyFeeds from "@data/bluesky-feeds.json";
+
+const blueskyProfile = "https://bsky.app/profile/jmrp.io";
 const feedEn = new URL("/rss.xml", siteUrl).href;
 const feedEs = new URL("/es/rss.xml", siteUrl).href;
 
@@ -65,6 +72,43 @@ const feedsSchema = {
   inLanguage: locale,
   isPartOf: { "@id": new URL("#website", siteUrl).href },
   publisher: { "@id": new URL("#person", siteUrl).href },
+  // The page's whole purpose is to publish these feeds, and its graph did not
+  // name a single one (GEO audit 2026-08-22, B1): two RSS DataFeeds plus the
+  // eight Bluesky feed generators. Bluesky entries carry both the human page
+  // on bsky.app (`url`) and the canonical AT Protocol URI (`identifier`).
+  mainEntity: {
+    "@type": "ItemList",
+    itemListElement: [
+      ...[
+        { url: feedEn, lang: "en", name: t("pages.feeds.feedEnglish") },
+        { url: feedEs, lang: "es", name: t("pages.feeds.feedSpanish") },
+      ].map((feed, index) => ({
+        "@type": "ListItem" as const,
+        position: index + 1,
+        item: {
+          "@type": "DataFeed" as const,
+          name: feed.name,
+          url: feed.url,
+          encodingFormat: "application/rss+xml",
+          inLanguage: feed.lang,
+          provider: { "@id": new URL("#person", siteUrl).href },
+        },
+      })),
+      ...blueskyFeeds.feeds.map((feed, index) => ({
+        "@type": "ListItem" as const,
+        position: index + 3,
+        item: {
+          "@type": "DataFeed" as const,
+          name: feed.name,
+          description: feed.description,
+          url: `${blueskyProfile}/feed/${feed.rkey}`,
+          identifier: `at://${blueskyFeeds.did}/app.bsky.feed.generator/${feed.rkey}`,
+          inLanguage: feed.lang,
+          provider: { "@id": new URL("#person", siteUrl).href },
+        },
+      })),
+    ],
+  },
 } satisfies WebPage;
 ---
 
@@ -108,6 +152,46 @@ const feedsSchema = {
         ))
       }
     </ul>
+
+    <section
+      class="feeds-bluesky"
+      aria-labelledby="feeds-bluesky-title"
+    >
+      <h2
+        class="feeds-bluesky__title"
+        id="feeds-bluesky-title"
+      >
+        {t("pages.feeds.blueskyTitle")}
+      </h2>
+      <p class="feeds-bluesky__intro">{t("pages.feeds.blueskyIntro")}</p>
+      <ul class="feeds-list">
+        {
+          blueskyFeeds.feeds.map((feed) => (
+            <li class="feed-card">
+              <span class="feed-card__label">{feed.name}</span>
+              {/* The description is the record's own text, in the feed's
+                  language — lang tells assistive tech which voice to use. */}
+              <span
+                class="feed-card__desc"
+                lang={feed.lang}
+              >
+                {feed.description}
+              </span>
+              <span class="feed-card__row">
+                <a
+                  class="feed-card__open"
+                  href={`${blueskyProfile}/feed/${feed.rkey}`}
+                  rel="external noopener noreferrer"
+                  aria-label={`${t("pages.feeds.blueskyOpen")} — ${feed.name}`}
+                >
+                  {t("pages.feeds.blueskyOpen")} ↗
+                </a>
+              </span>
+            </li>
+          ))
+        }
+      </ul>
+    </section>
 
     <section
       class="feeds-latest"
@@ -221,6 +305,32 @@ const feedsSchema = {
     white-space: nowrap;
     background: var(--color-bg-subtle);
     border-radius: var(--radius-sm);
+  }
+
+  .feeds-bluesky {
+    margin-top: var(--space-lg);
+  }
+
+  .feeds-bluesky__title {
+    margin-bottom: var(--space-sm);
+  }
+
+  .feeds-bluesky__intro {
+    max-width: var(--max-width-prose);
+    margin-bottom: var(--space-md);
+    color: var(--color-text-muted);
+  }
+
+  .feed-card__desc {
+    display: block;
+    margin-bottom: var(--space-sm);
+    font-size: var(--text-sm);
+    color: var(--color-text);
+  }
+
+  .feed-card__open {
+    font-family: var(--font-mono);
+    font-size: var(--text-sm);
   }
 
   .feeds-latest__title {

@@ -875,6 +875,10 @@ export const common = {
         "The hardware, software, and services José Manuel Requena Plens keeps in rotation — desk, dev tools, and homelab.",
     },
     feeds: {
+      blueskyTitle: "Curated feeds on Bluesky",
+      blueskyIntro:
+        "Beyond this site's own posts, I run eight curated Bluesky feeds — one per language — about open source, programming and homelab. Automated curation with human review; follow them from any Bluesky account.",
+      blueskyOpen: "Open on Bluesky",
       title: "Feeds",
       description:
         "Subscribe to this site with RSS: feed URLs for the English and Spanish blogs, what RSS is in two sentences, and the latest posts.",

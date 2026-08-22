@@ -65,7 +65,7 @@ I ship UI text in five languages on a microcontroller with two buttons and a tin
 
 So I wrote a generator to out-pack the linker. Then I learned the linker was already doing most of what I'd reinvented — and discovered the one thing it genuinely _can't_ do, which turned out to be the win worth keeping. This is that story: a packed, tail-merged string pool with `uint16_t` offsets, what it actually saved, and an honest accounting of where the savings really come from.
 
-<TLDRSummary title="TL;DR">
+<TLDRSummary title="TL;DR — pack the strings, halve the table">
 - The naïve i18n store is a `const char* table[langs][ids]` — on a 32-bit MCU that's **5,460 bytes of pointer index** for 5×273 strings, independent of the text.
 - A build-time generator emits one **packed, deduplicated, tail-merged string pool** plus a **`uint16_t` offset table** — the index drops to **2,730 bytes (−50%)**, and the naïve table's **1,365 relocations** (one address to fix up per cell) become **zero**.
 - Net firmware shrank **2,224 B** at the shipped `-Os`, with no API or call-site changes — and packed stays smaller at **every** optimization level from `-O0` to `-O3`.
