@@ -49,6 +49,33 @@ const usesSchema = {
   inLanguage: locale,
   isPartOf: { "@id": new URL("#website", getSiteUrl()).href },
   about: { "@id": new URL("#person", getSiteUrl()).href },
+  // The page declared itself a CollectionPage and collected nothing (GEO audit
+  // 2026-08-22, B4) — while rendering ~29 named products and tools, exactly
+  // what "what does X use?" queries retrieve. One ListItem per entry.
+  //
+  // Items are typed `Thing`, deliberately. Rows here are often groupings
+  // ("VS Code · Sublime Text · nano", "2× LG 27\"") rather than one product,
+  // and stamping `Product`/`SoftwareApplication` on a composite row would
+  // assert more than the data says. `Thing` with name + description is honest
+  // and still gives the graph the inventory. The `@id` is locale-scoped
+  // (translatePath above), so each language emits its own copy — no shared-id
+  // collision.
+  mainEntity: {
+    "@type": "ItemList",
+    itemListElement: c.groups
+      .flatMap((group) =>
+        group.items.map((item) => ({
+          "@type": "ListItem" as const,
+          position: 0, // fixed up below — flatMap loses the running index
+          item: {
+            "@type": "Thing" as const,
+            name: item.name,
+            ...(item.detail && { description: item.detail }),
+          },
+        })),
+      )
+      .map((entry, index) => ({ ...entry, position: index + 1 })),
+  },
 } satisfies CollectionPage;
 ---
 

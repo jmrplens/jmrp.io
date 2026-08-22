@@ -290,6 +290,13 @@ async function processSingleHtmlFile(
   // repaired text must be what gets hashed, minified and shipped.
   if (restoreCodeTypography($)) isModified = true;
 
+  // Drop empty <p></p> nodes. MDX emits one wherever a raw-HTML block and a
+  // markdown paragraph meet, which left 158 of them across the 34 tool pages
+  // (GEO audit 2026-08-22, B11) — noise that dilutes the extractable-block
+  // ratio and adds phantom prose margins. Only truly empty paragraphs go:
+  // anything with text or an element child stays.
+  if (removeEmptyParagraphs($)) isModified = true;
+
   // Handle styles
   if (processStyles($, enableCsp)) isModified = true;
 
@@ -691,6 +698,28 @@ function processCodeBlocks(
     $el.wrap(wrapperHtml);
     $el.removeAttr("role");
     modified = true;
+  });
+  return modified;
+}
+
+/**
+ * Removes paragraphs with no content at all.
+ *
+ * MDX produces an empty `<p></p>` at raw-HTML/markdown boundaries; see the
+ * call site for the measured impact. A paragraph survives if it has any
+ * non-whitespace text or any element child.
+ *
+ * @param $ - Cheerio API for the page.
+ * @returns `true` when at least one empty paragraph was removed.
+ */
+function removeEmptyParagraphs($: cheerio.CheerioAPI): boolean {
+  let modified = false;
+  $("p").each((_, el) => {
+    const $el = $(el);
+    if ($el.children().length === 0 && $el.text().trim() === "") {
+      $el.remove();
+      modified = true;
+    }
   });
   return modified;
 }
