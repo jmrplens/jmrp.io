@@ -210,6 +210,8 @@ const bilingual = (en: string, es: string) =>
   ] satisfies LanguageTaggedValue[] as unknown as Text;
 
 const experienceEn = cvEn.sections.find((s) => s.kind === "experience");
+const certificatesEn = cvEn.sections.find((s) => s.kind === "certificates");
+const certificatesEs = cvEs.sections.find((s) => s.kind === "certificates");
 const experienceEs = cvEs.sections.find((s) => s.kind === "experience");
 
 /**
@@ -260,30 +262,55 @@ const cvPersonFacts = {
   "@id": new URL("#person", getSiteUrl()).href,
   alumniOf: CANONICAL_ALUMNI_OF,
   ...(cvWorksFor.length > 0 && { worksFor: cvWorksFor }),
+  // Both lists are emitted from the EN and ES sources at once, with
+  // language-tagged literals, so /cv/ and /es/cv/ ship byte-identical values.
+  // They hang off the shared `#person` @id: emitting each page's own language
+  // gave the merged node 16 occupations and 48 credentials — one set per
+  // locale — for a person who has 8 and 24 (GEO audit 2026-08-22, M1). Same
+  // treatment `worksFor` above already gets.
   hasOccupation:
-    experience?.kind === "experience"
-      ? experience.items.map((job) => ({
-          "@type": "Occupation",
-          name: job.role,
-          description: job.summary
+    experienceEn?.kind === "experience" && experienceEs?.kind === "experience"
+      ? experienceEn.items.map((job, index) => {
+          const jobEs = experienceEs.items[index];
+          const summaryEn = job.summary
             ? stripToText(markdownToHtml(job.summary))
-            : undefined,
-        }))
+            : undefined;
+          const summaryEs = jobEs?.summary
+            ? stripToText(markdownToHtml(jobEs.summary))
+            : undefined;
+          return {
+            "@type": "Occupation" as const,
+            name: bilingual(job.role, jobEs?.role ?? job.role),
+            ...(summaryEn && {
+              description: bilingual(summaryEn, summaryEs ?? summaryEn),
+            }),
+          };
+        })
       : [],
   hasCredential:
-    certificates?.kind === "certificates"
-      ? certificates.groups.flatMap((group) =>
-          group.items.map((cert) => ({
-            "@type": "EducationalOccupationalCredential",
-            name: cert.name,
-            credentialCategory: group.category,
-            recognizedBy: {
-              "@type": "Organization",
-              name: cert.school,
-            },
-            ...(cert.url && { url: getAbsoluteUrl(cert.url) }),
-          })),
-        )
+    certificatesEn?.kind === "certificates" &&
+    certificatesEs?.kind === "certificates"
+      ? certificatesEn.groups.flatMap((group, groupIndex) => {
+          const groupEs = certificatesEs.groups[groupIndex];
+          return group.items.map((cert, itemIndex) => {
+            const certEs = groupEs?.items[itemIndex];
+            return {
+              "@type": "EducationalOccupationalCredential" as const,
+              name: bilingual(cert.name, certEs?.name ?? cert.name),
+              credentialCategory: bilingual(
+                group.category,
+                groupEs?.category ?? group.category,
+              ),
+              // The awarding body is a proper noun — never translated, so it
+              // needs no language tag.
+              recognizedBy: {
+                "@type": "Organization" as const,
+                name: cert.school,
+              },
+              ...(cert.url && { url: getAbsoluteUrl(cert.url) }),
+            };
+          });
+        })
       : [],
 } satisfies Person;
 

@@ -51,6 +51,13 @@ const latest = entries
 const pageUrl = new URL(Astro.url.pathname, siteUrl).href;
 const feedsSchema = {
   "@type": "WebPage",
+  // Answer target for this page: its title and the one-line intro under it.
+  // 66 indexable pages carried no `speakable` (GEO audit 2026-08-22, M7);
+  // selectors verified against the built markup.
+  speakable: {
+    "@type": "SpeakableSpecification",
+    cssSelector: [".feeds-header__title", ".feeds-header__intro"],
+  },
   "@id": `${pageUrl}#webpage`,
   url: pageUrl,
   name: t("pages.feeds.title"),

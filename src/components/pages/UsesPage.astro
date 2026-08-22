@@ -35,6 +35,13 @@ const isExternal = (href: string) => !href.startsWith("/");
 // the canonical #person node so it can be resolved as "what this person uses".
 const usesSchema = {
   "@type": "CollectionPage",
+  // Answer target for this page: its title and the one-line intro under it.
+  // 66 indexable pages carried no `speakable` (GEO audit 2026-08-22, M7);
+  // selectors verified against the built markup.
+  speakable: {
+    "@type": "SpeakableSpecification",
+    cssSelector: [".uses-header__title", ".uses-header__intro"],
+  },
   "@id": new URL(`${translatePath("/uses/")}#collection`, getSiteUrl()).href,
   url: new URL(translatePath("/uses/"), getSiteUrl()).href,
   name: t("pages.uses.title"),

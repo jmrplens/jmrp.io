@@ -15,7 +15,7 @@ import { useTranslatedPath, useTranslations } from "@i18n/utils";
 import BaseLayout from "@layouts/BaseLayout.astro";
 import { getSiteUrl } from "@utils/site";
 import type { CollectionEntry } from "astro:content";
-import type { FAQPage, SoftwareApplication } from "schema-dts";
+import type { FAQPage, SoftwareApplication, WebPage } from "schema-dts";
 
 /**
  * Google's SoftwareApplication `applicationCategory` values, keyed by the
@@ -141,7 +141,34 @@ const faqNode =
       } satisfies FAQPage)
     : undefined;
 
-const pageSchema = faqNode ? [toolSchema, faqNode] : toolSchema;
+// The page node itself. Tool pages emitted a SoftwareApplication and a
+// FAQPage but nothing describing the PAGE, so they were the only template with
+// no `speakable` (the header is exactly the self-contained summary an assistant
+// would read out) and, since `dateModified` is injected onto the page node,
+// no modification date either (GEO audit 2026-08-22, M7).
+//
+// `speakable` belongs on WebPage, not on SoftwareApplication — schema-dts
+// rejects it there, correctly. Selectors verified against the built markup:
+// `.header-content` wraps the kicker and the h1, `.subtitle` is the one-line
+// description.
+const toolWebPage = {
+  "@type": "WebPage",
+  "@id": `${toolUrl}#webpage`,
+  url: toolUrl,
+  name: title,
+  description,
+  inLanguage: locale,
+  isPartOf: { "@id": new URL("#website", getSiteUrl()).href },
+  mainEntity: { "@id": `${toolUrl}#software` },
+  speakable: {
+    "@type": "SpeakableSpecification",
+    cssSelector: [".header-content h1", ".subtitle"],
+  },
+} satisfies WebPage;
+
+const pageSchema = faqNode
+  ? [toolWebPage, toolSchema, faqNode]
+  : [toolWebPage, toolSchema];
 ---
 
 <BaseLayout
