@@ -28,11 +28,20 @@ faq:
     answer: "Cron runs with a minimal PATH and the system timezone, so use absolute paths for commands and check timedatectl. Redirect output with \">> /var/log/myjob.log 2>&1\" to capture errors."
 ---
 
+import CronBuilder from "@components/apps/CronBuilder.astro";
+import ToolApp from "@components/ui/ToolApp.astro";
+import ToolInfo from "@components/ui/ToolInfo.astro";
 import {
   TerminalSession,
   TerminalSessionCommand,
   TerminalSessionOutput,
 } from "@components/ui/terminal-session";
+
+<ToolApp>
+  <CronBuilder />
+</ToolApp>
+
+<ToolInfo>
 
 <h2>About This Tool</h2>
 <p>
@@ -447,3 +456,5 @@ import {
     logs.
   </li>
 </ul>
+
+</ToolInfo>

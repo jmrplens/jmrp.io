@@ -28,11 +28,20 @@ faq:
     answer: "Use OpenSSL from the terminal, for example \"openssl s_client -connect host:443\" piped into \"openssl x509 -noout -text\". The Linux command reference above lists ready-to-use snippets."
 ---
 
+import CertInspector from "@components/apps/CertInspector.astro";
+import ToolApp from "@components/ui/ToolApp.astro";
+import ToolInfo from "@components/ui/ToolInfo.astro";
 import {
   TerminalSession,
   TerminalSessionCommand,
   TerminalSessionOutput,
 } from "@components/ui/terminal-session";
+
+<ToolApp>
+  <CertInspector />
+</ToolApp>
+
+<ToolInfo>
 
 <h2>About This Tool</h2>
 <p>
@@ -252,3 +261,5 @@ import {
   </a>{" "}
   for a guide on mutual TLS authentication.
 </p>
+
+</ToolInfo>

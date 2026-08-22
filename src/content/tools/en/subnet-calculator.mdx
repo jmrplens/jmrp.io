@@ -28,11 +28,20 @@ faq:
     answer: "No. All calculations run entirely in your browser and no IP addresses or network data are sent to any server. The tool keeps working offline after the initial page load."
 ---
 
+import SubnetCalculator from "@components/apps/SubnetCalculator.astro";
+import ToolApp from "@components/ui/ToolApp.astro";
+import ToolInfo from "@components/ui/ToolInfo.astro";
 import {
   TerminalSession,
   TerminalSessionCommand,
   TerminalSessionOutput,
 } from "@components/ui/terminal-session";
+
+<ToolApp>
+  <SubnetCalculator />
+</ToolApp>
+
+<ToolInfo>
 
 <h2>About This Tool</h2>
 <p>
@@ -712,3 +721,5 @@ import {
   This is useful for firewall rules, route aggregation, and access control lists
   where CIDR notation is required.
 </p>
+
+</ToolInfo>

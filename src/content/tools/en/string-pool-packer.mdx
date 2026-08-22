@@ -28,6 +28,16 @@ faq:
     answer: "No. All parsing, deduplication, tail-merging, and byte counting happen entirely in your browser, and nothing you type is transmitted anywhere."
 ---
 
+import StringPoolPacker from "@components/apps/StringPoolPacker.astro";
+import ToolApp from "@components/ui/ToolApp.astro";
+import ToolInfo from "@components/ui/ToolInfo.astro";
+
+<ToolApp>
+  <StringPoolPacker />
+</ToolApp>
+
+<ToolInfo>
+
 <h2>About This Tool</h2>
 <p>
   Firmware that ships UI text in several languages usually stores it as a 2-D
@@ -118,3 +128,5 @@ faq:
   All parsing, deduplication, tail-merging, and byte counting happen entirely in
   your browser. Nothing you type is transmitted to any server.
 </p>
+
+</ToolInfo>

@@ -29,11 +29,20 @@ faq:
     answer: "No. Toda la construcción de tramas, decodificación, cálculo de CRC/LRC e interpretación de datos se realiza íntegramente en tu navegador; nada se transmite. El enlace compartible solo codifica los parámetros de la trama en los parámetros de la URL."
 ---
 
+import ModbusFrameBuilder from "@components/apps/ModbusFrameBuilder.astro";
+import ToolApp from "@components/ui/ToolApp.astro";
+import ToolInfo from "@components/ui/ToolInfo.astro";
 import {
   TerminalSession,
   TerminalSessionCommand,
   TerminalSessionOutput,
 } from "@components/ui/terminal-session";
+
+<ToolApp>
+  <ModbusFrameBuilder />
+</ToolApp>
+
+<ToolInfo>
 
 <h2>Acerca de esta herramienta</h2>
 <p>
@@ -598,3 +607,5 @@ import {
   mensaje (desde la dirección del esclavo hasta el último byte de datos). Se
   transmite como dos caracteres ASCII hexadecimales antes del CR LF final.
 </p>
+
+</ToolInfo>

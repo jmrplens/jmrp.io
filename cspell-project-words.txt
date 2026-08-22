@@ -141,6 +141,7 @@ Bluesky
 brea
 brettel
 brotlied
+bsky
 bypassable
 bytearray
 bytespider
@@ -472,6 +473,7 @@ hashcat
 hashrate
 headlesschrome
 healthz
+Helme
 helpdesk
 herramienta
 herramientas
@@ -498,6 +500,7 @@ htpasswd
 httpdate
 httponly
 hunde
+IACR
 icmpv
 iconify
 idempotentes
@@ -854,6 +857,7 @@ precompartida
 precomposed
 predoctoral
 preferir
+prefixless
 preflights
 prefs
 preprocesador
@@ -985,6 +989,7 @@ reverberado
 reverberante
 revierte
 rgpd
+rkey
 rmem
 Roadlite
 robótico

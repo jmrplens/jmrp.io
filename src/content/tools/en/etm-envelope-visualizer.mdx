@@ -29,6 +29,16 @@ faq:
     answer: "No. All cryptography runs entirely in your browser via the Web Crypto API, and nothing you type is transmitted to any server."
 ---
 
+import EnvelopeVisualizer from "@components/apps/EnvelopeVisualizer.astro";
+import ToolApp from "@components/ui/ToolApp.astro";
+import ToolInfo from "@components/ui/ToolInfo.astro";
+
+<ToolApp>
+  <EnvelopeVisualizer />
+</ToolApp>
+
+<ToolInfo>
+
 <h2>About This Tool</h2>
 <p>
   Every file in the vault is an <strong>encrypt-then-MAC</strong> envelope:{" "}
@@ -180,3 +190,5 @@ P    = unpad(AES-256-CBC-Decrypt(encKey, IV, C))`}</code></pre>
   All cryptography runs entirely in your browser via the Web Crypto API. Nothing
   you type is transmitted to any server.
 </p>
+
+</ToolInfo>

@@ -319,7 +319,7 @@ let lastmodResolver: ((path: string) => string | undefined) | undefined;
  * Memoised view of {@link createLastmodResolver} for use from page components.
  *
  * The resolver shells out to `git log` several times while it builds its maps,
- * which is fine once during sitemap serialisation but not once per page: the
+ * which is fine once during sitemap serialization but not once per page: the
  * schema builders run for all 126 pages, and rebuilding would spawn hundreds of
  * git processes. The singleton keeps it to one pass.
  *

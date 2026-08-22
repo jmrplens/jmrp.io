@@ -29,6 +29,16 @@ faq:
     answer: "No. Todo el análisis, la deduplicación, el tail-merge y el conteo de bytes ocurren por completo en tu navegador, y nada de lo que escribes se transmite a ningún sitio."
 ---
 
+import StringPoolPacker from "@components/apps/StringPoolPacker.astro";
+import ToolApp from "@components/ui/ToolApp.astro";
+import ToolInfo from "@components/ui/ToolInfo.astro";
+
+<ToolApp>
+  <StringPoolPacker />
+</ToolApp>
+
+<ToolInfo>
+
 <h2>Sobre esta herramienta</h2>
 <p>
   El firmware que muestra texto de UI en varios idiomas suele guardarlo como una
@@ -120,3 +130,5 @@ faq:
   por completo en tu navegador. Nada de lo que escribes se transmite a ningún
   servidor.
 </p>
+
+</ToolInfo>

@@ -29,11 +29,20 @@ faq:
     answer: "No. X-XSS-Protection es un filtro legacy que los navegadores modernos ignoran o que puede introducir vulnerabilidades; el valor recomendado es \"0\" para desactivarlo, y una Content-Security-Policy sólida es la defensa adecuada contra XSS."
 ---
 
+import HTTPHeadersAnalyzer from "@components/apps/HTTPHeadersAnalyzer.astro";
+import ToolApp from "@components/ui/ToolApp.astro";
+import ToolInfo from "@components/ui/ToolInfo.astro";
 import {
   TerminalSession,
   TerminalSessionCommand,
   TerminalSessionOutput,
 } from "@components/ui/terminal-session";
+
+<ToolApp>
+  <HTTPHeadersAnalyzer />
+</ToolApp>
+
+<ToolInfo>
 
 <h2>¿Qué hace esta herramienta?</h2>
 <p>
@@ -264,3 +273,5 @@ import {
   </a>{" "}
   para una guía detallada sobre la configuración de cabeceras de seguridad.
 </p>
+
+</ToolInfo>

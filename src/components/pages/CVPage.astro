@@ -168,7 +168,7 @@ const MONTHS: Record<string, string> = {
 /**
  * Turns a CV `period` such as `"Apr 2023 - May 2026"` into ISO year-months.
  *
- * Always parsed from the English CV: the Spanish one localises the month
+ * Always parsed from the English CV: the Spanish one localizes the month
  * abbreviations, and the dates must be identical in both documents because
  * they describe the same merged `#person` node.
  *
@@ -222,9 +222,9 @@ const experienceEs = cvEs.sections.find((s) => s.kind === "experience");
  * person worked?" was unanswerable from the structured data even though the CV
  * states it (GEO audit 2026-08-22, A7). It also left two entries both named
  * "Predoctoral researcher" with nothing to tell them apart — the dates and the
- * organisation now do.
+ * organization now do.
  *
- * One node per position, naming only the FIRST organisation of the entry.
+ * One node per position, naming only the FIRST organization of the entry.
  * Three roles are joint appointments (UPV / CSIC / Hospital La Fe) and the CV
  * lists them in order of primacy, so the first is the employer of record —
  * author's call, and it keeps one employment from reading as three. The

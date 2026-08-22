@@ -28,11 +28,20 @@ faq:
     answer: "Pick the preset closest to your use case — Static, Reverse Proxy, SPA, PHP-FPM, API Server, or Hardened — then customize the domain, root path, and SSL certificate paths from there."
 ---
 
+import NginxConfigGenerator from "@components/apps/NginxConfigGenerator.astro";
+import ToolApp from "@components/ui/ToolApp.astro";
+import ToolInfo from "@components/ui/ToolInfo.astro";
 import {
   TerminalSession,
   TerminalSessionCommand,
   TerminalSessionOutput,
 } from "@components/ui/terminal-session";
+
+<ToolApp>
+  <NginxConfigGenerator />
+</ToolApp>
+
+<ToolInfo>
 
 <h2>About This Tool</h2>
 <p>
@@ -161,3 +170,5 @@ import {
     — Mutual TLS authentication
   </li>
 </ul>
+
+</ToolInfo>

@@ -28,6 +28,16 @@ faq:
     answer: "MSS clamping prevents fragmentation problems over the tunnel by auto-calculating the right MSS value. Dual-stack adds IPv4 plus IPv6 ULA addressing with NAT66 so clients work on IPv6-capable networks; you can pick the IPv4-only preset if you don't need IPv6."
 ---
 
+import WireGuardConfigGenerator from "@components/apps/WireGuardConfigGenerator.astro";
+import ToolApp from "@components/ui/ToolApp.astro";
+import ToolInfo from "@components/ui/ToolInfo.astro";
+
+<ToolApp>
+  <WireGuardConfigGenerator />
+</ToolApp>
+
+<ToolInfo>
+
 <h2>About This Tool</h2>
 <p>
   Generate complete MikroTik RouterOS WireGuard VPN configurations with an
@@ -186,3 +196,5 @@ faq:
     </a>
   </li>
 </ul>
+
+</ToolInfo>

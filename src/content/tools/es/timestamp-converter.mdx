@@ -16,8 +16,6 @@ features:
   - "Se ejecuta localmente en tu navegador"
 appComponent: "TimestampConverter"
 lang: "es"
-appProps:
-  title: ""
 faq:
   - question: "¿Qué es un timestamp Unix?"
     answer: "Un timestamp Unix es el número de segundos transcurridos desde el Unix Epoch (1970-01-01 00:00:00 UTC), sin contar los segundos intercalares. Es independiente de la zona horaria, lo que lo hace ideal para almacenar e intercambiar instantes en APIs, logs y bases de datos."
@@ -31,11 +29,20 @@ faq:
     answer: "No. Todas las conversiones se ejecutan completamente en tu navegador usando las APIs integradas Date e Intl de JavaScript, y ningún dato de timestamp sale de tu dispositivo. Los enlaces compartibles solo codifican el timestamp en los parámetros de la URL."
 ---
 
+import TimestampConverter from "@components/apps/TimestampConverter.astro";
+import ToolApp from "@components/ui/ToolApp.astro";
+import ToolInfo from "@components/ui/ToolInfo.astro";
 import {
   TerminalSession,
   TerminalSessionCommand,
   TerminalSessionOutput,
 } from "@components/ui/terminal-session";
+
+<ToolApp>
+  <TimestampConverter title="" />
+</ToolApp>
+
+<ToolInfo>
 
 <h2>Acerca de esta herramienta</h2>
 <p>
@@ -286,3 +293,5 @@ import {
     ```
   </TerminalSessionOutput>
 </TerminalSession>
+
+</ToolInfo>

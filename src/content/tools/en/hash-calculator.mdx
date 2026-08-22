@@ -15,8 +15,6 @@ features:
   - "Optional whitespace cleanup before hashing"
   - "Web Crypto API, content never sent to a server"
 appComponent: "HashCalculator"
-appProps:
-  showExplanation: true
 faq:
   - question: "When should I use a CSP hash instead of a nonce?"
     answer: "Use a hash for inline scripts or styles whose content never changes, so you can allow them without \"unsafe-inline\". If the script contains dynamic values like a user ID, use a nonce instead, because any change to the content breaks the hash."
@@ -30,11 +28,20 @@ faq:
     answer: "SHA-256 is the standard and most widely supported choice for CSP. SHA-384 and SHA-512 are also valid and are commonly used for Subresource Integrity, but SHA-256 is sufficient for nearly all CSP use cases."
 ---
 
+import HashCalculator from "@components/apps/HashCalculator.astro";
+import ToolApp from "@components/ui/ToolApp.astro";
+import ToolInfo from "@components/ui/ToolInfo.astro";
 import {
   TerminalSession,
   TerminalSessionCommand,
   TerminalSessionOutput,
 } from "@components/ui/terminal-session";
+
+<ToolApp>
+  <HashCalculator showExplanation={true} />
+</ToolApp>
+
+<ToolInfo>
 
 <h2>About This Tool</h2>
 <p>
@@ -142,3 +149,5 @@ import {
     Nkhj...[base64 hash]...
   </TerminalSessionOutput>
 </TerminalSession>
+
+</ToolInfo>

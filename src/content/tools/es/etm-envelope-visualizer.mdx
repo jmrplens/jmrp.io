@@ -30,6 +30,16 @@ faq:
     answer: "No. Toda la criptografía se ejecuta enteramente en tu navegador con la Web Crypto API, y nada de lo que escribes se transmite a ningún servidor."
 ---
 
+import EnvelopeVisualizer from "@components/apps/EnvelopeVisualizer.astro";
+import ToolApp from "@components/ui/ToolApp.astro";
+import ToolInfo from "@components/ui/ToolInfo.astro";
+
+<ToolApp>
+  <EnvelopeVisualizer />
+</ToolApp>
+
+<ToolInfo>
+
 <h2>Sobre esta herramienta</h2>
 <p>
   Cada fichero de la bóveda es un sobre <strong>encrypt-then-MAC</strong>:{" "}
@@ -188,3 +198,5 @@ P    = unpad(AES-256-CBC-Decrypt(encKey, IV, C))`}</code></pre>
   Toda la criptografía se ejecuta enteramente en tu navegador con la Web Crypto
   API. Nada de lo que escribes se transmite a ningún servidor.
 </p>
+
+</ToolInfo>

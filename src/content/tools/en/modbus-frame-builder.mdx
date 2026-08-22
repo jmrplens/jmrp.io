@@ -28,11 +28,20 @@ faq:
     answer: "No. All frame building, decoding, CRC/LRC calculation, and data interpretation run entirely in your browser; nothing is transmitted. The shareable link only encodes frame parameters in the URL query string."
 ---
 
+import ModbusFrameBuilder from "@components/apps/ModbusFrameBuilder.astro";
+import ToolApp from "@components/ui/ToolApp.astro";
+import ToolInfo from "@components/ui/ToolInfo.astro";
 import {
   TerminalSession,
   TerminalSessionCommand,
   TerminalSessionOutput,
 } from "@components/ui/terminal-session";
+
+<ToolApp>
+  <ModbusFrameBuilder />
+</ToolApp>
+
+<ToolInfo>
 
 <h2>About This Tool</h2>
 <p>
@@ -582,3 +591,5 @@ import {
   (slave address through the last data byte). It is transmitted as two ASCII hex
   characters before the trailing CR LF.
 </p>
+
+</ToolInfo>

@@ -523,6 +523,11 @@ const tools = defineCollection({
       "mikrotik",
     ]),
     tags: z.array(z.string()).default([]),
+    // Still required even though ToolPage no longer renders from it: the MDX
+    // imports its own app (per-tool CSS split, 2026-08-22) and this field is
+    // what sitemap-post-dates.ts uses to fold the app component's git date
+    // into the tool's <lastmod>. It must keep matching the component the MDX
+    // imports.
     appComponent: z.string(),
     /** Extra props to pass to the app component, e.g. { showExplanation: true }. */
     appProps: z.record(z.string(), z.any()).optional(),

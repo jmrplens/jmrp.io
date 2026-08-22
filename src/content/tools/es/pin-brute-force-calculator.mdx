@@ -29,6 +29,16 @@ faq:
     answer: "No. Cada valor se calcula en tu navegador con aritmética simple y no se transmite ninguna entrada a ningún sitio."
 ---
 
+import BruteForceCost from "@components/apps/BruteForceCost.astro";
+import ToolApp from "@components/ui/ToolApp.astro";
+import ToolInfo from "@components/ui/ToolInfo.astro";
+
+<ToolApp>
+  <BruteForceCost />
+</ToolApp>
+
+<ToolInfo>
+
 <h2>Sobre esta herramienta</h2>
 <p>
   Un PIN de 4 dígitos solo tiene <strong>10.000</strong> valores posibles. Esta
@@ -79,3 +89,5 @@ faq:
   Todo se calcula en tu navegador con aritmética simple. No se transmite ninguna
   entrada a ningún sitio.
 </p>
+
+</ToolInfo>

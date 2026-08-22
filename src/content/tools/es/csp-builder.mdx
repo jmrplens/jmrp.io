@@ -29,11 +29,20 @@ faq:
     answer: "La evaluación de seguridad señala configuraciones inseguras como 'unsafe-inline' porque debilitan tu política al permitir scripts o estilos inline, anulando gran parte de la protección de CSP frente al XSS. Es preferible usar nonces o hashes."
 ---
 
+import CSPBuilder from "@components/apps/CSPBuilder.astro";
+import ToolApp from "@components/ui/ToolApp.astro";
+import ToolInfo from "@components/ui/ToolInfo.astro";
 import {
   TerminalSession,
   TerminalSessionCommand,
   TerminalSessionOutput,
 } from "@components/ui/terminal-session";
+
+<ToolApp>
+  <CSPBuilder />
+</ToolApp>
+
+<ToolInfo>
 
 <h2>Acerca de esta herramienta</h2>
 <p>
@@ -128,3 +137,5 @@ import {
   </a>
   .
 </p>
+
+</ToolInfo>
