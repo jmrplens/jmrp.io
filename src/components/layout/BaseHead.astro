@@ -15,10 +15,12 @@ import { defaultLocale, type Locale, locales } from "@i18n/config";
 import {
   getAlternateLinks,
   getOgLocale,
+  stripLocalePrefix,
   type TranslationKey,
   useTranslatedPath,
   useTranslations,
 } from "@i18n/utils";
+import { pageLastmod } from "@src/integrations/sitemap-post-dates";
 import type { SiteConfig } from "@src/types";
 import { safeJsonLd } from "@utils/html";
 import type { LanguageTaggedValue } from "@utils/person";
@@ -502,6 +504,29 @@ if (schema) {
     ];
   } else {
     schemaGraph.push(schema as unknown as (typeof schemaGraph)[number]);
+  }
+}
+
+// `dateModified` on the node that describes THIS page.
+//
+// 36 indexable pages — every collection and plain WebPage — carried no
+// `dateModified` even though the sitemap already published a content-derived
+// `<lastmod>` for them (GEO audit 2026-08-22, M8). Posts, tools and the
+// ProfilePages set their own, so this only fills the gap; a node that already
+// declares one is never touched.
+//
+// The date comes from the same resolver the sitemap uses, so the two can never
+// disagree. `modifiedDate` passed by the page still wins.
+const pagePath = stripLocalePrefix(Astro.url.pathname) || "/";
+const resolvedModified =
+  modifiedDate?.toISOString() ?? pageLastmod(pagePath) ?? undefined;
+
+if (resolvedModified) {
+  for (const node of schemaGraph) {
+    const candidate = node as unknown as Record<string, unknown>;
+    if (candidate.url === canonicalURL.href && !candidate.dateModified) {
+      candidate.dateModified = resolvedModified;
+    }
   }
 }
 

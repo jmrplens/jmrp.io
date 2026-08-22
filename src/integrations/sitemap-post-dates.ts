@@ -298,3 +298,27 @@ export function createLastmodResolver(): (path: string) => string | undefined {
     return staticDates.get(path);
   };
 }
+
+/** Lazily-built singleton behind {@link pageLastmod}. */
+let lastmodResolver: ((path: string) => string | undefined) | undefined;
+
+/**
+ * Memoised view of {@link createLastmodResolver} for use from page components.
+ *
+ * The resolver shells out to `git log` several times while it builds its maps,
+ * which is fine once during sitemap serialisation but not once per page: the
+ * schema builders run for all 126 pages, and rebuilding would spawn hundreds of
+ * git processes. The singleton keeps it to one pass.
+ *
+ * Exists so `dateModified` in the JSON-LD comes from exactly the same source as
+ * `<lastmod>` in the sitemap. Those 36 collection and WebPage nodes had no
+ * `dateModified` at all even though the sitemap already knew the date
+ * (GEO audit 2026-08-22, M8).
+ *
+ * @param path - Locale-stripped path, e.g. `/blog/` or `/cv/`.
+ * @returns ISO timestamp, or undefined when the date cannot be determined.
+ */
+export function pageLastmod(path: string): string | undefined {
+  lastmodResolver ??= createLastmodResolver();
+  return lastmodResolver(path);
+}

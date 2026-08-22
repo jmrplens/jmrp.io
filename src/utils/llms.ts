@@ -232,6 +232,19 @@ function buildProfileSections(
 }
 
 /**
+ * Flattens a BibTeX abstract onto a single line.
+ *
+ * Abstracts in `papers.bib` are hard-wrapped across many lines; left as-is they
+ * would break the one-item-per-line shape the rest of this document uses.
+ *
+ * @param value - Raw abstract text.
+ * @returns The same text with runs of whitespace collapsed to single spaces.
+ */
+function collapseWhitespace(value: string): string {
+  return value.replaceAll(/\s+/gu, " ").trim();
+}
+
+/**
  * Best-effort conversion of a post's MDX body to plain-ish markdown for AI
  * ingestion: strips `import` statements, collapses excess blank lines, and
  * demotes the post's own headings by two levels.
@@ -674,7 +687,20 @@ export async function generateLlmsFullTxt(
       const yearPart = year ? ` (${year})` : "";
       const authorPart = authors ? ` — ${authors}` : "";
       const venuePart = venue ? `. ${venue}` : "";
-      return `- ${pub.title}${yearPart}${authorPart}${venuePart}.`;
+      // The abstract is the only part of a paper that lets a model answer a
+      // question ABOUT the research rather than merely cite its title. This
+      // section emitted the bibliographic line alone, so the 2,233 words of
+      // abstracts rendered on /publications/ never reached the corpus written
+      // for models (GEO audit 2026-08-22, M11). 14 of the 16 entries have one.
+      // `PublicationItem` carries an index signature, hence the narrowing.
+      const abstract =
+        typeof pub.abstract === "string" ? pub.abstract.trim() : "";
+      const doi = typeof pub.DOI === "string" ? pub.DOI.trim() : "";
+      return [
+        `- ${pub.title}${yearPart}${authorPart}${venuePart}.`,
+        ...(doi ? [`  DOI: https://doi.org/${doi}`] : []),
+        ...(abstract ? [`  Abstract: ${collapseWhitespace(abstract)}`] : []),
+      ].join("\n");
     }),
     "",
   ]);
