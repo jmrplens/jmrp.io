@@ -3,6 +3,11 @@ title: "MikroTik Honeypot: Trap & Auto-Block Port Scanners"
 slug: "006-implementing-mikrotik-honeypot"
 publishedDate: 2026-01-19
 updatedDate: 2026-08-02
+lastVerified:
+  date: 2026-08-22
+  versions:
+    - RouterOS 7.24
+    - RB5009UG+S+
 description: "Configure a MikroTik honeypot to detect port scanners, log malicious activity, and auto-block attackers using firewall address lists and the RAW table."
 lead: "A RAW-table rule drops a blacklisted scanner before connection tracking allocates anything, so its first reconnaissance packet is also its last. Over 1,000 unique IPs trapped in 24 hours on a domestic line."
 author: "José Manuel Requena Plens"

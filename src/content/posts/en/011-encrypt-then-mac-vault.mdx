@@ -2,6 +2,11 @@
 title: "A Vault File That Fails Closed: Encrypt-then-MAC on an MCU"
 slug: "011-encrypt-then-mac-vault"
 publishedDate: 2026-06-16
+lastVerified:
+  date: 2026-08-22
+  versions:
+    - ESP-IDF 6.0.2
+    - Mbed TLS 4.0
 description: "How a hardware password manager authenticates every vault file before it decrypts: encrypt-then-MAC, verify-before-decrypt, and fail-closed reads."
 lead: "The tag is verified before a single byte is decrypted, so a relocated, retyped or rolled-back vault file fails the MAC — even for an attacker holding the raw flash but not the PIN."
 coverImage: "../../../assets/images/blog/etm-vault.webp"

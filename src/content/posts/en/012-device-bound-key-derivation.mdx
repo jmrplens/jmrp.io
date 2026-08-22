@@ -2,6 +2,10 @@
 title: "Your 4-Digit PIN Is Fine: Device-Bound Keys on ESP32-S3"
 slug: "012-device-bound-key-derivation"
 publishedDate: 2026-06-22
+lastVerified:
+  date: 2026-08-22
+  versions:
+    - ESP-IDF 6.0.2
 description: "Why PBKDF2 iterations can't protect a 4-digit PIN on a microcontroller, and how an eFuse-HMAC device secret plus HKDF stops offline brute force."
 lead: "One RTX 5090 sweeps all 10,000 four-digit PINs in well under a millisecond offline, so the defense is a per-chip eFuse secret mixed in with HKDF, not a larger iteration count."
 coverImage: "../../../assets/images/blog/device-bound-keys.webp"

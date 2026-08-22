@@ -3,6 +3,10 @@ title: "What the Linker Won't Do: Packing i18n Strings on an MCU"
 slug: "010-packed-i18n-string-pool"
 publishedDate: 2026-06-10
 updatedDate: 2026-08-03
+lastVerified:
+  date: 2026-08-22
+  versions:
+    - ESP-IDF 6.0.2
 description: "A build-time generator packs firmware UI translations into one string pool indexed by uint16 offsets, halving the index table on a 32-bit MCU."
 lead: "Halving the index table saves 2,730 B that no linker and not even LTO can recover; the packed blob itself is only 282 B smaller than what GNU ld already produces on its own."
 author: "José Manuel Requena Plens"

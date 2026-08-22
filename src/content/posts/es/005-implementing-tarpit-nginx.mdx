@@ -4,6 +4,10 @@ slug: "005-implementing-tarpit-nginx"
 lang: "es"
 publishedDate: 2026-01-16
 updatedDate: 2026-08-02
+lastVerified:
+  date: 2026-08-22
+  versions:
+    - nginx 1.31.3 (--with-http_perl_module)
 description: "Implementa un tarpit en Nginx para ralentizar bots maliciosos, escáneres de vulnerabilidades y ataques de fuerza bruta. Integración con CrowdSec incluida."
 lead: "Un tarpit responde a los escáneres a unos 10 bytes por segundo, así que se quedan esperando en vez de reintentar al instante como hacen tras un 403 — y una sola opción de Brotli desactivó el mío en silencio durante meses."
 author: "José Manuel Requena Plens"

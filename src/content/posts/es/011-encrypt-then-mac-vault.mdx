@@ -3,6 +3,11 @@ title: "Una bóveda con bloqueo ante fallos: Encrypt-then-MAC en un MCU"
 slug: "011-encrypt-then-mac-vault"
 lang: "es"
 publishedDate: 2026-06-16
+lastVerified:
+  date: 2026-08-22
+  versions:
+    - ESP-IDF 6.0.2
+    - Mbed TLS 4.0
 description: "Cómo un gestor de contraseñas hardware autentica cada fichero antes de descifrar: Encrypt-then-MAC, verificación antes de descifrar y bloqueo ante fallos."
 lead: "El tag se verifica antes de descifrar un solo byte, así que un fichero reubicado, retipado o revertido falla el MAC — incluso para quien tenga la flash en crudo pero no el PIN."
 coverImage: "../../../assets/images/blog/etm-vault.webp"

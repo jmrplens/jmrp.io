@@ -3,6 +3,10 @@ title: "Un PIN de 4 dígitos basta: claves vinculadas al ESP32-S3"
 slug: "012-device-bound-key-derivation"
 lang: "es"
 publishedDate: 2026-06-22
+lastVerified:
+  date: 2026-08-22
+  versions:
+    - ESP-IDF 6.0.2
 description: "Por qué las iteraciones de PBKDF2 no protegen un PIN de 4 dígitos en un MCU, y cómo un secreto del dispositivo más HKDF frenan la fuerza bruta offline."
 lead: "Una RTX 5090 barre los 10.000 PIN de cuatro dígitos en bastante menos de un milisegundo offline, así que la defensa es un secreto eFuse por chip mezclado con HKDF, no más iteraciones."
 coverImage: "../../../assets/images/blog/device-bound-keys.webp"
