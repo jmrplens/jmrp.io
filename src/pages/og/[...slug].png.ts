@@ -182,6 +182,16 @@ const STATIC_PAGES: Record<string, Record<Locale, OgProps>> = {
       subtitle: "Analítica autoalojada, sin cookies ni rastreadores · jmrp.io",
     },
   },
+  feeds: {
+    en: {
+      title: "Feeds",
+      subtitle: "RSS for the English and Spanish blogs · jmrp.io",
+    },
+    es: {
+      title: "Feeds",
+      subtitle: "RSS de los blogs en español e inglés · jmrp.io",
+    },
+  },
   "blog/series": {
     en: { title: "Series", subtitle: "Curated reading paths · jmrp.io" },
     es: { title: "Series", subtitle: "Itinerarios de lectura · jmrp.io" },
