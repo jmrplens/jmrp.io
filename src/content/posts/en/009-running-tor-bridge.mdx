@@ -3,6 +3,12 @@ title: "Running a Tor Bridge on Linux: obfs4 and WebTunnel Guide"
 slug: "009-running-tor-bridge"
 publishedDate: 2026-03-30
 updatedDate: 2026-08-03
+lastVerified:
+  date: 2026-08-22
+  versions:
+    - Tor 0.4.9.11
+    - obfs4proxy 0.0.14
+    - Debian 13
 description: "Guide to running obfs4 and WebTunnel Tor bridges on Linux with Nginx camouflage, firewall hardening, Prometheus monitoring, and CrowdSec."
 lead: "One bridge running obfs4 and WebTunnel at once, with Nginx making the WebTunnel half indistinguishable from ordinary HTTPS. Running and Valid arrive within the hour; Stable and Guard took about a week here, because they are scored on sustained reliability rather than a plain uptime counter."
 author: "José Manuel Requena Plens"
@@ -143,7 +149,7 @@ The [origins of Tor](https://www.onion-router.net/History.html) trace back to th
   { date: "2026", title: "Today", description: "~8,000 relays, ~2,000 bridges, and 2.5+ million daily users across 200+ countries. The network is entirely volunteer-operated.", type: "default" },
 ]} />
 
-### How Onion Routing Works
+### How does onion routing work?
 
 [Onion routing](https://en.wikipedia.org/wiki/Onion_routing) derives its name from the layers of an onion — your data is wrapped in **multiple layers of encryption**, and each relay in the circuit "peels off" one layer to reveal the next destination. No single relay ever knows both the origin and the destination of the traffic.
 
@@ -264,7 +270,7 @@ The Tor network is made up of different types of volunteer-operated nodes, each 
 As of 2026, the [Tor network has roughly **8,000 relays** but only about **2,000 bridges**](https://metrics.torproject.org/). Bridges are particularly valuable because they serve users who are **actively blocked** from accessing Tor — people in countries like China, Iran, and Russia where the government blocks connections to known Tor relays. Every new bridge is a **lifeline** for someone under censorship.
 </Callout>
 
-### Understanding Pluggable Transports
+### What are pluggable transports?
 
 Censors don't just block Tor by IP — they use **Deep Packet Inspection (DPI)** to identify and block the Tor protocol itself. [Pluggable transports](https://arxiv.org/pdf/2309.14856) solve this by disguising Tor traffic as something else entirely.
 
@@ -1417,7 +1423,7 @@ After everything is set up, run through this checklist to confirm your bridge is
 
 ## Operational Notes
 
-### What Happens After You Start
+### What happens after you start the bridge?
 
 <Timeline events={[
   { date: "0–1 hour", title: "Bootstrap & Self-Test", description: "Tor connects to the network, downloads the consensus, and tests if your ORPort is reachable. If the self-test passes, your bridge is operational.", type: "success" },

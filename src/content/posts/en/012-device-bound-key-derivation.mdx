@@ -2,6 +2,10 @@
 title: "Your 4-Digit PIN Is Fine: Device-Bound Keys on ESP32-S3"
 slug: "012-device-bound-key-derivation"
 publishedDate: 2026-06-22
+lastVerified:
+  date: 2026-08-22
+  versions:
+    - ESP-IDF 6.0.2
 description: "Why PBKDF2 iterations can't protect a 4-digit PIN on a microcontroller, and how an eFuse-HMAC device secret plus HKDF stops offline brute force."
 lead: "One RTX 5090 sweeps all 10,000 four-digit PINs in well under a millisecond offline, so the defense is a per-chip eFuse secret mixed in with HKDF, not a larger iteration count."
 coverImage: "../../../assets/images/blog/device-bound-keys.webp"
@@ -102,7 +106,7 @@ That `11.16 MH/s` figure is not hypothetical. It comes straight from a published
 
 The difference between **online** and **offline** is everything here. _Online_ is the thief standing at your door trying keys: you can slam it shut after a few tries. _Offline_ is the thief who took a copy of the lock back to their workshop, where they file keys unwatched, with all the time in the world. So the only thing that makes a short PIN viable is making sure the attacker **can't get offline** — and bounding how fast they can guess **online**.
 
-### Online vs offline: two different attackers
+### Online or offline: which attacker are you defending against?
 
 <AttackSurfaceMatrix
   title="Online vs offline: two different attackers, two different controls"
@@ -177,9 +181,9 @@ The brute-force guard only bounds attempts **on the device**. The moment an atta
 
 ---
 
-## You can't out-iterate a GPU on an MCU
+## Why can't you out-iterate a GPU on an MCU?
 
-The textbook answer to "my secret has low entropy" is a [password-based KDF](https://www.rfc-editor.org/rfc/rfc8018#section-5.2) with a high work factor. PBKDF2 ([RFC 8018](https://www.rfc-editor.org/rfc/rfc8018#section-5.2), the current PKCS#5; [NIST SP 800-132](https://csrc.nist.gov/pubs/sp/800/132/final) for password-based key derivation) lets you pick an iteration count, and the [OWASP Password Storage Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html) recommends **600,000 iterations** of PBKDF2-HMAC-SHA256. Make each guess expensive enough and even a small keyspace becomes annoying to sweep. That's the theory.
+The textbook answer to "my secret has low entropy" is a [password-based KDF](https://datatracker.ietf.org/doc/html/rfc8018#section-5.2) with a high work factor. PBKDF2 ([RFC 8018](https://datatracker.ietf.org/doc/html/rfc8018#section-5.2), the current PKCS#5; [NIST SP 800-132](https://csrc.nist.gov/pubs/sp/800/132/final) for password-based key derivation) lets you pick an iteration count, and the [OWASP Password Storage Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html) recommends **600,000 iterations** of PBKDF2-HMAC-SHA256. Make each guess expensive enough and even a small keyspace becomes annoying to sweep. That's the theory.
 
 It breaks on a microcontroller for a simple physical reason: **the work factor slows down the legitimate device far more than it slows down the attacker.** The iteration count has to be small enough that the *user's* unlock is bearable, and on this silicon that ceiling is low. My production builds use **35,000 iterations on the ESP32-S3 and 25,000 on classic ESP32**, each sized for roughly a **2-second** unlock. The OWASP-recommended 600,000 would push a single unlock to about **32 seconds** on the S3 — and around **47 seconds** on classic ESP32. Nobody is going to wait half a minute to open their password manager, so that count is physically unusable as a UX, not just inconvenient.
 
@@ -249,7 +253,7 @@ Binding is a *hardened-production* feature, gated behind a build flag. Open deve
 
 ---
 
-## Where the device secret comes from
+## Where does the device secret come from?
 
 The "secret only this chip can produce" has two implementations, picked at compile time by what the chip can actually do. The deciding capability is whether the SoC has a hardware **HMAC peripheral**, which ESP-IDF exposes as `SOC_HMAC_SUPPORTED`. The ESP32-S3 has it; the classic ESP32 does not — and that single fact is why the code carries two backends instead of one.
 
@@ -382,7 +386,7 @@ Both backends produce a 32-byte `deviceSecret` and hand it to the same mixing st
 
 ## Mixing it in with HKDF, not a hand-rolled HMAC
 
-Once you have a 32-byte device secret and a 32-byte PBKDF2 master key, you need to combine them into a new key. The temptation is to reach for a bare `HMAC(deviceSecret, master)` and call it done. I didn't, because there's a published, analyzed primitive built for exactly this — the certified tool instead of mixing by eye: **[HKDF](https://www.rfc-editor.org/rfc/rfc5869)** (RFC 5869), the extract-then-expand KDF whose security argument was laid out by Hugo Krawczyk in [*Cryptographic Extraction and Key Derivation: The HKDF Scheme*](https://eprint.iacr.org/2010/264). HKDF gives you a non-uniform secret turned into uniform key material *with domain separation*, and using it verbatim keeps the whole construction a citable, standard one rather than something I invented on a Tuesday.
+Once you have a 32-byte device secret and a 32-byte PBKDF2 master key, you need to combine them into a new key. The temptation is to reach for a bare `HMAC(deviceSecret, master)` and call it done. I didn't, because there's a published, analyzed primitive built for exactly this — the certified tool instead of mixing by eye: **[HKDF](https://datatracker.ietf.org/doc/html/rfc5869)** (RFC 5869), the extract-then-expand KDF whose security argument was laid out by Hugo Krawczyk in [*Cryptographic Extraction and Key Derivation: The HKDF Scheme*](https://eprint.iacr.org/2010/264). HKDF gives you a non-uniform secret turned into uniform key material *with domain separation*, and using it verbatim keeps the whole construction a citable, standard one rather than something I invented on a Tuesday.
 
 The construction is the canonical two-step:
 
@@ -439,7 +443,7 @@ for (uint32_t counter = 1; ok && done < outLen; ++counter) {
 
 ## Proving it: a known-answer test
 
-A binding that's wrong is worse than no binding — if `provision()` and `unlock()` ever disagreed by a single byte, every unlock would fail and the vault would be bricked. So the construction is pinned by tests, and the load-bearing one is a **known-answer test** — checking that our output matches a set of official reference numbers byte for byte, like checking a result against the answer key — against the published vectors in [RFC 5869 Appendix A](https://www.rfc-editor.org/rfc/rfc5869#appendix-A). Because the HKDF runs identically on the host and the device, asserting it against the RFC vector on the native build proves the HKDF primitive itself is byte-exact — so the binding it computes is reproduced identically on host and device.
+A binding that's wrong is worse than no binding — if `provision()` and `unlock()` ever disagreed by a single byte, every unlock would fail and the vault would be bricked. So the construction is pinned by tests, and the load-bearing one is a **known-answer test** — checking that our output matches a set of official reference numbers byte for byte, like checking a result against the answer key — against the published vectors in [RFC 5869 Appendix A](https://datatracker.ietf.org/doc/html/rfc5869#appendix-A). Because the HKDF runs identically on the host and the device, asserting it against the RFC vector on the native build proves the HKDF primitive itself is byte-exact — so the binding it computes is reproduced identically on host and device.
 
 <Code lang="cpp" title="test_device_secret.cpp — RFC 5869 Appendix A.1 known-answer test">
 ```cpp

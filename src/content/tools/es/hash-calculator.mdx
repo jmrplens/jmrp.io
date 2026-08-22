@@ -1,7 +1,7 @@
 ---
 title: "Calculadora de Hashes CSP"
 slug: "hash-calculator"
-description: "Genera hashes SHA-256 para scripts inline. Obtén directivas CSP listas para usar en tu Content Security Policy."
+description: "Genera hashes SHA-256 para scripts inline. Obtén directivas CSP listas para usar en tu Content Security Policy. Todo en el navegador."
 subtitle: "Genera hashes SHA-256 para scripts inline. Copia el hash directamente en tu Content Security Policy."
 icon: "i-mdi:calculator-variant-outline"
 category: "security"
@@ -31,6 +31,12 @@ faq:
     answer: "SHA-256 es la opción estándar y más compatible para CSP. SHA-384 y SHA-512 también son válidos y se usan habitualmente para Subresource Integrity, pero SHA-256 basta para casi todos los casos de uso de CSP."
 ---
 
+import {
+  TerminalSession,
+  TerminalSessionCommand,
+  TerminalSessionOutput,
+} from "@components/ui/terminal-session";
+
 <h2>Acerca de esta herramienta</h2>
 <p>
   Cuando necesitas permitir scripts o estilos inline específicos en tu Content
@@ -39,9 +45,109 @@ faq:
   en el formato base64 exacto que esperan los navegadores.
 </p>
 
-<h2>¿Por qué usar hashes en CSP?</h2>
+<h3>Características</h3>
+<ul>
+  <li>
+    <strong>Cálculo en tiempo real</strong> — el hash se actualiza al instante
+    mientras escribes o pegas
+  </li>
+  <li>
+    <strong>Varios algoritmos</strong> — admite SHA-256, SHA-384 y SHA-512
+  </li>
+  <li>
+    <strong>Directivas listas para usar</strong> — obtén la cadena{" "}
+    <code>'sha256-...'</code> completa o la línea <code>script-src</code>{" "}
+    entera
+  </li>
+  <li>
+    <strong>Limpieza automática</strong> — elimina los espacios y saltos de
+    línea sobrantes al principio y al final, si lo activas
+  </li>
+  <li>
+    <strong>Solo en el cliente</strong> — tus scripts sensibles nunca se envían
+    a un servidor
+  </li>
+</ul>
+
+<h3>¿Por qué usar hashes en CSP?</h3>
 <p>
   Los hashes proporcionan una forma segura de permitir scripts inline específicos
   sin abrir la puerta a ataques XSS. Cada hash es único para su contenido exacto,
   lo que garantiza que solo se ejecuten los scripts autorizados.
 </p>
+
+<h3>¿Cómo se usa esta herramienta?</h3>
+<ol>
+  <li>
+    Pega el contenido de tu script o estilo inline (sin las etiquetas{" "}
+    <code>&lt;script&gt;</code> o <code>&lt;style&gt;</code>)
+  </li>
+  <li>Copia el hash generado o la directiva CSP completa</li>
+  <li>
+    Añade el hash a tu directiva <code>script-src</code> o{" "}
+    <code>style-src</code> en la configuración de Nginx/Apache o en la etiqueta
+    meta
+  </li>
+</ol>
+
+<h3>Notas importantes</h3>
+<ul>
+  <li>
+    <strong>Coincidencia exacta</strong> — cualquier cambio en el script (hasta
+    un solo espacio o salto de línea) produce un hash completamente distinto y
+    hace que el navegador bloquee el script.
+  </li>
+  <li>
+    <strong>Sin etiquetas</strong> — no incluyas las etiquetas HTML{" "}
+    <code>&lt;script&gt;</code> ni <code>&lt;style&gt;</code>, solo el contenido
+    interior.
+  </li>
+  <li>
+    <strong>Scripts dinámicos</strong> — si tu script contiene valores dinámicos
+    (como un ID de usuario), los hashes no sirven. Considera usar{" "}
+    <a href="/es/blog/003-implementing-content-security-policy-nginx/#solución-3-usar-nonces">
+      nonces
+    </a>{" "}
+    en su lugar.
+  </li>
+  <li>
+    Consulta
+    <a href="/es/blog/003-implementing-content-security-policy-nginx/">
+      la guía completa de CSP
+    </a>{" "}
+    para conocer las buenas prácticas
+  </li>
+</ul>
+
+<h3>Privacidad</h3>
+<p>
+  La seguridad es la prioridad. Todas las operaciones criptográficas se realizan
+  localmente en tu navegador mediante la Web Crypto API. El contenido de tus
+  scripts nunca se transmite por la red.
+</p>
+
+<h3>Referencia de comandos en Linux</h3>
+<p>
+  También puedes calcular estos hashes a mano en tu terminal con utilidades
+  estándar de Linux.
+</p>
+
+<h4>SHA-256 para CSP</h4>
+<TerminalSession>
+  <TerminalSessionCommand>
+    echo -n 'console.log("Hello CSP");' | openssl dgst -sha256 -binary | openssl base64
+  </TerminalSessionCommand>
+  <TerminalSessionOutput title="Salida del hash SHA-256 en base64">
+    7fJ6A1b9qS8r...[hash]...=
+  </TerminalSessionOutput>
+</TerminalSession>
+
+<h4>SHA-384 para SRI (Subresource Integrity)</h4>
+<TerminalSession>
+  <TerminalSessionCommand>
+    cat script.js | openssl dgst -sha384 -binary | openssl base64 -A
+  </TerminalSessionCommand>
+  <TerminalSessionOutput title="Salida del hash SHA-384 en base64">
+    Nkhj...[base64 hash]...
+  </TerminalSessionOutput>
+</TerminalSession>

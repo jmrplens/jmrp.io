@@ -367,6 +367,13 @@ const serviceStatusTokens: Record<
 
 const servicesSchema = {
   "@type": "CollectionPage",
+  // Answer target for this page: its title and the one-line intro under it.
+  // 66 indexable pages carried no `speakable` (GEO audit 2026-08-22, M7);
+  // selectors verified against the built markup.
+  speakable: {
+    "@type": "SpeakableSpecification",
+    cssSelector: [".page-title", ".homelab-hero__intro"],
+  },
   "@id": new URL("#collection", new URL(Astro.url.pathname, getSiteUrl())).href,
   name: t("pages.homelab.schemaName"),
   inLanguage: locale,

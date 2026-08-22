@@ -1,6 +1,10 @@
 ---
 title: "Mastering Virtual Files in Nginx: A Complete Guide"
 slug: "002-serve-virtual-files-nginx"
+lastVerified:
+  date: 2026-08-22
+  versions:
+    - nginx 1.31.3
 description: "Serve virtual files in Nginx without disk I/O. Covers root vs alias vs try_files, named locations, Kubernetes health endpoints, and containers."
 lead: "Nginx can serve robots.txt, security.txt and Kubernetes health probes from the config itself, with no file on disk — and location matching picks the winner by priority, not by the order you wrote the blocks in."
 author: "José Manuel Requena Plens"
@@ -45,20 +49,28 @@ howto:
   steps:
     - name: "Understand location matching priority"
       text: "Learn how Nginx selects a location block by priority rather than config order: exact match (=) first, then prefix with ^~, then regex, then plain prefix by longest match. Use = for virtual files like /robots.txt so the exact match wins."
+      anchor: "location-matching-priority"
     - name: "Choose root, alias, or try_files"
       text: "Pick the directive that controls where Nginx looks for files. Use root for standard document roots, alias to serve files from non-standard locations, and try_files to check files in order with a final fallback."
+      anchor: "core-directives-root-alias-try_files"
     - name: "Serve inline content with the return directive"
       text: "Use return to send small content directly from the config, such as `return 200 \"User-agent: *\\nAllow: /\\n\";`, and set the Content-Type with default_type. This avoids creating physical files for robots.txt, JSON responses, or empty pings."
+      anchor: "the-return-directive"
     - name: "Add named locations and internal fallbacks"
       text: "Define named locations prefixed with @ for fallback patterns like SPA routing or proxying to a backend, and use the internal directive to prevent direct access to protected files."
+      anchor: "named-locations-and-fallbacks"
     - name: "Define standard web and .well-known files"
       text: "Add exact-match location blocks for robots.txt, humans.txt, favicon.ico, security.txt, and ACME challenge paths, serving them either inline with return or from disk with alias."
+      anchor: "standard-web-files"
     - name: "Use njs for dynamic virtual files"
       text: "Load the ngx_http_js_module and use js_content with an njs function when you need logic such as conditional content or dynamic JSON. Reserve njs for cases that return cannot handle, since return is faster for static content."
+      anchor: "dynamic-content-with-nginx-javascript-njs"
     - name: "Add health and monitoring endpoints"
       text: "Create exact-match endpoints for Kubernetes liveness, readiness, and startup probes that return a simple response with access_log off, and expose stub_status metrics restricted to internal networks."
+      anchor: "health-and-monitoring-endpoints"
     - name: "Validate and reload the configuration"
       text: "Run `sudo nginx -t` to check the syntax, then `sudo nginx -s reload` to apply changes, and test the virtual files with curl while checking the error log if something fails."
+      anchor: "validate-configuration"
 ---
 
 import Callout from "@components/ui/Callout.astro";
@@ -187,7 +199,7 @@ These three directives determine _where_ Nginx looks for files.
 
  Understanding the difference is crucial.
 
-### The difference explained
+### What's the difference between root and alias?
 
 <Table title="root vs alias vs try_files">
   <thead>
@@ -345,7 +357,7 @@ server {
 
 Named locations (prefixed with `@`) enable sophisticated fallback patterns without URL rewriting.
 
-### The @fallback pattern
+### How does the @fallback pattern work?
 
 <FileContent filename="named-location.conf">
 ```nginx
@@ -578,7 +590,7 @@ location = /site.webmanifest {
 
 ## The .well-known directory
 
-The [.well-known](https://www.iana.org/assignments/well-known-uris/well-known-uris.xhtml) directory is a standard location for site-wide metadata.
+The [.well-known](https://www.iana.org/assignments/well-known-uris) directory is a standard location for site-wide metadata.
 
 ### security.txt (RFC 9116)
 
@@ -1233,6 +1245,6 @@ encoded character, because the failure is silent: nginx accepts the config,
 - [Nginx Admin Guide: Web Server](https://docs.nginx.com/nginx/admin-guide/web-server/web-server/)
 
 ### Standards
-- [RFC 9116: security.txt](https://www.rfc-editor.org/rfc/rfc9116)
-- [IANA Well-Known URIs](https://www.iana.org/assignments/well-known-uris/well-known-uris.xhtml)
+- [RFC 9116: security.txt](https://datatracker.ietf.org/doc/html/rfc9116)
+- [IANA Well-Known URIs](https://www.iana.org/assignments/well-known-uris)
 - [robots.txt specification](https://developers.google.com/search/docs/crawling-indexing/robots/intro)

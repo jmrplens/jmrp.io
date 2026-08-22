@@ -51,16 +51,22 @@ howto:
   steps:
     - name: "Verificar o instalar Nginx con soporte HTTP/3"
       text: "Ejecuta nginx -V y confirma que la compilación incluye --with-http_v3_module y una biblioteca SSL con soporte QUIC (OpenSSL 3.5.1+, BoringSSL, QuicTLS o LibreSSL 3.6+). Si falta, instala Nginx 1.25.0+ desde el repositorio de Ondřej Surý o el mainline oficial, o compílalo desde el código fuente con QuicTLS."
+      anchor: "prerrequisitos"
     - name: "Añadir los listeners QUIC y TCP"
       text: "En el bloque server, mantén los listeners estándar listen 443 ssl para HTTP/1.1 y HTTP/2, y añade listen 443 quic reuseport para IPv4 e IPv6 para habilitar QUIC sobre UDP. El flag reuseport debe aparecer en exactamente una directiva listen por dirección:puerto a nivel global."
+      anchor: "configuración-básica"
     - name: "Configurar TLS 1.3 y activar HTTP/3"
       text: "Define ssl_protocols incluyendo TLSv1.3 (obligatorio para QUIC), apunta ssl_certificate y ssl_certificate_key a tu certificado y activa el protocolo con http3 on."
+      anchor: "configuración-básica"
     - name: "Anunciar HTTP/3 con la cabecera Alt-Svc"
       text: "Añade la cabecera add_header Alt-Svc 'h3=\":443\"; ma=86400' always para que los navegadores descubran HTTP/3 en la primera visita por HTTP/2 y cambien a él en las peticiones siguientes."
+      anchor: "configuración-básica"
     - name: "Abrir el puerto UDP 443 en el firewall"
       text: "QUIC usa UDP, no TCP, así que permite UDP/443 (por ejemplo sudo ufw allow 443/udp) tanto en el firewall del servidor como en el del proveedor cloud, o QUIC fallará silenciosamente y los clientes retrocederán a HTTP/2."
+      anchor: "configuración-del-firewall"
     - name: "Verificar que HTTP/3 funciona"
       text: "Prueba con curl -I --http3 https://tusitio, comprueba la columna Protocolo buscando h3 en las DevTools del navegador, usa herramientas online como http3check.net o cloudflare-quic.com, o filtra el log de acceso de Nginx por quic=\"h3\"."
+      anchor: "verificación-y-pruebas"
 ---
 
 import Callout from "@components/ui/Callout.astro";
@@ -200,7 +206,7 @@ La especificación completa de QUIC abarca múltiples RFCs:
 
 Para apreciar QUIC, debemos entender por qué TCP —la columna vertebral de internet desde 1974— tiene dificultades con las demandas modernas de la web.
 
-### El problema del head-of-line (HOL) blocking
+### ¿Qué es el head-of-line (HOL) blocking?
 
 Este es el problema fundamental que QUIC resuelve. Imagina una autopista con un solo carril (conexión TCP). Si un coche se avería (pérdida de paquete), **todos los que van detrás deben parar y esperar**, aunque vayan a destinos diferentes.
 
@@ -613,7 +619,7 @@ HTTP/3 es el mapeo de la semántica HTTP sobre el transporte QUIC. Reemplaza el 
   </tbody>
 </Table>
 
-### Adopción actual
+### ¿Quién usa HTTP/3 hoy?
 
 A fecha de 2026, la adopción de HTTP/3 es significativa y creciente:
 
@@ -1346,7 +1352,7 @@ Antes de desplegar HTTP/3 en producción, verifica:
     <tr>
       <td><strong>Config</strong></td>
       <td>Cabecera Alt-Svc configurada</td>
-      <td><code>curl -I https://site | grep alt-svc</code></td>
+      <td><code>curl -I https://example.com | grep alt-svc</code></td>
     </tr>
     <tr>
       <td><strong>Certificado</strong></td>
@@ -1356,7 +1362,7 @@ Antes de desplegar HTTP/3 en producción, verifica:
     <tr>
       <td><strong>Prueba</strong></td>
       <td>HTTP/3 confirmado y funcionando</td>
-      <td><code>curl --http3 https://site</code></td>
+      <td><code>curl --http3 https://example.com</code></td>
     </tr>
     <tr>
       <td><strong>Monitorización</strong></td>
@@ -1368,7 +1374,7 @@ Antes de desplegar HTTP/3 en producción, verifica:
 
 ---
 
-## Cuándo NO usar QUIC
+## ¿Cuándo NO deberías usar QUIC?
 
 Aunque QUIC ofrece beneficios significativos, hay escenarios donde TCP puede ser preferible:
 

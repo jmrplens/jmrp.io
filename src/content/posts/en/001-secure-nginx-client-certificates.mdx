@@ -1,6 +1,10 @@
 ---
 title: "Mastering Mutual TLS (mTLS) with Nginx: A Deep Dive"
 slug: "001-secure-nginx-client-certificates"
+lastVerified:
+  date: 2026-08-22
+  versions:
+    - nginx 1.31.3
 description: "Implement Mutual TLS (mTLS) with Nginx — create a CA, generate client certificates, configure CRL and OCSP revocation, and enable Zero Trust."
 lead: "Nginx rejects a connection that lacks a valid client certificate before your application ever loads, and the private key never leaves the device — which is what makes mTLS unphishable."
 author: "José Manuel Requena Plens"
@@ -47,18 +51,25 @@ howto:
   steps:
     - name: "Set up the PKI directory"
       text: "Create the /etc/nginx/pki directory structure (ca, certs, crl, private, newcerts), secure the private directory with chmod 700, and initialize the OpenSSL CA database files (index.txt, serial, crlnumber)."
+      anchor: "create-your-pki-directory"
     - name: "Create the certificate authority"
       text: "Write a comprehensive openssl.cnf with CA defaults, policies, and the v3_ca and v3_client extension profiles, then generate the 4096-bit CA private key and a self-signed CA certificate valid for 10 years."
+      anchor: "creating-your-certificate-authority"
     - name: "Generate client certificates"
       text: "For each device, generate a private key, create a CSR with the client's CN, and sign it with your CA using the v3_client extensions to produce a client certificate."
+      anchor: "generate-a-client-certificate"
     - name: "Export a PKCS12 bundle"
       text: "Bundle the client certificate, private key, and CA certificate into a password-protected .p12 file for distribution to browsers and mobile devices."
+      anchor: "create-pkcs12-bundle-for-clients"
     - name: "Configure Nginx for mTLS"
       text: "In the server block, point ssl_client_certificate at your CA, set ssl_verify_client on, configure ssl_verify_depth and strong TLS protocols/ciphers, then test with nginx -t and reload."
+      anchor: "configuring-nginx-for-mtls"
     - name: "Add certificate revocation (CRL)"
       text: "Revoke compromised certificates with openssl ca -revoke, regenerate the CRL with openssl ca -gencrl, enable it via ssl_crl, and reload Nginx every time a certificate is revoked."
+      anchor: "certificate-revocation-crl-vs-ocsp"
     - name: "Install certificates on client devices"
       text: "Transfer the .p12 file securely and import it into the keychain or certificate store on iOS, macOS, Windows, Android, or via curl on Linux."
+      anchor: "installing-certificates-on-clients"
 ---
 
 import Callout from "@components/ui/Callout.astro";
@@ -326,7 +337,7 @@ echo 1000 | sudo tee crlnumber > /dev/null
 
 
 
-A CA is the root of trust in your PKI. The certificates it issues follow the [X.509 v3](https://www.rfc-editor.org/rfc/rfc5280) (RFC 5280) profile that underpins the public web PKI.
+A CA is the root of trust in your PKI. The certificates it issues follow the [X.509 v3](https://datatracker.ietf.org/doc/html/rfc5280) (RFC 5280) profile that underpins the public web PKI.
 
  All client certificates must be signed by this CA for Nginx to accept them.
 
@@ -744,7 +755,7 @@ Write out database with 1 new entries
 Database updated
 </TerminalOutput>
 
-### PKCS12 vs PEM: export formats
+### PKCS12 or PEM: which export format do you need?
 
 <Table title="Certificate Format Comparison">
   <thead>
@@ -798,7 +809,7 @@ sudo openssl pkcs12 -export \
 
 Now configure Nginx to require and validate client certificates.
 
-### Understanding ssl_verify_client options
+### Which ssl_verify_client option should you use?
 
 The `ssl_verify_client` directive controls how Nginx handles client certificates:
 
@@ -999,7 +1010,7 @@ Proper TLS configuration is critical for security.
 
 ### Protocol version selection
 
-Only TLS 1.2 and TLS 1.3 belong in a modern configuration. [TLS 1.3](https://www.rfc-editor.org/rfc/rfc8446) (RFC 8446) is the current standard, with a faster handshake and AEAD-only cipher suites:
+Only TLS 1.2 and TLS 1.3 belong in a modern configuration. [TLS 1.3](https://datatracker.ietf.org/doc/html/rfc8446) (RFC 8446) is the current standard, with a faster handshake and AEAD-only cipher suites:
 
 <Table title="TLS Protocol Versions">
   <thead>
@@ -1335,7 +1346,7 @@ Accessing the site with the revoked certificate should now fail:
 
 For enterprises with many certificates, OCSP is more efficient.
 
- This requires running an OCSP responder (beyond the scope of this guide, but tools like [step-ca](https://smallstep.com/docs/step-ca) provide this).
+ This requires running an OCSP responder (beyond the scope of this guide, but tools like [step-ca](https://smallstep.com/docs/step-ca/) provide this).
 
 ---
 
@@ -1788,6 +1799,6 @@ tail -f /var/log/nginx/error.log | grep ssl
 - [Cloudflare: What is mTLS?](https://www.cloudflare.com/learning/access-management/what-is-mutual-tls/) — Conceptual overview
 
 ### Tools
-- [step-ca](https://smallstep.com/docs/step-ca) — Modern certificate authority
+- [step-ca](https://smallstep.com/docs/step-ca/) — Modern certificate authority
 - [cfssl](https://github.com/cloudflare/cfssl) — Cloudflare's PKI toolkit
 - [easy-rsa](https://github.com/OpenVPN/easy-rsa) — Simple CA management scripts

@@ -155,8 +155,19 @@ const server = http.createServer((req, res) => {
       if (responded || res.writableEnded) return;
       responded = true;
       try {
-        const report = JSON.parse(body);
-        processReport(report, clientIp, userAgent);
+        const parsed = JSON.parse(body);
+        // The Reporting API (report-to, added 2026-08-22 alongside the legacy
+        // report-uri — see csp.ts B24) POSTs an ARRAY of {type, body} envelopes
+        // with camelCase keys, unlike the legacy single {"csp-report": {…}}
+        // object with kebab-case. Normalize each envelope to the legacy shape
+        // so every downstream consumer (filters, dedup, Telegram) keeps
+        // working unchanged. Non-CSP report types (deprecation, crash…) are
+        // not requested by our Reporting-Endpoints, but a UA could still send
+        // them — they fall through with an empty body and get discarded by the
+        // existing defensive checks.
+        for (const report of normalizeReports(parsed)) {
+          processReport(report, clientIp, userAgent);
+        }
         res.writeHead(204);
         res.end();
       } catch (error) {
@@ -170,6 +181,38 @@ const server = http.createServer((req, res) => {
     res.end("Not Found");
   }
 });
+
+/**
+ * Normalizes an incoming payload to a list of legacy-shaped CSP reports.
+ *
+ * Accepts the legacy single object as-is, and maps Reporting API envelopes
+ * (`[{type: "csp-violation", body: {blockedURL, …}}]`) onto the kebab-case
+ * field names the rest of this file consumes.
+ */
+function normalizeReports(parsed) {
+  if (!Array.isArray(parsed)) return [parsed];
+  return parsed
+    .filter((entry) => entry && typeof entry === "object")
+    .map((entry) => {
+      const b = entry.body || {};
+      return {
+        "csp-report": {
+          "document-uri": b.documentURL,
+          referrer: b.referrer,
+          "blocked-uri": b.blockedURL,
+          "violated-directive": b.effectiveDirective,
+          "effective-directive": b.effectiveDirective,
+          "original-policy": b.originalPolicy,
+          disposition: b.disposition,
+          "status-code": b.statusCode,
+          "script-sample": b.sample,
+          "source-file": b.sourceFile,
+          "line-number": b.lineNumber,
+          "column-number": b.columnNumber,
+        },
+      };
+    });
+}
 
 /**
  * Processes the received report and handles logging/notification

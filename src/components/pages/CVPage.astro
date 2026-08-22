@@ -19,14 +19,22 @@ import { getCVData } from "@utils/cv";
 import { fetchRepoStats, formatStats, githubSlug } from "@utils/cv-github";
 import { markdownToHtml } from "@utils/cv-markdown";
 import { stripToText } from "@utils/html";
+import type { LanguageTaggedValue } from "@utils/person";
 import { CANONICAL_ALUMNI_OF } from "@utils/person";
 import { getAbsoluteUrl, getSiteUrl } from "@utils/site";
-import type { Person, WebPage } from "schema-dts";
+import type { Person, Text, WebPage } from "schema-dts";
 
 const locale = (Astro.currentLocale ?? defaultLocale) as Locale;
 const t = useTranslations(locale);
 
 const { basics, downloads, sections } = await getCVData(locale);
+
+// Both locales are loaded because the identity facts below hang off the shared
+// `#person` @id: /cv/ and /es/cv/ merge into one node, so emitting a
+// locale-specific value from each would give that person two of everything.
+// Language-tagged literals emitted identically from both pages avoid it.
+const cvEn = await getCVData("en");
+const cvEs = await getCVData("es");
 
 /** Generates a URL slug from arbitrary text. */
 const generateSlug = (text: string) =>
@@ -141,34 +149,168 @@ const cvWebPage = {
   },
 } satisfies WebPage;
 
+/** English month abbreviations as they appear in the CV's `period` strings. */
+const MONTHS: Record<string, string> = {
+  Jan: "01",
+  Feb: "02",
+  Mar: "03",
+  Apr: "04",
+  May: "05",
+  Jun: "06",
+  Jul: "07",
+  Aug: "08",
+  Sep: "09",
+  Oct: "10",
+  Nov: "11",
+  Dec: "12",
+};
+
+/**
+ * Turns a CV `period` such as `"Apr 2023 - May 2026"` into ISO year-months.
+ *
+ * Always parsed from the English CV: the Spanish one localises the month
+ * abbreviations, and the dates must be identical in both documents because
+ * they describe the same merged `#person` node.
+ *
+ * Accepts `number` because the CV schema allows a bare year (`2019`) as well
+ * as a range; a value that does not match the range shape yields no dates
+ * rather than a guess.
+ *
+ * @param period - Period value from the English CV.
+ * @returns `startDate`/`endDate` in `YYYY-MM`, omitted when unparseable.
+ */
+function parsePeriod(period: string | number | undefined): {
+  startDate?: string;
+  endDate?: string;
+} {
+  const match = /^(\w{3})\s+(\d{4})\s*[-–]\s*(\w{3})\s+(\d{4})$/.exec(
+    String(period ?? ""),
+  );
+  if (!match) return {};
+  const [, m1, y1, m2, y2] = match;
+  const start = MONTHS[m1];
+  const end = MONTHS[m2];
+  return {
+    ...(start && { startDate: `${y1}-${start}` }),
+    ...(end && { endDate: `${y2}-${end}` }),
+  };
+}
+
+/**
+ * A literal carried in both site languages, so the merged node has one value.
+ *
+ * Same shape and same escape hatch as `localizedValues` in BaseHead: `satisfies`
+ * keeps the literal honest, the cast narrows it to what schema-dts accepts
+ * (its `Text` does not model language-tagged objects, which JSON-LD allows).
+ */
+const bilingual = (en: string, es: string) =>
+  [
+    { "@value": en, "@language": "en" },
+    { "@value": es, "@language": "es" },
+  ] satisfies LanguageTaggedValue[] as unknown as Text;
+
+const experienceEn = cvEn.sections.find((s) => s.kind === "experience");
+const certificatesEn = cvEn.sections.find((s) => s.kind === "certificates");
+const certificatesEs = cvEs.sections.find((s) => s.kind === "certificates");
+const experienceEs = cvEs.sections.find((s) => s.kind === "experience");
+
+/**
+ * `worksFor` as `OrganizationRole` nodes.
+ *
+ * `hasOccupation` alone describes a *profession*, not an employment: the graph
+ * carried eight occupations and not a single employer, so "where has this
+ * person worked?" was unanswerable from the structured data even though the CV
+ * states it (GEO audit 2026-08-22, A7). It also left two entries both named
+ * "Predoctoral researcher" with nothing to tell them apart — the dates and the
+ * organisation now do.
+ *
+ * One node per position, naming only the FIRST organisation of the entry.
+ * Three roles are joint appointments (UPV / CSIC / Hospital La Fe) and the CV
+ * lists them in order of primacy, so the first is the employer of record —
+ * author's call, and it keeps one employment from reading as three. The
+ * abbreviation travels as `alternateName`, which is how "UPV" stays a
+ * resolvable alias for "Universitat Politècnica de València".
+ *
+ * Nothing here is invented — every field comes from the CV.
+ */
+const cvWorksFor =
+  experienceEn?.kind === "experience" && experienceEs?.kind === "experience"
+    ? experienceEn.items.flatMap((job, index) => {
+        const jobEs = experienceEs.items[index];
+        const dates = parsePeriod(job.period);
+        const org = job.org?.[0];
+        const orgEs = jobEs?.org?.[0];
+        if (!org) return [];
+        return [
+          {
+            "@type": "OrganizationRole" as const,
+            roleName: bilingual(job.role, jobEs?.role ?? job.role),
+            ...dates,
+            worksFor: {
+              "@type": "Organization" as const,
+              name: bilingual(org.name, orgEs?.name ?? org.name),
+              ...(org.short && { alternateName: org.short }),
+              ...(org.url && { url: org.url }),
+            },
+          },
+        ];
+      })
+    : [];
+
 const cvPersonFacts = {
   "@type": "Person",
   "@id": new URL("#person", getSiteUrl()).href,
   alumniOf: CANONICAL_ALUMNI_OF,
+  ...(cvWorksFor.length > 0 && { worksFor: cvWorksFor }),
+  // Both lists are emitted from the EN and ES sources at once, with
+  // language-tagged literals, so /cv/ and /es/cv/ ship byte-identical values.
+  // They hang off the shared `#person` @id: emitting each page's own language
+  // gave the merged node 16 occupations and 48 credentials — one set per
+  // locale — for a person who has 8 and 24 (GEO audit 2026-08-22, M1). Same
+  // treatment `worksFor` above already gets.
   hasOccupation:
-    experience?.kind === "experience"
-      ? experience.items.map((job) => ({
-          "@type": "Occupation",
-          name: job.role,
-          description: job.summary
+    experienceEn?.kind === "experience" && experienceEs?.kind === "experience"
+      ? experienceEn.items.map((job, index) => {
+          const jobEs = experienceEs.items[index];
+          const summaryEn = job.summary
             ? stripToText(markdownToHtml(job.summary))
-            : undefined,
-        }))
+            : undefined;
+          const summaryEs = jobEs?.summary
+            ? stripToText(markdownToHtml(jobEs.summary))
+            : undefined;
+          return {
+            "@type": "Occupation" as const,
+            name: bilingual(job.role, jobEs?.role ?? job.role),
+            ...(summaryEn && {
+              description: bilingual(summaryEn, summaryEs ?? summaryEn),
+            }),
+          };
+        })
       : [],
   hasCredential:
-    certificates?.kind === "certificates"
-      ? certificates.groups.flatMap((group) =>
-          group.items.map((cert) => ({
-            "@type": "EducationalOccupationalCredential",
-            name: cert.name,
-            credentialCategory: group.category,
-            recognizedBy: {
-              "@type": "Organization",
-              name: cert.school,
-            },
-            ...(cert.url && { url: getAbsoluteUrl(cert.url) }),
-          })),
-        )
+    certificatesEn?.kind === "certificates" &&
+    certificatesEs?.kind === "certificates"
+      ? certificatesEn.groups.flatMap((group, groupIndex) => {
+          const groupEs = certificatesEs.groups[groupIndex];
+          return group.items.map((cert, itemIndex) => {
+            const certEs = groupEs?.items[itemIndex];
+            return {
+              "@type": "EducationalOccupationalCredential" as const,
+              name: bilingual(cert.name, certEs?.name ?? cert.name),
+              credentialCategory: bilingual(
+                group.category,
+                groupEs?.category ?? group.category,
+              ),
+              // The awarding body is a proper noun — never translated, so it
+              // needs no language tag.
+              recognizedBy: {
+                "@type": "Organization" as const,
+                name: cert.school,
+              },
+              ...(cert.url && { url: getAbsoluteUrl(cert.url) }),
+            };
+          });
+        })
       : [],
 } satisfies Person;
 

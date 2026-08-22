@@ -52,20 +52,28 @@ howto:
   steps:
     - name: "Create the WireGuard interface"
       text: "Add a WireGuard interface on the MikroTik router with a custom listen port; RouterOS generates the keypair automatically. Retrieve the server's public key to configure clients later."
+      anchor: "step-1-create-the-wireguard-interface"
     - name: "Assign IPv4 and IPv6 addresses"
       text: "Assign both an IPv4 address and an IPv6 ULA address to the WireGuard interface so it acts as the gateway for VPN clients. Set advertise=no on the IPv6 address."
+      anchor: "step-2-assign-ip-addresses-to-the-interface"
     - name: "Add the interface to interface lists"
       text: "Add the WireGuard interface to the VPN and LAN interface lists so firewall rules handle its traffic correctly and clients can reach local resources."
+      anchor: "step-4-add-the-interface-to-interface-lists"
     - name: "Configure firewall rules"
       text: "Add input rules to accept WireGuard on its UDP port, forward rules to allow clients to reach the internet and the home LAN, and an address list for the WireGuard network."
+      anchor: "step-5-configure-firewall-rules"
     - name: "Configure NAT/masquerade"
       text: "Add IPv4 masquerade and IPv6 NAT66 srcnat rules so VPN clients' private addresses are translated to your public IP and ISP-assigned global IPv6 prefix."
+      anchor: "step-6-configure-natmasquerade"
     - name: "Tune MSS clamping and the RAW table"
       text: "Add a change-mss mangle rule to prevent fragmentation over the tunnel, and RAW prerouting rules to skip flood protection for WireGuard traffic."
+      anchor: "step-7-configure-mss-clamping"
     - name: "Add WireGuard peers (clients)"
       text: "Add a peer per device with a unique keypair, preshared key, and dedicated IPv4/IPv6 allowed-address, using persistent-keepalive=25s for devices behind NAT."
+      anchor: "step-9-add-wireguard-peers-clients"
     - name: "Configure the client and verify the connection"
       text: "Set up each client device via QR code or a manual config file, then verify the handshake on both ends and test IPv4 and IPv6 connectivity through the tunnel."
+      anchor: "step-11-verify-the-connection"
 ---
 
 import Callout from "@components/ui/Callout.astro";
@@ -173,7 +181,7 @@ WireGuard excels on mobile devices. When you switch from Wi-Fi to cellular or ch
 
 ## How do the IPv4 and IPv6 halves fit together?
 
-Our configuration creates a dual-stack VPN where connected clients receive both IPv4 and IPv6 addresses. Traffic from clients is NAT'd (masqueraded) to access the internet through your home connection. For detailed [MikroTik WireGuard documentation](https://help.mikrotik.com/docs/display/ROS/WireGuard), refer to the official wiki.
+Our configuration creates a dual-stack VPN where connected clients receive both IPv4 and IPv6 addresses. Traffic from clients is NAT'd (masqueraded) to access the internet through your home connection. For detailed [MikroTik WireGuard documentation](https://help.mikrotik.com/docs/spaces/ROS/pages/69664792/WireGuard), refer to the official wiki.
 
 <Mermaid caption="WireGuard Dual-Stack Architecture" ariaLabel="Diagram showing WireGuard VPN topology with IPv4 and IPv6 networks flowing through MikroTik router to the internet" maxWidth="600px">
 ```mermaid-render

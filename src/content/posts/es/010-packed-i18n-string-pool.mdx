@@ -4,6 +4,10 @@ slug: "010-packed-i18n-string-pool"
 lang: "es"
 publishedDate: 2026-06-10
 updatedDate: 2026-08-03
+lastVerified:
+  date: 2026-08-22
+  versions:
+    - ESP-IDF 6.0.2
 description: "Un generador empaqueta las traducciones del firmware en un pool indexado por offsets uint16, reduciendo a la mitad la tabla índice en un MCU de 32 bits."
 lead: "Reducir a la mitad la tabla índice ahorra 2.730 B que ningún enlazador, ni siquiera LTO, puede recuperar; el blob empaquetado solo es 282 B menor que lo que ya produce GNU ld."
 author: "José Manuel Requena Plens"
@@ -62,7 +66,7 @@ Mi firmware habla cinco idiomas en un microcontrolador con dos botones y una pan
 
 Así que escribí un generador para _empaquetar mejor_ que el linker. Luego descubrí que el linker ya hacía casi todo lo que yo había reinventado — y di con la única cosa que de verdad _no puede_ hacer, que resultó ser la mejora que valía la pena conservar. Esta es esa historia: un pool de cadenas empaquetado y con _tail-merge_ (fusión por sufijos), indexado con offsets `uint16_t`, lo que ahorró de verdad, y una contabilidad honesta de dónde vienen realmente los ahorros.
 
-<TLDRSummary title="TL;DR">
+<TLDRSummary title="TL;DR — empaqueta las cadenas, reduce la tabla a la mitad">
 - El esquema i18n básico es un `const char* table[langs][ids]` — en un MCU de 32 bits eso son **5.460 bytes de índice de punteros** para 5×273 cadenas, con independencia del texto.
 - Un generador en tiempo de compilación emite un **pool de cadenas empaquetado, deduplicado y con tail-merge** más una **tabla de offsets `uint16_t`** — el índice baja a **2.730 bytes (−50%)**, y las **1.365 relocations** de la tabla básica (una dirección que fijar por celda) pasan a **cero**.
 - El firmware encogió **2.224 B** netos en el `-Os` de producción, sin cambios de API ni en los puntos de llamada — y el empaquetado se mantiene más pequeño en **todos** los niveles de optimización, de `-O0` a `-O3`.
@@ -245,8 +249,8 @@ Varias cosas hacen que esto sea seguro y barato de adoptar:
 - Un offset apunta al inicio de una cadena terminada en NUL, así que el `tr()` público sigue devolviendo un `const char*` corriente. Cada punto de llamada queda **sin cambios** — la sustitución es invisible para el resto del firmware.
 - **El lookup es apenas más caro que la tabla de punteros:** una carga `uint16_t` más una suma (`kPool.data() + offset`), frente a una carga de puntero. Eso es una sola suma entera extra, **sin una segunda indirección** — no cambias flash por ciclos.
 - **Cero coste de RAM.** Tanto el pool como la tabla de offsets son `constexpr` `.rodata` — viven enteramente en flash. El único estado en runtime es un índice de "idioma actual" de un byte. (También por eso el `const char*` devuelto es seguro para siempre: apunta a flash inmortal, nunca se libera.)
-- Un `static_assert` ([static_assert en cppreference](https://en.cppreference.com/w/cpp/language/static_assert)) garantiza, en tiempo de compilación, que el pool se mantiene por debajo de 64 KiB para que los offsets `uint16_t` puedan direccionarlo entero. Haz crecer la tabla más allá y el build falla de forma ruidosa en vez de truncar en silencio.
-- `std::array` ([std::array en cppreference](https://en.cppreference.com/w/cpp/container/array)) es un agregado con la misma disposición que un `T[N]` crudo — cero overhead frente al array C al que reemplaza, y `data()` devuelve un puntero a almacenamiento contiguo, así que `kPool.data() + offset` está bien definido.
+- Un `static_assert` ([static_assert en cppreference](https://en.cppreference.com/cpp/language/static_assert)) garantiza, en tiempo de compilación, que el pool se mantiene por debajo de 64 KiB para que los offsets `uint16_t` puedan direccionarlo entero. Haz crecer la tabla más allá y el build falla de forma ruidosa en vez de truncar en silencio.
+- `std::array` ([std::array en cppreference](https://en.cppreference.com/cpp/container/array)) es un agregado con la misma disposición que un `T[N]` crudo — cero overhead frente al array C al que reemplaza, y `data()` devuelve un puntero a almacenamiento contiguo, así que `kPool.data() + offset` está bien definido.
 - Como los offsets se emiten como literales enteros de C++ y se compilan para el objetivo, **no hay problema de endianness ni de serialización** — a diferencia de un formato de blob binario como el `.mo` de gettext.
 
 <MemoryMap

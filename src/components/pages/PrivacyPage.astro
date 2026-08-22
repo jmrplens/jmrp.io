@@ -74,6 +74,13 @@ const privacyModified = [
 
 const privacySchema = {
   "@type": "WebPage",
+  // Answer target for this page: its title and the one-line intro under it.
+  // 66 indexable pages carried no `speakable` (GEO audit 2026-08-22, M7);
+  // selectors verified against the built markup.
+  speakable: {
+    "@type": "SpeakableSpecification",
+    cssSelector: [".privacy-header__title", ".privacy-header__intro"],
+  },
   "@id": `${pageUrl}#webpage`,
   url: pageUrl,
   name: t("pages.privacy.title"),

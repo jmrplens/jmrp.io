@@ -4,6 +4,12 @@ slug: "009-running-tor-bridge"
 lang: "es"
 publishedDate: 2026-03-30
 updatedDate: 2026-08-03
+lastVerified:
+  date: 2026-08-22
+  versions:
+    - Tor 0.4.9.11
+    - obfs4proxy 0.0.14
+    - Debian 13
 description: "Guía para ejecutar bridges Tor obfs4 y WebTunnel en Linux con camuflaje Nginx, firewall, monitoreo Prometheus e integración CrowdSec."
 lead: "Un mismo puente ejecutando obfs4 y WebTunnel a la vez, con Nginx haciendo que la mitad WebTunnel sea indistinguible de HTTPS normal. Running y Valid llegan en menos de una hora; Stable y Guard tardaron aquí alrededor de una semana, porque se puntúan por fiabilidad sostenida y no por un contador de uptime."
 author: "José Manuel Requena Plens"
@@ -144,7 +150,7 @@ Los [orígenes de Tor](https://www.onion-router.net/History.html) se remontan a 
   { date: "2026", title: "Hoy", description: "~8,000 relés, ~2,000 bridges, y 2.5+ millones de usuarios diarios en más de 200 países. La red es completamente operada por voluntarios.", type: "default" },
 ]} />
 
-### Cómo Funciona el Enrutamiento Onion
+### ¿Cómo funciona el enrutamiento onion?
 
 [El enrutamiento onion](https://en.wikipedia.org/wiki/Onion_routing) debe su nombre a las capas de una cebolla — tus datos se envuelven en **múltiples capas de cifrado**, y cada relé en el circuito "pela" una capa para revelar el siguiente destino. Ningún relé único conoce jamás tanto el origen como el destino del tráfico.
 
@@ -265,7 +271,7 @@ La red Tor está compuesta por diferentes tipos de nodos operados por voluntario
 A partir de 2026, la [red Tor tiene aproximadamente **8,000 relés** pero solo alrededor de **2,000 bridges**](https://metrics.torproject.org/). Los bridges son particularmente valiosos porque sirven a usuarios que están **activamente bloqueados** de acceder a Tor — personas en países como China, Irán y Rusia donde el gobierno bloquea conexiones a relés Tor conocidos. Cada nuevo bridge es una **línea de vida** para alguien bajo censura.
 </Callout>
 
-### Entender los Pluggable Transports
+### ¿Qué son los pluggable transports?
 
 Los censores no solo bloquean Tor por IP — usan **Inspección Profunda de Paquetes (DPI)** para identificar y bloquear el protocolo Tor en sí. Los [pluggable transports](https://arxiv.org/pdf/2309.14856) resuelven esto disfrazando el tráfico de Tor como algo completamente diferente.
 
@@ -606,13 +612,22 @@ Analicemos las secciones críticas:
 Si tu servidor está detrás de un router (NAT), usar `ORPort 127.0.0.1:auto` **fallará** en la prueba de auto-accesibilidad. Tor necesita verificar que su ORPort sea accesible desde Internet, y vincular a localhost previene esto. Siempre usa `ORPort 0.0.0.0:9001` (o tu IP específica de LAN) y reenvía el puerto 9001 desde tu router.
 </Callout>
 
-<Callout type="info" title="Dual-Stack: IPv4 + IPv6">
-Si tu ISP proporciona una dirección IPv6 global, puedes añadir una segunda línea `ORPort` con tu dirección IPv6. Esto permite que tu bridge acepte conexiones tanto IPv4 como IPv6, aumentando la accesibilidad para usuarios censurados. Para encontrar tu IPv6:
-<TerminalCommand ariaLabel="Encontrar tu dirección IPv6 global">
+<Callout type="tip" title="Dual-Stack: IPv4 + IPv6">
+Si tu ISP proporciona un prefijo IPv6, **plantéate seriamente añadir un ORPort IPv6**. Un bridge dual-stack puede servir a más usuarios, porque algunas redes solo tienen conectividad IPv6. Para encontrar la dirección IPv6 global de tu servidor:
+
+<TerminalCommand ariaLabel="Encontrar la dirección IPv6 global de tu servidor">
 ```bash
-ip -6 addr show scope global | grep inet6 | awk '{print $2}' | cut -d/ -f1 | head -1
+ip -6 addr show scope global | grep inet6
 ```
 </TerminalCommand>
+
+Usa la dirección (sin el prefijo `/64`) en tu `torrc`:
+
+```ini
+ORPort [2001:db8::1]:9001
+```
+
+A diferencia de IPv4, las direcciones IPv6 son **enrutables globalmente** — no hace falta NAT ni redirección de puertos. Solo necesitas que tu firewall permita TCP entrante al puerto 9001 en esa dirección.
 </Callout>
 
 ### Generar una Ruta Secreta de WebTunnel
@@ -1403,7 +1418,7 @@ Después de que todo esté configurado, repasa esta lista de verificación para 
 
 ## Notas operativas
 
-### Qué Sucede Después de Que Comiences
+### ¿Qué sucede después de arrancar el bridge?
 
 <Timeline events={[
   { date: "0–1 hora", title: "Bootstrap y Prueba Automática", description: "Tor se conecta a la red, descarga el consenso y prueba si tu ORPort es accesible. Si la prueba automática es exitosa, tu puente está operacional.", type: "success" },

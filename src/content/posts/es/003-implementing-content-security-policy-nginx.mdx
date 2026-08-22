@@ -49,20 +49,28 @@ howto:
   steps:
     - name: "Añadir una cabecera CSP inicial"
       text: "Añade `add_header Content-Security-Policy \"default-src 'self'\" always;` a tu bloque server de Nginx. Esto bloquea inmediatamente los scripts externos, los scripts inline y los estilos inline."
+      anchor: "tu-primera-csp-en-5-minutos"
     - name: "Comprobar y recargar Nginx"
       text: "Ejecuta `sudo nginx -t && sudo systemctl reload nginx` para validar la configuración y aplicarla. Abre la consola del navegador para inspeccionar las violaciones de CSP."
+      anchor: "tu-primera-csp-en-5-minutos"
     - name: "Construir una política base de Nivel 6"
       text: "Amplía la cabecera a `default-src 'none'` más `script-src`, `style-src`, `img-src`, `font-src`, `connect-src`, `object-src 'none'`, `base-uri 'none'`, `frame-ancestors 'none'`, `form-action 'self'` y `upgrade-insecure-requests` explícitos."
+      anchor: "construyendo-tu-csp-capa-a-capa"
     - name: "Inyectar nonces por petición para scripts inline"
       text: "Coloca un placeholder `CSP_NONCE_NGINX` en tus plantillas, establece `set $cspNonce $request_id;` y usa `sub_filter` para reemplazar el placeholder con el mismo nonce que va en la cabecera CSP."
+      anchor: "nonces-para-sitios-estáticos-el-truco-de-nginx"
     - name: "Pasar a modo estricto con nonces y strict-dynamic"
       text: "Cambia script-src a `'nonce-$cspNonce' 'strict-dynamic'` y mantén `object-src 'none'` y `base-uri 'none'`. Esto descarta las frágiles allowlists de dominios en favor de nonces criptográficos."
+      anchor: "modo-estricto-con-strict-dynamic"
     - name: "Desplegar en modo report-only"
       text: "Publica la política estricta como `Content-Security-Policy-Report-Only` durante una o dos semanas con un `report-uri` para registrar las violaciones sin bloquear nada."
+      anchor: "fase-1-report-only"
     - name: "Analizar y corregir las violaciones"
       text: "Revisa los informes y soluciona los problemas: convierte los inline event handlers a `addEventListener()`, reemplaza `eval()` con `JSON.parse()` y añade nonces a los scripts inline."
+      anchor: "configurar-el-reporting-de-csp"
     - name: "Activar la aplicación"
       text: "Cambia de `Content-Security-Policy-Report-Only` a `Content-Security-Policy` para empezar a bloquear las violaciones, manteniendo opcionalmente una cabecera report-only para probar políticas más estrictas en el futuro."
+      anchor: "fase-3-aplicar"
 ---
 
 import Callout from "@components/ui/Callout.astro";
@@ -109,7 +117,15 @@ Esta guía te lleva desde cero hasta una configuración CSP lista para producci�
 
 ## Cómo lo ejecuto en mi propia infraestructura
 
-Esto no es hipotético — jmrp.io es en sí mismo la implementación de referencia de todo lo anterior. En producción, Nginx fija `set $cspNonce $request_id;` y reescribe el marcador con `sub_filter NGINX_CSP_NONCE $cspNonce;`, de modo que cada respuesta lleva un nonce fresco atado a esa petición. La cabecera que este sitio sirve realmente está basada en nonces: `default-src 'none'`, `script-src 'self' 'nonce-…' 'strict-dynamic'`, `style-src 'self' 'nonce-…'`, más `frame-ancestors 'none'`, `base-uri 'none'` y `report-uri /csp-report`. El `'self'` que aparece ahí es un respaldo de mismo origen para navegadores sin soporte de `strict-dynamic`; donde sí lo soportan, el navegador ignora `'self'` y el nonce es lo único que autoriza la ejecución. Cero `unsafe-inline`, cero listas de dominios de terceros que mantener.
+{/* El <span> dentro de este <code> es FUNCIONAL, no una errata. Esta frase nombra el marcador
+    que usa producción de verdad, y el propio `sub_filter` de producción reescribe ese literal
+    al servir — escribirlo contiguo hacía que la página publicara un nonce en vivo en lugar del
+    token (auditoría GEO 2026-08-22, K1). Partirlo deja el texto renderizado y copiado idéntico
+    mientras los bytes servidos nunca coinciden. Con backticks NO funciona, y `&#67;` tampoco:
+    cheerio vuelve a decodificar las entidades — verificado. En el resto del post el token se
+    escribe deliberadamente invertido, como CSP_NONCE_NGINX. */}
+
+Esto no es hipotético — jmrp.io es en sí mismo la implementación de referencia de todo lo anterior. En producción, Nginx fija `set $cspNonce $request_id;` y reescribe el marcador con <code>sub_filter NGINX_CSP_<span>NONCE</span> $cspNonce;</code>, de modo que cada respuesta lleva un nonce fresco atado a esa petición. La cabecera que este sitio sirve realmente está basada en nonces: `default-src 'none'`, `script-src 'self' 'nonce-…' 'strict-dynamic'`, `style-src 'self' 'nonce-…'`, más `frame-ancestors 'none'`, `base-uri 'none'` y `report-uri /csp-report`. El `'self'` que aparece ahí es un respaldo de mismo origen para navegadores sin soporte de `strict-dynamic`; donde sí lo soportan, el navegador ignora `'self'` y el nonce es lo único que autoriza la ejecución. Cero `unsafe-inline`, cero listas de dominios de terceros que mantener.
 
 Las violaciones no se pierden en un log que nadie lee: tengo mi propio receptor (`scripts/csp-reporter.mjs`) que las saca a la luz en cuanto ocurren, en vez de depender de un servicio de terceros para saber qué se está rompiendo.
 
@@ -126,7 +142,7 @@ Content Security Policy ha evolucionado significativamente desde su introducció
   { date: "2012", type: "milestone", title: "CSP Level 1", description: "El W3C estandariza CSP con directivas fetch básicas (script-src, style-src, etc.). [Especificación W3C CSP 1.0](https://www.w3.org/TR/CSP1/)" },
   { date: "2016", type: "milestone", title: "CSP Level 2", description: "Introduce nonces, hashes y frame-ancestors. 'unsafe-inline' puede anularse con nonces. [W3C CSP Level 2](https://www.w3.org/TR/CSP2/)" },
   { date: "2016", type: "warning", title: "Investigación de Google", description: "Google publica 'CSP Is Dead, Long Live CSP' demostrando que se puede eludir el 94,72 % de todas las políticas distintas, de las cuales el 75,81 % usa listas de permitidos de scripts eludibles. [Artículo de investigación](https://research.google/pubs/csp-is-dead-long-live-csp-on-the-insecurity-of-whitelists-and-the-future-of-content-security-policy/)" },
-  { date: "2018", type: "success", title: "strict-dynamic", description: "Nueva keyword que permite a los scripts de confianza cargar dependencias sin necesidad de allowlist explícito. [MDN strict-dynamic](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy/script-src#strict-dynamic)" },
+  { date: "2018", type: "success", title: "strict-dynamic", description: "Nueva keyword que permite a los scripts de confianza cargar dependencias sin necesidad de allowlist explícito. [MDN strict-dynamic](https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Content-Security-Policy/script-src#strict-dynamic)" },
   { date: "2023+", type: "milestone", title: "CSP Level 3 (Working Draft)", description: "Introduce Trusted Types, report-to y soporte mejorado para WebAssembly. [W3C CSP Level 3](https://www.w3.org/TR/CSP3/)" },
   { date: "2024+", type: "success", title: "Adopción de Trusted Types", description: "El soporte en navegadores madura; las empresas comienzan a adoptarlo para la prevención de DOM-XSS. [web.dev Trusted Types](https://web.dev/articles/trusted-types)" },
 ]} />
@@ -365,7 +381,7 @@ Controla qué scripts pueden ejecutarse en tu página. Si te equivocas aquí, to
   description="Especifica las fuentes válidas para JavaScript. Es la directiva más importante para la protección contra XSS."
   defaultValue="Recurre a default-src"
   since="CSP Level 1"
-  mdnUrl="https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy/script-src"
+  mdnUrl="https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Content-Security-Policy/script-src"
 />
 
 <Table title="Valores de origen de script-src">
@@ -1622,7 +1638,7 @@ Either the 'unsafe-inline' keyword, a hash ('sha256-...'), or a nonce
   </thead>
   <tbody>
     <tr>
-      <td><a href="https://observatory.mozilla.org/" target="_blank" rel="noopener noreferrer"><strong>Mozilla Observatory</strong></a></td>
+      <td><a href="https://developer.mozilla.org/en-US/observatory" target="_blank" rel="noopener noreferrer"><strong>Mozilla Observatory</strong></a></td>
       <td>Evaluación completa de cabeceras de seguridad (A+ posible)</td>
     </tr>
     <tr>
@@ -1634,7 +1650,7 @@ Either the 'unsafe-inline' keyword, a hash ('sha256-...'), or a nonce
       <td>Análisis rápido de cabeceras y puntuación</td>
     </tr>
     <tr>
-      <td><a href="https://report-uri.com/home/hash" target="_blank" rel="noopener noreferrer"><strong>CSP Hash Generator</strong></a></td>
+      <td><a href="https://report-uri.com/tools/csp-hash-generator" target="_blank" rel="noopener noreferrer"><strong>CSP Hash Generator</strong></a></td>
       <td>Genera hashes para scripts inline</td>
     </tr>
   </tbody>
@@ -1832,5 +1848,5 @@ server {
 </StepByStep>
 
 <Callout type="success" icon="mdi:trophy">
-  **Resultado:** Esta es exactamente la configuración que corre en producción en este sitio — una calificación A+ con puntuación 140 y los 10 tests pasados en [Mozilla Observatory](https://observatory.mozilla.org/), con la funcionalidad completa del sitio intacta y los usuarios protegidos de ataques XSS.
+  **Resultado:** Esta es exactamente la configuración que corre en producción en este sitio — una calificación A+ con puntuación 140 y los 10 tests pasados en [Mozilla Observatory](https://developer.mozilla.org/en-US/observatory), con la funcionalidad completa del sitio intacta y los usuarios protegidos de ataques XSS.
 </Callout>

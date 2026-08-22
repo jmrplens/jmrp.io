@@ -20,7 +20,7 @@ faq:
   - question: "¿Base64 es una forma de cifrado?"
     answer: "No. Base64 es un esquema de codificación, no de cifrado. Hace que los datos binarios se puedan transmitir como texto, pero no aporta confidencialidad, ya que cualquiera puede decodificarlo al instante. Nunca lo uses para proteger secretos."
   - question: "¿Cuál es la diferencia entre Base64 y Base64URL?"
-    answer: "El Base64 estándar (RFC 4648) usa los caracteres + y / junto con el relleno =, que puede romper las URLs. Base64URL los sustituye por - y _ y normalmente elimina el relleno, lo que lo hace seguro para URLs y JWTs."
+    answer: "El Base64 estándar ([RFC 4648](https://datatracker.ietf.org/doc/html/rfc4648)) usa los caracteres + y / junto con el relleno =, que puede romper las URLs. Base64URL los sustituye por - y _ y normalmente elimina el relleno, lo que lo hace seguro para URLs y JWTs."
   - question: "¿Se sube mi archivo a un servidor cuando lo codifico?"
     answer: "No. Toda la codificación y decodificación se ejecuta completamente en tu navegador. Los archivos que arrastras nunca se suben, por lo que tus datos nunca salen de tu dispositivo."
   - question: "¿Por qué la salida Base64 es más grande que el archivo original?"

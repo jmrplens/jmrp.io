@@ -27,36 +27,47 @@ const translatePath = useTranslatedPath(locale);
 /** Category display metadata (order drives the chip bar). */
 const categoryMeta: Record<
   string,
-  { name: string; short: string; description: string; order: number }
+  {
+    name: string;
+    short: string;
+    description: string;
+    context?: string;
+    order: number;
+  }
 > = {
   security: {
     name: t("pages.tools.categorySecurity"),
     short: t("pages.tools.shortSecurity"),
     description: t("pages.toolsCategory.securityDesc"),
+    context: t("pages.toolsCategory.securityContext"),
     order: 1,
   },
   developer: {
     name: t("pages.tools.categoryDeveloper"),
     short: t("pages.tools.shortDeveloper"),
     description: t("pages.toolsCategory.developerDesc"),
+    context: t("pages.toolsCategory.developerContext"),
     order: 2,
   },
   network: {
     name: t("pages.tools.categoryNetwork"),
     short: t("pages.tools.shortNetwork"),
     description: t("pages.toolsCategory.networkDesc"),
+    context: t("pages.toolsCategory.networkContext"),
     order: 3,
   },
   embedded: {
     name: t("pages.tools.categoryEmbedded"),
     short: t("pages.tools.shortEmbedded"),
     description: t("pages.toolsCategory.embeddedDesc"),
+    context: t("pages.toolsCategory.embeddedContext"),
     order: 4,
   },
   mikrotik: {
     name: t("pages.tools.categoryMikrotik"),
     short: t("pages.tools.shortMikrotik"),
     description: t("pages.toolsCategory.mikrotikDesc"),
+    context: t("pages.toolsCategory.mikrotikContext"),
     order: 5,
   },
 };
@@ -134,6 +145,13 @@ const schema = {
           grid, with no sentence saying what the category is. */
       }
       <p class="cat-lead">{meta.description}</p>
+      {
+        /* When to reach for this class of tool — 2-3 sentences of real context
+           so the hub is a page, not just a list (GEO audit 2026-08-22, B10).
+           Approved copy; see the MAINTENANCE note in the translation files
+           before adding or removing tools in a category. */
+        meta.context && <p class="cat-context">{meta.context}</p>
+      }
       <p class="subtitle">
         {tools.length}
         {
@@ -269,6 +287,12 @@ const schema = {
     font-size: var(--text-md);
     line-height: 1.6;
     color: var(--color-text);
+  }
+
+  .cat-context {
+    max-width: var(--max-width-prose);
+    margin-top: var(--space-sm);
+    color: var(--color-text-muted);
   }
 
   .subtitle {

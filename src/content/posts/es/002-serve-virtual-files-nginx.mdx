@@ -1,6 +1,10 @@
 ---
 title: "Domina los archivos virtuales en Nginx: Guía completa"
 slug: "002-serve-virtual-files-nginx"
+lastVerified:
+  date: 2026-08-22
+  versions:
+    - nginx 1.31.3
 description: "Sirve archivos virtuales en Nginx sin I/O de disco. Cubre root vs alias vs try_files, named locations, endpoints de salud en Kubernetes y containers."
 lead: "Nginx puede servir robots.txt, security.txt y sondas de salud de Kubernetes desde la propia configuración, sin ningún fichero en disco — y el matching de location gana por prioridad, no por el orden en que escribiste los bloques."
 author: "José Manuel Requena Plens"
@@ -46,20 +50,28 @@ howto:
   steps:
     - name: "Entender la prioridad del location matching"
       text: "Aprende cómo Nginx selecciona un bloque location por prioridad y no por el orden en la configuración: coincidencia exacta (=) primero, luego prefijo con ^~, después regex y por último prefijo simple por coincidencia más larga. Usa = para archivos virtuales como /robots.txt para que gane la coincidencia exacta."
+      anchor: "prioridad-del-location-matching"
     - name: "Elegir entre root, alias o try_files"
       text: "Elige la directiva que controla dónde busca Nginx los archivos. Usa root para document roots estándar, alias para servir archivos desde ubicaciones no estándar y try_files para comprobar archivos en orden con un fallback final."
+      anchor: "directivas-principales-root-alias-try_files"
     - name: "Servir contenido inline con la directiva return"
       text: "Usa return para enviar contenido pequeño directamente desde la configuración, como `return 200 \"User-agent: *\\nAllow: /\\n\";`, y establece el Content-Type con default_type. Esto evita crear archivos físicos para robots.txt, respuestas JSON o pings vacíos."
+      anchor: "la-directiva-return"
     - name: "Añadir named locations y fallbacks internos"
       text: "Define named locations con prefijo @ para patrones de fallback como el enrutamiento de SPA o el proxy a un backend, y usa la directiva internal para prevenir el acceso directo a archivos protegidos."
+      anchor: "named-locations-y-fallbacks"
     - name: "Definir archivos web estándar y .well-known"
       text: "Añade bloques location de coincidencia exacta para robots.txt, humans.txt, favicon.ico, security.txt y las rutas de ACME challenge, sirviéndolos inline con return o desde disco con alias."
+      anchor: "archivos-web-estándar"
     - name: "Usar njs para archivos virtuales dinámicos"
       text: "Carga el módulo ngx_http_js_module y usa js_content con una función njs cuando necesites lógica como contenido condicional o JSON dinámico. Reserva njs para los casos que return no puede gestionar, ya que return es más rápido para contenido estático."
+      anchor: "contenido-dinámico-con-nginx-javascript-njs"
     - name: "Añadir endpoints de salud y monitorización"
       text: "Crea endpoints de coincidencia exacta para los probes de liveness, readiness y startup de Kubernetes que devuelvan una respuesta simple con access_log off, y expón métricas de stub_status restringidas a redes internas."
+      anchor: "endpoints-de-salud-y-monitorización"
     - name: "Validar y recargar la configuración"
       text: "Ejecuta `sudo nginx -t` para comprobar la sintaxis, luego `sudo nginx -s reload` para aplicar los cambios, y prueba los archivos virtuales con curl revisando el error log si algo falla."
+      anchor: "validar-la-configuración"
 ---
 
 import Callout from "@components/ui/Callout.astro";
@@ -188,7 +200,7 @@ Estas tres directivas determinan _dónde_ busca Nginx los archivos.
 
  Entender la diferencia es crucial.
 
-### La diferencia explicada
+### ¿Cuál es la diferencia entre root y alias?
 
 <Table title="root vs alias vs try_files">
   <thead>
@@ -346,7 +358,7 @@ server {
 
 Las named locations (con prefijo `@`) permiten patrones de fallback sofisticados sin reescritura de URL.
 
-### El patrón @fallback
+### ¿Cómo funciona el patrón @fallback?
 
 <FileContent filename="named-location.conf">
 ```nginx
@@ -579,7 +591,7 @@ location = /site.webmanifest {
 
 ## El directorio .well-known
 
-El directorio [.well-known](https://www.iana.org/assignments/well-known-uris/well-known-uris.xhtml) es una ubicación estándar para metadatos del sitio.
+El directorio [.well-known](https://www.iana.org/assignments/well-known-uris) es una ubicación estándar para metadatos del sitio.
 
 ### security.txt (RFC 9116)
 
@@ -1237,6 +1249,6 @@ nunca.
 - [Nginx Admin Guide: Web Server](https://docs.nginx.com/nginx/admin-guide/web-server/web-server/)
 
 ### Estándares
-- [RFC 9116: security.txt](https://www.rfc-editor.org/rfc/rfc9116)
-- [IANA Well-Known URIs](https://www.iana.org/assignments/well-known-uris/well-known-uris.xhtml)
+- [RFC 9116: security.txt](https://datatracker.ietf.org/doc/html/rfc9116)
+- [IANA Well-Known URIs](https://www.iana.org/assignments/well-known-uris)
 - [robots.txt specification](https://developers.google.com/search/docs/crawling-indexing/robots/intro)

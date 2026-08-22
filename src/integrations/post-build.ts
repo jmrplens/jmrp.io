@@ -21,9 +21,11 @@ import { fileURLToPath } from "node:url";
 
 import type { AstroIntegration, AstroIntegrationLogger } from "astro";
 
+import { generateBlogRedirects } from "./post-build/blog-redirects.js";
 import { compressAssets } from "./post-build/compression.js";
 import { finalizeCspConfig } from "./post-build/csp.js";
 import { extractCssDataUris } from "./post-build/css.js";
+import { generateDocsRedirects } from "./post-build/docs-redirects.js";
 import { processHtmlFiles } from "./post-build/html.js";
 import { optimizeImages } from "./post-build/images.js";
 import type { CspData } from "./post-build/types.js";
@@ -79,6 +81,15 @@ export default function postBuildIntegration(): AstroIntegration {
           );
           await timed("finalizeCspConfig", logger, () =>
             finalizeCspConfig(distDir, cspData, logger),
+          );
+          // Second Nginx artifact: the prefix-less blog redirect map. Derived
+          // from the built directory names, so posts added later are covered
+          // without touching the vhost.
+          await timed("generateBlogRedirects", logger, () =>
+            generateBlogRedirects(distDir, logger),
+          );
+          await timed("generateDocsRedirects", logger, () =>
+            generateDocsRedirects(logger),
           );
 
           // optimizeImages (re-compresses PNGs) and compressAssets (gzip/brotli

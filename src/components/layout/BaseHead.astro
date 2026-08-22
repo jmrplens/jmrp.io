@@ -15,10 +15,12 @@ import { defaultLocale, type Locale, locales } from "@i18n/config";
 import {
   getAlternateLinks,
   getOgLocale,
+  stripLocalePrefix,
   type TranslationKey,
   useTranslatedPath,
   useTranslations,
 } from "@i18n/utils";
+import { pageLastmod } from "@src/integrations/sitemap-post-dates";
 import type { SiteConfig } from "@src/types";
 import { safeJsonLd } from "@utils/html";
 import type { LanguageTaggedValue } from "@utils/person";
@@ -406,6 +408,9 @@ const navSchema = (siteData.nav || []).map((item): SiteNavigationElement => ({
 const rawSegments = Astro.url.pathname.split("/").filter(Boolean);
 const pathSegments =
   rawSegments[0] === locale ? rawSegments.slice(1) : rawSegments;
+/** URL segments that group children without being a page themselves. */
+const STRUCTURAL_SEGMENTS = new Set(["categories", "tags"]);
+
 const breadcrumbRoot = new URL(translatePath("/"), getSiteUrl()).href;
 const breadcrumbList = {
   "@type": "BreadcrumbList",
@@ -419,35 +424,76 @@ const breadcrumbList = {
       name: t("nav.home"),
       item: breadcrumbRoot,
     },
-    ...pathSegments.map((segment, index): ListItem => {
-      const path = translatePath(
-        `/${pathSegments.slice(0, index + 1).join("/")}/`,
-      );
-      const isLastSegment = index === pathSegments.length - 1;
-      const absoluteUrl = new URL(path, getSiteUrl()).href;
+    // Structural URL segments that group children but are not pages of their
+    // own: /tools/categories/ and /blog/tags/ both answer 403. Emitting them
+    // as ListItems put an unreachable URL inside the trail, and Google treats
+    // a BreadcrumbList whose `item` does not resolve as invalid — which
+    // silently voided the breadcrumb on the ten indexable category pages
+    // (the 28 tag pages are noindex, so those cost nothing).
+    // GEO audit 2026-08-22, A6. Collapsing the level is the right fix rather
+    // than publishing an index there: the children it would link to are
+    // themselves noindex.
+    ...pathSegments
+      .map((segment, index) => ({ segment, index }))
+      .filter(({ segment, index }) => {
+        const isLastSegment = index === pathSegments.length - 1;
+        return isLastSegment || !STRUCTURAL_SEGMENTS.has(segment);
+      })
+      .map(({ segment, index }, position): ListItem => {
+        const path = translatePath(
+          `/${pathSegments.slice(0, index + 1).join("/")}/`,
+        );
+        const isLastSegment = index === pathSegments.length - 1;
+        const absoluteUrl = new URL(path, getSiteUrl()).href;
 
-      // Prefer page title for the last segment if available
-      const fallbackName = segment
-        .replaceAll("-", " ")
-        .replaceAll(/\b\w/g, (l) => l.toUpperCase());
-      const name =
-        isLastSegment && title && title !== siteData.title
-          ? title
-          : fallbackName;
+        // Prefer page title for the last segment if available
+        const fallbackName = segment
+          .replaceAll("-", " ")
+          .replaceAll(/\b\w/g, (l) => l.toUpperCase());
+        const name =
+          isLastSegment && title && title !== siteData.title
+            ? title
+            : fallbackName;
 
-      return {
-        "@type": "ListItem",
-        position: index + 2,
-        name: name,
-        item: absoluteUrl,
-      };
-    }),
+        return {
+          "@type": "ListItem",
+          // Positions must stay contiguous after a segment is dropped, so this
+          // counts emitted items rather than reusing the path index.
+          position: position + 2,
+          name: name,
+          item: absoluteUrl,
+        };
+      }),
   ],
 } satisfies BreadcrumbList;
 
+// Minimal in-document definitions for the MCP `#api` nodes that `owns`
+// references above. mcp.jmrp.io stays the canonical describer — it publishes
+// the full node with name, bilingual description, documentation and
+// isBasedOn — but a consumer that resolves the graph per document (which is
+// what Google and most parsers do) only saw a bare `@id` here: the sole two
+// unresolvable references across all 126 pages (GEO audit 2026-08-22, A5).
+//
+// Deliberately limited to facts that cannot contradict the canonical node:
+// its type, its URL and its provider. In particular NO `name` — the canonical
+// node is named after the endpoint path ("libgen"), while projects.yaml calls
+// the project "libgen-mcp", and emitting both under one @id would create
+// exactly the cross-locale collision this audit flagged elsewhere.
+const mcpApiNodes = (await getMcpServers()).map((server) => ({
+  "@type": ["WebAPI", "SoftwareApplication"],
+  "@id": mcpApiId(server),
+  url: server.endpoint,
+  provider: { "@id": new URL("#person", getSiteUrl()).href },
+}));
+
 // 4. Merge Logic
 // We use a @graph to include multiple items (Website, Page, Breadcrumbs, etc.)
-let schemaGraph = [websiteSchema, ...navSchema, breadcrumbList];
+let schemaGraph = [
+  websiteSchema,
+  ...navSchema,
+  breadcrumbList,
+  ...(mcpApiNodes as unknown as (typeof breadcrumbList)[]),
+];
 
 if (schema) {
   // Use type assertion to bypass strict checking since schema is externally provided
@@ -458,6 +504,38 @@ if (schema) {
     ];
   } else {
     schemaGraph.push(schema as unknown as (typeof schemaGraph)[number]);
+  }
+}
+
+// `dateModified` on the node that describes THIS page.
+//
+// 36 indexable pages — every collection and plain WebPage — carried no
+// `dateModified` even though the sitemap already published a content-derived
+// `<lastmod>` for them (GEO audit 2026-08-22, M8). Posts, tools and the
+// ProfilePages set their own, so this only fills the gap; a node that already
+// declares one is never touched.
+//
+// The date comes from the same resolver the sitemap uses, so the two can never
+// disagree. `modifiedDate` passed by the page still wins.
+const pagePath = stripLocalePrefix(Astro.url.pathname) || "/";
+const resolvedModified =
+  modifiedDate?.toISOString() ?? pageLastmod(pagePath) ?? undefined;
+
+if (resolvedModified) {
+  // Matched on `url` — every page-describing node carries the canonical — but
+  // skipping `#website`, which repeats the site URL and would swallow the date
+  // on the home page. Nodes that already declare `dateModified` (posts, tools,
+  // the ProfilePages) are left alone.
+  const websiteId = new URL("#website", getSiteUrl()).href;
+  for (const node of schemaGraph) {
+    const candidate = node as unknown as Record<string, unknown>;
+    if (
+      candidate.url === canonicalURL.href &&
+      candidate["@id"] !== websiteId &&
+      !candidate.dateModified
+    ) {
+      candidate.dateModified = resolvedModified;
+    }
   }
 }
 

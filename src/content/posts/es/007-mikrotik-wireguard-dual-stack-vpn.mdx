@@ -53,20 +53,28 @@ howto:
   steps:
     - name: "Crear la interface WireGuard"
       text: "Añade una interface WireGuard en el router MikroTik con un port de escucha personalizado; RouterOS genera el par de claves automáticamente. Recupera la clave pública del servidor para configurar los clientes después."
+      anchor: "paso-1-crear-la-interface-wireguard"
     - name: "Asignar direcciones IPv4 e IPv6"
       text: "Asigna a la interface WireGuard una dirección IPv4 y una dirección ULA IPv6 para que actúe como gateway de los clientes VPN. Establece advertise=no en la dirección IPv6."
+      anchor: "paso-2-asignar-direcciones-ip-a-la-interface"
     - name: "Añadir la interface a las listas de interfaces"
       text: "Añade la interface WireGuard a las listas VPN y LAN para que las reglas de firewall traten su tráfico correctamente y los clientes accedan a los recursos locales."
+      anchor: "paso-4-añadir-la-interface-a-las-listas-de-interfaces"
     - name: "Configurar las reglas de firewall"
       text: "Añade reglas de input para aceptar WireGuard en su port UDP, reglas de forward para permitir el acceso de los clientes a internet y a la LAN doméstica, y una address list para la red WireGuard."
+      anchor: "paso-5-configurar-reglas-de-firewall"
     - name: "Configurar NAT/Masquerade"
       text: "Añade reglas srcnat de masquerade IPv4 y NAT66 IPv6 para que las direcciones privadas de los clientes VPN se traduzcan a tu IP pública y al prefix IPv6 global asignado por tu ISP."
+      anchor: "paso-6-configurar-natmasquerade"
     - name: "Ajustar el MSS clamping y la tabla RAW"
       text: "Añade una regla mangle change-mss para evitar la fragmentación por el tunnel y reglas RAW en prerouting para omitir la protección antiflood del tráfico WireGuard."
+      anchor: "paso-7-configurar-mss-clamping"
     - name: "Añadir peers WireGuard (clientes)"
       text: "Añade un peer por dispositivo con un par de claves único, clave precompartida y un allowed-address IPv4/IPv6 dedicado, usando persistent-keepalive=25s para dispositivos detrás de NAT."
+      anchor: "paso-9-añadir-peers-wireguard-clientes"
     - name: "Configurar el cliente y verificar la conexión"
       text: "Configura cada dispositivo cliente mediante código QR o un fichero de configuración manual, y luego verifica el handshake en ambos extremos y prueba la conectividad IPv4 e IPv6 por el tunnel."
+      anchor: "paso-11-verificar-la-conexión"
 ---
 
 import Callout from "@components/ui/Callout.astro";
@@ -174,7 +182,7 @@ WireGuard destaca en dispositivos móviles. Cuando cambias de Wi-Fi a datos móv
 
 ## ¿Cómo encajan las mitades IPv4 e IPv6?
 
-Nuestra configuración crea una VPN dual-stack en la que los clientes conectados reciben tanto dirección IPv4 como IPv6. El tráfico de los clientes se traduce mediante NAT (masquerade) para acceder a internet a través de tu conexión doméstica. Para más información, consulta la [documentación oficial de WireGuard en MikroTik](https://help.mikrotik.com/docs/display/ROS/WireGuard).
+Nuestra configuración crea una VPN dual-stack en la que los clientes conectados reciben tanto dirección IPv4 como IPv6. El tráfico de los clientes se traduce mediante NAT (masquerade) para acceder a internet a través de tu conexión doméstica. Para más información, consulta la [documentación oficial de WireGuard en MikroTik](https://help.mikrotik.com/docs/spaces/ROS/pages/69664792/WireGuard).
 
 <Mermaid caption="Arquitectura WireGuard Dual-Stack" ariaLabel="Diagrama que muestra la topología VPN WireGuard con redes IPv4 e IPv6 pasando a través del router MikroTik hacia internet" maxWidth="600px">
 ```mermaid-render

@@ -259,6 +259,20 @@ const articleNode = {
     : {
         "@id": new URL("#website", getSiteUrl()).href,
       },
+  // The sources this post is anchored to. Every post already renders 16–25
+  // curated references (RFCs, W3C specs, IACR and Google Research papers) in
+  // its References list — 402 across the corpus — and none of them reached the
+  // structured data, even though `citation` is the property a generative engine
+  // reads to judge how well-sourced a claim is and to follow the provenance
+  // chain (GEO audit 2026-08-22, M2). Same deduplicated list the visible
+  // section renders, so the two can never disagree.
+  ...(finalReferences.length > 0 && {
+    citation: finalReferences.map((ref) => ({
+      "@type": "CreativeWork" as const,
+      name: ref.text,
+      url: ref.url,
+    })),
+  }),
 } satisfies BlogPosting | TechArticle;
 
 // Secondary graph nodes: FAQPage (from `faq`) and HowTo (from `howto`).

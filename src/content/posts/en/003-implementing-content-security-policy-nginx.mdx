@@ -48,20 +48,28 @@ howto:
   steps:
     - name: "Add a starter CSP header"
       text: "Add `add_header Content-Security-Policy \"default-src 'self'\" always;` to your Nginx server block. This immediately blocks external scripts, inline scripts, and inline styles."
+      anchor: "your-first-csp-in-5-minutes"
     - name: "Test and reload Nginx"
       text: "Run `sudo nginx -t && sudo systemctl reload nginx` to validate the configuration and apply it. Open the browser console to inspect any CSP violations."
+      anchor: "your-first-csp-in-5-minutes"
     - name: "Build a baseline Level 6 policy"
       text: "Expand the header to `default-src 'none'` plus explicit `script-src`, `style-src`, `img-src`, `font-src`, `connect-src`, `object-src 'none'`, `base-uri 'none'`, `frame-ancestors 'none'`, `form-action 'self'`, and `upgrade-insecure-requests`."
+      anchor: "building-your-csp-layer-by-layer"
     - name: "Inject per-request nonces for inline scripts"
       text: "Place a `CSP_NONCE_NGINX` placeholder in your templates, then set `set $cspNonce $request_id;` and use `sub_filter` to replace the placeholder with the same nonce that goes into the CSP header."
+      anchor: "nonces-for-static-sites-the-nginx-trick"
     - name: "Go strict with nonces and strict-dynamic"
       text: "Switch script-src to `'nonce-$cspNonce' 'strict-dynamic'` and keep `object-src 'none'` and `base-uri 'none'`. This drops fragile domain allowlists in favor of cryptographic nonces."
+      anchor: "going-strict-with-strict-dynamic"
     - name: "Deploy in report-only mode"
       text: "Ship the strict policy as `Content-Security-Policy-Report-Only` for one to two weeks with a `report-uri` so violations are logged without blocking anything."
+      anchor: "phase-1-report-only"
     - name: "Analyze and fix violations"
       text: "Review the reports and remediate issues: convert inline event handlers to `addEventListener()`, replace `eval()` with `JSON.parse()`, and add nonces to inline scripts."
+      anchor: "setting-up-csp-reporting"
     - name: "Enable enforcement"
       text: "Switch from `Content-Security-Policy-Report-Only` to `Content-Security-Policy` to start blocking violations, optionally keeping a report-only header to test stricter future policies."
+      anchor: "phase-3-enforce"
 ---
 
 import Callout from "@components/ui/Callout.astro";
@@ -108,7 +116,15 @@ This guide takes you from zero to a production-ready, **A+ rated** CSP configura
 
 ## How I run this on my own infrastructure
 
-This isn't a hypothetical — jmrp.io itself is the reference implementation for everything above. Production Nginx sets `set $cspNonce $request_id;` and rewrites the placeholder with `sub_filter NGINX_CSP_NONCE $cspNonce;`, so every response carries a fresh nonce tied to that request. The header this site actually serves is nonce-based: `default-src 'none'`, `script-src 'self' 'nonce-…' 'strict-dynamic'`, `style-src 'self' 'nonce-…'`, plus `frame-ancestors 'none'`, `base-uri 'none'`, and `report-uri /csp-report`. The `'self'` in there is a same-origin fallback for browsers that don't support `strict-dynamic`; where it is supported the browser ignores `'self'` and the nonce is the only thing that grants execution. Zero `unsafe-inline`, zero third-party domain allowlists to maintain.
+{/* The <span> inside this <code> is LOAD-BEARING, not a typo. This sentence names the
+    placeholder production actually uses, and production's own `sub_filter` rewrites that
+    literal on the way out — so writing it contiguously made the page serve a live nonce in
+    place of the token (GEO audit 2026-08-22, K1). Splitting it keeps the rendered and copied
+    text identical while the served bytes never match. Backticks will NOT work here: cheerio
+    re-decodes HTML entities, so `&#67;` is not an escape either — verified. Everywhere else in
+    this post the token is deliberately written inverted, as CSP_NONCE_NGINX. */}
+
+This isn't a hypothetical — jmrp.io itself is the reference implementation for everything above. Production Nginx sets `set $cspNonce $request_id;` and rewrites the placeholder with <code>sub_filter NGINX_CSP_<span>NONCE</span> $cspNonce;</code>, so every response carries a fresh nonce tied to that request. The header this site actually serves is nonce-based: `default-src 'none'`, `script-src 'self' 'nonce-…' 'strict-dynamic'`, `style-src 'self' 'nonce-…'`, plus `frame-ancestors 'none'`, `base-uri 'none'`, and `report-uri /csp-report`. The `'self'` in there is a same-origin fallback for browsers that don't support `strict-dynamic`; where it is supported the browser ignores `'self'` and the nonce is the only thing that grants execution. Zero `unsafe-inline`, zero third-party domain allowlists to maintain.
 
 Violations don't disappear into a log nobody reads: I run my own receiver (`scripts/csp-reporter.mjs`) that surfaces them as they happen, instead of relying on a third party to tell me what's breaking.
 
@@ -125,7 +141,7 @@ Content Security Policy has evolved significantly since its introduction. Unders
   { date: "2012", type: "milestone", title: "CSP Level 1", description: "W3C standardizes CSP with basic fetch directives (script-src, style-src, etc.). [W3C CSP 1.0 Spec](https://www.w3.org/TR/CSP1/)" },
   { date: "2016", type: "milestone", title: "CSP Level 2", description: "Introduces nonces, hashes, and frame-ancestors. 'unsafe-inline' can be overridden by nonces. [W3C CSP Level 2](https://www.w3.org/TR/CSP2/)" },
   { date: "2016", type: "warning", title: "Google Research", description: "Google publishes 'CSP Is Dead, Long Live CSP' showing bypasses in 94.72% of all distinct policies, 75.81% of them using bypassable script allowlists. [Research Paper](https://research.google/pubs/csp-is-dead-long-live-csp-on-the-insecurity-of-whitelists-and-the-future-of-content-security-policy/)" },
-  { date: "2018", type: "success", title: "strict-dynamic", description: "New keyword allows trusted scripts to load dependencies without explicit allowlisting. [MDN strict-dynamic](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy/script-src#strict-dynamic)" },
+  { date: "2018", type: "success", title: "strict-dynamic", description: "New keyword allows trusted scripts to load dependencies without explicit allowlisting. [MDN strict-dynamic](https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Content-Security-Policy/script-src#strict-dynamic)" },
   { date: "2023+", type: "milestone", title: "CSP Level 3 (Working Draft)", description: "Introduces Trusted Types, report-to, and improved WebAssembly support. [W3C CSP Level 3](https://www.w3.org/TR/CSP3/)" },
   { date: "2024+", type: "success", title: "Trusted Types Adoption", description: "Browser support matures; enterprises begin adopting for DOM-XSS prevention. [web.dev Trusted Types](https://web.dev/articles/trusted-types)" },
 ]} />
@@ -364,7 +380,7 @@ This controls which scripts can execute on your page. Get this wrong and your en
   description="Specifies valid sources for JavaScript. This is the most important directive for XSS protection."
   defaultValue="Falls back to default-src"
   since="CSP Level 1"
-  mdnUrl="https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy/script-src"
+  mdnUrl="https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Content-Security-Policy/script-src"
 />
 
 <Table title="script-src Source Values">
@@ -1621,7 +1637,7 @@ Either the 'unsafe-inline' keyword, a hash ('sha256-...'), or a nonce
   </thead>
   <tbody>
     <tr>
-      <td><a href="https://observatory.mozilla.org/" target="_blank" rel="noopener noreferrer"><strong>Mozilla Observatory</strong></a></td>
+      <td><a href="https://developer.mozilla.org/en-US/observatory" target="_blank" rel="noopener noreferrer"><strong>Mozilla Observatory</strong></a></td>
       <td>Comprehensive security header grading (A+ possible)</td>
     </tr>
     <tr>
@@ -1633,7 +1649,7 @@ Either the 'unsafe-inline' keyword, a hash ('sha256-...'), or a nonce
       <td>Quick header analysis and scoring</td>
     </tr>
     <tr>
-      <td><a href="https://report-uri.com/home/hash" target="_blank" rel="noopener noreferrer"><strong>CSP Hash Generator</strong></a></td>
+      <td><a href="https://report-uri.com/tools/csp-hash-generator" target="_blank" rel="noopener noreferrer"><strong>CSP Hash Generator</strong></a></td>
       <td>Generate hashes for inline scripts</td>
     </tr>
   </tbody>
@@ -1831,7 +1847,7 @@ server {
 </StepByStep>
 
 <Callout type="success" icon="mdi:trophy">
-  **Result:** This is exactly the configuration running in production on this site — an A+ rating with a score of 140 and all 10 tests passing on [Mozilla Observatory](https://observatory.mozilla.org/), full site functionality intact, and users protected from XSS attacks.
+  **Result:** This is exactly the configuration running in production on this site — an A+ rating with a score of 140 and all 10 tests passing on [Mozilla Observatory](https://developer.mozilla.org/en-US/observatory), full site functionality intact, and users protected from XSS attacks.
 </Callout>
 
 

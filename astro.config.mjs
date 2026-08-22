@@ -39,7 +39,17 @@ const i18nConfig = {
 export default defineConfig({
   prefetch: {
     prefetchAll: true,
-    defaultStrategy: "viewport",
+    // "hover", not "viewport". With viewport prefetching a single blog post
+    // pulled SIX extra documents — 213 KB of the 493 KB a mobile visit spent,
+    // including the Spanish twin of the post being read (GEO audit 2026-08-22,
+    // M12). None of it is reusable either: HTML is served `no-store` for the
+    // per-visitor CSP nonce, so nothing enters the browser cache and every
+    // speculative fetch is paid for again on the real navigation.
+    //
+    // "hover" keeps the latency win where it actually converts — the link the
+    // reader is already pointing at — and drops the rest. On touch devices it
+    // fires on touchstart, which is still ahead of the click.
+    defaultStrategy: "hover",
   },
   experimental: {
     clientPrerender: true,

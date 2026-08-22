@@ -3,6 +3,10 @@ title: "Un PIN de 4 dígitos basta: claves vinculadas al ESP32-S3"
 slug: "012-device-bound-key-derivation"
 lang: "es"
 publishedDate: 2026-06-22
+lastVerified:
+  date: 2026-08-22
+  versions:
+    - ESP-IDF 6.0.2
 description: "Por qué las iteraciones de PBKDF2 no protegen un PIN de 4 dígitos en un MCU, y cómo un secreto del dispositivo más HKDF frenan la fuerza bruta offline."
 lead: "Una RTX 5090 barre los 10.000 PIN de cuatro dígitos en bastante menos de un milisegundo offline, así que la defensa es un secreto eFuse por chip mezclado con HKDF, no más iteraciones."
 coverImage: "../../../assets/images/blog/device-bound-keys.webp"
@@ -103,7 +107,7 @@ Esa cifra de `11,16 MH/s` no es hipotética. Sale directamente de un [benchmark 
 
 La diferencia entre **online** y **offline** lo es todo aquí. _Online_ es el ladrón plantado en tu puerta probando llaves: puedes cerrarle de un portazo tras unos pocos intentos. _Offline_ es el ladrón que se ha llevado una copia de la cerradura a su taller, donde lima llaves sin que nadie le vigile y con todo el tiempo del mundo. Así que lo único que hace viable un PIN corto es asegurarse de que el atacante **no pueda pasar a offline** — y acotar lo rápido que puede adivinar **online**.
 
-### Online frente a offline: dos atacantes distintos
+### ¿Online u offline: de qué atacante te defiendes?
 
 <AttackSurfaceMatrix
   title="Online vs offline: dos atacantes distintos, dos controles distintos"
@@ -178,9 +182,9 @@ La protección contra fuerza bruta solo acota los intentos **en el dispositivo**
 
 ---
 
-## No puedes ganarle a una GPU a base de iteraciones en un MCU
+## ¿Por qué no puedes ganarle a una GPU a base de iteraciones en un MCU?
 
-La respuesta de manual a "mi secreto tiene poca entropía" es un [KDF basado en contraseña](https://www.rfc-editor.org/rfc/rfc8018#section-5.2) con un factor de trabajo alto. PBKDF2 ([RFC 8018](https://www.rfc-editor.org/rfc/rfc8018#section-5.2), el PKCS#5 actual; [NIST SP 800-132](https://csrc.nist.gov/pubs/sp/800/132/final) para la derivación de clave basada en contraseña) te deja elegir un número de iteraciones, y la [OWASP Password Storage Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html) recomienda **600.000 iteraciones** de PBKDF2-HMAC-SHA256. Haz cada intento lo bastante caro y hasta un espacio de claves pequeño se vuelve molesto de barrer. Esa es la teoría.
+La respuesta de manual a "mi secreto tiene poca entropía" es un [KDF basado en contraseña](https://datatracker.ietf.org/doc/html/rfc8018#section-5.2) con un factor de trabajo alto. PBKDF2 ([RFC 8018](https://datatracker.ietf.org/doc/html/rfc8018#section-5.2), el PKCS#5 actual; [NIST SP 800-132](https://csrc.nist.gov/pubs/sp/800/132/final) para la derivación de clave basada en contraseña) te deja elegir un número de iteraciones, y la [OWASP Password Storage Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html) recomienda **600.000 iteraciones** de PBKDF2-HMAC-SHA256. Haz cada intento lo bastante caro y hasta un espacio de claves pequeño se vuelve molesto de barrer. Esa es la teoría.
 
 Se rompe en un microcontrolador por una razón física sencilla: **el factor de trabajo ralentiza al dispositivo legítimo mucho más de lo que ralentiza al atacante.** El número de iteraciones tiene que ser lo bastante bajo como para que el desbloqueo del _usuario_ sea llevadero, y en este silicio ese techo es bajo. Mis builds de producción usan **35.000 iteraciones en el ESP32-S3 y 25.000 en el ESP32 clásico**, cada uno dimensionado para un desbloqueo de unos **2 segundos**. Las 600.000 recomendadas por OWASP empujarían un solo desbloqueo a unos **32 segundos** en el S3 — y unos **47 segundos** en el ESP32 clásico. Nadie va a esperar medio minuto para abrir su gestor de contraseñas, así que ese conteo es físicamente inutilizable como UX, no solo incómodo.
 
@@ -250,7 +254,7 @@ La vinculación es una característica de _producción endurecida_, condicionada
 
 ---
 
-## De dónde sale el secreto del dispositivo
+## ¿De dónde sale el secreto del dispositivo?
 
 El "secreto que solo este chip puede producir" tiene dos implementaciones, elegidas en tiempo de compilación según lo que el chip realmente sabe hacer. La capacidad que decide es si el SoC tiene un **periférico HMAC** por hardware, que ESP-IDF expone como `SOC_HMAC_SUPPORTED`. El ESP32-S3 lo tiene; el ESP32 clásico no — y ese único hecho es la razón de que el código lleve dos backends en vez de uno.
 
@@ -383,7 +387,7 @@ Ambos backends producen un `deviceSecret` de 32 bytes y se lo entregan al mismo 
 
 ## Mezclarlo con HKDF, no con un HMAC hecho a mano
 
-Una vez que tienes un secreto del dispositivo de 32 bytes y una clave maestra de PBKDF2 de 32 bytes, hay que combinarlos en una clave nueva. La tentación es echar mano de un `HMAC(deviceSecret, master)` pelado y darlo por hecho. Yo no lo hice, porque existe un primitivo publicado y analizado construido justo para esto —la herramienta homologada en lugar de mezclar a ojo—: **[HKDF](https://www.rfc-editor.org/rfc/rfc5869)** (RFC 5869), el KDF de extract-then-expand cuyo argumento de seguridad expuso Hugo Krawczyk en [_Cryptographic Extraction and Key Derivation: The HKDF Scheme_](https://eprint.iacr.org/2010/264). HKDF te convierte un secreto no uniforme en material de clave uniforme _con separación de dominio_, y usarlo tal cual mantiene toda la construcción como algo citable y estándar en lugar de algo que me inventé un martes.
+Una vez que tienes un secreto del dispositivo de 32 bytes y una clave maestra de PBKDF2 de 32 bytes, hay que combinarlos en una clave nueva. La tentación es echar mano de un `HMAC(deviceSecret, master)` pelado y darlo por hecho. Yo no lo hice, porque existe un primitivo publicado y analizado construido justo para esto —la herramienta homologada en lugar de mezclar a ojo—: **[HKDF](https://datatracker.ietf.org/doc/html/rfc5869)** (RFC 5869), el KDF de extract-then-expand cuyo argumento de seguridad expuso Hugo Krawczyk en [_Cryptographic Extraction and Key Derivation: The HKDF Scheme_](https://eprint.iacr.org/2010/264). HKDF te convierte un secreto no uniforme en material de clave uniforme _con separación de dominio_, y usarlo tal cual mantiene toda la construcción como algo citable y estándar en lugar de algo que me inventé un martes.
 
 La construcción es la canónica de dos pasos:
 
@@ -440,7 +444,7 @@ for (uint32_t counter = 1; ok && done < outLen; ++counter) {
 
 ## Demostrarlo: un known-answer test
 
-Una vinculación que esté mal es peor que no tener vinculación — si `provision()` y `unlock()` discreparan en un solo byte, cada desbloqueo fallaría y la bóveda quedaría inutilizada. Así que la construcción está fijada por tests, y el que carga el peso es un **known-answer test** —comprobar que nuestra salida coincide, byte a byte, con unos números de referencia oficiales, como cotejar un resultado con la hoja de respuestas— contra los vectores publicados en el [Apéndice A de la RFC 5869](https://www.rfc-editor.org/rfc/rfc5869#appendix-A). Como el HKDF corre idéntico en el host y en el dispositivo, comprobarlo contra el vector de la RFC en el build nativo demuestra que el primitivo HKDF en sí es byte-exacto — así que la vinculación que computa se reproduce de forma idéntica en host y dispositivo.
+Una vinculación que esté mal es peor que no tener vinculación — si `provision()` y `unlock()` discreparan en un solo byte, cada desbloqueo fallaría y la bóveda quedaría inutilizada. Así que la construcción está fijada por tests, y el que carga el peso es un **known-answer test** —comprobar que nuestra salida coincide, byte a byte, con unos números de referencia oficiales, como cotejar un resultado con la hoja de respuestas— contra los vectores publicados en el [Apéndice A de la RFC 5869](https://datatracker.ietf.org/doc/html/rfc5869#appendix-A). Como el HKDF corre idéntico en el host y en el dispositivo, comprobarlo contra el vector de la RFC en el build nativo demuestra que el primitivo HKDF en sí es byte-exacto — así que la vinculación que computa se reproduce de forma idéntica en host y dispositivo.
 
 <Code lang="cpp" title="test_device_secret.cpp — known-answer test del Apéndice A.1 de la RFC 5869">
 ```cpp

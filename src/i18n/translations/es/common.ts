@@ -853,7 +853,7 @@ export const common = {
         "Ingeniero de firmware y software en Valencia: dispositivos embebidos seguros, herramientas open-source e infraestructura self-hosted.",
       editorialTitle: "// EDITORIAL Y CORRECCIONES",
       editorialBody1:
-        "Todo lo que se publica aquí sale de trabajo realmente hecho: comandos ejecutados en hardware y servidores reales, configuración citada de sistemas que la están ejecutando y, cuando una guía depende de una versión concreta del software, esa versión indicada en el artículo. Las afirmaciones que no son mías —comportamiento de un protocolo, propiedades criptográficas, valores por defecto de un fabricante— se contrastan con fuentes primarias (RFC, organismos de estandarización, documentación del fabricante) y se citan, y todos los enlaces se vuelven a comprobar automáticamente en cada ejecución de CI.",
+        "Todo lo que se publica aquí sale de trabajo realmente hecho: comandos ejecutados en hardware y servidores reales, configuración citada de sistemas que la están ejecutando y, cuando una guía depende de una versión concreta del software, esa versión indicada en el artículo. Las afirmaciones que no son mías —comportamiento de un protocolo, propiedades criptográficas, valores por defecto de un fabricante— se contrastan con fuentes primarias (RFC, organismos de estandarización, documentación del fabricante) y se citan, y los enlaces se vuelven a comprobar automáticamente en CI, salvo una lista documentada de dominios que rechazan a los verificadores automáticos.",
       editorialBody2:
         "Cada post lleva una declaración de asistencia por IA, así que esto es exactamente lo que significa. Las herramientas de IA ayudan a redactar, estructurar, pulir el texto y traducir al español. No deciden qué es cierto: cada comando, fragmento de configuración y medición se ejecuta y se verifica antes de publicarse, y nada sale directamente de la salida de un modelo. La versión en español es una traducción del mismo material verificado, no un artículo generado aparte.",
       editorialBody3:
@@ -869,6 +869,10 @@ export const common = {
         "El hardware, software y servicios que José Manuel Requena Plens tiene en rotación — escritorio, herramientas de desarrollo y homelab.",
     },
     feeds: {
+      blueskyTitle: "Feeds curados en Bluesky",
+      blueskyIntro:
+        "Además de los artículos de este sitio, mantengo ocho feeds curados en Bluesky — uno por idioma — sobre open source, programación y homelab. Curación automática con revisión humana; puedes seguirlos desde cualquier cuenta de Bluesky.",
+      blueskyOpen: "Abrir en Bluesky",
       title: "Feeds",
       description:
         "Suscríbete a este sitio con RSS: URLs de los feeds del blog en español e inglés, qué es RSS en dos frases y los últimos artículos.",
@@ -1007,6 +1011,16 @@ export const common = {
         "Herramientas embebidas gratuitas — constructor de tramas Modbus RTU/TCP con CRC y empaquetador de string pool para traducciones de firmware.",
       mikrotikDesc:
         "Herramientas gratuitas para MikroTik RouterOS — generador de configuración WireGuard VPN para configuraciones dual-stack. Procesamiento local.",
+      securityContext:
+        "Úsalas cuando estés endureciendo un sitio o revisando el trabajo de otro: construye una Content-Security-Policy y calcula los hashes de sus scripts inline, inspecciona un certificado TLS antes de confiar en él, audita cabeceras de respuesta, o razona sobre la fortaleza de contraseñas y PIN con números reales. Todo corre en tu navegador — nada de lo que pegues sale de la página.",
+      developerContext:
+        "Las pequeñas conversiones que interrumpen el trabajo de verdad: decodificar un blob Base64, probar una regex contra texto de ejemplo, escribir una expresión cron fiable, convertir un timestamp Unix en fecha o comprobar un par de colores contra WCAG. Cada una hace su trabajo sin cuenta, sin subir nada y sin peticiones de red.",
+      networkContext:
+        "Para planificar antes de tocar producción: genera un bloque de servidor Nginx con TLS moderno y rate limiting para compararlo con el tuyo, o divide un rango IPv4/IPv6 en subredes con VLSM antes de llevarlo a la configuración del router. Ambas corren en local, en tu navegador.",
+      embeddedContext:
+        "Compañeras del trabajo en firmware: construye o decodifica una trama Modbus RTU/TCP byte a byte — CRC incluido — cuando un dispositivo no responde, y mide cuánto ahorraría un pool de cadenas empaquetado en tus tablas de traducción antes de escribir el código. Ambas corren en tu navegador.",
+      mikrotikContext:
+        "RouterOS tiene su propia sintaxis y sus propias trampas. Este generador produce una configuración WireGuard dual-stack completa — interfaz, peers, firewall y NAT — como comandos RouterOS listos para pegar, de modo que la estructura sea correcta antes de adaptarla a tu red. Corre en tu navegador.",
       fallbackDesc: "Herramientas en la categoría {category}.",
     },
     notFound: {

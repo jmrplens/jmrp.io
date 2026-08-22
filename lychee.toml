@@ -57,6 +57,9 @@ exclude = [
     'scholar\.google\.es',
     'youtube\.com/embed/',
     'mathworks\.com',                  # AUTOSAR rule pages — 403 to bots
+    'https://report-uri\.com/.*',      # Scott Helme's Report URI — 403 to every
+                                       # checker UA (old and new paths alike);
+                                       # serves fine to real readers
     'gnu\.org/software/gettext',       # gettext .mo manual — 429 rate-limit
     'gnu\.org/licenses/',              # GPL/AGPL texts — 429 rate-limit (linked
                                        # as SoftwareApplication `license` from

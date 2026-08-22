@@ -3,7 +3,11 @@ title: "Implementar un Tarpit en Nginx: Atrapa a los Escáneres Maliciosos"
 slug: "005-implementing-tarpit-nginx"
 lang: "es"
 publishedDate: 2026-01-16
-updatedDate: 2026-08-02
+updatedDate: 2026-08-22
+lastVerified:
+  date: 2026-08-22
+  versions:
+    - nginx 1.31.3 (--with-http_perl_module)
 description: "Implementa un tarpit en Nginx para ralentizar bots maliciosos, escáneres de vulnerabilidades y ataques de fuerza bruta. Integración con CrowdSec incluida."
 lead: "Un tarpit responde a los escáneres a unos 10 bytes por segundo, así que se quedan esperando en vez de reintentar al instante como hacen tras un 403 — y una sola opción de Brotli desactivó el mío en silencio durante meses."
 author: "José Manuel Requena Plens"
@@ -46,16 +50,22 @@ howto:
   steps:
     - name: "Preparar el bloque http"
       text: "En nginx.conf, define los maps para las IPs de confianza, el tarpit rate dinámico y el flag de logging, además de un log_format dedicado que fuerza el status 418 y un perl_set que genera una carga útil aleatoria grande."
+      anchor: "paso-1-preparar-nginx-bloque-http"
     - name: "Crear el snippet del tarpit"
       text: "Escribe un snippet reutilizable que registre solo las request tarpiteadas, devuelva 403 para las IPs de confianza, aplique limit_rate para limitar la entrega a unos 10 bytes/segundo y devuelva 200 con el contenido lento aleatorio."
+      anchor: "paso-2-crear-el-snippet-del-tarpit"
     - name: "Definir las rutas sensibles"
       text: "En un snippet dedicado, devuelve 418 para las locations sensibles como /.env, /.git, extensiones de backup, rutas de exploit de CMS y dotfiles, marcándolas como trampas."
+      anchor: "paso-3-definir-las-rutas-sensibles-las-trampas"
     - name: "Configurar el server block"
       text: "En la configuración del sitio, asocia error_page 418 a una location nombrada @tarpit que incluye el snippet del tarpit, e incluye el snippet de rutas sensibles para que las trampas se redirijan a la respuesta lenta."
+      anchor: "paso-4-configurar-el-server-block"
     - name: "Probar la configuración"
       text: "Ejecuta nginx -t y recarga Nginx, luego sondea una trampa con una request curl usando un timeout corto para confirmar que la conexión permanece abierta mientras los datos gotean lentamente."
+      anchor: "paso-5-probar-la-configuración"
     - name: "Integrar CrowdSec para banear automáticamente"
       text: "Añade un parser de CrowdSec y un escenario de tipo leaky que lean el log del tarpit para banear automáticamente las IPs que activan el tarpit de forma repetida."
+      anchor: "integración-con-crowdsec"
 ---
 
 import Callout from "@components/ui/Callout.astro";
@@ -175,7 +185,7 @@ A diferencia del bloqueo tradicional (que rechaza las request inmediatamente), u
 
 ## Historia y orígenes
 
-El concepto de tarpit en ciberseguridad surgió a finales de los años 90 y principios de los 2000, durante un período en el que los gusanos de red y las herramientas de escaneo automatizado comenzaron a proliferar. El tarpit más famoso fue **[LaBrea](https://labrea.sourceforge.net/)**, creado por [Tom Liston](https://www.giac.org/paper/gsec/1895/labrea-approach-securing-networks/103112) alrededor de 2001.
+El concepto de tarpit en ciberseguridad surgió a finales de los años 90 y principios de los 2000, durante un período en el que los gusanos de red y las herramientas de escaneo automatizado comenzaron a proliferar. El tarpit más famoso fue **[LaBrea](https://labrea.sourceforge.io/)**, creado por [Tom Liston](https://www.giac.org/paper/gsec/1895/labrea-approach-securing-networks/103112) alrededor de 2001.
 
 LaBrea funcionaba a nivel de red, respondiendo a paquetes TCP SYN dirigidos a direcciones IP sin usar y creando "máquinas virtuales pegajosas" que atrapaban a los escáneres de gusanos. Cuando los gusanos [Code Red](https://en.wikipedia.org/wiki/Code_Red_%28computer_worm%29) y [Nimda](https://en.wikipedia.org/wiki/Nimda) se estaban propagando rápidamente, LaBrea demostró ser notablemente eficaz para frenar su expansión.
 
@@ -522,7 +532,7 @@ labels:
 </FileContent>
 
 <Callout type="tip" title="Alternativa más Sencilla">
-Si no quieres crear parsers personalizados, puedes usar [Fail2Ban](https://www.fail2ban.org/) en su lugar. Crea un filtro que coincida con las líneas de `/var/log/nginx/access.tarpit` y configura un jail para banear tras N coincidencias.
+Si no quieres crear parsers personalizados, puedes usar [Fail2Ban](https://github.com/fail2ban/fail2ban) en su lugar. Crea un filtro que coincida con las líneas de `/var/log/nginx/access.tarpit` y configura un jail para banear tras N coincidencias.
 </Callout>
 
 ---
@@ -677,7 +687,7 @@ location @tarpit {
 
 ### Tarpit para User-Agents específicos
 
-Apunta a escáneres maliciosos conocidos por User-Agent. Los escáneres más comunes incluyen [sqlmap](https://sqlmap.org/) (inyección SQL), [Nikto](https://cirt.net/Nikto2) (escáner de vulnerabilidades web), [Nmap](https://nmap.org/) (escáner de red), [masscan](https://github.com/robertdavidgraham/masscan) (escáner de puertos) y [ZGrab](https://github.com/zmap/zgrab2) (banner grabber):
+Apunta a escáneres maliciosos conocidos por User-Agent. Los escáneres más comunes incluyen [sqlmap](https://sqlmap.org/) (inyección SQL), [Nikto](https://github.com/sullo/nikto) (escáner de vulnerabilidades web), [Nmap](https://nmap.org/) (escáner de red), [masscan](https://github.com/robertdavidgraham/masscan) (escáner de puertos) y [ZGrab](https://github.com/zmap/zgrab2) (banner grabber):
 
 <Code lang="nginx" aria-label="Tarpit para bots de escaneo basado en User-Agent">
 ```
@@ -758,6 +768,16 @@ Implementar la **arquitectura lista para producción** con logging forzado a 418
 - **Cero falsos positivos:** Gracias al map de IPs de confianza, el tráfico de administración nunca se atrapa accidentalmente en el tarpit.
 - **Protección de recursos:** El bypass de rate limit garantiza que el tráfico válido fluya sin problemas mientras los atacantes se quedan atascados en el carril lento.
 - **Integración con CrowdSec:** La lógica del parser se volvió trivial — simplemente hacer coincidir `status == 418` es suficiente para banear una IP, independientemente de la ruta solicitada.
+
+<Callout type="keypoint" title="Lo que este tarpit ha atrapado de verdad">
+Los cuatro puntos de arriba son cualitativos, así que aquí va la cifra. Este
+sitio ejecuta el tarpit que describe esta guía, y el contador está en la
+[página del homelab](/es/homelab/) — lo inyecta el servidor de borde al
+responder, no JavaScript, así que lo que lees es lo que el servidor tenía en ese
+instante. Marcaba **1.318 hits de tarpit y 90 baneos de Nginx** cuando se
+escribió esta nota (22-08-2026); cuando la leas, la cifra en vivo será otra. Esa
+es justo la idea: la medición es la página, no esta frase.
+</Callout>
 
 <Callout type="success" title="El Factor Satisfacción">
 Hay cierta satisfacción en saber que mientras duermes, los atacantes están descargando caracteres aleatorios a 10 bytes por segundo. ¡Dulces sueños!

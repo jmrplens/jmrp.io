@@ -1,7 +1,7 @@
 ---
 title: "Encrypt-then-MAC Envelope Visualizer"
 slug: "etm-envelope-visualizer"
-description: "Seal a secret into an encrypt-then-MAC envelope, flip a byte, and watch the read verify the tag before decrypting — and fail closed on tampering."
+description: "Seal a secret into an encrypt-then-MAC envelope, flip a byte, and watch the read verify the tag before decrypting. Runs client-side."
 subtitle: "An interactive [ver][iv][hmacTag][cipher] demo with real AES-256-CBC + HMAC-SHA256 in your browser: tamper a byte and see verify-before-decrypt reject it."
 icon: "i-mdi:lock-check-outline"
 category: "security"
@@ -159,18 +159,18 @@ P    = unpad(AES-256-CBC-Decrypt(encKey, IV, C))`}</code></pre>
     </a>
   </li>
   <li>
-    <a href="https://www.rfc-editor.org/rfc/rfc2104">RFC 2104 — HMAC</a> ·{" "}
-    <a href="https://www.rfc-editor.org/rfc/rfc5652#section-6.3">
-      RFC 5652 §6.3 — PKCS#7 padding
+    <a href="https://datatracker.ietf.org/doc/html/rfc2104">[RFC 2104](https://datatracker.ietf.org/doc/html/rfc2104) — HMAC</a> ·{" "}
+    <a href="https://datatracker.ietf.org/doc/html/rfc5652#section-6.3">
+      [RFC 5652](https://datatracker.ietf.org/doc/html/rfc5652) §6.3 — PKCS#7 padding
     </a>
   </li>
   <li>
     <a href="https://nvlpubs.nist.gov/nistpubs/SpecialPublications/NIST.SP.800-57pt1r5.pdf">
-      NIST SP 800-57 Part 1
+      [NIST SP 800-57](https://csrc.nist.gov/pubs/sp/800/57/pt1/r5/final) Part 1
     </a>{" "}
     (one key, one purpose) ·{" "}
     <a href="https://csrc.nist.gov/pubs/fips/180-4/upd1/final">
-      FIPS 180-4 — SHA-256
+      [FIPS 180-4](https://csrc.nist.gov/pubs/fips/180-4/upd1/final) — SHA-256
     </a>
   </li>
 </ul>

@@ -217,9 +217,23 @@ set-cookie: __Secure-Pref=1; path=/; Secure; HttpOnly; SameSite=Strict
 server: jmrp.io`;
 ---
 
+{
+  /*
+  `data-hdr-token` carries a time-based HMAC, substituted per request by nginx
+  (`sub_filter NGINX_HOMELAB_TOKEN`) and validated by /api/headers-proxy. Same
+  mechanism the homelab API endpoints use. It is what stops that proxy from
+  being an open header-fetching service for arbitrary URLs: unlike Origin or
+  Referer, it cannot be forged without the server-side key.
+
+  This page is therefore excluded from the edge-nonce Worker's routes — a
+  5-minute token inside a copy cached for 24 h would go stale and lock the tool
+  out of its own backend. Same exclusion /homelab/ already has, same reason.
+*/
+}
 <div
   class="hdr-analyzer"
   data-hdr-id={uniqueId}
+  data-hdr-token="NGINX_HOMELAB_TOKEN"
 >
   {title && <div class="hdr-title">{title}</div>}
 
@@ -404,8 +418,10 @@ server: jmrp.io`;
         }
 
         try {
+          var token = container.getAttribute("data-hdr-token");
           var res = await fetch(
             "/api/headers-proxy?url=" + encodeURIComponent(url),
+            token ? { headers: { "X-Headers-Token": token } } : undefined,
           );
           var data = await res.json();
           if (!res.ok || data.error) {

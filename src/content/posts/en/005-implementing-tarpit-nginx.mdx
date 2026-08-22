@@ -2,7 +2,11 @@
 title: "Implementing a Tarpit in Nginx: Trap Malicious Scanners"
 slug: "005-implementing-tarpit-nginx"
 publishedDate: 2026-01-16
-updatedDate: 2026-08-02
+updatedDate: 2026-08-22
+lastVerified:
+  date: 2026-08-22
+  versions:
+    - nginx 1.31.3 (--with-http_perl_module)
 description: "Implement an Nginx tarpit to slow down and trap malicious bots, vulnerability scanners, and brute-force attackers. Includes CrowdSec integration."
 lead: "A tarpit answers scanners at about 10 bytes per second so they sit there waiting instead of retrying instantly the way they do after a 403 — and a single Brotli setting silently disabled mine for months."
 author: "José Manuel Requena Plens"
@@ -45,16 +49,22 @@ howto:
   steps:
     - name: "Prepare the http block"
       text: "In nginx.conf, define maps for trusted IPs, the dynamic tarpit rate, and the loggable flag, plus a dedicated log_format that forces status 418 and a perl_set that generates a large random payload."
+      anchor: "step-1-prepare-nginx-http-block"
     - name: "Create the tarpit snippet"
       text: "Write a reusable snippet that logs only tarpitted requests, returns 403 for trusted IPs, applies limit_rate to throttle delivery to about 10 bytes/second, and returns 200 with the slow random content."
+      anchor: "step-2-create-the-tarpit-snippet"
     - name: "Define the sensitive paths"
       text: "In a dedicated snippet, return 418 for sensitive locations such as /.env, /.git, backup extensions, CMS exploit paths, and dotfiles, marking them as traps."
+      anchor: "step-3-define-sensitive-paths-the-traps"
     - name: "Configure the server block"
       text: "In the site config, map error_page 418 to a named @tarpit location that includes the tarpit snippet, and include the sensitive-paths snippet so traps route into the slow response."
+      anchor: "step-4-configure-the-server-block"
     - name: "Test the configuration"
       text: "Run nginx -t and reload Nginx, then probe a trap with a curl request using a short timeout to confirm the connection stays open while data drips in slowly."
+      anchor: "step-5-test-the-configuration"
     - name: "Integrate CrowdSec to auto-ban"
       text: "Add a CrowdSec parser and a leaky-bucket scenario that read the tarpit log to automatically ban IPs that trigger the tarpit repeatedly."
+      anchor: "integration-with-crowdsec"
 ---
 
 import Callout from "@components/ui/Callout.astro";
@@ -173,7 +183,7 @@ Unlike traditional blocking (which immediately rejects requests), a tarpit *pret
 
 ## History and origins
 
-The concept of tarpits in cybersecurity emerged in the late 1990s and early 2000s during a period when network worms and automated scanning tools began proliferating. The most famous early tarpit was **[LaBrea](https://labrea.sourceforge.net/)**, created by [Tom Liston](https://www.giac.org/paper/gsec/1895/labrea-approach-securing-networks/103112) around 2001.
+The concept of tarpits in cybersecurity emerged in the late 1990s and early 2000s during a period when network worms and automated scanning tools began proliferating. The most famous early tarpit was **[LaBrea](https://labrea.sourceforge.io/)**, created by [Tom Liston](https://www.giac.org/paper/gsec/1895/labrea-approach-securing-networks/103112) around 2001.
 
 LaBrea worked at the network layer, responding to TCP SYN packets for unused IP addresses and creating "virtual sticky machines" that would trap worm scanners. When the [Code Red](https://en.wikipedia.org/wiki/Code_Red_%28computer_worm%29) and [Nimda](https://en.wikipedia.org/wiki/Nimda) worms were spreading rapidly, LaBrea proved remarkably effective at slowing their propagation.
 
@@ -520,7 +530,7 @@ labels:
 </FileContent>
 
 <Callout type="tip" title="Simpler Alternative">
-If you don't want to create custom parsers, you can use [Fail2Ban](https://www.fail2ban.org/) instead. Create a filter that matches lines in `/var/log/nginx/access.tarpit` and configure a jail to ban after N matches.
+If you don't want to create custom parsers, you can use [Fail2Ban](https://github.com/fail2ban/fail2ban) instead. Create a filter that matches lines in `/var/log/nginx/access.tarpit` and configure a jail to ban after N matches.
 </Callout>
 
 ---
@@ -675,7 +685,7 @@ location @tarpit {
 
 ### Tarpit for specific user-agents
 
-Target known malicious scanners by user-agent. Common scanners include [sqlmap](https://sqlmap.org/) (SQL injection), [Nikto](https://cirt.net/Nikto2) (web vulnerability scanner), [Nmap](https://nmap.org/) (network scanner), [masscan](https://github.com/robertdavidgraham/masscan) (port scanner), and [ZGrab](https://github.com/zmap/zgrab2) (banner grabber):
+Target known malicious scanners by user-agent. Common scanners include [sqlmap](https://sqlmap.org/) (SQL injection), [Nikto](https://github.com/sullo/nikto) (web vulnerability scanner), [Nmap](https://nmap.org/) (network scanner), [masscan](https://github.com/robertdavidgraham/masscan) (port scanner), and [ZGrab](https://github.com/zmap/zgrab2) (banner grabber):
 
 <Code lang="nginx" aria-label="Tarpit scanning bots based on User-Agent">
 ```
@@ -756,6 +766,16 @@ Implementing the **production-grade architecture** with forced 418 logging has s
 - **Zero False Positives:** By using the trusted IP map, admin traffic is never accidentally tarpitted.
 - **Resource Protection:** The rate limit bypass ensures valid traffic flows smoothly while attackers are stuck in the slow lane.
 - **CrowdSec Integration:** The parser logic became trivial—simply matching `status == 418` is enough to ban an IP, regardless of the requested path.
+
+<Callout type="keypoint" title="What this tarpit has actually caught">
+The four points above are qualitative, so here is the number. This site runs the
+tarpit described here, and the counter is on the [homelab page](/homelab/) —
+injected by the edge server as it responds, not by JavaScript, so what you read
+is what the server had at that moment. It stood at **1,318 tarpit hits and 90
+Nginx bans** when this note was written (2026-08-22); by the time you read it,
+the live figure will differ. That is the point: the page is the measurement, not
+this sentence.
+</Callout>
 
 <Callout type="success" title="The Satisfaction Factor">
 There's a certain satisfaction in knowing that while you're sleeping, attackers are stuck downloading random characters at 10 bytes per second. Sweet dreams!

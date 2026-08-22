@@ -57,7 +57,13 @@ export async function finalizeCspConfig(
     "form-action 'self'",
     "frame-ancestors 'none'",
     "upgrade-insecure-requests",
+    // Both reporting directives on purpose. `report-uri` is deprecated but is
+    // the only one Firefox and Safari act on today; `report-to` is the modern
+    // path Chrome prefers, resolved against the Reporting-Endpoints header
+    // emitted alongside the CSP (GEO audit 2026-08-22, B24). Browsers that
+    // understand report-to ignore report-uri, so there is no double-reporting.
     "report-uri /csp-report",
+    "report-to csp-endpoint",
   ];
 
   // Nonce-only CSP: all scripts/styles use nonces, external same-origin covered by 'self'
@@ -130,6 +136,10 @@ add_header Cross-Origin-Resource-Policy "same-origin" always;
 
 # Security Cookie (Optional demo cookie)
 ${demoSecurityCookieHeader}
+
+# Named endpoint for the CSP report-to directive (Reporting API v1). The
+# legacy report-uri stays in the policy for Firefox/Safari; Chrome uses this.
+add_header Reporting-Endpoints 'csp-endpoint="/csp-report"' always;
 
 # Content Security Policy (Nonce-only: all scripts/styles use nonces)
 add_header Content-Security-Policy "${cspHeader}" always;

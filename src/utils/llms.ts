@@ -232,6 +232,19 @@ function buildProfileSections(
 }
 
 /**
+ * Flattens a BibTeX abstract onto a single line.
+ *
+ * Abstracts in `papers.bib` are hard-wrapped across many lines; left as-is they
+ * would break the one-item-per-line shape the rest of this document uses.
+ *
+ * @param value - Raw abstract text.
+ * @returns The same text with runs of whitespace collapsed to single spaces.
+ */
+function collapseWhitespace(value: string): string {
+  return value.replaceAll(/\s+/gu, " ").trim();
+}
+
+/**
  * Best-effort conversion of a post's MDX body to plain-ish markdown for AI
  * ingestion: strips `import` statements, collapses excess blank lines, and
  * demotes the post's own headings by two levels.
@@ -509,13 +522,30 @@ export async function generateLlmsTxt(siteUrl: string): Promise<string> {
   return lines.join("\n");
 }
 
-/** Renders one locale's posts as `### title` blocks with body, for llms-full. */
-function buildPostSection(
-  posts: CollectionEntry<"posts">[],
+/**
+ * Path of the per-post shard for a locale, relative to the site root.
+ *
+ * Post bodies live in their own file rather than inlined in `llms-full*.txt`:
+ * the twelve English posts alone were 557 KB of a 587 KB document (94.8%), so
+ * any cap an ingestion pipeline applies lands in the middle of a post. One file
+ * per post is naturally bounded — the largest is 62 KB — and lets an agent
+ * fetch exactly the guide it needs instead of the whole corpus.
+ *
+ * @param locale - Post locale.
+ * @param slug - Post slug, already carrying its `NNN-` prefix.
+ * @returns Root-relative path, e.g. `/llms-blog-en-003-….txt`.
+ */
+export function llmsPostShardPath(locale: "en" | "es", slug: string): string {
+  return `/llms-blog-${locale}-${slug}.txt`;
+}
+
+/** Renders a single post as the `### title` block used by llms-full and shards. */
+function buildPostEntry(
+  p: CollectionEntry<"posts">,
   siteUrl: string,
   localePrefix: "" | "/es",
 ): string[] {
-  return posts.flatMap((p) => {
+  {
     const d = p.data;
     return [
       `### ${d.title}`,
@@ -537,7 +567,68 @@ function buildPostSection(
       ...(p.body ? ["", "---", "", mdxToText(p.body)] : []),
       "",
     ];
-  });
+  }
+}
+
+/**
+ * Renders the index that replaces the inlined post bodies in `llms-full*.txt`.
+ *
+ * Each line is a real markdown link so a parser that treats `##` sections as
+ * link lists (per llmstxt.org) can follow them, plus the one-line description
+ * so an agent can pick the right shard without fetching any of them.
+ *
+ * @param posts - The locale's posts, newest first.
+ * @param siteUrl - Absolute site origin.
+ * @param locale - Post locale.
+ * @returns Lines for the section body.
+ */
+function buildPostIndex(
+  posts: CollectionEntry<"posts">[],
+  siteUrl: string,
+  locale: "en" | "es",
+): string[] {
+  const note =
+    locale === "es"
+      ? "El cuerpo completo de cada artículo vive en su propio fichero, para que ningún límite de ingesta corte a mitad de una guía:"
+      : "Each post's full body lives in its own file, so no ingestion cap ever truncates mid-guide:";
+  return [
+    note,
+    "",
+    ...posts.map((p) => {
+      const d = p.data;
+      const url = `${siteUrl}${llmsPostShardPath(locale, d.slug)}`;
+      const summary = d.description ? `: ${d.description}` : "";
+      return `- [${d.title}](${url})${summary}`;
+    }),
+    "",
+  ];
+}
+
+/**
+ * Builds a standalone per-post document: the same block `llms-full` used to
+ * inline, wrapped in enough header for the file to stand on its own.
+ *
+ * @param siteUrl - Absolute site origin.
+ * @param locale - Post locale.
+ * @param post - The post to render.
+ * @returns The complete file body.
+ */
+export function generateLlmsPostTxt(
+  siteUrl: string,
+  locale: "en" | "es",
+  post: CollectionEntry<"posts">,
+): string {
+  const localePrefix = locale === "es" ? "/es" : "";
+  const parent = `${siteUrl}/llms-full-${locale}.txt`;
+  return [
+    `# ${post.data.title}`,
+    "",
+    `> One post from jmrp.io, published as its own document. Index: ${parent}`,
+    "",
+    `> Last updated: ${today()}`,
+    "",
+    ...buildPostEntry(post, siteUrl, localePrefix),
+  ].join("\n");
 }
 
 /** Renders one locale's tools as `### title` blocks with metadata, for llms-full. */
@@ -561,12 +652,12 @@ export async function generateLlmsFullTxt(
   /**
    * Restrict the document to one locale's posts and tools.
    *
-   * The combined file is ~1.2 MB. Several AI ingestion pipelines cap a single
-   * document below that and truncate silently, and because the Spanish corpus
-   * is emitted after the English one, the half that gets dropped is always the
-   * same half. The per-locale variants exist so each corpus fits comfortably;
-   * the combined document stays published unchanged for consumers already
-   * fetching it.
+   * Several AI ingestion pipelines cap a single document and truncate silently,
+   * and because the Spanish corpus is emitted after the English one, the half
+   * that gets dropped was always the same half. Two things address that: the
+   * per-locale variants, and — since post bodies moved to one file per post —
+   * this document being an index rather than the corpus itself. It went from
+   * ~1.2 MB combined to a few tens of KB.
    */
   onlyLocale?: "en" | "es",
 ): Promise<string> {
@@ -596,13 +687,28 @@ export async function generateLlmsFullTxt(
       const yearPart = year ? ` (${year})` : "";
       const authorPart = authors ? ` — ${authors}` : "";
       const venuePart = venue ? `. ${venue}` : "";
-      return `- ${pub.title}${yearPart}${authorPart}${venuePart}.`;
+      // The abstract is the only part of a paper that lets a model answer a
+      // question ABOUT the research rather than merely cite its title. This
+      // section emitted the bibliographic line alone, so the 2,233 words of
+      // abstracts rendered on /publications/ never reached the corpus written
+      // for models (GEO audit 2026-08-22, M11). 14 of the 16 entries have one.
+      // `PublicationItem` carries an index signature, hence the narrowing.
+      const abstract =
+        typeof pub.abstract === "string" ? pub.abstract.trim() : "";
+      const doi = typeof pub.DOI === "string" ? pub.DOI.trim() : "";
+      return [
+        `- ${pub.title}${yearPart}${authorPart}${venuePart}.`,
+        ...(doi ? [`  DOI: https://doi.org/${doi}`] : []),
+        ...(abstract ? [`  Abstract: ${collapseWhitespace(abstract)}`] : []),
+      ].join("\n");
     }),
     "",
   ]);
 
-  const postSectionEn = buildPostSection(postsEn, siteUrl, "");
-  const postSectionEs = buildPostSection(postsEs, siteUrl, "/es");
+  // Post bodies are NOT inlined any more — see llmsPostShardPath(). What goes
+  // in here is a link index; the bodies are one file per post.
+  const postSectionEn = buildPostIndex(postsEn, siteUrl, "en");
+  const postSectionEs = buildPostIndex(postsEs, siteUrl, "es");
   const toolSectionEn = buildToolSection(toolsEn, siteUrl);
   const toolSectionEs = buildToolSection(toolsEs, siteUrl);
 
@@ -610,6 +716,8 @@ export async function generateLlmsFullTxt(
     "# jmrp.io — Full Context",
     "",
     `> ${DESCRIPTION}`,
+    "",
+    '> Every section below is inlined in full except the blog posts, which are\n> one file per post so that no ingestion cap truncates mid-guide. The\n> "Blog Posts" section links to each of them.',
     "",
     `> Last updated: ${today()}`,
     "",
