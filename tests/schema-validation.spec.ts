@@ -63,6 +63,20 @@ function findInGraph(
   return matchesType(jsonLd["@type"], type) ? (jsonLd as JsonLdSchema) : null;
 }
 
+/**
+ * Find the page's own SoftwareApplication node (the tool). The graph also
+ * carries MCP endpoint stubs dual-typed ["WebAPI","SoftwareApplication"] —
+ * bare references to mcp.jmrp.io's canonical entities, with no name by
+ * design — which a plain type lookup would match first.
+ */
+function findToolApp(jsonLd: JsonLdDocument): JsonLdSchema | null {
+  return (
+    findAllInGraph(jsonLd, "SoftwareApplication").find(
+      (node) => !matchesType(node["@type"], "WebAPI"),
+    ) ?? null
+  );
+}
+
 /** Find all schemas in @graph by @type */
 function findAllInGraph(jsonLd: JsonLdDocument, type: string): JsonLdSchema[] {
   if (jsonLd["@graph"]) {
@@ -606,7 +620,7 @@ test.describe("SoftwareApplication schema on tool pages", () => {
     await page.goto("/tools/password-generator/");
     const jsonLd = await getJsonLd(page);
 
-    const app = findInGraph(jsonLd, "SoftwareApplication");
+    const app = findToolApp(jsonLd);
     expect(app).not.toBeNull();
     if (!app) return;
 
@@ -630,7 +644,7 @@ test.describe("SoftwareApplication schema on tool pages", () => {
     await page.goto("/tools/csp-builder/");
     const jsonLd = await getJsonLd(page);
 
-    const app = findInGraph(jsonLd, "SoftwareApplication");
+    const app = findToolApp(jsonLd);
     expect(app).not.toBeNull();
     if (!app) return;
 
@@ -788,6 +802,10 @@ test.describe("URL correctness in schemas", () => {
     };
 
     for (const schema of graph) {
+      // MCP endpoint stubs are dual-typed ["WebAPI","SoftwareApplication"]
+      // references whose canonical @id/url live on mcp.jmrp.io by design —
+      // the subdomain hosts those entities' own fiches.
+      if (matchesType(schema["@type"], "WebAPI")) continue;
       collectSiteUrls(schema);
     }
 

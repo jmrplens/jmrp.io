@@ -32,6 +32,9 @@ interface JsonLdSchema {
 const VALID_SCHEMA_TYPES = [
   "Organization",
   "Person",
+  // MCP endpoint stubs in BaseHead: dual-typed ["WebAPI","SoftwareApplication"]
+  // references to the canonical entities on mcp.jmrp.io.
+  "WebAPI",
   "Article",
   "BlogPosting",
   "WebSite",

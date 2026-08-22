@@ -545,29 +545,27 @@ function buildPostEntry(
   siteUrl: string,
   localePrefix: "" | "/es",
 ): string[] {
-  {
-    const d = p.data;
-    return [
-      `### ${d.title}`,
-      "",
-      `URL: ${siteUrl}${localePrefix}/blog/${d.slug}/`,
-      `Type: ${d.articleType}`,
-      ...(d.description ? [`Summary: ${d.description}`] : []),
-      ...(d.tags.length > 0 ? [`Tags: ${d.tags.join(", ")}`] : []),
-      ...(d.faq && d.faq.length > 0
-        ? ["", "Questions answered:", ...d.faq.map((f) => `- ${f.question}`)]
-        : []),
-      ...((d.howto?.steps?.length ?? 0) > 0
-        ? [
-            "",
-            `Steps (${d.howto?.name}):`,
-            ...(d.howto?.steps ?? []).map((s, i) => `${i + 1}. ${s.name}`),
-          ]
-        : []),
-      ...(p.body ? ["", "---", "", mdxToText(p.body)] : []),
-      "",
-    ];
-  }
+  const d = p.data;
+  return [
+    `### ${d.title}`,
+    "",
+    `URL: ${siteUrl}${localePrefix}/blog/${d.slug}/`,
+    `Type: ${d.articleType}`,
+    ...(d.description ? [`Summary: ${d.description}`] : []),
+    ...(d.tags.length > 0 ? [`Tags: ${d.tags.join(", ")}`] : []),
+    ...(d.faq && d.faq.length > 0
+      ? ["", "Questions answered:", ...d.faq.map((f) => `- ${f.question}`)]
+      : []),
+    ...((d.howto?.steps?.length ?? 0) > 0
+      ? [
+          "",
+          `Steps (${d.howto?.name}):`,
+          ...(d.howto?.steps ?? []).map((s, i) => `${i + 1}. ${s.name}`),
+        ]
+      : []),
+    ...(p.body ? ["", "---", "", mdxToText(p.body)] : []),
+    "",
+  ];
 }
 
 /**
