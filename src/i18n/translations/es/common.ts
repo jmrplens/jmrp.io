@@ -1011,6 +1011,16 @@ export const common = {
         "Herramientas embebidas gratuitas — constructor de tramas Modbus RTU/TCP con CRC y empaquetador de string pool para traducciones de firmware.",
       mikrotikDesc:
         "Herramientas gratuitas para MikroTik RouterOS — generador de configuración WireGuard VPN para configuraciones dual-stack. Procesamiento local.",
+      securityContext:
+        "Úsalas cuando estés endureciendo un sitio o revisando el trabajo de otro: construye una Content-Security-Policy y calcula los hashes de sus scripts inline, inspecciona un certificado TLS antes de confiar en él, audita cabeceras de respuesta, o razona sobre la fortaleza de contraseñas y PIN con números reales. Todo corre en tu navegador — nada de lo que pegues sale de la página.",
+      developerContext:
+        "Las pequeñas conversiones que interrumpen el trabajo de verdad: decodificar un blob Base64, probar una regex contra texto de ejemplo, escribir una expresión cron fiable, convertir un timestamp Unix en fecha o comprobar un par de colores contra WCAG. Cada una hace su trabajo sin cuenta, sin subir nada y sin peticiones de red.",
+      networkContext:
+        "Para planificar antes de tocar producción: genera un bloque de servidor Nginx con TLS moderno y rate limiting para compararlo con el tuyo, o divide un rango IPv4/IPv6 en subredes con VLSM antes de llevarlo a la configuración del router. Ambas corren en local, en tu navegador.",
+      embeddedContext:
+        "Compañeras del trabajo en firmware: construye o decodifica una trama Modbus RTU/TCP byte a byte — CRC incluido — cuando un dispositivo no responde, y mide cuánto ahorraría un pool de cadenas empaquetado en tus tablas de traducción antes de escribir el código. Ambas corren en tu navegador.",
+      mikrotikContext:
+        "RouterOS tiene su propia sintaxis y sus propias trampas. Este generador produce una configuración WireGuard dual-stack completa — interfaz, peers, firewall y NAT — como comandos RouterOS listos para pegar, de modo que la estructura sea correcta antes de adaptarla a tu red. Corre en tu navegador.",
       fallbackDesc: "Herramientas en la categoría {category}.",
     },
     notFound: {

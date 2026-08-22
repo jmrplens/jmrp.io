@@ -1016,6 +1016,22 @@ export const common = {
         "Free embedded tools — a Modbus RTU/TCP frame builder with CRC, and a string-pool packer for firmware translation tables. Both run in your browser.",
       mikrotikDesc:
         "Free MikroTik RouterOS tools — WireGuard VPN config generator for dual-stack setups. All processing runs locally in your browser.",
+      // MAINTENANCE: each <cat>Context below narrates what the category's
+      // CURRENT tools do (approved copy, 2026-08-22). Adding, removing or
+      // renaming a tool in a category may require updating its context AND its
+      // <cat>Desc above, in BOTH locales — a context that names a tool the
+      // category no longer has is a checkable lie. See also
+      // docs/BLOG_POST_GUIDE.md's sibling note for tools.
+      securityContext:
+        "Use these when you're hardening a site or checking someone else's work: build a Content-Security-Policy and hash its inline scripts, inspect a TLS certificate before trusting it, audit response headers, or reason about password and PIN strength with real numbers. Everything runs in your browser — nothing you paste leaves the page.",
+      developerContext:
+        "The small conversions that interrupt real work: decoding a Base64 blob, testing a regex against sample text, writing a cron expression you can trust, turning a Unix timestamp into a date, or checking a color pair against WCAG. Each one does its job without an account, an upload, or a network request.",
+      networkContext:
+        "For planning before touching production: generate an Nginx server block with modern TLS and rate limiting to compare against your own, or slice an IPv4/IPv6 range into subnets with VLSM before committing it to router config. Both run locally in your browser.",
+      embeddedContext:
+        "Companions for firmware work: build or decode a Modbus RTU/TCP frame byte by byte — CRC included — when a device won't answer, and measure what a packed, tail-merged string pool would save in your translation tables before writing the code. Both run in your browser.",
+      mikrotikContext:
+        "RouterOS has its own syntax and its own pitfalls. This generator produces a complete dual-stack WireGuard setup — interface, peers, firewall and NAT — as paste-ready RouterOS commands, so the structure is right before you adapt it to your network. Runs in your browser.",
       fallbackDesc: "Tools in the {category} category.",
     },
     notFound: {

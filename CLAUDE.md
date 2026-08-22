@@ -139,7 +139,14 @@ publishedDate: Date # Optional
 updatedDate: Date # Optional
 ```
 
-14 tools: `base64-encoder`, `cert-inspector`, `color-contrast-checker`, `cron-builder`, `csp-builder`, `hash-calculator`, `http-headers-analyzer`, `modbus-frame-builder`, `nginx-config-generator`, `password-generator`, `regex-tester`, `subnet-calculator`, `timestamp-converter`, `wireguard-config-generator`.
+17 tools: `base64-encoder`, `cert-inspector`, `color-contrast-checker`, `cron-builder`, `csp-builder`, `etm-envelope-visualizer`, `hash-calculator`, `http-headers-analyzer`, `modbus-frame-builder`, `nginx-config-generator`, `password-generator`, `pin-brute-force-calculator`, `regex-tester`, `string-pool-packer`, `subnet-calculator`, `timestamp-converter`, `wireguard-config-generator`.
+
+> **When adding/removing/renaming a tool**: the category pages narrate what each
+> category's CURRENT tools do. Update `<cat>Desc` AND `<cat>Context` under
+> `pages.toolsCategory` in `src/i18n/translations/{en,es}/common.ts` (both
+> locales) — a context that names a tool the category no longer has is a
+> checkable lie. The tool's own `description` should state that it runs
+> client-side (all 17 do; it is the claim AI answer engines select on).
 
 ### `site_config` — Discriminated Union
 
