@@ -755,7 +755,7 @@ Write out database with 1 new entries
 Database updated
 </TerminalOutput>
 
-### PKCS12 vs PEM: export formats
+### PKCS12 or PEM: which export format do you need?
 
 <Table title="Certificate Format Comparison">
   <thead>
@@ -809,7 +809,7 @@ sudo openssl pkcs12 -export \
 
 Now configure Nginx to require and validate client certificates.
 
-### Understanding ssl_verify_client options
+### Which ssl_verify_client option should you use?
 
 The `ssl_verify_client` directive controls how Nginx handles client certificates:
 

@@ -92,7 +92,7 @@ Primero, la amenaza. Es un dispositivo que cabe en la mano, y las credenciales v
 
 Eso es lo que hace que descifrar primero sea peligroso. El diseño intuitivo es el equivocado: tienes texto cifrado, quieres texto plano, así que descifras — y solo entonces, quizá, compruebas si el resultado "tiene buena pinta". Para ver por qué ese orden es fatal, hay que asomarse a lo que ocurre por dentro.
 
-### Cómo el padding de CBC se convierte en un oráculo
+### ¿Cómo se convierte el padding de CBC en un oráculo?
 
 Empecemos por lo básico: AES es un _cifrador de bloque_, y eso significa que solo sabe trabajar con trozos de tamaño fijo —16 bytes cada uno—. Como tus datos casi nunca miden un múltiplo exacto de 16, el último trozo se completa con bytes de relleno —el _padding_— hasta cuadrar el bloque. El esquema [PKCS#7](https://www.rfc-editor.org/rfc/rfc5652#section-6.3) lo hace con una regla simple: si faltan 5 bytes, añade cinco bytes `0x05`; si faltan 11, once `0x0B`. Al descifrar, lo último que hace el algoritmo es mirar ese padding y comprobar que está bien formado.
 
@@ -485,7 +485,7 @@ Como los metadatos están autenticados, la secuencia de desbloqueo se convierte 
 
 Un `meta.bin` antiguo o con formato desajustado — pongamos un `formatVer 0x01` de una versión anterior — simplemente no se autentica, y la bóveda se re-aprovisiona. No hay migración ni doble lectura: un solo formato en flash, siempre. (El dispositivo no está en producción, así que no hay datos reales que migrar.)
 
-## Anti-rollback resistente a cortes de corriente
+## ¿Cómo se hace el anti-rollback resistente a cortes de corriente?
 
 El rollback selectivo es un [ataque de repetición](https://www.rfc-editor.org/rfc/rfc4949) — el atacante re-presenta un fichero auténtico-pero-obsoleto — y la defensa estándar es un _valor de frescura_: un contador monótono que el verificador espera que solo aumente, de modo que un registro antiguo repetido falle la comprobación. Pero un contador de frescura solo vale tanto como su historia de actualización. Cada mutación — añadir, editar **o borrar** — incrementa el `generation` del slot, y el registro se reescribe bajo el nuevo valor. Eso crea un riesgo de escritura partida (_torn write_): pierde corriente _entre_ escribir el registro (bajo generation N+1) y escribir `meta.bin` (que registra N+1), y los dos discrepan. Resuelve eso mal y o bien dejas inservible un slot válido o bien reabres en silencio el rollback que acabas de cerrar.
 
@@ -560,7 +560,7 @@ deriveMacKey(masterKey, hmacSalt, out.mac);  // label || per-vault hmacSalt
   ]}
 />
 
-### El verificador de PIN: comprobar el PIN sin almacenarlo
+### ¿Cómo se comprueba un PIN sin almacenarlo?
 
 La tercera sub-clave, el verificador de PIN, es cómo el dispositivo comprueba el PIN sin almacenarlo: el desbloqueo deriva la clave maestra del PIN introducido, calcula el verificador, y lo compara — de nuevo en tiempo constante — con el valor almacenado. Un PIN equivocado simplemente produce un verificador distinto, sin ninguna pista sobre _cuán_ equivocado estaba. (El verificador está en la cabecera de `meta.bin` junto a los salts; el PIN en sí nunca se escribe en ninguna parte.)
 

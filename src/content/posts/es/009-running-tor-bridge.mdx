@@ -150,7 +150,7 @@ Los [orígenes de Tor](https://www.onion-router.net/History.html) se remontan a 
   { date: "2026", title: "Hoy", description: "~8,000 relés, ~2,000 bridges, y 2.5+ millones de usuarios diarios en más de 200 países. La red es completamente operada por voluntarios.", type: "default" },
 ]} />
 
-### Cómo Funciona el Enrutamiento Onion
+### ¿Cómo funciona el enrutamiento onion?
 
 [El enrutamiento onion](https://en.wikipedia.org/wiki/Onion_routing) debe su nombre a las capas de una cebolla — tus datos se envuelven en **múltiples capas de cifrado**, y cada relé en el circuito "pela" una capa para revelar el siguiente destino. Ningún relé único conoce jamás tanto el origen como el destino del tráfico.
 
@@ -271,7 +271,7 @@ La red Tor está compuesta por diferentes tipos de nodos operados por voluntario
 A partir de 2026, la [red Tor tiene aproximadamente **8,000 relés** pero solo alrededor de **2,000 bridges**](https://metrics.torproject.org/). Los bridges son particularmente valiosos porque sirven a usuarios que están **activamente bloqueados** de acceder a Tor — personas en países como China, Irán y Rusia donde el gobierno bloquea conexiones a relés Tor conocidos. Cada nuevo bridge es una **línea de vida** para alguien bajo censura.
 </Callout>
 
-### Entender los Pluggable Transports
+### ¿Qué son los pluggable transports?
 
 Los censores no solo bloquean Tor por IP — usan **Inspección Profunda de Paquetes (DPI)** para identificar y bloquear el protocolo Tor en sí. Los [pluggable transports](https://arxiv.org/pdf/2309.14856) resuelven esto disfrazando el tráfico de Tor como algo completamente diferente.
 
@@ -1409,7 +1409,7 @@ Después de que todo esté configurado, repasa esta lista de verificación para 
 
 ## Notas operativas
 
-### Qué Sucede Después de Que Comiences
+### ¿Qué sucede después de arrancar el bridge?
 
 <Timeline events={[
   { date: "0–1 hora", title: "Bootstrap y Prueba Automática", description: "Tor se conecta a la red, descarga el consenso y prueba si tu ORPort es accesible. Si la prueba automática es exitosa, tu puente está operacional.", type: "success" },

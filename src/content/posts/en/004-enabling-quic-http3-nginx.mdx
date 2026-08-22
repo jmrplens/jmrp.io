@@ -205,7 +205,7 @@ The complete QUIC specification spans multiple RFCs:
 
 To appreciate QUIC, we must understand why TCP—the backbone of the internet since 1974—struggles with modern web demands.
 
-### The head-of-line (HOL) blocking problem
+### What is head-of-line (HOL) blocking?
 
 This is the fundamental issue that QUIC solves. Imagine a highway with a single lane (TCP connection). If one car breaks down (packet loss), **everyone behind must stop and wait**, even if they're going to different destinations.
 
@@ -618,7 +618,7 @@ HTTP/3 is the mapping of HTTP semantics onto QUIC transport. It replaces HTTP/2'
   </tbody>
 </Table>
 
-### Current adoption
+### Who uses HTTP/3 today?
 
 As of 2026, HTTP/3 adoption is significant and growing:
 
@@ -1373,7 +1373,7 @@ Before deploying HTTP/3 to production, verify:
 
 ---
 
-## When not to use QUIC
+## When should you not use QUIC?
 
 While QUIC offers significant benefits, there are scenarios where TCP may be preferable:
 

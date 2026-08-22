@@ -106,7 +106,7 @@ That `11.16 MH/s` figure is not hypothetical. It comes straight from a published
 
 The difference between **online** and **offline** is everything here. _Online_ is the thief standing at your door trying keys: you can slam it shut after a few tries. _Offline_ is the thief who took a copy of the lock back to their workshop, where they file keys unwatched, with all the time in the world. So the only thing that makes a short PIN viable is making sure the attacker **can't get offline** — and bounding how fast they can guess **online**.
 
-### Online vs offline: two different attackers
+### Online or offline: which attacker are you defending against?
 
 <AttackSurfaceMatrix
   title="Online vs offline: two different attackers, two different controls"
@@ -181,7 +181,7 @@ The brute-force guard only bounds attempts **on the device**. The moment an atta
 
 ---
 
-## You can't out-iterate a GPU on an MCU
+## Why can't you out-iterate a GPU on an MCU?
 
 The textbook answer to "my secret has low entropy" is a [password-based KDF](https://www.rfc-editor.org/rfc/rfc8018#section-5.2) with a high work factor. PBKDF2 ([RFC 8018](https://www.rfc-editor.org/rfc/rfc8018#section-5.2), the current PKCS#5; [NIST SP 800-132](https://csrc.nist.gov/pubs/sp/800/132/final) for password-based key derivation) lets you pick an iteration count, and the [OWASP Password Storage Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html) recommends **600,000 iterations** of PBKDF2-HMAC-SHA256. Make each guess expensive enough and even a small keyspace becomes annoying to sweep. That's the theory.
 
@@ -253,7 +253,7 @@ Binding is a *hardened-production* feature, gated behind a build flag. Open deve
 
 ---
 
-## Where the device secret comes from
+## Where does the device secret come from?
 
 The "secret only this chip can produce" has two implementations, picked at compile time by what the chip can actually do. The deciding capability is whether the SoC has a hardware **HMAC peripheral**, which ESP-IDF exposes as `SOC_HMAC_SUPPORTED`. The ESP32-S3 has it; the classic ESP32 does not — and that single fact is why the code carries two backends instead of one.
 

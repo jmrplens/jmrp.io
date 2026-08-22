@@ -91,7 +91,7 @@ First, the threat. This is a device you can hold in your hand, and the credentia
 
 That's what makes decrypt-first dangerous. The intuitive design is the wrong one: you have ciphertext, you want plaintext, so you decrypt — and only then, maybe, you check whether the result "looks right." To see why that order is fatal, you have to look at what happens inside.
 
-### How CBC padding becomes an oracle
+### How does CBC padding become an oracle?
 
 Start with the basics: AES is a *block cipher* — it only knows how to work on fixed-size chunks, 16 bytes each. Since your data almost never lands on an exact multiple of 16, the last chunk is topped up with filler bytes — the *padding* — until it fills the block. [PKCS#7](https://www.rfc-editor.org/rfc/rfc5652#section-6.3) does this by a simple rule: if 5 bytes are missing, append five `0x05` bytes; if 11 are missing, eleven `0x0B`. When decrypting, the very last thing the algorithm does is look at that padding and check it's well-formed.
 
@@ -484,7 +484,7 @@ Because the metadata is authenticated, the unlock sequence becomes a careful lad
 
 An old or format-mismatched `meta.bin` — say a `formatVer 0x01` from an earlier version — simply fails to authenticate, and the vault is re-provisioned. There is no migration and no dual-read: one on-flash format, ever. (The device isn't in production, so there's no real data to migrate.)
 
-## Crash-safe anti-rollback
+## How do you make anti-rollback crash-safe?
 
 Selective rollback is a [replay attack](https://www.rfc-editor.org/rfc/rfc4949) — the attacker re-presents an authentic-but-stale file — and the standard defense is a *freshness value*: a monotonic counter the verifier expects to only ever increase, so a replayed older record fails the check. But a freshness counter is only as good as its update story. Every mutation — add, edit, **or delete** — bumps the slot's `generation`, and the record is rewritten under the new value. That creates a torn-write hazard: lose power *between* writing the record (under generation N+1) and writing `meta.bin` (which records N+1), and the two disagree. Resolve that wrong and you either brick a valid slot or quietly re-open the rollback you just closed.
 
@@ -559,7 +559,7 @@ deriveMacKey(masterKey, hmacSalt, out.mac);  // label || per-vault hmacSalt
   ]}
 />
 
-### The PIN verifier: checking a PIN without storing it
+### How do you check a PIN without storing it?
 
 The third sub-key, the PIN verifier, is how the device checks the PIN without storing it: unlock derives the master key from the entered PIN, computes the verifier, and compares it — again in constant time — against the stored value. A wrong PIN simply produces a different verifier, with no hint about *how* wrong it was. (The verifier sits in the `meta.bin` header alongside the salts; the PIN itself is never written anywhere.)
 
