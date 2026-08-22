@@ -21,11 +21,17 @@
  */
 import { execFileSync } from "node:child_process";
 import { readdirSync, readFileSync } from "node:fs";
-import { fileURLToPath } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 
 import { load as parseYaml } from "js-yaml";
 
-const POSTS_DIR = new URL("../content/posts/", import.meta.url);
+// Anchored to the process CWD rather than to `import.meta.url`, for the same
+// reason as REPO_ROOT below: Astro bundles this module into an SSR chunk whose
+// `import.meta.url` points at the build output, so the readdirSync fell into
+// its own catch and returned an empty list — silently, which is why /blog/ and
+// /tools/ came out with no `dateModified` while every other page worked.
+const SRC_DIR = pathToFileURL(`${process.cwd()}/src/`);
+const POSTS_DIR = new URL("content/posts/", SRC_DIR);
 const LOCALE_DIRS = ["en", "es"];
 
 interface PostFrontmatter {
@@ -98,7 +104,14 @@ export function getPostDateMap(): Map<string, string> {
   return map;
 }
 
-const REPO_ROOT = new URL("../../", import.meta.url);
+// Same CWD anchoring as SRC_DIR above. This module is
+// imported both by the sitemap integration (running from source) and, since
+// M8, by BaseHead — which Astro bundles into an SSR chunk whose `import.meta.url`
+// points at the build output, not at src/integrations/. `git log` then ran from
+// the wrong directory and returned nothing, silently, so every injected
+// `dateModified` came out undefined. `pnpm build` always runs from the project
+// root, which is also the repo root.
+const REPO_ROOT = pathToFileURL(`${process.cwd()}/`);
 
 /**
  * Last commit date for a repo-relative path, as a full ISO timestamp.
@@ -168,7 +181,7 @@ function frontmatterDate(value: string | Date | undefined): string | undefined {
  */
 function getToolDateMap(): Map<string, string> {
   const map = new Map<string, string>();
-  const toolsDir = new URL("../content/tools/", import.meta.url);
+  const toolsDir = new URL("content/tools/", SRC_DIR);
 
   for (const locale of LOCALE_DIRS) {
     const dir = new URL(`${locale}/`, toolsDir);

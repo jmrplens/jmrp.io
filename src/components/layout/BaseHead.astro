@@ -522,9 +522,18 @@ const resolvedModified =
   modifiedDate?.toISOString() ?? pageLastmod(pagePath) ?? undefined;
 
 if (resolvedModified) {
+  // Matched on `url` — every page-describing node carries the canonical — but
+  // skipping `#website`, which repeats the site URL and would swallow the date
+  // on the home page. Nodes that already declare `dateModified` (posts, tools,
+  // the ProfilePages) are left alone.
+  const websiteId = new URL("#website", getSiteUrl()).href;
   for (const node of schemaGraph) {
     const candidate = node as unknown as Record<string, unknown>;
-    if (candidate.url === canonicalURL.href && !candidate.dateModified) {
+    if (
+      candidate.url === canonicalURL.href &&
+      candidate["@id"] !== websiteId &&
+      !candidate.dateModified
+    ) {
       candidate.dateModified = resolvedModified;
     }
   }
