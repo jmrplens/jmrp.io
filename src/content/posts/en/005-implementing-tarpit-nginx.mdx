@@ -183,7 +183,7 @@ Unlike traditional blocking (which immediately rejects requests), a tarpit *pret
 
 ## History and origins
 
-The concept of tarpits in cybersecurity emerged in the late 1990s and early 2000s during a period when network worms and automated scanning tools began proliferating. The most famous early tarpit was **[LaBrea](https://labrea.sourceforge.net/)**, created by [Tom Liston](https://www.giac.org/paper/gsec/1895/labrea-approach-securing-networks/103112) around 2001.
+The concept of tarpits in cybersecurity emerged in the late 1990s and early 2000s during a period when network worms and automated scanning tools began proliferating. The most famous early tarpit was **[LaBrea](https://labrea.sourceforge.io/)**, created by [Tom Liston](https://www.giac.org/paper/gsec/1895/labrea-approach-securing-networks/103112) around 2001.
 
 LaBrea worked at the network layer, responding to TCP SYN packets for unused IP addresses and creating "virtual sticky machines" that would trap worm scanners. When the [Code Red](https://en.wikipedia.org/wiki/Code_Red_%28computer_worm%29) and [Nimda](https://en.wikipedia.org/wiki/Nimda) worms were spreading rapidly, LaBrea proved remarkably effective at slowing their propagation.
 
@@ -530,7 +530,7 @@ labels:
 </FileContent>
 
 <Callout type="tip" title="Simpler Alternative">
-If you don't want to create custom parsers, you can use [Fail2Ban](https://www.fail2ban.org/) instead. Create a filter that matches lines in `/var/log/nginx/access.tarpit` and configure a jail to ban after N matches.
+If you don't want to create custom parsers, you can use [Fail2Ban](https://github.com/fail2ban/fail2ban) instead. Create a filter that matches lines in `/var/log/nginx/access.tarpit` and configure a jail to ban after N matches.
 </Callout>
 
 ---
@@ -685,7 +685,7 @@ location @tarpit {
 
 ### Tarpit for specific user-agents
 
-Target known malicious scanners by user-agent. Common scanners include [sqlmap](https://sqlmap.org/) (SQL injection), [Nikto](https://cirt.net/Nikto2) (web vulnerability scanner), [Nmap](https://nmap.org/) (network scanner), [masscan](https://github.com/robertdavidgraham/masscan) (port scanner), and [ZGrab](https://github.com/zmap/zgrab2) (banner grabber):
+Target known malicious scanners by user-agent. Common scanners include [sqlmap](https://sqlmap.org/) (SQL injection), [Nikto](https://github.com/sullo/nikto) (web vulnerability scanner), [Nmap](https://nmap.org/) (network scanner), [masscan](https://github.com/robertdavidgraham/masscan) (port scanner), and [ZGrab](https://github.com/zmap/zgrab2) (banner grabber):
 
 <Code lang="nginx" aria-label="Tarpit scanning bots based on User-Agent">
 ```

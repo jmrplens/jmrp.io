@@ -185,7 +185,7 @@ A diferencia del bloqueo tradicional (que rechaza las request inmediatamente), u
 
 ## Historia y orígenes
 
-El concepto de tarpit en ciberseguridad surgió a finales de los años 90 y principios de los 2000, durante un período en el que los gusanos de red y las herramientas de escaneo automatizado comenzaron a proliferar. El tarpit más famoso fue **[LaBrea](https://labrea.sourceforge.net/)**, creado por [Tom Liston](https://www.giac.org/paper/gsec/1895/labrea-approach-securing-networks/103112) alrededor de 2001.
+El concepto de tarpit en ciberseguridad surgió a finales de los años 90 y principios de los 2000, durante un período en el que los gusanos de red y las herramientas de escaneo automatizado comenzaron a proliferar. El tarpit más famoso fue **[LaBrea](https://labrea.sourceforge.io/)**, creado por [Tom Liston](https://www.giac.org/paper/gsec/1895/labrea-approach-securing-networks/103112) alrededor de 2001.
 
 LaBrea funcionaba a nivel de red, respondiendo a paquetes TCP SYN dirigidos a direcciones IP sin usar y creando "máquinas virtuales pegajosas" que atrapaban a los escáneres de gusanos. Cuando los gusanos [Code Red](https://en.wikipedia.org/wiki/Code_Red_%28computer_worm%29) y [Nimda](https://en.wikipedia.org/wiki/Nimda) se estaban propagando rápidamente, LaBrea demostró ser notablemente eficaz para frenar su expansión.
 
@@ -532,7 +532,7 @@ labels:
 </FileContent>
 
 <Callout type="tip" title="Alternativa más Sencilla">
-Si no quieres crear parsers personalizados, puedes usar [Fail2Ban](https://www.fail2ban.org/) en su lugar. Crea un filtro que coincida con las líneas de `/var/log/nginx/access.tarpit` y configura un jail para banear tras N coincidencias.
+Si no quieres crear parsers personalizados, puedes usar [Fail2Ban](https://github.com/fail2ban/fail2ban) en su lugar. Crea un filtro que coincida con las líneas de `/var/log/nginx/access.tarpit` y configura un jail para banear tras N coincidencias.
 </Callout>
 
 ---
@@ -687,7 +687,7 @@ location @tarpit {
 
 ### Tarpit para User-Agents específicos
 
-Apunta a escáneres maliciosos conocidos por User-Agent. Los escáneres más comunes incluyen [sqlmap](https://sqlmap.org/) (inyección SQL), [Nikto](https://cirt.net/Nikto2) (escáner de vulnerabilidades web), [Nmap](https://nmap.org/) (escáner de red), [masscan](https://github.com/robertdavidgraham/masscan) (escáner de puertos) y [ZGrab](https://github.com/zmap/zgrab2) (banner grabber):
+Apunta a escáneres maliciosos conocidos por User-Agent. Los escáneres más comunes incluyen [sqlmap](https://sqlmap.org/) (inyección SQL), [Nikto](https://github.com/sullo/nikto) (escáner de vulnerabilidades web), [Nmap](https://nmap.org/) (escáner de red), [masscan](https://github.com/robertdavidgraham/masscan) (escáner de puertos) y [ZGrab](https://github.com/zmap/zgrab2) (banner grabber):
 
 <Code lang="nginx" aria-label="Tarpit para bots de escaneo basado en User-Agent">
 ```

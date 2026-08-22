@@ -234,14 +234,14 @@ flowchart TD
 Realizamos la **detección** en la **tabla Filter** (cadena Input), pero aplicamos el **bloqueo** en la **tabla Raw** (cadena Prerouting).
 
 <Callout type="tip" title="Ventaja de rendimiento">
-La **[tabla Raw](https://help.mikrotik.com/docs/display/ROS/Firewall)** procesa los paquetes *antes* del [Connection Tracking](https://help.mikrotik.com/docs/display/ROS/Connection+tracking). Al bloquear a los atacantes aquí, el router no asigna memoria ni ciclos de CPU para rastrear sus conexiones. En routers que gestionan miles de ataques diarios, esto puede reducir significativamente el uso de recursos.
+La **[tabla Raw](https://help.mikrotik.com/docs/spaces/ROS/pages/250708066/Firewall)** procesa los paquetes *antes* del [Connection Tracking](https://help.mikrotik.com/docs/spaces/ROS/pages/130220087/Connection+tracking). Al bloquear a los atacantes aquí, el router no asigna memoria ni ciclos de CPU para rastrear sus conexiones. En routers que gestionan miles de ataques diarios, esto puede reducir significativamente el uso de recursos.
 </Callout>
 
 ---
 
 ## Referencia de puertos trampa
 
-Las siguientes tablas listan puertos comúnmente atacados, basándose en el [registro de nombres de servicio y números de puerto de IANA](https://www.iana.org/assignments/service-names-port-numbers/service-names-port-numbers.xhtml). Son candidatos ideales para trampas de honeypot porque los usuarios legítimos de internet *nunca* deberían necesitar acceder a ellos en tu router.
+Las siguientes tablas listan puertos comúnmente atacados, basándose en el [registro de nombres de servicio y números de puerto de IANA](https://www.iana.org/assignments/service-names-port-numbers). Son candidatos ideales para trampas de honeypot porque los usuarios legítimos de internet *nunca* deberían necesitar acceder a ellos en tu router.
 
 <Callout type="important" title="Personaliza según tu entorno">
 Antes de implementar, revisa qué servicios expones realmente. Si ejecutas un servidor SSH público en el puerto 22, ¡no pongas trampa en ese puerto! Los ejemplos a continuación asumen que solo ejecutas servidores web en los puertos 80/443.
@@ -315,7 +315,7 @@ Los puertos UDP son especialmente valiosos para honeypots porque muchos se explo
     <tr><td>1900</td><td>SSDP</td><td>Amplificación</td><td>Amplificación 30x mediante descubrimiento UPnP</td></tr>
     <tr><td>5060</td><td>SIP</td><td>VoIP</td><td>Fraude telefónico, interceptación de llamadas</td></tr>
     <tr><td>5683</td><td>CoAP</td><td>IoT</td><td>Explotación de dispositivos IoT</td></tr>
-    <tr><td>11211</td><td>Memcached</td><td>Amplificación</td><td>**¡Amplificación 52.000x!** [Vector de DDoS récord](https://github.blog/2018-03-01-ddos-incident-report/)</td></tr>
+    <tr><td>11211</td><td>Memcached</td><td>Amplificación</td><td>**¡Amplificación 52.000x!** [Vector de DDoS récord](https://github.blog/news-insights/company-news/ddos-incident-report/)</td></tr>
     <tr><td>47808</td><td>BACnet</td><td>Industrial</td><td>Sistemas de automatización de edificios</td></tr>
   </tbody>
 </Table>

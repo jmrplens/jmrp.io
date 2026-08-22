@@ -94,7 +94,7 @@ Eso es lo que hace que descifrar primero sea peligroso. El diseño intuitivo es 
 
 ### ¿Cómo se convierte el padding de CBC en un oráculo?
 
-Empecemos por lo básico: AES es un _cifrador de bloque_, y eso significa que solo sabe trabajar con trozos de tamaño fijo —16 bytes cada uno—. Como tus datos casi nunca miden un múltiplo exacto de 16, el último trozo se completa con bytes de relleno —el _padding_— hasta cuadrar el bloque. El esquema [PKCS#7](https://www.rfc-editor.org/rfc/rfc5652#section-6.3) lo hace con una regla simple: si faltan 5 bytes, añade cinco bytes `0x05`; si faltan 11, once `0x0B`. Al descifrar, lo último que hace el algoritmo es mirar ese padding y comprobar que está bien formado.
+Empecemos por lo básico: AES es un _cifrador de bloque_, y eso significa que solo sabe trabajar con trozos de tamaño fijo —16 bytes cada uno—. Como tus datos casi nunca miden un múltiplo exacto de 16, el último trozo se completa con bytes de relleno —el _padding_— hasta cuadrar el bloque. El esquema [PKCS#7](https://datatracker.ietf.org/doc/html/rfc5652#section-6.3) lo hace con una regla simple: si faltan 5 bytes, añade cinco bytes `0x05`; si faltan 11, once `0x0B`. Al descifrar, lo último que hace el algoritmo es mirar ese padding y comprobar que está bien formado.
 
 Ahora la pieza que lo vuelve peligroso. AES en [modo CBC](https://en.wikipedia.org/wiki/Block_cipher_mode_of_operation#Cipher_block_chaining_\(CBC\)) encadena los bloques: cada bloque de texto cifrado se mezcla (con un XOR) en el descifrado del bloque _siguiente_. Piénsalo como una fila de fichas de dominó —tocar una mueve la de al lado—. Eso le da al atacante una palanca: si manipula un bloque del texto cifrado, controla byte a byte lo que sale del bloque posterior, incluido ese padding final que el descifrador va a inspeccionar.
 
@@ -240,7 +240,7 @@ Cada fichero cifrado de la bóveda —cada credencial, cada secreto TOTP, el ín
   ]}
 />
 
-La disposición en disco de arriba es el fichero entero — pero el tag autentica un poco _más_ de lo que el fichero contiene. Por delante del IV y del texto cifrado, el firmware antepone un **prefijo de contexto autenticado** de 7 bytes y aplica [HMAC](https://www.rfc-editor.org/rfc/rfc2104) al conjunto (sobre [SHA-256](https://csrc.nist.gov/pubs/fips/180-4/upd1/final)) con la sub-clave de MAC del fichero:
+La disposición en disco de arriba es el fichero entero — pero el tag autentica un poco _más_ de lo que el fichero contiene. Por delante del IV y del texto cifrado, el firmware antepone un **prefijo de contexto autenticado** de 7 bytes y aplica [HMAC](https://datatracker.ietf.org/doc/html/rfc2104) al conjunto (sobre [SHA-256](https://csrc.nist.gov/pubs/fips/180-4/upd1/final)) con la sub-clave de MAC del fichero:
 
 <Code lang="cpp" title="vault_envelope.h — el mensaje autenticado">
 ```cpp
@@ -347,7 +347,7 @@ bool constantTimeEqual(const uint8_t* a, const uint8_t* b, size_t len) {
 ```
 </Code>
 
-La bóveda no escribe ese bucle a mano: llama a [`mbedtls_ct_memcmp`](https://mbed-tls.readthedocs.io/projects/api/en/development/api/file/constant__time_8h/) de Mbed TLS —el primitivo de comparación en tiempo constante de la librería—, que hace exactamente esto. Si nunca has visto por qué importa, [_A Lesson In Timing Attacks_](https://web.archive.org/web/2023/https://codahale.com/a-lesson-in-timing-attacks/) de Coda Hale es la clásica explicación de cinco minutos; las [notas sobre tiempo constante de BearSSL](https://www.bearssl.org/constanttime.html) van más a fondo.
+La bóveda no escribe ese bucle a mano: llama a [`mbedtls_ct_memcmp`](https://mbed-tls.readthedocs.io/projects/api/en/development/api/file/constant__time_8h/) de Mbed TLS —el primitivo de comparación en tiempo constante de la librería—, que hace exactamente esto. Si nunca has visto por qué importa, [_A Lesson In Timing Attacks_](https://web.archive.org/web/20231229151151/https://codahale.com/a-lesson-in-timing-attacks/) de Coda Hale es la clásica explicación de cinco minutos; las [notas sobre tiempo constante de BearSSL](https://www.bearssl.org/constanttime.html) van más a fondo.
 
 ### Segundo: bloqueo ante fallos por diseño
 
@@ -398,7 +398,7 @@ Un tag sobre `ver ‖ iv ‖ cipher` demuestra que el texto cifrado es genuino �
 
 ### Vincular el contexto que falta al propio tag
 
-El arreglo vincula el contexto que falta _al propio tag_. Este es exactamente el papel de los [datos asociados](https://www.rfc-editor.org/rfc/rfc5116#section-2.1) en un esquema AEAD — contexto que debe estar **autenticado pero no cifrado** — salvo que aquí se pliega directamente en el tag de encrypt-then-MAC en lugar de pasarse a un cifrador de una sola pasada. El prefijo de 7 bytes está centralizado en un único sitio, así que cada módulo de registro — y el camino de re-cifrado de claves — lo calcula bit a bit idéntico:
+El arreglo vincula el contexto que falta _al propio tag_. Este es exactamente el papel de los [datos asociados](https://datatracker.ietf.org/doc/html/rfc5116#section-2.1) en un esquema AEAD — contexto que debe estar **autenticado pero no cifrado** — salvo que aquí se pliega directamente en el tag de encrypt-then-MAC en lugar de pasarse a un cifrador de una sola pasada. El prefijo de 7 bytes está centralizado en un único sitio, así que cada módulo de registro — y el camino de re-cifrado de claves — lo calcula bit a bit idéntico:
 
 <Code lang="cpp" title="vault_envelope.h — writeEnvelopeContext (un prefijo centralizado)">
 ```cpp
@@ -487,7 +487,7 @@ Un `meta.bin` antiguo o con formato desajustado — pongamos un `formatVer 0x01`
 
 ## ¿Cómo se hace el anti-rollback resistente a cortes de corriente?
 
-El rollback selectivo es un [ataque de repetición](https://www.rfc-editor.org/rfc/rfc4949) — el atacante re-presenta un fichero auténtico-pero-obsoleto — y la defensa estándar es un _valor de frescura_: un contador monótono que el verificador espera que solo aumente, de modo que un registro antiguo repetido falle la comprobación. Pero un contador de frescura solo vale tanto como su historia de actualización. Cada mutación — añadir, editar **o borrar** — incrementa el `generation` del slot, y el registro se reescribe bajo el nuevo valor. Eso crea un riesgo de escritura partida (_torn write_): pierde corriente _entre_ escribir el registro (bajo generation N+1) y escribir `meta.bin` (que registra N+1), y los dos discrepan. Resuelve eso mal y o bien dejas inservible un slot válido o bien reabres en silencio el rollback que acabas de cerrar.
+El rollback selectivo es un [ataque de repetición](https://datatracker.ietf.org/doc/html/rfc4949) — el atacante re-presenta un fichero auténtico-pero-obsoleto — y la defensa estándar es un _valor de frescura_: un contador monótono que el verificador espera que solo aumente, de modo que un registro antiguo repetido falle la comprobación. Pero un contador de frescura solo vale tanto como su historia de actualización. Cada mutación — añadir, editar **o borrar** — incrementa el `generation` del slot, y el registro se reescribe bajo el nuevo valor. Eso crea un riesgo de escritura partida (_torn write_): pierde corriente _entre_ escribir el registro (bajo generation N+1) y escribir `meta.bin` (que registra N+1), y los dos discrepan. Resuelve eso mal y o bien dejas inservible un slot válido o bien reabres en silencio el rollback que acabas de cerrar.
 
 La solución es elegir un único instante indivisible que "cuente" — como la firma de un contrato: antes de que el bolígrafo se levante nada es vinculante, después lo es todo. El firmware hace que el **intercambio de `meta.bin` sea ese instante** — se escribe en un fichero temporal y luego se [renombra atómicamente](https://pubs.opengroup.org/onlinepubs/9699919799/functions/rename.html) a su sitio, así que un lector siempre ve el `meta.bin` antiguo o el nuevo, nunca una escritura partida a medias — y se recupera de forma determinista en torno a él:
 
@@ -599,7 +599,7 @@ El sentido de la separación es que cada clave puede hacer _exactamente una cosa
 
 ## Defensa en profundidad: padding en tiempo constante + un códec con bloqueo ante fallos
 
-Como el MAC se verifica primero, un fichero manipulado nunca alcanza el código de descifrado, lo que significa que el clásico oráculo de padding es _inalcanzable_ por construcción. La comprobación de padding de abajo es, por tanto, **defensa en profundidad**, no la defensa principal — un cinturón además de los tirantes para el caso en que datos autenticados-pero-corruptos aún necesiten rechazarse limpiamente. Valida el [padding PKCS#7](https://www.rfc-editor.org/rfc/rfc5652#section-6.3) en tiempo constante e informa de un único fallo unificado, así que no filtra nada a través de logs ni del tiempo, pase lo que pase:
+Como el MAC se verifica primero, un fichero manipulado nunca alcanza el código de descifrado, lo que significa que el clásico oráculo de padding es _inalcanzable_ por construcción. La comprobación de padding de abajo es, por tanto, **defensa en profundidad**, no la defensa principal — un cinturón además de los tirantes para el caso en que datos autenticados-pero-corruptos aún necesiten rechazarse limpiamente. Valida el [padding PKCS#7](https://datatracker.ietf.org/doc/html/rfc5652#section-6.3) en tiempo constante e informa de un único fallo unificado, así que no filtra nada a través de logs ni del tiempo, pase lo que pase:
 
 <Code lang="cpp" title="Comprobación de padding PKCS#7 en tiempo constante, fallo unificado">
 ```cpp

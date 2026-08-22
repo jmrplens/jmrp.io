@@ -233,14 +233,14 @@ flowchart TD
 We perform **detection** in the **Filter table** (Input chain), but we enforce **blocking** in the **Raw table** (Prerouting chain).
 
 <Callout type="tip" title="Performance Advantage">
-The **[Raw table](https://help.mikrotik.com/docs/display/ROS/Firewall)** processes packets *before* [Connection Tracking](https://help.mikrotik.com/docs/display/ROS/Connection+tracking). By blocking attackers here, the router doesn't allocate memory or CPU cycles to track their connections. On routers handling thousands of attacks daily, this can significantly reduce resource usage.
+The **[Raw table](https://help.mikrotik.com/docs/spaces/ROS/pages/250708066/Firewall)** processes packets *before* [Connection Tracking](https://help.mikrotik.com/docs/spaces/ROS/pages/130220087/Connection+tracking). By blocking attackers here, the router doesn't allocate memory or CPU cycles to track their connections. On routers handling thousands of attacks daily, this can significantly reduce resource usage.
 </Callout>
 
 ---
 
 ## Trap port reference
 
-The following tables list ports commonly targeted by attackers, based on the [IANA Service Name and Port Number Registry](https://www.iana.org/assignments/service-names-port-numbers/service-names-port-numbers.xhtml). These are ideal candidates for honeypot traps because legitimate internet users should *never* need to access them on your router.
+The following tables list ports commonly targeted by attackers, based on the [IANA Service Name and Port Number Registry](https://www.iana.org/assignments/service-names-port-numbers). These are ideal candidates for honeypot traps because legitimate internet users should *never* need to access them on your router.
 
 <Callout type="important" title="Customize for Your Environment">
 Before implementing, review which services you actually expose. If you run a public SSH server on port 22, don't trap that port! The examples below assume you run web servers on ports 80/443 only.
@@ -314,7 +314,7 @@ UDP ports are particularly valuable for honeypots because many are exploited in 
     <tr><td>1900</td><td>SSDP</td><td>Amplification</td><td>30x amplification via UPnP discovery</td></tr>
     <tr><td>5060</td><td>SIP</td><td>VoIP</td><td>Toll fraud, call interception</td></tr>
     <tr><td>5683</td><td>CoAP</td><td>IoT</td><td>IoT device exploitation</td></tr>
-    <tr><td>11211</td><td>Memcached</td><td>Amplification</td><td>**52,000x amplification!** [Record-breaking DDoS vector](https://github.blog/2018-03-01-ddos-incident-report/)</td></tr>
+    <tr><td>11211</td><td>Memcached</td><td>Amplification</td><td>**52,000x amplification!** [Record-breaking DDoS vector](https://github.blog/news-insights/company-news/ddos-incident-report/)</td></tr>
     <tr><td>47808</td><td>BACnet</td><td>Industrial</td><td>Building automation systems</td></tr>
   </tbody>
 </Table>

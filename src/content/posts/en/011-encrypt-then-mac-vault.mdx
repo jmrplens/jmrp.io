@@ -93,7 +93,7 @@ That's what makes decrypt-first dangerous. The intuitive design is the wrong one
 
 ### How does CBC padding become an oracle?
 
-Start with the basics: AES is a *block cipher* — it only knows how to work on fixed-size chunks, 16 bytes each. Since your data almost never lands on an exact multiple of 16, the last chunk is topped up with filler bytes — the *padding* — until it fills the block. [PKCS#7](https://www.rfc-editor.org/rfc/rfc5652#section-6.3) does this by a simple rule: if 5 bytes are missing, append five `0x05` bytes; if 11 are missing, eleven `0x0B`. When decrypting, the very last thing the algorithm does is look at that padding and check it's well-formed.
+Start with the basics: AES is a *block cipher* — it only knows how to work on fixed-size chunks, 16 bytes each. Since your data almost never lands on an exact multiple of 16, the last chunk is topped up with filler bytes — the *padding* — until it fills the block. [PKCS#7](https://datatracker.ietf.org/doc/html/rfc5652#section-6.3) does this by a simple rule: if 5 bytes are missing, append five `0x05` bytes; if 11 are missing, eleven `0x0B`. When decrypting, the very last thing the algorithm does is look at that padding and check it's well-formed.
 
 Now the part that makes it dangerous. AES in [CBC mode](https://en.wikipedia.org/wiki/Block_cipher_mode_of_operation#Cipher_block_chaining_\(CBC\)) chains the blocks: each ciphertext block is mixed (with an XOR) into the *next* one's decryption. Think of a row of dominoes — nudge one and you move its neighbor. That hands the attacker a lever: tamper with one ciphertext block and you control, byte by byte, what comes out of the block after it — including that final padding the decryptor is about to inspect.
 
@@ -239,7 +239,7 @@ Every encrypted file in the vault — each credential, each TOTP secret, the lis
   ]}
 />
 
-The on-disk layout above is the whole file — but the tag authenticates a little *more* than the file holds. Ahead of the IV and ciphertext, the firmware prepends a 7-byte **authenticated context prefix** and [HMACs](https://www.rfc-editor.org/rfc/rfc2104) the lot (over [SHA-256](https://csrc.nist.gov/pubs/fips/180-4/upd1/final)) with the file's MAC sub-key:
+The on-disk layout above is the whole file — but the tag authenticates a little *more* than the file holds. Ahead of the IV and ciphertext, the firmware prepends a 7-byte **authenticated context prefix** and [HMACs](https://datatracker.ietf.org/doc/html/rfc2104) the lot (over [SHA-256](https://csrc.nist.gov/pubs/fips/180-4/upd1/final)) with the file's MAC sub-key:
 
 <Code lang="cpp" title="vault_envelope.h — the authenticated message">
 ```cpp
@@ -346,7 +346,7 @@ bool constantTimeEqual(const uint8_t* a, const uint8_t* b, size_t len) {
 ```
 </Code>
 
-The vault doesn't hand-write that loop — it calls Mbed TLS's [`mbedtls_ct_memcmp`](https://mbed-tls.readthedocs.io/projects/api/en/development/api/file/constant__time_8h/), the library's constant-time comparison primitive, which does exactly this. If you've never seen why this matters, Coda Hale's [*A Lesson In Timing Attacks*](https://web.archive.org/web/2023/https://codahale.com/a-lesson-in-timing-attacks/) is the classic five-minute explanation; [BearSSL's constant-time notes](https://www.bearssl.org/constanttime.html) go deeper.
+The vault doesn't hand-write that loop — it calls Mbed TLS's [`mbedtls_ct_memcmp`](https://mbed-tls.readthedocs.io/projects/api/en/development/api/file/constant__time_8h/), the library's constant-time comparison primitive, which does exactly this. If you've never seen why this matters, Coda Hale's [*A Lesson In Timing Attacks*](https://web.archive.org/web/20231229151151/https://codahale.com/a-lesson-in-timing-attacks/) is the classic five-minute explanation; [BearSSL's constant-time notes](https://www.bearssl.org/constanttime.html) go deeper.
 
 ### Second: fail-closed by design
 
@@ -397,7 +397,7 @@ A tag over `ver ‖ iv ‖ cipher` proves the ciphertext is genuine — but it s
 
 ### Binding the missing context into the tag
 
-The fix binds the missing context *into the tag itself*. This is exactly the role of [associated data](https://www.rfc-editor.org/rfc/rfc5116#section-2.1) in an AEAD scheme — context that must be **authenticated but not encrypted** — except here it's folded directly into the encrypt-then-MAC tag rather than passed to a single-pass cipher. The 7-byte prefix is centralized in one place, so every record module — and the re-key path — computes it bit-identically:
+The fix binds the missing context *into the tag itself*. This is exactly the role of [associated data](https://datatracker.ietf.org/doc/html/rfc5116#section-2.1) in an AEAD scheme — context that must be **authenticated but not encrypted** — except here it's folded directly into the encrypt-then-MAC tag rather than passed to a single-pass cipher. The 7-byte prefix is centralized in one place, so every record module — and the re-key path — computes it bit-identically:
 
 <Code lang="cpp" title="vault_envelope.h — writeEnvelopeContext (one centralized prefix)">
 ```cpp
@@ -486,7 +486,7 @@ An old or format-mismatched `meta.bin` — say a `formatVer 0x01` from an earlie
 
 ## How do you make anti-rollback crash-safe?
 
-Selective rollback is a [replay attack](https://www.rfc-editor.org/rfc/rfc4949) — the attacker re-presents an authentic-but-stale file — and the standard defense is a *freshness value*: a monotonic counter the verifier expects to only ever increase, so a replayed older record fails the check. But a freshness counter is only as good as its update story. Every mutation — add, edit, **or delete** — bumps the slot's `generation`, and the record is rewritten under the new value. That creates a torn-write hazard: lose power *between* writing the record (under generation N+1) and writing `meta.bin` (which records N+1), and the two disagree. Resolve that wrong and you either brick a valid slot or quietly re-open the rollback you just closed.
+Selective rollback is a [replay attack](https://datatracker.ietf.org/doc/html/rfc4949) — the attacker re-presents an authentic-but-stale file — and the standard defense is a *freshness value*: a monotonic counter the verifier expects to only ever increase, so a replayed older record fails the check. But a freshness counter is only as good as its update story. Every mutation — add, edit, **or delete** — bumps the slot's `generation`, and the record is rewritten under the new value. That creates a torn-write hazard: lose power *between* writing the record (under generation N+1) and writing `meta.bin` (which records N+1), and the two disagree. Resolve that wrong and you either brick a valid slot or quietly re-open the rollback you just closed.
 
 The fix is to pick one single, indivisible moment that "counts" — like the signature on a contract: before the pen lifts nothing is binding, after it everything is. The firmware makes the **`meta.bin` swap that moment** — written to a temp file, then [atomically renamed](https://pubs.opengroup.org/onlinepubs/9699919799/functions/rename.html) into place, so a reader always sees the old `meta.bin` or the new one, never a torn half-write — and recovers deterministically around it:
 
@@ -598,7 +598,7 @@ The point of the split is that each key can do *exactly one thing*. If the same 
 
 ## Defense in depth: constant-time padding + a fail-closed codec
 
-Because the MAC is verified first, a tampered file never reaches the decryption code, which means the classic padding oracle is *unreachable* by construction. The padding check below is therefore **defense in depth**, not the primary defense — belt and suspenders for the case where authenticated-but-corrupt data still needs to be rejected cleanly. It validates [PKCS#7 padding](https://www.rfc-editor.org/rfc/rfc5652#section-6.3) in constant time and reports a single unified failure, so it leaks nothing through logs or timing regardless:
+Because the MAC is verified first, a tampered file never reaches the decryption code, which means the classic padding oracle is *unreachable* by construction. The padding check below is therefore **defense in depth**, not the primary defense — belt and suspenders for the case where authenticated-but-corrupt data still needs to be rejected cleanly. It validates [PKCS#7 padding](https://datatracker.ietf.org/doc/html/rfc5652#section-6.3) in constant time and reports a single unified failure, so it leaks nothing through logs or timing regardless:
 
 <Code lang="cpp" title="Constant-time PKCS#7 padding check, unified failure">
 ```cpp
