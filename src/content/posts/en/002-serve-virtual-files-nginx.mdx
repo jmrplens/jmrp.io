@@ -49,20 +49,28 @@ howto:
   steps:
     - name: "Understand location matching priority"
       text: "Learn how Nginx selects a location block by priority rather than config order: exact match (=) first, then prefix with ^~, then regex, then plain prefix by longest match. Use = for virtual files like /robots.txt so the exact match wins."
+      anchor: "location-matching-priority"
     - name: "Choose root, alias, or try_files"
       text: "Pick the directive that controls where Nginx looks for files. Use root for standard document roots, alias to serve files from non-standard locations, and try_files to check files in order with a final fallback."
+      anchor: "core-directives-root-alias-try_files"
     - name: "Serve inline content with the return directive"
       text: "Use return to send small content directly from the config, such as `return 200 \"User-agent: *\\nAllow: /\\n\";`, and set the Content-Type with default_type. This avoids creating physical files for robots.txt, JSON responses, or empty pings."
+      anchor: "the-return-directive"
     - name: "Add named locations and internal fallbacks"
       text: "Define named locations prefixed with @ for fallback patterns like SPA routing or proxying to a backend, and use the internal directive to prevent direct access to protected files."
+      anchor: "named-locations-and-fallbacks"
     - name: "Define standard web and .well-known files"
       text: "Add exact-match location blocks for robots.txt, humans.txt, favicon.ico, security.txt, and ACME challenge paths, serving them either inline with return or from disk with alias."
+      anchor: "standard-web-files"
     - name: "Use njs for dynamic virtual files"
       text: "Load the ngx_http_js_module and use js_content with an njs function when you need logic such as conditional content or dynamic JSON. Reserve njs for cases that return cannot handle, since return is faster for static content."
+      anchor: "dynamic-content-with-nginx-javascript-njs"
     - name: "Add health and monitoring endpoints"
       text: "Create exact-match endpoints for Kubernetes liveness, readiness, and startup probes that return a simple response with access_log off, and expose stub_status metrics restricted to internal networks."
+      anchor: "health-and-monitoring-endpoints"
     - name: "Validate and reload the configuration"
       text: "Run `sudo nginx -t` to check the syntax, then `sudo nginx -s reload` to apply changes, and test the virtual files with curl while checking the error log if something fails."
+      anchor: "validate-configuration"
 ---
 
 import Callout from "@components/ui/Callout.astro";

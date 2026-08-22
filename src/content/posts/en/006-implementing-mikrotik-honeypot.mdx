@@ -52,16 +52,22 @@ howto:
   steps:
     - name: "Create the whitelist"
       text: "Before deploying any blocking rules, create a WhiteList address-list and add your own IPs, VPN endpoints, and trusted services. This prevents accidentally locking yourself out, since the honeypot rules use src-address-list=!WhiteList."
+      anchor: "step-1-create-the-whitelist"
     - name: "Deploy the IPv4 honeypot configuration"
       text: "Add the Filter-table detection rules that match connection-state=new on trapped TCP/UDP ports and run action=add-src-to-address-list, then a DROP rule for blacklisted sources. Finish with a RAW prerouting drop rule for high-performance blocking."
+      anchor: "step-2-ipv4-honeypot-configuration"
     - name: "Deploy the IPv6 honeypot configuration"
       text: "Apply the mirrored IPv6 ruleset using the separate BlackList_PortScanners_v6 address list for the same trapped ports, providing dual-stack protection across the Filter and RAW tables."
+      anchor: "step-3-ipv6-honeypot-configuration"
     - name: "Forward logs to a remote syslog server"
       text: "Set the remote logging action with your syslog server IP and send firewall logs (including the [HONEYPOT] prefixes) so attacker IPs can be collected for threat intelligence."
+      anchor: "leveraging-logs-for-threat-intelligence"
     - name: "Integrate the logs with CrowdSec"
       text: "Configure rsyslog to write MikroTik logs to a file, add a CrowdSec acquisition for that file, install the MikroTik parser, and reload CrowdSec to extract attacker IPs automatically."
+      anchor: "integrating-with-crowdsec"
     - name: "Test the honeypot"
       text: "From an IP not on the whitelist, connect to a trapped port such as Telnet (23) or SSH, then confirm the IP appears in the BlackList address-list and that the RAW rule drops its traffic. Remove the test IP afterwards."
+      anchor: "testing-your-honeypot"
 ---
 
 import Callout from "@components/ui/Callout.astro";

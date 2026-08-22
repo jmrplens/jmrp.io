@@ -50,16 +50,22 @@ howto:
   steps:
     - name: "Preparar el bloque http"
       text: "En nginx.conf, define los maps para las IPs de confianza, el tarpit rate dinámico y el flag de logging, además de un log_format dedicado que fuerza el status 418 y un perl_set que genera una carga útil aleatoria grande."
+      anchor: "paso-1-preparar-nginx-bloque-http"
     - name: "Crear el snippet del tarpit"
       text: "Escribe un snippet reutilizable que registre solo las request tarpiteadas, devuelva 403 para las IPs de confianza, aplique limit_rate para limitar la entrega a unos 10 bytes/segundo y devuelva 200 con el contenido lento aleatorio."
+      anchor: "paso-2-crear-el-snippet-del-tarpit"
     - name: "Definir las rutas sensibles"
       text: "En un snippet dedicado, devuelve 418 para las locations sensibles como /.env, /.git, extensiones de backup, rutas de exploit de CMS y dotfiles, marcándolas como trampas."
+      anchor: "paso-3-definir-las-rutas-sensibles-las-trampas"
     - name: "Configurar el server block"
       text: "En la configuración del sitio, asocia error_page 418 a una location nombrada @tarpit que incluye el snippet del tarpit, e incluye el snippet de rutas sensibles para que las trampas se redirijan a la respuesta lenta."
+      anchor: "paso-4-configurar-el-server-block"
     - name: "Probar la configuración"
       text: "Ejecuta nginx -t y recarga Nginx, luego sondea una trampa con una request curl usando un timeout corto para confirmar que la conexión permanece abierta mientras los datos gotean lentamente."
+      anchor: "paso-5-probar-la-configuración"
     - name: "Integrar CrowdSec para banear automáticamente"
       text: "Añade un parser de CrowdSec y un escenario de tipo leaky que lean el log del tarpit para banear automáticamente las IPs que activan el tarpit de forma repetida."
+      anchor: "integración-con-crowdsec"
 ---
 
 import Callout from "@components/ui/Callout.astro";

@@ -51,20 +51,28 @@ howto:
   steps:
     - name: "Configure the physical interface"
       text: "Set up the ethernet port connected to the DIGI ONT, enabling flow control. Use any port not assigned to your LAN bridge."
+      anchor: "step-1-configure-the-physical-interface"
     - name: "Create the VLAN interface"
       text: "Create an 802.1Q VLAN interface with VLAN ID 20 on the physical port, since DIGI requires VLAN 20 tagging for PPPoE traffic. Skip this step if your ISP doesn't use VLAN tagging."
+      anchor: "step-2-create-the-vlan-interface"
     - name: "Configure the PPPoE client"
       text: "Create a PPPoE client on the VLAN interface with your DIGI credentials in the identifier@digi format, enabling add-default-route and use-peer-dns. The server negotiates the actual MTU to 1480 via LCP."
+      anchor: "step-3-configure-the-pppoe-client"
     - name: "Add interfaces to the WAN list"
       text: "Add the physical port, VLAN, and PPPoE client to a WAN interface list so the firewall rules match traffic correctly at every layer of the connection."
+      anchor: "step-4-add-interfaces-to-wan-list"
     - name: "Configure the DHCPv6 client for prefix delegation"
       text: "Add a DHCPv6 client on the PPPoE interface requesting a prefix into pool6, with a script that waits 5 seconds, removes the old advertised address, and adds a new one from the updated pool with advertise=yes."
+      anchor: "step-5-configure-dhcpv6-client-for-prefix-delegation"
     - name: "Configure Neighbor Discovery for SLAAC"
       text: "Configure IPv6 Neighbor Discovery on the bridge with high RA preference and the router's link-local address as DNS, so LAN devices auto-configure their IPv6 addresses via SLAAC."
+      anchor: "step-7-configure-neighbor-discovery-slaac"
     - name: "Configure IPv4 NAT (masquerade)"
       text: "Add a srcnat masquerade rule on the WAN interface list to provide outbound IPv4 connectivity for LAN devices."
+      anchor: "step-8-configure-ipv4-nat-masquerade"
     - name: "Verify the connection"
       text: "Check the PPPoE status, the negotiated values, the delegated IPv6 prefix in pool6, the assigned LAN address, and test IPv6 connectivity with a ping."
+      anchor: "step-9-verify-the-connection"
 ---
 
 import Callout from "@components/ui/Callout.astro";

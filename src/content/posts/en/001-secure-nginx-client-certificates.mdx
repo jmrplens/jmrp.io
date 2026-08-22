@@ -51,18 +51,25 @@ howto:
   steps:
     - name: "Set up the PKI directory"
       text: "Create the /etc/nginx/pki directory structure (ca, certs, crl, private, newcerts), secure the private directory with chmod 700, and initialize the OpenSSL CA database files (index.txt, serial, crlnumber)."
+      anchor: "create-your-pki-directory"
     - name: "Create the certificate authority"
       text: "Write a comprehensive openssl.cnf with CA defaults, policies, and the v3_ca and v3_client extension profiles, then generate the 4096-bit CA private key and a self-signed CA certificate valid for 10 years."
+      anchor: "creating-your-certificate-authority"
     - name: "Generate client certificates"
       text: "For each device, generate a private key, create a CSR with the client's CN, and sign it with your CA using the v3_client extensions to produce a client certificate."
+      anchor: "generate-a-client-certificate"
     - name: "Export a PKCS12 bundle"
       text: "Bundle the client certificate, private key, and CA certificate into a password-protected .p12 file for distribution to browsers and mobile devices."
+      anchor: "create-pkcs12-bundle-for-clients"
     - name: "Configure Nginx for mTLS"
       text: "In the server block, point ssl_client_certificate at your CA, set ssl_verify_client on, configure ssl_verify_depth and strong TLS protocols/ciphers, then test with nginx -t and reload."
+      anchor: "configuring-nginx-for-mtls"
     - name: "Add certificate revocation (CRL)"
       text: "Revoke compromised certificates with openssl ca -revoke, regenerate the CRL with openssl ca -gencrl, enable it via ssl_crl, and reload Nginx every time a certificate is revoked."
+      anchor: "certificate-revocation-crl-vs-ocsp"
     - name: "Install certificates on client devices"
       text: "Transfer the .p12 file securely and import it into the keychain or certificate store on iOS, macOS, Windows, Android, or via curl on Linux."
+      anchor: "installing-certificates-on-clients"
 ---
 
 import Callout from "@components/ui/Callout.astro";

@@ -48,20 +48,28 @@ howto:
   steps:
     - name: "Add a starter CSP header"
       text: "Add `add_header Content-Security-Policy \"default-src 'self'\" always;` to your Nginx server block. This immediately blocks external scripts, inline scripts, and inline styles."
+      anchor: "your-first-csp-in-5-minutes"
     - name: "Test and reload Nginx"
       text: "Run `sudo nginx -t && sudo systemctl reload nginx` to validate the configuration and apply it. Open the browser console to inspect any CSP violations."
+      anchor: "your-first-csp-in-5-minutes"
     - name: "Build a baseline Level 6 policy"
       text: "Expand the header to `default-src 'none'` plus explicit `script-src`, `style-src`, `img-src`, `font-src`, `connect-src`, `object-src 'none'`, `base-uri 'none'`, `frame-ancestors 'none'`, `form-action 'self'`, and `upgrade-insecure-requests`."
+      anchor: "building-your-csp-layer-by-layer"
     - name: "Inject per-request nonces for inline scripts"
       text: "Place a `CSP_NONCE_NGINX` placeholder in your templates, then set `set $cspNonce $request_id;` and use `sub_filter` to replace the placeholder with the same nonce that goes into the CSP header."
+      anchor: "nonces-for-static-sites-the-nginx-trick"
     - name: "Go strict with nonces and strict-dynamic"
       text: "Switch script-src to `'nonce-$cspNonce' 'strict-dynamic'` and keep `object-src 'none'` and `base-uri 'none'`. This drops fragile domain allowlists in favor of cryptographic nonces."
+      anchor: "going-strict-with-strict-dynamic"
     - name: "Deploy in report-only mode"
       text: "Ship the strict policy as `Content-Security-Policy-Report-Only` for one to two weeks with a `report-uri` so violations are logged without blocking anything."
+      anchor: "phase-1-report-only"
     - name: "Analyze and fix violations"
       text: "Review the reports and remediate issues: convert inline event handlers to `addEventListener()`, replace `eval()` with `JSON.parse()`, and add nonces to inline scripts."
+      anchor: "setting-up-csp-reporting"
     - name: "Enable enforcement"
       text: "Switch from `Content-Security-Policy-Report-Only` to `Content-Security-Policy` to start blocking violations, optionally keeping a report-only header to test stricter future policies."
+      anchor: "phase-3-enforce"
 ---
 
 import Callout from "@components/ui/Callout.astro";

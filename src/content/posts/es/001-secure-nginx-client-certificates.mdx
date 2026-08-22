@@ -52,18 +52,25 @@ howto:
   steps:
     - name: "Preparar el directorio PKI"
       text: "Crea la estructura de directorios /etc/nginx/pki (ca, certs, crl, private, newcerts), protege el directorio private con chmod 700 e inicializa los archivos de base de datos de la CA de OpenSSL (index.txt, serial, crlnumber)."
+      anchor: "crea-tu-directorio-pki"
     - name: "Crear la certificate authority"
       text: "Escribe un archivo openssl.cnf completo con los valores por defecto de la CA, las políticas y los perfiles de extensión v3_ca y v3_client, y luego genera la clave privada de la CA de 4096 bits y un certificado de CA autofirmado válido 10 años."
+      anchor: "creando-tu-certificate-authority"
     - name: "Generar certificados de cliente"
       text: "Para cada dispositivo, genera una clave privada, crea un CSR con el CN del cliente y fírmalo con tu CA usando las extensiones v3_client para producir un certificado de cliente."
+      anchor: "genera-un-certificado-de-cliente"
     - name: "Exportar un paquete PKCS12"
       text: "Empaqueta el certificado de cliente, la clave privada y el certificado de la CA en un archivo .p12 protegido por contraseña para distribuirlo a navegadores y dispositivos móviles."
+      anchor: "crea-el-paquete-pkcs12-para-clientes"
     - name: "Configurar Nginx para mTLS"
       text: "En el bloque server, apunta ssl_client_certificate a tu CA, establece ssl_verify_client on, configura ssl_verify_depth y protocolos/cipher suites TLS fuertes, y luego comprueba con nginx -t y recarga."
+      anchor: "configurando-nginx-para-mtls"
     - name: "Añadir revocación de certificados (CRL)"
       text: "Revoca los certificados comprometidos con openssl ca -revoke, regenera el CRL con openssl ca -gencrl, habilítalo mediante ssl_crl y recarga Nginx cada vez que revoques un certificado."
+      anchor: "revocación-de-certificados-crl-vs-ocsp"
     - name: "Instalar certificados en los dispositivos cliente"
       text: "Transfiere el archivo .p12 de forma segura e impórtalo en el keychain o almacén de certificados en iOS, macOS, Windows, Android, o mediante curl en Linux."
+      anchor: "instalando-certificados-en-los-clientes"
 ---
 
 import Callout from "@components/ui/Callout.astro";

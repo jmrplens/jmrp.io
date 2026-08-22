@@ -49,16 +49,22 @@ howto:
   steps:
     - name: "Prepare the http block"
       text: "In nginx.conf, define maps for trusted IPs, the dynamic tarpit rate, and the loggable flag, plus a dedicated log_format that forces status 418 and a perl_set that generates a large random payload."
+      anchor: "step-1-prepare-nginx-http-block"
     - name: "Create the tarpit snippet"
       text: "Write a reusable snippet that logs only tarpitted requests, returns 403 for trusted IPs, applies limit_rate to throttle delivery to about 10 bytes/second, and returns 200 with the slow random content."
+      anchor: "step-2-create-the-tarpit-snippet"
     - name: "Define the sensitive paths"
       text: "In a dedicated snippet, return 418 for sensitive locations such as /.env, /.git, backup extensions, CMS exploit paths, and dotfiles, marking them as traps."
+      anchor: "step-3-define-sensitive-paths-the-traps"
     - name: "Configure the server block"
       text: "In the site config, map error_page 418 to a named @tarpit location that includes the tarpit snippet, and include the sensitive-paths snippet so traps route into the slow response."
+      anchor: "step-4-configure-the-server-block"
     - name: "Test the configuration"
       text: "Run nginx -t and reload Nginx, then probe a trap with a curl request using a short timeout to confirm the connection stays open while data drips in slowly."
+      anchor: "step-5-test-the-configuration"
     - name: "Integrate CrowdSec to auto-ban"
       text: "Add a CrowdSec parser and a leaky-bucket scenario that read the tarpit log to automatically ban IPs that trigger the tarpit repeatedly."
+      anchor: "integration-with-crowdsec"
 ---
 
 import Callout from "@components/ui/Callout.astro";

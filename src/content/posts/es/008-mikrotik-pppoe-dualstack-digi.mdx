@@ -52,20 +52,28 @@ howto:
   steps:
     - name: "Configurar la interfaz física"
       text: "Configura el puerto ethernet conectado al ONT de DIGI, habilitando el control de flujo. Usa cualquier puerto no asignado a tu bridge de LAN."
+      anchor: "paso-1-configurar-la-interfaz-física"
     - name: "Crear la interfaz VLAN"
       text: "Crea una interfaz VLAN 802.1Q con VLAN ID 20 sobre el puerto físico, ya que DIGI requiere VLAN tagging en la VLAN 20 para el tráfico PPPoE. Omite este paso si tu ISP no usa VLAN tagging."
+      anchor: "paso-2-crear-la-interfaz-vlan"
     - name: "Configurar el cliente PPPoE"
       text: "Crea un cliente PPPoE sobre la interfaz VLAN con tus credenciales de DIGI en el formato identificador@digi, habilitando add-default-route y use-peer-dns. El servidor negocia el MTU real a 1480 vía LCP."
+      anchor: "paso-3-configurar-el-cliente-pppoe"
     - name: "Añadir las interfaces a la lista WAN"
       text: "Añade el puerto físico, la VLAN y el cliente PPPoE a una lista de interfaces WAN para que las reglas de firewall coincidan correctamente en cada capa de la conexión."
+      anchor: "paso-4-añadir-interfaces-a-la-lista-wan"
     - name: "Configurar el cliente DHCPv6 para prefix delegation"
       text: "Añade un cliente DHCPv6 en la interfaz PPPoE solicitando un prefix hacia pool6, con un script que espera 5 segundos, elimina la dirección anunciada antigua y añade una nueva desde el pool actualizado con advertise=yes."
+      anchor: "paso-5-configurar-el-cliente-dhcpv6-para-prefix-delegation"
     - name: "Configurar Neighbor Discovery para SLAAC"
       text: "Configura el Neighbor Discovery IPv6 en el bridge con preferencia de RA alta y la dirección link-local del router como DNS, para que los dispositivos LAN autoconfiguren sus direcciones IPv6 vía SLAAC."
+      anchor: "paso-7-configurar-neighbor-discovery-slaac"
     - name: "Configurar el NAT IPv4 (masquerade)"
       text: "Añade una regla srcnat masquerade sobre la lista de interfaces WAN para proporcionar conectividad IPv4 saliente a los dispositivos LAN."
+      anchor: "paso-8-configurar-nat-ipv4-masquerade"
     - name: "Verificar la conexión"
       text: "Comprueba el estado del PPPoE, los valores negociados, el prefix IPv6 delegado en pool6, la dirección asignada a la LAN y prueba la conectividad IPv6 con un ping."
+      anchor: "paso-9-verificar-la-conexión"
 ---
 
 import Callout from "@components/ui/Callout.astro";

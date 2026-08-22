@@ -49,20 +49,28 @@ howto:
   steps:
     - name: "Añadir una cabecera CSP inicial"
       text: "Añade `add_header Content-Security-Policy \"default-src 'self'\" always;` a tu bloque server de Nginx. Esto bloquea inmediatamente los scripts externos, los scripts inline y los estilos inline."
+      anchor: "tu-primera-csp-en-5-minutos"
     - name: "Comprobar y recargar Nginx"
       text: "Ejecuta `sudo nginx -t && sudo systemctl reload nginx` para validar la configuración y aplicarla. Abre la consola del navegador para inspeccionar las violaciones de CSP."
+      anchor: "tu-primera-csp-en-5-minutos"
     - name: "Construir una política base de Nivel 6"
       text: "Amplía la cabecera a `default-src 'none'` más `script-src`, `style-src`, `img-src`, `font-src`, `connect-src`, `object-src 'none'`, `base-uri 'none'`, `frame-ancestors 'none'`, `form-action 'self'` y `upgrade-insecure-requests` explícitos."
+      anchor: "construyendo-tu-csp-capa-a-capa"
     - name: "Inyectar nonces por petición para scripts inline"
       text: "Coloca un placeholder `CSP_NONCE_NGINX` en tus plantillas, establece `set $cspNonce $request_id;` y usa `sub_filter` para reemplazar el placeholder con el mismo nonce que va en la cabecera CSP."
+      anchor: "nonces-para-sitios-estáticos-el-truco-de-nginx"
     - name: "Pasar a modo estricto con nonces y strict-dynamic"
       text: "Cambia script-src a `'nonce-$cspNonce' 'strict-dynamic'` y mantén `object-src 'none'` y `base-uri 'none'`. Esto descarta las frágiles allowlists de dominios en favor de nonces criptográficos."
+      anchor: "modo-estricto-con-strict-dynamic"
     - name: "Desplegar en modo report-only"
       text: "Publica la política estricta como `Content-Security-Policy-Report-Only` durante una o dos semanas con un `report-uri` para registrar las violaciones sin bloquear nada."
+      anchor: "fase-1-report-only"
     - name: "Analizar y corregir las violaciones"
       text: "Revisa los informes y soluciona los problemas: convierte los inline event handlers a `addEventListener()`, reemplaza `eval()` con `JSON.parse()` y añade nonces a los scripts inline."
+      anchor: "configurar-el-reporting-de-csp"
     - name: "Activar la aplicación"
       text: "Cambia de `Content-Security-Policy-Report-Only` a `Content-Security-Policy` para empezar a bloquear las violaciones, manteniendo opcionalmente una cabecera report-only para probar políticas más estrictas en el futuro."
+      anchor: "fase-3-aplicar"
 ---
 
 import Callout from "@components/ui/Callout.astro";

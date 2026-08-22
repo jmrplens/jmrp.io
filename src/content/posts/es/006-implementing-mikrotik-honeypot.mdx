@@ -53,16 +53,22 @@ howto:
   steps:
     - name: "Crear la lista blanca"
       text: "Antes de desplegar cualquier regla de bloqueo, crea una address-list WhiteList y añade tus propias IPs, endpoints VPN y servicios de confianza. Esto evita bloquearte a ti mismo, ya que las reglas del honeypot usan src-address-list=!WhiteList."
+      anchor: "paso-1-crear-la-lista-blanca"
     - name: "Desplegar la configuración del honeypot IPv4"
       text: "Añade las reglas de detección de la tabla Filter que coinciden con connection-state=new en los puertos trampa TCP/UDP y ejecutan action=add-src-to-address-list, seguidas de una regla DROP para los orígenes de la lista negra. Termina con una regla drop en prerouting de la tabla RAW para un bloqueo de alto rendimiento."
+      anchor: "paso-2-configuración-del-honeypot-ipv4"
     - name: "Desplegar la configuración del honeypot IPv6"
       text: "Aplica el conjunto de reglas IPv6 idéntico usando la lista de direcciones separada BlackList_PortScanners_v6 para los mismos puertos trampa, proporcionando protección dual-stack en las tablas Filter y RAW."
+      anchor: "paso-3-configuración-del-honeypot-ipv6"
     - name: "Reenviar los logs a un servidor syslog remoto"
       text: "Configura la acción de logging remoto con la IP de tu servidor syslog y envía los logs del firewall (incluidos los prefijos [HONEYPOT]) para poder recopilar las IPs de los atacantes como threat intelligence."
+      anchor: "aprovechando-los-logs-para-threat-intelligence"
     - name: "Integrar los logs con CrowdSec"
       text: "Configura rsyslog para escribir los logs de MikroTik en un archivo, añade una adquisición de CrowdSec para ese archivo, instala el parser de MikroTik y recarga CrowdSec para extraer las IPs de los atacantes automáticamente."
+      anchor: "integración-con-crowdsec"
     - name: "Probar el honeypot"
       text: "Desde una IP que no esté en la lista blanca, conéctate a un puerto trampa como Telnet (23) o SSH, y comprueba que la IP aparece en la address-list BlackList y que la regla RAW descarta su tráfico. Elimina la IP de prueba al terminar."
+      anchor: "probando-tu-honeypot"
 ---
 
 import Callout from "@components/ui/Callout.astro";
