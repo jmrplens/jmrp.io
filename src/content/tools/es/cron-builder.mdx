@@ -14,7 +14,6 @@ features:
   - "Lee descripciones legibles de la programación"
   - "Previsualiza las próximas 10 ejecuciones"
   - "Genera líneas crontab y enlaces para compartir"
-appComponent: "CronBuilder"
 lang: "es"
 faq:
   - question: "¿Qué es una expresión cron?"
@@ -29,11 +28,20 @@ faq:
     answer: "Cron se ejecuta con un PATH mínimo y la zona horaria del sistema, así que usa rutas absolutas para los comandos y comprueba timedatectl. Redirige la salida con \">> /var/log/myjob.log 2>&1\" para capturar errores."
 ---
 
+import CronBuilder from "@components/apps/CronBuilder.astro";
+import ToolApp from "@components/ui/ToolApp.astro";
+import ToolInfo from "@components/ui/ToolInfo.astro";
 import {
   TerminalSession,
   TerminalSessionCommand,
   TerminalSessionOutput,
 } from "@components/ui/terminal-session";
+
+<ToolApp>
+  <CronBuilder />
+</ToolApp>
+
+<ToolInfo>
 
 <h2>Acerca de esta herramienta</h2>
 <p>
@@ -455,3 +463,5 @@ import {
     registros de ejecución.
   </li>
 </ul>
+
+</ToolInfo>

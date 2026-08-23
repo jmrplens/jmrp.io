@@ -14,7 +14,6 @@ features:
   - "Simula cuatro tipos de daltonismo"
   - "Sugerencias automáticas para colores que fallan"
   - "Exporta CSS y comparte por URL"
-appComponent: "ColorContrastChecker"
 lang: "es"
 faq:
   - question: "¿Cuál es el ratio de contraste mínimo de WCAG 2.2 para texto normal?"
@@ -29,11 +28,20 @@ faq:
     answer: "Aplica el mínimo de WCAG 2.2 de 3:1 a componentes de interfaz como botones, campos de entrada y bordes, además de objetos gráficos que transmiten información \"con significado\"."
 ---
 
+import ColorContrastChecker from "@components/apps/ColorContrastChecker.astro";
+import ToolApp from "@components/ui/ToolApp.astro";
+import ToolInfo from "@components/ui/ToolInfo.astro";
 import {
   TerminalSession,
   TerminalSessionCommand,
   TerminalSessionOutput,
 } from "@components/ui/terminal-session";
+
+<ToolApp>
+  <ColorContrastChecker />
+</ToolApp>
+
+<ToolInfo>
 
 <h2>Acerca de esta herramienta</h2>
 <p>
@@ -302,3 +310,5 @@ import {
     ```
   </TerminalSessionOutput>
 </TerminalSession>
+
+</ToolInfo>

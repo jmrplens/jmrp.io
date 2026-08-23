@@ -14,7 +14,6 @@ features:
   - "Exporta a 7 formatos (Nginx, Apache, Vercel)"
   - "Modo Report-Only y evaluación de seguridad en vivo"
   - "Funciona enteramente en tu navegador"
-appComponent: "CSPBuilder"
 lang: "es"
 faq:
   - question: "¿Qué es una Content Security Policy y por qué la necesito?"
@@ -29,11 +28,20 @@ faq:
     answer: "La evaluación de seguridad señala configuraciones inseguras como 'unsafe-inline' porque debilitan tu política al permitir scripts o estilos inline, anulando gran parte de la protección de CSP frente al XSS. Es preferible usar nonces o hashes."
 ---
 
+import CSPBuilder from "@components/apps/CSPBuilder.astro";
+import ToolApp from "@components/ui/ToolApp.astro";
+import ToolInfo from "@components/ui/ToolInfo.astro";
 import {
   TerminalSession,
   TerminalSessionCommand,
   TerminalSessionOutput,
 } from "@components/ui/terminal-session";
+
+<ToolApp>
+  <CSPBuilder />
+</ToolApp>
+
+<ToolInfo>
 
 <h2>Acerca de esta herramienta</h2>
 <p>
@@ -128,3 +136,5 @@ import {
   </a>
   .
 </p>
+
+</ToolInfo>

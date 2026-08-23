@@ -14,7 +14,6 @@ features:
   - "Simulate four color vision deficiencies"
   - "Auto-fix suggestions for failing colors"
   - "Export CSS and share via URL"
-appComponent: "ColorContrastChecker"
 faq:
   - question: "What is the minimum WCAG 2.2 contrast ratio for normal text?"
     answer: "Normal text needs at least 4.5:1 for AA and 7:1 for AAA. Large text (18pt+, or 14pt+ bold) only needs 3:1 for AA and 4.5:1 for AAA."
@@ -28,11 +27,20 @@ faq:
     answer: "It applies the WCAG 2.2 minimum of 3:1 to UI components such as buttons, inputs, and borders, plus graphical objects that convey information \"meaning\"."
 ---
 
+import ColorContrastChecker from "@components/apps/ColorContrastChecker.astro";
+import ToolApp from "@components/ui/ToolApp.astro";
+import ToolInfo from "@components/ui/ToolInfo.astro";
 import {
   TerminalSession,
   TerminalSessionCommand,
   TerminalSessionOutput,
 } from "@components/ui/terminal-session";
+
+<ToolApp>
+  <ColorContrastChecker />
+</ToolApp>
+
+<ToolInfo>
 
 <h2>About This Tool</h2>
 <p>
@@ -286,3 +294,5 @@ import {
     ```
   </TerminalSessionOutput>
 </TerminalSession>
+
+</ToolInfo>

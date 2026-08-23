@@ -14,7 +14,6 @@ features:
   - "Conversión de rangos a bloques CIDR"
   - "Detección de tipo de dirección y DNS inverso"
   - "Se ejecuta localmente en tu navegador"
-appComponent: "SubnetCalculator"
 lang: "es"
 faq:
   - question: "¿Cómo calculo el número de hosts utilizables en una subred?"
@@ -29,11 +28,20 @@ faq:
     answer: "No. Todos los cálculos se ejecutan íntegramente en tu navegador y no se envía ninguna dirección IP ni dato de red a ningún servidor. La herramienta sigue funcionando sin conexión tras la carga inicial de la página."
 ---
 
+import SubnetCalculator from "@components/apps/SubnetCalculator.astro";
+import ToolApp from "@components/ui/ToolApp.astro";
+import ToolInfo from "@components/ui/ToolInfo.astro";
 import {
   TerminalSession,
   TerminalSessionCommand,
   TerminalSessionOutput,
 } from "@components/ui/terminal-session";
+
+<ToolApp>
+  <SubnetCalculator />
+</ToolApp>
+
+<ToolInfo>
 
 <h2>Acerca de esta herramienta</h2>
 <p>
@@ -722,3 +730,5 @@ import {
   Esto es útil para reglas de firewall, agregación de rutas y listas de control
   de acceso donde se requiere notación CIDR.
 </p>
+
+</ToolInfo>

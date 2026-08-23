@@ -14,7 +14,6 @@ features:
   - "Offset uint16 y aviso de 64 KiB"
   - "Modos de entrada por líneas y CSV"
   - "Se ejecuta localmente en tu navegador"
-appComponent: "StringPoolPacker"
 lang: "es"
 faq:
   - question: "¿Por qué las tablas de punteros const char* desperdician tanta flash en un MCU?"
@@ -28,6 +27,16 @@ faq:
   - question: "¿Esta herramienta envía mis cadenas a un servidor?"
     answer: "No. Todo el análisis, la deduplicación, el tail-merge y el conteo de bytes ocurren por completo en tu navegador, y nada de lo que escribes se transmite a ningún sitio."
 ---
+
+import StringPoolPacker from "@components/apps/StringPoolPacker.astro";
+import ToolApp from "@components/ui/ToolApp.astro";
+import ToolInfo from "@components/ui/ToolInfo.astro";
+
+<ToolApp>
+  <StringPoolPacker />
+</ToolApp>
+
+<ToolInfo>
 
 <h2>Sobre esta herramienta</h2>
 <p>
@@ -120,3 +129,5 @@ faq:
   por completo en tu navegador. Nada de lo que escribes se transmite a ningún
   servidor.
 </p>
+
+</ToolInfo>

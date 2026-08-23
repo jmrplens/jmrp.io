@@ -14,7 +14,6 @@ features:
   - "Balanceo de carga upstream y proxy inverso"
   - "Rate limiting, tarpit y cabeceras de seguridad"
   - "Se genera en el navegador, nada se envía"
-appComponent: "NginxConfigGenerator"
 lang: "es"
 faq:
   - question: "¿Se envía mi configuración de servidor a algún servidor?"
@@ -29,11 +28,20 @@ faq:
     answer: "Elige el preset más cercano a tu caso de uso — Estático, Reverse Proxy, SPA, PHP-FPM, Servidor API o Fortificado — y personaliza desde ahí el dominio, la ruta raíz y las rutas de los certificados SSL."
 ---
 
+import NginxConfigGenerator from "@components/apps/NginxConfigGenerator.astro";
+import ToolApp from "@components/ui/ToolApp.astro";
+import ToolInfo from "@components/ui/ToolInfo.astro";
 import {
   TerminalSession,
   TerminalSessionCommand,
   TerminalSessionOutput,
 } from "@components/ui/terminal-session";
+
+<ToolApp>
+  <NginxConfigGenerator />
+</ToolApp>
+
+<ToolInfo>
 
 <h2>Acerca de esta herramienta</h2>
 <p>
@@ -165,3 +173,5 @@ import {
     — Autenticación TLS mutua
   </li>
 </ul>
+
+</ToolInfo>

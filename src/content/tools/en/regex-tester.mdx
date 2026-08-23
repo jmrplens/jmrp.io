@@ -14,7 +14,6 @@ features:
   - "Replace mode with backreferences"
   - "Toggleable g/i/m/s/u flags and presets"
   - "Runs locally in your browser"
-appComponent: "RegexTester"
 faq:
   - question: "Are my regex patterns and test strings sent to a server?"
     answer: "No. All pattern matching and text processing runs entirely in your browser using JavaScript's built-in RegExp engine. Your patterns and test strings never leave your device."
@@ -28,12 +27,21 @@ faq:
     answer: "Patterns like (a+)+b cause catastrophic backtracking on long non-matching input. The tool shows the execution time for each test, so if a pattern takes more than a few milliseconds, simplify it or use negated character classes instead of greedy wildcards."
 ---
 
+import RegexTester from "@components/apps/RegexTester.astro";
+import ToolApp from "@components/ui/ToolApp.astro";
+import ToolInfo from "@components/ui/ToolInfo.astro";
 import RegexFlavorTable from "@components/apps/RegexFlavorTable.astro";
 import {
   TerminalSession,
   TerminalSessionCommand,
   TerminalSessionOutput,
 } from "@components/ui/terminal-session";
+
+<ToolApp>
+  <RegexTester />
+</ToolApp>
+
+<ToolInfo>
 
 <h2>About This Tool</h2>
 <p>
@@ -470,3 +478,5 @@ import {
   color: var(--color-text);
 }
 `}</style>
+
+</ToolInfo>

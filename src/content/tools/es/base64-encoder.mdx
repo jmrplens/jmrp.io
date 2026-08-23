@@ -14,7 +14,6 @@ features:
   - "Codifica archivos arrastrando con vista previa"
   - "Genera Data URIs para CSS y HTML"
   - "Todo en el navegador, sin subidas"
-appComponent: "Base64Encoder"
 lang: "es"
 faq:
   - question: "¿Base64 es una forma de cifrado?"
@@ -29,11 +28,20 @@ faq:
     answer: "Un Data URI embebe el contenido codificado en Base64 directamente en CSS o HTML usando el prefijo data:<tipo-mime>;base64,..., evitando una petición de archivo aparte. Activa el prefijo Data URI para obtener una cadena lista para pegar en recursos pequeños como iconos."
 ---
 
+import Base64Encoder from "@components/apps/Base64Encoder.astro";
+import ToolApp from "@components/ui/ToolApp.astro";
+import ToolInfo from "@components/ui/ToolInfo.astro";
 import {
   TerminalSession,
   TerminalSessionCommand,
   TerminalSessionOutput,
 } from "@components/ui/terminal-session";
+
+<ToolApp>
+  <Base64Encoder />
+</ToolApp>
+
+<ToolInfo>
 
 <h2>Acerca de esta herramienta</h2>
 <p>
@@ -185,3 +193,5 @@ import {
     /dev/stdin: PNG image data, 800 x 600, 8-bit/color RGBA
   </TerminalSessionOutput>
 </TerminalSession>
+
+</ToolInfo>

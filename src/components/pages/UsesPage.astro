@@ -9,6 +9,7 @@
 import { defaultLocale, type Locale } from "@i18n/config";
 import { useTranslatedPath, useTranslations } from "@i18n/utils";
 import BaseLayout from "@layouts/BaseLayout.astro";
+import { externalLinkProps } from "@utils/links";
 import { getSiteUrl } from "@utils/site";
 import { getEntry } from "astro:content";
 import type { CollectionPage } from "schema-dts";
@@ -27,7 +28,6 @@ const c = usesEntry.data[locale];
 /** Internal paths get localized; full URLs pass through untouched. */
 const resolveHref = (href: string) =>
   href.startsWith("/") ? translatePath(href) : href;
-const isExternal = (href: string) => !href.startsWith("/");
 
 // /uses/ is pure structured-fact content (hardware, software, homelab in
 // rotation) — exactly what AI answer engines look to cite — but previously
@@ -104,17 +104,14 @@ const usesSchema = {
               {group.items.map((item) => {
                 // Hoisted out of the JSX attribute spread below: sonarjs
                 // flags a ternary nested inside another ternary's branch.
-                const externalLinkProps =
-                  item.href && isExternal(item.href)
-                    ? { target: "_blank", rel: "external noopener noreferrer" }
-                    : {};
+                const linkProps = item.href ? externalLinkProps(item.href) : {};
                 return (
                   <div class="uses-item">
                     <div class="uses-item__name">
                       {item.href ? (
                         <a
                           href={resolveHref(item.href)}
-                          {...externalLinkProps}
+                          {...linkProps}
                         >
                           {item.name}
                         </a>

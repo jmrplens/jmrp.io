@@ -3,23 +3,6 @@
  * Tool Page shared component.
  * Renders individual tool pages from the `tools` content collection.
  */
-import Base64Encoder from "@components/apps/Base64Encoder.astro";
-import BruteForceCost from "@components/apps/BruteForceCost.astro";
-import CertInspector from "@components/apps/CertInspector.astro";
-import ColorContrastChecker from "@components/apps/ColorContrastChecker.astro";
-import CronBuilder from "@components/apps/CronBuilder.astro";
-import CSPBuilder from "@components/apps/CSPBuilder.astro";
-import EnvelopeVisualizer from "@components/apps/EnvelopeVisualizer.astro";
-import HashCalculator from "@components/apps/HashCalculator.astro";
-import HTTPHeadersAnalyzer from "@components/apps/HTTPHeadersAnalyzer.astro";
-import ModbusFrameBuilder from "@components/apps/ModbusFrameBuilder.astro";
-import NginxConfigGenerator from "@components/apps/NginxConfigGenerator.astro";
-import PasswordGenerator from "@components/apps/PasswordGenerator.astro";
-import RegexTester from "@components/apps/RegexTester.astro";
-import StringPoolPacker from "@components/apps/StringPoolPacker.astro";
-import SubnetCalculator from "@components/apps/SubnetCalculator.astro";
-import TimestampConverter from "@components/apps/TimestampConverter.astro";
-import WireGuardConfigGenerator from "@components/apps/WireGuardConfigGenerator.astro";
 import ToolLayout from "@layouts/ToolLayout.astro";
 import { type CollectionEntry, render } from "astro:content";
 
@@ -28,39 +11,8 @@ interface Props {
   tool: CollectionEntry<"tools">;
 }
 
-/** Static map of appComponent names → imported Astro components. */
-const componentMap: Record<string, any> = {
-  Base64Encoder,
-  BruteForceCost,
-  CSPBuilder,
-  CertInspector,
-  EnvelopeVisualizer,
-  ColorContrastChecker,
-  CronBuilder,
-  HTTPHeadersAnalyzer,
-  HashCalculator,
-  ModbusFrameBuilder,
-  NginxConfigGenerator,
-  PasswordGenerator,
-  RegexTester,
-  StringPoolPacker,
-  SubnetCalculator,
-  TimestampConverter,
-  WireGuardConfigGenerator,
-};
-
 const { tool } = Astro.props;
 const { Content } = await render(tool);
-
-const AppComponent = componentMap[tool.data.appComponent];
-if (!AppComponent) {
-  throw new Error(
-    `Unknown app component "${tool.data.appComponent}" for tool "${tool.data.title}". ` +
-      `Available components: ${Object.keys(componentMap).join(", ")}`,
-  );
-}
-
-const appProps = tool.data.appProps ?? {};
 ---
 
 <ToolLayout
@@ -75,9 +27,10 @@ const appProps = tool.data.appProps ?? {};
   publishedDate={tool.data.publishedDate}
   updatedDate={tool.data.updatedDate}
 >
-  <AppComponent {...appProps} />
-
-  <Fragment slot="info">
-    <Content />
-  </Fragment>
+  {
+    /* The MDX body carries everything: its own app component (so the page's
+      CSS contains only that app's styles — see ToolApp.astro) plus the
+      documentation, each in its wrapper. */
+  }
+  <Content />
 </ToolLayout>

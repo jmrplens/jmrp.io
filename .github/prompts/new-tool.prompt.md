@@ -1,13 +1,13 @@
 ---
 name: new-tool
-description: Scaffold a new interactive tool with MDX content, Astro component, and componentMap registration
+description: Scaffold a new interactive tool with MDX content and its Astro app component
 argument-hint: "[tool-name] [category]"
 agent: implementer
 ---
 
 Create a new interactive tool for jmrp.io following these steps:
 
-1. **Create the MDX content file** at `src/content/tools/${input:slug}.mdx`:
+1. **Create the MDX content file** at `src/content/tools/en/${input:slug}.mdx` (then mirror it to `es/` with the same slug):
 
 ```mdx
 ---
@@ -16,19 +16,32 @@ slug: "${input:slug}"
 description: "Short description ≤ 155 characters"
 icon: "i-mdi:icon-name"
 category: "${input:category}"  # security | developer | network | embedded | mikrotik
-appComponent: "${input:componentName}"
 tags: []
 ---
 
-Documentation about what this tool does and how to use it.
+import ${input:componentName} from "@components/apps/${input:componentName}.astro";
+import ToolApp from "@components/ui/ToolApp.astro";
+import ToolInfo from "@components/ui/ToolInfo.astro";
+
+<ToolApp>
+  <${input:componentName} />
+</ToolApp>
+
+<ToolInfo>
+  Documentation about what this tool does and how to use it.
+</ToolInfo>
 ```
+
+The MDX importing its own app is what keeps the page's CSS to this tool's own
+styles instead of every app's. Component props go in the JSX, not in
+frontmatter.
 
 1. **Create the Astro component** at `src/components/apps/${input:componentName}.astro`:
 
 ```astro
 ---
 interface Props {
-  // Props from appProps in frontmatter (if any)
+  // Props passed from the MDX, e.g. <Tool showExplanation />
 }
 ---
 
@@ -60,11 +73,9 @@ interface Props {
 </style>
 ```
 
-1. **Register in componentMap**: Add entry to `src/pages/tools/[...slug].astro`:
-
-```typescript
-${input:componentName}: (await import("@components/apps/${input:componentName}.astro")).default,
-```
+1. **No registration step**: there is no component map. The MDX import from
+   step 1 is the whole wiring, and it is also what `sitemap-post-dates.ts`
+   parses to keep the tool's sitemap `<lastmod>` tracking its component.
 
 1. **Design rules**:
    - **No Preact** — Tools use `<script is:inline>` with vanilla JS

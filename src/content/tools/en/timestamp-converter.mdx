@@ -14,9 +14,6 @@ features:
   - "ISO 8601, [RFC 2822](https://datatracker.ietf.org/doc/html/rfc2822), and short formats"
   - "Compare one moment across 11 timezones"
   - "Runs locally in your browser"
-appComponent: "TimestampConverter"
-appProps:
-  title: ""
 faq:
   - question: "What is a Unix timestamp?"
     answer: "A Unix timestamp is the number of seconds elapsed since the Unix Epoch (1970-01-01 00:00:00 UTC), not counting leap seconds. It is timezone-independent, which makes it ideal for storing and exchanging moments in APIs, logs, and databases."
@@ -30,11 +27,20 @@ faq:
     answer: "No. All conversions run entirely in your browser using JavaScript's built-in Date and Intl APIs, and no timestamp data leaves your device. Shareable links only encode the timestamp in URL parameters."
 ---
 
+import TimestampConverter from "@components/apps/TimestampConverter.astro";
+import ToolApp from "@components/ui/ToolApp.astro";
+import ToolInfo from "@components/ui/ToolInfo.astro";
 import {
   TerminalSession,
   TerminalSessionCommand,
   TerminalSessionOutput,
 } from "@components/ui/terminal-session";
+
+<ToolApp>
+  <TimestampConverter title="" />
+</ToolApp>
+
+<ToolInfo>
 
 <h2>About This Tool</h2>
 <p>
@@ -283,3 +289,5 @@ import {
     ```
   </TerminalSessionOutput>
 </TerminalSession>
+
+</ToolInfo>

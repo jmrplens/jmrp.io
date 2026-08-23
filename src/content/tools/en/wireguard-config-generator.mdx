@@ -14,7 +14,6 @@ features:
   - "Unlimited peers with client .conf files"
   - "Full or split tunnel and QR support"
   - "Runs locally in your browser"
-appComponent: "WireGuardConfigGenerator"
 faq:
   - question: "Are my WireGuard keys safe with this generator?"
     answer: "Yes. The tool runs entirely in your browser and sends no data to any server. By default it lets RouterOS auto-generate the keys on the device, so private keys never need to be entered into the tool at all."
@@ -27,6 +26,16 @@ faq:
   - question: "Why does the config include MSS clamping and a dual-stack IPv6 setup?"
     answer: "MSS clamping prevents fragmentation problems over the tunnel by auto-calculating the right MSS value. Dual-stack adds IPv4 plus IPv6 ULA addressing with NAT66 so clients work on IPv6-capable networks; you can pick the IPv4-only preset if you don't need IPv6."
 ---
+
+import WireGuardConfigGenerator from "@components/apps/WireGuardConfigGenerator.astro";
+import ToolApp from "@components/ui/ToolApp.astro";
+import ToolInfo from "@components/ui/ToolInfo.astro";
+
+<ToolApp>
+  <WireGuardConfigGenerator />
+</ToolApp>
+
+<ToolInfo>
 
 <h2>About This Tool</h2>
 <p>
@@ -186,3 +195,5 @@ faq:
     </a>
   </li>
 </ul>
+
+</ToolInfo>

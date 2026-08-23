@@ -14,7 +14,6 @@ features:
   - "Configurable keyspace and GPU throughput"
   - "Shows device binding making attacks infeasible"
   - "Computes client-side, no inputs transmitted"
-appComponent: "BruteForceCost"
 faq:
   - question: "How long does it take to brute-force a 4-digit PIN?"
     answer: "A 4-digit PIN has only 10,000 possible values, so a GPU with no key-stretching cracks it almost instantly. The real defense is a PBKDF2 work factor that slows each guess, or device binding that makes offline guessing infeasible."
@@ -27,6 +26,16 @@ faq:
   - question: "Is anything I type sent to a server?"
     answer: "No. Every value is computed in your browser with simple arithmetic, and no inputs are transmitted anywhere."
 ---
+
+import BruteForceCost from "@components/apps/BruteForceCost.astro";
+import ToolApp from "@components/ui/ToolApp.astro";
+import ToolInfo from "@components/ui/ToolInfo.astro";
+
+<ToolApp>
+  <BruteForceCost />
+</ToolApp>
+
+<ToolInfo>
 
 <h2>About This Tool</h2>
 <p>
@@ -73,3 +82,5 @@ faq:
   Everything is computed in your browser with simple arithmetic. No inputs are
   transmitted anywhere.
 </p>
+
+</ToolInfo>

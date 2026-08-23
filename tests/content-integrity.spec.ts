@@ -73,12 +73,22 @@ test.describe("Image Alt Text Validation", () => {
 // ─── External Links Security ─────────────────────────────────────────
 
 test.describe("External Links Security", () => {
+  // The sample missed the two page types that actually shipped bare external
+  // anchors (2026-08-23): /about/, whose links are written by hand in the
+  // component, and a tool page whose MDX writes raw HTML <a> — those reach the
+  // tree as JSX and rehype-external-links never sees them. /uses/ is here for
+  // the same reason as /about/. The other test that covers this
+  // (functional.spec.ts) only inspects links that ALREADY have target="_blank",
+  // so a link with neither attribute slipped through both.
   const samplePages = [
     "/",
     "/blog/001-secure-nginx-client-certificates/",
     "/cv",
     "/tools/",
+    "/tools/etm-envelope-visualizer/",
     "/projects/",
+    "/about/",
+    "/uses/",
   ];
 
   for (const url of samplePages) {

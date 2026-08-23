@@ -14,7 +14,6 @@ features:
   - "Decodes hex frames with exception detection"
   - "Interprets registers with selectable byte order"
   - "Runs fully client-side, no server"
-appComponent: "ModbusFrameBuilder"
 faq:
   - question: "What is the difference between Modbus RTU and Modbus TCP frames?"
     answer: "RTU frames are binary and end with a 16-bit CRC for serial lines, while TCP frames prepend a 7-byte MBAP header (transaction ID, protocol ID, length, unit ID) and drop the CRC because TCP/IP handles error checking. This tool builds and decodes both, plus Modbus ASCII with LRC."
@@ -28,11 +27,20 @@ faq:
     answer: "No. All frame building, decoding, CRC/LRC calculation, and data interpretation run entirely in your browser; nothing is transmitted. The shareable link only encodes frame parameters in the URL query string."
 ---
 
+import ModbusFrameBuilder from "@components/apps/ModbusFrameBuilder.astro";
+import ToolApp from "@components/ui/ToolApp.astro";
+import ToolInfo from "@components/ui/ToolInfo.astro";
 import {
   TerminalSession,
   TerminalSessionCommand,
   TerminalSessionOutput,
 } from "@components/ui/terminal-session";
+
+<ToolApp>
+  <ModbusFrameBuilder />
+</ToolApp>
+
+<ToolInfo>
 
 <h2>About This Tool</h2>
 <p>
@@ -582,3 +590,5 @@ import {
   (slave address through the last data byte). It is transmitted as two ASCII hex
   characters before the trailing CR LF.
 </p>
+
+</ToolInfo>

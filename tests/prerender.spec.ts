@@ -35,8 +35,11 @@ async function getSpeculationRules(
 ): Promise<(SpeculationRule | null)[]> {
   await page.goto("/", { waitUntil: "load" });
 
-  // Trigger prefetch by hovering over internal link
-  const internalLinks = page.locator('a[href^="/"]');
+  // Trigger prefetch by hovering over internal link. With
+  // `defaultStrategy: "hover"` only the hovered link gets speculation rules,
+  // and hovering a link to the CURRENT page injects nothing — so the
+  // self-referencing logo (`href="/"`) must be excluded.
+  const internalLinks = page.locator('a[href^="/"]:not([href="/"])');
 
   // Verify links exist
   expect(await internalLinks.count()).toBeGreaterThan(0);
@@ -84,8 +87,10 @@ test.describe("Speculation Rules / Prerender", () => {
       "Browser does not support speculation rules",
     );
 
-    // Trigger prefetch by hovering over internal links
-    const internalLinks = page.locator('a[href^="/"]');
+    // Trigger prefetch by hovering over internal links. With the "hover"
+    // prefetch strategy only the hovered link gets speculation rules, and a
+    // link to the CURRENT page injects nothing — exclude the logo (`/`).
+    const internalLinks = page.locator('a[href^="/"]:not([href="/"])');
     const linkCount = await internalLinks.count();
 
     // Verify we have internal links to test with
@@ -223,7 +228,9 @@ test.describe("Speculation Rules / Prerender", () => {
     await page.goto("/", { waitUntil: "load" });
     // Note: waitUntil: "load" already waits for document.readyState === "complete"
 
-    const internalLinks = page.locator('a[href^="/"]');
+    // Hover a non-self link so the "hover" strategy actually injects rules
+    // (a link to the current page is a no-op and would test nothing).
+    const internalLinks = page.locator('a[href^="/"]:not([href="/"])');
     // eslint-disable-next-line playwright/no-conditional-in-test
     if ((await internalLinks.count()) > 0) {
       await internalLinks.first().hover();

@@ -14,7 +14,6 @@ features:
   - "Export to 7 server formats (Nginx, Apache, Vercel)"
   - "Report-Only mode and live security assessment"
   - "Runs entirely in your browser"
-appComponent: "CSPBuilder"
 faq:
   - question: "What is a Content Security Policy and why do I need one?"
     answer: "A Content Security Policy (CSP) is an HTTP response header that tells the browser which sources of content are trusted, helping detect and mitigate attacks like Cross-Site Scripting (XSS) and data injection. It is a critical defense-in-depth layer for any modern website."
@@ -28,11 +27,20 @@ faq:
     answer: "The security assessment flags insecure configurations like 'unsafe-inline' because they weaken your policy by allowing inline scripts or styles, defeating much of CSP's protection against XSS. Prefer nonces or hashes instead."
 ---
 
+import CSPBuilder from "@components/apps/CSPBuilder.astro";
+import ToolApp from "@components/ui/ToolApp.astro";
+import ToolInfo from "@components/ui/ToolInfo.astro";
 import {
   TerminalSession,
   TerminalSessionCommand,
   TerminalSessionOutput,
 } from "@components/ui/terminal-session";
+
+<ToolApp>
+  <CSPBuilder />
+</ToolApp>
+
+<ToolInfo>
 
 <h2>About This Tool</h2>
 <p>
@@ -124,3 +132,5 @@ import {
   </a>
   .
 </p>
+
+</ToolInfo>

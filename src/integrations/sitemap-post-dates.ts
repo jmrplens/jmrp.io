@@ -39,8 +39,6 @@ interface PostFrontmatter {
   publishedDate?: string | Date;
   updatedDate?: string | Date;
   draft?: boolean;
-  /** Tools only: the Astro component that actually implements the tool. */
-  appComponent?: string;
 }
 
 /** Extracts and parses the YAML frontmatter block from raw MDX content. */
@@ -175,6 +173,28 @@ function frontmatterDate(value: string | Date | undefined): string | undefined {
 }
 
 /**
+ * Repo-relative paths of the app components a tool MDX imports.
+ *
+ * Derived from the import statements rather than from an `appComponent`
+ * frontmatter field, which is what this used to read. That field was the only
+ * remaining copy of a name the MDX already states, and since the per-tool CSS
+ * split (2026-08-22) nothing rendered from it — so a rename or a typo would
+ * still build, `gitDate()` would quietly find no file, and the tool's
+ * `<lastmod>` would stop tracking its own component. The import cannot drift:
+ * if it is wrong the page does not compile.
+ *
+ * All matches count, not just the first: `regex-tester` imports both
+ * `RegexTester` and `RegexFlavorTable`, and an edit to either really does
+ * change the page.
+ */
+function appComponentPaths(raw: string): string[] {
+  const imports = raw.matchAll(
+    /from\s+["']@components\/apps\/(\w+)\.astro["']/g,
+  );
+  return [...imports].map((match) => `src/components/apps/${match[1]}.astro`);
+}
+
+/**
  * Tool slug → lastmod, from frontmatter when present and git history otherwise.
  * Tool pages are hand-maintained MDX, so their real modification date is the
  * last time someone edited that MDX — never the deploy that happened to follow.
@@ -200,13 +220,11 @@ function getToolDateMap(): Map<string, string> {
       // Keyed to frontmatter alone, all 46 tool URLs reported 2026-06-23 while
       // e.g. SubnetCalculator.astro had changed on 2026-08-01 — understating
       // freshness and suppressing recrawl of genuinely changed pages. Take the
-      // newest of: frontmatter, the MDX file, and the component itself.
+      // newest of: frontmatter, the MDX file, and the components it imports.
       const iso = newest(
         frontmatterDate(fm?.updatedDate ?? fm?.publishedDate),
         gitDate(`src/content/tools/${locale}/${file}`),
-        fm?.appComponent
-          ? gitDate(`src/components/apps/${fm.appComponent}.astro`)
-          : undefined,
+        ...appComponentPaths(raw).map((path) => gitDate(path)),
       );
       if (!iso) continue;
       const slug = fm?.slug ?? file.replace(/\.mdx$/, "");
@@ -319,7 +337,7 @@ let lastmodResolver: ((path: string) => string | undefined) | undefined;
  * Memoised view of {@link createLastmodResolver} for use from page components.
  *
  * The resolver shells out to `git log` several times while it builds its maps,
- * which is fine once during sitemap serialisation but not once per page: the
+ * which is fine once during sitemap serialization but not once per page: the
  * schema builders run for all 126 pages, and rebuilding would spawn hundreds of
  * git processes. The singleton keeps it to one pass.
  *

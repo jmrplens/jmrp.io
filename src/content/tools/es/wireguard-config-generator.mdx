@@ -14,7 +14,6 @@ features:
   - "Peers ilimitados con archivos .conf de cliente"
   - "Túnel completo o dividido y soporte QR"
   - "Se ejecuta localmente en tu navegador"
-appComponent: "WireGuardConfigGenerator"
 lang: "es"
 faq:
   - question: "¿Están seguras mis claves de WireGuard con este generador?"
@@ -28,6 +27,16 @@ faq:
   - question: "¿Por qué la configuración incluye MSS clamping y un montaje dual-stack IPv6?"
     answer: "El MSS clamping evita problemas de fragmentación sobre el túnel calculando automáticamente el valor MSS adecuado. El dual-stack añade direccionamiento IPv4 más IPv6 ULA con NAT66 para que los clientes funcionen en redes con IPv6; puedes elegir el preset solo IPv4 si no necesitas IPv6."
 ---
+
+import WireGuardConfigGenerator from "@components/apps/WireGuardConfigGenerator.astro";
+import ToolApp from "@components/ui/ToolApp.astro";
+import ToolInfo from "@components/ui/ToolInfo.astro";
+
+<ToolApp>
+  <WireGuardConfigGenerator />
+</ToolApp>
+
+<ToolInfo>
 
 <h2>Acerca de esta herramienta</h2>
 <p>
@@ -195,3 +204,5 @@ faq:
     </a>
   </li>
 </ul>
+
+</ToolInfo>

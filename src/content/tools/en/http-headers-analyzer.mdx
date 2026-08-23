@@ -14,7 +14,6 @@ features:
   - "Detects information leakage headers"
   - "Fetch from URL or paste headers manually"
   - "All analysis runs in your browser"
-appComponent: "HTTPHeadersAnalyzer"
 faq:
   - question: "Which HTTP security headers does this tool check?"
     answer: "It evaluates 10 critical headers including Content-Security-Policy, Strict-Transport-Security, X-Content-Type-Options, X-Frame-Options, Referrer-Policy, Permissions-Policy and the three Cross-Origin policies. It also flags information leakage from \"Server\", \"X-Powered-By\" and \"X-AspNet-Version\" headers."
@@ -28,11 +27,20 @@ faq:
     answer: "No. X-XSS-Protection is a legacy filter that modern browsers ignore or that can introduce vulnerabilities; the recommended value is \"0\" to disable it, and a strong Content-Security-Policy is the proper XSS defense."
 ---
 
+import HTTPHeadersAnalyzer from "@components/apps/HTTPHeadersAnalyzer.astro";
+import ToolApp from "@components/ui/ToolApp.astro";
+import ToolInfo from "@components/ui/ToolInfo.astro";
 import {
   TerminalSession,
   TerminalSessionCommand,
   TerminalSessionOutput,
 } from "@components/ui/terminal-session";
+
+<ToolApp>
+  <HTTPHeadersAnalyzer />
+</ToolApp>
+
+<ToolInfo>
 
 <h2>What does this tool do?</h2>
 <p>
@@ -248,3 +256,5 @@ import {
   </a>{" "}
   for a detailed guide on configuring security headers.
 </p>
+
+</ToolInfo>

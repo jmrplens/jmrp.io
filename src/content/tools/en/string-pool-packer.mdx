@@ -14,7 +14,6 @@ features:
   - "uint16 offset and 64 KiB guard"
   - "Lines and CSV i18n input modes"
   - "Runs locally in your browser"
-appComponent: "StringPoolPacker"
 faq:
   - question: "Why do const char* pointer tables waste so much flash on an MCU?"
     answer: "Each cell in a 2-D (language × string ID) table holds a pointer, which is 4 bytes on a 32-bit MCU before a single character of text. Switching to a uint16 offset table halves that index overhead, a structural win the linker can't make for you."
@@ -27,6 +26,16 @@ faq:
   - question: "Does this tool send my strings to a server?"
     answer: "No. All parsing, deduplication, tail-merging, and byte counting happen entirely in your browser, and nothing you type is transmitted anywhere."
 ---
+
+import StringPoolPacker from "@components/apps/StringPoolPacker.astro";
+import ToolApp from "@components/ui/ToolApp.astro";
+import ToolInfo from "@components/ui/ToolInfo.astro";
+
+<ToolApp>
+  <StringPoolPacker />
+</ToolApp>
+
+<ToolInfo>
 
 <h2>About This Tool</h2>
 <p>
@@ -118,3 +127,5 @@ faq:
   All parsing, deduplication, tail-merging, and byte counting happen entirely in
   your browser. Nothing you type is transmitted to any server.
 </p>
+
+</ToolInfo>

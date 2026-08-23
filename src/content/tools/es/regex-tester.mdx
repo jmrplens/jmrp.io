@@ -14,7 +14,6 @@ features:
   - "Modo de reemplazo con retrorreferencias"
   - "Flags g/i/m/s/u conmutables y presets"
   - "Se ejecuta localmente en tu navegador"
-appComponent: "RegexTester"
 lang: "es"
 faq:
   - question: "¿Mis patrones regex y cadenas de prueba se envían a un servidor?"
@@ -29,12 +28,21 @@ faq:
     answer: "Patrones como (a+)+b provocan backtracking catastrófico con entradas largas que no coinciden. La herramienta muestra el tiempo de ejecución de cada prueba, así que si un patrón tarda más de unos milisegundos, simplifícalo o usa character classes negadas en lugar de comodines voraces."
 ---
 
+import RegexTester from "@components/apps/RegexTester.astro";
+import ToolApp from "@components/ui/ToolApp.astro";
+import ToolInfo from "@components/ui/ToolInfo.astro";
 import RegexFlavorTable from "@components/apps/RegexFlavorTable.astro";
 import {
   TerminalSession,
   TerminalSessionCommand,
   TerminalSessionOutput,
 } from "@components/ui/terminal-session";
+
+<ToolApp>
+  <RegexTester />
+</ToolApp>
+
+<ToolInfo>
 
 <h2>Acerca de esta herramienta</h2>
 <p>
@@ -479,3 +487,5 @@ import {
   color: var(--color-text);
 }
 `}</style>
+
+</ToolInfo>

@@ -748,7 +748,7 @@ function isTextNode(node: { nodeType?: number }): node is { data: string } & {
  * around from `astro.config.mjs`. Backtick spans survive (they are `inlineCode`
  * mdast nodes, which SmartyPants skips), but a raw `<code>` written as HTML —
  * which is the only option inside the HTML tables this site uses — leaves its
- * contents as a plain `text` node, and that does get typographed.
+ * contents as a plain `text` node, and that does get typographic treatment.
  *
  * The damage is not cosmetic: it ships code that fails if copied. Measured on
  * the 2026-08-22 GEO audit — `‘unsafe-inline’` (invalid CSP keyword),

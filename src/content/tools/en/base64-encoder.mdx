@@ -14,7 +14,6 @@ features:
   - "Encode files via drag-and-drop with preview"
   - "Generate Data URIs for CSS and HTML"
   - "Runs fully client-side, no uploads"
-appComponent: "Base64Encoder"
 faq:
   - question: "Is Base64 a form of encryption?"
     answer: "No. Base64 is an encoding scheme, not encryption. It makes binary data safe to transmit as text but provides no confidentiality, since anyone can decode it instantly. Never use it to protect secrets."
@@ -28,11 +27,20 @@ faq:
     answer: "A Data URI embeds the Base64-encoded content directly inside CSS or HTML using a data:<mime-type>;base64,... prefix, avoiding a separate file request. Enable the Data URI toggle to get a ready-to-paste string for small assets like icons."
 ---
 
+import Base64Encoder from "@components/apps/Base64Encoder.astro";
+import ToolApp from "@components/ui/ToolApp.astro";
+import ToolInfo from "@components/ui/ToolInfo.astro";
 import {
   TerminalSession,
   TerminalSessionCommand,
   TerminalSessionOutput,
 } from "@components/ui/terminal-session";
+
+<ToolApp>
+  <Base64Encoder />
+</ToolApp>
+
+<ToolInfo>
 
 <h2>About This Tool</h2>
 <p>
@@ -182,3 +190,5 @@ import {
     /dev/stdin: PNG image data, 800 x 600, 8-bit/color RGBA
   </TerminalSessionOutput>
 </TerminalSession>
+
+</ToolInfo>

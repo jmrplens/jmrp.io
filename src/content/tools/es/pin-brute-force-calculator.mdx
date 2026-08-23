@@ -14,7 +14,6 @@ features:
   - "Espacio de claves y rendimiento de GPU configurables"
   - "Muestra cómo la vinculación al chip hace inviable el ataque"
   - "Calcula en el navegador, sin enviar datos"
-appComponent: "BruteForceCost"
 lang: "es"
 faq:
   - question: "¿Cuánto se tarda en romper por fuerza bruta un PIN de 4 dígitos?"
@@ -28,6 +27,16 @@ faq:
   - question: "¿Se envía a algún servidor lo que escribo?"
     answer: "No. Cada valor se calcula en tu navegador con aritmética simple y no se transmite ninguna entrada a ningún sitio."
 ---
+
+import BruteForceCost from "@components/apps/BruteForceCost.astro";
+import ToolApp from "@components/ui/ToolApp.astro";
+import ToolInfo from "@components/ui/ToolInfo.astro";
+
+<ToolApp>
+  <BruteForceCost />
+</ToolApp>
+
+<ToolInfo>
 
 <h2>Sobre esta herramienta</h2>
 <p>
@@ -79,3 +88,5 @@ faq:
   Todo se calcula en tu navegador con aritmética simple. No se transmite ninguna
   entrada a ningún sitio.
 </p>
+
+</ToolInfo>

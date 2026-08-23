@@ -1,0 +1,22 @@
+---
+/**
+ * Wrapper for a tool's interactive app on its page.
+ *
+ * Exists so each tool MDX imports its OWN app component: with the previous
+ * static componentMap in ToolPage, Vite bundled the CSS of every app into the
+ * shared chunk and each tool page shipped the styles of all seventeen —
+ * 68 KB of foreign rules per page, measured on /tools/csp-builder/
+ * (2026-08-22). The `.tool-container` markup and style moved here verbatim
+ * from ToolLayout, which no longer wraps its default slot.
+ */
+---
+
+<div class="tool-container">
+  <slot />
+</div>
+
+<style>
+  .tool-container {
+    margin-bottom: var(--space-xl);
+  }
+</style>
