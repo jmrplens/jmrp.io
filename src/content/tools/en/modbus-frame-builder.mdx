@@ -14,7 +14,6 @@ features:
   - "Decodes hex frames with exception detection"
   - "Interprets registers with selectable byte order"
   - "Runs fully client-side, no server"
-appComponent: "ModbusFrameBuilder"
 faq:
   - question: "What is the difference between Modbus RTU and Modbus TCP frames?"
     answer: "RTU frames are binary and end with a 16-bit CRC for serial lines, while TCP frames prepend a 7-byte MBAP header (transaction ID, protocol ID, length, unit ID) and drop the CRC because TCP/IP handles error checking. This tool builds and decodes both, plus Modbus ASCII with LRC."

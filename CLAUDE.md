@@ -133,11 +133,15 @@ subtitle: string # Optional
 icon: string # UnoCSS class (e.g. "i-mdi:shield-lock-outline")
 category: enum # "security" | "developer" | "network" | "embedded" | "mikrotik"
 tags: string[] # Default: []
-appComponent: string # Maps to component in componentMap (e.g. "CSPBuilder")
-appProps: Record # Extra props passed to the component
 publishedDate: Date # Optional
 updatedDate: Date # Optional
 ```
+
+> **No `appComponent` / `appProps` in frontmatter.** Since the per-tool CSS
+> split (2026-08-22) each MDX imports its own app component and passes its own
+> props in JSX; there is no registry to name. `sitemap-post-dates.ts` reads the
+> `@components/apps/*.astro` import statements straight from the MDX to fold the
+> component's git date into the tool's `<lastmod>`.
 
 17 tools: `base64-encoder`, `cert-inspector`, `color-contrast-checker`, `cron-builder`, `csp-builder`, `etm-envelope-visualizer`, `hash-calculator`, `http-headers-analyzer`, `modbus-frame-builder`, `nginx-config-generator`, `password-generator`, `pin-brute-force-calculator`, `regex-tester`, `string-pool-packer`, `subnet-calculator`, `timestamp-converter`, `wireguard-config-generator`.
 
@@ -175,7 +179,7 @@ Array of sections with discriminated union by `type`:
 ### Routing
 
 - `/tools/` → `tools/index.astro` (grouped by category, ordered: security=1, developer=2, network=3, embedded=4, mikrotik=5)
-- `/tools/[slug]/` → `tools/[...slug].astro` (static `componentMap` maps `appComponent` → imported component)
+- `/tools/[slug]/` → `tools/[...slug].astro` → `ToolPage.astro`, which renders the MDX body inside `ToolLayout`; the MDX itself imports its app component (no registry)
 - `/tools/categories/[category]` → category filter pages
 
 ### ToolLayout Props

@@ -15,7 +15,6 @@ features:
   - "Siete ataques reales: voltear, falsificar, truncar, reubicar, cambiar tipo, revertir"
   - "Encrypt-then-MAC vs descifrar-primero, con ataque de oráculo de padding en vivo"
   - "Web Crypto API, nada sale de tu navegador"
-appComponent: "EnvelopeVisualizer"
 lang: "es"
 faq:
   - question: "¿Qué significa \"encrypt-then-MAC\"?"
@@ -153,41 +152,41 @@ P    = unpad(AES-256-CBC-Decrypt(encKey, IV, C))`}</code></pre>
 <h3>Referencias y lecturas</h3>
 <ul>
   <li>
-    <a href="https://eprint.iacr.org/2000/025">
+    <a href="https://eprint.iacr.org/2000/025" target="_blank" rel="external noopener noreferrer">
       Bellare y Namprempre — Authenticated Encryption: Relations among Notions
       and Analysis of the Generic Composition Paradigm
     </a>{" "}
     (encrypt-then-MAC es la composición genéricamente segura)
   </li>
   <li>
-    <a href="https://eprint.iacr.org/2001/045">
+    <a href="https://eprint.iacr.org/2001/045" target="_blank" rel="external noopener noreferrer">
       Krawczyk — The Order of Encryption and Authentication for Protecting
       Communications
     </a>
   </li>
   <li>
-    <a href="https://www.iacr.org/archive/eurocrypt2002/23320530/cbc02_e02d.pdf">
+    <a href="https://www.iacr.org/archive/eurocrypt2002/23320530/cbc02_e02d.pdf" target="_blank" rel="external noopener noreferrer">
       Vaudenay (2002) — Security Flaws Induced by CBC Padding
     </a>{" "}
     (el ataque de oráculo de padding original)
   </li>
   <li>
-    <a href="https://moxie.org/2011/12/13/the-cryptographic-doom-principle.html">
+    <a href="https://moxie.org/2011/12/13/the-cryptographic-doom-principle.html" target="_blank" rel="external noopener noreferrer">
       Moxie Marlinspike — The Cryptographic Doom Principle
     </a>
   </li>
   <li>
-    <a href="https://datatracker.ietf.org/doc/html/rfc2104">RFC 2104 — HMAC</a> ·{" "}
-    <a href="https://datatracker.ietf.org/doc/html/rfc5652#section-6.3">
+    <a href="https://datatracker.ietf.org/doc/html/rfc2104" target="_blank" rel="external noopener noreferrer">RFC 2104 — HMAC</a> ·{" "}
+    <a href="https://datatracker.ietf.org/doc/html/rfc5652#section-6.3" target="_blank" rel="external noopener noreferrer">
       RFC 5652 §6.3 — relleno PKCS#7
     </a>
   </li>
   <li>
-    <a href="https://nvlpubs.nist.gov/nistpubs/SpecialPublications/NIST.SP.800-57pt1r5.pdf">
+    <a href="https://nvlpubs.nist.gov/nistpubs/SpecialPublications/NIST.SP.800-57pt1r5.pdf" target="_blank" rel="external noopener noreferrer">
       NIST SP 800-57 Parte 1
     </a>{" "}
     (una clave, un propósito) ·{" "}
-    <a href="https://csrc.nist.gov/pubs/fips/180-4/upd1/final">
+    <a href="https://csrc.nist.gov/pubs/fips/180-4/upd1/final" target="_blank" rel="external noopener noreferrer">
       FIPS 180-4 — SHA-256
     </a>
   </li>

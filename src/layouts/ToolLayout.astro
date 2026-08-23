@@ -1,9 +1,10 @@
 ---
 /**
  * ToolLayout component.
- * Shared layout for all /tools/* pages.
- * Provides consistent structure: breadcrumb, header, tool container,
- * and info section — plus the SoftwareApplication JSON-LD schema.
+ * Shared layout for all /tools/* pages. Provides only the common chrome —
+ * breadcrumb, page header and FAQ — plus the SoftwareApplication JSON-LD
+ * schema. The tool container and the info card are NOT rendered here: they
+ * belong to the MDX, as <ToolApp> and <ToolInfo>.
  *
  * Slots:
  *   - default: the tool MDX's full body. Each MDX brings its own <ToolApp>

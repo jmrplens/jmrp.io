@@ -14,7 +14,6 @@ features:
   - "uint16 offset and 64 KiB guard"
   - "Lines and CSV i18n input modes"
   - "Runs locally in your browser"
-appComponent: "StringPoolPacker"
 faq:
   - question: "Why do const char* pointer tables waste so much flash on an MCU?"
     answer: "Each cell in a 2-D (language × string ID) table holds a pointer, which is 4 bytes on a 32-bit MCU before a single character of text. Switching to a uint16 offset table halves that index overhead, a structural win the linker can't make for you."

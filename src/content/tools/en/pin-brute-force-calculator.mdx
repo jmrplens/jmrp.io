@@ -14,7 +14,6 @@ features:
   - "Configurable keyspace and GPU throughput"
   - "Shows device binding making attacks infeasible"
   - "Computes client-side, no inputs transmitted"
-appComponent: "BruteForceCost"
 faq:
   - question: "How long does it take to brute-force a 4-digit PIN?"
     answer: "A 4-digit PIN has only 10,000 possible values, so a GPU with no key-stretching cracks it almost instantly. The real defense is a PBKDF2 work factor that slows each guess, or device binding that makes offline guessing infeasible."

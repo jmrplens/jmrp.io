@@ -14,7 +14,6 @@ features:
   - "Outputs ready-to-use CSP script-src directives"
   - "Optional whitespace cleanup before hashing"
   - "Web Crypto API, content never sent to a server"
-appComponent: "HashCalculator"
 faq:
   - question: "When should I use a CSP hash instead of a nonce?"
     answer: "Use a hash for inline scripts or styles whose content never changes, so you can allow them without \"unsafe-inline\". If the script contains dynamic values like a user ID, use a nonce instead, because any change to the content breaks the hash."

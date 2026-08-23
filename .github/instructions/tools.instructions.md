@@ -13,7 +13,8 @@ Tools are interactive web utilities at `/tools/[slug]/`. They are **NOT Preact**
 - Tool content: `src/content/tools/*.mdx` (frontmatter + documentation)
 - Tool components: `src/components/apps/*.astro` (interactive UI)
 - Tool layout: `src/layouts/ToolLayout.astro`
-- Tool routing: `src/pages/tools/[...slug].astro` (contains `componentMap`)
+- Tool wrappers: `src/components/ui/ToolApp.astro` (interactive app) + `src/components/ui/ToolInfo.astro` (documentation card) — used from the MDX
+- Tool routing: `src/pages/tools/[...slug].astro` → `src/components/pages/ToolPage.astro` (no component registry: each MDX imports its own app)
 
 ## Adding a New Tool
 
@@ -27,18 +28,31 @@ slug: "my-tool"
 description: "Short description ≤ 155 chars"
 icon: "i-mdi:wrench"
 category: "developer" # security | developer | network | embedded | mikrotik
-appComponent: "MyTool" # Maps to componentMap key
 tags: ["utility"]
 ---
-Documentation content here (rendered in the "info" slot).
+import MyTool from "@components/apps/MyTool.astro";
+import ToolApp from "@components/ui/ToolApp.astro";
+import ToolInfo from "@components/ui/ToolInfo.astro";
+
+<ToolApp>
+<MyTool />
+</ToolApp>
+
+<ToolInfo>
+Documentation content here.
+</ToolInfo>
 ```
+
+The MDX imports its own app: that is what keeps the page's CSS to this tool's
+own styles instead of all 17 apps' (−31 % gz). Props go in the JSX
+(`<MyTool showExplanation />`), not in frontmatter.
 
 ### 2. Create the component
 
 ```astro
 ---
 interface Props {
-  // Props from appProps in frontmatter
+  // Props passed from the MDX, e.g. <MyTool showExplanation />
 }
 ---
 
@@ -54,16 +68,12 @@ interface Props {
 </script>
 ```
 
-### 3. Register in componentMap
+### 3. Nothing to register
 
-Add to `src/pages/tools/[...slug].astro`:
-
-```typescript
-const componentMap: Record<string, any> = {
-  // ...existing entries
-  MyTool: (await import("@components/apps/MyTool.astro")).default,
-};
-```
+There is no component registry. The MDX import from step 1 is the only wiring —
+which is also what `sitemap-post-dates.ts` parses to keep the tool's sitemap
+`<lastmod>` tracking its component. Mirror the MDX to `src/content/tools/es/`
+with the same slug.
 
 ## Design Rules
 
@@ -85,6 +95,6 @@ const componentMap: Record<string, any> = {
 4. `embedded` — Embedded systems tools
 5. `mikrotik` — MikroTik-specific tools
 
-## Existing Tools (14)
+## Existing Tools (17)
 
-`base64-encoder`, `cert-inspector`, `color-contrast-checker`, `cron-builder`, `csp-builder`, `hash-calculator`, `http-headers-analyzer`, `modbus-frame-builder`, `nginx-config-generator`, `password-generator`, `regex-tester`, `subnet-calculator`, `timestamp-converter`, `wireguard-config-generator`
+`base64-encoder`, `cert-inspector`, `color-contrast-checker`, `cron-builder`, `csp-builder`, `etm-envelope-visualizer`, `hash-calculator`, `http-headers-analyzer`, `modbus-frame-builder`, `nginx-config-generator`, `password-generator`, `pin-brute-force-calculator`, `regex-tester`, `string-pool-packer`, `subnet-calculator`, `timestamp-converter`, `wireguard-config-generator`
