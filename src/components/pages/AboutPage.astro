@@ -14,6 +14,7 @@ import { useTranslatedPath, useTranslations } from "@i18n/utils";
 import BaseLayout from "@layouts/BaseLayout.astro";
 import type { SiteConfig } from "@src/types";
 import { lastCommitDate } from "@utils/content-date";
+import { externalLinkProps } from "@utils/links";
 import { CANONICAL_ALUMNI_OF } from "@utils/person";
 import { getSiteUrl } from "@utils/site";
 import { Image } from "astro:assets";
@@ -183,7 +184,12 @@ const personSchema = {
                 {link.email ? (
                   <ObfuscatedEmail address={link.value} />
                 ) : (
-                  <a href={link.href}>{link.value}</a>
+                  <a
+                    href={link.href}
+                    {...externalLinkProps(link.href ?? "")}
+                  >
+                    {link.value}
+                  </a>
                 )}
               </li>
             ))
@@ -217,7 +223,16 @@ const personSchema = {
                       />
                     )}
                     <h3 class="proj-card__name">
-                      {href ? <a href={href}>{p.name}</a> : p.name}
+                      {href ? (
+                        <a
+                          href={href}
+                          {...externalLinkProps(href)}
+                        >
+                          {p.name}
+                        </a>
+                      ) : (
+                        p.name
+                      )}
                     </h3>
                   </div>
                   {p.tech && <p class="proj-card__tech">{p.tech}</p>}
