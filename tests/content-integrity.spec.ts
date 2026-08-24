@@ -151,10 +151,10 @@ test.describe("Opted-out Networks", () => {
 
     // Host-anchored on purpose: a bare "x.com" substring also matches
     // docs.nginx.com and acusticox.com, both legitimately linked from posts.
-    // El esquema es opcional para cazar también las relativas de protocolo
-    // (`//twitter.com/...`), y `(?![\w.-])` exige que el host TERMINE ahí: con
-    // `\b` bastaba un punto para colarse, y `twitter.com.evil` daba un falso
-    // positivo que habría roto el build por un enlace legítimo.
+    // The scheme is optional so protocol-relative hrefs (`//twitter.com/...`)
+    // are caught too, and `(?![\w.-])` requires the host to END there: with
+    // `\b` a following dot was enough to slip through, so `twitter.com.evil`
+    // matched and would have failed the build over a legitimate link.
     const forbidden = [
       {
         label: "X/Twitter URL",

@@ -170,9 +170,10 @@ export function resolveFile(
  * @throws If any value contains a character that is unsafe to interpolate.
  */
 export function assertNginxSafe(values: string[], context: string): void {
-  // `\\` va escapada de verdad: en `["\;…]` el `\;` es solo `;` y la barra
-  // invertida NO entraba en la clase, así que el guard dejaba pasar justo el
-  // carácter que escapa la comilla de cierre en una cadena de nginx.
+  // The backslash is escaped for real here. In `["\;…]` the `\;` is just `;` —
+  // a backslash before a non-special character inside a character class is a
+  // no-op — so the backslash itself was NOT in the class, and the guard let
+  // through the one character that escapes the closing quote of a map entry.
   const unsafe = /["\\;\r\n]|\s{2,}/;
   for (const value of values) {
     if (unsafe.test(value)) {
