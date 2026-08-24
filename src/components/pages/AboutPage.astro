@@ -261,14 +261,18 @@ const personSchema = {
                     <p class="proj-card__links">
                       <a
                         href={live}
-                        {...externalLinkProps(live)}
+                        {...externalLinkProps(
+                          live,
+                          t("aria.opensNewTab", {
+                            text: `${t("pages.projects.hosted")} — ${p.name}`,
+                          }),
+                        )}
                       >
                         <span
                           class="i-mdi:api"
                           aria-hidden="true"
                         />
                         {t("pages.projects.hosted")}
-                        <span class="sr-only"> — {p.name}</span>
                       </a>
                     </p>
                   )}
