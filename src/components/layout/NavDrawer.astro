@@ -173,6 +173,9 @@ const termData = {
     blocked: t("terminal.blocked"),
     usage: t("terminal.usage"),
     resetHome: t("terminal.resetHome"),
+    // The terminal builds external links in the browser, so the notice has to
+    // travel with the data: `t()` does not exist there.
+    opensNewTab: t("aria.opensNewTab", { text: "{label}" }),
     groups: {
       nav: t("terminal.groupNav"),
       discover: t("terminal.groupDiscover"),
@@ -571,7 +574,13 @@ const staticRecent = postData.slice(0, 6);
         a.href = href;
         a.target = "_blank";
         a.rel = "external noopener noreferrer";
-        a.appendChild(el("span", "term-link__glyph", "↗"));
+        // The name is built here rather than left to the text content: the
+        // glyph would otherwise be read out ("north east arrow GitHub"), and
+        // the link would not announce that it leaves the site.
+        a.setAttribute("aria-label", T.opensNewTab.replace("{label}", label));
+        const glyph = el("span", "term-link__glyph", "↗");
+        glyph.setAttribute("aria-hidden", "true");
+        a.appendChild(glyph);
         a.appendChild(el("span", "term-link__label", label));
         return a;
       }
