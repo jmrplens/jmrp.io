@@ -186,7 +186,7 @@ const groups = [
                     {t("pages.projects.docs")}
                     <span class="sr-only"> — {project.name}</span>
                   </a>
-                  {project.hosted && (
+                  {hostedHref(project, locale) && (
                     <a
                       href={hostedHref(project, locale)}
                       target="_blank"

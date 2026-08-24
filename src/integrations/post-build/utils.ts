@@ -170,7 +170,10 @@ export function resolveFile(
  * @throws If any value contains a character that is unsafe to interpolate.
  */
 export function assertNginxSafe(values: string[], context: string): void {
-  const unsafe = /["\;\r\n]|\s{2,}/;
+  // `\\` va escapada de verdad: en `["\;…]` el `\;` es solo `;` y la barra
+  // invertida NO entraba en la clase, así que el guard dejaba pasar justo el
+  // carácter que escapa la comilla de cierre en una cadena de nginx.
+  const unsafe = /["\\;\r\n]|\s{2,}/;
   for (const value of values) {
     if (unsafe.test(value)) {
       throw new Error(

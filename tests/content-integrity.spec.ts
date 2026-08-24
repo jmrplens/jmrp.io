@@ -151,12 +151,19 @@ test.describe("Opted-out Networks", () => {
 
     // Host-anchored on purpose: a bare "x.com" substring also matches
     // docs.nginx.com and acusticox.com, both legitimately linked from posts.
+    // El esquema es opcional para cazar también las relativas de protocolo
+    // (`//twitter.com/...`), y `(?![\w.-])` exige que el host TERMINE ahí: con
+    // `\b` bastaba un punto para colarse, y `twitter.com.evil` daba un falso
+    // positivo que habría roto el build por un enlace legítimo.
     const forbidden = [
       {
         label: "X/Twitter URL",
-        re: /https?:\/\/(?:[\w-]+\.)*(?:x|twitter)\.com\b/i,
+        re: /(?:https?:)?\/\/(?:[\w-]+\.)*(?:x|twitter)\.com(?![\w.-])/i,
       },
-      { label: "Ko-fi URL", re: /https?:\/\/(?:[\w-]+\.)*ko-fi\.com\b/i },
+      {
+        label: "Ko-fi URL",
+        re: /(?:https?:)?\/\/(?:[\w-]+\.)*ko-fi\.com(?![\w.-])/i,
+      },
       {
         label: "account handle meta",
         re: /<meta[^>]+name="twitter:(?:site|creator)"/i,
