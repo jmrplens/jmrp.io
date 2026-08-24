@@ -113,7 +113,7 @@ export const common = {
     visitProfile: "Visitar mi perfil de {name}",
     viewTaggedPosts: "Ver todas las publicaciones con la etiqueta {tag}",
     readArticle: "Leer artículo: {title}",
-    opensNewTab: "{text} (abre en nueva pestaña)",
+    opensNewTab: "{text} (se abre en nueva pestaña)",
     showTab: "Mostrar pestaña {label}",
     calloutType: "Aviso de tipo {type}",
     stepByStep: "Guía paso a paso",
@@ -654,7 +654,6 @@ export const common = {
         "Servidores Model Context Protocol que ejecuto y expongo públicamente, para que un cliente de IA pueda llamarlos por HTTP sin instalar nada.",
       mcpLink: "Abrir mcp.jmrp.io",
       endpointsLabel: "Endpoints:",
-      opensInNewTab: "(se abre en nueva pestaña)",
       // InfrastructureInsights
       statsAriaLabel: "Estadísticas en tiempo real del nodo edge",
       statsError: "No se pudieron cargar las estadísticas de infraestructura.",

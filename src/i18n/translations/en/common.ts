@@ -661,7 +661,6 @@ export const common = {
         "Model Context Protocol servers I run and expose publicly, so an AI client can call them over HTTP without installing anything.",
       mcpLink: "Open mcp.jmrp.io",
       endpointsLabel: "Endpoints:",
-      opensInNewTab: "(opens in new tab)",
       // InfrastructureInsights
       statsAriaLabel: "Edge node real-time statistics",
       statsError: "Unable to load infrastructure statistics.",
