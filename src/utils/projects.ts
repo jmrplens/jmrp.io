@@ -88,6 +88,26 @@ export const licenseUrl = (license: string): string =>
 export const softwareId = (project: Project | string): string =>
   `https://github.com/jmrplens/${typeof project === "string" ? project : project.id}#software`;
 
+/**
+ * Localized page for a project's public running instance, or `undefined` when
+ * it has none.
+ *
+ * Lives here rather than in a page because two surfaces render the same link —
+ * /projects/ and the featured cards on /about/ — and a second copy of the
+ * `hostedEs` fallback is exactly the shape that drifts between locales.
+ * Returns the PAGE, never the raw endpoint: the MCP endpoints answer 405 to
+ * the GET a browser sends (see the `hosted` field docs in content.config.ts).
+ *
+ * @param project - The project as authored in `projects.yaml`.
+ * @param locale - Current locale; only `es` has a separate page today.
+ * @returns The documentation page URL for the running instance, if any.
+ */
+export const hostedHref = (
+  project: Project,
+  locale: string,
+): string | undefined =>
+  locale === "es" && project.hostedEs ? project.hostedEs : project.hosted;
+
 /** Reads and validates the projects document from the content collection. */
 export async function getProjects(): Promise<Project[]> {
   const entry = await getEntry("profile", "projects");

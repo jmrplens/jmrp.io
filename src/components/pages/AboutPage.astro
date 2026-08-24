@@ -3,8 +3,9 @@
  * About page ("// PROFILE") — bio, portrait, "I build / I write about / say hi"
  * cards, featured open-source projects, and education. All content is a single
  * localized source in `src/content/profile/about.yaml`; the featured projects are
- * pulled from the CV collection so their data lives in one place. Emits a
- * ProfilePage + Person JSON-LD to strengthen author-entity recognition.
+ * pulled from the CV collection so their data lives in one place, and their
+ * public running instances from `projects.yaml`, the source /projects/ reads.
+ * Emits a ProfilePage + Person JSON-LD to strengthen author-entity recognition.
  */
 import mehomeImg from "@assets/mehome.webp";
 import ObfuscatedEmail from "@components/ui/ObfuscatedEmail.astro";
@@ -16,6 +17,7 @@ import type { SiteConfig } from "@src/types";
 import { lastCommitDate } from "@utils/content-date";
 import { externalLinkProps } from "@utils/links";
 import { CANONICAL_ALUMNI_OF } from "@utils/person";
+import { getProjects, hostedHref } from "@utils/projects";
 import { getSiteUrl } from "@utils/site";
 import { Image } from "astro:assets";
 import { getEntry } from "astro:content";
@@ -58,6 +60,21 @@ const featuredProjects = about.featuredProjects
 /** Primary (GitHub, else first) link for a project card. */
 const projectHref = (p: CvProject) =>
   p.links?.find((l) => l.label === "GitHub")?.url ?? p.links?.[0]?.url;
+
+/**
+ * The public running instance of a featured project, when it has one.
+ *
+ * /projects/ already renders this from `projects.yaml`; the same cards here
+ * showed only the repository, so a reader on the profile page could not tell
+ * that one of them is callable right now. Looked up by `id` because the CV
+ * items name each project by its repo name — the same key space the projects
+ * document uses.
+ */
+const projects = await getProjects();
+const liveHref = (name: string) => {
+  const project = projects.find((p) => p.id === name);
+  return project && hostedHref(project, locale);
+};
 
 // Editorial & corrections policy (#editorial). The site discloses AI assistance
 // on every post, which makes the absence of a stated verification and
@@ -213,6 +230,7 @@ const personSchema = {
           <div class="about-projects">
             {featuredProjects.map((p) => {
               const href = projectHref(p);
+              const live = liveHref(p.name);
               return (
                 <article class="proj-card">
                   <div class="proj-card__head">
@@ -238,6 +256,21 @@ const personSchema = {
                   {p.tech && <p class="proj-card__tech">{p.tech}</p>}
                   {p.description && (
                     <p class="proj-card__desc">{p.description}</p>
+                  )}
+                  {live && (
+                    <p class="proj-card__links">
+                      <a
+                        href={live}
+                        {...externalLinkProps(live)}
+                      >
+                        <span
+                          class="i-mdi:api"
+                          aria-hidden="true"
+                        />
+                        {t("pages.projects.hosted")}
+                        <span class="sr-only"> — {p.name}</span>
+                      </a>
+                    </p>
                   )}
                 </article>
               );
@@ -481,6 +514,29 @@ const personSchema = {
     font-size: var(--text-sm);
     line-height: 1.55;
     color: var(--color-text);
+  }
+
+  .proj-card__links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-md);
+    margin: var(--space-md) 0 0;
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+  }
+
+  .proj-card__links a {
+    display: inline-flex;
+    gap: 6px;
+    align-items: center;
+    color: var(--color-accent);
+    text-decoration: none;
+  }
+
+  .proj-card__links a:hover,
+  .proj-card__links a:focus-visible {
+    text-decoration: underline;
+    text-underline-offset: 3px;
   }
 
   .about-edu {
