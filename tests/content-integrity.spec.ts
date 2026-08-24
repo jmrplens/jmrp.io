@@ -131,6 +131,58 @@ test.describe("External Links Security", () => {
   }
 });
 
+// ─── Opted-out Networks ──────────────────────────────────────────────
+
+test.describe("Opted-out Networks", () => {
+  // The author does not use X/Twitter or Ko-fi and does not want them named
+  // anywhere on the site (closed decision, reaffirmed 2026-08-24). The existing
+  // guard in schema-validation.spec.ts only inspects `sameAs` in the JSON-LD of
+  // /about/, so it never saw the two <meta> tags BaseHead emitted on all 126
+  // pages: twitter:site and twitter:creator, both carrying the handle. This
+  // sweeps the whole build instead of a sample, because the leak was in a
+  // layout — one page's worth of coverage would have proved nothing.
+  //
+  // The rest of the twitter:* namespace is deliberately NOT matched: Slack,
+  // Discord and WhatsApp read twitter:card to pick the large-image layout, and
+  // none of those tags names an account.
+  test("no page names an opted-out network", () => {
+    const distDir = join(process.cwd(), "dist");
+    expect(existsSync(distDir)).toBe(true);
+
+    // Host-anchored on purpose: a bare "x.com" substring also matches
+    // docs.nginx.com and acusticox.com, both legitimately linked from posts.
+    const forbidden = [
+      {
+        label: "X/Twitter URL",
+        re: /https?:\/\/(?:[\w-]+\.)*(?:x|twitter)\.com\b/i,
+      },
+      { label: "Ko-fi URL", re: /https?:\/\/(?:[\w-]+\.)*ko-fi\.com\b/i },
+      {
+        label: "account handle meta",
+        re: /<meta[^>]+name="twitter:(?:site|creator)"/i,
+      },
+    ];
+
+    const offenders: string[] = [];
+    const walk = (dir: string): void => {
+      for (const entry of readdirSync(dir, { withFileTypes: true })) {
+        const full = join(dir, entry.name);
+        if (entry.isDirectory()) {
+          walk(full);
+        } else if (entry.name.endsWith(".html")) {
+          const html = readFileSync(full, "utf8");
+          for (const { label, re } of forbidden) {
+            if (re.test(html)) offenders.push(`${label} in ${full}`);
+          }
+        }
+      }
+    };
+    walk(distDir);
+
+    expect(offenders, offenders.slice(0, 10).join("\n")).toEqual([]);
+  });
+});
+
 // ─── Build Compression ───────────────────────────────────────────────
 
 test.describe("Build Compression", () => {
