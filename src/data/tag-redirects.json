@@ -1,0 +1,59 @@
+{
+  "$comment": [
+    "Retired blog tags -> where their URL should land now. Consumed at build time",
+    "by src/integrations/post-build/tag-redirects.ts, which writes the nginx map",
+    "in nginx/tag_redirects.conf. Adding an entry here is the ONLY step needed:",
+    "the generator emits the EN and ES forms, with and without trailing slash, and",
+    "nginx matches map keys case-insensitively, so /blog/tags/mTLS/ resolves too.",
+    "",
+    "A value starting with 'tag:' redirects to that tag's page; 'blog' sends the",
+    "request to the blog index, which is the honest answer when no current tag",
+    "covers the retired one.",
+    "",
+    "Traffic figures are from the full access-log history (2026-05-09 .. 08-24),",
+    "loopback excluded. They are the reason each entry exists; a tag nobody asks",
+    "for does not need a rule."
+  ],
+  "consolidated": {
+    "$comment": "Tag consolidation of 2026-08-01: 28 tags -> 13. These URLs were in the sitemap and are indexed.",
+    "containers": "tag:devops",
+    "csp": "tag:security",
+    "dhcpv6-pd": "tag:ipv6",
+    "honeypot": "tag:security",
+    "http3": "tag:nginx",
+    "i18n": "tag:embedded",
+    "kubernetes": "tag:devops",
+    "mtls": "tag:security",
+    "performance": "tag:nginx",
+    "pppoe": "tag:ipv6",
+    "tarpit": "tag:security",
+    "tor": "tag:privacy",
+    "vpn": "tag:networking",
+    "wireguard": "tag:networking"
+  },
+  "retired": {
+    "$comment": "Tags that really existed in post frontmatter (verified in git history) but were dropped before the 2026-08-01 consolidation, so they never got a rule. 1023 requests were still 404ing.",
+    "firewall": "tag:security",
+    "crowdsec": "tag:security",
+    "bouncer": "tag:security",
+    "certificates": "tag:security",
+    "quic": "tag:nginx",
+    "architecture": "blog",
+    "open-source": "blog"
+  },
+  "hallucinated": {
+    "$comment": "Tags that NEVER existed in any revision: invented by AI crawlers. Only the ones with real traffic are curated, the same treatment the two hallucinated post URLs get in the vhost. The rest keep answering 404, which is the truthful response to a URL that never existed.",
+    "zero-trust": "tag:security",
+    "defense": "tag:security",
+    "sysadmin": "tag:linux",
+    "webperf": "tag:nginx",
+    "debug": "blog",
+    "tutorial": "blog",
+    "astro": "blog",
+    "webdev": "blog"
+  },
+  "paths": {
+    "$comment": "Standalone legacy paths, not tags. /home never existed as a page on this site: it is a URL from the previous al-folio blog. 9 requests in the log history, 2 from a real iPhone. The generator emits the EN and ES forms, with and without the trailing slash.",
+    "/home": "/"
+  }
+}
