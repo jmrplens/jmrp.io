@@ -134,10 +134,6 @@ if (projectsSection?.kind === "projects") {
   );
 }
 
-// Sections used to build the CV JSON-LD (WebPage + additive Person facts).
-const experience = sections.find((s) => s.kind === "experience");
-const certificates = sections.find((s) => s.kind === "certificates");
-
 // /cv/ is not the canonical ProfilePage (that's /about/ — see AboutPage.astro)
 // so it emits a plain WebPage referencing the canonical #person node, plus a
 // SEPARATE Person node that only ADDS occupation/education/credential facts —
