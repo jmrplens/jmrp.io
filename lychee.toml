@@ -3,6 +3,20 @@ max_cache_age = "1d"
 
 no_progress = true
 
+# Códigos que cuentan como enlace VÁLIDO. El valor por defecto de lychee es
+# `100..=103, 200..=299`; aquí se añade 408 y nada más.
+#
+# Por qué: los DOI de Zenodo enlazados desde /publications/ devuelven 408 Request
+# Timeout a los runners de GitHub de forma intermitente — dos runs seguidos en rojo
+# el 2026-08-24 con los mismos enlaces. Comprobados a mano desde este servidor, los
+# 15 doi.org del sitio resuelven 200 y redirigen a su registro de Zenodo.
+#
+# 408 significa "no me han contestado a tiempo", que es una condición de red, no un
+# enlace roto: un 404 o un 410 reales siguen fallando el check. Se prefiere esto a
+# excluir `doi.org` del barrido (que es lo que se hizo con acusticox.com más abajo),
+# porque excluirlo dejaría 15 enlaces reales sin comprobar nunca.
+accept = ["100..=103", "200..=299", "408"]
+
 # Exclude specific domains/URLs (Timeouts prevent checking)
 exclude = [
     # --- Anti-bot 403s: these serve fine to real readers ---------------------
