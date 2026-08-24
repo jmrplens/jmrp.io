@@ -441,7 +441,7 @@ export const common = {
       heroBio1:
         "Soy José Manuel Requena Plens, ingeniero de I+D en Valencia, España, especializado en firmware embebido (C/C++, STM32/ESP32), desarrollo de software industrial e investigación en acústica aplicada. Mi trayectoria va desde la investigación académica en acústica hasta el desarrollo de firmware industrial, y esa amplitud es la que más me motiva.",
       heroBio2:
-        "Disfruto integrando hardware y software de principio a fin. Contribuyo activamente al Open Source —con herramientas usadas por desarrolladores de todo el mundo— y soy un apasionado del self-hosting, siempre mejorando mi homelab y aportando proyectos a la comunidad. <a href='/es/cv/'>Consulta mi CV</a> para ver la trayectoria completa.",
+        "Disfruto integrando hardware y software de principio a fin. Contribuyo activamente al Open Source —con herramientas usadas por desarrolladores de todo el mundo— y soy un apasionado del self-hosting. Mi homelab sirve este sitio y los <a href='https://mcp.jmrp.io/es/' target='_blank' rel='external noopener noreferrer'>servidores MCP públicos</a> a los que cualquiera puede conectar un cliente de IA. <a href='/es/cv/'>Consulta mi CV</a> para ver la trayectoria completa.",
       viewCV: "Ver CV",
       viewCVAria: "Ver CV - mi currículum profesional",
       readBlog: "Leer Blog",

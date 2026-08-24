@@ -3,6 +3,20 @@ max_cache_age = "1d"
 
 no_progress = true
 
+# Status codes that count as a VALID link. lychee's default is
+# `100..=103, 200..=299`; 408 is the only addition.
+#
+# Why: the Zenodo DOIs linked from /publications/ intermittently answer 408
+# Request Timeout to GitHub runners — two consecutive red runs on 2026-08-24 over
+# the same links. Checked by hand from the server, all 15 doi.org links on the
+# site resolve 200 and redirect to their Zenodo record.
+#
+# A 408 means "nobody answered in time", which is a network condition rather than
+# a dead link: a real 404 or 410 still fails the check. Preferred over excluding
+# `doi.org` from the sweep (the treatment acusticox.com gets below), because
+# excluding it would leave 15 real links unchecked forever.
+accept = ["100..=103", "200..=299", "408"]
+
 # Exclude specific domains/URLs (Timeouts prevent checking)
 exclude = [
     # --- Anti-bot 403s: these serve fine to real readers ---------------------

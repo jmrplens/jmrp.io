@@ -20,6 +20,7 @@ import BaseLayout from "@layouts/BaseLayout.astro";
 import {
   buildProjectSchema,
   getProjects,
+  hostedHref,
   licenseUrl,
   type Project,
   softwareId,
@@ -39,14 +40,6 @@ const pageUrl = new URL(Astro.url.pathname, getSiteUrl()).href;
 /** Localized documentation URL — falls back to the English docs entry point. */
 const docsHref = (project: Project) =>
   locale === "es" && project.docsEs ? project.docsEs : project.docs;
-
-/**
- * Localized page for the project's public running instance. Only rendered when
- * `hosted` is set; see `projects.yaml` for why this links the page rather than
- * the endpoint.
- */
-const hostedHref = (project: Project) =>
-  locale === "es" && project.hostedEs ? project.hostedEs : project.hosted;
 
 /**
  * CollectionPage → ItemList → each `#software` node. The ItemList references
@@ -193,9 +186,9 @@ const groups = [
                     {t("pages.projects.docs")}
                     <span class="sr-only"> — {project.name}</span>
                   </a>
-                  {project.hosted && (
+                  {hostedHref(project, locale) && (
                     <a
-                      href={hostedHref(project)}
+                      href={hostedHref(project, locale)}
                       target="_blank"
                       rel="external noopener noreferrer"
                     >

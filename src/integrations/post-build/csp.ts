@@ -151,14 +151,30 @@ add_header Permissions-Policy "${permissionsPolicy}" always;
   // --- Optimized Assets CSP ---
   // A version of the security headers for non-HTML assets (images, fonts, etc.).
   // It removes script-src and style-src nonces while maintaining strict default-src 'none'.
-  // Note: style-src 'unsafe-inline' is used here because some CSS files may contain
-  // inline styles (e.g., SVG with embedded styles). This is acceptable for non-HTML
-  // assets where CSP enforcement is less critical.
+  // style-src 'unsafe-inline' is REQUIRED, but not for the reason the old note
+  // here claimed ("some CSS files may contain inline styles, e.g. SVG with
+  // embedded styles"). That premise is false: measured on 2026-08-24 over the
+  // 278 SVGs the build emits, zero carry a <style> element and zero a style=
+  // attribute.
+  //
+  // The real reason is the browser. Navigate straight to an image or to
+  // /sitemap-index.xml and Chrome wraps it in a generated HTML document —
+  // centred image on a dark backdrop, collapsible XML tree — whose styles are
+  // inline, and that document inherits THIS policy. Tightening to 'none' was
+  // tried and reverted the same day: 20 violations across png, webp, avif, jpeg
+  // and the sitemap, each one Chrome's own viewer being blocked. No hash can
+  // cover styles the browser injects, so the directive stays.
   const assetsCspHeader = [
     "default-src 'none'",
     "script-src 'none'",
     "style-src 'unsafe-inline'",
-    ...commonCspDirectives,
+    // Same directives as the HTML policy EXCEPT connect-src: the HTML allowlist
+    // (GitHub API, Cloudflare Insights, certspotter, crt.sh) is there for the
+    // islands and the beacon. An SVG, a PDF or a font never opens a connection,
+    // so serving them that allowlist widens the policy for nothing.
+    ...commonCspDirectives.map((d) =>
+      d.startsWith("connect-src ") ? "connect-src 'self'" : d,
+    ),
   ]
     .map((s) => s.trim())
     .join("; ");
@@ -177,6 +193,13 @@ add_header X-Frame-Options "DENY" always;
 
 # Referrer Policy
 add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+
+# Named endpoint for the CSP report-to directive (Reporting API v1). The policy
+# below has always declared "report-to csp-endpoint", but the header that DEFINES
+# that name lived only in security_headers.conf, the HTML one. Without it Chrome
+# has nowhere to send the violation and drops it, so CSP breaches on assets were
+# reported to nobody. Firefox and Safari kept using the legacy "report-uri".
+add_header Reporting-Endpoints 'csp-endpoint="/csp-report"' always;
 
 # Cross-Origin Policies
 add_header Cross-Origin-Embedder-Policy "require-corp" always;

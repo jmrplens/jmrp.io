@@ -211,7 +211,6 @@ const site_config = defineCollection({
       // but usually 'type' works well. The original file had `type: z.string()` in the first object.
       theme_color: z.string(),
       background_color: z.string().optional(),
-      twitter_creator: z.string(),
       nav: z.array(z.object({ label: z.string(), href: z.string() })),
       hero: z.object({
         title: z.string(),

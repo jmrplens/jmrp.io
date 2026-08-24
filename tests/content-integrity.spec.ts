@@ -89,6 +89,11 @@ test.describe("External Links Security", () => {
     "/projects/",
     "/about/",
     "/uses/",
+    // /feeds/ shipped the same defect from the other direction (2026-08-24):
+    // its 16 Bluesky links carried the full rel but no target, so they were the
+    // only external links on the site that did not open in a new tab. Nothing
+    // caught it because the page was outside this sample.
+    "/feeds/",
   ];
 
   for (const url of samplePages) {
@@ -104,9 +109,12 @@ test.describe("External Links Security", () => {
         const href = await link.getAttribute("href");
         const rel = (await link.getAttribute("rel")) ?? "";
 
-        // Skip rel="me" links — they intentionally omit noopener/noreferrer
-
-        if (rel.split(/\s+/).includes("me")) continue;
+        // No exemption for rel="me": Footer.astro's normalizeExternalRel()
+        // forces external+noopener+noreferrer on every social link while
+        // keeping the `me` token, so all 378 of them already satisfy the three
+        // assertions below. The skip that used to live here claimed they
+        // "intentionally omit noopener/noreferrer" — untrue since that
+        // normalizer landed, and it was a hole in the guard for free.
 
         expect(rel, `Link ${href} on ${url} missing noopener`).toContain(
           "noopener",
@@ -121,6 +129,65 @@ test.describe("External Links Security", () => {
       }
     });
   }
+});
+
+// ─── Opted-out Networks ──────────────────────────────────────────────
+
+test.describe("Opted-out Networks", () => {
+  // The author does not use X/Twitter or Ko-fi and does not want them named
+  // anywhere on the site (closed decision, reaffirmed 2026-08-24). The existing
+  // guard in schema-validation.spec.ts only inspects `sameAs` in the JSON-LD of
+  // /about/, so it never saw the two <meta> tags BaseHead emitted on all 126
+  // pages: twitter:site and twitter:creator, both carrying the handle. This
+  // sweeps the whole build instead of a sample, because the leak was in a
+  // layout — one page's worth of coverage would have proved nothing.
+  //
+  // The rest of the twitter:* namespace is deliberately NOT matched: Slack,
+  // Discord and WhatsApp read twitter:card to pick the large-image layout, and
+  // none of those tags names an account.
+  test("no page names an opted-out network", () => {
+    const distDir = join(process.cwd(), "dist");
+    expect(existsSync(distDir)).toBe(true);
+
+    // Host-anchored on purpose: a bare "x.com" substring also matches
+    // docs.nginx.com and acusticox.com, both legitimately linked from posts.
+    // The scheme is optional so protocol-relative hrefs (`//twitter.com/...`)
+    // are caught too, and `(?![\w.-])` requires the host to END there: with
+    // `\b` a following dot was enough to slip through, so `twitter.com.evil`
+    // matched and would have failed the build over a legitimate link.
+    const forbidden = [
+      {
+        label: "X/Twitter URL",
+        re: /(?:https?:)?\/\/(?:[\w-]+\.)*(?:x|twitter)\.com(?![\w.-])/i,
+      },
+      {
+        label: "Ko-fi URL",
+        re: /(?:https?:)?\/\/(?:[\w-]+\.)*ko-fi\.com(?![\w.-])/i,
+      },
+      {
+        label: "account handle meta",
+        re: /<meta[^>]+name="twitter:(?:site|creator)"/i,
+      },
+    ];
+
+    const offenders: string[] = [];
+    const walk = (dir: string): void => {
+      for (const entry of readdirSync(dir, { withFileTypes: true })) {
+        const full = join(dir, entry.name);
+        if (entry.isDirectory()) {
+          walk(full);
+        } else if (entry.name.endsWith(".html")) {
+          const html = readFileSync(full, "utf8");
+          for (const { label, re } of forbidden) {
+            if (re.test(html)) offenders.push(`${label} in ${full}`);
+          }
+        }
+      }
+    };
+    walk(distDir);
+
+    expect(offenders, offenders.slice(0, 10).join("\n")).toEqual([]);
+  });
 });
 
 // ─── Build Compression ───────────────────────────────────────────────

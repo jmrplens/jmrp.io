@@ -28,6 +28,7 @@ import { extractCssDataUris } from "./post-build/css.js";
 import { generateDocsRedirects } from "./post-build/docs-redirects.js";
 import { processHtmlFiles } from "./post-build/html.js";
 import { optimizeImages } from "./post-build/images.js";
+import { generateTagRedirects } from "./post-build/tag-redirects.js";
 import type { CspData } from "./post-build/types.js";
 import { timed } from "./timing.js";
 
@@ -90,6 +91,9 @@ export default function postBuildIntegration(): AstroIntegration {
           );
           await timed("generateDocsRedirects", logger, () =>
             generateDocsRedirects(logger),
+          );
+          await timed("generateTagRedirects", logger, () =>
+            generateTagRedirects(logger),
           );
 
           // optimizeImages (re-compresses PNGs) and compressAssets (gzip/brotli

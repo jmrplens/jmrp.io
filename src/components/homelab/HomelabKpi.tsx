@@ -1,5 +1,3 @@
-import { useEffect, useRef, useState } from "preact/hooks";
-
 /** Translations required by HomelabKpi. Passed from the Astro parent. */
 export interface HomelabKpiTranslations {
   /** ARIA label for the KPI band region. */
@@ -12,8 +10,6 @@ export interface HomelabKpiTranslations {
   requests24h: string;
   /** Label under the "WAN · 24h" figure. */
   wan24h: string;
-  /** Shown in place of a figure when its live value is unavailable. */
-  noData: string;
 }
 
 /** Component props. */
@@ -24,71 +20,23 @@ interface Props {
   /** Number of monitored infrastructure nodes (computed at build). */
   readonly nodesCount: number;
   /**
-   * Server-injected mode: pre-formatted display strings (the `HLM_*` tokens
-   * from `ssr-tokens.ts`, replaced by nginx at serve time). When set, the
-   * component renders them verbatim and performs no fetching — it is expected
-   * to be mounted WITHOUT a `client:*` directive. See `ssr-tokens.ts` for the
-   * full contract.
+   * Pre-formatted display strings: the `HLM_*` tokens from `ssr-tokens.ts`,
+   * replaced by nginx at serve time. The component renders them verbatim and
+   * fetches nothing; it is mounted WITHOUT a `client:*` directive. See
+   * `ssr-tokens.ts` for the full contract.
    */
-  readonly ssr?: {
+  readonly ssr: {
     readonly online: string;
     readonly requests: string;
     readonly wan: string;
   };
 }
 
-/** Health endpoint payload: real per-service up/down aggregated server-side. */
-interface HealthPayload {
-  online: number;
-  total: number;
-}
-
-/** Subset of the stats payload used for the KPI band (requests + WAN 24h). */
-interface StatsPayload {
-  requests_received_24h: number;
-  wan_rx_bytes_24h: number;
-}
-
-/** Narrow an unknown payload to the health shape. */
-function isHealth(data: unknown): data is HealthPayload {
-  if (!data || typeof data !== "object") return false;
-  const d = data as Record<string, unknown>;
-  return typeof d.online === "number" && typeof d.total === "number";
-}
-
-/** Narrow an unknown payload to the stats fields we read. */
-function isStats(data: unknown): data is StatsPayload {
-  if (!data || typeof data !== "object") return false;
-  const d = data as Record<string, unknown>;
-  return (
-    typeof d.requests_received_24h === "number" &&
-    typeof d.wan_rx_bytes_24h === "number"
-  );
-}
-
-/**
- * Formats a byte count into a compact human-readable string (e.g. "485 GB").
- * @param bytes - The number of bytes.
- */
-function formatBytes(bytes: number): string {
-  if (!Number.isFinite(bytes) || bytes <= 0) return "0 B";
-  const k = 1024;
-  const sizes = ["B", "KB", "MB", "GB", "TB"];
-  const i = Math.min(
-    Math.floor(Math.log(bytes) / Math.log(k)),
-    sizes.length - 1,
-  );
-  const value = bytes / Math.pow(k, i);
-  return `${Number.parseFloat(value.toFixed(value < 10 ? 1 : 0))} ${sizes[i]}`;
-}
-
 /**
  * Homelab KPI band — four headline figures above the edge-defense spotlight.
- * Two are structural (services total, nodes) and two are live: the real online
- * count comes from the server-side `/api/homelab/health` aggregate, while the
- * 24h requests + WAN figures piggyback on the `/api/homelab/stats` payload the
- * band already fetches — so the whole band costs two cached requests. A failed
- * fetch leaves the affected figure as an em dash.
+ * Two are structural (services total, nodes) and two arrive pre-formatted from
+ * nginx as `HLM_*` tokens. The component fetches nothing: it renders on the
+ * server and never hydrates.
  */
 export default function HomelabKpi({
   translations: t,
@@ -96,94 +44,17 @@ export default function HomelabKpi({
   nodesCount,
   ssr,
 }: Props) {
-  const [online, setOnline] = useState<number | null>(null);
-  const [requests, setRequests] = useState<number | null>(null);
-  const [wan, setWan] = useState<number | null>(null);
-  const isFetchingRef = useRef(false);
-
-  useEffect(() => {
-    // Server-injected mode: values arrive in the HTML itself; nothing to fetch.
-    if (ssr) return;
-    const controller = new AbortController();
-    const REFRESH_INTERVAL = 30_000;
-
-    const fetchKpis = async () => {
-      if (isFetchingRef.current) return;
-      isFetchingRef.current = true;
-      try {
-        const token =
-          document.querySelector<HTMLElement>("[data-homelab-token]")?.dataset
-            .homelabToken ?? "";
-        const headers = { "X-Homelab-Token": token };
-        const [healthRes, statsRes] = await Promise.all([
-          fetch("/api/homelab/health", {
-            signal: controller.signal,
-            headers,
-          }).catch(() => null),
-          fetch("/api/homelab/stats", {
-            signal: controller.signal,
-            headers,
-          }).catch(() => null),
-        ]);
-
-        if (healthRes?.ok) {
-          const health = (await healthRes.json()) as unknown;
-          if (isHealth(health)) setOnline(health.online);
-        }
-        if (statsRes?.ok) {
-          const stats = (await statsRes.json()) as unknown;
-          if (isStats(stats)) {
-            setRequests(stats.requests_received_24h);
-            setWan(stats.wan_rx_bytes_24h);
-          }
-        }
-      } catch (error: unknown) {
-        if (error instanceof DOMException && error.name === "AbortError")
-          return;
-        console.error("Failed to fetch homelab KPI stats", error);
-      } finally {
-        isFetchingRef.current = false;
-      }
-    };
-
-    void fetchKpis();
-    const intervalId = setInterval(() => void fetchKpis(), REFRESH_INTERVAL);
-    return () => {
-      clearInterval(intervalId);
-      controller.abort();
-    };
-  }, [ssr]);
-
   // Server-injected values are already formatted; render them verbatim.
-  const kpis = ssr
-    ? [
-        {
-          v: `${ssr.online} / ${servicesCount}`,
-          l: t.servicesOnline,
-          empty: false,
-        },
-        { v: String(nodesCount), l: t.monitoredNodes, empty: false },
-        { v: ssr.requests, l: t.requests24h, empty: false },
-        { v: ssr.wan, l: t.wan24h, empty: false },
-      ]
-    : [
-        {
-          v: `${online ?? "…"} / ${servicesCount}`,
-          l: t.servicesOnline,
-          empty: online === null,
-        },
-        { v: String(nodesCount), l: t.monitoredNodes, empty: false },
-        {
-          v: requests === null ? t.noData : requests.toLocaleString(),
-          l: t.requests24h,
-          empty: requests === null,
-        },
-        {
-          v: wan === null ? t.noData : formatBytes(wan),
-          l: t.wan24h,
-          empty: wan === null,
-        },
-      ];
+  const kpis = [
+    {
+      v: `${ssr.online} / ${servicesCount}`,
+      l: t.servicesOnline,
+      empty: false,
+    },
+    { v: String(nodesCount), l: t.monitoredNodes, empty: false },
+    { v: ssr.requests, l: t.requests24h, empty: false },
+    { v: ssr.wan, l: t.wan24h, empty: false },
+  ];
 
   return (
     <div className="kpi-band">

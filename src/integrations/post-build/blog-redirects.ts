@@ -3,6 +3,8 @@ import path from "node:path";
 
 import type { AstroIntegrationLogger } from "astro";
 
+import { assertNginxSafe, writeNginxSnippet } from "./utils.js";
+
 /**
  * Blog post directories are named with a numeric ordering prefix
  * (`001-secure-nginx-client-certificates`) and that prefix leaks into the
@@ -118,6 +120,14 @@ export async function generateBlogRedirects(
     ...collectLocaleRedirects(distDir, "/es", logger),
   ];
 
+  // Slugs come from directory names on disk, so they are already constrained —
+  // but they are interpolated into quoted Nginx map entries all the same, and
+  // this file is `include`d by the live vhost. Same guard as docs-redirects.
+  assertNginxSafe(
+    pairs.flatMap(([from, to]) => [from, to]),
+    "blog post slugs",
+  );
+
   const entries = pairs
     .flatMap(([from, to]) => [
       // The no-slash form first: Nginx would otherwise 301 it to the slash form
@@ -156,8 +166,7 @@ ${entries}
   // dangling and fail `nginx -t`. Keeping it in the repo means the path always
   // resolves; the content only changes when posts are added or renamed.
   const outPath = path.join(process.cwd(), "nginx", "blog_redirects.conf");
-  await fs.promises.mkdir(path.dirname(outPath), { recursive: true });
-  await fs.promises.writeFile(outPath, content);
+  await writeNginxSnippet(outPath, content);
   logger.info(
     `  ✓ Generated nginx/blog_redirects.conf (${pairs.length} prefix-less redirects)`,
   );

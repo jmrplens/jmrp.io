@@ -1191,8 +1191,10 @@ volver
 wbgetentities
 wbsearchentities
 wcag
+webdev
 webfinger
 webmin
+webperf
 webroot
 webtunnel
 weiter

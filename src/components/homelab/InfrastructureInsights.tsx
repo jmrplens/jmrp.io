@@ -1,5 +1,3 @@
-import { useEffect, useRef, useState } from "preact/hooks";
-
 /** Translations required by InfrastructureInsights. Passed from Astro parent. */
 export interface InfrastructureTranslations {
   /** ARIA label for the infrastructure insights container. */
@@ -140,7 +138,7 @@ interface Props {
    * available in this mode (it needs a variable-length payload, not a scalar
    * token) and is simply omitted. See `ssr-tokens.ts` for the full contract.
    */
-  readonly ssr?: {
+  readonly ssr: {
     readonly threats: string;
     readonly honeypot: string;
     readonly tarpit: string;
@@ -158,89 +156,32 @@ interface Country {
   count: number;
 }
 
-interface HomelabStats {
-  requests_received_24h: number;
-  responses_sent_24h: number;
-  upstream_sent_24h: number;
-  bandwidth_sent_24h: number;
-  bandwidth_recv_24h: number;
-  tarpit_hits_24h: number;
-  nginx_bans_24h: number;
-  mikrotik_scans_total: number;
-  rate_limited_503_24h: number;
-  cpu_usage_avg: number;
-  mem_used_percent: number;
-  cpu_temp: number | null;
-  top_security_countries: Country[];
+interface Props {
+  readonly translations: InfrastructureTranslations;
+  /**
+   * Server-injected mode: pre-formatted display strings (the `HLM_*` tokens
+   * from `ssr-tokens.ts`, replaced by nginx at serve time). When set, the
+   * component renders them verbatim, fetches nothing, and is expected to be
+   * mounted WITHOUT a `client:*` directive. The attack-regions list is not
+   * available in this mode (it needs a variable-length payload, not a scalar
+   * token) and is simply omitted. See `ssr-tokens.ts` for the full contract.
+   */
+  readonly ssr: {
+    readonly threats: string;
+    readonly honeypot: string;
+    readonly tarpit: string;
+    readonly nginxBans: string;
+    readonly crowdsec: string;
+    readonly blacklist: string;
+    readonly wanRx: string;
+    readonly activeConnections: string;
+    readonly requests: string;
+  };
 }
 
-/** MikroTik edge-router stats (network layer + honeypot) for the spotlight. */
-interface MikrotikStats {
-  honeypot_hits: number;
-  port_scanners_dropped: number;
-  blacklist_scanners: number;
-  crowdsec_blocked: number;
-  active_connections: number;
-  wan_rx_bytes: number;
-  wan_tx_bytes: number;
-}
-
-/** Light validation for the MikroTik payload (spotlight is best-effort). */
-function isValidMikrotik(data: unknown): data is MikrotikStats {
-  if (!data || typeof data !== "object") return false;
-  const d = data as Record<string, unknown>;
-  return (
-    typeof d.honeypot_hits === "number" &&
-    typeof d.crowdsec_blocked === "number"
-  );
-}
-
-/**
- * Validates the HomelabStats object.
- */
-function isValidHomelabStats(data: unknown): data is HomelabStats {
-  if (!data || typeof data !== "object") return false;
-  const d = data as Record<string, unknown>;
-  const requiredNumericFields = [
-    "requests_received_24h",
-    "responses_sent_24h",
-    "upstream_sent_24h",
-    "bandwidth_sent_24h",
-    "bandwidth_recv_24h",
-    "tarpit_hits_24h",
-    "nginx_bans_24h",
-    "mikrotik_scans_total",
-    "rate_limited_503_24h",
-    "cpu_usage_avg",
-    "mem_used_percent",
-  ];
-
-  return (
-    requiredNumericFields.every((field) => typeof d[field] === "number") &&
-    (typeof d.cpu_temp === "number" || d.cpu_temp === null) &&
-    Array.isArray(d.top_security_countries) &&
-    d.top_security_countries.every(
-      (c: unknown) =>
-        c &&
-        typeof c === "object" &&
-        typeof (c as Record<string, unknown>).code === "string" &&
-        typeof (c as Record<string, unknown>).count === "number",
-    )
-  );
-}
-
-/**
- * Formats bytes to a human-readable string.
- * @param bytes - The number of bytes.
- */
-function formatBytes(bytes: number | string) {
-  const numBytes = typeof bytes === "string" ? Number.parseFloat(bytes) : bytes;
-  if (!Number.isFinite(numBytes) || numBytes <= 0) return "0 B";
-  const k = 1024;
-  const sizes = ["B", "KB", "MB", "GB", "TB"];
-  const i = Math.floor(Math.log(numBytes) / Math.log(k));
-  const clampedI = Math.max(0, Math.min(i, sizes.length - 1));
-  return `${Number.parseFloat((numBytes / Math.pow(k, clampedI)).toFixed(2))} ${sizes[clampedI]}`;
+interface Country {
+  code: string;
+  count: number;
 }
 
 /**
@@ -253,155 +194,30 @@ export default function InfrastructureInsights({
   translations: t,
   ssr,
 }: Props) {
-  const [stats, setStats] = useState<HomelabStats | null>(null);
-  const [mikrotik, setMikrotik] = useState<MikrotikStats | null>(null);
-  const [error, setError] = useState(false);
-  const isFetchingRef = useRef(false);
+  // The attack-regions list needs a variable-length payload, which no `HLM_*`
+  // token can carry, so the server-injected page omits the block entirely.
+  const countries: Country[] = [];
 
-  useEffect(() => {
-    // Server-injected mode: values arrive in the HTML itself; nothing to fetch.
-    if (ssr) return;
-    const controller = new AbortController();
-    // Refresh interval in milliseconds (30 seconds)
-    const REFRESH_INTERVAL = 30_000;
-
-    const fetchMikrotik = async (headers: Record<string, string>) => {
-      try {
-        const mkRes = await fetch("/api/homelab/mikrotik", {
-          signal: controller.signal,
-          headers,
-        });
-        if (mkRes.ok) {
-          const mkData = (await mkRes.json()) as unknown;
-          if (isValidMikrotik(mkData)) setMikrotik(mkData);
-        }
-      } catch (mkError: unknown) {
-        if (!(
-          mkError instanceof DOMException && mkError.name === "AbortError"
-        )) {
-          console.error("Failed to fetch MikroTik stats", mkError);
-        }
-      }
-    };
-
-    const fetchStats = async () => {
-      if (isFetchingRef.current) return;
-
-      isFetchingRef.current = true;
-      try {
-        const token =
-          document.querySelector<HTMLElement>("[data-homelab-token]")?.dataset
-            .homelabToken ?? "";
-        const headers = { "X-Homelab-Token": token };
-        const res = await fetch("/api/homelab/stats", {
-          signal: controller.signal,
-          headers,
-        });
-        if (res.ok) {
-          const data = (await res.json()) as unknown;
-          if (isValidHomelabStats(data)) {
-            setStats(data);
-            setError(false);
-          } else {
-            console.error("Malformed infrastructure stats received", data);
-            setError(true);
-          }
-        } else {
-          setError(true);
-        }
-
-        // MikroTik edge-router data feeds the network-layer spotlight column
-        // (best-effort; a failure never blocks the main stats view).
-        await fetchMikrotik(headers);
-      } catch (error: unknown) {
-        if (error instanceof DOMException && error.name === "AbortError") {
-          return;
-        }
-        console.error("Failed to fetch infrastructure stats", error);
-        setError(true);
-      } finally {
-        isFetchingRef.current = false;
-      }
-    };
-
-    // Initial fetch
-    void fetchStats();
-
-    // Set up periodic refresh
-    const intervalId = setInterval(() => {
-      void fetchStats();
-    }, REFRESH_INTERVAL);
-
-    return () => {
-      clearInterval(intervalId);
-      controller.abort();
-    };
-  }, [ssr]);
-
-  const displayVal = (
-    val: number | null | undefined,
-    formatter?: (v: number | string) => string,
-  ) => {
-    if (val === undefined || val === null) return t.noData;
-    return formatter ? formatter(val) : val.toLocaleString();
-  };
-
-  // The attack-regions list needs a variable-length payload, so it exists
-  // only in hydrated mode; the server-injected page omits the block.
-  const countries = ssr ? [] : stats?.top_security_countries || [];
-
-  // Aggregate headline: same honest 24h sum as the KPI band (tarpit + nginx).
-  // Pre-formatted strings in ssr mode; live numbers otherwise.
-  const threats24h =
-    stats == null ? null : stats.tarpit_hits_24h + stats.nginx_bans_24h;
-  const threatsDisplay = ssr ? ssr.threats : displayVal(threats24h);
+  const threatsDisplay = ssr.threats;
 
   // Four headline sub-metrics shown in the hero band (all distinct real fields).
-  const fwTop = ssr
-    ? [
-        { label: t.honeypotHits, value: ssr.honeypot },
-        { label: t.tarpitHits, value: ssr.tarpit },
-        { label: t.nginxBans, value: ssr.nginxBans },
-        { label: t.crowdsecBlocked, value: ssr.crowdsec },
-      ]
-    : [
-        { label: t.honeypotHits, value: displayVal(mikrotik?.honeypot_hits) },
-        { label: t.tarpitHits, value: displayVal(stats?.tarpit_hits_24h) },
-        { label: t.nginxBans, value: displayVal(stats?.nginx_bans_24h) },
-        {
-          label: t.crowdsecBlocked,
-          value: displayVal(mikrotik?.crowdsec_blocked),
-        },
-      ];
+  const fwTop = [
+    { label: t.honeypotHits, value: ssr.honeypot },
+    { label: t.tarpitHits, value: ssr.tarpit },
+    { label: t.nginxBans, value: ssr.nginxBans },
+    { label: t.crowdsecBlocked, value: ssr.crowdsec },
+  ];
 
-  // Rows of the two layer columns, unified so the JSX below stays identical
-  // in both modes.
-  let wanRx = "...";
-  if (ssr) wanRx = `${ssr.wanRx} ↓`;
-  else if (mikrotik) wanRx = `${formatBytes(mikrotik.wan_rx_bytes)} ↓`;
-
+  // Rows of the two layer columns.
   const rows = {
-    blacklist: ssr ? ssr.blacklist : displayVal(mikrotik?.blacklist_scanners),
-    wanRx,
-    activeConnections: ssr
-      ? ssr.activeConnections
-      : displayVal(mikrotik?.active_connections),
-    crowdsec: ssr ? ssr.crowdsec : displayVal(mikrotik?.crowdsec_blocked),
-    requests: ssr ? ssr.requests : displayVal(stats?.requests_received_24h),
-    tarpit: ssr ? ssr.tarpit : displayVal(stats?.tarpit_hits_24h),
-    nginxBans: ssr ? ssr.nginxBans : displayVal(stats?.nginx_bans_24h),
+    blacklist: ssr.blacklist,
+    wanRx: `${ssr.wanRx} ↓`,
+    activeConnections: ssr.activeConnections,
+    crowdsec: ssr.crowdsec,
+    requests: ssr.requests,
+    tarpit: ssr.tarpit,
+    nginxBans: ssr.nginxBans,
   };
-
-  if (error) {
-    return (
-      <section
-        className="infrastructure-section"
-        aria-label={t.ariaLabel}
-      >
-        <div className="stats-error">{t.error}</div>
-      </section>
-    );
-  }
 
   return (
     <section

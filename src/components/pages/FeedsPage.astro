@@ -17,6 +17,7 @@ import { defaultLocale, type Locale } from "@i18n/config";
 import { useTranslatedPath, useTranslations } from "@i18n/utils";
 import BaseLayout from "@layouts/BaseLayout.astro";
 import { formatDateDot, getPostsForLocale } from "@utils/blog";
+import { externalLinkProps } from "@utils/links";
 import { getSiteUrl } from "@utils/site";
 import type { WebPage } from "schema-dts";
 
@@ -166,29 +167,32 @@ const feedsSchema = {
       <p class="feeds-bluesky__intro">{t("pages.feeds.blueskyIntro")}</p>
       <ul class="feeds-list">
         {
-          blueskyFeeds.feeds.map((feed) => (
-            <li class="feed-card">
-              <span class="feed-card__label">{feed.name}</span>
-              {/* The description is the record's own text, in the feed's
+          blueskyFeeds.feeds.map((feed) => {
+            const feedUrl = `${blueskyProfile}/feed/${feed.rkey}`;
+            return (
+              <li class="feed-card">
+                <span class="feed-card__label">{feed.name}</span>
+                {/* The description is the record's own text, in the feed's
                   language — lang tells assistive tech which voice to use. */}
-              <span
-                class="feed-card__desc"
-                lang={feed.lang}
-              >
-                {feed.description}
-              </span>
-              <span class="feed-card__row">
-                <a
-                  class="feed-card__open"
-                  href={`${blueskyProfile}/feed/${feed.rkey}`}
-                  rel="external noopener noreferrer"
-                  aria-label={`${t("pages.feeds.blueskyOpen")} — ${feed.name}`}
+                <span
+                  class="feed-card__desc"
+                  lang={feed.lang}
                 >
-                  {t("pages.feeds.blueskyOpen")} ↗
-                </a>
-              </span>
-            </li>
-          ))
+                  {feed.description}
+                </span>
+                <span class="feed-card__row">
+                  <a
+                    class="feed-card__open"
+                    href={feedUrl}
+                    {...externalLinkProps(feedUrl)}
+                    aria-label={`${t("pages.feeds.blueskyOpen")} — ${feed.name}`}
+                  >
+                    {t("pages.feeds.blueskyOpen")} ↗
+                  </a>
+                </span>
+              </li>
+            );
+          })
         }
       </ul>
     </section>

@@ -110,7 +110,6 @@ const kpiTranslations: HomelabKpiTranslations = {
   monitoredNodes: t("pages.homelab.kpiMonitoredNodes"),
   requests24h: t("pages.homelab.kpiRequests24h"),
   wan24h: t("pages.homelab.kpiWan24h"),
-  noData: t("pages.homelab.noData"),
 };
 
 const serviceStatsTranslations: ServiceStatsTranslations = {
@@ -304,31 +303,26 @@ const torServices = [
 const nodeCards: NodeConfig[] = [
   {
     key: "nginx",
-    endpoint: "/api/homelab/stats",
     name: t("pages.homelab.nodeNginxName"),
     role: t("pages.homelab.nodeNginxRole"),
   },
   {
     key: "matrix",
-    endpoint: "/api/homelab/matrix",
     name: t("pages.homelab.nodeMatrixName"),
     role: t("pages.homelab.nodeMatrixRole"),
   },
   {
     key: "mastodon",
-    endpoint: "/api/homelab/mastodon",
     name: t("pages.homelab.nodeMastodonName"),
     role: t("pages.homelab.nodeMastodonRole"),
   },
   {
     key: "truenas",
-    endpoint: "/api/homelab/truenas",
     name: t("pages.homelab.nodeTruenasName"),
     role: t("pages.homelab.nodeTruenasRole"),
   },
   {
     key: "mikrotik",
-    endpoint: "/api/homelab/mikrotik",
     name: t("pages.homelab.nodeRouterName"),
     role: t("pages.homelab.nodeRouterRole"),
   },

@@ -838,18 +838,16 @@ const jsonLD = {
   )
 }
 
-<!-- Twitter -->
+<!-- Twitter card vocabulary. No twitter:site / twitter:creator here, and none
+     is coming back: the author does not use the account (closed decision,
+     2026-08-24 — the same one already applied in mcp.jmrp.io's Base.astro).
+     The rest of the namespace stays because it is not X that reads it: Slack,
+     Discord, WhatsApp and Signal all use twitter:card to pick the large-image
+     layout. site/creator are attribution-only — nothing renders worse without
+     them, and they were the last place on the site naming the handle. -->
 <meta
   name="twitter:card"
   content="summary_large_image"
-/>
-<meta
-  name="twitter:site"
-  content={siteData.twitter_creator}
-/>
-<meta
-  name="twitter:creator"
-  content={siteData.twitter_creator}
 />
 <meta
   name="twitter:url"

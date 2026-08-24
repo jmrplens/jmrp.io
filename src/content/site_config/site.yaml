@@ -8,7 +8,6 @@ locale: "en_US"
 type: "site"
 theme_color: "#0A0A0B"
 background_color: "#0A0A0B"
-twitter_creator: "@jmrplens"
 
 # Person Schema defaults for JSON-LD
 person:
