@@ -76,7 +76,7 @@ export const rehypeExternalLinksAnnounced = () => (tree, file) => {
   visit(tree, "element", (node) => {
     if (node.tagName !== "a") return;
     const props = node.properties;
-    if (!props || props.target !== "_blank") return;
+    if (props?.target !== "_blank") return;
 
     // Whatever the accessible name is right now — the visible text, or the
     // disambiguated label a previous plugin already set — the notice is
