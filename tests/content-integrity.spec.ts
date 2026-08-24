@@ -89,6 +89,11 @@ test.describe("External Links Security", () => {
     "/projects/",
     "/about/",
     "/uses/",
+    // /feeds/ shipped the same defect from the other direction (2026-08-24):
+    // its 16 Bluesky links carried the full rel but no target, so they were the
+    // only external links on the site that did not open in a new tab. Nothing
+    // caught it because the page was outside this sample.
+    "/feeds/",
   ];
 
   for (const url of samplePages) {
@@ -104,9 +109,12 @@ test.describe("External Links Security", () => {
         const href = await link.getAttribute("href");
         const rel = (await link.getAttribute("rel")) ?? "";
 
-        // Skip rel="me" links — they intentionally omit noopener/noreferrer
-
-        if (rel.split(/\s+/).includes("me")) continue;
+        // No exemption for rel="me": Footer.astro's normalizeExternalRel()
+        // forces external+noopener+noreferrer on every social link while
+        // keeping the `me` token, so all 378 of them already satisfy the three
+        // assertions below. The skip that used to live here claimed they
+        // "intentionally omit noopener/noreferrer" — untrue since that
+        // normalizer landed, and it was a hole in the guard for free.
 
         expect(rel, `Link ${href} on ${url} missing noopener`).toContain(
           "noopener",
