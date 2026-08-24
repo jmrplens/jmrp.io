@@ -11,6 +11,7 @@ import rehypeMermaid from "rehype-mermaid";
 import rehypeRaw from "rehype-raw";
 import { ViteImageOptimizer } from "vite-plugin-image-optimizer";
 
+import { rehypeExternalLinksAnnounced } from "./scripts/rehype-external-links-announced.mjs";
 import { rehypeLinkDisambiguator } from "./scripts/rehype-link-disambiguator.mjs";
 import { remarkMermaidBypass } from "./scripts/remark-mermaid-bypass.mjs";
 import postBuildIntegration from "./src/integrations/post-build.ts";
@@ -359,6 +360,12 @@ export default defineConfig({
           },
         ],
         rehypeLinkDisambiguator,
+        // AFTER the disambiguator on purpose: that one only labels links whose
+        // text is ambiguous and guards with `!node.properties.ariaLabel`, so
+        // running this first would silence it forever. This one appends the
+        // notice to whatever the accessible name already is — the visible text,
+        // or the label the disambiguator just set.
+        rehypeExternalLinksAnnounced,
       ],
     }),
   },
