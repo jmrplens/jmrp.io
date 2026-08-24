@@ -19,6 +19,19 @@ const { project } = Astro.props;
 const locale = getLangFromUrl(Astro.url);
 const t = useTranslations(locale);
 
+/**
+ * `markdownToHtml` with the new-tab notice wired in, so every external link the
+ * CV renders announces itself (WCAG 3.2.5).
+ *
+ * The notice is DERIVED from the single i18n key rather than duplicated:
+ * `aria.opensNewTab` interpolates as "{text} (opens in new tab)", so calling it
+ * with an empty text and trimming yields just the parenthesis. The renderer
+ * appends it to the name it builds itself, which is why it needs the bare
+ * notice and not the whole label.
+ */
+const NEW_TAB_NOTICE = t("aria.opensNewTab", { text: "" }).trim();
+const mdHtml = (md: string) => markdownToHtml(md, NEW_TAB_NOTICE);
+
 /** Primary link used for the card title anchor. */
 const primaryLink = project.links?.[0];
 
@@ -38,7 +51,9 @@ const linkRow = (project.links?.length ?? 0) > 1 ? project.links : undefined;
             href={primaryLink.url}
             target="_blank"
             rel="external noopener noreferrer"
-            aria-label={primaryLink.ariaLabel ?? `${project.name} — GitHub`}
+            aria-label={t("aria.opensNewTab", {
+              text: primaryLink.ariaLabel ?? `${project.name} — GitHub`,
+            })}
           >
             {project.name}
           </a>
@@ -54,7 +69,7 @@ const linkRow = (project.links?.length ?? 0) > 1 ? project.links : undefined;
     project.description && (
       <div
         class="project-description"
-        set:html={markdownToHtml(project.description)}
+        set:html={mdHtml(project.description)}
       />
     )
   }
@@ -83,7 +98,9 @@ const linkRow = (project.links?.length ?? 0) > 1 ? project.links : undefined;
               href={link.url}
               target="_blank"
               rel="external noopener noreferrer"
-              aria-label={link.ariaLabel ?? `${project.name} — ${link.label}`}
+              aria-label={t("aria.opensNewTab", {
+                text: link.ariaLabel ?? `${link.label} — ${project.name}`,
+              })}
             >
               {link.label}
             </a>

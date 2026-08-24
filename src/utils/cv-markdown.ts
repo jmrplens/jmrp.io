@@ -8,4 +8,21 @@
  * @module
  */
 
-export { markdownToHtml } from "../../scripts/cv/inline-markdown.mjs";
+import { markdownToHtml as render } from "../../scripts/cv/inline-markdown.mjs";
+
+/**
+ * Renders inline markdown to HTML.
+ *
+ * Restated here rather than re-exported straight from the `.mjs`: that file is
+ * plain JavaScript shared with the LaTeX build, and a bare `export {}` of it
+ * made `newTabNotice` read as an arity error at every call site. Declaring the
+ * wrapper gives consumers a checked signature and one place to document it.
+ *
+ * @param md - The markdown string.
+ * @param newTabNotice - Localized "(opens in new tab)", appended to the
+ *   accessible name of every external link. Omit to keep the previous
+ *   behavior, where only a link title produced a label.
+ * @returns The HTML string.
+ */
+export const markdownToHtml = (md: unknown, newTabNotice = ""): string =>
+  render(md, newTabNotice);

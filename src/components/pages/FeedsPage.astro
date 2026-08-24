@@ -184,10 +184,17 @@ const feedsSchema = {
                   <a
                     class="feed-card__open"
                     href={feedUrl}
-                    {...externalLinkProps(feedUrl)}
-                    aria-label={`${t("pages.feeds.blueskyOpen")} — ${feed.name}`}
+                    {...externalLinkProps(
+                      feedUrl,
+                      t("aria.opensNewTab", {
+                        text: `${t("pages.feeds.blueskyOpen")} — ${feed.name}`,
+                      }),
+                    )}
                   >
-                    {t("pages.feeds.blueskyOpen")} ↗
+                    {t("pages.feeds.blueskyOpen")}
+                    {/* Decorative: the aria-label already announces the new
+                      tab, so the glyph must not be read a second time. */}
+                    <span aria-hidden="true"> ↗</span>
                   </a>
                 </span>
               </li>

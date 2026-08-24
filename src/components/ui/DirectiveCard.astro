@@ -46,9 +46,12 @@ if (mdnUrl) {
           target="_blank"
           rel="noopener noreferrer"
           class="dc-mdn"
-          aria-label={t("aria.mdnDocs", { name })}
+          aria-label={t("aria.opensNewTab", {
+            text: t("aria.mdnDocs", { name }),
+          })}
         >
-          MDN ↗
+          MDN
+          <span aria-hidden="true"> ↗</span>
         </a>
       )
     }

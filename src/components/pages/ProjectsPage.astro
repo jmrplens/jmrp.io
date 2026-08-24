@@ -143,6 +143,9 @@ const groups = [
                         href={licenseUrl(project.license)}
                         target="_blank"
                         rel="external noopener noreferrer"
+                        aria-label={t("aria.opensNewTab", {
+                          text: `${project.license} — ${project.name}`,
+                        })}
                       >
                         {project.license}
                       </a>

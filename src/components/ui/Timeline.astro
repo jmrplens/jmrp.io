@@ -51,7 +51,14 @@ const typeLabel: Record<EventType, string> = {
 function parseMarkdownLinks(text: string): string {
   return text.replaceAll(
     /\[([^\]]+)\]\(([^)]+)\)/g,
-    '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>',
+    (_match, label: string, href: string) =>
+      // The label goes first and verbatim inside the accessible name: an
+      // `aria-label` REPLACES it, so announcing the new tab without it would
+      // break WCAG 2.5.3 Label in Name (level A) while chasing 3.2.5 (AAA).
+      `<a href="${href}" target="_blank" rel="external noopener noreferrer" class="external-link" aria-label="${t(
+        "aria.opensNewTab",
+        { text: label },
+      )}">${label}</a>`,
   );
 }
 ---

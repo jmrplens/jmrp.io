@@ -326,7 +326,9 @@ const collectionSchema = {
               class="pub-orcid-link"
               rel="external noopener noreferrer"
               target="_blank"
-              aria-label={t("aria.visitProfile", { name: "ORCID" })}
+              aria-label={t("aria.opensNewTab", {
+                text: t("aria.visitProfile", { name: "ORCID" }),
+              })}
             >
               <span
                 class="i-simple-icons:orcid pub-orcid-link__icon"

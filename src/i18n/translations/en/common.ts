@@ -440,7 +440,7 @@ export const common = {
       heroBio1:
         "I'm José Manuel Requena Plens, an R&D engineer based in Valencia, Spain, specializing in embedded firmware (C/C++, STM32/ESP32), industrial software development, and applied acoustics research. My path runs from academic research in acoustics to industrial firmware development — and that breadth is what motivates me the most.",
       heroBio2:
-        "I thrive on integrating hardware and software end to end. I'm an active Open Source contributor whose tools are used by developers around the world, and a passionate self-hoster. My homelab serves this site and the <a href='https://mcp.jmrp.io/' target='_blank' rel='external noopener noreferrer'>public MCP servers</a> anyone can point an AI client at. <a href='/cv/'>Check out my CV</a> to see the full journey.",
+        "I thrive on integrating hardware and software end to end. I'm an active Open Source contributor whose tools are used by developers around the world, and a passionate self-hoster. My homelab serves this site and the <a href='https://mcp.jmrp.io/' target='_blank' rel='external noopener noreferrer' aria-label='public MCP servers (opens in new tab)'>public MCP servers</a> anyone can point an AI client at. <a href='/cv/'>Check out my CV</a> to see the full journey.",
       viewCV: "View CV",
       viewCVAria: "View CV - my professional curriculum vitae",
       readBlog: "Read Blog",
