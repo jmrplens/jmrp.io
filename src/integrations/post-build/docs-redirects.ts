@@ -4,6 +4,8 @@ import path from "node:path";
 import type { AstroIntegrationLogger } from "astro";
 import { load } from "js-yaml";
 
+import { assertNginxSafe, writeNginxSnippet } from "./utils.js";
+
 /**
  * Generates `nginx/docs_redirects.conf`: stable `/docs/<project-id>` URLs on
  * jmrp.io that 301 to each project's real documentation site.
@@ -55,6 +57,14 @@ export async function generateDocsRedirects(
     )
     .map((p) => [`/docs/${p.id}`, p.docs] as const);
 
+  // These two strings are interpolated into quoted Nginx map entries below and
+  // never pass through the Zod content schema (this step reads the YAML
+  // directly). See assertNginxSafe for what a stray quote costs.
+  assertNginxSafe(
+    pairs.flatMap(([from, to]) => [from, to]),
+    "projects.yaml (id / docs)",
+  );
+
   const entries = pairs
     .flatMap(([from, to]) => [
       `    "${from}"  "${to}";`,
@@ -85,8 +95,7 @@ ${entries}
 `;
 
   const outPath = path.join(process.cwd(), "nginx", "docs_redirects.conf");
-  await fs.promises.mkdir(path.dirname(outPath), { recursive: true });
-  await fs.promises.writeFile(outPath, content);
+  await writeNginxSnippet(outPath, content);
   logger.info(
     `  ✓ Generated nginx/docs_redirects.conf (${pairs.length} project docs redirects)`,
   );

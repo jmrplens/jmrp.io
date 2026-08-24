@@ -148,3 +148,62 @@ export function resolveFile(
 
   return fs.existsSync(filePath) ? filePath : null;
 }
+
+/**
+ * Rejects any value that would break out of the quoted string it is about to be
+ * interpolated into inside an Nginx `map` block.
+ *
+ * The redirect generators build their snippets by string interpolation and
+ * write them straight to `nginx/*_redirects.conf`, which the vhost `include`s
+ * at http level by absolute path. Neither generator goes through the Zod
+ * content schema — `docs-redirects.ts` parses `projects.yaml` with `js-yaml`
+ * directly — so this is the only place the values are checked. A single double
+ * quote, backslash, semicolon or newline in a project id or a docs URL yields a
+ * config Nginx refuses, and an `include` that fails to parse stops the whole
+ * server from starting, not just this vhost.
+ *
+ * Failing the build is the right outcome: the alternative is a repo that looks
+ * fine and a server that will not come back up after the next restart.
+ *
+ * @param values - The strings destined for the snippet.
+ * @param context - Human-readable source name, used in the error message.
+ * @throws If any value contains a character that is unsafe to interpolate.
+ */
+export function assertNginxSafe(values: string[], context: string): void {
+  const unsafe = /["\;\r\n]|\s{2,}/;
+  for (const value of values) {
+    if (unsafe.test(value)) {
+      throw new Error(
+        `${context}: refusing to generate an Nginx snippet from ${JSON.stringify(
+          value,
+        )} — it contains a character that would break the quoted map entry.`,
+      );
+    }
+  }
+}
+
+/**
+ * Writes an Nginx snippet atomically.
+ *
+ * The destination is `include`d by the live vhost, so a partial write — a build
+ * killed between `open()` and the last chunk — leaves a truncated `map` block
+ * that fails `nginx -t`. `deploy-live.mjs` only backs up and rolls back the
+ * security-header snippets, so a broken redirect file would simply stay on
+ * disk: the reload fails, Nginx keeps serving from memory, nothing looks wrong,
+ * and the next `systemctl restart` (certbot, a reboot) takes down every vhost
+ * on the box. Writing to a sibling temp file and `rename(2)`-ing over the
+ * target makes the swap all-or-nothing.
+ *
+ * @param outPath - Absolute path of the snippet to write.
+ * @param content - Full file content.
+ * @returns Resolves once the file has been replaced.
+ */
+export async function writeNginxSnippet(
+  outPath: string,
+  content: string,
+): Promise<void> {
+  await fs.promises.mkdir(path.dirname(outPath), { recursive: true });
+  const tmpPath = `${outPath}.tmp`;
+  await fs.promises.writeFile(tmpPath, content);
+  await fs.promises.rename(tmpPath, outPath);
+}
