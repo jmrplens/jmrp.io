@@ -32,14 +32,15 @@
     "wireguard": "tag:networking"
   },
   "retired": {
-    "$comment": "Tags that really existed in post frontmatter (verified in git history) but were dropped before the 2026-08-01 consolidation, so they never got a rule. 1023 requests were still 404ing.",
+    "$comment": "Tags that really existed in post frontmatter (verified in git history) but were dropped before the 2026-08-01 consolidation, so they never got a rule. 1023 requests were still 404ing. 'key derivation' carries a space: nginx decodes %20 in $uri, so the map key matches the literal space and the four hand-written quoted locations it replaces are no longer needed.",
     "firewall": "tag:security",
     "crowdsec": "tag:security",
     "bouncer": "tag:security",
     "certificates": "tag:security",
     "quic": "tag:nginx",
     "architecture": "blog",
-    "open-source": "blog"
+    "open-source": "blog",
+    "key derivation": "tag:cryptography"
   },
   "hallucinated": {
     "$comment": "Tags that NEVER existed in any revision: invented by AI crawlers. Only the ones with real traffic are curated, the same treatment the two hallucinated post URLs get in the vhost. The rest keep answering 404, which is the truthful response to a URL that never existed.",
