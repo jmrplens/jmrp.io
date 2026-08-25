@@ -395,9 +395,48 @@ test.describe("SEO & Metadata Checks", () => {
     expect(content).toContain("## Blog Posts (Español)");
     expect(content).toContain("## Developer Tools (Español)");
 
+    // Every post line carries TWO links now — the article and its markdown
+    // twin — so the count has to name which one it means or it doubles.
     const esPosts =
-      content.match(/]\(https:\/\/jmrp\.io\/es\/blog\/\d{3}-/g) ?? [];
+      content.match(/]\(https:\/\/jmrp\.io\/es\/blog\/\d{3}-[a-z0-9-]+\/\)/g) ??
+      [];
     expect(esPosts).toHaveLength(12);
+
+    const esMarkdown =
+      content.match(
+        /]\(https:\/\/jmrp\.io\/es\/blog\/\d{3}-[a-z0-9-]+\.md\)/g,
+      ) ?? [];
+    expect(esMarkdown).toHaveLength(12);
+  });
+
+  test("every post has a markdown twin at its own URL", async ({ page }) => {
+    for (const path of [
+      "/blog/004-enabling-quic-http3-nginx.md",
+      "/es/blog/004-enabling-quic-http3-nginx.md",
+    ]) {
+      const response = await page.request.get(path);
+      expect(response.status(), path).toBe(200);
+      expect(response.headers()["content-type"], path).toContain(
+        "text/markdown",
+      );
+
+      const body = await response.text();
+      // The header is what makes the file usable pasted into a chat with no
+      // other context, and the body is what makes it worth pasting.
+      expect(body, path).toContain("URL: https://jmrp.io");
+      expect(body, path).toContain("Published:");
+      // No component tag may survive the conversion.
+      expect(body, path).not.toMatch(/<\/?(Callout|Table|Mermaid|Code)\b/);
+    }
+  });
+
+  test("a post page points at its markdown twin", async ({ page }) => {
+    await page.goto("/blog/004-enabling-quic-http3-nginx/");
+    const link = page.locator('link[rel="alternate"][type="text/markdown"]');
+    await expect(link).toHaveAttribute(
+      "href",
+      "/blog/004-enabling-quic-http3-nginx.md",
+    );
   });
 
   test("llms-full.txt includes Spanish post bodies", async ({ page }) => {
