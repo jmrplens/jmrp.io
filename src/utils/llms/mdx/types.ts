@@ -20,6 +20,8 @@ export interface MdxNode {
   /** Fence info string, for `code` nodes. */
   lang?: string | null;
   depth?: number;
+  /** ESTree attached by remark-mdx to expression nodes. */
+  data?: { estree?: EstreeNode };
   position?: {
     start: { offset?: number; column?: number };
     end: { offset?: number };

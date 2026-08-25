@@ -76,6 +76,18 @@ async function main() {
   const args = process.argv.slice(2);
   const files = corpus();
 
+  /**
+   * Which of the three census buckets a component falls into.
+   *
+   * @param {string} name - Component tag name.
+   * @param {boolean} covered - Whether a registered ancestor owns this subtree.
+   * @returns {"direct"|"ancestor"|"gap"} The bucket.
+   */
+  function bucketFor(name, covered) {
+    if (registry.has(name)) return "direct";
+    return covered ? "ancestor" : "gap";
+  }
+
   if (args[0] === "--tags") {
     // Which components appear in the corpus, and which of them still have no
     // module. Counting tags left in the OUTPUT would report almost nothing,
@@ -89,31 +101,53 @@ async function main() {
     const seen = new Map();
     for (const entry of files) {
       const tree = processor.parse(body(entry.file));
-      const walk = (node) => {
+      // `covered` tracks whether a registered ancestor already owns this
+      // subtree. The 16 tool apps live inside <ToolApp>, which emits its own
+      // text and their empty bodies, so reporting them as gaps would leave 16
+      // permanently red rows and train the reader to ignore the census.
+      const walk = (node, covered) => {
+        let mine = covered;
         if (
           (node.type === "mdxJsxFlowElement" ||
             node.type === "mdxJsxTextElement") &&
           node.name &&
           /^[A-Z]/.test(node.name)
         ) {
-          seen.set(node.name, (seen.get(node.name) ?? 0) + 1);
+          const bucket = bucketFor(node.name, covered);
+          const key = `${bucket}:${node.name}`;
+          seen.set(key, (seen.get(key) ?? 0) + 1);
+          mine = covered || registry.has(node.name);
         }
-        for (const child of node.children ?? []) walk(child);
+        for (const child of node.children ?? []) walk(child, mine);
       };
-      walk(tree);
+      walk(tree, false);
     }
 
-    const rows = [...seen].sort((a, b) => b[1] - a[1]);
-    const done = rows.filter(([tag]) => registry.has(tag));
-    const todo = rows.filter(([tag]) => !registry.has(tag));
+    const split = (bucket) =>
+      [...seen]
+        .filter(([key]) => key.startsWith(`${bucket}:`))
+        .map(([key, n]) => [key.slice(bucket.length + 1), n])
+        .sort((a, b) => b[1] - a[1]);
+    const direct = split("direct");
+    const ancestor = split("ancestor");
+    const gaps = split("gap");
     const sum = (list) => list.reduce((n, [, c]) => n + c, 0);
-    const total = sum(rows);
+    const total = sum(direct) + sum(ancestor) + sum(gaps);
+    const covered = sum(direct) + sum(ancestor);
     console.log(
-      `handled ${done.length}/${rows.length} components — ` +
-        `${sum(done)}/${total} usages (${((sum(done) / total) * 100).toFixed(1)}%)`,
+      `${direct.length} components with a module — ` +
+        `${covered}/${total} usages covered ` +
+        `(${((covered / total) * 100).toFixed(1)}%)`,
     );
-    console.log("\nstill unhandled, by usage:");
-    for (const [tag, n] of todo) {
+    if (ancestor.length > 0) {
+      console.log(
+        `\ncovered by an ancestor's module (${sum(ancestor)} usages):`,
+      );
+      console.log(`  ${ancestor.map(([tag]) => tag).join(", ")}`);
+    }
+    console.log(`\nnot covered (${sum(gaps)} usages):`);
+    if (gaps.length === 0) console.log("  none");
+    for (const [tag, n] of gaps) {
       console.log(`  ${String(n).padStart(4)}  ${tag}`);
     }
     return;

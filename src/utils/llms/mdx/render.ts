@@ -72,8 +72,61 @@ const SCAFFOLDING_TYPES = new Set([
   "mdxTextExpression",
 ]);
 
-/** Node types that sit inside a paragraph rather than beside it. */
-const INLINE_TYPES = new Set(["text", "inlineCode", "mdxJsxTextElement"]);
+/**
+ * Node types that sit inside a paragraph rather than beside it.
+ *
+ * The first version listed only text, inlineCode and mdxJsxTextElement, so any
+ * component whose direct children were phrasing nodes had them joined with a
+ * blank line: `<li>Uses **nonces** or **hashes**</li>` came out as three
+ * paragraphs. Every phrasing type mdast can produce belongs here.
+ */
+const INLINE_TYPES = new Set([
+  "text",
+  "inlineCode",
+  "mdxJsxTextElement",
+  "mdxTextExpression",
+  "strong",
+  "emphasis",
+  "delete",
+  "link",
+  "linkReference",
+  "image",
+  "imageReference",
+  "break",
+  "footnoteReference",
+  "html",
+]);
+
+/**
+ * Raw inline HTML written by hand in the MDX, mapped to markdown.
+ *
+ * These are NOT components, so there is no `.astro` to put a `.md.ts` beside
+ * and they have to live here. Without them the generic fail-safe keeps only
+ * the text: 102 `<a>` lose their destination, 860 `<code>` lose their
+ * backticks, and — the reason this is a correctness fix rather than a fidelity
+ * one — `10<sup>4</sup>` collapses to "104", which is not a lost distinction
+ * but a false statement about a magnitude.
+ */
+const HTML_INLINE: Record<string, (inner: string) => string> = {
+  code: (inner) => (inner.includes("`") ? inner : `\`${inner}\``),
+  kbd: (inner) => (inner.includes("`") ? inner : `\`${inner}\``),
+  strong: (inner) => `**${inner}**`,
+  b: (inner) => `**${inner}**`,
+  em: (inner) => `*${inner}*`,
+  i: (inner) => `*${inner}*`,
+  del: (inner) => `~~${inner}~~`,
+  s: (inner) => `~~${inner}~~`,
+  // Markdown has no superscript. `^` is the notation every plain-text
+  // convention uses for it, and it keeps the exponent attached to its base.
+  sup: (inner) => `^${inner}`,
+  sub: (inner) => `_${inner}`,
+  small: (inner) => inner,
+  span: (inner) => inner,
+  abbr: (inner) => inner,
+  mark: (inner) => inner,
+  br: () => "\n",
+  wbr: () => "",
+};
 
 /** A JSX element node, flow or inline. */
 function isElement(node: MdxNode): boolean {
@@ -196,6 +249,20 @@ function evaluateAttribute(attribute: MdxAttribute): unknown {
   const statement = program?.body?.[0];
   if (!statement || statement.type !== "ExpressionStatement") return undefined;
   return fromEstree(statement.expression);
+}
+
+/**
+ * The string an MDX expression node evaluates to, when it is a plain literal.
+ *
+ * @param node - An `mdxTextExpression` or `mdxFlowExpression` node.
+ * @returns The string, or `undefined` when the expression is not a literal.
+ */
+function literalExpression(node: MdxNode): string | undefined {
+  const program = node.data?.estree;
+  const statement = program?.body?.[0];
+  if (!statement || statement.type !== "ExpressionStatement") return undefined;
+  const value = fromEstree(statement.expression);
+  return typeof value === "string" ? value : undefined;
 }
 
 /** Concatenated visible text of a subtree, with markup dropped. */
@@ -328,15 +395,41 @@ export function mdxToMarkdown(
         renderNode(element) +
         out.slice(end - base);
     }
-    return dedent(out, node.position?.start.column ?? 1);
+    // Only for flow nodes: an inline node starts mid-line, so its "column" is
+    // an offset into a sentence, not indentation. Restoring it as spaces put
+    // the leading space of a text node into the common minimum and stripped
+    // it, welding `**nonces** or **hashes**` into `**nonces**or **hashes**`.
+    return INLINE_TYPES.has(node.type)
+      ? out
+      : dedent(out, node.position?.start.column ?? 1);
   }
 
   function renderNode(node: MdxNode): string {
+    // `{"…"}` and `{`…`}` are how an author escapes MDX syntax — braces, angle
+    // brackets, a lone backtick — so the literal inside them is CONTENT. Only
+    // imports and `{/* … */}` comments are scaffolding. Treating every
+    // expression as scaffolding emptied `<code>{"(?<name>…)"}</code>`.
+    if (
+      node.type === "mdxTextExpression" ||
+      node.type === "mdxFlowExpression"
+    ) {
+      const literal = literalExpression(node);
+      return literal ?? "";
+    }
     if (isScaffolding(node)) return "";
 
     if (isElement(node)) {
       const spec = node.name ? REGISTRY.get(node.name) : undefined;
       if (spec) return spec.toMarkdown(node, ctx);
+
+      // Raw inline HTML the author wrote inside the MDX.
+      const inlineHtml = node.name ? HTML_INLINE[node.name] : undefined;
+      if (inlineHtml) return inlineHtml(renderChildren(node));
+      if (node.name === "a") {
+        const inner = renderChildren(node);
+        const href = readAttr(node, "href");
+        return href ? `[${inner}](${href})` : inner;
+      }
       // Fail safe: an unknown tag contributes its children, never its own
       // syntax. A component added tomorrow degrades to its content instead of
       // publishing `<NewThing prop="…">` to a language model.
