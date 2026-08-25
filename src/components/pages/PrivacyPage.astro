@@ -8,64 +8,36 @@
  * here is checkable from the outside: no `Set-Cookie` on any response, no
  * cross-origin `src` on any page, and the two tools that do make a network
  * request are named explicitly rather than hidden behind the blanket claim.
+ *
+ * The copy lives in `src/content/pages/<locale>/privacy.mdx`, not in the
+ * translation bundle it used to occupy as 32 keys. A policy is a document:
+ * editing one should not mean editing a string table, its `dateModified`
+ * should come from the document rather than from a bundle that also holds
+ * unrelated UI strings, and it should have a markdown twin like every other
+ * page — all three of which the move buys at once.
  */
-import ObfuscatedEmail from "@components/ui/ObfuscatedEmail.astro";
 import { defaultLocale, type Locale } from "@i18n/config";
-import type { TranslationKey } from "@i18n/utils";
-import { useTranslations } from "@i18n/utils";
 import BaseLayout from "@layouts/BaseLayout.astro";
 import { lastCommitDate } from "@utils/content-date";
+import { markdownTwinPath } from "@utils/llms";
 import { getSiteUrl } from "@utils/site";
+import { getEntry, render } from "astro:content";
 import type { WebPage } from "schema-dts";
 
 const locale = (Astro.currentLocale ?? defaultLocale) as Locale;
-const t = useTranslations(locale);
 
-/** Prose sections, in reading order. Keys are literal so they stay type-checked. */
-const sections: { title: TranslationKey; body: TranslationKey[] }[] = [
-  {
-    title: "pages.privacy.analyticsTitle",
-    body: [
-      "pages.privacy.analyticsBody1",
-      "pages.privacy.analyticsBody2",
-      "pages.privacy.analyticsBody3",
-      "pages.privacy.analyticsBody4",
-    ],
-  },
-  {
-    title: "pages.privacy.cookiesTitle",
-    body: ["pages.privacy.cookiesBody1", "pages.privacy.cookiesBody2"],
-  },
-  {
-    title: "pages.privacy.thirdPartyTitle",
-    body: ["pages.privacy.thirdPartyBody1", "pages.privacy.thirdPartyBody2"],
-  },
-  {
-    title: "pages.privacy.logsTitle",
-    body: ["pages.privacy.logsBody1", "pages.privacy.logsBody2"],
-  },
-  {
-    title: "pages.privacy.toolsTitle",
-    body: [
-      "pages.privacy.toolsBody1",
-      "pages.privacy.toolsBody2",
-      "pages.privacy.toolsBody3",
-    ],
-  },
-  {
-    title: "pages.privacy.adsTitle",
-    body: ["pages.privacy.adsBody1"],
-  },
-];
-
-/** Stable heading id so each section is linkable and labelled. */
-const sectionId = (key: TranslationKey) =>
-  `privacy-${key.split(".").pop()?.replace("Title", "").toLowerCase()}`;
+const entry = await getEntry("pages", `${locale}/privacy`);
+if (!entry) throw new Error(`Missing privacy page for locale: ${locale}`);
+const { Content } = await render(entry);
 
 const pageUrl = new URL(Astro.url.pathname, getSiteUrl()).href;
 
+// Freshness from git, and now from the DOCUMENT. It used to be the later of
+// the whole `common.ts` bundle and this component, which meant an unrelated UI
+// translation restamped the privacy policy as modified — a documented
+// over-trigger that the move removes rather than mitigates.
 const privacyModified = [
-  lastCommitDate(`src/i18n/translations/${locale}/common.ts`),
+  lastCommitDate(`src/content/pages/${locale}/privacy.mdx`),
   lastCommitDate("src/components/pages/PrivacyPage.astro"),
 ]
   .filter((date): date is string => Boolean(date))
@@ -79,106 +51,34 @@ const privacySchema = {
   // selectors verified against the built markup.
   speakable: {
     "@type": "SpeakableSpecification",
-    cssSelector: [".privacy-header__title", ".privacy-header__intro"],
+    cssSelector: [".privacy-header__title", ".privacy-body > p:first-of-type"],
   },
   "@id": `${pageUrl}#webpage`,
   url: pageUrl,
-  name: t("pages.privacy.title"),
-  description: t("pages.privacy.description"),
+  name: entry.data.title,
+  description: entry.data.description,
   inLanguage: locale,
   isPartOf: { "@id": new URL("#website", getSiteUrl()).href },
   publisher: { "@id": new URL("#person", getSiteUrl()).href },
-  // Freshness from git, not the build clock — `new Date()` here restamped the
-  // policy as modified on every deploy. The policy text lives in the locale's
-  // translation bundle and its markup in this component, so the later of the
-  // two is the date. Known over-trigger: `common.ts` also holds unrelated UI
-  // strings, so an unrelated translation edit can bump this by a day. That is
-  // a bounded imprecision in the right direction; the build clock was a
-  // guaranteed falsehood on every deploy. Omitted when git cannot answer.
   ...(privacyModified && { dateModified: privacyModified }),
 } satisfies WebPage;
 ---
 
 <BaseLayout
-  title={t("pages.privacy.title")}
-  description={t("pages.privacy.description")}
+  title={entry.data.title}
+  description={entry.data.description}
   schema={privacySchema}
+  markdownHref={markdownTwinPath(Astro.url.pathname)}
 >
   <div class="privacy container">
     <header class="privacy-header">
-      <p class="section-title">{t("pages.privacy.kicker")}</p>
-      <h1 class="page-title privacy-header__title">
-        {t("pages.privacy.heading")}
-      </h1>
-      <p class="privacy-header__intro">{t("pages.privacy.intro")}</p>
+      <p class="section-title">{entry.data.kicker}</p>
+      <h1 class="page-title privacy-header__title">{entry.data.heading}</h1>
     </header>
 
-    {
-      sections.map((section) => (
-        <section
-          class="privacy-section"
-          aria-labelledby={sectionId(section.title)}
-        >
-          <h2
-            class="privacy-section__title"
-            id={sectionId(section.title)}
-          >
-            {t(section.title)}
-          </h2>
-          {section.body.map((key) => (
-            <p class="privacy-section__body">{t(key)}</p>
-          ))}
-        </section>
-      ))
-    }
-
-    <section
-      class="privacy-section"
-      aria-labelledby="privacy-verify"
-    >
-      <h2
-        class="privacy-section__title"
-        id="privacy-verify"
-      >
-        {t("pages.privacy.verifyTitle")}
-      </h2>
-      <p class="privacy-section__body">{t("pages.privacy.verifyBody1")}</p>
-      <p class="privacy-section__links">
-        <a
-          href="https://github.com/jmrplens/jmrp.io"
-          target="_blank"
-          rel="external noopener noreferrer"
-          class="external-link"
-          aria-label={t("aria.opensNewTab", {
-            text: t("pages.privacy.verifySourceLabel"),
-          })}
-        >
-          {t("pages.privacy.verifySourceLabel")}
-        </a>
-      </p>
-    </section>
-
-    <section
-      class="privacy-section"
-      aria-labelledby="privacy-contact"
-    >
-      <h2
-        class="privacy-section__title"
-        id="privacy-contact"
-      >
-        {t("pages.privacy.contactTitle")}
-      </h2>
-      <p class="privacy-section__body">{t("pages.privacy.contactBody1")}</p>
-      <p class="privacy-section__links">
-        <ObfuscatedEmail address="mail@jmrp.io" />
-        <a
-          href="/.well-known/security.txt"
-          data-astro-prefetch="false"
-        >
-          {t("pages.privacy.contactSecurityLabel")}
-        </a>
-      </p>
-    </section>
+    <div class="privacy-body">
+      <Content />
+    </div>
   </div>
 </BaseLayout>
 
@@ -206,7 +106,7 @@ const privacySchema = {
     border-bottom: 0;
   }
 
-  .privacy-header__intro {
+  .privacy-body :global(p:first-of-type) {
     max-width: var(--max-width-prose);
     margin: 0;
     font-size: var(--text-md);
@@ -214,12 +114,12 @@ const privacySchema = {
     color: var(--color-text);
   }
 
-  .privacy-section {
+  .privacy-body :global(section) {
     max-width: var(--max-width-prose);
     margin-top: var(--space-lg-xl);
   }
 
-  .privacy-section__title {
+  .privacy-body :global(h2) {
     margin: 0 0 var(--space-md);
     font-family: var(--font-mono);
     font-size: var(--text-label);
@@ -229,14 +129,14 @@ const privacySchema = {
     letter-spacing: 0.15em;
   }
 
-  .privacy-section__body {
+  .privacy-body :global(p) {
     margin: 0 0 var(--space-md);
     font-size: var(--text-base);
     line-height: 1.7;
     color: var(--color-text);
   }
 
-  .privacy-section__links {
+  .privacy-body :global(p:has(a)) {
     display: flex;
     flex-wrap: wrap;
     gap: var(--space-md);
@@ -245,14 +145,14 @@ const privacySchema = {
     font-size: var(--text-sm);
   }
 
-  .privacy-section__links a {
+  .privacy-body :global(p:has(a)) a {
     font-weight: var(--fw-medium);
     color: var(--color-accent);
     text-decoration: none;
   }
 
-  .privacy-section__links a:hover,
-  .privacy-section__links a:focus-visible {
+  .privacy-body :global(p:has(a)) a:hover,
+  .privacy-body :global(p:has(a)) a:focus-visible {
     text-decoration: underline;
     text-underline-offset: 3px;
   }

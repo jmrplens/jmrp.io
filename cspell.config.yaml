@@ -100,6 +100,8 @@ overrides:
     language: es,en
   - filename: "src/content/tools/es/**"
     language: es,en
+  - filename: "src/content/pages/es/**"
+    language: es,en
   - filename: "src/content/cv/es.yaml"
     language: es,en
   - filename: "src/i18n/translations/es/**"

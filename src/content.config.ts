@@ -735,6 +735,39 @@ const profile = defineCollection({
   ]),
 });
 
+/**
+ * Standalone prose pages whose content is a document rather than data.
+ *
+ * `/privacy/` is the first: 32 translation keys holding paragraphs, which is
+ * the wrong shape for prose in two ways. Editing a policy meant editing a
+ * string table, and the page's `dateModified` had to be derived from the whole
+ * `common.ts` bundle — so an unrelated UI translation restamped the privacy
+ * policy as modified, an over-trigger the component's own comment documented.
+ * As MDX the copy is a document, the date comes from the document, and the
+ * markdown twin falls out of the same converter every post already uses.
+ *
+ * Pages whose content is STRUCTURED (projects, uses, about) deliberately stay
+ * in YAML: their fields feed JSON-LD — schemaType, sameAs, Wikidata Q-ids —
+ * and prose cannot carry a Q-id.
+ */
+const pages = defineCollection({
+  loader: glob({
+    pattern: "**/*.mdx",
+    base: "./src/content/pages",
+    generateId: ({ entry }) => stripExtension(entry),
+  }),
+  schema: z.object({
+    title: z.string(),
+    /** Meta description; the SEO tests cap this at 155 characters. */
+    description: z.string().max(155),
+    /** Small label above the H1. */
+    kicker: z.string(),
+    /** The visible H1, which differs from the `title` used in metadata. */
+    heading: z.string(),
+    lang: z.enum(["en", "es"]),
+  }),
+});
+
 export const collections = {
   posts,
   site_config,
@@ -742,4 +775,5 @@ export const collections = {
   publications_data,
   tools,
   profile,
+  pages,
 };
