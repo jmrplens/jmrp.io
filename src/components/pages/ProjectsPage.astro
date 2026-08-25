@@ -17,6 +17,7 @@
 import { defaultLocale, type Locale } from "@i18n/config";
 import { useTranslations } from "@i18n/utils";
 import BaseLayout from "@layouts/BaseLayout.astro";
+import { markdownTwinPath } from "@utils/llms";
 import {
   buildProjectSchema,
   getProjects,
@@ -98,6 +99,7 @@ const groups = [
   title={t("pages.projects.title")}
   description={t("pages.projects.description")}
   schema={schema}
+  markdownHref={markdownTwinPath(Astro.url.pathname)}
 >
   <div class="projects container">
     <header class="projects-header">

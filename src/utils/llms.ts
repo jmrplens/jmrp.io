@@ -11,6 +11,11 @@ import type { CVData } from "@src/types";
 import { getCVData } from "@utils/cv";
 import { registry } from "@utils/llms/mdx/registry";
 import { mdxToMarkdown } from "@utils/llms/mdx/render";
+import {
+  aboutLines,
+  projectsLines,
+  usesLines,
+} from "@utils/llms/profile-markdown";
 import { getMcpServers, type McpServer } from "@utils/projects";
 import {
   getPublications,
@@ -221,16 +226,29 @@ const PROFILE_SECTIONS: {
  *   Spanish section headings, which is worse than omitting it.
  * @returns Markdown lines, ready to splice into the document.
  */
+/** Profile pages that have a generated markdown twin. */
+const TWINNED_PROFILE_PAGES = new Set(["/projects/", "/uses/"]);
+
 function buildProfileSections(
   siteUrl: string,
   locale: "en" | "es" = "en",
 ): string[] {
+  const localePrefix = locale === "es" ? "/es" : "";
   return PROFILE_SECTIONS.flatMap((section) => {
     const localized = locale === "es" ? section.es : section.en;
     return [
       `## ${localized.title}`,
       "",
-      `URL: ${siteUrl}${locale === "es" ? "/es" : ""}${section.url}`,
+      `URL: ${siteUrl}${localePrefix}${section.url}`,
+      // The twin, where one exists. Its content is generated from the same
+      // YAML the page renders, so it cannot drift from what a visitor sees —
+      // unlike the curated lines below it, which is where a claim about a
+      // Nextcloud that does not exist survived for months.
+      ...(TWINNED_PROFILE_PAGES.has(section.url)
+        ? [
+            `Markdown: ${siteUrl}${markdownTwinPath(localePrefix + section.url)}`,
+          ]
+        : []),
       "",
       ...localized.lines,
       "",
@@ -1027,6 +1045,42 @@ export async function generatePublicationsMarkdown(
     ),
     "",
     ...publicationsLines(groups),
+  ].join("\n");
+}
+
+/**
+ * One of the three profile pages as a standalone markdown document.
+ *
+ * @param siteUrl - Absolute site origin.
+ * @param page - Which page.
+ * @param locale - Which locale.
+ * @returns The complete file body.
+ */
+export async function generateProfileMarkdown(
+  siteUrl: string,
+  page: "about" | "projects" | "uses",
+  locale: "en" | "es",
+): Promise<string> {
+  const path = `${locale === "es" ? "/es" : ""}/${page}/`;
+  const titles = {
+    about: { en: "About", es: "Sobre mí" },
+    projects: { en: "Projects", es: "Proyectos" },
+    uses: { en: "Uses", es: "Uses" },
+  } as const;
+  const renderers = {
+    about: aboutLines,
+    uses: usesLines,
+    projects: projectsLines,
+  } as const;
+  const lines = await renderers[page](locale);
+  return [
+    ...documentHeader(
+      titles[page][locale],
+      `${siteUrl}${path}`,
+      `${siteUrl}/llms.txt`,
+    ),
+    "",
+    ...lines,
   ].join("\n");
 }
 
