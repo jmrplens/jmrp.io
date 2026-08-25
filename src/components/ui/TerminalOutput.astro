@@ -26,13 +26,54 @@ const t = useTranslations(locale);
 const slotContent = await Astro.slots.render("default");
 const trimmedContent = slotContent.trim();
 
-// Plain text (for the copy button).
-const $ = cheerio.load(slotContent);
+const $ = cheerio.load(trimmedContent, null, false);
+
+// Two shapes reach this slot, and they need opposite treatment.
+//
+// A fenced code block arrives as a single Shiki <pre>: that HTML *is* the
+// highlighting, so it is printed verbatim.
+//
+// Everything else arrives as prose that MDX ran through the markdown parser,
+// which is wrong for a transcript in two ways. It invents structure — `*   Trying
+// [::1]:443` became a <ul> and `> GET /.env HTTP/2` a <blockquote> in post 005 —
+// and, worse, the <p> it produces is not whitespace-preserving markup, so the
+// post-build minifier (collapseWhitespace) folds every line break into a space
+// and a 22-line `openssl x509 -text` dump renders as one run-on sentence
+// (post 001). Both were live on the site until 2026-08-25.
+//
+// So that shape is flattened back to text and printed inside a <pre>: the same
+// bytes the copy button hands out, in the one element collapseWhitespace leaves
+// alone. The old code note here said "<div>, not <pre>: the slot may contain
+// block content" — true of the markdown-rendered HTML, moot now that only text
+// or a self-contained <pre> ever reaches the template.
+const topLevel = $.root().children();
+const isHighlightedFence =
+  topLevel.length === 1 &&
+  topLevel.is("pre") &&
+  // No stray text outside the fence (a fence plus prose would lose the prose).
+  $.root().text().trim() === topLevel.text().trim();
+
+// Plain text (for the copy button, and for the body when it is not a fence).
 $("br").replaceWith("\n");
 $("p, div, li").each((_, el) => {
   $(el).append("\n");
 });
 const outputText = decodeHtml($.text()).trim();
+
+// Markdown cannot be undone here — by the time the slot is rendered the `*`,
+// the `>` and the leading indentation are already gone — so the only fix for
+// those blocks is a ```text fence in the MDX. Say so instead of shipping a
+// transcript that quietly lost characters.
+if (!isHighlightedFence) {
+  const phantom = ["ul", "ol", "blockquote", "h1", "h2", "h3", "h4", "h5", "h6"]
+    .filter((tag) => $(tag).length > 0)
+    .join(", ");
+  if (phantom) {
+    console.warn(
+      `[TerminalOutput] Markdown structure (<${phantom}>) in output "${title ?? "(untitled)"}": the source lines started with *, > or #, and the parser ate those characters. Wrap the output in a \`\`\`text fence.`,
+    );
+  }
+}
 
 const label = title ?? t("ui.output");
 const finalAriaLabel =
@@ -71,14 +112,15 @@ const scrollAria = title
     >
       {/* eslint-enable astro/jsx-a11y/no-noninteractive-tabindex */}
       {
-        /* <div>, not <pre>: the output slot may contain block content (<p>,
-          <ul>, code fences) which is invalid inside <pre>. Pre-wrap comes from
-          the global .jmrp-term__out rule. */
+        isHighlightedFence ? (
+          <div
+            class="jmrp-term__out"
+            set:html={trimmedContent}
+          />
+        ) : (
+          <pre class="jmrp-term__out">{outputText}</pre>
+        )
       }
-      <div
-        class="jmrp-term__out"
-        set:html={trimmedContent}
-      />
     </div>
   </div>
 </section>
@@ -92,5 +134,14 @@ const scrollAria = title
   .jmrp-term__scroll:focus-visible {
     outline: 2px solid transparent;
     box-shadow: inset 0 0 0 2px var(--term-prompt);
+  }
+
+  /* The <pre> is a transport for line breaks, not a code block: it must keep
+     the card's own font and rhythm, not the UA's monospace default + margin.
+     white-space/overflow-wrap stay with .jmrp-term__out in code-terminal.css,
+     shared with the fence branch. */
+  pre.jmrp-term__out {
+    margin: 0;
+    font: inherit;
   }
 </style>

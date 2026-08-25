@@ -9,6 +9,8 @@
 import { type TranslationKey, useTranslations } from "@i18n/utils";
 import type { CVData } from "@src/types";
 import { getCVData } from "@utils/cv";
+import { registry } from "@utils/llms/mdx/registry";
+import { mdxToMarkdown } from "@utils/llms/mdx/render";
 import { getMcpServers, type McpServer } from "@utils/projects";
 import { getPublications, stripTrailingPunctuation } from "@utils/publications";
 import { SERIES } from "@utils/series";
@@ -243,97 +245,6 @@ function buildProfileSections(
  */
 function collapseWhitespace(value: string): string {
   return value.replaceAll(/\s+/gu, " ").trim();
-}
-
-/**
- * Best-effort conversion of a post's MDX body to plain-ish markdown for AI
- * ingestion: strips `import` statements, collapses excess blank lines, and
- * optionally demotes the post's own headings.
- *
- * `demote` defaults to 0 and every current caller leaves it there. It existed
- * because post bodies used to be INLINED under an `### <post title>` node in
- * `llms-full`, where a native `##` would have sat above the title it belongs
- * to. Bodies now live in one shard per post under a `# <title>` of their own,
- * so demoting flattened every article instead: the shards ended up with 23 H4
- * and 45 H5 and not a single H2, which is one 60 KB chunk to any pipeline that
- * splits on H2 boundaries — the exact failure the demotion was meant to avoid.
- *
- * Fenced code blocks are skipped — a leading `#` there is a shell comment, not
- * a heading, and rewriting it would corrupt the snippet. Component tags are
- * left in place (harmless noise) to avoid corrupting code blocks that
- * legitimately contain `<` / `>`.
- */
-function mdxToText(body: string, demote = 0): string {
-  // EVERY transform here runs inside one fence-aware pass, deliberately.
-  // Each one that was hoisted out of it corrupted snippets: stripping `import`
-  // up front deleted the `import csv` / `import os` lines from the Python
-  // sample in post 010, and collapsing blank runs up front squashed the
-  // spacing inside code blocks. Both shipped broken code to the very consumer
-  // llms-full.txt exists for. Nothing may touch a line while `inFence`.
-  let inFence = false;
-  let inImport = false;
-  let blankRun = 0;
-  const out: string[] = [];
-
-  for (const line of body.trim().split("\n")) {
-    if (/^\s*```/.test(line)) {
-      inFence = !inFence;
-      blankRun = 0;
-      out.push(line);
-      continue;
-    }
-    if (inFence) {
-      out.push(line);
-      continue;
-    }
-
-    // MDX component imports are page scaffolding, not prose. Dropping the line
-    // outright (rather than emitting "") keeps the import block from turning
-    // into a run of blank lines.
-    //
-    // A brace that opens and does not close on the same line starts a
-    // multi-line import; only its FIRST line begins with `import`, so matching
-    // that alone published the continuation lines as if they were prose —
-    // `  TerminalSession,` and friends were shipping in four shards. The state
-    // lives inside this loop, after the `inFence` guard, so a `import` line in
-    // a Python or shell sample is still never touched.
-    if (inImport) {
-      if (line.includes("}")) inImport = false;
-      continue;
-    }
-    if (line.startsWith("import ")) {
-      if (line.includes("{") && !line.includes("}")) inImport = true;
-      continue;
-    }
-
-    // Collapse runs of blank lines to at most one, outside fences only.
-    if (line.trim() === "") {
-      blankRun += 1;
-      if (blankRun > 1) continue;
-      out.push(line);
-      continue;
-    }
-    blankRun = 0;
-
-    // `\s` matches exactly one character and the remainder is taken with
-    // slice() rather than a second capture group: `(\s+.*)` lets both parts
-    // consume whitespace, so the engine backtracks over every split of a
-    // long run of spaces (super-linear, flagged by SonarCloud as ReDoS).
-    const match = /^(#{1,4})\s/.exec(line);
-    if (!match) {
-      out.push(line);
-      continue;
-    }
-    if (demote === 0) {
-      out.push(line);
-      continue;
-    }
-    // Cap at H6 so deeply nested source headings stay valid markdown.
-    const depth = Math.min(match[1].length + demote, 6);
-    out.push(`${"#".repeat(depth)}${line.slice(match[1].length)}`);
-  }
-
-  return out.join("\n");
 }
 
 /**
@@ -770,7 +681,18 @@ function buildPostEntry(
           ...(d.howto?.steps ?? []).map((s, i) => `${i + 1}. ${s.name}`),
         ]
       : []),
-    ...(p.body ? ["", "---", "", mdxToText(p.body)] : []),
+    ...(p.body
+      ? [
+          "",
+          "---",
+          "",
+          mdxToMarkdown(p.body, {
+            locale: localePrefix === "/es" ? "es" : "en",
+            siteUrl,
+            registry,
+          }),
+        ]
+      : []),
     "",
   ];
 }
@@ -845,7 +767,39 @@ export function generateLlmsPostTxt(
   ].join("\n");
 }
 
-/** Renders one locale's tools as `### title` blocks with metadata, for llms-full. */
+/**
+ * Renders one locale's tools as `### title` blocks with metadata and body, for
+ * llms-full.
+ *
+ * ── Why the body is inlined and not sharded like a post ───────────────────
+ * A post body gets its own file because it is a self-contained 31–59 KB guide:
+ * big enough that inlining twelve of them made the document 587 KB and any
+ * ingestion cap landed mid-guide. A tool body is not that. Converted, the
+ * largest is 9.1 KB and the median 4.6 KB — the whole 17-tool English corpus
+ * (76.5 KB) is barely larger than one post shard. It is also not a document:
+ * "How is the CRC-16 calculated?" is only useful next to the URL, category and
+ * feature list of the tool that calculates it, and splitting the two would cost
+ * a second fetch to reassemble a page that is 11 KB whole. Publishing a 2.2 KB
+ * `.txt` per tool would apply the shard machinery to files it was never needed
+ * for, and add 34 URLs to the index for it.
+ *
+ * The cost is honest: this takes llms-full-en.txt from 76 KB to 153 KB and the
+ * bilingual llms-full.txt from 117 KB to 282 KB, which pushes the CV and
+ * Publications sections further down the document. The per-locale variants
+ * exist for exactly the pipelines that care, and llms.txt already advertises
+ * them on that basis.
+ *
+ * ── Why the whole body, chrome included ───────────────────────────────────
+ * Roughly 8% of it is interface instructions ("click the + button"), and
+ * another ~24% restates the description, feature list and privacy answer that
+ * the frontmatter above already emitted, in different words. The remaining ~66%
+ * is reference material that exists nowhere else in the corpus: Modbus function
+ * and exception code tables, the JS/PCRE/Python regex flavour comparison, WCAG
+ * contrast formulas, subnet tables, and a `Linux Command Reference` per tool.
+ * Filtering the rest out would mean a converter deciding which of an author's
+ * sections count as content, and the near-duplicate wording is a retrieval
+ * annoyance, not a false statement.
+ */
 function buildToolSection(
   tools: CollectionEntry<"tools">[],
   siteUrl: string,
@@ -872,6 +826,26 @@ function buildToolSection(
             "Questions answered:",
             "",
             ...d.faq.flatMap((f) => [`**${f.question}**`, "", f.answer, ""]),
+          ]
+        : []),
+      // Same `---` rule the post shards use: it separates the frontmatter
+      // metadata above from the page's own prose below, and the blank line
+      // before it is what keeps it a thematic break rather than an underline
+      // that would turn the line above into a heading.
+      ...(t.body
+        ? [
+            "",
+            "---",
+            "",
+            mdxToMarkdown(t.body, {
+              locale: d.lang,
+              siteUrl,
+              registry,
+              // The body opens at `<h2>`; it is being nested under this tool's
+              // own `###`, so every heading moves down two levels. The deepest
+              // one in the corpus is `<h4>`, which lands on `######`.
+              headingOffset: 2,
+            }),
           ]
         : []),
       "",
@@ -955,7 +929,7 @@ export async function generateLlmsFullTxt(
     "",
     `> ${DESCRIPTION}`,
     "",
-    '> Blog posts are one file per post so that no ingestion cap truncates a\n> guide mid-way; the "Blog Posts" section links to each of them. Tools carry\n> their description, feature list and FAQ here, with the long-form\n> documentation on the tool page itself. Everything else is inlined in full.',
+    '> Blog posts are one file per post so that no ingestion cap truncates a\n> guide mid-way; the "Blog Posts" section links to each of them. Everything\n> else is inlined in full, each tool\'s own documentation included. For a\n> smaller document, llms-full-en.txt and llms-full-es.txt carry one language\n> each.',
     "",
     // The build date, not a content date — see the same label on the shards.
     `> Generated: ${today()}`,

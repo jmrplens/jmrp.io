@@ -24,6 +24,10 @@ export default [
       "design-audit/**",
       "**/node_modules/**",
       "**/.astro/**",
+      // Build caches and any throwaway `--outDir` written under .cache/.
+      // Gitignored but NOT ignored here until now, so a verification build
+      // left inside it failed lint with errors from Preact's minified output.
+      "**/.cache/**",
       "**/coverage/**",
       "**/public/scripts/**",
       "**/*.min.js",

@@ -3,8 +3,17 @@
  * TerminalCommand — a CLI command to run, in a dark terminal card (both themes),
  * with a copy button that copies the raw command (no prompt).
  *
+ * `title` is an optional caption in the card header, rendered exactly like
+ * <TerminalSession>'s: visible chrome, aria-hidden, with the accessible name
+ * still derived from the command itself. Alternative considered and rejected:
+ * folding the title into the aria-label the way <TerminalOutput> does. An
+ * output has no self-describing content so its title has to carry the name,
+ * whereas a command block already announces the command — doing it there would
+ * have hidden the caption from sighted readers for no accessibility gain.
+ *
  * Usage:
  *   <TerminalCommand>sudo nginx -t && sudo systemctl reload nginx</TerminalCommand>
+ *   <TerminalCommand title="Generate Client Keys">wg genkey</TerminalCommand>
  */
 import { createHash } from "node:crypto";
 
@@ -16,11 +25,12 @@ import * as cheerio from "cheerio";
 import CopyButton from "./CopyButton.astro";
 
 interface Props {
+  title?: string;
   prompt?: string;
   ariaLabel?: string;
 }
 
-const { prompt = "❯", ariaLabel } = Astro.props;
+const { title, prompt = "❯", ariaLabel } = Astro.props;
 
 let lines: string[] = [];
 let rawContent = "";
@@ -73,11 +83,23 @@ if (ariaLabel) {
   data-testid={`terminal-${contentHash}`}
 >
   <div class="jmrp-term__head">
-    <span
-      class="jmrp-term__dots"
-      aria-hidden="true"
-    >
-      <i></i><i></i><i></i>
+    <span class="jmrp-term__head-left">
+      <span
+        class="jmrp-term__dots"
+        aria-hidden="true"
+      >
+        <i></i><i></i><i></i>
+      </span>
+      {
+        title && (
+          <span
+            class="jmrp-term__label jmrp-term__label--title"
+            aria-hidden="true"
+          >
+            {title}
+          </span>
+        )
+      }
     </span>
     <CopyButton
       variant="terminal"
@@ -122,6 +144,21 @@ if (ariaLabel) {
 </div>
 
 <style>
+  .jmrp-term__head-left {
+    display: flex;
+    gap: 9px;
+    align-items: center;
+    min-width: 0;
+  }
+
+  .jmrp-term__label--title {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    text-transform: none;
+    letter-spacing: 0;
+    white-space: nowrap;
+  }
+
   .jmrp-term__scroll {
     overflow-x: auto;
     outline: none;
