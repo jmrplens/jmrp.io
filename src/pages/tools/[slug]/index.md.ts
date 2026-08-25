@@ -1,5 +1,4 @@
-import { generateToolMarkdown } from "@utils/llms";
-import { type CollectionEntry, getCollection } from "astro:content";
+import { toolMarkdownRoute } from "@utils/llms/markdown-route";
 
 /**
  * `/tools/<slug>/index.md` — the English markdown twin of every tool page.
@@ -9,26 +8,4 @@ import { type CollectionEntry, getCollection } from "astro:content";
  * applies. Publishing them is what lets `llms-full.txt` link to a tool's
  * documentation instead of carrying it: the 34 bodies were 82.5% of that file.
  */
-export async function getStaticPaths() {
-  const tools = await getCollection("tools", (t) => t.data.lang === "en");
-  return tools.map((tool) => ({
-    params: { slug: tool.data.slug },
-    props: { tool },
-  }));
-}
-
-/**
- * Renders one tool as a standalone markdown document.
- *
- * @param context - Astro endpoint context.
- * @returns A `text/markdown` response.
- */
-export function GET(context: {
-  site: URL;
-  props: { tool: CollectionEntry<"tools"> };
-}) {
-  return new Response(
-    generateToolMarkdown(context.site.origin, context.props.tool),
-    { headers: { "Content-Type": "text/markdown; charset=utf-8" } },
-  );
-}
+export const { getStaticPaths, GET } = toolMarkdownRoute("en");

@@ -639,8 +639,6 @@ export async function generateLlmsTxt(siteUrl: string): Promise<string> {
     // claiming ~1.2 MB for a 58 KB file, while robots.txt claimed ~43 KB for
     // the same file. A pipeline budgeting on either number skipped it.
     `- [Full context](${siteUrl}/llms-full.txt): Both languages in one document — every tool in full, plus a linked index of every post`,
-    `- [Full context, English only](${siteUrl}/llms-full-en.txt): The same document scoped to the English corpus, for pipelines that cap document size`,
-    `- [Full context, Spanish only](${siteUrl}/llms-full-es.txt): The same document scoped to the Spanish corpus`,
     `- [RSS feed (EN)](${siteUrl}/rss.xml): English blog feed`,
     `- [RSS feed (ES)](${siteUrl}/es/rss.xml): Spanish blog feed`,
     "",
@@ -819,7 +817,7 @@ export function generateLlmsPostTxt(
  * `.txt` per tool would apply the shard machinery to files it was never needed
  * for, and add 34 URLs to the index for it.
  *
- * The cost is honest: this takes llms-full-en.txt from 76 KB to 153 KB and the
+ * The cost is honest: this takes the corpus from 76 KB to 153 KB and the
  * bilingual llms-full.txt from 117 KB to 282 KB, which pushes the CV and
  * Publications sections further down the document. The per-locale variants
  * exist for exactly the pipelines that care, and llms.txt already advertises
@@ -854,7 +852,12 @@ export function generateLlmsPostTxt(
  * @returns The twin's path.
  */
 export function markdownTwinPath(pagePath: string): string {
-  return `${pagePath.replace(/\/+$/u, "")}/index.md`;
+  // String ops rather than `/\/+$/`: an anchored `+` over a run of the same
+  // character is the backtracking shape SonarCloud flags, and the loop says
+  // what it does.
+  let base = pagePath;
+  while (base.endsWith("/")) base = base.slice(0, -1);
+  return `${base}/index.md`;
 }
 
 /** Metadata block shared by every standalone markdown document. */

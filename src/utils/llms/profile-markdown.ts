@@ -39,7 +39,7 @@ function item(name: string, detail?: string): string {
  */
 export async function aboutLines(locale: "en" | "es"): Promise<Lines> {
   const entry = await getEntry("profile", "about");
-  if (!entry || entry.data.type !== "about") return [];
+  if (entry?.data.type !== "about") return [];
   const d = entry.data[locale];
   return [
     ...d.lead,
@@ -71,7 +71,7 @@ export async function aboutLines(locale: "en" | "es"): Promise<Lines> {
  */
 export async function usesLines(locale: "en" | "es"): Promise<Lines> {
   const entry = await getEntry("profile", "uses");
-  if (!entry || entry.data.type !== "uses") return [];
+  if (entry?.data.type !== "uses") return [];
   const d = entry.data[locale];
   return [
     d.intro,
@@ -105,7 +105,7 @@ export async function usesLines(locale: "en" | "es"): Promise<Lines> {
  */
 export async function projectsLines(locale: "en" | "es"): Promise<Lines> {
   const entry = await getEntry("profile", "projects");
-  if (!entry || entry.data.type !== "projects") return [];
+  if (entry?.data.type !== "projects") return [];
   return entry.data.projects.flatMap((p) => [
     `## ${p.name}`,
     "",

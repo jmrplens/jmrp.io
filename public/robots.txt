@@ -167,8 +167,6 @@ Sitemap: https://jmrp.io/sitemap-index.xml
 #                                          on purpose: the hand-maintained
 #                                          figures here and in llms.txt drifted
 #                                          apart until they disagreed 28-fold.
-# https://jmrp.io/llms-full-en.txt       — English corpus only
-# https://jmrp.io/llms-full-es.txt       — Spanish corpus only
 # https://jmrp.io/<page>/index.md   — the markdown twin of a page, at the page's
 #                                     own URL. The llms.txt spec: "provide a
 #                                     clean markdown version of those pages at

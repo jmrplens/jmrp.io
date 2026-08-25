@@ -1,4 +1,5 @@
 import { generateCvMarkdown } from "@utils/llms";
+import { singleMarkdownRoute } from "@utils/llms/markdown-route";
 
 /**
  * `/es/cv/index.md` — the markdown twin of the CV page.
@@ -7,16 +8,4 @@ import { generateCvMarkdown } from "@utils/llms";
  * of its motivating cases, and this is the file that makes that answerable
  * without parsing a rendered page or a PDF.
  */
-export const prerender = true;
-
-/**
- * Renders the CV as markdown.
- *
- * @param context - Astro endpoint context.
- * @returns A `text/markdown` response.
- */
-export async function GET(context: { site: URL }) {
-  return new Response(await generateCvMarkdown(context.site.origin, "es"), {
-    headers: { "Content-Type": "text/markdown; charset=utf-8" },
-  });
-}
+export const { prerender, GET } = singleMarkdownRoute(generateCvMarkdown, "es");
