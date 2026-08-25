@@ -162,8 +162,10 @@ Sitemap: https://jmrp.io/sitemap-index.xml
 
 # LLM context (llmstxt.org standard)
 # https://jmrp.io/llms.txt
-# https://jmrp.io/llms-full.txt          — both languages, index + everything
-#                                          except post bodies. No size quoted
+# https://jmrp.io/llms-full.txt          — both languages, an index: the detail
+#                                          for posts, tools, the CV and the
+#                                          publications is linked from here,
+#                                          not embedded. No size quoted
 #                                          on purpose: the hand-maintained
 #                                          figures here and in llms.txt drifted
 #                                          apart until they disagreed 28-fold.
@@ -174,7 +176,9 @@ Sitemap: https://jmrp.io/sitemap-index.xml
 #                                     (URLs without file names should append
 #                                     index.html.md or index.md instead.)"
 #                                     Published for every post, every tool, the
-#                                     CV and the publications, in both locales.
+#                                     CV, the publications and the profile
+#                                     pages (/about/, /projects/, /uses/), in
+#                                     both locales.
 #                                     Pages declare theirs with
 #                                     rel="alternate" type="text/markdown", and
 #                                     every page points at this index with

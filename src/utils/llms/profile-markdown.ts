@@ -39,7 +39,12 @@ function item(name: string, detail?: string): string {
  */
 export async function aboutLines(locale: "en" | "es"): Promise<Lines> {
   const entry = await getEntry("profile", "about");
-  if (entry?.data.type !== "about") return [];
+  // Throwing, like AboutPage and UsesPage do for the same condition: a twin
+  // with a header and no body would publish an empty document and keep the
+  // build green.
+  if (entry?.data.type !== "about") {
+    throw new Error("profile/about.yaml is missing or has the wrong type");
+  }
   const d = entry.data[locale];
   return [
     ...d.lead,
@@ -71,7 +76,12 @@ export async function aboutLines(locale: "en" | "es"): Promise<Lines> {
  */
 export async function usesLines(locale: "en" | "es"): Promise<Lines> {
   const entry = await getEntry("profile", "uses");
-  if (entry?.data.type !== "uses") return [];
+  // Throwing, like AboutPage and UsesPage do for the same condition: a twin
+  // with a header and no body would publish an empty document and keep the
+  // build green.
+  if (entry?.data.type !== "uses") {
+    throw new Error("profile/uses.yaml is missing or has the wrong type");
+  }
   const d = entry.data[locale];
   return [
     d.intro,
@@ -105,7 +115,12 @@ export async function usesLines(locale: "en" | "es"): Promise<Lines> {
  */
 export async function projectsLines(locale: "en" | "es"): Promise<Lines> {
   const entry = await getEntry("profile", "projects");
-  if (entry?.data.type !== "projects") return [];
+  // Throwing, like AboutPage and UsesPage do for the same condition: a twin
+  // with a header and no body would publish an empty document and keep the
+  // build green.
+  if (entry?.data.type !== "projects") {
+    throw new Error("profile/projects.yaml is missing or has the wrong type");
+  }
   return entry.data.projects.flatMap((p) => [
     `## ${p.name}`,
     "",

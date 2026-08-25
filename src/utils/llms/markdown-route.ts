@@ -127,7 +127,10 @@ export function singleMarkdownRoute(
   locale: "en" | "es",
 ) {
   return {
-    prerender: true,
+    // No `prerender` export: this site has no `output` in astro.config, so it
+    // is fully static and the flag is a no-op. None of the other 40+ pages
+    // declares one, and a no-op export is a claim that something is being
+    // decided here.
     GET: async (context: { site: URL }) =>
       new Response(await render(context.site.origin, locale), {
         headers: MARKDOWN_HEADERS,

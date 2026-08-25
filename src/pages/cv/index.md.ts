@@ -8,4 +8,4 @@ import { singleMarkdownRoute } from "@utils/llms/markdown-route";
  * of its motivating cases, and this is the file that makes that answerable
  * without parsing a rendered page or a PDF.
  */
-export const { prerender, GET } = singleMarkdownRoute(generateCvMarkdown, "en");
+export const { GET } = singleMarkdownRoute(generateCvMarkdown, "en");

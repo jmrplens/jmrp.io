@@ -1038,11 +1038,14 @@ export async function generatePublicationsMarkdown(
   siteUrl: string,
   locale: "en" | "es",
 ): Promise<string> {
-  const groups = await getPublications();
+  // With the locale: `getPublications` groups by type and those titles are
+  // translated, so the default made the Spanish twin carry "Journal articles"
+  // while the page it mirrors says "Artículos de revista".
+  const groups = await getPublications(locale);
   const page = `${locale === "es" ? "/es" : ""}/publications/`;
   return [
     ...documentHeader(
-      "Publications",
+      locale === "es" ? "Publicaciones" : "Publications",
       `${siteUrl}${page}`,
       `${siteUrl}/llms.txt`,
     ),
@@ -1088,26 +1091,11 @@ export async function generateProfileMarkdown(
 }
 
 /** Generates the enriched `llms-full.txt` with per-post detail. */
-export async function generateLlmsFullTxt(
-  siteUrl: string,
-  /**
-   * Restrict the document to one locale's posts and tools.
-   *
-   * Several AI ingestion pipelines cap a single document and truncate silently,
-   * and because the Spanish corpus is emitted after the English one, the half
-   * that gets dropped was always the same half. Two things address that: the
-   * per-locale variants, and — since post bodies moved to one file per post —
-   * this document being an index rather than the corpus itself. It went from
-   * ~1.2 MB combined to a few tens of KB.
-   */
-  onlyLocale?: "en" | "es",
-): Promise<string> {
-  const wantEn = onlyLocale !== "es";
-  const wantEs = onlyLocale !== "en";
-  const postsEn = wantEn ? await getPostsByLocale("en") : [];
-  const postsEs = wantEs ? await getPostsByLocale("es") : [];
-  const toolsEn = wantEn ? await getToolsByLocale("en") : [];
-  const toolsEs = wantEs ? await getToolsByLocale("es") : [];
+export async function generateLlmsFullTxt(siteUrl: string): Promise<string> {
+  const postsEn = await getPostsByLocale("en");
+  const postsEs = await getPostsByLocale("es");
+  const toolsEn = await getToolsByLocale("en");
+  const toolsEs = await getToolsByLocale("es");
   // Post bodies are NOT inlined any more — see llmsPostShardPath(). What goes
   // in here is a link index; the bodies are one file per post.
   const postSectionEn = buildPostIndex(postsEn, siteUrl, "en");
@@ -1131,45 +1119,39 @@ export async function generateLlmsFullTxt(
     "",
     // Locale sections are omitted entirely rather than emitted empty when the
     // document is scoped, so a per-locale file has no dangling headings.
-    ...(wantEn ? ["## Blog Posts", "", ...postSectionEn] : []),
-    ...(wantEs ? ["## Blog Posts (Español)", "", ...postSectionEs] : []),
-    ...(wantEn ? ["## Developer Tools", "", ...toolSectionEn] : []),
-    ...(wantEs ? ["## Developer Tools (Español)", "", ...toolSectionEs] : []),
+    "## Blog Posts",
+    "",
+    ...postSectionEn,
+    "## Blog Posts (Español)",
+    "",
+    ...postSectionEs,
+    "## Developer Tools",
+    "",
+    ...toolSectionEn,
+    "## Developer Tools (Español)",
+    "",
+    ...toolSectionEs,
     // Linked, not inlined, for the same reason the post bodies are: this file
     // has to stay inside a fetching agent's context, and these two were 35 KB
     // of a document already past the point where one truncates it.
     "## Curriculum Vitae",
     "",
-    ...(wantEn
-      ? [
-          `- [Curriculum Vitae](${siteUrl}${markdownTwinPath("/cv/")}): full CV in markdown ([page](${siteUrl}/cv/))`,
-        ]
-      : []),
-    ...(wantEs
-      ? [
-          `- [Currículum](${siteUrl}${markdownTwinPath("/es/cv/")}): CV completo en markdown ([página](${siteUrl}/es/cv/))`,
-        ]
-      : []),
+    `- [Curriculum Vitae](${siteUrl}${markdownTwinPath("/cv/")}): full CV in markdown ([page](${siteUrl}/cv/))`,
+    `- [Currículum](${siteUrl}${markdownTwinPath("/es/cv/")}): CV completo en markdown ([página](${siteUrl}/es/cv/))`,
     "",
     "## Publications",
     "",
-    ...(wantEn
-      ? [
-          `- [Publications](${siteUrl}${markdownTwinPath("/publications/")}): every paper with its abstract and DOI ([page](${siteUrl}/publications/))`,
-        ]
-      : []),
-    ...(wantEs
-      ? [
-          `- [Publicaciones](${siteUrl}${markdownTwinPath("/es/publications/")}): cada artículo con su resumen y DOI ([página](${siteUrl}/es/publications/))`,
-        ]
-      : []),
+    `- [Publications](${siteUrl}${markdownTwinPath("/publications/")}): every paper with its abstract and DOI ([page](${siteUrl}/publications/))`,
+    `- [Publicaciones](${siteUrl}${markdownTwinPath("/es/publications/")}): cada artículo con su resumen y DOI ([página](${siteUrl}/es/publications/))`,
     "",
     // The four sections llms.txt advertises but this file used to skip.
-    ...buildProfileSections(siteUrl, onlyLocale === "es" ? "es" : "en"),
+    ...buildProfileSections(siteUrl, "en"),
     // Per-locale like the post/tool sections: the combined document carries
     // both languages, each per-locale variant only its own.
-    ...(wantEn ? [await mcpBlock("en"), ""] : []),
-    ...(wantEs ? [await mcpBlock("es"), ""] : []),
+    await mcpBlock("en"),
+    "",
+    await mcpBlock("es"),
+    "",
     "## Contact",
     "",
     ...CONTACT.map((c) => `- ${c}`),
