@@ -668,15 +668,20 @@ const jsonLD = {
   title="Person entity (JSON-LD)"
 />
 {
-  /* llms.txt discovery. robots.txt already points at these files, but only as
-    comments, which nothing parses. Declaring them here means a client that
-    fetched the page — rather than the robots file — can still find the AI
-    context index without guessing the well-known path. */
+  /* The two link relations the llms.txt spec names, verbatim: "`rel="alternate"
+    type="text/markdown"` points to the markdown version of a page, and
+    `rel="describedby"` points to the llms.txt file that covers it."
+
+    `describedby` goes on EVERY page; the markdown alternate only on pages that
+    have a twin. Until now this was a single `rel="alternate" type="text/plain"`
+    to /llms.txt — a relation the spec does not define and a type that misstates
+    what the file is. robots.txt also points at these files, but only in
+    comments, which nothing parses. */
 }
 <link
-  rel="alternate"
-  type="text/plain"
+  rel="describedby"
   href="/llms.txt"
+  type="text/markdown"
   title="LLM context index (llmstxt.org)"
 />
 {

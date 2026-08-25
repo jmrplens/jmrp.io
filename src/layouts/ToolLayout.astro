@@ -15,6 +15,7 @@ import FAQ from "@components/ui/FAQ.astro";
 import { defaultLocale, type Locale } from "@i18n/config";
 import { useTranslatedPath, useTranslations } from "@i18n/utils";
 import BaseLayout from "@layouts/BaseLayout.astro";
+import { markdownTwinPath } from "@utils/llms";
 import { getSiteUrl } from "@utils/site";
 import type { CollectionEntry } from "astro:content";
 import type { FAQPage, SoftwareApplication, WebPage } from "schema-dts";
@@ -177,6 +178,7 @@ const pageSchema = faqNode
   title={title}
   description={description}
   schema={pageSchema}
+  markdownHref={markdownTwinPath(Astro.url.pathname)}
 >
   <div class="tool-page">
     <div class="content-wrapper">

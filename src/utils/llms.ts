@@ -12,7 +12,11 @@ import { getCVData } from "@utils/cv";
 import { registry } from "@utils/llms/mdx/registry";
 import { mdxToMarkdown } from "@utils/llms/mdx/render";
 import { getMcpServers, type McpServer } from "@utils/projects";
-import { getPublications, stripTrailingPunctuation } from "@utils/publications";
+import {
+  getPublications,
+  type PublicationGroup,
+  stripTrailingPunctuation,
+} from "@utils/publications";
 import { SERIES } from "@utils/series";
 import type { CollectionEntry } from "astro:content";
 import { getCollection } from "astro:content";
@@ -286,6 +290,11 @@ const CV_LABELS = {
 /** ` (text)`, or nothing when the value is absent. */
 function parenthetical(value?: string): string {
   return value ? ` (${value})` : "";
+}
+
+/** `. text.`, or just `.`, for the venue tail of a citation line. */
+function suffixed(value?: string): string {
+  return value ? `. ${value}.` : ".";
 }
 
 /** ` — text`, or nothing when the value is absent. */
@@ -630,8 +639,9 @@ export async function generateLlmsTxt(siteUrl: string): Promise<string> {
  * per post is naturally bounded and lets an agent fetch exactly the guide it
  * needs instead of the whole corpus.
  *
- * The path MIRRORS the article's own URL, with `.md` in place of the trailing
- * slash, because the previous shape — `/llms-blog-<locale>-<slug>.txt` at the
+ * The path MIRRORS the article's own URL with `index.md` appended, which is
+ * what the spec prescribes for a URL that has no file name. The shape before
+ * that — `/llms-blog-<locale>-<slug>.txt` at the
  * site root — could not be derived from anything: an agent holding `/blog/005-foo/` had to invent
  * a prefix AND move the locale from a path segment to a filename infix, while
  * the convention it would actually try (append `.md`) returned 404. The access
@@ -640,10 +650,10 @@ export async function generateLlmsTxt(siteUrl: string): Promise<string> {
  *
  * @param locale - Post locale.
  * @param slug - Post slug, already carrying its `NNN-` prefix.
- * @returns Root-relative path, e.g. `/blog/003-….md` or `/es/blog/003-….md`.
+ * @returns Root-relative path, e.g. `/blog/003-…/index.md`.
  */
 export function llmsPostShardPath(locale: "en" | "es", slug: string): string {
-  return `${locale === "es" ? "/es" : ""}/blog/${slug}.md`;
+  return markdownTwinPath(`${locale === "es" ? "/es" : ""}/blog/${slug}/`);
 }
 
 /** Renders a single post as the `### title` block used by llms-full and shards. */
@@ -808,57 +818,216 @@ export function generateLlmsPostTxt(
  * sections count as content, and the near-duplicate wording is a retrieval
  * annoyance, not a false statement.
  */
+/**
+ * Root-relative path of a page's markdown twin.
+ *
+ * The spec's own words: "pages with information that agents might need
+ * provide a clean markdown version of those pages at the same URL as the
+ * original page, either with `.md` appended (`page.html.md`) or with the
+ * extension replaced by `.md` (`page.md`). (URLs without file names should
+ * append `index.html.md` or `index.md` instead.)"
+ *
+ * Every page here ends in a slash and has no file name, so `index.md` is the
+ * form that applies. The bare `<page>.md` shape this replaced is kept alive by
+ * a redirect: it was advertised, and an agent that learned it should not meet
+ * a 404.
+ *
+ * @param pagePath - Root-relative page URL, with its trailing slash.
+ * @returns The twin's path.
+ */
+export function markdownTwinPath(pagePath: string): string {
+  return `${pagePath.replace(/\/+$/u, "")}/index.md`;
+}
+
+/** Metadata block shared by every standalone markdown document. */
+function documentHeader(
+  title: string,
+  url: string,
+  index: string,
+  extra: string[] = [],
+): string[] {
+  return [
+    `# ${title}`,
+    "",
+    `> One page from jmrp.io, published as markdown. Index: ${index}`,
+    "",
+    // The build date, not a content date — the real ones, when a page has
+    // them, are in `extra`.
+    `> Generated: ${today()}`,
+    "",
+    `URL: ${url}`,
+    ...extra,
+  ];
+}
+
+/** A tool's frontmatter as the `notes about the file` the index carries. */
+function toolIndexEntry(
+  t: CollectionEntry<"tools">,
+  siteUrl: string,
+): string[] {
+  const d = t.data;
+  return [
+    `### ${d.title}`,
+    "",
+    `URL: ${toolUrl(siteUrl, t)}`,
+    `Markdown: ${siteUrl}${markdownTwinPath(new URL(toolUrl(siteUrl, t)).pathname)}`,
+    `Category: ${d.category}`,
+    ...(d.tags.length > 0 ? [`Tags: ${d.tags.join(", ")}`] : []),
+    d.description,
+    // Both of these already reach the page as JSON-LD — `featureList` on the
+    // SoftwareApplication and a FAQPage — so withholding them from the text
+    // corpus meant the machine-readable surface was richer than the one
+    // written for machines. They stay in the index because they are what lets
+    // an agent choose WHICH tool to fetch, which is the job of a file list.
+    ...(d.features && d.features.length > 0
+      ? ["", "Features:", ...d.features.map((f) => `- ${f}`)]
+      : []),
+    ...(d.faq && d.faq.length > 0
+      ? [
+          "",
+          "Questions answered:",
+          "",
+          ...d.faq.flatMap((f) => [`**${f.question}**`, "", f.answer, ""]),
+        ]
+      : []),
+    "",
+  ];
+}
+
+/** Renders one locale's tools as `### title` blocks, for llms-full. */
 function buildToolSection(
   tools: CollectionEntry<"tools">[],
   siteUrl: string,
 ): string[] {
-  return tools.flatMap((t) => {
-    const d = t.data;
-    return [
-      `### ${d.title}`,
-      "",
-      `URL: ${toolUrl(siteUrl, t)}`,
+  return tools.flatMap((t) => toolIndexEntry(t, siteUrl));
+}
+
+/**
+ * One tool as a standalone markdown document.
+ *
+ * The body used to be inlined in `llms-full.txt`, where the 34 of them were
+ * 82.5% of the file and pushed it past the point where a fetching agent
+ * truncates. The spec's answer to exactly this is the sentence that ends its
+ * proposal: "The file itself stays small enough to fit in context. The detail
+ * lives behind the links, and is fetched only when needed."
+ *
+ * @param siteUrl - Absolute site origin.
+ * @param tool - The tool entry.
+ * @returns The complete file body.
+ */
+export function generateToolMarkdown(
+  siteUrl: string,
+  tool: CollectionEntry<"tools">,
+): string {
+  const d = tool.data;
+  const locale = d.lang === "es" ? "es" : "en";
+  const page = new URL(toolUrl(siteUrl, tool)).pathname;
+  return [
+    ...documentHeader(d.title, `${siteUrl}${page}`, `${siteUrl}/llms.txt`, [
       `Category: ${d.category}`,
       ...(d.tags.length > 0 ? [`Tags: ${d.tags.join(", ")}`] : []),
-      d.description,
-      // Both of these already reach the page as JSON-LD — `featureList` on the
-      // SoftwareApplication and a FAQPage — so withholding them from the text
-      // corpus meant the machine-readable surface was richer than the one
-      // written for machines.
-      ...(d.features && d.features.length > 0
-        ? ["", "Features:", ...d.features.map((f) => `- ${f}`)]
-        : []),
-      ...(d.faq && d.faq.length > 0
-        ? [
-            "",
-            "Questions answered:",
-            "",
-            ...d.faq.flatMap((f) => [`**${f.question}**`, "", f.answer, ""]),
-          ]
-        : []),
-      // Same `---` rule the post shards use: it separates the frontmatter
-      // metadata above from the page's own prose below, and the blank line
-      // before it is what keeps it a thematic break rather than an underline
-      // that would turn the line above into a heading.
-      ...(t.body
-        ? [
-            "",
-            "---",
-            "",
-            mdxToMarkdown(t.body, {
-              locale: d.lang,
-              siteUrl,
-              registry,
-              // The body opens at `<h2>`; it is being nested under this tool's
-              // own `###`, so every heading moves down two levels. The deepest
-              // one in the corpus is `<h4>`, which lands on `######`.
-              headingOffset: 2,
-            }),
-          ]
-        : []),
       "",
-    ];
-  });
+      d.description,
+    ]),
+    ...(d.features && d.features.length > 0
+      ? ["", "Features:", ...d.features.map((f) => `- ${f}`)]
+      : []),
+    ...(d.faq && d.faq.length > 0
+      ? [
+          "",
+          "Questions answered:",
+          "",
+          ...d.faq.flatMap((f) => [`**${f.question}**`, "", f.answer, ""]),
+        ]
+      : []),
+    ...(tool.body
+      ? ["", "---", "", mdxToMarkdown(tool.body, { locale, siteUrl, registry })]
+      : []),
+    "",
+  ].join("\n");
+}
+
+/**
+ * The publications list as markdown lines.
+ *
+ * @param groups - Publication groups from the BibTeX source.
+ * @returns Markdown lines.
+ */
+function publicationsLines(groups: PublicationGroup[]): string[] {
+  return groups.flatMap((group) => [
+    `### ${group.title}`,
+    "",
+    ...group.items.map((pub) => {
+      const authors = (pub.author ?? [])
+        .map((a) => (a.given ? `${a.given} ${a.family}` : a.family))
+        .join(", ");
+      const year = pub.issued?.["date-parts"]?.[0]?.[0];
+      const venueRaw = pub["container-title"] ?? pub.publisher;
+      const venue = stripTrailingPunctuation(
+        typeof venueRaw === "string" ? venueRaw : "",
+      ).trim();
+      // The abstract is the only part of a paper that lets a model answer a
+      // question ABOUT the research rather than merely cite its title.
+      const abstract =
+        typeof pub.abstract === "string" ? pub.abstract.trim() : "";
+      const doi = typeof pub.DOI === "string" ? pub.DOI.trim() : "";
+      return [
+        `- ${pub.title}${parenthetical(year ? String(year) : undefined)}${dashed(authors)}${suffixed(venue)}`,
+        ...(doi ? [`  DOI: https://doi.org/${doi}`] : []),
+        ...(abstract ? [`  Abstract: ${collapseWhitespace(abstract)}`] : []),
+      ].join("\n");
+    }),
+    "",
+  ]);
+}
+
+/**
+ * The CV as a standalone markdown document.
+ *
+ * @param siteUrl - Absolute site origin.
+ * @param locale - Which locale's CV to render.
+ * @returns The complete file body.
+ */
+export async function generateCvMarkdown(
+  siteUrl: string,
+  locale: "en" | "es",
+): Promise<string> {
+  const cv = await getCVData(locale);
+  const page = `${locale === "es" ? "/es" : ""}/cv/`;
+  return [
+    ...documentHeader(
+      cv.basics.name,
+      `${siteUrl}${page}`,
+      `${siteUrl}/llms.txt`,
+    ),
+    "",
+    ...cvToMarkdown(cv, siteUrl, locale),
+    "",
+  ].join("\n");
+}
+
+/**
+ * The publications list as a standalone markdown document.
+ *
+ * @param siteUrl - Absolute site origin.
+ * @param locale - Locale of the page this twins.
+ * @returns The complete file body.
+ */
+export async function generatePublicationsMarkdown(
+  siteUrl: string,
+  locale: "en" | "es",
+): Promise<string> {
+  const groups = await getPublications();
+  const page = `${locale === "es" ? "/es" : ""}/publications/`;
+  return [
+    ...documentHeader(
+      "Publications",
+      `${siteUrl}${page}`,
+      `${siteUrl}/llms.txt`,
+    ),
+    "",
+    ...publicationsLines(groups),
+  ].join("\n");
 }
 
 /** Generates the enriched `llms-full.txt` with per-post detail. */
@@ -882,49 +1051,6 @@ export async function generateLlmsFullTxt(
   const postsEs = wantEs ? await getPostsByLocale("es") : [];
   const toolsEn = wantEn ? await getToolsByLocale("en") : [];
   const toolsEs = wantEs ? await getToolsByLocale("es") : [];
-  // Locale-aware: without it the Spanish corpus shipped the English CV.
-  const cv = await getCVData(onlyLocale === "es" ? "es" : "en");
-  const publicationGroups = await getPublications();
-
-  const cvSection = cvToMarkdown(
-    cv,
-    siteUrl,
-    onlyLocale === "es" ? "es" : "en",
-  );
-
-  const publicationsSection = publicationGroups.flatMap((group) => [
-    `### ${group.title}`,
-    "",
-    ...group.items.map((pub) => {
-      const authors = (pub.author ?? [])
-        .map((a) => (a.given ? `${a.given} ${a.family}` : a.family))
-        .join(", ");
-      const year = pub.issued?.["date-parts"]?.[0]?.[0];
-      const venueRaw = pub["container-title"] ?? pub.publisher;
-      const venue = stripTrailingPunctuation(
-        typeof venueRaw === "string" ? venueRaw : "",
-      ).trim();
-      const yearPart = year ? ` (${year})` : "";
-      const authorPart = authors ? ` — ${authors}` : "";
-      const venuePart = venue ? `. ${venue}` : "";
-      // The abstract is the only part of a paper that lets a model answer a
-      // question ABOUT the research rather than merely cite its title. This
-      // section emitted the bibliographic line alone, so the 2,233 words of
-      // abstracts rendered on /publications/ never reached the corpus written
-      // for models (GEO audit 2026-08-22, M11). 14 of the 16 entries have one.
-      // `PublicationItem` carries an index signature, hence the narrowing.
-      const abstract =
-        typeof pub.abstract === "string" ? pub.abstract.trim() : "";
-      const doi = typeof pub.DOI === "string" ? pub.DOI.trim() : "";
-      return [
-        `- ${pub.title}${yearPart}${authorPart}${venuePart}.`,
-        ...(doi ? [`  DOI: https://doi.org/${doi}`] : []),
-        ...(abstract ? [`  Abstract: ${collapseWhitespace(abstract)}`] : []),
-      ].join("\n");
-    }),
-    "",
-  ]);
-
   // Post bodies are NOT inlined any more — see llmsPostShardPath(). What goes
   // in here is a link index; the bodies are one file per post.
   const postSectionEn = buildPostIndex(postsEn, siteUrl, "en");
@@ -937,7 +1063,7 @@ export async function generateLlmsFullTxt(
     "",
     `> ${DESCRIPTION}`,
     "",
-    '> Blog posts are one file per post so that no ingestion cap truncates a\n> guide mid-way; the "Blog Posts" section links to each of them. Everything\n> else is inlined in full, each tool\'s own documentation included. For a\n> smaller document, llms-full-en.txt and llms-full-es.txt carry one language\n> each.',
+    "> This file is an index. Every entry links to a markdown twin that carries\n> the detail, which is what keeps the index itself small enough to fit in an\n> agent's context. Posts, tools, the CV and the publications each live at\n> their page's own URL with `index.md` appended.",
     "",
     // The build date, not a content date — see the same label on the shards.
     `> Generated: ${today()}`,
@@ -952,13 +1078,35 @@ export async function generateLlmsFullTxt(
     ...(wantEs ? ["## Blog Posts (Español)", "", ...postSectionEs] : []),
     ...(wantEn ? ["## Developer Tools", "", ...toolSectionEn] : []),
     ...(wantEs ? ["## Developer Tools (Español)", "", ...toolSectionEs] : []),
+    // Linked, not inlined, for the same reason the post bodies are: this file
+    // has to stay inside a fetching agent's context, and these two were 35 KB
+    // of a document already past the point where one truncates it.
     "## Curriculum Vitae",
     "",
-    ...cvSection,
+    ...(wantEn
+      ? [
+          `- [Curriculum Vitae](${siteUrl}${markdownTwinPath("/cv/")}): full CV in markdown ([page](${siteUrl}/cv/))`,
+        ]
+      : []),
+    ...(wantEs
+      ? [
+          `- [Currículum](${siteUrl}${markdownTwinPath("/es/cv/")}): CV completo en markdown ([página](${siteUrl}/es/cv/))`,
+        ]
+      : []),
     "",
     "## Publications",
     "",
-    ...publicationsSection,
+    ...(wantEn
+      ? [
+          `- [Publications](${siteUrl}${markdownTwinPath("/publications/")}): every paper with its abstract and DOI ([page](${siteUrl}/publications/))`,
+        ]
+      : []),
+    ...(wantEs
+      ? [
+          `- [Publicaciones](${siteUrl}${markdownTwinPath("/es/publications/")}): cada artículo con su resumen y DOI ([página](${siteUrl}/es/publications/))`,
+        ]
+      : []),
+    "",
     // The four sections llms.txt advertises but this file used to skip.
     ...buildProfileSections(siteUrl, onlyLocale === "es" ? "es" : "en"),
     // Per-locale like the post/tool sections: the combined document carries
