@@ -452,6 +452,7 @@ curl -v --max-time 5 'https://example.com/.env'
 </TerminalCommand>
 
 <TerminalOutput title="Tarpit response (truncated)">
+```text
 *   Trying [::1]:443...
 * Connected to example.com (::1) port 443
 * TLS 1.3 connection using TLS_AES_256_GCM_SHA384
@@ -461,6 +462,7 @@ curl -v --max-time 5 'https://example.com/.env'
 < cache-control: no-store, no-cache, must-revalidate, max-age=0
 * Operation timed out after 5000 milliseconds with 50 bytes received
 curl: (28) Operation timed out
+```
 </TerminalOutput>
 
 The connection was established, received 50 bytes (5 seconds × 10 bytes/second), and then our timeout kicked in. In reality, an attacker's scanner would wait much longer!
