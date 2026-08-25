@@ -76,6 +76,14 @@ interface Props {
   authors?: string[]; // Defaults to siteData.author
   tags?: string[];
   schema?: Record<string, unknown> | Record<string, unknown>[]; // Custom JSON-LD schema to merge or override
+  /**
+   * Root-relative path of this page's markdown twin, when it has one.
+   *
+   * Only blog posts do. `<link rel="alternate">` is how a client that fetched
+   * the PAGE — rather than robots.txt, whose pointers are comments that
+   * nothing parses — learns the file exists without guessing the convention.
+   */
+  markdownHref?: string;
 }
 
 const canonicalURL = new URL(Astro.url.pathname, getSiteUrl());
@@ -91,6 +99,7 @@ const {
   authors = [siteData.author],
   tags = [],
   schema,
+  markdownHref,
 } = Astro.props;
 
 const siteTitle = t("seo.siteTitle");
@@ -670,6 +679,16 @@ const jsonLD = {
   href="/llms.txt"
   title="LLM context index (llmstxt.org)"
 />
+{
+  markdownHref && (
+    <link
+      rel="alternate"
+      type="text/markdown"
+      href={markdownHref}
+      title="This page as markdown"
+    />
+  )
+}
 <meta
   name="generator"
   content={Astro.generator}
