@@ -466,6 +466,34 @@ export function mdxToMarkdown(
       : dedent(out, node.position?.start.column ?? 1);
   }
 
+  /**
+   * A JSX element: its own module, a raw-HTML equivalent, or its children.
+   *
+   * @param node - The element node.
+   * @returns Markdown.
+   */
+  function renderElement(node: MdxNode): string {
+    const name = node.name ?? "";
+
+    const spec = REGISTRY.get(name);
+    if (spec) return spec.toMarkdown(node, ctx);
+
+    // Raw inline HTML the author wrote inside the MDX.
+    const inlineHtml = HTML_INLINE[name];
+    if (inlineHtml) return inlineHtml(renderChildren(node));
+
+    if (name === "a") {
+      const inner = renderChildren(node);
+      const href = readAttr(node, "href");
+      return href ? `[${inner}](${href})` : inner;
+    }
+
+    // Fail safe: an unknown tag contributes its children, never its own
+    // syntax. A component added tomorrow degrades to its content instead of
+    // publishing `<NewThing prop="…">` to a language model.
+    return renderChildren(node);
+  }
+
   function renderNode(node: MdxNode): string {
     // `{"…"}` and `{`…`}` are how an author escapes MDX syntax — braces, angle
     // brackets, a lone backtick — so the literal inside them is CONTENT. Only
@@ -474,23 +502,7 @@ export function mdxToMarkdown(
     if (EXPRESSION_TYPES.has(node.type)) return literalExpression(node) ?? "";
     if (isScaffolding(node)) return "";
 
-    if (isElement(node)) {
-      const spec = node.name ? REGISTRY.get(node.name) : undefined;
-      if (spec) return spec.toMarkdown(node, ctx);
-
-      // Raw inline HTML the author wrote inside the MDX.
-      const inlineHtml = node.name ? HTML_INLINE[node.name] : undefined;
-      if (inlineHtml) return inlineHtml(renderChildren(node));
-      if (node.name === "a") {
-        const inner = renderChildren(node);
-        const href = readAttr(node, "href");
-        return href ? `[${inner}](${href})` : inner;
-      }
-      // Fail safe: an unknown tag contributes its children, never its own
-      // syntax. A component added tomorrow degrades to its content instead of
-      // publishing `<NewThing prop="…">` to a language model.
-      return renderChildren(node);
-    }
+    if (isElement(node)) return renderElement(node);
 
     // Anything that is not a component keeps its exact source bytes, so long
     // as no component is nested inside it.
