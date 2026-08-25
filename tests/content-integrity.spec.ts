@@ -371,3 +371,53 @@ test.describe("Meta Description Length", () => {
     });
   }
 });
+
+// ─── Locale Leaks in Spanish Content ─────────────────────────────────
+
+test.describe("Spanish content links stay in Spanish", () => {
+  const ES_DIRS = ["src/content/posts/es", "src/content/tools/es"];
+  // Sections that exist in both locales, so a link to the bare form is a leak.
+  // `/identity/`, `/og/`, `/pdf/` and the like are locale-less on purpose.
+  const LOCALIZED = [
+    "blog",
+    "tools",
+    "cv",
+    "projects",
+    "homelab",
+    "publications",
+    "about",
+    "uses",
+    "privacy",
+    "feeds",
+  ].join("|");
+
+  for (const dir of ES_DIRS) {
+    const root = join(process.cwd(), dir);
+    if (!existsSync(root)) continue;
+
+    const files = readdirSync(root).filter(
+      (f) => f.endsWith(".mdx") && !f.startsWith("_") && !f.startsWith("999"),
+    );
+    for (const file of files) {
+      test(`no unprefixed internal link in ${dir}/${file}`, () => {
+        const body = readFileSync(join(root, file), "utf8");
+        // Both markdown links and raw href attributes: this leaked through a
+        // markdown link, and the same mistake in an `<a href>` is invisible to
+        // a link checker because the English page answers 200.
+        const leaks = [
+          ...body.matchAll(
+            new RegExp(String.raw`\]\((/(?:${LOCALIZED})/[^)]*)\)`, "g"),
+          ),
+          ...body.matchAll(
+            new RegExp(`href=["'](/(?:${LOCALIZED})/[^"']*)["']`, "g"),
+          ),
+        ].map((m) => m[1]);
+
+        expect(
+          leaks,
+          `${file} links to the English page for: ${leaks.join(", ")}`,
+        ).toEqual([]);
+      });
+    }
+  }
+});

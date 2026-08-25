@@ -439,13 +439,25 @@ test.describe("SEO & Metadata Checks", () => {
     );
   });
 
-  test("llms-full.txt includes Spanish post bodies", async ({ page }) => {
-    const response = await page.request.get("/llms-full.txt");
-    const content = await response.text();
-    expect(content).toBeDefined();
+  test("the Spanish corpus reaches its post bodies", async ({ page }) => {
+    // This used to assert a post TITLE and call it a body check. It passed for
+    // the wrong reason: the string it looked for is the title of post 012, and
+    // titles appear in the index links whether or not any body is present — so
+    // the assertion survived the bodies moving out to one file per post and
+    // guarded nothing.
+    const index = await (await page.request.get("/llms-full.txt")).text();
+    expect(index).toContain("## Blog Posts (Español)");
 
-    expect(content).toContain("## Blog Posts (Español)");
-    expect(content).toContain("Un PIN de 4 dígitos basta");
+    // What llms-full carries now is the LINK to each Spanish body.
+    const twin = "/es/blog/012-device-bound-key-derivation.md";
+    expect(index).toContain(`https://jmrp.io${twin}`);
+
+    // And the body itself has to be there, at the other end of that link.
+    const body = await (await page.request.get(twin)).text();
+    expect(body).toContain("# Un PIN de 4 dígitos basta");
+    // Prose from deep inside the article, not its title: this is the part a
+    // title-matching assertion could never have proven was present.
+    expect(body).toContain("PBKDF2");
   });
 
   test("llms.txt has a single header blockquote, markdown-link contacts, and an Optional section", async ({

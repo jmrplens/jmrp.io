@@ -35,6 +35,7 @@ const t = useTranslations(locale);
 <a
   class="md-copy"
   href={href}
+  data-astro-prefetch="false"
   data-md-copy
   data-label-idle={t("pages.blogPost.copyMarkdown")}
   data-label-copied={t("ui.copied")}
@@ -71,7 +72,12 @@ const t = useTranslations(locale);
   }
 
   .md-copy:focus-visible {
-    outline: none;
+    /* The transparent outline is not decoration: Windows High Contrast Mode
+       discards box-shadow and forces outlines, so a focus ring built only from
+       a shadow leaves the control with no visible focus at all there. Keeping
+       both costs nothing in a normal render and is the only indicator in HCM. */
+    outline: 2px solid transparent;
+    outline-offset: 2px;
     box-shadow: var(--focus-ring);
   }
 
@@ -84,6 +90,10 @@ const t = useTranslations(locale);
 <script>
   (() => {
     const COPIED_MS = 1600;
+    /** Timer of the last copy, so a second click does not cut its own message
+        short: without this the first timeout fires mid-confirmation and the
+        live region is cleared before a screen reader has read it. */
+    let resetTimer: ReturnType<typeof globalThis.setTimeout> | undefined;
 
     /**
      * Upgrades the markdown link into a copy control.
@@ -123,7 +133,8 @@ const t = useTranslations(locale);
       const settle = (message: string) => {
         if (label) label.textContent = message;
         if (status) status.textContent = message;
-        globalThis.setTimeout(() => {
+        if (resetTimer !== undefined) globalThis.clearTimeout(resetTimer);
+        resetTimer = globalThis.setTimeout(() => {
           if (label) label.textContent = idle;
           if (status) status.textContent = "";
         }, COPIED_MS);
