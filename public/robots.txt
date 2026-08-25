@@ -169,8 +169,14 @@ Sitemap: https://jmrp.io/sitemap-index.xml
 #                                          apart until they disagreed 28-fold.
 # https://jmrp.io/llms-full-en.txt       — English corpus only
 # https://jmrp.io/llms-full-es.txt       — Spanish corpus only
-# https://jmrp.io/llms-blog-<locale>-<slug>.txt
-#                                        — one file per post, full body. Linked
-#                                          from the index above; kept separate
-#                                          so no ingestion cap truncates a guide
-#                                          mid-way.
+# https://jmrp.io/blog/<slug>.md        — one file per post, full body, in
+# https://jmrp.io/es/blog/<slug>.md        markdown. The article's own URL with
+#                                          `.md` in place of the trailing slash,
+#                                          so it can be derived rather than
+#                                          looked up. Kept separate from the
+#                                          corpus above so no ingestion cap
+#                                          truncates a guide mid-way.
+#
+# The former flat form, /llms-blog-<locale>-<slug>.txt, 301s to the file above
+# and is deliberately NOT listed here: advertising both would send a fresh
+# crawler through a redirect for no reason.

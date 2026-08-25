@@ -395,18 +395,69 @@ test.describe("SEO & Metadata Checks", () => {
     expect(content).toContain("## Blog Posts (Español)");
     expect(content).toContain("## Developer Tools (Español)");
 
+    // Every post line carries TWO links now — the article and its markdown
+    // twin — so the count has to name which one it means or it doubles.
     const esPosts =
-      content.match(/]\(https:\/\/jmrp\.io\/es\/blog\/\d{3}-/g) ?? [];
+      content.match(/]\(https:\/\/jmrp\.io\/es\/blog\/\d{3}-[a-z0-9-]+\/\)/g) ??
+      [];
     expect(esPosts).toHaveLength(12);
+
+    const esMarkdown =
+      content.match(
+        /]\(https:\/\/jmrp\.io\/es\/blog\/\d{3}-[a-z0-9-]+\.md\)/g,
+      ) ?? [];
+    expect(esMarkdown).toHaveLength(12);
   });
 
-  test("llms-full.txt includes Spanish post bodies", async ({ page }) => {
-    const response = await page.request.get("/llms-full.txt");
-    const content = await response.text();
-    expect(content).toBeDefined();
+  test("every post has a markdown twin at its own URL", async ({ page }) => {
+    for (const path of [
+      "/blog/004-enabling-quic-http3-nginx.md",
+      "/es/blog/004-enabling-quic-http3-nginx.md",
+    ]) {
+      const response = await page.request.get(path);
+      expect(response.status(), path).toBe(200);
+      expect(response.headers()["content-type"], path).toContain(
+        "text/markdown",
+      );
 
-    expect(content).toContain("## Blog Posts (Español)");
-    expect(content).toContain("Un PIN de 4 dígitos basta");
+      const body = await response.text();
+      // The header is what makes the file usable pasted into a chat with no
+      // other context, and the body is what makes it worth pasting.
+      expect(body, path).toContain("URL: https://jmrp.io");
+      expect(body, path).toContain("Published:");
+      // No component tag may survive the conversion.
+      expect(body, path).not.toMatch(/<\/?(Callout|Table|Mermaid|Code)\b/);
+    }
+  });
+
+  test("a post page points at its markdown twin", async ({ page }) => {
+    await page.goto("/blog/004-enabling-quic-http3-nginx/");
+    const link = page.locator('link[rel="alternate"][type="text/markdown"]');
+    await expect(link).toHaveAttribute(
+      "href",
+      "/blog/004-enabling-quic-http3-nginx.md",
+    );
+  });
+
+  test("the Spanish corpus reaches its post bodies", async ({ page }) => {
+    // This used to assert a post TITLE and call it a body check. It passed for
+    // the wrong reason: the string it looked for is the title of post 012, and
+    // titles appear in the index links whether or not any body is present — so
+    // the assertion survived the bodies moving out to one file per post and
+    // guarded nothing.
+    const index = await (await page.request.get("/llms-full.txt")).text();
+    expect(index).toContain("## Blog Posts (Español)");
+
+    // What llms-full carries now is the LINK to each Spanish body.
+    const twin = "/es/blog/012-device-bound-key-derivation.md";
+    expect(index).toContain(`https://jmrp.io${twin}`);
+
+    // And the body itself has to be there, at the other end of that link.
+    const body = await (await page.request.get(twin)).text();
+    expect(body).toContain("# Un PIN de 4 dígitos basta");
+    // Prose from deep inside the article, not its title: this is the part a
+    // title-matching assertion could never have proven was present.
+    expect(body).toContain("PBKDF2");
   });
 
   test("llms.txt has a single header blockquote, markdown-link contacts, and an Optional section", async ({

@@ -7,6 +7,7 @@
 import "@styles/blog.css";
 
 import AuthorCard from "@components/blog/AuthorCard.astro";
+import MarkdownCopy from "@components/blog/MarkdownCopy.astro";
 import RelatedContent from "@components/blog/RelatedContent.astro";
 import TableOfContentsDrawer from "@components/layout/TableOfContentsDrawer.astro";
 import Callout from "@components/ui/Callout.astro";
@@ -23,6 +24,7 @@ import { formatDate, useTranslatedPath, useTranslations } from "@i18n/utils";
 import BaseLayout from "@layouts/BaseLayout.astro";
 import type { SiteConfig } from "@src/types";
 import { formatDateDot, getReadingTime, tagUrlSegment } from "@utils/blog";
+import { llmsPostShardPath } from "@utils/llms";
 import { getRelatedContent } from "@utils/related";
 import { getSeriesForPost } from "@utils/series";
 import { getSiteUrl } from "@utils/site";
@@ -348,6 +350,7 @@ const articleSchema = [
   modifiedDate={post.data.updatedDate}
   tags={post.data.tags}
   schema={articleSchema}
+  markdownHref={llmsPostShardPath(locale, post.data.slug)}
 >
   {isFallback && <FallbackBanner locale={locale} />}
   <article
@@ -421,6 +424,13 @@ const articleSchema = [
                 </time>
               )
             }
+            <span
+              class="meta-sep"
+              aria-hidden="true"
+            >
+              ·
+            </span>
+            <MarkdownCopy href={llmsPostShardPath(locale, post.data.slug)} />
           </div>
         </div>
 

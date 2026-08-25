@@ -1,0 +1,257 @@
+---
+/**
+ * MarkdownCopy — "copy this post as markdown", for feeding it to an LLM.
+ *
+ * ── Why a link and not a button ───────────────────────────────────────────
+ * It renders as a real `<a href="…md">`, and script upgrades it into a copy
+ * control. With JavaScript off — or before the handler binds — clicking it
+ * opens the markdown, which is a worse experience but a working one. A bare
+ * `<button>` would simply do nothing, and this site's stated baseline is that
+ * the page works without client JS.
+ *
+ * ── Why it fetches instead of embedding ───────────────────────────────────
+ * The markdown twin of a post runs 20–55 KB. Inlining it in a `data-` attribute
+ * to save one request would double the weight of every article for a control
+ * most readers never touch. The file is already built, already cached for 30
+ * days, and `connect-src 'self'` already allows the fetch, so the click pays
+ * for itself and the page pays nothing.
+ *
+ * What lands on the clipboard is the file verbatim, header included: the URL,
+ * dates and Wikidata topics at the top are exactly the provenance a model needs
+ * when the text arrives pasted into a chat with no other context.
+ */
+import { getLangFromUrl, useTranslations } from "@i18n/utils";
+
+interface Props {
+  /** Root-relative path of this post's markdown twin. */
+  href: string;
+}
+
+const { href } = Astro.props;
+const locale = getLangFromUrl(Astro.url);
+const t = useTranslations(locale);
+---
+
+<a
+  class="md-copy"
+  href={href}
+  data-astro-prefetch="false"
+  data-md-copy
+  data-label-idle={t("pages.blogPost.copyMarkdown")}
+  data-label-copied={t("ui.copied")}
+  data-label-failed={t("components.copyButton.failedToCopy")}
+  data-label-busy={t("pages.blogPost.copyingMarkdown")}
+>
+  <span
+    class="i-mdi:language-markdown-outline md-copy__icon"
+    aria-hidden="true"
+  ></span>
+  <span
+    class="md-copy__spinner"
+    aria-hidden="true"
+  ></span>
+  <span class="md-copy__label">{t("pages.blogPost.copyMarkdown")}</span>
+</a>
+<span
+  class="sr-only"
+  role="status"
+  aria-live="polite"
+  data-md-copy-status
+></span>
+
+<style>
+  .md-copy {
+    display: inline-flex;
+    gap: 0.35em;
+    align-items: center;
+    color: var(--color-text-muted);
+    text-decoration: none;
+    cursor: pointer;
+    background: none;
+    border: 0;
+  }
+
+  .md-copy:hover,
+  .md-copy:focus-visible {
+    color: var(--color-accent);
+  }
+
+  .md-copy:focus-visible {
+    /* The transparent outline is not decoration: Windows High Contrast Mode
+       discards box-shadow and forces outlines, so a focus ring built only from
+       a shadow leaves the control with no visible focus at all there. Keeping
+       both costs nothing in a normal render and is the only indicator in HCM. */
+    outline: 2px solid transparent;
+    outline-offset: 2px;
+    box-shadow: var(--focus-ring);
+  }
+
+  .md-copy__icon {
+    width: 1.1em;
+    height: 1.1em;
+  }
+
+  /* The two glyphs swap: the markdown mark while idle, the ring while the copy
+     is in flight. Only ONE occupies the row at a time, so the label never
+     shifts sideways mid-copy. */
+  .md-copy__spinner {
+    display: none;
+    width: 1.1em;
+    height: 1.1em;
+    border: 2px solid currentcolor;
+    border-top-color: transparent;
+    border-radius: 50%;
+    animation: md-copy-spin 0.7s linear infinite;
+  }
+
+  .md-copy[aria-busy="true"] .md-copy__icon {
+    display: none;
+  }
+
+  .md-copy[aria-busy="true"] .md-copy__spinner {
+    display: inline-block;
+  }
+
+  @keyframes md-copy-spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  /* Reduced motion still needs the state to be VISIBLE — dropping the
+     animation without a replacement would leave the reader with a static ring
+     indistinguishable from an icon. It pulses opacity instead, which conveys
+     "working" without rotation. */
+  @media (prefers-reduced-motion: reduce) {
+    .md-copy__spinner {
+      animation: md-copy-pulse 1.4s ease-in-out infinite;
+    }
+
+    @keyframes md-copy-pulse {
+      0%,
+      100% {
+        opacity: 100%;
+      }
+
+      50% {
+        opacity: 35%;
+      }
+    }
+  }
+</style>
+
+<script>
+  (() => {
+    const COPIED_MS = 1600;
+    /** After this, a write that has not settled is reported as failed rather
+        than left silent. Comfortably past the ~5 s activation window. */
+    const SILENT_MS = 8000;
+    /** Timer of the last copy, so a second click does not cut its own message
+        short: without this the first timeout fires mid-confirmation and the
+        live region is cleared before a screen reader has read it. */
+    let resetTimer: ReturnType<typeof globalThis.setTimeout> | undefined;
+
+    /**
+     * Upgrades the markdown link into a copy control.
+     *
+     * Delegated from the document so it survives Astro's View Transitions,
+     * which swap the article node out from under any element-bound listener.
+     */
+    const onClick = (event: MouseEvent) => {
+      const link = (event.target as Element | null)?.closest?.(
+        "a[data-md-copy]",
+      ) as HTMLAnchorElement | null;
+      if (!link) return;
+
+      // Let the browser do its normal thing for "open in new tab" and friends,
+      // where the reader has asked for the file rather than the clipboard.
+      if (
+        event.button !== 0 ||
+        event.metaKey ||
+        event.ctrlKey ||
+        event.shiftKey ||
+        event.altKey
+      ) {
+        return;
+      }
+      if (!navigator.clipboard) return; // no clipboard: the href still works
+      // A copy already in flight owns the control: a second click would start
+      // a second fetch and race it to the same clipboard.
+      if (link.getAttribute("aria-busy") === "true") {
+        event.preventDefault();
+        return;
+      }
+
+      event.preventDefault();
+
+      const label = link.querySelector<HTMLElement>(".md-copy__label");
+      const status = document.querySelector<HTMLElement>(
+        "[data-md-copy-status]",
+      );
+      const idle = link.dataset.labelIdle ?? "";
+      const done = link.dataset.labelCopied ?? "";
+      const failed = link.dataset.labelFailed ?? "";
+
+      const settle = (message: string) => {
+        link.removeAttribute("aria-busy");
+        if (label) label.textContent = message;
+        if (status) status.textContent = message;
+        if (resetTimer !== undefined) globalThis.clearTimeout(resetTimer);
+        resetTimer = globalThis.setTimeout(() => {
+          if (label) label.textContent = idle;
+          if (status) status.textContent = "";
+        }, COPIED_MS);
+      };
+
+      // `aria-busy` rather than a message in the live region: announcing
+      // "Copying…" and then "Copied" makes a screen reader talk twice for one
+      // action, and the second is the only one that carries information. The
+      // spinner and the label give a sighted reader the same state visually.
+      link.setAttribute("aria-busy", "true");
+      if (label) label.textContent = link.dataset.labelBusy ?? idle;
+
+      // The clipboard write has to START inside the user gesture. Fetching
+      // first and writing after spends the transient activation window on the
+      // network: measured in two engines, the write stops being allowed
+      // somewhere between 4 s and 5 s after the click, and past that Chrome
+      // leaves the promise PENDING FOREVER — no `.then`, no `.catch`, so the
+      // label never changes and the live region stays empty. The reader gets
+      // silence, which is worse than an error. Handing `ClipboardItem` the
+      // promise starts the write immediately and lets the fetch finish inside
+      // it.
+      const payload = fetch(link.href).then(async (response) => {
+        if (!response.ok) throw new Error(String(response.status));
+        // Re-wrapped, not passed through: this file is served as
+        // `text/markdown` by our own nginx `types` block, and Chrome rejects a
+        // ClipboardItem whose key does not match its blob's type — at EVERY
+        // latency, not just slow ones. Reusing the response blob would turn a
+        // rare failure into a certain one for every Chrome user.
+        return new Blob([await response.text()], { type: "text/plain" });
+      });
+
+      const written =
+        typeof globalThis.ClipboardItem === "function" &&
+        typeof navigator.clipboard.write === "function"
+          ? navigator.clipboard.write([
+              new ClipboardItem({ "text/plain": payload }),
+            ])
+          : // No ClipboardItem: the old two-step path, which is still correct
+            // for a fast response and is all these browsers can do.
+            payload
+              .then((blob) => blob.text())
+              .then((text) => navigator.clipboard.writeText(text));
+
+      // A write that never settles would leave the control mute. Losing the
+      // race only changes what the reader is told, never what is copied.
+      const timeout = new Promise((_, reject) => {
+        globalThis.setTimeout(() => reject(new Error("timeout")), SILENT_MS);
+      });
+
+      Promise.race([written, timeout])
+        .then(() => settle(done))
+        .catch(() => settle(failed));
+    };
+
+    document.addEventListener("click", onClick);
+  })();
+</script>

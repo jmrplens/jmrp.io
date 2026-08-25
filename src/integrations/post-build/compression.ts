@@ -175,7 +175,7 @@ async function pruneStaleEntries(
 
 /**
  * Compresses static assets in the distribution directory using Gzip and Brotli.
- * Target extensions: .js, .css, .svg, .json, .xml, .txt
+ * Target extensions: .js, .css, .svg, .json, .xml, .txt, .md
  *
  * Note: HTML files are intentionally excluded because Nginx's sub_filter directive
  * for CSP nonce replacement requires uncompressed content. Pre-compressing HTML
@@ -196,7 +196,7 @@ export async function compressAssets(
 ) {
   logger.info("Compressing assets (Gzip & Brotli)...");
 
-  const files = await glob("**/*.{js,css,svg,json,xml,txt}", {
+  const files = await glob("**/*.{js,css,svg,json,xml,txt,md}", {
     cwd: distDir,
     absolute: true,
     nodir: true,

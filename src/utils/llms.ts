@@ -622,20 +622,28 @@ export async function generateLlmsTxt(siteUrl: string): Promise<string> {
 }
 
 /**
- * Path of the per-post shard for a locale, relative to the site root.
+ * Path of the per-post markdown twin, relative to the site root.
  *
  * Post bodies live in their own file rather than inlined in `llms-full*.txt`:
  * the twelve English posts alone were 557 KB of a 587 KB document (94.8%), so
  * any cap an ingestion pipeline applies lands in the middle of a post. One file
- * per post is naturally bounded — the largest is 62 KB — and lets an agent
- * fetch exactly the guide it needs instead of the whole corpus.
+ * per post is naturally bounded and lets an agent fetch exactly the guide it
+ * needs instead of the whole corpus.
+ *
+ * The path MIRRORS the article's own URL, with `.md` in place of the trailing
+ * slash, because the previous shape — `/llms-blog-<locale>-<slug>.txt` at the
+ * site root — could not be derived from anything: an agent holding `/blog/005-foo/` had to invent
+ * a prefix AND move the locale from a path segment to a filename infix, while
+ * the convention it would actually try (append `.md`) returned 404. The access
+ * log agrees: across its whole history `/llms.txt` and `/llms-full.txt` were
+ * fetched 69 and 63 times, and the shards not once.
  *
  * @param locale - Post locale.
  * @param slug - Post slug, already carrying its `NNN-` prefix.
- * @returns Root-relative path, e.g. `/llms-blog-en-003-….txt`.
+ * @returns Root-relative path, e.g. `/blog/003-….md` or `/es/blog/003-….md`.
  */
 export function llmsPostShardPath(locale: "en" | "es", slug: string): string {
-  return `/llms-blog-${locale}-${slug}.txt`;
+  return `${locale === "es" ? "/es" : ""}/blog/${slug}.md`;
 }
 
 /** Renders a single post as the `### title` block used by llms-full and shards. */

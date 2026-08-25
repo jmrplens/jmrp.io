@@ -487,6 +487,8 @@ export const common = {
       coverImageAlt: "Imagen de portada de {title}",
       readAction: "Leer artículo →",
       codeFallback: "Código",
+      copyMarkdown: "Copiar como Markdown",
+      copyingMarkdown: "Copiando…",
       codeExampleTemplate: "Ejemplo {lang} {index}",
       authorRole: "Ingeniero de I+D",
       aboutAuthor: "Sobre el autor",
