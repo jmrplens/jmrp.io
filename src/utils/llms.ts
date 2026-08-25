@@ -7,6 +7,7 @@
  * tags, FAQ questions, and HowTo step names (all sourced from frontmatter).
  */
 import { type TranslationKey, useTranslations } from "@i18n/utils";
+import type { CVData } from "@src/types";
 import { getCVData } from "@utils/cv";
 import { getMcpServers, type McpServer } from "@utils/projects";
 import { getPublications, stripTrailingPunctuation } from "@utils/publications";
@@ -133,7 +134,7 @@ const PROFILE_SECTIONS: {
       title: "Projects",
       lines: [
         "Open-source software authored and maintained by the author, each entry listing language, license, source repository and documentation site.",
-        "Includes: gitlab-mcp-server (Model Context Protocol server exposing over 1,000 GitLab operations to AI assistants, Go), phonometry (Python acoustics library validated against 362 published standards), cs-routeros-bouncer (CrowdSec bouncer for MikroTik RouterOS, Go), Cloudflare-DNS-Updater (dynamic DNS updater), libgen-mcp, and TFG-TFM_EPS (LaTeX thesis template for the Universitat Politècnica de València).",
+        "Includes: gitlab-mcp-server (Model Context Protocol server exposing over 1,000 GitLab operations to AI assistants, Go), phonometry (Python acoustics library validated against 367 standards), cs-routeros-bouncer (CrowdSec bouncer for MikroTik RouterOS, Go), Cloudflare-DNS-Updater (dynamic DNS updater), libgen-mcp, and TFG-TFM_EPS (LaTeX thesis template for the Universitat Politècnica de València).",
         "Both MCP servers also run as public hosted endpoints at mcp.jmrp.io, so a client can call them without building or installing anything.",
       ],
     },
@@ -141,7 +142,7 @@ const PROFILE_SECTIONS: {
       title: "Proyectos",
       lines: [
         "Software de código abierto escrito y mantenido por el autor; cada entrada indica lenguaje, licencia, repositorio de código y sitio de documentación.",
-        "Incluye: gitlab-mcp-server (servidor Model Context Protocol que expone más de 1.000 operaciones de GitLab a asistentes de IA, en Go), phonometry (biblioteca de acústica en Python validada contra 362 normas publicadas), cs-routeros-bouncer (bouncer de CrowdSec para MikroTik RouterOS, en Go), Cloudflare-DNS-Updater (actualizador de DNS dinámico), libgen-mcp y TFG-TFM_EPS (plantilla LaTeX de tesis para la Universitat Politècnica de València).",
+        "Incluye: gitlab-mcp-server (servidor Model Context Protocol que expone más de 1.000 operaciones de GitLab a asistentes de IA, en Go), phonometry (biblioteca de acústica en Python validada contra 367 normas publicadas), cs-routeros-bouncer (bouncer de CrowdSec para MikroTik RouterOS, en Go), Cloudflare-DNS-Updater (actualizador de DNS dinámico), libgen-mcp y TFG-TFM_EPS (plantilla LaTeX de tesis para la Universitat Politècnica de València).",
         "Los dos servidores MCP corren además como endpoints públicos alojados en mcp.jmrp.io, así que un cliente puede llamarlos sin compilar ni instalar nada.",
       ],
     },
@@ -152,7 +153,7 @@ const PROFILE_SECTIONS: {
       title: "Homelab",
       lines: [
         "Self-hosted infrastructure run by the author on his own hardware and connections, with live metrics on the page.",
-        "Services include a Mastodon instance (mstdn.jmrp.io), a Matrix homeserver, an AT Protocol PDS, Nextcloud, Jellyfin, and monitoring.",
+        "Services include a Mastodon instance (mstdn.jmrp.io), a Matrix homeserver, an AT Protocol PDS, Home Assistant, Immich, Jellyfin, and monitoring.",
         "Model Context Protocol servers are published at mcp.jmrp.io, running on the same infrastructure: libgen (no credentials) and gitlab (per-request token).",
         "Tor: four nodes — two bridges running obfs4 and WebTunnel, one in Valencia and one in Alicante, and two middle relays on IONOS VPS instances, one in London and one in Madrid.",
         "Security pipeline: a MikroTik honeypot and nginx pattern matching feed CrowdSec, which drives bouncers on the router and the web tier.",
@@ -162,7 +163,7 @@ const PROFILE_SECTIONS: {
       title: "Homelab",
       lines: [
         "Infraestructura autoalojada que el autor opera sobre su propio hardware y sus propias conexiones, con métricas en tiempo real en la página.",
-        "Entre los servicios hay una instancia de Mastodon (mstdn.jmrp.io), un homeserver de Matrix, un PDS de AT Protocol, Nextcloud, Jellyfin y monitorización.",
+        "Entre los servicios hay una instancia de Mastodon (mstdn.jmrp.io), un homeserver de Matrix, un PDS de AT Protocol, Home Assistant, Immich, Jellyfin y monitorización.",
         "Los servidores Model Context Protocol se publican en mcp.jmrp.io, sobre la misma infraestructura: libgen (sin credenciales) y gitlab (token por petición).",
         "Tor: cuatro nodos — dos puentes que ejecutan obfs4 y WebTunnel, uno en Valencia y otro en Alicante, y dos relays intermedios en VPS de IONOS, uno en Londres y otro en Madrid.",
         "Tubería de seguridad: un honeypot en MikroTik y la coincidencia de patrones de nginx alimentan a CrowdSec, que a su vez acciona los bouncers del router y de la capa web.",
@@ -247,19 +248,22 @@ function collapseWhitespace(value: string): string {
 /**
  * Best-effort conversion of a post's MDX body to plain-ish markdown for AI
  * ingestion: strips `import` statements, collapses excess blank lines, and
- * demotes the post's own headings by two levels.
+ * optionally demotes the post's own headings.
  *
- * The demotion matters: post bodies are inlined under an `### <post title>`
- * node, so their native `##` sections would otherwise sit one level ABOVE the
- * title they belong to. Any retrieval pipeline that chunks on H2 boundaries
- * would then detach every section from its article and lose attribution.
+ * `demote` defaults to 0 and every current caller leaves it there. It existed
+ * because post bodies used to be INLINED under an `### <post title>` node in
+ * `llms-full`, where a native `##` would have sat above the title it belongs
+ * to. Bodies now live in one shard per post under a `# <title>` of their own,
+ * so demoting flattened every article instead: the shards ended up with 23 H4
+ * and 45 H5 and not a single H2, which is one 60 KB chunk to any pipeline that
+ * splits on H2 boundaries — the exact failure the demotion was meant to avoid.
  *
  * Fenced code blocks are skipped — a leading `#` there is a shell comment, not
  * a heading, and rewriting it would corrupt the snippet. Component tags are
  * left in place (harmless noise) to avoid corrupting code blocks that
  * legitimately contain `<` / `>`.
  */
-function mdxToText(body: string): string {
+function mdxToText(body: string, demote = 0): string {
   // EVERY transform here runs inside one fence-aware pass, deliberately.
   // Each one that was hoisted out of it corrupted snippets: stripping `import`
   // up front deleted the `import csv` / `import os` lines from the Python
@@ -267,6 +271,7 @@ function mdxToText(body: string): string {
   // spacing inside code blocks. Both shipped broken code to the very consumer
   // llms-full.txt exists for. Nothing may touch a line while `inFence`.
   let inFence = false;
+  let inImport = false;
   let blankRun = 0;
   const out: string[] = [];
 
@@ -285,7 +290,21 @@ function mdxToText(body: string): string {
     // MDX component imports are page scaffolding, not prose. Dropping the line
     // outright (rather than emitting "") keeps the import block from turning
     // into a run of blank lines.
-    if (line.startsWith("import ")) continue;
+    //
+    // A brace that opens and does not close on the same line starts a
+    // multi-line import; only its FIRST line begins with `import`, so matching
+    // that alone published the continuation lines as if they were prose —
+    // `  TerminalSession,` and friends were shipping in four shards. The state
+    // lives inside this loop, after the `inFence` guard, so a `import` line in
+    // a Python or shell sample is still never touched.
+    if (inImport) {
+      if (line.includes("}")) inImport = false;
+      continue;
+    }
+    if (line.startsWith("import ")) {
+      if (line.includes("{") && !line.includes("}")) inImport = true;
+      continue;
+    }
 
     // Collapse runs of blank lines to at most one, outside fences only.
     if (line.trim() === "") {
@@ -305,8 +324,12 @@ function mdxToText(body: string): string {
       out.push(line);
       continue;
     }
+    if (demote === 0) {
+      out.push(line);
+      continue;
+    }
     // Cap at H6 so deeply nested source headings stay valid markdown.
-    const depth = Math.min(match[1].length + 2, 6);
+    const depth = Math.min(match[1].length + demote, 6);
     out.push(`${"#".repeat(depth)}${line.slice(match[1].length)}`);
   }
 
@@ -314,26 +337,186 @@ function mdxToText(body: string): string {
 }
 
 /**
- * Flattens the structured CV data (a discriminated union of section types) into
- * a readable list of human-facing strings — section titles, institutions,
- * summaries, skill and certificate names — skipping icons, links and levels.
- * Type-agnostic so it survives schema changes.
+ * Renders the CV as labelled markdown.
+ *
+ * The previous version walked the object generically and pushed every string it
+ * met, which discarded the key. A role, its four institutions, a location and a
+ * date range arrived as six unlabelled sibling bullets, so nothing in 427 lines
+ * of the corpus said which was which — the reader had to infer that "Valencia,
+ * Spain" was a location and not an employer. Typing the walk to the schema costs
+ * one branch per section kind and makes every value self-describing.
+ *
+ * Root-relative links inside the inline markdown are made absolute: this document
+ * is read away from the site, where `/pdf/…` resolves nowhere.
+ *
+ * @param cv - The CV collection data.
+ * @param siteUrl - Absolute site origin, for root-relative links.
+ * @returns Markdown lines.
  */
-function cvToText(node: unknown, out: string[] = []): string[] {
-  if (typeof node === "string") {
-    const s = node.trim();
-    if (s && !s.startsWith("i-") && !/^https?:\/\//.test(s)) out.push(s);
-    return out;
-  }
-  if (Array.isArray(node)) {
-    for (const item of node) cvToText(item, out);
-    return out;
-  }
-  if (node && typeof node === "object") {
-    const skip = new Set(["icon", "link", "url", "image", "level", "type"]);
-    for (const [key, value] of Object.entries(node)) {
-      if (!skip.has(key)) cvToText(value, out);
-    }
+const CV_LABELS = {
+  en: {
+    location: "Location",
+    availability: "Availability",
+    email: "Email",
+    links: "Links",
+    department: "Department",
+    period: "Period",
+  },
+  es: {
+    location: "Ubicación",
+    availability: "Disponibilidad",
+    email: "Correo",
+    links: "Enlaces",
+    department: "Departamento",
+    period: "Periodo",
+  },
+} as const;
+
+/** ` (text)`, or nothing when the value is absent. */
+function parenthetical(value?: string): string {
+  return value ? ` (${value})` : "";
+}
+
+/** ` — text`, or nothing when the value is absent. */
+function dashed(value?: string): string {
+  return value ? ` — ${value}` : "";
+}
+
+/** `Name (Q123)` — extracted so the post entry is not a nested template. */
+function namedTopic(topic: { name: string; wikidata: string }): string {
+  return `${topic.name} (${topic.wikidata})`;
+}
+
+/** `label (url)` — extracted so the CV header is not a nested template. */
+function labelledUrl(link: { label: string; url: string }): string {
+  return `${link.label} (${link.url})`;
+}
+
+/** One CV section's body, by kind. Split out to keep the walker flat. */
+const CV_SECTION_BODY = {
+  experience: (section, ctx) =>
+    section.items.flatMap((item) => [
+      `- **${item.role}** — ${ctx.orgs(item.org)}`,
+      ...ctx.chrono(item),
+    ]),
+  education: (section, ctx) =>
+    section.items.flatMap((item) => [
+      `- **${item.degree}** — ${ctx.orgs(item.org)}`,
+      ...ctx.chrono(item),
+    ]),
+  skills: (section, ctx) => [
+    ...section.groups.map(
+      (group) =>
+        `- **${group.category}**: ${group.items.map(ctx.skill).join(", ")}`,
+    ),
+    "",
+  ],
+  projects: (section, ctx) =>
+    section.items.flatMap((item) => [
+      `- **${item.name}**${parenthetical(item.tech)}`,
+      ...(item.description ? [`  ${ctx.prose(item.description)}`] : []),
+      ...(item.metrics ?? []).map((m) => `  - ${m}`),
+      ...(item.links ?? []).map((l) => `  - ${l.label}: ${l.url}`),
+      "",
+    ]),
+  certificates: (section, ctx) => [
+    ...section.groups.flatMap((group) => [
+      `- **${group.category}**`,
+      ...group.items.map((item) => `  - ${ctx.certificate(item)}`),
+    ]),
+    "",
+  ],
+  // Each entry is typed against its own member of the discriminated union, so
+  // `satisfies` here is what guarantees a new `kind` cannot be added to the
+  // schema without this map gaining a branch.
+} satisfies {
+  [K in CVData["sections"][number]["kind"]]: (
+    section: Extract<CVData["sections"][number], { kind: K }>,
+    ctx: CvContext,
+  ) => string[];
+};
+
+/** Shared formatting helpers handed to every section renderer. */
+interface CvContext {
+  orgs: (list: { name: string }[]) => string;
+  prose: (text: string) => string;
+  chrono: (item: CvChronoItem) => string[];
+  skill: (item: { name: string; note?: string }) => string;
+  certificate: (item: {
+    name: string;
+    school?: string;
+    hours?: string;
+  }) => string;
+}
+
+/** The fields every chronological CV entry shares. */
+interface CvChronoItem {
+  department?: { name: string };
+  location?: string;
+  period?: string | number;
+  summary?: string;
+  notes?: string[];
+  bullets?: string[];
+}
+
+function cvToMarkdown(
+  cv: CVData,
+  siteUrl: string,
+  locale: "en" | "es",
+): string[] {
+  // The section titles come from the YAML and are already localized, so
+  // English labels around them would be the only foreign words in the
+  // document. Same shape as MCP_PROSE above rather than new i18n keys: these
+  // strings exist for this file alone and never reach a rendered page.
+  const L = CV_LABELS[locale];
+  const prose = (text: string) =>
+    collapseWhitespace(text).replaceAll(
+      /\]\((\/[^)]*)\)/gu,
+      (_m, path: string) => "](" + siteUrl + path + ")",
+    );
+
+  const ctx: CvContext = {
+    prose,
+    orgs: (list) => list.map((o) => o.name).join(", "),
+    skill: (item) => `${item.name}${parenthetical(item.note)}`,
+    certificate: (item) =>
+      `${item.name}${dashed(item.school)}${parenthetical(item.hours)}`,
+    chrono: (item) => [
+      ...(item.department
+        ? [`  ${L.department}: ${item.department.name}`]
+        : []),
+      ...(item.location ? [`  ${L.location}: ${item.location}`] : []),
+      ...(item.period ? [`  ${L.period}: ${item.period}`] : []),
+      ...(item.summary ? ["", `  ${prose(item.summary)}`] : []),
+      ...(item.bullets ?? []).map((b) => `  - ${prose(b)}`),
+      ...(item.notes ?? []).map((n) => `  - ${prose(n)}`),
+      "",
+    ],
+  };
+
+  const b = cv.basics;
+  const out: string[] = [
+    `**${b.name}** — ${b.headline}`,
+    "",
+    ...(b.location ? [`${L.location}: ${b.location}`] : []),
+    ...(b.availability ? [`${L.availability}: ${b.availability}`] : []),
+    ...(b.email ? [`${L.email}: ${b.email}`] : []),
+    ...(b.links && b.links.length > 0
+      ? [`${L.links}: ${b.links.map(labelledUrl).join(", ")}`]
+      : []),
+    "",
+    ...(b.profile ? [prose(b.profile), ""] : []),
+  ];
+
+  for (const section of cv.sections) {
+    out.push(`### ${section.title}`, "");
+    // The cast re-links section to its own branch: TypeScript narrows the
+    // union on `section.kind` but cannot narrow the lookup that follows.
+    const render = CV_SECTION_BODY[section.kind] as (
+      s: typeof section,
+      c: CvContext,
+    ) => string[];
+    out.push(...render(section, ctx));
   }
   return out;
 }
@@ -407,7 +590,7 @@ function sectionsBlock(siteUrl: string): string {
     `- [Projects](${siteUrl}/projects/): Curated open-source software he authors and maintains — MCP servers, acoustics tooling, network security; language, license, source and docs per project`,
     `- [Tools](${siteUrl}/tools/): Free browser-based developer tools; all run in the browser except the certificate inspector and HTTP header analyzer, which fetch the target you ask them to inspect`,
     `- [Uses](${siteUrl}/uses/): Hardware, software, and homelab kept in rotation`,
-    `- [Privacy](${siteUrl}/privacy/): What the site measures — self-hosted analytics beacon, no cookies, no third-party requests, no ads`,
+    `- [Privacy](${siteUrl}/privacy/): What the site measures — self-hosted analytics beacon, no cookies, no ads; rendering a page needs no third-party host, and the beacon posts one aggregate event to Cloudflare`,
   ].join("\n");
 }
 
@@ -432,7 +615,7 @@ function sectionsBlockEs(siteUrl: string): string {
     `- [Proyectos](${siteUrl}/es/projects/): Software libre que escribe y mantiene — servidores MCP, herramientas de acústica, seguridad de red`,
     `- [Herramientas](${siteUrl}/es/tools/): Herramientas gratuitas que se ejecutan en el navegador, salvo el inspector de certificados y el analizador de cabeceras HTTP, que consultan el destino que les indiques`,
     `- [Uses](${siteUrl}/es/uses/): Hardware, software e infraestructura en uso`,
-    `- [Privacidad](${siteUrl}/es/privacy/): Qué mide el sitio — beacon de analítica autoalojado, sin cookies, sin peticiones a terceros, sin anuncios`,
+    `- [Privacidad](${siteUrl}/es/privacy/): Qué mide el sitio — beacon de analítica autoalojado, sin cookies, sin anuncios; renderizar una página no requiere ningún host de terceros, y el beacon envía un evento agregado a Cloudflare`,
   ].join("\n");
 }
 
@@ -450,11 +633,13 @@ export async function generateLlmsTxt(siteUrl: string): Promise<string> {
     "",
     `Last updated: ${today()}`,
     "",
-    `For comprehensive context including blog post topics, FAQs, and tool features, see [llms-full.txt](${siteUrl}/llms-full.txt).`,
-    "",
-    "## About",
-    "",
     ABOUT,
+    "",
+    "Technical details:",
+    "",
+    ...TECHNICAL_DETAILS.map((d) => `- ${d}`),
+    "",
+    `For comprehensive context including blog post topics, FAQs, and tool features, see [llms-full.txt](${siteUrl}/llms-full.txt).`,
     "",
     sectionsBlock(siteUrl),
     "",
@@ -466,11 +651,15 @@ export async function generateLlmsTxt(siteUrl: string): Promise<string> {
     "",
     "## Blog Posts",
     "",
+    // The canonical article first — that is the URL worth citing — then the
+    // shard, so a model can reach the full body in one hop. Before this the
+    // index never mentioned the shards at all, leaving every post body two
+    // hops away behind an `## Optional` link.
     ...postsEn.map(
       (p) =>
         `- [${p.data.title}](${siteUrl}/blog/${p.data.slug}/)${
           p.data.description ? `: ${p.data.description}` : ""
-        }`,
+        } ([plain text](${siteUrl}${llmsPostShardPath("en", p.data.slug)}))`,
     ),
     "",
     "## Blog Posts (Español)",
@@ -479,7 +668,7 @@ export async function generateLlmsTxt(siteUrl: string): Promise<string> {
       (p) =>
         `- [${p.data.title}](${siteUrl}/es/blog/${p.data.slug}/)${
           p.data.description ? `: ${p.data.description}` : ""
-        }`,
+        } ([texto plano](${siteUrl}${llmsPostShardPath("es", p.data.slug)}))`,
     ),
     "",
     "## Developer Tools",
@@ -505,14 +694,13 @@ export async function generateLlmsTxt(siteUrl: string): Promise<string> {
     "",
     ...CONTACT.map((c) => `- ${c}`),
     "",
-    "## Technical Details",
-    "",
-    ...TECHNICAL_DETAILS.map((d) => `- ${d}`),
-    "",
     "## Optional",
     "",
     `- [Person entity (JSON-LD)](${siteUrl}/identity/person.jsonld): Machine-readable identity node for the author`,
-    `- [Full context](${siteUrl}/llms-full.txt): Every post and tool expanded, both languages in one document (~1.2 MB)`,
+    // No byte figure: the hand-maintained one drifted twice and ended up
+    // claiming ~1.2 MB for a 58 KB file, while robots.txt claimed ~43 KB for
+    // the same file. A pipeline budgeting on either number skipped it.
+    `- [Full context](${siteUrl}/llms-full.txt): Both languages in one document — every tool in full, plus a linked index of every post`,
     `- [Full context, English only](${siteUrl}/llms-full-en.txt): The same document scoped to the English corpus, for pipelines that cap document size`,
     `- [Full context, Spanish only](${siteUrl}/llms-full-es.txt): The same document scoped to the Spanish corpus`,
     `- [RSS feed (EN)](${siteUrl}/rss.xml): English blog feed`,
@@ -547,14 +735,33 @@ function buildPostEntry(
 ): string[] {
   const d = p.data;
   return [
-    `### ${d.title}`,
-    "",
+    // No `### <title>` here: the only caller is the shard, whose `# <title>`
+    // header names the post one line above. Emitting both put the article
+    // title in the document twice and pushed every real section down a level.
     `URL: ${siteUrl}${localePrefix}/blog/${d.slug}/`,
     `Type: ${d.articleType}`,
+    `Published: ${d.publishedDate.toISOString().slice(0, 10)}`,
+    ...(d.updatedDate
+      ? [`Updated: ${d.updatedDate.toISOString().slice(0, 10)}`]
+      : []),
+    ...(d.author ? [`Author: ${d.author}`] : []),
     ...(d.description ? [`Summary: ${d.description}`] : []),
     ...(d.tags.length > 0 ? [`Tags: ${d.tags.join(", ")}`] : []),
+    ...(d.topics && d.topics.length > 0
+      ? [`Topics: ${d.topics.map(namedTopic).join(", ")}`]
+      : []),
+    // The ANSWER, not only the question. Emitting the questions alone
+    // published the promise and withheld the payload: these pairs are the
+    // most directly citable prose on the site — they are written as the
+    // query a reader actually types — and the page already renders them and
+    // ships them as FAQPage JSON-LD.
     ...(d.faq && d.faq.length > 0
-      ? ["", "Questions answered:", ...d.faq.map((f) => `- ${f.question}`)]
+      ? [
+          "",
+          "Questions answered:",
+          "",
+          ...d.faq.flatMap((f) => [`**${f.question}**`, "", f.answer, ""]),
+        ]
       : []),
     ...((d.howto?.steps?.length ?? 0) > 0
       ? [
@@ -592,11 +799,16 @@ function buildPostIndex(
   return [
     note,
     "",
+    // Both URLs: the shard carries the body, but a model that answers from it
+    // needs the canonical article to cite. Linking only the `.txt` made every
+    // citation point at a plain-text file instead of the page.
     ...posts.map((p) => {
       const d = p.data;
-      const url = `${siteUrl}${llmsPostShardPath(locale, d.slug)}`;
+      const shard = `${siteUrl}${llmsPostShardPath(locale, d.slug)}`;
+      const article = `${siteUrl}${locale === "es" ? "/es" : ""}/blog/${d.slug}/`;
       const summary = d.description ? `: ${d.description}` : "";
-      return `- [${d.title}](${url})${summary}`;
+      const label = locale === "es" ? "artículo" : "article";
+      return `- [${d.title}](${shard})${summary} ([${label}](${article}))`;
     }),
     "",
   ];
@@ -623,7 +835,11 @@ export function generateLlmsPostTxt(
     "",
     `> One post from jmrp.io, published as its own document. Index: ${parent}`,
     "",
-    `> Last updated: ${today()}`,
+    // `Generated`, not `Last updated`: this is the build date, identical across
+    // all 24 shards. Labelling it as the post's update date told every
+    // recency-weighted pipeline that the whole corpus changed today. The real
+    // dates are `Published:`/`Updated:` inside the entry.
+    `> Generated: ${today()}`,
     "",
     ...buildPostEntry(post, siteUrl, localePrefix),
   ].join("\n");
@@ -634,14 +850,33 @@ function buildToolSection(
   tools: CollectionEntry<"tools">[],
   siteUrl: string,
 ): string[] {
-  return tools.flatMap((t) => [
-    `### ${t.data.title}`,
-    "",
-    `URL: ${toolUrl(siteUrl, t)}`,
-    `Category: ${t.data.category}`,
-    t.data.description,
-    "",
-  ]);
+  return tools.flatMap((t) => {
+    const d = t.data;
+    return [
+      `### ${d.title}`,
+      "",
+      `URL: ${toolUrl(siteUrl, t)}`,
+      `Category: ${d.category}`,
+      ...(d.tags.length > 0 ? [`Tags: ${d.tags.join(", ")}`] : []),
+      d.description,
+      // Both of these already reach the page as JSON-LD — `featureList` on the
+      // SoftwareApplication and a FAQPage — so withholding them from the text
+      // corpus meant the machine-readable surface was richer than the one
+      // written for machines.
+      ...(d.features && d.features.length > 0
+        ? ["", "Features:", ...d.features.map((f) => `- ${f}`)]
+        : []),
+      ...(d.faq && d.faq.length > 0
+        ? [
+            "",
+            "Questions answered:",
+            "",
+            ...d.faq.flatMap((f) => [`**${f.question}**`, "", f.answer, ""]),
+          ]
+        : []),
+      "",
+    ];
+  });
 }
 
 /** Generates the enriched `llms-full.txt` with per-post detail. */
@@ -665,10 +900,15 @@ export async function generateLlmsFullTxt(
   const postsEs = wantEs ? await getPostsByLocale("es") : [];
   const toolsEn = wantEn ? await getToolsByLocale("en") : [];
   const toolsEs = wantEs ? await getToolsByLocale("es") : [];
-  const cv = await getCVData();
+  // Locale-aware: without it the Spanish corpus shipped the English CV.
+  const cv = await getCVData(onlyLocale === "es" ? "es" : "en");
   const publicationGroups = await getPublications();
 
-  const cvSection = cvToText(cv).map((line) => `- ${line}`);
+  const cvSection = cvToMarkdown(
+    cv,
+    siteUrl,
+    onlyLocale === "es" ? "es" : "en",
+  );
 
   const publicationsSection = publicationGroups.flatMap((group) => [
     `### ${group.title}`,
@@ -715,9 +955,10 @@ export async function generateLlmsFullTxt(
     "",
     `> ${DESCRIPTION}`,
     "",
-    '> Every section below is inlined in full except the blog posts, which are\n> one file per post so that no ingestion cap truncates mid-guide. The\n> "Blog Posts" section links to each of them.',
+    '> Blog posts are one file per post so that no ingestion cap truncates a\n> guide mid-way; the "Blog Posts" section links to each of them. Tools carry\n> their description, feature list and FAQ here, with the long-form\n> documentation on the tool page itself. Everything else is inlined in full.',
     "",
-    `> Last updated: ${today()}`,
+    // The build date, not a content date — see the same label on the shards.
+    `> Generated: ${today()}`,
     "",
     "## About the Author",
     "",

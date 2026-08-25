@@ -163,7 +163,10 @@ Sitemap: https://jmrp.io/sitemap-index.xml
 # LLM context (llmstxt.org standard)
 # https://jmrp.io/llms.txt
 # https://jmrp.io/llms-full.txt          — both languages, index + everything
-#                                          except post bodies (~43 KB)
+#                                          except post bodies. No size quoted
+#                                          on purpose: the hand-maintained
+#                                          figures here and in llms.txt drifted
+#                                          apart until they disagreed 28-fold.
 # https://jmrp.io/llms-full-en.txt       — English corpus only
 # https://jmrp.io/llms-full-es.txt       — Spanish corpus only
 # https://jmrp.io/llms-blog-<locale>-<slug>.txt
