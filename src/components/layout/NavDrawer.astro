@@ -173,6 +173,9 @@ const termData = {
     blocked: t("terminal.blocked"),
     usage: t("terminal.usage"),
     resetHome: t("terminal.resetHome"),
+    // The terminal builds external links in the browser, so the notice has to
+    // travel with the data: `t()` does not exist there.
+    opensNewTab: t("aria.opensNewTab", { text: "{label}" }),
     groups: {
       nav: t("terminal.groupNav"),
       discover: t("terminal.groupDiscover"),
@@ -447,7 +450,14 @@ const staticRecent = postData.slice(0, 6);
     </div>
   </div>
 
+  {
+    /* `is:inline` stated explicitly: Astro already treats a <script> with any
+      attribute as inline, and saying so silences the hint that warns the
+      directive is being applied implicitly. This is a data island, not code —
+      there is nothing here for Astro to process. */
+  }
   <script
+    is:inline
     type="application/json"
     id="nav-term-data"
     set:html={safeJsonLd(termData)}
@@ -528,7 +538,6 @@ const staticRecent = postData.slice(0, 6);
 
       let cwd = "~";
       let prev = "~";
-      let ran = false;
       const history = [];
       let hIdx = 0;
 
@@ -571,7 +580,13 @@ const staticRecent = postData.slice(0, 6);
         a.href = href;
         a.target = "_blank";
         a.rel = "external noopener noreferrer";
-        a.appendChild(el("span", "term-link__glyph", "↗"));
+        // The name is built here rather than left to the text content: the
+        // glyph would otherwise be read out ("north east arrow GitHub"), and
+        // the link would not announce that it leaves the site.
+        a.setAttribute("aria-label", T.opensNewTab.replace("{label}", label));
+        const glyph = el("span", "term-link__glyph", "↗");
+        glyph.setAttribute("aria-hidden", "true");
+        a.appendChild(glyph);
         a.appendChild(el("span", "term-link__label", label));
         return a;
       }
@@ -782,7 +797,6 @@ const staticRecent = postData.slice(0, 6);
           prev = cwd;
           setCwd("~");
           setOutput(rTree());
-          ran = false;
           resetBtn.hidden = true;
           input.focus();
         });
@@ -958,7 +972,6 @@ const staticRecent = postData.slice(0, 6);
         history.push(cmd);
         hIdx = history.length;
         run(cmd);
-        ran = true;
         resetBtn.hidden = false;
         input.value = "";
         renderSuggest("");
@@ -1024,7 +1037,6 @@ const staticRecent = postData.slice(0, 6);
         prev = cwd;
         setCwd("~");
         setOutput(rTree());
-        ran = false;
         resetBtn.hidden = true;
         input.focus();
       });

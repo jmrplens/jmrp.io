@@ -143,6 +143,9 @@ const groups = [
                         href={licenseUrl(project.license)}
                         target="_blank"
                         rel="external noopener noreferrer"
+                        aria-label={t("aria.opensNewTab", {
+                          text: `${project.license} — ${project.name}`,
+                        })}
                       >
                         {project.license}
                       </a>
@@ -166,38 +169,44 @@ const groups = [
                     href={project.repo}
                     target="_blank"
                     rel="external noopener noreferrer"
+                    aria-label={t("aria.opensNewTab", {
+                      text: `${t("pages.projects.repo")} — ${project.name}`,
+                    })}
                   >
                     <span
                       class="i-fa-brands:github"
                       aria-hidden="true"
                     />
                     {t("pages.projects.repo")}
-                    <span class="sr-only"> — {project.name}</span>
                   </a>
                   <a
                     href={docsHref(project)}
                     target="_blank"
                     rel="external noopener noreferrer"
+                    aria-label={t("aria.opensNewTab", {
+                      text: `${t("pages.projects.docs")} — ${project.name}`,
+                    })}
                   >
                     <span
                       class="i-mdi:book-open-variant"
                       aria-hidden="true"
                     />
                     {t("pages.projects.docs")}
-                    <span class="sr-only"> — {project.name}</span>
                   </a>
                   {hostedHref(project, locale) && (
                     <a
                       href={hostedHref(project, locale)}
                       target="_blank"
                       rel="external noopener noreferrer"
+                      aria-label={t("aria.opensNewTab", {
+                        text: `${t("pages.projects.hosted")} — ${project.name}`,
+                      })}
                     >
                       <span
                         class="i-mdi:api"
                         aria-hidden="true"
                       />
                       {t("pages.projects.hosted")}
-                      <span class="sr-only"> — {project.name}</span>
                     </a>
                   )}
                 </p>

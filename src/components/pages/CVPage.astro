@@ -27,6 +27,19 @@ import type { Person, Text, WebPage } from "schema-dts";
 const locale = (Astro.currentLocale ?? defaultLocale) as Locale;
 const t = useTranslations(locale);
 
+/**
+ * `markdownToHtml` with the new-tab notice wired in, so every external link the
+ * CV renders announces itself (WCAG 3.2.5).
+ *
+ * The notice is DERIVED from the single i18n key rather than duplicated:
+ * `aria.opensNewTab` interpolates as "{text} (opens in new tab)", so calling it
+ * with an empty text and trimming yields just the parenthesis. The renderer
+ * appends it to the name it builds itself, which is why it needs the bare
+ * notice and not the whole label.
+ */
+const NEW_TAB_NOTICE = t("aria.opensNewTab", { text: "" }).trim();
+const mdHtml = (md: string) => markdownToHtml(md, NEW_TAB_NOTICE);
+
 const { basics, downloads, sections } = await getCVData(locale);
 
 // Both locales are loaded because the identity facts below hang off the shared
@@ -58,7 +71,7 @@ const orgMd = (o: OrgEntity) => {
 
 /** Rendered HTML for an organization list (joined by ·). */
 const orgsHtml = (orgs: OrgEntity[]) =>
-  markdownToHtml(orgs.map((o) => orgMd(o)).join(" · "));
+  mdHtml(orgs.map((o) => orgMd(o)).join(" · "));
 
 // Build the navigation menu structure from the body sections.
 const menuSections: MenuSection[] = sections.map((section) => {
@@ -120,10 +133,6 @@ if (projectsSection?.kind === "projects") {
     }),
   );
 }
-
-// Sections used to build the CV JSON-LD (WebPage + additive Person facts).
-const experience = sections.find((s) => s.kind === "experience");
-const certificates = sections.find((s) => s.kind === "certificates");
 
 // /cv/ is not the canonical ProfilePage (that's /about/ — see AboutPage.astro)
 // so it emits a plain WebPage referencing the canonical #person node, plus a
@@ -398,7 +407,9 @@ const SIDEBAR_LINK_KINDS = new Set([
                         download={file.download}
                         target="_blank"
                         rel="noopener noreferrer"
-                        aria-label={`${fmt.format} · ${file.label} (PDF)`}
+                        aria-label={t("aria.opensNewTab", {
+                          text: `${file.label} · ${fmt.format} (PDF)`,
+                        })}
                       >
                         <span
                           class="i-fa-solid:download"
@@ -439,7 +450,9 @@ const SIDEBAR_LINK_KINDS = new Set([
                       class="cv-sb-link"
                       target="_blank"
                       rel="external noopener noreferrer"
-                      aria-label={link.ariaLabel || undefined}
+                      aria-label={t("aria.opensNewTab", {
+                        text: link.ariaLabel || link.label,
+                      })}
                     >
                       <span
                         class="cv-sb-link-arrow"
@@ -523,7 +536,7 @@ const SIDEBAR_LINK_KINDS = new Set([
       <div class="cv-main">
         <div
           class="cv-profile"
-          set:html={markdownToHtml(basics.profile)}
+          set:html={mdHtml(basics.profile)}
         />
 
         {
@@ -565,7 +578,7 @@ const SIDEBAR_LINK_KINDS = new Set([
                           {item.department && (
                             <div
                               class="item-department"
-                              set:html={markdownToHtml(orgMd(item.department))}
+                              set:html={mdHtml(orgMd(item.department))}
                             />
                           )}
                           {item.location && (
@@ -581,20 +594,20 @@ const SIDEBAR_LINK_KINDS = new Set([
                           {item.summary && (
                             <div
                               class="item-summary"
-                              set:html={markdownToHtml(item.summary)}
+                              set:html={mdHtml(item.summary)}
                             />
                           )}
                           {item.notes?.map((note) => (
                             <div
                               class="item-summary"
-                              set:html={markdownToHtml(note)}
+                              set:html={mdHtml(note)}
                             />
                           ))}
 
                           {item.bullets && item.bullets.length > 0 && (
                             <ul class="item-description-list">
                               {item.bullets.map((bullet) => (
-                                <li set:html={markdownToHtml(bullet)} />
+                                <li set:html={mdHtml(bullet)} />
                               ))}
                             </ul>
                           )}
@@ -604,7 +617,7 @@ const SIDEBAR_LINK_KINDS = new Set([
                               <strong>{pg.heading}</strong>
                               <ul>
                                 {pg.items.map((pub) => (
-                                  <li set:html={markdownToHtml(pub)} />
+                                  <li set:html={mdHtml(pub)} />
                                 ))}
                               </ul>
                             </div>
@@ -618,7 +631,9 @@ const SIDEBAR_LINK_KINDS = new Set([
                                   class="btn btn-sm"
                                   target="_blank"
                                   rel="external noopener noreferrer"
-                                  aria-label={doc.ariaLabel}
+                                  aria-label={t("aria.opensNewTab", {
+                                    text: doc.ariaLabel ?? doc.label,
+                                  })}
                                 >
                                   <span
                                     class="i-fa-solid:file-pdf"
@@ -638,7 +653,9 @@ const SIDEBAR_LINK_KINDS = new Set([
                                   class="btn btn-sm"
                                   target="_blank"
                                   rel="external noopener noreferrer"
-                                  aria-label={link.ariaLabel}
+                                  aria-label={t("aria.opensNewTab", {
+                                    text: link.ariaLabel ?? link.label,
+                                  })}
                                 >
                                   {link.label}
                                 </a>

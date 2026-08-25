@@ -92,7 +92,7 @@ const t = useTranslations(locale);
         target="_blank"
         rel="external noopener noreferrer"
         class="service-link"
-        aria-label={`${linkText} ${t("pages.homelab.opensInNewTab")}`}
+        aria-label={t("aria.opensNewTab", { text: linkText })}
       >
         {linkText}
         <span aria-hidden="true"> ↗</span>

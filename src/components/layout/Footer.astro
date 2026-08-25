@@ -263,7 +263,9 @@ const socialLinksWithType = socialLinks.map((link) => {
             href={link.url}
             target="_blank"
             rel={normalizeExternalRel(link.rel)}
-            aria-label={t("aria.visitProfile", { name: link.label })}
+            aria-label={t("aria.opensNewTab", {
+              text: t("aria.visitProfile", { name: link.label }),
+            })}
             title={link.label}
             class="social-btn"
           >

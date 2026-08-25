@@ -158,10 +158,19 @@ const entries = references
               <a
                 href={entry.href}
                 {...(entry.isExternalLink
-                  ? { target: "_blank", rel: "noopener noreferrer" }
+                  ? {
+                      target: "_blank",
+                      rel: "external noopener noreferrer",
+                      "aria-label": t("aria.opensNewTab", {
+                        text: entry.label,
+                      }),
+                    }
                   : {})}
                 data-astro-prefetch="false"
-                class="reference-link"
+                class:list={[
+                  "reference-link",
+                  entry.isExternalLink && "external-link",
+                ]}
               >
                 {entry.label}
               </a>

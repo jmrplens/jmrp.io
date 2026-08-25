@@ -11,3 +11,23 @@
 @import url("./base.css");
 @import url("./utilities.css");
 @import url("./code-terminal.css");
+
+/* ── External links in prose ────────────────────────────────────────────────
+ * The ↗ marks a link that leaves the site, for readers who never hear the
+ * `aria-label` that scripts/rehype-external-links-announced.mjs writes.
+ *
+ * Generated content, not a `<span>` in the markup, for one reason: selecting a
+ * paragraph and copying it must yield the text as written, and `::after`
+ * content is not copied. That is also why the announcement lives in an
+ * attribute instead of inside the anchor.
+ *
+ * The `/ ""` is the alt text of CSS generated content: it tells the screen
+ * readers that support it to announce nothing here, since the `aria-label`
+ * already carries the warning. Where it is not supported the glyph is simply
+ * read, which is why it is not the only signal. */
+.external-link::after {
+  font-size: 0.85em;
+  line-height: 1;
+  vertical-align: baseline;
+  content: " ↗" / "";
+}

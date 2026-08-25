@@ -266,12 +266,32 @@ const homeSchema = {
           <div class="proj-grid">
             {featuredProjects.map((repo) => {
               const meta = PROJECT_META[repo.name];
+              /*
+               * The whole card is the link, so its accessible name is its own
+               * text. `aria-label` REPLACES that name instead of extending it,
+               * so the notice is appended to the FULL visible text, in DOM
+               * order — the same rule the prose pipeline applies in
+               * scripts/rehype-external-links-announced.mjs. Labelling the
+               * card with just its title would drop the description from the
+               * accessible name while it stays on screen.
+               */
+              const cardText = [
+                meta?.category,
+                String(repo.stargazers_count),
+                repo.name,
+                repo.description,
+                repo.language,
+                meta?.tag,
+              ]
+                .filter(Boolean)
+                .join(" ");
               return (
                 <a
                   class="proj-card"
                   href={repo.html_url}
                   target="_blank"
                   rel="external noopener noreferrer"
+                  aria-label={t("aria.opensNewTab", { text: cardText })}
                 >
                   <div class="proj-card__top">
                     {meta?.category && (

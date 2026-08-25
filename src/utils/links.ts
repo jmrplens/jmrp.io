@@ -30,11 +30,28 @@ export function isExternalHref(href: string): boolean {
  * The `rel` value matches the one `rehype-external-links` is configured with,
  * so a hand-written anchor and a markdown link render identically.
  *
+ * Pass `announcedLabel` to also emit the "opens in new tab" warning (WCAG
+ * 3.2.5). Build it with `t("aria.opensNewTab", { text: visibleText })`, the key
+ * Header, NavDrawer and StateNotice already use — it interpolates as
+ * "{text} (opens in new tab)". Taking the finished string keeps this helper
+ * free of an i18n dependency. It is opt-in because an icon-only link has no
+ * visible text to preserve and needs its own descriptive label instead.
+ *
  * @param href - The link target.
+ * @param announcedLabel - Ready-made accessible name, visible text FIRST.
  * @returns The attribute object, empty when the link is internal.
  */
-export function externalLinkProps(href: string): Record<string, string> {
-  return isExternalHref(href)
-    ? { target: "_blank", rel: "external noopener noreferrer" }
-    : {};
+export function externalLinkProps(
+  href: string,
+  announcedLabel?: string,
+): Record<string, string> {
+  if (!isExternalHref(href)) return {};
+  const base = { target: "_blank", rel: "external noopener noreferrer" };
+  if (!announcedLabel) return base;
+  // Putting the visible text first is load-bearing: `aria-label` replaces the
+  // accessible name rather than extending it, so a label that dropped it would
+  // break WCAG 2.5.3 Label in Name (level A) while chasing 3.2.5 (AAA) — a
+  // worse trade. keyboard.accessibility.spec.ts already asserts that a link's
+  // aria-label contains its visible text.
+  return { ...base, "aria-label": announcedLabel };
 }

@@ -133,13 +133,27 @@ export function markdownToLatex(md) {
 }
 
 /**
+ * Accessible name when no new-tab notice is supplied: the previous behaviour,
+ * where only a `title` justified emitting a label at all.
+ *
+ * @param {string} base - Visible text, already joined with the title.
+ * @param {string|undefined} title - The markdown link title, if any.
+ * @returns {string} The label, or "" to emit no attribute.
+ */
+function accessibleNameOrEmpty(base, title) {
+  return title ? base : "";
+}
+
+/**
  * Renders inline markdown to HTML. Relative URLs are kept relative (the site
  * serves them from root); the optional link title becomes `aria-label`.
  *
  * @param {unknown} md - The markdown string.
+ * @param {string} [newTabNotice] - Localized "(opens in new tab)" appended to
+ *   every external link's accessible name. Omitted by non-web callers.
  * @returns {string} The HTML string.
  */
-export function markdownToHtml(md) {
+export function markdownToHtml(md, newTabNotice = "") {
   if (typeof md !== "string" || md === "") return "";
   return walk(md, {
     text: escapeHtml,
@@ -148,8 +162,17 @@ export function markdownToHtml(md) {
       if (!isSafeHref(url)) return escapeHtml(text);
       // The optional title enriches the accessible name, but it must still
       // CONTAIN the visible text (WCAG 2.5.3, label-in-name) — so prepend it.
-      const accessibleName = `${text} — ${title}`;
-      const aria = title ? ` aria-label="${escapeAttr(accessibleName)}"` : "";
+      // The notice, when the caller supplies one, is appended for the same
+      // reason: it warns without displacing the label. It arrives as a ready
+      // string because this module also runs outside Astro (the LaTeX CV
+      // build), where `t()` does not exist.
+      const base = title ? `${text} — ${title}` : text;
+      const accessibleName = newTabNotice
+        ? `${base} ${newTabNotice}`
+        : accessibleNameOrEmpty(base, title);
+      const aria = accessibleName
+        ? ` aria-label="${escapeAttr(accessibleName)}"`
+        : "";
       return `<a href="${escapeAttr(url)}" target="_blank" rel="external noopener noreferrer"${aria}>${escapeHtml(text)}</a>`;
     },
     bold: (text) => `<strong>${escapeHtml(text)}</strong>`,

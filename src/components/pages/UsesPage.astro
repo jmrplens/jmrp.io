@@ -104,7 +104,12 @@ const usesSchema = {
               {group.items.map((item) => {
                 // Hoisted out of the JSX attribute spread below: sonarjs
                 // flags a ternary nested inside another ternary's branch.
-                const linkProps = item.href ? externalLinkProps(item.href) : {};
+                const linkProps = item.href
+                  ? externalLinkProps(
+                      item.href,
+                      t("aria.opensNewTab", { text: item.name }),
+                    )
+                  : {};
                 return (
                   <div class="uses-item">
                     <div class="uses-item__name">

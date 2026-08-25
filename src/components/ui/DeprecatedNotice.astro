@@ -53,7 +53,8 @@ if (import.meta.env.DEV && alternativeUrl && !alternative) {
             <a
               href={alternativeUrl}
               target="_blank"
-              rel="noopener noreferrer"
+              rel="external noopener noreferrer"
+              aria-label={t("aria.opensNewTab", { text: alternative })}
             >
               <code>{alternative}</code>
             </a>

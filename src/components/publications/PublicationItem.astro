@@ -113,6 +113,12 @@ const cleanedBibtex = cleanBibtex(pub.bibtex);
       }
     </div>
     <h3 class="pub-title">{pub.title}</h3>
+    {
+      /* Co-author links are external too. They are announced via the wrapped
+        `aria.opensNewTab` label, but deliberately carry no ↗ glyph: the list
+        is a dense inline run of up to 30 names and an arrow per name would
+        drown it. */
+    }
     <div class="pub-authors">
       {
         (collapseAuthors ? visibleAuthors : authors).map(
@@ -127,11 +133,13 @@ const cleanedBibtex = cleanBibtex(pub.bibtex);
                     class={authorClass}
                     href={author.url}
                     target="_blank"
-                    rel="noopener noreferrer"
+                    rel="external noopener noreferrer"
                     data-astro-prefetch="false"
-                    aria-label={t("aria.viewPublicationsBy", {
-                      author: `${author.given} ${author.family}`,
-                      title: pub.title,
+                    aria-label={t("aria.opensNewTab", {
+                      text: t("aria.viewPublicationsBy", {
+                        author: `${author.given} ${author.family}`,
+                        title: pub.title,
+                      }),
                     })}
                   >
                     {author.given} {author.family}
@@ -165,11 +173,13 @@ const cleanedBibtex = cleanBibtex(pub.bibtex);
                       class={authorClass}
                       href={author.url}
                       target="_blank"
-                      rel="noopener noreferrer"
+                      rel="external noopener noreferrer"
                       data-astro-prefetch="false"
-                      aria-label={t("aria.viewPublicationsBy", {
-                        author: `${author.given} ${author.family}`,
-                        title: pub.title,
+                      aria-label={t("aria.opensNewTab", {
+                        text: t("aria.viewPublicationsBy", {
+                          author: `${author.given} ${author.family}`,
+                          title: pub.title,
+                        }),
                       })}
                     >
                       {author.given} {author.family}
@@ -187,6 +197,18 @@ const cleanedBibtex = cleanBibtex(pub.bibtex);
       }
     </div>
 
+    {
+      /* Action chips (WCAG 3.2.5): every external one wraps its existing
+        descriptive label in `aria.opensNewTab`, so the name still opens with
+        the publication it belongs to and keeps the visible token (PDF, DOI,
+        URL…) inside it — 2.5.3 Label in Name. No ↗ affordance here: these
+        render as buttons, not prose links.
+
+        Slides and Poster are the exception: their visible token is a bare
+        English literal in both locales, so the Spanish `aria.viewSlides` /
+        `aria.viewPoster` wording translates that token away and no longer contains it,
+        breaking Label in Name. They lead with the visible token instead. */
+    }
     <div class="pub-actions">
       {
         pub.abstract && (
@@ -223,9 +245,11 @@ const cleanedBibtex = cleanBibtex(pub.bibtex);
             href={pdf}
             class="btn-sm"
             target="_blank"
-            rel="noopener noreferrer"
+            rel="external noopener noreferrer"
             data-astro-prefetch="false"
-            aria-label={t("aria.downloadPdf", { title: pub.title })}
+            aria-label={t("aria.opensNewTab", {
+              text: t("aria.downloadPdf", { title: pub.title }),
+            })}
           >
             <span class="i-fa-solid:file-pdf" /> PDF
           </a>
@@ -237,9 +261,11 @@ const cleanedBibtex = cleanBibtex(pub.bibtex);
             href={doi}
             class="btn-sm"
             target="_blank"
-            rel="noopener noreferrer"
+            rel="external noopener noreferrer"
             data-astro-prefetch="false"
-            aria-label={t("aria.viewDoi", { title: pub.title })}
+            aria-label={t("aria.opensNewTab", {
+              text: t("aria.viewDoi", { title: pub.title }),
+            })}
           >
             <span class="i-fa-solid:external-link-alt" /> DOI
           </a>
@@ -251,9 +277,11 @@ const cleanedBibtex = cleanBibtex(pub.bibtex);
             href={url}
             class="btn-sm"
             target="_blank"
-            rel="noopener noreferrer"
+            rel="external noopener noreferrer"
             data-astro-prefetch="false"
-            aria-label={t("aria.viewUrl", { title: pub.title })}
+            aria-label={t("aria.opensNewTab", {
+              text: t("aria.viewUrl", { title: pub.title }),
+            })}
           >
             <span class="i-fa-solid:link" /> URL
           </a>
@@ -265,11 +293,14 @@ const cleanedBibtex = cleanBibtex(pub.bibtex);
             href={slides}
             class="btn-sm"
             target="_blank"
-            rel="noopener noreferrer"
+            rel="external noopener noreferrer"
             data-astro-prefetch="false"
-            aria-label={t("aria.viewSlides", { title: pub.title })}
+            aria-label={t("aria.opensNewTab", {
+              text: `${t("pages.publications.slides")} — ${pub.title}`,
+            })}
           >
-            <span class="i-fa-solid:chalkboard-teacher" /> Slides
+            <span class="i-fa-solid:chalkboard-teacher" />{" "}
+            {t("pages.publications.slides")}
           </a>
         )
       }
@@ -279,11 +310,13 @@ const cleanedBibtex = cleanBibtex(pub.bibtex);
             href={poster}
             class="btn-sm"
             target="_blank"
-            rel="noopener noreferrer"
+            rel="external noopener noreferrer"
             data-astro-prefetch="false"
-            aria-label={t("aria.viewPoster", { title: pub.title })}
+            aria-label={t("aria.opensNewTab", {
+              text: `${t("pages.publications.poster")} — ${pub.title}`,
+            })}
           >
-            <span class="i-fa-solid:image" /> Poster
+            <span class="i-fa-solid:image" /> {t("pages.publications.poster")}
           </a>
         )
       }
