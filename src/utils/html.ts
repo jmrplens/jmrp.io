@@ -59,6 +59,10 @@ export function sanitize(html: string | undefined | null): string {
       a: [
         "href",
         "name",
+        // `class` is allowed for the same reason it already is on `span`: the
+        // prose external-link marker is a class, and stripping it silently
+        // dropped the ↗ from links written inside translated copy.
+        "class",
         "target",
         "rel",
         "title",

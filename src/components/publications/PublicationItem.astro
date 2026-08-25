@@ -133,7 +133,7 @@ const cleanedBibtex = cleanBibtex(pub.bibtex);
                     class={authorClass}
                     href={author.url}
                     target="_blank"
-                    rel="noopener noreferrer"
+                    rel="external noopener noreferrer"
                     data-astro-prefetch="false"
                     aria-label={t("aria.opensNewTab", {
                       text: t("aria.viewPublicationsBy", {
@@ -173,7 +173,7 @@ const cleanedBibtex = cleanBibtex(pub.bibtex);
                       class={authorClass}
                       href={author.url}
                       target="_blank"
-                      rel="noopener noreferrer"
+                      rel="external noopener noreferrer"
                       data-astro-prefetch="false"
                       aria-label={t("aria.opensNewTab", {
                         text: t("aria.viewPublicationsBy", {
@@ -245,7 +245,7 @@ const cleanedBibtex = cleanBibtex(pub.bibtex);
             href={pdf}
             class="btn-sm"
             target="_blank"
-            rel="noopener noreferrer"
+            rel="external noopener noreferrer"
             data-astro-prefetch="false"
             aria-label={t("aria.opensNewTab", {
               text: t("aria.downloadPdf", { title: pub.title }),
@@ -261,7 +261,7 @@ const cleanedBibtex = cleanBibtex(pub.bibtex);
             href={doi}
             class="btn-sm"
             target="_blank"
-            rel="noopener noreferrer"
+            rel="external noopener noreferrer"
             data-astro-prefetch="false"
             aria-label={t("aria.opensNewTab", {
               text: t("aria.viewDoi", { title: pub.title }),
@@ -277,7 +277,7 @@ const cleanedBibtex = cleanBibtex(pub.bibtex);
             href={url}
             class="btn-sm"
             target="_blank"
-            rel="noopener noreferrer"
+            rel="external noopener noreferrer"
             data-astro-prefetch="false"
             aria-label={t("aria.opensNewTab", {
               text: t("aria.viewUrl", { title: pub.title }),
@@ -293,13 +293,14 @@ const cleanedBibtex = cleanBibtex(pub.bibtex);
             href={slides}
             class="btn-sm"
             target="_blank"
-            rel="noopener noreferrer"
+            rel="external noopener noreferrer"
             data-astro-prefetch="false"
             aria-label={t("aria.opensNewTab", {
-              text: `Slides — ${pub.title}`,
+              text: `${t("pages.publications.slides")} — ${pub.title}`,
             })}
           >
-            <span class="i-fa-solid:chalkboard-teacher" /> Slides
+            <span class="i-fa-solid:chalkboard-teacher" />{" "}
+            {t("pages.publications.slides")}
           </a>
         )
       }
@@ -309,13 +310,13 @@ const cleanedBibtex = cleanBibtex(pub.bibtex);
             href={poster}
             class="btn-sm"
             target="_blank"
-            rel="noopener noreferrer"
+            rel="external noopener noreferrer"
             data-astro-prefetch="false"
             aria-label={t("aria.opensNewTab", {
-              text: `Poster — ${pub.title}`,
+              text: `${t("pages.publications.poster")} — ${pub.title}`,
             })}
           >
-            <span class="i-fa-solid:image" /> Poster
+            <span class="i-fa-solid:image" /> {t("pages.publications.poster")}
           </a>
         )
       }

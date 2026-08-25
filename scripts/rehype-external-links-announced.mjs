@@ -1,5 +1,7 @@
 import { visit } from "unist-util-visit";
 
+import { useTranslations } from "../src/i18n/utils.ts";
+
 /**
  * Announces "opens in new tab" on the external links of MDX prose, and marks
  * them so CSS can add the ↗ glyph.
@@ -41,12 +43,6 @@ function localeFromPath(path) {
     : "en";
 }
 
-/** The notice appended to the visible text, per locale. */
-const NOTICE = {
-  en: "(opens in new tab)",
-  es: "(se abre en nueva pestaña)",
-};
-
 /**
  * Visible text of a link, as a screen reader would read it.
  *
@@ -71,7 +67,12 @@ function visibleText(node) {
  * @returns {(tree: object, file: object) => void} The transform.
  */
 export const rehypeExternalLinksAnnounced = () => (tree, file) => {
-  const notice = NOTICE[localeFromPath(file?.path ?? file?.history?.at(-1))];
+  // The very `t()` the components call, not a copy of its strings: a second
+  // table would let one locale drift and give the same link two different
+  // accessible names depending on whether it was written in MDX or in JSX.
+  const t = useTranslations(
+    localeFromPath(file?.path ?? file?.history?.at(-1)),
+  );
 
   visit(tree, "element", (node) => {
     if (node.tagName !== "a") return;
@@ -92,7 +93,7 @@ export const rehypeExternalLinksAnnounced = () => (tree, file) => {
     // human: inventing a name here would hide the problem rather than fix it.
     if (!current) return;
 
-    props.ariaLabel = `${current} ${notice}`;
+    props.ariaLabel = t("aria.opensNewTab", { text: current });
 
     // Marks the anchor so `.external-link::after` can add the ↗. A class, not
     // an injected node, keeps the glyph out of the copy-paste.

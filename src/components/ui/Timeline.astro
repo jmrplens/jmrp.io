@@ -12,6 +12,7 @@
  */
 import { defaultLocale, type Locale } from "@i18n/config";
 import { useTranslations } from "@i18n/utils";
+import { escapeHtml } from "@utils/html";
 
 interface TimelineEvent {
   date: string;
@@ -55,10 +56,13 @@ function parseMarkdownLinks(text: string): string {
       // The label goes first and verbatim inside the accessible name: an
       // `aria-label` REPLACES it, so announcing the new tab without it would
       // break WCAG 2.5.3 Label in Name (level A) while chasing 3.2.5 (AAA).
-      `<a href="${href}" target="_blank" rel="external noopener noreferrer" class="external-link" aria-label="${t(
-        "aria.opensNewTab",
-        { text: label },
-      )}">${label}</a>`,
+      //
+      // Every interpolated value is escaped because the result is handed to
+      // `set:html`: a quote inside a label would otherwise close `aria-label`
+      // early and emit malformed markup.
+      `<a href="${escapeHtml(href)}" target="_blank" rel="external noopener noreferrer" class="external-link" aria-label="${escapeHtml(
+        t("aria.opensNewTab", { text: label }),
+      )}">${escapeHtml(label)}</a>`,
   );
 }
 ---

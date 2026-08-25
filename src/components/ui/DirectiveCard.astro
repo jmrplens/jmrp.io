@@ -44,14 +44,13 @@ if (mdnUrl) {
         <a
           href={safeMdnUrl}
           target="_blank"
-          rel="noopener noreferrer"
-          class="dc-mdn"
+          rel="external noopener noreferrer"
+          class="dc-mdn external-link"
           aria-label={t("aria.opensNewTab", {
             text: t("aria.mdnDocs", { name }),
           })}
         >
           MDN
-          <span aria-hidden="true"> ↗</span>
         </a>
       )
     }
