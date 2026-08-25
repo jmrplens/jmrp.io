@@ -638,8 +638,8 @@ sections:
           Standards-conformant acoustics library: sound level metrology,
           psychoacoustics, room, building, environmental and underwater
           acoustics, vibration, electroacoustics and wave simulation — every
-          method implemented from the standard, with 429 CI-enforced conformance
-          checks across 279 standards. Formerly PyOctaveBand.
+          method implemented from the standard, with 550 CI-enforced conformance
+          checks across 367 standards. Formerly PyOctaveBand.
         metrics: [PyPI]
         links:
           - { label: GitHub, url: https://github.com/jmrplens/phonometry }

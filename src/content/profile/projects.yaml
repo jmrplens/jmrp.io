@@ -82,8 +82,8 @@ projects:
       - { name: Octave band, wikidata: Q2270252 }
       - { name: Python, wikidata: Q28865 }
     summary:
-      en: "Acoustic measurement, analysis and prediction for Python: sound level metrology, psychoacoustics, room and building acoustics, materials, vibration, environmental and transport noise, underwater acoustics, electroacoustics and wave simulation, with 429 CI-enforced conformance checks across 53 domains and 279 standards."
-      es: "Medición, análisis y predicción acústica para Python: metrología de niveles sonoros, psicoacústica, acústica de salas y edificación, materiales, vibración, ruido ambiental y de transporte, acústica subacuática, electroacústica y simulación de ondas, con 429 comprobaciones de conformidad en CI sobre 53 dominios y 279 normas."
+      en: "Acoustic measurement, analysis and prediction for Python: sound level metrology, psychoacoustics, room and building acoustics, materials, vibration, environmental and transport noise, underwater acoustics, electroacoustics and wave simulation, with 550 CI-enforced conformance checks across 58 domains and 367 standards."
+      es: "Medición, análisis y predicción acústica para Python: metrología de niveles sonoros, psicoacústica, acústica de salas y edificación, materiales, vibración, ruido ambiental y de transporte, acústica subacuática, electroacústica y simulación de ondas, con 550 comprobaciones de conformidad en CI sobre 58 dominios y 367 normas."
 
   - id: cs-routeros-bouncer
     name: cs-routeros-bouncer
