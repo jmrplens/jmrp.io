@@ -1,3 +1,4 @@
+import { table } from "@utils/llms/mdx/markdown-table";
 import { markdownFor } from "@utils/llms/mdx/types";
 
 /**
@@ -45,24 +46,6 @@ const LABEL = {
     good: "aguanta la defensa",
   },
 } as const;
-
-/** Anything a table cell can hold once the props have been read. */
-type CellValue = string | number | undefined;
-
-/** Markdown table cell: newlines flattened, pipes escaped. */
-const cell = (value: CellValue): string =>
-  String(value ?? "")
-    .replaceAll(/\s*\n\s*/gu, " ")
-    .replaceAll("|", String.raw`\|`)
-    .trim();
-
-/** A markdown table from a header row and body rows. */
-const table = (head: string[], body: CellValue[][]): string =>
-  [
-    `| ${head.map(cell).join(" | ")} |`,
-    `| ${head.map(() => "---").join(" | ")} |`,
-    ...body.map((row) => `| ${row.map(cell).join(" | ")} |`),
-  ].join("\n");
 
 export default markdownFor({
   tag: "KeyspaceThreat",

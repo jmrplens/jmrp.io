@@ -1,3 +1,4 @@
+import { line } from "@utils/llms/mdx/markdown-table";
 import { markdownFor } from "@utils/llms/mdx/types";
 
 /**
@@ -39,10 +40,6 @@ interface Step {
   kind?: string;
   note?: string;
 }
-
-/** Collapses a value to a single line for use inside a list item. */
-const line = (value: string | undefined): string =>
-  (value ?? "").replaceAll(/\s*\n\s*/gu, " ").trim();
 
 export default markdownFor({
   tag: "AttackTimeline",

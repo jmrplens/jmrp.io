@@ -108,7 +108,11 @@ export async function generateDocsRedirects(
 
       // `$is_args$args` because `return 301` does NOT re-append the query the
       // way `rewrite` does, so a docs search link lost its terms.
-      const base = to.replace(/\/+$/u, "");
+      // String ops rather than `/\/+$/`: an anchored `+` over a run of the
+      // same character is the backtracking shape SonarCloud flags, and the
+      // loop says what it does.
+      let base = to;
+      while (base.endsWith("/")) base = base.slice(0, -1);
       return [
         `    "${from}"  "${to}$is_args$args";`,
         `    "${from}/"  "${to}$is_args$args";`,

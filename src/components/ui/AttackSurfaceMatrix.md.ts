@@ -1,3 +1,4 @@
+import { line } from "@utils/llms/mdx/markdown-table";
 import { markdownFor } from "@utils/llms/mdx/types";
 
 /**
@@ -45,10 +46,6 @@ interface Lane {
   cannot?: string[];
   stoppedBy?: string;
 }
-
-/** Collapses a value to a single line for use inside a bullet. */
-const line = (value: string | undefined): string =>
-  (value ?? "").replaceAll(/\s*\n\s*/gu, " ").trim();
 
 /** A bullet whose sub-items are nested one level under it. */
 const bulletList = (label: string, items: string[]): string =>

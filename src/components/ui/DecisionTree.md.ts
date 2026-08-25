@@ -1,4 +1,8 @@
-import { markdownFor, type MdxNode } from "@utils/llms/mdx/types";
+import {
+  type MarkdownContext,
+  markdownFor,
+  type MdxNode,
+} from "@utils/llms/mdx/types";
 
 /**
  * A question plus a list of `<details>` branches: each `<summary>` is the
@@ -29,6 +33,43 @@ function findSummary(node: MdxNode): MdxNode | undefined {
   return undefined;
 }
 
+/**
+ * Splits one `<details>` branch into its condition and its body.
+ *
+ * `<summary>` sits on the line straight after `<details>` with no blank line,
+ * so remark reads it as INLINE content and hands it over wrapped in a
+ * paragraph. Matching on the direct children alone finds nothing and silently
+ * drops the condition, which is the whole point of the branch — hence the
+ * search, and hence unwrapping the block it is in.
+ *
+ * @param details - The `<details>` element node.
+ * @param ctx - Renderer context.
+ * @returns The summary node, if found, and the rendered body blocks.
+ */
+function splitBranch(
+  details: MdxNode,
+  ctx: MarkdownContext,
+): { summary: MdxNode | undefined; branch: string[] } {
+  const branch: string[] = [];
+  let summary: MdxNode | undefined;
+  for (const block of details.children ?? []) {
+    const found = summary ? undefined : findSummary(block);
+    if (found) {
+      summary = found;
+      const rest = (block === found ? [] : (block.children ?? []))
+        .filter((sibling) => sibling !== found)
+        .map((sibling) => ctx.render(sibling))
+        .join("")
+        .trim();
+      if (rest) branch.push(rest);
+      continue;
+    }
+    const rendered = ctx.render(block);
+    if (rendered.trim() !== "") branch.push(rendered);
+  }
+  return { summary, branch };
+}
+
 export default markdownFor({
   tag: "DecisionTree",
   toMarkdown(node, ctx) {
@@ -42,29 +83,7 @@ export default markdownFor({
         continue;
       }
 
-      // `<summary>` sits on the line straight after `<details>`, with no blank
-      // line, so remark reads it as INLINE content and hands it over wrapped
-      // in a paragraph. Matching on the direct children alone finds nothing
-      // and silently drops the condition, which is the whole point of the
-      // branch — hence the search, and hence unwrapping the block it is in.
-      const branch: string[] = [];
-      let summary: MdxNode | undefined;
-      for (const block of child.children ?? []) {
-        const found = summary ? undefined : findSummary(block);
-        if (found) {
-          summary = found;
-          const rest = (block === found ? [] : (block.children ?? []))
-            .filter((sibling) => sibling !== found)
-            .map((sibling) => ctx.render(sibling))
-            .join("")
-            .trim();
-          if (rest) branch.push(rest);
-          continue;
-        }
-        const rendered = ctx.render(block);
-        if (rendered.trim() !== "") branch.push(rendered);
-      }
-
+      const { summary, branch } = splitBranch(child, ctx);
       const condition = summary ? ctx.text(summary) : "";
       if (condition) parts.push(`**${IF[ctx.locale]}: ${condition}**`);
       parts.push(...branch);

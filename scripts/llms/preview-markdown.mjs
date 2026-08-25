@@ -25,28 +25,34 @@ registerHooks({ resolve: resolveAlias });
 
 const ROOT = path.resolve(import.meta.dirname, "../..");
 
+/** Whether a filename is a published entry rather than a draft or a fixture. */
+function isPublished(file) {
+  return (
+    file.endsWith(".mdx") && !file.startsWith("_") && !file.startsWith("999")
+  );
+}
+
+/** Every published MDX file of one collection and locale. */
+function collectionFiles(collection, locale) {
+  const dir = path.join(ROOT, "src/content", collection, locale);
+  if (!fs.existsSync(dir)) return [];
+  return fs
+    .readdirSync(dir)
+    .filter(isPublished)
+    .toSorted((a, b) => a.localeCompare(b))
+    .map((file) => ({
+      id: `${locale}/${file.replace(/\.mdx$/, "")}`,
+      collection,
+      locale,
+      file: path.join(dir, file),
+    }));
+}
+
 /** Every published MDX body, keyed by `<collection>/<locale>/<name>`. */
 function corpus() {
-  const files = [];
-  for (const collection of ["posts", "tools"]) {
-    for (const locale of ["en", "es"]) {
-      const dir = path.join(ROOT, "src/content", collection, locale);
-      if (!fs.existsSync(dir)) continue;
-      for (const file of fs
-        .readdirSync(dir)
-        .toSorted((a, b) => a.localeCompare(b))) {
-        if (!file.endsWith(".mdx")) continue;
-        if (file.startsWith("_") || file.startsWith("999")) continue;
-        files.push({
-          id: `${locale}/${file.replace(/\.mdx$/, "")}`,
-          collection,
-          locale,
-          file: path.join(dir, file),
-        });
-      }
-    }
-  }
-  return files;
+  return ["posts", "tools"].flatMap((collection) =>
+    ["en", "es"].flatMap((locale) => collectionFiles(collection, locale)),
+  );
 }
 
 /** Strips YAML frontmatter, which the collection loader removes in Astro. */
@@ -54,24 +60,29 @@ function body(file) {
   return fs.readFileSync(file, "utf8").replace(/^---\n[\s\S]*?\n---\n/, "");
 }
 
+/** Every `*.md.ts` under src/components, imported — the offline glob. */
+async function loadModules() {
+  const paths = [];
+  const walk = (dir) => {
+    for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+      const full = path.join(dir, entry.name);
+      if (entry.isDirectory()) walk(full);
+      else if (entry.name.endsWith(".md.ts")) paths.push(full);
+    }
+  };
+  walk(path.join(ROOT, "src/components"));
+
+  const modules = {};
+  for (const file of paths) modules[file] = await import(file);
+  return modules;
+}
+
 async function main() {
   const { buildRegistry, mdxToMarkdown } = await import(
     path.join(ROOT, "src/utils/llms/mdx/render.ts")
   );
 
-  const modules = {};
-  const walk = (dir) => {
-    for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
-      const full = path.join(dir, entry.name);
-      if (entry.isDirectory()) walk(full);
-      else if (entry.name.endsWith(".md.ts")) modules[full] = full;
-    }
-  };
-  walk(path.join(ROOT, "src/components"));
-  for (const key of Object.keys(modules)) {
-    modules[key] = await import(modules[key]);
-  }
-  const registry = buildRegistry(modules);
+  const registry = buildRegistry(await loadModules());
 
   const args = process.argv.slice(2);
   const files = corpus();

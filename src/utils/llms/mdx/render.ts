@@ -66,6 +66,9 @@ const PROCESSOR = unified().use(remarkParse).use(remarkMdx);
 const ELEMENT_TYPES = new Set(["mdxJsxFlowElement", "mdxJsxTextElement"]);
 
 /** Node types that carry no content of their own into the output. */
+/** MDX `{…}` nodes, whose literal content is real prose rather than syntax. */
+const EXPRESSION_TYPES = new Set(["mdxTextExpression", "mdxFlowExpression"]);
+
 const SCAFFOLDING_TYPES = new Set([
   "mdxjsEsm",
   "mdxFlowExpression",
@@ -197,13 +200,7 @@ function fromEstree(node: EstreeNode | undefined): unknown {
       return (node.elements ?? []).map((element) => fromEstree(element));
     }
     case "ObjectExpression": {
-      const out: Record<string, unknown> = {};
-      for (const property of node.properties ?? []) {
-        if (property.type !== "Property" || !property.key) continue;
-        const key = propertyKey(property.key);
-        if (key) out[key] = fromEstree(property.value);
-      }
-      return out;
+      return objectFromEstree(node);
     }
     case "UnaryExpression": {
       const value = fromEstree(node.argument);
@@ -219,6 +216,41 @@ function fromEstree(node: EstreeNode | undefined): unknown {
       return undefined;
     }
   }
+}
+
+/**
+ * An object literal, as a plain object.
+ *
+ * @param node - An `ObjectExpression` node.
+ * @returns The object, with computed and spread properties skipped.
+ */
+function objectFromEstree(node: EstreeNode): Record<string, unknown> {
+  const out: Record<string, unknown> = {};
+  for (const property of node.properties ?? []) {
+    if (property.type !== "Property") continue;
+    const key = propertyKey(property.key);
+    if (key) out[key] = fromEstree(property.value);
+  }
+  return out;
+}
+
+/**
+ * The one expression an attached estree consists of, when it is exactly one.
+ *
+ * Both callers wrap a single expression — a JSX attribute and an MDX `{…}`
+ * node — so anything else (no program, several statements, a declaration) is
+ * not a literal this renderer reads.
+ *
+ * @param program - The estree the MDX parser attached.
+ * @returns The expression node, or `undefined`.
+ */
+function soleExpression(
+  program: EstreeNode | undefined,
+): EstreeNode | undefined {
+  const statement = program?.body?.[0];
+  return statement?.type === "ExpressionStatement"
+    ? statement.expression
+    : undefined;
 }
 
 /**
@@ -245,10 +277,7 @@ function propertyKey(key: EstreeNode | undefined): string {
 function evaluateAttribute(attribute: MdxAttribute): unknown {
   const value = attribute.value;
   if (!value || typeof value !== "object") return undefined;
-  const program = value.data?.estree;
-  const statement = program?.body?.[0];
-  if (!statement || statement.type !== "ExpressionStatement") return undefined;
-  return fromEstree(statement.expression);
+  return fromEstree(soleExpression(value.data?.estree));
 }
 
 /**
@@ -258,10 +287,7 @@ function evaluateAttribute(attribute: MdxAttribute): unknown {
  * @returns The string, or `undefined` when the expression is not a literal.
  */
 function literalExpression(node: MdxNode): string | undefined {
-  const program = node.data?.estree;
-  const statement = program?.body?.[0];
-  if (!statement || statement.type !== "ExpressionStatement") return undefined;
-  const value = fromEstree(statement.expression);
+  const value = fromEstree(soleExpression(node.data?.estree));
   return typeof value === "string" ? value : undefined;
 }
 
@@ -445,13 +471,7 @@ export function mdxToMarkdown(
     // brackets, a lone backtick — so the literal inside them is CONTENT. Only
     // imports and `{/* … */}` comments are scaffolding. Treating every
     // expression as scaffolding emptied `<code>{"(?<name>…)"}</code>`.
-    if (
-      node.type === "mdxTextExpression" ||
-      node.type === "mdxFlowExpression"
-    ) {
-      const literal = literalExpression(node);
-      return literal ?? "";
-    }
+    if (EXPRESSION_TYPES.has(node.type)) return literalExpression(node) ?? "";
     if (isScaffolding(node)) return "";
 
     if (isElement(node)) {

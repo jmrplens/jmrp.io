@@ -195,7 +195,7 @@ function codeSpan(value: string): string {
 function fence(code: string): string {
   const runs = [...code.matchAll(/`+/gu)].map((m) => m[0].length);
   const ticks = "`".repeat(Math.max(3, ...runs.map((n) => n + 1)));
-  return `${ticks}\n${code.replace(/\s+$/u, "")}\n${ticks}`;
+  return `${ticks}\n${code.trimEnd()}\n${ticks}`;
 }
 
 /** Root-relative hrefs become absolute; anything else is left as authored. */
@@ -397,18 +397,51 @@ function table(node: MdxNode, ctx: MarkdownContext): string {
  * @param ctx - Renderer helpers.
  * @returns Block markdown.
  */
-function block(node: MdxNode, ctx: MarkdownContext): string {
+/**
+ * An HTML heading tag, at the depth its level maps to.
+ *
+ * @param node - The heading element.
+ * @param depth - Markdown heading depth.
+ * @param ctx - Renderer helpers.
+ * @returns The heading line, or "" when it has no text.
+ */
+function htmlHeading(
+  node: MdxNode,
+  depth: number,
+  ctx: MarkdownContext,
+): string {
+  const text = inlineAll(node.children ?? [], ctx);
+  return text === "" ? "" : ctx.heading(depth, text);
+}
+
+/**
+ * A paragraph node, which the parser may have invented around an HTML tag.
+ *
+ * @param node - The paragraph node.
+ * @param ctx - Renderer helpers.
+ * @returns Block markdown.
+ */
+function paragraph(node: MdxNode, ctx: MarkdownContext): string {
   // A paragraph that holds an HTML tag is a container the parser invented, not
   // a paragraph: `<h3>Features</h3>` on its own line arrives wrapped in one.
-  if (node.type === "paragraph") {
-    const children = node.children ?? [];
-    if (children.every((child) => !isHtml(child))) return ctx.render(node);
-    return children.some(
-      (child) => isHtml(child) && BLOCK_LEVEL.has(child.name ?? ""),
-    )
-      ? blocks(children, ctx)
-      : inlineAll(children, ctx);
-  }
+  const children = node.children ?? [];
+  if (children.every((child) => !isHtml(child))) return ctx.render(node);
+  return children.some(
+    (child) => isHtml(child) && BLOCK_LEVEL.has(child.name ?? ""),
+  )
+    ? blocks(children, ctx)
+    : inlineAll(children, ctx);
+}
+
+/**
+ * One block of the hand-written HTML documentation, as markdown.
+ *
+ * @param node - The node to convert.
+ * @param ctx - Renderer helpers.
+ * @returns Block markdown.
+ */
+function block(node: MdxNode, ctx: MarkdownContext): string {
+  if (node.type === "paragraph") return paragraph(node, ctx);
 
   // Fences, markdown lists, thematic breaks and every real component: their own
   // bytes, or their own module.
@@ -418,10 +451,7 @@ function block(node: MdxNode, ctx: MarkdownContext): string {
   if (DROPPED.has(name)) return "";
 
   const depth = HEADINGS.get(name);
-  if (depth !== undefined) {
-    const text = inlineAll(node.children ?? [], ctx);
-    return text === "" ? "" : ctx.heading(depth, text);
-  }
+  if (depth !== undefined) return htmlHeading(node, depth, ctx);
 
   switch (name) {
     case "ul": {

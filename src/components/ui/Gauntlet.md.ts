@@ -1,3 +1,4 @@
+import { line } from "@utils/llms/mdx/markdown-table";
 import { markdownFor } from "@utils/llms/mdx/types";
 
 /**
@@ -37,10 +38,6 @@ interface Gate {
   label?: string;
   detail?: string;
 }
-
-/** Collapses a value to a single line for use inside a list item. */
-const line = (value: string | undefined): string =>
-  (value ?? "").replaceAll(/\s*\n\s*/gu, " ").trim();
 
 /** "**label** — detail", or just the label when there is no detail. */
 const titled = (
