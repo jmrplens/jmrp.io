@@ -90,6 +90,9 @@ const t = useTranslations(locale);
 <script>
   (() => {
     const COPIED_MS = 1600;
+    /** After this, a write that has not settled is reported as failed rather
+        than left silent. Comfortably past the ~5 s activation window. */
+    const SILENT_MS = 8000;
     /** Timer of the last copy, so a second click does not cut its own message
         short: without this the first timeout fires mid-confirmation and the
         live region is cleared before a screen reader has read it. */
@@ -140,12 +143,44 @@ const t = useTranslations(locale);
         }, COPIED_MS);
       };
 
-      fetch(link.href)
-        .then((response) => {
-          if (!response.ok) throw new Error(String(response.status));
-          return response.text();
-        })
-        .then((text) => navigator.clipboard.writeText(text))
+      // The clipboard write has to START inside the user gesture. Fetching
+      // first and writing after spends the transient activation window on the
+      // network: measured in two engines, the write stops being allowed
+      // somewhere between 4 s and 5 s after the click, and past that Chrome
+      // leaves the promise PENDING FOREVER — no `.then`, no `.catch`, so the
+      // label never changes and the live region stays empty. The reader gets
+      // silence, which is worse than an error. Handing `ClipboardItem` the
+      // promise starts the write immediately and lets the fetch finish inside
+      // it.
+      const payload = fetch(link.href).then(async (response) => {
+        if (!response.ok) throw new Error(String(response.status));
+        // Re-wrapped, not passed through: this file is served as
+        // `text/markdown` by our own nginx `types` block, and Chrome rejects a
+        // ClipboardItem whose key does not match its blob's type — at EVERY
+        // latency, not just slow ones. Reusing the response blob would turn a
+        // rare failure into a certain one for every Chrome user.
+        return new Blob([await response.text()], { type: "text/plain" });
+      });
+
+      const written =
+        typeof globalThis.ClipboardItem === "function" &&
+        typeof navigator.clipboard.write === "function"
+          ? navigator.clipboard.write([
+              new ClipboardItem({ "text/plain": payload }),
+            ])
+          : // No ClipboardItem: the old two-step path, which is still correct
+            // for a fast response and is all these browsers can do.
+            payload
+              .then((blob) => blob.text())
+              .then((text) => navigator.clipboard.writeText(text));
+
+      // A write that never settles would leave the control mute. Losing the
+      // race only changes what the reader is told, never what is copied.
+      const timeout = new Promise((_, reject) => {
+        globalThis.setTimeout(() => reject(new Error("timeout")), SILENT_MS);
+      });
+
+      Promise.race([written, timeout])
         .then(() => settle(done))
         .catch(() => settle(failed));
     };
