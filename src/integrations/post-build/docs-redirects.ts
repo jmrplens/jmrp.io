@@ -26,6 +26,19 @@ import { assertNginxSafe, writeNginxSnippet } from "./utils.js";
  */
 const MAP_VARIABLE = "$project_docs_redirect";
 
+/**
+ * Escapes the regex metacharacters an id could contain.
+ *
+ * Ids are repository names, so `.` and `+` are both plausible and both would
+ * otherwise widen the match to paths that are not the project's.
+ *
+ * @param value - The project id.
+ * @returns The id, safe to embed in a regex.
+ */
+function escapeRegex(value: string): string {
+  return value.replaceAll(/[.*+?^${}()|[\]\\]/gu, String.raw`\$&`);
+}
+
 /** Shape of the fields this step reads from a `projects.yaml` entry. */
 interface ProjectDocsEntry {
   id?: string;
@@ -65,11 +78,43 @@ export async function generateDocsRedirects(
     "projects.yaml (id / docs)",
   );
 
+  // Deep paths get a regex entry that carries the rest of the path across.
+  // Without it `/docs/libgen-mcp/getting-started/` 404s, because an exact-key
+  // map only ever matched the two bare forms — so the stable URL worked for a
+  // project's front page and for nothing else in its documentation, which is
+  // most of what anyone actually links to.
+  //
+  // The two bare forms stay EXACT on purpose: exact keys are a hash lookup and
+  // are matched case-insensitively by nginx (verified live: /docs/LIBGEN-MCP
+  // and /docs/cloudflare-dns-updater both resolve today), and regexes only run
+  // when the hash misses. Turning them into regexes would cost that for
+  // nothing.
   const entries = pairs
-    .flatMap(([from, to]) => [
-      `    "${from}"  "${to}";`,
-      `    "${from}/"  "${to}";`,
-    ])
+    .flatMap(([from, to]) => {
+      const id = from.slice("/docs/".length);
+      // A capture name has to be a valid nginx variable, and ids carry `-`.
+      const capture = `docs_${id.toLowerCase().replaceAll(/[^a-z0-9]/gu, "_")}`;
+
+      // Only a docs URL that is a real site root can carry a deeper path.
+      // Six projects point at `github.com/<repo>#readme`, and appending to a
+      // FRAGMENT produces `…TFG-TFM_EPS#readme/manual/` — a URL that resolves
+      // to the repo front page while looking like it worked. Verified live
+      // before this guard existed. The same test governs the query string:
+      // `?q=x` after a fragment is malformed.
+      const isSiteRoot = !to.includes("#") && !to.includes("?");
+      if (!isSiteRoot) {
+        return [`    "${from}"  "${to}";`, `    "${from}/"  "${to}";`];
+      }
+
+      // `$is_args$args` because `return 301` does NOT re-append the query the
+      // way `rewrite` does, so a docs search link lost its terms.
+      const base = to.replace(/\/+$/u, "");
+      return [
+        `    "${from}"  "${to}$is_args$args";`,
+        `    "${from}/"  "${to}$is_args$args";`,
+        `    ~*^/docs/${escapeRegex(id)}(?<${capture}>/.+)$  "${base}$${capture}$is_args$args";`,
+      ];
+    })
     .join("\n");
 
   const content = `# GENERATED FILE — DO NOT EDIT.
@@ -85,7 +130,8 @@ export async function generateDocsRedirects(
 # Included at http level; consumed by the server block as:
 #     if (${MAP_VARIABLE}) { return 301 ${MAP_VARIABLE}; }
 #
-# Projects: ${pairs.length} (x2 for the trailing-slash form)
+# Projects: ${pairs.length} — two exact keys (bare and trailing slash) plus one
+# regex per project that forwards any deeper path to the same docs site.
 
 map $uri ${MAP_VARIABLE} {
     default "";
