@@ -84,6 +84,18 @@ export interface MarkdownContext {
   text: (node: MdxNode) => string;
   /** Renders one node to markdown (for handlers that walk their own tree). */
   render: (node: MdxNode) => string;
+  /**
+   * A heading line at the depth the source wrote it, shifted by the offset the
+   * caller passed to `mdxToMarkdown`.
+   *
+   * A module that builds headings itself must go through this rather than
+   * emitting a `#` run of its own. The same body is published two ways — as a
+   * standalone document, where its `<h2>` is a top-level section, and nested
+   * under a heading the corpus builder wrote, where that `<h2>` has to sit
+   * below it. Only the caller knows how deep the document was nested, so the
+   * depth arithmetic belongs here and not in the module.
+   */
+  heading: (depth: number, text: string) => string;
 }
 
 /** What a `<Name>.md.ts` module default-exports. */

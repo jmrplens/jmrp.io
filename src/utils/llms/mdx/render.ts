@@ -324,6 +324,17 @@ function collapseBlankRuns(text: string): string {
 }
 
 /**
+ * Deepest heading markdown has.
+ *
+ * A tool body's deepest heading is `<h4>`, and the corpus builder shifts it by
+ * two, so it lands exactly on this bound and the clamp is never reached today.
+ * It exists because the alternative failure is silent: `####### Title` is not a
+ * heading in any parser, it is a paragraph that starts with seven hashes, and a
+ * section title would become body text without anything erroring.
+ */
+const MAX_HEADING_DEPTH = 6;
+
+/**
  * Converts one MDX body to markdown.
  *
  * @param body - The MDX source, without frontmatter.
@@ -336,9 +347,27 @@ export function mdxToMarkdown(
     locale: "en" | "es";
     siteUrl: string;
     registry: Map<string, ComponentMarkdown>;
+    /**
+     * Levels to push a heading down by, for a body being nested under a
+     * heading the caller wrote. Zero — the default — publishes the body's own
+     * depths untouched, which is what a standalone document wants.
+     *
+     * This reaches the output only through `ctx.heading`, which is to say only
+     * where a component module asks for it. It is deliberately NOT applied to
+     * mdast `heading` nodes here: the renderer cannot tell a heading that is
+     * document structure from one that is content another component will
+     * re-wrap, and the corpus contains the second kind. `# Safely appends
+     * without removing existing jobs` inside a `<TerminalSessionOutput>` is
+     * terminal output that remark parses as an h1 and `TerminalSession` then
+     * fences; rewriting it here turned that comment into `###` inside a code
+     * block. `<ToolInfo>` shifts its own `<h2>`–`<h4>` tags, where the
+     * distinction is unambiguous.
+     */
+    headingOffset?: number;
   },
 ): string {
   const REGISTRY = options.registry;
+  const headingOffset = options.headingOffset ?? 0;
   const source = body;
   const tree = PROCESSOR.parse(source) as MdxNode;
 
@@ -375,6 +404,13 @@ export function mdxToMarkdown(
     text: (node) => plainText(node).trim(),
     body: (node) => renderChildren(node),
     render: (node) => renderNode(node),
+    heading: (depth, text) => {
+      const level = Math.min(
+        MAX_HEADING_DEPTH,
+        Math.max(1, depth + headingOffset),
+      );
+      return `${"#".repeat(level)} ${text}`;
+    },
   };
 
   /**

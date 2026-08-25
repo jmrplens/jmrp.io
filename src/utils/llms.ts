@@ -767,7 +767,39 @@ export function generateLlmsPostTxt(
   ].join("\n");
 }
 
-/** Renders one locale's tools as `### title` blocks with metadata, for llms-full. */
+/**
+ * Renders one locale's tools as `### title` blocks with metadata and body, for
+ * llms-full.
+ *
+ * ── Why the body is inlined and not sharded like a post ───────────────────
+ * A post body gets its own file because it is a self-contained 31–59 KB guide:
+ * big enough that inlining twelve of them made the document 587 KB and any
+ * ingestion cap landed mid-guide. A tool body is not that. Converted, the
+ * largest is 9.1 KB and the median 4.6 KB — the whole 17-tool English corpus
+ * (76.5 KB) is barely larger than one post shard. It is also not a document:
+ * "How is the CRC-16 calculated?" is only useful next to the URL, category and
+ * feature list of the tool that calculates it, and splitting the two would cost
+ * a second fetch to reassemble a page that is 11 KB whole. Publishing a 2.2 KB
+ * `.txt` per tool would apply the shard machinery to files it was never needed
+ * for, and add 34 URLs to the index for it.
+ *
+ * The cost is honest: this takes llms-full-en.txt from 76 KB to 153 KB and the
+ * bilingual llms-full.txt from 117 KB to 282 KB, which pushes the CV and
+ * Publications sections further down the document. The per-locale variants
+ * exist for exactly the pipelines that care, and llms.txt already advertises
+ * them on that basis.
+ *
+ * ── Why the whole body, chrome included ───────────────────────────────────
+ * Roughly 8% of it is interface instructions ("click the + button"), and
+ * another ~24% restates the description, feature list and privacy answer that
+ * the frontmatter above already emitted, in different words. The remaining ~66%
+ * is reference material that exists nowhere else in the corpus: Modbus function
+ * and exception code tables, the JS/PCRE/Python regex flavour comparison, WCAG
+ * contrast formulas, subnet tables, and a `Linux Command Reference` per tool.
+ * Filtering the rest out would mean a converter deciding which of an author's
+ * sections count as content, and the near-duplicate wording is a retrieval
+ * annoyance, not a false statement.
+ */
 function buildToolSection(
   tools: CollectionEntry<"tools">[],
   siteUrl: string,
@@ -794,6 +826,26 @@ function buildToolSection(
             "Questions answered:",
             "",
             ...d.faq.flatMap((f) => [`**${f.question}**`, "", f.answer, ""]),
+          ]
+        : []),
+      // Same `---` rule the post shards use: it separates the frontmatter
+      // metadata above from the page's own prose below, and the blank line
+      // before it is what keeps it a thematic break rather than an underline
+      // that would turn the line above into a heading.
+      ...(t.body
+        ? [
+            "",
+            "---",
+            "",
+            mdxToMarkdown(t.body, {
+              locale: d.lang,
+              siteUrl,
+              registry,
+              // The body opens at `<h2>`; it is being nested under this tool's
+              // own `###`, so every heading moves down two levels. The deepest
+              // one in the corpus is `<h4>`, which lands on `######`.
+              headingOffset: 2,
+            }),
           ]
         : []),
       "",
@@ -877,7 +929,7 @@ export async function generateLlmsFullTxt(
     "",
     `> ${DESCRIPTION}`,
     "",
-    '> Blog posts are one file per post so that no ingestion cap truncates a\n> guide mid-way; the "Blog Posts" section links to each of them. Tools carry\n> their description, feature list and FAQ here, with the long-form\n> documentation on the tool page itself. Everything else is inlined in full.',
+    '> Blog posts are one file per post so that no ingestion cap truncates a\n> guide mid-way; the "Blog Posts" section links to each of them. Everything\n> else is inlined in full, each tool\'s own documentation included. For a\n> smaller document, llms-full-en.txt and llms-full-es.txt carry one language\n> each.',
     "",
     // The build date, not a content date — see the same label on the shards.
     `> Generated: ${today()}`,

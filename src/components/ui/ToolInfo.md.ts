@@ -420,7 +420,7 @@ function block(node: MdxNode, ctx: MarkdownContext): string {
   const depth = HEADINGS.get(name);
   if (depth !== undefined) {
     const text = inlineAll(node.children ?? [], ctx);
-    return text === "" ? "" : `${"#".repeat(depth)} ${text}`;
+    return text === "" ? "" : ctx.heading(depth, text);
   }
 
   switch (name) {
@@ -467,10 +467,11 @@ function blocks(nodes: MdxNode[], ctx: MarkdownContext): string {
 export default markdownFor({
   tag: "ToolInfo",
   toMarkdown(node, ctx) {
-    // Headings keep the depth the author wrote — the section opens at `<h2>`.
-    // Fitting them under whatever heading the corpus builder puts above the
-    // tool is that builder's job; `llms.ts` already has a `demote` parameter
-    // for exactly this, and guessing here would fight it.
+    // Headings keep the depth the author wrote — the section opens at `<h2>` —
+    // and `ctx.heading` shifts them by whatever offset the caller asked for.
+    // Fitting them under the heading the corpus builder puts above the tool is
+    // that builder's job: `llms.ts` nests this body under a `###` and passes
+    // `headingOffset: 2`. Guessing a depth here would fight it.
     return blocks(node.children ?? [], ctx);
   },
 });
