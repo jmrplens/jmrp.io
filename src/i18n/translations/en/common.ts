@@ -487,6 +487,7 @@ export const common = {
       readAction: "Read article →",
       codeFallback: "Code",
       copyMarkdown: "Copy as Markdown",
+      copyingMarkdown: "Copying…",
       codeExampleTemplate: "{lang} example {index}",
       authorRole: "R&D Engineer",
       aboutAuthor: "About the author",

@@ -40,9 +40,14 @@ const t = useTranslations(locale);
   data-label-idle={t("pages.blogPost.copyMarkdown")}
   data-label-copied={t("ui.copied")}
   data-label-failed={t("components.copyButton.failedToCopy")}
+  data-label-busy={t("pages.blogPost.copyingMarkdown")}
 >
   <span
     class="i-mdi:language-markdown-outline md-copy__icon"
+    aria-hidden="true"
+  ></span>
+  <span
+    class="md-copy__spinner"
     aria-hidden="true"
   ></span>
   <span class="md-copy__label">{t("pages.blogPost.copyMarkdown")}</span>
@@ -85,6 +90,54 @@ const t = useTranslations(locale);
     width: 1.1em;
     height: 1.1em;
   }
+
+  /* The two glyphs swap: the markdown mark while idle, the ring while the copy
+     is in flight. Only ONE occupies the row at a time, so the label never
+     shifts sideways mid-copy. */
+  .md-copy__spinner {
+    display: none;
+    width: 1.1em;
+    height: 1.1em;
+    border: 2px solid currentcolor;
+    border-top-color: transparent;
+    border-radius: 50%;
+    animation: md-copy-spin 0.7s linear infinite;
+  }
+
+  .md-copy[aria-busy="true"] .md-copy__icon {
+    display: none;
+  }
+
+  .md-copy[aria-busy="true"] .md-copy__spinner {
+    display: inline-block;
+  }
+
+  @keyframes md-copy-spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  /* Reduced motion still needs the state to be VISIBLE — dropping the
+     animation without a replacement would leave the reader with a static ring
+     indistinguishable from an icon. It pulses opacity instead, which conveys
+     "working" without rotation. */
+  @media (prefers-reduced-motion: reduce) {
+    .md-copy__spinner {
+      animation: md-copy-pulse 1.4s ease-in-out infinite;
+    }
+
+    @keyframes md-copy-pulse {
+      0%,
+      100% {
+        opacity: 100%;
+      }
+
+      50% {
+        opacity: 35%;
+      }
+    }
+  }
 </style>
 
 <script>
@@ -122,6 +175,12 @@ const t = useTranslations(locale);
         return;
       }
       if (!navigator.clipboard) return; // no clipboard: the href still works
+      // A copy already in flight owns the control: a second click would start
+      // a second fetch and race it to the same clipboard.
+      if (link.getAttribute("aria-busy") === "true") {
+        event.preventDefault();
+        return;
+      }
 
       event.preventDefault();
 
@@ -134,6 +193,7 @@ const t = useTranslations(locale);
       const failed = link.dataset.labelFailed ?? "";
 
       const settle = (message: string) => {
+        link.removeAttribute("aria-busy");
         if (label) label.textContent = message;
         if (status) status.textContent = message;
         if (resetTimer !== undefined) globalThis.clearTimeout(resetTimer);
@@ -142,6 +202,13 @@ const t = useTranslations(locale);
           if (status) status.textContent = "";
         }, COPIED_MS);
       };
+
+      // `aria-busy` rather than a message in the live region: announcing
+      // "Copying…" and then "Copied" makes a screen reader talk twice for one
+      // action, and the second is the only one that carries information. The
+      // spinner and the label give a sighted reader the same state visually.
+      link.setAttribute("aria-busy", "true");
+      if (label) label.textContent = link.dataset.labelBusy ?? idle;
 
       // The clipboard write has to START inside the user gesture. Fetching
       // first and writing after spends the transient activation window on the
