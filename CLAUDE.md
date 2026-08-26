@@ -283,37 +283,43 @@ All JSON-LD wrapped in `safeJsonLd()` — escapes `<`, `>`, `&`, `\u2028`, `\u20
 
 ### Design Tokens (CSS Custom Properties)
 
-**Theme (Dark-first)**:
+**Theme (Dark-first)** — source of truth: `src/styles/tokens.css` (the redesign's
+amber brand; an older purple palette lingered in docs until 2026-08). The full
+file also carries intent aliases (`--color-meta`, `--accent-dim`), state
+palettes and the `--dg-*` diagram ramps; below are just the core tokens:
 
 ```css
 /* Dark (default) */
---color-bg: #000;
---color-bg-secondary: #0d1117;
+--color-bg: #0a0a0b;
+--color-bg-secondary: #101013;
 --color-bg-subtle: rgb(255 255 255 / 5%);
---color-text: #c9d1d9;
---color-text-muted: #8b949e;
---color-text-heading: #fff;
---color-primary: #b389f5;
---color-primary-hover: #c49af5;
---color-on-primary: #000;
---color-accent: #b389f5;
---color-border: #30363d;
---color-bg-header: rgb(255 255 255 / 3%);
+--color-text: #b6b5ae;
+--color-text-muted: #8c8a82;
+--color-text-heading: #f4f2ec;
+--color-primary: #f5a623; /* amber */
+--color-primary-hover: #ffbb4d;
+--color-on-primary: #0a0a0b;
+--color-accent: #f5a623;
+--color-border: #26262c;
+--color-bg-header: rgb(10 10 11 / 72%);
 
-/* Light (override) */
---color-bg: #fff;
---color-bg-secondary: #f6f8fa;
+/* Light (override) — KEEP-IN-SYNC: light-tokens */
+--color-bg: #fafaf7;
+--color-bg-secondary: #fff;
 --color-bg-subtle: rgb(0 0 0 / 5%);
---color-text: #24292f;
---color-text-muted: #57606a;
---color-text-heading: #1f2328;
---color-primary: #b509ac;
---color-primary-hover: #d11cd1;
+--color-text: #46453f;
+--color-text-muted: #666560;
+--color-text-heading: #1a1a18;
+--color-primary: #8f5300; /* amber darkened to AA as text */
+--color-primary-hover: #c07a10;
 --color-on-primary: #fff;
---color-accent: #b509ac;
---color-border: #d0d7de;
---color-bg-header: #eaeff2;
+--color-accent: #8f5300;
+--color-border: #dcdbd3;
+--color-bg-header: #eae9e2;
 ```
+
+The CV PDFs share this palette: `scripts/cv/design-template.mjs` and
+`ats-template.mjs` embed the light tokens (marked `KEEP-IN-SYNC: light-tokens`).
 
 **Typography**: `--font-display: var(--font-space-grotesk)` (headings, large numbers, card titles), `--font-body: var(--font-ibm-plex-sans)` (paragraphs, UI text), `--font-mono: var(--font-ibm-plex-mono)` (kickers, code, data, the logo). Weights: `--fw-normal` (400), `--fw-medium` (500), `--fw-semibold` (600), `--fw-bold` (700), `--fw-extrabold` (800).
 

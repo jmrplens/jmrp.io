@@ -160,7 +160,7 @@ function renderProjects(section, statsBySlug) {
       // by ATS extraction, so here it can be the real icon.
       .map((m) =>
         m.includes("★")
-          ? String.raw`${escapeLatex(m.replace("★", "").trim())}\,{\color{accent}\scriptsize\faStar}`
+          ? String.raw`${escapeLatex(m.replace("★", "").trim())}\,{\color{accenthi}\scriptsize\faStar}`
           : escapeLatex(m),
       )
       .join(String.raw` \CVDot{} `);

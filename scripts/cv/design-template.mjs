@@ -85,11 +85,18 @@ export function designPreamble({
 % emergency stretch absorbs every overfull box without visible loose lines.
 \emergencystretch=1.5em
 
-% ---- jmrp.io light-theme tokens (src/styles/global.css) ----
-\definecolor{accent}{HTML}{B509AC}
-\definecolor{ink}{HTML}{1F2328}
-\definecolor{muted}{HTML}{57606A}
-\definecolor{border}{HTML}{D0D7DE}
+% ---- Site light palette — KEEP-IN-SYNC: light-tokens (src/styles/tokens.css)
+% The redesign's brand is AMBER (#F5A623 on dark); as text on a light page it
+% is the darkened --color-primary #8F5300 (AA), with --accent-hi #C07A10 for
+% decorative fills only. Page background is the site's warm --color-bg.
+\definecolor{accent}{HTML}{8F5300}
+\definecolor{accenthi}{HTML}{C07A10}
+\definecolor{heading}{HTML}{1A1A18}
+\definecolor{ink}{HTML}{46453F}
+\definecolor{muted}{HTML}{666560}
+\definecolor{border}{HTML}{DCDBD3}
+\definecolor{pagebg}{HTML}{FAFAF7}
+\pagecolor{pagebg}
 
 % ---- Site typography (see module docblock for why filenames) ----
 \setmainfont{IBMPlexSans-Regular.otf}[
@@ -109,7 +116,7 @@ export function designPreamble({
 \setlength{\columnsep}{18pt}
 
 % ---- helpers ----
-\newcommand{\SkillDots}[1]{{\scriptsize\foreach \i in {1,...,5}{\ifnum\i>#1{\textcolor{border}{\faCircle}}\else{\textcolor{accent}{\faCircle}}\fi\,}}}
+\newcommand{\SkillDots}[1]{{\scriptsize\foreach \i in {1,...,5}{\ifnum\i>#1{\textcolor{border}{\faCircle}}\else{\textcolor{accenthi}{\faCircle}}\fi\,}}}
 \newcommand{\CVDot}{\,\textcolor{accent}{\textbullet}\,}
 \newcommand{\SoftKeepStart}{\par\penalty-200\interlinepenalty=300\relax}
 \newcommand{\SoftKeepEnd}{\par\interlinepenalty=0\relax}
@@ -119,17 +126,17 @@ export function designPreamble({
 % ---- sections ----
 \newcommand{\CVSection}[1]{%
   \par\penalty-400\vspace{8pt}%
-  {\cvmono\scriptsize\color{muted}//\ }{\displayfont\bfseries\large\color{ink}\MakeUppercase{#1}}\\[-0.55em]
+  {\cvmono\scriptsize\color{muted}//\ }{\displayfont\bfseries\large\color{heading}\MakeUppercase{#1}}\\[-0.55em]
   {\color{accent}\rule{\linewidth}{1.2pt}}\par\nobreak\vspace{4pt}}
 \newcommand{\SideSection}[1]{%
   \par\penalty-400\vspace{8pt}%
-  {\displayfont\bfseries\color{ink}\MakeUppercase{#1}}\\[-0.6em]
+  {\displayfont\bfseries\color{heading}\MakeUppercase{#1}}\\[-0.6em]
   {\color{border}\rule{\linewidth}{0.9pt}}\par\nobreak\vspace{3pt}}
 
 % ---- experience ----
 \newcommand{\CVEventStart}[5]{%
   \SoftKeepStart\vspace{4pt}%
-  {\displayfont\bfseries\color{ink}#1}\hfill{\cvmono\footnotesize\color{muted}#3}\\*
+  {\displayfont\bfseries\color{heading}#1}\hfill{\cvmono\footnotesize\color{muted}#3}\\*
   {\small\color{accent}#2}{\small\color{muted}\ifx\relax#5\relax\else\ \textperiodcentered\ #5\fi\ifx\relax#4\relax\else\ \textperiodcentered\ #4\fi}\par\nobreak}
 \newcommand{\CVEventSummary}[1]{{\nobreak\small\color{muted}\itshape #1\par}}
 \newcommand{\CVBulletsBegin}{\nobreak\begin{itemize}[leftmargin=1.05em,itemsep=1pt,topsep=2pt,parsep=0pt,label=\textcolor{accent}{\small\textbullet}]}
@@ -140,7 +147,7 @@ export function designPreamble({
 % ---- projects (metrics line from live GitHub stats, like the ATS CVs) ----
 \newcommand{\CVProject}[4]{%
   \SoftKeepStart\vspace{3pt}%
-  {\displayfont\bfseries\color{ink}#1}\hfill{\cvmono\footnotesize\color{muted}#2}\par\nobreak
+  {\displayfont\bfseries\color{heading}#1}\hfill{\cvmono\footnotesize\color{muted}#2}\par\nobreak
   \ifx\relax#3\relax\else{\footnotesize\color{muted}#3\par\nobreak}\fi
   {\small #4\par}\SoftKeepEnd\vspace{2pt}}
 
@@ -176,7 +183,7 @@ export function designPreamble({
 export function designHeader({ name, headline, tagline, contact }) {
   return String.raw`\begin{document}
 \begin{minipage}{\dimexpr\linewidth-2.9cm}
-  {\displayfont\bfseries\fontsize{22pt}{24pt}\selectfont ${name}\par}\vspace{2pt}
+  {\displayfont\bfseries\fontsize{22pt}{24pt}\selectfont\color{heading}${name}\par}\vspace{2pt}
   {\displayfont\large\color{accent}${headline}\ \ {\cvmono\footnotesize\color{muted}${tagline}}\par}\vspace{4pt}
   ${contact}
 \end{minipage}\hfill

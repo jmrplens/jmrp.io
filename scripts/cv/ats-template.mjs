@@ -65,9 +65,13 @@ export function documentPreamble({
 
 % ---- Color (un solo acento = morado de jmrp.io) ----
 \usepackage{xcolor}
-\definecolor{accent}{HTML}{B509AC}     % morado de marca (light theme)
-\definecolor{ink}{HTML}{1F2328}        % texto principal (casi negro)
-\definecolor{muted}{HTML}{57606A}      % texto secundario
+% Site light palette — KEEP-IN-SYNC: light-tokens in src/styles/tokens.css
+% (the redesign's amber brand; the old purple B509AC predates it). The page
+% stays white: these are the print-safe ATS documents.
+\definecolor{accent}{HTML}{8F5300}     % --color-accent (amber, AA on light)
+\definecolor{heading}{HTML}{1A1A18}    % --color-text-heading
+\definecolor{ink}{HTML}{46453F}        % --color-text (body)
+\definecolor{muted}{HTML}{666560}      % --color-text-muted
 
 % ---- Tipografía: Inter ----
 \setmainfont{Inter}[
@@ -186,7 +190,7 @@ export function headerBlock({ name, headline, contactParts, availability }) {
 % =====================================================================
 %  ENCABEZADO
 % =====================================================================
-{\headingfont\fontsize{22pt}{24pt}\selectfont ${escapeLatex(name)}}\par
+{\headingfont\fontsize{22pt}{24pt}\selectfont\color{heading}${escapeLatex(name)}}\par
 \vspace{2pt}
 {\large\color{accent}${escapeLatex(headline)}}\par
 \vspace{4pt}
