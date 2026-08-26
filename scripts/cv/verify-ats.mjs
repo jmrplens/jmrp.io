@@ -297,12 +297,75 @@ function checkFontPinning() {
   return failures;
 }
 
+/** The design (sidebar) PDFs and the page budget they must not exceed. */
+const DESIGN_TARGETS = [
+  "CV_RequenaPlensJoseManuel_ENG.pdf",
+  "CV_RequenaPlensJoseManuel_SPA.pdf",
+];
+const DESIGN_MAX_PAGES = 3;
+
+/**
+ * Guards the design CVs against the half-empty-page regression.
+ *
+ * The retired AltaCV layout wasted 21-67% of every page because `\needspace`
+ * and per-item `minipage` wrappers moved whole blocks to the next page; the
+ * symptom of that entire failure class is PAGE COUNT GROWTH (6 pages for
+ * content that fits in 3). Exact per-page fill needs glyph positions, which
+ * pure-JS extraction does not expose reliably, so the check pins the budget
+ * instead: both design PDFs must stay within DESIGN_MAX_PAGES and carry a real
+ * text layer. Raise the budget deliberately when content grows, not to
+ * silence a layout regression.
+ *
+ * @returns {Promise<string[]>} Failure messages, empty when within budget.
+ */
+async function checkDesignBudget() {
+  const failures = [];
+  for (const file of DESIGN_TARGETS) {
+    const full = path.join(PDF_DIR, file);
+    if (!fs.existsSync(full)) {
+      failures.push(`${file} — file not found`);
+      continue;
+    }
+    const buffer = fs.readFileSync(full);
+    const parser = new PDFParse({ data: new Uint8Array(buffer) });
+    try {
+      const { text, total } = await parser.getText();
+      const pages = total ?? (text.match(/\f/gu)?.length ?? 0) + 1;
+      if (pages > DESIGN_MAX_PAGES) {
+        failures.push(
+          `${file} — ${pages} pages exceeds the ${DESIGN_MAX_PAGES}-page budget (layout regression?)`,
+        );
+      }
+      if (text.trim().split(/\s+/u).length < 300) {
+        failures.push(`${file} — text layer too small`);
+      }
+    } catch (error) {
+      failures.push(`${file} — extraction error: ${error.message}`);
+    } finally {
+      await parser.destroy();
+    }
+  }
+  return failures;
+}
+
 /** Entry point: validates every target PDF and exits non-zero on failure. */
 async function main() {
   let failed = 0;
   console.log(
     `${c.dim}ATS check on ${TARGETS.length} generated CV PDFs (pdf-parse + ats-checker)${c.reset}`,
   );
+
+  const designFailures = await checkDesignBudget();
+  if (designFailures.length === 0) {
+    console.log(
+      `  ${c.green}✓${c.reset} design budget ${c.dim}(both sidebar CVs within ${DESIGN_MAX_PAGES} pages)${c.reset}`,
+    );
+  } else {
+    failed += 1;
+    console.log(`  ${c.red}✗${c.reset} design budget`);
+    for (const f of designFailures)
+      console.log(`      ${c.red}- ${f}${c.reset}`);
+  }
 
   const fontFailures = checkFontPinning();
   if (fontFailures.length === 0) {

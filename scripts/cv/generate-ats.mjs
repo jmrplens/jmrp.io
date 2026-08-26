@@ -215,7 +215,7 @@ function renderSkills(groups, profile) {
  * @param {{kind?: string, label: string}} link - One entry of `basics.links`.
  * @returns {string} The text to typeset.
  */
-function labelForContact(link) {
+export function labelForContact(link) {
   return link.kind === "orcid" ? `ORCID ${link.label}` : link.label;
 }
 
@@ -540,5 +540,9 @@ async function main() {
   }
 }
 
-// eslint-disable-next-line unicorn/no-top-level-side-effects -- CLI entry point
-await main();
+// Run only when invoked as a CLI, not when imported: generate-design.mjs
+// imports labelForContact from here, and an unguarded top-level main() made
+// that import silently regenerate all four ATS sources as a side effect.
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
+  await main();
+}
