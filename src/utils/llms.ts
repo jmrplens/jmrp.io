@@ -24,7 +24,7 @@ import {
 } from "@utils/publications";
 import { SERIES } from "@utils/series";
 import type { CollectionEntry } from "astro:content";
-import { getCollection } from "astro:content";
+import { getCollection, getEntry } from "astro:content";
 
 /** Curated, site-level narrative reused by both files. */
 const DESCRIPTION =
@@ -1087,6 +1087,38 @@ export async function generateProfileMarkdown(
     ),
     "",
     ...lines,
+  ].join("\n");
+}
+
+/**
+ * A prose page from the `pages` collection, as a standalone markdown document.
+ *
+ * These are MDX, so the body goes through the same converter every post uses —
+ * which is half the reason the privacy policy stopped being 32 translation
+ * keys: a document gets its twin for free, a string table never can.
+ *
+ * @param siteUrl - Absolute site origin.
+ * @param slug - Page slug within the collection.
+ * @param locale - Which locale.
+ * @returns The complete file body.
+ */
+export async function generatePageMarkdown(
+  siteUrl: string,
+  slug: string,
+  locale: "en" | "es",
+): Promise<string> {
+  const entry = await getEntry("pages", `${locale}/${slug}`);
+  if (!entry) throw new Error(`Missing page: ${locale}/${slug}`);
+  const path = `${locale === "es" ? "/es" : ""}/${slug}/`;
+  return [
+    ...documentHeader(
+      entry.data.heading,
+      `${siteUrl}${path}`,
+      `${siteUrl}/llms.txt`,
+      ["", entry.data.description],
+    ),
+    "",
+    mdxToMarkdown(entry.body ?? "", { locale, siteUrl, registry }),
   ].join("\n");
 }
 
