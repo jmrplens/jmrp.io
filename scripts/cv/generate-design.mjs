@@ -342,7 +342,9 @@ export async function buildDesign(locale, options = {}) {
           String.raw`\CVLang{${escapeLatex(i.name)}}{${escapeLatex(i.level)}}`,
       )
       .join("\n"),
-    String.raw`\vspace{2pt}{\footnotesize\color{muted}\faInfoCircle~${escapeLatex(basics.availability ?? "")}\par}`,
+    // Its own breathing room: the languages block ends in a no-break line, so
+    // without this the availability note reads as one more language entry.
+    String.raw`\par\vspace{9pt}{\color{border}\rule{\linewidth}{0.6pt}}\par\vspace{5pt}{\footnotesize\color{muted}\faInfoCircle~${escapeLatex(basics.availability ?? "")}\par}`,
     renderCertificates(by("certificates")),
     renderPublications(meta),
     String.raw`\end{paracol}`,
