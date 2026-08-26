@@ -67,7 +67,13 @@
 }
 
 .kpi-card {
+  /* min-width: 0 — the card sits in a 1fr grid track, whose floor is the
+     content's min-content. In production the values are short ("4 / 4"), but
+     in astro preview/E2E the raw HLM_* tokens are long unbreakable strings
+     that inflated the track past the mobile viewport. */
+  min-width: 0;
   padding: 16px 18px;
+  overflow-wrap: anywhere;
   background: var(--color-bg-secondary);
   border: var(--border-1);
   border-radius: var(--radius-md);
