@@ -159,12 +159,15 @@ h4 {
    del viewport, así que un `content-visibility: auto` en .prose entero
    interseca siempre y no se salta nada (medido: 3,8 s de Style & Layout en
    el post 003 con la regla en el contenedor). Por hijo, cada bloque bajo el
-   pliegue se salta individualmente. `contain-intrinsic-size: auto <est>`
+   pliegue se salta individualmente. `contain-intrinsic-height: auto <est>`
    deja que el navegador recuerde el tamaño real tras el primer render.
    Nota: esto desactiva el colapso de márgenes entre hermanos del prose —
    verificado que el delta de altura total del documento es insignificante. */
 .prose > * {
-  contain-intrinsic-size: auto 170px; /* ≈ altura media real de un hijo del prose (43.7k px / 256) — cuanto más fiel, menor error de scroll-a-ancla sobre contenido aún no renderizado */
+  /* Solo altura: el shorthand declara también un ANCHO intrínseco, inocuo en
+     flujo de bloque pero que infla cualquier pista grid/flex con mínimo auto
+     (recortó /publications/ en móvil). */
+  contain-intrinsic-height: auto 170px; /* ≈ altura media real de un hijo del prose (43.7k px / 256) — cuanto más fiel, menor error de scroll-a-ancla sobre contenido aún no renderizado */
   content-visibility: auto;
 }
 

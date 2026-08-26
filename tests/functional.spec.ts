@@ -48,6 +48,47 @@ test.describe("Site-wide Functional Checks", () => {
       const response = await page.goto(pageInfo.url);
 
       // --- Functional checks ---
+      await test.step("Horizontal containment (no clipped content)", async () => {
+        // Catches the class of bug where an element inflates or escapes its
+        // container sideways without widening document.scrollWidth (the body
+        // clips it), so the content is CUT at the viewport edge — e.g. the
+        // 2026-08 /publications/ mobile regression: contain-intrinsic-size's
+        // implicit width floor blew the pub-layout 1fr track to 600px.
+        // Elements inside a horizontal scroller (overflow-x auto/scroll) are
+        // legitimate and skipped.
+        const offenders = await page.evaluate(() => {
+          const vw = document.documentElement.clientWidth;
+          const bad: string[] = [];
+          const inScroller = (el: Element): boolean => {
+            for (
+              let n = el.parentElement;
+              n && n !== document.body;
+              n = n.parentElement
+            ) {
+              const o = getComputedStyle(n).overflowX;
+              if (o === "auto" || o === "scroll") return true;
+            }
+            return false;
+          };
+          for (const el of document.querySelectorAll("main *")) {
+            const r = el.getBoundingClientRect();
+            if (r.width === 0 || r.right <= vw + 2) continue;
+            const cs = getComputedStyle(el);
+            if (cs.visibility === "hidden" || cs.display === "none") continue;
+            if (inScroller(el)) continue;
+            const cls = (el.className || "").split(" ", 1)[0];
+            bad.push(
+              `${el.tagName.toLowerCase()}${cls ? "." + cls : ""} right=${Math.round(r.right)} (viewport ${vw})`,
+            );
+          }
+          return bad.slice(0, 8);
+        });
+        expect(
+          offenders,
+          `Content clipped past the viewport on ${pageInfo.url}`,
+        ).toEqual([]);
+      });
+
       await test.step("Status, structure & console errors", async () => {
         expect(response?.status()).toBe(200);
         expect(consoleErrors, `Console errors on ${pageInfo.url}`).toEqual([]);

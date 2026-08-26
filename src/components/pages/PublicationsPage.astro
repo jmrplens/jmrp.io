@@ -603,7 +603,11 @@ const collectionSchema = {
   /* Sidebar + main two-column layout */
   .pub-layout {
     display: grid;
-    grid-template-columns: 220px 1fr;
+
+    /* minmax(0, 1fr), not bare 1fr: 1fr's floor is the content's min-content,
+       so any child that misreports its intrinsic width widens the track past
+       the viewport instead of shrinking. */
+    grid-template-columns: 220px minmax(0, 1fr);
     gap: var(--space-xl);
     align-items: start;
   }
@@ -690,7 +694,12 @@ const collectionSchema = {
     /* Saltar el layout de los años bajo el pliegue (mismo patrón que
        .prose > * en base.css); el filtro por tipo usa [hidden] por ítem y
        no depende del render de los grupos. */
-    contain-intrinsic-size: auto 600px;
+
+    /* Height-only estimate. The shorthand (auto 600px) also declares a 600px
+       INTRINSIC WIDTH, and inside the pub-layout 1fr track (whose auto floor
+       is min-content) that inflated the column to 600px on mobile: every card
+       clipped at the viewport edge. Block-flow parents never noticed. */
+    contain-intrinsic-height: auto 600px;
     margin-bottom: var(--space-lg);
     content-visibility: auto;
   }
@@ -722,7 +731,7 @@ const collectionSchema = {
 
   @media (width <= 820px) {
     .pub-layout {
-      grid-template-columns: 1fr;
+      grid-template-columns: minmax(0, 1fr);
       gap: var(--space-lg);
     }
 

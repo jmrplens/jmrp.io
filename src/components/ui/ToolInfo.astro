@@ -18,12 +18,26 @@
     /* La documentación queda siempre bajo la herramienta (bajo el pliegue):
        aquí sí funciona a nivel de contenedor — se salta su layout entero
        hasta que el usuario baja. */
-    contain-intrinsic-size: auto 2000px;
+
+    /* Height-only: the shorthand also claims an intrinsic WIDTH, which is
+       harmless in block flow but inflates any grid/flex track with an auto
+       minimum (it clipped /publications/ on mobile). */
+    contain-intrinsic-height: auto 2000px;
     padding: var(--space-lg);
     content-visibility: auto;
     background: var(--color-bg-secondary);
     border: 1px solid var(--color-hair);
     border-radius: var(--radius-lg);
+  }
+
+  /* Four tools document themselves with raw HTML tables (subnet, cron,
+     modbus, timestamp). Site rule: wide content scrolls inside its own
+     container — without this they overflowed the viewport on mobile (427px
+     table in a 339px column, found by the E2E containment check). */
+  .tool-info :global(table) {
+    display: block;
+    max-width: 100%;
+    overflow-x: auto;
   }
 
   /* Typography inside tool-info */
