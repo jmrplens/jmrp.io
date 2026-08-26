@@ -294,6 +294,7 @@ const CV_LABELS = {
     links: "Links",
     department: "Department",
     period: "Period",
+    downloads: "Downloadable versions (PDF)",
   },
   es: {
     location: "Ubicación",
@@ -302,6 +303,7 @@ const CV_LABELS = {
     links: "Enlaces",
     department: "Departamento",
     period: "Periodo",
+    downloads: "Versiones descargables (PDF)",
   },
 } as const;
 
@@ -455,6 +457,23 @@ function cvToMarkdown(
       c: CvContext,
     ) => string[];
     out.push(...render(section, ctx));
+  }
+
+  // The PDFs were invisible from here: an agent reading this twin had no way
+  // to discover them (the HTML page links them, but this document did not).
+  // Absolute URLs, one line per file, with the page's own wording for each
+  // format so the reader can pick the right one.
+  if (cv.downloads.length > 0) {
+    out.push(`### ${L.downloads}`, "");
+    for (const fmt of cv.downloads) {
+      for (const file of fmt.files) {
+        const note = fmt.note ? ` — ${fmt.note}` : "";
+        out.push(
+          `- [${file.label} · ${fmt.format}](${siteUrl}${file.url})${note}`,
+        );
+      }
+    }
+    out.push("");
   }
   return out;
 }

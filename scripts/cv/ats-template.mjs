@@ -41,6 +41,10 @@ export function documentPreamble({
 %  NO editar a mano: los cambios se sobrescriben. Editar el YAML + el generador
 %  (scripts/cv/generate-ats.mjs). Motor: LuaLaTeX + fontspec.
 % =====================================================================
+% Fixed RNG seed BEFORE \DocumentMetadata — tagpdf's user-namespace UUID is
+% drawn with \int_rand at load time; with SOURCE_DATE_EPOCH (compile_cv.sh)
+% this makes rebuilds byte-identical, so an unchanged CV produces no git diff.
+\ExplSyntaxOn \sys_gset_rand_seed:n {20260826} \ExplSyntaxOff
 \DocumentMetadata{lang=${docLang}, pdfversion=2.0, testphase={phase-III}}
 \documentclass[11pt,a4paper]{article}
 
@@ -123,6 +127,7 @@ export function documentPreamble({
 \usepackage[hidelinks]{hyperref}
 \hypersetup{
   colorlinks=true, urlcolor=accent, linkcolor=accent,
+  pdfdisplaydoctitle=true,
   pdftitle={${escapeLatex(pdfTitle)}},
   pdfauthor={José Manuel Requena Plens},
   pdfsubject={${escapeLatex(pdfSubject)}},

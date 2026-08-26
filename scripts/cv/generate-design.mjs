@@ -66,6 +66,7 @@ const META = {
     pdfKeywords:
       "firmware, embedded, C, STM32, ESP32, FreeRTOS, Go, Python, QA, CI/CD, SonarQube, Modbus, RTOS, software, DevSecOps",
     publicationsTitle: "Publicaciones",
+    photoAlt: "Fotografía de retrato de José Manuel Requena Plens",
     languagesTitle: "Idiomas",
     pubGroupLabels: {
       journal: "Revista",
@@ -80,6 +81,7 @@ const META = {
     pdfKeywords:
       "firmware, embedded, C, STM32, ESP32, FreeRTOS, Go, Python, QA, CI/CD, SonarQube, Modbus, RTOS, software, DevSecOps",
     publicationsTitle: "Publications",
+    photoAlt: "Portrait photo of José Manuel Requena Plens",
     languagesTitle: "Languages",
     pubGroupLabels: {
       journal: "Journal articles",
@@ -317,7 +319,9 @@ export async function buildDesign(locale, options = {}) {
     designPreamble({
       babelLang: meta.babelLang,
       docLang: meta.docLang,
-      pdfTitle: `${basics.name} — CV (${basics.headline})`,
+      // Escaped: a raw & reaches hypersetup as an alignment char and the
+      // PDF title came out as "Firmware  Software Engineer".
+      pdfTitle: escapeLatex(`${basics.name} — CV (${basics.headline})`),
       pdfSubject: meta.pdfSubject,
       pdfKeywords: meta.pdfKeywords,
     }),
@@ -328,6 +332,7 @@ export async function buildDesign(locale, options = {}) {
         .map((o) => escapeLatex(o))
         .join(String.raw` \CVDot{} `),
       contact,
+      photoAlt: meta.photoAlt,
     }),
     String.raw`\begin{paracol}{2}`,
     // ═ main column ═
