@@ -31,6 +31,14 @@ ATS_FILES=(
     "CV_RequenaPlensJoseManuel_SPA_ATS_EXT"
 )
 
+# Reproducible builds: with a fixed timestamp (plus the RNG seed the templates
+# set before \DocumentMetadata) two compilations of unchanged sources are
+# byte-identical, so a rebuild without real changes produces no git diff on
+# the tracked PDFs. Derived from the last commit; falls back to now when git
+# is unavailable (then determinism is simply not guaranteed, which is fine).
+SOURCE_DATE_EPOCH="$(git -C "$SCRIPT_DIR" log -1 --format=%ct 2>/dev/null || date +%s)"
+export SOURCE_DATE_EPOCH
+
 cd "$LATEX_DIR" || exit 1
 
 # Ensure public/pdf exists

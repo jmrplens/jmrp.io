@@ -269,6 +269,9 @@ Decisión
 decorar
 decryptor
 decryptor's
+dedent
+dedented
+dedenting
 dedup
 deduplica
 deduplicación
@@ -292,6 +295,7 @@ depende
 depurabilidad
 desactualizadas
 desactualizados
+descargables
 descárgalo
 descárgalos
 Descífralo
@@ -660,6 +664,7 @@ mbus
 mcafee
 mcpservers
 mdnwebdocs
+mdxjs
 medkit
 mehome
 mejora
@@ -750,7 +755,6 @@ nikto
 nimda
 nivel
 nkhj
-nueva
 nmap
 nobits
 nodelay
@@ -770,6 +774,7 @@ nownownow
 nsanitización
 nsecs
 ntor
+nueva
 nunca
 nuxtjs
 nvtkaszpir
@@ -822,9 +827,9 @@ perjudicial
 pero
 perplexitybot
 persístela
-pestaña
 personalízalo
 pesa
+pestaña
 petición
 peticiones
 pfctl
@@ -900,6 +905,7 @@ pytest
 qpack
 qualitygate
 qualys
+quasis
 qube
 queda
 quickref
@@ -1230,8 +1236,3 @@ Zenodo
 zeroize
 zgrab
 zurück
-dedent
-dedented
-dedenting
-mdxjs
-quasis

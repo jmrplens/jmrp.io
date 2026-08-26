@@ -58,6 +58,12 @@ export function designPreamble({
 %  NO editar a mano: los cambios se sobrescriben. Editar el YAML + el generador
 %  (scripts/cv/generate-design.mjs). Motor: LuaLaTeX + fontspec.
 % =====================================================================
+% NO \DocumentMetadata here, deliberately: tagging (tagpdf) does not support
+% paracol — the column re-processing re-creates structure objects and the run
+% dies with "\g__tag_struct_N_prop already defined" mid-document. The tagged,
+% accessible documents are the ATS versions; this one keeps /Lang,
+% pdfdisplaydoctitle and the visual design. Re-test when the LaTeX tagging
+% project lists paracol as supported.
 \documentclass[10pt,a4paper]{article}
 \usepackage[a4paper,margin=1.2cm,top=1.1cm,bottom=1.1cm]{geometry}
 \usepackage{fontspec}
@@ -72,14 +78,6 @@ export function designPreamble({
 \usepackage{pgffor}
 \usepackage{paracol}
 \usepackage{hyperref}
-\hypersetup{
-  hidelinks, colorlinks=true, urlcolor=accent, linkcolor=accent,
-  pdftitle={${pdfTitle}},
-  pdfauthor={José Manuel Requena Plens},
-  pdfsubject={${pdfSubject}},
-  pdfkeywords={${pdfKeywords}},
-  pdflang={${docLang}},
-}
 \raggedbottom
 % Long bullet lines in the 64% column would otherwise overflow; the stretch
 % absorbs every overfull box (at 1.5em one 9.7pt box survived in each locale
@@ -98,6 +96,19 @@ export function designPreamble({
 \definecolor{border}{HTML}{DCDBD3}
 \definecolor{pagebg}{HTML}{FAFAF7}
 \pagecolor{pagebg}
+
+% hypersetup AFTER the palette: under \DocumentMetadata (pdfmanagement),
+% hyperref resolves urlcolor/linkcolor at \hypersetup time, not lazily —
+% with the colors below undefined it aborts with "Unknown color 'accent'".
+\hypersetup{
+  hidelinks, colorlinks=true, urlcolor=accent, linkcolor=accent,
+  pdfdisplaydoctitle=true,
+  pdftitle={${pdfTitle}},
+  pdfauthor={José Manuel Requena Plens},
+  pdfsubject={${pdfSubject}},
+  pdfkeywords={${pdfKeywords}},
+  pdflang={${docLang}},
+}
 
 % ---- Site typography (see module docblock for why filenames) ----
 \setmainfont{IBMPlexSans-Regular.otf}[
@@ -179,16 +190,17 @@ export function designPreamble({
  * @param {string} opts.headline - Job headline.
  * @param {string} opts.tagline - Target-roles tagline.
  * @param {string} opts.contact - `\ContactEntry` calls.
+ * @param {string} opts.photoAlt - Alt text for the photo (tagged PDF).
  * @returns {string} The header LaTeX.
  */
-export function designHeader({ name, headline, tagline, contact }) {
+export function designHeader({ name, headline, tagline, contact, photoAlt }) {
   return String.raw`\begin{document}
 \begin{minipage}{\dimexpr\linewidth-2.9cm}
   {\displayfont\bfseries\fontsize{22pt}{24pt}\selectfont\color{heading}${name}\par}\vspace{2pt}
   {\displayfont\large\color{accent}${headline}\ \ {\cvmono\footnotesize\color{muted}${tagline}}\par}\vspace{4pt}
   ${contact}
 \end{minipage}\hfill
-\begin{minipage}{2.5cm}\includegraphics[width=2.4cm]{../resources/foto.jpeg}\end{minipage}
+\begin{minipage}{2.5cm}\includegraphics[alt={${photoAlt}},width=2.4cm]{../resources/foto.jpeg}\end{minipage}
 \par\vspace{2pt}{\color{border}\rule{\linewidth}{0.9pt}}\par\vspace{2pt}
 `;
 }
