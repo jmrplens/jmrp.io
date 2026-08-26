@@ -113,6 +113,11 @@ validation_*.txt
 cv_latex/*.pdf
 # Auto-generated ATS .tex sources (produced from the CV YAML by scripts/cv/generate-ats.mjs)
 cv_latex/generated/
+# Private CV build: the same six PDFs plus the phone number from CV_PHONE in
+# .env. Never publish these - public/pdf/ is served by nginx and linked from
+# the site; this directory is the hand-upload copy for job portals.
+/cv_private/
+cv_latex/jmrp-phone.tex
 
 # --- 8. PROJECT SPECIFIC & MISC ---
 # Agentic workflows and local knowledge

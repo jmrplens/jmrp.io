@@ -80,6 +80,11 @@
 \tagline{Firmware \& Software Engineer \newline C · C++ · Python · RTOS · Test Automation · CI/CD}
 \photo{2.5cm}{foto}
 \personalinfo{
+  %% Private build only: compile_cv.sh writes jmrp-phone.tex (\phone{...}) from
+  %% CV_PHONE in .env, compiles into cv_private/, then deletes it again. The
+  %% public PDFs in public/pdf/ are served by nginx, so the number must never
+  %% reach them - absent file, no phone, same output as before.
+  \IfFileExists{jmrp-phone.tex}{\input{jmrp-phone.tex}}{}
   \email{jmrplens@gmail.com}
   \location{Valencia, Spain}
   \homepage{jmrp.io}
