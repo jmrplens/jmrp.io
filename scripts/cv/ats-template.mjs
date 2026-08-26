@@ -138,7 +138,15 @@ export function documentPreamble({
 % =====================================================================
 %  Comandos de ayuda
 % =====================================================================
-% Entrada de experiencia/formación: {cargo}{organización}{lugar}{fechas}
+% Entrada de experiencia/formación: {cargo}{organización}{lugar}{fechas}.
+% KEEP the \hfill. It LOOKS like the classic ATS hazard (right-aligned dates
+% become a second text column, and one parse did split an entry once), but a
+% controlled A/B/C test against Affinda on identical content (2026-08-26)
+% measured the opposite: this layout parsed 3/3 complete jobs + 5/5 education
+% in BOTH locales, while the "safer" single-column variants (role+dates
+% inline, with and without a dash) DROPPED a job in EN and split education
+% entries in ES. The occasional split is parser boundary noise that no layout
+% eliminates; do not "fix" this again without re-measuring.
 \newcommand{\cventry}[4]{%
   \textbf{#1}\hfill\textbf{#4}\par
   {\color{muted}\textit{#2}\hfill\textit{#3}}\par
