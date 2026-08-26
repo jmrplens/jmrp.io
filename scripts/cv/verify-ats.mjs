@@ -10,7 +10,25 @@
  *   - contact + profile links are present (email, web, GitHub, LinkedIn, ORCID, Scholar),
  *   - no mojibake / replacement characters,
  *   - a keyword/skills coverage score from `@pranavraut033/ats-checker`
- *     (deterministic, no LLM, no network) above a floor.
+ *     (deterministic, no LLM, no network) above a floor,
+ *   - every font the ATS sources pin is glyf-flavoured TrueType (see below).
+ *
+ * ── Why a font check sits in an ATS test ──────────────────────────────────
+ * Because the only defect that ever actually broke these CVs was invisible to
+ * every check above it. Inter's system build is OTF/CFF at 2048 units per em,
+ * so the embedded font carries its own FontMatrix of 1/2048 instead of the
+ * 1/1000 that CFF almost always uses. Poppler, MuPDF, pypdf and the pdf-parse
+ * used here all honour it and extract the text perfectly — this file reported
+ * "19/20 keywords, score 84" the whole time. Affinda's commercial resume
+ * parser does not: it scales advances by the 1000 it assumes, drifts behind
+ * the real glyph positions, and emits the drift as spaces. It read
+ * "E m bedded fi rmwa re a nd softwa re eng i neer", found 55 skills instead
+ * of 76, and extracted ZERO work-experience entries from the concise EN CV.
+ *
+ * So there is no output-level assertion that can catch this locally: the local
+ * text layer is correct. The check has to pin the cause instead — the sources
+ * must resolve Inter from the vendored TrueType files, never from whatever
+ * OTF the machine happens to have installed.
  *
  * Exits non-zero on any regression so the build fails.
  *
@@ -194,12 +212,108 @@ function checkPdf(text, profile, locale) {
   return { failures, score, keywords };
 }
 
+/** Directory holding the generated ATS `.tex` sources. */
+const GEN_DIR = path.resolve(__dirname, "..", "..", "cv_latex", "generated");
+
+/**
+ * Reads an sfnt table directory and reports which outline table it carries.
+ *
+ * @param {string} file - Absolute path to a font file.
+ * @returns {"glyf"|"CFF"|"unreadable"} Which outline format the font uses.
+ */
+function outlineFormat(file) {
+  let fd;
+  try {
+    fd = fs.openSync(file, "r");
+    const head = Buffer.alloc(12);
+    if (fs.readSync(fd, head, 0, 12, 0) < 12) return "unreadable";
+    const numTables = head.readUInt16BE(4);
+    const dir = Buffer.alloc(16 * numTables);
+    fs.readSync(fd, dir, 0, dir.length, 12);
+    const tags = new Set();
+    for (let i = 0; i < numTables; i += 1) {
+      tags.add(dir.toString("latin1", i * 16, i * 16 + 4));
+    }
+    if (tags.has("CFF ")) return "CFF";
+    if (tags.has("glyf")) return "glyf";
+    return "unreadable";
+  } catch {
+    return "unreadable";
+  } finally {
+    if (fd !== undefined) fs.closeSync(fd);
+  }
+}
+
+/**
+ * Asserts every generated ATS source pins its fonts to vendored TrueType files.
+ *
+ * @returns {string[]} Failure messages, empty when every source is pinned.
+ */
+function checkFontPinning() {
+  const failures = [];
+  for (const { file } of TARGETS) {
+    const tex = path.join(GEN_DIR, file.replace(/\.pdf$/u, ".tex"));
+    if (!fs.existsSync(tex)) {
+      failures.push(`${path.basename(tex)} — generated source not found`);
+      continue;
+    }
+    const source = fs.readFileSync(tex, "utf8");
+    const blocks = [
+      ...source.matchAll(
+        /\\(?:setmainfont|newfontfamily\\\w+)\{([^}]+)\}\[([^\]]*)\]/gu,
+      ),
+    ];
+    if (blocks.length === 0) {
+      failures.push(`${path.basename(tex)} — no font declarations found`);
+      continue;
+    }
+    for (const [, family, options] of blocks) {
+      const dir = /Path\s*=\s*([^,\]\n]+)/u.exec(options)?.[1]?.trim();
+      const ext = /Extension\s*=\s*([^,\]\n]+)/u.exec(options)?.[1]?.trim();
+      if (!dir || !ext) {
+        failures.push(
+          `${path.basename(tex)} — ${family} is not pinned to a vendored file ` +
+            `(no Path/Extension); it would resolve from the system font database`,
+        );
+        continue;
+      }
+      for (const [, suffix] of options.matchAll(/=\s*\*(-\w+)/gu)) {
+        const resolved = path.resolve(GEN_DIR, dir, `${family}${suffix}${ext}`);
+        if (!fs.existsSync(resolved)) {
+          failures.push(
+            `${path.basename(tex)} — missing font file ${family}${suffix}${ext}`,
+          );
+          continue;
+        }
+        const format = outlineFormat(resolved);
+        if (format !== "glyf") {
+          failures.push(
+            `${path.basename(tex)} — ${family}${suffix}${ext} is ${format}, not glyf-flavoured TrueType`,
+          );
+        }
+      }
+    }
+  }
+  return failures;
+}
+
 /** Entry point: validates every target PDF and exits non-zero on failure. */
 async function main() {
   let failed = 0;
   console.log(
     `${c.dim}ATS check on ${TARGETS.length} generated CV PDFs (pdf-parse + ats-checker)${c.reset}`,
   );
+
+  const fontFailures = checkFontPinning();
+  if (fontFailures.length === 0) {
+    console.log(
+      `  ${c.green}✓${c.reset} font pinning ${c.dim}(all sources resolve vendored TrueType)${c.reset}`,
+    );
+  } else {
+    failed += 1;
+    console.log(`  ${c.red}✗${c.reset} font pinning`);
+    for (const f of fontFailures) console.log(`      ${c.red}- ${f}${c.reset}`);
+  }
 
   for (const { file, profile, locale } of TARGETS) {
     const full = path.join(PDF_DIR, file);

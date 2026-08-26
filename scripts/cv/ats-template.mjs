@@ -6,8 +6,8 @@
  *
  * Provides the document preamble (parameterised by language + PDF metadata), the
  * header block and small section helpers. The preamble mirrors the hand-authored
- * ATS `.tex` that was already verified to extract cleanly (LuaLaTeX + Inter with
- * `WordSpace=1.15` and `RawFeature={-tlig}`, accent = brand purple, tagged PDF).
+ * ATS `.tex` (LuaLaTeX + the vendored TrueType Inter, accent = brand purple,
+ * tagged PDF).
  *
  * @module
  */
@@ -64,10 +64,25 @@ export function documentPreamble({
   BoldFont    = *-SemiBold,
   ItalicFont  = *-Italic,
   BoldItalicFont = *-SemiBoldItalic,
-  WordSpace   = 1.15,        % ensancha el espacio entre palabras: extracción ATS más robusta
-  RawFeature  = {-tlig},     % apóstrofo/comillas rectos (mejor extracción ATS)
+  % Path/Extension pin this to the vendored TrueType build of Inter, and that
+  % is not cosmetic. The system package ships Inter as OTF/CFF at 2048 units
+  % per em - legal, but unconventional for CFF, which is nearly always 1000 -
+  % so the embedded font declares its own FontMatrix of 1/2048. Poppler, MuPDF
+  % and pypdf honour it and read the PDF perfectly, which is why every local
+  % check passed. Affinda's resume parser does not: it scales every advance by
+  % the 1000 it assumes, its cursor falls behind the real glyph positions, and
+  % it emits the accumulated drift as spaces. 45% of tokens came out as 1-2
+  % character fragments ("E m bedded fi rmwa re a nd softwa re eng i neer"),
+  % it recognised 55 skills instead of 76, and it found no profession at all.
+  % Same glyphs as glyf-flavoured TrueType: 9.3%, 76 skills, every probe
+  % phrase intact. Latin Modern (CFF, 1000 upem) and Lato (TrueType) both parse
+  % cleanly, so this is Inter's OTF build specifically, not CFF as a format.
+  Path        = ../resources/fonts/,
+  Extension   = .ttf,
+  WordSpace   = 1.15,        % wider inter-word gap
+  RawFeature  = {-tlig},     % straight quotes/apostrophes (better ATS extraction)
 ]
-\newfontfamily\headingfont{Inter}[UprightFont=*-Bold]
+\newfontfamily\headingfont{Inter}[Path=../resources/fonts/,Extension=.ttf,UprightFont=*-Bold]
 \color{ink}
 
 % ---- Listas compactas ----
