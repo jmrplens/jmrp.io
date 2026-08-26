@@ -114,14 +114,22 @@ async function mcpBlock(locale: "en" | "es"): Promise<string> {
  * @param siteData - The site config entry.
  * @returns Markdown list items.
  */
-function contactLines(siteData: SiteConfig): string[] {
+async function contactLines(siteData: SiteConfig): Promise<string[]> {
+  // The address comes from `about.person.email`, the same field BaseHead feeds
+  // to the Person JSON-LD (`BaseHead.astro:301`). Hardcoding `mail@jmrp.io`
+  // here was the very duplication this function exists to remove — it derived
+  // the fourteen profiles from the canonical source and then wrote the address
+  // by hand two lines below.
+  const about = await getEntry("profile", "about");
+  const email =
+    about?.data.type === "about" ? about.data.person.email : undefined;
   const named = new Map(
     (siteData.social_links ?? []).map((l) => [l.url, l.name] as const),
   );
   const profiles = buildSameAs(siteData.social_links, siteData.person?.sameAs);
   return [
     ...profiles.map((url) => `[${named.get(url) ?? hostLabel(url)}](${url})`),
-    "[Email](mailto:mail@jmrp.io)",
+    ...(email ? [`[Email](mailto:${email})`] : []),
   ];
 }
 
@@ -704,7 +712,7 @@ export async function generateLlmsTxt(siteUrl: string): Promise<string> {
     "",
     "## Contact",
     "",
-    ...contactLines(siteData).map((c) => `- ${c}`),
+    ...(await contactLines(siteData)).map((c) => `- ${c}`),
     "",
     "## Optional",
     "",
@@ -1262,7 +1270,7 @@ export async function generateLlmsFullTxt(siteUrl: string): Promise<string> {
     "",
     "## Contact",
     "",
-    ...contactLines(siteData).map((c) => `- ${c}`),
+    ...(await contactLines(siteData)).map((c) => `- ${c}`),
     "",
     "## Technical Details",
     "",
