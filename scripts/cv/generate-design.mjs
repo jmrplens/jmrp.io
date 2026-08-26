@@ -334,6 +334,10 @@ export async function buildDesign(locale, options = {}) {
     String.raw`\switchcolumn`,
     // ═ sidebar ═ (its sections use the smaller SideSection style)
     String.raw`\let\CVSection\SideSection`,
+    // Availability leads the sidebar, untitled: top of page one, where a
+    // recruiter scans for work mode, without crowding the name or the
+    // headline line (which barely fits in Spanish as it is).
+    String.raw`{\footnotesize\color{muted}\faBriefcase~${escapeLatex(basics.availability ?? "")}\par}`,
     renderSkills(by("skills")),
     String.raw`\CVSection{${escapeLatex(meta.languagesTitle)}}`,
     (basics.idiomas ?? [])
@@ -342,9 +346,6 @@ export async function buildDesign(locale, options = {}) {
           String.raw`\CVLang{${escapeLatex(i.name)}}{${escapeLatex(i.level)}}`,
       )
       .join("\n"),
-    // Its own breathing room: the languages block ends in a no-break line, so
-    // without this the availability note reads as one more language entry.
-    String.raw`\par\vspace{9pt}{\color{border}\rule{\linewidth}{0.6pt}}\par\vspace{5pt}{\footnotesize\color{muted}\faInfoCircle~${escapeLatex(basics.availability ?? "")}\par}`,
     renderCertificates(by("certificates")),
     renderPublications(meta),
     String.raw`\end{paracol}`,
