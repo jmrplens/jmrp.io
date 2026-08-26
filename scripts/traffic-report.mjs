@@ -128,7 +128,7 @@ function collectOrigin(sinceMs) {
       const m = LINE.exec(line);
       if (!m) continue;
       const [, ip, d, mon, y, hms, method, uri, status, ua] = m;
-      const [hh, mm, ss] = hms.split(":");
+      const [hh, mm, ss] = hms.split(":", 3);
       const ts = Date.UTC(+y, MONTHS[mon], +d, +hh, +mm, +ss);
       // The log offset is the server's own TZ and so is this process: local
       // Date.parse-free comparison is close enough for a daily window.
@@ -202,7 +202,7 @@ async function aeQuery(sql) {
 /** Collects the edge-side aggregates for the last 24 h. */
 async function collectEdge() {
   const W = "WHERE timestamp > NOW() - INTERVAL '24' HOUR";
-  const [classes, topPages, twins, countries] = await Promise.all([
+  const [classes, topPages, twins, countries, agents] = await Promise.all([
     aeQuery(
       `SELECT index1 AS c, blob2 AS ua, SUM(_sample_interval) AS n FROM jmrp_edge_requests ${W} GROUP BY c, ua`,
     ),
@@ -215,8 +215,12 @@ async function collectEdge() {
     aeQuery(
       `SELECT blob3 AS cc, SUM(_sample_interval) AS n FROM jmrp_edge_requests ${W} GROUP BY cc ORDER BY n DESC LIMIT 10`,
     ),
+    // Named agents come from worker v2 rows (blob11 = status marks them).
+    aeQuery(
+      `SELECT blob4 AS agent, SUM(_sample_interval) AS n FROM jmrp_edge_requests ${W} AND blob11 != '' GROUP BY agent ORDER BY n DESC LIMIT 20`,
+    ),
   ]);
-  return { classes, topPages, twins, countries };
+  return { classes, topPages, twins, countries, agents };
 }
 
 // ── Rendering ───────────────────────────────────────────────────────────────
@@ -260,6 +264,29 @@ function buildMessage(edge, origin, date) {
       "",
       "<b>404 más repetidos</b>",
       ...top404.map(([p, n]) => `  ${n}× <code>${esc(p)}</code>`),
+    );
+  }
+  const AI = new Set([
+    "GPTBot",
+    "ChatGPT-User",
+    "OAI-SearchBot",
+    "ClaudeBot",
+    "Claude-User",
+    "Claude-SearchBot",
+    "PerplexityBot",
+    "Perplexity-User",
+    "Google-Extended",
+    "Amazonbot",
+    "Bytespider",
+    "CCBot",
+    "meta-externalagent",
+  ]);
+  const ai = edge.agents.filter((r) => AI.has(r.agent));
+  if (ai.length > 0) {
+    lines.push(
+      "",
+      "<b>Agentes IA</b>",
+      ...ai.slice(0, 6).map((r) => `  ${r.n}× ${esc(r.agent)}`),
     );
   }
   lines.push("", "El detalle completo va en el HTML adjunto.");
@@ -325,6 +352,11 @@ ${table(
   ["ruta", "cliente", "n"],
 )}
 ${table(
+  "Edge · agentes (IA, bots, navegadores)",
+  edge.agents.map((r) => [r.agent, r.n]),
+  ["agente", "n"],
+)}
+${table(
   "Edge · países",
   edge.countries.map((r) => [r.cc || "?", r.n]),
   ["país", "n"],
@@ -386,7 +418,13 @@ async function main() {
   const date = now.toISOString().slice(0, 10);
   const sinceMs = now.getTime() - 24 * 3600 * 1000;
 
-  let edge = { classes: [], topPages: [], twins: [], countries: [] };
+  let edge = {
+    classes: [],
+    topPages: [],
+    twins: [],
+    countries: [],
+    agents: [],
+  };
   try {
     edge = await collectEdge();
   } catch (error) {
