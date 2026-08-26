@@ -47,6 +47,15 @@ const PDF_DIR = path.join(ROOT, "public", "pdf");
 const INPUT_SOURCES = [
   { dir: path.join(ROOT, "src", "content", "cv"), exts: [".yaml", ".yml"] },
   { dir: path.join(ROOT, "cv_latex"), exts: [".tex", ".cls", ".sty", ".sh"] },
+  // The design CVs render the publications straight from papers.bib, and every
+  // PDF embeds the vendored fonts — both changes must invalidate the cache.
+  // (collectInputFiles does not recurse, so each directory is listed.)
+  {
+    dir: path.join(ROOT, "src", "content", "publications_data"),
+    exts: [".bib"],
+  },
+  { dir: path.join(ROOT, "cv_latex", "resources"), exts: [".jpeg"] },
+  { dir: path.join(ROOT, "cv_latex", "resources", "fonts"), exts: [".ttf"] },
   { dir: __dirname, exts: [".mjs"] },
 ];
 

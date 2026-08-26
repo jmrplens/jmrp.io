@@ -17,6 +17,18 @@
  *   node scripts/cv/generate-ats.mjs            # generate all 4 files
  *   node scripts/cv/generate-ats.mjs es normal  # one (locale, profile) to stdout
  *
+ * ── The phone number lives in `.env`, not in the YAML ─────────────────────
+ * A phone number is the one contact field an ATS ranks on that its owner does
+ * not want crawled: `public/pdf/` is served by nginx and linked from the site,
+ * so anything compiled into it is public. `src/content/cv/{es,en}.yaml` feeds
+ * the website too, so it cannot hold the number either.
+ *
+ * Instead `CV_PHONE` in `.env` (git-ignored) drives a SECOND, private set of
+ * PDFs written to `cv_private/` — same filenames, whole directory ignored —
+ * that is what gets uploaded to a job portal by hand. The public set is
+ * byte-for-byte what it was before and never carries the number. Both come
+ * from one build, so they cannot drift apart.
+ *
  * @module
  */
 
@@ -41,6 +53,19 @@ const yaml = nodeRequire("js-yaml");
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = path.resolve(__dirname, "..", "..");
+
+// `.env` is not loaded for us: this runs as a plain Node process from
+// compile_cv.sh, not through Astro's env plugin. `loadEnvFile` never overwrites
+// an already-set variable, so the precedence is shell > .env — exporting
+// CV_PHONE= (empty) is how a checkout opts out of the private build.
+try {
+  process.loadEnvFile(path.join(REPO_ROOT, ".env"));
+} catch {
+  // No .env (CI, a fresh clone): the private set simply is not built.
+}
+
+/** The phone number for the private build, or undefined when not configured. */
+const CV_PHONE = process.env.CV_PHONE?.trim() || undefined;
 
 /** Per-locale ATS-only labels/metadata not present in the YAML. */
 const META = {
@@ -176,16 +201,58 @@ function renderSkills(groups, profile) {
     .join("\n");
 }
 
-/** Formats a single project metric, converting the star glyph to `\faStar`. */
-function fmtMetric(metric) {
+/**
+ * The visible text for one contact link.
+ *
+ * The ORCID is a bare `0000-0003-1250-6212` in the YAML, and on the web that is
+ * fine: it sits behind an ORCID icon with its own `ariaLabel`. Stripped of that
+ * context in a PDF's contact row it is sixteen digits and three hyphens, and a
+ * resume parser reads it as a PHONE NUMBER — measured: `phoneNumbers` came back
+ * as `["0000-0003-1250-6212"]`. An "ORCID " prefix fixed the English parse but
+ * NOT the Spanish one (same raw text, different language model), so the label
+ * is the URL host form instead — `orcid.org/0000-…` — which no phone heuristic
+ * matches and which is how every other link in the row already reads
+ * (github.com/…, linkedin.com/…). The YAML label is left alone so the CV page
+ * keeps rendering exactly what it renders today.
+ *
+ * @param {{kind?: string, label: string, url?: string}} link - One entry of
+ *   `basics.links`.
+ * @returns {string} The text to typeset.
+ */
+export function labelForContact(link) {
+  if (link.kind !== "orcid") return link.label;
+  return link.url?.replace(/^https?:\/\//u, "") ?? `ORCID ${link.label}`;
+}
+
+/** Star-count wording per locale, singular and plural. */
+const STAR_WORD = {
+  en: ["star", "stars"],
+  es: ["estrella", "estrellas"],
+};
+
+/**
+ * Formats a single project metric, spelling out the star glyph.
+ *
+ * `formatStats` emits "27★" and the website renders that as-is, which is right
+ * for a web page. In a PDF it is not: the glyph used to go through `\faStar`,
+ * whose ToUnicode maps to the literal string "STAR", so extractors read a junk
+ * token glued onto the count ("30STAR • 50 releases"). Spelling it out here
+ * keeps the change on the LaTeX side and leaves the CV page untouched.
+ *
+ * @param {string} metric - One metric string, e.g. `27★` or `35 releases`.
+ * @param {string} locale - `es` or `en`.
+ * @returns {string} LaTeX for that metric.
+ */
+function fmtMetric(metric, locale) {
   const idx = metric.indexOf("★");
-  if (idx !== -1)
-    return String.raw`${escapeLatex(metric.slice(0, idx).trim())}\,\faStar`;
-  return escapeLatex(metric);
+  if (idx === -1) return escapeLatex(metric);
+  const count = metric.slice(0, idx).trim();
+  const [one, many] = STAR_WORD[locale] ?? STAR_WORD.en;
+  return `${escapeLatex(count)} ${count === "1" ? one : many}`;
 }
 
 /** Renders a projects section body. */
-function renderProjects(items, profile, statsBySlug) {
+function renderProjects(items, profile, statsBySlug, locale) {
   return items
     .filter((p) => !(profile === "normal" && p.ats?.normal === false))
     .map((p) => {
@@ -196,7 +263,7 @@ function renderProjects(items, profile, statsBySlug) {
       const slug = githubSlug(p.links);
       const auto = (slug && statsBySlug.get(slug)) || [];
       const metrics = [...auto, ...(p.metrics ?? [])]
-        .map(fmtMetric)
+        .map((m) => fmtMetric(m, locale))
         .join(String.raw` \divider `);
       let out = `\\cvproject{${name}}{${escapeLatex(p.tech ?? "")}}{${metrics}}\n`;
       if (p.description) {
@@ -332,8 +399,16 @@ async function fetchProjectStats(sections, locale) {
   return statsBySlug;
 }
 
-/** Builds the full LaTeX document for a (locale, profile). */
-export async function buildDocument(locale, profile) {
+/**
+ * Builds the full LaTeX document for a (locale, profile).
+ *
+ * @param {string} locale - `es` or `en`.
+ * @param {string} profile - `normal` or `extended`.
+ * @param {{phone?: string}} [options] - `phone` adds a tel: contact item; it
+ *   is only ever passed for the private build (see the module docblock).
+ * @returns {Promise<string>} The LaTeX source.
+ */
+export async function buildDocument(locale, profile, options = {}) {
   const meta = META[locale];
   const yamlPath = path.join(REPO_ROOT, `src/content/cv/${locale}.yaml`);
   const { basics, sections } = yaml.load(fs.readFileSync(yamlPath, "utf8"));
@@ -354,7 +429,25 @@ export async function buildDocument(locale, profile) {
     ...(basics.email
       ? [{ text: basics.email, url: `mailto:${basics.email}` }]
       : []),
-    ...basics.links.map((l) => ({ text: l.label, url: l.url })),
+    // Immediately after the email, which is where every resume parser expects
+    // it and where it is least likely to be swallowed by the surrounding
+    // profile links.
+    ...(options.phone
+      ? [
+          {
+            text: options.phone,
+            url: `tel:${options.phone.replaceAll(/[^+\d]/gu, "")}`,
+          },
+        ]
+      : []),
+    // Scholar stays on the web CV page but not in the PDFs (author's call,
+    // 2026-08-26): the publications themselves already carry the signal here.
+    ...basics.links
+      .filter((l) => l.kind !== "scholar")
+      .map((l) => ({
+        text: labelForContact(l),
+        url: l.url,
+      })),
   ];
   doc += headerBlock({
     name: basics.name,
@@ -389,7 +482,7 @@ export async function buildDocument(locale, profile) {
         break;
       }
       case "projects": {
-        doc += renderProjects(section.items, profile, statsBySlug);
+        doc += renderProjects(section.items, profile, statsBySlug, locale);
         break;
       }
       case "certificates": {
@@ -413,6 +506,26 @@ const OUTPUT_NAMES = {
   "en:extended": "CV_RequenaPlensJoseManuel_ENG_ATS_EXT.tex",
 };
 
+/**
+ * Writes every (locale, profile) source into one directory.
+ *
+ * @param {string} outDir - Absolute destination directory.
+ * @param {{phone?: string}} options - Passed through to `buildDocument`.
+ */
+async function writeSet(outDir, options) {
+  fs.mkdirSync(outDir, { recursive: true });
+  for (const [key, filename] of Object.entries(OUTPUT_NAMES)) {
+    const [locale, profile] = key.split(":", 2);
+    const outPath = path.join(outDir, filename);
+    fs.writeFileSync(
+      outPath,
+      await buildDocument(locale, profile, options),
+      "utf8",
+    );
+    console.log(`✓ ${path.relative(REPO_ROOT, outPath)}`);
+  }
+}
+
 async function main() {
   const [argLocale, argProfile] = process.argv.slice(2);
 
@@ -421,15 +534,24 @@ async function main() {
     return;
   }
 
-  const outDir = path.join(REPO_ROOT, "cv_latex", "generated");
-  fs.mkdirSync(outDir, { recursive: true });
-  for (const [key, filename] of Object.entries(OUTPUT_NAMES)) {
-    const [locale, profile] = key.split(":", 2);
-    const outPath = path.join(outDir, filename);
-    fs.writeFileSync(outPath, await buildDocument(locale, profile), "utf8");
-    console.log(`✓ ${path.relative(REPO_ROOT, outPath)}`);
+  await writeSet(path.join(REPO_ROOT, "cv_latex", "generated"), {});
+
+  if (CV_PHONE) {
+    // compile_cv.sh symlinks cv_private/resources -> cv_latex/resources, so the
+    // private sources reach the fonts by the same `../resources/fonts/` string
+    // as the public ones. Giving them a deeper path instead does not work:
+    // luaotfload silently fails to load a Path containing `../..` or an
+    // absolute directory, embeds no Inter at all, and LuaTeX dies at PDF
+    // finalisation with `cannot find file ''`.
+    await writeSet(path.join(REPO_ROOT, "cv_private", "tex"), {
+      phone: CV_PHONE,
+    });
   }
 }
 
-// eslint-disable-next-line unicorn/no-top-level-side-effects -- CLI entry point
-await main();
+// Run only when invoked as a CLI, not when imported: generate-design.mjs
+// imports labelForContact from here, and an unguarded top-level main() made
+// that import silently regenerate all four ATS sources as a side effect.
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
+  await main();
+}

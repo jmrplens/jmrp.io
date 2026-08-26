@@ -6,8 +6,8 @@
  *
  * Provides the document preamble (parameterised by language + PDF metadata), the
  * header block and small section helpers. The preamble mirrors the hand-authored
- * ATS `.tex` that was already verified to extract cleanly (LuaLaTeX + Inter with
- * `WordSpace=1.15` and `RawFeature={-tlig}`, accent = brand purple, tagged PDF).
+ * ATS `.tex` (LuaLaTeX + the vendored TrueType Inter, accent = brand purple,
+ * tagged PDF).
  *
  * @module
  */
@@ -49,14 +49,29 @@ export function documentPreamble({
 \usepackage[${babelOptions}]{babel}
 \usepackage{microtype}
 
+% ---- No hyphenation ----
+% A hyphen-broken word is a keyword the ATS cannot match. Poppler papers over
+% it by rejoining the halves, which is why this went unnoticed; Affinda drops
+% the hyphen and leaves the gap, so "Texas Instru-/ments" reaches the parser as
+% "Texas Instru ments" and "GoRe-/leaser" as "GoRe leaser". The extended EN CV
+% had 11 of these. emergencystretch keeps the paragraphs breakable without them.
+\hyphenpenalty=10000
+\exhyphenpenalty=10000
+\sloppy
+\emergencystretch=3em
+
 % ---- Geometría (márgenes ajustados pero legibles) ----
 \usepackage[a4paper,top=1.2cm,bottom=1.1cm,left=1.5cm,right=1.5cm]{geometry}
 
 % ---- Color (un solo acento = morado de jmrp.io) ----
 \usepackage{xcolor}
-\definecolor{accent}{HTML}{B509AC}     % morado de marca (light theme)
-\definecolor{ink}{HTML}{1F2328}        % texto principal (casi negro)
-\definecolor{muted}{HTML}{57606A}      % texto secundario
+% Site light palette — KEEP-IN-SYNC: light-tokens in src/styles/tokens.css
+% (the redesign's amber brand; the old purple B509AC predates it). The page
+% stays white: these are the print-safe ATS documents.
+\definecolor{accent}{HTML}{8F5300}     % --color-accent (amber, AA on light)
+\definecolor{heading}{HTML}{1A1A18}    % --color-text-heading
+\definecolor{ink}{HTML}{46453F}        % --color-text (body)
+\definecolor{muted}{HTML}{666560}      % --color-text-muted
 
 % ---- Tipografía: Inter ----
 \setmainfont{Inter}[
@@ -64,10 +79,25 @@ export function documentPreamble({
   BoldFont    = *-SemiBold,
   ItalicFont  = *-Italic,
   BoldItalicFont = *-SemiBoldItalic,
-  WordSpace   = 1.15,        % ensancha el espacio entre palabras: extracción ATS más robusta
-  RawFeature  = {-tlig},     % apóstrofo/comillas rectos (mejor extracción ATS)
+  % Path/Extension pin this to the vendored TrueType build of Inter, and that
+  % is not cosmetic. The system package ships Inter as OTF/CFF at 2048 units
+  % per em - legal, but unconventional for CFF, which is nearly always 1000 -
+  % so the embedded font declares its own FontMatrix of 1/2048. Poppler, MuPDF
+  % and pypdf honour it and read the PDF perfectly, which is why every local
+  % check passed. Affinda's resume parser does not: it scales every advance by
+  % the 1000 it assumes, its cursor falls behind the real glyph positions, and
+  % it emits the accumulated drift as spaces. 45% of tokens came out as 1-2
+  % character fragments ("E m bedded fi rmwa re a nd softwa re eng i neer"),
+  % it recognised 55 skills instead of 76, and it found no profession at all.
+  % Same glyphs as glyf-flavoured TrueType: 9.3%, 76 skills, every probe
+  % phrase intact. Latin Modern (CFF, 1000 upem) and Lato (TrueType) both parse
+  % cleanly, so this is Inter's OTF build specifically, not CFF as a format.
+  Path        = ../resources/fonts/,
+  Extension   = .ttf,
+  WordSpace   = 1.15,        % wider inter-word gap
+  RawFeature  = {-tlig},     % straight quotes/apostrophes (better ATS extraction)
 ]
-\newfontfamily\headingfont{Inter}[UprightFont=*-Bold]
+\newfontfamily\headingfont{Inter}[Path=../resources/fonts/,Extension=.ttf,UprightFont=*-Bold]
 \color{ink}
 
 % ---- Listas compactas ----
@@ -108,7 +138,15 @@ export function documentPreamble({
 % =====================================================================
 %  Comandos de ayuda
 % =====================================================================
-% Entrada de experiencia/formación: {cargo}{organización}{lugar}{fechas}
+% Entrada de experiencia/formación: {cargo}{organización}{lugar}{fechas}.
+% KEEP the \hfill. It LOOKS like the classic ATS hazard (right-aligned dates
+% become a second text column, and one parse did split an entry once), but a
+% controlled A/B/C test against Affinda on identical content (2026-08-26)
+% measured the opposite: this layout parsed 3/3 complete jobs + 5/5 education
+% in BOTH locales, while the "safer" single-column variants (role+dates
+% inline, with and without a dash) DROPPED a job in EN and split education
+% entries in ES. The occasional split is parser boundary noise that no layout
+% eliminates; do not "fix" this again without re-measuring.
 \newcommand{\cventry}[4]{%
   \textbf{#1}\hfill\textbf{#4}\par
   {\color{muted}\textit{#2}\hfill\textit{#3}}\par
@@ -160,7 +198,7 @@ export function headerBlock({ name, headline, contactParts, availability }) {
 % =====================================================================
 %  ENCABEZADO
 % =====================================================================
-{\headingfont\fontsize{22pt}{24pt}\selectfont ${escapeLatex(name)}}\par
+{\headingfont\fontsize{22pt}{24pt}\selectfont\color{heading}${escapeLatex(name)}}\par
 \vspace{2pt}
 {\large\color{accent}${escapeLatex(headline)}}\par
 \vspace{4pt}

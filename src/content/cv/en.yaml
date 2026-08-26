@@ -7,7 +7,7 @@ basics:
   profile: >-
     **Embedded firmware and software engineer** with experience building industrial
     firmware for solar inverters (C, STM32, FreeRTOS) and a solid R&D
-    background. Focused on low-level optimization, industrial communications
+    background in acoustics (physics). Focused on low-level optimization, industrial communications
     (Modbus) and hardware test automation. I maintain *open source* projects used
     by developers worldwide. Targeting **firmware, software and QA** roles,
     bringing engineering rigor and a focus on quality.
@@ -18,6 +18,7 @@ basics:
         label: github.com/jmrplens,
         url: https://github.com/jmrplens,
       }
+    - { kind: gitlab, label: gitlab.com/jmrp, url: "https://gitlab.com/jmrp" }
     - {
         kind: linkedin,
         label: linkedin.com/in/jmrplens,
@@ -98,7 +99,7 @@ sections:
       - role: R&D Software Developer
         org:
           - {
-              name: Power Electronics,
+              name: Power Electronics S.L.,
               short: PE,
               url: https://power-electronics.com/en,
             }
@@ -141,7 +142,7 @@ sections:
             proposing improvements before integration.
         ats:
           normal: true
-          org: Power Electronics — Solar + Storage
+          org: Power Electronics S.L. — Solar + Storage
 
       - role: Predoctoral researcher
         org:

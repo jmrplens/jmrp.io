@@ -1,63 +1,61 @@
 # CV Compilation (LaTeX)
 
-This directory contains the source code for generating the Curriculum Vitae in both English and Spanish using LaTeX. **XeLaTeX is the recommended engine** due to better font handling. LuaLaTeX is also supported but may require additional font configuration.
+Every CV PDF is **generated from a single source of truth** —
+`src/content/cv/{es,en}.yaml` plus `src/content/publications_data/papers.bib` —
+and compiled with **LuaLaTeX**. There are no hand-authored `.tex` documents any
+more: the two AltaCV files were replaced in 2026-08 by a generated sidebar
+layout after they drifted from the YAML (a missing job, stale figures).
+
+| Output (public/pdf/)           | Layout                                    | Generator                        |
+| ------------------------------ | ----------------------------------------- | -------------------------------- |
+| `CV_..._{ENG,SPA}.pdf`         | Design: sidebar/paracol, brand typography | `scripts/cv/generate-design.mjs` |
+| `CV_..._{ENG,SPA}_ATS.pdf`     | ATS concise, single column                | `scripts/cv/generate-ats.mjs`    |
+| `CV_..._{ENG,SPA}_ATS_EXT.pdf` | ATS exhaustive (all jobs + publications)  | `scripts/cv/generate-ats.mjs`    |
 
 ## Prerequisites
 
-To compile these documents, you need a standard TeX Live installation with specific packages.
-
-### System Dependencies (Debian/Ubuntu)
-
 ```bash
-# Core TeX Live packages
-sudo apt-get install texlive-xetex texlive-luatex texlive-science texlive-latex-extra texlive-fonts-extra
-
-# Bibliography management
-sudo apt-get install biber
-
-# Language packs for hyphenation and localization
-# - texlive-lang-spanish: REQUIRED to avoid babel errors when compiling Spanish CVs
-# - texlive-lang-english: Usually pre-installed in most TeX distributions, but included for completeness
-sudo apt-get install texlive-lang-spanish texlive-lang-english
+sudo apt-get install texlive-luatex texlive-latex-extra texlive-fonts-extra \
+  texlive-lang-spanish texlive-lang-english
 ```
 
-**Note**: Missing `texlive-lang-spanish` will cause `babel` errors during Spanish CV compilation. The English language pack is typically included by default but is listed here to ensure complete installation.
+Fonts: IBM Plex Sans/Mono come from TeX Live (loaded **by filename** — the
+family-name lookup silently drops bold runs); Space Grotesk and Inter are
+vendored in `resources/fonts/` with their OFL licenses. Inter must stay the
+**TrueType** build: the system OTF/CFF cut (2048 upem) breaks commercial resume
+parsers — see `scripts/cv/verify-ats.mjs`, which pins this.
 
 ## How to Compile
 
-A helper script is provided to compile both versions and move them to the public directory.
-
 ```bash
-# Make sure the script is executable
-chmod +x compile_cv.sh
-
-# Run the compilation from the project root or this directory
-./cv_latex/compile_cv.sh
+pnpm build:cv           # content-hash cached; skips if nothing changed
+pnpm build:cv --force   # full recompilation
+# or directly:
+bash cv_latex/compile_cv.sh
 ```
 
-### Manual Compilation
+The script regenerates every `.tex` into `generated/` (git-ignored) and
+compiles each with two lualatex passes. No biber: the design CV renders its
+publications directly from `papers.bib` via citation-js at generation time.
 
-If you need to compile manually (useful for debugging):
+### Private set (phone number)
 
-```bash
-cd cv_latex
-
-# Using XeLaTeX (recommended):
-xelatex -interaction=nonstopmode CV_RequenaPlensJoseManuel_SPA.tex
-biber CV_RequenaPlensJoseManuel_SPA
-xelatex -interaction=nonstopmode CV_RequenaPlensJoseManuel_SPA.tex
-xelatex -interaction=nonstopmode CV_RequenaPlensJoseManuel_SPA.tex
-
-# Alternative: Using LuaLaTeX (if preferred):
-# lualatex -interaction=nonstopmode CV_RequenaPlensJoseManuel_SPA.tex
-# biber CV_RequenaPlensJoseManuel_SPA
-# lualatex -interaction=nonstopmode CV_RequenaPlensJoseManuel_SPA.tex
-# lualatex -interaction=nonstopmode CV_RequenaPlensJoseManuel_SPA.tex
-```
-
-**Why multiple LaTeX runs?** LaTeX requires multiple passes to resolve cross-references, table of contents, and bibliography entries. The first run identifies references, Biber processes the bibliography, and subsequent runs incorporate the resolved data.
+With `CV_PHONE` set in `.env` (git-ignored), a second pass rebuilds all six
+PDFs with the phone into `cv_private/` — same filenames, whole directory
+git-ignored, for hand-uploads to job portals. Without the variable (fresh
+clone, CI) that pass simply does not run and the public set needs no secret.
 
 ## Directory Structure
 
-- `resources/`: Contains classes (`altacv.cls`), bibliography (`papers.bib`), fonts, and images.
-- `CV_*.tex`: The main source files for English and Spanish versions.
+- `compile_cv.sh` — build script (generate → lualatex ×2 → move to public/pdf)
+- `generated/` — generated `.tex` sources (git-ignored, never edit)
+- `resources/fonts/` — vendored Inter + Space Grotesk (TTF) + licenses
+- `resources/foto.jpeg` — photo used by the design layout
+
+## Verification
+
+`scripts/cv/verify-ats.mjs` (dist phase of `pnpm verify`) checks: text layer,
+sections, contacts, keyword coverage, an ATS score floor, **font pinning**
+(vendored glyf TrueType only) and the **design page budget** (both sidebar CVs
+within 3 pages — page-count growth is the symptom of the half-empty-page
+layout regression class).

@@ -6,8 +6,8 @@ basics:
   email: jmrplens@gmail.com
   profile: >-
     **Ingeniero de firmware y software** con experiencia en firmware
-    industrial para inversores solares (C, STM32, FreeRTOS) y una base sólida en
-    I+D. Especializado en optimización de bajo nivel, comunicaciones
+    industrial para inversores solares (C, STM32, FreeRTOS) y una sólida base de I+D
+    en acústica (física). Especializado en optimización de bajo nivel, comunicaciones
     industriales (Modbus) y automatización de pruebas sobre hardware. Mantengo
     proyectos *open source* usados por desarrolladores de todo el mundo. Oriento
     mi carrera a roles de **firmware, software y QA**, aportando rigor de
@@ -19,6 +19,7 @@ basics:
         label: github.com/jmrplens,
         url: https://github.com/jmrplens,
       }
+    - { kind: gitlab, label: gitlab.com/jmrp, url: "https://gitlab.com/jmrp" }
     - {
         kind: linkedin,
         label: linkedin.com/in/jmrplens,
@@ -99,15 +100,15 @@ sections:
       - role: Desarrollador de Software I+D
         org:
           - {
-              name: Power Electronics,
+              name: Power Electronics S.L.,
               short: PE,
-              url: https://power-electronics.com/en,
+              url: https://power-electronics.com/es,
             }
         department:
           {
             name: Solar + Storage,
             short: PE Solar,
-            url: https://power-electronics.com/en/solar,
+            url: https://power-electronics.com/es/solar,
           }
         location: Llíria, España
         period: Abr 2023 - May 2026
@@ -144,7 +145,7 @@ sections:
             proponiendo mejoras antes de la integración.
         ats:
           normal: true
-          org: Power Electronics — Solar + Storage
+          org: Power Electronics S.L. — Solar + Storage
 
       - role: Investigador predoctoral
         org:
@@ -293,7 +294,7 @@ sections:
           - >-
             Diseño y desarrollo de un sistema robótico de 3 ejes para realizar
             mediciones experimentales. Fotos e información aquí:
-            [NEWS](https://cienciagandia.webs.upv.es/en/2022/03/metamaterial-to-reduce-noise-in-space-rocket-launches/ "Proyecto de metamateriales para lanzamientos de cohetes espaciales")
+            [NEWS](https://cienciagandia.webs.upv.es/2022/03/metamaterial-para-reducir-el-ruido-en-el-lanzamiento-de-cohetes-espaciales/ "Proyecto de metamateriales para lanzamientos de cohetes espaciales")
           - Resultados validados y aceptados por la ESA.
         pubGroups:
           - heading: "Tres publicaciones/presentaciones en congresos internacionales (Euronoise y ECSSMET) y una en congreso nacional (Tecniacústica):"
