@@ -185,7 +185,6 @@ Pon los dos órdenes uno al lado del otro y la perdición es evidente. La compos
 ### Mismas primitivas, resultados opuestos
 
 <OrderedCompare
-  title="Mismas primitivas, resultados opuestos"
   caption="MAC-then-Encrypt fuerza un descifrado sobre entrada controlada por el atacante antes de la comprobación de integridad; Encrypt-then-MAC hace de guardián con el tag, así que un fichero falsificado se rechaza antes de que el cifrador llegue a ejecutarse."
   ariaLabel="Una comparación lado a lado de dos órdenes en el camino de lectura. El camino MAC-then-Encrypt, marcado como el camino de la perdición: paso 1, recibe un fichero posiblemente manipulado; el paso 2 es un paso inseguro, descifrarlo, que toca los bytes del atacante y quita el padding PKCS#7, que es lo que filtra el oráculo; el paso 3 también es inseguro, solo ahora comprueba el MAC, lo que ya es demasiado tarde. El camino Encrypt-then-MAC, marcado seguro: paso 1, recibe un fichero posiblemente manipulado; el paso 2 es un paso seguro, recalcula y comprueba primero el tag del MAC sobre el texto cifrado; el paso 3 es un paso seguro, descifra solo si el tag verificó, así que un fichero falsificado se rechaza antes de cualquier descifrado."
   dangerLabel="inseguro — bytes del atacante tocados antes de la comprobación"

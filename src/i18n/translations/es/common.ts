@@ -406,6 +406,14 @@ export const common = {
       yes: "Sí",
       no: "No",
     },
+    capabilityMatrix: {
+      // Defaults for the three cell states. They were hardcoded English
+      // in the component, which every sibling avoids: a Spanish usage that
+      // omitted the props would have rendered "Yes" to a Spanish reader.
+      yes: "Sí",
+      no: "No",
+      na: "—",
+    },
     attackSurfaceMatrix: {
       stoppedBy: "Lo detiene",
       tableCaption: "Atacante online frente a offline",
