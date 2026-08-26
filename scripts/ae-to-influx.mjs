@@ -1,4 +1,4 @@
-/* cspell:ignore otros vacio */
+/* cspell:ignore otros vacio referers */
 /**
  * Cloudflare Analytics Engine → InfluxDB 3 ingestion.
  *
@@ -27,6 +27,12 @@
  * - cf_requests,class=,ua=      n=<sum>
  * - cf_countries,country=       n=<sum>
  * - cf_paths,class=,path=       n=<sum>
+ * Worker v2 rows (blob11 = status marks them) additionally feed:
+ * - cf_agents,agent=            n         (named AI crawlers, bots, browsers)
+ * - cf_status,class=,status=,cache=  n    (edge verdicts: HIT/MISS/redirects)
+ * - cf_geo,country=,city=       n,lat,lon (Cloudflare's own geolocation)
+ * - cf_referers,ref=            n         (external referer hosts)
+ * - cf_proto,proto=,tls=        n
  *
  * Runs from a systemd timer every 5 minutes. Manual: `node scripts/ae-to-influx.mjs`.
  */
@@ -81,6 +87,16 @@ const tag = (s) =>
     .replaceAll(/[ ,=\\]/gu, "_")
     .slice(0, 120);
 
+/** Groups AE rows by their time bucket (`t`). */
+function groupByBucket(rows) {
+  const map = new Map();
+  for (const r of rows) {
+    if (!map.has(r.t)) map.set(r.t, []);
+    map.get(r.t).push(r);
+  }
+  return map;
+}
+
 /** Builds the line-protocol payload for one closed window. */
 async function collectWindow(fromS, toS) {
   const W = `WHERE timestamp >= toDateTime(${fromS}) AND timestamp < toDateTime(${toS})`;
@@ -125,6 +141,59 @@ async function collectWindow(fromS, toS) {
       lines.push(`cf_paths,class=${tag(c)},path=(otros) n=${restSum}i ${t}`);
     }
   }
+  // ── Worker v2 dimensions (blob11 = final status marks the new rows) ──────
+  const V2 = `${W} AND blob11 != ''`;
+
+  const agents = await aeQuery(
+    `SELECT ${B}, blob4 AS a, SUM(_sample_interval) AS n FROM jmrp_edge_requests ${V2} GROUP BY t, a`,
+  );
+  for (const r of agents) {
+    lines.push(`cf_agents,agent=${tag(r.a)} n=${r.n}i ${r.t}`);
+  }
+
+  const statuses = await aeQuery(
+    `SELECT ${B}, index1 AS c, blob11 AS st, blob12 AS cache, SUM(_sample_interval) AS n FROM jmrp_edge_requests ${V2} GROUP BY t, c, st, cache`,
+  );
+  for (const r of statuses) {
+    lines.push(
+      `cf_status,class=${tag(r.c)},status=${tag(r.st)},cache=${tag(r.cache)} n=${r.n}i ${r.t}`,
+    );
+  }
+
+  // Geolocation: city-level with Cloudflare's own coordinates. Top 30 cities
+  // per bucket; the tail folds into the country with no city to keep the
+  // series set bounded.
+  const geo = await aeQuery(
+    `SELECT ${B}, blob3 AS cc, blob7 AS city, AVG(double1) AS lat, AVG(double2) AS lon, SUM(_sample_interval) AS n FROM jmrp_edge_requests ${V2} AND double1 != 0 GROUP BY t, cc, city ORDER BY n DESC`,
+  );
+  for (const [t, rows] of groupByBucket(geo)) {
+    for (const r of rows.slice(0, 30)) {
+      lines.push(
+        `cf_geo,country=${tag(r.cc)},city=${tag(r.city)} n=${r.n}i,lat=${Number(r.lat)},lon=${Number(r.lon)} ${t}`,
+      );
+    }
+  }
+
+  const referers = await aeQuery(
+    `SELECT ${B}, blob5 AS ref, SUM(_sample_interval) AS n FROM jmrp_edge_requests ${V2} AND blob5 != '' GROUP BY t, ref ORDER BY n DESC`,
+  );
+  for (const [t, rows] of groupByBucket(referers)) {
+    for (const r of rows.slice(0, 15)) {
+      lines.push(`cf_referers,ref=${tag(r.ref)} n=${r.n}i ${t}`);
+    }
+    const rest = rows.slice(15).reduce((a, r) => a + r.n, 0);
+    if (rest > 0) lines.push(`cf_referers,ref=(otros) n=${rest}i ${t}`);
+  }
+
+  const proto = await aeQuery(
+    `SELECT ${B}, blob9 AS pr, blob10 AS tls, SUM(_sample_interval) AS n FROM jmrp_edge_requests ${V2} GROUP BY t, pr, tls`,
+  );
+  for (const r of proto) {
+    lines.push(
+      `cf_proto,proto=${tag(r.pr)},tls=${tag(r.tls)} n=${r.n}i ${r.t}`,
+    );
+  }
+
   return lines;
 }
 
