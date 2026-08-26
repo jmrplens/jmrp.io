@@ -162,21 +162,29 @@ Sitemap: https://jmrp.io/sitemap-index.xml
 
 # LLM context (llmstxt.org standard)
 # https://jmrp.io/llms.txt
-# https://jmrp.io/llms-full.txt          — both languages, index + everything
-#                                          except post bodies. No size quoted
+# https://jmrp.io/llms-full.txt          — both languages, an index: the detail
+#                                          for posts, tools, the CV and the
+#                                          publications is linked from here,
+#                                          not embedded. No size quoted
 #                                          on purpose: the hand-maintained
 #                                          figures here and in llms.txt drifted
 #                                          apart until they disagreed 28-fold.
-# https://jmrp.io/llms-full-en.txt       — English corpus only
-# https://jmrp.io/llms-full-es.txt       — Spanish corpus only
-# https://jmrp.io/blog/<slug>.md        — one file per post, full body, in
-# https://jmrp.io/es/blog/<slug>.md        markdown. The article's own URL with
-#                                          `.md` in place of the trailing slash,
-#                                          so it can be derived rather than
-#                                          looked up. Kept separate from the
-#                                          corpus above so no ingestion cap
-#                                          truncates a guide mid-way.
+# https://jmrp.io/<page>/index.md   — the markdown twin of a page, at the page's
+#                                     own URL. The llms.txt spec: "provide a
+#                                     clean markdown version of those pages at
+#                                     the same URL as the original page …
+#                                     (URLs without file names should append
+#                                     index.html.md or index.md instead.)"
+#                                     Published for every post, every tool, the
+#                                     CV, the publications and the profile
+#                                     pages (/about/, /projects/, /uses/), in
+#                                     both locales.
+#                                     Pages declare theirs with
+#                                     rel="alternate" type="text/markdown", and
+#                                     every page points at this index with
+#                                     rel="describedby"; the .md files carry the
+#                                     same pointer as a Link: header.
 #
-# The former flat form, /llms-blog-<locale>-<slug>.txt, 301s to the file above
-# and is deliberately NOT listed here: advertising both would send a fresh
-# crawler through a redirect for no reason.
+# The shapes this replaced — /llms-blog-<locale>-<slug>.txt and /<page>.md —
+# 301 to the file above and are deliberately NOT listed here: advertising more
+# than one form would send a fresh crawler through a redirect for no reason.

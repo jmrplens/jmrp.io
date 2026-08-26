@@ -3,8 +3,12 @@ name: CI
 on:
   push:
     branches: ["main"]
+  # Sin filtro `branches` a proposito: con `branches: ["main"]` un PR apilado
+  # sobre otra rama no disparaba NADA, asi que el segundo PR de una pila se
+  # revisaba a ciegas y solo veia su CI al reapuntarlo. La cola la limita el
+  # `concurrency` de abajo, que agrupa por ref: cada PR cancela su propia
+  # ejecucion anterior, no la de los demas.
   pull_request:
-    branches: ["main"]
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}

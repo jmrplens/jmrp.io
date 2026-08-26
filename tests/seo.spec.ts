@@ -395,8 +395,9 @@ test.describe("SEO & Metadata Checks", () => {
     expect(content).toContain("## Blog Posts (Español)");
     expect(content).toContain("## Developer Tools (Español)");
 
-    // Every post line carries TWO links now — the article and its markdown
-    // twin — so the count has to name which one it means or it doubles.
+    // Every post line carries TWO links — the article and its markdown twin —
+    // so the count has to name which one it means or it doubles. The twin is
+    // `<page>/index.md`: the spec's form for a URL with no file name.
     const esPosts =
       content.match(/]\(https:\/\/jmrp\.io\/es\/blog\/\d{3}-[a-z0-9-]+\/\)/g) ??
       [];
@@ -404,15 +405,15 @@ test.describe("SEO & Metadata Checks", () => {
 
     const esMarkdown =
       content.match(
-        /]\(https:\/\/jmrp\.io\/es\/blog\/\d{3}-[a-z0-9-]+\.md\)/g,
+        /]\(https:\/\/jmrp\.io\/es\/blog\/\d{3}-[a-z0-9-]+\/index\.md\)/g,
       ) ?? [];
     expect(esMarkdown).toHaveLength(12);
   });
 
   test("every post has a markdown twin at its own URL", async ({ page }) => {
     for (const path of [
-      "/blog/004-enabling-quic-http3-nginx.md",
-      "/es/blog/004-enabling-quic-http3-nginx.md",
+      "/blog/004-enabling-quic-http3-nginx/index.md",
+      "/es/blog/004-enabling-quic-http3-nginx/index.md",
     ]) {
       const response = await page.request.get(path);
       expect(response.status(), path).toBe(200);
@@ -435,7 +436,7 @@ test.describe("SEO & Metadata Checks", () => {
     const link = page.locator('link[rel="alternate"][type="text/markdown"]');
     await expect(link).toHaveAttribute(
       "href",
-      "/blog/004-enabling-quic-http3-nginx.md",
+      "/blog/004-enabling-quic-http3-nginx/index.md",
     );
   });
 
@@ -449,7 +450,7 @@ test.describe("SEO & Metadata Checks", () => {
     expect(index).toContain("## Blog Posts (Español)");
 
     // What llms-full carries now is the LINK to each Spanish body.
-    const twin = "/es/blog/012-device-bound-key-derivation.md";
+    const twin = "/es/blog/012-device-bound-key-derivation/index.md";
     expect(index).toContain(`https://jmrp.io${twin}`);
 
     // And the body itself has to be there, at the other end of that link.

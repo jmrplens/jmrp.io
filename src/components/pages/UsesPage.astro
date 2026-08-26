@@ -10,6 +10,7 @@ import { defaultLocale, type Locale } from "@i18n/config";
 import { useTranslatedPath, useTranslations } from "@i18n/utils";
 import BaseLayout from "@layouts/BaseLayout.astro";
 import { externalLinkProps } from "@utils/links";
+import { markdownTwinPath } from "@utils/llms";
 import { getSiteUrl } from "@utils/site";
 import { getEntry } from "astro:content";
 import type { CollectionPage } from "schema-dts";
@@ -83,6 +84,7 @@ const usesSchema = {
   title={t("pages.uses.title")}
   description={t("pages.uses.description")}
   schema={usesSchema}
+  markdownHref={markdownTwinPath(Astro.url.pathname)}
 >
   <div class="uses container">
     <header class="uses-header">

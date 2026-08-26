@@ -1,4 +1,8 @@
-import { generateLlmsPostTxt } from "@utils/llms";
+import {
+  generateLlmsPostTxt,
+  generateProfileMarkdown,
+  generateToolMarkdown,
+} from "@utils/llms";
 import { type CollectionEntry, getCollection } from "astro:content";
 
 /**
@@ -76,4 +80,71 @@ export function markdownRoute(locale: "en" | "es") {
       );
     },
   };
+}
+
+/** The one header every markdown twin answers with. */
+const MARKDOWN_HEADERS = {
+  "Content-Type": "text/markdown; charset=utf-8",
+} as const;
+
+/**
+ * The `/tools/<slug>/index.md` endpoints, one per locale.
+ *
+ * Same factory shape as the post routes above, and for the same reason: ten
+ * near-identical route files is ten places for the content type or the
+ * predicate to drift, and SonarCloud counted them as duplication before this
+ * existed.
+ *
+ * @param locale - The locale whose tools this route serves.
+ * @returns The two exports an Astro endpoint needs.
+ */
+export function toolMarkdownRoute(locale: "en" | "es") {
+  return {
+    getStaticPaths: async () => {
+      const tools = await getCollection("tools", (t) => t.data.lang === locale);
+      return tools.map((tool) => ({
+        params: { slug: tool.data.slug },
+        props: { tool },
+      }));
+    },
+    GET: (context: { site: URL; props: { tool: CollectionEntry<"tools"> } }) =>
+      new Response(
+        generateToolMarkdown(context.site.origin, context.props.tool),
+        { headers: MARKDOWN_HEADERS },
+      ),
+  };
+}
+
+/**
+ * A singleton page's markdown twin — one URL, no params.
+ *
+ * @param render - Produces the document for a locale.
+ * @param locale - The locale this route serves.
+ * @returns The `GET` an Astro endpoint needs.
+ */
+export function singleMarkdownRoute(
+  render: (siteUrl: string, locale: "en" | "es") => Promise<string>,
+  locale: "en" | "es",
+) {
+  return {
+    // No `prerender` export: this site has no `output` in astro.config, so it
+    // is fully static and the flag is a no-op. None of the other 40+ pages
+    // declares one, and a no-op export is a claim that something is being
+    // decided here.
+    GET: async (context: { site: URL }) =>
+      new Response(await render(context.site.origin, locale), {
+        headers: MARKDOWN_HEADERS,
+      }),
+  };
+}
+
+/**
+ * Binds one of the three profile pages to a locale.
+ *
+ * @param page - Which profile page.
+ * @returns A renderer with the signature `singleMarkdownRoute` expects.
+ */
+export function profileRenderer(page: "about" | "projects" | "uses") {
+  return (siteUrl: string, locale: "en" | "es") =>
+    generateProfileMarkdown(siteUrl, page, locale);
 }
