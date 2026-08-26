@@ -293,7 +293,11 @@ function buildHtml(edge, origin, date) {
        border-bottom: 1px solid #26262c; }
   td { padding: 4px 8px; border-bottom: 1px solid #1a1a1e;
        font-family: ui-monospace, monospace; overflow-wrap: anywhere; }
-  td:last-child, th:last-child { text-align: right; }
+  /* The count column must never wrap: on a phone, anywhere-wrapping squeezed
+     it to one digit per line ("37" became "3" over "7"). Paths absorb the
+     narrowness instead — they are the wrappable part. */
+  td:last-child, th:last-child { text-align: right; white-space: nowrap;
+       font-variant-numeric: tabular-nums; width: 1%; }
   p.meta { color: #8c8a82; font-size: 13px; }
 </style></head><body>
 <h1><span>jmrp.io</span> · tráfico diario — ${esc(date)}</h1>
