@@ -6,8 +6,15 @@
  * columns are capabilities, and each cell is yes / no / n-a rendered with both a
  * glyph and a word (never colour alone). Good for "what each key can and can't
  * do" separation-of-duties tables. Zero client JS; theme-aware; accessible (a
- * real <table> with scoped headers + role-based cell text). All text is passed
- * as props, so the component holds no i18n chrome of its own.
+ * real <table> with scoped headers + role-based cell text).
+ *
+ * Every visible string is a prop, but the three cell-state labels DEFAULT
+ * through `t()` rather than to English literals. They used to be `"Yes"`,
+ * `"No"` and `"—"` hardcoded, which made this the one component of its family
+ * that ignored the locale: a Spanish usage that omitted the props would have
+ * rendered "Yes" to a Spanish reader. Both current Spanish call sites happen
+ * to pass explicit labels, so nothing was visibly wrong — which is exactly why
+ * it survived.
  *
  * @example
  * <CapabilityMatrix
@@ -53,6 +60,12 @@ interface Props {
   naLabel?: string;
 }
 
+import { defaultLocale, type Locale } from "@i18n/config";
+import { useTranslations } from "@i18n/utils";
+
+const locale = (Astro.currentLocale ?? defaultLocale) as Locale;
+const t = useTranslations(locale);
+
 const {
   columns,
   rows,
@@ -60,9 +73,9 @@ const {
   title,
   caption,
   ariaLabel,
-  yesLabel = "Yes",
-  noLabel = "No",
-  naLabel = "—",
+  yesLabel = t("components.capabilityMatrix.yes"),
+  noLabel = t("components.capabilityMatrix.no"),
+  naLabel = t("components.capabilityMatrix.na"),
 } = Astro.props;
 
 const cellIcon: Record<Cell, string> = {

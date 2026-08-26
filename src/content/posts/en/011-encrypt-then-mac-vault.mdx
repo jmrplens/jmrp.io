@@ -184,7 +184,6 @@ Put the two orderings side by side and the doom is obvious. The composition isn'
 ### Same primitives, opposite outcomes
 
 <OrderedCompare
-  title="Same primitives, opposite outcomes"
   caption="MAC-then-Encrypt forces a decryption on attacker-controlled input before the integrity check; Encrypt-then-MAC gate-keeps with the tag, so a forged file is rejected before the cipher ever runs."
   ariaLabel="A side-by-side comparison of two orderings on the read path. The MAC-then-Encrypt path, marked as the doom path: step 1, receive a possibly-tampered file; step 2 is an unsafe step, decrypt it, which touches the attacker's bytes and runs the PKCS#7 unpad that leaks the oracle; step 3 is also unsafe, only now check the MAC, which is already too late. The Encrypt-then-MAC path, marked safe: step 1, receive a possibly-tampered file; step 2 is a safe step, recompute and check the MAC tag over the ciphertext first; step 3 is a safe step, decrypt only if the tag verified, so a forged file is rejected before any decryption."
   dangerLabel="unsafe — attacker bytes touched before the check"
