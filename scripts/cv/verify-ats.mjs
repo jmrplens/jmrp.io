@@ -70,9 +70,12 @@ const CONTACT = {
   email: /jmrplens@gmail\.com/i,
   web: /jmrp\.io/i,
   github: /github\.com\/jmrplens/i,
+  // Official collaborator on GitLab's repos; added 2026-08-26. Scholar was
+  // dropped from the PDFs the same day (author's call: it stays on the web
+  // page and its schema; the publications section carries the signal here).
+  gitlab: /gitlab\.com\/jmrp\b/i,
   linkedin: /linkedin\.com\/in\/jmrplens/i,
   orcid: /0000-0003-1250-6212/i,
-  scholar: /scholar|google scholar/i,
 };
 
 /** Language-agnostic, technical job description used as the scoring reference. */

@@ -19,6 +19,7 @@ basics:
         label: github.com/jmrplens,
         url: https://github.com/jmrplens,
       }
+    - { kind: gitlab, label: gitlab.com/jmrp, url: "https://gitlab.com/jmrp" }
     - {
         kind: linkedin,
         label: linkedin.com/in/jmrplens,

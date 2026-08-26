@@ -440,10 +440,14 @@ export async function buildDocument(locale, profile, options = {}) {
           },
         ]
       : []),
-    ...basics.links.map((l) => ({
-      text: labelForContact(l),
-      url: l.url,
-    })),
+    // Scholar stays on the web CV page but not in the PDFs (author's call,
+    // 2026-08-26): the publications themselves already carry the signal here.
+    ...basics.links
+      .filter((l) => l.kind !== "scholar")
+      .map((l) => ({
+        text: labelForContact(l),
+        url: l.url,
+      })),
   ];
   doc += headerBlock({
     name: basics.name,
