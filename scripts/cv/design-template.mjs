@@ -81,9 +81,10 @@ export function designPreamble({
   pdflang={${docLang}},
 }
 \raggedbottom
-% Long bullet lines in the 64% column would otherwise overflow; a little
-% emergency stretch absorbs every overfull box without visible loose lines.
-\emergencystretch=1.5em
+% Long bullet lines in the 64% column would otherwise overflow; the stretch
+% absorbs every overfull box (at 1.5em one 9.7pt box survived in each locale
+% - a hyphen-compound bullet; 3em clears it without visibly loose lines).
+\emergencystretch=3em
 
 % ---- Site light palette — KEEP-IN-SYNC: light-tokens (src/styles/tokens.css)
 % The redesign's brand is AMBER (#F5A623 on dark); as text on a light page it
