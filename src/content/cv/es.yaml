@@ -99,7 +99,7 @@ sections:
       - role: Desarrollador de Software I+D
         org:
           - {
-              name: Power Electronics,
+              name: Power Electronics S.L.,
               short: PE,
               url: https://power-electronics.com/en,
             }
@@ -144,7 +144,7 @@ sections:
             proponiendo mejoras antes de la integración.
         ats:
           normal: true
-          org: Power Electronics — Solar + Storage
+          org: Power Electronics S.L. — Solar + Storage
 
       - role: Investigador predoctoral
         org:

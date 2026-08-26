@@ -201,6 +201,24 @@ function renderSkills(groups, profile) {
     .join("\n");
 }
 
+/**
+ * The visible text for one contact link.
+ *
+ * The ORCID is a bare `0000-0003-1250-6212` in the YAML, and on the web that is
+ * fine: it sits behind an ORCID icon with its own `ariaLabel`. Stripped of that
+ * context in a PDF's contact row it is sixteen digits and three hyphens, and a
+ * resume parser reads it as a PHONE NUMBER — measured: `phoneNumbers` came back
+ * as `["0000-0003-1250-6212"]`. Prefixing the scheme name costs five characters
+ * and tells the parser what it is looking at. The YAML label is left alone so
+ * the CV page keeps rendering exactly what it renders today.
+ *
+ * @param {{kind?: string, label: string}} link - One entry of `basics.links`.
+ * @returns {string} The text to typeset.
+ */
+function labelForContact(link) {
+  return link.kind === "orcid" ? `ORCID ${link.label}` : link.label;
+}
+
 /** Star-count wording per locale, singular and plural. */
 const STAR_WORD = {
   en: ["star", "stars"],
@@ -417,7 +435,10 @@ export async function buildDocument(locale, profile, options = {}) {
           },
         ]
       : []),
-    ...basics.links.map((l) => ({ text: l.label, url: l.url })),
+    ...basics.links.map((l) => ({
+      text: labelForContact(l),
+      url: l.url,
+    })),
   ];
   doc += headerBlock({
     name: basics.name,
