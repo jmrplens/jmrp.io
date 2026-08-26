@@ -8,6 +8,7 @@
  */
 import { type TranslationKey, useTranslations } from "@i18n/utils";
 import type { CVData } from "@src/types";
+import type { SiteConfig } from "@src/types";
 import { getCVData } from "@utils/cv";
 import { registry } from "@utils/llms/mdx/registry";
 import { mdxToMarkdown } from "@utils/llms/mdx/render";
@@ -23,6 +24,7 @@ import {
   stripTrailingPunctuation,
 } from "@utils/publications";
 import { SERIES } from "@utils/series";
+import { buildSameAs } from "@utils/site";
 import type { CollectionEntry } from "astro:content";
 import { getCollection, getEntry } from "astro:content";
 
@@ -99,14 +101,65 @@ async function mcpBlock(locale: "en" | "es"): Promise<string> {
   ].join("\n");
 }
 
-const CONTACT = [
-  "[GitHub](https://github.com/jmrplens)",
-  "[LinkedIn](https://www.linkedin.com/in/jmrplens)",
-  "[Google Scholar](https://scholar.google.com/citations?user=9b0kPaUAAAAJ)",
-  "[ORCID](https://orcid.org/0000-0003-1250-6212)",
-  "[Mastodon](https://mstdn.jmrp.io/@jmrplens)",
-  "[Email](mailto:mail@jmrp.io)",
-];
+/**
+ * The author's public profiles, for the `## Contact` section.
+ *
+ * Derived from the SAME source as the Person JSON-LD rather than listed here.
+ * The hardcoded version carried six entries while `person.jsonld` — which this
+ * very file links under `## Optional` — carried fourteen: Bluesky, Matrix,
+ * Keyoxide, ResearchGate, MathWorks, Codeberg, GitLab, PyPI and Docker Hub
+ * never reached the corpus. A model reading llms.txt saw a smaller person than
+ * the machine-readable entity beside it.
+ *
+ * @param siteData - The site config entry.
+ * @returns Markdown list items.
+ */
+function contactLines(siteData: SiteConfig): string[] {
+  const named = new Map(
+    (siteData.social_links ?? []).map((l) => [l.url, l.name] as const),
+  );
+  const profiles = buildSameAs(siteData.social_links, siteData.person?.sameAs);
+  return [
+    ...profiles.map((url) => `[${named.get(url) ?? hostLabel(url)}](${url})`),
+    "[Email](mailto:mail@jmrp.io)",
+  ];
+}
+
+/**
+ * Names for the `person.sameAs` extras, which are bare URLs in the config.
+ *
+ * Those entries exist to strengthen entity recognition rather than to be
+ * rendered, so they carry no label. The host is a usable fallback but a poor
+ * name — "Google Scholar" is the entity a model knows, "scholar.google.com"
+ * is a string it has to resolve. Keyed by host so a changed profile path does
+ * not silently lose its name.
+ */
+const PROFILE_NAMES: Record<string, string> = {
+  "scholar.google.com": "Google Scholar",
+  "orcid.org": "ORCID",
+  "researchgate.net": "ResearchGate",
+  "mathworks.com": "MATLAB Central",
+  "codeberg.org": "Codeberg",
+  "gitlab.com": "GitLab",
+  "pypi.org": "PyPI",
+  "hub.docker.com": "Docker Hub",
+  "keyoxide.org": "Keyoxide",
+};
+
+/**
+ * A readable label for a profile URL that has no configured name.
+ *
+ * @param url - The profile URL.
+ * @returns Its well-known name, or the host as a fallback.
+ */
+function hostLabel(url: string): string {
+  try {
+    const host = new URL(url).hostname.replace(/^www\./u, "");
+    return PROFILE_NAMES[host] ?? host;
+  } catch {
+    return url;
+  }
+}
 
 const TECHNICAL_DETAILS = [
   "Built with Astro 7 (Static Site Generation)",
@@ -578,6 +631,8 @@ function sectionsBlockEs(siteUrl: string): string {
 
 /** Generates the concise `llms.txt` index. */
 export async function generateLlmsTxt(siteUrl: string): Promise<string> {
+  const siteEntry = await getEntry("site_config", "site");
+  const siteData = (siteEntry?.data ?? {}) as SiteConfig;
   const postsEn = await getPostsByLocale("en");
   const postsEs = await getPostsByLocale("es");
   const toolsEn = await getToolsByLocale("en");
@@ -649,7 +704,7 @@ export async function generateLlmsTxt(siteUrl: string): Promise<string> {
     "",
     "## Contact",
     "",
-    ...CONTACT.map((c) => `- ${c}`),
+    ...contactLines(siteData).map((c) => `- ${c}`),
     "",
     "## Optional",
     "",
@@ -1143,6 +1198,8 @@ export async function generatePageMarkdown(
 
 /** Generates the enriched `llms-full.txt` with per-post detail. */
 export async function generateLlmsFullTxt(siteUrl: string): Promise<string> {
+  const siteEntry = await getEntry("site_config", "site");
+  const siteData = (siteEntry?.data ?? {}) as SiteConfig;
   const postsEn = await getPostsByLocale("en");
   const postsEs = await getPostsByLocale("es");
   const toolsEn = await getToolsByLocale("en");
@@ -1205,7 +1262,7 @@ export async function generateLlmsFullTxt(siteUrl: string): Promise<string> {
     "",
     "## Contact",
     "",
-    ...CONTACT.map((c) => `- ${c}`),
+    ...contactLines(siteData).map((c) => `- ${c}`),
     "",
     "## Technical Details",
     "",
