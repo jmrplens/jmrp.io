@@ -7,8 +7,7 @@
  * tags, FAQ questions, and HowTo step names (all sourced from frontmatter).
  */
 import { type TranslationKey, useTranslations } from "@i18n/utils";
-import type { CVData } from "@src/types";
-import type { SiteConfig } from "@src/types";
+import type { CVData, SiteConfig } from "@src/types";
 import { getCVData } from "@utils/cv";
 import { registry } from "@utils/llms/mdx/registry";
 import { mdxToMarkdown } from "@utils/llms/mdx/render";
@@ -123,8 +122,12 @@ async function contactLines(siteData: SiteConfig): Promise<string[]> {
   const about = await getEntry("profile", "about");
   const email =
     about?.data.type === "about" ? about.data.person.email : undefined;
-  const named = new Map(
-    (siteData.social_links ?? []).map((l) => [l.url, l.name] as const),
+  // Typed explicitly: the schema declares `name: z.string()`, but `SiteConfig`
+  // is an `Extract` over a discriminated union and the inference does not carry
+  // that through — which reads, to a static analyser, as a possible object
+  // reaching string interpolation.
+  const named = new Map<string, string>(
+    (siteData.social_links ?? []).map((l) => [l.url, l.name]),
   );
   const profiles = buildSameAs(siteData.social_links, siteData.person?.sameAs);
   return [
