@@ -1,5 +1,6 @@
 import {
   generateLlmsPostTxt,
+  generatePageMarkdown,
   generateProfileMarkdown,
   generateToolMarkdown,
 } from "@utils/llms";
@@ -147,4 +148,15 @@ export function singleMarkdownRoute(
 export function profileRenderer(page: "about" | "projects" | "uses") {
   return (siteUrl: string, locale: "en" | "es") =>
     generateProfileMarkdown(siteUrl, page, locale);
+}
+
+/**
+ * Binds one of the prose pages to a locale.
+ *
+ * @param slug - Page slug within the `pages` collection.
+ * @returns A renderer with the signature `singleMarkdownRoute` expects.
+ */
+export function pageRenderer(slug: string) {
+  return (siteUrl: string, locale: "en" | "es") =>
+    generatePageMarkdown(siteUrl, slug, locale);
 }
