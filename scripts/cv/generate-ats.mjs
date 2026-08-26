@@ -208,15 +208,20 @@ function renderSkills(groups, profile) {
  * fine: it sits behind an ORCID icon with its own `ariaLabel`. Stripped of that
  * context in a PDF's contact row it is sixteen digits and three hyphens, and a
  * resume parser reads it as a PHONE NUMBER — measured: `phoneNumbers` came back
- * as `["0000-0003-1250-6212"]`. Prefixing the scheme name costs five characters
- * and tells the parser what it is looking at. The YAML label is left alone so
- * the CV page keeps rendering exactly what it renders today.
+ * as `["0000-0003-1250-6212"]`. An "ORCID " prefix fixed the English parse but
+ * NOT the Spanish one (same raw text, different language model), so the label
+ * is the URL host form instead — `orcid.org/0000-…` — which no phone heuristic
+ * matches and which is how every other link in the row already reads
+ * (github.com/…, linkedin.com/…). The YAML label is left alone so the CV page
+ * keeps rendering exactly what it renders today.
  *
- * @param {{kind?: string, label: string}} link - One entry of `basics.links`.
+ * @param {{kind?: string, label: string, url?: string}} link - One entry of
+ *   `basics.links`.
  * @returns {string} The text to typeset.
  */
 export function labelForContact(link) {
-  return link.kind === "orcid" ? `ORCID ${link.label}` : link.label;
+  if (link.kind !== "orcid") return link.label;
+  return link.url?.replace(/^https?:\/\//u, "") ?? `ORCID ${link.label}`;
 }
 
 /** Star-count wording per locale, singular and plural. */
