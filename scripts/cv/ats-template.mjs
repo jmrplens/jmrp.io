@@ -49,6 +49,17 @@ export function documentPreamble({
 \usepackage[${babelOptions}]{babel}
 \usepackage{microtype}
 
+% ---- No hyphenation ----
+% A hyphen-broken word is a keyword the ATS cannot match. Poppler papers over
+% it by rejoining the halves, which is why this went unnoticed; Affinda drops
+% the hyphen and leaves the gap, so "Texas Instru-/ments" reaches the parser as
+% "Texas Instru ments" and "GoRe-/leaser" as "GoRe leaser". The extended EN CV
+% had 11 of these. emergencystretch keeps the paragraphs breakable without them.
+\hyphenpenalty=10000
+\exhyphenpenalty=10000
+\sloppy
+\emergencystretch=3em
+
 % ---- Geometría (márgenes ajustados pero legibles) ----
 \usepackage[a4paper,top=1.2cm,bottom=1.1cm,left=1.5cm,right=1.5cm]{geometry}
 

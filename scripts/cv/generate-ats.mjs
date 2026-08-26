@@ -201,16 +201,35 @@ function renderSkills(groups, profile) {
     .join("\n");
 }
 
-/** Formats a single project metric, converting the star glyph to `\faStar`. */
-function fmtMetric(metric) {
+/** Star-count wording per locale, singular and plural. */
+const STAR_WORD = {
+  en: ["star", "stars"],
+  es: ["estrella", "estrellas"],
+};
+
+/**
+ * Formats a single project metric, spelling out the star glyph.
+ *
+ * `formatStats` emits "27★" and the website renders that as-is, which is right
+ * for a web page. In a PDF it is not: the glyph used to go through `\faStar`,
+ * whose ToUnicode maps to the literal string "STAR", so extractors read a junk
+ * token glued onto the count ("30STAR • 50 releases"). Spelling it out here
+ * keeps the change on the LaTeX side and leaves the CV page untouched.
+ *
+ * @param {string} metric - One metric string, e.g. `27★` or `35 releases`.
+ * @param {string} locale - `es` or `en`.
+ * @returns {string} LaTeX for that metric.
+ */
+function fmtMetric(metric, locale) {
   const idx = metric.indexOf("★");
-  if (idx !== -1)
-    return String.raw`${escapeLatex(metric.slice(0, idx).trim())}\,\faStar`;
-  return escapeLatex(metric);
+  if (idx === -1) return escapeLatex(metric);
+  const count = metric.slice(0, idx).trim();
+  const [one, many] = STAR_WORD[locale] ?? STAR_WORD.en;
+  return `${escapeLatex(count)} ${count === "1" ? one : many}`;
 }
 
 /** Renders a projects section body. */
-function renderProjects(items, profile, statsBySlug) {
+function renderProjects(items, profile, statsBySlug, locale) {
   return items
     .filter((p) => !(profile === "normal" && p.ats?.normal === false))
     .map((p) => {
@@ -221,7 +240,7 @@ function renderProjects(items, profile, statsBySlug) {
       const slug = githubSlug(p.links);
       const auto = (slug && statsBySlug.get(slug)) || [];
       const metrics = [...auto, ...(p.metrics ?? [])]
-        .map(fmtMetric)
+        .map((m) => fmtMetric(m, locale))
         .join(String.raw` \divider `);
       let out = `\\cvproject{${name}}{${escapeLatex(p.tech ?? "")}}{${metrics}}\n`;
       if (p.description) {
@@ -433,7 +452,7 @@ export async function buildDocument(locale, profile, options = {}) {
         break;
       }
       case "projects": {
-        doc += renderProjects(section.items, profile, statsBySlug);
+        doc += renderProjects(section.items, profile, statsBySlug, locale);
         break;
       }
       case "certificates": {
