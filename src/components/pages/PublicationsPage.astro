@@ -562,26 +562,33 @@ const collectionSchema = {
     font-size: 1.1em;
   }
 
-  /* Headline stats band */
+  /* Headline stats band. The hairlines are the 1px gap showing the container
+     background through: every INTERNAL boundary gets its line automatically,
+     for any column count and any number of stats. The old per-child
+     border-right/border-bottom rules assumed exactly 4 items; with 5 the last
+     row had no top line and stray verticals leaked (both breakpoints). */
   .pub-stats {
     position: relative;
     display: grid;
-    grid-template-columns: repeat(4, minmax(0, max-content));
+
+    /* One row regardless of how many stats exist (the old repeat(4) was a
+       leftover from a four-stat era: the fifth wrapped into a second row with
+       no separator). Cells shrink and labels wrap on narrow desktops. */
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(0, max-content);
+    gap: 1px;
     width: fit-content;
     max-width: 100%;
     margin: 0;
     overflow: hidden;
+    background: var(--color-border);
     border: 1px solid var(--color-border);
     border-radius: var(--radius-md);
   }
 
   .pub-stat {
     padding: 16px 26px;
-    border-right: 1px solid var(--color-border);
-  }
-
-  .pub-stat:last-child {
-    border-right: 0;
+    background: var(--color-bg);
   }
 
   .pub-stat__value {
@@ -749,16 +756,16 @@ const collectionSchema = {
     }
 
     .pub-stats {
+      grid-auto-flow: row;
       grid-template-columns: repeat(2, 1fr);
       width: 100%;
     }
 
-    .pub-stat:nth-child(2) {
-      border-right: 0;
-    }
-
-    .pub-stat:nth-child(-n + 2) {
-      border-bottom: 1px solid var(--color-border);
+    /* A trailing orphan takes the whole row, so the two-column grid never
+       shows an empty gap-colored cell. Mobile-only: in the desktop implicit
+       grid, line -1 is line 1 and this rule would PIN the item first. */
+    .pub-stat:last-child:nth-child(odd) {
+      grid-column: 1 / -1;
     }
   }
 </style>
