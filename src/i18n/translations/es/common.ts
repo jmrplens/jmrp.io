@@ -663,7 +663,8 @@ export const common = {
       mcpDescription:
         "Servidores Model Context Protocol que ejecuto y expongo públicamente, para que un cliente de IA pueda llamarlos por HTTP sin instalar nada.",
       mcpLink: "Abrir mcp.jmrp.io",
-      endpointsLabel: "Endpoints:",
+      mcpInstances: "instancias",
+      mcpFleetAria: "Estado en vivo de cada servidor MCP",
       // InfrastructureInsights
       statsAriaLabel: "Estadísticas en tiempo real del nodo edge",
       statsError: "No se pudieron cargar las estadísticas de infraestructura.",

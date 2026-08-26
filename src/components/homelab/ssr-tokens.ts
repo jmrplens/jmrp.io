@@ -161,6 +161,29 @@ export const HLM = {
     },
   } satisfies Record<string, { status: string; statusClass: string }>,
 
+  /**
+   * MCP fleet rows on the MCP service card: one row per server, with the
+   * running version, the alive-replica count ("3/3") and a dot class in the
+   * pill vocabulary (`is-online` / `is-degraded` / `is-offline`). Values come
+   * from `/stats/mcp` (homelab_mcp.lua), which probes every replica's
+   * `/health` on loopback.
+   */
+  mcpFleet: {
+    gitlab: {
+      version: "HLM_MCP_GITLAB_VERSION",
+      alive: "HLM_MCP_GITLAB_ALIVE",
+      dotClass: "HLM_MCP_GITLAB_CLASS",
+    },
+    libgen: {
+      version: "HLM_MCP_LIBGEN_VERSION",
+      alive: "HLM_MCP_LIBGEN_ALIVE",
+      dotClass: "HLM_MCP_LIBGEN_CLASS",
+    },
+  } satisfies Record<
+    string,
+    { version: string; alive: string; dotClass: string }
+  >,
+
   /** Tor aggregate band (TorAggregate). */
   torAggregate: {
     /** Clients helped across all nodes, 24 h. */
