@@ -1,17 +1,17 @@
 {
-  "total": 145049,
-  "generatedAt": "2026-08-27T09:19:19.392Z",
+  "total": 145224,
+  "generatedAt": "2026-08-27T09:43:25.688Z",
   "sources": {
-    "githubReleases": 136551,
-    "dockerHub": 7364,
-    "manual": 1134
+    "githubReleases": 136636,
+    "dockerHub": 7366,
+    "manual": 1222
   },
   "manualVerifiedOn": "2026-08-27",
   "projects": {
     "gitlab-mcp-server": {
-      "total": 138661,
-      "releases": 133506,
-      "docker": 5155,
+      "total": 138748,
+      "releases": 133591,
+      "docker": 5157,
       "manual": 0
     },
     "libgen-mcp": {
@@ -23,6 +23,12 @@
     "cs-routeros-bouncer": {
       "total": 418,
       "releases": 418,
+      "docker": 0,
+      "manual": 0
+    },
+    "portainer-mcp": {
+      "total": 0,
+      "releases": 0,
       "docker": 0,
       "manual": 0
     },
@@ -61,6 +67,12 @@
       "releases": 0,
       "docker": 0,
       "manual": 215
+    },
+    "CATT2Matlab": {
+      "total": 88,
+      "releases": 0,
+      "docker": 0,
+      "manual": 88
     }
   }
 }
