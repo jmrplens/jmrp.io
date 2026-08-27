@@ -97,6 +97,75 @@ function groupByBucket(rows) {
   return map;
 }
 
+/**
+ * Per-path series, with the long tail of page paths folded into one bucket.
+ *
+ * Only `page` is capped: the other classes are small closed sets, while page
+ * paths are unbounded and would otherwise create a new InfluxDB series for
+ * every URL a scanner invents.
+ *
+ * @param {object[]} paths - Rows of {t, c, p, n}.
+ * @returns {string[]} Line-protocol lines.
+ */
+function pathLines(paths) {
+  const byBucket = new Map();
+  for (const r of paths) {
+    const key = `${r.t}|${r.c}`;
+    if (!byBucket.has(key)) byBucket.set(key, []);
+    byBucket.get(key).push(r);
+  }
+  const out = [];
+  for (const [key, rows] of byBucket) {
+    const [t, c] = key.split("|", 2);
+    rows.sort((a, b) => b.n - a.n);
+    const capped = c === "page";
+    for (const r of capped ? rows.slice(0, 20) : rows) {
+      out.push(`cf_paths,class=${tag(c)},path=${tag(r.p)} n=${r.n}i ${t}`);
+    }
+    const restSum = capped ? rows.slice(20).reduce((a, r) => a + r.n, 0) : 0;
+    if (restSum > 0) {
+      out.push(`cf_paths,class=${tag(c)},path=(otros) n=${restSum}i ${t}`);
+    }
+  }
+  return out;
+}
+
+/**
+ * City-level series, top 30 cities per bucket.
+ *
+ * @param {object[]} geo - Rows of {t, cc, city, lat, lon, n}.
+ * @returns {string[]} Line-protocol lines.
+ */
+function geoLines(geo) {
+  const out = [];
+  for (const [t, rows] of groupByBucket(geo)) {
+    for (const r of rows.slice(0, 30)) {
+      out.push(
+        `cf_geo,country=${tag(r.cc)},city=${tag(r.city)} n=${r.n}i,lat=${Number(r.lat)},lon=${Number(r.lon)} ${t}`,
+      );
+    }
+  }
+  return out;
+}
+
+/**
+ * Referer series, top 15 per bucket with the tail summed into one entry.
+ *
+ * @param {object[]} referers - Rows of {t, ref, n}.
+ * @returns {string[]} Line-protocol lines.
+ */
+function refererLines(referers) {
+  const out = [];
+  for (const [t, rows] of groupByBucket(referers)) {
+    for (const r of rows.slice(0, 15)) {
+      out.push(`cf_referers,ref=${tag(r.ref)} n=${r.n}i ${t}`);
+    }
+    const rest = rows.slice(15).reduce((a, r) => a + r.n, 0);
+    if (rest > 0) out.push(`cf_referers,ref=(otros) n=${rest}i ${t}`);
+  }
+  return out;
+}
+
 /** Builds the line-protocol payload for one closed window. */
 async function collectWindow(fromS, toS) {
   const W = `WHERE timestamp >= toDateTime(${fromS}) AND timestamp < toDateTime(${toS})`;
@@ -122,25 +191,7 @@ async function collectWindow(fromS, toS) {
   const paths = await aeQuery(
     `SELECT ${B}, index1 AS c, blob1 AS p, SUM(_sample_interval) AS n FROM jmrp_edge_requests ${W} AND index1 IN ('page','md-twin','llms-txt','pdf','feed-xml') GROUP BY t, c, p`,
   );
-  const byBucket = new Map();
-  for (const r of paths) {
-    const key = `${r.t}|${r.c}`;
-    if (!byBucket.has(key)) byBucket.set(key, []);
-    byBucket.get(key).push(r);
-  }
-  for (const [key, rows] of byBucket) {
-    const [t, c] = key.split("|", 2);
-    rows.sort((a, b) => b.n - a.n);
-    const keep = c === "page" ? rows.slice(0, 20) : rows;
-    const rest = c === "page" ? rows.slice(20) : [];
-    for (const r of keep) {
-      lines.push(`cf_paths,class=${tag(c)},path=${tag(r.p)} n=${r.n}i ${t}`);
-    }
-    const restSum = rest.reduce((a, r) => a + r.n, 0);
-    if (restSum > 0) {
-      lines.push(`cf_paths,class=${tag(c)},path=(otros) n=${restSum}i ${t}`);
-    }
-  }
+  lines.push(...pathLines(paths));
   // ── Worker v2 dimensions (blob11 = final status marks the new rows) ──────
   const V2 = `${W} AND blob11 != ''`;
 
@@ -166,24 +217,12 @@ async function collectWindow(fromS, toS) {
   const geo = await aeQuery(
     `SELECT ${B}, blob3 AS cc, blob7 AS city, AVG(double1) AS lat, AVG(double2) AS lon, SUM(_sample_interval) AS n FROM jmrp_edge_requests ${V2} AND double1 != 0 GROUP BY t, cc, city ORDER BY n DESC`,
   );
-  for (const [t, rows] of groupByBucket(geo)) {
-    for (const r of rows.slice(0, 30)) {
-      lines.push(
-        `cf_geo,country=${tag(r.cc)},city=${tag(r.city)} n=${r.n}i,lat=${Number(r.lat)},lon=${Number(r.lon)} ${t}`,
-      );
-    }
-  }
+  lines.push(...geoLines(geo));
 
   const referers = await aeQuery(
     `SELECT ${B}, blob5 AS ref, SUM(_sample_interval) AS n FROM jmrp_edge_requests ${V2} AND blob5 != '' GROUP BY t, ref ORDER BY n DESC`,
   );
-  for (const [t, rows] of groupByBucket(referers)) {
-    for (const r of rows.slice(0, 15)) {
-      lines.push(`cf_referers,ref=${tag(r.ref)} n=${r.n}i ${t}`);
-    }
-    const rest = rows.slice(15).reduce((a, r) => a + r.n, 0);
-    if (rest > 0) lines.push(`cf_referers,ref=(otros) n=${rest}i ${t}`);
-  }
+  lines.push(...refererLines(referers));
 
   const proto = await aeQuery(
     `SELECT ${B}, blob9 AS pr, blob10 AS tls, SUM(_sample_interval) AS n FROM jmrp_edge_requests ${V2} GROUP BY t, pr, tls`,

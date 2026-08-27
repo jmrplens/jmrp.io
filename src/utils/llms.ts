@@ -400,6 +400,70 @@ interface CvContext {
   }) => string;
 }
 
+/**
+ * The identity block that opens the CV twin: name, headline and contact.
+ *
+ * Split out of {@link cvToMarkdown} because every field here is optional, and
+ * six independent guards in the middle of a function that also walks sections
+ * and downloads is most of that function's cognitive load for none of its
+ * meaning.
+ *
+ * @param b - The CV's `basics`.
+ * @param L - Localized labels for this document.
+ * @param prose - Collapses whitespace and rewrites relative links as absolute.
+ * @returns The opening markdown lines.
+ */
+function cvBasicsLines(
+  b: CVData["basics"],
+  L: (typeof CV_LABELS)["en" | "es"],
+  prose: (text: string) => string,
+): string[] {
+  return [
+    `**${b.name}** — ${b.headline}`,
+    "",
+    ...(b.location ? [`${L.location}: ${b.location}`] : []),
+    ...(b.availability ? [`${L.availability}: ${b.availability}`] : []),
+    ...(b.email ? [`${L.email}: ${b.email}`] : []),
+    ...(b.links && b.links.length > 0
+      ? [`${L.links}: ${b.links.map(labelledUrl).join(", ")}`]
+      : []),
+    "",
+    ...(b.profile ? [prose(b.profile), ""] : []),
+  ];
+}
+
+/**
+ * The downloads section of the CV twin, one line per published file.
+ *
+ * The PDFs were invisible from this document: the HTML page links them, but an
+ * agent reading the twin had no way to discover they exist. Absolute URLs, and
+ * the page's own wording for each format so the reader can pick the right one.
+ *
+ * @param downloads - The CV's download groups.
+ * @param L - Localized labels for this document.
+ * @param siteUrl - Absolute site origin, for the file URLs.
+ * @returns The markdown lines, empty when nothing is published.
+ */
+function cvDownloadLines(
+  downloads: CVData["downloads"],
+  L: (typeof CV_LABELS)["en" | "es"],
+  siteUrl: string,
+): string[] {
+  if (downloads.length === 0) return [];
+  return [
+    `## ${L.downloads}`,
+    "",
+    ...downloads.flatMap((fmt) => {
+      const note = fmt.note ? ` — ${fmt.note}` : "";
+      return fmt.files.map(
+        (file) =>
+          `- [${file.label} · ${fmt.format}](${siteUrl}${file.url})${note}`,
+      );
+    }),
+    "",
+  ];
+}
+
 /** The fields every chronological CV entry shares. */
 interface CvChronoItem {
   department?: { name: string };
@@ -445,19 +509,7 @@ function cvToMarkdown(
     ],
   };
 
-  const b = cv.basics;
-  const out: string[] = [
-    `**${b.name}** — ${b.headline}`,
-    "",
-    ...(b.location ? [`${L.location}: ${b.location}`] : []),
-    ...(b.availability ? [`${L.availability}: ${b.availability}`] : []),
-    ...(b.email ? [`${L.email}: ${b.email}`] : []),
-    ...(b.links && b.links.length > 0
-      ? [`${L.links}: ${b.links.map(labelledUrl).join(", ")}`]
-      : []),
-    "",
-    ...(b.profile ? [prose(b.profile), ""] : []),
-  ];
+  const out: string[] = cvBasicsLines(cv.basics, L, prose);
 
   for (const section of cv.sections) {
     // H2, not H3: the only caller is `generateCvMarkdown`, whose `# <name>` is
@@ -473,22 +525,7 @@ function cvToMarkdown(
     out.push(...render(section, ctx));
   }
 
-  // The PDFs were invisible from here: an agent reading this twin had no way
-  // to discover them (the HTML page links them, but this document did not).
-  // Absolute URLs, one line per file, with the page's own wording for each
-  // format so the reader can pick the right one.
-  if (cv.downloads.length > 0) {
-    out.push(`## ${L.downloads}`, "");
-    for (const fmt of cv.downloads) {
-      for (const file of fmt.files) {
-        const note = fmt.note ? ` — ${fmt.note}` : "";
-        out.push(
-          `- [${file.label} · ${fmt.format}](${siteUrl}${file.url})${note}`,
-        );
-      }
-    }
-    out.push("");
-  }
+  out.push(...cvDownloadLines(cv.downloads, L, siteUrl));
   return out;
 }
 

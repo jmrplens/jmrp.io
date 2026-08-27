@@ -307,10 +307,11 @@ export async function buildDesign(locale, options = {}) {
     // Same PDF-only exclusion as the ATS generator: Scholar stays on the web.
     ...basics.links
       .filter((l) => l.kind !== "scholar")
-      .map(
-        (l) =>
-          String.raw`\ContactEntry{${CONTACT_ICONS[l.kind] ?? String.raw`\faLink`}}{${escapeLatex(labelForContact(l))}}{${l.url}}`,
-      ),
+      .map((l) => {
+        const icon = CONTACT_ICONS[l.kind] ?? String.raw`\faLink`;
+        const label = escapeLatex(labelForContact(l));
+        return String.raw`\ContactEntry{${icon}}{${label}}{${l.url}}`;
+      }),
   ]
     .map((c) => `  ${c}%`)
     .join("\n");
