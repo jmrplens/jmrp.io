@@ -1,3 +1,6 @@
+import { useTranslations } from "@i18n/utils";
+import { getCVData } from "@utils/cv";
+import { getProjects, hostedHref } from "@utils/projects";
 import { getEntry } from "astro:content";
 
 /**
@@ -34,6 +37,21 @@ function item(name: string, detail?: string): string {
 /**
  * The `/about/` page as markdown.
  *
+ * ── Why it carries more than the bio ──────────────────────────────────────
+ * This twin used to emit the lead, the note, "I build", "I write about" and
+ * education, and stopped there — 41% of the page's word count and 36% of its
+ * vocabulary, against 104–159% for every other twin. What it dropped was the
+ * half of the page worth citing: the four featured open-source projects with
+ * their technologies and metrics, the contact block, and the editorial &
+ * corrections policy that every post's AI-assistance disclosure links to. On
+ * the one page that exists to answer "who is this person and what does he
+ * build", the answer to the second half was missing.
+ *
+ * Every added block reads the SAME source the page reads, so the twin cannot
+ * drift from what a visitor sees: the curated name list in `about.yaml`
+ * resolved against the CV's own `projects` section, the running instances
+ * from `projects.yaml`, and the policy from the translation bundle.
+ *
  * @param locale - Which locale's copy to render.
  * @returns Markdown lines.
  */
@@ -46,6 +64,26 @@ export async function aboutLines(locale: "en" | "es"): Promise<Lines> {
     throw new Error("profile/about.yaml is missing or has the wrong type");
   }
   const d = entry.data[locale];
+  const t = useTranslations(locale);
+
+  // Narrowed through the discriminant rather than indexed straight off the
+  // `find`: `CVSection` is a discriminated union whose `skills` and
+  // `certificates` branches carry `groups`, not `items`, so `.items` straight
+  // off the `find` does not type-check. AboutPage.astro flattens `items`
+  // across ALL sections through an `as unknown as` cast; today both reach the
+  // same four projects, because `projects` is the only body section with an
+  // `items` array of named entries, but this way is checked.
+  const cv = await getCVData(locale);
+  const projectsSection = cv.sections.find(
+    (section) => section.kind === "projects",
+  );
+  const cvProjects =
+    projectsSection?.kind === "projects" ? projectsSection.items : [];
+  const hosted = await getProjects();
+  const featured = entry.data.featuredProjects
+    .map((name) => cvProjects.find((project) => project.name === name))
+    .filter((project) => project !== undefined);
+
   return [
     ...d.lead,
     "",
@@ -59,11 +97,65 @@ export async function aboutLines(locale: "en" | "es"): Promise<Lines> {
     "",
     ...d.writesAbout.map((line) => `- ${line}`),
     "",
+    `## ${d.labels.contact}`,
+    "",
+    // The same three rows the "say hi" card renders. The address is written
+    // in plain text on purpose: ObfuscatedEmail exists to keep it out of the
+    // MARKUP, and this document is machine-readable by definition — the very
+    // same address is already published in person.jsonld and security.txt.
+    `- git: https://github.com/jmrplens`,
+    `- mail: ${entry.data.person.email}`,
+    `- cv: ${locale === "es" ? "/es" : ""}/cv/`,
+    "",
+    `## ${d.labels.projects}`,
+    "",
+    ...featured.flatMap((project) => [
+      `### ${project.name}`,
+      "",
+      ...(project.tech ? [project.tech, ""] : []),
+      // The YAML folds the description across several lines; collapsed so the
+      // paragraph is one line, like every other prose block in these twins.
+      ...(project.description
+        ? [project.description.replaceAll(/\s+/gu, " ").trim(), ""]
+        : []),
+      ...(project.metrics ?? []).map((metric) => `- ${metric}`),
+      // Every labelled link, not just the primary one the card renders: the
+      // card can only afford one, and repository, docs and registry listings
+      // are exactly what tells one project from another.
+      ...(project.links ?? []).map((link) => `- ${link.label}: ${link.url}`),
+      // The callable instance, when there is one. /projects/ shows it and the
+      // profile cards do too, so withholding it here would make the twin the
+      // only surface that hides that a project can be called right now.
+      ...(() => {
+        const live = hosted.find((candidate) => candidate.id === project.name);
+        const href = live && hostedHref(live, locale);
+        return href ? [`- Hosted: ${href}`] : [];
+      })(),
+      "",
+    ]),
     `## ${d.labels.education}`,
     "",
     ...d.education.map((e) =>
       item(e.degree, [e.org, e.year, e.note].filter(Boolean).join(" · ")),
     ),
+    "",
+    // The editorial & corrections policy (#editorial). Every post discloses
+    // AI assistance and links here for what that disclosure MEANS; a model
+    // that read only the twin saw the disclosure and never the policy behind
+    // it. The `// ` prefix is the page's kicker styling, not part of the
+    // heading.
+    `## ${t("pages.about.editorialTitle").replace(/^\/\/\s*/u, "")}`,
+    "",
+    t("pages.about.editorialBody1"),
+    "",
+    t("pages.about.editorialBody2"),
+    "",
+    t("pages.about.editorialBody3"),
+    "",
+    t("pages.about.editorialBody4"),
+    "",
+    `- mail: ${entry.data.person.email}`,
+    `- security.txt: /.well-known/security.txt`,
     "",
   ];
 }
