@@ -160,6 +160,16 @@ Allow: /
 # www.jmrp.io, neither of which depends on this file.
 Sitemap: https://jmrp.io/sitemap-index.xml
 
+# The same AI policy, restated for the crawlers that read another dialect:
+# https://jmrp.io/ai.txt                 — Spawning's ai.txt (User-Agent: * / Allow: /)
+# https://jmrp.io/.well-known/tdmrep.json — W3C TDM Reservation Protocol,
+#                                          "tdm-reservation": 0: no rights are
+#                                          reserved over text and data mining,
+#                                          which is what `ai-train=yes` grants
+#                                          above. The three files MUST be
+#                                          edited together; tests/seo.spec.ts
+#                                          fails if they disagree.
+
 # LLM context (llmstxt.org standard)
 # https://jmrp.io/llms.txt
 # https://jmrp.io/llms-full.txt          — both languages, an index: the detail

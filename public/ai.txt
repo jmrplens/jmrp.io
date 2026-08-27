@@ -6,9 +6,14 @@
 #
 #     Content-Signal: search=yes, ai-input=yes, ai-train=yes
 #
+# The same intent is also published as a TDM Reservation Protocol document at
+# /.well-known/tdmrep.json (`"tdm-reservation": 0` — no rights reserved over
+# text and data mining), which is the dialect EU-facing crawlers ask for.
+#
 # This file exists because some agents look here first and treat a 404 as
-# ambiguous. If the policy ever changes, robots.txt and this file MUST be
-# changed together — a disagreement between them is worse than either alone.
+# ambiguous. If the policy ever changes, robots.txt, this file and tdmrep.json
+# MUST be changed together — a disagreement between them is worse than any one
+# of them alone.
 
 User-Agent: *
 Allow: /

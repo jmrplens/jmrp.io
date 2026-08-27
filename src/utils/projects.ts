@@ -54,6 +54,8 @@ export interface Project {
   hostedEs?: string;
   /** Raw callable MCP endpoint; presence marks the project as part of the fleet (see the schema). */
   endpoint?: string;
+  /** Primary third-party listing: rendered as a card link AND folded into `sameAs`. */
+  listing?: { label: string; url: string; icon: string };
   sameAs?: string[];
   topics: ProjectTopic[];
   summary: { en: string; es: string };
@@ -182,8 +184,11 @@ export function buildProjectSchema(project: Project): Record<string, unknown> {
   // The docs URL is an identity alias only when it is a separate site.
   // Projects without one point `docs` at the repo README anchor, which is
   // just `url` with a fragment — not a distinct page worth aliasing.
+  // `listing` is a `sameAs` that also gets rendered, so it is folded in here
+  // rather than authored twice — one URL, one place to change it.
   const aliases = [
     ...(project.docs.startsWith(`${project.repo}#`) ? [] : [project.docs]),
+    ...(project.listing ? [project.listing.url] : []),
     ...(project.sameAs ?? []),
   ];
 

@@ -607,6 +607,30 @@ test.describe("SEO & Metadata Checks", () => {
     expect(ai).not.toMatch(/^Disallow:\s*\/\s*$/im);
   });
 
+  test("tdmrep.json states the same AI policy as robots.txt", async ({
+    page,
+  }) => {
+    // Third dialect of the same statement (robots.txt speaks Content Signals,
+    // ai.txt the Spawning one, this the W3C TDM Reservation Protocol), and the
+    // only one with legal weight in the EU: `tdm-reservation: 1` would reserve
+    // the mining rights that `ai-train=yes` grants two files over. Flipping one
+    // without the others publishes a contradiction, so they are tested
+    // together.
+    const robots = await (await page.goto("/robots.txt"))?.text();
+    expect(robots).toMatch(/Content-Signal:[^\n]*ai-train=yes/i);
+
+    const response = await page.goto("/.well-known/tdmrep.json");
+    expect(response?.status()).toBe(200);
+    const entries = JSON.parse((await response?.text()) ?? "[]") as {
+      location?: string;
+      "tdm-reservation"?: number;
+    }[];
+
+    const root = entries.find((entry) => entry.location === "/");
+    expect(root).toBeDefined();
+    expect(root?.["tdm-reservation"]).toBe(0);
+  });
+
   test("traffic-advice opts in to prefetch proxies", async ({ page }) => {
     // The file only means anything if `disallow` is false: with `true` we would
     // be turning the Chrome prefetch proxy away, which is the opposite of why
