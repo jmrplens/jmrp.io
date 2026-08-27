@@ -24,6 +24,13 @@ type: projects
 #   browser's GET. Card link only, never JSON-LD: the running instance is a
 #   different entity from the program, and mcp.jmrp.io already publishes that
 #   node and links it to this project's `#software` @id via `targetProduct`.
+# * `listing` is the project's PRIMARY third-party listing (PyPI, the CrowdSec
+#   Hub, an MCP directory). It is the only registry link rendered on the card;
+#   `buildProjectSchema` folds its URL into `sameAs` on its own, so never
+#   repeat it under `sameAs`. `icon` is a bare Iconify id — the UnoCSS YAML
+#   extractor picks it up without the `i-` prefix.
+# * `sameAs` holds the registry/identity URLs that are NOT rendered: secondary
+#   directories and the Zenodo DOI. Identity signal only, no navigation.
 # * `endpoint` is the raw callable MCP URL and the single source of truth for
 #   the fleet: BaseHead/build-identity derive `<endpoint>#api` owns @ids from
 #   it, the /homelab/ MCP card lists it, and llms.txt iterates it. Adding a
@@ -48,8 +55,11 @@ projects:
     hosted: https://mcp.jmrp.io/#gitlab
     hostedEs: https://mcp.jmrp.io/es/#gitlab
     endpoint: https://mcp.jmrp.io/gitlab
+    listing:
+      label: Glama
+      url: https://glama.ai/mcp/servers/jmrplens/gitlab-mcp-server
+      icon: mdi:view-grid-outline
     sameAs:
-      - https://glama.ai/mcp/servers/jmrplens/gitlab-mcp-server
       - https://cursor.directory/plugins/gitlab-mcp-server
       - https://mcp.so/server/gitlab-mcp-server/jmrplens
     topics:
@@ -72,8 +82,11 @@ projects:
     repo: https://github.com/jmrplens/phonometry
     docs: https://jmrplens.github.io/phonometry/
     docsEs: https://jmrplens.github.io/phonometry/es/
+    listing:
+      label: PyPI
+      url: https://pypi.org/project/phonometry/
+      icon: simple-icons:pypi
     sameAs:
-      - https://pypi.org/project/phonometry/
       - https://doi.org/10.5281/zenodo.21215280
     topics:
       - { name: Acoustics, wikidata: Q82811 }
@@ -94,8 +107,10 @@ projects:
     license: MIT
     repo: https://github.com/jmrplens/cs-routeros-bouncer
     docs: https://jmrplens.github.io/cs-routeros-bouncer/
-    sameAs:
-      - https://app.crowdsec.net/hub/author/jmrplens/remediation-components/cs-routeros-bouncer
+    listing:
+      label: CrowdSec Hub
+      url: https://app.crowdsec.net/hub/author/jmrplens/remediation-components/cs-routeros-bouncer
+      icon: mdi:shield-check
     topics:
       - { name: Network security, wikidata: Q989632 }
       - { name: RouterOS, wikidata: Q12036888 }
@@ -138,8 +153,11 @@ projects:
     hosted: https://mcp.jmrp.io/#libgen
     hostedEs: https://mcp.jmrp.io/es/#libgen
     endpoint: https://mcp.jmrp.io/libgen
+    listing:
+      label: Glama
+      url: https://glama.ai/mcp/servers/jmrplens/libgen-mcp
+      icon: mdi:view-grid-outline
     sameAs:
-      - https://glama.ai/mcp/servers/jmrplens/libgen-mcp
       - https://cursor.directory/plugins/libgen-mcp
     topics:
       - { name: Model Context Protocol, wikidata: Q133436854 }

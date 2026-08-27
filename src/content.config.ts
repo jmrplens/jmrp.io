@@ -711,6 +711,27 @@ const ProjectEntry = z.object({
    * MACHINES (`POST` transport; a browser `GET` answers 405 by design).
    */
   endpoint: z.url().optional(),
+  /**
+   * The project's primary third-party listing — the package index, hub or
+   * catalogue where a reader can find it published (PyPI, the CrowdSec Hub,
+   * an MCP directory). Unlike `sameAs`, this one is RENDERED as a card link:
+   * the listing is where the software is distributed and reviewed, which is
+   * navigation a reader wants, not just an identity signal.
+   *
+   * Its URL is folded into the JSON-LD `sameAs` array automatically
+   * (`buildProjectSchema`), so it is authored here once and must NOT be
+   * repeated under `sameAs`. `icon` is a bare Iconify id (`collection:name`),
+   * picked up by the UnoCSS YAML extractor without the `i-` prefix.
+   */
+  listing: z
+    .object({
+      /** Proper noun of the registry ("PyPI", "CrowdSec Hub"); not translated. */
+      label: z.string(),
+      url: z.url(),
+      /** Bare Iconify id, e.g. `simple-icons:pypi`. */
+      icon: z.string().regex(/^[a-z0-9-]+:[a-z0-9-]+$/, "bare Iconify id"),
+    })
+    .optional(),
   /** Extra canonical URLs for the software entity (registries, PyPI, DOI). */
   sameAs: z.array(z.url()).optional(),
   topics: z.array(ProjectTopic).min(1),

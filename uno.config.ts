@@ -4,6 +4,8 @@
  * Scans all source and content files for icon patterns.
  * Custom extractor ensures icons in YAML/MDX/TS are detected even without 'i-' prefix.
  */
+import { readFileSync } from "node:fs";
+
 import { defineConfig, presetIcons, presetWind4 } from "unocss";
 
 const iconCollections = [
@@ -16,6 +18,22 @@ const iconCollections = [
   "devicon",
   "tabler",
 ];
+
+/**
+ * Bare Iconify ids authored as `icon:` values in the projects document,
+ * returned as `i-`-prefixed utility names.
+ *
+ * @returns Utility class names to safelist.
+ */
+function projectListingIcons(): string[] {
+  const doc = readFileSync(
+    new URL("src/content/profile/projects.yaml", import.meta.url),
+    "utf8",
+  );
+  return [...doc.matchAll(/^\s*icon:\s*([a-z0-9-]+:[a-z0-9-]+)\s*$/gm)].map(
+    (match) => `i-${match[1]}`,
+  );
+}
 
 export default defineConfig({
   content: {
@@ -45,6 +63,14 @@ export default defineConfig({
     },
   ],
   safelist: [
+    // Project listing icons, authored in `src/content/profile/projects.yaml`
+    // (`listing.icon`). The card builds the class at runtime as
+    // `i-${listing.icon}`, so neither the Vite-side extractor nor the
+    // `content.filesystem` scan above ever produces those utilities — the
+    // class ships in the HTML and resolves to nothing. Reading the document
+    // here keeps a NEW project's listing icon working with no hand-maintained
+    // list (/cv solves the same problem with a block of literal <span>s).
+    ...projectListingIcons(),
     // Footer custom_social icons (dynamically generated from socials.yaml)
     "i-mdi:key",
     "i-simple-icons:mikrotik",
