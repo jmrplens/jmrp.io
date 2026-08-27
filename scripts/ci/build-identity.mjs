@@ -268,6 +268,12 @@ function buildIdentityDocument() {
     // `@id` reference would dangle for them. Unprefixed (EN) on purpose — the
     // entity is locale-neutral, like `#person` and `#website` themselves.
     mainEntityOfPage: `${SITE_URL}/about/`,
+    // The editorial & corrections policy published at /about/#editorial —
+    // verification, corrections and AI-assistance disclosure. Stated in the
+    // graph rather than only in prose, so the six downstream sites that splice
+    // this node in inherit the signal too.
+    // KEEP-IN-SYNC: src/components/layout/BaseHead.astro.
+    publishingPrinciples: `${SITE_URL}/about/#editorial`,
     image: {
       "@type": "ImageObject",
       url: IMAGE.url,

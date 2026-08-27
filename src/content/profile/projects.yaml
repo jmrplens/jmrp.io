@@ -52,9 +52,10 @@ projects:
     repo: https://github.com/jmrplens/gitlab-mcp-server
     docs: https://jmrplens.github.io/gitlab-mcp-server/
     docsEs: https://jmrplens.github.io/gitlab-mcp-server/es/
-    hosted: https://mcp.jmrp.io/#gitlab
-    hostedEs: https://mcp.jmrp.io/es/#gitlab
+    hosted: https://mcp.jmrp.io/servers/gitlab/
+    hostedEs: https://mcp.jmrp.io/es/servers/gitlab/
     endpoint: https://mcp.jmrp.io/gitlab
+    registryId: io.github.jmrplens/gitlab-mcp-server
     listing:
       label: Glama
       url: https://glama.ai/mcp/servers/jmrplens/gitlab-mcp-server
@@ -62,6 +63,9 @@ projects:
     sameAs:
       - https://cursor.directory/plugins/gitlab-mcp-server
       - https://mcp.so/server/gitlab-mcp-server/jmrplens
+      - https://lobehub.com/mcp/jmrplens-gitlab-mcp-server
+      - https://hub.docker.com/r/jmrplens/gitlab-mcp-server
+      - https://doi.org/10.5281/zenodo.21215045
     topics:
       - { name: Model Context Protocol, wikidata: Q133436854 }
       - { name: GitLab, wikidata: Q16639197 }
@@ -150,15 +154,18 @@ projects:
     license: MIT
     repo: https://github.com/jmrplens/libgen-mcp
     docs: https://jmrplens.github.io/libgen-mcp/
-    hosted: https://mcp.jmrp.io/#libgen
-    hostedEs: https://mcp.jmrp.io/es/#libgen
+    hosted: https://mcp.jmrp.io/servers/libgen/
+    hostedEs: https://mcp.jmrp.io/es/servers/libgen/
     endpoint: https://mcp.jmrp.io/libgen
+    registryId: io.github.jmrplens/libgen-mcp
     listing:
       label: Glama
       url: https://glama.ai/mcp/servers/jmrplens/libgen-mcp
       icon: mdi:view-grid-outline
     sameAs:
       - https://cursor.directory/plugins/libgen-mcp
+      - https://lobehub.com/mcp/jmrplens-libgen-mcp
+      - https://hub.docker.com/r/jmrplens/libgen-mcp
     topics:
       - { name: Model Context Protocol, wikidata: Q133436854 }
       - { name: Library Genesis, wikidata: Q22017206 }
@@ -199,6 +206,10 @@ projects:
     license: GPL-3.0
     repo: https://github.com/jmrplens/A-Lab
     docs: https://github.com/jmrplens/A-Lab#readme
+    listing:
+      label: MATLAB Central
+      url: https://www.mathworks.com/matlabcentral/fileexchange/93180-a-lab
+      icon: vscode-icons:file-type-matlab
     topics:
       - { name: Acoustics, wikidata: Q82811 }
       - { name: Acoustic impedance, wikidata: Q975684 }
@@ -231,6 +242,10 @@ projects:
     license: GPL-3.0
     repo: https://github.com/jmrplens/SetFigPaper
     docs: https://github.com/jmrplens/SetFigPaper#readme
+    listing:
+      label: MATLAB Central
+      url: https://www.mathworks.com/matlabcentral/fileexchange/75507-setfigpaper
+      icon: vscode-icons:file-type-matlab
     topics:
       - { name: Data visualization, wikidata: Q6504956 }
       - { name: MATLAB, wikidata: Q169478 }
@@ -264,6 +279,10 @@ projects:
     license: GPL-3.0
     repo: https://github.com/jmrplens/FDTDexamples
     docs: https://github.com/jmrplens/FDTDexamples#readme
+    listing:
+      label: MATLAB Central
+      url: https://www.mathworks.com/matlabcentral/fileexchange/72883-fdtdexamples
+      icon: vscode-icons:file-type-matlab
     topics:
       - { name: Finite-difference time-domain method, wikidata: Q1417308 }
       - { name: Aeroacoustics, wikidata: Q381331 }

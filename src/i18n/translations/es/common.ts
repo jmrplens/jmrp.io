@@ -928,6 +928,7 @@ export const common = {
       repo: "Código",
       docs: "Docs",
       hosted: "Instancia en vivo",
+      downloads: "Descargas",
       topicsLabel: "Temas que cubre {project}",
     },
     tools: {

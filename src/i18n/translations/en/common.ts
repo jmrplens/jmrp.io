@@ -934,6 +934,7 @@ export const common = {
       repo: "Source",
       docs: "Docs",
       hosted: "Live instance",
+      downloads: "Downloads",
       topicsLabel: "Topics covered by {project}",
     },
     tools: {

@@ -3,14 +3,22 @@ import path from "node:path";
 
 import { type AstroIntegrationLogger } from "astro";
 
+import {
+  fetchAllDownloads,
+  type ProjectDownloads,
+} from "../../../scripts/download-sources.mjs";
 import { safeStringify } from "../shared.js";
 
 /**
  * Cumulative, all-time download totals for the owner's public projects,
- * refreshed at pre-build and consumed by the homepage hero terminal
- * (`downloads.total`). Only sources that expose a *cumulative* count are
- * summed here — PyPI/npm expose windowed stats, not lifetime totals, so they
- * are intentionally excluded (their volume is rounding noise at this scale).
+ * refreshed at pre-build. The grand total feeds the homepage hero terminal
+ * (`downloads.total`); the per-project breakdown feeds the project cards on
+ * /projects/, which show a figure only once it clears
+ * `DOWNLOADS_DISPLAY_MIN`.
+ *
+ * Which channels are counted — and which are left out, with the reason for
+ * each — lives in `scripts/download-sources.mjs`, shared with the CV
+ * generators so the same project cannot be reported two different ways.
  */
 const OUTPUT_DIR = "src/data";
 const OUTPUT_FILE = "downloads.json";
@@ -18,105 +26,23 @@ const OUTPUT_FILE = "downloads.json";
 /** Path to the generated downloads data file, relative to the project root. */
 export const DOWNLOADS_DATA_PATH = `${OUTPUT_DIR}/${OUTPUT_FILE}`;
 
-const UA = "Astro-PreBuild-Integration (https://jmrp.io/)";
-const OWNER = "jmrplens";
-
-/**
- * GitHub repos whose Releases ship downloadable binary assets. Their
- * `download_count` is cumulative (all-time) and read straight from the API.
- */
-const GITHUB_RELEASE_REPOS = [
-  "gitlab-mcp-server",
-  "cs-routeros-bouncer",
-  "Cloudflare-DNS-Updater",
-] as const;
-
-/** Docker Hub `namespace/repository` slugs whose `pull_count` we sum. */
-const DOCKER_HUB_IMAGES = [`${OWNER}/gitlab-mcp-server`] as const;
-
 /** Persisted shape of {@link DOWNLOADS_DATA_PATH}. */
 interface DownloadsData {
   /** Grand total across every configured source. */
   total: number;
   /** ISO timestamp of the last successful refresh. */
   generatedAt: string;
-  /** Per-source breakdown (for debugging / future per-source display). */
+  /** Aggregate breakdown per kind of source. */
   sources: {
     githubReleases: number;
     dockerHub: number;
+    /** Hand-read counts (MathWorks blocks scripted requests). */
+    manual: number;
   };
-}
-
-/** A single release object (only the fields we read). */
-interface GitHubRelease {
-  assets?: { download_count?: number }[];
-}
-
-/** A Docker Hub repository object (only the field we read). */
-interface DockerHubRepo {
-  pull_count?: number;
-}
-
-/**
- * Sums `download_count` across every release asset of a single repo, following
- * pagination. Throws on a non-OK response so the caller can fall back.
- *
- * @param repo - Repository name under {@link OWNER}.
- * @param token - Optional GitHub token to lift the rate limit.
- * @returns Total asset downloads for the repo.
- */
-async function fetchRepoReleaseDownloads(
-  repo: string,
-  token: string | undefined,
-): Promise<number> {
-  const headers: Record<string, string> = {
-    "User-Agent": UA,
-    Accept: "application/vnd.github+json",
-  };
-  if (token) headers.Authorization = `Bearer ${token}`;
-
-  let total = 0;
-  for (let page = 1; page <= 20; page++) {
-    const res = await fetch(
-      `https://api.github.com/repos/${OWNER}/${repo}/releases?per_page=100&page=${page}`,
-      { headers, signal: AbortSignal.timeout(15_000) },
-    );
-    if (!res.ok) throw new Error(`GitHub ${repo} releases: ${res.status}`);
-
-    const releases = (await res.json()) as GitHubRelease[];
-    if (!Array.isArray(releases) || releases.length === 0) break;
-
-    for (const release of releases) {
-      for (const asset of release.assets ?? []) {
-        total += asset.download_count ?? 0;
-      }
-    }
-    if (releases.length < 100) break; // last page
-  }
-  return total;
-}
-
-/**
- * Reads the cumulative `pull_count` of a single Docker Hub image.
- *
- * @param slug - `namespace/repository` slug.
- * @returns The image's pull count.
- */
-async function fetchDockerHubPulls(slug: string): Promise<number> {
-  const res = await fetch(`https://hub.docker.com/v2/repositories/${slug}/`, {
-    headers: { "User-Agent": UA },
-    signal: AbortSignal.timeout(15_000),
-  });
-  if (!res.ok) throw new Error(`Docker Hub ${slug}: ${res.status}`);
-
-  // Optional chaining guards a null/malformed 200 body; throwing (rather than
-  // returning 0) keeps the refresh atomic — the caller's catch then preserves
-  // the last good total instead of persisting a partial one.
-  const repo = (await res.json()) as DockerHubRepo | null;
-  if (typeof repo?.pull_count !== "number") {
-    throw new TypeError(`Docker Hub ${slug}: missing pull_count`);
-  }
-  return repo.pull_count;
+  /** Date the hand-read counts were last verified. */
+  manualVerifiedOn: string;
+  /** Per-project breakdown, keyed by GitHub repository name. */
+  projects: Record<string, ProjectDownloads>;
 }
 
 /**
@@ -137,22 +63,14 @@ export async function setupDownloads(
   const outputPath = path.join(outputDirAbs, OUTPUT_FILE);
 
   try {
-    const githubReleases = (
-      await Promise.all(
-        GITHUB_RELEASE_REPOS.map((repo) =>
-          fetchRepoReleaseDownloads(repo, token),
-        ),
-      )
-    ).reduce((sum, n) => sum + n, 0);
-
-    const dockerHub = (
-      await Promise.all(DOCKER_HUB_IMAGES.map(fetchDockerHubPulls))
-    ).reduce((sum, n) => sum + n, 0);
-
+    const { total, sources, manualVerifiedOn, projects } =
+      await fetchAllDownloads(token);
     const data: DownloadsData = {
-      total: githubReleases + dockerHub,
+      total,
       generatedAt: new Date().toISOString(),
-      sources: { githubReleases, dockerHub },
+      sources,
+      manualVerifiedOn,
+      projects,
     };
 
     if (!fs.existsSync(outputDirAbs)) {
@@ -164,7 +82,9 @@ export async function setupDownloads(
 
     logger.info(
       `  ✓ Downloads total: ${data.total.toLocaleString("en-US")} ` +
-        `(releases ${githubReleases}, docker ${dockerHub})`,
+        `(releases ${sources.githubReleases}, docker ${sources.dockerHub}, ` +
+        `manual ${sources.manual}, ` +
+        `${Object.keys(projects).length} projects)`,
     );
   } catch (error) {
     const message =

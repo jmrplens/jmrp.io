@@ -818,6 +818,7 @@ patrón
 pcre
 pdfs
 pelín
+pepy
 perjudicial
 pero
 perplexitybot
@@ -896,6 +897,7 @@ pwgen
 pycrowdsec
 pymodbus
 pypi
+pypistats
 pytest
 página
 páginas
@@ -1152,6 +1154,7 @@ ultrasónico
 ultrasónicos
 ultrathin
 umil
+unadlib
 unban
 unbans
 undecryptable
@@ -1200,6 +1203,7 @@ wbsearchentities
 wcag
 webdev
 webfinger
+webmcp
 webmin
 webperf
 webroot

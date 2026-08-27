@@ -10,6 +10,12 @@
 
 import process from "node:process";
 
+import {
+  DOWNLOAD_SOURCES,
+  DOWNLOADS_DISPLAY_MIN,
+  fetchDockerHubPulls,
+} from "../download-sources.mjs";
+
 const API = "https://api.github.com";
 /** @type {Map<string, Promise<{stars:number, releases:number, downloads:number}>>} */
 const cache = new Map();
@@ -40,7 +46,9 @@ export function githubSlug(links) {
 }
 
 /**
- * Fetches star, release and total-download counts for a repo (cached).
+ * Fetches star, release and combined-download counts for a repo (cached).
+ * `downloads` covers every distribution channel of the project, not just
+ * GitHub Releases.
  *
  * @param {string} slug - The `owner/repo` slug.
  * @returns {Promise<{stars:number, releases:number, downloads:number}>} The stats.
@@ -72,7 +80,25 @@ export function fetchRepoStats(slug) {
           }
         }
       }
-      return { stars: repo.stargazers_count ?? 0, releases, downloads };
+      // A project usually ships through more than one channel — the MCP
+      // servers are on Docker Hub as well as in GitHub Releases — and the
+      // badge has to state ONE number or it understates the project. The
+      // channel map lives in `download-sources.mjs`, shared with the pre-build
+      // step that computes the homepage total, so the CV and the homepage
+      // cannot report the same project two different ways.
+      const name = slug.split("/", 2)[1] ?? "";
+      const channels = DOWNLOAD_SOURCES[name];
+      const pulls = await Promise.all(
+        (channels?.docker ?? []).map(fetchDockerHubPulls),
+      );
+      const extra =
+        pulls.reduce((sum, n) => sum + n, 0) + (channels?.manual?.count ?? 0);
+
+      return {
+        stars: repo.stargazers_count ?? 0,
+        releases,
+        downloads: downloads + extra,
+      };
     } catch (error) {
       // Don't cache failures so a later call can retry.
       cache.delete(slug);
@@ -84,7 +110,8 @@ export function fetchRepoStats(slug) {
 }
 
 /**
- * Formats repo stats as CV metric badges, localized.
+ * Formats repo stats as CV metric badges, localized. The download badge is
+ * omitted below {@link DOWNLOADS_DISPLAY_MIN}.
  *
  * @param {{stars:number, releases:number, downloads:number}} stats - The stats.
  * @param {string} locale - "es" or "en".
@@ -93,11 +120,11 @@ export function fetchRepoStats(slug) {
 export function formatStats(stats, locale) {
   const out = [`${stats.stars}★`];
   if (stats.releases > 0) out.push(`${stats.releases} releases`);
-  if (stats.downloads > 0) {
-    const count =
-      stats.downloads >= 1000
-        ? `~${Math.round(stats.downloads / 1000)}k`
-        : String(stats.downloads);
+  // Below the threshold the figure is not flattering — "104 downloads" next
+  // to a project reads as a verdict on it. The project keeps contributing to
+  // the site-wide total either way; what is suppressed is only its own badge.
+  if (stats.downloads >= DOWNLOADS_DISPLAY_MIN) {
+    const count = `~${Math.round(stats.downloads / 1000)}k`;
     out.push(`${count} ${locale === "es" ? "descargas" : "downloads"}`);
   }
   return out;

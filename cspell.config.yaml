@@ -68,6 +68,10 @@ ignorePaths:
   - "*.woff2"
   - "*.woff"
   - cv_latex/**
+  # Generated LaTeX for the private CV variants (git-ignored, carries the phone
+  # number): the same machine-written Spanish preamble as cv_latex, and not
+  # project source at all.
+  - cv_private/**
   - scripts/cv/** # LaTeX/ATS generator toolchain (LaTeX macros + Spanish template strings)
   - public/pdf/**
   - src/content/publications_data/papers.bib
