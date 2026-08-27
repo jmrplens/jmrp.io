@@ -398,3 +398,20 @@ projects:
     summary:
       en: Laboratory instruments control with MATLAB.
       es: Control de instrumentos de laboratorio con MATLAB.
+
+  - id: picoScopeMATLAB
+    name: picoScopeMATLAB
+    status: archived
+    schemaType: SoftwareSourceCode
+    language: MATLAB
+    license: MIT
+    repo: https://github.com/jmrplens/picoScopeMATLAB
+    docs: https://github.com/jmrplens/picoScopeMATLAB#readme
+    topics:
+      - { name: Oscilloscope, wikidata: Q174320 }
+      - { name: Data acquisition, wikidata: Q1172399 }
+      - { name: Measuring instrument, wikidata: Q2041172 }
+      - { name: MATLAB, wikidata: Q169478 }
+    summary:
+      en: Library for working with the PicoScope 5000 series (and possibly other models) in MATLAB.
+      es: Biblioteca para trabajar con la serie PicoScope 5000 (y posiblemente otros modelos) en MATLAB.
