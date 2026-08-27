@@ -1,0 +1,59 @@
+{
+  "$comment": [
+    "Sites that splice the `https://jmrp.io/#person` node into their own @graph.",
+    "All of them read the canonical document from raw.githubusercontent at build",
+    "time and keep `snapshotPath` as an offline fallback;",
+    "scripts/ci/propagate-identity.mjs rewrites it when the canonical changes.",
+    "",
+    "`buildPathPrefix` is the prefix that repo's Pages push trigger watches. The",
+    "snapshot lives inside it on purpose: the commit itself then starts their",
+    "build, with no extra call. If a repo is restructured and stops honouring",
+    "that, the script falls back to `dispatchWorkflow`. An empty prefix means the",
+    "workflow has no path filter, so any push starts it.",
+    "",
+    "Adding a consumer is adding an entry here."
+  ],
+  "owner": "jmrplens",
+  "commitAuthor": {
+    "name": "José M. Requena Plens",
+    "email": "jmrplens@gmail.com"
+  },
+  "consumers": [
+    {
+      "repo": "gitlab-mcp-server",
+      "snapshotPath": "site/identity/person.snapshot.json",
+      "buildPathPrefix": "site/",
+      "dispatchWorkflow": "pages.yml"
+    },
+    {
+      "repo": "phonometry",
+      "snapshotPath": "site/identity/person.snapshot.json",
+      "buildPathPrefix": "site/",
+      "dispatchWorkflow": "docs.yml"
+    },
+    {
+      "repo": "libgen-mcp",
+      "snapshotPath": "site/identity/person.snapshot.json",
+      "buildPathPrefix": "site/",
+      "dispatchWorkflow": "pages.yml"
+    },
+    {
+      "repo": "cs-routeros-bouncer",
+      "snapshotPath": "docs/identity/person.snapshot.json",
+      "buildPathPrefix": "docs/",
+      "dispatchWorkflow": "docs.yml"
+    },
+    {
+      "repo": "Cloudflare-DNS-Updater",
+      "snapshotPath": "docs/identity/person.snapshot.json",
+      "buildPathPrefix": "docs/",
+      "dispatchWorkflow": "docs.yml"
+    },
+    {
+      "repo": "jmrplens.github.io",
+      "snapshotPath": "src/data/person.snapshot.json",
+      "buildPathPrefix": "",
+      "dispatchWorkflow": "pages.yml"
+    }
+  ]
+}

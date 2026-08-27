@@ -1,0 +1,53 @@
+# Propagates the canonical `#person` document to the sites that splice it in.
+#
+# Fires ONLY when a push to `main` carries a diff in the canonical document: the
+# `paths` filter IS the condition, not a check performed afterwards, so a merge
+# that does not touch it costs no Actions time at all.
+#
+# What it does lives in scripts/ci/propagate-identity.mjs: rewrite each
+# consumer's versioned `person.snapshot.json` when it differs. That commit lands
+# inside the prefix each repo's Pages trigger watches, so their build starts on
+# its own — no chained calls needed.
+
+name: Identity propagation
+
+on:
+  push:
+    branches: [main]
+    paths: ["public/identity/person.jsonld"]
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Report what would be written, touching no repository"
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+# No cancellation: two runs in a row are two identity changes, and aborting the
+# first would leave some consumers synced and others not.
+concurrency:
+  group: identity-propagation
+  cancel-in-progress: false
+
+jobs:
+  propagate:
+    name: Sync the consumers
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: package.json
+
+      # No `pnpm install` on purpose: the script has no dependencies, only
+      # `fetch` and `node:fs`. Installing the whole tree for six HTTP calls
+      # would be paying minutes for nothing.
+      - name: Propagate the snapshot
+        env:
+          IDENTITY_SYNC_TOKEN: ${{ secrets.IDENTITY_SYNC_TOKEN }}
+        run: |
+          node scripts/ci/propagate-identity.mjs \
+            ${{ inputs.dry_run && '--dry-run' || '' }}
