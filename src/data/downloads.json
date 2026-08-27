@@ -1,8 +1,66 @@
 {
-  "total": 138939,
-  "generatedAt": "2026-08-27T07:56:05.865Z",
+  "total": 145049,
+  "generatedAt": "2026-08-27T09:19:19.392Z",
   "sources": {
-    "githubReleases": 133792,
-    "dockerHub": 5147
+    "githubReleases": 136551,
+    "dockerHub": 7364,
+    "manual": 1134
+  },
+  "manualVerifiedOn": "2026-08-27",
+  "projects": {
+    "gitlab-mcp-server": {
+      "total": 138661,
+      "releases": 133506,
+      "docker": 5155,
+      "manual": 0
+    },
+    "libgen-mcp": {
+      "total": 3829,
+      "releases": 1620,
+      "docker": 2209,
+      "manual": 0
+    },
+    "cs-routeros-bouncer": {
+      "total": 418,
+      "releases": 418,
+      "docker": 0,
+      "manual": 0
+    },
+    "Cloudflare-DNS-Updater": {
+      "total": 104,
+      "releases": 104,
+      "docker": 0,
+      "manual": 0
+    },
+    "A-Lab": {
+      "total": 1297,
+      "releases": 641,
+      "docker": 0,
+      "manual": 656
+    },
+    "LoVE-BASS": {
+      "total": 239,
+      "releases": 239,
+      "docker": 0,
+      "manual": 0
+    },
+    "TFG-TFM_EPS": {
+      "total": 23,
+      "releases": 23,
+      "docker": 0,
+      "manual": 0
+    },
+    "SetFigPaper": {
+      "total": 263,
+      "releases": 0,
+      "docker": 0,
+      "manual": 263
+    },
+    "FDTDexamples": {
+      "total": 215,
+      "releases": 0,
+      "docker": 0,
+      "manual": 215
+    }
   }
 }

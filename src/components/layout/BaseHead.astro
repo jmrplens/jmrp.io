@@ -306,6 +306,13 @@ const websiteSchema = {
     // node do not inherit a dangling reference. Unprefixed on purpose: the
     // entity is locale-neutral, like `#person` and `#website`.
     mainEntityOfPage: new URL("/about/", getSiteUrl()).href,
+    // The editorial & corrections policy the /about/ page publishes under
+    // #editorial: how posts are verified, how errors are corrected, and where
+    // AI assistance is disclosed. Schema.org allows it on Person, and it is
+    // the one E-E-A-T signal the site was making in prose without stating in
+    // the graph — the disclosure line on every AuthorCard already links there.
+    // KEEP-IN-SYNC: scripts/ci/build-identity.mjs.
+    publishingPrinciples: new URL("/about/#editorial", getSiteUrl()).href,
     image: {
       "@type": "ImageObject",
       url: new URL(CANONICAL_PERSON_IMAGE.path, getSiteUrl()).href,

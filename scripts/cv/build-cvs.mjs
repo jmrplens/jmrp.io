@@ -59,6 +59,19 @@ const INPUT_SOURCES = [
   { dir: __dirname, exts: [".mjs"] },
 ];
 
+/**
+ * Individual files outside {@link INPUT_SOURCES} that still feed the PDFs.
+ * Listed one by one rather than by directory: `scripts/` is full of unrelated
+ * tooling, and hashing all of it would force a ~70 s LaTeX recompile every
+ * time an unrelated script changed.
+ */
+const INPUT_FILES = [
+  // The project metric badges combine GitHub Releases with the other
+  // distribution channels declared here, so a change to the channel map
+  // changes the numbers printed in the PDFs.
+  path.join(ROOT, "scripts", "download-sources.mjs"),
+];
+
 /** The six PDFs `compile_cv.sh` produces; all must exist for a skip to be safe. */
 const EXPECTED_PDFS = [
   "CV_RequenaPlensJoseManuel_ENG.pdf",
@@ -92,6 +105,7 @@ function collectInputFiles() {
       files.push(path.join(dir, entry.name));
     }
   }
+  files.push(...INPUT_FILES.filter((file) => fs.existsSync(file)));
   return files.sort((a, b) => a.localeCompare(b));
 }
 

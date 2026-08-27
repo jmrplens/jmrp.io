@@ -54,6 +54,8 @@ export interface Project {
   hostedEs?: string;
   /** Raw callable MCP endpoint; presence marks the project as part of the fleet (see the schema). */
   endpoint?: string;
+  /** Name in the official MCP Registry, emitted as a JSON-LD `identifier`. */
+  registryId?: string;
   /** Primary third-party listing: rendered as a card link AND folded into `sameAs`. */
   listing?: { label: string; url: string; icon: string };
   sameAs?: string[];
@@ -207,6 +209,16 @@ export function buildProjectSchema(project: Project): Record<string, unknown> {
     about: topicThing(about),
     ...(mentions.length > 0 && { mentions: mentions.map(topicThing) }),
     ...(aliases.length > 0 && { sameAs: aliases }),
+    // The MCP Registry publishes no page for a server, so its name cannot be a
+    // `sameAs` URL — it is an identifier in a namespace, and PropertyValue is
+    // how schema.org states one.
+    ...(project.registryId && {
+      identifier: {
+        "@type": "PropertyValue" as const,
+        propertyID: "MCP Registry",
+        value: project.registryId,
+      },
+    }),
   };
 
   return project.schemaType === "SoftwareSourceCode"

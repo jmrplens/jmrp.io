@@ -24,6 +24,29 @@
   clip-path: inset(50%);
 }
 
+/* The accessible table alternatives (AttackTimeline and the diagram
+   components) were visually clipped but still measured ~1019px wide, hanging
+   far past a 393px viewport — invisible, yet real geometry, and what the
+   mobile overflow guard in tests/functional.spec.ts reads as clipped content.
+   Two reasons, both of which have to be answered:
+
+   1. A <table> ignores a width smaller than its content unless the layout is
+      fixed, so `width: 1px` above did nothing.
+   2. With that fixed, the <caption> still stretched the table wrapper to its
+      own min-content width — a caption sizes the table, not the other way
+      round — which is why clamping it is what actually collapses the box.
+
+   Both properties only affect sizing; the markup screen readers walk is
+   untouched, and the text stays in the accessibility tree. */
+table.sr-only {
+  table-layout: fixed;
+}
+
+table.sr-only caption {
+  max-width: 1px;
+  overflow: hidden;
+}
+
 .hidden {
   display: none !important;
 }

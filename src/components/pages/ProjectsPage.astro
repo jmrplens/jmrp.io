@@ -14,9 +14,11 @@
  * projects with their own documentation, real usage, or both — no experiments,
  * forks or scratch repos.
  */
+import downloadsData from "@data/downloads.json";
 import { defaultLocale, type Locale } from "@i18n/config";
 import { useTranslations } from "@i18n/utils";
 import BaseLayout from "@layouts/BaseLayout.astro";
+import { compactDownloads, DOWNLOADS_DISPLAY_MIN } from "@utils/downloads";
 import { markdownTwinPath } from "@utils/llms";
 import {
   buildProjectSchema,
@@ -37,6 +39,25 @@ const active = projects.filter((p) => p.status === "active");
 const archived = projects.filter((p) => p.status === "archived");
 
 const pageUrl = new URL(Astro.url.pathname, getSiteUrl()).href;
+
+/**
+ * Combined download count of a project, or `null` when it should not be shown.
+ *
+ * The figure covers every channel the project ships through (GitHub Releases,
+ * Docker Hub…), summed at pre-build into `src/data/downloads.json` — the same
+ * document behind the homepage total, so the card and the terminal cannot
+ * disagree. A project under `DOWNLOADS_DISPLAY_MIN` renders no figure at all:
+ * a small number next to a project reads as a verdict on it, while the
+ * site-wide total still counts it.
+ */
+const downloadsOf = (project: Project): string | null => {
+  const count = (
+    downloadsData.projects as Record<string, { total?: number } | undefined>
+  )[project.id]?.total;
+  return count && count >= DOWNLOADS_DISPLAY_MIN
+    ? compactDownloads(count)
+    : null;
+};
 
 /** Localized documentation URL — falls back to the English docs entry point. */
 const docsHref = (project: Project) =>
@@ -153,6 +174,12 @@ const groups = [
                       </a>
                     </dd>
                   </div>
+                  {downloadsOf(project) && (
+                    <div class="proj-card__meta-pair">
+                      <dt>{t("pages.projects.downloads")}</dt>
+                      <dd>{downloadsOf(project)}</dd>
+                    </div>
+                  )}
                 </dl>
 
                 <ul

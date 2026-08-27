@@ -51,6 +51,12 @@ person:
     # identity to the artifacts rather than only to their source repos.
     - "https://pypi.org/user/jmrplens/"
     - "https://hub.docker.com/u/jmrplens"
+    # AT Protocol forge, published under the same handle as the Bluesky
+    # profile above. Ownership is not asserted here but PROVEN by the
+    # protocol: tangled.org/jmrp.io resolves to did:plc:jder4wkjnwh6mzhrx4n5ebti,
+    # the very DID that bsky.app/profile/jmrp.io resolves to (checked
+    # 2026-08-27), so both are the same account seen through two apps.
+    - "https://tangled.org/jmrp.io"
   # Expertise topics emitted as the canonical Person `knowsAbout`, site-wide, by
   # BaseHead.astro. Merged from the former site-config list + about.yaml's
   # embedded-firmware specifics so a single list covers the whole entity —

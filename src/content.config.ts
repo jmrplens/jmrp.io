@@ -712,6 +712,17 @@ const ProjectEntry = z.object({
    */
   endpoint: z.url().optional(),
   /**
+   * Name under which the server is published in the official MCP Registry
+   * (`io.github.<owner>/<repo>`). The registry is API-only — it has no page to
+   * link — so this is emitted as a JSON-LD `identifier`, not as `sameAs`: it
+   * identifies the software in a namespace, which is exactly what a
+   * PropertyValue identifier is for.
+   */
+  registryId: z
+    .string()
+    .regex(/^[a-z0-9.-]+\/[\w.-]+$/, "MCP Registry name, e.g. io.github.me/srv")
+    .optional(),
+  /**
    * The project's primary third-party listing — the package index, hub or
    * catalogue where a reader can find it published (PyPI, the CrowdSec Hub,
    * an MCP directory). Unlike `sameAs`, this one is RENDERED as a card link:
