@@ -491,24 +491,48 @@ const breadcrumbList = {
 // what Google and most parsers do) only saw a bare `@id` here: the sole two
 // unresolvable references across all 126 pages (GEO audit 2026-08-22, A5).
 //
-// Deliberately limited to facts that cannot contradict the canonical node:
-// its type, its URL and its provider. In particular NO `name` — the canonical
-// node is named after the endpoint path ("libgen"), while projects.yaml calls
-// the project "libgen-mcp", and emitting both under one @id would create
-// exactly the cross-locale collision this audit flagged elsewhere.
+// Deliberately limited to facts that CANNOT contradict the canonical node —
+// which is precisely what makes them safe to repeat on all 126 pages. `name`
+// is the endpoint's last path segment, a pure function of the `@id` and byte
+// for byte what mcp.jmrp.io's own server card publishes ("gitlab",
+// "libgen"); it is NOT projects.yaml's `name`, which calls the same project
+// "libgen-mcp" and would collide under one @id. `documentation` is the same
+// /docs/<repo> URL the canonical node carries, served by this site. Without
+// them these were two bare shells repeated on every page, with nothing for a
+// consumer to render or follow (GEO audit 2026-08-27, B11).
+//
+// Restricting the nodes to /homelab/ and /projects/ was the alternative, and
+// it is wrong: `owns` on `#person` references these @ids from every page, so
+// dropping them anywhere re-creates the dangling references of A5.
+//
+// `isBasedOn` is NOT copied: on the canonical node it points at a
+// `#source-code` node this site does not emit (it emits `#software`), and
+// restating it differently would be the divergence the rest of this comment
+// is about.
 const mcpApiNodes = (await getMcpServers()).map((server) => ({
   "@type": ["WebAPI", "SoftwareApplication"],
   "@id": mcpApiId(server),
+  name: new URL(server.endpoint).pathname.split("/").findLast(Boolean),
   url: server.endpoint,
+  documentation: new URL(`/docs/${server.id}`, getSiteUrl()).href,
   provider: { "@id": new URL("#person", getSiteUrl()).href },
 }));
 
 // 4. Merge Logic
 // We use a @graph to include multiple items (Website, Page, Breadcrumbs, etc.)
+//
+// The breadcrumb is dropped on `noIndex` pages. On the English 404 the trail's
+// last `item` is https://jmrp.io/404/, which answers 404 — a BreadcrumbList
+// whose `item` does not resolve is invalid, the same failure already fixed for
+// the structural /tags/ and /categories/ segments. That is the only page where
+// the trail is broken: the other 27 noindex pages (/es/404/ and the 26 tag
+// listings, all measured 200) resolve fine, and lose the trail for the other
+// half of the reason — a page deliberately kept out of the index has no
+// consumer for a breadcrumb (GEO audit 2026-08-27, B10).
 let schemaGraph = [
   websiteSchema,
   ...navSchema,
-  breadcrumbList,
+  ...(noIndex ? [] : [breadcrumbList]),
   ...(mcpApiNodes as unknown as (typeof breadcrumbList)[]),
 ];
 
@@ -547,12 +571,61 @@ if (resolvedModified) {
   for (const node of schemaGraph) {
     const candidate = node as unknown as Record<string, unknown>;
     if (
+      // Identified nodes only. `SiteNavigationElement` carries this page's
+      // `url` too, and was collecting a `dateModified` that says nothing
+      // about a nav link — one per nav entry, on the 14 pages that are a nav
+      // destination (GEO audit 2026-08-27, B11).
+      typeof candidate["@id"] === "string" &&
       candidate.url === canonicalURL.href &&
       candidate["@id"] !== websiteId &&
       !candidate.dateModified
     ) {
       candidate.dateModified = resolvedModified;
     }
+  }
+}
+
+// The markdown twin, declared in the graph.
+//
+// Every page that has one already advertises it in the head
+// (`<link rel="alternate" type="text/markdown">`) and llms.txt lists them all,
+// but the graph never mentioned it: an agent reading the JSON-LD had no way to
+// learn that a clean, chrome-free encoding of the same work exists (GEO audit
+// 2026-08-27, M8). `encoding` is schema.org's property for exactly that —
+// another encoding of the SAME CreativeWork — so it hangs off the node
+// describing this page instead of becoming a second work.
+//
+// Attached here rather than in each page builder: `markdownHref` is already
+// the single flag that states the twin exists, so a page without one can never
+// claim it, and the tool pages and every CollectionPage are covered at once.
+// Article nodes are excluded on purpose — BlogPost.astro declares the twin on
+// its own `#article` node, which is the work the post's markdown encodes.
+//
+// Matched by `@id` + node type rather than by `url`: the page-describing nodes
+// all carry `<canonical>#<fragment>`, while `SiteNavigationElement` carries a
+// bare page `url` and no `@id` at all.
+if (markdownHref) {
+  const pageNodeTypes = new Set(["WebPage", "CollectionPage", "ProfilePage"]);
+  const twinUrl = new URL(markdownHref, getSiteUrl()).href;
+  const pageNode = schemaGraph.find((node) => {
+    const candidate = node as unknown as Record<string, unknown>;
+    const id = candidate["@id"];
+    return (
+      typeof id === "string" &&
+      id.startsWith(`${canonicalURL.href}#`) &&
+      pageNodeTypes.has(String(candidate["@type"]))
+    );
+  }) as unknown as Record<string, unknown> | undefined;
+  if (pageNode) {
+    pageNode.encoding = {
+      "@type": "MediaObject",
+      "@id": twinUrl,
+      contentUrl: twinUrl,
+      encodingFormat: "text/markdown",
+      // The twin is served as plain text with no language markup of its own,
+      // so the graph is where its language is stated.
+      inLanguage: locale,
+    };
   }
 }
 

@@ -54,11 +54,13 @@
   "alumniOf": [
     {
       "@type": "EducationalOrganization",
+      "@id": "http://www.wikidata.org/entity/Q2037040",
       "name": "University of Alicante",
       "sameAs": "https://www.wikidata.org/wiki/Q2037040"
     },
     {
       "@type": "EducationalOrganization",
+      "@id": "http://www.wikidata.org/entity/Q2003976",
       "name": "Universitat Politècnica de València",
       "sameAs": "https://www.wikidata.org/wiki/Q2003976"
     }
@@ -70,6 +72,7 @@
       "credentialCategory": "degree",
       "recognizedBy": {
         "@type": "EducationalOrganization",
+        "@id": "http://www.wikidata.org/entity/Q2037040",
         "name": "University of Alicante",
         "sameAs": "https://www.wikidata.org/wiki/Q2037040"
       }
@@ -80,6 +83,7 @@
       "credentialCategory": "degree",
       "recognizedBy": {
         "@type": "EducationalOrganization",
+        "@id": "http://www.wikidata.org/entity/Q2003976",
         "name": "Universitat Politècnica de València",
         "sameAs": "https://www.wikidata.org/wiki/Q2003976"
       }

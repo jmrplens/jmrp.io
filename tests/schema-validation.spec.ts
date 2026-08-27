@@ -65,9 +65,11 @@ function findInGraph(
 
 /**
  * Find the page's own SoftwareApplication node (the tool). The graph also
- * carries MCP endpoint stubs dual-typed ["WebAPI","SoftwareApplication"] —
- * bare references to mcp.jmrp.io's canonical entities, with no name by
- * design — which a plain type lookup would match first.
+ * carries the MCP endpoint nodes, dual-typed ["WebAPI","SoftwareApplication"],
+ * which a plain type lookup would match first. They now carry a `name` (the
+ * endpoint's last path segment, exactly as mcp.jmrp.io's canonical card
+ * publishes it) and a `documentation` URL, so the tool cannot be told apart by
+ * the absence of a name: the discriminator is, and always was, `@type`.
  */
 function findToolApp(jsonLd: JsonLdDocument): JsonLdSchema | null {
   return (

@@ -1,3 +1,4 @@
+import { wikidataEntityUri } from "@utils/wikidata";
 import type {
   EducationalOccupationalCredential,
   EducationalOrganization,
@@ -67,15 +68,27 @@ export const CANONICAL_PERSON_IMAGE = {
  * Universitat Politècnica de València. The predoctoral doctorate at the UPV was
  * NOT completed, so it does not add a third institution — the list is exactly
  * the two universities he is an alumnus of, each carrying a Wikidata `sameAs`.
+ *
+ * Each school is IDENTIFIED by its Wikidata entity URI, the same convention
+ * `knowsAbout` uses — not left as an anonymous node carrying only a `sameAs`
+ * to the wiki ARTICLE. Two consequences: the document stopped publishing two
+ * different Wikidata URI conventions for the same vocabulary, and the schools
+ * emitted from /about/ and /cv/ collapse onto one node each instead of
+ * accumulating four alma maters for a person who has two (GEO audit
+ * 2026-08-27, M6). The `sameAs` stays: the article page is a real, additional
+ * representation of the entity, and dropping it would be a subtractive change
+ * to a document six external sites splice in verbatim.
  */
 export const CANONICAL_ALUMNI_OF: EducationalOrganization[] = [
   {
     "@type": "EducationalOrganization",
+    "@id": wikidataEntityUri("Q2037040"),
     name: "University of Alicante",
     sameAs: "https://www.wikidata.org/wiki/Q2037040",
   },
   {
     "@type": "EducationalOrganization",
+    "@id": wikidataEntityUri("Q2003976"),
     name: "Universitat Politècnica de València",
     sameAs: "https://www.wikidata.org/wiki/Q2003976",
   },

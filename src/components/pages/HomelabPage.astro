@@ -27,8 +27,13 @@ import type {
 } from "@components/homelab/TorStats";
 import TorStats from "@components/homelab/TorStats";
 import { defaultLocale, type Locale } from "@i18n/config";
-import { useTranslatedPath, useTranslations } from "@i18n/utils";
+import {
+  type TranslationKey,
+  useTranslatedPath,
+  useTranslations,
+} from "@i18n/utils";
 import BaseLayout from "@layouts/BaseLayout.astro";
+import type { LanguageTaggedValue } from "@utils/person";
 import { getMcpServers } from "@utils/projects";
 import { getSiteUrl } from "@utils/site";
 
@@ -155,10 +160,15 @@ interface Provider {
 
 interface Service {
   id: string;
-  name: string;
+  /**
+   * Translation key of the schema `name`, resolved in BOTH locales (see
+   * `localizedLabel`) rather than as one page-locale string on a shared `@id`.
+   */
+  nameKey: TranslationKey;
   title: string;
   icon: string;
-  description: string;
+  /** Translation key of the card copy AND of the schema `description`. */
+  descriptionKey: TranslationKey;
   url: string;
   linkText: string;
   /**
@@ -206,10 +216,10 @@ const defaultProvider: Provider = {
 const services: Service[] = [
   {
     id: "mastodon",
-    name: t("pages.homelab.mastodonName"),
+    nameKey: "pages.homelab.mastodonName",
     title: "Mastodon",
     icon: "fa-brands:mastodon",
-    description: t("pages.homelab.mastodonDescription"),
+    descriptionKey: "pages.homelab.mastodonDescription",
     url: "https://mstdn.jmrp.io/",
     linkText: t("pages.homelab.mastodonLink"),
     statsType: "mastodon",
@@ -218,10 +228,10 @@ const services: Service[] = [
   },
   {
     id: "matrix",
-    name: t("pages.homelab.matrixName"),
+    nameKey: "pages.homelab.matrixName",
     title: "Matrix",
     icon: "simple-icons:matrix",
-    description: t("pages.homelab.matrixDescription"),
+    descriptionKey: "pages.homelab.matrixDescription",
     url: "https://matrix.to/#/@jmrplens:matrix.jmrp.io",
     linkText: t("pages.homelab.matrixLink"),
     statsType: "matrix",
@@ -231,10 +241,10 @@ const services: Service[] = [
   },
   {
     id: "pds",
-    name: t("pages.homelab.pdsName"),
+    nameKey: "pages.homelab.pdsName",
     title: "AT Protocol",
     icon: "simple-icons:bluesky",
-    description: t("pages.homelab.pdsDescription"),
+    descriptionKey: "pages.homelab.pdsDescription",
     url: "https://bsky.app/profile/jmrp.io",
     linkText: t("pages.homelab.pdsLink"),
     statsType: "pds",
@@ -244,10 +254,10 @@ const services: Service[] = [
   },
   {
     id: "mcp",
-    name: t("pages.homelab.mcpName"),
+    nameKey: "pages.homelab.mcpName",
     title: "MCP",
     icon: "simple-icons:modelcontextprotocol",
-    description: t("pages.homelab.mcpDescription"),
+    descriptionKey: "pages.homelab.mcpDescription",
     url: "https://mcp.jmrp.io/",
     linkText: t("pages.homelab.mcpLink"),
     provider: defaultProvider,
@@ -272,47 +282,57 @@ const services: Service[] = [
   },
 ];
 
+/**
+ * One Tor card. `nameKey` replaces the old `title`/`name` pair, which held the
+ * very same translation twice — once for the card, once for the graph.
+ */
+interface TorService {
+  id: string;
+  nameKey: TranslationKey;
+  icon: string;
+  descriptionKey: TranslationKey;
+  url: string;
+  linkText: string;
+  torType: TorType;
+}
+
 /** Tor services displayed as separate cards alongside the main services grid. */
-const torServices = [
+const torServices: TorService[] = [
   {
     id: "tor-bridge",
-    title: t("pages.homelab.torBridgeName"),
+    nameKey: "pages.homelab.torBridgeName",
     icon: "simple-icons:torproject",
-    description: t("pages.homelab.torBridgeDescription"),
+    descriptionKey: "pages.homelab.torBridgeDescription",
     url: "https://metrics.torproject.org/rs.html#details/1508F567C54ECF5373CE2EF3BF02C62EEA1B320E",
     linkText: t("pages.homelab.torBridgeLink"),
-    torType: "bridge" as TorType,
-    name: t("pages.homelab.torBridgeName"),
+    torType: "bridge",
   },
   {
     id: "tor-bridge-es1",
-    title: t("pages.homelab.torBridgeEs1Name"),
+    nameKey: "pages.homelab.torBridgeEs1Name",
     icon: "simple-icons:torproject",
-    description: t("pages.homelab.torBridgeEs1Description"),
+    descriptionKey: "pages.homelab.torBridgeEs1Description",
     url: "https://metrics.torproject.org/rs.html#details/98422E9D1648FFDB8F16C06CF58CD64B6C03A003",
     linkText: t("pages.homelab.torBridgeEs1Link"),
-    torType: "bridge-es1" as TorType,
-    name: t("pages.homelab.torBridgeEs1Name"),
+    torType: "bridge-es1",
   },
   {
     id: "tor-relay",
-    title: t("pages.homelab.torRelayName"),
+    nameKey: "pages.homelab.torRelayName",
     icon: "simple-icons:torproject",
-    description: t("pages.homelab.torRelayDescription"),
+    descriptionKey: "pages.homelab.torRelayDescription",
     url: "https://metrics.torproject.org/rs.html#details/B442687AD97B8CC73F3AED95D76E1F47A5504C14",
     linkText: t("pages.homelab.torRelayLink"),
-    torType: "relay" as TorType,
-    name: t("pages.homelab.torRelayName"),
+    torType: "relay",
   },
   {
     id: "tor-relay-es",
-    title: t("pages.homelab.torRelayEsName"),
+    nameKey: "pages.homelab.torRelayEsName",
     icon: "simple-icons:torproject",
-    description: t("pages.homelab.torRelayEsDescription"),
+    descriptionKey: "pages.homelab.torRelayEsDescription",
     url: "https://metrics.torproject.org/rs.html#details/3467943E5042BA46FCE4DE8517B0EBCD5D1BBB1D",
     linkText: t("pages.homelab.torRelayEsLink"),
-    torType: "relay-es" as TorType,
-    name: t("pages.homelab.torRelayEsName"),
+    torType: "relay-es",
   },
 ];
 
@@ -376,6 +396,30 @@ const serviceStatusTokens: Record<
   { status: string; statusClass: string } | undefined
 > = HLM.serviceStatus;
 
+/**
+ * A service label carried in both site languages.
+ *
+ * The `Service` nodes below share ONE `@id` across /homelab/ and /es/homelab/
+ * — correct, each is one real service — but their `name` and `description`
+ * were bare per-locale strings, so the merged entity held two contradictory,
+ * untagged labels ("Mastodon Instance" and its Spanish counterpart) with
+ * nothing to tell a consumer which language each was written in (GEO audit
+ * 2026-08-27, A3). Language-tagged literals make both true at once.
+ *
+ * Same shape and same reasoning as `localizedValues` in BaseHead.astro. No
+ * cast is needed here: `servicesSchema` carries no `satisfies`, so the
+ * literals travel as authored.
+ *
+ * The key is read once and the card below renders from that same key, so the
+ * visible copy and the graph cannot drift.
+ */
+const tEn = useTranslations("en");
+const tEs = useTranslations("es");
+const localizedLabel = (key: TranslationKey): LanguageTaggedValue[] => [
+  { "@value": tEn(key), "@language": "en" },
+  { "@value": tEs(key), "@language": "es" },
+];
+
 const servicesSchema = {
   "@type": "CollectionPage",
   // Answer target for this page: its title and the one-line intro under it.
@@ -397,16 +441,16 @@ const servicesSchema = {
     ...services.map((service) => ({
       "@type": "Service",
       "@id": new URL(`/homelab/#service-${service.id}`, getSiteUrl()).href,
-      name: service.name,
-      description: service.description,
+      name: localizedLabel(service.nameKey),
+      description: localizedLabel(service.descriptionKey),
       url: service.url,
       provider: service.provider,
     })),
     ...torServices.map((service) => ({
       "@type": "Service",
       "@id": new URL(`/homelab/#service-${service.id}`, getSiteUrl()).href,
-      name: service.name,
-      description: service.description,
+      name: localizedLabel(service.nameKey),
+      description: localizedLabel(service.descriptionKey),
       url: service.url,
       provider: defaultProvider,
     })),
@@ -502,7 +546,7 @@ const servicesSchema = {
               <ServiceCard
                 title={service.title}
                 icon={service.icon}
-                description={service.description}
+                description={t(service.descriptionKey)}
                 link={service.url}
                 linkText={service.linkText}
                 statusText={
@@ -583,9 +627,9 @@ const servicesSchema = {
           {
             torServices.map((service) => (
               <ServiceCard
-                title={service.title}
+                title={t(service.nameKey)}
                 icon={service.icon}
-                description={service.description}
+                description={t(service.descriptionKey)}
                 link={service.url}
                 linkText={service.linkText}
                 statusText={t("pages.homelab.torRunning")}
