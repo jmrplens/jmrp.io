@@ -132,7 +132,7 @@ renumbering underneath it.
 
 ## How I run this on my own infrastructure
 
-The configuration above isn't a lab exercise — it's the WireGuard setup running today on my own RB5009UG+S+ on RouterOS 7.23.2, with `wg_devices` on UDP port 53537 exactly as used throughout this guide, serving 3 configured peers at the standard 1500 MTU.
+The configuration above isn't a lab exercise — it's the WireGuard setup running today on my own RB5009UG+S+ on RouterOS 7.23.2, using the same interface layout as this guide, at the standard 1500 MTU.
 
 Honestly, there isn't an incident to report. I'd like to hand you a war story about MSS clamping gone wrong or a handshake that silently failed, but that's not what happened here: this tunnel has been running for a while without a single usage problem, with good throughput and full dual-stack connectivity — IPv4 and IPv6 both work end to end, every time. If your deployment follows the steps above, that's the boring, reliable outcome you should expect too.
 
@@ -1524,17 +1524,7 @@ WireGuard is extremely efficient, but several factors can limit throughput on Mi
 ```
 </Code>
 
-What that reads on my own router is undramatic, and worth stating precisely because
-it is easy to over-claim here. Over a window of 3 days and 5 hours — the router's
-full uptime, with both WireGuard interfaces up the whole time and zero link flaps —
-`cpu-load` stayed between 0% and 5% across ten samples while the WAN link carried
-roughly 33 Mbps of combined traffic. That is **not** a WireGuard benchmark: in the
-same window the tunnel moved 312 MB in total, about 9 kbps on average, with two of
-the three configured peers completing handshakes and one showing no handshake within
-the measured window. So the honest claim is only that WireGuard costs me nothing
-measurable at this load. I have no figure of my own for 100 Mbps through the tunnel,
-and the only way to get one is a controlled throughput test across it on your own
-hardware.
+On my own router `cpu-load` sits in the low single digits with the tunnel up, but I am not going to dress that up as a benchmark: my link is idle most of the time, and a number measured on an idle tunnel tells you nothing about one under load. WireGuard runs in the kernel and is genuinely cheap, but if you need a throughput figure for your own hardware, the only way to get one is a controlled test across the tunnel — `iperf3` between a client and a host on the LAN side, with both ends under your control.
 
 ### Useful diagnostic commands
 

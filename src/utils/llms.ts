@@ -340,18 +340,24 @@ const PROFILE_SECTIONS: {
  * request, and a `.md` served by the static-asset location would publish the
  * raw `HLM_*` tokens and then cache them for a day. It gets its entry when
  * the server side is resolved.
+ *
+ * `/blog/` and `/tools/` are absent for a different reason, and it is not an
+ * oversight: llms.txt already lists every post and every tool with its title,
+ * description and its own twin link, so a twin of the listing page would be a
+ * verbatim second copy of a section of the index that points at it. The series
+ * hubs and the tool categories DO get one, because their pages carry hand-
+ * written prose — a reading order, a "use these when" paragraph — that exists
+ * nowhere else.
  */
 const TWINNED_PAGES: ReadonlySet<string> = new Set([
   "/",
   "/about/",
-  "/blog/",
   "/blog/series/",
   "/cv/",
   "/feeds/",
   "/privacy/",
   "/projects/",
   "/publications/",
-  "/tools/",
   "/uses/",
 ]);
 
@@ -1558,8 +1564,8 @@ const HOME_SECTIONS: {
     path: "/blog/",
     title: { en: "Blog", es: "Blog" },
     note: {
-      en: "Listing page: its twin is the index, and every post publishes a twin of its own with the body.",
-      es: "Página de listado: su gemelo es el índice, y cada entrada publica su propio gemelo con el cuerpo.",
+      en: "Listing page. Every post publishes its own markdown twin, and llms.txt lists them all.",
+      es: "Página de listado. Cada entrada publica su propio gemelo markdown, y llms.txt los lista todos.",
     },
   },
   {
@@ -1574,8 +1580,8 @@ const HOME_SECTIONS: {
     path: "/tools/",
     title: { en: "Tools", es: "Herramientas" },
     note: {
-      en: "Listing page: its twin is the index, grouped by category. Every tool publishes a twin of its own with the full documentation, and all of them run client-side.",
-      es: "Página de listado: su gemelo es el índice, agrupado por categoría. Cada herramienta publica su propio gemelo con la documentación completa, y todas se ejecutan en el cliente.",
+      en: "Listing page. Every tool publishes its own markdown twin with the full documentation, and all of them run client-side.",
+      es: "Página de listado. Cada herramienta publica su propio gemelo markdown con la documentación completa, y todas se ejecutan en el cliente.",
     },
   },
   { path: "/projects/", title: { en: "Projects", es: "Proyectos" } },

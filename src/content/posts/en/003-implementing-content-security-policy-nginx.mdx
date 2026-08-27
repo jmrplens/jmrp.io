@@ -130,125 +130,18 @@ Violations don't disappear into a log nobody reads: I run my own receiver (`scri
 
 Measured against the current Mozilla Observatory API (v5), this configuration earns an **A+ rating: a score of 140, with all 10 tests passing and zero failures**. That's the number as of writing — not the 145 you might see referenced elsewhere on this site from a December 2025 commit. That older total included a 5-point bonus Observatory grants for serving cookies with `Secure`/`HttpOnly`/`SameSite`; those cookies were two placeholder values that did nothing useful, and removing them — so this site's `/privacy/` page can honestly claim no response ever sets `Set-Cookie` — cost 5 cosmetic points on a policy that already fails nothing. That trade was obviously worth it.
 
-### What 81 days of violation reports actually contain
+### What the violation reports actually contain
 
-Between 8 June and 27 August 2026 — 81 calendar days — that receiver wrote **1,756 violation reports** to disk. Divided by those 81 days that is 21.7 a day, and the mean is the least useful number in the set: the median day brings 4 reports, sixteen days brought none at all, and 1 August alone brought 371.
+That receiver averages around twenty reports a day, and the average is the least useful number in the set: most days bring a handful, and an occasional day brings hundreds. What matters is the composition, and it has been stable for as long as I have been reading them. The overwhelming majority are crawlers. Nearly all of the rest are browser extensions and antivirus software injecting scripts and styles into someone else's page. **Not one has ever turned out to be a defect in this site.**
 
-Replaying the whole history through the filters the receiver runs *today* sorts it as follows. It is a retroactive reclassification — the filters were tightened during the window, so this is how the current logic reads the history, not how each report was treated at the time.
+The blocked-`eval` reports are the clearest case, because they are trivially falsifiable: no JavaScript file this site serves contains `eval(` or `new Function(` — after a production build, the only occurrences of that literal anywhere in the output are in the prose of this very post. They arrive in bursts from a single address and a single user-agent, which is one visitor with something injecting code into their browser, not a policy that is too tight.
 
-<Table title="1,756 CSP reports, 8 June – 27 August 2026">
-  <thead>
-    <tr>
-      <th scope="col">Classification</th>
-      <th scope="col">Reports</th>
-      <th scope="col">Share</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td>Crawler user-agent</td>
-      <td>1,399</td>
-      <td>79.7%</td>
-    </tr>
-    <tr>
-      <td>Residual — inspected by hand</td>
-      <td>287</td>
-      <td>16.3%</td>
-    </tr>
-    <tr>
-      <td>Crawler netblock</td>
-      <td>60</td>
-      <td>3.4%</td>
-    </tr>
-    <tr>
-      <td>Browser extension / injected inline style</td>
-      <td>10</td>
-      <td>0.6%</td>
-    </tr>
-  </tbody>
-</Table>
+That is the honest return on a `report-uri`: it mostly tells you what other people's software is doing to your pages. It has never once told me my own policy was wrong — which does not make it useless, because it made me read my own receiver closely enough to find the bug below.
 
-The residual bucket is the one worth reading, and it is four things: **247** reports of a blocked `eval`, **29** of a blocked inline script, **8** SRI failures on hashed `/_astro/` chunks, and **3** blocked requests to an injected Yandex analytics pixel.
-
-None of those is a defect in the site. The `eval` reports are the clearest case: no JavaScript file this site serves contains `eval(` or `new Function(` — after a production build, the only occurrences of that literal anywhere in the output are in the prose of this very post. Those 247 reports came from **5 IP addresses on 5 days**, 223 of them from a single user-agent, and the page they name is almost always `/homelab/` (178) or the home page (45). That is one visitor with something injecting code into their browser. The 29 inline-script reports have the same shape: 4 addresses, 4 days, no `source-file` at all.
-
-### The funnel: what gets thrown away before it reaches the log
-
-The log is only half the picture, because the reports the filters discard are never written to it. Their only trace is an in-memory counter the process dumps to the journal every 100 discards — and for one window, 22 to 27 August (4.67 days), that counter and the log can be reconciled against each other: the counter's `no-notify:crawler-ua=97` matches, exactly, the 97 crawler reports the log holds for the same window. That gives the complete funnel.
-
-<Table title="CSP report funnel, 22–27 August 2026 (4.67 days)">
-  <thead>
-    <tr>
-      <th scope="col">Stage</th>
-      <th scope="col">Reports</th>
-      <th scope="col">Share</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td>Got past JSON parsing and the defensive guards</td>
-      <td>313</td>
-      <td>100%</td>
-    </tr>
-    <tr>
-      <td>Discarded before reaching the log</td>
-      <td>213</td>
-      <td>68.1%</td>
-    </tr>
-    <tr>
-      <td>— browser extension or antivirus</td>
-      <td>172</td>
-      <td>55.0%</td>
-    </tr>
-    <tr>
-      <td>— prefetch fallback</td>
-      <td>14</td>
-      <td>4.5%</td>
-    </tr>
-    <tr>
-      <td>— injected inline style</td>
-      <td>14</td>
-      <td>4.5%</td>
-    </tr>
-    <tr>
-      <td>— browser-internal context</td>
-      <td>7</td>
-      <td>2.2%</td>
-    </tr>
-    <tr>
-      <td>— injected third-party resource</td>
-      <td>6</td>
-      <td>1.9%</td>
-    </tr>
-    <tr>
-      <td>Crawlers: logged, never notified</td>
-      <td>97</td>
-      <td>31.0%</td>
-    </tr>
-    <tr>
-      <td>Reached the notification path</td>
-      <td>3</td>
-      <td>1.0%</td>
-    </tr>
-    <tr>
-      <td>Defects in the site itself</td>
-      <td>0</td>
-      <td>0%</td>
-    </tr>
-  </tbody>
-</Table>
-
-The three that reached the notification path were the same injected Yandex analytics pixel, blocked three times within 200 ms on one page for one visitor.
-
-Two caveats belong with that table, and both matter more than the percentages.
-
-**313 is a floor, not a total.** Bodies that fail JSON parsing (a 400) or exceed the 32 KB cap (a 413) are rejected before any counter sees them, and two defensive `return`s inside the report handler dropped malformed payloads without counting them either. So the honest label is "reports that got past the parser and the guards", not "reports received". I have since wired those paths into the same counter, which is exactly the sort of hole you only find by trying to write a number down.
-
-**The two rates in this post are not comparable.** 313 reports in 4.67 days is 67 a day, against the 21.7 a day of the 81-day log — because the log contains no discards at all. Both figures are true and they count different things.
 
 ### The bug this audit found in my own reporter
 
-Those numbers are only right because checking them turned up a parsing bug in the receiver itself.
+That composition is only trustworthy because sitting down to check it turned up a parsing bug in the receiver itself.
 
 On 22 August I added a `report-to` endpoint alongside the legacy `report-uri`. The two APIs disagree on shape: the legacy one POSTs a single `{"csp-report": {…}}` object with kebab-case field names, while the Reporting API sends `{type, url, body: {…}}` envelopes with camelCase ones. A `normalizeReports()` function exists to map the second onto the first — and it did, but only when the payload arrived as an array.
 
@@ -267,7 +160,7 @@ A browser that POSTs one bare envelope instead of an array of one fell straight 
 
 Ten reports arrived that way between 22 and 26 August. Decoded by hand they are entirely ordinary: six carry a `safari-web-extension://…` or `safari-extension://…` source file, and the other four are inline `<style>` elements the browser attributes to the document itself. Both categories were already covered by the discard filters; the filters just never got to see the fields. The fix is to accept a bare envelope as well as an array of them.
 
-The size of the correction is the point. Before those ten were decoded, the funnel above read "13 reports reached the notification path" — and the "zero real defects" line next to it rested on ten reports nobody had ever actually read. The true figure is 3. Replaying all 81 days through the current notify path gives **26 alerts, one every 3.1 days** (7 for `eval`, 8 for inline scripts, 8 for SRI on stale `/_astro/` chunks, 3 for the Yandex pixel); replaying it with the bug still in place gives 30, and the four extra ones are empty.
+The shape of the mistake is what makes it worth writing down. A claim that none of these reports is a real defect, resting partly on reports nobody could read, is not a claim at all — and I had no way of knowing which it was until I decoded them by hand.
 
 <Callout type="keypoint" title="A report you cannot parse is worse than one you never received">
   It still costs you an alert, and it looks like signal. If you bolt a `report-to`

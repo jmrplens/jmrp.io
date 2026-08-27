@@ -133,7 +133,7 @@ delegado, para que el túnel sobreviva a los cambios de prefijo de tu ISP.
 
 ## Cómo lo ejecuto en mi propia infraestructura
 
-La configuración de arriba no es un ejercicio de laboratorio — es el WireGuard que corre hoy en mi propio RB5009UG+S+ con RouterOS 7.23.2, con `wg_devices` en el puerto UDP 53537 exactamente como se usa a lo largo de esta guía, sirviendo a 3 peers configurados con el MTU estándar de 1500.
+La configuración de arriba no es un ejercicio de laboratorio — es el WireGuard que corre hoy en mi propio RB5009UG+S+ con RouterOS 7.23.2, con la misma disposición de interfaces que esta guía, con el MTU estándar de 1500.
 
 Sinceramente, no hay ningún incidente que contar. Me gustaría ofrecerte una historia de terror sobre MSS clamping que fallara o un handshake que se rompiera en silencio, pero no es lo que ha pasado aquí: este túnel lleva tiempo funcionando sin un solo problema de uso, con buen rendimiento y conectividad dual-stack completa — IPv4 e IPv6 funcionan de extremo a extremo, siempre. Si tu despliegue sigue los pasos de arriba, ese es exactamente el resultado aburrido y fiable que deberías esperar.
 
@@ -1525,17 +1525,7 @@ WireGuard es extremadamente eficiente, pero varios factores pueden limitar el re
 ```
 </Code>
 
-Lo que marca en mi propio router es poco épico, y conviene decirlo con precisión
-porque aquí es fácil pasarse. En una ventana de 3 días y 5 horas — el uptime
-completo del router, con las dos interfaces WireGuard levantadas todo ese tiempo y
-sin una sola caída de enlace — el `cpu-load` se mantuvo entre el 0% y el 5% en diez
-muestras, mientras el enlace WAN movía unos 33 Mbps de tráfico agregado. Eso **no**
-es un benchmark de WireGuard: en esa misma ventana el túnel movió 312 MB en total,
-unos 9 kbps de media, con dos de los tres peers configurados completando handshakes
-y uno sin handshake en la ventana medida. Así que lo único honesto que puedo afirmar
-es que WireGuard no me cuesta nada medible a esta carga. No tengo una cifra propia
-para 100 Mbps a través del túnel, y la única forma de obtenerla es una prueba de
-caudal controlada a través de él en tu propio hardware.
+En mi propio router el `cpu-load` se queda en cifras de un dígito con el túnel levantado, pero no voy a disfrazar eso de benchmark: mi enlace está parado la mayor parte del tiempo, y un número medido sobre un túnel en reposo no dice nada de uno bajo carga. WireGuard corre en el kernel y es genuinamente barato, pero si necesitas una cifra de rendimiento para tu propio hardware, la única forma de obtenerla es una prueba controlada a través del túnel: `iperf3` entre un cliente y un equipo del lado LAN, con los dos extremos bajo tu control.
 
 ### Comandos de diagnóstico útiles
 
