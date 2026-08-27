@@ -123,12 +123,15 @@ export async function generateManifest(locale: Locale): Promise<Response> {
       },
       {
         name: t("pwa.shortcutCV"),
-        url: `${pathPrefix}/cv`,
+        // Trailing slash, like `/blog/` above: without it the shortcut lands on
+        // a 301 to the canonical form, so an installed PWA spends a round trip
+        // on every launch from that shortcut.
+        url: `${pathPrefix}/cv/`,
         description: t("pwa.shortcutCVDesc"),
       },
       {
         name: t("pwa.shortcutPublications"),
-        url: `${pathPrefix}/publications`,
+        url: `${pathPrefix}/publications/`,
         description: t("pwa.shortcutPublicationsDesc"),
       },
     ],
