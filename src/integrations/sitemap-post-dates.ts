@@ -25,6 +25,8 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 
 import { load as parseYaml } from "js-yaml";
 
+import { postDateModified } from "../utils/post-dates.js";
+
 // Anchored to the process CWD rather than to `import.meta.url`, for the same
 // reason as REPO_ROOT below: Astro bundles this module into an SSR chunk whose
 // `import.meta.url` points at the build output, so the readdirSync fell into
@@ -38,6 +40,8 @@ interface PostFrontmatter {
   slug?: string;
   publishedDate?: string | Date;
   updatedDate?: string | Date;
+  /** Re-verification date + pinned versions; a term of `dateModified`. */
+  lastVerified?: { date?: string | Date; versions?: string[] };
   draft?: boolean;
 }
 
@@ -65,26 +69,43 @@ function listPostFiles(locale: string): { dir: URL; files: string[] } {
 
 /**
  * Extracts `{ slug, iso }` from a post file, or undefined when the file is not
- * a published post or has no usable date. Uses `updatedDate` then `publishedDate`.
+ * a published post or has no usable date.
+ *
+ * The date is the SAME computed `dateModified` the page's JSON-LD and the
+ * markdown twin publish — max(publishedDate, updatedDate, lastVerified.date,
+ * last substantive commit) — so `<lastmod>` cannot disagree with the graph.
+ * It used to read `updatedDate ?? publishedDate`, which inherited every missed
+ * manual bump: 205d494 edited 25 post files and moved 4 dates, so 21 URLs
+ * advertised a `lastmod` older than their own content.
  */
 function readPostDate(
   dir: URL,
   file: string,
+  locale: string,
 ): { slug: string; iso: string } | undefined {
   if (!file.endsWith(".mdx") || file.startsWith("_")) return undefined;
   const raw = readFileSync(fileURLToPath(new URL(file, dir)), "utf8");
   const fm = parseFrontmatter(raw);
-  if (!fm?.slug || fm.draft) return undefined;
-  const date = fm.updatedDate ?? fm.publishedDate;
-  if (!date) return undefined;
-  const parsed = new Date(date);
-  if (Number.isNaN(parsed.getTime())) return undefined; // skip malformed dates
-  return { slug: fm.slug, iso: parsed.toISOString() };
+  if (!fm?.slug || fm.draft || !fm.publishedDate) return undefined;
+  const iso = postDateModified(`${locale}/${file}`, {
+    publishedDate: fm.publishedDate,
+    updatedDate: fm.updatedDate,
+    lastVerified: fm.lastVerified,
+  });
+  return iso ? { slug: fm.slug, iso } : undefined;
 }
 
 /**
- * Builds a `slug → lastmod ISO string` map from all non-draft posts.
- * When a slug exists in several locales, keeps the newest date.
+ * Builds a `"<locale>/<slug>" → lastmod ISO string` map from all non-draft
+ * posts.
+ *
+ * Keyed per locale, not per slug. It used to keep one date per slug — the
+ * newest of the two translations — which was harmless only while both locales
+ * shared the same hand-maintained frontmatter dates. Now that the date folds in
+ * the file's own git history the translations really do differ (05af5217 fixed
+ * two unprefixed tool links in the Spanish post 010 and nothing in the
+ * English one), and a single shared entry would have published one date for
+ * both URLs while each page's own JSON-LD published its own.
  */
 export function getPostDateMap(): Map<string, string> {
   const map = new Map<string, string>();
@@ -92,10 +113,8 @@ export function getPostDateMap(): Map<string, string> {
   for (const locale of LOCALE_DIRS) {
     const { dir, files } = listPostFiles(locale);
     for (const file of files) {
-      const entry = readPostDate(dir, file);
-      if (!entry) continue;
-      const existing = map.get(entry.slug);
-      if (!existing || entry.iso > existing) map.set(entry.slug, entry.iso);
+      const entry = readPostDate(dir, file, locale);
+      if (entry) map.set(`${locale}/${entry.slug}`, entry.iso);
     }
   }
 
@@ -238,12 +257,18 @@ function getToolDateMap(): Map<string, string> {
 /**
  * Resolves `<lastmod>` for any sitemap URL from its real content source.
  *
- * @returns A function taking the locale-stripped path and returning an ISO
- *   timestamp, or undefined when nothing can be determined (the caller then
- *   omits `lastmod` — an absent element is valid and honest, whereas the build
- *   clock is a claim that the page changed when it did not).
+ * @returns A function taking the locale-stripped path, plus the locale that was
+ *   stripped off it, and returning an ISO timestamp — or undefined when nothing
+ *   can be determined (the caller then omits `lastmod`: an absent element is
+ *   valid and honest, whereas the build clock is a claim that the page changed
+ *   when it did not). The locale is optional because a caller that has already
+ *   thrown it away (BaseHead) still gets today's answer, the newest across
+ *   translations, rather than a wrong one.
  */
-export function createLastmodResolver(): (path: string) => string | undefined {
+export function createLastmodResolver(): (
+  path: string,
+  locale?: string,
+) => string | undefined {
   const postDates = getPostDateMap();
   const toolDates = getToolDateMap();
 
@@ -252,7 +277,18 @@ export function createLastmodResolver(): (path: string) => string | undefined {
 
   // Static pages, each keyed to whatever file actually holds its content.
   const staticSources: Record<string, string[]> = {
-    "/about/": ["src/content/profile/about.yaml"],
+    // The YAML holds the structured facts; the editorial policy, the bio and
+    // every heading are strings in the translation bundles. Keyed to the YAML
+    // alone, the page rewrote its own correction policy (this change) without
+    // its `lastmod` moving a day — the same failure this module fixes for
+    // posts. Same reasoning, and same over-reporting tradeoff, as /privacy/
+    // and /feeds/ below.
+    "/about/": [
+      "src/content/profile/about.yaml",
+      "src/components/pages/AboutPage.astro",
+      "src/i18n/translations/en/common.ts",
+      "src/i18n/translations/es/common.ts",
+    ],
     "/uses/": ["src/content/profile/uses.yaml"],
     "/projects/": ["src/content/profile/projects.yaml"],
     "/cv/": ["src/content/cv/en.yaml", "src/content/cv/es.yaml"],
@@ -290,7 +326,7 @@ export function createLastmodResolver(): (path: string) => string | undefined {
     ]),
   );
 
-  return (rawPath) => {
+  return (rawPath, locale) => {
     const path = rawPath === "" ? "/" : rawPath;
 
     // Home: the newest thing it surfaces. It is a shop window onto the posts,
@@ -303,8 +339,16 @@ export function createLastmodResolver(): (path: string) => string | undefined {
     // URLs shipped with no <lastmod> at all and were resubmitted to IndexNow on
     // every single deploy as "unknown, assume changed".
     const postSlug = /^\/blog\/([^/]+)\/?$/.exec(path);
-    if (postSlug && !["series", "tags"].includes(postSlug[1]))
-      return postDates.get(postSlug[1]);
+    if (postSlug && !["series", "tags"].includes(postSlug[1])) {
+      // The map is keyed per locale because the two translations of a post
+      // have their own edit histories. A caller that knows which one it is
+      // asking about gets that page's own date; one that does not falls back
+      // to the newest of the pair, which is what every caller used to get.
+      const key = postSlug[1];
+      return locale
+        ? postDates.get(`${locale}/${key}`)
+        : newest(...LOCALE_DIRS.map((l) => postDates.get(`${l}/${key}`)));
+    }
 
     const toolSlug = /^\/tools\/([^/]+)\/?$/.exec(path);
     if (toolSlug && toolSlug[1] !== "categories")
@@ -331,7 +375,8 @@ export function createLastmodResolver(): (path: string) => string | undefined {
 }
 
 /** Lazily-built singleton behind {@link pageLastmod}. */
-let lastmodResolver: ((path: string) => string | undefined) | undefined;
+let lastmodResolver:
+  ((path: string, locale?: string) => string | undefined) | undefined;
 
 /**
  * Memoised view of {@link createLastmodResolver} for use from page components.
@@ -347,9 +392,11 @@ let lastmodResolver: ((path: string) => string | undefined) | undefined;
  * (GEO audit 2026-08-22, M8).
  *
  * @param path - Locale-stripped path, e.g. `/blog/` or `/cv/`.
+ * @param locale - The locale that was stripped off it, when the caller still
+ *   knows it. Only post URLs differ per locale; everything else ignores it.
  * @returns ISO timestamp, or undefined when the date cannot be determined.
  */
-export function pageLastmod(path: string): string | undefined {
+export function pageLastmod(path: string, locale?: string): string | undefined {
   lastmodResolver ??= createLastmodResolver();
-  return lastmodResolver(path);
+  return lastmodResolver(path, locale);
 }

@@ -28,6 +28,15 @@ const posts = defineCollection({
       /** Content language. Defaults to "en" when omitted from frontmatter. */
       lang: z.enum(["en", "es"]).default("en"),
       publishedDate: z.coerce.date(),
+      /**
+       * Optional manual FLOOR for the revision date, no longer its source of
+       * truth. `dateModified` is computed in `@utils/post-dates` as
+       * max(publishedDate, updatedDate, lastVerified.date, last substantive
+       * commit touching the file), so forgetting this field no longer breaks
+       * the promise made at /about/#editorial — it did, on 21 of the 25 post
+       * files commit 205d494 edited. Set it only to claim a date git cannot
+       * know (e.g. a revision landing in a commit marked `Content-Bump: skip`).
+       */
       updatedDate: z.coerce.date().optional(),
       draft: z.boolean().default(false),
       // Pins this post as the blog index hero. If none is flagged, the most
@@ -122,6 +131,12 @@ const posts = defineCollection({
        * Distinct from `updatedDate`, which also covers typo/prose fixes with
        * no re-verification behind them. Only set this when a re-test actually
        * happened — an invented date turns a trust signal into a checkable lie.
+       *
+       * It is a term of the computed `dateModified` and it is emitted as
+       * `Last verified:` in the markdown twin: a re-verification IS a change
+       * to what the page claims, even when no prose moved. Post 011 used to
+       * advertise `dateModified: 2026-06-16` while its own byline said the
+       * instructions had been re-tested on 2026-08-22.
        */
       lastVerified: z
         .object({

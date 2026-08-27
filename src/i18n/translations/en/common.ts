@@ -877,7 +877,7 @@ export const common = {
       editorialBody3:
         "If something here is wrong, tell me. A short email with the article and the problem is enough — no account, no form. Vulnerability reports have their own channel and PGP key in security.txt.",
       editorialBody4:
-        "Corrections are made in the article itself rather than in a comment thread. A fix that changes the technical substance updates the article's revision date, which is shown on the page and in its structured data, and the change is noted in the article so a returning reader can see what moved. Typos are simply fixed. The full edit history of this site is public in its repository.",
+        "Corrections are made in the article itself rather than in a comment thread. The revision date shown on the page and in its structured data is not maintained by hand: it is derived at build time from the commit that last changed the article, so it cannot fall behind the text — including when the change is a small one. Formatting passes that touch every article at once are marked as such in that history and leave the dates alone. There is no per-article changelog; the record of what changed, and when, is the full edit history of this site, which is public in its repository.",
       editorialReportLabel: "Report an error",
       editorialSecurityLabel: "security.txt",
     },

@@ -320,6 +320,67 @@ test.describe("Sitemap Completeness", () => {
       expect(block).toMatch(/<lastmod>/);
     }
   });
+
+  test("every post URL agrees with its own page on the revision date", async ({
+    page,
+  }) => {
+    // `<lastmod>` and the page's `dateModified` are computed by the same
+    // function (`@utils/post-dates`), but they travel by different routes: the
+    // sitemap parses the MDX frontmatter itself from inside astro.config, while
+    // the page reads the collection entry. This pins them together.
+    //
+    // The failure it guards against is per-locale, and was real: the sitemap's
+    // map used to be keyed by SLUG, keeping the newest of the two
+    // translations, so both /blog/<slug>/ and /es/blog/<slug>/ advertised one
+    // date while each page published its own. It went unnoticed only while the
+    // two locales shared hand-written frontmatter dates.
+    await blockCloudflare(page);
+    const sitemap = await (await page.request.get("/sitemap-0.xml")).text();
+
+    const entries = [...sitemap.matchAll(/<url>([\s\S]*?)<\/url>/g)]
+      .map((block) => ({
+        loc: /<loc>(.*?)<\/loc>/.exec(block[1])?.[1] ?? "",
+        lastmod: /<lastmod>(.*?)<\/lastmod>/.exec(block[1])?.[1] ?? "",
+      }))
+      .filter((entry) => /\/blog\/\d{3}-[a-z0-9-]+\/$/.test(entry.loc));
+
+    expect(entries.length).toBeGreaterThanOrEqual(24);
+
+    for (const entry of entries) {
+      const path = new URL(entry.loc).pathname;
+      const html = await (await page.request.get(path)).text();
+      // Attribute order is not stable — the post-build minifier alphabetizes
+      // them — so the type is matched anywhere inside the tag.
+      const blocks = [
+        ...html.matchAll(
+          /<script[^>]*application\/ld\+json[^>]*>([\s\S]*?)<\/script>/g,
+        ),
+      ];
+      const nodes = blocks.flatMap((block) => {
+        const parsed = JSON.parse(block[1]) as {
+          "@graph"?: { "@type"?: string | string[]; dateModified?: string }[];
+        };
+        return parsed["@graph"] ?? [];
+      });
+      const article = nodes.find((node) =>
+        [node["@type"] ?? []]
+          .flat()
+          .some((type) => /BlogPosting|TechArticle/.test(type)),
+      );
+
+      expect(
+        article,
+        `${path} has no article node in its JSON-LD`,
+      ).toBeDefined();
+      // Compared by day: both sides carry a full timestamp from the same
+      // source, and pinning the millisecond would fail on a formatting change
+      // without any date having drifted.
+      expect(
+        article?.dateModified?.slice(0, 10),
+        `${path} publishes a dateModified its sitemap entry contradicts`,
+      ).toBe(entry.lastmod.slice(0, 10));
+    }
+  });
 });
 
 // ─── rel=me Social Links ────────────────────────────────────────────
