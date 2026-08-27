@@ -9,6 +9,7 @@
 import { type TranslationKey, useTranslations } from "@i18n/utils";
 import type { CVData, SiteConfig } from "@src/types";
 import { getCVData } from "@utils/cv";
+import { stripToText } from "@utils/html";
 import { registry } from "@utils/llms/mdx/registry";
 import { mdxToMarkdown } from "@utils/llms/mdx/render";
 import {
@@ -1136,6 +1137,187 @@ export async function generatePublicationsMarkdown(
     ),
     "",
     ...publicationsLines(groups),
+  ].join("\n");
+}
+
+/**
+ * Turns the hero's inline HTML into markdown.
+ *
+ * `heroSubtitle` and `heroBio2` are the only translated strings that carry
+ * markup, because the page renders them with `set:html`. Stripping the tags
+ * would have been one line, but it drops the two links inside them — the
+ * public MCP servers and the CV — which are exactly the paths an agent
+ * reading this document should be able to follow. So the three tags that
+ * actually occur are mapped, and anything else is stripped.
+ *
+ * @param html - The translated string, as authored.
+ * @param siteUrl - Absolute site origin, to resolve root-relative hrefs.
+ * @returns Markdown text.
+ */
+function heroToMarkdown(html: string, siteUrl: string): string {
+  const withLinks = html
+    .replaceAll(/<br\s*\/?>/gi, "\n")
+    .replaceAll(/<(strong|b)>([^<]*)<\/\1>/gi, "**$2**")
+    .replaceAll(/<(em|i)>([^<]*)<\/\1>/gi, "*$2*")
+    .replaceAll(
+      /<a\s[^>]*href=['"]([^'"]+)['"][^>]*>([^<]*)<\/a>/gi,
+      (_m, href: string, text: string) =>
+        `[${text}](${href.startsWith("/") ? siteUrl + href : href})`,
+    );
+  // `Engineer. <br>` leaves a trailing space before the newline. One trailing
+  // space is not a markdown hard break (that needs two), just untidy bytes.
+  return stripToText(withLinks)
+    .split("\n")
+    .map((line) => line.trimEnd())
+    .join("\n");
+}
+
+/**
+ * Sections the homepage sends a visitor to, and whether each has a twin.
+ *
+ * Hardcoded like `TWINNED_PROFILE_PAGES`, and for the same reason: whether a
+ * twin exists is a fact about the routes that were written, not something the
+ * content collections know. The listing pages carry a note rather than a
+ * `Markdown:` line — their items are the ones with twins, and saying so beats
+ * leaving a reader to infer it from an absence.
+ */
+const HOME_SECTIONS: {
+  path: string;
+  title: { en: string; es: string };
+  twin: boolean;
+  note?: { en: string; es: string };
+}[] = [
+  {
+    path: "/blog/",
+    title: { en: "Blog", es: "Blog" },
+    twin: false,
+    note: {
+      en: "Listing page. Every post publishes its own markdown twin.",
+      es: "Página de listado. Cada entrada publica su propio gemelo markdown.",
+    },
+  },
+  {
+    path: "/tools/",
+    title: { en: "Tools", es: "Herramientas" },
+    twin: false,
+    note: {
+      en: "Listing page. Every tool publishes its own markdown twin, and all of them run client-side.",
+      es: "Página de listado. Cada herramienta publica su propio gemelo markdown, y todas se ejecutan en el cliente.",
+    },
+  },
+  {
+    path: "/projects/",
+    title: { en: "Projects", es: "Proyectos" },
+    twin: true,
+  },
+  {
+    path: "/publications/",
+    title: { en: "Publications", es: "Publicaciones" },
+    twin: true,
+  },
+  { path: "/cv/", title: { en: "CV", es: "CV" }, twin: true },
+  { path: "/uses/", title: { en: "Uses", es: "Uses" }, twin: true },
+  { path: "/about/", title: { en: "About", es: "Sobre mí" }, twin: true },
+  {
+    path: "/homelab/",
+    title: { en: "Homelab", es: "Homelab" },
+    twin: false,
+    note: {
+      en: "No twin: its figures are substituted per request, so a static copy would be stale the moment it was written.",
+      es: "Sin gemelo: sus cifras se sustituyen por petición, así que una copia estática nacería caducada.",
+    },
+  },
+  { path: "/privacy/", title: { en: "Privacy", es: "Privacidad" }, twin: true },
+];
+
+/**
+ * The homepage as a standalone markdown document.
+ *
+ * The page itself is orientation — who this is, and where everything lives —
+ * so its twin is a map: the same hero identity, then every section with its
+ * own twin listed beside it. An agent that lands here reaches the whole site
+ * in markdown without parsing one page of HTML.
+ *
+ * The featured projects are named, not described. The page fetches their
+ * descriptions and star counts from the GitHub API at build time; repeating
+ * that here would put a second, independently-drifting copy of the same claim
+ * in the corpus, and `/projects/` already publishes the detailed version.
+ *
+ * @param siteUrl - Absolute site origin.
+ * @param locale - Which locale.
+ * @returns The complete file body.
+ */
+export async function generateHomeMarkdown(
+  siteUrl: string,
+  locale: "en" | "es",
+): Promise<string> {
+  const t = useTranslations(locale);
+  const prefix = locale === "es" ? "/es" : "";
+  const siteEntry = await getEntry("site_config", "site");
+  const siteData = (siteEntry?.data ?? {}) as SiteConfig;
+
+  const label = {
+    sections: { en: "Sections", es: "Secciones" },
+    featured: { en: "Featured projects", es: "Proyectos destacados" },
+    latest: { en: "Latest posts", es: "Últimas entradas" },
+    status: { en: "Status", es: "Estado" },
+    role: { en: "Role", es: "Perfil" },
+  } as const;
+
+  const sections = HOME_SECTIONS.flatMap((section) => [
+    `### ${section.title[locale]}`,
+    "",
+    `URL: ${siteUrl}${prefix}${section.path}`,
+    ...(section.twin
+      ? [`Markdown: ${siteUrl}${markdownTwinPath(prefix + section.path)}`]
+      : []),
+    ...(section.note ? ["", section.note[locale]] : []),
+    "",
+  ]);
+
+  // Newest first, which is the order the homepage shows them in.
+  const posts = (await getPostsByLocale(locale)).slice(-5).toReversed();
+  const latest = posts.flatMap((post) => {
+    const path = `${prefix}/blog/${post.data.slug}/`;
+    return [
+      `- ${post.data.title}`,
+      `  URL: ${siteUrl}${path}`,
+      `  Markdown: ${siteUrl}${markdownTwinPath(path)}`,
+    ];
+  });
+
+  const featured = (siteData.featured_projects ?? []).map(
+    (name) => `- ${name} — https://github.com/jmrplens/${name}`,
+  );
+
+  return [
+    ...documentHeader(
+      t("pages.home.heroTitle"),
+      `${siteUrl}${prefix}/`,
+      `${siteUrl}/llms.txt`,
+      [
+        `${label.status[locale]}: ${t("pages.home.availability")}`,
+        `${label.role[locale]}: ${t("pages.home.terminalRole")}`,
+      ],
+    ),
+    "",
+    heroToMarkdown(t("pages.home.heroSubtitle"), siteUrl),
+    "",
+    heroToMarkdown(t("pages.home.heroBio1"), siteUrl),
+    "",
+    heroToMarkdown(t("pages.home.heroBio2"), siteUrl),
+    "",
+    `## ${label.sections[locale]}`,
+    "",
+    ...sections,
+    `## ${label.featured[locale]}`,
+    "",
+    ...featured,
+    "",
+    `## ${label.latest[locale]}`,
+    "",
+    ...latest,
+    "",
   ].join("\n");
 }
 

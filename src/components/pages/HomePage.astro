@@ -16,6 +16,7 @@ import {
   langColors,
 } from "@utils/github";
 import { sanitize } from "@utils/html";
+import { markdownTwinPath } from "@utils/llms";
 import { getSiteUrl } from "@utils/site";
 import { getEntry } from "astro:content";
 import type { WebPage } from "schema-dts";
@@ -131,6 +132,7 @@ const homeSchema = {
 <BaseLayout
   title={t("seo.siteTitle")}
   description={t("seo.siteDescription")}
+  markdownHref={markdownTwinPath(Astro.url.pathname)}
   schema={homeSchema}
 >
   <section class="hero">
