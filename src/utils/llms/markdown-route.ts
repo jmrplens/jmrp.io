@@ -1,4 +1,5 @@
 import {
+  generateHomeMarkdown,
   generateLlmsPostTxt,
   generatePageMarkdown,
   generateProfileMarkdown,
@@ -148,6 +149,16 @@ export function singleMarkdownRoute(
 export function profileRenderer(page: "about" | "projects" | "uses") {
   return (siteUrl: string, locale: "en" | "es") =>
     generateProfileMarkdown(siteUrl, page, locale);
+}
+
+/**
+ * Binds the homepage to a locale.
+ *
+ * @returns A renderer with the signature `singleMarkdownRoute` expects.
+ */
+export function homeRenderer() {
+  return (siteUrl: string, locale: "en" | "es") =>
+    generateHomeMarkdown(siteUrl, locale);
 }
 
 /**

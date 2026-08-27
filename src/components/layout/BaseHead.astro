@@ -79,7 +79,8 @@ interface Props {
   /**
    * Root-relative path of this page's markdown twin, when it has one.
    *
-   * Only blog posts do. `<link rel="alternate">` is how a client that fetched
+   * Posts, tools, the profile pages and the homepage do; the listing
+   * pages do not. `<link rel="alternate">` is how a client that fetched
    * the PAGE — rather than robots.txt, whose pointers are comments that
    * nothing parses — learns the file exists without guessing the convention.
    */
