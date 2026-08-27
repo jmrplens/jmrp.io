@@ -102,6 +102,22 @@ export async function generateTagRedirects(
   );
   pairs.push(...legacyPairs);
 
+  // A retired tag's CARD IMAGE, too. The tag page itself has redirected for a
+  // while, but a social crawler holding an old copy fetches the `og:image` URL
+  // straight from its cache — `/og/blog/tags/honeypot.png` was answering 404
+  // (measured in the access log, referred by /blog/tags/honeypot/), so the
+  // preview lost its image even though the page behind it resolved fine.
+  // No trailing-slash variants: these are files, not directories.
+  const ogPairs = tags.flatMap(([slug, value]) =>
+    ["", "/es"].map((locale) => {
+      const target = value.startsWith("tag:")
+        ? `/og${locale}/blog/tags/${value.slice("tag:".length)}.png`
+        : `/og${locale}/blog.png`;
+      return [`/og${locale}/blog/tags/${slug}.png`, target] as const;
+    }),
+  );
+  pairs.push(...ogPairs);
+
   // Interpolated into quoted map entries below, and this file never passes
   // through the Zod content schema — see assertNginxSafe.
   assertNginxSafe(
@@ -127,7 +143,8 @@ export async function generateTagRedirects(
 # Included at http level; consumed by the server block as:
 #     if (${MAP_VARIABLE}) { return 301 ${MAP_VARIABLE}; }
 #
-# Tags: ${tags.length} + ${legacy.length} legacy path(s) (x4: EN/ES, with and without slash)
+# Tags: ${tags.length} + ${legacy.length} legacy path(s) (x4: EN/ES, with and
+# without slash), plus ${ogPairs.length} og:image keys (x2: EN/ES, no slash form)
 
 map $uri ${MAP_VARIABLE} {
     default "";
