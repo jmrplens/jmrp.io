@@ -1,3 +1,4 @@
+import { decodeHtml } from "@utils/html";
 import { markdownFor } from "@utils/llms/mdx/types";
 
 /**
@@ -49,7 +50,12 @@ export default markdownFor({
     // `ctx.body` slices the source, so a bare-text output keeps the exact
     // bytes of every line — including the `*`/`>`/`#` that made markdown
     // misread it in the first place.
-    const content = onlyFence ? (fence?.value ?? "") : ctx.body(node);
+    // Same entity trap as TerminalCommand: bare-text output comes from JSX
+    // children, where `&lt;` is the only way to write `<`, so it is decoded
+    // here. The single-fence branch keeps its bytes untouched.
+    const content = onlyFence
+      ? (fence?.value ?? "")
+      : decodeHtml(ctx.body(node));
     if (!content.trim()) return "";
 
     let block: string;

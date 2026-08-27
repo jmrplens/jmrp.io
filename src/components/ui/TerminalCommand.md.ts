@@ -1,3 +1,4 @@
+import { decodeHtml } from "@utils/html";
 import { markdownFor } from "@utils/llms/mdx/types";
 
 /**
@@ -60,7 +61,13 @@ export default markdownFor({
     // Half the session commands are written as bare text rather than a fence
     // (`<TerminalSessionCommand>crontab -l</TerminalSessionCommand>`). Both
     // forms are a command, so both leave here as one.
-    const code = fence ? (fence.value ?? "") : ctx.body(node);
+    // The bare-text form lives in JSX children, where a literal `<` would be
+    // parsed as a tag — so authors must write `&lt;`, and MDX decodes it back
+    // before it reaches the page. `ctx.body` slices the source instead, which
+    // kept the entity and shipped `tr -dc '...' &lt; /dev/urandom`: a command
+    // that fails the moment anyone copies it. The fenced branch is NOT decoded
+    // — a fence's bytes are literal, entity or not.
+    const code = fence ? (fence.value ?? "") : decodeHtml(ctx.body(node));
     if (!code.trim()) return "";
 
     // An info string the author typed always wins; only the unlabelled blocks
