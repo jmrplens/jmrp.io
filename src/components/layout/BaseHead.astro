@@ -755,14 +755,21 @@ const jsonLD = {
 
     `describedby` goes on EVERY page; the markdown alternate only on pages that
     have a twin. Until now this was a single `rel="alternate" type="text/plain"`
-    to /llms.txt — a relation the spec does not define and a type that misstates
-    what the file is. robots.txt also points at these files, but only in
-    comments, which nothing parses. */
+    to /llms.txt — a relation the spec does not define.
+
+    No `type` on the `describedby` link, deliberately: the spec pairs
+    `type="text/markdown"` with `rel="alternate"` only, and its own example
+    gives the llms.txt link no media type at all. Declaring one here started a
+    three-way disagreement — `text/markdown` in the head, `text/plain` in the
+    nginx `Link` header, `text/plain` on the wire — over a file whose type the
+    spec never fixes. Omitting it is what the spec actually shows.
+
+    robots.txt also points at these files, but only in comments, which nothing
+    parses. */
 }
 <link
   rel="describedby"
   href="/llms.txt"
-  type="text/markdown"
   title="LLM context index (llmstxt.org)"
 />
 {
