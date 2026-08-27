@@ -763,13 +763,17 @@ function buildPostEntry(
   p: CollectionEntry<"posts">,
   siteUrl: string,
   localePrefix: "" | "/es",
+  locale: "en" | "es",
 ): string[] {
   const d = p.data;
+  const postUrl = `${siteUrl}${localePrefix}/blog/${d.slug}/`;
   return [
     // No `### <title>` here: the only caller is the shard, whose `# <title>`
     // header names the post one line above. Emitting both put the article
     // title in the document twice and pushed every real section down a level.
-    `URL: ${siteUrl}${localePrefix}/blog/${d.slug}/`,
+    `URL: ${postUrl}`,
+    `Language: ${locale}`,
+    `Alternate: ${alternateTwinUrl(postUrl, locale)}`,
     `Type: ${d.articleType}`,
     `Published: ${d.publishedDate.toISOString().slice(0, 10)}`,
     ...(d.updatedDate
@@ -789,7 +793,7 @@ function buildPostEntry(
     ...(d.faq && d.faq.length > 0
       ? [
           "",
-          "Questions answered:",
+          CHROME.questions[locale],
           "",
           ...d.faq.flatMap((f) => [`**${f.question}**`, "", f.answer, ""]),
         ]
@@ -797,7 +801,7 @@ function buildPostEntry(
     ...((d.howto?.steps?.length ?? 0) > 0
       ? [
           "",
-          `Steps (${d.howto?.name}):`,
+          `${CHROME.steps[locale]} (${d.howto?.name}):`,
           ...(d.howto?.steps ?? []).map((s, i) => `${i + 1}. ${s.name}`),
         ]
       : []),
@@ -871,11 +875,14 @@ export function generateLlmsPostTxt(
   post: CollectionEntry<"posts">,
 ): string {
   const localePrefix = locale === "es" ? "/es" : "";
-  const parent = `${siteUrl}/llms-full-${locale}.txt`;
+  // Straight to the file, not `llms-full-<locale>.txt`: the per-locale names
+  // were consolidated into one and now 301 there, so every shard was sending
+  // its reader through a redirect to reach its own index.
+  const parent = `${siteUrl}/llms-full.txt`;
   return [
     `# ${post.data.title}`,
     "",
-    `> One post from jmrp.io, published as its own document. Index: ${parent}`,
+    `> ${CHROME.post[locale]} ${parent}`,
     "",
     // `Generated`, not `Last updated`: this is the build date, identical across
     // all 24 shards. Labelling it as the post's update date told every
@@ -883,7 +890,7 @@ export function generateLlmsPostTxt(
     // dates are `Published:`/`Updated:` inside the entry.
     `> Generated: ${today()}`,
     "",
-    ...buildPostEntry(post, siteUrl, localePrefix),
+    ...buildPostEntry(post, siteUrl, localePrefix, locale),
   ].join("\n");
 }
 
@@ -946,23 +953,73 @@ export function markdownTwinPath(pagePath: string): string {
   return `${base}/index.md`;
 }
 
+/**
+ * The prose the generator writes around the content, per locale.
+ *
+ * Split from the field keys (`URL:`, `Published:`, `Tags:`…) on purpose. Those
+ * are a schema: their values already carry the language, and what makes them
+ * parseable is being identical across all 72 documents — the same reason
+ * JSON-LD property names stay English whatever `inLanguage` says. These, by
+ * contrast, are sentences, and a markdown file has no `lang` attribute and no
+ * hreflang: its own text is the ONLY language signal it carries. English
+ * chrome inside a Spanish document weakens precisely the signal that makes it
+ * selectable as a Spanish source.
+ */
+const CHROME = {
+  page: {
+    en: "One page from jmrp.io, published as markdown. Index:",
+    es: "Una página de jmrp.io, publicada como markdown. Índice:",
+  },
+  post: {
+    en: "One post from jmrp.io, published as its own document. Index:",
+    es: "Una entrada de jmrp.io, publicada como documento propio. Índice:",
+  },
+  questions: { en: "Questions answered:", es: "Preguntas que responde:" },
+  features: { en: "Features:", es: "Características:" },
+  steps: { en: "Steps", es: "Pasos" },
+} as const;
+
+/**
+ * The same document in the other locale.
+ *
+ * This is the twin's hreflang. The page has `<link rel="alternate" hreflang>`;
+ * the markdown file has nothing, so an agent holding the Spanish document had
+ * no way to learn the English one exists, or the reverse. Structural parity
+ * between locales is enforced elsewhere (identical slugs, identical FAQ
+ * counts), which is what makes swapping the prefix a safe derivation.
+ *
+ * @param url - Absolute URL of the page this document twins.
+ * @param locale - Locale of THIS document.
+ * @returns Absolute URL of the other locale's twin.
+ */
+function alternateTwinUrl(url: string, locale: "en" | "es"): string {
+  const { origin, pathname } = new URL(url);
+  const other =
+    locale === "es" ? pathname.replace("/es/", "/") : `/es${pathname}`;
+  return `${origin}${markdownTwinPath(other)}`;
+}
+
 /** Metadata block shared by every standalone markdown document. */
 function documentHeader(
   title: string,
   url: string,
   index: string,
+  locale: "en" | "es",
   extra: string[] = [],
 ): string[] {
   return [
     `# ${title}`,
     "",
-    `> One page from jmrp.io, published as markdown. Index: ${index}`,
+    `> ${CHROME.page[locale]} ${index}`,
     "",
     // The build date, not a content date — the real ones, when a page has
     // them, are in `extra`.
     `> Generated: ${today()}`,
     "",
     `URL: ${url}`,
+    // The keys stay English: they are the schema. The values are the language.
+    `Language: ${locale}`,
+    `Alternate: ${alternateTwinUrl(url, locale)}`,
     ...extra,
   ];
 }
@@ -973,6 +1030,9 @@ function toolIndexEntry(
   siteUrl: string,
 ): string[] {
   const d = t.data;
+  // The entry's own language, not the caller's: llms-full.txt is one bilingual
+  // index, so its Spanish half must read as Spanish inside an English file.
+  const locale = d.lang;
   return [
     `### ${d.title}`,
     "",
@@ -987,12 +1047,12 @@ function toolIndexEntry(
     // written for machines. They stay in the index because they are what lets
     // an agent choose WHICH tool to fetch, which is the job of a file list.
     ...(d.features && d.features.length > 0
-      ? ["", "Features:", ...d.features.map((f) => `- ${f}`)]
+      ? ["", CHROME.features[locale], ...d.features.map((f) => `- ${f}`)]
       : []),
     ...(d.faq && d.faq.length > 0
       ? [
           "",
-          "Questions answered:",
+          CHROME.questions[locale],
           "",
           ...d.faq.flatMap((f) => [`**${f.question}**`, "", f.answer, ""]),
         ]
@@ -1030,19 +1090,25 @@ export function generateToolMarkdown(
   const locale = d.lang === "es" ? "es" : "en";
   const page = new URL(toolUrl(siteUrl, tool)).pathname;
   return [
-    ...documentHeader(d.title, `${siteUrl}${page}`, `${siteUrl}/llms.txt`, [
-      `Category: ${d.category}`,
-      ...(d.tags.length > 0 ? [`Tags: ${d.tags.join(", ")}`] : []),
-      "",
-      d.description,
-    ]),
+    ...documentHeader(
+      d.title,
+      `${siteUrl}${page}`,
+      `${siteUrl}/llms.txt`,
+      locale,
+      [
+        `Category: ${d.category}`,
+        ...(d.tags.length > 0 ? [`Tags: ${d.tags.join(", ")}`] : []),
+        "",
+        d.description,
+      ],
+    ),
     ...(d.features && d.features.length > 0
-      ? ["", "Features:", ...d.features.map((f) => `- ${f}`)]
+      ? ["", CHROME.features[locale], ...d.features.map((f) => `- ${f}`)]
       : []),
     ...(d.faq && d.faq.length > 0
       ? [
           "",
-          "Questions answered:",
+          CHROME.questions[locale],
           "",
           ...d.faq.flatMap((f) => [`**${f.question}**`, "", f.answer, ""]),
         ]
@@ -1106,6 +1172,7 @@ export async function generateCvMarkdown(
       cv.basics.name,
       `${siteUrl}${page}`,
       `${siteUrl}/llms.txt`,
+      locale,
     ),
     "",
     ...cvToMarkdown(cv, siteUrl, locale),
@@ -1134,6 +1201,7 @@ export async function generatePublicationsMarkdown(
       locale === "es" ? "Publicaciones" : "Publications",
       `${siteUrl}${page}`,
       `${siteUrl}/llms.txt`,
+      locale,
     ),
     "",
     ...publicationsLines(groups),
@@ -1295,6 +1363,7 @@ export async function generateHomeMarkdown(
       t("pages.home.heroTitle"),
       `${siteUrl}${prefix}/`,
       `${siteUrl}/llms.txt`,
+      locale,
       [
         `${label.status[locale]}: ${t("pages.home.availability")}`,
         `${label.role[locale]}: ${t("pages.home.terminalRole")}`,
@@ -1351,6 +1420,7 @@ export async function generateProfileMarkdown(
       titles[page][locale],
       `${siteUrl}${path}`,
       `${siteUrl}/llms.txt`,
+      locale,
     ),
     "",
     ...lines,
@@ -1382,6 +1452,7 @@ export async function generatePageMarkdown(
       entry.data.heading,
       `${siteUrl}${path}`,
       `${siteUrl}/llms.txt`,
+      locale,
       ["", entry.data.description],
     ),
     "",
