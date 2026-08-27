@@ -1524,7 +1524,27 @@ WireGuard is extremely efficient, but several factors can limit throughput on Mi
 ```
 </Code>
 
-On my own router `cpu-load` sits in the low single digits with the tunnel up, but I am not going to dress that up as a benchmark: my link is idle most of the time, and a number measured on an idle tunnel tells you nothing about one under load. WireGuard runs in the kernel and is genuinely cheap, but if you need a throughput figure for your own hardware, the only way to get one is a controlled test across the tunnel — `iperf3` between a client and a host on the LAN side, with both ends under your control.
+An idle tunnel tells you nothing, so I measured this one under load: `iperf3` between a
+phone on the VPN and a host on the LAN side, with the router doing the crypto in between.
+Downstream — the direction where the router encrypts — the tunnel sustained roughly 70 Mbps
+for 30 seconds, and `cpu-load` went from a median of 3% at rest to a median of 15% while it
+ran. Memory barely moved: about 22 MiB of the router's 1 GiB, and it came straight back. So
+the cost of WireGuard on an RB5009 at that rate is around twelve points of one core's worth
+of CPU, and nothing else.
+
+Two caveats, because both of them would have made this number a lie. The first is that my
+router runs some periodic task every two minutes that takes CPU to 30% on its own; it is
+visible in the samples at 0, 120, 240 and 360 seconds, has nothing to do with the tunnel,
+and averaging it in would have produced a "peak 31% under VPN load" that is simply false.
+Sample long enough to see your own background, and exclude it. The second is that 70 Mbps
+was my client's ceiling, not the router's — this says what WireGuard costs at that rate, not
+where it stops.
+
+One result did surprise me. Five parallel streams moved **less** than a single stream —
+about 58 Mbps against roughly 70 — and did it with thirty times the retransmissions. On a
+mobile link the parallel flows compete for the same buffer and manufacture the loss that TCP
+then reads as congestion. If you benchmark your own tunnel, start with one stream; reach for
+`-P` only after you have confirmed a single flow cannot fill the pipe.
 
 ### Useful diagnostic commands
 

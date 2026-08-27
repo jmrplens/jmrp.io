@@ -1525,7 +1525,26 @@ WireGuard es extremadamente eficiente, pero varios factores pueden limitar el re
 ```
 </Code>
 
-En mi propio router el `cpu-load` se queda en cifras de un dígito con el túnel levantado, pero no voy a disfrazar eso de benchmark: mi enlace está parado la mayor parte del tiempo, y un número medido sobre un túnel en reposo no dice nada de uno bajo carga. WireGuard corre en el kernel y es genuinamente barato, pero si necesitas una cifra de rendimiento para tu propio hardware, la única forma de obtenerla es una prueba controlada a través del túnel: `iperf3` entre un cliente y un equipo del lado LAN, con los dos extremos bajo tu control.
+Un túnel en reposo no dice nada, así que medí este bajo carga: `iperf3` entre un móvil
+conectado a la VPN y un equipo del lado LAN, con el router haciendo la criptografía por en
+medio. En bajada —la dirección en la que el router cifra— el túnel sostuvo unos 70 Mbps
+durante 30 segundos, y el `cpu-load` pasó de una mediana del 3% en reposo a una mediana del
+15% mientras duraba. La memoria apenas se movió: unos 22 MiB del giga que lleva el router, y
+los devolvió enseguida. Es decir: WireGuard en un RB5009 a ese caudal cuesta unos doce puntos
+de lo que da un núcleo, y nada más.
+
+Dos advertencias, porque cualquiera de las dos habría convertido esa cifra en mentira. La
+primera es que mi router ejecuta alguna tarea periódica cada dos minutos que por sí sola se
+lleva la CPU al 30%; se ve en las muestras a los 0, 120, 240 y 360 segundos, no tiene nada que
+ver con el túnel, y meterla en la media habría producido un «pico del 31% bajo carga de VPN» que es
+sencillamente falso. Conviene medir durante el tiempo suficiente para ver tu propio ruido de fondo, y dejar ese ruido fuera del cálculo. La segunda es que esos 70 Mbps eran el techo de mi cliente, no el del router:
+esto dice lo que cuesta WireGuard a ese caudal, no dónde se para.
+
+Un resultado sí me sorprendió. Cinco flujos en paralelo movieron **menos** que uno solo —unos
+58 Mbps frente a los ~70— y encima con treinta veces más retransmisiones. Sobre un enlace
+móvil los flujos paralelos compiten por el mismo buffer y fabrican la pérdida que TCP luego
+interpreta como congestión. Si mides tu propio túnel, empieza con un flujo; recurre a `-P`
+solo después de comprobar que uno solo no llena el tubo.
 
 ### Comandos de diagnóstico útiles
 
