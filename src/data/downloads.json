@@ -1,16 +1,16 @@
 {
-  "total": 145224,
-  "generatedAt": "2026-08-27T09:43:25.688Z",
+  "total": 145251,
+  "generatedAt": "2026-08-27T09:53:07.944Z",
   "sources": {
-    "githubReleases": 136636,
+    "githubReleases": 136663,
     "dockerHub": 7366,
     "manual": 1222
   },
   "manualVerifiedOn": "2026-08-27",
   "projects": {
     "gitlab-mcp-server": {
-      "total": 138748,
-      "releases": 133591,
+      "total": 138775,
+      "releases": 133618,
       "docker": 5157,
       "manual": 0
     },
