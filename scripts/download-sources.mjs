@@ -68,6 +68,9 @@ export const DOWNLOAD_SOURCES = {
   },
   "libgen-mcp": { releases: true, docker: [`${OWNER}/libgen-mcp`] },
   "cs-routeros-bouncer": { releases: true, docker: [] },
+  // No releases yet (the first is in the making) — listed so the count starts
+  // being picked up the moment one is published, with no edit here.
+  "portainer-mcp": { releases: true, docker: [] },
   "Cloudflare-DNS-Updater": { releases: true, docker: [] },
   "A-Lab": {
     releases: true,
@@ -85,6 +88,11 @@ export const DOWNLOAD_SOURCES = {
     releases: false,
     docker: [],
     manual: { source: "MATLAB Central File Exchange", count: 215 },
+  },
+  CATT2Matlab: {
+    releases: false,
+    docker: [],
+    manual: { source: "MATLAB Central File Exchange", count: 88 },
   },
 };
 
