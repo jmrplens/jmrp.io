@@ -51,6 +51,27 @@ person:
     # identity to the artifacts rather than only to their source repos.
     - "https://pypi.org/user/jmrplens/"
     - "https://hub.docker.com/u/jmrplens"
+    # Communities where he posts under the canonical handle. Each one was
+    # verified by a link back to this site or to the GitHub account, not by the
+    # handle alone — "jmrplens" is rare, but a matching handle is not proof.
+    #
+    # Home Assistant: profile carries the full name, "Valencia, Spain" and
+    # jmrp.io in its website field, with 33 posts behind it.
+    - "https://community.home-assistant.io/u/jmrplens"
+    # MikroTik forum: he writes there as the maintainer of cs-routeros-bouncer.
+    # NOTE: the forum answers 403 to anonymous requests, so an external
+    # validator cannot read this one — it is here because it is true, not
+    # because a crawler can confirm it.
+    - "https://forum.mikrotik.com/u/jmrplens"
+    # AT Protocol professional profile: its content is signed in his own PDS
+    # (id.sifa.profile.*), and the page links GitHub, LinkedIn, jmrp.io and the
+    # Keyoxide key that signs security.txt.
+    - "https://sifa.id/p/jmrp.io"
+    # Stack Exchange NETWORK profile — the account that groups the per-site
+    # ones. Both forms are kept on purpose: the network id survives site
+    # migrations, the Stack Overflow one is where the actual answers are.
+    - "https://stackexchange.com/users/7889616/jmrplens"
+    - "https://dsp.stackexchange.com/users/51783/jmrplens"
     # Stack Overflow. The account is old and was renamed to the canonical handle
     # on 2026-08-27; the numeric id in the URL is what identifies it, and it
     # survives any future rename — which is why the URL is stored with the id
