@@ -21,7 +21,7 @@ faq:
   - question: "What is device binding in key derivation?"
     answer: "Device binding mixes a 32-byte per-chip deviceSecret into the master key after PBKDF2, using HKDF. The verifier stored on flash then only reproduces on the original chip, so an attacker who dumps the flash still can't recompute the key without the secret — turning an offline brute-force attack from linear into categorically impossible."
   - question: "Where does the per-chip device secret come from on the ESP32?"
-    answer: "It has two backends chosen at compile time. On the ESP32-S3 it's an eFuse-HMAC: the HMAC peripheral computes a tag using an eFuse key that's read-protected and never leaves the silicon. On classic ESP32, which has no HMAC peripheral, it's a random 32-byte NVS pepper stored in encrypted NVS — weaker, but it still defeats a naive flash dump."
+    answer: "The device secret has two backends, chosen at compile time. On the ESP32-S3 it's an eFuse-HMAC: the HMAC peripheral computes a tag using an eFuse key that's read-protected and never leaves the silicon. On classic ESP32, which has no HMAC peripheral, it's a random 32-byte NVS pepper stored in encrypted NVS — weaker, but it still defeats a naive flash dump."
   - question: "Why use HKDF instead of a hand-rolled HMAC to mix in the device secret?"
     answer: "HKDF (RFC 5869) is a published, analyzed extract-then-expand KDF that turns a non-uniform secret into uniform key material with domain separation, keeping the construction standard and citable. It's built on one HMAC primitive so output is byte-identical on both host and device, and it's pinned by a known-answer test against the RFC 5869 Appendix A vectors."
   - question: "What happens to the vault if the device dies?"
@@ -208,9 +208,11 @@ Iteration count buys real time against a *high-entropy* password being attacked 
 
 ---
 
-## The idea: bind the key to the silicon
+## What is device binding in key derivation?
 
-If you can't make each offline guess slow enough, make each offline guess **need something the attacker doesn't have**. After PBKDF2 produces the master key from the PIN and salt, I mix in a 32-byte `deviceSecret` that only the original chip can produce. The verifier stored on flash is then derived from that *bound* master key. An attacker who dumps the flash has the ciphertext and the salt, but recomputing the key for any PIN guess now requires the per-chip secret — and that secret never appears on the flash they copied.
+Device binding mixes a 32-byte per-chip `deviceSecret` into the master key after PBKDF2, using HKDF. The verifier stored on flash then only reproduces on the original chip, so an attacker who dumps that flash still can't recompute the key for any PIN guess.
+
+The reasoning is simple: if you can't make each offline guess slow enough, make each offline guess **need something the attacker doesn't have**. After PBKDF2 produces the master key from the PIN and salt, I mix in a 32-byte `deviceSecret` that only the original chip can produce. The verifier stored on flash is then derived from that *bound* master key. An attacker who dumps the flash has the ciphertext and the salt, but recomputing the key for any PIN guess now requires the per-chip secret — and that secret never appears on the flash they copied.
 
 It's like requiring, on top of the PIN, an ingredient that exists only in *this one* chip and can't be copied: however perfect the flash copy the thief walks off with, without that ingredient their 10,000 tries go nowhere. This is the whole trick, and it changes the attack from *linear* to *categorical*. Before binding, the offline attacker needs 10,000 cheap PBKDF2 evaluations and wins. After binding, they need a secret that physically does not leave the chip, so the offline attack doesn't get slower — it stops existing. The only place a guess can be checked is back on the device, where the lockout-and-wipe guard is waiting.
 
@@ -253,7 +255,7 @@ Binding is a *hardened-production* feature, gated behind a build flag. Open deve
 
 ---
 
-## Where does the device secret come from?
+## Where does the per-chip device secret come from on the ESP32?
 
 The "secret only this chip can produce" has two implementations, picked at compile time by what the chip can actually do. The deciding capability is whether the SoC has a hardware **HMAC peripheral**, which ESP-IDF exposes as `SOC_HMAC_SUPPORTED`. The ESP32-S3 has it; the classic ESP32 does not — and that single fact is why the code carries two backends instead of one.
 
@@ -384,7 +386,9 @@ Both backends produce a 32-byte `deviceSecret` and hand it to the same mixing st
 
 ---
 
-## Mixing it in with HKDF, not a hand-rolled HMAC
+## Why use HKDF instead of a hand-rolled HMAC?
+
+HKDF (RFC 5869) is a published, analyzed extract-then-expand KDF that turns a non-uniform secret into uniform key material with domain separation, so the construction stays standard and citable rather than home-made — and it is built on a single HMAC primitive, which is what keeps the output byte-identical on host and device.
 
 Once you have a 32-byte device secret and a 32-byte PBKDF2 master key, you need to combine them into a new key. The temptation is to reach for a bare `HMAC(deviceSecret, master)` and call it done. I didn't, because there's a published, analyzed primitive built for exactly this — the certified tool instead of mixing by eye: **[HKDF](https://datatracker.ietf.org/doc/html/rfc5869)** (RFC 5869), the extract-then-expand KDF whose security argument was laid out by Hugo Krawczyk in [*Cryptographic Extraction and Key Derivation: The HKDF Scheme*](https://eprint.iacr.org/2010/264). HKDF gives you a non-uniform secret turned into uniform key material *with domain separation*, and using it verbatim keeps the whole construction a citable, standard one rather than something I invented on a Tuesday.
 

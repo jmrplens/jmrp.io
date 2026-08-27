@@ -9,8 +9,8 @@ lastVerified:
   versions:
     - RouterOS 7.23.2
     - RB5009UG+S+
-description: "Configura PPPoE con DHCPv6 Prefix Delegation en MikroTik RouterOS para DIGI España. VLAN tagging, SLAAC, gestión de cambios de prefix y firewall."
-lead: "DIGI España entrega la sesión PPPoE en la VLAN 20 y delega un /56 por DHCPv6-PD — y la MTU del enlace se negocia a la baja hasta 1480 por LCP, pongas lo que pongas en max-mtu."
+description: "Configura PPPoE con DHCPv6 Prefix Delegation en MikroTik RouterOS para DIGI España. VLAN tagging, SLAAC, gestión de cambios de prefijo y firewall."
+lead: "DIGI España entrega la sesión PPPoE en la VLAN 20 y delega un /56 por DHCPv6-PD — y el MTU del enlace se negocia a la baja hasta 1480 por LCP, pongas lo que pongas en max-mtu."
 author: "José Manuel Requena Plens"
 authorEmail: "mail@jmrp.io"
 draft: false
@@ -19,16 +19,16 @@ tags: ["MikroTik", "IPv6", "Networking"]
 faq:
   - question: "¿Qué VLAN usa DIGI España para PPPoE?"
     answer: "DIGI España requiere VLAN tagging 802.1Q en la VLAN 20 para el tráfico PPPoE de internet. Si conectas directamente sin VLAN tagging, la autenticación PPPoE fallará."
-  - question: "¿Qué prefix IPv6 delega DIGI vía DHCPv6-PD?"
-    answer: "DIGI delega un prefix dinámico /56 mediante DHCPv6 Prefix Delegation, lo que te da 256 subnets /64 para usar en tu LAN principal, IoT, red de invitados y más. El prefix puede cambiar en cada reconexión."
-  - question: "¿Cómo gestiono el cambio de prefix IPv6 de DIGI en cada reconexión?"
+  - question: "¿Qué prefijo IPv6 delega DIGI vía DHCPv6-PD?"
+    answer: "DIGI delega un prefijo dinámico /56 mediante DHCPv6 Prefix Delegation, lo que te da 256 subredes /64 para usar en tu LAN principal, IoT, red de invitados y más. El prefijo puede cambiar en cada reconexión."
+  - question: "¿Cómo gestiono el cambio de prefijo IPv6 de DIGI en cada reconexión?"
     answer: "Añade un script al cliente DHCPv6 que espere 5 segundos a que se rellene el pool, elimine la dirección anunciada antigua del bridge y añada una nueva desde el pool6 actualizado. Como la dirección usa advertise=yes, RouterOS crea automáticamente el ND prefix para SLAAC."
   - question: "¿Por qué el MTU de PPPoE es 1480 si configuro max-mtu en 1500?"
     answer: "El parámetro max-mtu es solo el límite superior que el cliente acepta, no el MTU real de la conexión. El servidor PPPoE determina el MTU real durante la negociación LCP, y DIGI lo negocia hasta 1480 independientemente del valor de max-mtu."
   - question: "¿Por qué no se autentica mi conexión PPPoE con DIGI?"
     answer: "Comprueba que el VLAN ID sea 20, que el usuario use el formato identificador@digi, que el ONT esté en modo bridge y que el cable físico esté conectado. El cliente DHCPv6 también debe estar en la interfaz PPPoE, no en la VLAN."
   - question: "¿Funciona esta configuración de MikroTik con otros ISP además de DIGI?"
-    answer: "Sí. Funciona con cualquier ISP basado en PPPoE que proporcione IPv6 vía DHCPv6-PD. Las diferencias entre ISPs suelen ser el ID de VLAN (o ausencia de VLAN), el MTU negociado (normalmente 1480–1492), el formato de usuario y el tamaño del prefix delegado (/48, /56 o /64)."
+    answer: "Sí. Funciona con cualquier ISP basado en PPPoE que proporcione IPv6 vía DHCPv6-PD. Las diferencias entre ISPs suelen ser el ID de VLAN (o ausencia de VLAN), el MTU negociado (normalmente 1480–1492), el formato de usuario y el tamaño del prefijo delegado (/48, /56 o /64)."
 topics:
   - name: "Point-to-Point Protocol over Ethernet"
     wikidata: "Q866392"
@@ -63,7 +63,7 @@ howto:
       text: "Añade el puerto físico, la VLAN y el cliente PPPoE a una lista de interfaces WAN para que las reglas de firewall coincidan correctamente en cada capa de la conexión."
       anchor: "paso-4-añadir-interfaces-a-la-lista-wan"
     - name: "Configurar el cliente DHCPv6 para prefix delegation"
-      text: "Añade un cliente DHCPv6 en la interfaz PPPoE solicitando un prefix hacia pool6, con un script que espera 5 segundos, elimina la dirección anunciada antigua y añade una nueva desde el pool actualizado con advertise=yes."
+      text: "Añade un cliente DHCPv6 en la interfaz PPPoE solicitando un prefijo hacia pool6, con un script que espera 5 segundos, elimina la dirección anunciada antigua y añade una nueva desde el pool actualizado con advertise=yes."
       anchor: "paso-5-configurar-el-cliente-dhcpv6-para-prefix-delegation"
     - name: "Configurar Neighbor Discovery para SLAAC"
       text: "Configura el Neighbor Discovery IPv6 en el bridge con preferencia de RA alta y la dirección link-local del router como DNS, para que los dispositivos LAN autoconfiguren sus direcciones IPv6 vía SLAAC."
@@ -72,7 +72,7 @@ howto:
       text: "Añade una regla srcnat masquerade sobre la lista de interfaces WAN para proporcionar conectividad IPv4 saliente a los dispositivos LAN."
       anchor: "paso-8-configurar-nat-ipv4-masquerade"
     - name: "Verificar la conexión"
-      text: "Comprueba el estado del PPPoE, los valores negociados, el prefix IPv6 delegado en pool6, la dirección asignada a la LAN y prueba la conectividad IPv6 con un ping."
+      text: "Comprueba el estado del PPPoE, los valores negociados, el prefijo IPv6 delegado en pool6, la dirección asignada a la LAN y prueba la conectividad IPv6 con un ping."
       anchor: "paso-9-verificar-la-conexión"
 ---
 
@@ -93,16 +93,16 @@ import Prerequisite from "@components/ui/Prerequisite.astro";
 import { Tabs, TabPanel } from "@components/ui/tabs";
 import Collapsible from "@components/ui/Collapsible.astro";
 
-[DIGI España](https://www.digimobil.es/) es uno de los pocos ISP en España que ofrece conectividad IPv6 nativa a clientes residenciales. Su red de fibra utiliza autenticación [PPPoE](https://datatracker.ietf.org/doc/html/rfc2516) con VLAN tagging y proporciona tanto una dirección IPv4 dinámica como un prefix IPv6 dinámico /56 a través de [DHCPv6 Prefix Delegation (DHCPv6-PD)](https://datatracker.ietf.org/doc/html/rfc3633).
+[DIGI España](https://www.digimobil.es/) es uno de los pocos ISP en España que ofrece conectividad IPv6 nativa a clientes residenciales. Su red de fibra utiliza autenticación [PPPoE](https://datatracker.ietf.org/doc/html/rfc2516) con VLAN tagging y proporciona tanto una dirección IPv4 dinámica como un prefijo IPv6 dinámico /56 a través de [DHCPv6 Prefix Delegation (DHCPv6-PD)](https://datatracker.ietf.org/doc/html/rfc3633).
 
-Esta guía cubre la configuración completa de un router [MikroTik](https://mikrotik.com/) para la red de DIGI, incluyendo la gestión automática de cambios de prefix, un reto habitual cuando tu ISP asigna prefixes dinámicos que pueden cambiar en cada reconexión.
+Esta guía cubre la configuración completa de un router [MikroTik](https://mikrotik.com/) para la red de DIGI, incluyendo la gestión automática de cambios de prefijo, un reto habitual cuando tu ISP asigna prefijos dinámicos que pueden cambiar en cada reconexión.
 
 <TLDRSummary title="TL;DR — dual-stack de DIGI España en RouterOS">
   - **DIGI entrega la sesión PPPoE en la VLAN 20.** Pon el cliente PPPoE sobre una interfaz VLAN encima del puerto WAN, no sobre el puerto directamente, o la autenticación falla sin ningún error útil: es con diferencia el motivo más habitual de que esto no levante.
   - **El formato de usuario es `identificador@digi`**, y el IPv4 llega dinámicamente con la default route y el DNS del ISP desde la propia sesión.
-  - **El IPv6 es un `/56` delegado, no un `/64`.** Pide el prefix con DHCPv6-PD y talla un `/64` por cada LAN; apuntar el `/56` directamente a un bridge no funciona.
-  - **La MTU del enlace se negocia a la baja hasta 1480 por LCP, pase lo que pase.** `max-mtu=1500` es solo el límite superior del cliente, no la MTU resultante, así que hay que fijar el MSS o media web carga y la otra media se queda colgada.
-  - **El prefix delegado cambia al reconectar**, así que hace falta un script DHCPv6 que reescriba las direcciones de la LAN; sin él, el IPv6 muere en silencio tras un corte mientras el IPv4 sigue funcionando.
+  - **El IPv6 es un `/56` delegado, no un `/64`.** Pide el prefijo con DHCPv6-PD y talla un `/64` por cada LAN; apuntar el `/56` directamente a un bridge no funciona.
+  - **El MTU del enlace se negocia a la baja hasta 1480 por LCP, pase lo que pase.** `max-mtu=1500` es solo el límite superior del cliente, no el MTU resultante, así que hay que fijar el MSS o media web carga y la otra media se queda colgada.
+  - **El prefijo delegado cambia al reconectar**, así que hace falta un script DHCPv6 que reescriba las direcciones de la LAN; sin él, el IPv6 muere en silencio tras un corte mientras el IPv4 sigue funcionando.
   - **Probado en RouterOS 7.23.2 sobre un RB5009**, y aplicable a cualquier router MikroTik.
 </TLDRSummary>
 
@@ -125,7 +125,7 @@ Si tu ISP no usa VLAN tagging, sáltate el Paso 2 y configura la interfaz del cl
 
 Esto no es teórico: mi propio RB5009UG+S+, con RouterOS 7.23.2, corre exactamente esta configuración de PPPoE + DHCPv6-PD contra DIGI, con la VLAN de WAN etiquetada como `vlan-id=20` (`VLAN_DIGI`) tal y como se describe más arriba.
 
-La gestión del cambio de prefix del Paso 5 no es programación defensiva para un caso raro — es el caso normal. Cada vez que reinicio la interfaz PPPoE, o el router entero, DIGI me asigna un nuevo prefix /56. No de forma ocasional: siempre. Por eso el direccionamiento LAN no puede fijar un prefix a mano y tiene que recalcularlo en cada reconexión; cualquier cosa que asuma un prefix estático se rompe en el primer reinicio. El coste es que las sesiones abiertas se cortan unos segundos mientras la interfaz renegocia — la misma interrupción breve que verías tras cualquier desconexión externa.
+La gestión del cambio de prefijo del Paso 5 no es programación defensiva para un caso raro — es el caso normal. Cada vez que reinicio la interfaz PPPoE, o el router entero, DIGI me asigna un nuevo prefijo /56. No de forma ocasional: siempre. Por eso el direccionamiento LAN no puede fijar un prefijo a mano y tiene que recalcularlo en cada reconexión; cualquier cosa que asuma un prefijo estático se rompe en el primer reinicio. El coste es que las sesiones abiertas se cortan unos segundos mientras la interfaz renegocia — la misma interrupción breve que verías tras cualquier desconexión externa.
 
 El MTU negociado de 1480 tampoco es una suposición. Lo he confirmado por tres vías independientes: la documentación oficial de DIGI, la configuración que trae de fábrica el router de DIGI, y probando directamente distintos valores de MTU en mi propia conexión. Las tres coinciden en 1480, no en el 1500 que `max-mtu` solo permite como límite superior.
 
@@ -184,8 +184,8 @@ La red de DIGI requiere una configuración específica: ONT en modo bridge → V
   </tbody>
 </Table>
 
-<Callout type="info" title="Sobre el prefix /56">
-DIGI delega un prefix /56, lo que te da 256 subnets /64 para trabajar. Esto es generoso en comparación con algunos ISPs que solo proporcionan un único /64. Puedes usar diferentes subnets /64 para tu LAN principal, red IoT, red de invitados, etc.
+<Callout type="info" title="Sobre el prefijo /56">
+DIGI delega un prefijo /56, lo que te da 256 subredes /64 para trabajar. Esto es generoso en comparación con algunos ISPs que solo proporcionan un único /64. Puedes usar diferentes subredes /64 para tu LAN principal, red IoT, red de invitados, etc.
 </Callout>
 
 ---
@@ -202,7 +202,7 @@ DIGI delega un prefix /56, lo que te da 256 subnets /64 para trabajar. Esto es g
 </Prerequisite>
 
 <Callout type="tip" title="Otros ISPs que usan PPPoE">
-Esta configuración funciona con cualquier ISP basado en PPPoE que proporcione IPv6 vía DHCPv6-PD. Las diferencias clave entre ISPs suelen ser: el ID de VLAN (o ausencia de VLAN), el MTU negociado (normalmente 1480–1492, determinado por el servidor vía LCP), el formato de usuario y el tamaño del prefix delegado (/48, /56 o /64). Ajusta los valores específicos de DIGI para tu ISP.
+Esta configuración funciona con cualquier ISP basado en PPPoE que proporcione IPv6 vía DHCPv6-PD. Las diferencias clave entre ISPs suelen ser: el ID de VLAN (o ausencia de VLAN), el MTU negociado (normalmente 1480–1492, determinado por el servidor vía LCP), el formato de usuario y el tamaño del prefijo delegado (/48, /56 o /64). Ajusta los valores específicos de DIGI para tu ISP.
 </Callout>
 
 ---
@@ -383,9 +383,9 @@ Añadir las tres garantiza que tus reglas de firewall funcionen independientemen
 
 ## Paso 5: configurar el cliente DHCPv6 para prefix delegation
 
-Aquí es donde IPv6 se pone interesante. DIGI proporciona un prefix /56 vía [DHCPv6-PD (Prefix Delegation)](https://datatracker.ietf.org/doc/html/rfc3633). Necesitamos:
+Aquí es donde IPv6 se pone interesante. DIGI proporciona un prefijo /56 vía [DHCPv6-PD (Prefix Delegation)](https://datatracker.ietf.org/doc/html/rfc3633). Necesitamos:
 
-1. Solicitar el prefix a DIGI
+1. Solicitar el prefijo a DIGI
 2. Almacenarlo en un pool local
 3. Asignar direcciones a nuestra LAN desde ese pool
 4. Configurar Router Advertisements para [SLAAC](https://datatracker.ietf.org/doc/html/rfc4862)
@@ -410,7 +410,7 @@ Aquí es donde IPv6 se pone interesante. DIGI proporciona un prefix /56 vía [DH
 El script espera 5 segundos a que el pool se rellene, elimina cualquier dirección IPv6 anunciada anteriormente en el bridge y añade una nueva desde el pool actualizado. Como la dirección usa `advertise=yes`, RouterOS **crea automáticamente un ND prefix dinámico** para SLAAC; no es necesario gestionar manualmente los ND prefix.
 
 <Callout type="info" title="¿Por qué eliminar y volver a añadir?">
-Cuando el prefix del ISP cambia (reconexión PPPoE, renovación de lease), la dirección antigua se vuelve inválida. El script garantiza que el bridge siempre tenga una dirección válida del pool actual. El flag `advertise=yes` hace que RouterOS anuncie automáticamente el prefix `/64` correcto a los dispositivos LAN mediante Router Advertisements (SLAAC).
+Cuando el prefijo del ISP cambia (reconexión PPPoE, renovación de lease), la dirección antigua se vuelve inválida. El script garantiza que el bridge siempre tenga una dirección válida del pool actual. El flag `advertise=yes` hace que RouterOS anuncie automáticamente el prefijo `/64` correcto a los dispositivos LAN mediante Router Advertisements (SLAAC).
 </Callout>
 
 ---
@@ -429,7 +429,7 @@ La interfaz LAN del router necesita una dirección IPv6 del pool delegado:
 ```
 </Code>
 
-Esto crea una dirección como `2a0c:5a84:xxxx:xx00::1/64` donde el prefix proviene de la delegación de DIGI.
+Esto crea una dirección como `2a0c:5a84:xxxx:xx00::1/64` donde el prefijo proviene de la delegación de DIGI.
 
 ---
 
@@ -569,7 +569,7 @@ Flags: X - disabled; R - running
 El comando `monitor` muestra los **valores negociados en tiempo real**: el MTU real (1480), MRU (1492), service name (`ftth`) y el nombre del access concentrator. Úsalo para verificar lo que realmente proporciona el servidor, a diferencia de `print detail` que muestra los parámetros configurados.
 </Callout>
 
-### Comprobar la delegación de prefix IPv6
+### Comprobar la delegación de prefijo IPv6
 
 <TerminalSession title="Prefix Delegation IPv6">
   <TerminalSessionCommand>
@@ -586,8 +586,8 @@ Flags: D - dynamic
 </TerminalSession>
 
 <Callout type="info" title="Prefix de ejemplo">
-El prefix mostrado arriba (`2001:db8:...`) es un ejemplo de documentación. Tu ISP asignará un prefix real de su asignación.
-DIGI España normalmente delega un prefix `/56`, lo que te da 256 posibles subnets `/64`.
+El prefijo mostrado arriba (`2001:db8:...`) es un ejemplo de documentación. Tu ISP asignará un prefijo real de su asignación.
+DIGI España normalmente delega un prefijo `/56`, lo que te da 256 posibles subredes `/64`.
 </Callout>
 
 ### Comprobar las direcciones IPv6
@@ -748,10 +748,10 @@ La configuración principal de PPPoE + DHCPv6-PD está completa. Las siguientes 
 <Callout type="info" title="¿Cuándo necesitas esto?">
 Solo es necesario si expones servicios a internet por IPv6 (por ejemplo, un servidor web). Si solo necesitas conectividad IPv6 de salida para los dispositivos LAN, sáltate esta sección.
 
-Si usas este script, añade `/system script run update-ipv6-nat;` como última línea del script del cliente DHCPv6 del Paso 5 para que se ejecute automáticamente en cada cambio de prefix.
+Si usas este script, añade `/system script run update-ipv6-nat;` como última línea del script del cliente DHCPv6 del Paso 5 para que se ejecute automáticamente en cada cambio de prefijo.
 </Callout>
 
-#### Crear una regla de port forwarding
+#### Crear una regla de reenvío de puertos
 
 Necesitas al menos una regla dstnat IPv6. Este ejemplo redirige tráfico HTTP y HTTPS desde la WAN a un servidor web interno:
 
@@ -774,7 +774,7 @@ El campo `comment` es lo que el script de actualización usa para identificar qu
 
 #### Crear el script de actualización
 
-Dado que el prefix delegado cambia en cada reconexión PPPoE, el `to-address` de tus reglas dstnat queda obsoleto. Este script reconstruye automáticamente la dirección IPv6 completa a partir del nuevo prefix y actualiza todas las reglas coincidentes:
+Dado que el prefijo delegado cambia en cada reconexión PPPoE, el `to-address` de tus reglas dstnat queda obsoleto. Este script reconstruye automáticamente la dirección IPv6 completa a partir del nuevo prefijo y actualiza todas las reglas coincidentes:
 
 <Code lang="routeros" title="Script de actualización de NAT IPv6">
 ```routeros
@@ -804,7 +804,7 @@ Sustituye `1111:2222:3333:4444` con la parte host estática de tu servidor (ver 
 
 #### Cómo funciona el script
 
-<Mermaid caption="Construcción de la dirección IPv6" ariaLabel="Diagrama que muestra cómo se construye la dirección IPv6 completa combinando el prefix delegado por el ISP con el sufijo host estático" maxWidth="650px">
+<Mermaid caption="Construcción de la dirección IPv6" ariaLabel="Diagrama que muestra cómo se construye la dirección IPv6 completa combinando el prefijo delegado por el ISP con el sufijo host estático" maxWidth="650px">
 ```mermaid-render
 flowchart LR
     subgraph Prefix["Prefix delegado por el ISP"]
@@ -825,13 +825,13 @@ flowchart LR
 </Mermaid>
 
 El script:
-1. Obtiene el prefix actual de `pool6` (por ejemplo, `2001:db8:abcd:ef00::/56`)
-2. Elimina la notación de longitud (`/56`) y los `::` finales para aislar el prefix de red
+1. Obtiene el prefijo actual de `pool6` (por ejemplo, `2001:db8:abcd:ef00::/56`)
+2. Elimina la notación de longitud (`/56`) y los `::` finales para aislar el prefijo de red
 3. Añade la parte host estática para formar la dirección IPv6 completa
 4. Actualiza todas las reglas dstnat coincidentes identificadas por su campo `comment`
 
 <Callout type="tip" title="Parte host estática">
-Usa la [dirección EUI-64](https://datatracker.ietf.org/doc/html/rfc4291#section-2.5.1) de tu servidor (derivada de su dirección MAC) o asigna un [sufijo estático](https://datatracker.ietf.org/doc/html/rfc8064). La parte host permanece constante entre cambios de prefix, lo que hace fiables las actualizaciones automáticas.
+Usa la [dirección EUI-64](https://datatracker.ietf.org/doc/html/rfc4291#section-2.5.1) de tu servidor (derivada de su dirección MAC) o asigna un [sufijo estático](https://datatracker.ietf.org/doc/html/rfc8064). La parte host permanece constante entre cambios de prefijo, lo que hace fiables las actualizaciones automáticas.
 </Callout>
 
 <Callout type="note" title="Alternativa: address list">
@@ -1006,7 +1006,7 @@ Opcionalmente, habilita el registro de eventos PPPoE para la resolución de prob
 <li data-check="check">Revisa la conexión del cable físico</li>
 </CheckList>
 
-### No se recibe prefix IPv6
+### No se recibe prefijo IPv6
 
 <CheckList>
 <li data-check="check">El cliente DHCPv6 debe estar en la interfaz PPPoE, no en la VLAN</li>
@@ -1019,7 +1019,7 @@ Opcionalmente, habilita el registro de eventos PPPoE para la resolución de prob
 <CheckList>
 <li data-check="check">Verifica que ND esté configurado para la interfaz bridge</li>
 <li data-check="check">Comprueba que la dirección IPv6 del bridge tenga <code>advertise=yes</code></li>
-<li data-check="check">Asegúrate de que pool6 tenga un prefix válido</li>
+<li data-check="check">Asegúrate de que pool6 tenga un prefijo válido</li>
 </CheckList>
 
 ---
@@ -1031,7 +1031,7 @@ Ahora tienes una configuración dual-stack completa para [DIGI España](https://
 - **Autenticación PPPoE** sobre VLAN 20
 - **IPv4 dinámico** con default route automática
 - **DHCPv6 Prefix Delegation** para IPv6 nativo
-- **Gestión automática** de cambios de prefix
+- **Gestión automática** de cambios de prefijo
 - **SLAAC** para configuración sencilla de dispositivos LAN
 
-Esta configuración garantiza que tu red mantenga conectividad IPv4 e IPv6 completa incluso cuando el ISP cambie los prefixes asignados. El script DHCPv6 gestiona la complejidad de los cambios de prefix, haciendo que la configuración sea realmente «configura y olvídate».
+Esta configuración garantiza que tu red mantenga conectividad IPv4 e IPv6 completa incluso cuando el ISP cambie los prefijos asignados. El script DHCPv6 gestiona la complejidad de los cambios de prefijo, haciendo que la configuración sea realmente «configura y olvídate».

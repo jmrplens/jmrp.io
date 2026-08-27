@@ -7,7 +7,7 @@ lead: "QUIC hace que cada stream sea independiente en la capa de transporte, as�
 author: "José Manuel Requena Plens"
 authorEmail: "mail@jmrp.io"
 publishedDate: 2026-01-14
-updatedDate: 2026-08-03
+updatedDate: 2026-08-27
 lastVerified:
   date: 2026-08-01
   versions:
@@ -23,7 +23,7 @@ faq:
   - question: "¿Cómo resuelve QUIC el head-of-line blocking de TCP?"
     answer: "TCP ve todo como un único flujo ordenado de bytes, así que un solo paquete perdido bloquea todos los streams multiplexados de HTTP/2 hasta su retransmisión. QUIC implementa streams en la capa de transporte, dando entrega independiente a cada stream, por lo que un paquete perdido solo afecta a su propio stream."
   - question: "¿Por qué mi navegador sigue mostrando HTTP/2 en la primera visita?"
-    answer: "Es normal. En la primera visita los navegadores usan HTTP/2 para descubrir la cabecera Alt-Svc que anuncia HTTP/3; en peticiones posteriores o tras recargar cambian a HTTP/3."
+    answer: "Ver HTTP/2 en la primera visita es lo esperado: un navegador que nunca ha conectado con el origen no tiene forma de saber que habla HTTP/3, así que abre primero una conexión TCP. Durante esa petición descubre HTTP/3 —por la cabecera de respuesta Alt-Svc o por un registro DNS HTTPS que anuncia alpn=h3— y cambia a HTTP/3 en las peticiones siguientes o tras recargar."
   - question: "¿Por qué es crítico el flag reuseport para QUIC en Nginx?"
     answer: "UDP no tiene conexión, así que sin reuseport todos los paquetes QUIC los maneja un único worker de Nginx, creando un cuello de botella. La función reuseport del kernel distribuye los paquetes entre los workers, pero debe aparecer en exactamente una directiva listen por dirección:puerto a nivel global o Nginx no arrancará."
   - question: "¿Cómo verifico que HTTP/3 funciona?"
@@ -50,7 +50,7 @@ howto:
     - "Nginx"
   steps:
     - name: "Verificar o instalar Nginx con soporte HTTP/3"
-      text: "Ejecuta nginx -V y confirma que la compilación incluye --with-http_v3_module y una biblioteca SSL con soporte QUIC (OpenSSL 3.5.1+, BoringSSL, QuicTLS o LibreSSL 3.6+). Si falta, instala Nginx 1.25.0+ desde el repositorio de Ondřej Surý o el mainline oficial, o compílalo desde el código fuente con QuicTLS."
+      text: "Ejecuta nginx -V y confirma que la compilación incluye --with-http_v3_module y una biblioteca SSL con soporte QUIC (OpenSSL 3.5.1+, BoringSSL, QuicTLS o LibreSSL 3.6+). Si falta, instala Nginx 1.25.0+ desde el repositorio mainline oficial de nginx.org, cuyos paquetes para Debian y Ubuntu ya traen soporte HTTP/3, o compílalo desde el código fuente contra OpenSSL 3.5+."
       anchor: "prerrequisitos"
     - name: "Añadir los listeners QUIC y TCP"
       text: "En el bloque server, mantén los listeners estándar listen 443 ssl para HTTP/1.1 y HTTP/2, y añade listen 443 quic reuseport para IPv4 e IPv6 para habilitar QUIC sobre UDP. El flag reuseport debe aparecer en exactamente una directiva listen por dirección:puerto a nivel global."
@@ -101,6 +101,24 @@ En esta guía completa, exploraremos la historia y la arquitectura de QUIC, ente
 jmrp.io sirve HTTP/3 en sí mismo: los dos server blocks en producción llevan `listen 443 quic;` junto a los listeners TCP habituales, de modo que el sitio acepta conexiones QUIC y TLS-sobre-TCP en paralelo, según lo que soporte realmente el cliente — y lo que haya entre el cliente y el servidor.
 
 No me fié de la palabra de la cabecera `Alt-Svc`. Ejecutar `curl --http3` directamente contra el sitio en vivo devuelve `HTTP/3 200`: un handshake QUIC completado, no una inferencia sacada de una cabecera de respuesta que un servidor mal configurado podría seguir enviando mientras cae en silencio a HTTP/2 por debajo. Esa distinción importa — muchas listas de comprobación de "HTTP/3 activado" se quedan en la cabecera y nunca confirman que el protocolo se negoció de verdad. Es un detalle pequeño de verificar, y también es la única forma de saber que un despliegue QUIC es real y no aspiracional: la cabecera no cuesta nada añadir, pero solo un handshake desde el lado del cliente demuestra que UDP/443 está realmente abierto y negociando de extremo a extremo.
+
+Servir HTTP/3 y que se use son dos preguntas distintas, y solo la segunda necesita datos. jmrp.io está detrás de Cloudflare, que termina la conexión del cliente, así que el protocolo que negocia de verdad un visitante aparece en la analítica de zona de Cloudflare y no en mi propio log de acceso. En ocho días —del 19 al 27 de agosto de 2026, filtrando por el host `jmrp.io` para que el resto de la zona no lo tape— **HTTP/3 se llevó el 33,5 % de las peticiones que negociaron HTTP/2 o HTTP/3**: 11.208 de 33.411.
+
+Ese denominador pide dos frases de defensa, porque la versión honesta de esta medición va sobre todo de lo que hay que tirar. Excluí HTTP/1.1 por completo, y la exclusión no es cosmética: los navegadores actuales acuerdan h2 por ALPN contra Cloudflare, así que una petición que dice ser un navegador y aun así llega por HTTP/1.1 es casi siempre un scraper con el user-agent falseado. Y había unos cuantos: un cubo de «Chrome de escritorio» salía con un 45,8 % de HTTP/1.1, que es algo que Chrome de escritorio no hace. Quitar HTTP/1.1 elimina las falsificaciones evidentes, pero no garantiza que el resto esté limpio: el plan Free no expone puntuación de bot, y la dimensión del navegador se deduce del propio user-agent, de modo que no queda ningún campo independiente por el que filtrar. Por eso tampoco hay aquí una tabla de adopción por navegador: no voy a publicar porcentajes por familia construidos sobre un denominador que no puedo auditar. La ventana son ocho consultas encadenadas de 24 horas, el rango más largo que devuelve ese plan, con lo que arrastra ocho costuras de dos minutos: unos 16 minutos ausentes en total.
+
+Un detalle medido que no esperaba. Mi origen sí envía la cabecera que esta guía te dice que añadas —`add_header Alt-Svc 'h3=":443"; ma=86400' always;` está en los dos server blocks TLS, y una petición directa al origen vuelve con ella—. A través de Cloudflare, esa cabecera sencillamente no está:
+
+<TerminalOutput title="Alt-Svc en el origen frente al edge">
+$ curl -sS -D- -o /dev/null https://jmrp.io/
+alt-svc: h3=":443"; ma=86400
+$ curl -sS -D- -o /dev/null --resolve jmrp.io:443:104.21.40.251 https://jmrp.io/
+server: cloudflare
+(sin cabecera alt-svc en la respuesta)
+$ dig +short HTTPS jmrp.io @1.1.1.1
+1 . alpn="h3,h2" ipv4hint=104.21.40.251,172.67.158.146 ech=...
+</TerminalOutput>
+
+QUIC funciona igualmente, como ya demostraba el handshake de antes, porque el anuncio vive en otro sitio: el registro DNS HTTPS del dominio lleva `alpn="h3,h2"`, y los navegadores que resuelven ese registro se enteran de HTTP/3 antes de abrir una sola conexión. Esto es comportamiento de Cloudflare en toda su plataforma, no una particularidad de mi configuración — el edge termina la conexión y decide por su cuenta qué anuncia, y nada de mi configuración de Nginx puede cambiarlo. La lección práctica es estrecha pero vale: si tienes un CDN delante del origen que configuraste para HTTP/3, la cabecera que estás comprobando puede no ser la que ven tus visitantes. Mira también el registro DNS.
 
 ---
 
@@ -670,7 +688,7 @@ Ahora vamos a implementar HTTP/3 en Nginx. Esta sección cubre todo, desde los p
   - **Biblioteca SSL**: Una de las siguientes con soporte QUIC:
     - OpenSSL 3.5.1+ (recomendado para 0-RTT)
     - BoringSSL
-    - QuicTLS (fork de OpenSSL)
+    - QuicTLS (fork de OpenSSL, archivado en 2025)
     - LibreSSL 3.6+
 </Callout>
 
@@ -690,67 +708,62 @@ configure arguments: ... --with-http_v3_module ...
 
 <Collapsible summary="Cómo instalar Nginx con soporte HTTP/3">
 
+<Callout type="warning" title="El repositorio Nginx de Ondřej Surý ya no existe" icon="mdi:alert-circle">
+  Las guías escritas antes de 2026 —incluidas versiones anteriores de esta— te
+  mandan a `https://packages.sury.org/nginx/README.txt` en Debian y a
+  `ppa:ondrej/nginx-mainline` en Ubuntu. Los dos canales se han retirado: a 27 de
+  agosto de 2026 la ruta `/nginx/` de ese host devuelve **404** mientras sus
+  repositorios de PHP y Apache siguen respondiendo, y los dos PPA de Launchpad han
+  desaparecido. Usa el repositorio oficial de Nginx.
+</Callout>
+
 <Tabs>
-  <TabPanel label="Repositorio Ondřej Surý (Recomendado)">
-    Este repositorio (ampliamente usado para PHP y Nginx) proporciona las últimas versiones mainline con soporte HTTP/3 y muchos módulos adicionales para Debian y Ubuntu.
+  <TabPanel label="Repositorio oficial de Nginx (Recomendado)">
+    Los paquetes que nginx.org publica para Debian y Ubuntu vienen compilados
+    `--with-http_v3_module` contra OpenSSL 3.5, así que HTTP/3 no exige compilar
+    nada a mano. Los mismos comandos valen para las dos distribuciones:
+    `/etc/os-release` aporta el fabricante y el nombre en clave.
 
     ```bash
-    # Para Debian:
-    sudo apt install curl gpg
-    curl -fsSL https://packages.sury.org/nginx/README.txt | sudo bash -x
-    
-    # Para Ubuntu:
-    sudo add-apt-repository ppa:ondrej/nginx-mainline
-    sudo apt update
-    
-    # Instalar Nginx:
-    sudo apt install nginx
-    ```
-  </TabPanel>
-  <TabPanel label="Ubuntu/Debian (Repo oficial)">
-    ```bash
-    # Add official Nginx mainline repository
-    sudo apt install curl gnupg2 ca-certificates lsb-release
-    
-    # Create keyring directory if it doesn't exist
+    sudo apt install curl gnupg2 ca-certificates
+    DISTRO=$(. /etc/os-release && echo "$ID")
+    CODENAME=$(. /etc/os-release && echo "$VERSION_CODENAME")
+
+    # Clave de firma de Nginx en su propio llavero
     sudo mkdir -p /etc/apt/keyrings
-    
-    # Download and add the Nginx signing key (modern approach)
     curl -fsSL https://nginx.org/keys/nginx_signing.key \
         | sudo gpg --dearmor -o /etc/apt/keyrings/nginx.gpg
-    
-    # Add repository with signed-by keyring
-    echo "deb [signed-by=/etc/apt/keyrings/nginx.gpg] http://nginx.org/packages/mainline/ubuntu $(lsb_release -cs) nginx" \
+
+    # Repositorio mainline, restringido a ese llavero
+    echo "deb [signed-by=/etc/apt/keyrings/nginx.gpg] https://nginx.org/packages/mainline/$DISTRO $CODENAME nginx" \
         | sudo tee /etc/apt/sources.list.d/nginx.list
-    
-    sudo apt update
-    sudo apt install nginx
+
+    sudo apt update && sudo apt install nginx
+
+    # Comprobar la compilación que acabas de instalar
+    nginx -V 2>&1 | tr ' ' '\n' | grep -E 'http_v3|OpenSSL'
     ```
   </TabPanel>
   <TabPanel label="Compilar desde fuente">
+    Solo hace falta si quieres un módulo que los paquetes no traen. Nginx compila
+    HTTP/3 contra cualquier biblioteca SSL que exponga una API QUIC: OpenSSL 3.5+,
+    BoringSSL o LibreSSL 3.6+. En una distribución actual basta con el OpenSSL del
+    sistema — el propio paquete oficial de Debian 13 está compilado contra OpenSSL
+    3.5.6.
+
     ```bash
-    # Download Nginx and QuicTLS
-    wget https://nginx.org/download/nginx-1.25.3.tar.gz
-    git clone --depth 1 https://github.com/quictls/openssl quictls
-    
-    # Build QuicTLS
-    cd quictls
-    ./Configure --prefix=$PWD/build linux-x86_64
-    make -j$(nproc)
-    make install_sw
-    cd ..
-    
-    # Configure and build Nginx
-    tar xzf nginx-1.25.3.tar.gz
-    cd nginx-1.25.3
+    openssl version   # 3.5.0 o superior
+
+    wget https://nginx.org/download/nginx-1.31.4.tar.gz
+    tar xzf nginx-1.31.4.tar.gz
+    cd nginx-1.31.4
+
     ./configure \
         --with-http_v3_module \
         --with-http_ssl_module \
-        --with-http_v2_module \
-        --with-cc-opt="-I../quictls/build/include" \
-        --with-ld-opt="-L../quictls/build/lib"
-    
-    make -j$(nproc)
+        --with-http_v2_module
+
+    make -j"$(nproc)"
     sudo make install
     ```
   </TabPanel>

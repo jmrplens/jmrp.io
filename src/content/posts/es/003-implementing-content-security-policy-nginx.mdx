@@ -3,7 +3,7 @@ title: "Content Security Policy (CSP) con Nginx: La Guía Completa"
 slug: "003-implementing-content-security-policy-nginx"
 lang: "es"
 publishedDate: 2025-12-19
-updatedDate: 2026-08-03
+updatedDate: 2026-08-27
 lastVerified:
   date: 2026-08-01
   versions:
@@ -130,6 +130,152 @@ Esto no es hipotético — jmrp.io es en sí mismo la implementación de referen
 Las violaciones no se pierden en un log que nadie lee: tengo mi propio receptor (`scripts/csp-reporter.mjs`) que las saca a la luz en cuanto ocurren, en vez de depender de un servicio de terceros para saber qué se está rompiendo.
 
 Medido contra la API actual de Mozilla Observatory (v5), esta configuración obtiene una **calificación A+: puntuación 140, con los 10 tests pasados y cero fallos**. Esa es la cifra a día de hoy — no el 145 que puedes ver referenciado en otra parte de este sitio, de un commit de diciembre de 2025. Aquel total incluía un bonus de 5 puntos que Observatory concede por servir cookies con `Secure`/`HttpOnly`/`SameSite`; esas cookies eran dos valores dummy que no hacían nada útil, y eliminarlas —para que la página `/privacy/` de este sitio pueda afirmar honestamente que ninguna respuesta fija `Set-Cookie`— costó 5 puntos cosméticos en una política que ya no falla ni un solo test. Ese cambio mereció claramente la pena.
+
+### Qué contienen de verdad 81 días de informes de violación
+
+Entre el 8 de junio y el 27 de agosto de 2026 —81 días naturales— ese receptor escribió en disco **1.756 informes de violación**. Repartidos entre esos 81 días salen 21,7 al día, y la media es el número menos útil de todo el conjunto: el día mediano trae 4 informes, dieciséis días no trajeron ninguno y el 1 de agosto, él solo, trajo 371.
+
+Pasar todo el histórico por los filtros que el receptor aplica *hoy* lo ordena así. Es una clasificación retroactiva —los filtros se fueron afinando durante la ventana—, de modo que esto es cómo lee la lógica actual ese histórico, no cómo se trató cada informe en su momento.
+
+<Table title="1.756 informes CSP, 8 de junio – 27 de agosto de 2026">
+  <thead>
+    <tr>
+      <th scope="col">Clasificación</th>
+      <th scope="col">Informes</th>
+      <th scope="col">Peso</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>User-agent de crawler</td>
+      <td>1.399</td>
+      <td>79,7 %</td>
+    </tr>
+    <tr>
+      <td>Residual — revisado a mano</td>
+      <td>287</td>
+      <td>16,3 %</td>
+    </tr>
+    <tr>
+      <td>Rango de red de crawler</td>
+      <td>60</td>
+      <td>3,4 %</td>
+    </tr>
+    <tr>
+      <td>Extensión del navegador / style inline inyectado</td>
+      <td>10</td>
+      <td>0,6 %</td>
+    </tr>
+  </tbody>
+</Table>
+
+El cubo residual es el que merece la pena leer, y son cuatro cosas: **247** informes de un `eval` bloqueado, **29** de un script inline bloqueado, **8** fallos de SRI sobre fragmentos `/_astro/` con hash y **3** peticiones bloqueadas a un píxel de analítica de Yandex inyectado.
+
+Ninguna de ellas es un defecto del sitio. Los informes de `eval` son el caso más claro: ningún fichero JavaScript que este sitio sirve contiene `eval(` ni `new Function(` — tras una compilación de producción, las únicas apariciones de ese literal en toda la salida están en el texto de este mismo post. Esos 247 informes vienen de **5 direcciones IP en 5 días**, 223 de ellos de un único user-agent, y la página que citan es casi siempre `/homelab/` (178) o la portada (45). Eso es un visitante con algo inyectando código en su navegador. Los 29 informes de script inline tienen la misma forma: 4 direcciones, 4 días y ni un `source-file`.
+
+### El embudo: lo que se descarta antes de llegar al log
+
+El log es solo la mitad de la foto, porque los informes que los filtros descartan no llegan a escribirse. Su único rastro es un contador en memoria que el proceso vuelca al journal cada 100 descartes — y en una ventana concreta, del 22 al 27 de agosto (4,67 días), ese contador y el log se pueden cruzar: el `no-notify:crawler-ua=97` del contador coincide, exactamente, con los 97 informes de crawler que el log guarda en esa misma ventana. Eso da el embudo completo.
+
+<Table title="Embudo de informes CSP, 22–27 de agosto de 2026 (4,67 días)">
+  <thead>
+    <tr>
+      <th scope="col">Etapa</th>
+      <th scope="col">Informes</th>
+      <th scope="col">Peso</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Superan el parseo JSON y las guardas defensivas</td>
+      <td>313</td>
+      <td>100 %</td>
+    </tr>
+    <tr>
+      <td>Descartados antes de llegar al log</td>
+      <td>213</td>
+      <td>68,1 %</td>
+    </tr>
+    <tr>
+      <td>— extensión del navegador o antivirus</td>
+      <td>172</td>
+      <td>55,0 %</td>
+    </tr>
+    <tr>
+      <td>— respaldo de prefetch</td>
+      <td>14</td>
+      <td>4,5 %</td>
+    </tr>
+    <tr>
+      <td>— style inline inyectado</td>
+      <td>14</td>
+      <td>4,5 %</td>
+    </tr>
+    <tr>
+      <td>— contexto interno del navegador</td>
+      <td>7</td>
+      <td>2,2 %</td>
+    </tr>
+    <tr>
+      <td>— recurso de terceros inyectado</td>
+      <td>6</td>
+      <td>1,9 %</td>
+    </tr>
+    <tr>
+      <td>Crawlers: se registran, nunca avisan</td>
+      <td>97</td>
+      <td>31,0 %</td>
+    </tr>
+    <tr>
+      <td>Llegan a la vía de notificación</td>
+      <td>3</td>
+      <td>1,0 %</td>
+    </tr>
+    <tr>
+      <td>Defectos del propio sitio</td>
+      <td>0</td>
+      <td>0 %</td>
+    </tr>
+  </tbody>
+</Table>
+
+Los tres que llegaron a la vía de notificación eran el mismo píxel de analítica de Yandex inyectado, bloqueado tres veces en menos de 200 ms en una sola página y para un solo visitante.
+
+Con esa tabla van dos advertencias, y ambas importan más que los porcentajes.
+
+**313 es una cota inferior, no un total.** Los cuerpos que fallan al parsear el JSON (un 400) o que superan el tope de 32 KB (un 413) se rechazan antes de que ningún contador los vea, y dos `return` defensivos dentro del manejador de informes tiraban los cuerpos malformados sin contarlos tampoco. Así que la etiqueta honesta es «informes que superaron el parseo y las guardas», no «informes recibidos». Desde entonces he enganchado esas rutas al mismo contador, que es justo el tipo de agujero que solo aparece cuando intentas escribir la cifra.
+
+**Los dos ritmos de este post no son comparables.** 313 informes en 4,67 días son 67 al día, frente a los 21,7 al día del log de 81 días — porque el log no contiene ni un descarte. Las dos cifras son ciertas y miden cosas distintas.
+
+### El fallo que esta auditoría encontró en mi propio receptor
+
+Estos números solo son correctos porque comprobarlos destapó un fallo de parseo en el propio receptor.
+
+El 22 de agosto añadí un endpoint `report-to` junto al `report-uri` de siempre. Las dos API no se ponen de acuerdo en la forma: la antigua envía por POST un único objeto `{"csp-report": {…}}` con nombres de campo en kebab-case, mientras que la Reporting API manda envoltorios `{type, url, body: {…}}` en camelCase. Para eso existe una función `normalizeReports()`, que traduce la segunda forma a la primera — y lo hacía, pero solo cuando el cuerpo llegaba como array.
+
+<Code lang="javascript" title="scripts/csp-reporter.mjs — el fallo">
+```javascript
+function normalizeReports(parsed) {
+  // Un envoltorio suelto no es un array: se escapaba por esta línea
+  // y llegaba a los filtros con todos los campos kebab-case undefined.
+  if (!Array.isArray(parsed)) return [parsed];
+  return parsed.map(/* camelCase → kebab-case */);
+}
+```
+</Code>
+
+Un navegador que envía un envoltorio suelto en vez de un array de uno se colaba de largo por esa primera línea. El informe llegaba a los filtros sin directiva, sin URI bloqueada y sin fichero de origen —nada con lo que casar—, así que no se descartaba nada, todo se registraba como inclasificable y cuatro de esos informes vacíos esquivaron el limitador de frecuencia y acabaron en mi móvil como alertas de Telegram con una violación en blanco dentro.
+
+Diez informes entraron así entre el 22 y el 26 de agosto. Descodificados a mano no tienen ningún misterio: seis traen un fichero de origen `safari-web-extension://…` o `safari-extension://…`, y los otros cuatro son elementos `<style>` inline que el navegador atribuye al propio documento. Los filtros de descarte ya cubrían ambas categorías; sencillamente nunca llegaron a ver los campos. El arreglo consiste en aceptar también el envoltorio suelto, no solo el array.
+
+Lo importante es el tamaño de la corrección. Antes de descodificar esos diez, el embudo de arriba decía «13 informes llegan a la vía de notificación» — y el «cero defectos reales» que iba al lado se apoyaba en diez informes que nadie había leído nunca. La cifra verdadera es 3. Reproducir los 81 días completos por la vía de notificación actual da **26 alertas, una cada 3,1 días** (7 por `eval`, 8 por scripts inline, 8 por SRI sobre fragmentos `/_astro/` caducados y 3 por el píxel de Yandex); reproducirlos con el fallo todavía dentro da 30, y las cuatro de más van vacías.
+
+<Callout type="keypoint" title="Un informe que no sabes parsear es peor que uno que nunca recibiste">
+  Te cuesta igual una alerta y encima parece señal. Si le enchufas un endpoint
+  `report-to` a un receptor que ya tenía `report-uri`, lo primero que hay que
+  probar es un envoltorio suelto — no el array que enseñan los ejemplos de la
+  especificación.
+</Callout>
 
 ---
 

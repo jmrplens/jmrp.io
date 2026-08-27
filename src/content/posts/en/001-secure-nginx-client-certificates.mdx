@@ -20,7 +20,7 @@ faq:
   - question: "Why can't mTLS be phished?"
     answer: "Client certificates are never transmitted (only a signature proving possession is sent), are bound to hardware in secure keychains/TPMs, and require private-key access that never leaves the device. Even if an attacker steals your password and intercepts your 2FA code, they still can't access the resource without the certificate file on an authorized device."
   - question: "What does the ssl_verify_client directive control in Nginx?"
-    answer: "It controls how Nginx handles client certificates: on requires a valid certificate and rejects connections without one, optional accepts a valid cert but proceeds without it, optional_no_ca accepts any cert with no CA validation (development only), and off requires no client certificate. Never use optional_no_ca in production, as it defeats the purpose of mTLS."
+    answer: "The ssl_verify_client directive controls how Nginx handles client certificates: on requires a valid certificate and rejects connections without one, optional accepts a valid cert but proceeds without it, optional_no_ca accepts any cert with no CA validation (development only), and off requires no client certificate. Never use optional_no_ca in production, as it defeats the purpose of mTLS."
   - question: "How do I revoke a lost or compromised client certificate?"
     answer: "Use openssl ca -revoke to revoke the certificate, then regenerate the CRL with openssl ca -gencrl and point Nginx at it with ssl_crl. You must regenerate the CRL and reload Nginx every time you revoke a certificate."
   - question: "What is the difference between CRL and OCSP revocation?"

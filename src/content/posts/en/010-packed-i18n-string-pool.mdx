@@ -16,7 +16,7 @@ coverImage: "../../../assets/images/blog/string-pool.webp"
 tags: ["Firmware", "C++", "Embedded", "ESP32"]
 faq:
   - question: "What is a packed i18n string pool?"
-    answer: "It replaces the naïve table of const char* pointers with two pieces of generated data: a single flash blob holding every NUL-terminated translation, and a per-language table of uint16_t offsets into that blob. An offset is just the byte where a C string begins, so tr() still returns a plain const char*."
+    answer: "A packed i18n string pool replaces the naïve table of const char* pointers with two pieces of generated data: a single flash blob holding every NUL-terminated translation, and a per-language table of uint16_t offsets into that blob. An offset is just the byte where a C string begins, so tr() still returns a plain const char*."
   - question: "Why use uint16_t offsets instead of a pointer table?"
     answer: "On a 32-bit MCU each const char* is 4 bytes, so a 5×273 grid costs 5,460 bytes of pure addressing. A uint16_t offset is 2 bytes, halving the index table to 2,730 bytes (−50%) — a structural win no linker, and not even LTO, will do for you."
   - question: "Doesn't the linker already deduplicate and tail-merge strings?"
@@ -155,9 +155,9 @@ The first reason is nice-to-have. The second is the headline.
 
 ---
 
-## The packed pool and the offset table
+## What is a packed i18n string pool?
 
-The design is two pieces of generated data. First, every translation is concatenated into a single flash blob, each string NUL-terminated — so an "offset" is just the start of an ordinary C string. Second, a per-language table of `uint16_t` offsets into that blob, replacing the pointer grid.
+A packed i18n string pool is two pieces of generated data. First, every translation is concatenated into a single flash blob, each string NUL-terminated — so an "offset" is just the start of an ordinary C string. Second, a per-language table of `uint16_t` offsets into that blob, replacing the pointer grid of `const char*`.
 
 <ByteFrame
   title="Inside kPool — strings stored end to end"
@@ -411,9 +411,9 @@ Want to try it on your own data? The [string-pool packer](/tools/string-pool-pac
 
 ---
 
-## What it actually saved
+## How much firmware did packing actually save?
 
-Here are the numbers from the live `sticks3` build (5 languages, 273 IDs), packed against the naïve pointer table, both at the shipped `-Os`:
+Packing shrank the net firmware by **2,224 B** at the shipped `-Os`, with no API and no call-site changes. That is less than the flat −2,730 B the index halving contributes, because pooling forfeits about 500 B of cross-module linker dedup. Here are the numbers from the live `sticks3` build (5 languages, 273 IDs), packed against the naïve pointer table:
 
 <DeltaCompare
   title="Packed vs the naïve pointer table (-Os)"

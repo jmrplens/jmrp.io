@@ -62,13 +62,13 @@ howto:
       anchor: "paso-3-configuración-del-honeypot-ipv6"
     - name: "Reenviar los logs a un servidor syslog remoto"
       text: "Configura la acción de logging remoto con la IP de tu servidor syslog y envía los logs del firewall (incluidos los prefijos [HONEYPOT]) para poder recopilar las IPs de los atacantes como threat intelligence."
-      anchor: "aprovechando-los-logs-para-threat-intelligence"
+      anchor: "aprovechar-los-logs-para-threat-intelligence"
     - name: "Integrar los logs con CrowdSec"
       text: "Configura rsyslog para escribir los logs de MikroTik en un archivo, añade una adquisición de CrowdSec para ese archivo, instala el parser de MikroTik y recarga CrowdSec para extraer las IPs de los atacantes automáticamente."
       anchor: "integración-con-crowdsec"
     - name: "Probar el honeypot"
       text: "Desde una IP que no esté en la lista blanca, conéctate a un puerto trampa como Telnet (23) o SSH, y comprueba que la IP aparece en la address-list BlackList y que la regla RAW descarta su tráfico. Elimina la IP de prueba al terminar."
-      anchor: "probando-tu-honeypot"
+      anchor: "probar-tu-honeypot"
 ---
 
 import Callout from "@components/ui/Callout.astro";
@@ -137,7 +137,7 @@ Este enfoque es ligero, no requiere hardware adicional y proporciona protección
 
 ---
 
-## Entendiendo los estados de conexión TCP
+## Entender los estados de conexión TCP
 
 Antes de configurar nuestro honeypot, es esencial comprender cómo los firewalls con estado como MikroTik clasifican el tráfico de red. A cada paquete se le asigna un **estado de conexión**:
 
@@ -649,7 +649,7 @@ El escaneo IPv6 está aumentando rápidamente a medida que más redes adoptan co
 
 ---
 
-## Comprendiendo la configuración
+## Comprender la configuración
 
 Examinemos los parámetros clave que hacen efectivo este honeypot:
 
@@ -702,7 +702,7 @@ Examinemos los parámetros clave que hacen efectivo este honeypot:
 
 ---
 
-## Aprovechando los logs para threat intelligence
+## Aprovechar los logs para threat intelligence
 
 El parámetro `log=yes` genera entradas que pueden reenviarse a sistemas de seguridad externos. Configurando MikroTik para enviar logs a un servidor syslog remoto, puedes:
 
@@ -921,7 +921,7 @@ Más de **1.000 IPs únicas** fueron detectadas y bloqueadas en las últimas 24 
 
 ---
 
-## Probando tu honeypot
+## Probar tu honeypot
 
 Antes de considerar tu honeypot listo para producción, verifica que funciona correctamente:
 
