@@ -15,6 +15,10 @@
  * Per-page tests run in parallel across workers for maximum performance.
  * Dynamically tests all pages discovered from the sitemap.
  */
+// cspell:locale es,en — the llms-full.txt assertion below lists that file's H2
+// headings verbatim, and half of them are the Spanish profile sections. They
+// are expected values copied from the document, not prose, so they cannot be
+// written in English; the same treatment `@utils/llms/listing-markdown` gets.
 
 import { expect, test } from "@playwright/test";
 
