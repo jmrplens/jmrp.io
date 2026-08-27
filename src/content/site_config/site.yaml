@@ -51,6 +51,11 @@ person:
     # identity to the artifacts rather than only to their source repos.
     - "https://pypi.org/user/jmrplens/"
     - "https://hub.docker.com/u/jmrplens"
+    # Stack Overflow. The account is old and was renamed to the canonical handle
+    # on 2026-08-27; the numeric id in the URL is what identifies it, and it
+    # survives any future rename — which is why the URL is stored with the id
+    # rather than as /users/jmrplens.
+    - "https://stackoverflow.com/users/5960262/jmrplens"
     # AT Protocol forge, published under the same handle as the Bluesky
     # profile above. Ownership is not asserted here but PROVEN by the
     # protocol: tangled.org/jmrp.io resolves to did:plc:jder4wkjnwh6mzhrx4n5ebti,
