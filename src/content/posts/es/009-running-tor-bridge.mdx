@@ -104,7 +104,7 @@ import BeforeAfter from "@components/ui/BeforeAfter.astro";
 import SecurityRating from "@components/ui/SecurityRating.astro";
 
 
-En 2026, más de **2,5 millones de personas** usan la [red Tor](https://www.torproject.org/) todos los días para acceder a una Internet libre y abierta — [Tor Metrics sitúa la estimación diaria por encima de los tres millones durante la mayor parte del año](https://metrics.torproject.org/userstats-relay-country.html). Periodistas en regímenes autoritarios, activistas que organizan protestas, denunciantes que destapan casos de corrupción y ciudadanos corrientes que protegen su privacidad: todos ellos dependen de una red **operada íntegramente por voluntarios**.
+En 2026, más de **2,5 millones de personas** al día llegan a una Internet libre y abierta a través de la [red Tor](https://www.torproject.org/) conectando directamente a un relé — [Tor Metrics sitúa esa estimación diaria por encima de los tres millones durante la mayor parte del año](https://metrics.torproject.org/userstats-relay-country.html), y solo cuenta conexiones directas: quien entra por un bridge, que es de lo que trata esta guía, se contabiliza aparte y no está en esa cifra. Periodistas en regímenes autoritarios, activistas que organizan protestas, denunciantes que destapan casos de corrupción y ciudadanos corrientes que protegen su privacidad: todos ellos dependen de una red **operada íntegramente por voluntarios**.
 
 ¿El problema? Solo hay unos **2.600 bridges** dando servicio a esos millones de usuarios. Los bridges son el recurso más crítico y escaso en el ecosistema Tor — son el primer punto de contacto para usuarios en países censurados, y cada nuevo bridge ayuda directamente a alguien a acceder a la información libremente.
 
@@ -349,7 +349,7 @@ En esta guía configuraremos **obfs4 y WebTunnel** en el mismo servidor, para ma
 <Prerequisite>
 ### Requisitos de hardware
 - **CPU**: cualquier procesador x86_64 moderno (ARM también vale)
-- **RAM**: mínimo 512 MB, 1 GB o más recomendado
+- **RAM**: mínimo 1 GB (lo que exige WebTunnel), 4 GB recomendados si vas a servir mucho tráfico
 - **Almacenamiento**: mínimo 5 GB (para datos de Tor, logs y claves)
 - **Red**: al menos **10 Mbps** de ancho de banda de subida (cuanto más, mejor)
 - **Uptime**: el servidor debe estar en marcha 24/7 — Tor penaliza los relés inestables
@@ -363,7 +363,7 @@ En esta guía configuraremos **obfs4 y WebTunnel** en el mismo servidor, para ma
 
 ### Requisitos de red
 - Poder **reenviar puertos** desde tu router (o usar un VPS con IP pública directa)
-- Puertos **9001** (ORPort) y **4443** (obfs4) accesibles desde internet
+- Puertos **9001** (ORPort), **4443** (obfs4) y **443** (HTTPS de Nginx, si sirves WebTunnel) accesibles desde internet
 - Puerto **443** (HTTPS) si ejecutas WebTunnel
 </Prerequisite>
 
@@ -467,7 +467,9 @@ sudo apt install -y golang-go
 ```
 </TerminalCommand>
 
-Comprueba que tienes Go 1.21 o superior:
+Comprueba que tienes Go 1.21 o superior, que es lo que pide WebTunnel. Ojo si sigues en
+Debian 12: su paquete `golang-go` es Go 1.19 y no llega, así que ahí hay que tirar de
+`bookworm-backports` o del tarball oficial. Debian 13 trae 1.24 y sirve tal cual:
 
 <TerminalCommand ariaLabel="Comprobar la versión de Go">
 ```bash
@@ -654,7 +656,7 @@ Usa ese valor en dos sitios:
 
 ## Paso 4: configurar Nginx para camuflaje WebTunnel
 
-Lo bonito de WebTunnel es que tu servidor parece un **sitio web completamente normal**. Los visitantes ven una página HTML corriente; solo quien conoce la ruta secreta puede conectarse al bridge de Tor. Esto se llama **camuflaje** o **domain fronting**.
+Lo bonito de WebTunnel es que tu servidor parece un **sitio web completamente normal**. Los visitantes ven una página HTML corriente; solo quien conoce la ruta secreta puede conectarse al bridge de Tor. Esto es **camuflaje por ruta secreta**. No es *domain fronting*: aquello usa un dominio en el SNI de TLS y otro distinto en la cabecera `Host`, mientras que aquí hay un solo dominio y lo que oculta el bridge es la ruta.
 
 <StepByStep title="Configurar el camuflaje con Nginx">
 <li>
@@ -1409,7 +1411,7 @@ Con todo configurado, repasa esta lista para confirmar que tu bridge funciona po
 <li data-check="check">Prometheus haciendo scraping: `curl http://localhost:9052/metrics | head`</li>
 <li data-check="check">El firewall permite los puertos de Tor: `ufw status | grep -E "9001|4443"`</li>
 <li data-check="check">Existe la huella digital del puente: `cat /var/lib/tor/fingerprint`</li>
-<li data-check="warning">Van apareciendo los flags del relé (¡paciencia!): entre 1 y 72 horas según el flag</li>
+<li data-check="warning">Van apareciendo los flags del relé (¡paciencia!): Running y Valid en torno a 1 hora, Stable unos 7 días y Guard unos 8, según el flag</li>
 <li data-check="optional">Accesible por IPv6 desde fuera: `nc -6zv TU_IPV6 9001`</li>
 <li data-check="optional">El bypass de CrowdSec funciona (si procede): `cscli explain` con una línea de log de prueba</li>
 </CheckList>

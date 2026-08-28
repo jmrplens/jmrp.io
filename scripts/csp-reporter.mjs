@@ -201,7 +201,10 @@ function isReportingApiEnvelope(entry) {
     !("csp-report" in entry) &&
     typeof entry.type === "string" &&
     !!entry.body &&
-    typeof entry.body === "object"
+    typeof entry.body === "object" &&
+    // An array is an object: without this, `{type, body: []}` passed as an
+    // envelope and every field came out undefined on the other side.
+    !Array.isArray(entry.body)
   );
 }
 
@@ -258,6 +261,16 @@ function normalizeReports(parsed) {
       continue;
     }
     if (!isReportingApiEnvelope(entry)) {
+      // Anything that is not an envelope must be a legacy report, and a legacy
+      // report is exactly `{"csp-report": {…}}`. Accepting every other object
+      // let shapes with no CSP fields at all through to the notify path, which
+      // is the same class of bug as the envelope one: a payload nobody could
+      // read, counted as if it had been.
+      const legacy = entry["csp-report"];
+      if (!legacy || typeof legacy !== "object" || Array.isArray(legacy)) {
+        recordFiltered("discard", "malformed");
+        continue;
+      }
       reports.push(entry);
       continue;
     }

@@ -1425,7 +1425,7 @@ export async function generateProfileMarkdown(
     uses: usesLines,
     projects: projectsLines,
   } as const;
-  const lines = await renderers[page](locale);
+  const lines = await renderers[page](locale, siteUrl);
   return [
     ...documentHeader(
       titles[page][locale],

@@ -139,7 +139,11 @@ const referenceLabel = (text: string, url: string): string => {
 // Link-text group excludes newlines and `[`/`{` so the scan can't run from a
 // JSX array/object bracket (e.g. `events={[ … [Real Link](url)`) through to a
 // real link's `](`, which would otherwise capture a mangled multi-line "title".
-const linkRegex = /\[([^\]\n[{]+)\]\(([^)]+(?:\([^)]+\)[^)]*)*)\)/g;
+// `*`, not `+`: a label can legitimately be empty by the time this runs, since
+// inline code is stripped above and a link whose whole text was code arrives
+// here as `[](url)`. Requiring one character dropped that citation instead of
+// letting `referenceLabel` fall back to the host.
+const linkRegex = /\[([^\]\n[{]*)\]\(([^)]+(?:\([^)]+\)[^)]*)*)\)/g;
 const collectedRefsFromMarkdown = [];
 let match;
 while ((match = linkRegex.exec(bodyWithoutCode)) !== null) {

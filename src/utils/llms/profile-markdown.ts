@@ -55,7 +55,10 @@ function item(name: string, detail?: string): string {
  * @param locale - Which locale's copy to render.
  * @returns Markdown lines.
  */
-export async function aboutLines(locale: "en" | "es"): Promise<Lines> {
+export async function aboutLines(
+  locale: "en" | "es",
+  siteUrl: string,
+): Promise<Lines> {
   const entry = await getEntry("profile", "about");
   // Throwing, like AboutPage and UsesPage do for the same condition: a twin
   // with a header and no body would publish an empty document and keep the
@@ -80,9 +83,20 @@ export async function aboutLines(locale: "en" | "es"): Promise<Lines> {
   const cvProjects =
     projectsSection?.kind === "projects" ? projectsSection.items : [];
   const hosted = await getProjects();
-  const featured = entry.data.featuredProjects
-    .map((name) => cvProjects.find((project) => project.name === name))
-    .filter((project) => project !== undefined);
+  // Throwing, not filtering: a name in `featuredProjects` that matches no CV
+  // project would drop that project from the twin while AboutPage still
+  // rendered it — the page and its markdown copy would disagree, silently and
+  // in the direction nobody checks. Same failure class as the missing
+  // about.yaml above, so it gets the same treatment.
+  const featured = entry.data.featuredProjects.map((name) => {
+    const project = cvProjects.find((p) => p.name === name);
+    if (!project) {
+      throw new Error(
+        `about.yaml featuredProjects names "${name}", which no CV project matches`,
+      );
+    }
+    return project;
+  });
 
   return [
     ...d.lead,
@@ -105,7 +119,7 @@ export async function aboutLines(locale: "en" | "es"): Promise<Lines> {
     // same address is already published in person.jsonld and security.txt.
     `- git: https://github.com/jmrplens`,
     `- mail: ${entry.data.person.email}`,
-    `- cv: ${locale === "es" ? "/es" : ""}/cv/`,
+    `- cv: ${siteUrl}${locale === "es" ? "/es" : ""}/cv/`,
     "",
     `## ${d.labels.projects}`,
     "",
@@ -155,7 +169,7 @@ export async function aboutLines(locale: "en" | "es"): Promise<Lines> {
     t("pages.about.editorialBody4"),
     "",
     `- mail: ${entry.data.person.email}`,
-    `- security.txt: /.well-known/security.txt`,
+    `- security.txt: ${siteUrl}/.well-known/security.txt`,
     "",
   ];
 }
@@ -166,7 +180,10 @@ export async function aboutLines(locale: "en" | "es"): Promise<Lines> {
  * @param locale - Which locale's copy to render.
  * @returns Markdown lines.
  */
-export async function usesLines(locale: "en" | "es"): Promise<Lines> {
+export async function usesLines(
+  locale: "en" | "es",
+  _siteUrl: string,
+): Promise<Lines> {
   const entry = await getEntry("profile", "uses");
   // Throwing, like AboutPage and UsesPage do for the same condition: a twin
   // with a header and no body would publish an empty document and keep the
@@ -205,7 +222,10 @@ export async function usesLines(locale: "en" | "es"): Promise<Lines> {
  * @param locale - Which locale's summary to render.
  * @returns Markdown lines.
  */
-export async function projectsLines(locale: "en" | "es"): Promise<Lines> {
+export async function projectsLines(
+  locale: "en" | "es",
+  _siteUrl: string,
+): Promise<Lines> {
   const entry = await getEntry("profile", "projects");
   // Throwing, like AboutPage and UsesPage do for the same condition: a twin
   // with a header and no body would publish an empty document and keep the

@@ -108,7 +108,8 @@ That denominator needs two sentences of defense, because the honest version of t
 One measured detail I did not expect. My origin does send the header this guide tells you to add — `add_header Alt-Svc 'h3=":443"; ma=86400' always;` sits in both TLS server blocks, and a request straight to the origin comes back carrying it. Through Cloudflare, that header is simply not there:
 
 <TerminalOutput title="Alt-Svc at the origin vs. at the edge">
-$ curl -sS -D- -o /dev/null https://jmrp.io/
+# On the origin host itself, bypassing the CDN entirely:
+$ curl -sS -kD- -o /dev/null -H 'Host: jmrp.io' https://127.0.0.1/
 alt-svc: h3=":443"; ma=86400
 $ curl -sS -D- -o /dev/null --resolve jmrp.io:443:104.21.40.251 https://jmrp.io/
 server: cloudflare
@@ -730,8 +731,15 @@ configure arguments: ... --with-http_v3_module ...
 
     # Nginx signing key in its own keyring
     sudo mkdir -p /etc/apt/keyrings
-    curl -fsSL https://nginx.org/keys/nginx_signing.key \
-        | sudo gpg --dearmor -o /etc/apt/keyrings/nginx.gpg
+    curl -fsSL https://nginx.org/keys/nginx_signing.key -o /tmp/nginx.key
+
+    # Check the fingerprints against the list nginx publishes at
+    # https://nginx.org/en/pgp_keys.html BEFORE trusting the key. The bundle
+    # carries several keys and they rotate, so compare the output rather than
+    # a number copied from a blog post.
+    gpg --show-keys --with-fingerprint /tmp/nginx.key
+
+    sudo gpg --dearmor -o /etc/apt/keyrings/nginx.gpg /tmp/nginx.key
 
     # Mainline repository, restricted to that keyring
     echo "deb [signed-by=/etc/apt/keyrings/nginx.gpg] https://nginx.org/packages/mainline/$DISTRO $CODENAME nginx" \

@@ -157,7 +157,7 @@ The first reason is nice-to-have. The second is the headline.
 
 ## What is a packed i18n string pool?
 
-A packed i18n string pool is two pieces of generated data. First, every translation is concatenated into a single flash blob, each string NUL-terminated — so an "offset" is just the start of an ordinary C string. Second, a per-language table of `uint16_t` offsets into that blob, replacing the pointer grid of `const char*`.
+A packed i18n string pool is two pieces of generated data. First, every translation is concatenated into a single flash blob, each string NUL-terminated — so an "offset" is just the start of an ordinary C string. Second, a per-language table of `uint16_t` offsets into that blob replaces the pointer grid of `const char*`.
 
 <ByteFrame
   title="Inside kPool — strings stored end to end"

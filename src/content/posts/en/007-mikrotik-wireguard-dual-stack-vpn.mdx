@@ -1529,8 +1529,9 @@ phone on the VPN and a host on the LAN side, with the router doing the crypto in
 Downstream — the direction where the router encrypts — the tunnel sustained roughly 70 Mbps
 for 30 seconds, and `cpu-load` went from a median of 3% at rest to a median of 15% while it
 ran. Memory barely moved: about 22 MiB of the router's 1 GiB, and it came straight back. So
-the cost of WireGuard on an RB5009 at that rate is around twelve points of one core's worth
-of CPU, and nothing else.
+the cost of WireGuard on an RB5009 at that rate is around twelve points of aggregate CPU —
+RouterOS reports `cpu-load` averaged across the board's four cores, not per core — and
+nothing else.
 
 Two caveats, because both of them would have made this number a lie. The first is that my
 router runs some periodic task every two minutes that takes CPU to 30% on its own; it is

@@ -877,7 +877,7 @@ export const common = {
       editorialBody3:
         "If something here is wrong, tell me. A short email with the article and the problem is enough — no account, no form. Vulnerability reports have their own channel and PGP key in security.txt.",
       editorialBody4:
-        "Corrections are made in the article itself rather than in a comment thread. The revision date shown on the page and in its structured data is not maintained by hand: it is derived at build time from the commit that last changed the article, so it cannot fall behind the text — including when the change is a small one. Formatting passes that touch every article at once are marked as such in that history and leave the dates alone. There is no per-article changelog; the record of what changed, and when, is the full edit history of this site, which is public in its repository.",
+        "Corrections are made in the article itself rather than in a comment thread. The revision date shown on the page and in its structured data is not maintained by hand: it is computed at build time as the most recent of four things — when the article was published, any date I set on it deliberately, the last time I re-tested it against the software versions it names, and the last commit that changed its substance — so it cannot fall behind the text, including when the change is a small one. Formatting passes that touch every article at once are marked as such in that history and leave the dates alone. There is no per-article changelog; the record of what changed, and when, is the full edit history of this site, which is public in its repository.",
       editorialReportLabel: "Report an error",
       editorialSecurityLabel: "security.txt",
     },

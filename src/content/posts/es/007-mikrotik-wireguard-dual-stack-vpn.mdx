@@ -1530,8 +1530,9 @@ conectado a la VPN y un equipo del lado LAN, con el router haciendo la criptogra
 medio. En bajada —la dirección en la que el router cifra— el túnel sostuvo unos 70 Mbps
 durante 30 segundos, y el `cpu-load` pasó de una mediana del 3% en reposo a una mediana del
 15% mientras duraba. La memoria apenas se movió: unos 22 MiB del giga que lleva el router, y
-los devolvió enseguida. Es decir: WireGuard en un RB5009 a ese caudal cuesta unos doce puntos
-de lo que da un núcleo, y nada más.
+los devolvió enseguida. Es decir: WireGuard en un RB5009 a ese caudal cuesta unos doce
+puntos de CPU agregada —RouterOS informa el `cpu-load` promediado entre los cuatro núcleos
+de la placa, no por núcleo— y nada más.
 
 Dos advertencias, porque cualquiera de las dos habría convertido esa cifra en mentira. La
 primera es que mi router ejecuta alguna tarea periódica cada dos minutos que por sí sola se
