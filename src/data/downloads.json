@@ -1,17 +1,17 @@
 {
-  "total": 149334,
-  "generatedAt": "2026-08-28T14:52:05.951Z",
+  "total": 149424,
+  "generatedAt": "2026-08-28T15:32:57.304Z",
   "sources": {
-    "githubReleases": 140377,
-    "dockerHub": 7735,
+    "githubReleases": 140465,
+    "dockerHub": 7737,
     "manual": 1222
   },
   "manualVerifiedOn": "2026-08-27",
   "projects": {
     "gitlab-mcp-server": {
-      "total": 142674,
-      "releases": 137213,
-      "docker": 5461,
+      "total": 142764,
+      "releases": 137301,
+      "docker": 5463,
       "manual": 0
     },
     "libgen-mcp": {
