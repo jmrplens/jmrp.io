@@ -55,9 +55,14 @@ exclude = [
     # — the main site, the school, the department, the research institute and
     # the repository. Not an outage: from this server they answer 301 or 200,
     # each checked by hand. Only the repository host was listed, which is why
-    # the other four went red the moment UA started refusing. One pattern for
-    # the whole domain, so a sixth faculty host does not reopen this.
-    'https?://[a-z0-9-]+\.ua\.es/.*',
+    # the other four went red the moment UA started refusing.
+    #
+    # The subdomain group repeats rather than matching one label, because UA
+    # nests: the co-author CV pages sit two labels deep. Those five had a
+    # dedicated line further down, which this pattern now subsumes — so that
+    # line is gone, along with the `https://`-only spelling that would have
+    # failed the same way the handle above did.
+    'https?://(?:[a-z0-9-]+\.)*ua\.es/.*',
     'https://www\.upv\.es/index-en\.html',
     'https://www\.upv\.es/entidades/epsg/en/home/',
     # Same scheme trap as the UPV profiles below: listed as `http://` while
@@ -86,7 +91,6 @@ exclude = [
     'https://cienciagandia\.webs\.upv\.es/.*',
     'https://i3m\.csic\.upv\.es/.*',
     'https://igic\.webs\.upv\.es/.*',
-    'https://cvnet\.cpd\.ua\.es/.*',
     # Ignore Astro/Template variables
     '.*\$\{.*',
     '.*\%7B.*',
