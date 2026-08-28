@@ -171,6 +171,11 @@ projects:
     endpoint: https://mcp.jmrp.io/libgen
     registryId: io.github.jmrplens/libgen-mcp
     listings:
+      # npm first, same order as the GitLab server: install channel before
+      # discovery directory.
+      - label: npm
+        url: https://www.npmjs.com/package/@jmrp.io/libgen-mcp
+        icon: simple-icons:npm
       - label: Glama
         url: https://glama.ai/mcp/servers/jmrplens/libgen-mcp
         icon: mdi:view-grid-outline
