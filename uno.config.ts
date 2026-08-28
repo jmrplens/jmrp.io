@@ -20,17 +20,19 @@ const iconCollections = [
 ];
 
 /**
- * Bare Iconify ids authored as `icon:` values in the projects document,
- * returned as `i-`-prefixed utility names.
+ * Bare Iconify ids authored as `icon:` values in a source file, returned as
+ * `i-`-prefixed utility names.
  *
+ * Accepts the YAML form (`icon: simple-icons:npm`) and the TS one
+ * (`icon: "simple-icons:torproject"`), because the two rosters that need this
+ * are written in the two languages.
+ *
+ * @param relativePath - Source file to read, relative to this config.
  * @returns Utility class names to safelist.
  */
-function projectListingIcons(): string[] {
-  const doc = readFileSync(
-    new URL("src/content/profile/projects.yaml", import.meta.url),
-    "utf8",
-  );
-  return [...doc.matchAll(/^\s*icon:\s*([a-z0-9-]+:[a-z0-9-]+)\s*$/gm)].map(
+function authoredIcons(relativePath: string): string[] {
+  const source = readFileSync(new URL(relativePath, import.meta.url), "utf8");
+  return [...source.matchAll(/\bicon:\s*"?([a-z0-9-]+:[a-z0-9-]+)"?/g)].map(
     (match) => `i-${match[1]}`,
   );
 }
@@ -63,14 +65,20 @@ export default defineConfig({
     },
   ],
   safelist: [
-    // Project listing icons, authored in `src/content/profile/projects.yaml`
-    // (`listing.icon`). The card builds the class at runtime as
-    // `i-${listing.icon}`, so neither the Vite-side extractor nor the
-    // `content.filesystem` scan above ever produces those utilities — the
-    // class ships in the HTML and resolves to nothing. Reading the document
-    // here keeps a NEW project's listing icon working with no hand-maintained
-    // list (/cv solves the same problem with a block of literal <span>s).
-    ...projectListingIcons(),
+    // Icons authored as data rather than as a literal class. In both files the
+    // consumer builds the class at runtime as `i-${entry.icon}`, so neither
+    // the Vite-side extractor nor the `content.filesystem` scan above ever
+    // produces those utilities — the class ships in the HTML and resolves to
+    // nothing. Reading the rosters here keeps a NEW entry's icon working with
+    // no hand-maintained list (/cv solves the same problem with a block of
+    // literal <span>s).
+    //
+    // The homelab roster earned its way in: moving those arrays out of
+    // `HomelabPage.astro` into a plain `.ts` module silently dropped
+    // `i-simple-icons:torproject` from the generated CSS — the only icon on
+    // that page used nowhere else — and shipped four invisible Tor cards.
+    ...authoredIcons("src/content/profile/projects.yaml"),
+    ...authoredIcons("src/components/homelab/inventory.ts"),
     // Footer custom_social icons (dynamically generated from socials.yaml)
     "i-mdi:key",
     "i-simple-icons:mikrotik",

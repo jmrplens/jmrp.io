@@ -5,7 +5,7 @@
  * probe (`/etc/nginx/lua/homelab_health.lua`, served at
  * `127.0.0.1:8999/stats/health`), while the KPI DENOMINATOR is the build-time
  * count of services flagged `probed: true` in
- * `src/components/pages/HomelabPage.astro`. The two rosters live in different
+ * `src/components/homelab/inventory.ts`. The two rosters live in different
  * repos, so nothing structural stops them drifting — and a drift renders a
  * permanent fake outage ("n / n+1") or an impossible "n+1 / n" with no signal.
  *
@@ -25,29 +25,48 @@
 import fs from "node:fs";
 import path from "node:path";
 
-const PAGE = path.join(process.cwd(), "src/components/pages/HomelabPage.astro");
+const ROSTER = path.join(process.cwd(), "src/components/homelab/inventory.ts");
 const HEALTH_URL =
   process.env.HOMELAB_HEALTH_URL ?? "http://127.0.0.1:8999/stats/health";
 const FETCH_TIMEOUT_MS = 4000;
 
 /**
- * Extracts `{ id, probed }` pairs from the `const services: Service[]` array
- * literal in HomelabPage.astro.
+ * Extracts `{ id, probed }` pairs from the roster returned by
+ * `homelabServices()` in `src/components/homelab/inventory.ts`.
  *
- * Not a real parser: it slices the array region, splits it into object
- * chunks on `id:` occurrences and reads each chunk's `probed:` flag. That is
- * enough because the services array is hand-maintained data with one `id:`
- * and one `probed:` per entry — and if the shape ever changes so much that
- * this misparses, the check fails loudly rather than silently passing.
+ * Not a real parser: it walks the array literal counting brackets to find its
+ * end, then splits it into object chunks on `id:` occurrences and reads each
+ * chunk's `probed:` flag. Bracket counting rather than the first `];` because
+ * the roster now contains an expression that ends in one (`HLM.mcpFleet[key];`
+ * inside the MCP fleet map), and stopping there would silently truncate the
+ * region — the sort of near-miss that still parses and quietly checks less
+ * than it claims to. If the shape ever changes past what this handles, the
+ * check throws rather than passing on a short read.
  *
- * @param {string} source - The page source text.
+ * @param {string} source - The module source text.
  * @returns {{ id: string, probed: boolean }[]} The declared services.
  */
 function extractServices(source) {
-  const start = source.indexOf("const services: Service[]");
+  const anchor = source.indexOf("export async function homelabServices");
+  if (anchor === -1)
+    throw new Error("inventory.ts: `homelabServices` not found");
+  const start = source.indexOf("return [", anchor);
   if (start === -1)
-    throw new Error("HomelabPage.astro: `const services: Service[]` not found");
-  const end = source.indexOf("];", start);
+    throw new Error("inventory.ts: `homelabServices` has no array literal");
+
+  let depth = 0;
+  let end = -1;
+  for (let i = source.indexOf("[", start); i < source.length; i++) {
+    if (source[i] === "[") depth++;
+    else if (source[i] === "]") {
+      depth--;
+      if (depth === 0) {
+        end = i;
+        break;
+      }
+    }
+  }
+  if (end === -1) throw new Error("inventory.ts: unbalanced services array");
   const region = source.slice(start, end);
 
   const services = [];
@@ -60,17 +79,15 @@ function extractServices(source) {
     );
     const probed = /\bprobed:\s*(true|false)\b/.exec(chunk);
     if (!probed)
-      throw new Error(
-        `HomelabPage.astro: service "${match[1]}" has no probed flag`,
-      );
+      throw new Error(`inventory.ts: service "${match[1]}" has no probed flag`);
     services.push({ id: match[1], probed: probed[1] === "true" });
   }
   if (services.length === 0)
-    throw new Error("HomelabPage.astro: no services parsed");
+    throw new Error("inventory.ts: no services parsed");
   return services;
 }
 
-const services = extractServices(fs.readFileSync(PAGE, "utf8"));
+const services = extractServices(fs.readFileSync(ROSTER, "utf8"));
 const probedIds = new Set(
   services.filter((service) => service.probed).map((service) => service.id),
 );
@@ -102,13 +119,13 @@ if (missingFromRoster.length === 0 && missingFromPage.length === 0) {
 } else {
   if (missingFromRoster.length > 0)
     console.error(
-      `✗ probed: true on the page but ABSENT from the probe: ${missingFromRoster.join(", ")}\n` +
+      `✗ probed: true in the roster but ABSENT from the probe: ${missingFromRoster.join(", ")}\n` +
         "  The KPI would render a permanent fake outage (probe online < page total).\n" +
         "  Fix: add the service to /etc/nginx/lua/homelab_health.lua, or set probed: false.",
     );
   if (missingFromPage.length > 0)
     console.error(
-      `✗ probed by nginx but not flagged probed: true on the page: ${missingFromPage.join(", ")}\n` +
+      `✗ probed by nginx but not flagged probed: true in the roster: ${missingFromPage.join(", ")}\n` +
         '  The KPI numerator could exceed its denominator ("n+1 / n").\n' +
         "  Fix: flag the service probed: true, or drop it from homelab_health.lua.",
     );
