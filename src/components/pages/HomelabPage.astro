@@ -37,6 +37,7 @@ import {
   useTranslations,
 } from "@i18n/utils";
 import BaseLayout from "@layouts/BaseLayout.astro";
+import { markdownTwinPath } from "@utils/llms";
 import type { LanguageTaggedValue } from "@utils/person";
 import { getSiteUrl } from "@utils/site";
 
@@ -274,6 +275,7 @@ const servicesSchema = {
   title={t("nav.homelab")}
   description={t("pages.homelab.description")}
   schema={servicesSchema}
+  markdownHref={markdownTwinPath(Astro.url.pathname)}
 >
   <section
     class="homelab-page"
