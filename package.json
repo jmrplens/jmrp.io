@@ -50,7 +50,7 @@
   },
   "dependencies": {
     "@astrojs/markdown-remark": "7.2.4",
-    "@astrojs/mdx": "7.0.7",
+    "@astrojs/mdx": "7.0.8",
     "@astrojs/preact": "6.0.4",
     "@astrojs/sitemap": "3.7.3",
     "@iconify-json/fa-brands": "^1.2.2",
@@ -59,7 +59,7 @@
     "@iconify-json/mdi": "^1.2.3",
     "@iconify-json/simple-icons": "^1.2.93",
     "@unocss/astro": "^66.8.1",
-    "astro": "7.2.4",
+    "astro": "7.2.6",
     "citation-js": "^0.8.2",
     "mermaid": "^11.17.0",
     "preact": "^10.29.8",
