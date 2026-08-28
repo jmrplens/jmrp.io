@@ -17,7 +17,10 @@
  *    disk still holds the raw tokens and is served without ever reaching the
  *    body filter, which would publish `HLM_ONLINE` verbatim.
  *  · There is no `Generated:` line. A build date on a body refreshed every
- *    minute would be the most misleading thing in the file.
+ *    minute would be the most misleading thing in the file — so the document
+ *    carries `HLM_AS_OF` instead, the same live capture token the page's
+ *    "injected at serve time" chip shows. It states how old the figures are,
+ *    which is the question a build date would have answered wrongly.
  *
  * ── Why it is worth having ──────────────────────────────────────────────────
  *
@@ -82,6 +85,19 @@ export async function homelabMarkdown(
     `URL: ${siteUrl}${prefix}/homelab/`,
     `Language: ${locale}`,
     `Alternate: ${siteUrl}${otherPrefix}/homelab/index.md`,
+    // Not a `Generated:` line: this is the LIVE capture token, substituted
+    // per request like every figure below it, so it states how fresh those
+    // figures are instead of when the build ran.
+    //
+    // The cadence is stated as a RATE, not as a maximum age. nginx refreshes
+    // at most once every 60 s (`FRESH_TTL`), but the refresh is triggered by
+    // a request rather than by a timer, and it is stale-while-revalidate:
+    // the request that finds the capture expired is served the OLD one while
+    // the new one is fetched. So "at most 60 s old" would be false on a quiet
+    // page — nothing fires the refresh — while "at most once a minute" is an
+    // upper bound on the rate and cannot be falsified. The exact age is right
+    // there in the capture time anyway; this only says how often it can move.
+    `${t("pages.homelab.twinCapturedAt")}: ${HLM.asOf} (${t("pages.homelab.twinRefresh")})`,
     "",
     `## ${t("pages.homelab.twinOverview")}`,
     "",
