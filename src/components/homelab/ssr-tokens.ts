@@ -277,6 +277,15 @@ export const HLM = {
     },
   } satisfies Record<string, NodeSsr>,
 
-  /** UTC time the injected values were captured (e.g. "18:42 UTC"). */
+  /**
+   * Local time the injected values were captured, with its UTC offset
+   * (e.g. "18:42 UTC+2"). Europe/Madrid, like every other date on the site.
+   *
+   * An offset rather than `CEST`/`CET`: it needs no knowledge of European
+   * zone names, and it is the notation the rest of the site already uses.
+   * nginx derives BOTH the time and the offset from the same timestamp
+   * against the host's `/etc/localtime`, so the two cannot disagree, and
+   * summer time needs no handling — the offset just reads +2 instead of +1.
+   */
   asOf: "HLM_AS_OF",
 } as const;

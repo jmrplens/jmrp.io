@@ -1,3 +1,6 @@
+# Design re-audit — ES comment terms in .astro/.css (en-scoped) + token abbrevs
+# Lab style-system logo class fragments + fonts + ES terms
+# PR #388 — ES comment terms (perf/UX session) + feed readers + misc
 aalarge
 Abbrechen
 abre
@@ -6,10 +9,10 @@ accionable
 acelerómetros
 acento
 achromatopsia
-Actívalo
 actuadores
-acústicos
+Actívalo
 acusticox
+acústicos
 addrlist
 adminer
 aeroacoustics
@@ -28,7 +31,6 @@ alginato
 algoritmos
 alimentario
 amazonbot
-ámbar
 amicro
 ancel
 ancla
@@ -37,7 +39,6 @@ animados
 Annulla
 anonimización
 anonymization
-años
 antiflood
 antirrebotes
 anymatch
@@ -55,7 +56,6 @@ aprox
 aquel
 aquí
 arduino
-área
 arrs
 arsc
 artesano
@@ -67,9 +67,9 @@ aspnet
 aspnetmvc
 assetlinks
 astm
-atómicamente
 attackable
 attributify
+atómicamente
 autenticador
 autenticarlo
 autoalojada
@@ -96,6 +96,7 @@ avanti
 avanzado
 avcdn
 azul
+años
 backlink
 baiduspider
 baja
@@ -105,8 +106,8 @@ banean
 baneando
 banear
 baneo
-baneó
 baneos
+baneó
 barras
 basados
 basetype
@@ -120,8 +121,8 @@ berlín
 bibtex
 bigdog
 bingbot
-biomédicas
 biomedicina
+biomédicas
 biomédico
 biomédicos
 bitdefender
@@ -203,10 +204,8 @@ cnet
 cnrs
 codeberg
 Codeberg
-códec
 codegen
 codificaciones
-código
 coep
 colegio
 colhead
@@ -219,7 +218,6 @@ comilla
 compartición
 compartido
 compensa
-compílalo
 completo
 componente
 comportamiento
@@ -227,12 +225,13 @@ compresión
 comprobador
 computacional
 computacionalmente
+compílalo
 comsol
 configurables
 configurarlas
-Consérvalos
 consolas
 constexpr
+Consérvalos
 contenedor
 contenedores
 contenido
@@ -244,12 +243,12 @@ cppreference
 crackeo
 crawlable
 credentialless
-críptico
 cripto
 crlnumber
 crossref
 crowdsec
 crowdsecurity
+críptico
 cscli
 csic
 csirt
@@ -257,6 +256,8 @@ cstack
 cstdint
 Csvg
 curso
+códec
+código
 d'acoustique
 daemonizes
 dakfl
@@ -297,12 +298,11 @@ depurabilidad
 desactualizadas
 desactualizados
 descargables
+desconexión
 descárgalo
 descárgalos
 Descífralo
-desconexión
 deseleccionar
-# Design re-audit — ES comment terms in .astro/.css (en-scoped) + token abbrevs
 desincronizando
 desolder
 desolders
@@ -315,16 +315,13 @@ devicon
 dfests
 dfmt
 dhcpv
-día
 diagramas
-días
 diceware
 diffbot
 diffie
 diffs
 difusores
 digi
-dígitos
 dingledine
 dios
 direccionado
@@ -353,10 +350,13 @@ DSCP
 dstnat
 dualstack
 dwyer
+día
+días
+dígitos
 ecssmet
 editables
-edítalo
 educativo
+edítalo
 efuse
 ekus
 elche
@@ -387,9 +387,9 @@ español
 espressif
 establécela
 establécelo
+estudio
 estándar
 estáticamente
-estudio
 etal
 ethernet
 euronoise
@@ -419,7 +419,6 @@ feedly
 filtro
 firehol
 firewalld
-fírmalo
 firmándolo
 firstname
 flashable
@@ -436,6 +435,7 @@ ftth
 fullchain
 funciona
 Funkolab
+fírmalo
 gandia
 garcía
 gelöscht
@@ -460,13 +460,13 @@ googlebot
 gorazdo
 gptbot
 grafana
-gráfico
 greylisting
 greyscale
 groby
 grotesk
 groupby
 grupos
+gráfico
 gstatic
 guarinos
 guillem
@@ -518,21 +518,20 @@ ihdr
 imagequant
 imagesift
 Immich
-impórtalo
 imprevisibilidad
 imprimible
+impórtalo
 imudp
 independiente
 independientes
 indexnow
-Índice
 indietro
 indirección
 industriales
 inet
 infraestructura
-ingeniería
 Ingeniero
+ingeniería
 inicial
 inicialización
 inicio
@@ -541,13 +540,13 @@ inoperativo
 Inplace
 inputname
 inspectiontool
-instálalo
 instante
 instituto
-intégralos
+instálalo
 integridad
 interp
 interseca
+intégralos
 invassat
 IONOS
 ipcalc
@@ -557,7 +556,6 @@ iporhost
 ipsets
 iptv
 iseconds
-ítem
 janim
 jblink
 jcur
@@ -600,7 +598,6 @@ Krawczyk
 Krawczyk's
 labora
 laboratoire
-# Lab style-system logo class fragments + fonts + ES terms
 labview
 lanczos
 lans
@@ -623,7 +620,6 @@ libx
 lighthouseci
 lighthouserc
 lightningcss
-línea
 linearization
 linkedin
 linkitems
@@ -632,14 +628,16 @@ listarlos
 llamante
 llevan
 lliria
-llíria
 llms
 llmstxt
+llíria
 localised
+localtime
 logfile
 loggable
 londres
 lvgl
+línea
 macbook
 mackey
 malformado
@@ -722,7 +720,6 @@ mppe
 mrru
 mschap
 mstdn
-muévelos
 multicriteria
 multiformato
 multijugador
@@ -730,6 +727,7 @@ multilínea
 multiphysics
 multiplexa
 multiplexados
+muévelos
 myadmin
 myjob
 nameopt
@@ -788,7 +786,6 @@ objetivo
 observabilidad
 ocsp
 ocurre
-öffnen
 oficial
 oids
 okabe
@@ -811,8 +808,6 @@ otras
 otro
 ouvrir
 Owasp
-página
-páginas
 panish
 parseadas
 parseado
@@ -825,18 +820,17 @@ pathspec
 patrón
 pcre
 pdfs
-pégala
 pelín
 pepy
 perjudicial
 pero
 perplexitybot
-persístela
 personalízalo
+persístela
 pesa
 pestaña
-petición
 peticiones
+petición
 pfctl
 pfwp
 phishable
@@ -860,7 +854,6 @@ portarlos
 postbuild
 poveda
 pppoe
-# PR #388 — ES comment terms (perf/UX session) + feed readers + misc
 pranavraut
 precarga
 precargado
@@ -894,8 +887,8 @@ progresiva
 prometheus
 proplist
 protanopía
-protégela
 protocolos
+protégela
 proyectos
 pruébalo
 pseudoaleatoria
@@ -910,6 +903,9 @@ pymodbus
 pypi
 pypistats
 pytest
+página
+páginas
+pégala
 qpack
 qualitygate
 qualys
@@ -937,15 +933,15 @@ recompilaciones
 recompiles
 reconecta
 reconectar
-reconexión
 reconexiones
+reconexión
 recrawl
 recursión
 redibujado
-redirección
 redirecciones
-Rediseñé
+redirección
 rediseño
+Rediseñé
 reemitir
 reempaqueta
 reenvíos
@@ -959,7 +955,6 @@ reflasheables
 reflasheo
 reformateada
 regextype
-réglages
 regs
 reimagining
 reinicios
@@ -1021,13 +1016,13 @@ rubén
 rustc
 ruta
 Ryzen
+réglages
 sacrificable
 saes
 salesianos
 Saltar
 salut
 sameorigin
-sánchez
 sanitización
 sanitizar
 sapc
@@ -1058,7 +1053,6 @@ shiki
 shiki's
 shuf
 sidekiq
-sídney
 siem
 siempre
 sifa
@@ -1106,8 +1100,9 @@ Suscríbete
 swipeable
 sysstat
 syverson
+sánchez
+sídney
 tabler
-táctil
 tamaño
 también
 tampermonkey
@@ -1155,6 +1150,7 @@ trixie
 truecolor
 truenas
 ttfb
+táctil
 uaaaaj
 uart
 ulnp
@@ -1184,10 +1180,9 @@ usar
 userscript
 userscripts
 usuario
-útil
-valència
 valencian
 valueonly
+valència
 varint
 Vaudenay
 velocista
@@ -1197,18 +1192,18 @@ versiones
 vibroacústica
 vibroacústico
 vicent
-víctor
 videollamadas
-viénot
 vigila
 violentmonkey
 viridis
 visita
+viénot
 vlan
 vlsm
 volcarla
 volcarlo
 volver
+víctor
 wbgetentities
 wbsearchentities
 wcag
@@ -1250,3 +1245,9 @@ Zenodo
 zeroize
 zgrab
 zurück
+ámbar
+área
+Índice
+ítem
+öffnen
+útil

@@ -294,7 +294,8 @@ const servicesSchema = {
             aria-hidden="true"
           ></span>
           {
-            /* HLM.asOf is replaced by nginx with the capture time (UTC).
+            /* HLM.asOf is replaced by nginx with the capture time in
+              Europe/Madrid, offset included.
               See src/components/homelab/ssr-tokens.ts for the contract. */
           }
           {t("pages.homelab.realtimePill")} · {HLM.asOf}
