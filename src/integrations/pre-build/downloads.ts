@@ -46,6 +46,53 @@ interface DownloadsData {
   projects: Record<string, ProjectDownloads>;
 }
 
+/** Absolute path of the generated file and of the directory holding it. */
+const outputDirAbs = path.resolve(process.cwd(), OUTPUT_DIR);
+const outputPath = path.join(outputDirAbs, OUTPUT_FILE);
+
+/**
+ * Writes a zeroed {@link DOWNLOADS_DATA_PATH}, creating its directory.
+ *
+ * Zero is a value the pages can show, not a broken one: `HomePage` shows "—" for
+ * a total of 0 and `ProjectsPage` shows no figure for a project below its
+ * display floor. So an empty roster degrades to "no numbers", where a missing
+ * file is a hard failure — both pages import it statically.
+ */
+function writeZeroed(): void {
+  const empty: DownloadsData = {
+    total: 0,
+    generatedAt: new Date().toISOString(),
+    sources: { githubReleases: 0, dockerHub: 0, manual: 0 },
+    manualVerifiedOn: MANUAL_COUNTS_VERIFIED_ON,
+    projects: {},
+  };
+  if (!fs.existsSync(outputDirAbs)) {
+    fs.mkdirSync(outputDirAbs, { recursive: true });
+  }
+  fs.writeFileSync(outputPath, `${JSON.stringify(empty, null, 2)}\n`);
+}
+
+/**
+ * Guarantees {@link DOWNLOADS_DATA_PATH} exists, without touching the network.
+ *
+ * The refresh below only runs for `astro build`, but the file is imported
+ * statically by two pages, so EVERY command that resolves modules needs it to
+ * exist — `astro check` and `astro dev` included. While the file was tracked
+ * that was free; now that it is generated, a fresh clone has none until
+ * something writes one, and `astro check` would fail to resolve the import
+ * before any build had a chance to run.
+ *
+ * Cheap on purpose: an existing file is left exactly as it is, so this never
+ * overwrites a real refresh or the host's last-known-good cache.
+ *
+ * @param logger - The Astro logger instance.
+ */
+export function ensureDownloadsData(logger: AstroIntegrationLogger): void {
+  if (fs.existsSync(outputPath)) return;
+  writeZeroed();
+  logger.info(`  ✓ No ${OUTPUT_FILE} yet — wrote a zeroed one.`);
+}
+
 /**
  * Refreshes {@link DOWNLOADS_DATA_PATH} with the latest cumulative download
  * totals. Never throws, and always leaves a readable file behind: the pages
@@ -65,9 +112,6 @@ export async function setupDownloads(
   token?: string,
 ): Promise<void> {
   logger.info("Fetching cumulative download totals...");
-
-  const outputDirAbs = path.resolve(process.cwd(), OUTPUT_DIR);
-  const outputPath = path.join(outputDirAbs, OUTPUT_FILE);
 
   try {
     const { total, sources, manualVerifiedOn, projects } =
@@ -101,21 +145,9 @@ export async function setupDownloads(
         `Could not refresh download totals (${message}). Keeping existing ${OUTPUT_FILE}.`,
       );
     } else {
-      // Zeroed rather than absent: `HomePage` renders "—" for a total of 0 and
-      // `ProjectsPage` shows no figure for a project below its display floor,
-      // so an empty roster degrades to "no numbers" — while a missing file
-      // fails the static import and takes the whole build down with it.
-      const empty: DownloadsData = {
-        total: 0,
-        generatedAt: new Date().toISOString(),
-        sources: { githubReleases: 0, dockerHub: 0, manual: 0 },
-        manualVerifiedOn: MANUAL_COUNTS_VERIFIED_ON,
-        projects: {},
-      };
-      if (!fs.existsSync(outputDirAbs)) {
-        fs.mkdirSync(outputDirAbs, { recursive: true });
-      }
-      fs.writeFileSync(outputPath, `${JSON.stringify(empty, null, 2)}\n`);
+      // Unreachable in practice — `ensureDownloadsData` runs first on every
+      // command — but a warning here is cheaper than a mystery if it ever is.
+      writeZeroed();
       logger.warn(
         `Could not fetch download totals (${message}) and no cached file ` +
           `exists. Wrote a zeroed ${OUTPUT_FILE} so the build still renders.`,

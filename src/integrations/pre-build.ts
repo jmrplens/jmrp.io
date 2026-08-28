@@ -2,7 +2,7 @@ import type { AstroIntegration } from "astro";
 import { loadEnv } from "vite";
 
 import { setupCfBeacon } from "./pre-build/beacon.js";
-import { setupDownloads } from "./pre-build/downloads.js";
+import { ensureDownloadsData, setupDownloads } from "./pre-build/downloads.js";
 import { timed } from "./timing.js";
 
 /**
@@ -26,9 +26,16 @@ export default function preBuildIntegration(): AstroIntegration {
         logger.info(`Environment initialization: [${command}]`);
 
         try {
-          // Only fetch beacon + download totals when building for production.
-          // Both keep their last committed value on failure, so the checked-in
-          // baselines cover dev and offline builds.
+          // The download totals are generated, not tracked, and two pages
+          // import the file statically — so it has to exist for EVERY command
+          // that resolves modules, `astro check` and `astro dev` included, not
+          // just for the build that refreshes it. This writes a zeroed file
+          // only when there is none at all, and never touches the network.
+          ensureDownloadsData(logger);
+
+          // Only fetch the beacon + the real download totals when building for
+          // production. The beacon keeps its committed baseline on failure;
+          // the totals keep whatever copy the host already had.
           if (command === "build") {
             await timed("setupCfBeacon", logger, () =>
               setupCfBeacon(env.PUBLIC_CF_BEACON_TOKEN, logger),
