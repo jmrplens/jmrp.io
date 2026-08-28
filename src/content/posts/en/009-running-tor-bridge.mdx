@@ -1017,12 +1017,13 @@ You should see three processes: `tor`, `obfs4proxy`, and `webtunnel-server`.
 
 <TerminalCommand ariaLabel="Check listening ports for Tor bridge">
 ```bash
-ss -tlnp | grep -E "(9001|4443|15000|9051|9052)"
+ss -tlnp | grep -E "(:443|9001|4443|15000|9051|9052)"
 ```
 </TerminalCommand>
 
 <TerminalOutput title="Expected listening ports">
 ```
+LISTEN  0  511    0.0.0.0:443    0.0.0.0:*  users:(("nginx",pid=...,fd=...))
 LISTEN  0  4096   0.0.0.0:9001   0.0.0.0:*  users:(("tor",pid=...,fd=...))
 LISTEN  0  4096   0.0.0.0:4443   0.0.0.0:*  users:(("obfs4proxy",pid=...,fd=...))
 LISTEN  0  4096 127.0.0.1:15000  0.0.0.0:*  users:(("webtunnel-ser",pid=...,fd=...))

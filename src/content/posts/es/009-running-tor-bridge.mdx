@@ -1012,12 +1012,13 @@ Deberías ver tres procesos: `tor`, `obfs4proxy`, y `webtunnel-server`.
 
 <TerminalCommand ariaLabel="Comprobar los puertos en escucha del puente Tor">
 ```bash
-ss -tlnp | grep -E "(9001|4443|15000|9051|9052)"
+ss -tlnp | grep -E "(:443|9001|4443|15000|9051|9052)"
 ```
 </TerminalCommand>
 
 <TerminalOutput title="Puertos que deberían estar en escucha">
 ```
+LISTEN  0  511    0.0.0.0:443    0.0.0.0:*  users:(("nginx",pid=...,fd=...))
 LISTEN  0  4096   0.0.0.0:9001   0.0.0.0:*  users:(("tor",pid=...,fd=...))
 LISTEN  0  4096   0.0.0.0:4443   0.0.0.0:*  users:(("obfs4proxy",pid=...,fd=...))
 LISTEN  0  4096 127.0.0.1:15000  0.0.0.0:*  users:(("webtunnel-ser",pid=...,fd=...))
