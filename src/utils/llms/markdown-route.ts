@@ -4,7 +4,13 @@ import {
   generatePageMarkdown,
   generateProfileMarkdown,
   generateToolMarkdown,
+  getToolsByLocale,
 } from "@utils/llms";
+import {
+  generateSeriesMarkdown,
+  generateToolCategoryMarkdown,
+} from "@utils/llms/listing-markdown";
+import { SERIES } from "@utils/series";
 import { type CollectionEntry, getCollection } from "astro:content";
 
 /**
@@ -170,4 +176,59 @@ export function homeRenderer() {
 export function pageRenderer(slug: string) {
   return (siteUrl: string, locale: "en" | "es") =>
     generatePageMarkdown(siteUrl, slug, locale);
+}
+
+/**
+ * The `/blog/series/<slug>/index.md` endpoints, one per locale.
+ *
+ * The hubs are the only pages that say in what ORDER to read a cluster of
+ * posts, and none of that prose existed in markdown.
+ *
+ * @param locale - The locale this route serves.
+ * @returns The two exports an Astro endpoint needs.
+ */
+export function seriesMarkdownRoute(locale: "en" | "es") {
+  return {
+    getStaticPaths: () =>
+      SERIES.map((series) => ({ params: { series: series.slug } })),
+    GET: async (context: { site: URL; params: { series: string } }) =>
+      new Response(
+        await generateSeriesMarkdown(
+          context.site.origin,
+          locale,
+          context.params.series,
+        ),
+        { headers: MARKDOWN_HEADERS },
+      ),
+  };
+}
+
+/**
+ * The `/tools/categories/<category>/index.md` endpoints, one per locale.
+ *
+ * The categories are derived from what the locale's tools declare, exactly as
+ * `tools/categories/[category].astro` derives them, so a new category never
+ * needs a route added by hand — and the twin set can never name one the pages
+ * do not have.
+ *
+ * @param locale - The locale this route serves.
+ * @returns The two exports an Astro endpoint needs.
+ */
+export function toolCategoryMarkdownRoute(locale: "en" | "es") {
+  return {
+    getStaticPaths: async () => {
+      const tools = await getToolsByLocale(locale);
+      const categories = [...new Set(tools.map((tool) => tool.data.category))];
+      return categories.map((category) => ({ params: { category } }));
+    },
+    GET: async (context: { site: URL; params: { category: string } }) =>
+      new Response(
+        await generateToolCategoryMarkdown(
+          context.site.origin,
+          locale,
+          context.params.category,
+        ),
+        { headers: MARKDOWN_HEADERS },
+      ),
+  };
 }

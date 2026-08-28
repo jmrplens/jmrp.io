@@ -15,6 +15,10 @@
  * Per-page tests run in parallel across workers for maximum performance.
  * Dynamically tests all pages discovered from the sitemap.
  */
+// cspell:locale es,en — the llms-full.txt assertion below lists that file's H2
+// headings verbatim, and half of them are the Spanish profile sections. They
+// are expected values copied from the document, not prose, so they cannot be
+// written in English; the same treatment `@utils/llms/listing-markdown` gets.
 
 import { expect, test } from "@playwright/test";
 
@@ -369,10 +373,24 @@ test.describe("SEO & Metadata Checks", () => {
       // Advertised by llms.txt under "## Sections" and previously missing from
       // this document entirely, so a model that followed the index found
       // nothing for four of the sections it had just been promised.
+      // The home page and /about/ were the two profile sections this document
+      // never indexed, which is exactly backwards: they are the entity pages a
+      // model lands on when asked who the author is.
+      "Home",
+      "About",
       "Projects",
       "Homelab",
       "Uses",
       "Privacy",
+      // The Spanish profile sections were absent entirely — the document
+      // carried both languages for posts and tools but only English for the
+      // pages, so half the site had no entry under the index that promised it.
+      "Inicio",
+      "Sobre mí",
+      "Proyectos",
+      "Homelab",
+      "Uses",
+      "Privacidad",
       // Not a page of this site: the author's MCP endpoints live on
       // mcp.jmrp.io. Its own H2 because these are callable endpoints, not
       // prose to read — see mcpBlock() in `@utils/llms`. Both languages in
@@ -426,6 +444,12 @@ test.describe("SEO & Metadata Checks", () => {
       // other context, and the body is what makes it worth pasting.
       expect(body, path).toContain("URL: https://jmrp.io");
       expect(body, path).toContain("Published:");
+      // The re-verification claim reaches machines, not only the byline: post
+      // 004 pins `lastVerified` with the version it was re-tested against.
+      // Without this the twin silently drops the strongest freshness signal
+      // the article makes — which is how post 011 came to advertise a
+      // `dateModified` 67 days older than its own page said it was.
+      expect(body, path).toMatch(/^Last verified: \d{4}-\d{2}-\d{2}/m);
       // No component tag may survive the conversion.
       expect(body, path).not.toMatch(/<\/?(Callout|Table|Mermaid|Code)\b/);
     }

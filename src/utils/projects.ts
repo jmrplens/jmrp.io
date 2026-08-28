@@ -56,8 +56,8 @@ export interface Project {
   endpoint?: string;
   /** Name in the official MCP Registry, emitted as a JSON-LD `identifier`. */
   registryId?: string;
-  /** Primary third-party listing: rendered as a card link AND folded into `sameAs`. */
-  listing?: { label: string; url: string; icon: string };
+  /** Third-party listings: rendered as card links AND folded into `sameAs`. */
+  listings?: { label: string; url: string; icon: string }[];
   sameAs?: string[];
   topics: ProjectTopic[];
   summary: { en: string; es: string };
@@ -166,6 +166,30 @@ const topicThing = (topic: ProjectTopic): Thing => ({
 });
 
 /**
+ * The MCP servers' entry in the official registry, as a resolvable URL.
+ *
+ * `registryId` was authored for the publishing pipeline and never reached the
+ * graph, so the registry the protocol itself considers canonical — and the one
+ * every derived directory (Glama, mcp.so, PulseMCP) reads from — was the one
+ * alias the servers did not declare.
+ *
+ * `/versions` is the per-server resource: the registry has no `/v0/servers/
+ * {name}` path (that 404s) and no human-facing page per server, and the search
+ * endpoint is a query, not a permalink. This one returns the server's whole
+ * version history in a single response — verified against both servers, 57 and
+ * 22 entries, with no pagination to walk.
+ *
+ * @param registryId - The `io.github.owner/name` id, when the project has one.
+ * @returns A one-element array with the URL, or empty when it has no id.
+ */
+function registryAlias(registryId: string | undefined): string[] {
+  if (!registryId) return [];
+  return [
+    `https://registry.modelcontextprotocol.io/v0/servers/${encodeURIComponent(registryId)}/versions`,
+  ];
+}
+
+/**
  * Builds the JSON-LD node for one project.
  *
  * `description` is always the English summary, on both locales: the software
@@ -186,11 +210,12 @@ export function buildProjectSchema(project: Project): Record<string, unknown> {
   // The docs URL is an identity alias only when it is a separate site.
   // Projects without one point `docs` at the repo README anchor, which is
   // just `url` with a fragment — not a distinct page worth aliasing.
-  // `listing` is a `sameAs` that also gets rendered, so it is folded in here
+  // A listing is a `sameAs` that also gets rendered, so they are folded in here
   // rather than authored twice — one URL, one place to change it.
   const aliases = [
     ...(project.docs.startsWith(`${project.repo}#`) ? [] : [project.docs]),
-    ...(project.listing ? [project.listing.url] : []),
+    ...(project.listings ?? []).map((l) => l.url),
+    ...registryAlias(project.registryId),
     ...(project.sameAs ?? []),
   ];
 

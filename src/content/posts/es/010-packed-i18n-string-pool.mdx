@@ -156,9 +156,9 @@ La primera razón es un buen extra; la segunda es la que de verdad importa.
 
 ---
 
-## El pool empaquetado y la tabla de offsets
+## ¿Qué es un pool de cadenas i18n empaquetado?
 
-El diseño son dos piezas de datos generados. Primero, cada traducción se concatena en un único blob de flash, cada cadena terminada en NUL — así que un "offset" es simplemente el inicio de una cadena C corriente. Segundo, una tabla por idioma de offsets `uint16_t` dentro de ese blob, que sustituye a la rejilla de punteros.
+Un pool de cadenas i18n empaquetado son dos piezas de datos generados. Primero, cada traducción se concatena en un único blob de flash, cada cadena terminada en NUL — así que un "offset" es simplemente el inicio de una cadena C corriente. Segundo, una tabla por idioma de offsets `uint16_t` dentro de ese blob, que sustituye a la rejilla de punteros `const char*`.
 
 <ByteFrame
   title="Dentro de kPool — cadenas almacenadas una tras otra"
@@ -412,9 +412,9 @@ flowchart LR
 
 ---
 
-## Lo que ahorró de verdad
+## ¿Cuánto firmware ahorró el empaquetado en realidad?
 
-Estos son los números del build real `sticks3` (5 idiomas, 273 IDs), empaquetado frente a la tabla de punteros básica, ambos en el `-Os` de producción:
+El empaquetado encogió el firmware en **2.224 B** netos en el `-Os` de producción, sin cambios de API ni en los puntos de llamada. Es menos que los −2.730 B planos que aporta reducir el índice a la mitad, porque agrupar en un pool renuncia a unos 500 B de deduplicación cruzada del linker. Estos son los números del build real `sticks3` (5 idiomas, 273 IDs), empaquetado frente a la tabla de punteros básica:
 
 <DeltaCompare
   title="Empaquetado vs la tabla de punteros básica (-Os)"

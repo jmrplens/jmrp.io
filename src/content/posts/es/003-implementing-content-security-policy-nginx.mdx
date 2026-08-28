@@ -3,7 +3,7 @@ title: "Content Security Policy (CSP) con Nginx: La Guía Completa"
 slug: "003-implementing-content-security-policy-nginx"
 lang: "es"
 publishedDate: 2025-12-19
-updatedDate: 2026-08-03
+updatedDate: 2026-08-27
 lastVerified:
   date: 2026-08-01
   versions:
@@ -130,6 +130,45 @@ Esto no es hipotético — jmrp.io es en sí mismo la implementación de referen
 Las violaciones no se pierden en un log que nadie lee: tengo mi propio receptor (`scripts/csp-reporter.mjs`) que las saca a la luz en cuanto ocurren, en vez de depender de un servicio de terceros para saber qué se está rompiendo.
 
 Medido contra la API actual de Mozilla Observatory (v5), esta configuración obtiene una **calificación A+: puntuación 140, con los 10 tests pasados y cero fallos**. Esa es la cifra a día de hoy — no el 145 que puedes ver referenciado en otra parte de este sitio, de un commit de diciembre de 2025. Aquel total incluía un bonus de 5 puntos que Observatory concede por servir cookies con `Secure`/`HttpOnly`/`SameSite`; esas cookies eran dos valores dummy que no hacían nada útil, y eliminarlas —para que la página `/privacy/` de este sitio pueda afirmar honestamente que ninguna respuesta fija `Set-Cookie`— costó 5 puntos cosméticos en una política que ya no falla ni un solo test. Ese cambio mereció claramente la pena.
+
+### Qué contienen de verdad los informes de violación
+
+Ese receptor recibe de media una veintena de informes al día, y la media es el número menos útil del conjunto: la mayoría de los días traen un puñado y algún día suelto trae cientos. Lo que importa es la composición, y es estable desde que empecé a leerlos. La gran mayoría son crawlers. Casi todo el resto son extensiones del navegador y antivirus inyectando scripts y estilos en la página de otra persona. **Ni uno solo ha resultado ser un defecto de este sitio.**
+
+Los informes de `eval` bloqueado son el caso más claro, porque son trivialmente falsables: ningún fichero JavaScript que sirve este sitio contiene `eval(` ni `new Function(` — tras un build de producción, las únicas apariciones de ese literal en toda la salida están en la prosa de este mismo artículo. Llegan a rachas desde una sola dirección y un solo user-agent, que es un visitante con algo inyectando código en su navegador, no una política demasiado estricta.
+
+Ese es el rendimiento honesto de un `report-uri`: te cuenta sobre todo lo que el software de otros le hace a tus páginas. Ni una sola vez me ha dicho que mi propia política estuviera mal — lo cual no lo hace inútil, porque me llevó a leer mi propio receptor con la atención suficiente para encontrar el fallo de abajo.
+
+
+### El fallo que esta auditoría encontró en mi propio receptor
+
+Esa composición solo es fiable porque sentarme a comprobarla destapó un fallo de parseo en el propio receptor.
+
+El 22 de agosto añadí un endpoint `report-to` junto al `report-uri` de siempre. Las dos API no se ponen de acuerdo en la forma: la antigua envía por POST un único objeto `{"csp-report": {…}}` con nombres de campo en kebab-case, mientras que la Reporting API manda envoltorios `{type, url, body: {…}}` en camelCase. Para eso existe una función `normalizeReports()`, que traduce la segunda forma a la primera — y lo hacía, pero solo cuando el cuerpo llegaba como array.
+
+<Code lang="javascript" title="scripts/csp-reporter.mjs — el fallo">
+```javascript
+function normalizeReports(parsed) {
+  // Un envoltorio suelto no es un array: se escapaba por esta línea
+  // y llegaba a los filtros con todos los campos kebab-case undefined.
+  if (!Array.isArray(parsed)) return [parsed];
+  return parsed.map(/* camelCase → kebab-case */);
+}
+```
+</Code>
+
+Un navegador que envía un envoltorio suelto en vez de un array de uno se colaba de largo por esa primera línea. El informe llegaba a los filtros sin directiva, sin URI bloqueada y sin fichero de origen —nada con lo que casar—, así que no se descartaba nada, todo se registraba como inclasificable y cuatro de esos informes vacíos esquivaron el limitador de frecuencia y acabaron en mi móvil como alertas de Telegram con una violación en blanco dentro.
+
+Diez informes entraron así entre el 22 y el 26 de agosto. Descodificados a mano no tienen ningún misterio: seis traen un fichero de origen `safari-web-extension://…` o `safari-extension://…`, y los otros cuatro son elementos `<style>` inline que el navegador atribuye al propio documento. Los filtros de descarte ya cubrían ambas categorías; sencillamente nunca llegaron a ver los campos. El arreglo consiste en aceptar también el envoltorio suelto, no solo el array.
+
+La forma del error es lo que merece escribirse. Una afirmación de que ninguno de estos informes es un defecto real, apoyada en parte en informes que nadie podía leer, no es una afirmación — y no tenía manera de saber cuál de las dos cosas era hasta decodificarlos a mano.
+
+<Callout type="keypoint" title="Un informe que no sabes parsear es peor que uno que nunca recibiste">
+  Te cuesta igual una alerta y encima parece señal. Si le enchufas un endpoint
+  `report-to` a un receptor que ya tenía `report-uri`, lo primero que hay que
+  probar es un envoltorio suelto — no el array que enseñan los ejemplos de la
+  especificación.
+</Callout>
 
 ---
 

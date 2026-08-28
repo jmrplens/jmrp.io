@@ -93,6 +93,17 @@ const IMAGE = {
 };
 
 /**
+ * Wikidata's canonical entity URI. Plain `http:` by design — it is the Linked
+ * Data identifier, not a fetchable link. Mirrors `wikidataEntityUri` in
+ * `src/utils/wikidata.ts`.
+ *
+ * @param qid - The bare Q-id, e.g. `Q2037040`.
+ * @returns The entity URI.
+ */
+// eslint-disable-next-line unicorn/prefer-https -- see comment above
+const wikidataEntityUri = (qid) => `http://www.wikidata.org/entity/${qid}`;
+
+/**
  * Mirrors `CANONICAL_ALUMNI_OF` and `CANONICAL_CREDENTIALS` in
  * `src/utils/person.ts` (a .astro/.ts module cannot be imported here). Kept
  * in sync by the schema-validation spec, which compares this document against
@@ -101,11 +112,16 @@ const IMAGE = {
 const ALUMNI_OF = [
   {
     "@type": "EducationalOrganization",
+    // Identified by the Wikidata entity URI, the same convention `knowsAbout`
+    // uses below — not an anonymous node carrying only a `sameAs` to the wiki
+    // ARTICLE. Mirrors `CANONICAL_ALUMNI_OF` in src/utils/person.ts.
+    "@id": wikidataEntityUri("Q2037040"),
     name: "University of Alicante",
     sameAs: "https://www.wikidata.org/wiki/Q2037040",
   },
   {
     "@type": "EducationalOrganization",
+    "@id": wikidataEntityUri("Q2003976"),
     name: "Universitat Politècnica de València",
     sameAs: "https://www.wikidata.org/wiki/Q2003976",
   },
@@ -215,11 +231,7 @@ function buildIdentityDocument() {
             labelOverrides[wikidata[topic]] ??
             wikidataLabels[wikidata[topic]] ??
             topic,
-          // Wikidata's canonical entity concept URI is http by design — it is
-          // the Linked Data identifier, not a fetchable link. Mirrors the same
-          // suppression in BaseHead.astro.
-          // eslint-disable-next-line unicorn/prefer-https -- see comment above
-          "@id": `http://www.wikidata.org/entity/${wikidata[topic]}`,
+          "@id": wikidataEntityUri(wikidata[topic]),
         }
       : topic,
   );

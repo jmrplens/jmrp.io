@@ -248,6 +248,46 @@ function outlineFormat(file) {
 }
 
 /**
+ * Verifies one `\setmainfont`/`\newfontfamily` declaration.
+ *
+ * A family must be pinned to a vendored file — `Path` plus `Extension` — or
+ * LaTeX resolves it from the system font database, which is what silently
+ * changed the shipped typeface once already. Each pinned face must also exist
+ * on disk and carry glyf outlines: CFF is what made ATS parsers read the PDF
+ * as broken words.
+ *
+ * @param {string} texName - Basename of the generated source, for messages.
+ * @param {string} family - The font family as declared.
+ * @param {string} options - The bracketed option list of the declaration.
+ * @returns {string[]} Failure messages, empty when the family is sound.
+ */
+function checkFontFamily(texName, family, options) {
+  const dir = /Path\s*=\s*([^,\]\n]+)/u.exec(options)?.[1]?.trim();
+  const ext = /Extension\s*=\s*([^,\]\n]+)/u.exec(options)?.[1]?.trim();
+  if (!dir || !ext) {
+    return [
+      `${texName} — ${family} is not pinned to a vendored file ` +
+        `(no Path/Extension); it would resolve from the system font database`,
+    ];
+  }
+  const failures = [];
+  for (const [, suffix] of options.matchAll(/=\s*\*(-\w+)/gu)) {
+    const resolved = path.resolve(GEN_DIR, dir, `${family}${suffix}${ext}`);
+    if (!fs.existsSync(resolved)) {
+      failures.push(`${texName} — missing font file ${family}${suffix}${ext}`);
+      continue;
+    }
+    const format = outlineFormat(resolved);
+    if (format !== "glyf") {
+      failures.push(
+        `${texName} — ${family}${suffix}${ext} is ${format}, not glyf-flavoured TrueType`,
+      );
+    }
+  }
+  return failures;
+}
+
+/**
  * Asserts every generated ATS source pins its fonts to vendored TrueType files.
  *
  * @returns {string[]} Failure messages, empty when every source is pinned.
@@ -271,30 +311,7 @@ function checkFontPinning() {
       continue;
     }
     for (const [, family, options] of blocks) {
-      const dir = /Path\s*=\s*([^,\]\n]+)/u.exec(options)?.[1]?.trim();
-      const ext = /Extension\s*=\s*([^,\]\n]+)/u.exec(options)?.[1]?.trim();
-      if (!dir || !ext) {
-        failures.push(
-          `${path.basename(tex)} — ${family} is not pinned to a vendored file ` +
-            `(no Path/Extension); it would resolve from the system font database`,
-        );
-        continue;
-      }
-      for (const [, suffix] of options.matchAll(/=\s*\*(-\w+)/gu)) {
-        const resolved = path.resolve(GEN_DIR, dir, `${family}${suffix}${ext}`);
-        if (!fs.existsSync(resolved)) {
-          failures.push(
-            `${path.basename(tex)} — missing font file ${family}${suffix}${ext}`,
-          );
-          continue;
-        }
-        const format = outlineFormat(resolved);
-        if (format !== "glyf") {
-          failures.push(
-            `${path.basename(tex)} — ${family}${suffix}${ext} is ${format}, not glyf-flavoured TrueType`,
-          );
-        }
-      }
+      failures.push(...checkFontFamily(path.basename(tex), family, options));
     }
   }
   return failures;
@@ -351,6 +368,59 @@ async function checkDesignBudget() {
   return failures;
 }
 
+/**
+ * Prints the verdict of one whole-run check and reports whether it failed.
+ *
+ * @param {string} label - The check's name.
+ * @param {string[]} failures - Its failure messages, empty when it passed.
+ * @param {string} okNote - Parenthetical shown when it passed.
+ * @returns {number} 1 when the check failed, 0 when it passed.
+ */
+function reportGroup(label, failures, okNote) {
+  if (failures.length === 0) {
+    console.log(
+      `  ${c.green}✓${c.reset} ${label} ${c.dim}(${okNote})${c.reset}`,
+    );
+    return 0;
+  }
+  console.log(`  ${c.red}✗${c.reset} ${label}`);
+  for (const f of failures) console.log(`      ${c.red}- ${f}${c.reset}`);
+  return 1;
+}
+
+/**
+ * Extracts one generated PDF and prints its ATS verdict.
+ *
+ * @param {{file: string, profile: string, locale: string}} target - The PDF.
+ * @returns {Promise<number>} 1 when it failed, 0 when it passed.
+ */
+async function reportPdf({ file, profile, locale }) {
+  if (!fs.existsSync(path.join(PDF_DIR, file))) {
+    console.log(`  ${c.red}✗${c.reset} ${file} — file not found`);
+    return 1;
+  }
+  let result;
+  try {
+    result = checkPdf(await extractText(file), profile, locale);
+  } catch (error) {
+    console.log(
+      `  ${c.red}✗${c.reset} ${file} — extraction error: ${error.message}`,
+    );
+    return 1;
+  }
+  const { failures, score, keywords } = result;
+  if (failures.length === 0) {
+    const scoreLabel = locale === "en" ? `, score ${score.toFixed(0)}` : "";
+    console.log(
+      `  ${c.green}✓${c.reset} ${file} ${c.dim}(${profile}, ${keywords}/${TARGET_KEYWORDS.length} keywords${scoreLabel})${c.reset}`,
+    );
+    return 0;
+  }
+  console.log(`  ${c.red}✗${c.reset} ${file} ${c.dim}(${profile})${c.reset}`);
+  for (const f of failures) console.log(`      ${c.red}- ${f}${c.reset}`);
+  return 1;
+}
+
 /** Entry point: validates every target PDF and exits non-zero on failure. */
 async function main() {
   let failed = 0;
@@ -358,60 +428,19 @@ async function main() {
     `${c.dim}ATS check on ${TARGETS.length} generated CV PDFs (pdf-parse + ats-checker)${c.reset}`,
   );
 
-  const designFailures = await checkDesignBudget();
-  if (designFailures.length === 0) {
-    console.log(
-      `  ${c.green}✓${c.reset} design budget ${c.dim}(both sidebar CVs within ${DESIGN_MAX_PAGES} pages)${c.reset}`,
-    );
-  } else {
-    failed += 1;
-    console.log(`  ${c.red}✗${c.reset} design budget`);
-    for (const f of designFailures)
-      console.log(`      ${c.red}- ${f}${c.reset}`);
-  }
+  failed += reportGroup(
+    "design budget",
+    await checkDesignBudget(),
+    `both sidebar CVs within ${DESIGN_MAX_PAGES} pages`,
+  );
+  failed += reportGroup(
+    "font pinning",
+    checkFontPinning(),
+    "all sources resolve vendored TrueType",
+  );
 
-  const fontFailures = checkFontPinning();
-  if (fontFailures.length === 0) {
-    console.log(
-      `  ${c.green}✓${c.reset} font pinning ${c.dim}(all sources resolve vendored TrueType)${c.reset}`,
-    );
-  } else {
-    failed += 1;
-    console.log(`  ${c.red}✗${c.reset} font pinning`);
-    for (const f of fontFailures) console.log(`      ${c.red}- ${f}${c.reset}`);
-  }
-
-  for (const { file, profile, locale } of TARGETS) {
-    const full = path.join(PDF_DIR, file);
-    if (!fs.existsSync(full)) {
-      console.log(`  ${c.red}✗${c.reset} ${file} — file not found`);
-      failed += 1;
-      continue;
-    }
-    let result;
-    try {
-      const text = await extractText(file);
-      result = checkPdf(text, profile, locale);
-    } catch (error) {
-      console.log(
-        `  ${c.red}✗${c.reset} ${file} — extraction error: ${error.message}`,
-      );
-      failed += 1;
-      continue;
-    }
-    const { failures, score, keywords } = result;
-    const scoreLabel = locale === "en" ? `, score ${score.toFixed(0)}` : "";
-    if (failures.length === 0) {
-      console.log(
-        `  ${c.green}✓${c.reset} ${file} ${c.dim}(${profile}, ${keywords}/${TARGET_KEYWORDS.length} keywords${scoreLabel})${c.reset}`,
-      );
-    } else {
-      failed += 1;
-      console.log(
-        `  ${c.red}✗${c.reset} ${file} ${c.dim}(${profile})${c.reset}`,
-      );
-      for (const f of failures) console.log(`      ${c.red}- ${f}${c.reset}`);
-    }
+  for (const target of TARGETS) {
+    failed += await reportPdf(target);
   }
 
   if (failed > 0) {

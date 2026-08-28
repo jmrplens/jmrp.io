@@ -65,9 +65,9 @@ en:
   kicker: Profile
   title: The engineer behind the notebook.
   lead:
-    - I'm José Manuel — a firmware and software engineer based in Valencia, Spain, with an R&D background. Day to day I'm programming across a range of languages, building and maintaining open-source projects, and keeping up with what's new in software and the open-source world.
-    - I came to engineering from acoustics and instrumentation — a degree in Telecommunication Engineering and a Master's in Acoustical Engineering, followed by predoctoral research at the UPV on ultrasound and acoustic metamaterials, before redirecting toward software. I still gravitate to problems that sit where signal, system and software meet.
-    - Most recently I built industrial embedded firmware in C on STM32 and FreeRTOS for solar inverters and storage — low-level optimization, industrial communications (Modbus) and hardware test automation. The open-source projects I maintain are used by developers worldwide, and I care about doing the work with engineering rigor and a focus on quality.
+    - I'm José Manuel — a firmware and software engineer based in Valencia, Spain, with an R&D background. I write firmware in C for industrial hardware and developer tooling in Go, and I maintain 38 public repositories on GitHub that have collected more than 350 stars between them (August 2026).
+    - "I came to engineering from acoustics and instrumentation — a degree in Telecommunication Engineering and a Master's in Acoustical Engineering, followed by four years of predoctoral research at the UPV (2019–2023) on ultrasound and acoustic metamaterials, before redirecting toward software. That period left 14 academic publications behind it: one journal article, eleven conference papers and two theses. I still gravitate to problems that sit where signal, system and software meet."
+    - "Between 2023 and 2026 I built industrial embedded firmware in C on STM32 and FreeRTOS for solar inverters and battery storage — low-level optimization, industrial communications (Modbus) and hardware test automation. The open-source half of the work is the measurable one: my two MCP servers have been pulled more than 7,500 times from Docker Hub, gitlab-mcp-server has published more than 50 versions to the official Model Context Protocol registry, and more than 15 of my papers, theses and software releases are archived with a DOI on Zenodo."
   note: "This site is my notebook: what I learn I write down, what I build I publish."
   labels:
     build: I build
@@ -76,10 +76,10 @@ en:
     education: Education
     contact: Say hi
   build:
-    - Embedded firmware (C, STM32, FreeRTOS)
-    - Industrial comms & test automation (Modbus)
-    - MCP servers & tooling in Go
-    - Self-hosted infrastructure & security
+    - I write embedded firmware in C for STM32 and FreeRTOS.
+    - I automate hardware testing and industrial Modbus communications.
+    - I publish MCP servers and developer tooling written in Go.
+    - I self-host the infrastructure that serves this site and its 17 browser-only tools.
   writesAbout:
     - Firmware & low level
     - Networking (MikroTik, nginx)
@@ -103,9 +103,9 @@ es:
   kicker: Perfil
   title: El ingeniero detrás del cuaderno.
   lead:
-    - Soy José Manuel, ingeniero de firmware y software en Valencia, con base en I+D. En el día a día programo en varios lenguajes, construyo y mantengo proyectos open source, y me mantengo al día de las novedades del software y del mundo del código abierto.
-    - Llegué a la ingeniería desde la acústica y la instrumentación —un grado en Ingeniería de Telecomunicación y un Máster en Ingeniería Acústica, y después investigación predoctoral en la UPV sobre ultrasonidos y metamateriales acústicos— antes de reorientarme al software. Sigo prefiriendo los problemas donde la señal, el sistema y el software se tocan.
-    - Lo más reciente ha sido firmware embebido industrial en C sobre STM32 y FreeRTOS para inversores solares y almacenamiento —optimización de bajo nivel, comunicaciones industriales (Modbus) y automatización de pruebas sobre hardware—. Los proyectos open source que mantengo los usan desarrolladores de todo el mundo, y me importa hacer el trabajo con rigor de ingeniería y foco en la calidad.
+    - Soy José Manuel, ingeniero de firmware y software en Valencia, con base en I+D. Escribo firmware en C para hardware industrial y herramientas de desarrollo en Go, y mantengo 38 repositorios públicos en GitHub que suman más de 350 estrellas (agosto de 2026).
+    - "Llegué a la ingeniería desde la acústica y la instrumentación —un grado en Ingeniería de Telecomunicación y un Máster en Ingeniería Acústica, y después cuatro años de investigación predoctoral en la UPV (2019–2023) sobre ultrasonidos y metamateriales acústicos— antes de reorientarme al software. De esa etapa quedan 14 publicaciones académicas: un artículo de revista, once comunicaciones en congresos y dos tesis. Sigo prefiriendo los problemas donde la señal, el sistema y el software se tocan."
+    - "Entre 2023 y 2026 desarrollé firmware embebido industrial en C sobre STM32 y FreeRTOS para inversores solares y almacenamiento en baterías —optimización de bajo nivel, comunicaciones industriales (Modbus) y automatización de pruebas sobre hardware—. La parte open source es la medible: mis dos servidores MCP acumulan más de 7.500 descargas en Docker Hub, gitlab-mcp-server ha publicado más de 50 versiones en el registro oficial del Model Context Protocol, y más de 15 de mis artículos, tesis y publicaciones de software están archivados con DOI en Zenodo."
   note: "Este sitio es mi cuaderno: lo que aprendo lo escribo, lo que construyo lo publico."
   labels:
     build: Construyo
@@ -114,10 +114,10 @@ es:
     education: Formación
     contact: Hablemos
   build:
-    - Firmware embebido (C, STM32, FreeRTOS)
-    - Comunicaciones industriales y automatización de pruebas (Modbus)
-    - Servidores MCP y herramientas en Go
-    - Infraestructura self-hosted y seguridad
+    - Escribo firmware embebido en C para STM32 y FreeRTOS.
+    - Automatizo pruebas sobre hardware y comunicaciones industriales Modbus.
+    - Publico servidores MCP y herramientas de desarrollo en Go.
+    - Administro la infraestructura self-hosted que sirve este sitio y sus 17 herramientas que se ejecutan en el navegador.
   writesAbout:
     - Firmware y bajo nivel
     - Redes (MikroTik, nginx)

@@ -6,7 +6,12 @@
  * a concise link index; `llms-full.txt` enriches each post with its description,
  * tags, FAQ questions, and HowTo step names (all sourced from frontmatter).
  */
-import { type TranslationKey, useTranslations } from "@i18n/utils";
+import {
+  stripLocalePrefix,
+  type TranslationKey,
+  useTranslations,
+} from "@i18n/utils";
+import { pageLastmod } from "@src/integrations/sitemap-post-dates";
 import type { CVData, SiteConfig } from "@src/types";
 import { getCVData } from "@utils/cv";
 import { stripToText } from "@utils/html";
@@ -17,6 +22,11 @@ import {
   projectsLines,
   usesLines,
 } from "@utils/llms/profile-markdown";
+import {
+  HOME_SECTIONS,
+  PROFILE_SECTIONS,
+  SITE_SECTIONS,
+} from "@utils/llms/sections";
 import { getMcpServers, type McpServer } from "@utils/projects";
 import {
   getPublications,
@@ -185,102 +195,41 @@ const TECHNICAL_DETAILS = [
 const today = () => new Date().toISOString().slice(0, 10);
 
 /**
- * Site sections that `llms.txt` advertises under "## Sections" but that
- * `llms-full.txt` used to omit entirely.
+ * Every landing page that publishes a markdown twin, locale-agnostic.
  *
- * The index promised Homelab, Projects, Uses and Privacy; the full document
- * expanded only About, Blog, Tools, CV and Publications, so a model that
- * followed the index into the full file found nothing for four of them —
- * including /privacy/, which carries some of the most quotable prose on the
- * site because its claims are falsifiable rather than promotional.
+ * ONE list, read by all three surfaces that make a claim about twins:
+ * `buildProfileSections` (llms-full.txt), `sectionsBlock` (llms.txt) and
+ * `HOME_SECTIONS` (the homepage twin). They used to disagree — llms-full.txt
+ * knew about two of them, llms.txt advertised none, and the homepage twin
+ * carried its own hand-kept boolean — so a page could gain a twin and stay
+ * invisible in two of the three indexes, or worse, be advertised at a URL
+ * that 404s. Membership here is a fact about which `index.md.ts` routes exist
+ * under `src/pages/`, so adding a route and adding a line here is one change.
  *
- * Written as standing facts rather than generated from the pages: /homelab/'s
- * figures are live metrics that would be stale the moment they were written
- * into a static document, and stating a number here that the page no longer
- * shows would be worse than stating none.
+ * `/homelab/` is deliberately absent: its figures are substituted by nginx per
+ * request, and a `.md` served by the static-asset location would publish the
+ * raw `HLM_*` tokens and then cache them for a day. It gets its entry when
+ * the server side is resolved.
+ *
+ * `/blog/` and `/tools/` are absent for a different reason, and it is not an
+ * oversight: llms.txt already lists every post and every tool with its title,
+ * description and its own twin link, so a twin of the listing page would be a
+ * verbatim second copy of a section of the index that points at it. The series
+ * hubs and the tool categories DO get one, because their pages carry hand-
+ * written prose — a reading order, a "use these when" paragraph — that exists
+ * nowhere else.
  */
-const PROFILE_SECTIONS: {
-  url: string;
-  en: { title: string; lines: string[] };
-  es: { title: string; lines: string[] };
-}[] = [
-  {
-    url: "/projects/",
-    en: {
-      title: "Projects",
-      lines: [
-        "Open-source software authored and maintained by the author, each entry listing language, license, source repository and documentation site.",
-        "Includes: gitlab-mcp-server (Model Context Protocol server exposing over 1,000 GitLab operations to AI assistants, Go), phonometry (Python acoustics library validated against 367 standards), cs-routeros-bouncer (CrowdSec bouncer for MikroTik RouterOS, Go), Cloudflare-DNS-Updater (dynamic DNS updater), libgen-mcp, and TFG-TFM_EPS (LaTeX thesis template for the Universitat Politècnica de València).",
-        "Both MCP servers also run as public hosted endpoints at mcp.jmrp.io, so a client can call them without building or installing anything.",
-      ],
-    },
-    es: {
-      title: "Proyectos",
-      lines: [
-        "Software de código abierto escrito y mantenido por el autor; cada entrada indica lenguaje, licencia, repositorio de código y sitio de documentación.",
-        "Incluye: gitlab-mcp-server (servidor Model Context Protocol que expone más de 1.000 operaciones de GitLab a asistentes de IA, en Go), phonometry (biblioteca de acústica en Python validada contra 367 normas publicadas), cs-routeros-bouncer (bouncer de CrowdSec para MikroTik RouterOS, en Go), Cloudflare-DNS-Updater (actualizador de DNS dinámico), libgen-mcp y TFG-TFM_EPS (plantilla LaTeX de tesis para la Universitat Politècnica de València).",
-        "Los dos servidores MCP corren además como endpoints públicos alojados en mcp.jmrp.io, así que un cliente puede llamarlos sin compilar ni instalar nada.",
-      ],
-    },
-  },
-  {
-    url: "/homelab/",
-    en: {
-      title: "Homelab",
-      lines: [
-        "Self-hosted infrastructure run by the author on his own hardware and connections, with live metrics on the page.",
-        "Services include a Mastodon instance (mstdn.jmrp.io), a Matrix homeserver, an AT Protocol PDS, Home Assistant, Immich, Jellyfin, and monitoring.",
-        "Model Context Protocol servers are published at mcp.jmrp.io, running on the same infrastructure: libgen (no credentials) and gitlab (per-request token).",
-        "Tor: four nodes — two bridges running obfs4 and WebTunnel, one in Valencia and one in Alicante, and two middle relays on IONOS VPS instances, one in London and one in Madrid.",
-        "Security pipeline: a MikroTik honeypot and nginx pattern matching feed CrowdSec, which drives bouncers on the router and the web tier.",
-      ],
-    },
-    es: {
-      title: "Homelab",
-      lines: [
-        "Infraestructura autoalojada que el autor opera sobre su propio hardware y sus propias conexiones, con métricas en tiempo real en la página.",
-        "Entre los servicios hay una instancia de Mastodon (mstdn.jmrp.io), un homeserver de Matrix, un PDS de AT Protocol, Home Assistant, Immich, Jellyfin y monitorización.",
-        "Los servidores Model Context Protocol se publican en mcp.jmrp.io, sobre la misma infraestructura: libgen (sin credenciales) y gitlab (token por petición).",
-        "Tor: cuatro nodos — dos puentes que ejecutan obfs4 y WebTunnel, uno en Valencia y otro en Alicante, y dos relays intermedios en VPS de IONOS, uno en Londres y otro en Madrid.",
-        "Tubería de seguridad: un honeypot en MikroTik y la coincidencia de patrones de nginx alimentan a CrowdSec, que a su vez acciona los bouncers del router y de la capa web.",
-      ],
-    },
-  },
-  {
-    url: "/uses/",
-    en: {
-      title: "Uses",
-      lines: [
-        "The hardware, software and services actually in rotation: router and network gear, servers and mini PCs, development tools, and the self-hosted services listed under Homelab.",
-      ],
-    },
-    es: {
-      title: "Uses",
-      lines: [
-        "El hardware, el software y los servicios que están realmente en uso: router y equipamiento de red, servidores y mini PCs, herramientas de desarrollo y los servicios autoalojados que aparecen en Homelab.",
-      ],
-    },
-  },
-  {
-    url: "/privacy/",
-    en: {
-      title: "Privacy",
-      lines: [
-        "No cookies, no third-party scripts, no advertising network, no cross-site tracking, and no mailing list.",
-        "The only measurement is a privacy-preserving analytics beacon; the page invites the reader to verify the claim directly by opening the browser storage panel and finding nothing to delete.",
-        "Nothing on the site is monetized: no advertising, no affiliate links and no sponsored content, stated explicitly as a conflict-of-interest declaration.",
-      ],
-    },
-    es: {
-      title: "Privacidad",
-      lines: [
-        "Sin cookies, sin scripts de terceros, sin red publicitaria, sin rastreo entre sitios y sin lista de correo.",
-        "La única medición es un beacon de analítica respetuoso con la privacidad; la página invita a comprobarlo abriendo el panel de almacenamiento del navegador y no encontrando nada que borrar.",
-        "Nada del sitio está monetizado: ni publicidad, ni enlaces de afiliado, ni contenido patrocinado, declarado explícitamente como conflicto de intereses.",
-      ],
-    },
-  },
-];
+const TWINNED_PAGES: ReadonlySet<string> = new Set([
+  "/",
+  "/about/",
+  "/blog/series/",
+  "/cv/",
+  "/feeds/",
+  "/privacy/",
+  "/projects/",
+  "/publications/",
+  "/uses/",
+]);
 
 /**
  * Renders {@link PROFILE_SECTIONS} as llms-full.txt blocks.
@@ -291,9 +240,6 @@ const PROFILE_SECTIONS: {
  *   Spanish section headings, which is worse than omitting it.
  * @returns Markdown lines, ready to splice into the document.
  */
-/** Profile pages that have a generated markdown twin. */
-const TWINNED_PROFILE_PAGES = new Set(["/projects/", "/uses/"]);
-
 function buildProfileSections(
   siteUrl: string,
   locale: "en" | "es" = "en",
@@ -309,7 +255,7 @@ function buildProfileSections(
       // YAML the page renders, so it cannot drift from what a visitor sees —
       // unlike the curated lines below it, which is where a claim about a
       // Nextcloud that does not exist survived for months.
-      ...(TWINNED_PROFILE_PAGES.has(section.url)
+      ...(TWINNED_PAGES.has(section.url)
         ? [
             `Markdown: ${siteUrl}${markdownTwinPath(localePrefix + section.url)}`,
           ]
@@ -454,6 +400,70 @@ interface CvContext {
   }) => string;
 }
 
+/**
+ * The identity block that opens the CV twin: name, headline and contact.
+ *
+ * Split out of {@link cvToMarkdown} because every field here is optional, and
+ * six independent guards in the middle of a function that also walks sections
+ * and downloads is most of that function's cognitive load for none of its
+ * meaning.
+ *
+ * @param b - The CV's `basics`.
+ * @param L - Localized labels for this document.
+ * @param prose - Collapses whitespace and rewrites relative links as absolute.
+ * @returns The opening markdown lines.
+ */
+function cvBasicsLines(
+  b: CVData["basics"],
+  L: (typeof CV_LABELS)["en" | "es"],
+  prose: (text: string) => string,
+): string[] {
+  return [
+    `**${b.name}** — ${b.headline}`,
+    "",
+    ...(b.location ? [`${L.location}: ${b.location}`] : []),
+    ...(b.availability ? [`${L.availability}: ${b.availability}`] : []),
+    ...(b.email ? [`${L.email}: ${b.email}`] : []),
+    ...(b.links && b.links.length > 0
+      ? [`${L.links}: ${b.links.map(labelledUrl).join(", ")}`]
+      : []),
+    "",
+    ...(b.profile ? [prose(b.profile), ""] : []),
+  ];
+}
+
+/**
+ * The downloads section of the CV twin, one line per published file.
+ *
+ * The PDFs were invisible from this document: the HTML page links them, but an
+ * agent reading the twin had no way to discover they exist. Absolute URLs, and
+ * the page's own wording for each format so the reader can pick the right one.
+ *
+ * @param downloads - The CV's download groups.
+ * @param L - Localized labels for this document.
+ * @param siteUrl - Absolute site origin, for the file URLs.
+ * @returns The markdown lines, empty when nothing is published.
+ */
+function cvDownloadLines(
+  downloads: CVData["downloads"],
+  L: (typeof CV_LABELS)["en" | "es"],
+  siteUrl: string,
+): string[] {
+  if (downloads.length === 0) return [];
+  return [
+    `## ${L.downloads}`,
+    "",
+    ...downloads.flatMap((fmt) => {
+      const note = fmt.note ? ` — ${fmt.note}` : "";
+      return fmt.files.map(
+        (file) =>
+          `- [${file.label} · ${fmt.format}](${siteUrl}${file.url})${note}`,
+      );
+    }),
+    "",
+  ];
+}
+
 /** The fields every chronological CV entry shares. */
 interface CvChronoItem {
   department?: { name: string };
@@ -499,22 +509,13 @@ function cvToMarkdown(
     ],
   };
 
-  const b = cv.basics;
-  const out: string[] = [
-    `**${b.name}** — ${b.headline}`,
-    "",
-    ...(b.location ? [`${L.location}: ${b.location}`] : []),
-    ...(b.availability ? [`${L.availability}: ${b.availability}`] : []),
-    ...(b.email ? [`${L.email}: ${b.email}`] : []),
-    ...(b.links && b.links.length > 0
-      ? [`${L.links}: ${b.links.map(labelledUrl).join(", ")}`]
-      : []),
-    "",
-    ...(b.profile ? [prose(b.profile), ""] : []),
-  ];
+  const out: string[] = cvBasicsLines(cv.basics, L, prose);
 
   for (const section of cv.sections) {
-    out.push(`### ${section.title}`, "");
+    // H2, not H3: the only caller is `generateCvMarkdown`, whose `# <name>` is
+    // one line above, so the document went H1 → H3 and had no H2 at all —
+    // which breaks any consumer that segments a document by heading level.
+    out.push(`## ${section.title}`, "");
     // The cast re-links section to its own branch: TypeScript narrows the
     // union on `section.kind` but cannot narrow the lookup that follows.
     const render = CV_SECTION_BODY[section.kind] as (
@@ -524,27 +525,23 @@ function cvToMarkdown(
     out.push(...render(section, ctx));
   }
 
-  // The PDFs were invisible from here: an agent reading this twin had no way
-  // to discover them (the HTML page links them, but this document did not).
-  // Absolute URLs, one line per file, with the page's own wording for each
-  // format so the reader can pick the right one.
-  if (cv.downloads.length > 0) {
-    out.push(`### ${L.downloads}`, "");
-    for (const fmt of cv.downloads) {
-      for (const file of fmt.files) {
-        const note = fmt.note ? ` — ${fmt.note}` : "";
-        out.push(
-          `- [${file.label} · ${fmt.format}](${siteUrl}${file.url})${note}`,
-        );
-      }
-    }
-    out.push("");
-  }
+  out.push(...cvDownloadLines(cv.downloads, L, siteUrl));
   return out;
 }
 
-/** Published posts for one locale, ordered by numbered slug (chronological). */
-async function getPostsByLocale(lang: "en" | "es") {
+/**
+ * Published posts for one locale, ordered by numbered slug (chronological).
+ *
+ * Exported for `@utils/llms/listing-markdown`. Deliberately NOT
+ * `getPostsForLocale` from `@utils/blog`, which falls back to the English
+ * entry when a translation is missing: the twin routes filter strictly on
+ * `data.lang`, so a fallback entry would make the Spanish index link an
+ * `/es/blog/<slug>/index.md` that was never generated.
+ *
+ * @param lang - The locale to select.
+ * @returns That locale's published posts.
+ */
+export async function getPostsByLocale(lang: "en" | "es") {
   const posts = await getCollection(
     "posts",
     (p) => p.data.lang === lang && !p.data.draft,
@@ -552,8 +549,16 @@ async function getPostsByLocale(lang: "en" | "es") {
   return posts.sort((a, b) => a.data.slug.localeCompare(b.data.slug));
 }
 
-/** Tools for one locale, alphabetical within that locale. */
-async function getToolsByLocale(lang: "en" | "es") {
+/**
+ * Tools for one locale, alphabetical within that locale.
+ *
+ * Exported, and strict on `data.lang`, for the same reason as
+ * {@link getPostsByLocale}.
+ *
+ * @param lang - The locale to select.
+ * @returns That locale's tools.
+ */
+export async function getToolsByLocale(lang: "en" | "es") {
   const tools = await getCollection("tools", (t) => t.data.lang === lang);
   return tools.sort((a, b) => a.data.title.localeCompare(b.data.title));
 }
@@ -571,6 +576,30 @@ function toolUrl(siteUrl: string, tool: CollectionEntry<"tools">): string {
 }
 
 /**
+ * One `- [title](page): description ([plain text](twin))` line for llms.txt.
+ *
+ * The index advertised the twin of all 24 posts and of none of the 34 tools,
+ * which is an inconsistency inside a single file: an agent that learned the
+ * convention from the Blog section had no reason to believe it also applied
+ * to Tools, so those 34 documents stayed one guess away.
+ *
+ * @param siteUrl - Absolute site origin.
+ * @param tool - The tool entry.
+ * @param locale - Language of the twin's link label.
+ * @returns The index line.
+ */
+function toolIndexLine(
+  siteUrl: string,
+  tool: CollectionEntry<"tools">,
+  locale: "en" | "es",
+): string {
+  const page = toolUrl(siteUrl, tool);
+  const twin = `${siteUrl}${markdownTwinPath(new URL(page).pathname)}`;
+  const label = locale === "es" ? "texto plano" : "plain text";
+  return `- [${tool.data.title}](${page}): ${tool.data.description} ([${label}](${twin}))`;
+}
+
+/**
  * The editorial series hubs, as an `llms.txt` section.
  *
  * These were missing entirely: the file had zero references to `/blog/series/`
@@ -584,60 +613,49 @@ function seriesBlock(siteUrl: string, locale: "en" | "es"): string {
   const t = useTranslations(locale);
   const prefix = locale === "es" ? "/es" : "";
   const heading = locale === "es" ? "## Series (Español)" : "## Series";
+  const indexPath = `${prefix}/blog/series/`;
   return [
     heading,
     "",
-    `- [${t("series.ui.indexTitle")}](${siteUrl}${prefix}/blog/series/): ${t(
+    // Each hub and the index now publish a twin, so the line carries both —
+    // the page is the URL worth citing, the twin is the one worth reading.
+    `- [${t("series.ui.indexTitle")}](${siteUrl}${indexPath}): ${t(
       "series.ui.indexDescription",
-    )}`,
+    )} ([markdown](${siteUrl}${markdownTwinPath(indexPath)}))`,
     // The slug is only known at runtime, so the key is cast — the same
     // pattern SeriesPage.astro uses for `series.<slug>.*`.
     ...SERIES.map(({ slug }) => {
       const title = t(`series.${slug}.title` as TranslationKey);
       const description = t(`series.${slug}.description` as TranslationKey);
-      return `- [${title}](${siteUrl}${prefix}/blog/series/${slug}/): ${description}`;
+      const path = `${prefix}/blog/series/${slug}/`;
+      return `- [${title}](${siteUrl}${path}): ${description} ([markdown](${siteUrl}${markdownTwinPath(path)}))`;
     }),
   ].join("\n");
 }
 
-function sectionsBlock(siteUrl: string): string {
-  return [
-    "## Sections",
-    "",
-    `- [Blog](${siteUrl}/blog/): Technical articles on Nginx, MikroTik, networking, security, embedded firmware, and DevOps`,
-    `- [About](${siteUrl}/about/): Who José Manuel Requena Plens is — firmware & software engineer, background, and featured open-source projects`,
-    `- [CV](${siteUrl}/cv/): Professional curriculum vitae and experience`,
-    `- [Publications](${siteUrl}/publications/): Academic papers on acoustics, metamaterials, and ultrasound`,
-    `- [Homelab](${siteUrl}/homelab/): Self-hosted infrastructure — Mastodon, Matrix, AT Protocol PDS, MCP servers, Tor relays`,
-    `- [Projects](${siteUrl}/projects/): Curated open-source software he authors and maintains — MCP servers, acoustics tooling, network security; language, license, source and docs per project`,
-    `- [Tools](${siteUrl}/tools/): Free browser-based developer tools; all run in the browser except the certificate inspector and HTTP header analyzer, which fetch the target you ask them to inspect`,
-    `- [Uses](${siteUrl}/uses/): Hardware, software, and homelab kept in rotation`,
-    `- [Privacy](${siteUrl}/privacy/): What the site measures — self-hosted analytics beacon, no cookies, no ads; rendering a page needs no third-party host, and the beacon posts one aggregate event to Cloudflare`,
-  ].join("\n");
-}
-
 /**
- * The same section map under `/es/`.
+ * The section map for one locale, each entry with its twin where one exists.
  *
- * Posts and tools were already listed in both languages, but `## Sections` was
- * English-only, so none of the nine Spanish landing pages — including the ES
- * homepage — appeared anywhere in the index. Every one of them exists and is
- * in the sitemap.
+ * The twin link is what makes the new listing documents reachable from the
+ * index: an agent that landed on llms.txt had to guess the `index.md`
+ * convention to get the machine-readable form of anything but a post.
+ *
+ * @param siteUrl - Absolute site origin.
+ * @param locale - Which language to render.
+ * @returns The `## Sections` block.
  */
-function sectionsBlockEs(siteUrl: string): string {
+function sectionsBlock(siteUrl: string, locale: "en" | "es"): string {
+  const prefix = locale === "es" ? "/es" : "";
   return [
-    "## Sections (Español)",
+    locale === "es" ? "## Sections (Español)" : "## Sections",
     "",
-    `- [Inicio](${siteUrl}/es/): Versión en español del sitio completo`,
-    `- [Blog](${siteUrl}/es/blog/): Artículos técnicos sobre Nginx, MikroTik, redes, seguridad, firmware embebido y DevOps`,
-    `- [Perfil](${siteUrl}/es/about/): Quién es José Manuel Requena Plens — ingeniero de firmware y software, trayectoria y proyectos destacados`,
-    `- [CV](${siteUrl}/es/cv/): Currículum profesional y experiencia`,
-    `- [Publicaciones](${siteUrl}/es/publications/): Artículos académicos sobre acústica, metamateriales y ultrasonidos`,
-    `- [Homelab](${siteUrl}/es/homelab/): Infraestructura autoalojada — Mastodon, Matrix, PDS de AT Protocol, servidores MCP, relés Tor`,
-    `- [Proyectos](${siteUrl}/es/projects/): Software libre que escribe y mantiene — servidores MCP, herramientas de acústica, seguridad de red`,
-    `- [Herramientas](${siteUrl}/es/tools/): Herramientas gratuitas que se ejecutan en el navegador, salvo el inspector de certificados y el analizador de cabeceras HTTP, que consultan el destino que les indiques`,
-    `- [Uses](${siteUrl}/es/uses/): Hardware, software e infraestructura en uso`,
-    `- [Privacidad](${siteUrl}/es/privacy/): Qué mide el sitio — beacon de analítica autoalojado, sin cookies, sin anuncios; renderizar una página no requiere ningún host de terceros, y el beacon envía un evento agregado a Cloudflare`,
+    ...SITE_SECTIONS.map((section) => {
+      const copy = section[locale];
+      const twin = TWINNED_PAGES.has(section.path)
+        ? ` ([markdown](${siteUrl}${markdownTwinPath(prefix + section.path)}))`
+        : "";
+      return `- [${copy.title}](${siteUrl}${prefix}${section.path}): ${copy.description}${twin}`;
+    }),
   ].join("\n");
 }
 
@@ -665,9 +683,9 @@ export async function generateLlmsTxt(siteUrl: string): Promise<string> {
     "",
     `For comprehensive context including blog post topics, FAQs, and tool features, see [llms-full.txt](${siteUrl}/llms-full.txt).`,
     "",
-    sectionsBlock(siteUrl),
+    sectionsBlock(siteUrl, "en"),
     "",
-    sectionsBlockEs(siteUrl),
+    sectionsBlock(siteUrl, "es"),
     "",
     seriesBlock(siteUrl, "en"),
     "",
@@ -697,17 +715,13 @@ export async function generateLlmsTxt(siteUrl: string): Promise<string> {
     "",
     "## Developer Tools",
     "",
-    ...toolsEn.map(
-      (t) =>
-        `- [${t.data.title}](${toolUrl(siteUrl, t)}): ${t.data.description}`,
-    ),
+    // The canonical page first, then its twin — the same two-link shape the
+    // post lines above use.
+    ...toolsEn.map((tool) => toolIndexLine(siteUrl, tool, "en")),
     "",
     "## Developer Tools (Español)",
     "",
-    ...toolsEs.map(
-      (t) =>
-        `- [${t.data.title}](${toolUrl(siteUrl, t)}): ${t.data.description}`,
-    ),
+    ...toolsEs.map((tool) => toolIndexLine(siteUrl, tool, "es")),
     "",
     // Both languages, like every other section of this bilingual index.
     await mcpBlock("en"),
@@ -778,6 +792,23 @@ function buildPostEntry(
     `Published: ${d.publishedDate.toISOString().slice(0, 10)}`,
     ...(d.updatedDate
       ? [`Updated: ${d.updatedDate.toISOString().slice(0, 10)}`]
+      : []),
+    // The strongest freshness claim the article makes — re-tested on this
+    // date, against these versions — and it reached no machine-readable
+    // surface at all: the page renders it under the title and the twin
+    // dropped it, so a model reading the markdown could not tell a guide
+    // verified last week from one last touched two years ago. Same source as
+    // the page and the JSON-LD: the post's own `lastVerified` frontmatter.
+    // The versions are appended only when there are any — the schema defaults
+    // them to an empty array, which would otherwise leave a dangling `·`.
+    ...(d.lastVerified
+      ? [
+          `Last verified: ${d.lastVerified.date.toISOString().slice(0, 10)}${
+            d.lastVerified.versions.length > 0
+              ? ` · ${d.lastVerified.versions.join(" · ")}`
+              : ""
+          }`,
+        ]
       : []),
     ...(d.author ? [`Author: ${d.author}`] : []),
     ...(d.description ? [`Summary: ${d.description}`] : []),
@@ -999,28 +1030,84 @@ function alternateTwinUrl(url: string, locale: "en" | "es"): string {
   return `${origin}${markdownTwinPath(other)}`;
 }
 
-/** Metadata block shared by every standalone markdown document. */
-function documentHeader(
+/**
+ * Metadata block shared by every standalone markdown document.
+ *
+ * Exported because `@utils/llms/listing-markdown` builds the same header for
+ * the listing twins; two copies is how the `Language:`/`Alternate:` schema
+ * would drift between document families.
+ *
+ * @param title - Document title, rendered as the `# ` heading.
+ * @param url - Absolute URL of the page this document twins.
+ * @param index - Absolute URL of the index that covers it.
+ * @param locale - Locale of THIS document.
+ * @param extra - Further header lines, appended after the schema block.
+ * @returns The header lines.
+ */
+export function documentHeader(
   title: string,
   url: string,
   index: string,
   locale: "en" | "es",
   extra: string[] = [],
 ): string[] {
+  // `Updated:` is the CONTENT date, resolved from the same function that
+  // answers for the sitemap's <lastmod> and for the page's JSON-LD
+  // `dateModified`, so the three surfaces cannot disagree. Without it every
+  // page twin carried only `Generated:` — the build clock, identical across
+  // the whole corpus — while the HTML beside it declared a real date, and a
+  // recency-weighted pipeline read the whole set as changed today.
+  //
+  // `Generated:` stays exactly what it is: the build date. Resolved here
+  // rather than passed in through `extra` so a twin added later cannot omit
+  // it, and omitted entirely when git cannot answer, because an absent
+  // freshness signal is honest and a fabricated one is not.
+  const modified = pageLastmod(stripLocalePrefix(new URL(url).pathname));
   return [
     `# ${title}`,
     "",
     `> ${CHROME.page[locale]} ${index}`,
     "",
-    // The build date, not a content date — the real ones, when a page has
-    // them, are in `extra`.
+    // The build date, not a content date — `Updated:` below is the real one.
     `> Generated: ${today()}`,
     "",
     `URL: ${url}`,
     // The keys stay English: they are the schema. The values are the language.
     `Language: ${locale}`,
     `Alternate: ${alternateTwinUrl(url, locale)}`,
+    ...(modified ? [`Updated: ${modified.slice(0, 10)}`] : []),
     ...extra,
+  ];
+}
+
+/**
+ * The `featureList` and FAQ of a tool, rendered as markdown lines.
+ *
+ * Shared by the llms-full.txt entry and the tool's standalone twin because
+ * both need exactly this, and a divergence between them would mean the index
+ * advertised a tool differently from the document it points at. Both blocks
+ * collapse to nothing when the frontmatter omits them.
+ *
+ * @param d - The tool's frontmatter.
+ * @param locale - The tool's own language, not the caller's.
+ * @returns Markdown lines, empty when the tool declares neither.
+ */
+function toolFeaturesAndFaq(
+  d: CollectionEntry<"tools">["data"],
+  locale: "en" | "es",
+): string[] {
+  return [
+    ...(d.features && d.features.length > 0
+      ? ["", CHROME.features[locale], ...d.features.map((f) => `- ${f}`)]
+      : []),
+    ...(d.faq && d.faq.length > 0
+      ? [
+          "",
+          CHROME.questions[locale],
+          "",
+          ...d.faq.flatMap((f) => [`**${f.question}**`, "", f.answer, ""]),
+        ]
+      : []),
   ];
 }
 
@@ -1046,17 +1133,7 @@ function toolIndexEntry(
     // corpus meant the machine-readable surface was richer than the one
     // written for machines. They stay in the index because they are what lets
     // an agent choose WHICH tool to fetch, which is the job of a file list.
-    ...(d.features && d.features.length > 0
-      ? ["", CHROME.features[locale], ...d.features.map((f) => `- ${f}`)]
-      : []),
-    ...(d.faq && d.faq.length > 0
-      ? [
-          "",
-          CHROME.questions[locale],
-          "",
-          ...d.faq.flatMap((f) => [`**${f.question}**`, "", f.answer, ""]),
-        ]
-      : []),
+    ...toolFeaturesAndFaq(d, locale),
     "",
   ];
 }
@@ -1102,17 +1179,7 @@ export function generateToolMarkdown(
         d.description,
       ],
     ),
-    ...(d.features && d.features.length > 0
-      ? ["", CHROME.features[locale], ...d.features.map((f) => `- ${f}`)]
-      : []),
-    ...(d.faq && d.faq.length > 0
-      ? [
-          "",
-          CHROME.questions[locale],
-          "",
-          ...d.faq.flatMap((f) => [`**${f.question}**`, "", f.answer, ""]),
-        ]
-      : []),
+    ...toolFeaturesAndFaq(d, locale),
     ...(tool.body
       ? ["", "---", "", mdxToMarkdown(tool.body, { locale, siteUrl, registry })]
       : []),
@@ -1128,7 +1195,9 @@ export function generateToolMarkdown(
  */
 function publicationsLines(groups: PublicationGroup[]): string[] {
   return groups.flatMap((group) => [
-    `### ${group.title}`,
+    // H2, not H3 — same fix as `cvToMarkdown`. `# Publications` is the line
+    // above, so H3 here left the document with no H2 at all.
+    `## ${group.title}`,
     "",
     ...group.items.map((pub) => {
       const authors = (pub.author ?? [])
@@ -1241,64 +1310,6 @@ function heroToMarkdown(html: string, siteUrl: string): string {
 }
 
 /**
- * Sections the homepage sends a visitor to, and whether each has a twin.
- *
- * Hardcoded like `TWINNED_PROFILE_PAGES`, and for the same reason: whether a
- * twin exists is a fact about the routes that were written, not something the
- * content collections know. The listing pages carry a note rather than a
- * `Markdown:` line — their items are the ones with twins, and saying so beats
- * leaving a reader to infer it from an absence.
- */
-const HOME_SECTIONS: {
-  path: string;
-  title: { en: string; es: string };
-  twin: boolean;
-  note?: { en: string; es: string };
-}[] = [
-  {
-    path: "/blog/",
-    title: { en: "Blog", es: "Blog" },
-    twin: false,
-    note: {
-      en: "Listing page. Every post publishes its own markdown twin.",
-      es: "Página de listado. Cada entrada publica su propio gemelo markdown.",
-    },
-  },
-  {
-    path: "/tools/",
-    title: { en: "Tools", es: "Herramientas" },
-    twin: false,
-    note: {
-      en: "Listing page. Every tool publishes its own markdown twin, and all of them run client-side.",
-      es: "Página de listado. Cada herramienta publica su propio gemelo markdown, y todas se ejecutan en el cliente.",
-    },
-  },
-  {
-    path: "/projects/",
-    title: { en: "Projects", es: "Proyectos" },
-    twin: true,
-  },
-  {
-    path: "/publications/",
-    title: { en: "Publications", es: "Publicaciones" },
-    twin: true,
-  },
-  { path: "/cv/", title: { en: "CV", es: "CV" }, twin: true },
-  { path: "/uses/", title: { en: "Uses", es: "Uses" }, twin: true },
-  { path: "/about/", title: { en: "About", es: "Sobre mí" }, twin: true },
-  {
-    path: "/homelab/",
-    title: { en: "Homelab", es: "Homelab" },
-    twin: false,
-    note: {
-      en: "No twin: its figures are substituted per request, so a static copy would be stale the moment it was written.",
-      es: "Sin gemelo: sus cifras se sustituyen por petición, así que una copia estática nacería caducada.",
-    },
-  },
-  { path: "/privacy/", title: { en: "Privacy", es: "Privacidad" }, twin: true },
-];
-
-/**
  * The homepage as a standalone markdown document.
  *
  * The page itself is orientation — who this is, and where everything lives —
@@ -1336,7 +1347,7 @@ export async function generateHomeMarkdown(
     `### ${section.title[locale]}`,
     "",
     `URL: ${siteUrl}${prefix}${section.path}`,
-    ...(section.twin
+    ...(TWINNED_PAGES.has(section.path)
       ? [`Markdown: ${siteUrl}${markdownTwinPath(prefix + section.path)}`]
       : []),
     ...(section.note ? ["", section.note[locale]] : []),
@@ -1414,7 +1425,7 @@ export async function generateProfileMarkdown(
     uses: usesLines,
     projects: projectsLines,
   } as const;
-  const lines = await renderers[page](locale);
+  const lines = await renderers[page](locale, siteUrl);
   return [
     ...documentHeader(
       titles[page][locale],
@@ -1516,8 +1527,12 @@ export async function generateLlmsFullTxt(siteUrl: string): Promise<string> {
     `- [Publications](${siteUrl}${markdownTwinPath("/publications/")}): every paper with its abstract and DOI ([page](${siteUrl}/publications/))`,
     `- [Publicaciones](${siteUrl}${markdownTwinPath("/es/publications/")}): cada artículo con su resumen y DOI ([página](${siteUrl}/es/publications/))`,
     "",
-    // The four sections llms.txt advertises but this file used to skip.
+    // The sections llms.txt advertises but this file used to skip — in BOTH
+    // languages. `buildProfileSections` always took a locale and was only ever
+    // called with "en", so /es/projects/ and /es/uses/ appeared nowhere in the
+    // corpus even though their twins had been published for months.
     ...buildProfileSections(siteUrl, "en"),
+    ...buildProfileSections(siteUrl, "es"),
     // Per-locale like the post/tool sections: the combined document carries
     // both languages, each per-locale variant only its own.
     await mcpBlock("en"),

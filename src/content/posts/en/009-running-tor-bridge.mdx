@@ -18,7 +18,7 @@ coverImage: "../../../assets/images/blog/tor-bridge.webp"
 tags: ["Privacy", "Linux", "Security", "Nginx"]
 faq:
   - question: "What is a Tor bridge and why are bridges so important?"
-    answer: "A bridge is a hidden entry point into the Tor network that is not listed in the public Tor directory, so it helps users in censored countries reach Tor even when known relays are blocked. As of 2026 the network has roughly 8,000 relays but only about 2,000 bridges, making them the most critical and scarce resource for censorship circumvention."
+    answer: "A bridge is a hidden entry point into the Tor network that is not listed in the public Tor directory, so it helps users in censored countries reach Tor even when known relays are blocked. As of 2026 the network has roughly 10,000 relays but only about 2,600 bridges, making them the most critical and scarce resource for censorship circumvention."
   - question: "What is the difference between obfs4 and WebTunnel?"
     answer: "obfs4 makes Tor traffic look like random bytes to resist DPI fingerprinting and is easy to set up, while WebTunnel disguises traffic as ordinary HTTPS/WebSocket browsing, making it nearly impossible to block but requiring a web server and domain. Running both on one server provides two different circumvention methods at once."
   - question: "Why must ORPort use 0.0.0.0 instead of 127.0.0.1 behind NAT?"
@@ -103,9 +103,9 @@ import BeforeAfter from "@components/ui/BeforeAfter.astro";
 import SecurityRating from "@components/ui/SecurityRating.astro";
 
 
-In 2026, over **2.5 million people** use the [Tor network](https://www.torproject.org/) every single day to access the free and open internet. Journalists in authoritarian regimes, activists organizing protests, whistleblowers exposing corruption, and ordinary citizens protecting their privacy — all of them depend on a network that is entirely **volunteer-operated**.
+In 2026, over **2.5 million people** a day reach the free and open internet through the [Tor network](https://www.torproject.org/) by connecting straight to a relay — [Tor Metrics puts that daily estimate above three million for most of the year](https://metrics.torproject.org/userstats-relay-country.html), and it counts only direct connections: everyone arriving through a bridge, which is what this guide is about, is counted separately and is not in that figure. Journalists in authoritarian regimes, activists organizing protests, whistleblowers exposing corruption, and ordinary citizens protecting their privacy — all of them depend on a network that is entirely **volunteer-operated**.
 
-The problem? There are only about **2,000 bridges** serving those millions of users. Bridges are the most critical and scarce resource in the Tor ecosystem — they're the first point of contact for users in censored countries, and every new bridge directly helps someone access information freely.
+The problem? There are only about **2,600 bridges** serving those millions of users. Bridges are the most critical and scarce resource in the Tor ecosystem — they're the first point of contact for users in censored countries, and every new bridge directly helps someone access information freely.
 
 This guide will teach you everything you need to know about the Tor network, onion routing, and how to set up a **production-ready obfs4 + WebTunnel bridge** on Linux — complete with Nginx camouflage, firewall hardening, Prometheus monitoring, and CrowdSec integration.
 
@@ -146,7 +146,7 @@ The [origins of Tor](https://www.onion-router.net/History.html) trace back to th
   { date: "2011", title: "Arab Spring", description: "Tor plays a critical role as activists in Tunisia, Egypt, Libya, and Syria use it to organize protests and communicate securely despite government censorship.", type: "milestone" },
   { date: "2013", title: "Snowden Revelations", description: "Edward Snowden's disclosures about global mass surveillance programs drive a massive surge in Tor adoption worldwide.", type: "warning" },
   { date: "2023", title: "WebTunnel Released", description: "A new pluggable transport that disguises Tor traffic as ordinary HTTPS, making it nearly impossible to block without collateral damage.", type: "success" },
-  { date: "2026", title: "Today", description: "~8,000 relays, ~2,000 bridges, and 2.5+ million daily users across 200+ countries. The network is entirely volunteer-operated.", type: "default" },
+  { date: "2026", title: "Today", description: "~10,000 relays, ~2,600 bridges, and 2.5+ million daily users across 200+ countries. The network is entirely volunteer-operated.", type: "default" },
 ]} />
 
 ### How does onion routing work?
@@ -267,7 +267,7 @@ The Tor network is made up of different types of volunteer-operated nodes, each 
 </Table>
 
 <Callout type="tip" title="Why Bridges Matter Most Right Now">
-As of 2026, the [Tor network has roughly **8,000 relays** but only about **2,000 bridges**](https://metrics.torproject.org/). Bridges are particularly valuable because they serve users who are **actively blocked** from accessing Tor — people in countries like China, Iran, and Russia where the government blocks connections to known Tor relays. Every new bridge is a **lifeline** for someone under censorship.
+As of 2026, the [Tor network has roughly **10,000 relays** but only about **2,600 bridges**](https://metrics.torproject.org/networksize.html). Bridges are particularly valuable because they serve users who are **actively blocked** from accessing Tor — people in countries like China, Iran, and Russia where the government blocks connections to known Tor relays. Every new bridge is a **lifeline** for someone under censorship.
 </Callout>
 
 ### What are pluggable transports?
@@ -348,7 +348,7 @@ In this guide, we'll set up **both obfs4 and WebTunnel** on the same server — 
 <Prerequisite>
 ### Hardware Requirements
 - **CPU**: Any modern x86_64 processor (ARM also works)
-- **RAM**: 512 MB minimum, 1 GB+ recommended
+- **RAM**: 1 GB minimum (what WebTunnel requires), 4 GB recommended if you expect real traffic
 - **Storage**: 5 GB minimum (for Tor data, logs, and keys)
 - **Network**: At least **10 Mbps** upload bandwidth (more is better)
 - **Uptime**: The server should run 24/7 — Tor penalizes unstable relays
@@ -362,7 +362,7 @@ In this guide, we'll set up **both obfs4 and WebTunnel** on the same server — 
 
 ### Network Requirements
 - Ability to **forward ports** from your router (or use a VPS with direct public IP)
-- Ports **9001** (ORPort) and **4443** (obfs4) accessible from the internet
+- Ports **9001** (ORPort), **4443** (obfs4) and **443** (Nginx HTTPS, if you serve WebTunnel) accessible from the internet
 - Port **443** (HTTPS) if running WebTunnel
 </Prerequisite>
 
@@ -466,7 +466,9 @@ sudo apt install -y golang-go
 ```
 </TerminalCommand>
 
-Verify that Go 1.21+ is installed:
+Verify that Go 1.21+ is installed, which is what WebTunnel requires. Watch out on Debian 12:
+its `golang-go` package is Go 1.19 and does not meet that, so there you need
+`bookworm-backports` or the official tarball. Debian 13 ships 1.24 and works as is:
 
 <TerminalCommand ariaLabel="Check Go version">
 ```bash
@@ -653,7 +655,7 @@ Use this value in two places:
 
 ## Step 4: Configure Nginx for WebTunnel Camouflage
 
-The beauty of WebTunnel is that your server looks like a **completely normal website**. Visitors see a regular HTML page; only those who know the secret path can connect to the Tor bridge. This is called **camouflage** or **domain fronting**.
+The beauty of WebTunnel is that your server looks like a **completely normal website**. Visitors see a regular HTML page; only those who know the secret path can connect to the Tor bridge. This is **secret-path camouflage**. It is not *domain fronting*: that puts one domain in the TLS SNI and a different one in the `Host` header, whereas here there is a single domain and what hides the bridge is the path.
 
 <StepByStep title="Set Up Nginx Camouflage">
 <li>
@@ -1015,12 +1017,13 @@ You should see three processes: `tor`, `obfs4proxy`, and `webtunnel-server`.
 
 <TerminalCommand ariaLabel="Check listening ports for Tor bridge">
 ```bash
-ss -tlnp | grep -E "(9001|4443|15000|9051|9052)"
+ss -tlnp | grep -E "(:443|9001|4443|15000|9051|9052)"
 ```
 </TerminalCommand>
 
 <TerminalOutput title="Expected listening ports">
 ```
+LISTEN  0  511    0.0.0.0:443    0.0.0.0:*  users:(("nginx",pid=...,fd=...))
 LISTEN  0  4096   0.0.0.0:9001   0.0.0.0:*  users:(("tor",pid=...,fd=...))
 LISTEN  0  4096   0.0.0.0:4443   0.0.0.0:*  users:(("obfs4proxy",pid=...,fd=...))
 LISTEN  0  4096 127.0.0.1:15000  0.0.0.0:*  users:(("webtunnel-ser",pid=...,fd=...))
@@ -1414,7 +1417,7 @@ After everything is set up, run through this checklist to confirm your bridge is
 <li data-check="check">Prometheus scraping: `curl http://localhost:9052/metrics | head`</li>
 <li data-check="check">Firewall rules allow Tor ports: `ufw status | grep -E "9001|4443"`</li>
 <li data-check="check">Bridge fingerprint exists: `cat /var/lib/tor/fingerprint`</li>
-<li data-check="warning">Relay flags appear (patience!): takes 1–72 hours depending on the flag</li>
+<li data-check="warning">Relay flags appear (patience!): Running and Valid in about an hour, Stable around 7 days and Guard around 8</li>
 <li data-check="optional">IPv6 reachability from external: `nc -6zv YOUR_IPV6 9001`</li>
 <li data-check="optional">CrowdSec bypass working (if applicable): `cscli explain` with a test log line</li>
 </CheckList>
@@ -1577,7 +1580,7 @@ Running a Tor bridge is one of the most impactful things you can do for internet
 <SecurityRating
   rating="A+"
   title="Your Contribution to Internet Freedom"
-  description="By running an obfs4 + WebTunnel bridge with proper monitoring, firewall hardening, and camouflage, you're providing one of the most valuable resources in the Tor ecosystem. The network has ~8,000 relays but only ~2,000 bridges — your bridge directly serves the most vulnerable users."
+  description="By running an obfs4 + WebTunnel bridge with proper monitoring, firewall hardening, and camouflage, you're providing one of the most valuable resources in the Tor ecosystem. The network has ~10,000 relays but only ~2,600 bridges — your bridge directly serves the most vulnerable users."
 />
 
 If you found this guide helpful, consider sharing it with others who might want to contribute. The more bridges we have, the harder it is for censors to block access to the free internet.

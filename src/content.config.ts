@@ -28,6 +28,15 @@ const posts = defineCollection({
       /** Content language. Defaults to "en" when omitted from frontmatter. */
       lang: z.enum(["en", "es"]).default("en"),
       publishedDate: z.coerce.date(),
+      /**
+       * Optional manual FLOOR for the revision date, no longer its source of
+       * truth. `dateModified` is computed in `@utils/post-dates` as
+       * max(publishedDate, updatedDate, lastVerified.date, last substantive
+       * commit touching the file), so forgetting this field no longer breaks
+       * the promise made at /about/#editorial — it did, on 21 of the 25 post
+       * files commit 205d494 edited. Set it only to claim a date git cannot
+       * know (e.g. a revision landing in a commit marked `Content-Bump: skip`).
+       */
       updatedDate: z.coerce.date().optional(),
       draft: z.boolean().default(false),
       // Pins this post as the blog index hero. If none is flagged, the most
@@ -122,6 +131,12 @@ const posts = defineCollection({
        * Distinct from `updatedDate`, which also covers typo/prose fixes with
        * no re-verification behind them. Only set this when a re-test actually
        * happened — an invented date turns a trust signal into a checkable lie.
+       *
+       * It is a term of the computed `dateModified` and it is emitted as
+       * `Last verified:` in the markdown twin: a re-verification IS a change
+       * to what the page claims, even when no prose moved. Post 011 used to
+       * advertise `dateModified: 2026-06-16` while its own byline said the
+       * instructions had been re-tested on 2026-08-22.
        */
       lastVerified: z
         .object({
@@ -723,25 +738,36 @@ const ProjectEntry = z.object({
     .regex(/^[a-z0-9.-]+\/[\w.-]+$/, "MCP Registry name, e.g. io.github.me/srv")
     .optional(),
   /**
-   * The project's primary third-party listing — the package index, hub or
-   * catalogue where a reader can find it published (PyPI, the CrowdSec Hub,
-   * an MCP directory). Unlike `sameAs`, this one is RENDERED as a card link:
-   * the listing is where the software is distributed and reviewed, which is
-   * navigation a reader wants, not just an identity signal.
+   * The third-party listings worth navigating to — the package indexes, hubs
+   * or catalogues where a reader can find the project published (npm, PyPI,
+   * the CrowdSec Hub, an MCP directory). Unlike `sameAs`, these are RENDERED
+   * as card links: a listing is where the software is distributed and
+   * reviewed, which is navigation a reader wants, not just an identity signal.
    *
-   * Its URL is folded into the JSON-LD `sameAs` array automatically
-   * (`buildProjectSchema`), so it is authored here once and must NOT be
-   * repeated under `sameAs`. `icon` is a bare Iconify id (`collection:name`),
-   * picked up by the UnoCSS YAML extractor without the `i-` prefix.
+   * More than one because they answer different questions: a package index
+   * answers "how do I install it", a directory answers "who else has seen
+   * it", and neither substitutes for the other. Capped at three because the
+   * card's link row already carries the repo, the docs and, for the MCP
+   * servers, a hosted instance — five links is where it stops being a row and
+   * starts being a list. Order is authored, and it is the order rendered.
+   *
+   * Every URL here is folded into the JSON-LD `sameAs` array automatically
+   * (`buildProjectSchema`), so each is authored once and must NOT be repeated
+   * under `sameAs`. `icon` is a bare Iconify id (`collection:name`), picked up
+   * by the UnoCSS YAML extractor without the `i-` prefix.
    */
-  listing: z
-    .object({
-      /** Proper noun of the registry ("PyPI", "CrowdSec Hub"); not translated. */
-      label: z.string(),
-      url: z.url(),
-      /** Bare Iconify id, e.g. `simple-icons:pypi`. */
-      icon: z.string().regex(/^[a-z0-9-]+:[a-z0-9-]+$/, "bare Iconify id"),
-    })
+  listings: z
+    .array(
+      z.object({
+        /** Proper noun of the registry ("PyPI", "npm"); not translated. */
+        label: z.string(),
+        url: z.url(),
+        /** Bare Iconify id, e.g. `simple-icons:pypi`. */
+        icon: z.string().regex(/^[a-z0-9-]+:[a-z0-9-]+$/, "bare Iconify id"),
+      }),
+    )
+    .min(1)
+    .max(3)
     .optional(),
   /** Extra canonical URLs for the software entity (registries, PyPI, DOI). */
   sameAs: z.array(z.url()).optional(),

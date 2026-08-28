@@ -35,7 +35,7 @@ person:
   sameAs:
     - "https://scholar.google.com/citations?user=9b0kPaUAAAAJ"
     - "https://orcid.org/0000-0003-1250-6212"
-    - "https://www.researchgate.net/profile/Jose-Requena-Plens-2"
+    - "https://www.researchgate.net/profile/Jose_Requena_Plens-2"
     - "https://www.mathworks.com/matlabcentral/profile/authors/5890853"
     # Forge accounts whose ownership is asserted by a signed `proof@ariadne.id`
     # notation in the OpenPGP key 0A993B26…91FC — the strongest ownership
@@ -49,8 +49,13 @@ person:
     - "https://gitlab.com/jmrp"
     # Package registries where the software in `owns` is published, tying the
     # identity to the artifacts rather than only to their source repos.
+    #
+    # NOTE the npm handle: the account is `jmrpio`, WITHOUT the dot, while the
+    # scope the packages publish under is `@jmrp.io`, with it. An audit that
+    # searched npm for "jmrplens" concluded he had no packages there; he does.
     - "https://pypi.org/user/jmrplens/"
     - "https://hub.docker.com/u/jmrplens"
+    - "https://www.npmjs.com/~jmrpio"
     # Communities where he posts under the canonical handle. Each one was
     # verified by a link back to this site or to the GitHub account, not by the
     # handle alone — "jmrplens" is rare, but a matching handle is not proof.
@@ -162,12 +167,16 @@ nav:
   - label: "Projects"
     href: "/projects/"
 
+# Localized fallback only — the homepage actually renders
+# `pages.home.heroTitle` / `heroSubtitle` / `heroBio1` / `heroBio2` from the
+# i18n layer (see HomePage.astro and utils/llms.ts). Kept in sync with the
+# English strings there so the two copies never state different facts.
 hero:
   title: "Hi, I'm José Manuel."
-  subtitle: "Software Engineer & Researcher. <br>Bridging the gap between <strong>Acoustics</strong>, <strong>Electronics</strong>, and <strong>Code</strong>."
+  subtitle: "Embedded Firmware & Software Engineer. <br>Bridging the gap between <strong>firmware</strong>, software, and applied research."
   bio:
-    - "I'm José Manuel Requena Plens, an R&D engineer based in Valencia, Spain, specializing in <strong>embedded firmware</strong> (C/C++, STM32/ESP32), <strong>industrial software development</strong>, and <strong>applied acoustics research</strong>. I've worked on projects across very different domains —from <strong>academic research</strong> to <strong>industrial development</strong>— and that diversity is what motivates me the most."
-    - "I thrive on the challenge of integrating hardware and software. When I'm not coding industrial systems, I'm an active <strong>Open Source</strong> contributor and a passionate self-hoster, constantly refining my homelab and building tools for the community. <a href='/cv/'>Check out my CV</a> to see the full journey."
+    - "I'm José Manuel Requena Plens, an R&D engineer based in Valencia, Spain, specializing in <strong>embedded firmware</strong> (C/C++, STM32/ESP32), <strong>industrial software development</strong>, and <strong>applied acoustics research</strong>. Between 2023 and 2026 I built firmware for solar inverters on STM32 and FreeRTOS; before that, four years of predoctoral research at the UPV (2019–2023) produced 14 academic publications."
+    - "The open-source side is the measurable one: 38 public repositories on GitHub with more than 350 stars between them (August 2026), two MCP servers pulled more than 7,500 times from Docker Hub, and more than 15 papers, theses and releases archived with a DOI on Zenodo. My homelab serves this site and the <a href='https://mcp.jmrp.io/' target='_blank' rel='external noopener noreferrer' class='external-link' aria-label='public MCP servers (opens in new tab)'>public MCP servers</a> anyone can point an AI client at. <a href='/cv/'>Check out my CV</a> to see the full journey."
 
 featured_projects:
   - "gitlab-mcp-server"

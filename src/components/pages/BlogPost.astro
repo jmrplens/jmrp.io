@@ -25,6 +25,7 @@ import BaseLayout from "@layouts/BaseLayout.astro";
 import type { SiteConfig } from "@src/types";
 import { formatDateDot, getReadingTime, tagUrlSegment } from "@utils/blog";
 import { llmsPostShardPath } from "@utils/llms";
+import { postDateModified } from "@utils/post-dates";
 import { getRelatedContent } from "@utils/related";
 import { getSeriesForPost } from "@utils/series";
 import { getSiteUrl } from "@utils/site";
@@ -52,6 +53,23 @@ const siteData = (siteEntry?.data || {}) as SiteConfig;
 
 const { Content, headings } = await render(post);
 
+// Revision date computed, not remembered: max(publishedDate, updatedDate,
+// lastVerified.date, last substantive commit touching this file). The
+// hand-maintained `updatedDate` is still a term of that maximum, but it is no
+// longer the only one — /about/#editorial promises the date moves with a
+// substantive fix, and one sweep alone broke that promise on 21 of the 25 post
+// files it edited. See `@utils/post-dates`.
+// The `??` is unreachable in practice: `publishedDate` is required by the
+// collection schema and Zod has already coerced it to a valid Date.
+const publishedIso = post.data.publishedDate.toISOString();
+const revisedIso = postDateModified(post.id, post.data) ?? publishedIso;
+const revisedDate = new Date(revisedIso);
+// Compared by calendar day, not by instant: the frontmatter dates are date-only
+// and land at midnight UTC, so an instant comparison would label every post
+// with a same-day revision term as revised and print "Updated" next to a
+// publication date that reads identically.
+const isRevised = revisedIso.slice(0, 10) !== publishedIso.slice(0, 10);
+
 // Post header meta: dot date + reading time + 1–2 amber category chips
 // (the full tag list lives in the JSON-LD / tag pages, not the header).
 const readingMin = getReadingTime(post);
@@ -76,30 +94,73 @@ const seriesUrl = seriesInfo
   : undefined;
 
 // --- Reference Collection Logic ---
+// Fenced blocks are DROPPED (a link inside a code sample is not a citation);
+// inline code is UNWRAPPED, keeping its text.
+//
+// Deleting it was the bug: a link whose text is entirely inline code —
+// [`rustc` `Symbol`](…) — collapsed to `[ ](url)`, which published a citation
+// named " ", and [`ResStringPool`](…) collapsed to `[](url)`, which the regex
+// does not match at all, silently dropping the reference. Measured across the
+// corpus: 3 real citations were being lost per locale (1 in post 010, 2 in
+// post 011) and 2 more were published with their code words missing
+// ("ECMA-335  heap", " ") — GEO audit 2026-08-27, M16.
+//
+// Latent risk of unwrapping: a future link whose text carries brackets inside
+// inline code — [`arr[i]`](url) — would break the link-text group and be
+// skipped. No post does that today (checked over all 24), but a new one could.
 const bodyWithoutCode = (post.body || "")
   .replaceAll(/```[\s\S]*?```/g, "")
-  .replaceAll(/`[^`]*?`/g, "");
+  .replaceAll(/`([^`]*?)`/g, "$1");
+
+/**
+ * The name a reference is published under, in the list and in `citation`.
+ *
+ * Whitespace is collapsed (an unwrapped code span can leave double spaces) and
+ * an empty label falls back to the host, which is the same rule References.astro
+ * already applies when rendering — the graph was the only surface still
+ * publishing a blank citation name.
+ *
+ * KEEP-IN-SYNC: `label` in src/components/ui/References.astro.
+ *
+ * @param text - Raw link text.
+ * @param url - The reference URL.
+ * @returns A non-empty label.
+ */
+const referenceLabel = (text: string, url: string): string => {
+  const clean = text.replaceAll(/\s+/g, " ").trim();
+  if (clean) return clean;
+  try {
+    return new URL(url, getSiteUrl()).hostname || url;
+  } catch {
+    return url;
+  }
+};
 
 // Link-text group excludes newlines and `[`/`{` so the scan can't run from a
 // JSX array/object bracket (e.g. `events={[ … [Real Link](url)`) through to a
 // real link's `](`, which would otherwise capture a mangled multi-line "title".
-const linkRegex = /\[([^\]\n[{]+)\]\(([^)]+(?:\([^)]+\)[^)]*)*)\)/g;
+// `*`, not `+`: a label can legitimately be empty by the time this runs, since
+// inline code is stripped above and a link whose whole text was code arrives
+// here as `[](url)`. Requiring one character dropped that citation instead of
+// letting `referenceLabel` fall back to the host.
+const linkRegex = /\[([^\]\n[{]*)\]\(([^)]+(?:\([^)]+\)[^)]*)*)\)/g;
 const collectedRefsFromMarkdown = [];
 let match;
 while ((match = linkRegex.exec(bodyWithoutCode)) !== null) {
   const url = match[2];
   if (url.startsWith("#")) continue;
-  collectedRefsFromMarkdown.push({ text: match[1], url });
+  collectedRefsFromMarkdown.push({ text: referenceLabel(match[1], url), url });
 }
 
 const $ = cheerio.load(bodyWithoutCode);
 $('a[href^="http"], a[href^="//"]').each((_, el) => {
   const $el = $(el);
   const url = $el.attr("href");
-  const text = $el.text().replaceAll(/\s+/g, " ").trim();
-  if (url && text) {
-    collectedRefsFromMarkdown.push({ text, url });
-  }
+  if (!url) return;
+  collectedRefsFromMarkdown.push({
+    text: referenceLabel($el.text(), url),
+    url,
+  });
 });
 
 const uniqueUrls = new Set<string>();
@@ -144,6 +205,12 @@ if (post.data.coverImage) {
 const postUrl = new URL(translatePath(`/blog/${post.data.slug}/`), getSiteUrl())
   .href;
 
+// The chrome-free markdown rendering of this post: the `<link rel="alternate">`
+// in the head, the copy-as-markdown control and the `encoding` node below all
+// resolve it from here, so a page cannot advertise one file and describe another.
+const markdownTwinPath = llmsPostShardPath(locale, post.data.slug);
+const markdownTwinUrl = new URL(markdownTwinPath, getSiteUrl()).href;
+
 // The same post in the other locale. Both files share the numeric slug, so the
 // counterpart URL is derivable without a lookup. Linking them with
 // workTranslation/translationOfWork tells consumers these are two renderings of
@@ -174,13 +241,13 @@ const articleNode = {
   "@id": `${postUrl}#article`,
   headline: post.data.title,
   description: post.data.description,
-  datePublished: post.data.publishedDate.toISOString(),
+  datePublished: publishedIso,
   // Always emit dateModified: for a never-edited post the last modification IS
   // its publication date (Google/Schema.org recommend it on Article — a
-  // freshness signal AI engines read); revised posts use their real updatedDate.
-  dateModified: (
-    post.data.updatedDate ?? post.data.publishedDate
-  ).toISOString(),
+  // freshness signal AI engines read); revised posts carry the computed date,
+  // which folds in `lastVerified` — the re-test that used to be rendered for
+  // humans and withheld from every machine surface.
+  dateModified: revisedIso,
   publisher: personRef,
   author: personRef,
   image: {
@@ -202,6 +269,25 @@ const articleNode = {
   mainEntityOfPage: {
     "@type": "WebPage",
     "@id": postUrl,
+  },
+  // The markdown twin, declared in the graph.
+  //
+  // The page already advertises it in the head (`<link rel="alternate"
+  // type="text/markdown">`) and llms.txt lists every one of them, but the graph
+  // never mentioned it: an agent reading the JSON-LD had no way to learn that a
+  // clean, chrome-free encoding of the same article exists (GEO audit
+  // 2026-08-27, M8). `encoding` is schema.org's property for exactly that —
+  // another encoding of the SAME CreativeWork — so it hangs off the article
+  // node instead of becoming a second work. Same path helper the `markdownHref`
+  // prop below uses, so the two can never point at different files.
+  encoding: {
+    "@type": "MediaObject",
+    "@id": markdownTwinUrl,
+    contentUrl: markdownTwinUrl,
+    encodingFormat: "text/markdown",
+    // The twin is served as plain text, with no `lang` attribute and no
+    // hreflang of its own, so the graph is where its language is stated.
+    inLanguage: isFallback ? "en" : locale,
   },
   // Fallback (untranslated) posts render English content, so mark them as such.
   inLanguage: isFallback ? "en" : locale,
@@ -347,10 +433,10 @@ const articleSchema = [
   description={post.data.description}
   type="article"
   publishDate={post.data.publishedDate}
-  modifiedDate={post.data.updatedDate}
+  modifiedDate={isRevised ? revisedDate : undefined}
   tags={post.data.tags}
   schema={articleSchema}
-  markdownHref={llmsPostShardPath(locale, post.data.slug)}
+  markdownHref={markdownTwinPath}
 >
   {isFallback && <FallbackBanner locale={locale} />}
   <article
@@ -399,7 +485,7 @@ const articleSchema = [
             >
               ·
             </span>
-            <time datetime={post.data.publishedDate.toISOString()}>
+            <time datetime={publishedIso}>
               {formatDateDot(post.data.publishedDate)}
             </time>
             <span
@@ -413,13 +499,13 @@ const articleSchema = [
               {t("pages.blog.minRead")}
             </span>
             {
-              post.data.updatedDate && (
+              isRevised && (
                 <time
                   class="updated"
-                  datetime={post.data.updatedDate.toISOString()}
+                  datetime={revisedIso}
                 >
                   {t("pages.blogPost.updatedOn", {
-                    date: formatDate(post.data.updatedDate, locale),
+                    date: formatDate(revisedDate, locale),
                   })}
                 </time>
               )
@@ -430,7 +516,7 @@ const articleSchema = [
             >
               ·
             </span>
-            <MarkdownCopy href={llmsPostShardPath(locale, post.data.slug)} />
+            <MarkdownCopy href={markdownTwinPath} />
           </div>
         </div>
 

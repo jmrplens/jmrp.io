@@ -178,10 +178,13 @@ export default defineConfig({
         const lastmodFor = createLastmodResolver();
         return (item) => {
           const url = item.url;
-          // Strip locale prefix for pattern matching
-          const path = url
-            .replace(/^https?:\/\/[^/]+/, "")
-            .replace(/^\/es(?=\/|$)/, "");
+          // Strip locale prefix for pattern matching, but KEEP which one it
+          // was: the two translations of a post have separate edit histories,
+          // so the resolver answers per locale. Dropping it here published one
+          // date for both URLs while each page's own JSON-LD published its own.
+          const pathname = url.replace(/^https?:\/\/[^/]+/, "");
+          const locale = /^\/es(\/|$)/.test(pathname) ? "es" : "en";
+          const path = pathname.replace(/^\/es(?=\/|$)/, "");
 
           // Priority: homepage > blog/tools index > blog posts > tools > static > tags
           // changefreq default: monthly (only override when different)
@@ -209,7 +212,7 @@ export default defineConfig({
             priority = 0.3;
           }
 
-          const lastmod = lastmodFor(path);
+          const lastmod = lastmodFor(path, locale);
 
           // `x-default` alternate, to match what every page already emits in
           // its <head>. @astrojs/sitemap's i18n option generates one

@@ -132,7 +132,11 @@ const entries = references
     return {
       href: ref.url,
       // Always give the anchor an accessible name: fall back to the hostname
-      // (then the raw URL) when a reference has empty text.
+      // (then the raw URL) when a reference has empty text. The collector in
+      // BlogPost.astro applies the same rule before it builds the `citation`
+      // nodes, so the visible list and the graph publish one name per source;
+      // this stays as the last line of defence for any other caller.
+      // KEEP-IN-SYNC: `referenceLabel` in src/components/pages/BlogPost.astro.
       label: ref.text?.trim() || urlObj.hostname || ref.url,
       publisher: publisherFor(urlObj),
       isExternalLink,

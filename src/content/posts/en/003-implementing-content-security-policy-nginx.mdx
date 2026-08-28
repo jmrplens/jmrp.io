@@ -2,7 +2,7 @@
 title: "Content Security Policy (CSP) with Nginx: The Complete Guide"
 slug: "003-implementing-content-security-policy-nginx"
 publishedDate: 2025-12-19
-updatedDate: 2026-08-03
+updatedDate: 2026-08-27
 lastVerified:
   date: 2026-08-01
   versions:
@@ -129,6 +129,44 @@ This isn't a hypothetical — jmrp.io itself is the reference implementation for
 Violations don't disappear into a log nobody reads: I run my own receiver (`scripts/csp-reporter.mjs`) that surfaces them as they happen, instead of relying on a third party to tell me what's breaking.
 
 Measured against the current Mozilla Observatory API (v5), this configuration earns an **A+ rating: a score of 140, with all 10 tests passing and zero failures**. That's the number as of writing — not the 145 you might see referenced elsewhere on this site from a December 2025 commit. That older total included a 5-point bonus Observatory grants for serving cookies with `Secure`/`HttpOnly`/`SameSite`; those cookies were two placeholder values that did nothing useful, and removing them — so this site's `/privacy/` page can honestly claim no response ever sets `Set-Cookie` — cost 5 cosmetic points on a policy that already fails nothing. That trade was obviously worth it.
+
+### What the violation reports actually contain
+
+That receiver averages around twenty reports a day, and the average is the least useful number in the set: most days bring a handful, and an occasional day brings hundreds. What matters is the composition, and it has been stable for as long as I have been reading them. The overwhelming majority are crawlers. Nearly all of the rest are browser extensions and antivirus software injecting scripts and styles into someone else's page. **Not one has ever turned out to be a defect in this site.**
+
+The blocked-`eval` reports are the clearest case, because they are trivially falsifiable: no JavaScript file this site serves contains `eval(` or `new Function(` — after a production build, the only occurrences of that literal anywhere in the output are in the prose of this very post. They arrive in bursts from a single address and a single user-agent, which is one visitor with something injecting code into their browser, not a policy that is too tight.
+
+That is the honest return on a `report-uri`: it mostly tells you what other people's software is doing to your pages. It has never once told me my own policy was wrong — which does not make it useless, because it made me read my own receiver closely enough to find the bug below.
+
+
+### The bug this audit found in my own reporter
+
+That composition is only trustworthy because sitting down to check it turned up a parsing bug in the receiver itself.
+
+On 22 August I added a `report-to` endpoint alongside the legacy `report-uri`. The two APIs disagree on shape: the legacy one POSTs a single `{"csp-report": {…}}` object with kebab-case field names, while the Reporting API sends `{type, url, body: {…}}` envelopes with camelCase ones. A `normalizeReports()` function exists to map the second onto the first — and it did, but only when the payload arrived as an array.
+
+<Code lang="javascript" title="scripts/csp-reporter.mjs — the bug">
+```javascript
+function normalizeReports(parsed) {
+  // A bare envelope is not an array, so it escaped on this line
+  // and reached the filters with every kebab-case field undefined.
+  if (!Array.isArray(parsed)) return [parsed];
+  return parsed.map(/* camelCase → kebab-case */);
+}
+```
+</Code>
+
+A browser that POSTs one bare envelope instead of an array of one fell straight through that first line. The report arrived at the filters with no directive, no blocked URI and no source file — nothing to match on — so nothing was discarded, all of it was logged as unclassifiable, and four of those empty reports made it past the rate limiter and onto my phone as Telegram alerts with a blank violation inside.
+
+Ten reports arrived that way between 22 and 26 August. Decoded by hand they are entirely ordinary: six carry a `safari-web-extension://…` or `safari-extension://…` source file, and the other four are inline `<style>` elements the browser attributes to the document itself. Both categories were already covered by the discard filters; the filters just never got to see the fields. The fix is to accept a bare envelope as well as an array of them.
+
+The shape of the mistake is what makes it worth writing down. A claim that none of these reports is a real defect, resting partly on reports nobody could read, is not a claim at all — and I had no way of knowing which it was until I decoded them by hand.
+
+<Callout type="keypoint" title="A report you cannot parse is worse than one you never received">
+  It still costs you an alert, and it looks like signal. If you bolt a `report-to`
+  endpoint onto an existing `report-uri` receiver, test a single bare envelope
+  first — not the array the spec examples show you.
+</Callout>
 
 ---
 

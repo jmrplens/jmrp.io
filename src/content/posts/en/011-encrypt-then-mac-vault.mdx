@@ -285,7 +285,9 @@ VaultCrypto::secureWipe(tag.data(), tag.size());
 
 Note the wiping. The plaintext, the keys, and the scratch buffers all hold secret material, and on a device that can be powered down and probed, leaving them in RAM is a liability. Every buffer is cleared with a zeroize primitive that the compiler is not allowed to optimize away — [`mbedtls_platform_zeroize`](https://mbed-tls.readthedocs.io/projects/api/en/development/api/file/platform__util_8h/) on the device, which exists precisely because a plain `memset` can be elided as a "dead store."
 
-## Reading a record: verify, _then_ decrypt
+## Why verify the MAC before decrypting?
+
+Decrypting first exposes a padding oracle: the decrypt step inspects PKCS#7 padding and leaks timing or error differences an attacker can grind offline. Verifying the tag first means no attacker-controlled bytes ever reach the cipher, so a tampered file is rejected without a single byte being decrypted.
 
 ### The five-step read path
 
@@ -531,9 +533,9 @@ Binding `generation` closes *selective* rollback — reverting one record while 
 
 I'd rather state that boundary plainly than oversell it. The generation counter is **defense-in-depth for the non-secure builds** against the far more practical selective attack; the whole-vault time-warp is a hardware problem, solved in hardware on the builds that opt into burning eFuses.
 
-## Two keys from one master: key separation
+## Does encrypt-then-MAC need separate keys?
 
-The envelope uses two different keys — one to encrypt, one to MAC — and that is deliberate (the same instinct that says your house key, car key, and mailbox key should be three different keys). The security argument for encrypt-then-MAC assumes the encryption and authentication keys are *independent*; reusing one key for both jobs voids the guarantee and invites cross-protocol mischief. So the vault derives separate sub-keys from a single master key, each tagged with a distinct domain-separation label, following the long-standing [key-separation guidance](https://csrc.nist.gov/pubs/sp/800/57/pt1/r5/final) — [NIST SP 800-57 Part 1](https://nvlpubs.nist.gov/nistpubs/SpecialPublications/NIST.SP.800-57pt1r5.pdf) puts it plainly: "a single key should be used for only one purpose":
+Yes — and the envelope does it deliberately: one key to encrypt, one to MAC, both derived from the same PIN-derived master (the same instinct that says your house key, car key, and mailbox key should be three different keys). The security argument for encrypt-then-MAC assumes the encryption and authentication keys are *independent*; reusing one key for both jobs voids the guarantee and invites cross-protocol mischief. So the vault derives separate sub-keys from a single master key, each tagged with a distinct domain-separation label, following the long-standing [key-separation guidance](https://csrc.nist.gov/pubs/sp/800/57/pt1/r5/final) — [NIST SP 800-57 Part 1](https://nvlpubs.nist.gov/nistpubs/SpecialPublications/NIST.SP.800-57pt1r5.pdf) puts it plainly: "a single key should be used for only one purpose":
 
 <Code lang="cpp" title="vault_keys — distinct labels per purpose">
 ```cpp
@@ -681,9 +683,11 @@ The vault uses encrypt-then-MAC with AES-256-CBC and HMAC-SHA256 for a specific,
 
 One honest footnote on the implementation: PSA's transition guide suggests `psa_mac_verify` over "compute a tag, then `mbedtls_ct_memcmp`." The vault deliberately keeps the compute-and-compare form because it runs identically on both backends — and the comparison is still constant-time. It's a trade of one PSA convenience for backend uniformity, made with eyes open.
 
-## Listing without decrypting everything: the O(1) index
+## How does the vault list credentials without decrypting them all?
 
-There's a nice side effect of treating every file as an independent envelope (the "O(1)" in the heading is just jargon for "the cost stays flat no matter how many credentials you have"). Listing the vault doesn't mean decrypting every credential — that would be slow and would needlessly expose every secret in RAM. Instead a single encrypted `index.bin`, in the exact same `[ver][iv][hmacTag][cipher]` envelope, caches only the *non-secret* metadata each credential needs in a list view: its id, name, username, brand, and a couple of flags — never the password, URL, notes, or TOTP secret.
+A single encrypted `index.bin`, in the exact same `[ver][iv][hmacTag][cipher]` envelope, caches only the *non-secret* metadata a list view needs: id, name, username, brand, and a couple of flags — never the password, URL, notes, or TOTP secret. Listing therefore costs one read and one decrypt, flat, however many credentials the vault holds.
+
+That falls out of treating every file as an independent envelope. Decrypting every credential just to draw a list would be slow and would needlessly expose every secret in RAM; the index sidesteps both.
 
 <Callout type="info" title="One read, one decrypt">
 Showing the credential list is **one file read plus one decrypt**, regardless of how many credentials exist. The heavy per-credential decrypt happens only when you actually open one. The index is just a cache: if it's missing or its MAC doesn't verify, it's rebuilt from the authenticated per-credential files, which are always the source of truth.

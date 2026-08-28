@@ -222,22 +222,22 @@ const groups = [
                     />
                     {t("pages.projects.docs")}
                   </a>
-                  {project.listing && (
+                  {(project.listings ?? []).map((listing) => (
                     <a
-                      href={project.listing.url}
+                      href={listing.url}
                       target="_blank"
                       rel="external noopener noreferrer"
                       aria-label={t("aria.opensNewTab", {
-                        text: `${project.listing.label} — ${project.name}`,
+                        text: `${listing.label} — ${project.name}`,
                       })}
                     >
                       <span
-                        class={`i-${project.listing.icon}`}
+                        class={`i-${listing.icon}`}
                         aria-hidden="true"
                       />
-                      {project.listing.label}
+                      {listing.label}
                     </a>
-                  )}
+                  ))}
                   {hostedHref(project, locale) && (
                     <a
                       href={hostedHref(project, locale)}

@@ -961,6 +961,29 @@ The final report lists every failed step across all phases (not just the first e
 6. References auto-collected from markdown links + HTML `<a>` tags; the FAQ section, JSON-LD (TechArticle/FAQPage/HowTo + about/mentions), and the `AuthorCard` are **auto-rendered by `BlogPost.astro`** from the frontmatter — do not hand-add them
 7. For a Spanish version, mirror to `src/content/posts/es/` with translated `faq` and the SAME `topics` Q-ids
 
+> **Dates are computed, not remembered.** A post's `dateModified` — JSON-LD,
+> sitemap `<lastmod>`, the visible "Updated on" line and the markdown twin — is
+> `max(publishedDate, updatedDate?, lastVerified.date?, last substantive commit
+> touching the file)`, resolved in `src/utils/post-dates.ts`. `updatedDate` is
+> now an optional floor, not the source of truth. A commit whose conventional
+> type is `build`/`chore`/`ci`/`deps`/`docs`/`i18n`/`perf`/`refactor`/`style`/
+> `test` never moves the date; `feat`/`fix`/`content`/`revert`, a breaking
+> `type!:`, and an unlabelled subject do. Commits dated on or before the day of
+> `publishedDate` are ignored, so a new post is never born already "Updated".
+> **A site-wide mechanical pass over MDX must say so**, with a
+> `Content-Bump: skip` trailer (or `[skip-bump]` in the subject);
+> `Content-Bump: force` is the opposite override. Without the marker, a
+> `feat(llms)` sweep that only adds code fences restamps all 24 posts as
+> revised and re-submits them to IndexNow.
+>
+> **The marker has to be typed into the squash box.** Every commit reaches
+> `main` as a GitHub squash merge, so only the squash message is in the
+> history: a trailer written on a branch commit is discarded at merge time, and
+> `[skip-bump]` in the subject means the PR title, which is what the squash
+> subject becomes. Historic passes that predate the trailer are listed by SHA in
+> `MECHANICAL_COMMITS` in that module; the list is closed, and anything new
+> declares itself in its own message.
+
 Full workflow + field reference: the `new-blog-post` skill and `docs/BLOG_POST_GUIDE.md`.
 
 ### Component Usage in MDX

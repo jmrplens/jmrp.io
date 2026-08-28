@@ -616,11 +616,15 @@ sections:
           Open-source GitLab MCP server that exposes 850+ GitLab actions (1,000+
           on Enterprise) to AI assistants through a dynamic 2-tool find/execute
           design, with stdio/HTTP/OAuth transports and safe & read-only modes.
-        metrics: ["Listed on Glama, mcp.so, Cursor & mcpservers.org"]
+        metrics: ["On npm; listed on Glama, mcp.so, Cursor & mcpservers.org"]
         links:
           - {
               label: GitHub,
               url: https://github.com/jmrplens/gitlab-mcp-server,
+            }
+          - {
+              label: npm,
+              url: "https://www.npmjs.com/package/@jmrp.io/gitlab-mcp-server",
             }
           - {
               label: Glama,

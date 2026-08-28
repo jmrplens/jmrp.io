@@ -67,9 +67,12 @@ const MAX_BODY_SIZE = 32 * 1024; // 32KB limit for CSP reports
 const reportCache = new Map();
 
 // Filtered-report metrics: { "stage:reason" -> count }. Filtered reports
-// (discarded false positives, plus crawler reports that are logged but never
-// notified) are invisible on Telegram, so without a counter their volume and
-// mix cannot be reviewed. Dumped to the console every FILTER_LOG_INTERVAL hits.
+// (payloads rejected before parsing, discarded false positives, plus crawler
+// reports that are logged but never notified) are invisible on Telegram, so
+// without a counter their volume and mix cannot be reviewed. Dumped to the
+// console every FILTER_LOG_INTERVAL hits. Every early exit on the request path
+// records here, so the `reject:*` and `discard:*` counts plus the log line
+// count give the true intake (`no-notify:*` reports are in the log already).
 const filterCounts = new Map();
 let totalFiltered = 0;
 const FILTER_LOG_INTERVAL = 100;
@@ -78,8 +81,9 @@ const FILTER_LOG_INTERVAL = 100;
  * Records a filtered CSP report and periodically logs a summary of every
  * filter reason seen so far.
  *
- * @param {"discard"|"no-notify"} stage - Whether the report was dropped
- *   entirely or only kept off Telegram.
+ * @param {"reject"|"discard"|"no-notify"} stage - Whether the payload was
+ *   rejected before parsing, the report was dropped entirely, or it was only
+ *   kept off Telegram.
  * @param {string} reason - Short reason string from the filter chain.
  * @returns {void}
  */
@@ -144,6 +148,7 @@ const server = http.createServer((req, res) => {
       // Enforce maximum body size
       if (bodyBytes > MAX_BODY_SIZE) {
         console.warn(`Request body exceeded limit from IP: ${clientIp}`);
+        recordFiltered("reject", "payload-too-large");
         responded = true;
         res.writeHead(413, { "Content-Type": "text/plain" });
         res.end("Payload Too Large");
@@ -157,14 +162,11 @@ const server = http.createServer((req, res) => {
       try {
         const parsed = JSON.parse(body);
         // The Reporting API (report-to, added 2026-08-22 alongside the legacy
-        // report-uri — see csp.ts B24) POSTs an ARRAY of {type, body} envelopes
-        // with camelCase keys, unlike the legacy single {"csp-report": {…}}
-        // object with kebab-case. Normalize each envelope to the legacy shape
-        // so every downstream consumer (filters, dedup, Telegram) keeps
-        // working unchanged. Non-CSP report types (deprecation, crash…) are
-        // not requested by our Reporting-Endpoints, but a UA could still send
-        // them — they fall through with an empty body and get discarded by the
-        // existing defensive checks.
+        // report-uri — see csp.ts B24) sends {type, url, body} envelopes with
+        // camelCase keys, unlike the legacy single {"csp-report": {…}} object
+        // with kebab-case. Normalize every accepted shape to the legacy one so
+        // the downstream consumers (filters, dedup, Telegram) keep working
+        // unchanged.
         for (const report of normalizeReports(parsed)) {
           processReport(report, clientIp, userAgent);
         }
@@ -172,6 +174,7 @@ const server = http.createServer((req, res) => {
         res.end();
       } catch (error) {
         console.error("Error parsing CSP report JSON:", error);
+        recordFiltered("reject", "invalid-json");
         res.writeHead(400);
         res.end("Invalid JSON");
       }
@@ -183,45 +186,122 @@ const server = http.createServer((req, res) => {
 });
 
 /**
+ * Detects a Reporting API envelope (`{type, url, age, user_agent, body}`).
+ *
+ * Anything already carrying a "csp-report" key is a legacy report and must be
+ * passed through untouched.
+ *
+ * @param {unknown} entry - A parsed payload, or one entry of a payload array.
+ * @returns {boolean} True when the value is a Reporting API envelope.
+ */
+function isReportingApiEnvelope(entry) {
+  return (
+    !!entry &&
+    typeof entry === "object" &&
+    !("csp-report" in entry) &&
+    typeof entry.type === "string" &&
+    !!entry.body &&
+    typeof entry.body === "object" &&
+    // An array is an object: without this, `{type, body: []}` passed as an
+    // envelope and every field came out undefined on the other side.
+    !Array.isArray(entry.body)
+  );
+}
+
+/**
+ * Maps one Reporting API envelope onto the legacy `{"csp-report": {…}}` shape,
+ * translating its camelCase fields to the kebab-case names the rest of this
+ * file reads.
+ *
+ * @param {Record<string, unknown>} entry - A `type: "csp-violation"` envelope.
+ * @returns {Record<string, unknown>} The equivalent legacy-shaped report.
+ */
+function reportingApiToLegacy(entry) {
+  const b = entry.body || {};
+  return {
+    "csp-report": {
+      // The envelope repeats the document URL in its own `url` field; some UAs
+      // populate only that one.
+      "document-uri": b.documentURL ?? entry.url,
+      referrer: b.referrer,
+      "blocked-uri": b.blockedURL,
+      "violated-directive": b.effectiveDirective,
+      "effective-directive": b.effectiveDirective,
+      "original-policy": b.originalPolicy,
+      disposition: b.disposition,
+      "status-code": b.statusCode,
+      "script-sample": b.sample,
+      "source-file": b.sourceFile,
+      "line-number": b.lineNumber,
+      "column-number": b.columnNumber,
+    },
+  };
+}
+
+/**
  * Normalizes an incoming payload to a list of legacy-shaped CSP reports.
  *
- * Accepts the legacy single object as-is, and maps Reporting API envelopes
- * (`[{type: "csp-violation", body: {blockedURL, …}}]`) onto the kebab-case
- * field names the rest of this file consumes.
+ * Three shapes reach this endpoint in production: the legacy single
+ * `{"csp-report": {…}}` object, the spec's ARRAY of Reporting API envelopes,
+ * and — this is the one that used to slip through — a BARE envelope object.
+ * That last case was returned as-is, so every kebab-case field read downstream
+ * came back `undefined`: 10 genuine violations were logged with an empty body
+ * between 2026-08-22 (when `report-to` was added) and the fix.
+ *
+ * @param {unknown} parsed - The parsed JSON request body.
+ * @returns {Array<Record<string, unknown>>} Legacy-shaped reports to process.
  */
 function normalizeReports(parsed) {
-  if (!Array.isArray(parsed)) return [parsed];
-  return parsed
-    .filter((entry) => entry && typeof entry === "object")
-    .map((entry) => {
-      const b = entry.body || {};
-      return {
-        "csp-report": {
-          "document-uri": b.documentURL,
-          referrer: b.referrer,
-          "blocked-uri": b.blockedURL,
-          "violated-directive": b.effectiveDirective,
-          "effective-directive": b.effectiveDirective,
-          "original-policy": b.originalPolicy,
-          disposition: b.disposition,
-          "status-code": b.statusCode,
-          "script-sample": b.sample,
-          "source-file": b.sourceFile,
-          "line-number": b.lineNumber,
-          "column-number": b.columnNumber,
-        },
-      };
-    });
+  const entries = Array.isArray(parsed) ? parsed : [parsed];
+  const reports = [];
+
+  for (const entry of entries) {
+    if (!entry || typeof entry !== "object") {
+      recordFiltered("discard", "malformed");
+      continue;
+    }
+    if (!isReportingApiEnvelope(entry)) {
+      // Anything that is not an envelope must be a legacy report, and a legacy
+      // report is exactly `{"csp-report": {…}}`. Accepting every other object
+      // let shapes with no CSP fields at all through to the notify path, which
+      // is the same class of bug as the envelope one: a payload nobody could
+      // read, counted as if it had been.
+      const legacy = entry["csp-report"];
+      if (!legacy || typeof legacy !== "object" || Array.isArray(legacy)) {
+        recordFiltered("discard", "malformed");
+        continue;
+      }
+      reports.push(entry);
+      continue;
+    }
+    // Reporting-Endpoints only asks for csp-violation, but a UA may batch other
+    // report types (deprecation, intervention…) into the same POST. They carry
+    // none of the fields below, so they must never reach the notify path.
+    if (entry.type !== "csp-violation") {
+      recordFiltered("discard", "non-csp-report");
+      continue;
+    }
+    reports.push(reportingApiToLegacy(entry));
+  }
+
+  return reports;
 }
 
 /**
  * Processes the received report and handles logging/notification
  */
 function processReport(report, ip, ua) {
-  // Defensive check: report must be an object (parsed JSON)
-  if (!report || typeof report !== "object") return;
+  // Defensive check: report must be an object (parsed JSON). Counted, so the
+  // filter totals stay reconcilable against the log.
+  if (!report || typeof report !== "object") {
+    recordFiltered("discard", "malformed");
+    return;
+  }
   const r = report["csp-report"] || report;
-  if (!r || typeof r !== "object") return;
+  if (!r || typeof r !== "object") {
+    recordFiltered("discard", "malformed");
+    return;
+  }
 
   // Silently discard reports that cannot describe the site's own behavior
   // (browser extensions, antivirus, userscripts, browser-internal pages,

@@ -25,6 +25,12 @@ exclude = [
     # lychee was tried and made things worse (it tripped additional blocks,
     # including doi.org), so the domains are skipped instead.
     'https://eprint\.iacr\.org/.*',
+    # npm is a different case from the rest of this list: it answers 403 to
+    # everything from this address, a browser user-agent included, so the note
+    # above about a plain curl returning 200 does not apply to it. The packages
+    # are real and verifiable through registry.npmjs.org, which does answer —
+    # it is only the human-facing www host that refuses datacenter traffic.
+    'https://www\.npmjs\.com/.*',
     'https://www\.iacr\.org/.*',
     'https://gitlab\.torproject\.org/.*',
     'https://www\.abuseipdb\.com/.*',

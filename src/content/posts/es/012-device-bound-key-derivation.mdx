@@ -209,9 +209,11 @@ El número de iteraciones compra tiempo real contra una contraseña de _alta ent
 
 ---
 
-## La idea: vincular la clave al silicio
+## ¿Qué es la vinculación al dispositivo en la derivación de clave?
 
-Si no puedes hacer cada intento offline lo bastante lento, haz que cada intento offline **necesite algo que el atacante no tiene**. Después de que PBKDF2 produce la clave maestra a partir del PIN y el salt, mezclo un `deviceSecret` de 32 bytes que solo el chip original puede producir. El verificador almacenado en flash se deriva entonces de esa clave maestra _vinculada_. Un atacante que vuelca la flash tiene el texto cifrado y el salt, pero recalcular la clave para cualquier intento de PIN exige ahora el secreto por-chip — y ese secreto nunca aparece en la flash que copió.
+La vinculación al dispositivo mezcla un `deviceSecret` de 32 bytes por chip en la clave maestra después de PBKDF2, usando HKDF. El verificador almacenado en flash solo se reproduce entonces en el chip original, así que un atacante que vuelque esa flash sigue sin poder recalcular la clave para ningún intento de PIN.
+
+El razonamiento es simple: si no puedes hacer cada intento offline lo bastante lento, haz que cada intento offline **necesite algo que el atacante no tiene**. Después de que PBKDF2 produce la clave maestra a partir del PIN y el salt, mezclo un `deviceSecret` de 32 bytes que solo el chip original puede producir. El verificador almacenado en flash se deriva entonces de esa clave maestra _vinculada_. Un atacante que vuelca la flash tiene el texto cifrado y el salt, pero recalcular la clave para cualquier intento de PIN exige ahora el secreto por-chip. En el ESP32-S3 ese secreto nunca aparece en la flash que copió: vive en un eFuse de solo lectura y el periférico HMAC lo usa sin exponerlo. En el ESP32 clásico, que no tiene ese periférico, el respaldo es un pepper guardado en NVS cifrada: sigue costándole trabajo al atacante, pero está en el chip y no fuera de su alcance, así que la garantía es más débil.
 
 Es como pedir, además del PIN, un ingrediente que solo existe en _este_ chip concreto y que no se puede copiar: por muy perfecta que sea la copia de la flash que se lleve el ladrón, sin ese ingrediente sus 10.000 intentos no van a ninguna parte. Este es todo el truco, y cambia el ataque de _lineal_ a _categórico_. Antes de la vinculación, el atacante offline necesita 10.000 evaluaciones baratas de PBKDF2 y gana. Después de la vinculación, necesita un secreto que físicamente no sale del chip, así que el ataque offline no se vuelve más lento — deja de existir. El único sitio donde se puede comprobar un intento es de vuelta en el dispositivo, donde la protección de lockout-y-borrado está esperando.
 
@@ -254,7 +256,7 @@ La vinculación es una característica de _producción endurecida_, condicionada
 
 ---
 
-## ¿De dónde sale el secreto del dispositivo?
+## ¿De dónde sale el secreto del dispositivo por-chip en el ESP32?
 
 El "secreto que solo este chip puede producir" tiene dos implementaciones, elegidas en tiempo de compilación según lo que el chip realmente sabe hacer. La capacidad que decide es si el SoC tiene un **periférico HMAC** por hardware, que ESP-IDF expone como `SOC_HMAC_SUPPORTED`. El ESP32-S3 lo tiene; el ESP32 clásico no — y ese único hecho es la razón de que el código lleve dos backends en vez de uno.
 
@@ -385,7 +387,9 @@ Ambos backends producen un `deviceSecret` de 32 bytes y se lo entregan al mismo 
 
 ---
 
-## Mezclarlo con HKDF, no con un HMAC hecho a mano
+## ¿Por qué usar HKDF en lugar de un HMAC hecho a mano?
+
+HKDF (RFC 5869) es un KDF de extract-then-expand publicado y analizado que convierte un secreto no uniforme en material de clave uniforme con separación de dominio, así que la construcción se mantiene estándar y citable en vez de casera — y se apoya en un único primitivo HMAC, que es lo que mantiene la salida idéntica byte a byte en host y dispositivo.
 
 Una vez que tienes un secreto del dispositivo de 32 bytes y una clave maestra de PBKDF2 de 32 bytes, hay que combinarlos en una clave nueva. La tentación es echar mano de un `HMAC(deviceSecret, master)` pelado y darlo por hecho. Yo no lo hice, porque existe un primitivo publicado y analizado construido justo para esto —la herramienta homologada en lugar de mezclar a ojo—: **[HKDF](https://datatracker.ietf.org/doc/html/rfc5869)** (RFC 5869), el KDF de extract-then-expand cuyo argumento de seguridad expuso Hugo Krawczyk en [_Cryptographic Extraction and Key Derivation: The HKDF Scheme_](https://eprint.iacr.org/2010/264). HKDF te convierte un secreto no uniforme en material de clave uniforme _con separación de dominio_, y usarlo tal cual mantiene toda la construcción como algo citable y estándar en lugar de algo que me inventé un martes.
 

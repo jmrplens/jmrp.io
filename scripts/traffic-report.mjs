@@ -97,8 +97,94 @@ const MONTHS = {
   Nov: 10,
   Dec: 11,
 };
+// The request target is captured as the whole remainder of the quoted request
+// line and split afterwards. Writing it as `(\S*)[^"]*` instead made two
+// quantifiers compete for the same characters, which is super-linear on a
+// crafted line — and these lines come from the open internet.
 const LINE =
-  /^(\S+) \S+ \S+ \[(\d+)\/(\w+)\/(\d+):([\d:]+) [+-]\d+\] "(\w+) (\S*)[^"]*" (\d{3}) \d+ "[^"]*" "([^"]*)"/u;
+  /^(\S+) \S+ \S+ \[(\d+)\/(\w+)\/(\d+):([\d:]+) [+-]\d+\] "(\w+) ([^"]*)" (\d{3}) \d+ "[^"]*" "([^"]*)"/u;
+
+/**
+ * Reads one nginx log, decompressing a rotated one on the way.
+ *
+ * @param file - Path to the log.
+ * @returns Its text, or null when it cannot be read (rotated away mid-run).
+ */
+function readLogText(file) {
+  try {
+    const raw = fs.readFileSync(file);
+    return file.endsWith(".gz")
+      ? zlib.gunzipSync(raw).toString()
+      : raw.toString();
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Files one request into the bucket its status code belongs to.
+ *
+ * @param agg - The aggregate being filled.
+ * @param bump - Counter helper bound to that aggregate.
+ * @param req - The parsed request: cleaned path, client IP, method, status.
+ */
+function recordByStatus(agg, bump, { clean, ip, method, status }) {
+  switch (status) {
+    case "404": {
+      bump(agg.top404, clean);
+      return;
+    }
+    case "418": {
+      bump(agg.tarpit, clean);
+      agg.tarpitIps.add(ip);
+      return;
+    }
+    case "405": {
+      bump(agg.top405, `${method} ${clean}`);
+      return;
+    }
+    case "200": {
+      if (clean.endsWith(".md")) bump(agg.mdTwins, clean);
+      else if (clean.endsWith("/") || !clean.includes(".")) {
+        bump(agg.topPages, clean);
+      }
+      return;
+    }
+    default:
+  }
+}
+
+/**
+ * Parses one access-log line and files it into the aggregate.
+ *
+ * Returns without recording anything for a line that does not parse, falls
+ * outside the window, or comes from this host — the three cases that would
+ * otherwise inflate every bucket with the report's own traffic.
+ *
+ * @param {object} agg - The aggregate being filled.
+ * @param {Function} bump - Counter helper bound to that aggregate.
+ * @param {string} line - One raw log line.
+ * @param {number} sinceMs - Start of the window, epoch milliseconds.
+ */
+function recordLine(agg, bump, line, sinceMs) {
+  const m = LINE.exec(line);
+  if (!m) return;
+  const [, ip, d, mon, y, hms, method, request, status, ua] = m;
+  const [hh, mm, ss] = hms.split(":", 3);
+  // The log offset is the server's own TZ and so is this process: local
+  // Date.parse-free comparison is close enough for a daily window.
+  const ts = Date.UTC(+y, MONTHS[mon], +d, +hh, +mm, +ss);
+  if (ts < sinceMs || isOwn(ip)) return;
+  agg.total += 1;
+  bump(agg.byStatus, status);
+  recordByStatus(agg, bump, {
+    clean: request.split(" ", 1)[0].split("?", 1)[0],
+    ip,
+    method,
+    status,
+  });
+  bump(agg.uas, ua.length > 80 ? `${ua.slice(0, 77)}…` : ua);
+}
 
 /** Parses the origin logs into per-bucket aggregates for the window. */
 function collectOrigin(sinceMs) {
@@ -115,57 +201,9 @@ function collectOrigin(sinceMs) {
   };
   const bump = (map, key, n = 1) => map.set(key, (map.get(key) ?? 0) + n);
   for (const file of NGINX_LOGS) {
-    let text;
-    try {
-      const raw = fs.readFileSync(file);
-      text = file.endsWith(".gz")
-        ? zlib.gunzipSync(raw).toString()
-        : raw.toString();
-    } catch {
-      continue;
-    }
-    for (const line of text.split("\n")) {
-      const m = LINE.exec(line);
-      if (!m) continue;
-      const [, ip, d, mon, y, hms, method, uri, status, ua] = m;
-      const [hh, mm, ss] = hms.split(":", 3);
-      const ts = Date.UTC(+y, MONTHS[mon], +d, +hh, +mm, +ss);
-      // The log offset is the server's own TZ and so is this process: local
-      // Date.parse-free comparison is close enough for a daily window.
-      if (ts < sinceMs) continue;
-      if (isOwn(ip)) continue;
-      agg.total += 1;
-      bump(agg.byStatus, status);
-      const clean = uri.split("?", 1)[0];
-      switch (status) {
-        case "404": {
-          bump(agg.top404, clean);
-          break;
-        }
-        case "418": {
-          bump(agg.tarpit, clean);
-          agg.tarpitIps.add(ip);
-
-          break;
-        }
-        case "405": {
-          bump(agg.top405, `${method} ${clean}`);
-          break;
-        }
-        default: {
-          if (status === "200" && clean.endsWith(".md"))
-            bump(agg.mdTwins, clean);
-          else if (
-            status === "200" &&
-            (clean.endsWith("/") || !clean.includes("."))
-          ) {
-            bump(agg.topPages, clean);
-          }
-        }
-      }
-      const uaShort = ua.length > 80 ? `${ua.slice(0, 77)}…` : ua;
-      bump(agg.uas, uaShort);
-    }
+    const text = readLogText(file);
+    if (text === null) continue;
+    for (const line of text.split("\n")) recordLine(agg, bump, line, sinceMs);
   }
   return agg;
 }
@@ -295,12 +333,19 @@ function buildMessage(edge, origin, date) {
 
 /** The full self-contained HTML report (site palette, dark). */
 function buildHtml(edge, origin, date) {
-  const table = (title, entries, cols) => `
-    <section><h2>${esc(title)}</h2><table><thead><tr>${cols
-      .map((c) => `<th>${esc(c)}</th>`)
-      .join("")}</tr></thead><tbody>${entries
-      .map((r) => `<tr>${r.map((c) => `<td>${esc(c)}</td>`).join("")}</tr>`)
-      .join("")}</tbody></table></section>`;
+  const th = (c) => "<th>" + esc(c) + "</th>";
+  const td = (c) => "<td>" + esc(c) + "</td>";
+  const tr = (r) => "<tr>" + r.map(td).join("") + "</tr>";
+  const table = (title, entries, cols) =>
+    [
+      "<section><h2>",
+      esc(title),
+      "</h2><table><thead><tr>",
+      cols.map(th).join(""),
+      "</tr></thead><tbody>",
+      entries.map(tr).join(""),
+      "</tbody></table></section>",
+    ].join("");
   const classRows = {};
   for (const r of edge.classes) {
     classRows[r.c] ??= { bot: 0, browser: 0, "empty-ua": 0 };
@@ -428,7 +473,13 @@ async function main() {
   try {
     edge = await collectEdge();
   } catch (error) {
-    console.error(`[traffic-report] edge collection failed: ${error.message}`);
+    // The message can carry an upstream response body, so it is neither
+    // trusted nor safe to splice into a log line: strip control characters
+    // (a newline would forge a second entry) and cap the length.
+    const safe = String(error.message)
+      .replaceAll(/[\u{0}-\u{1F}\u{7F}]/gu, " ")
+      .slice(0, 200);
+    console.error("[traffic-report] edge collection failed:", safe);
   }
   const origin = collectOrigin(sinceMs);
 
