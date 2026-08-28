@@ -124,7 +124,7 @@
     "remark-mdx": "^3.1.1",
     "remark-parse": "^11.0.0",
     "rss-parser": "^3.13.0",
-    "satori": "^0.33.2",
+    "satori": "^0.33.4",
     "schema-dts": "^2.0.0",
     "sharp": "^0.35.3",
     "sonar-scanner": "^3.1.0",
