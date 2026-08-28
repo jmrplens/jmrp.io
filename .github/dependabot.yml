@@ -5,6 +5,14 @@ updates:
     schedule:
       interval: "weekly"
     open-pull-requests-limit: 10
+    ignore:
+      # TypeScript stays on 6.x until Astro supports 7. TS 7 dropped the
+      # programmatic API `astro check` builds on, so a major bump turns the
+      # type-check job red on arrival and there is nothing to fix on our side.
+      # Minor and patch releases still come through. Drop this entry once
+      # Astro ships TS 7 support.
+      - dependency-name: "typescript"
+        update-types: ["version-update:semver-major"]
     # Optional: Groups updates to reduce noise
     groups:
       astro-ecosystem:
