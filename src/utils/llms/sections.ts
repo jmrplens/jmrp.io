@@ -354,8 +354,8 @@ export const HOME_SECTIONS: {
     path: "/homelab/",
     title: { en: "Homelab", es: "Homelab" },
     note: {
-      en: "No twin: its figures are substituted per request, so a static copy would be stale the moment it was written.",
-      es: "Sin gemelo: sus cifras se sustituyen por petición, así que una copia estática nacería caducada.",
+      en: "Its twin ships the metric placeholders rather than values: nginx substitutes them as the document is served, so the markdown carries the same live figures as the page and is never cached.",
+      es: "Su gemelo lleva los marcadores de las métricas en vez de los valores: nginx los sustituye al servir el documento, así que el markdown trae las mismas cifras vivas que la página y no se cachea nunca.",
     },
   },
   { path: "/privacy/", title: { en: "Privacy", es: "Privacidad" } },

@@ -10,6 +10,13 @@ import type { HomelabKpiTranslations } from "@components/homelab/HomelabKpi";
 import HomelabKpi from "@components/homelab/HomelabKpi";
 import type { InfrastructureTranslations } from "@components/homelab/InfrastructureInsights";
 import InfrastructureInsights from "@components/homelab/InfrastructureInsights";
+import {
+  homelabNodes,
+  type HomelabService,
+  homelabServices,
+  type HomelabTorService,
+  homelabTorServices,
+} from "@components/homelab/inventory";
 import type {
   NodeCardsTranslations,
   NodeConfig,
@@ -21,10 +28,7 @@ import ServiceStats from "@components/homelab/ServiceStats";
 import { HLM } from "@components/homelab/ssr-tokens";
 import type { TorAggregateTranslations } from "@components/homelab/TorAggregate";
 import TorAggregate from "@components/homelab/TorAggregate";
-import type {
-  TorStatsTranslations,
-  TorType,
-} from "@components/homelab/TorStats";
+import type { TorStatsTranslations } from "@components/homelab/TorStats";
 import TorStats from "@components/homelab/TorStats";
 import { defaultLocale, type Locale } from "@i18n/config";
 import {
@@ -34,7 +38,6 @@ import {
 } from "@i18n/utils";
 import BaseLayout from "@layouts/BaseLayout.astro";
 import type { LanguageTaggedValue } from "@utils/person";
-import { getMcpServers } from "@utils/projects";
 import { getSiteUrl } from "@utils/site";
 
 const locale = (Astro.currentLocale ?? defaultLocale) as Locale;
@@ -158,53 +161,6 @@ interface Provider {
   name: string;
 }
 
-interface Service {
-  id: string;
-  /**
-   * Translation key of the schema `name`, resolved in BOTH locales (see
-   * `localizedLabel`) rather than as one page-locale string on a shared `@id`.
-   */
-  nameKey: TranslationKey;
-  title: string;
-  icon: string;
-  /** Translation key of the card copy AND of the schema `description`. */
-  descriptionKey: TranslationKey;
-  url: string;
-  linkText: string;
-  /**
-   * Live stat pair to render, when the service publishes one. Optional: the
-   * MCP card has no meaningful pair to show yet, and an empty `ServiceStats`
-   * would render two "—" placeholders that look like a broken probe.
-   */
-  statsType?: "mastodon" | "matrix" | "pds";
-  provider: Provider;
-  userInfo?: string;
-  /** MCP fleet rows: callable address + live version/replicas tokens. */
-  mcpFleet?: {
-    endpoint: string;
-    version: string;
-    alive: string;
-    dotClass: string;
-  }[];
-  /**
-   * Whether nginx's `/stats/health` probe reports on this service.
-   *
-   * It gates BOTH the card's "online" pill and the KPI denominator, because
-   * the KPI renders `<probe-online> / <count of probed cards>`: counting a
-   * service the probe never looks at would render "3 / 4" and tell the reader
-   * something is down. A card with `probed: false` is shown without a status
-   * claim instead of with an unverified one.
-   *
-   * Note the pill itself is a build-time string gated by this flag — only the
-   * KPI numerator is live (HLM_ONLINE, injected by nginx at serve time). The
-   * probe's roster lives OUT of this repo (/etc/nginx/lua/homelab_health.lua,
-   * which checks the MCP fleet via its public per-server health endpoints);
-   * `scripts/ci/check-homelab-probe.mjs` (pnpm verify, production host only)
-   * asserts these flags and that roster are the same set.
-   */
-  probed: boolean;
-}
-
 // Reference the canonical #person entity so services are provided by the same
 // José node used site-wide (not a disconnected duplicate Person).
 const defaultProvider: Provider = {
@@ -213,157 +169,13 @@ const defaultProvider: Provider = {
   name: "José Manuel Requena Plens",
 };
 
-const services: Service[] = [
-  {
-    id: "mastodon",
-    nameKey: "pages.homelab.mastodonName",
-    title: "Mastodon",
-    icon: "fa-brands:mastodon",
-    descriptionKey: "pages.homelab.mastodonDescription",
-    url: "https://mstdn.jmrp.io/",
-    linkText: t("pages.homelab.mastodonLink"),
-    statsType: "mastodon",
-    provider: defaultProvider,
-    probed: true,
-  },
-  {
-    id: "matrix",
-    nameKey: "pages.homelab.matrixName",
-    title: "Matrix",
-    icon: "simple-icons:matrix",
-    descriptionKey: "pages.homelab.matrixDescription",
-    url: "https://matrix.to/#/@jmrplens:matrix.jmrp.io",
-    linkText: t("pages.homelab.matrixLink"),
-    statsType: "matrix",
-    provider: defaultProvider,
-    probed: true,
-    userInfo: "@jmrplens:matrix.jmrp.io",
-  },
-  {
-    id: "pds",
-    nameKey: "pages.homelab.pdsName",
-    title: "AT Protocol",
-    icon: "simple-icons:bluesky",
-    descriptionKey: "pages.homelab.pdsDescription",
-    url: "https://bsky.app/profile/jmrp.io",
-    linkText: t("pages.homelab.pdsLink"),
-    statsType: "pds",
-    provider: defaultProvider,
-    probed: true,
-    userInfo: "@jmrp.io",
-  },
-  {
-    id: "mcp",
-    nameKey: "pages.homelab.mcpName",
-    title: "MCP",
-    icon: "simple-icons:modelcontextprotocol",
-    descriptionKey: "pages.homelab.mcpDescription",
-    url: "https://mcp.jmrp.io/",
-    linkText: t("pages.homelab.mcpLink"),
-    provider: defaultProvider,
-    probed: true,
-    // One row per MCP server: callable address from projects.yaml plus the
-    // live tokens (version, alive replicas, dot class) that nginx substitutes
-    // at serve time — same registry pattern as everything else on this page.
-    // The token key is the endpoint's last path segment (gitlab, libgen);
-    // a server without tokens still renders, with em-dash placeholders.
-    mcpFleet: (await getMcpServers()).map((server) => {
-      const key = new URL(server.endpoint).pathname
-        .split("/")
-        .findLast(Boolean) as keyof typeof HLM.mcpFleet;
-      const tokens = HLM.mcpFleet[key];
-      return {
-        endpoint: server.endpoint.replace(/^https?:\/\//, ""),
-        version: tokens?.version ?? "—",
-        alive: tokens?.alive ?? "—",
-        dotClass: tokens?.dotClass ?? "",
-      };
-    }),
-  },
-];
-
-/**
- * One Tor card. `nameKey` replaces the old `title`/`name` pair, which held the
- * very same translation twice — once for the card, once for the graph.
- */
-interface TorService {
-  id: string;
-  nameKey: TranslationKey;
-  icon: string;
-  descriptionKey: TranslationKey;
-  url: string;
-  linkText: string;
-  torType: TorType;
-}
+const services: HomelabService[] = await homelabServices(t);
 
 /** Tor services displayed as separate cards alongside the main services grid. */
-const torServices: TorService[] = [
-  {
-    id: "tor-bridge",
-    nameKey: "pages.homelab.torBridgeName",
-    icon: "simple-icons:torproject",
-    descriptionKey: "pages.homelab.torBridgeDescription",
-    url: "https://metrics.torproject.org/rs.html#details/1508F567C54ECF5373CE2EF3BF02C62EEA1B320E",
-    linkText: t("pages.homelab.torBridgeLink"),
-    torType: "bridge",
-  },
-  {
-    id: "tor-bridge-es1",
-    nameKey: "pages.homelab.torBridgeEs1Name",
-    icon: "simple-icons:torproject",
-    descriptionKey: "pages.homelab.torBridgeEs1Description",
-    url: "https://metrics.torproject.org/rs.html#details/98422E9D1648FFDB8F16C06CF58CD64B6C03A003",
-    linkText: t("pages.homelab.torBridgeEs1Link"),
-    torType: "bridge-es1",
-  },
-  {
-    id: "tor-relay",
-    nameKey: "pages.homelab.torRelayName",
-    icon: "simple-icons:torproject",
-    descriptionKey: "pages.homelab.torRelayDescription",
-    url: "https://metrics.torproject.org/rs.html#details/B442687AD97B8CC73F3AED95D76E1F47A5504C14",
-    linkText: t("pages.homelab.torRelayLink"),
-    torType: "relay",
-  },
-  {
-    id: "tor-relay-es",
-    nameKey: "pages.homelab.torRelayEsName",
-    icon: "simple-icons:torproject",
-    descriptionKey: "pages.homelab.torRelayEsDescription",
-    url: "https://metrics.torproject.org/rs.html#details/3467943E5042BA46FCE4DE8517B0EBCD5D1BBB1D",
-    linkText: t("pages.homelab.torRelayEsLink"),
-    torType: "relay-es",
-  },
-];
+const torServices: HomelabTorService[] = homelabTorServices(t);
 
 /** Infrastructure nodes shown in the compact live resource grid. */
-const nodeCards: NodeConfig[] = [
-  {
-    key: "nginx",
-    name: t("pages.homelab.nodeNginxName"),
-    role: t("pages.homelab.nodeNginxRole"),
-  },
-  {
-    key: "matrix",
-    name: t("pages.homelab.nodeMatrixName"),
-    role: t("pages.homelab.nodeMatrixRole"),
-  },
-  {
-    key: "mastodon",
-    name: t("pages.homelab.nodeMastodonName"),
-    role: t("pages.homelab.nodeMastodonRole"),
-  },
-  {
-    key: "truenas",
-    name: t("pages.homelab.nodeTruenasName"),
-    role: t("pages.homelab.nodeTruenasRole"),
-  },
-  {
-    key: "mikrotik",
-    name: t("pages.homelab.nodeRouterName"),
-    role: t("pages.homelab.nodeRouterRole"),
-  },
-];
+const nodeCards: NodeConfig[] = homelabNodes(t);
 
 // Node-count breakdown for the KPI band, derived from the real arrays so it stays
 // in sync (e.g. "monitored nodes · 5 infra · 4 Tor").
@@ -444,7 +256,7 @@ const servicesSchema = {
       name: localizedLabel(service.nameKey),
       description: localizedLabel(service.descriptionKey),
       url: service.url,
-      provider: service.provider,
+      provider: defaultProvider,
     })),
     ...torServices.map((service) => ({
       "@type": "Service",

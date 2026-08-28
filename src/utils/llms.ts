@@ -206,10 +206,10 @@ const today = () => new Date().toISOString().slice(0, 10);
  * that 404s. Membership here is a fact about which `index.md.ts` routes exist
  * under `src/pages/`, so adding a route and adding a line here is one change.
  *
- * `/homelab/` is deliberately absent: its figures are substituted by nginx per
- * request, and a `.md` served by the static-asset location would publish the
- * raw `HLM_*` tokens and then cache them for a day. It gets its entry when
- * the server side is resolved.
+ * `/homelab/` is in the set, but its twin is unlike every other one: it ships
+ * the `HLM_*` tokens rather than values, and nginx substitutes them per
+ * request from two exact-match locations that also send `no-store` and turn
+ * the precompressed variants off. See `@utils/llms/homelab-markdown`.
  *
  * `/blog/` and `/tools/` are absent for a different reason, and it is not an
  * oversight: llms.txt already lists every post and every tool with its title,
@@ -225,6 +225,7 @@ const TWINNED_PAGES: ReadonlySet<string> = new Set([
   "/blog/series/",
   "/cv/",
   "/feeds/",
+  "/homelab/",
   "/privacy/",
   "/projects/",
   "/publications/",

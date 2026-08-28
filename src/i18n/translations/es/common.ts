@@ -599,6 +599,12 @@ export const common = {
         "CrowdSec actúa como WAF: analiza patrones en NGINX y, junto al honeypot del router, decide qué IPs bloquear. Los bloqueos se reparten a todos los bouncers — NGINX, Cloudflare y el router vía mi cs-RouterOS-bouncer.",
       linkTarpit: "Cómo funciona el tarpit ↗",
       linkHoneypot: "Honeypot & CrowdSec ↗",
+      twinIntro:
+        "Infraestructura autoalojada sobre hardware y conexiones propias del autor. Cada cifra de abajo la sustituye nginx al servir el documento, así que tiene minutos como mucho, y este fichero no se cachea nunca.",
+      twinOverview: "De un vistazo",
+      twinFleet: "Endpoints MCP que se pueden llamar",
+      twinReplicas: "réplicas vivas",
+      twinStatus: "Estado",
       servicesKicker: "Servicios públicos",
       nodesUnit: "nodos",
       nodesLiveHint: "carga en vivo · inyectada al servir",
