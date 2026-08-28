@@ -138,8 +138,8 @@ importers:
         specifier: ^1.2.38
         version: 1.2.38
       '@iconify-json/vscode-icons':
-        specifier: ^1.2.74
-        version: 1.2.74
+        specifier: ^1.2.75
+        version: 1.2.75
       '@lhci/cli':
         specifier: ^0.15.1
         version: 0.15.1(supports-color@10.2.2)
@@ -1533,8 +1533,8 @@ packages:
   '@iconify-json/tabler@1.2.38':
     resolution: {integrity: sha512-9v6ooRU/bKOK/Whv4w2aiK5gBnfCV9Ei+uD1iDDeLu2b+EnF3G3ZKkRKWEOOLG8bJyfKn6XEia6gUQ9oO7cF+Q==}
 
-  '@iconify-json/vscode-icons@1.2.74':
-    resolution: {integrity: sha512-ZVf1IM5sOvvY+0Gc6jtuD5okkd51mJe/BoVMhWJCu1WqZLSF6XgbSguxUOyuBmMjJXNPSw1OBvPwEVq1bXfiTw==}
+  '@iconify-json/vscode-icons@1.2.75':
+    resolution: {integrity: sha512-9nPLpK9cd35iCEZYRSPOmhZ7S2IK4np8Vf/tXdswe5rKhV9Twt+oJ2y+tKfRlugJQavhTJBvejvCpj7Aukki5A==}
 
   '@iconify/types@2.0.0':
     resolution: {integrity: sha512-+wluvCrRhXrhyOmRDJ3q8mux9JkKy5SJ/v8ol2tu4FVjyYvtEzkc/3pK15ET6RKg4b4w4BmTk1+gsCUhf21Ykg==}
@@ -9353,7 +9353,7 @@ snapshots:
     dependencies:
       '@iconify/types': 2.0.0
 
-  '@iconify-json/vscode-icons@1.2.74':
+  '@iconify-json/vscode-icons@1.2.75':
     dependencies:
       '@iconify/types': 2.0.0
 
