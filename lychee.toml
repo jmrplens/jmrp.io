@@ -54,11 +54,23 @@ exclude = [
     'https://www\.upv\.es/index-en\.html',
     'https://www\.upv\.es/entidades/epsg/en/home/',
     'http://hdl\.handle\.net/.*',
-    'http://www\.upv\.es/ficha-personal/alcebrui',
-    'http://www\.upv\.es/ficha-personal/fracasra',
-    'http://www\.upv\.es/ficha-personal/lmgarcia',
-    'http://www\.upv\.es/ficha-personal/rpico',
-    'http://www\.upv\.es/ficha-personal/victorsm',
+    # UPV's personal-profile app answers 503, or hangs past the timeout, to
+    # automated requests — verified from this server one URL a second, so it is
+    # not lychee's concurrency. The rest of www.upv.es answers 200 normally,
+    # hence the path prefix rather than the whole domain.
+    #
+    # These five profiles WERE already listed, one line each and spelled
+    # `http://`. #388 rewrote `coauthors.yaml` to `https://`, the patterns
+    # quietly stopped matching anything, and nothing noticed for months because
+    # UPV was still answering. Both schemes and a wildcard tail instead, so the
+    # exclusion cannot drift again and a sixth co-author from the same faculty
+    # is covered without touching this file.
+    #
+    # Two lines rather than one `https?://`: cspell skips text it can parse as
+    # a URL, and `https?://` is not one, so the single-pattern version made the
+    # spell checker read the path as prose and reject the Spanish word in it.
+    'http://www\.upv\.es/ficha-personal/.*',
+    'https://www\.upv\.es/ficha-personal/.*',
     'https://nojigon\.webs\.upv\.es/.*',
     'https://www\.csic\.es/.*',
     'https://cienciagandia\.webs\.upv\.es/.*',
