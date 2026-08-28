@@ -178,50 +178,62 @@ export async function homelabServices(t: Translate): Promise<HomelabService[]> {
 }
 
 /**
+ * What actually differs between the four Tor nodes.
+ *
+ * The cards were four object literals identical but for a fingerprint and a
+ * key prefix. That shape is the kind of duplication that rots rather than the
+ * kind that documents: a field added to one card and forgotten on the other
+ * three renders three quietly incomplete cards, and nothing fails.
+ *
+ * `keyStem` is spelled out instead of derived from `torType` so the
+ * translation keys stay searchable — searching `torBridgeEs1Name` has to land
+ * here. The `id` IS derived, because it is `tor-` + the type by construction
+ * and `scripts/ci/check-homelab-probe.mjs` asserts the resulting ids against
+ * nginx's own roster, so a drift there fails CI rather than passing silently.
+ */
+const TOR_NODES = [
+  {
+    torType: "bridge",
+    keyStem: "torBridge",
+    fingerprint: "1508F567C54ECF5373CE2EF3BF02C62EEA1B320E",
+  },
+  {
+    torType: "bridge-es1",
+    keyStem: "torBridgeEs1",
+    fingerprint: "98422E9D1648FFDB8F16C06CF58CD64B6C03A003",
+  },
+  {
+    torType: "relay",
+    keyStem: "torRelay",
+    fingerprint: "B442687AD97B8CC73F3AED95D76E1F47A5504C14",
+  },
+  {
+    torType: "relay-es",
+    keyStem: "torRelayEs",
+    fingerprint: "3467943E5042BA46FCE4DE8517B0EBCD5D1BBB1D",
+  },
+] as const satisfies readonly {
+  torType: TorType;
+  keyStem: string;
+  fingerprint: string;
+}[];
+
+/**
  * The Tor nodes, in the order the page shows them.
  *
  * @param t - Translator for the target locale.
  * @returns The Tor roster.
  */
 export function homelabTorServices(t: Translate): HomelabTorService[] {
-  return [
-    {
-      id: "tor-bridge",
-      nameKey: "pages.homelab.torBridgeName",
-      icon: "simple-icons:torproject",
-      descriptionKey: "pages.homelab.torBridgeDescription",
-      url: "https://metrics.torproject.org/rs.html#details/1508F567C54ECF5373CE2EF3BF02C62EEA1B320E",
-      linkText: t("pages.homelab.torBridgeLink"),
-      torType: "bridge",
-    },
-    {
-      id: "tor-bridge-es1",
-      nameKey: "pages.homelab.torBridgeEs1Name",
-      icon: "simple-icons:torproject",
-      descriptionKey: "pages.homelab.torBridgeEs1Description",
-      url: "https://metrics.torproject.org/rs.html#details/98422E9D1648FFDB8F16C06CF58CD64B6C03A003",
-      linkText: t("pages.homelab.torBridgeEs1Link"),
-      torType: "bridge-es1",
-    },
-    {
-      id: "tor-relay",
-      nameKey: "pages.homelab.torRelayName",
-      icon: "simple-icons:torproject",
-      descriptionKey: "pages.homelab.torRelayDescription",
-      url: "https://metrics.torproject.org/rs.html#details/B442687AD97B8CC73F3AED95D76E1F47A5504C14",
-      linkText: t("pages.homelab.torRelayLink"),
-      torType: "relay",
-    },
-    {
-      id: "tor-relay-es",
-      nameKey: "pages.homelab.torRelayEsName",
-      icon: "simple-icons:torproject",
-      descriptionKey: "pages.homelab.torRelayEsDescription",
-      url: "https://metrics.torproject.org/rs.html#details/3467943E5042BA46FCE4DE8517B0EBCD5D1BBB1D",
-      linkText: t("pages.homelab.torRelayEsLink"),
-      torType: "relay-es",
-    },
-  ];
+  return TOR_NODES.map(({ torType, keyStem, fingerprint }) => ({
+    id: `tor-${torType}`,
+    nameKey: `pages.homelab.${keyStem}Name`,
+    icon: "simple-icons:torproject",
+    descriptionKey: `pages.homelab.${keyStem}Description`,
+    url: `https://metrics.torproject.org/rs.html#details/${fingerprint}`,
+    linkText: t(`pages.homelab.${keyStem}Link`),
+    torType,
+  }));
 }
 
 /**
