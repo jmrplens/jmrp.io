@@ -1,23 +1,23 @@
 {
-  "total": 148281,
-  "generatedAt": "2026-08-28T06:24:55.082Z",
+  "total": 149334,
+  "generatedAt": "2026-08-28T14:52:05.951Z",
   "sources": {
-    "githubReleases": 139381,
-    "dockerHub": 7678,
+    "githubReleases": 140377,
+    "dockerHub": 7735,
     "manual": 1222
   },
   "manualVerifiedOn": "2026-08-27",
   "projects": {
     "gitlab-mcp-server": {
-      "total": 141648,
-      "releases": 136239,
-      "docker": 5409,
+      "total": 142674,
+      "releases": 137213,
+      "docker": 5461,
       "manual": 0
     },
     "libgen-mcp": {
-      "total": 3983,
-      "releases": 1714,
-      "docker": 2269,
+      "total": 4008,
+      "releases": 1734,
+      "docker": 2274,
       "manual": 0
     },
     "cs-routeros-bouncer": {
@@ -39,8 +39,8 @@
       "manual": 0
     },
     "A-Lab": {
-      "total": 1297,
-      "releases": 641,
+      "total": 1299,
+      "releases": 643,
       "docker": 0,
       "manual": 656
     },
