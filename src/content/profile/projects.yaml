@@ -70,6 +70,11 @@ projects:
       # community repository, with the manifests signed by him.
       - https://github.com/microsoft/winget-pkgs/tree/master/manifests/j/jmrplens/gitlab-mcp-server
       - https://hub.docker.com/r/jmrplens/gitlab-mcp-server
+      # npm scope `@jmrp.io` (with the dot), published by the account `jmrpio`
+      # (without it). Only the entry package is listed: the six
+      # `-<platform>-<arch>` siblings beside it are the prebuilt binaries it
+      # pulls in, not things anyone installs on purpose.
+      - https://www.npmjs.com/package/@jmrp.io/gitlab-mcp-server
       - https://doi.org/10.5281/zenodo.21215045
     topics:
       - { name: Model Context Protocol, wikidata: Q133436854 }

@@ -49,8 +49,13 @@ person:
     - "https://gitlab.com/jmrp"
     # Package registries where the software in `owns` is published, tying the
     # identity to the artifacts rather than only to their source repos.
+    #
+    # NOTE the npm handle: the account is `jmrpio`, WITHOUT the dot, while the
+    # scope the packages publish under is `@jmrp.io`, with it. An audit that
+    # searched npm for "jmrplens" concluded he had no packages there; he does.
     - "https://pypi.org/user/jmrplens/"
     - "https://hub.docker.com/u/jmrplens"
+    - "https://www.npmjs.com/~jmrpio"
     # Communities where he posts under the canonical handle. Each one was
     # verified by a link back to this site or to the GitHub account, not by the
     # handle alone — "jmrplens" is rare, but a matching handle is not proof.
