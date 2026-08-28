@@ -56,10 +56,17 @@ projects:
     hostedEs: https://mcp.jmrp.io/es/servers/gitlab/
     endpoint: https://mcp.jmrp.io/gitlab
     registryId: io.github.jmrplens/gitlab-mcp-server
-    listing:
-      label: Glama
-      url: https://glama.ai/mcp/servers/jmrplens/gitlab-mcp-server
-      icon: mdi:view-grid-outline
+    listings:
+      # npm first: a reader looking at the card usually wants to install it.
+      # Glama keeps its link — it is a discovery directory, a different
+      # question — and its ranking depends on the link existing, not on where
+      # in the row it sits.
+      - label: npm
+        url: https://www.npmjs.com/package/@jmrp.io/gitlab-mcp-server
+        icon: simple-icons:npm
+      - label: Glama
+        url: https://glama.ai/mcp/servers/jmrplens/gitlab-mcp-server
+        icon: mdi:view-grid-outline
     sameAs:
       - https://cursor.directory/plugins/gitlab-mcp-server
       - https://mcp.so/server/gitlab-mcp-server/jmrplens
@@ -70,11 +77,6 @@ projects:
       # community repository, with the manifests signed by him.
       - https://github.com/microsoft/winget-pkgs/tree/master/manifests/j/jmrplens/gitlab-mcp-server
       - https://hub.docker.com/r/jmrplens/gitlab-mcp-server
-      # npm scope `@jmrp.io` (with the dot), published by the account `jmrpio`
-      # (without it). Only the entry package is listed: the six
-      # `-<platform>-<arch>` siblings beside it are the prebuilt binaries it
-      # pulls in, not things anyone installs on purpose.
-      - https://www.npmjs.com/package/@jmrp.io/gitlab-mcp-server
       - https://doi.org/10.5281/zenodo.21215045
     topics:
       - { name: Model Context Protocol, wikidata: Q133436854 }
@@ -96,10 +98,10 @@ projects:
     repo: https://github.com/jmrplens/phonometry
     docs: https://jmrplens.github.io/phonometry/
     docsEs: https://jmrplens.github.io/phonometry/es/
-    listing:
-      label: PyPI
-      url: https://pypi.org/project/phonometry/
-      icon: simple-icons:pypi
+    listings:
+      - label: PyPI
+        url: https://pypi.org/project/phonometry/
+        icon: simple-icons:pypi
     sameAs:
       - https://doi.org/10.5281/zenodo.21215280
     topics:
@@ -121,10 +123,10 @@ projects:
     license: MIT
     repo: https://github.com/jmrplens/cs-routeros-bouncer
     docs: https://jmrplens.github.io/cs-routeros-bouncer/
-    listing:
-      label: CrowdSec Hub
-      url: https://app.crowdsec.net/hub/author/jmrplens/remediation-components/cs-routeros-bouncer
-      icon: mdi:shield-check
+    listings:
+      - label: CrowdSec Hub
+        url: https://app.crowdsec.net/hub/author/jmrplens/remediation-components/cs-routeros-bouncer
+        icon: mdi:shield-check
     topics:
       - { name: Network security, wikidata: Q989632 }
       - { name: RouterOS, wikidata: Q12036888 }
@@ -168,10 +170,10 @@ projects:
     hostedEs: https://mcp.jmrp.io/es/servers/libgen/
     endpoint: https://mcp.jmrp.io/libgen
     registryId: io.github.jmrplens/libgen-mcp
-    listing:
-      label: Glama
-      url: https://glama.ai/mcp/servers/jmrplens/libgen-mcp
-      icon: mdi:view-grid-outline
+    listings:
+      - label: Glama
+        url: https://glama.ai/mcp/servers/jmrplens/libgen-mcp
+        icon: mdi:view-grid-outline
     sameAs:
       - https://cursor.directory/plugins/libgen-mcp
       - https://lobehub.com/mcp/jmrplens-libgen-mcp
@@ -238,10 +240,10 @@ projects:
     license: GPL-3.0
     repo: https://github.com/jmrplens/A-Lab
     docs: https://github.com/jmrplens/A-Lab#readme
-    listing:
-      label: MATLAB Central
-      url: https://www.mathworks.com/matlabcentral/fileexchange/93180-a-lab
-      icon: vscode-icons:file-type-matlab
+    listings:
+      - label: MATLAB Central
+        url: https://www.mathworks.com/matlabcentral/fileexchange/93180-a-lab
+        icon: vscode-icons:file-type-matlab
     topics:
       - { name: Acoustics, wikidata: Q82811 }
       - { name: Acoustic impedance, wikidata: Q975684 }
@@ -274,10 +276,10 @@ projects:
     license: GPL-3.0
     repo: https://github.com/jmrplens/SetFigPaper
     docs: https://github.com/jmrplens/SetFigPaper#readme
-    listing:
-      label: MATLAB Central
-      url: https://www.mathworks.com/matlabcentral/fileexchange/75507-setfigpaper
-      icon: vscode-icons:file-type-matlab
+    listings:
+      - label: MATLAB Central
+        url: https://www.mathworks.com/matlabcentral/fileexchange/75507-setfigpaper
+        icon: vscode-icons:file-type-matlab
     topics:
       - { name: Data visualization, wikidata: Q6504956 }
       - { name: MATLAB, wikidata: Q169478 }
@@ -311,10 +313,10 @@ projects:
     license: GPL-3.0
     repo: https://github.com/jmrplens/FDTDexamples
     docs: https://github.com/jmrplens/FDTDexamples#readme
-    listing:
-      label: MATLAB Central
-      url: https://www.mathworks.com/matlabcentral/fileexchange/72883-fdtdexamples
-      icon: vscode-icons:file-type-matlab
+    listings:
+      - label: MATLAB Central
+        url: https://www.mathworks.com/matlabcentral/fileexchange/72883-fdtdexamples
+        icon: vscode-icons:file-type-matlab
     topics:
       - { name: Finite-difference time-domain method, wikidata: Q1417308 }
       - { name: Aeroacoustics, wikidata: Q381331 }
@@ -333,10 +335,10 @@ projects:
     license: GPL-3.0
     repo: https://github.com/jmrplens/CATT2Matlab
     docs: https://github.com/jmrplens/CATT2Matlab#readme
-    listing:
-      label: MATLAB Central
-      url: https://www.mathworks.com/matlabcentral/fileexchange/64398-catt2matlab
-      icon: vscode-icons:file-type-matlab
+    listings:
+      - label: MATLAB Central
+        url: https://www.mathworks.com/matlabcentral/fileexchange/64398-catt2matlab
+        icon: vscode-icons:file-type-matlab
     topics:
       - { name: Acoustics, wikidata: Q82811 }
       - { name: Reverberation, wikidata: Q468809 }
