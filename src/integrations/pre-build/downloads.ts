@@ -5,6 +5,7 @@ import { type AstroIntegrationLogger } from "astro";
 
 import {
   fetchAllDownloads,
+  MANUAL_COUNTS_VERIFIED_ON,
   type ProjectDownloads,
 } from "../../../scripts/download-sources.mjs";
 import { safeStringify } from "../shared.js";
@@ -47,8 +48,14 @@ interface DownloadsData {
 
 /**
  * Refreshes {@link DOWNLOADS_DATA_PATH} with the latest cumulative download
- * totals. Never throws: on any failure the previously committed file is kept
- * so the build always has a value to render.
+ * totals. Never throws, and always leaves a readable file behind: the pages
+ * import it statically, so its absence is a build failure rather than a
+ * missing figure.
+ *
+ * The file is generated, not tracked. On a failed refresh an existing copy is
+ * kept — the build host accumulates its own last-known-good across builds — and
+ * a host that has none gets a zeroed file, which both consumers already render
+ * as a dash instead of a number.
  *
  * @param logger - The Astro logger instance.
  * @param token - Optional GitHub token (from env) to lift the API rate limit.
@@ -94,8 +101,24 @@ export async function setupDownloads(
         `Could not refresh download totals (${message}). Keeping existing ${OUTPUT_FILE}.`,
       );
     } else {
+      // Zeroed rather than absent: `HomePage` renders "—" for a total of 0 and
+      // `ProjectsPage` shows no figure for a project below its display floor,
+      // so an empty roster degrades to "no numbers" — while a missing file
+      // fails the static import and takes the whole build down with it.
+      const empty: DownloadsData = {
+        total: 0,
+        generatedAt: new Date().toISOString(),
+        sources: { githubReleases: 0, dockerHub: 0, manual: 0 },
+        manualVerifiedOn: MANUAL_COUNTS_VERIFIED_ON,
+        projects: {},
+      };
+      if (!fs.existsSync(outputDirAbs)) {
+        fs.mkdirSync(outputDirAbs, { recursive: true });
+      }
+      fs.writeFileSync(outputPath, `${JSON.stringify(empty, null, 2)}\n`);
       logger.warn(
-        `Could not fetch download totals (${message}) and no cached file exists.`,
+        `Could not fetch download totals (${message}) and no cached file ` +
+          `exists. Wrote a zeroed ${OUTPUT_FILE} so the build still renders.`,
       );
     }
   }

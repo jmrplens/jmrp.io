@@ -16,6 +16,15 @@ builds/
 .astro/
 # Optimized images cache (speeds up builds)
 .cache/
+# Live download counters, refreshed at pre-build from the GitHub and Docker Hub
+# APIs. Pure derived data — the hand-read MATLAB counts that cannot be fetched
+# live in `scripts/download-sources.mjs`, not here — so tracking it only bought
+# a fallback for a failed fetch, at the cost of dirtying the tree on EVERY
+# build and riding along in 24 unrelated commits. The build host keeps its own
+# last-known-good copy on disk between builds; a fresh clone whose fetch fails
+# gets a zeroed file from the integration, and both pages already render a dash
+# rather than a figure when the total is 0.
+src/data/downloads.json
 # Package manager dependencies
 node_modules/
 
