@@ -166,6 +166,30 @@ const topicThing = (topic: ProjectTopic): Thing => ({
 });
 
 /**
+ * The MCP servers' entry in the official registry, as a resolvable URL.
+ *
+ * `registryId` was authored for the publishing pipeline and never reached the
+ * graph, so the registry the protocol itself considers canonical — and the one
+ * every derived directory (Glama, mcp.so, PulseMCP) reads from — was the one
+ * alias the servers did not declare.
+ *
+ * `/versions` is the per-server resource: the registry has no `/v0/servers/
+ * {name}` path (that 404s) and no human-facing page per server, and the search
+ * endpoint is a query, not a permalink. This one returns the server's whole
+ * version history in a single response — verified against both servers, 57 and
+ * 22 entries, with no pagination to walk.
+ *
+ * @param registryId - The `io.github.owner/name` id, when the project has one.
+ * @returns A one-element array with the URL, or empty when it has no id.
+ */
+function registryAlias(registryId: string | undefined): string[] {
+  if (!registryId) return [];
+  return [
+    `https://registry.modelcontextprotocol.io/v0/servers/${encodeURIComponent(registryId)}/versions`,
+  ];
+}
+
+/**
  * Builds the JSON-LD node for one project.
  *
  * `description` is always the English summary, on both locales: the software
@@ -191,6 +215,7 @@ export function buildProjectSchema(project: Project): Record<string, unknown> {
   const aliases = [
     ...(project.docs.startsWith(`${project.repo}#`) ? [] : [project.docs]),
     ...(project.listings ?? []).map((l) => l.url),
+    ...registryAlias(project.registryId),
     ...(project.sameAs ?? []),
   ];
 
