@@ -58,6 +58,111 @@ function label(s: string): string {
   return s.charAt(0).toUpperCase() + s.slice(1);
 }
 
+/** Minimal translator shape, matching `useTranslations(locale)`. */
+type Translate = ReturnType<typeof useTranslations>;
+
+/**
+ * One service card as markdown lines.
+ *
+ * Split out of `homelabMarkdown` because every optional part of a card — the
+ * handle, the status pill, the stat pair, the MCP fleet table — is a branch,
+ * and four of them inside the document builder pushed its cognitive
+ * complexity past what the gate allows. The branching belongs with the thing
+ * that is actually optional.
+ *
+ * @param service - The service to render.
+ * @param t - Translator for the target locale.
+ * @returns The card's markdown lines.
+ */
+function serviceBlock(
+  service: Awaited<ReturnType<typeof homelabServices>>[number],
+  t: Translate,
+): string[] {
+  const out = [
+    `### ${t(service.nameKey)}`,
+    "",
+    t(service.descriptionKey),
+    "",
+    `- URL: ${service.url}`,
+  ];
+  if (service.userInfo) out.push(`- ${service.userInfo}`);
+
+  const status =
+    HLM.serviceStatus[service.id as keyof typeof HLM.serviceStatus];
+  if (service.probed && status) {
+    out.push(`- ${label(t("pages.homelab.twinStatus"))}: ${status.status}`);
+  }
+
+  const stats = service.statsType ? HLM.services[service.statsType] : undefined;
+  if (stats && service.statsType) {
+    // The pair `ServiceStats` renders: a headline figure and the software
+    // version, the latter labelled with the product name and not the word
+    // "version" — matching the component rather than inventing a label.
+    out.push(
+      `- ${label(t(SERVICE_PRIMARY_LABEL[service.statsType]))}: ${stats.primary}`,
+      `- ${SERVICE_SOFTWARE[service.statsType]}: ${stats.secondary}`,
+    );
+  }
+
+  if (service.mcpFleet?.length) {
+    out.push("", `**${t("pages.homelab.twinFleet")}**`, "");
+    for (const row of service.mcpFleet) {
+      out.push(
+        `- \`${row.endpoint}\` — ${t("pages.homelab.torVersion")} ${row.version}, ${row.alive} ${t("pages.homelab.twinReplicas")}`,
+      );
+    }
+  }
+
+  out.push("");
+  return out;
+}
+
+/**
+ * One Tor node card as markdown lines.
+ *
+ * @param node - The Tor node to render.
+ * @param t - Translator for the target locale.
+ * @returns The card's markdown lines.
+ */
+function torBlock(
+  node: ReturnType<typeof homelabTorServices>[number],
+  t: Translate,
+): string[] {
+  const ssr = HLM.torNodes[node.torType];
+  return [
+    `### ${t(node.nameKey)}`,
+    "",
+    t(node.descriptionKey),
+    "",
+    // Clients for a bridge, connections for a relay — never the same word
+    // for both. See `torHeadlineKey`.
+    `- ${label(t(torHeadlineKey(node.torType)))}: ${ssr.headline}`,
+    `- ${label(t("pages.homelab.torLocation"))}: ${ssr.location}`,
+    `- ${label(t("pages.homelab.torBandwidth"))}: ${ssr.bandwidth}`,
+    `- ${node.url}`,
+    "",
+  ];
+}
+
+/**
+ * One infrastructure node as a single markdown list item.
+ *
+ * @param node - The node to render.
+ * @param t - Translator for the target locale.
+ * @returns The line, or nothing when the node publishes no live tokens.
+ */
+function nodeLine(
+  node: ReturnType<typeof homelabNodes>[number],
+  t: Translate,
+): string[] {
+  const ssr = HLM.nodes[node.key as keyof typeof HLM.nodes];
+  return ssr
+    ? [
+        `- **${node.name}** (${node.role}) — ${t("pages.homelab.nodeCpu")} ${ssr.cpu}, ${t("pages.homelab.nodeRam")} ${ssr.mem}, ${t("pages.homelab.cpuTemp")} ${ssr.temp} (${ssr.status})`,
+      ]
+    : [];
+}
+
 /**
  * Renders the homelab twin for one locale.
  *
@@ -108,73 +213,16 @@ export async function homelabMarkdown(
     "",
     `## ${t("pages.homelab.servicesKicker")}`,
     "",
-  ];
+    ...services.flatMap((service) => serviceBlock(service, t)),
 
-  for (const service of services) {
-    out.push(
-      `### ${t(service.nameKey)}`,
-      "",
-      t(service.descriptionKey),
-      "",
-      `- URL: ${service.url}`,
-    );
-    if (service.userInfo) out.push(`- ${service.userInfo}`);
-    const status =
-      HLM.serviceStatus[service.id as keyof typeof HLM.serviceStatus];
-    if (service.probed && status) {
-      out.push(`- ${label(t("pages.homelab.twinStatus"))}: ${status.status}`);
-    }
-    const stats = service.statsType
-      ? HLM.services[service.statsType]
-      : undefined;
-    if (stats && service.statsType) {
-      // The pair `ServiceStats` renders: a headline figure and the software
-      // version, the latter labelled with the product name and not the word
-      // "version" — matching the component rather than inventing a label.
-      out.push(
-        `- ${label(t(SERVICE_PRIMARY_LABEL[service.statsType]))}: ${stats.primary}`,
-        `- ${SERVICE_SOFTWARE[service.statsType]}: ${stats.secondary}`,
-      );
-    }
-    if (service.mcpFleet?.length) {
-      out.push("", `**${t("pages.homelab.twinFleet")}**`, "");
-      for (const row of service.mcpFleet) {
-        out.push(
-          `- \`${row.endpoint}\` — ${t("pages.homelab.torVersion")} ${row.version}, ${row.alive} ${t("pages.homelab.twinReplicas")}`,
-        );
-      }
-    }
-    out.push("");
-  }
+    `## ${t("pages.homelab.torKicker")}`,
+    "",
+    ...torServices.flatMap((node) => torBlock(node, t)),
 
-  out.push(`## ${t("pages.homelab.torKicker")}`, "");
-  for (const node of torServices) {
-    const ssr = HLM.torNodes[node.torType];
-    out.push(
-      `### ${t(node.nameKey)}`,
-      "",
-      t(node.descriptionKey),
-      "",
-      // Clients for a bridge, connections for a relay — never the same word
-      // for both. See `torHeadlineKey`.
-      `- ${label(t(torHeadlineKey(node.torType)))}: ${ssr.headline}`,
-      `- ${label(t("pages.homelab.torLocation"))}: ${ssr.location}`,
-      `- ${label(t("pages.homelab.torBandwidth"))}: ${ssr.bandwidth}`,
-      `- ${node.url}`,
-      "",
-    );
-  }
+    `## ${t("pages.homelab.kicker")}`,
+    "",
+    ...nodes.flatMap((node) => nodeLine(node, t)),
 
-  out.push(`## ${t("pages.homelab.kicker")}`, "");
-  for (const node of nodes) {
-    const ssr = HLM.nodes[node.key as keyof typeof HLM.nodes];
-    if (!ssr) continue;
-    out.push(
-      `- **${node.name}** (${node.role}) — ${t("pages.homelab.nodeCpu")} ${ssr.cpu}, ${t("pages.homelab.nodeRam")} ${ssr.mem}, ${t("pages.homelab.cpuTemp")} ${ssr.temp} (${ssr.status})`,
-    );
-  }
-
-  out.push(
     "",
     `## ${t("pages.homelab.edgeDefense")}`,
     "",
@@ -186,7 +234,7 @@ export async function homelabMarkdown(
     `- ${label(t("pages.homelab.blacklistScanners"))}: ${HLM.edge.blacklist}`,
     `- ${label(t("pages.homelab.activeConnections"))}: ${HLM.edge.activeConnections}`,
     "",
-  );
+  ];
 
   return out.join("\n");
 }
