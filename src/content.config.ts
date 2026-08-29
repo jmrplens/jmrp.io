@@ -610,6 +610,17 @@ const aboutSchema = z.object({
      */
     email: z.email().optional(),
     /**
+     * Funding page, emitted as a `DonateAction` under `potentialAction`.
+     *
+     * Deliberately NOT a `sameAs` entry: that list exists so a consumer can
+     * resolve two URLs to one entity, and the GitHub account is already there
+     * with the strongest proof any of them has. A second URL on the same host
+     * adds no identity evidence — and this page is not an identity at all, it
+     * is somewhere to act. `DonateAction` is the vocabulary schema.org has for
+     * exactly that.
+     */
+    sponsorUrl: z.url().optional(),
+    /**
      * The profession, emitted as `hasOccupation`. Deliberately separate from
      * `worksFor` (site.yaml), which reads as present tense — the canonical
      * entity must not claim a current employer it no longer has.

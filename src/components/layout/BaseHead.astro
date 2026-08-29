@@ -314,6 +314,22 @@ const websiteSchema = {
     // the graph — the disclosure line on every AuthorCard already links there.
     // KEEP-IN-SYNC: scripts/ci/build-identity.mjs.
     publishingPrinciples: new URL("/about/#editorial", getSiteUrl()).href,
+    // Funding page as an ACTION, not as an identity. It is deliberately absent
+    // from `sameAs`: that list exists so a consumer can resolve two URLs to one
+    // entity, and github.com/jmrplens is already in it carrying a signed
+    // ownership proof, so a second URL on the same host adds nothing. See the
+    // longer note in build-identity.mjs.
+    // KEEP-IN-SYNC: scripts/ci/build-identity.mjs.
+    ...(aboutData?.person.sponsorUrl && {
+      potentialAction: {
+        "@type": "DonateAction",
+        name: "Sponsor this work on GitHub",
+        target: {
+          "@type": "EntryPoint",
+          urlTemplate: aboutData.person.sponsorUrl,
+        },
+      },
+    }),
     image: {
       "@type": "ImageObject",
       url: new URL(CANONICAL_PERSON_IMAGE.path, getSiteUrl()).href,
