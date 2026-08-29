@@ -286,6 +286,29 @@ function buildIdentityDocument() {
     // this node in inherit the signal too.
     // KEEP-IN-SYNC: src/components/layout/BaseHead.astro.
     publishingPrinciples: `${SITE_URL}/about/#editorial`,
+    // Where to fund the work, as an action rather than as an identity.
+    //
+    // This is NOT in `sameAs` on purpose: that list lets a consumer resolve
+    // two URLs to one entity, and github.com/jmrplens is already there with a
+    // signed ownership proof. A second URL on the same host proves nothing
+    // new, and a funding page is not an identity anyway. `DonateAction` is the
+    // property schema.org has for "you can donate here".
+    //
+    // No `recipient`: the action hangs off the Person node itself, so the
+    // recipient is unambiguous. Naming it would mean an `@id` reference, and
+    // the six downstream sites splice this document into a graph where such a
+    // reference resolves only by luck.
+    // KEEP-IN-SYNC: src/components/layout/BaseHead.astro.
+    ...(about.person.sponsorUrl && {
+      potentialAction: {
+        "@type": "DonateAction",
+        name: "Sponsor this work on GitHub",
+        target: {
+          "@type": "EntryPoint",
+          urlTemplate: about.person.sponsorUrl,
+        },
+      },
+    }),
     image: {
       "@type": "ImageObject",
       url: IMAGE.url,

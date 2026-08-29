@@ -26,6 +26,11 @@ person:
   # must not be "simplified" to match this one.
   email: mail@jmrp.io
 
+  # Funding page → `potentialAction` as a DonateAction. Not a `sameAs`: the
+  # GitHub account is already asserted there, and this is a place to act, not
+  # an identity to resolve.
+  sponsorUrl: https://github.com/sponsors/jmrplens
+
   # The profession, deliberately NOT `worksFor`. schema.org's `worksFor` reads
   # as present tense, and the last employment ended — asserting it here would
   # publish a stale employer to this site AND to the six project documentation
