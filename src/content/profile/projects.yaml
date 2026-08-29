@@ -76,6 +76,7 @@ projects:
       # VerifyMCP audits the LIVE endpoint (mcp.jmrp.io/gitlab), not the repo,
       # and publishes its own SoftwareApplication node for this server.
       - https://verifymcp.io/servers/jmrplens-gitlab-mcp-server/gitlab
+      - https://pickmcp.com/servers/jmrplens/gitlab-mcp-server
       # WinGet: publisher namespace of his own in Microsoft's official
       # community repository, with the manifests signed by him.
       - https://github.com/microsoft/winget-pkgs/tree/master/manifests/j/jmrplens/gitlab-mcp-server
@@ -190,6 +191,7 @@ projects:
       # VerifyMCP audits the LIVE endpoint (mcp.jmrp.io/libgen). Canonical URL
       # carries the transport segment; the bare /servers/<slug> path 302s here.
       - https://verifymcp.io/servers/jmrplens-libgen-mcp/libgen
+      - https://pickmcp.com/servers/jmrplens/libgen-mcp
       - https://hub.docker.com/r/jmrplens/libgen-mcp
     topics:
       - { name: Model Context Protocol, wikidata: Q133436854 }
