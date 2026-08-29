@@ -422,6 +422,36 @@ fs.writeFileSync(path.join(PUBLIC, "favicon.svg"), favSvgAnim);
 fs.writeFileSync(path.join(PUBLIC, "favicon-32x32.png"), await rounded(32));
 fs.writeFileSync(path.join(PUBLIC, "favicon-48x48.png"), await rounded(48));
 fs.writeFileSync(path.join(PUBLIC, "favicon.png"), await rounded(180));
+// Apple touch icons, every size iOS and macOS look for.
+//
+// When a page declares no `<link rel="apple-touch-icon" sizes="...">` for the
+// size it wants, Safari falls back to probing the site root by convention,
+// newest name first, and each miss is a 404 in the log — real iPhones were
+// asking for the 120x120 pair and getting one. Emitting the whole set answers
+// on the first try instead of on the fallback.
+//
+// The `-precomposed` twin of each size exists for the same reason: iOS 6 and
+// earlier applied their own gloss unless the name said otherwise, and Safari
+// still asks for it first. The two files are identical here — this icon is
+// flat by design and never wanted the gloss.
+//
+// Sizes, oldest to newest: 57 and 72 are the pre-retina iPhone and iPad; 114
+// and 144 their retina versions; 60, 76, 120 and 152 the iOS 7+ set; 167 the
+// iPad Pro; 180 the iPhone Plus and the size a modern `<link>` points at.
+const APPLE_TOUCH_SIZES = [57, 60, 72, 76, 114, 120, 144, 152, 167, 180];
+for (const size of APPLE_TOUCH_SIZES) {
+  const png = await square(size);
+  fs.writeFileSync(
+    path.join(PUBLIC, `apple-touch-icon-${size}x${size}.png`),
+    png,
+  );
+  fs.writeFileSync(
+    path.join(PUBLIC, `apple-touch-icon-${size}x${size}-precomposed.png`),
+    png,
+  );
+}
+// The unsized pair stays: it is what the `<link>` in BaseHead points at, and
+// the last thing Safari tries when every sized name misses.
 fs.writeFileSync(path.join(PUBLIC, "apple-touch-icon.png"), await square(180));
 fs.writeFileSync(
   path.join(PUBLIC, "apple-touch-icon-precomposed.png"),
