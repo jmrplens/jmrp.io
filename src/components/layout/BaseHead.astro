@@ -337,13 +337,16 @@ const websiteSchema = {
       // image metadata documentation asks for `contentUrl` specifically, and a
       // node carrying only `url` does not satisfy it.
       //
-      // Deliberately WITHOUT `creator`, `creditText` or `copyrightNotice`,
-      // unlike the blog covers: this is a photograph OF the person, and the
-      // rights in a portrait belong to whoever took it. Naming the subject as
-      // author would be an attribution claim the site cannot support, and a
-      // false one is worse than a missing one.
+      // Attribution mirrors the blog covers. This is a photograph OF the
+      // person rather than one taken by him, so the rights were checked
+      // rather than assumed: they were assigned to him, and it is the
+      // portrait he uses everywhere, which is what makes the claim safe to
+      // publish on a node six other sites splice in verbatim.
       // KEEP-IN-SYNC: scripts/ci/build-identity.mjs.
       contentUrl: new URL(CANONICAL_PERSON_IMAGE.path, getSiteUrl()).href,
+      creator: { "@id": new URL("#person", getSiteUrl()).href },
+      creditText: siteData.author,
+      copyrightNotice: `© ${siteData.author}`,
       // Numeric, not a quoted string: schema.org types MediaObject
       // width/height as Distance | QuantitativeValue, never Text, so "460" was
       // simply the wrong datatype. E37 is the UN/CEFACT code for "pixel".

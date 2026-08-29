@@ -316,13 +316,16 @@ function buildIdentityDocument() {
       // image metadata documentation asks for `contentUrl` specifically, and a
       // node carrying only `url` does not satisfy it.
       //
-      // Deliberately WITHOUT `creator`, `creditText` or `copyrightNotice`,
-      // unlike the blog covers: this is a photograph OF the person, and the
-      // rights in a portrait belong to whoever took it. Naming the subject as
-      // author would be an attribution claim the site cannot support, and a
-      // false one is worse than a missing one.
+      // Attribution mirrors the blog covers. This is a photograph OF the
+      // person rather than one taken by him, so the rights were checked
+      // rather than assumed: they were assigned to him, and it is the
+      // portrait he uses everywhere, which is what makes the claim safe to
+      // publish on a node six other sites splice in verbatim.
       // KEEP-IN-SYNC: src/components/layout/BaseHead.astro.
       contentUrl: IMAGE.url,
+      creator: { "@id": PERSON_ID },
+      creditText: site.author,
+      copyrightNotice: `© ${site.author}`,
       // Numeric QuantitativeValue, not a quoted string — schema.org types
       // MediaObject width/height as Distance | QuantitativeValue, never Text.
       // E37 = pixel (UN/CEFACT). Must mirror BaseHead.astro exactly: the
