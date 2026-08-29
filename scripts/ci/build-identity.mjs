@@ -312,6 +312,17 @@ function buildIdentityDocument() {
     image: {
       "@type": "ImageObject",
       url: IMAGE.url,
+      // Where the bytes are, as distinct from what `url` identifies. Google's
+      // image metadata documentation asks for `contentUrl` specifically, and a
+      // node carrying only `url` does not satisfy it.
+      //
+      // Deliberately WITHOUT `creator`, `creditText` or `copyrightNotice`,
+      // unlike the blog covers: this is a photograph OF the person, and the
+      // rights in a portrait belong to whoever took it. Naming the subject as
+      // author would be an attribution claim the site cannot support, and a
+      // false one is worse than a missing one.
+      // KEEP-IN-SYNC: src/components/layout/BaseHead.astro.
+      contentUrl: IMAGE.url,
       // Numeric QuantitativeValue, not a quoted string — schema.org types
       // MediaObject width/height as Distance | QuantitativeValue, never Text.
       // E37 = pixel (UN/CEFACT). Must mirror BaseHead.astro exactly: the
