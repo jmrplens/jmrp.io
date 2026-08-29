@@ -253,6 +253,26 @@ const articleNode = {
   image: {
     "@type": "ImageObject",
     url: new URL(jsonLdImage, getSiteUrl()).href,
+    // `url` and `contentUrl` are NOT interchangeable, and only one of them is
+    // the file: `url` identifies the item, `contentUrl` is where the bytes
+    // live. Google's image metadata documentation asks for `contentUrl`
+    // specifically, and a node carrying only `url` does not satisfy it. They
+    // point at the same address here because the cover is served directly,
+    // with no landing page of its own.
+    contentUrl: new URL(jsonLdImage, getSiteUrl()).href,
+    // This image IS the subject of the page, not decoration beside it — the
+    // distinction Google draws when picking a thumbnail.
+    representativeOfPage: true,
+    // Attribution, which is the ONLY thing image metadata is documented to
+    // affect: how the image is credited if it surfaces, never how it ranks.
+    // A reference to the canonical entity rather than a duplicated Person
+    // node, so there is one author in the graph and not two that merely agree.
+    creator: personRef,
+    creditText: siteData.author,
+    // The post's year, not the build's: a notice that changes every deploy
+    // says the work was created the day the site last shipped, which is false
+    // for everything but the newest post.
+    copyrightNotice: `© ${post.data.publishedDate.getFullYear()} ${siteData.author}`,
     // Numeric, not a quoted string: schema.org types MediaObject width/height
     // as Distance | QuantitativeValue, never Text. E37 = pixel (UN/CEFACT).
     width: {
