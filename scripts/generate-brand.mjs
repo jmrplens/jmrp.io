@@ -421,7 +421,13 @@ const square = (size) => render(sqSvg, "icon", size);
 fs.writeFileSync(path.join(PUBLIC, "favicon.svg"), favSvgAnim);
 fs.writeFileSync(path.join(PUBLIC, "favicon-32x32.png"), await rounded(32));
 fs.writeFileSync(path.join(PUBLIC, "favicon-48x48.png"), await rounded(48));
-fs.writeFileSync(path.join(PUBLIC, "favicon.png"), await rounded(180));
+// 144 px, and the number is a limit rather than a taste: RSS 2.0 caps the
+// channel image at 144 wide. No `<link>` in the HTML points at this file —
+// its only consumer is the feed's `<image>` (src/utils/rss.ts) — so it is
+// sized for that. At 180 it broke the cap, and a strict reader may drop it.
+// Renaming it to something honest would change a public URL that feed
+// readers have already cached, which is the more expensive mistake.
+fs.writeFileSync(path.join(PUBLIC, "favicon.png"), await rounded(144));
 // Apple touch icons, every size iOS and macOS look for.
 //
 // When a page declares no `<link rel="apple-touch-icon" sizes="...">` for the
@@ -500,4 +506,4 @@ console.log(
 console.log(`  animation frames (sample ${sampleGif}): ${frames} (expect 2)`);
 console.log(`  PNG: truecolor + sRGB (reliable colour everywhere)`);
 console.log(`  Tinify (WebP only): ${tinify ? "ON" : "off (set TINIFY=1)"}`);
-console.log("  Favicons → public/ (svg, ico, 32/48/180, icon-192/512)");
+console.log("  Favicons → public/ (svg, ico, 32/48, feed 144, icon-192/512)");

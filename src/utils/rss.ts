@@ -146,6 +146,13 @@ export async function generateRssFeed(
     itemsXml += await generateRssItem(post, site, locale, pathPrefix);
   }
 
+  // The channel <image> declares both dimensions because the DEFAULTS are the
+  // trap, not the maximums: RSS 2.0 defaults width to 88 and height to 31, so
+  // a reader that honours them renders this square logo squashed into a wide,
+  // short box. The spec caps width at 144 and height at 400, which makes
+  // 144x144 the largest legal square — and the size generate-brand.mjs emits
+  // `favicon.png` at. Kept out of the XML itself: it is guidance for whoever
+  // edits this file, and shipping it would spend those bytes on every fetch.
   const rssXml = `<?xml version="1.0" encoding="UTF-8"?>
 <rss version="2.0" 
   xmlns:atom="http://www.w3.org/2005/Atom" 
@@ -168,6 +175,8 @@ export async function generateRssFeed(
       <url>${escapeXml(new URL("/favicon.png", site).href)}</url>
       <title>${escapeXml(t("seo.rssFeedTitle"))}</title>
       <link>${escapeXml(site + pathPrefix)}</link>
+      <width>144</width>
+      <height>144</height>
     </image>
     ${itemsXml}
   </channel>
