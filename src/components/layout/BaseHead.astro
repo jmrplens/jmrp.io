@@ -707,6 +707,20 @@ const jsonLD = {
   PNG cover everything that is not a browser. Chromium scores `sizes="any"`
   as "scalable" and would pick the ICO over the SVG if the ICO carried it, so
   the ICO is pinned to `32x32` and `any` goes on the SVG instead.
+
+  That pin UNDER-DECLARES the file on purpose, and the gap is worth stating so
+  it does not read as an oversight: `favicon.ico` actually contains three
+  images — 16, 32 and 48 — and every consumer that opens the file gets all of
+  them. Declaring only 32 is what keeps Chromium on the SVG; a consumer that
+  wants 16 reads it from inside the ICO anyway, or takes the SVG, which scales.
+
+  No sizes above 48 are worth adding to the ICO, and the reason is the format:
+  the images inside are uncompressed BMP, so the file already spends 15 KB on
+  three small icons. A 64 would add ~16 KB, a 128 ~64 KB and a 256 ~256 KB, for
+  surfaces — Windows desktop shortcuts, Start tiles — that modern browsers
+  serve from the web app manifest instead. Storing those sizes as PNG inside
+  the ICO would be cheap, but PNG-in-ICO needs Vista or newer, which excludes
+  precisely the old consumers the large sizes would have been for.
 */
 }
 <link
