@@ -382,6 +382,10 @@ test.describe("SEO & Metadata Checks", () => {
       "Homelab",
       "Uses",
       "Privacy",
+      // The license page joined the profile sections when the site started
+      // stating reuse terms per kind of work; it is a real document section,
+      // not a post body, so H2 is where it belongs.
+      "License",
       // The Spanish profile sections were absent entirely — the document
       // carried both languages for posts and tools but only English for the
       // pages, so half the site had no entry under the index that promised it.
@@ -391,6 +395,7 @@ test.describe("SEO & Metadata Checks", () => {
       "Homelab",
       "Uses",
       "Privacidad",
+      "Licencia",
       // Not a page of this site: the author's MCP endpoints live on
       // mcp.jmrp.io. Its own H2 because these are callable endpoints, not
       // prose to read — see mcpBlock() in `@utils/llms`. Both languages in
