@@ -187,6 +187,7 @@ cilíndricos
 ciphersuites
 ciphertext
 ciphertexts
+cítalos
 clases
 claude
 claudebot
@@ -239,6 +240,7 @@ contenedores
 contenido
 continuar
 conversor
+cópiala
 copytruncate
 cplusplus
 cppreference
@@ -417,6 +419,7 @@ fediverse
 fediverso
 Feedbin
 feedly
+fiarlo
 filtro
 firehol
 firewalld
@@ -812,6 +815,7 @@ oscuro
 otras
 otro
 ouvrir
+overclaim
 overleafconfig
 Owasp
 página
@@ -944,6 +948,7 @@ reconexión
 reconexiones
 recrawl
 recursión
+recursos
 redibujado
 redirección
 redirecciones
@@ -984,6 +989,8 @@ renegociar
 reorientarme
 replaceability
 representación
+republícala
+republícalos
 reqs
 requena
 requestfailed
@@ -1153,6 +1160,7 @@ torproject
 torrc
 totp
 traceroute
+tradúcelos
 transmítela
 tresor
 trevorcox

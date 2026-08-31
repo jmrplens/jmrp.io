@@ -326,6 +326,20 @@ function buildIdentityDocument() {
       creator: { "@id": PERSON_ID },
       creditText: site.author,
       copyrightNotice: `© ${site.author}`,
+      // The two license fields Search Console reports as missing once a node
+      // carries creator/creditText/copyrightNotice: `license` states the terms,
+      // `acquireLicensePage` says where to ask for anything they do not grant.
+      // Google requires them to be distinct URLs, so they are two sections of
+      // the license page and not the same address twice.
+      //
+      // The portrait is deliberately NOT under the CC BY 4.0 that covers the
+      // post covers: it identifies a person rather than illustrating an
+      // article, and a free-reuse grant on a face is the one that cannot be
+      // walked back. Anchors are the English slugs on purpose — this node is
+      // the canonical identity document six external sites splice in verbatim,
+      // so it must not vary by the locale that happened to render it.
+      license: `${SITE_URL}/license/#portrait`,
+      acquireLicensePage: `${SITE_URL}/license/#permission`,
       // Numeric QuantitativeValue, not a quoted string — schema.org types
       // MediaObject width/height as Distance | QuantitativeValue, never Text.
       // E37 = pixel (UN/CEFACT). Must mirror BaseHead.astro exactly: the

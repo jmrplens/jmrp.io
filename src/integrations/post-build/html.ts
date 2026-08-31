@@ -236,8 +236,35 @@ function hardenBeaconScript(
       return;
     }
 
-    logger.info("Hardening cf-beacon.js with local guard...");
-    const hardenedBeacon = `${BEACON_HARDENED_SENTINEL}(function(){var h=location.hostname;if(h==='localhost'||h==='127.0.0.1'||h==='0.0.0.0'||h==='::1'||h==='[::1]')return;${originalBeacon}})();`;
+    // Allowlist the production host rather than denylisting loopback.
+    //
+    // The old guard blocked localhost, 127.0.0.1, 0.0.0.0 and ::1 only, which
+    // left the way the site is ACTUALLY previewed wide open: `astro preview`
+    // bound to a LAN address, opened from a phone at http://192.168.x.x:4321.
+    // The beacon is baked into the HTML at build time, so a preview of a
+    // production build fires it with the production token and pollutes the
+    // analytics with the author's own proofreading. The privacy page claims
+    // "development and preview runs never report anything"; a denylist can
+    // only ever approximate that, and this one did not even cover RFC1918.
+    //
+    // An exact host match makes the claim true by construction: any hostname
+    // that is not the production one — LAN IP, mDNS name, tunnel, staging
+    // worktree — reports nothing. `www` is a 301 to the bare host, so pages
+    // are only ever served from one name. Falls back to the previous loopback
+    // guard when PUBLIC_SITE_URL is absent, so behavior is unchanged rather
+    // than silently disabled if the variable ever goes missing.
+    const productionHost = process.env.PUBLIC_SITE_URL
+      ? URL.parse(process.env.PUBLIC_SITE_URL)?.hostname
+      : undefined;
+    const guard = productionHost
+      ? `if(location.hostname!==${JSON.stringify(productionHost)})return;`
+      : `var h=location.hostname;if(h==='localhost'||h==='127.0.0.1'||h==='0.0.0.0'||h==='::1'||h==='[::1]')return;`;
+    logger.info(
+      productionHost
+        ? `Hardening cf-beacon.js (reports only from ${productionHost})...`
+        : "Hardening cf-beacon.js with local guard...",
+    );
+    const hardenedBeacon = `${BEACON_HARDENED_SENTINEL}(function(){${guard}${originalBeacon}})();`;
     fs.writeFileSync(beaconPath, hardenedBeacon, "utf-8");
     hashCache.delete(`${beaconPath}:sha512`);
   }

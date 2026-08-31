@@ -133,16 +133,35 @@ export const PROFILE_SECTIONS: {
       title: "Privacy",
       lines: [
         "No cookies, no third-party scripts, no advertising network, no cross-site tracking, and no mailing list.",
-        "The only measurement is a privacy-preserving analytics beacon; the page invites the reader to verify the claim directly by opening the browser storage panel and finding nothing to delete.",
-        "Nothing on the site is monetized: no advertising, no affiliate links and no sponsored content, stated explicitly as a conflict-of-interest declaration.",
+        "Measurement is named in full rather than summarized: a self-hosted analytics beacon that strips the query string before reporting, and an edge worker that keeps one aggregate row per request for ninety days with no IP address and no session identifier.",
+        "No advertising, no affiliate links and no sponsored content; the single funding route is a GitHub Sponsors link on the projects page, named on the privacy page as a conflict-of-interest declaration rather than left for the reader to find.",
       ],
     },
     es: {
       title: "Privacidad",
       lines: [
         "Sin cookies, sin scripts de terceros, sin red publicitaria, sin rastreo entre sitios y sin lista de correo.",
-        "La única medición es un beacon de analítica respetuoso con la privacidad; la página invita a comprobarlo abriendo el panel de almacenamiento del navegador y no encontrando nada que borrar.",
-        "Nada del sitio está monetizado: ni publicidad, ni enlaces de afiliado, ni contenido patrocinado, declarado explícitamente como conflicto de intereses.",
+        "La medición se enuncia entera en vez de resumirse: un beacon de analítica autoalojado que elimina la cadena de consulta antes de informar, y un worker en el borde que guarda una fila agregada por petición durante noventa días, sin dirección IP ni identificador de sesión.",
+        "Ni publicidad, ni enlaces de afiliado, ni contenido patrocinado; la única vía de financiación es un enlace de GitHub Sponsors en la página de proyectos, nombrado en la página de privacidad como declaración de conflicto de intereses en vez de dejarlo a que el lector lo descubra.",
+      ],
+    },
+  },
+  {
+    url: "/license/",
+    en: {
+      title: "License",
+      lines: [
+        "Reuse terms differ by kind of work, and the page states each one rather than leaving the rest to be inferred from a single blanket notice.",
+        "Articles and blog cover images are released under CC BY 4.0: reusable commercially and in any medium, including derivatives, on condition of crediting the author and marking changes.",
+        "The portrait used as the avatar is excluded from that grant, because it identifies a person rather than illustrating an article; the site source is MIT-licensed, and the terms are emitted as machine-readable metadata on every page rather than only stated in prose.",
+      ],
+    },
+    es: {
+      title: "Licencia",
+      lines: [
+        "Las condiciones de reutilización cambian según el tipo de obra, y la página enuncia cada una en vez de dejar el resto a deducir de un único aviso general.",
+        "Los artículos y las portadas del blog se publican bajo CC BY 4.0: reutilizables comercialmente y en cualquier medio, derivados incluidos, a condición de citar la autoría e indicar los cambios.",
+        "El retrato que se usa como avatar queda fuera de esa cesión, porque identifica a una persona en lugar de ilustrar un artículo; el código del sitio está bajo MIT, y las condiciones se emiten como metadatos legibles por máquina en cada página, no solo enunciadas en prosa.",
       ],
     },
   },
@@ -289,12 +308,26 @@ export const SITE_SECTIONS: {
     en: {
       title: "Privacy",
       description:
-        "What the site measures — self-hosted analytics beacon, no cookies, no ads; rendering a page needs no third-party host, and the beacon posts one aggregate event to Cloudflare",
+        "What the site measures and what it does not — no cookies, no third-party scripts, no ads; the access log fields and their one-year retention, the edge worker, and the report a browser can send back on its own, all named rather than summarized",
     },
     es: {
       title: "Privacidad",
       description:
-        "Qué mide el sitio — beacon de analítica autoalojado, sin cookies, sin anuncios; renderizar una página no requiere ningún host de terceros, y el beacon envía un evento agregado a Cloudflare",
+        "Qué mide el sitio y qué no — sin cookies, sin scripts de terceros, sin anuncios; los campos del registro de acceso y su retención de un año, el worker del borde, y el informe que un navegador puede enviar por su cuenta, todos nombrados en vez de resumidos",
+    },
+  },
+
+  {
+    path: "/license/",
+    en: {
+      title: "License",
+      description:
+        "Reuse terms, stated per kind of work — articles and blog cover images under CC BY 4.0, the site source MIT-licensed, and the portrait reserved because it identifies a person",
+    },
+    es: {
+      title: "Licencia",
+      description:
+        "Condiciones de reutilización, por tipo de obra — artículos y portadas del blog bajo CC BY 4.0, código del sitio bajo MIT, y retrato reservado por identificar a una persona",
     },
   },
 ];
@@ -359,4 +392,5 @@ export const HOME_SECTIONS: {
     },
   },
   { path: "/privacy/", title: { en: "Privacy", es: "Privacidad" } },
+  { path: "/license/", title: { en: "License", es: "Licencia" } },
 ];

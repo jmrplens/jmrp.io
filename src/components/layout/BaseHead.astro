@@ -347,6 +347,20 @@ const websiteSchema = {
       creator: { "@id": new URL("#person", getSiteUrl()).href },
       creditText: siteData.author,
       copyrightNotice: `© ${siteData.author}`,
+      // The two license fields Search Console reports as missing once a node
+      // carries creator/creditText/copyrightNotice: `license` states the terms,
+      // `acquireLicensePage` says where to ask for anything they do not grant.
+      // Google requires them to be distinct URLs, so they are two sections of
+      // the license page and not the same address twice.
+      //
+      // The portrait is deliberately NOT under the CC BY 4.0 that covers the
+      // post covers: it identifies a person rather than illustrating an
+      // article, and a free-reuse grant on a face is the one that cannot be
+      // walked back. Anchors are the English slugs on purpose — this node is
+      // the canonical identity document six external sites splice in verbatim,
+      // so it must not vary by the locale that happened to render it.
+      license: new URL("/license/#portrait", getSiteUrl()).href,
+      acquireLicensePage: new URL("/license/#permission", getSiteUrl()).href,
       // Numeric, not a quoted string: schema.org types MediaObject
       // width/height as Distance | QuantitativeValue, never Text, so "460" was
       // simply the wrong datatype. E37 is the UN/CEFACT code for "pixel".
@@ -759,6 +773,23 @@ const jsonLD = {
 <link
   rel="sitemap"
   href="/sitemap-index.xml"
+/>
+{
+  /*
+   * Reuse terms, in the one place the HTML spec puts them. `rel="license"` means
+   * "this hyperlink leads to a document describing the licensing information",
+   * which is exactly what /license/ is, so the same relation is correct on every
+   * page whatever kind of work it carries — an article under CC BY, the portrait
+   * that is excluded from it, or a tool page whose code is MIT.
+   *
+   * Deliberately not the Creative Commons URI: that would be right on a post and
+   * wrong on the other hundred pages. The CC URI is already emitted, per post,
+   * in the JSON-LD `license` of the article and of its cover.
+   */
+}
+<link
+  rel="license"
+  href={locale === defaultLocale ? "/license/" : `/${locale}/license/`}
 />
 <link
   rel="alternate"

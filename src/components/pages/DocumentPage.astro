@@ -1,0 +1,194 @@
+---
+/**
+ * A standalone prose document ("// PRIVACY", "// LICENSE") — a page whose
+ * whole content is a written policy rather than generated data.
+ *
+ * The copy lives in `src/content/pages/<locale>/<slug>.mdx`, not in the
+ * translation bundle the privacy policy used to occupy as 32 keys. A policy is
+ * a document: editing one should not mean editing a string table, its
+ * `dateModified` should come from the document rather than from a bundle that
+ * also holds unrelated UI strings, and it should have a markdown twin like
+ * every other page — all three of which the move buys at once.
+ *
+ * Generalized from the privacy-only component when the license page arrived:
+ * the two differ solely in which MDX they render, so a second copy would have
+ * duplicated ~120 lines of styling that must not be allowed to drift apart.
+ */
+import { defaultLocale, type Locale } from "@i18n/config";
+import BaseLayout from "@layouts/BaseLayout.astro";
+import { lastCommitDate } from "@utils/content-date";
+import { markdownTwinPath } from "@utils/llms";
+import { getSiteUrl } from "@utils/site";
+import { getEntry, render } from "astro:content";
+import type { WebPage } from "schema-dts";
+
+interface Props {
+  /** Which document under `src/content/pages/<locale>/` to render. */
+  slug: string;
+}
+
+const { slug } = Astro.props;
+
+const locale = (Astro.currentLocale ?? defaultLocale) as Locale;
+
+const entry = await getEntry("pages", `${locale}/${slug}`);
+if (!entry) throw new Error(`Missing ${slug} page for locale: ${locale}`);
+const { Content } = await render(entry);
+
+const pageUrl = new URL(Astro.url.pathname, getSiteUrl()).href;
+
+// Freshness from git, and now from the DOCUMENT. It used to be the later of
+// the whole `common.ts` bundle and this component, which meant an unrelated UI
+// translation restamped the policy as modified — a documented over-trigger
+// that the move removes rather than mitigates.
+const documentModified = [
+  lastCommitDate(`src/content/pages/${locale}/${slug}.mdx`),
+  lastCommitDate("src/components/pages/DocumentPage.astro"),
+]
+  .filter((date): date is string => Boolean(date))
+  .sort((a, b) => a.localeCompare(b))
+  .at(-1);
+
+const documentSchema = {
+  "@type": "WebPage",
+  // Answer target for this page: its title and the one-line intro under it.
+  // 66 indexable pages carried no `speakable` (GEO audit 2026-08-22, M7);
+  // selectors verified against the built markup.
+  speakable: {
+    "@type": "SpeakableSpecification",
+    cssSelector: [".doc-header__title", ".doc-body > p:first-of-type"],
+  },
+  "@id": `${pageUrl}#webpage`,
+  url: pageUrl,
+  name: entry.data.title,
+  description: entry.data.description,
+  inLanguage: locale,
+  isPartOf: { "@id": new URL("#website", getSiteUrl()).href },
+  publisher: { "@id": new URL("#person", getSiteUrl()).href },
+  ...(documentModified && { dateModified: documentModified }),
+} satisfies WebPage;
+---
+
+<BaseLayout
+  title={entry.data.title}
+  description={entry.data.description}
+  schema={documentSchema}
+  markdownHref={markdownTwinPath(Astro.url.pathname)}
+>
+  <div class="doc container">
+    <header class="doc-header">
+      <p class="section-title">{entry.data.kicker}</p>
+      <h1 class="page-title doc-header__title">{entry.data.heading}</h1>
+    </header>
+
+    <div class="doc-body">
+      <Content />
+    </div>
+  </div>
+</BaseLayout>
+
+<style>
+  .doc {
+    padding-top: var(--space-xl);
+    padding-bottom: var(--space-xl);
+  }
+
+  /*
+   * Held to the same measure as the prose under it. The rule used to span the
+   * full 1200px container while the text ran to 70ch, which read as a title
+   * belonging to a wider layout than the page it introduces — invisible while
+   * the body was also full-width, obvious once it was not.
+   */
+
+  /*
+   * One declaration of the reading column, on the two wrappers, instead of the
+   * same token repeated on every child. Centred rather than pinned left: the
+   * header and footer span the full width, so a 70ch column hard against the
+   * left edge left ~700px of void on a wide screen and read as a layout that
+   * had lost its other half.
+   */
+  .doc-header,
+  .doc-body {
+    max-width: var(--max-width-prose);
+    margin-inline: auto;
+  }
+
+  .doc-header {
+    padding-bottom: var(--space-lg);
+    margin-bottom: var(--space-lg);
+    border-bottom: 1px solid var(--color-hair);
+  }
+
+  .doc-header .section-title {
+    margin-bottom: var(--space-sm);
+  }
+
+  .doc-header__title {
+    padding-bottom: 0;
+    margin: 0 0 var(--space-md);
+    font-size: clamp(1.9rem, 4.5vw, 2.75rem);
+    line-height: 1.05;
+    border-bottom: 0;
+  }
+
+  .doc-body :global(p:first-of-type) {
+    margin: 0;
+    font-size: var(--text-md);
+    line-height: 1.6;
+    color: var(--color-text);
+  }
+
+  /*
+   * Section rhythm and reading measure, both of which used to hang off a
+   * `.doc-body section` rule. The MDX emits no `<section>` at all — just h2
+   * and p siblings — so that rule never matched a single element on either
+   * page. Two things were broken by it and neither was obvious in review:
+   *
+   *   - Every h2 had `margin: 0 0 …`, i.e. no top margin, so a section label
+   *     sat flush against the paragraph before it. Worst after a link row or
+   *     after the intro, since both set `margin: 0` and left a gap of zero.
+   *   - Only the intro was held to `--max-width-prose`. Body paragraphs ran
+   *     the full container: about 150 characters a line on a desktop screen,
+   *     against the 70ch the token exists to enforce.
+   *
+   * Styling the elements the markdown actually produces fixes both, and
+   * cannot silently stop applying the way a wrapper selector can.
+   */
+  .doc-body :global(h2) {
+    margin: var(--space-lg-xl) 0 var(--space-md);
+    font-family: var(--font-mono);
+    font-size: var(--text-label);
+    font-weight: var(--fw-medium);
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+  }
+
+  .doc-body :global(p) {
+    margin: 0 0 var(--space-md);
+    font-size: var(--text-base);
+    line-height: 1.7;
+    color: var(--color-text);
+  }
+
+  .doc-body :global(p:has(a)) {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-md);
+    margin: 0;
+    font-family: var(--font-mono);
+    font-size: var(--text-sm);
+  }
+
+  .doc-body :global(p:has(a)) a {
+    font-weight: var(--fw-medium);
+    color: var(--color-accent);
+    text-decoration: none;
+  }
+
+  .doc-body :global(p:has(a)) a:hover,
+  .doc-body :global(p:has(a)) a:focus-visible {
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+</style>

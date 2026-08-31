@@ -18,12 +18,22 @@
 ---
 
 <script>
-  const LANG_KEY = "preferred-lang";
+  // Renamed from "preferred-lang" deliberately. Every browser that used the
+  // switcher from an English page holds a value under the old key that records
+  // the OPPOSITE of what was chosen (see markLanguageChoice below), and that
+  // wrong value permanently disabled the redirect. Fixing the writer does not
+  // un-break a reader that already has one stored, so the key changes once and
+  // the bad values are simply never read again.
+  const LANG_KEY = "lang-choice";
   const REDIRECT_DONE_KEY = "lang-redirect-done";
 
   function detectAndRedirect() {
-    // Skip if user has manually chosen a language
-    if (localStorage.getItem(LANG_KEY)) return;
+    // An explicit choice of English is final; a stored "es" is not a reason to
+    // stop, it is a reason to redirect. The previous version bailed out on ANY
+    // stored value, so choosing Spanish and choosing English did the same
+    // thing — nothing — and the preference was write-only.
+    const stored = localStorage.getItem(LANG_KEY);
+    if (stored === "en") return;
 
     // Skip if we already redirected once this session
     if (sessionStorage.getItem(REDIRECT_DONE_KEY)) return;
@@ -32,13 +42,14 @@
     const path = window.location.pathname;
     if (path.startsWith("/es/") || path === "/es") return;
 
-    // Check browser languages for Spanish preference
+    // A stored choice of Spanish decides it outright; the browser is only
+    // consulted when the reader has never said.
     const langs = navigator.languages
       ? Array.from(navigator.languages)
       : [navigator.language];
-    let prefersSpanish = langs.some((lang) =>
-      lang.toLowerCase().startsWith("es"),
-    );
+    let prefersSpanish =
+      stored === "es" ||
+      langs.some((lang) => lang.toLowerCase().startsWith("es"));
 
     // Fallback: Intl.DateTimeFormat resolvedOptions (reliable on Safari iOS)
     if (!prefersSpanish) {
@@ -66,8 +77,14 @@
    * Mark that the user has manually chosen a language.
    * Called by the LanguageSwitcher when clicked.
    */
-  function markLanguageChoice() {
-    const path = window.location.pathname;
+  function markLanguageChoice(targetPath?: string) {
+    // The path being GONE TO, not the one being left. This ran on the click
+    // handler, before navigation, so `window.location.pathname` was still the
+    // current page: clicking "ES" from an English page stored "en" — the exact
+    // opposite of the choice — and that value then switched the automatic
+    // redirect off for good. The argument is the anchor's own pathname; the
+    // fallback only exists for a caller that has none.
+    const path = targetPath ?? window.location.pathname;
     const isSpanish = path.startsWith("/es/") || path === "/es";
     localStorage.setItem(LANG_KEY, isSpanish ? "es" : "en");
   }

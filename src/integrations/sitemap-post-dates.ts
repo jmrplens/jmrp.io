@@ -307,9 +307,21 @@ export function createLastmodResolver(): (
       "src/components/homelab",
       "src/components/pages/HomelabPage.astro",
     ],
+    // The two document pages. Their copy is MDX under src/content/pages/, not
+    // the translation bundles: the privacy entry still named those bundles long
+    // after the move, so its <lastmod> tracked any unrelated UI string edit and
+    // ignored edits to the policy itself. `/license/` was missing entirely,
+    // which is why both of its locales shipped with no <lastmod> at all —
+    // caught by the sitemap completeness test.
     "/privacy/": [
-      "src/i18n/translations/en/common.ts",
-      "src/i18n/translations/es/common.ts",
+      "src/content/pages/en/privacy.mdx",
+      "src/content/pages/es/privacy.mdx",
+      "src/components/pages/DocumentPage.astro",
+    ],
+    "/license/": [
+      "src/content/pages/en/license.mdx",
+      "src/content/pages/es/license.mdx",
+      "src/components/pages/DocumentPage.astro",
     ],
     // Same reasoning as /privacy/: the page copy lives in the translation
     // bundles; the component holds the structure.

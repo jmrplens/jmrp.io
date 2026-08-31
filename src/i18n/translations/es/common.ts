@@ -16,6 +16,7 @@ export const common = {
     about: "Perfil",
     uses: "Uses",
     privacy: "Privacidad",
+    license: "Licencia",
     contact: "Contacto",
   },
   menu: {
@@ -96,7 +97,7 @@ export const common = {
     english: "English",
     spanish: "Español",
     switchLanguage: "Cambiar a {lang}",
-    copyright: "© {year} {author}. Todos los derechos reservados.",
+    copyright: "© {year} {author}",
   },
   aria: {
     mainNav: "Navegación principal",
@@ -938,6 +939,10 @@ export const common = {
       hosted: "Instancia en vivo",
       downloads: "Descargas",
       topicsLabel: "Temas que cubre {project}",
+      supportHeading: "Apoyo",
+      supportIntro:
+        "Estos proyectos se mantienen en mi tiempo libre, sobre hardware que funciona en casa. Si alguno te ahorra una tarde, puedes patrocinar el trabajo en GitHub. En cualquier caso, aquí no hay nada tras un muro de pago, y nada te rastrea.",
+      supportLink: "Patrocinar en GitHub",
     },
     tools: {
       title: "Herramientas para desarrolladores",
@@ -1009,7 +1014,8 @@ export const common = {
   },
   rss: {
     continueReading: "Continuar leyendo en jmrp.io →",
-    copyright: "Copyright {year}, José Manuel Requena Plens",
+    copyright:
+      "© {year} José Manuel Requena Plens. Los artículos se publican bajo CC BY 4.0 — https://creativecommons.org/licenses/by/4.0/",
   },
   pwa: {
     shortcutBlog: "Blog",

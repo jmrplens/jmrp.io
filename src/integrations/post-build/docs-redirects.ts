@@ -89,6 +89,38 @@ export async function generateDocsRedirects(
   // and /docs/cloudflare-dns-updater both resolve today), and regexes only run
   // when the hash misses. Turning them into regexes would cost that for
   // nothing.
+  // Top-level routes the site itself owns. A project id equal to any of these
+  // never gets a prefix-less redirect, because the site's own page must win.
+  const RESERVED = new Set([
+    "about",
+    "assets",
+    "blog",
+    "cv",
+    "docs",
+    "es",
+    "feeds",
+    "fonts",
+    "github",
+    "homelab",
+    "identity",
+    "images",
+    "license",
+    "llms",
+    "og",
+    "privacy",
+    "projects",
+    "publications",
+    "recursos",
+    "robots",
+    "rss",
+    "scripts",
+    "sitemap",
+    "tools",
+    "uses",
+    "_astro",
+    "api",
+  ]);
+
   const entries = pairs
     .flatMap(([from, to]) => {
       const id = from.slice("/docs/".length);
@@ -121,6 +153,34 @@ export async function generateDocsRedirects(
     })
     .join("\n");
 
+  // The same targets again, without the `/docs/` prefix.
+  //
+  // Real traffic asks for them: in 24h on 2026-08-31 the access log carried 20
+  // requests to `/libgen-mcp/architecture/`, `/gitlab-mcp-server/configuration/`
+  // and eighteen more of that shape — one per path, each from a different
+  // address, a distributed crawl working from a URL list that lost the prefix.
+  // Every one 404'd while the `/docs/` form of the same path answers 200.
+  //
+  // Guarded by RESERVED so a repository can never claim a route the site owns.
+  // A project id that collides is simply not given the bare form; the `/docs/`
+  // one still works, which is the documented address anyway.
+  const bareEntries = pairs
+    .flatMap(([from, to]) => {
+      const id = from.slice("/docs/".length);
+      if (RESERVED.has(id.toLowerCase())) return [];
+      const isSiteRoot = !to.includes("#") && !to.includes("?");
+      if (!isSiteRoot) return [];
+      const capture = `bare_${id.toLowerCase().replaceAll(/[^a-z0-9]/gu, "_")}`;
+      let base = to;
+      while (base.endsWith("/")) base = base.slice(0, -1);
+      return [
+        `    "/${id}"  "${to}$is_args$args";`,
+        `    "/${id}/"  "${to}$is_args$args";`,
+        `    ~*^/${escapeRegex(id)}(?<${capture}>/.+)$  "${base}$${capture}$is_args$args";`,
+      ];
+    })
+    .join("\n");
+
   const content = `# GENERATED FILE — DO NOT EDIT.
 # Written by src/integrations/post-build/docs-redirects.ts on every build,
 # derived from src/content/profile/projects.yaml.
@@ -141,6 +201,7 @@ map $uri ${MAP_VARIABLE} {
     default "";
 
 ${entries}
+${bareEntries}
 }
 `;
 

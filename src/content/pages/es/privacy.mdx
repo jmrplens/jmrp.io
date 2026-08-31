@@ -8,57 +8,63 @@ lang: es
 
 import ObfuscatedEmail from "@components/ui/ObfuscatedEmail.astro";
 
-Sin cookies, sin scripts de terceros, sin red publicitaria y sin rastreo entre sitios. Esta página explica exactamente qué ocurre cuando cargas una página aquí —incluidas las partes que sí salen de tu navegador— y cómo comprobar cada afirmación por tu cuenta.
+Sin cookies, sin scripts de terceros, sin redes publicitarias y sin rastreo entre sitios. Esta página declara exactamente qué ocurre cuando abres algo de aquí —incluidas las partes que sí salen de tu navegador— y cómo comprobar cada afirmación por tu cuenta.
 
 ## Analítica
 
-Las visitas se cuentan con Cloudflare Web Analytics. El script de medición no se carga desde Cloudflare: se descarga durante la compilación y se sirve desde este mismo dominio como /scripts/cf-beacon.js. Renderizar una página no requiere, por tanto, ninguna petición a un tercero.
+Las páginas vistas se cuentan con Cloudflare Web Analytics. El script de medición no se carga desde Cloudflare: se descarga durante la compilación y se sirve desde este mismo dominio como /scripts/cf-beacon.js. Por tanto, mostrar una página no exige ninguna petición a un tercero, y la única petición a un tercero que hace este sitio es el propio informe del beacon, que se describe a continuación.
 
-Lo que el script sí envía es un evento agregado de visita al endpoint de analítica de Cloudflare. No pone ninguna cookie, no asigna ningún identificador y no construye ningún perfil, así que no hay nada que pueda seguirte a otro sitio.
+Lo que ese script envía, una vez por página vista, es un informe al endpoint de analítica de Cloudflare: la dirección de la página con la cadena de consulta y el fragmento eliminados antes del envío, la página de procedencia, tiempos de carga, Core Web Vitals y señales gruesas del dispositivo como el tipo de conexión. No pone ninguna cookie, no asigna ningún identificador y no construye ningún perfil, así que no hay nada que pueda seguirte a otro sitio. Como la cadena de consulta se elimina antes, nada de lo que escribas en una herramienta y acabe en la barra de direcciones llega a Cloudflare.
 
-El beacon lleva una guarda que lo desactiva en localhost y solo se inyecta en las compilaciones de producción. Las ejecuciones de desarrollo y de vista previa nunca reportan nada.
+El beacon solo se inyecta en las compilaciones de producción y, además, lleva delante una comprobación que lo detiene si el nombre de host no es exactamente jmrp.io. El servidor de desarrollo, la vista previa y cualquier otra copia de este sitio no envían nada, sea cual sea la dirección desde la que se sirvan.
 
-Estos números existen para saber qué artículos merece la pena mantener actualizados. Ese es su único uso.
+Este dominio se sirve además a través de Cloudflare, que termina el TLS y ve por tanto todas las peticiones. En ese borde corre un worker propio que anota una fila por petición —ruta, código de respuesta, resultado de caché, país, ciudad, operador de red y tipo de cliente a grandes rasgos— en un conjunto de datos agregado que se conserva unos noventa días. No guarda la dirección IP ni ningún identificador de sesión. Existe porque el borde responde la mayoría de las peticiones desde su caché, así que este servidor no llega a verlas y sus propios registros no pueden decir qué páginas se leen de verdad.
 
-## Cookies
+Estos números están para que yo sepa qué artículos merece la pena mantener actualizados. Ese es su único uso.
 
-Este sitio no pone ninguna cookie: ni para analítica, ni para preferencias, ni para pedir consentimiento sobre cookies que no existen. Ninguna respuesta de este dominio incluye una cabecera Set-Cookie.
+## Cookies y almacenamiento
 
-Tu elección de tema (oscuro o claro) se guarda en localStorage, en tu propio dispositivo. Nunca se transmite ni sale del navegador.
+Este sitio no pone ninguna cookie: ni para analítica, ni para preferencias, ni para pedir consentimiento para cookies que no existen. Ninguna respuesta de este dominio incluye una cabecera Set-Cookie.
+
+Lo que sí guarda en tu dispositivo cabe en una lista corta. En localStorage: tu elección de tema y, si usas el selector de idioma, el idioma que elegiste. En sessionStorage, y solo mientras la pestaña siga abierta: una marca para que la redirección automática al español no se repita y otra para que un fallo de integridad no se informe dos veces. Nada de eso se transmite.
+
+En la primera visita a una página en inglés, un script pequeño lee la lista de idiomas que anuncia tu navegador y, si pide español, te lleva una vez a la versión española. Esa comprobación ocurre entera en tu navegador y su respuesta no se envía a ninguna parte.
 
 ## Peticiones a terceros
 
-Las tipografías, las imágenes, las hojas de estilo y los scripts se sirven todos desde este dominio. No hay etiquetas de script a ningún CDN, ni widgets embebidos, ni botones sociales, ni tipografías alojadas fuera en ninguna página.
+Las tipografías, las imágenes, las hojas de estilo y los scripts se sirven desde este dominio. Ninguna página carga scripts desde un CDN, ni widgets embebidos, ni botones sociales, ni tipografías alojadas fuera.
 
-Una Content Security Policy lo impone desde el servidor en vez de confiar en la disciplina: los scripts y los estilos solo se aceptan desde este origen y solo con un nonce por petición.
+Una Content Security Policy lo impone desde el servidor en vez de fiarlo a la disciplina: los estilos solo se aceptan desde este origen y solo con un nonce por petición, y los scripts solo con ese nonce. La política completa —incluidos los pocos hosts a los que el beacon de analítica y las dos herramientas con red tienen permiso para llegar— la genera la compilación y está en el código público.
 
 ## Registros del servidor
 
-El servidor web mantiene registros de acceso corrientes: marca de tiempo, ruta solicitada, código de respuesta, user agent y dirección IP. Este sitio ejecuta un tarpit activo y una pila de listas de bloqueo, que no pueden funcionar sin saber quién está llamando a la puerta.
+El servidor web mantiene los registros de acceso habituales: marca de tiempo, dirección IP, la línea de petición completa, código de respuesta, bytes enviados, página de procedencia, user agent, el nombre de host que pediste, y el país, la ciudad y el operador de red que una base de datos GeoIP deduce de esa dirección. Se rotan a diario y se conservan un año; después se borran. Este sitio tiene en marcha un tarpit activo y un conjunto de listas de bloqueo, que no pueden funcionar sin saber quién está llamando a la puerta.
 
-Esos registros son datos de operación y seguridad. No se cruzan con la analítica, no se usan para construir perfiles de lectores y no se comparten con nadie.
+Esos registros son datos operativos y de seguridad. No se cruzan con la analítica, no se usan para construir perfiles de lectores y no se comparten con nadie.
+
+Tu navegador puede enviar además un informe por su cuenta. Si bloquea algo en una página de aquí —una violación de la Content Security Policy, o un script que falla la comprobación de integridad—, envía un informe breve a este dominio con la dirección de la página, la de procedencia y el recurso bloqueado. La dirección a la que se envía va publicada en las cabeceras de seguridad de todas las respuestas, así que puedes leerla antes de que llegue a usarse. Esos informes existen para detectar el mismo día una página rota o manipulada, y en la práctica casi todo lo que recogen son extensiones del navegador.
 
 ## Las herramientas
 
-Las herramientas interactivas se ejecutan en tu navegador. Hashes, contraseñas, expresiones regulares, subredes, certificados que pegues: el cálculo ocurre en tu máquina y la entrada nunca se sube a ningún sitio.
+Las herramientas interactivas se ejecutan en tu navegador. Lo que escribas en ellas —hashes, contraseñas, expresiones regulares, subredes, certificados— se calcula en tu propia máquina y no se sube a ningún sitio. Cinco de ellas escriben además lo que escribes en la barra de direcciones, para que un resultado se pueda guardar o compartir; eso se queda en el historial de tu navegador y solo llega a este servidor si recargas la página con ello.
 
-Dos herramientas son excepciones deliberadas y visibles, porque no pueden funcionar de otro modo. El inspector de certificados consulta los registros públicos de Certificate Transparency (Cert Spotter y crt.sh) para el nombre de host que escribas. El analizador de cabeceras HTTP envía la URL que le indiques a un pequeño proxy de este mismo dominio, porque un navegador no puede leer las cabeceras de respuesta de otro sitio.
+Dos herramientas son excepciones deliberadas porque no pueden funcionar de otro modo. El inspector de certificados busca en los registros públicos de Certificate Transparency —Cert Spotter y crt.sh— el nombre de host que escribas, y lo hace desde tu navegador, así que esos dos servicios ven tu dirección como si los hubieras visitado tú. El analizador de cabeceras HTTP funciona al revés: envía la URL que le indiques a un pequeño proxy de este mismo dominio, porque un navegador no tiene permiso para leer las cabeceras de respuesta de otro sitio, así que el sitio inspeccionado ve este servidor y no a ti.
 
-En ambos casos la petición lleva solo lo que has escrito, y solo cuando pulsas el botón. Nada de lo que introduces en una herramienta se almacena ni se asocia contigo.
+En ambos casos la petición se hace solo cuando pulsas el botón, y lleva solo lo que has escrito. Ese proxy tiene el registro de acceso desactivado a propósito, para que la URL que inspeccionas no quede escrita junto a tu dirección. Nada de lo que introduces en una herramienta se almacena aquí ni se asocia contigo.
 
 ## Sin publicidad ni afiliados
 
-Aquí no hay publicidad, ni enlaces de afiliado, ni contenido patrocinado, ni lista de correo. Nada de este sitio está monetizado, así que no hay ningún incentivo para recopilar nada sobre ti.
+Aquí no hay publicidad, ni enlaces de afiliado, ni contenido patrocinado, ni lista de correo. La única vía de apoyo es un enlace de GitHub Sponsors en la página de proyectos; esa misma dirección se declara además como destino de donación en los datos estructurados de todas las páginas, para que una máquina que lea el sitio la encuentre donde la busca. Es un enlace saliente corriente, que no pone cookies ni mide nada. Aparte de eso, el sitio no está monetizado, así que no hay ningún incentivo para recopilar nada sobre ti.
 
 ## Compruébalo tú
 
-Abre el panel de red de tu navegador en cualquier página y lee la lista de peticiones: todas son del mismo origen. Abre el panel de almacenamiento: no hay ninguna cookie que borrar. El código de este sitio es público, incluido el paso de compilación que descarga el script de analítica y la configuración que genera las cabeceras de seguridad.
+Abre el panel de red de tu navegador en cualquier página y lee la lista de peticiones: todas se sirven desde este dominio salvo una, el informe del beacon hacia Cloudflare; y, en el inspector de certificados, los dos servicios de Certificate Transparency que consulta cuando pulsas el botón. Abre el panel de almacenamiento: no hay ninguna cookie que borrar, y las únicas entradas son el puñado que se nombra más arriba. El código de este sitio es público, incluido el paso de compilación que descarga el script de analítica y la configuración que genera las cabeceras de seguridad.
 
 [Código del sitio en GitHub](https://github.com/jmrplens/jmrp.io)
 
 ## Contacto
 
-Para cualquier asunto de privacidad, escríbeme directamente. Los informes de seguridad tienen su propio canal, con clave PGP y política de divulgación.
+Para cualquier cosa relacionada con la privacidad, escríbeme directamente. Los informes de seguridad tienen su propio canal, con una clave PGP y una política de divulgación.
 
 <ObfuscatedEmail address="mail@jmrp.io" />
 
