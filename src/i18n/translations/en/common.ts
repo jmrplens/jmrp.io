@@ -16,6 +16,7 @@ export const common = {
     about: "About",
     uses: "Uses",
     privacy: "Privacy",
+    license: "License",
     contact: "Contact",
   },
   menu: {

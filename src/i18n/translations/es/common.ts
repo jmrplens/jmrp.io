@@ -16,6 +16,7 @@ export const common = {
     about: "Perfil",
     uses: "Uses",
     privacy: "Privacidad",
+    license: "Licencia",
     contact: "Contacto",
   },
   menu: {

@@ -1,20 +1,18 @@
 ---
 /**
- * Privacy page ("// PRIVACY") — what the site measures and what it does not.
+ * A standalone prose document ("// PRIVACY", "// LICENSE") — a page whose
+ * whole content is a written policy rather than generated data.
  *
- * Exists because the site loads a Cloudflare Web Analytics beacon (self-hosted
- * from `/scripts/cf-beacon.js`) and presents its tools as "privacy-first,
- * client-side only", with no page stating either fact. Every claim rendered
- * here is checkable from the outside: no `Set-Cookie` on any response, no
- * cross-origin `src` on any page, and the two tools that do make a network
- * request are named explicitly rather than hidden behind the blanket claim.
+ * The copy lives in `src/content/pages/<locale>/<slug>.mdx`, not in the
+ * translation bundle the privacy policy used to occupy as 32 keys. A policy is
+ * a document: editing one should not mean editing a string table, its
+ * `dateModified` should come from the document rather than from a bundle that
+ * also holds unrelated UI strings, and it should have a markdown twin like
+ * every other page — all three of which the move buys at once.
  *
- * The copy lives in `src/content/pages/<locale>/privacy.mdx`, not in the
- * translation bundle it used to occupy as 32 keys. A policy is a document:
- * editing one should not mean editing a string table, its `dateModified`
- * should come from the document rather than from a bundle that also holds
- * unrelated UI strings, and it should have a markdown twin like every other
- * page — all three of which the move buys at once.
+ * Generalized from the privacy-only component when the license page arrived:
+ * the two differ solely in which MDX they render, so a second copy would have
+ * duplicated ~120 lines of styling that must not be allowed to drift apart.
  */
 import { defaultLocale, type Locale } from "@i18n/config";
 import BaseLayout from "@layouts/BaseLayout.astro";
@@ -24,34 +22,41 @@ import { getSiteUrl } from "@utils/site";
 import { getEntry, render } from "astro:content";
 import type { WebPage } from "schema-dts";
 
+interface Props {
+  /** Which document under `src/content/pages/<locale>/` to render. */
+  slug: string;
+}
+
+const { slug } = Astro.props;
+
 const locale = (Astro.currentLocale ?? defaultLocale) as Locale;
 
-const entry = await getEntry("pages", `${locale}/privacy`);
-if (!entry) throw new Error(`Missing privacy page for locale: ${locale}`);
+const entry = await getEntry("pages", `${locale}/${slug}`);
+if (!entry) throw new Error(`Missing ${slug} page for locale: ${locale}`);
 const { Content } = await render(entry);
 
 const pageUrl = new URL(Astro.url.pathname, getSiteUrl()).href;
 
 // Freshness from git, and now from the DOCUMENT. It used to be the later of
 // the whole `common.ts` bundle and this component, which meant an unrelated UI
-// translation restamped the privacy policy as modified — a documented
-// over-trigger that the move removes rather than mitigates.
-const privacyModified = [
-  lastCommitDate(`src/content/pages/${locale}/privacy.mdx`),
-  lastCommitDate("src/components/pages/PrivacyPage.astro"),
+// translation restamped the policy as modified — a documented over-trigger
+// that the move removes rather than mitigates.
+const documentModified = [
+  lastCommitDate(`src/content/pages/${locale}/${slug}.mdx`),
+  lastCommitDate("src/components/pages/DocumentPage.astro"),
 ]
   .filter((date): date is string => Boolean(date))
   .sort((a, b) => a.localeCompare(b))
   .at(-1);
 
-const privacySchema = {
+const documentSchema = {
   "@type": "WebPage",
   // Answer target for this page: its title and the one-line intro under it.
   // 66 indexable pages carried no `speakable` (GEO audit 2026-08-22, M7);
   // selectors verified against the built markup.
   speakable: {
     "@type": "SpeakableSpecification",
-    cssSelector: [".privacy-header__title", ".privacy-body > p:first-of-type"],
+    cssSelector: [".doc-header__title", ".doc-body > p:first-of-type"],
   },
   "@id": `${pageUrl}#webpage`,
   url: pageUrl,
@@ -60,45 +65,45 @@ const privacySchema = {
   inLanguage: locale,
   isPartOf: { "@id": new URL("#website", getSiteUrl()).href },
   publisher: { "@id": new URL("#person", getSiteUrl()).href },
-  ...(privacyModified && { dateModified: privacyModified }),
+  ...(documentModified && { dateModified: documentModified }),
 } satisfies WebPage;
 ---
 
 <BaseLayout
   title={entry.data.title}
   description={entry.data.description}
-  schema={privacySchema}
+  schema={documentSchema}
   markdownHref={markdownTwinPath(Astro.url.pathname)}
 >
-  <div class="privacy container">
-    <header class="privacy-header">
+  <div class="doc container">
+    <header class="doc-header">
       <p class="section-title">{entry.data.kicker}</p>
-      <h1 class="page-title privacy-header__title">{entry.data.heading}</h1>
+      <h1 class="page-title doc-header__title">{entry.data.heading}</h1>
     </header>
 
-    <div class="privacy-body">
+    <div class="doc-body">
       <Content />
     </div>
   </div>
 </BaseLayout>
 
 <style>
-  .privacy {
+  .doc {
     padding-top: var(--space-xl);
     padding-bottom: var(--space-xl);
   }
 
-  .privacy-header {
+  .doc-header {
     padding-bottom: var(--space-lg);
     margin-bottom: var(--space-lg);
     border-bottom: 1px solid var(--color-hair);
   }
 
-  .privacy-header .section-title {
+  .doc-header .section-title {
     margin-bottom: var(--space-sm);
   }
 
-  .privacy-header__title {
+  .doc-header__title {
     padding-bottom: 0;
     margin: 0 0 var(--space-md);
     font-size: clamp(1.9rem, 4.5vw, 2.75rem);
@@ -106,7 +111,7 @@ const privacySchema = {
     border-bottom: 0;
   }
 
-  .privacy-body :global(p:first-of-type) {
+  .doc-body :global(p:first-of-type) {
     max-width: var(--max-width-prose);
     margin: 0;
     font-size: var(--text-md);
@@ -114,12 +119,12 @@ const privacySchema = {
     color: var(--color-text);
   }
 
-  .privacy-body :global(section) {
+  .doc-body :global(section) {
     max-width: var(--max-width-prose);
     margin-top: var(--space-lg-xl);
   }
 
-  .privacy-body :global(h2) {
+  .doc-body :global(h2) {
     margin: 0 0 var(--space-md);
     font-family: var(--font-mono);
     font-size: var(--text-label);
@@ -129,14 +134,14 @@ const privacySchema = {
     letter-spacing: 0.15em;
   }
 
-  .privacy-body :global(p) {
+  .doc-body :global(p) {
     margin: 0 0 var(--space-md);
     font-size: var(--text-base);
     line-height: 1.7;
     color: var(--color-text);
   }
 
-  .privacy-body :global(p:has(a)) {
+  .doc-body :global(p:has(a)) {
     display: flex;
     flex-wrap: wrap;
     gap: var(--space-md);
@@ -145,14 +150,14 @@ const privacySchema = {
     font-size: var(--text-sm);
   }
 
-  .privacy-body :global(p:has(a)) a {
+  .doc-body :global(p:has(a)) a {
     font-weight: var(--fw-medium);
     color: var(--color-accent);
     text-decoration: none;
   }
 
-  .privacy-body :global(p:has(a)) a:hover,
-  .privacy-body :global(p:has(a)) a:focus-visible {
+  .doc-body :global(p:has(a)) a:hover,
+  .doc-body :global(p:has(a)) a:focus-visible {
     text-decoration: underline;
     text-underline-offset: 3px;
   }

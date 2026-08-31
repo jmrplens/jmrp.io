@@ -226,6 +226,7 @@ const TWINNED_PAGES: ReadonlySet<string> = new Set([
   "/cv/",
   "/feeds/",
   "/homelab/",
+  "/license/",
   "/privacy/",
   "/projects/",
   "/publications/",

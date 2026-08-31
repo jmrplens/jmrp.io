@@ -273,6 +273,18 @@ const articleNode = {
     // says the work was created the day the site last shipped, which is false
     // for everything but the newest post.
     copyrightNotice: `© ${post.data.publishedDate.getFullYear()} ${siteData.author}`,
+    // The two fields Search Console reports as missing once a node carries
+    // creator/creditText/copyrightNotice: `license` states the terms,
+    // `acquireLicensePage` says where to ask about anything they do not grant.
+    // Google requires the two to be distinct URLs.
+    //
+    // Covers are the author's own work and are released under CC BY 4.0 — the
+    // canonical license URI, not the localized `deed.es` the Spanish page
+    // links for humans, because this value is an identifier a machine matches
+    // rather than a page it reads. The grant is real and irrevocable, which is
+    // why the portrait is excluded from it and licensed separately.
+    license: "https://creativecommons.org/licenses/by/4.0/",
+    acquireLicensePage: new URL(translatePath("/license/"), getSiteUrl()).href,
     // Numeric, not a quoted string: schema.org types MediaObject width/height
     // as Distance | QuantitativeValue, never Text. E37 = pixel (UN/CEFACT).
     width: {
