@@ -93,7 +93,14 @@ const documentSchema = {
     padding-bottom: var(--space-xl);
   }
 
+  /*
+   * Held to the same measure as the prose under it. The rule used to span the
+   * full 1200px container while the text ran to 70ch, which read as a title
+   * belonging to a wider layout than the page it introduces — invisible while
+   * the body was also full-width, obvious once it was not.
+   */
   .doc-header {
+    max-width: var(--max-width-prose);
     padding-bottom: var(--space-lg);
     margin-bottom: var(--space-lg);
     border-bottom: 1px solid var(--color-hair);
@@ -119,13 +126,24 @@ const documentSchema = {
     color: var(--color-text);
   }
 
-  .doc-body :global(section) {
-    max-width: var(--max-width-prose);
-    margin-top: var(--space-lg-xl);
-  }
-
+  /*
+   * Section rhythm and reading measure, both of which used to hang off a
+   * `.doc-body section` rule. The MDX emits no `<section>` at all — just h2
+   * and p siblings — so that rule never matched a single element on either
+   * page. Two things were broken by it and neither was obvious in review:
+   *
+   *   - Every h2 had `margin: 0 0 …`, i.e. no top margin, so a section label
+   *     sat flush against the paragraph before it. Worst after a link row or
+   *     after the intro, since both set `margin: 0` and left a gap of zero.
+   *   - Only the intro was held to `--max-width-prose`. Body paragraphs ran
+   *     the full container: about 150 characters a line on a desktop screen,
+   *     against the 70ch the token exists to enforce.
+   *
+   * Styling the elements the markdown actually produces fixes both, and
+   * cannot silently stop applying the way a wrapper selector can.
+   */
   .doc-body :global(h2) {
-    margin: 0 0 var(--space-md);
+    margin: var(--space-lg-xl) 0 var(--space-md);
     font-family: var(--font-mono);
     font-size: var(--text-label);
     font-weight: var(--fw-medium);
@@ -135,6 +153,7 @@ const documentSchema = {
   }
 
   .doc-body :global(p) {
+    max-width: var(--max-width-prose);
     margin: 0 0 var(--space-md);
     font-size: var(--text-base);
     line-height: 1.7;
@@ -145,6 +164,7 @@ const documentSchema = {
     display: flex;
     flex-wrap: wrap;
     gap: var(--space-md);
+    max-width: var(--max-width-prose);
     margin: 0;
     font-family: var(--font-mono);
     font-size: var(--text-sm);
