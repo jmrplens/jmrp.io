@@ -945,6 +945,10 @@ export const common = {
       hosted: "Live instance",
       downloads: "Downloads",
       topicsLabel: "Topics covered by {project}",
+      supportHeading: "Support",
+      supportIntro:
+        "These projects are maintained in my own time, on hardware that runs at home. If one of them saves you an afternoon, you can sponsor the work on GitHub. Nothing here sits behind a paywall either way, and nothing here tracks you.",
+      supportLink: "Sponsor on GitHub",
     },
     tools: {
       title: "Developer Tools",

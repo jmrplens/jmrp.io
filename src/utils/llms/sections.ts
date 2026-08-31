@@ -134,7 +134,7 @@ export const PROFILE_SECTIONS: {
       lines: [
         "No cookies, no third-party scripts, no advertising network, no cross-site tracking, and no mailing list.",
         "The only measurement is a privacy-preserving analytics beacon; the page invites the reader to verify the claim directly by opening the browser storage panel and finding nothing to delete.",
-        "Nothing on the site is monetized: no advertising, no affiliate links and no sponsored content, stated explicitly as a conflict-of-interest declaration.",
+        "No advertising, no affiliate links and no sponsored content; the single funding route is a GitHub Sponsors link on the projects page, named on the privacy page as a conflict-of-interest declaration rather than left for the reader to find.",
       ],
     },
     es: {
@@ -142,7 +142,7 @@ export const PROFILE_SECTIONS: {
       lines: [
         "Sin cookies, sin scripts de terceros, sin red publicitaria, sin rastreo entre sitios y sin lista de correo.",
         "La única medición es un beacon de analítica respetuoso con la privacidad; la página invita a comprobarlo abriendo el panel de almacenamiento del navegador y no encontrando nada que borrar.",
-        "Nada del sitio está monetizado: ni publicidad, ni enlaces de afiliado, ni contenido patrocinado, declarado explícitamente como conflicto de intereses.",
+        "Ni publicidad, ni enlaces de afiliado, ni contenido patrocinado; la única vía de financiación es un enlace de GitHub Sponsors en la página de proyectos, nombrado en la página de privacidad como declaración de conflicto de intereses en vez de dejarlo a que el lector lo descubra.",
       ],
     },
   },
