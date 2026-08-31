@@ -188,6 +188,7 @@ export async function homelabMarkdown(
     `> ${t("pages.homelab.twinIntro")}`,
     "",
     `URL: ${siteUrl}${prefix}/homelab/`,
+    `License: ${siteUrl}${prefix}/license/`,
     `Language: ${locale}`,
     `Alternate: ${siteUrl}${otherPrefix}/homelab/index.md`,
     // Not a `Generated:` line: this is the LIVE capture token, substituted

@@ -42,7 +42,7 @@ El servidor web mantiene los registros de acceso habituales: marca de tiempo, di
 
 Esos registros son datos operativos y de seguridad. No se cruzan con la analítica, no se usan para construir perfiles de lectores y no se comparten con nadie.
 
-Hay una cosa que sí va más lejos. Si tu navegador bloquea algo en una página de aquí —una violación de la Content Security Policy, o un script que falla la comprobación de integridad—, envía un informe breve a este dominio con la dirección de la página, la de procedencia y el recurso bloqueado. Esos informes me llegan por Telegram, junto con la dirección que los envía y su user agent, para detectar el mismo día una página rota o manipulada. Es lo único de este sitio que se entrega a un servicio que no gestiono yo, y en la práctica casi todo lo que recoge son extensiones del navegador.
+Tu navegador puede enviar además un informe por su cuenta. Si bloquea algo en una página de aquí —una violación de la Content Security Policy, o un script que falla la comprobación de integridad—, envía un informe breve a este dominio con la dirección de la página, la de procedencia y el recurso bloqueado. La dirección a la que se envía va publicada en las cabeceras de seguridad de todas las respuestas, así que puedes leerla antes de que llegue a usarse. Esos informes existen para detectar el mismo día una página rota o manipulada, y en la práctica casi todo lo que recogen son extensiones del navegador.
 
 ## Las herramientas
 

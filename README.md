@@ -3,7 +3,8 @@
 <!-- Project & Status -->
 
 ![Astro](https://img.shields.io/badge/astro-7.0.2-orange?style=flat&logo=astro)
-![License](https://img.shields.io/badge/license-MIT-blue.svg)
+![Code license](https://img.shields.io/badge/code-MIT-blue.svg)
+![Content license](https://img.shields.io/badge/content-CC%20BY%204.0-lightgrey.svg)
 [![Dependabot](https://badgen.net/badge/Dependabot/enabled/green?icon=dependabot)](https://github.com/jmrplens/jmrp.io/pulls)
 [![CI Dashboard](https://img.shields.io/badge/CI_Dashboard-Live_Status-blueviolet?style=for-the-badge&logo=vercel)](https://jmrp-ci-reports.vercel.app)
 
@@ -30,6 +31,7 @@ This is the source code for my personal website, **[jmrp.io](https://jmrp.io)**,
 - [Deployment](#-deployment)
 - [Security & Nginx](#-security--nginx)
 - [LaTeX CV Compilation](#-latex-cv-compilation)
+- [License](#-license)
 
 ---
 
@@ -184,3 +186,19 @@ Advanced Nginx configuration for high-security environments.
 ## 📄 LaTeX CV Compilation
 
 Automated LaTeX compilation for professional PDF resumes. See [CV LaTeX Documentation](cv_latex/README.md) for details.
+
+## 📜 License
+
+Two licenses, because this repository holds two different kinds of work.
+
+| What                                                            | License                                                   |
+| --------------------------------------------------------------- | --------------------------------------------------------- |
+| Code — components, integrations, build pipeline, scripts, tools | [MIT](LICENSE)                                            |
+| Articles, page copy, tool documentation                         | [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) |
+| Blog cover images                                               | [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) |
+| The portrait (`avatar.png`, `me_round.png`)                     | All rights reserved                                       |
+
+The MIT file alone would read as covering the whole tree, including the
+articles and the portrait — and being the more permissive of the two, it would
+override the terms published on the site. [LICENSE-CONTENT.md](LICENSE-CONTENT.md)
+draws the line; <https://jmrp.io/license/> is the authoritative statement.

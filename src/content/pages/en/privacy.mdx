@@ -42,7 +42,7 @@ The web server keeps ordinary access logs: timestamp, IP address, the full reque
 
 Those logs are operational and security records. They are not joined with analytics, not used to build reader profiles and not shared with anyone.
 
-One thing does travel further. If your browser blocks something on a page here — a Content Security Policy violation, or a script that fails its integrity check — it posts a short report to this domain naming the page address, the referrer and the resource that was blocked. Those reports reach me over Telegram, along with the reporting address and user agent, so that a broken or tampered page is noticed the same day. It is the only thing on this site handed to a service I do not run, and in practice almost everything it catches is browser extensions.
+Your browser may also send a report of its own. If it blocks something on a page here — a Content Security Policy violation, or a script that fails its integrity check — it posts a short report to this domain naming the page address, the referrer and the resource that was blocked. The address it is sent to is published in the security headers of every response, so you can read it before it is ever used. Those reports exist so that a broken or tampered page is noticed the same day, and in practice almost everything they catch is browser extensions.
 
 ## The tools
 

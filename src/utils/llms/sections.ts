@@ -308,12 +308,12 @@ export const SITE_SECTIONS: {
     en: {
       title: "Privacy",
       description:
-        "What the site measures and what it does not — no cookies, no third-party scripts, no ads; the access log fields and their one-year retention, the edge worker, and the single third party anything is forwarded to, all named rather than summarized",
+        "What the site measures and what it does not — no cookies, no third-party scripts, no ads; the access log fields and their one-year retention, the edge worker, and the report a browser can send back on its own, all named rather than summarized",
     },
     es: {
       title: "Privacidad",
       description:
-        "Qué mide el sitio y qué no — sin cookies, sin scripts de terceros, sin anuncios; los campos del registro de acceso y su retención de un año, el worker del borde, y el único tercero al que se reenvía algo, todos nombrados en vez de resumidos",
+        "Qué mide el sitio y qué no — sin cookies, sin scripts de terceros, sin anuncios; los campos del registro de acceso y su retención de un año, el worker del borde, y el informe que un navegador puede enviar por su cuenta, todos nombrados en vez de resumidos",
     },
   },
 

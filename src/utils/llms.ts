@@ -685,6 +685,12 @@ export async function generateLlmsTxt(siteUrl: string): Promise<string> {
     "",
     `For comprehensive context including blog post topics, FAQs, and tool features, see [llms-full.txt](${siteUrl}/llms-full.txt).`,
     "",
+    // Reuse terms up front, in the index an agent reads before deciding what
+    // to fetch. Everything it can reach from here is either CC BY 4.0 or says
+    // so at the address below; the two exceptions are named rather than left
+    // to be discovered after the fact.
+    `Reuse: the articles, the page copy and the blog cover images are licensed CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/) — reuse them, including commercially, crediting "José Manuel Requena Plens" and noting any change. The site's source code is MIT. The portrait used as the avatar is reserved and is not covered by either. Full terms: ${siteUrl}/license/`,
+    "",
     sectionsBlock(siteUrl, "en"),
     "",
     sectionsBlock(siteUrl, "es"),
@@ -790,6 +796,11 @@ function buildPostEntry(
     `URL: ${postUrl}`,
     `Language: ${locale}`,
     `Alternate: ${alternateTwinUrl(postUrl, locale)}`,
+    // The canonical CC BY URI, not the license page, because for a post the
+    // terms are not ambiguous the way they are on a twin that might be the CV
+    // or a publication list. This is the document an AI pipeline ingests, and
+    // the identifier is what it can act on without parsing prose.
+    "License: https://creativecommons.org/licenses/by/4.0/",
     `Type: ${d.articleType}`,
     `Published: ${d.publishedDate.toISOString().slice(0, 10)}`,
     ...(d.updatedDate
@@ -1078,6 +1089,16 @@ export function documentHeader(
     `Language: ${locale}`,
     `Alternate: ${alternateTwinUrl(url, locale)}`,
     ...(modified ? [`Updated: ${modified.slice(0, 10)}`] : []),
+    // Reuse terms, in the block an agent parses rather than in prose it has to
+    // interpret. These twins are what an AI pipeline actually ingests, and
+    // they carried no license at all while the HTML beside them did.
+    //
+    // It points at the license page rather than naming a CC URI directly
+    // because these eight generators cover articles, tool documentation, the
+    // CV and the publication list, and only some of those are CC BY. One
+    // address that states the terms per kind of work is true for every twin;
+    // a blanket CC URI would be an overclaim on half of them.
+    `License: ${new URL(locale === "es" ? "/es/license/" : "/license/", url).href}`,
     ...extra,
   ];
 }
@@ -1494,6 +1515,8 @@ export async function generateLlmsFullTxt(siteUrl: string): Promise<string> {
     `> ${DESCRIPTION}`,
     "",
     "> This file is an index. Every entry links to a markdown twin that carries\n> the detail, which is what keeps the index itself small enough to fit in an\n> agent's context. Posts, tools, the CV and the publications each live at\n> their page's own URL with `index.md` appended.",
+    "",
+    `> Reuse: articles, page copy and blog covers are CC BY 4.0 with attribution; the source code is MIT; the portrait is reserved. Full terms: ${siteUrl}/license/`,
     "",
     // The build date, not a content date — see the same label on the shards.
     `> Generated: ${today()}`,

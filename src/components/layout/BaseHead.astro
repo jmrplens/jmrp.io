@@ -774,6 +774,23 @@ const jsonLD = {
   rel="sitemap"
   href="/sitemap-index.xml"
 />
+{
+  /*
+   * Reuse terms, in the one place the HTML spec puts them. `rel="license"` means
+   * "this hyperlink leads to a document describing the licensing information",
+   * which is exactly what /license/ is, so the same relation is correct on every
+   * page whatever kind of work it carries — an article under CC BY, the portrait
+   * that is excluded from it, or a tool page whose code is MIT.
+   *
+   * Deliberately not the Creative Commons URI: that would be right on a post and
+   * wrong on the other hundred pages. The CC URI is already emitted, per post,
+   * in the JSON-LD `license` of the article and of its cover.
+   */
+}
+<link
+  rel="license"
+  href={locale === defaultLocale ? "/license/" : `/${locale}/license/`}
+/>
 <link
   rel="alternate"
   type="application/rss+xml"

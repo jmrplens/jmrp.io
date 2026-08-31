@@ -97,7 +97,7 @@ export const common = {
     english: "English",
     spanish: "Español",
     switchLanguage: "Cambiar a {lang}",
-    copyright: "© {year} {author}. Todos los derechos reservados.",
+    copyright: "© {year} {author}",
   },
   aria: {
     mainNav: "Navegación principal",
@@ -1014,7 +1014,8 @@ export const common = {
   },
   rss: {
     continueReading: "Continuar leyendo en jmrp.io →",
-    copyright: "Copyright {year}, José Manuel Requena Plens",
+    copyright:
+      "© {year} José Manuel Requena Plens. Los artículos se publican bajo CC BY 4.0 — https://creativecommons.org/licenses/by/4.0/",
   },
   pwa: {
     shortcutBlog: "Blog",

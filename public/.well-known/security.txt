@@ -12,12 +12,21 @@ Preferred-Languages: en, es
 Canonical: https://jmrp.io/.well-known/security.txt
 Policy: https://github.com/jmrplens/jmrp.io/security/policy
 
+# Hiring: security-adjacent work is part of what I do; the CV is the
+# canonical place where that is listed.
+Hiring: https://jmrp.io/cv/
+
+# Bug-Bounty is registered with IANA (CERT CVD 3.5.5) though it is not in
+# RFC 9116 itself. Declared False so a reporter knows up front that there
+# is no money behind this, rather than finding out after the work.
+Bug-Bounty: False
+
 # Expires: This file should be reviewed and updated annually
 Expires: 2027-04-09T23:59:59.000Z
 -----BEGIN PGP SIGNATURE-----
 
-iHUEARYKAB0WIQQKmTsmhlTbulK36NP89lM5HiyR/AUCadbtnQAKCRD89lM5HiyR
-/FP6AQCatKHZgMGWlnsYH14lfLzlEyWGedyCwc3NIHoClyS4SwEA8AKYmJpzTvK0
-13WgxZlpX0PvmSUW7nTNlP1xOVLryAQ=
-=V7PZ
+iHUEARYKAB0WIQQKmTsmhlTbulK36NP89lM5HiyR/AUCapV2XQAKCRD89lM5HiyR
+/EWxAQC9rik8ZAM9LjxfS9tKjlrSc9GbcFNOHZSdKcygIjp7hgEAlCpI1GlycBOi
+oYkMyzoWrSFdvQfbwUS2lYhqaWaOkww=
+=Z0mE
 -----END PGP SIGNATURE-----
