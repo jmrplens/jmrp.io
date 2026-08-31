@@ -112,7 +112,10 @@ const pathFor = (loc: Locale): string =>
     for (const link of links) {
       link.addEventListener("click", () => {
         if (typeof (window as any).__markLanguageChoice === "function") {
-          (window as any).__markLanguageChoice();
+          // Pass the destination. Without it the detector read the CURRENT
+          // path — this handler runs before the browser navigates — and
+          // recorded the language being left instead of the one chosen.
+          (window as any).__markLanguageChoice(link.pathname);
         }
       });
     }
