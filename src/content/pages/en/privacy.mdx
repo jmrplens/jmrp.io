@@ -8,57 +8,63 @@ lang: en
 
 import ObfuscatedEmail from "@components/ui/ObfuscatedEmail.astro";
 
-No cookies, no third-party scripts, no ad network, no cross-site tracking. This page states exactly what happens when you load a page here — including the parts that do leave your browser — and how to verify each claim yourself.
+No cookies, no third-party scripts, no ad networks, no cross-site tracking. This page states exactly what happens when you load a page here — including the parts that do leave your browser — and how to verify each claim yourself.
 
 ## Analytics
 
-Page views are counted with Cloudflare Web Analytics. The measurement script is not loaded from Cloudflare: it is downloaded at build time and served from this domain as /scripts/cf-beacon.js. Rendering a page therefore requires no request to any third-party host.
+Page views are counted with Cloudflare Web Analytics. The measurement script is not loaded from Cloudflare: it is downloaded at build time and served from this domain as /scripts/cf-beacon.js. Rendering a page therefore needs no request to a third-party host, and the one third-party request this site makes is the beacon's own report, described next.
 
-What the script does send is an aggregate page-view event to Cloudflare's analytics endpoint. It sets no cookie, assigns no identifier and builds no profile, so there is nothing that could follow you to another site.
+What that script sends, once per page view, is a report to Cloudflare's analytics endpoint: the page address with its query string and fragment stripped out before sending, the referrer, load timings, Core Web Vitals and coarse device signals such as connection type. It sets no cookie, assigns no identifier and builds no profile, so there is nothing that could follow you to another site. Because the query string is removed first, anything you typed into a tool that ended up in the address bar never reaches Cloudflare.
 
-The beacon is wrapped in a guard that disables it on localhost, and it is only injected into production builds. Development and preview runs never report anything.
+The beacon is only injected into production builds, and it carries a check that stops it unless the page is being served from jmrp.io itself. Development runs, previews and any other copy of this site report nothing, whatever address they are served from.
+
+This domain is also served through Cloudflare, which terminates TLS and therefore sees every request. A small worker of mine runs at that edge and records one row per request — path, response status, cache result, country, city, network operator and coarse client type — in an aggregate dataset kept for about ninety days. It stores no IP address and no session identifier. It exists because the edge answers most requests from its cache, so this server never sees them and its own logs cannot say which pages are actually read.
 
 These numbers exist to tell me which articles are worth keeping up to date. That is their only use.
 
-## Cookies
+## Cookies and storage
 
-This site sets no cookies at all — not for analytics, not for preferences, not for consent to cookies that do not exist. No response from this domain carries a Set-Cookie header.
+This site sets no cookies at all — not for analytics, not for preferences, not to ask your consent for cookies that do not exist. No response from this domain carries a Set-Cookie header.
 
-Your theme choice (dark or light) is stored in localStorage, on your own device. It is never transmitted and never leaves the browser.
+What it does keep on your device is a short list. In localStorage: your theme choice, and your language once you use the language switcher. In sessionStorage, and only while the tab is open: a flag so the automatic Spanish redirect does not fire twice, and a flag so a failed integrity check is not reported twice. None of it is transmitted.
+
+On a first visit to an English page, a small script reads the language list your browser advertises and, if it asks for Spanish, sends you to the Spanish version once. That check happens entirely in your browser and its answer is never sent anywhere.
 
 ## Third-party requests
 
-Fonts, images, stylesheets and scripts are all served from this domain. There are no CDN script tags, no embedded widgets, no social buttons and no externally hosted web fonts on any page.
+Fonts, images, stylesheets and scripts are all served from this domain. No page loads a script from a CDN, an embedded widget, a social button or an externally hosted web font.
 
-A Content Security Policy enforces this from the server side rather than relying on discipline: scripts and styles are accepted only from this origin, and only with a per-request nonce.
+A Content Security Policy enforces this from the server side rather than leaving it to discipline: styles are accepted only from this origin and only with a per-request nonce, and scripts only with that nonce. The complete policy — including the few hosts the analytics beacon and the two networked tools are allowed to reach — is generated by the build and is in the public source.
 
 ## Server logs
 
-The web server keeps ordinary access logs: timestamp, requested path, response status, user agent and IP address. This site runs an active tarpit and blocklist stack, which cannot work without knowing who is knocking.
+The web server keeps ordinary access logs: timestamp, IP address, the full request line, response status, bytes sent, referrer, user agent, the hostname you asked for, and the country, city and network operator that a GeoIP database derives from the address. They are rotated daily and kept for one year, then deleted. This site runs an active tarpit and blocklist stack, which cannot work without knowing who is knocking.
 
-Those logs are operational and security data. They are not joined with analytics, not used to build reader profiles and not shared with anyone.
+Those logs are operational and security records. They are not joined with analytics, not used to build reader profiles and not shared with anyone.
+
+One thing does travel further. If your browser blocks something on a page here — a Content Security Policy violation, or a script that fails its integrity check — it posts a short report to this domain naming the page address, the referrer and the resource that was blocked. Those reports reach me over Telegram, along with the reporting address and user agent, so that a broken or tampered page is noticed the same day. It is the only thing on this site handed to a service I do not run, and in practice almost everything it catches is browser extensions.
 
 ## The tools
 
-The interactive tools run in your browser. Hashes, passwords, regular expressions, subnets, certificates you paste in — the computation happens on your machine, and the input is never uploaded.
+The interactive tools run in your browser. Whatever you type into them — hashes, passwords, regular expressions, subnets, certificates — is computed on your own machine and is not uploaded. Five of them also write your input into the address bar, so that a result can be bookmarked or shared; that stays in your browser history, and it reaches this server only if you reload the page with it.
 
-Two tools are deliberate, visible exceptions, because they cannot work otherwise. The certificate inspector queries public Certificate Transparency logs (Cert Spotter and crt.sh) for the hostname you type. The HTTP header analyzer sends the URL you submit to a small proxy on this same domain, because a browser is not allowed to read another site's response headers.
+Two tools are deliberate exceptions because they cannot work otherwise. The Certificate Inspector searches the public Certificate Transparency logs — Cert Spotter and crt.sh — for the hostname you type, and it does so from your browser, so those two services see your address as if you had visited them yourself. The HTTP Security Headers Analyzer works the other way round: it sends the URL you submit to a small proxy on this domain, because a browser is not allowed to read another site's response headers, so the site being inspected sees this server and not you.
 
-In both cases the request carries only what you typed, and only when you press the button. Nothing you enter into a tool is stored or associated with you.
+In both cases the request is made only when you press the button, and carries only what you typed. That proxy has its access log switched off deliberately, so the URL you inspect is never written beside your address. Nothing you enter into a tool is stored here or associated with you.
 
 ## No ads, no affiliates
 
-There is no advertising, no affiliate link, no sponsored content and no mailing list here. The only way to support the work is a GitHub Sponsors link on the projects page — an ordinary outbound link that sets nothing and measures nothing, and that is not on any other page. Beyond that the site is not monetized, so there is no incentive to collect anything about you.
+There is no advertising, no affiliate links, no sponsored content and no mailing list here. The only funding route is a GitHub Sponsors link, shown on the projects page; the same address is also declared as a donation endpoint in the structured data of every page, so that a machine reading the site finds it where it looks. It is an ordinary outbound link that sets nothing and measures nothing. Beyond that the site is not monetized, so there is no incentive to collect anything about you.
 
 ## Verify it yourself
 
-Open your browser's network panel on any page and read the request list: every entry is same-origin. Open the storage panel: there is no cookie to delete. The source of this site is public, including the build step that downloads the analytics script and the configuration that generates the security headers.
+Open your browser's network panel on any page and read the request list: every entry is served from this domain except one, the beacon's report to Cloudflare — and, on the Certificate Inspector, the two Certificate Transparency services it queries once you press the button. Open the storage panel: there is no cookie to delete, and the only entries are the handful named above. The source of this site is public, including the build step that downloads the analytics script and the configuration that generates the security headers.
 
 [Site source on GitHub](https://github.com/jmrplens/jmrp.io)
 
 ## Contact
 
-For anything privacy-related, write to me directly. Security reports have their own channel, with a PGP key and disclosure policy.
+For anything privacy-related, write to me directly. Security reports have their own channel, with a PGP key and a disclosure policy.
 
 <ObfuscatedEmail address="mail@jmrp.io" />
 

@@ -419,6 +419,7 @@ fediverse
 fediverso
 Feedbin
 feedly
+fiarlo
 filtro
 firehol
 firewalld

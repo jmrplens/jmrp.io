@@ -99,8 +99,21 @@ const documentSchema = {
    * belonging to a wider layout than the page it introduces — invisible while
    * the body was also full-width, obvious once it was not.
    */
-  .doc-header {
+
+  /*
+   * One declaration of the reading column, on the two wrappers, instead of the
+   * same token repeated on every child. Centred rather than pinned left: the
+   * header and footer span the full width, so a 70ch column hard against the
+   * left edge left ~700px of void on a wide screen and read as a layout that
+   * had lost its other half.
+   */
+  .doc-header,
+  .doc-body {
     max-width: var(--max-width-prose);
+    margin-inline: auto;
+  }
+
+  .doc-header {
     padding-bottom: var(--space-lg);
     margin-bottom: var(--space-lg);
     border-bottom: 1px solid var(--color-hair);
@@ -119,7 +132,6 @@ const documentSchema = {
   }
 
   .doc-body :global(p:first-of-type) {
-    max-width: var(--max-width-prose);
     margin: 0;
     font-size: var(--text-md);
     line-height: 1.6;
@@ -153,7 +165,6 @@ const documentSchema = {
   }
 
   .doc-body :global(p) {
-    max-width: var(--max-width-prose);
     margin: 0 0 var(--space-md);
     font-size: var(--text-base);
     line-height: 1.7;
@@ -164,7 +175,6 @@ const documentSchema = {
     display: flex;
     flex-wrap: wrap;
     gap: var(--space-md);
-    max-width: var(--max-width-prose);
     margin: 0;
     font-family: var(--font-mono);
     font-size: var(--text-sm);
