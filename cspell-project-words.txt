@@ -948,6 +948,7 @@ reconexión
 reconexiones
 recrawl
 recursión
+recursos
 redibujado
 redirección
 redirecciones
