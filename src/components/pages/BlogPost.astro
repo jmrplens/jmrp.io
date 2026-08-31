@@ -250,6 +250,12 @@ const articleNode = {
   dateModified: revisedIso,
   publisher: personRef,
   author: personRef,
+  // The article TEXT is CC BY 4.0, and this is where a machine is told so.
+  // The license page states it in prose; without this the structured data
+  // would carry terms for the cover image and stay silent about the words
+  // beside it — the same gap Search Console reported for the images, and
+  // the one that would make the page's own claim untrue.
+  license: "https://creativecommons.org/licenses/by/4.0/",
   image: {
     "@type": "ImageObject",
     url: new URL(jsonLdImage, getSiteUrl()).href,

@@ -187,6 +187,7 @@ cilíndricos
 ciphersuites
 ciphertext
 ciphertexts
+cítalos
 clases
 claude
 claudebot
@@ -239,6 +240,7 @@ contenedores
 contenido
 continuar
 conversor
+cópiala
 copytruncate
 cplusplus
 cppreference
@@ -984,9 +986,8 @@ renegociar
 reorientarme
 replaceability
 representación
-republicación
-republicar
-republicarla
+republícala
+republícalos
 reqs
 requena
 requestfailed
@@ -1156,6 +1157,7 @@ torproject
 torrc
 totp
 traceroute
+tradúcelos
 transmítela
 tresor
 trevorcox

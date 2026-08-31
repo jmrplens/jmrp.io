@@ -152,16 +152,16 @@ export const PROFILE_SECTIONS: {
       title: "License",
       lines: [
         "Reuse terms differ by kind of work, and the page states each one rather than leaving the rest to be inferred from a single blanket notice.",
-        "Blog cover images are released under CC BY 4.0: reusable commercially and in any medium, including derivatives, on condition of crediting the author and marking changes.",
-        "The portrait used as the avatar is excluded from that grant, because it identifies a person rather than illustrating an article; the site source is MIT-licensed, and article text is all rights reserved with quotation under attribution explicitly welcome.",
+        "Articles and blog cover images are released under CC BY 4.0: reusable commercially and in any medium, including derivatives, on condition of crediting the author and marking changes.",
+        "The portrait used as the avatar is excluded from that grant, because it identifies a person rather than illustrating an article; the site source is MIT-licensed, and the terms are emitted as machine-readable metadata on every page rather than only stated in prose.",
       ],
     },
     es: {
       title: "Licencia",
       lines: [
         "Las condiciones de reutilización cambian según el tipo de obra, y la página enuncia cada una en vez de dejar el resto a deducir de un único aviso general.",
-        "Las portadas del blog se publican bajo CC BY 4.0: reutilizables comercialmente y en cualquier medio, derivados incluidos, a condición de citar la autoría e indicar los cambios.",
-        "El retrato que se usa como avatar queda fuera de esa cesión, porque identifica a una persona en lugar de ilustrar un artículo; el código del sitio está bajo MIT, y el texto de los artículos tiene todos los derechos reservados, con la cita con atribución expresamente bienvenida.",
+        "Los artículos y las portadas del blog se publican bajo CC BY 4.0: reutilizables comercialmente y en cualquier medio, derivados incluidos, a condición de citar la autoría e indicar los cambios.",
+        "El retrato que se usa como avatar queda fuera de esa cesión, porque identifica a una persona en lugar de ilustrar un artículo; el código del sitio está bajo MIT, y las condiciones se emiten como metadatos legibles por máquina en cada página, no solo enunciadas en prosa.",
       ],
     },
   },
@@ -322,12 +322,12 @@ export const SITE_SECTIONS: {
     en: {
       title: "License",
       description:
-        "Reuse terms, stated per kind of work — blog cover images under CC BY 4.0, the portrait reserved, the site source MIT-licensed, article text all rights reserved",
+        "Reuse terms, stated per kind of work — articles and blog cover images under CC BY 4.0, the site source MIT-licensed, and the portrait reserved because it identifies a person",
     },
     es: {
       title: "Licencia",
       description:
-        "Condiciones de reutilización, por tipo de obra — portadas del blog bajo CC BY 4.0, retrato reservado, código del sitio bajo MIT, texto de los artículos con todos los derechos reservados",
+        "Condiciones de reutilización, por tipo de obra — artículos y portadas del blog bajo CC BY 4.0, código del sitio bajo MIT, y retrato reservado por identificar a una persona",
     },
   },
 ];
