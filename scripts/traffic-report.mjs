@@ -496,8 +496,31 @@ async function main() {
   if (!TELEGRAM_BOT_TOKEN || !TELEGRAM_CHAT_ID) {
     throw new Error("TELEGRAM_BOT_TOKEN / TELEGRAM_CHAT_ID missing");
   }
+  // One report per calendar day, enforced here rather than trusted to the
+  // timer.
+  //
+  // On 2026-09-01 this was delivered four times between 14:37 and 15:59 for a
+  // unit whose OnCalendar is 22:00. The cause was not this script and not its
+  // timer: every Persistent=true daily unit on the host re-fired in the same
+  // batches — apt-daily-upgrade six times, logrotate, dpkg-db-backup and
+  // e2scrub_all five each — which is what systemd does when it re-arms realtime
+  // timers and a stamp looks older than the last scheduled elapse.
+  //
+  // A daily report has no business being sendable twice whatever systemd
+  // decides, so idempotence belongs in the thing that sends. The marker is the
+  // date, so a genuine run tomorrow proceeds; `--force` exists for a re-send
+  // that is actually wanted.
+  const stamp = path.join(os.tmpdir(), `traffic-report-sent-${date}`);
+  if (!process.argv.includes("--force") && fs.existsSync(stamp)) {
+    console.log(
+      `[traffic-report] already sent for ${date}; skipping. Use --force to re-send.`,
+    );
+    return;
+  }
+
   await sendMessage(message);
   await sendDocument(`jmrp-traffic-${date}.html`, html);
+  fs.writeFileSync(stamp, new Date().toISOString());
   console.log(`[traffic-report] sent for ${date}`);
 }
 
