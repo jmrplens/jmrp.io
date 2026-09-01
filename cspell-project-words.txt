@@ -727,6 +727,7 @@ mppe
 mrru
 mschap
 mstdn
+mtimes
 muévelos
 multicriteria
 multiformato
@@ -1142,6 +1143,8 @@ tieni
 tik's
 tikzposter
 timedatectl
+timesync
+timesyncd
 timpibot
 tinified
 tinify
