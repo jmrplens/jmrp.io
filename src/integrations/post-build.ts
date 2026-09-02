@@ -31,6 +31,7 @@ import { extractCssDataUris } from "./post-build/css.js";
 import { generateDocsRedirects } from "./post-build/docs-redirects.js";
 import { processHtmlFiles } from "./post-build/html.js";
 import { optimizeImages } from "./post-build/images.js";
+import { generateMdTwinAlternates } from "./post-build/md-twin-alternates.js";
 import { generateTagRedirects } from "./post-build/tag-redirects.js";
 import type { CspData } from "./post-build/types.js";
 import { timed } from "./timing.js";
@@ -97,6 +98,13 @@ export default function postBuildIntegration(): AstroIntegration {
           );
           await timed("generateTagRedirects", logger, () =>
             generateTagRedirects(logger),
+          );
+          // Fourth Nginx artifact: the markdown-twin alternate map. Derived
+          // from the twins the build actually wrote, so a page never announces
+          // a twin that does not exist, and removing one withdraws the
+          // announcement in the same build (GEO audit 2026-09-02, A2).
+          await timed("generateMdTwinAlternates", logger, () =>
+            generateMdTwinAlternates(distDir, logger),
           );
 
           // Verification, not a transform: the built pages, their markdown
