@@ -70,6 +70,8 @@ import os from "node:os";
 import path from "node:path";
 import { performance } from "node:perf_hooks";
 
+import { stagingCandidates } from "./nginx-staging.mjs";
+
 /**
  * Load the project's `.env` into `process.env`.
  *
@@ -123,10 +125,9 @@ const DIST_DIR = path.join(ROOT, "dist");
  * file caught by that would land in `/etc/nginx/` owned by `www-data`. It must also share a filesystem with the destination, which is
  * what makes the delivery a true move rather than a copy.
  */
-const STAGING_DIR = path.resolve(
-  (process.env.POSTBUILD_NGINX_STAGING_DIR || "").trim() ||
-    "/var/lib/jmrp.io/nginx-staged",
-);
+const STAGING_DIR =
+  stagingCandidates().find((dir) => fs.existsSync(dir)) ??
+  stagingCandidates()[0];
 
 /** Delivery contract written LAST by the post-build hook. */
 const MANIFEST_BASENAME = "manifest.json";
@@ -880,7 +881,7 @@ function statOwnership(paths) {
 function assertDeliveredOwnership(entries, secureOpts) {
   const paths = entries.map((entry) => entry.dst);
   const observed = statOwnership(paths);
-  if (!observed || observed.length !== paths.length) {
+  if (observed?.length !== paths.length) {
     console.warn(
       "deploy-live: ⚠ could not stat the delivered artifacts to confirm 0644 root:root.",
     );
@@ -1178,8 +1179,11 @@ function deployNginxSnippets(stagingDir, snippetsDir) {
   const reloadTimeout = readTimeout("POSTBUILD_NGINX_RELOAD_TIMEOUT", 30_000);
   const tempDir = pickTempDirFor(snippetsDir);
 
+  // Built outside the message: a nested template literal inside `${...}` is
+  // unreadable at a glance and Sonar rejects it (S4624).
+  const stampNote = stamp ? ` (stamp ${stamp})` : "";
   console.log(
-    `deploy-live: delivering ${entries.length} Nginx artifact(s)${stamp ? ` (stamp ${stamp})` : ""} to ${snippetsDir}...`,
+    `deploy-live: delivering ${entries.length} Nginx artifact(s)${stampNote} to ${snippetsDir}...`,
   );
 
   try {
@@ -1214,9 +1218,10 @@ function deployNginxSnippets(stagingDir, snippetsDir) {
 
   clearStagingAfterDelivery(stagingDir);
   warnAboutServedArtifacts(DIST_DIR);
+  const prunedNote = orphans.length > 0 ? `, ${orphans.length} pruned` : "";
   console.log(
     `deploy-live: ✓ ${entries.length} artifact(s) moved into ${snippetsDir}` +
-      `${orphans.length > 0 ? `, ${orphans.length} pruned` : ""}; Nginx tested and reloaded.`,
+      `${prunedNote}; Nginx tested and reloaded.`,
   );
 }
 

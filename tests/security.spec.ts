@@ -22,6 +22,7 @@ import path from "node:path";
 
 import { expect, test } from "@playwright/test";
 
+import { stagingCandidates } from "../scripts/nginx-staging.mjs";
 import { getCachedPages } from "./utils";
 
 // Read pages synchronously at module scope for parallel test registration
@@ -271,13 +272,13 @@ test.describe("CSP and SRI Security Checks", () => {
  * blue/green swap — into the Nginx snippets directory, so at any moment it
  * exists in exactly one of two places:
  *
- * 1. Staged (`.nginx-staged/`, or `POSTBUILD_NGINX_STAGING_DIR`): a build ran
+ * 1. Staged (`POSTBUILD_NGINX_STAGING_DIR`, else the production or fallback root): a build ran
  *    and nothing delivered it — a worktree or a scratch build, where
  *    deploy-live is skipped because cwd is not the production root, so
  *    staging stays full. CI reaches this branch ONLY if the workspace running
  *    this suite has the staging directory: the build there happens in a
  *    separate job, and `functional-tests` restores just the `dist-build`
- *    artifact, so `.nginx-staged/` has to be uploaded and downloaded
+ *    artifact, so the staging directory has to be uploaded and downloaded
  *    alongside it (.github/workflows/ci.yml) or these three tests fail with
  *    the error below.
  * 2. Delivered (`POSTBUILD_NGINX_SNIPPETS_DIR`): production after a successful
@@ -294,9 +295,6 @@ test.describe("CSP and SRI Security Checks", () => {
 // worktree out of an action, would point this resolver at the repo root while
 // the build still wrote to `.nginx-staged`, and the fall-through to the
 // delivered copy would then verify a file this build never produced.
-const STAGED_SNIPPETS_DIR = path.resolve(
-  (process.env.POSTBUILD_NGINX_STAGING_DIR || "").trim() || ".nginx-staged",
-);
 const DELIVERED_SNIPPETS_DIR = (
   process.env.POSTBUILD_NGINX_SNIPPETS_DIR || ""
 ).trim();
@@ -313,12 +311,14 @@ const DELIVERED_SNIPPETS_DIR = (
  * @throws If the file is in neither location, or is empty.
  */
 function readHeadersConf(): { path: string; content: string } {
-  const staged = path.join(STAGED_SNIPPETS_DIR, "security_headers.conf");
+  const staged = stagingCandidates().map((dir) =>
+    path.join(dir, "security_headers.conf"),
+  );
   const delivered = DELIVERED_SNIPPETS_DIR
     ? path.join(DELIVERED_SNIPPETS_DIR, "security_headers.conf")
     : "";
 
-  const found = [staged, delivered].find(
+  const found = [...staged, delivered].find(
     (candidate) => candidate !== "" && fs.existsSync(candidate),
   );
 
@@ -328,7 +328,7 @@ function readHeadersConf(): { path: string; content: string } {
         "security_headers.conf not found, so the shipped CSP is unverified.",
         "The post-build hook writes it to the staging dir and deploy-live.mjs",
         "moves it to the Nginx snippets dir; it is never written to dist/.",
-        `  staged (checked first): ${staged} — missing`,
+        ...staged.map((c) => `  staged (checked first): ${c} — missing`),
         delivered
           ? `  delivered:              ${delivered} — missing`
           : "  delivered:              POSTBUILD_NGINX_SNIPPETS_DIR unset" +

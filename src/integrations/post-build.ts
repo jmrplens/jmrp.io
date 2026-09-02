@@ -41,12 +41,15 @@
 import { spawnSync } from "node:child_process";
 import crypto from "node:crypto";
 import fs from "node:fs";
-import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 import type { AstroIntegration, AstroIntegrationLogger } from "astro";
 
+import {
+  FALLBACK_STAGING_DIR,
+  stagingCandidates,
+} from "../../scripts/nginx-staging.mjs";
 import { generateBlogRedirects } from "./post-build/blog-redirects.js";
 import { compressAssets } from "./post-build/compression.js";
 import { finalizeCspConfig } from "./post-build/csp.js";
@@ -270,9 +273,6 @@ function createBuildStampId(): string {
   return `${compact}Z-${crypto.randomBytes(4).toString("hex")}`;
 }
 
-/** Default staging root: outside the repository AND outside the served tree. */
-const DEFAULT_NGINX_STAGING_DIR = "/var/lib/jmrp.io/nginx-staged";
-
 /**
  * Resolves the directory this build stages its Nginx artifacts in.
  *
@@ -294,7 +294,7 @@ const DEFAULT_NGINX_STAGING_DIR = "/var/lib/jmrp.io/nginx-staged";
  */
 function resolveNginxStagingDir(): string {
   const override = (process.env.POSTBUILD_NGINX_STAGING_DIR || "").trim();
-  return path.resolve(override || DEFAULT_NGINX_STAGING_DIR);
+  return path.resolve(override || stagingCandidates()[0]);
 }
 
 /**
@@ -396,7 +396,7 @@ async function prepareNginxStaging(
     // a build that stages here CANNOT deliver, and a silent fallback would let
     // a misconfigured production build look successful while delivering
     // nothing, which is the exact failure this migration existed to remove.
-    const fallback = path.join(os.tmpdir(), "jmrp-nginx-staged");
+    const fallback = FALLBACK_STAGING_DIR;
     logger.warn(
       `Cannot write Nginx staging at [${stagedIn}] (${code}). Falling back ` +
         `to [${fallback}] — this build stages but CANNOT deliver. Set ` +

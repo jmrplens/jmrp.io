@@ -244,8 +244,15 @@ function readAssetDownloads(asset, repo) {
   // destructuring crash no build log can trace back to a repository.
   const name = asset?.name;
   if (typeof name !== "string" || name.length === 0) {
+    // The id is as unchecked as the name, so it is narrowed to a primitive
+    // before it reaches the message. An object id would interpolate as
+    // "[object Object]" — and `String()` would produce exactly the same
+    // useless label — naming no asset at all; "?" at least does not pretend.
+    const id = asset?.id;
+    const label =
+      typeof id === "number" || typeof id === "string" ? id.toString() : "?";
     throw new TypeError(
-      `GitHub ${repo} releases: asset ${asset?.id ?? "?"} has no usable name`,
+      `GitHub ${repo} releases: asset ${label} has no usable name`,
     );
   }
   // `download_count` is checked here too because a non-number would turn every

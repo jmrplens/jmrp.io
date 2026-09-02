@@ -763,7 +763,7 @@ function readIndexes(distDir) {
     const file = path.join(distDir, name);
     if (!fs.existsSync(file))
       throw new Error(`${name} is missing from ${distDir} — build incomplete`);
-    return fs.readFileSync(file, "utf8");
+    return fs.readFileSync(file, "utf8"); // NOSONAR: distDir is validated in main() before any read reaches here
   };
   return {
     llms: listedPaths(read("llms.txt")),
@@ -860,17 +860,27 @@ export function checkTwins(distDir) {
  * every legitimate build root. A refusal exits 2, not 1: the guard could not
  * run, the site has not drifted.
  *
+ * S8707 asks instead for a string-shaped allow-list, which is exactly the
+ * check that broke `--outDir`, so the reads it points at carry a `NOSONAR`:
+ * the rule is suppressed on purpose, not satisfied by accident.
+ *
  * @param {string} distArg - Directory to check (default `dist`).
  * @returns {void}
  * @throws {Error} When the argument is not a directory holding a built site.
  */
 function main(distArg) {
-  const distDir = path.resolve(process.cwd(), distArg);
-  if (!fs.existsSync(distDir) || !fs.statSync(distDir).isDirectory())
-    throw new Error(`${distArg} (${distDir}) is not an existing directory`);
+  const resolved = path.resolve(process.cwd(), distArg);
+  const isDirectory =
+    fs.existsSync(resolved) && fs.statSync(resolved).isDirectory(); // NOSONAR: this IS the validation S8707 asks for, on the canonical path
+  if (!isDirectory)
+    throw new Error(`${distArg} (${resolved}) is not an existing directory`);
+  // Canonicalized ONCE, past every symlink — `dist` is one, it points at
+  // whichever blue/green colour is live — so a single value, not the string
+  // off the command line, is what every reader below is handed.
+  const distDir = fs.realpathSync(resolved);
   if (!fs.existsSync(path.join(distDir, "index.html")))
     throw new Error(
-      `${distArg} (${distDir}) holds no index.html — this guard reads built ` +
+      `${distArg} (${resolved}) holds no index.html — this guard reads built ` +
         `site output, and refuses to walk a directory that is not one`,
     );
   const { violations, stats } = checkTwins(distDir);
