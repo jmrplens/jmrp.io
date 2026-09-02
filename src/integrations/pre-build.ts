@@ -1,17 +1,35 @@
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+
 import type { AstroIntegration } from "astro";
 import { loadEnv } from "vite";
 
 import { setupCfBeacon } from "./pre-build/beacon.js";
 import { ensureDownloadsData, setupDownloads } from "./pre-build/downloads.js";
+import { pruneStaleOptimizedImageCache } from "./pre-build/image-cache.js";
 import { timed } from "./timing.js";
 
 /**
  * Creates the jmrp-pre-build Astro integration.
  *
  * This integration ensures that external assets required for the build
- * (like the Cloudflare beacon and download totals) are downloaded and ready.
+ * (like the Cloudflare beacon and download totals) are downloaded and ready,
+ * and that the optimized-image cache cannot serve a blob derived from bytes
+ * or encoder settings that no longer apply.
+ *
+ * @param imageOptimizer - The `ViteImageOptimizer` cache location and the
+ *   exact options object it is configured with, both taken from
+ *   `astro.config.mjs` so the guard and the plugin share one source of truth.
+ * @returns The Astro integration definition.
  */
-export default function preBuildIntegration(): AstroIntegration {
+export default function preBuildIntegration(imageOptimizer: {
+  cacheDir: string;
+  options: Record<string, unknown>;
+}): AstroIntegration {
+  // Captured from the resolved config rather than assumed, so a future
+  // `publicDir` override cannot silently make the guard check nothing.
+  let publicDir = path.resolve(process.cwd(), "public");
+
   return {
     name: "jmrp-pre-build",
     hooks: {
@@ -60,6 +78,26 @@ export default function preBuildIntegration(): AstroIntegration {
         }
 
         logger.info("Initialization completed.");
+      },
+
+      "astro:config:done": ({ config }) => {
+        publicDir = fileURLToPath(config.publicDir);
+      },
+
+      // Before Vite runs, so the image optimizer either hits a cache blob
+      // certified against the bytes currently in public/ and the settings in
+      // force, or misses and re-encodes. Never fires for `astro dev`.
+      "astro:build:start": async ({ logger }) => {
+        await timed("pruneOptimizedImageCache", logger, () =>
+          pruneStaleOptimizedImageCache(
+            {
+              publicDir,
+              cacheDir: path.resolve(process.cwd(), imageOptimizer.cacheDir),
+              options: imageOptimizer.options,
+            },
+            logger,
+          ),
+        );
       },
     },
   };

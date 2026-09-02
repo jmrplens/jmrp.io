@@ -206,8 +206,12 @@ async function pruneStaleEntries(
  * Optimizes images in the distribution directory.
  *
  * `ViteImageOptimizer` (see `astro.config.mjs`) already runs Sharp over every
- * PNG during the Vite build (bundled assets and `public/`, cached by content
- * hash). This second pass exists because that config never enables Sharp's
+ * PNG during the Vite build, over bundled assets and `public/` alike. Its
+ * cache is keyed by PATH, not by content, and its key says nothing about the
+ * encoder settings either — `src/integrations/pre-build/image-cache.ts`
+ * certifies both before each build; the cache below is the one keyed by
+ * content hash. This second pass exists because that config never enables
+ * Sharp's
  * `palette` (pngquant-style) quantization, so it re-encodes small/icon-like
  * PNGs with palette quantization to recover real additional savings Vite's
  * pass leaves on the table. To avoid redoing that CPU-bound work on every
