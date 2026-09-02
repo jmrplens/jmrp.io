@@ -209,6 +209,7 @@ export function pagePathOf(distDir, file) {
 
 /** One character of an HTML attribute name, as this guard reads them. */
 const NAME_CHAR = /[a-zA-Z-]/;
+const NOT_NAME_CHAR = /[^a-zA-Z-]/;
 
 /** One whitespace character, exactly what `\s` matches. */
 const SPACE_CHAR = /\s/;
@@ -226,29 +227,53 @@ const SPACE_CHAR = /\s/;
  * @param {string} tag - One tag source, e.g. `<link href="…" rel="…">`.
  * @returns {Record<string, string>} Lower-cased attribute name -> raw value.
  */
+function skipWhile(tag, from, charClass) {
+  let at = from;
+  while (at < tag.length && charClass.test(tag[at])) at += 1;
+  return at;
+}
+
+/**
+ * Reads the next `name="value"` pair, starting the scan at `from`.
+ *
+ * Returns `null` when nothing more can be read — either no name run is left, or
+ * a value was opened and never closed, which is the same point at which the
+ * regex this replaced stopped matching. A run of name characters not followed
+ * by `="` yields a `next` with no `name`, so the caller resumes from there,
+ * exactly as every start offset inside that run used to fail.
+ *
+ * @param {string} tag - One tag source.
+ * @param {number} from - Offset to start scanning at.
+ * @returns {{name?: string, value?: string, next: number} | null} The pair read.
+ */
+function readAttribute(tag, from) {
+  const nameStart = skipWhile(tag, from, NOT_NAME_CHAR);
+  if (nameStart >= tag.length) return null;
+  const nameEnd = skipWhile(tag, nameStart, NAME_CHAR);
+  const afterName = skipWhile(tag, nameEnd, SPACE_CHAR);
+  if (tag[afterName] !== "=") return { next: afterName };
+  const afterEquals = skipWhile(tag, afterName + 1, SPACE_CHAR);
+  if (tag[afterEquals] !== '"') return { next: afterEquals };
+  const valueEnd = tag.indexOf('"', afterEquals + 1);
+  if (valueEnd === -1) return null;
+  return {
+    name: tag.slice(nameStart, nameEnd).toLowerCase(),
+    value: tag.slice(afterEquals + 1, valueEnd),
+    next: valueEnd + 1,
+  };
+}
+
 function tagAttributes(tag) {
   /** @type {Record<string, string>} */
   const attrs = {};
   let at = 0;
   while (at < tag.length) {
-    if (!NAME_CHAR.test(tag[at])) {
-      at += 1;
-      continue;
-    }
-    const nameStart = at;
-    while (at < tag.length && NAME_CHAR.test(tag[at])) at += 1;
-    const name = tag.slice(nameStart, at);
-    while (at < tag.length && SPACE_CHAR.test(tag[at])) at += 1;
-    if (tag[at] !== "=") continue;
-    at += 1;
-    while (at < tag.length && SPACE_CHAR.test(tag[at])) at += 1;
-    if (tag[at] !== '"') continue;
-    const valueEnd = tag.indexOf('"', at + 1);
-    // An unterminated value leaves no quote pair after it, so no `name="value"`
-    // can follow either — the same point at which the regex stopped matching.
-    if (valueEnd === -1) break;
-    attrs[name.toLowerCase()] = tag.slice(at + 1, valueEnd);
-    at = valueEnd + 1;
+    const read = readAttribute(tag, at);
+    if (!read) break;
+    if (read.name !== undefined) attrs[read.name] = read.value;
+    // `readAttribute` always consumes at least the name run it found, so `at`
+    // strictly increases and this cannot spin.
+    at = read.next;
   }
   return attrs;
 }
