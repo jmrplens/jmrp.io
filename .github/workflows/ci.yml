@@ -99,6 +99,11 @@ jobs:
         with:
           name: nginx-staged
           path: .nginx-staged/
+          # The directory itself starts with a dot, so every file under it
+          # counts as hidden and upload-artifact silently uploads nothing —
+          # the download in `functional-tests` then fails with "Artifact not
+          # found". Same reason the dist-build upload below sets it.
+          include-hidden-files: true
           retention-days: 1
       - name: Upload build artifact
         uses: actions/upload-artifact@v7
