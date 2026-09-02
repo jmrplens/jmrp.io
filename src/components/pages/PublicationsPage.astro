@@ -8,7 +8,6 @@ import { defaultLocale, type Locale } from "@i18n/config";
 import { type TranslationKey, useTranslations } from "@i18n/utils";
 import BaseLayout from "@layouts/BaseLayout.astro";
 import { stripHtml } from "@utils/html";
-import { markdownTwinPath } from "@utils/llms";
 import {
   getPublicationKind,
   getPublications,
@@ -307,7 +306,6 @@ const collectionSchema = {
   title={t("pages.publications.title")}
   description={t("pages.publications.description")}
   schema={collectionSchema}
-  markdownHref={markdownTwinPath(Astro.url.pathname)}
 >
   <div class="container">
     <header class="pub-header">

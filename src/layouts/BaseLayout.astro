@@ -31,8 +31,6 @@ interface Props {
   modifiedDate?: Date;
   authors?: string[];
   tags?: string[];
-  /** Root-relative path of this page's markdown twin (blog posts only). */
-  markdownHref?: string;
 }
 
 const {
@@ -46,7 +44,6 @@ const {
   modifiedDate,
   authors,
   tags,
-  markdownHref,
 } = Astro.props;
 ---
 
@@ -69,7 +66,6 @@ const {
       modifiedDate={modifiedDate}
       authors={authors}
       tags={tags}
-      markdownHref={markdownHref}
     />
     <SRIEventListener />
     <script is:inline>

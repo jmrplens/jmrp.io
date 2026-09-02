@@ -2,10 +2,13 @@
  * Post-Build Integration
  *
  * This integration consolidates the post-build logic into the Astro lifecycle.
- * It runs after the build is complete (`astro:build:done` hook), and only
- * TRANSFORMS the content of the (not-yet-live) `builds/<color>` output
- * directory: HTML/CSS optimization, CSP artifact generation, image
- * optimization, compression, and permission fixups.
+ * It runs after the build is complete (`astro:build:done` hook) and TRANSFORMS
+ * the content of the (not-yet-live) `builds/<color>` output directory: HTML/CSS
+ * optimization, CSP artifact generation, image optimization, compression, and
+ * permission fixups. One step VERIFIES rather than transforms —
+ * `verifyMarkdownTwins()` throws when the built pages, their markdown twins
+ * and the index files disagree — and it lives here precisely because a throw
+ * here happens before `deploy-swap.mjs` retargets `dist/`.
  *
  * PUBLISH actions (copying the generated `security_headers*.conf` to system
  * Nginx + test + reload + rollback, Cloudflare cache purge, IndexNow/Bing
@@ -94,6 +97,17 @@ export default function postBuildIntegration(): AstroIntegration {
           );
           await timed("generateTagRedirects", logger, () =>
             generateTagRedirects(logger),
+          );
+
+          // Verification, not a transform: the built pages, their markdown
+          // twins and the three index surfaces must agree. Runs BEFORE the
+          // image/compression phase so a drift fails in ~0.2s instead of after
+          // ~30s of work, and — being inside astro:build:done — it fails the
+          // build before deploy-swap.mjs retargets the `dist` symlink, so a
+          // drifted build can never become the live one. See GEO audit #6,
+          // findings A2 / M5 / M8 (and A3, via the twin date rule).
+          await timed("verifyMarkdownTwins", logger, () =>
+            verifyMarkdownTwins(distDir),
           );
 
           // optimizeImages (re-compresses PNGs) and compressAssets (gzip/brotli
@@ -201,5 +215,45 @@ function fixPermissions(distDir: string, logger: AstroIntegrationLogger) {
     // Permission failures should fail the build, not just warn
     logger.error("Failed to fix permissions.");
     throw error instanceof Error ? error : new Error(String(error));
+  }
+}
+
+/**
+ * Fails the build when the markdown-twin, announcement and index surfaces
+ * disagree.
+ *
+ * The rules live in `scripts/ci/check-markdown-twins.mjs` rather than here so
+ * there is exactly ONE implementation: the same file is runnable by hand
+ * against any build directory (`node scripts/ci/check-markdown-twins.mjs
+ * builds/green`) and unit-tested on its own (`pnpm test:unit`). A guard whose
+ * failure mode nobody can reproduce is the vacuous check this one replaces.
+ *
+ * `process.execPath` rather than "node": no PATH lookup, and the child runs on
+ * the same runtime as the build. `stdio: "inherit"` so the offending PATHS land
+ * in the build log, not a count. Exit 1 means drift; any other non-zero status
+ * means the guard itself could not run, and saying "drift" there would be a lie
+ * about what happened.
+ *
+ * @param distDir - The directory Astro just built into.
+ */
+function verifyMarkdownTwins(distDir: string) {
+  const script = path.join(
+    process.cwd(),
+    "scripts/ci/check-markdown-twins.mjs",
+  );
+  const result = spawnSync(process.execPath, [script, distDir], {
+    stdio: "inherit",
+  });
+  if (result.error) throw result.error;
+  if (result.status === 1) {
+    throw new Error(
+      "markdown twin / announcement / index drift — see the paths listed above",
+    );
+  }
+  if (result.status !== 0) {
+    throw new Error(
+      `check-markdown-twins could not run (exit ${result.status}) — this is a` +
+        " guard failure, not a drift report",
+    );
   }
 }

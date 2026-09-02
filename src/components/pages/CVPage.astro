@@ -19,7 +19,6 @@ import { getCVData } from "@utils/cv";
 import { fetchRepoStats, formatStats, githubSlug } from "@utils/cv-github";
 import { markdownToHtml } from "@utils/cv-markdown";
 import { stripToText } from "@utils/html";
-import { markdownTwinPath } from "@utils/llms";
 import type { LanguageTaggedValue } from "@utils/person";
 import { CANONICAL_ALUMNI_OF } from "@utils/person";
 import { getAbsoluteUrl, getSiteUrl } from "@utils/site";
@@ -344,7 +343,6 @@ const SIDEBAR_LINK_KINDS = new Set([
   description={t("pages.cv.description")}
   type="profile"
   schema={cvSchema}
-  markdownHref={markdownTwinPath(Astro.url.pathname)}
 >
   <div class="container">
     <h1 class="page-title cv-title">{t("pages.cv.heading")}</h1>

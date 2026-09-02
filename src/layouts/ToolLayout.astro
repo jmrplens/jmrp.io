@@ -15,7 +15,7 @@ import FAQ from "@components/ui/FAQ.astro";
 import { defaultLocale, type Locale } from "@i18n/config";
 import { useTranslatedPath, useTranslations } from "@i18n/utils";
 import BaseLayout from "@layouts/BaseLayout.astro";
-import { markdownTwinPath } from "@utils/llms";
+import { CC_BY_4_0, licensePageUrl, MIT_LICENSE } from "@utils/license";
 import { getSiteUrl } from "@utils/site";
 import type { CollectionEntry } from "astro:content";
 import type { FAQPage, SoftwareApplication, WebPage } from "schema-dts";
@@ -118,6 +118,15 @@ const baseToolSchema = {
   isAccessibleForFree: true,
   author: { "@id": new URL("#person", getSiteUrl()).href },
   creator: { "@id": new URL("#person", getSiteUrl()).href },
+  // This node IS the tool, and the tool is code: "/license/" says the source of
+  // this site and of the interactive tools it hosts is public and MIT-licensed.
+  // The 34 `#software` nodes said nothing, so the one page on the site that
+  // states the terms was contradicted by silence everywhere they apply
+  // (GEO audit 2026-09-02, M4). Not CC BY: that covers the DOCUMENTATION, which
+  // is the `#webpage` node below, not the application.
+  license: MIT_LICENSE,
+  usageInfo: licensePageUrl(locale, "code"),
+  copyrightHolder: { "@id": new URL("#person", getSiteUrl()).href },
   inLanguage: locale,
   ...toolTranslationLink,
   ...(features && features.length > 0 && { featureList: features }),
@@ -163,6 +172,21 @@ const toolWebPage = {
   inLanguage: locale,
   isPartOf: { "@id": new URL("#website", getSiteUrl()).href },
   mainEntity: { "@id": `${toolUrl}#software` },
+  // The documentation, as distinct from the application it documents:
+  // "/license/" puts "the documentation written for the tools on this site"
+  // under CC BY 4.0 in the same sentence as the articles, and this page node is
+  // the only node in the graph that stands for that prose.
+  //
+  // The page also embeds the tool, whose code is MIT — and that is not left to
+  // inference: the `#software` node this one points at via `mainEntity` carries
+  // its own `license`, so the code/content line "/license/#code" draws ("not
+  // the content it renders") is readable off the graph rather than asserted by
+  // one node alone. `usageInfo` carries the same two qualifications the
+  // articles get, because `#writing` is literally the section that grants the
+  // tool documentation its license.
+  license: CC_BY_4_0,
+  usageInfo: licensePageUrl(locale, "writing"),
+  copyrightHolder: { "@id": new URL("#person", getSiteUrl()).href },
   speakable: {
     "@type": "SpeakableSpecification",
     cssSelector: [".header-content h1", ".subtitle"],
@@ -178,7 +202,6 @@ const pageSchema = faqNode
   title={title}
   description={description}
   schema={pageSchema}
-  markdownHref={markdownTwinPath(Astro.url.pathname)}
 >
   <div class="tool-page">
     <div class="content-wrapper">

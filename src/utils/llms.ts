@@ -6,6 +6,7 @@
  * a concise link index; `llms-full.txt` enriches each post with its description,
  * tags, FAQ questions, and HowTo step names (all sourced from frontmatter).
  */
+import downloadsData from "@data/downloads.json";
 import {
   stripLocalePrefix,
   type TranslationKey,
@@ -14,7 +15,9 @@ import {
 import { pageLastmod } from "@src/integrations/sitemap-post-dates";
 import type { CVData, SiteConfig } from "@src/types";
 import { getCVData } from "@utils/cv";
+import { featuredRepos, githubProfile } from "@utils/github-facts";
 import { stripToText } from "@utils/html";
+import { featuredProjectLines, whoamiFactLines } from "@utils/llms/home-facts";
 import { registry } from "@utils/llms/mdx/registry";
 import { mdxToMarkdown } from "@utils/llms/mdx/render";
 import {
@@ -27,6 +30,9 @@ import {
   PROFILE_SECTIONS,
   SITE_SECTIONS,
 } from "@utils/llms/sections";
+import { CATEGORY_ORDER, categoryName } from "@utils/llms/tool-categories";
+import { markdownTwinPath } from "@utils/llms/twin-path";
+import { postDateModified } from "@utils/post-dates";
 import { getMcpServers, type McpServer } from "@utils/projects";
 import {
   getPublications,
@@ -35,8 +41,19 @@ import {
 } from "@utils/publications";
 import { SERIES } from "@utils/series";
 import { buildSameAs } from "@utils/site";
+import { getToolsForLocale } from "@utils/tools";
 import type { CollectionEntry } from "astro:content";
 import { getCollection, getEntry } from "astro:content";
+
+// Re-exported so `@utils/llms` keeps the surface every existing caller uses:
+// `@utils/llms/listing-markdown` imports the symbol from here and calls it
+// ten times. The definition moved to a leaf module because `BaseHead.astro`
+// needs it on all 128 pages and must not pull this file's eager component
+// glob, citation-js and CV parser into every page's head (GEO audit #6, A2).
+// The `export … from` form is required: `export { markdownTwinPath };` is an
+// ESLint error here under `unicorn/prefer-export-from`, which fires even
+// though this file uses the binding itself.
+export { markdownTwinPath } from "@utils/llms/twin-path";
 
 /** Curated, site-level narrative reused by both files. */
 const DESCRIPTION =
@@ -68,8 +85,8 @@ const MCP_PROSE: Record<string, { en: string; es: string }> = {
     es: "Busca y descarga libros, artículos, cómics, revistas y normas de Library Genesis. Sin credenciales.",
   },
   "gitlab-mcp-server": {
-    en: "Over 1,000 GitLab operations as tools. Needs a `PRIVATE-TOKEN` header per request; the token is never stored server-side.",
-    es: "Más de 1.000 operaciones de GitLab como tools. Requiere una cabecera `PRIVATE-TOKEN` por petición; el token nunca se guarda en el servidor.",
+    en: "850+ GitLab actions as tools (1,000+ on Enterprise). Needs a `PRIVATE-TOKEN` header per request; the token is never stored server-side.",
+    es: "Más de 850 acciones de GitLab como tools (más de 1.000 en Enterprise). Requiere una cabecera `PRIVATE-TOKEN` por petición; el token nunca se guarda en el servidor.",
   },
 };
 
@@ -636,6 +653,96 @@ function seriesBlock(siteUrl: string, locale: "en" | "es"): string {
 }
 
 /**
+ * The tool categories, as an index section.
+ *
+ * The ten `/tools/categories/<cat>/` pages were the only URLs in the sitemap
+ * that appeared in `llms.txt` neither by their `.md` twin nor by their HTML
+ * URL — wholly invisible in the index, while their twins had been published
+ * for weeks (audit #6, M5). The rule this restores, and that the two
+ * derivations below are written to keep: every twin listed by its `.md`,
+ * every page without one listed by its HTML URL.
+ *
+ * Two different sources, on purpose:
+ *
+ * - the LIST comes from `getToolsForLocale`, which is what
+ *   `tools/categories/[category].astro` builds its `getStaticPaths` from. It
+ *   falls back to the English tool when a locale has no translation, so a
+ *   category can exist as a page in `es` on the strength of an English-only
+ *   tool. Deriving from the strict `getToolsByLocale` here would generate the
+ *   page and omit it from the index — the exact invisibility this fixes.
+ * - the TWIN LINK comes from `getToolsByLocale`, which is what
+ *   `toolCategoryMarkdownRoute` builds ITS paths from. A fallback-only
+ *   category therefore has a page and no twin, and is listed by its HTML URL
+ *   alone rather than by a link to a document that does not exist.
+ *
+ * @param siteUrl - Absolute site origin.
+ * @param locale - Which language to render.
+ * @returns The `## Tool Categories` block.
+ */
+async function categoriesBlock(
+  siteUrl: string,
+  locale: "en" | "es",
+): Promise<string> {
+  const t = useTranslations(locale);
+  const prefix = locale === "es" ? "/es" : "";
+  const pageCategories = new Set<string>(
+    (await getToolsForLocale(locale)).map((entry) => entry.tool.data.category),
+  );
+  const twinCategories = new Set<string>(
+    (await getToolsByLocale(locale)).map((tool) => tool.data.category),
+  );
+  return [
+    locale === "es" ? "## Tool Categories (Español)" : "## Tool Categories",
+    "",
+    ...CATEGORY_ORDER.filter((category) => pageCategories.has(category)).map(
+      (category) => {
+        const path = `${prefix}/tools/categories/${category}/`;
+        const description = t(
+          `pages.toolsCategory.${category}Desc` as TranslationKey,
+        );
+        const twin = twinCategories.has(category)
+          ? ` ([markdown](${siteUrl}${markdownTwinPath(path)}))`
+          : "";
+        return `- [${categoryName(t, category)}](${siteUrl}${path}): ${description}${twin}`;
+      },
+    ),
+  ].join("\n");
+}
+
+/**
+ * `/feeds/`, as an `llms-full.txt` section.
+ *
+ * Both twins were published and neither appeared in that document. The copy
+ * is read from `SITE_SECTIONS` — the same entry `llms.txt` renders — instead
+ * of being written a second time here, so the two indexes cannot describe the
+ * page differently.
+ *
+ * Both locales under one English heading, like `## Curriculum Vitae` and
+ * `## Publications` further down the same array.
+ *
+ * @param siteUrl - Absolute site origin.
+ * @returns The `## Feeds` block lines.
+ */
+function feedsBlock(siteUrl: string): string[] {
+  const section = SITE_SECTIONS.find((entry) => entry.path === "/feeds/");
+  if (!section) return [];
+  return [
+    "## Feeds",
+    "",
+    ...(["en", "es"] as const).map((locale) => {
+      const prefix = locale === "es" ? "/es" : "";
+      const copy = section[locale];
+      const pageLabel = locale === "es" ? "página" : "page";
+      // Hoisted rather than interpolated inline: a template literal nested
+      // inside another is `sonarjs/no-nested-template-literals`, an error here.
+      const twin = markdownTwinPath(`${prefix}/feeds/`);
+      return `- [${copy.title}](${siteUrl}${twin}): ${copy.description} ([${pageLabel}](${siteUrl}${prefix}/feeds/))`;
+    }),
+    "",
+  ];
+}
+
+/**
  * The section map for one locale, each entry with its twin where one exists.
  *
  * The twin link is what makes the new listing documents reachable from the
@@ -721,6 +828,13 @@ export async function generateLlmsTxt(siteUrl: string): Promise<string> {
         } ([texto plano](${siteUrl}${llmsPostShardPath("es", p.data.slug)}))`,
     ),
     "",
+    // Before the tool lists, on this file's own precedent: the series hubs are
+    // listed before the posts they group, for the same reason — an agent
+    // budgeting fetches meets the dense grouping documents before the leaves.
+    await categoriesBlock(siteUrl, "en"),
+    "",
+    await categoriesBlock(siteUrl, "es"),
+    "",
     "## Developer Tools",
     "",
     // The canonical page first, then its twin — the same two-link shape the
@@ -789,6 +903,29 @@ function buildPostEntry(
 ): string[] {
   const d = p.data;
   const postUrl = `${siteUrl}${localePrefix}/blog/${d.slug}/`;
+  const published = d.publishedDate.toISOString().slice(0, 10);
+  // The CONTENT date. `postDateModified` is the exact call `BlogPost.astro`
+  // makes (line 65) for the visible "Updated on" line and for the JSON-LD
+  // `dateModified`, and it backs the sitemap's <lastmod> too. This block
+  // published the raw frontmatter `updatedDate` instead, so the twins were
+  // the one surface the derived date never reached: 21 of 24 carried a day up
+  // to 26 older than the page beside them, and 011/012 carried none at all
+  // because they declare no `updatedDate`.
+  //
+  // Deliberately NOT `pageLastmod(path)`, which `documentHeader` below uses:
+  // that call takes no locale and answers with the NEWEST of the two
+  // translations. Right for a page twin, wrong here — the two translations of
+  // a post have their own edit histories, and es/006 resolves to a different
+  // day from en/006.
+  //
+  // Omitted when it lands on the publication day, which is the `isRevised`
+  // test at BlogPost.astro:71: the commit that CREATES a post is excluded
+  // from the formula, so a brand-new post resolves to its own
+  // `publishedDate`, and an `Updated:` equal to `Published:` would advertise
+  // a revision that never happened.
+  const derived = postDateModified(p.id, d)?.slice(0, 10);
+  const revised =
+    derived !== undefined && derived !== published ? derived : undefined;
   return [
     // No `### <title>` here: the only caller is the shard, whose `# <title>`
     // header names the post one line above. Emitting both put the article
@@ -802,10 +939,8 @@ function buildPostEntry(
     // the identifier is what it can act on without parsing prose.
     "License: https://creativecommons.org/licenses/by/4.0/",
     `Type: ${d.articleType}`,
-    `Published: ${d.publishedDate.toISOString().slice(0, 10)}`,
-    ...(d.updatedDate
-      ? [`Updated: ${d.updatedDate.toISOString().slice(0, 10)}`]
-      : []),
+    `Published: ${published}`,
+    ...(revised ? [`Updated: ${revised}`] : []),
     // The strongest freshness claim the article makes — re-tested on this
     // date, against these versions — and it reached no machine-readable
     // surface at all: the page renders it under the title and the twin
@@ -971,31 +1106,6 @@ export function generateLlmsPostTxt(
  * sections count as content, and the near-duplicate wording is a retrieval
  * annoyance, not a false statement.
  */
-/**
- * Root-relative path of a page's markdown twin.
- *
- * The spec's own words: "pages with information that agents might need
- * provide a clean markdown version of those pages at the same URL as the
- * original page, either with `.md` appended (`page.html.md`) or with the
- * extension replaced by `.md` (`page.md`). (URLs without file names should
- * append `index.html.md` or `index.md` instead.)"
- *
- * Every page here ends in a slash and has no file name, so `index.md` is the
- * form that applies. The bare `<page>.md` shape this replaced is kept alive by
- * a redirect: it was advertised, and an agent that learned it should not meet
- * a 404.
- *
- * @param pagePath - Root-relative page URL, with its trailing slash.
- * @returns The twin's path.
- */
-export function markdownTwinPath(pagePath: string): string {
-  // String ops rather than `/\/+$/`: an anchored `+` over a run of the same
-  // character is the backtracking shape SonarCloud flags, and the loop says
-  // what it does.
-  let base = pagePath;
-  while (base.endsWith("/")) base = base.slice(0, -1);
-  return `${base}/index.md`;
-}
 
 /**
  * The prose the generator writes around the content, per locale.
@@ -1340,10 +1450,19 @@ function heroToMarkdown(html: string, siteUrl: string): string {
  * own twin listed beside it. An agent that lands here reaches the whole site
  * in markdown without parsing one page of HTML.
  *
- * The featured projects are named, not described. The page fetches their
- * descriptions and star counts from the GitHub API at build time; repeating
- * that here would put a second, independently-drifting copy of the same claim
- * in the corpus, and `/projects/` already publishes the detailed version.
+ * The featured projects carry the same figures the page prints on each card —
+ * star count, language and the repository's own one-line description. Not a
+ * second fetch: both read `@utils/github-facts`, which settles one promise
+ * per build, so the twin cannot report a star count the page beside it does
+ * not show. The note that used to stand here called this "a second,
+ * independently-drifting copy"; that was a fair warning against a private
+ * fetch, and the shared accessor is what answers it. Its other half was
+ * simply wrong: `/projects/` publishes the CURATED description from
+ * `projects.yaml`, so the repository's own description — the string carrying
+ * "850+ GitLab actions (1,000+ Enterprise)" — reached no generated markdown
+ * document at all. What does drift is the hand-written "38 public
+ * repositories … more than 350 stars (August 2026)" in `about.yaml`;
+ * deriving is the cure for that class, not the cause.
  *
  * @param siteUrl - Absolute site origin.
  * @param locale - Which locale.
@@ -1364,6 +1483,8 @@ export async function generateHomeMarkdown(
     latest: { en: "Latest posts", es: "Últimas entradas" },
     status: { en: "Status", es: "Estado" },
     role: { en: "Role", es: "Perfil" },
+    focus: { en: "Focus", es: "Enfoque" },
+    base: { en: "Base", es: "Base" },
   } as const;
 
   const sections = HOME_SECTIONS.flatMap((section) => [
@@ -1378,19 +1499,47 @@ export async function generateHomeMarkdown(
   ]);
 
   // Newest first, which is the order the homepage shows them in.
-  const posts = (await getPostsByLocale(locale)).slice(-5).toReversed();
+  const allPosts = await getPostsByLocale(locale);
+  const posts = allPosts.slice(-5).toReversed();
   const latest = posts.flatMap((post) => {
     const path = `${prefix}/blog/${post.data.slug}/`;
     return [
       `- ${post.data.title}`,
       `  URL: ${siteUrl}${path}`,
       `  Markdown: ${siteUrl}${markdownTwinPath(path)}`,
+      // The date the page prints beside each title. Without it this was the
+      // one "latest" list on the site carrying no recency at all.
+      `  Published: ${post.data.publishedDate.toISOString().slice(0, 10)}`,
     ];
   });
 
-  const featured = (siteData.featured_projects ?? []).map(
-    (name) => `- ${name} — https://github.com/jmrplens/${name}`,
+  const featuredNames = siteData.featured_projects ?? [];
+  const featured = featuredProjectLines(
+    featuredNames,
+    await featuredRepos(featuredNames),
   );
+  // The rest of the hero's `~/whoami` card. `Status:` and `Role:` were
+  // already published in the header; these five are the same card's other
+  // rows, and they were every entity figure the twin dropped (audit #6, A5):
+  // the download total, the public-repo count and the date of the last post.
+  //
+  // `last.post` is the newest publication date in the corpus, which is how
+  // the page picks it — NOT the last element of the list above, which is
+  // ordered by numeric slug and would diverge the day a post is published
+  // out of order.
+  const lastPostDate = allPosts
+    .map((post) => post.data.publishedDate)
+    .toSorted((a, b) => b.valueOf() - a.valueOf())
+    .at(0);
+  const whoami = whoamiFactLines({
+    focusLabel: label.focus[locale],
+    focus: siteData.terminal?.focus,
+    baseLabel: label.base[locale],
+    base: siteData.terminal?.base,
+    downloadsTotal: downloadsData.total,
+    publicRepos: (await githubProfile()).public_repos,
+    lastPostDate: lastPostDate?.toISOString().slice(0, 10),
+  });
 
   return [
     ...documentHeader(
@@ -1401,6 +1550,7 @@ export async function generateHomeMarkdown(
       [
         `${label.status[locale]}: ${t("pages.home.availability")}`,
         `${label.role[locale]}: ${t("pages.home.terminalRole")}`,
+        ...whoami,
       ],
     ),
     "",
@@ -1539,6 +1689,19 @@ export async function generateLlmsFullTxt(siteUrl: string): Promise<string> {
     "## Developer Tools (Español)",
     "",
     ...toolSectionEs,
+    // The three families of listing twin this document never indexed: the
+    // series hubs, the tool categories and /feeds/. Twenty published twins,
+    // reachable from llms.txt — or, for the ten categories, from nowhere at
+    // all — and absent from the file that calls itself the full context.
+    seriesBlock(siteUrl, "en"),
+    "",
+    seriesBlock(siteUrl, "es"),
+    "",
+    await categoriesBlock(siteUrl, "en"),
+    "",
+    await categoriesBlock(siteUrl, "es"),
+    "",
+    ...feedsBlock(siteUrl),
     // Linked, not inlined, for the same reason the post bodies are: this file
     // has to stay inside a fetching agent's context, and these two were 35 KB
     // of a document already past the point where one truncates it.

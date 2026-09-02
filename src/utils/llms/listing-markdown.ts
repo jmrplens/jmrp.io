@@ -8,6 +8,7 @@ import {
   getToolsByLocale,
   markdownTwinPath,
 } from "@utils/llms";
+import { CATEGORY_ORDER, categoryName } from "@utils/llms/tool-categories";
 import { getSeries, getSeriesPosts, SERIES } from "@utils/series";
 
 /**
@@ -78,21 +79,6 @@ const WORDS = {
   categories: { en: "All categories", es: "Todas las categorías" },
 } as const;
 
-/**
- * Category order, matching `categoryMeta` in ToolsIndex/ToolCategoryPage.
- *
- * Declared here rather than imported because those live in `.astro`
- * frontmatter, which a `.ts` module cannot import from. A category the tools
- * no longer use simply renders nothing.
- */
-export const CATEGORY_ORDER = [
-  "security",
-  "developer",
-  "network",
-  "embedded",
-  "mikrotik",
-] as const;
-
 /** `/es` for Spanish, empty for English — the site's own routing rule. */
 function prefixOf(locale: Locale): string {
   return locale === "es" ? "/es" : "";
@@ -111,15 +97,6 @@ async function newestFirst(locale: Locale) {
   return (await getPostsByLocale(locale)).toSorted(
     (a, b) => b.data.publishedDate.valueOf() - a.data.publishedDate.valueOf(),
   );
-}
-
-/** `pages.tools.categorySecurity` and friends, assembled from the id. */
-function categoryName(
-  t: ReturnType<typeof useTranslations>,
-  category: string,
-): string {
-  const capitalized = category.charAt(0).toUpperCase() + category.slice(1);
-  return t(`pages.tools.category${capitalized}` as TranslationKey);
 }
 
 /** `- [title](page): description ([markdown](twin))` — the index line shape. */

@@ -16,10 +16,9 @@
  */
 import downloadsData from "@data/downloads.json";
 import { defaultLocale, type Locale } from "@i18n/config";
-import { useTranslations } from "@i18n/utils";
+import { formatDate, useTranslations } from "@i18n/utils";
 import BaseLayout from "@layouts/BaseLayout.astro";
 import { compactDownloads, DOWNLOADS_DISPLAY_MIN } from "@utils/downloads";
-import { markdownTwinPath } from "@utils/llms";
 import {
   buildProjectSchema,
   getProjects,
@@ -34,6 +33,14 @@ import type { CollectionPage } from "schema-dts";
 
 const locale = (Astro.currentLocale ?? defaultLocale) as Locale;
 const t = useTranslations(locale);
+
+// The hand-read File Exchange counts carry the date they were read
+// (MANUAL_COUNTS_VERIFIED_ON, published in downloads.json). Printing it is the
+// difference between "we counted" and "we counted, here is when".
+const manualVerifiedOn = formatDate(
+  new Date(downloadsData.manualVerifiedOn),
+  locale,
+);
 
 const projects = await getProjects();
 const aboutEntry = await getEntry("profile", "about");
@@ -128,7 +135,6 @@ const groups = [
   title={t("pages.projects.title")}
   description={t("pages.projects.description")}
   schema={schema}
-  markdownHref={markdownTwinPath(Astro.url.pathname)}
 >
   <div class="projects container">
     <header class="projects-header">
@@ -137,6 +143,18 @@ const groups = [
         {t("pages.projects.heading")}
       </h1>
       <p class="projects-header__intro">{t("pages.projects.intro")}</p>
+      <p class="projects-header__note">
+        {t("pages.projects.downloadsNote", { date: manualVerifiedOn })}{" "}
+        {t("pages.projects.downloadsSourceLead")}{" "}
+        <a
+          href="https://github.com/jmrplens/jmrp.io/blob/main/scripts/download-sources.mjs"
+          target="_blank"
+          rel="external noopener noreferrer"
+          class="external-link"
+          aria-label={t("aria.opensNewTab", { text: "download-sources.mjs" })}
+          >download-sources.mjs</a
+        >.
+      </p>
     </header>
 
     {
@@ -340,6 +358,14 @@ const groups = [
     font-size: var(--text-md);
     line-height: 1.6;
     color: var(--color-text);
+  }
+
+  .projects-header__note {
+    max-width: 60ch;
+    margin: var(--space-sm) 0 0;
+    font-size: var(--text-sm);
+    line-height: 1.6;
+    color: var(--color-meta);
   }
 
   .projects-group + .projects-group {
