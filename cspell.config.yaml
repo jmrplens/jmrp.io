@@ -50,6 +50,9 @@ ignorePaths:
   - dist_new
   - dist_old
   - builds
+  # Staging area for the generated nginx snippets, moved to
+  # /etc/nginx/snippets/jmrp/ by scripts/deploy-live.mjs. Listed explicitly
+  # because CSpell does not read .gitignore here (useGitignore is unset).
   - plan
   - .git
   - plan/** # gitignored working notes (Spanish prose), not part of the project

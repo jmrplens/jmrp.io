@@ -842,33 +842,37 @@ export function checkTwins(distDir) {
   };
 }
 
-/** The checkout this guard belongs to: `<root>/scripts/ci/<this file>`. */
-const PROJECT_ROOT = path.resolve(fileURLToPath(import.meta.url), "../../..");
-
 /**
  * CLI entry point: check one build directory and report.
  *
  * The argument arrives from the command line, so it is validated before a
  * single file is read: resolving a path is not the same as trusting it
- * (Sonar jssecurity:S8707). Build output always lives inside this checkout —
- * `dist`, `builds/<color>`, or any `--outDir` beneath it — so a path that
- * escapes it is either a typo or an attempt to aim the guard at unrelated
- * files, and both earn the same refusal. A refusal exits 2, not 1: the guard
- * could not run, the site has not drifted.
+ * (Sonar jssecurity:S8707). The check is what the directory IS, not where it
+ * sits. An earlier version required the path to be inside this checkout, on
+ * the premise that build output always is — but it is not: building with
+ * `astro build --outDir /var/tmp/...` is this project's documented way to
+ * exercise a build WITHOUT deploying, since a build at the default location
+ * publishes to production. That version turned the safest way to test into the
+ * one the guard refused.
+ *
+ * Requiring a real directory that contains an `index.html` is the honest
+ * check: it cannot be aimed at `/etc` or at an arbitrary tree, and it accepts
+ * every legitimate build root. A refusal exits 2, not 1: the guard could not
+ * run, the site has not drifted.
  *
  * @param {string} distArg - Directory to check (default `dist`).
  * @returns {void}
- * @throws {Error} When the argument is not a directory inside the checkout.
+ * @throws {Error} When the argument is not a directory holding a built site.
  */
 function main(distArg) {
   const distDir = path.resolve(process.cwd(), distArg);
-  if (distDir !== PROJECT_ROOT && !distDir.startsWith(PROJECT_ROOT + path.sep))
-    throw new Error(
-      `${distArg} resolves to ${distDir}, outside ${PROJECT_ROOT} — this ` +
-        `guard only reads build output of its own checkout`,
-    );
   if (!fs.existsSync(distDir) || !fs.statSync(distDir).isDirectory())
     throw new Error(`${distArg} (${distDir}) is not an existing directory`);
+  if (!fs.existsSync(path.join(distDir, "index.html")))
+    throw new Error(
+      `${distArg} (${distDir}) holds no index.html — this guard reads built ` +
+        `site output, and refuses to walk a directory that is not one`,
+    );
   const { violations, stats } = checkTwins(distDir);
   if (violations.length === 0) {
     console.log(

@@ -1,4 +1,25 @@
+import fs from "node:fs";
+
 import { defineConfig, devices } from "@playwright/test";
+
+// Load .env before anything reads process.env.
+//
+// `pnpm verify` loads it (scripts/run-verify.mjs) before spawning the suite,
+// but a bare `pnpm test:e2e` — a documented command — does not, and this
+// config only forwards process.env to the web server. Without this, the
+// security spec's POSTBUILD_NGINX_SNIPPETS_DIR lookup would find nothing on
+// the server after a successful deploy (staging is empty because deploy-live
+// moved the snippets out of it) and all three CSP tests would fail for the
+// wrong reason. loadEnvFile never overwrites an already-set variable, so the
+// precedence stays shell > .env.
+try {
+  if (fs.existsSync(".env")) {
+    process.loadEnvFile(".env");
+  }
+} catch (error) {
+  const message = error instanceof Error ? error.message : String(error);
+  console.warn(`[Playwright] Warning: failed to load .env: ${message}`);
+}
 
 // Preview-server port. Overridable via PW_PORT so test runs can dodge an
 // unrelated server already bound to 4321 on this shared host (with

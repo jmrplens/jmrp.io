@@ -3,7 +3,7 @@ import path from "node:path";
 
 import type { AstroIntegrationLogger } from "astro";
 
-import { assertNginxSafe, writeNginxSnippet } from "./utils.js";
+import { assertNginxSafe, buildStampLine, writeNginxSnippet } from "./utils.js";
 
 /**
  * Blog post directories are named with a numeric ordering prefix
@@ -108,11 +108,19 @@ function collectLocaleRedirects(
  * either, and `$uri` is matched verbatim.
  *
  * @param distDir - Build output directory.
+ * @param stagingDir - Staging root for the generated Nginx snippets; the
+ *   maps go in its `maps/` subdirectory, from where `deploy-live.mjs`
+ *   moves them after the swap.
+ * @param stamp - The per-build `# Build-Stamp:` banner, emitted verbatim as
+ *   the snippet's second line; it is what proves, from `nginx -T`, that
+ *   the running config came from this build.
  * @param logger - Astro integration logger.
  * @returns Resolves once the snippet has been written.
  */
 export async function generateBlogRedirects(
   distDir: string,
+  stagingDir: string,
+  stamp: string,
   logger: AstroIntegrationLogger,
 ): Promise<void> {
   const pairs = [
@@ -138,6 +146,7 @@ export async function generateBlogRedirects(
     .join("\n");
 
   const content = `# GENERATED FILE — DO NOT EDIT.
+${buildStampLine(stamp)}
 # Written by src/integrations/post-build/blog-redirects.ts on every build.
 #
 # Blog posts are published under a numeric ordering prefix
@@ -159,15 +168,17 @@ ${entries}
 }
 `;
 
-  // Deliberately NOT written into dist/: that directory is public (verified —
-  // /security_headers_assets.conf is reachable over HTTP) and, more importantly,
-  // dist is the blue/green symlink. Nginx includes this file by absolute path,
-  // so a build from a revision that predates this step would leave the include
-  // dangling and fail `nginx -t`. Keeping it in the repo means the path always
-  // resolves; the content only changes when posts are added or renamed.
-  const outPath = path.join(process.cwd(), "nginx", "blog_redirects.conf");
+  // Staged rather than written into dist/ or into the repo working tree.
+  // dist is the public blue/green symlink, and a generated file under
+  // version control drifts from what Nginx actually loaded the moment a
+  // build runs without a deploy. `scripts/deploy-live.mjs` MOVES this file
+  // out of staging into the snippets directory the vhost includes, after
+  // the swap; until it does, Nginx keeps the previously delivered copy.
+  // The include there is a wildcard over the whole maps/ directory, so a
+  // file that has not been delivered yet costs one redirect, where an exact
+  // include of a missing path would instead refuse to start every vhost on
+  // the box.
+  const outPath = path.join(stagingDir, "maps", "blog_redirects.conf");
   await writeNginxSnippet(outPath, content);
-  logger.info(
-    `  ✓ Generated nginx/blog_redirects.conf (${pairs.length} prefix-less redirects)`,
-  );
+  logger.info(`  ✓ Staged ${outPath} (${pairs.length} prefix-less redirects)`);
 }

@@ -3,7 +3,7 @@ import path from "node:path";
 
 import type { AstroIntegrationLogger } from "astro";
 
-import { assertNginxSafe, writeNginxSnippet } from "./utils.js";
+import { assertNginxSafe, buildStampLine, writeNginxSnippet } from "./utils.js";
 
 /**
  * Announces every page's markdown twin in the HTTP response, as an RFC 8288
@@ -94,11 +94,19 @@ function collectTwinPages(distDir: string, base = ""): string[] {
  *    location would mean repeating the security-header set.
  *
  * @param distDir - Build output directory.
+ * @param stagingDir - Staging root for the generated Nginx snippets; the
+ *   maps go in its `maps/` subdirectory, from where `deploy-live.mjs`
+ *   moves them after the swap.
+ * @param stamp - The per-build `# Build-Stamp:` banner, emitted verbatim as
+ *   the snippet's second line; it is what proves, from `nginx -T`, that
+ *   the running config came from this build.
  * @param logger - Astro integration logger.
  * @returns Resolves once the snippet has been written.
  */
 export async function generateMdTwinAlternates(
   distDir: string,
+  stagingDir: string,
+  stamp: string,
   logger: AstroIntegrationLogger,
 ): Promise<void> {
   const pages = collectTwinPages(distDir).sort((a, b) => a.localeCompare(b));
@@ -121,10 +129,11 @@ export async function generateMdTwinAlternates(
   // in a template literal only `${` starts a substitution, so a bare `$` needs
   // no escape and `\$` would be flagged as an unnecessary one. If you ever
   // write an Nginx variable that is immediately followed by `{`, that one DOES
-  // need `\${` — otherwise the build would try to interpolate it. The three
-  // real `${…}` substitutions below are the twin count, the map variable name
-  // and the entry list.
+  // need `\${` — otherwise the build would try to interpolate it. The four
+  // real `${…}` substitutions below are the build stamp, the twin count, the
+  // map variable name and the entry list.
   const content = `# GENERATED FILE — DO NOT EDIT.
+${buildStampLine(stamp)}
 # Written by src/integrations/post-build/md-twin-alternates.ts on every build.
 #
 # A page that has a markdown twin says so in its HTTP response, as an RFC 8288
@@ -193,13 +202,19 @@ ${entries}
 }
 `;
 
-  // Deliberately NOT written into dist/: that directory is public and is the
-  // blue/green symlink, so an include by absolute path would dangle whenever a
-  // build from an older revision won the swap. Keeping it in the repo means the
-  // include always resolves. Same rationale as blog_redirects.conf.
-  const outPath = path.join(process.cwd(), "nginx", "md_twin_alternates.conf");
+  // Staged rather than written into dist/ or into the repo working tree.
+  // dist is the public blue/green symlink, and a generated file under
+  // version control drifts from what Nginx actually loaded the moment a
+  // build runs without a deploy. `scripts/deploy-live.mjs` MOVES this file
+  // out of staging into the snippets directory the vhost includes, after
+  // the swap; until it does, Nginx keeps the previously delivered copy.
+  // The include there is a wildcard over the whole maps/ directory, so a
+  // file that has not been delivered yet costs the twin announcements — this
+  // map sets a Link header, it redirects nothing — where an exact include of
+  // a missing path would instead refuse to start every vhost on the box.
+  const outPath = path.join(stagingDir, "maps", "md_twin_alternates.conf");
   await writeNginxSnippet(outPath, content);
   logger.info(
-    `  ✓ Generated nginx/md_twin_alternates.conf (${pages.length} markdown twins announced)`,
+    `  ✓ Staged ${outPath} (${pages.length} markdown twins announced)`,
   );
 }

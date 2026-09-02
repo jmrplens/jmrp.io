@@ -547,16 +547,24 @@ pnpm build
 
 ### Post-Build Pipeline (`astro:build:done`, `src/integrations/post-build.ts`)
 
-Runs **inside** the build, before the swap — it only transforms the not-yet-live `builds/<color>` output. Each step is wrapped in a `timed()` helper (`src/integrations/timing.ts`) that logs `⏱ {step}: {seconds}s` for baseline telemetry.
+Runs **inside** the build, before the swap — it transforms the not-yet-live `builds/<color>` output and, for the generated Nginx config, writes *outside* it (see "Generated Nginx config never enters the served tree" below). Each step is wrapped in a `timed()` helper (`src/integrations/timing.ts`) that logs `⏱ {step}: {seconds}s` for baseline telemetry.
 
-1. `extractCssDataUris()` — CSS data URI extraction to physical files
-2. `processHtmlFiles()` — SRI integrity hashes, nonce attributes, inline style → class, data URI extraction, HTML minification
-3. `finalizeCspConfig()` — Generates `security_headers.conf` + `security_headers_assets.conf` for Nginx
-4. `verifyMarkdownTwins()` — the one step that VERIFIES instead of transforming. Runs `scripts/ci/check-markdown-twins.mjs`, which fails the build when a page, its markdown twin, the `<link rel="alternate" type="text/markdown">` / JSON-LD `encoding` announcement, `llms.txt`, `llms-full.txt` and the sitemap disagree. Every built page must match exactly one entry of `PAGE_CLASSES`, so a new page type cannot silently skip twins (GEO audit #6, A2/M5/M8/A3).<br>**Adding a page**: twins are hand-written routes — a prose page needs `src/pages/<page>/index.md.ts` AND `src/pages/es/<page>/index.md.ts`, then its path added to the `singleton` entry of `PAGE_CLASSES`; a new route *shape* needs a new class entry with a `pattern` and a written `reason`. The failure message prints this remedy.
-5. `optimizeImages()` + `compressAssets()` **run concurrently** (`Promise.all`) — they touch disjoint file sets (PNG re-optimization vs gzip/Brotli over js/css/svg/json/xml/txt). Both are backed by a content-hash (SHA-256) cache under `.cache/postbuild-png*` / `.cache/postbuild-compression*`, keyed by a config signature so a settings/dependency change invalidates stale cache entries instead of serving them forever.
-6. `fixPermissions()` — chown/chmod for Nginx (`www-data`), only if `POSTBUILD_NGINX_SNIPPETS_PATH` is set
+1. `prepareNginxStaging()` — empties the staging dir before anything is written, so an artifact left by a generator that no longer exists is never delivered and a previous run's leftovers cannot pass for this build's output
+2. `extractCssDataUris()` — CSS data URI extraction to physical files
+3. `processHtmlFiles()` — SRI integrity hashes, nonce attributes, inline style → class, data URI extraction, HTML minification
+4. `finalizeCspConfig()` — generates `security_headers.conf` + `security_headers_assets.conf` into the staging dir (never into the build output)
+5. `generateBlogRedirects()`, `generateDocsRedirects()`, `generateTagRedirects()` — the http-level `map` blocks for retired blog URLs, `/docs/<repo>` and retired tags, written to `<staging>/maps/`
+6. `verifyMarkdownTwins()` — the one step that VERIFIES instead of transforming. Runs `scripts/ci/check-markdown-twins.mjs`, which fails the build when a page, its markdown twin, the `<link rel="alternate" type="text/markdown">` / JSON-LD `encoding` announcement, `llms.txt`, `llms-full.txt` and the sitemap disagree. Every built page must match exactly one entry of `PAGE_CLASSES`, so a new page type cannot silently skip twins (GEO audit #6, A2/M5/M8/A3).<br>**Adding a page**: twins are hand-written routes — a prose page needs `src/pages/<page>/index.md.ts` AND `src/pages/es/<page>/index.md.ts`, then its path added to the `singleton` entry of `PAGE_CLASSES`; a new route *shape* needs a new class entry with a `pattern` and a written `reason`. The failure message prints this remedy.
+7. `generateMdTwinAlternates()` — the `map` that announces each page's markdown twin, written to `<staging>/maps/`
+8. `writeNginxManifest()` — writes `manifest.json` after the six artifacts and never before, so a build that dies partway leaves no manifest and `deploy-live.mjs` delivers nothing
+9. `optimizeImages()` + `compressAssets()` **run concurrently** (`Promise.all`) — they touch disjoint file sets (PNG re-optimization vs gzip/Brotli over js/css/svg/json/xml/txt). Both are backed by a content-hash (SHA-256) cache under `.cache/postbuild-png*` / `.cache/postbuild-compression*`, keyed by a config signature so a settings/dependency change invalidates stale cache entries instead of serving them forever.
+10. `fixPermissions()` — chown/chmod **of the build output** for Nginx (`www-data`), only if `POSTBUILD_NGINX_SNIPPETS_DIR` is set. Its `chown -R` deliberately cannot reach staging: `rename(2)` carries the source inode's owner and mode, so a staged file owned by `www-data` would arrive in `/etc/nginx` owned by `www-data`.
 
-> **Publish actions moved out**: copying `security_headers*.conf` to the system Nginx path + `nginx -t` + reload, and the Cloudflare cache purge, no longer run inside this hook (pre-swap). They now run from `scripts/deploy-live.mjs`, invoked by `pnpm build` *after* `deploy-swap.mjs` has retargeted `dist/` — see Deployment below.
+> **Generated Nginx config never enters the served tree** (2026-09). The build writes all six artifacts to `<repo>/.nginx-staged/` — the two header files at the top level, the four `map` files under `.nginx-staged/maps/` — plus a `manifest.json`, written after all six, listing exactly what this build produced. Override the location with `POSTBUILD_NGINX_STAGING_DIR`. Staging is untracked, is reachable by no URL (nothing in the vhost roots or aliases the repo root) and lives outside `distDir`, on the same filesystem as `/etc/nginx` — which is what makes delivery a true `rename(2)` move instead of a copy. Every artifact carries one `# Build-Stamp: <id>` line in its header comment block, the same id across all six for a given build, so `ID=$(sed -n 's/^# Build-Stamp: //p' /etc/nginx/snippets/jmrp/security_headers.conf); nginx -T | grep -c "Build-Stamp: $ID"` returns 6 only when the running config loaded all six from the same build. Until this change the two header files were written into `dist/` and the four maps into the tracked `nginx/` directory; the only file left there is `nginx/handmade_redirects.conf`, hand-written, still tracked and still included by the vhost.
+>
+> **The build delivers nothing by itself**: `scripts/deploy-live.mjs` MOVES the staged files into `/etc/nginx/snippets/jmrp/` (the four maps into `jmrp/maps/`) after the swap, so `.nginx-staged/` is empty after a successful deploy. The vhost includes the two header files by exact path and the maps through one wildcard `include /etc/nginx/snippets/jmrp/maps/*.conf;`, deliberately: a wildcard matching no file still passes `nginx -t` (measured), so an emptied `maps/` costs only the redirects until the next deploy, whereas an exact include of a missing file is a fatal parse error that refuses to start every vhost on the box. A bare `astro build` (which never invokes `deploy-live.mjs` at all), a worktree build or CI (where the production-root guard skips it) leaves the six files staged and changes nothing Nginx serves: a new post's prefix-less URL keeps 404ing and a new image domain stays CSP-blocked until a real deploy.
+
+> **Publish actions moved out**: delivering `security_headers*.conf` and the four maps to `/etc/nginx/snippets/jmrp/` + `nginx -t` + reload, and the Cloudflare cache purge, no longer run inside this hook (pre-swap). They now run from `scripts/deploy-live.mjs`, invoked by `pnpm build` *after* `deploy-swap.mjs` has retargeted `dist/` — see Deployment below.
 
 ### Vite Plugin: Prefetch Nonce
 
@@ -564,7 +572,7 @@ Runs **inside** the build, before the swap — it only transforms the not-yet-li
 
 ### CSP Strategy: Nonce-Only
 
-Nginx replaces `NGINX_CSP_NONCE` placeholder with `$cspNonce` per-request. Two header files:
+Nginx replaces `NGINX_CSP_NONCE` placeholder with `$cspNonce` per-request. Two header files, staged in `.nginx-staged/` by the build and delivered to `/etc/nginx/snippets/jmrp/` by `deploy-live.mjs`, where the vhost includes each by exact path:
 
 - `security_headers.conf`: For HTML (nonce in script-src + style-src + strict-dynamic)
 - `security_headers_assets.conf`: For static assets (default-src 'none', no nonces)
@@ -729,7 +737,7 @@ Blog posts and tools content **are fully translated**. `src/content/posts/{en,es
 | `tabs.accessibility.spec.ts`     | Zero-JS radio group keyboard nav, FileContent focus        |
 | `functional.spec.ts`             | Theme toggle/persistence, mobile menu, per-page functional |
 | `integration.spec.ts`            | Cross-page navigation flows, content verification          |
-| `security.spec.ts`               | CSP/SRI per-page verification, build output checks         |
+| `security.spec.ts`               | CSP/SRI per-page verification, generated-snippet checks    |
 | `seo.spec.ts`                    | Meta tags, OG/Twitter, JSON-LD, robots.txt, RSS, llms.txt  |
 | `performance.spec.ts`            | LCP, lazy loading, preloads, reduced motion, broken links  |
 | `prerender.spec.ts`              | Speculation rules injection, CSP compliance                |
@@ -773,7 +781,7 @@ Blog posts and tools content **are fully translated**. `src/content/posts/{en,es
 | `run-lighthouse-audit.mjs`      | Lighthouse audits against localhost/production          |
 | `test-mermaid.mjs`              | Verify mermaid-isomorphic SSR works                     |
 | `deploy-swap.mjs`               | Blue/green build dir selection + atomic `dist` symlink swap |
-| `deploy-live.mjs`               | Post-swap publish actions: Nginx headers/reload, Cloudflare purge, IndexNow/Bing submission (production-root guarded) |
+| `deploy-live.mjs`               | Post-swap publish actions: moves the staged Nginx snippets into place + reload, Cloudflare purge, IndexNow/Bing submission (production-root guarded) |
 
 ### CI (`scripts/ci/`)
 
@@ -824,7 +832,8 @@ pnpm exec sonar-scanner
 | `PRIVATE_CF_API_TOKEN`          | Secret   | Cloudflare API for cache purge       |
 | `PRIVATE_CF_EMAIL`              | Secret   | Cloudflare email                     |
 | `PRIVATE_CF_ZONE_ID`            | Secret   | Cloudflare zone ID                   |
-| `POSTBUILD_NGINX_SNIPPETS_PATH` | Secret   | Path to deploy security_headers.conf |
+| `POSTBUILD_NGINX_SNIPPETS_DIR`  | Secret   | Directory the generated Nginx snippets are delivered to (`/etc/nginx/snippets/jmrp`) |
+| `POSTBUILD_NGINX_STAGING_DIR`   | Optional | Overrides where the build stages those snippets (default `<repo>/.nginx-staged`) |
 | `POSTBUILD_NGINX_CONFIG_PATH`   | Secret   | Nginx config path for verification   |
 | `POSTBUILD_NGINX_CACHE_PATH`    | Secret   | Nginx cache path to clear            |
 | `POSTBUILD_NGINX_RELOAD_TIMEOUT`| Secret   | Timeout for Nginx reload (ms)        |
@@ -840,9 +849,11 @@ pnpm exec sonar-scanner
 | `DEPLOY_LIVE_FORCE`             | Optional | Set to `1` to force `deploy-live.mjs` publish actions outside the production root |
 | `DEPLOY_LIVE_PRODUCTION_ROOT`   | Optional | Overrides the production-root guard path in `deploy-live.mjs` (default `/var/www/jmrp.io`) |
 
+> `POSTBUILD_NGINX_SNIPPETS_PATH` — a single *file* path — is retired and ignored by current code, but is deliberately left in the server's `.env`: `.env` is outside git, so a `git revert` would reintroduce the old code without restoring its key and that code skips the Nginx deploy silently.
+>
 > None of these variables are required for local development. `SONAR_TOKEN` and `SONAR_PROJECT_KEY` are only needed to run the Sonar phase of `pnpm verify` (SonarCloud Analysis + Issues); that phase is skipped automatically when the variables are absent. `deploy-live.mjs`'s publish actions are additionally gated behind the production-root guard (see Deployment).
 >
-> **Where these come from at deploy time**: the post-build hook runs *inside* `astro build`, so it inherits the `.env` — not because the hook loads anything itself, but because Astro's env plugin copies every loaded variable into `process.env` (`node_modules/astro/dist/env/vite-plugin-env.js`: `for (const [key, value] of Object.entries(loadedEnv)) process.env[key] = value`). That is why `post-build.ts` can read `process.env.POSTBUILD_NGINX_SNIPPETS_PATH` with no loader of its own, and why `fixPermissions` runs even when the variable is absent from the shell. `deploy-live.mjs` does **not** — it is a separate Node process spawned after `astro build` exits, so it calls `process.loadEnvFile()` on the project's `.env` itself. Without that it only saw variables exported in the shell, which silently disabled the Nginx header deploy and the Bing submission from the 2026-07-05 refactor until 2026-08-21 (`.env` defined them; the shell did not). `loadEnvFile` never overwrites an already-set variable, so precedence is **shell > `.env`**: exporting a variable as an empty string is how a worktree opts out of an action (e.g. `POSTBUILD_NGINX_SNIPPETS_PATH=` to leave Nginx alone) — though the production-root guard already covers the worktree case.
+> **Where these come from at deploy time**: the post-build hook runs *inside* `astro build`, so it inherits the `.env` — not because the hook loads anything itself, but because Astro's env plugin copies every loaded variable into `process.env` (`node_modules/astro/dist/env/vite-plugin-env.js`: `for (const [key, value] of Object.entries(loadedEnv)) process.env[key] = value`). That is why `post-build.ts` can read `process.env.POSTBUILD_NGINX_SNIPPETS_DIR` with no loader of its own, and why `fixPermissions` runs even when the variable is absent from the shell. `deploy-live.mjs` does **not** — it is a separate Node process spawned after `astro build` exits, so it calls `process.loadEnvFile()` on the project's `.env` itself. Without that it only saw variables exported in the shell, which silently disabled the Nginx header deploy and the Bing submission from the 2026-07-05 refactor until 2026-08-21 (`.env` defined them; the shell did not). `loadEnvFile` never overwrites an already-set variable, so precedence is **shell > `.env`**: exporting a variable as an empty string is how a worktree opts out of an action (e.g. `POSTBUILD_NGINX_SNIPPETS_DIR=` to leave Nginx alone) — though the production-root guard already covers the worktree case.
 
 ---
 
@@ -889,12 +900,12 @@ Steps (`pnpm build` = `scripts/deploy-swap.mjs prepare` → `astro build --outDi
 2. `astro build --outDir builds/<color>` — includes the pre-build + post-build integrations (see Build System above); the site is fully built but not yet live
 3. `deploy-swap.mjs swap builds/<color>` — atomically retargets the `dist` symlink; the new build is now live
 4. `deploy-live.mjs` runs **after** the swap and performs the publish side effects:
-   - Copies `security_headers.conf` + `security_headers_assets.conf` to the Nginx snippets path, verifies config (`nginx -t`), reloads Nginx, clears the site's Nginx cache — rolls back the config on failure
+   - MOVES the six staged snippets from `.nginx-staged/` into `POSTBUILD_NGINX_SNIPPETS_DIR` (`/etc/nginx/snippets/jmrp/`, the four maps into its `maps/` subdirectory), driven by the build's `manifest.json` rather than a glob, pruning any `maps/*.conf` the manifest does not list; then verifies config (`nginx -t`), reloads Nginx and clears the site's Nginx cache — restoring all six destinations and parking the rejected content outside staging if anything fails. Any failure here — no manifest, a failed move, a failed `nginx -t`, or a reload whose rollback also fails — is **fatal**: the delivery is undone and `deploy-live.mjs` exits 1, failing `pnpm build`. It can no longer report success having delivered nothing; the only case that prints "skipping" is an unset gating variable. The swap has already happened by then, so the new site stays live with the previous Nginx config. A move, not a copy: nothing generated survives in `.nginx-staged/` or in `dist/`
    - Purges the Cloudflare cache via API
    - Submits sitemap URLs to IndexNow and the Bing Webmaster API
 5. CSP Reporter runs as separate service (`scripts/csp-reporter.mjs`)
 
-> **Production-root guard**: This repo is checked out in multiple worktrees (production at `/var/www/jmrp.io`, plus any staging worktree) sharing the same Nginx snippets path and Cloudflare zone. `deploy-live.mjs` is a no-op — skipped entirely, before doing any work — unless `process.cwd()` matches the production root (default `/var/www/jmrp.io`, override via `DEPLOY_LIVE_PRODUCTION_ROOT`) or `DEPLOY_LIVE_FORCE=1` is set. Individual actions are further gated on their own env vars being present (Nginx deploy on `POSTBUILD_NGINX_SNIPPETS_PATH`, Cloudflare purge on `PRIVATE_CF_ZONE_ID`/`PRIVATE_CF_API_TOKEN`, IndexNow on `POSTBUILD_INDEXNOW`, Bing on `BING_WEBMASTER_API_KEY`).
+> **Production-root guard**: This repo is checked out in multiple worktrees (production at `/var/www/jmrp.io`, plus any staging worktree) that would deliver into the same Nginx snippets directory and purge the same Cloudflare zone. `deploy-live.mjs` is a no-op — skipped entirely, before doing any work — unless `process.cwd()` matches the production root (default `/var/www/jmrp.io`, override via `DEPLOY_LIVE_PRODUCTION_ROOT`) or `DEPLOY_LIVE_FORCE=1` is set. Individual actions are further gated on their own env vars being present (Nginx deploy on `POSTBUILD_NGINX_SNIPPETS_DIR`, Cloudflare purge on `PRIVATE_CF_ZONE_ID`/`PRIVATE_CF_API_TOKEN`, IndexNow on `POSTBUILD_INDEXNOW`, Bing on `BING_WEBMASTER_API_KEY`).
 >
 > **First production deploy after merging this branch**: production's `/var/www/jmrp.io/dist` is still a real directory (legacy layout). `deploy-swap.mjs swap` auto-migrates it into `builds/<color>` on first run (rename the real dir out of the way, then symlink in the new build) — but that rename-then-symlink isn't atomic as *one* step, so there's a sub-millisecond window where `dist` exists as neither the old dir nor the new symlink. In practice this is negligible, but to eliminate it entirely, pre-convert `dist` to a symlink by hand before the first post-merge build (e.g. `mv dist builds/blue && ln -s builds/blue dist`).
 > **No lock for concurrent builds**: nothing prevents two `pnpm build` invocations from racing on `deploy-swap.mjs`; keep deploys serial.
