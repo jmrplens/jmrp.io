@@ -616,7 +616,8 @@ sections:
           de GitLab (más de 1.000 en Enterprise) a asistentes de IA mediante un
           diseño dinámico de 2 herramientas (find/execute), con transportes
           stdio/HTTP/OAuth y modos seguro y de solo lectura.
-        metrics: ["En npm; listado en Glama, mcp.so, Cursor y mcpservers.org"]
+        metrics:
+          ["En npm y PyPI; listado en Glama, mcp.so, Cursor y mcpservers.org"]
         links:
           - {
               label: GitHub,
@@ -625,6 +626,10 @@ sections:
           - {
               label: npm,
               url: "https://www.npmjs.com/package/@jmrp.io/gitlab-mcp-server",
+            }
+          - {
+              label: PyPI,
+              url: https://pypi.org/project/jmrplens-gitlab-mcp-server/,
             }
           - {
               label: Glama,

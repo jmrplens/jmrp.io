@@ -47,7 +47,8 @@ export const OWNER = "jmrplens";
  * - **Zenodo** (`gitlab-mcp-server`): the archive of each release exists and
  *   its API does report downloads, but the figure is 9 across all versions —
  *   an archive of record, not a way anyone installs this.
- * - **PyPI** (`phonometry`): publishes no lifetime counter. `pypistats` only
+ * - **PyPI** (`phonometry`, `jmrplens-gitlab-mcp-server`): publishes no
+ *   lifetime counter. `pypistats` only
  *   serves a rolling 180-day window (820 downloads without mirrors on
  *   2026-08-27), and folding a window into a cumulative total would let the
  *   published figure go DOWN between builds as the window rolls. `pepy.tech`
