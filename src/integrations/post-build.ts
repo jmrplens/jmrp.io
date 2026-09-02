@@ -41,6 +41,7 @@
 import { spawnSync } from "node:child_process";
 import crypto from "node:crypto";
 import fs from "node:fs";
+import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -134,7 +135,9 @@ export default function postBuildIntegration(): AstroIntegration {
           // build — or from a generator that no longer exists — surviving as
           // an orphan that the manifest would not mention but a stale copy at
           // the destination would keep alive.
-          await timed("prepareNginxStaging", logger, () =>
+          // The prepared directory, which may differ from the configured one
+          // when this build cannot write there (CI, a contributor's laptop).
+          const stagedIn = await timed("prepareNginxStaging", logger, () =>
             prepareNginxStaging(stagingDir, logger),
           );
 
@@ -153,20 +156,20 @@ export default function postBuildIntegration(): AstroIntegration {
             processHtmlFiles(distDir, cspData, enableCsp, logger),
           );
           await timed("finalizeCspConfig", logger, () =>
-            finalizeCspConfig(stagingDir, cspData, stamp, logger),
+            finalizeCspConfig(stagedIn, cspData, stamp, logger),
           );
           // Second Nginx artifact: the prefix-less blog redirect map. Derived
           // from the built directory names, so posts added later are covered
           // without touching the vhost. `distDir` is the INPUT it reads;
-          // `stagingDir` is where the snippet goes.
+          // `stagedIn` is where the snippet goes.
           await timed("generateBlogRedirects", logger, () =>
-            generateBlogRedirects(distDir, stagingDir, stamp, logger),
+            generateBlogRedirects(distDir, stagedIn, stamp, logger),
           );
           await timed("generateDocsRedirects", logger, () =>
-            generateDocsRedirects(stagingDir, stamp, logger),
+            generateDocsRedirects(stagedIn, stamp, logger),
           );
           await timed("generateTagRedirects", logger, () =>
-            generateTagRedirects(stagingDir, stamp, logger),
+            generateTagRedirects(stagedIn, stamp, logger),
           );
           // Verification, not a transform: the built pages, their markdown
           // twins and the three index surfaces must agree. Runs BEFORE the
@@ -195,14 +198,14 @@ export default function postBuildIntegration(): AstroIntegration {
           // a twin that does not exist, and removing one withdraws the
           // announcement in the same build (GEO audit 2026-09-02, A2).
           await timed("generateMdTwinAlternates", logger, () =>
-            generateMdTwinAlternates(distDir, stagingDir, stamp, logger),
+            generateMdTwinAlternates(distDir, stagedIn, stamp, logger),
           );
 
           // LAST of the Nginx steps, on purpose: the manifest is what makes
           // the staged set deliverable, so it must not exist until all six
           // artifacts do.
           await timed("writeNginxManifest", logger, () =>
-            writeNginxManifest(stagingDir, stampId, logger),
+            writeNginxManifest(stagedIn, stampId, logger),
           );
 
           // optimizeImages (re-compresses PNGs) and compressAssets (gzip/brotli
@@ -221,7 +224,7 @@ export default function postBuildIntegration(): AstroIntegration {
           if (systemNginxDir) {
             // Only fix permissions when deploying to Nginx (requires sudo and www-data user).
             // The actual move-to-Nginx + reload happens post-swap in scripts/deploy-live.mjs.
-            // It reaches distDir only — stagingDir sits outside it, so the
+            // It reaches distDir only — stagedIn sits outside it, so the
             // staged snippets keep root ownership and arrive at /etc/nginx
             // owned by root (rename(2) carries the source inode's owner).
             await timed("fixPermissions", logger, () =>
@@ -315,12 +318,12 @@ function resolveNginxStagingDir(): string {
  * legitimate stages into its own destination anyway: delivery is a move, and
  * `mv src src` fails.
  *
- * @param stagingDir - Absolute path resolved by `resolveNginxStagingDir()`.
+ * @param stagedIn - Absolute path resolved by `resolveNginxStagingDir()`.
  * @param distDir - The directory Astro just built into.
  * @throws If the path is unsafe to empty, sits inside the build output, or
  *   overlaps the directory `deploy-live.mjs` delivers to.
  */
-function assertStagingDirIsSafe(stagingDir: string, distDir: string): void {
+function assertStagingDirIsSafe(stagedIn: string, distDir: string): void {
   const contains = (parent: string, child: string): boolean => {
     const rel = path.relative(parent, child);
     return rel === "" || (!rel.startsWith("..") && !path.isAbsolute(rel));
@@ -329,12 +332,9 @@ function assertStagingDirIsSafe(stagingDir: string, distDir: string): void {
   const snippetsDir = (process.env.POSTBUILD_NGINX_SNIPPETS_DIR || "").trim();
   if (snippetsDir) {
     const destination = path.resolve(snippetsDir);
-    if (
-      contains(stagingDir, destination) ||
-      contains(destination, stagingDir)
-    ) {
+    if (contains(stagedIn, destination) || contains(destination, stagedIn)) {
       throw new Error(
-        `Refusing to stage Nginx artifacts in [${stagingDir}]: it overlaps the` +
+        `Refusing to stage Nginx artifacts in [${stagedIn}]: it overlaps the` +
           ` delivery destination [${destination}], which this build would then` +
           " empty before regenerating anything. Staging is a scratch directory," +
           " not the place Nginx reads from. Check POSTBUILD_NGINX_STAGING_DIR.",
@@ -343,13 +343,13 @@ function assertStagingDirIsSafe(stagingDir: string, distDir: string): void {
   }
 
   if (
-    stagingDir === path.parse(stagingDir).root ||
-    contains(stagingDir, process.cwd()) ||
-    contains(stagingDir, distDir) ||
-    contains(distDir, stagingDir)
+    stagedIn === path.parse(stagedIn).root ||
+    contains(stagedIn, process.cwd()) ||
+    contains(stagedIn, distDir) ||
+    contains(distDir, stagedIn)
   ) {
     throw new Error(
-      `Refusing to stage Nginx artifacts in [${stagingDir}]: this directory is` +
+      `Refusing to stage Nginx artifacts in [${stagedIn}]: this directory is` +
         " emptied on every build, so it must be a dedicated directory that is" +
         " neither an ancestor of the project root or of the build output, nor" +
         " inside the build output. Check POSTBUILD_NGINX_STAGING_DIR.",
@@ -367,21 +367,48 @@ function assertStagingDirIsSafe(stagingDir: string, distDir: string): void {
  * it. Emptying here means the staged set is always exactly what this build
  * produced.
  *
- * @param stagingDir - Absolute path of the staging directory.
+ * @param stagedIn - Absolute path of the staging directory.
  * @param logger - Astro logger instance.
  */
 async function prepareNginxStaging(
-  stagingDir: string,
+  stagedIn: string,
   logger: AstroIntegrationLogger,
-) {
-  await fs.promises.rm(stagingDir, { recursive: true, force: true });
-  await fs.promises.mkdir(path.join(stagingDir, "maps"), {
-    recursive: true,
-    mode: 0o755,
-  });
-  logger.info(
-    `Nginx staging ready: [${path.relative(process.cwd(), stagingDir) || stagingDir}]`,
-  );
+): Promise<string> {
+  try {
+    await fs.promises.rm(stagedIn, { recursive: true, force: true });
+    await fs.promises.mkdir(path.join(stagedIn, "maps"), {
+      recursive: true,
+      mode: 0o755,
+    });
+    logger.info(
+      `Nginx staging ready: [${path.relative(process.cwd(), stagedIn) || stagedIn}]`,
+    );
+    return stagedIn;
+  } catch (error) {
+    const code = (error as NodeJS.ErrnoException).code;
+    if (code !== "EACCES" && code !== "EPERM" && code !== "EROFS") throw error;
+    // The staging root is deployment configuration, not a universal constant:
+    // on this host it is /var/lib/jmrp.io/nginx-staged, which only root can
+    // create. A CI runner and a contributor's laptop cannot, and neither of
+    // them delivers anything — deploy-live.mjs refuses to run outside the
+    // production root. So fall back to a writable directory that is still
+    // outside the repository and outside the served tree, and say so loudly:
+    // a build that stages here CANNOT deliver, and a silent fallback would let
+    // a misconfigured production build look successful while delivering
+    // nothing, which is the exact failure this migration existed to remove.
+    const fallback = path.join(os.tmpdir(), "jmrp-nginx-staged");
+    logger.warn(
+      `Cannot write Nginx staging at [${stagedIn}] (${code}). Falling back ` +
+        `to [${fallback}] — this build stages but CANNOT deliver. Set ` +
+        `POSTBUILD_NGINX_STAGING_DIR to a writable path to silence this.`,
+    );
+    await fs.promises.rm(fallback, { recursive: true, force: true });
+    await fs.promises.mkdir(path.join(fallback, "maps"), {
+      recursive: true,
+      mode: 0o755,
+    });
+    return fallback;
+  }
 }
 
 /**
@@ -398,19 +425,19 @@ async function prepareNginxStaging(
  * `writeNginxSnippet`), so a build that dies partway leaves no manifest at all
  * and therefore delivers nothing.
  *
- * @param stagingDir - Absolute path of the staging directory.
+ * @param stagedIn - Absolute path of the staging directory.
  * @param stampId - The bare build stamp shared by all six artifacts.
  * @param logger - Astro logger instance.
  * @throws If any of the six artifacts is missing or empty.
  */
 async function writeNginxManifest(
-  stagingDir: string,
+  stagedIn: string,
   stampId: string,
   logger: AstroIntegrationLogger,
 ) {
   const staged = await Promise.all(
     NGINX_ARTIFACTS.map(async (relPath) => {
-      const absPath = path.join(stagingDir, relPath);
+      const absPath = path.join(stagedIn, relPath);
       const stats = await fs.promises.stat(absPath).catch(() => null);
       return { relPath, size: stats?.isFile() ? stats.size : 0 };
     }),
@@ -429,7 +456,7 @@ async function writeNginxManifest(
   }
 
   await writeNginxSnippet(
-    path.join(stagingDir, "manifest.json"),
+    path.join(stagedIn, "manifest.json"),
     `${JSON.stringify(
       {
         // Key names are `deploy-live.mjs`'s canonical contract. It also
