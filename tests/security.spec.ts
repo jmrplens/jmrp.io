@@ -5,7 +5,9 @@
  * 1. Content Security Policy (CSP): Ensuring all scripts and styles have nonces.
  * 2. Subresource Integrity (SRI): Validating hashes for local external resources.
  * 3. Security Headers: Verifying the generation of `security_headers.conf` with
- *    HSTS, X-Frame-Options, and robust CSP directives.
+ *    HSTS, X-Frame-Options, and robust CSP directives. That file is no longer
+ *    part of the build output — see `readHeadersConf()` for where it lives now
+ *    and why a missing one fails the suite instead of skipping it.
  * 4. Inline Compliance: Checking that inline styles are converted to classes.
  *
  * Note: Nonces are placeholders ("nonce-$cspNonce") in static builds,
@@ -20,6 +22,7 @@ import path from "node:path";
 
 import { expect, test } from "@playwright/test";
 
+import { stagingCandidates } from "../scripts/nginx-staging.mjs";
 import { getCachedPages } from "./utils";
 
 // Read pages synchronously at module scope for parallel test registration
@@ -261,19 +264,96 @@ test.describe("CSP and SRI Security Checks", () => {
   }
 });
 
+/**
+ * Directories where the generated `security_headers.conf` can live.
+ *
+ * It is no longer part of the build output. The post-build hook writes it to
+ * the staging directory and `scripts/deploy-live.mjs` MOVES it — after the
+ * blue/green swap — into the Nginx snippets directory, so at any moment it
+ * exists in exactly one of two places:
+ *
+ * 1. Staged (`POSTBUILD_NGINX_STAGING_DIR`, else the production or fallback root): a build ran
+ *    and nothing delivered it — a worktree or a scratch build, where
+ *    deploy-live is skipped because cwd is not the production root, so
+ *    staging stays full. CI reaches this branch ONLY if the workspace running
+ *    this suite has the staging directory: the build there happens in a
+ *    separate job, and `functional-tests` restores just the `dist-build`
+ *    artifact, so the staging directory has to be uploaded and downloaded
+ *    alongside it (.github/workflows/ci.yml) or these three tests fail with
+ *    the error below.
+ * 2. Delivered (`POSTBUILD_NGINX_SNIPPETS_DIR`): production after a successful
+ *    deploy, where the move emptied staging. The stronger of the two: it is
+ *    the exact file Nginx loaded.
+ *
+ * Staged wins when both exist — it is the output of the most recent build,
+ * while a delivered copy can predate it by a failed deploy.
+ */
+// `|| ""` then a trim, not `??`: both producers (post-build.ts's
+// resolveNginxStagingDir and deploy-live.mjs's STAGING_DIR) treat an empty
+// value as "unset" and fall back to `.nginx-staged`. `??` would not — an
+// exported `POSTBUILD_NGINX_STAGING_DIR=`, this repo's documented way to opt a
+// worktree out of an action, would point this resolver at the repo root while
+// the build still wrote to `.nginx-staged`, and the fall-through to the
+// delivered copy would then verify a file this build never produced.
+const DELIVERED_SNIPPETS_DIR = (
+  process.env.POSTBUILD_NGINX_SNIPPETS_DIR || ""
+).trim();
+
+/**
+ * Reads the generated `security_headers.conf` from wherever it currently is.
+ *
+ * Absent from both locations is a FAILURE, never a skip. These three tests are
+ * the only automated check on the CSP the site ships; a resolver that skipped
+ * when it could not find the file would turn them into decoration that reports
+ * green forever — the exact failure mode this suite exists to catch.
+ *
+ * @returns Resolved path and file contents.
+ * @throws If the file is in neither location, or is empty.
+ */
+function readHeadersConf(): { path: string; content: string } {
+  const staged = stagingCandidates().map((dir) =>
+    path.join(dir, "security_headers.conf"),
+  );
+  const delivered = DELIVERED_SNIPPETS_DIR
+    ? path.join(DELIVERED_SNIPPETS_DIR, "security_headers.conf")
+    : "";
+
+  const found = [...staged, delivered].find(
+    (candidate) => candidate !== "" && fs.existsSync(candidate),
+  );
+
+  if (!found) {
+    throw new Error(
+      [
+        "security_headers.conf not found, so the shipped CSP is unverified.",
+        "The post-build hook writes it to the staging dir and deploy-live.mjs",
+        "moves it to the Nginx snippets dir; it is never written to dist/.",
+        ...staged.map((c) => `  staged (checked first): ${c} — missing`),
+        delivered
+          ? `  delivered:              ${delivered} — missing`
+          : "  delivered:              POSTBUILD_NGINX_SNIPPETS_DIR unset" +
+            " (playwright.config.ts loads .env when present)",
+        "Run a build, or point POSTBUILD_NGINX_SNIPPETS_DIR at the delivered",
+        "copy. This check never skips: an unverified CSP is a failure.",
+      ].join("\n"),
+    );
+  }
+
+  const content = fs.readFileSync(found, "utf-8");
+  if (content.trim() === "") {
+    throw new Error(`${found} exists but is empty — the build wrote nothing.`);
+  }
+
+  return { path: found, content };
+}
+
 test.describe("Build Output Verification", () => {
-  test("security_headers.conf is generated after build", () => {
-    const distDir = path.resolve("dist");
-    const headersPath = path.join(distDir, "security_headers.conf");
+  test("security_headers.conf is generated by the build", () => {
+    const { path: headersPath, content } = readHeadersConf();
 
-    expect(
-      fs.existsSync(headersPath),
-      "security_headers.conf should exist in dist/",
-    ).toBe(true);
-
-    const content = fs.readFileSync(headersPath, "utf-8");
-
-    expect(content).toContain("Content-Security-Policy");
+    expect(content, `Checked ${headersPath}`).toContain(
+      "Content-Security-Policy",
+    );
     expect(content).toContain("nonce-$cspNonce");
     expect(content).toContain("script-src");
     expect(content).toContain("style-src");
@@ -285,20 +365,15 @@ test.describe("Build Output Verification", () => {
   });
 
   test("CSP header contains required directives", () => {
-    const distDir = path.resolve("dist");
-    const headersPath = path.join(distDir, "security_headers.conf");
-
-    expect(
-      fs.existsSync(headersPath),
-      `security_headers.conf should exist at ${headersPath}`,
-    ).toBe(true);
-
-    const content = fs.readFileSync(headersPath, "utf-8");
+    const { path: headersPath, content } = readHeadersConf();
 
     // Extract the CSP line using optimized RegExp.exec()
     const cspRegex = /Content-Security-Policy "([^"]+)"/;
     const cspMatch = cspRegex.exec(content);
-    expect(cspMatch, "CSP header should be present").toBeTruthy();
+    expect(
+      cspMatch,
+      `CSP header should be present in ${headersPath}`,
+    ).toBeTruthy();
 
     const cspPolicy = cspMatch![1];
 
@@ -343,19 +418,11 @@ test.describe("Build Output Verification", () => {
   });
 
   test("no dummy session cookies on HTML responses", () => {
-    const distDir = path.resolve("dist");
-    const headersPath = path.join(distDir, "security_headers.conf");
-
-    expect(
-      fs.existsSync(headersPath),
-      `security_headers.conf should exist at ${headersPath}`,
-    ).toBe(true);
-
-    const content = fs.readFileSync(headersPath, "utf-8");
+    const { path: headersPath, content } = readHeadersConf();
 
     // Both were pinned to the constant 1 with no session or preference
     // behind them: dead overhead on every HTML response.
-    expect(content).not.toContain("__Host-Session");
+    expect(content, `Checked ${headersPath}`).not.toContain("__Host-Session");
     expect(content).not.toContain("__Secure-Pref");
   });
 });

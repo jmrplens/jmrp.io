@@ -22,16 +22,17 @@
  * carries the post/tool/page title in Spanish.
  */
 
-import { readFileSync } from "node:fs";
+import { readdirSync, readFileSync } from "node:fs";
 import path from "node:path";
 
+import { defaultLocale } from "@i18n/config";
 import type { TranslationKey } from "@i18n/utils";
 import { useTranslations } from "@i18n/utils";
-import { getUniqueTags } from "@utils/blog";
+import { getPostsForLocale, getUniqueTags } from "@utils/blog";
 import { generateOgImage } from "@utils/og-image";
 import { SERIES } from "@utils/series";
+import { getToolsForLocale } from "@utils/tools";
 import type { APIContext } from "astro";
-import { getCollection } from "astro:content";
 
 interface OgProps {
   /** Large heading displayed in Space Grotesk 700. */
@@ -182,6 +183,16 @@ const STATIC_PAGES: Record<string, Record<Locale, OgProps>> = {
       subtitle: "Analítica autoalojada, sin cookies ni rastreadores · jmrp.io",
     },
   },
+  license: {
+    en: {
+      title: "License",
+      subtitle: "Writing & covers CC BY 4.0, source MIT · jmrp.io",
+    },
+    es: {
+      title: "Licencia",
+      subtitle: "Textos y portadas CC BY 4.0, código MIT · jmrp.io",
+    },
+  },
   feeds: {
     en: {
       title: "Feeds",
@@ -202,6 +213,119 @@ const STATIC_PAGES: Record<string, Record<Locale, OgProps>> = {
     es: { title: "Página no encontrada", subtitle: "jmrp.io" },
   },
 };
+
+/**
+ * Page files whose OG cards are enumerated in `getStaticPaths()` through the
+ * SAME `getPostsForLocale` / `getToolsForLocale` helpers the page routes use,
+ * so page and card cannot drift apart.
+ *
+ * Listed by name rather than pattern-matched on `[`, so a NEW dynamic route
+ * family trips the coverage check below instead of being waved through.
+ * Paths are relative to `src/pages`, with any `<locale>/` prefix removed.
+ */
+const COLLECTION_ROUTES = new Set([
+  "blog/[...slug].astro",
+  "blog/series/[series].astro",
+  "blog/tags/[tag].astro",
+  "tools/[...slug].astro",
+  "tools/categories/[category].astro",
+]);
+
+/**
+ * Maps a page file to the `STATIC_PAGES` key that `BaseHead.astro` derives from
+ * that page's URL: `index.astro` → `home`, `blog/index.astro` → `blog`,
+ * `about.astro` → `about`.
+ * @param route - Page path relative to `src/pages`, with no locale prefix.
+ * @returns The `STATIC_PAGES` key for that page.
+ */
+function staticPageKey(route: string): string {
+  const withoutExtension = route.slice(0, -".astro".length);
+  if (withoutExtension === "index") return "home";
+  return withoutExtension.endsWith("/index")
+    ? withoutExtension.slice(0, -"/index".length)
+    : withoutExtension;
+}
+
+/**
+ * Fails the build when `STATIC_PAGES` and the `.astro` pages on disk disagree.
+ *
+ * `BaseHead.astro` points `og:image` AND `twitter:image` at `/og/<pathname>.png`
+ * unconditionally whenever no `image` prop is passed — it never checks that the
+ * card exists, despite the comment there claiming it falls through to the
+ * default image. So a page missing from `STATIC_PAGES` ships two meta tags that
+ * 404, silently, in both locales: that is how `/license/` and `/es/license/`
+ * went live with a dead preview image (GEO audit #6, M1).
+ *
+ * The locale axis comes from `LOCALES`, but note `ogSlug()` above still spells
+ * the `es/` prefix out by hand: adding a third locale needs both updated.
+ *
+ * Throwing here fails `astro build` BEFORE `deploy-swap.mjs swap` retargets the
+ * `dist` symlink, so a build with a dead card never becomes the live one.
+ * @throws When a page has no card, a card has no page, an unlisted dynamic
+ * route appears, or a page exists in only some locales.
+ */
+function assertStaticPagesCoverage(): void {
+  const pagesDirectory = path.join(process.cwd(), "src/pages");
+  const onDisk = new Map<Locale, Set<string>>(
+    LOCALES.map((locale) => [locale, new Set<string>()]),
+  );
+  const prefixes = LOCALES.filter((locale) => locale !== defaultLocale).map(
+    (locale) => ({ prefix: `${locale}/`, locale }),
+  );
+
+  for (const entry of readdirSync(pagesDirectory, {
+    recursive: true,
+    encoding: "utf8",
+  })) {
+    const route = entry.replaceAll(path.sep, "/");
+    if (!route.endsWith(".astro")) continue;
+
+    const match = prefixes.find((p) => route.startsWith(p.prefix));
+    const locale = match ? match.locale : defaultLocale;
+    const bare = match ? route.slice(match.prefix.length) : route;
+
+    if (COLLECTION_ROUTES.has(bare)) continue;
+    if (bare.includes("["))
+      throw new Error(
+        `og: unknown dynamic route src/pages/${route} — enumerate its cards in ` +
+          "getStaticPaths() and list the file in COLLECTION_ROUTES.",
+      );
+    onDisk.get(locale)?.add(staticPageKey(bare));
+  }
+
+  const declared = new Set(Object.keys(STATIC_PAGES));
+  const defaultPages = onDisk.get(defaultLocale) ?? new Set<string>();
+  const everyKey = new Set(
+    LOCALES.flatMap((locale) => [...(onDisk.get(locale) ?? [])]),
+  );
+  const problems = [
+    ...[...defaultPages]
+      .filter((key) => !declared.has(key))
+      .map(
+        (key) =>
+          `page "${key}" has no STATIC_PAGES entry — its og:image 404s. ` +
+          "Add bespoke EN+ES copy there. (A page that passes its own `image` " +
+          "to BaseLayout needs no card, but give it an entry anyway — one " +
+          "unused PNG is cheaper than an exemption list.)",
+      ),
+    ...[...declared]
+      .filter((key) => !defaultPages.has(key))
+      .map(
+        (key) =>
+          `STATIC_PAGES["${key}"] has no page — the card is generated for nothing`,
+      ),
+    ...[...everyKey]
+      .filter((key) => LOCALES.some((locale) => !onDisk.get(locale)?.has(key)))
+      .map(
+        (key) =>
+          `page "${key}" is missing in at least one locale — every locale is always generated`,
+      ),
+  ];
+  if (problems.length > 0)
+    throw new Error(
+      `og: static page cards out of sync\n  - ${problems.join("\n  - ")}`,
+    );
+}
 
 /** Localized "Blog" kicker for post + tag cards. */
 const BLOG_KICKER: Record<Locale, string> = {
@@ -248,18 +372,22 @@ function toolSubtitle(description: string): string {
  * { title, subtitle, cover? } props consumed by GET.
  */
 export async function getStaticPaths() {
+  assertStaticPagesCoverage();
+
+  // Enumerate through the SAME helpers the page routes use. Both merge in the
+  // EN entry whenever a translation is missing or draft-filtered, so
+  // `/es/blog/<slug>/` exists even with no ES twin. A strict
+  // `data.lang === locale` filter here would skip that page's card and ship a
+  // 404 og:image — M1 all over again, in the ES locale.
   const [postsByLocale, toolsByLocale] = await Promise.all([
     Promise.all(
-      LOCALES.map((locale) =>
-        getCollection(
-          "posts",
-          ({ data }) => !data.draft && data.lang === locale,
-        ),
+      LOCALES.map(async (locale) =>
+        (await getPostsForLocale(locale)).map(({ post }) => post),
       ),
     ),
     Promise.all(
-      LOCALES.map((locale) =>
-        getCollection("tools", ({ data }) => data.lang === locale),
+      LOCALES.map(async (locale) =>
+        (await getToolsForLocale(locale)).map(({ tool }) => tool),
       ),
     ),
   ]);

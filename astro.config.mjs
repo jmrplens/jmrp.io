@@ -27,6 +27,111 @@ const githubDark = "github-dark-high-contrast";
 // Image optimizer cache location (also referenced in .gitignore and CI)
 const OPTIMIZED_IMAGES_CACHE_DIR = ".cache/optimized-images";
 
+// The exact options object handed to `ViteImageOptimizer` below. Hoisted so
+// `preBuildIntegration` can hash it into the optimized-image cache's config
+// signature: a change to any encoder setting here must invalidate blobs that
+// were produced under the old one.
+const imageOptimizerOptions = {
+  // The cache holds 167 png/webp blobs and spares the build their re-encode
+  // (41 s cold). It is keyed by PATH, though, so it cannot tell a replaced
+  // `public/` file from the one it replaced, and its key says nothing about
+  // the settings below — see `src/integrations/pre-build/image-cache.ts`,
+  // which certifies both before every build.
+  cache: true,
+  cacheLocation: OPTIMIZED_IMAGES_CACHE_DIR,
+  svg: {
+    multipass: true,
+    plugins: /** @type {import('svgo').PluginConfig[]} */ ([
+      {
+        name: "preset-default",
+        params: {
+          // Only names `preset-default` actually contains belong in here.
+          // SVGO warns on anything else and then ignores it, so a key with a
+          // typo — or naming a plugin the preset dropped — reads as intent
+          // while doing nothing. Six of them did exactly that until
+          // 2026-09-02, warning once per name per `multipass` pass — 12 lines
+          // per SVG actually optimized, so 12 for a cold build and none for a
+          // cache-warm one, since a cache hit never reaches SVGO at all:
+          //
+          //   `cleanupIDs`         — typo for `cleanupIds`; see below.
+          //   `removeViewBox`      — not in SVGO 4's preset, so viewBox is
+          //                          kept unconditionally and the intent of
+          //                          svg/svgo#1128 holds without the key.
+          //   `removeTitle`,       — all three wanted a plugin turned ON,
+          //   `removeStyleElement`,  which needs a top-level entry, not an
+          //   `removeDimensions`,    override. None are reinstated:
+          //   `removeRasterImages`   `removeTitle` would strip an SVG's
+          //                          accessible name, and the rest have
+          //                          nothing to act on (see below).
+          overrides: {
+            cleanupNumericValues: {
+              floatPrecision: 1,
+            },
+            // KEEP ids: markers and gradients are referenced by `url(#id)`,
+            // and this plugin minifies ids and drops "unused" ones by
+            // default. The guard was misspelled `cleanupIDs` from the start,
+            // so ids were being cleaned all along — with no consequence,
+            // because the only SVG this optimizer ever reaches is
+            // `public/favicon.svg` (via `includePublic`) and it has no ids.
+            // Nothing else qualifies: no SVG enters the bundle, and the
+            // `dist/assets/extracted/*.svg` written by the post-build CSS
+            // data-URI pass are produced after Vite is done. Fixed anyway —
+            // the next SVG asset shouldn't have to rediscover this.
+            cleanupIds: false,
+            removeUselessDefs: false, // KEEP definitions (markers for arrows)
+            removeDesc: true,
+            collapseGroups: true,
+            removeEmptyContainers: true,
+            removeEmptyAttrs: true,
+            cleanupAttrs: true,
+          },
+        },
+      },
+      "sortAttrs",
+      {
+        name: "removeAttrs",
+        params: {
+          attrs: "(data-name)", // Only remove data-name, KEEP class and id
+        },
+      },
+      {
+        name: "addAttributesToSVGElement",
+        params: {
+          attributes: [{ xmlns: "http://www.w3.org/2000/svg" }],
+        },
+      },
+    ]),
+  },
+  png: {
+    // https://sharp.pixelplumbing.com/api-output#png
+    quality: 80,
+    compressionLevel: 9,
+  },
+  jpeg: {
+    // https://sharp.pixelplumbing.com/api-output#jpeg
+    quality: 80,
+  },
+  jpg: {
+    // https://sharp.pixelplumbing.com/api-output#jpeg
+    quality: 80,
+  },
+  tiff: {
+    // https://sharp.pixelplumbing.com/api-output#tiff
+    quality: 80,
+  },
+  // gif does not support lossless compression
+  // https://sharp.pixelplumbing.com/api-output#gif
+  gif: {},
+  webp: {
+    // https://sharp.pixelplumbing.com/api-output#webp
+    quality: 80,
+  },
+  avif: {
+    // https://sharp.pixelplumbing.com/api-output#avif
+    lossless: true,
+  },
+};
+
 // Internationalization (i18n) configuration
 const i18nConfig = {
   defaultLocale: "en",
@@ -154,7 +259,10 @@ export default defineConfig({
   // List of integrations to extend Astro functionality
   integrations: [
     UnoCSS(),
-    preBuildIntegration(),
+    preBuildIntegration({
+      cacheDir: OPTIMIZED_IMAGES_CACHE_DIR,
+      options: imageOptimizerOptions,
+    }),
     sitemap({
       i18n: {
         defaultLocale: i18nConfig.defaultLocale,
@@ -377,79 +485,7 @@ export default defineConfig({
   vite: {
     plugins: [
       vitePrefetchNoncePlugin(),
-      ViteImageOptimizer({
-        // Enable caching to maintain consistent asset hashes between builds
-        cache: true,
-        cacheLocation: OPTIMIZED_IMAGES_CACHE_DIR,
-        svg: {
-          multipass: true,
-          plugins: /** @type {import('svgo').PluginConfig[]} */ ([
-            {
-              name: "preset-default",
-              params: {
-                overrides: {
-                  cleanupNumericValues: {
-                    floatPrecision: 1,
-                  },
-                  removeViewBox: false, // https://github.com/svg/svgo/issues/1128
-                  removeTitle: true,
-                  removeDesc: true,
-                  removeUselessDefs: false, // KEEP definitions (markers for arrows)
-                  collapseGroups: true,
-                  cleanupIDs: false, // KEEP IDs (crucial for marker references)
-                  removeEmptyContainers: true,
-                  removeEmptyAttrs: true,
-                  cleanupAttrs: true,
-                  removeStyleElement: true,
-                  removeDimensions: true,
-                  removeRasterImages: true,
-                },
-              },
-            },
-            "sortAttrs",
-            {
-              name: "removeAttrs",
-              params: {
-                attrs: "(data-name)", // Only remove data-name, KEEP class and id
-              },
-            },
-            {
-              name: "addAttributesToSVGElement",
-              params: {
-                attributes: [{ xmlns: "http://www.w3.org/2000/svg" }],
-              },
-            },
-          ]),
-        },
-        png: {
-          // https://sharp.pixelplumbing.com/api-output#png
-          quality: 80,
-          compressionLevel: 9,
-        },
-        jpeg: {
-          // https://sharp.pixelplumbing.com/api-output#jpeg
-          quality: 80,
-        },
-        jpg: {
-          // https://sharp.pixelplumbing.com/api-output#jpeg
-          quality: 80,
-        },
-        tiff: {
-          // https://sharp.pixelplumbing.com/api-output#tiff
-          quality: 80,
-        },
-        // gif does not support lossless compression
-        // https://sharp.pixelplumbing.com/api-output#gif
-        gif: {},
-        webp: {
-          // https://sharp.pixelplumbing.com/api-output#webp
-          quality: 80,
-        },
-        avif: {
-          // https://sharp.pixelplumbing.com/api-output#avif
-          lossless: true,
-        },
-      }),
+      ViteImageOptimizer(imageOptimizerOptions),
     ],
     css: {
       devSourcemap: true,

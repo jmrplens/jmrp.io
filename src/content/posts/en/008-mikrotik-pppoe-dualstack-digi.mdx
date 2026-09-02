@@ -122,7 +122,7 @@ If your ISP doesn't use VLAN tagging, skip Step 2 and set the PPPoE client inter
 
 ## How I run this on my own infrastructure
 
-This isn't theoretical: my own RB5009UG+S+, running RouterOS 7.23.2, runs exactly this PPPoE + DHCPv6-PD setup against DIGI, with the WAN VLAN tagged `vlan-id=20` (`VLAN_DIGI`) just as described above.
+This isn't theoretical: my own RB5009UG+S+ runs exactly this PPPoE + DHCPv6-PD setup against DIGI, with the WAN VLAN tagged `vlan-id=20` (`VLAN_DIGI`) just as described above. The RouterOS version it was last checked against is stamped at the top of this page.
 
 The prefix-change handling in Step 5 isn't defensive programming for an edge case — it's the normal case. Every time I restart the PPPoE interface, or the router itself, DIGI hands me a new /56 prefix. Not occasionally: every single time. That's exactly why the LAN addressing can't hardcode a prefix and has to re-derive it on reconnection; anything that assumes a static prefix breaks on the very first reboot. The trade-off is a few seconds of dropped sessions while the interface renegotiates — the same brief interruption you'd see from any external disconnection.
 

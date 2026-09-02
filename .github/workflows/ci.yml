@@ -64,6 +64,14 @@ jobs:
         with:
           path: ~/.cache/ms-playwright
           key: playwright-browsers-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
+      # The loose `restore-keys` fallback below intentionally reuses a cache
+      # built from different image bytes and possibly different encoder
+      # settings. `pruneStaleOptimizedImageCache`
+      # (src/integrations/pre-build/image-cache.ts) runs before the build and
+      # drops whatever the restored manifest cannot certify — the whole
+      # directory when the settings signature does not match. Without that
+      # guard this fallback silently reproduced the frozen-favicon bug on
+      # every runner.
       - name: Cache Optimized Images
         uses: actions/cache@v6
         with:
@@ -77,6 +85,26 @@ jobs:
         run: pnpm exec playwright install --with-deps chromium
       - name: Build Project (Production)
         run: pnpm run build
+        env:
+          # The build stages its generated Nginx snippets outside the served
+          # tree; on this runner the production root (/var/lib) is not
+          # writable, so point it somewhere that is AND that can be uploaded.
+          # `functional-tests` runs in a separate job and restores only
+          # `dist-build`, so without the artifact below the three CSP tests in
+          # tests/security.spec.ts fail: they read the generated
+          # security_headers.conf, which is no longer part of the build output.
+          POSTBUILD_NGINX_STAGING_DIR: ${{ github.workspace }}/.nginx-staged
+      - name: Upload staged Nginx snippets
+        uses: actions/upload-artifact@v7
+        with:
+          name: nginx-staged
+          path: .nginx-staged/
+          # The directory itself starts with a dot, so every file under it
+          # counts as hidden and upload-artifact silently uploads nothing —
+          # the download in `functional-tests` then fails with "Artifact not
+          # found". Same reason the dist-build upload below sets it.
+          include-hidden-files: true
+          retention-days: 1
       - name: Upload build artifact
         uses: actions/upload-artifact@v7
         with:
@@ -149,6 +177,26 @@ jobs:
         with:
           name: log-eslint
           path: eslint.log
+          retention-days: 1
+
+  # Node's own test runner over scripts/**/*.test.mjs. Added with the
+  # optimized-image cache guard: its regression tests would otherwise only run
+  # inside `pnpm verify`, which on the production host builds and deploys.
+  sa-unit:
+    name: "SA: Unit Tests"
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ./.github/actions/setup
+      - name: Run unit tests
+        run: pnpm test:unit 2>&1 | tee unit-tests.log
+      - name: Upload unit test log
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: log-unit-tests
+          path: unit-tests.log
           retention-days: 1
 
   sa-audit:
@@ -437,6 +485,11 @@ jobs:
           name: dist-build
           path: dist
       - uses: ./.github/actions/setup
+      # The image optimizer caches by path, so a replaced public/ file can be
+      # published as the blob of the file it replaced. This compares every
+      # public/ image with the artefact the build actually emitted.
+      - name: Verify public/ assets survive the build
+        run: node scripts/ci/check-public-asset-fidelity.mjs dist
       - name: Analyze images
         run: |
           echo "## 🖼️ Image Optimization Analysis" >> $GITHUB_STEP_SUMMARY
@@ -463,6 +516,11 @@ jobs:
         with:
           name: dist-build
           path: dist
+      - name: Download staged Nginx snippets
+        uses: actions/download-artifact@v8
+        with:
+          name: nginx-staged
+          path: .nginx-staged
       - uses: ./.github/actions/setup
       - name: Cache Playwright Browsers
         id: playwright-cache
@@ -474,6 +532,8 @@ jobs:
         if: steps.playwright-cache.outputs.cache-hit != 'true'
         run: pnpm exec playwright install --with-deps chromium
       - name: Run Playwright tests
+        env:
+          POSTBUILD_NGINX_STAGING_DIR: ${{ github.workspace }}/.nginx-staged
         run: pnpm exec playwright test --project=functional --project=mobile-functional --project=a11y-static --project=performance
       - name: Upload functional report
         uses: actions/upload-artifact@v7

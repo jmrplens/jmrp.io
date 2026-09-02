@@ -29,7 +29,15 @@ person:
   # Funding page → `potentialAction` as a DonateAction. Not a `sameAs`: the
   # GitHub account is already asserted there, and this is a place to act, not
   # an identity to resolve.
+  #
+  # `sponsorLabel` is that action's `name`, emitted as language-tagged literals
+  # like jobTitle/description above. It shipped as an untagged English sentence
+  # until 2026-09-02 — the only authored prose in a document that six external
+  # sites splice in beside Spanish copy.
   sponsorUrl: https://github.com/sponsors/jmrplens
+  sponsorLabel:
+    en: Sponsor this work on GitHub
+    es: Patrocina este trabajo en GitHub
 
   # The profession, deliberately NOT `worksFor`. schema.org's `worksFor` reads
   # as present tense, and the last employment ended — asserting it here would
@@ -110,7 +118,7 @@ es:
   lead:
     - Soy José Manuel, ingeniero de firmware y software en Valencia, con base en I+D. Escribo firmware en C para hardware industrial y herramientas de desarrollo en Go, y mantengo 38 repositorios públicos en GitHub que suman más de 350 estrellas (agosto de 2026).
     - "Llegué a la ingeniería desde la acústica y la instrumentación —un grado en Ingeniería de Telecomunicación y un Máster en Ingeniería Acústica, y después cuatro años de investigación predoctoral en la UPV (2019–2023) sobre ultrasonidos y metamateriales acústicos— antes de reorientarme al software. De esa etapa quedan 14 publicaciones académicas: un artículo de revista, once comunicaciones en congresos y dos tesis. Sigo prefiriendo los problemas donde la señal, el sistema y el software se tocan."
-    - "Entre 2023 y 2026 desarrollé firmware embebido industrial en C sobre STM32 y FreeRTOS para inversores solares y almacenamiento en baterías —optimización de bajo nivel, comunicaciones industriales (Modbus) y automatización de pruebas sobre hardware—. La parte open source es la medible: mis dos servidores MCP acumulan más de 7.500 descargas en Docker Hub, gitlab-mcp-server ha publicado más de 50 versiones en el registro oficial del Model Context Protocol, y más de 15 de mis artículos, tesis y publicaciones de software están archivados con DOI en Zenodo."
+    - "Entre 2023 y 2026 desarrollé firmware embebido industrial en C sobre STM32 y FreeRTOS para inversores solares y almacenamiento en baterías —optimización de bajo nivel, comunicaciones industriales (Modbus) y automatización de pruebas sobre hardware—. La parte open source es la medible: mis dos servidores MCP acumulan más de 7.500 pulls en Docker Hub, gitlab-mcp-server ha publicado más de 50 versiones en el registro oficial del Model Context Protocol, y más de 15 de mis artículos, tesis y publicaciones de software están archivados con DOI en Zenodo."
   note: "Este sitio es mi cuaderno: lo que aprendo lo escribo, lo que construyo lo publico."
   labels:
     build: Construyo

@@ -23,6 +23,8 @@ import {
 import { pageLastmod } from "@src/integrations/sitemap-post-dates";
 import type { SiteConfig } from "@src/types";
 import { safeJsonLd } from "@utils/html";
+import { licensePageUrl } from "@utils/license";
+import { markdownTwinHref } from "@utils/llms/twin-routes";
 import type { LanguageTaggedValue } from "@utils/person";
 import {
   CANONICAL_ALUMNI_OF,
@@ -43,6 +45,7 @@ import { Font, getImage } from "astro:assets";
 import { getEntry } from "astro:content";
 import type {
   BreadcrumbList,
+  DonateAction,
   ListItem,
   SiteNavigationElement,
   Text,
@@ -76,15 +79,6 @@ interface Props {
   authors?: string[]; // Defaults to siteData.author
   tags?: string[];
   schema?: Record<string, unknown> | Record<string, unknown>[]; // Custom JSON-LD schema to merge or override
-  /**
-   * Root-relative path of this page's markdown twin, when it has one.
-   *
-   * Posts, tools, the profile pages and the homepage do; the listing
-   * pages do not. `<link rel="alternate">` is how a client that fetched
-   * the PAGE — rather than robots.txt, whose pointers are comments that
-   * nothing parses — learns the file exists without guessing the convention.
-   */
-  markdownHref?: string;
 }
 
 const canonicalURL = new URL(Astro.url.pathname, getSiteUrl());
@@ -100,8 +94,17 @@ const {
   authors = [siteData.author],
   tags = [],
   schema,
-  markdownHref,
 } = Astro.props;
+
+// This page's markdown twin, when it has one.
+//
+// Resolved here, from the twin routes themselves, rather than passed in: as a
+// per-page prop it was opt-in, and the four page components that never passed
+// it left 20 pages serving a twin that no HTML on the site announced (GEO
+// audit #6, A2). `<link rel="alternate">` is how a client that fetched the
+// PAGE — rather than robots.txt, whose pointers are comments that nothing
+// parses — learns the file exists without guessing the convention.
+const markdownHref = markdownTwinHref(Astro.routePattern, Astro.url.pathname);
 
 const siteTitle = t("seo.siteTitle");
 const fullTitle = (() => {
@@ -233,6 +236,26 @@ const personDescription = aboutData?.person.description
   : t("pages.cv.schemaDescription");
 
 /**
+ * The funding action, hoisted out of the schema literal on purpose.
+ *
+ * Inside the object it would sit behind a conditional spread, and a conditional
+ * spread drops the literal's freshness — `satisfies WebSite` below then checks
+ * nothing inside it, so a misspelt property or a malformed `@id` reference
+ * would compile. Declared here with its own `satisfies`, the shape is checked.
+ */
+const sponsorAction = aboutData?.person.sponsorUrl
+  ? ({
+      "@type": "DonateAction",
+      name: localizedValues(aboutData.person.sponsorLabel),
+      recipient: { "@id": new URL("#person", getSiteUrl()).href },
+      target: {
+        "@type": "EntryPoint",
+        urlTemplate: aboutData.person.sponsorUrl,
+      },
+    } satisfies DonateAction)
+  : undefined;
+
+/**
  * The open-source software this Person authors, as bare `@id` references to
  * the `#software` nodes fully described on /projects/ (and, for most of them,
  * on the project's own documentation site, which publishes the SAME @id with
@@ -290,6 +313,21 @@ const websiteSchema = {
     es: useTranslations("es")("seo.siteDescription"),
   }),
   inLanguage: ["en", "es"],
+  // Where the reuse terms are, NOT what they are. `/license/` assigns four
+  // different sets of terms — CC BY for the writing and the covers, MIT for the
+  // code, all rights reserved for the portrait — so a blanket `license` here
+  // would publish a grant the page refuses to make, and the material it would
+  // sweep in is the one the author deliberately kept outside CC BY because that
+  // grant cannot be withdrawn. `usageInfo` is schema.org's property for
+  // "further information about the terms", which is exactly what this is
+  // (GEO audit 2026-09-02, M4).
+  //
+  // The English URL from both locales on purpose: `#website` is ONE entity
+  // emitted from both (hence `inLanguage: ["en","es"]` above), so nothing
+  // hanging off it may vary with the page that happened to render it — the same
+  // rule the canonical `#person` node states for `/license/#portrait`.
+  usageInfo: licensePageUrl("en"),
+  copyrightHolder: { "@id": new URL("#person", getSiteUrl()).href },
   publisher: {
     "@type": "Person",
     "@id": new URL("#person", getSiteUrl()).href,
@@ -318,18 +356,9 @@ const websiteSchema = {
     // from `sameAs`: that list exists so a consumer can resolve two URLs to one
     // entity, and github.com/jmrplens is already in it carrying a signed
     // ownership proof, so a second URL on the same host adds nothing. See the
-    // longer note in build-identity.mjs.
+    // longer note in build-identity.mjs, including why `recipient` is named.
     // KEEP-IN-SYNC: scripts/ci/build-identity.mjs.
-    ...(aboutData?.person.sponsorUrl && {
-      potentialAction: {
-        "@type": "DonateAction",
-        name: "Sponsor this work on GitHub",
-        target: {
-          "@type": "EntryPoint",
-          urlTemplate: aboutData.person.sponsorUrl,
-        },
-      },
-    }),
+    ...(sponsorAction && { potentialAction: sponsorAction }),
     image: {
       "@type": "ImageObject",
       url: new URL(CANONICAL_PERSON_IMAGE.path, getSiteUrl()).href,

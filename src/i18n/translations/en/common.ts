@@ -886,7 +886,7 @@ export const common = {
       editorialBody3:
         "If something here is wrong, tell me. A short email with the article and the problem is enough — no account, no form. Vulnerability reports have their own channel and PGP key in security.txt.",
       editorialBody4:
-        "Corrections are made in the article itself rather than in a comment thread. The revision date shown on the page and in its structured data is not maintained by hand: it is computed at build time as the most recent of four things — when the article was published, any date I set on it deliberately, the last time I re-tested it against the software versions it names, and the last commit that changed its substance — so it cannot fall behind the text, including when the change is a small one. Formatting passes that touch every article at once are marked as such in that history and leave the dates alone. There is no per-article changelog; the record of what changed, and when, is the full edit history of this site, which is public in its repository.",
+        "Corrections are made in the article itself rather than in a comment thread. The revision date shown on the page and in its structured data is not maintained by hand: it is computed at build time as the most recent of four things — when the article was published, any date I set on it deliberately, the last time I re-tested it against the software versions it names, and the last commit that changed its substance — so it cannot fall behind the text, including when the change is a small one. Mechanical changes — a formatting pass, a link attribute, a typo — leave the dates alone. The ones that predate this rule are listed by commit hash, each with the reason it qualifies, in the module that computes the date (src/utils/post-dates.ts); any later one declares itself in its own commit message. There is no per-article changelog; the record of what changed, and when, is the full edit history of this site, which is public in its repository.",
       editorialReportLabel: "Report an error",
       editorialSecurityLabel: "security.txt",
     },
@@ -944,6 +944,10 @@ export const common = {
       docs: "Docs",
       hosted: "Live instance",
       downloads: "Downloads",
+      downloadsNote:
+        "Download figures combine GitHub release artifacts, Docker Hub image pulls and MATLAB File Exchange downloads. Checksum, signature and SBOM files are not counted: a release publishes them next to the binary and every install fetches both, so counting them would report the same install twice. The File Exchange figures are read by hand ({date}) because MathWorks refuses scripted requests, and a project shows its own figure only once it passes 1,000 — so the per-project numbers below do not add up to the site-wide total.",
+      downloadsSourceLead:
+        "The exact rule, and the full list of channels counted and skipped:",
       topicsLabel: "Topics covered by {project}",
       supportHeading: "Support",
       supportIntro:

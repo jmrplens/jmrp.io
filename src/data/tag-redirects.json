@@ -1,8 +1,10 @@
 {
   "$comment": [
     "Retired blog tags -> where their URL should land now. Consumed at build time",
-    "by src/integrations/post-build/tag-redirects.ts, which writes the nginx map",
-    "in nginx/tag_redirects.conf. Adding an entry here is the ONLY step needed:",
+    "by src/integrations/post-build/tag-redirects.ts, which stages the nginx map",
+    "in .nginx-staged/maps/tag_redirects.conf; deploy-live.mjs moves it into",
+    "/etc/nginx/snippets/jmrp/maps/ after the deploy swap, so building alone does",
+    "not change what nginx serves. Adding an entry here is the ONLY step needed:",
     "the generator emits the EN and ES forms, with and without trailing slash, and",
     "nginx matches map keys case-insensitively, so /blog/tags/mTLS/ resolves too.",
     "",

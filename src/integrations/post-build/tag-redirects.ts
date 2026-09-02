@@ -3,10 +3,10 @@ import path from "node:path";
 
 import type { AstroIntegrationLogger } from "astro";
 
-import { assertNginxSafe, writeNginxSnippet } from "./utils.js";
+import { assertNginxSafe, buildStampLine, writeNginxSnippet } from "./utils.js";
 
 /**
- * Generates `nginx/tag_redirects.conf`: an Nginx `map` that turns the URL of a
+ * Generates `tag_redirects.conf`: an Nginx `map` that turns the URL of a
  * retired blog tag into the tag that absorbed it, or into the blog index when
  * no current tag covers it.
  *
@@ -22,9 +22,9 @@ import { assertNginxSafe, writeNginxSnippet } from "./utils.js";
  *   2. Adding a tag meant remembering all four forms. Here it is one line in
  *      `src/data/tag-redirects.json`.
  *
- * Written to the repo, not to dist/: dist is the public blue/green symlink, and
- * a build from a revision predating this step would leave the vhost include
- * dangling. Same reasoning as blog-redirects.ts and docs-redirects.ts.
+ * Staged for delivery rather than written into dist/ or into the repo — see
+ * `writeNginxSnippet` and the note at the write site below. Same handling as
+ * blog-redirects.ts and docs-redirects.ts.
  */
 const MAP_VARIABLE = "$blog_tag_redirect";
 
@@ -56,10 +56,18 @@ function destination(value: string, locale: string): string {
 /**
  * Writes the retired-tag redirect map.
  *
+ * @param stagingDir - Staging root for the generated Nginx snippets; the
+ *   maps go in its `maps/` subdirectory, from where `deploy-live.mjs`
+ *   moves them after the swap.
+ * @param stamp - The per-build `# Build-Stamp:` banner, emitted verbatim as
+ *   the snippet's second line; it is what proves, from `nginx -T`, that
+ *   the running config came from this build.
  * @param logger - Astro integration logger.
  * @returns Resolves once the snippet has been written.
  */
 export async function generateTagRedirects(
+  stagingDir: string,
+  stamp: string,
   logger: AstroIntegrationLogger,
 ): Promise<void> {
   const dataPath = path.join(process.cwd(), "src/data/tag-redirects.json");
@@ -130,6 +138,7 @@ export async function generateTagRedirects(
     .join("\n");
 
   const content = `# GENERATED FILE — DO NOT EDIT.
+${buildStampLine(stamp)}
 # Written by src/integrations/post-build/tag-redirects.ts on every build,
 # derived from src/data/tag-redirects.json.
 #
@@ -153,9 +162,19 @@ ${entries}
 }
 `;
 
-  const outPath = path.join(process.cwd(), "nginx", "tag_redirects.conf");
+  // Staged rather than written into dist/ or into the repo working tree.
+  // dist is the public blue/green symlink, and a generated file under
+  // version control drifts from what Nginx actually loaded the moment a
+  // build runs without a deploy. `scripts/deploy-live.mjs` MOVES this file
+  // out of staging into the snippets directory the vhost includes, after
+  // the swap; until it does, Nginx keeps the previously delivered copy.
+  // The include there is a wildcard over the whole maps/ directory, so a
+  // file that has not been delivered yet costs one redirect, where an exact
+  // include of a missing path would instead refuse to start every vhost on
+  // the box.
+  const outPath = path.join(stagingDir, "maps", "tag_redirects.conf");
   await writeNginxSnippet(outPath, content);
   logger.info(
-    `  ✓ Generated nginx/tag_redirects.conf (${tags.length} tags + ${legacy.length} legacy paths)`,
+    `  ✓ Staged ${outPath} (${tags.length} tags + ${legacy.length} legacy paths)`,
   );
 }

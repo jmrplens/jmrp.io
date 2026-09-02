@@ -154,13 +154,13 @@ export function resolveFile(
  * interpolated into inside an Nginx `map` block.
  *
  * The redirect generators build their snippets by string interpolation and
- * write them straight to `nginx/*_redirects.conf`, which the vhost `include`s
- * at http level by absolute path. Neither generator goes through the Zod
- * content schema — `docs-redirects.ts` parses `projects.yaml` with `js-yaml`
- * directly — so this is the only place the values are checked. A single double
- * quote, backslash, semicolon or newline in a project id or a docs URL yields a
- * config Nginx refuses, and an `include` that fails to parse stops the whole
- * server from starting, not just this vhost.
+ * stage them for delivery into the snippets directory the vhost `include`s at
+ * http level. Neither generator goes through the Zod content schema —
+ * `docs-redirects.ts` parses `projects.yaml` with `js-yaml` directly — so this
+ * is the only place the values are checked. A single double quote, backslash,
+ * semicolon or newline in a project id or a docs URL yields a config Nginx
+ * refuses, and a `map` that fails to parse stops the whole server from
+ * starting, not just this vhost.
  *
  * Failing the build is the right outcome: the alternative is a repo that looks
  * fine and a server that will not come back up after the next restart.
@@ -186,17 +186,75 @@ export function assertNginxSafe(values: string[], context: string): void {
   }
 }
 
+/** Prefix of the stamp line every generated Nginx snippet carries. */
+export const BUILD_STAMP_PREFIX = "# Build-Stamp: ";
+
 /**
- * Writes an Nginx snippet atomically.
+ * Places the per-build stamp banner as one comment line inside a generated
+ * snippet, and refuses anything that is not one.
  *
- * The destination is `include`d by the live vhost, so a partial write — a build
- * killed between `open()` and the last chunk — leaves a truncated `map` block
- * that fails `nginx -t`. `deploy-live.mjs` only backs up and rolls back the
- * security-header snippets, so a broken redirect file would simply stay on
- * disk: the reload fails, Nginx keeps serving from memory, nothing looks wrong,
- * and the next `systemctl restart` (certbot, a reboot) takes down every vhost
- * on the box. Writing to a sibling temp file and `rename(2)`-ing over the
- * target makes the swap all-or-nothing.
+ * ONE stamp is computed per build in `post-build.ts` and handed to all six
+ * generators, so `nginx -T | grep -c '# Build-Stamp: <id>'` returning 6 proves
+ * that the six files the RUNNING config loaded all came from that one build —
+ * `nginx -T` dumps comments verbatim and dumps each distinct file exactly once
+ * however many include sites reference it. A hand-seeded copy cannot satisfy
+ * it, which is the point: it is the only check that distinguishes "the build
+ * delivered" from "somebody copied six files into /etc".
+ *
+ * The caller passes the banner ready to prepend, trailing newline included;
+ * this returns it without that newline so a generator can drop it into its
+ * header block as a line of its own. Everything after a `#` is inert to Nginx
+ * EXCEPT a line break, which would end the comment and turn whatever follows
+ * into directives — so an embedded newline is rejected rather than escaped,
+ * and a stamp that does not carry the expected prefix (or carries nothing
+ * after it) is rejected too: a snippet with no usable stamp would pass
+ * `nginx -t` and silently fail the only check that proves delivery.
+ *
+ * @param stamp - The `# Build-Stamp: <id>\n` banner computed once per build.
+ * @returns That banner as a single line, without the trailing newline.
+ * @throws If the stamp is not exactly one non-empty `# Build-Stamp:` line.
+ */
+export function buildStampLine(stamp: string): string {
+  const line = stamp.trimEnd();
+  if (
+    !line.startsWith(BUILD_STAMP_PREFIX) ||
+    line.length === BUILD_STAMP_PREFIX.length ||
+    /[\r\n]/.test(line)
+  ) {
+    throw new Error(
+      `Refusing to stamp an Nginx snippet with ${JSON.stringify(stamp)} — the` +
+        ` build stamp must be a single non-empty "${BUILD_STAMP_PREFIX}" line.`,
+    );
+  }
+  return line;
+}
+
+/**
+ * Writes an Nginx snippet atomically, at mode 0644.
+ *
+ * The file is staged here and MOVED into the directory the live vhost
+ * `include`s by `scripts/deploy-live.mjs`, after the blue/green swap. A partial
+ * write — a build killed between `open()` and the last chunk — would hand that
+ * deploy a truncated `map` block, and `nginx -t` failing there means the reload
+ * fails, Nginx keeps serving from memory, nothing looks wrong, and the next
+ * `systemctl restart` (certbot, a reboot) takes down every vhost on the box.
+ * Writing to a sibling temp file and `rename(2)`-ing over the target makes the
+ * swap all-or-nothing.
+ *
+ * The temp name carries random bytes: a fixed `${outPath}.tmp` collides between
+ * concurrent builds — two of them would interleave into one temp file and one
+ * would rename the other's bytes into place — and leaves a predictable orphan
+ * when a build is killed. `finally` removes it on the failure path; after a
+ * successful `rename` there is nothing left to remove, which is why the removal
+ * is `force`.
+ *
+ * `chmod` rather than `writeFile`'s `mode` option, because the mode argument is
+ * masked by the process umask and `chmod` is not. It matters beyond this
+ * directory: `rename(2)` carries the SOURCE inode's mode and owner, so this is
+ * the mode the file arrives with when the deploy moves it into
+ * `/etc/nginx/snippets/`. For an INCLUDED `.conf` that is hygiene rather than
+ * uptime — only the root master parses config, and workers never re-read a
+ * `.conf` — but it is free and correct.
  *
  * @param outPath - Absolute path of the snippet to write.
  * @param content - Full file content.
@@ -207,7 +265,16 @@ export async function writeNginxSnippet(
   content: string,
 ): Promise<void> {
   await fs.promises.mkdir(path.dirname(outPath), { recursive: true });
-  const tmpPath = `${outPath}.tmp`;
-  await fs.promises.writeFile(tmpPath, content);
-  await fs.promises.rename(tmpPath, outPath);
+  const tmpPath = `${outPath}.tmp-${crypto.randomBytes(6).toString("hex")}`;
+  try {
+    await fs.promises.writeFile(tmpPath, content);
+    // 0644 is the intent, not an oversight: an Nginx snippet the root master
+    // reads, world-readable like every other file in /etc/nginx/snippets.
+    // Nothing secret reaches these six files.
+    // eslint-disable-next-line sonarjs/file-permissions -- see above
+    await fs.promises.chmod(tmpPath, 0o644); // NOSONAR
+    await fs.promises.rename(tmpPath, outPath);
+  } finally {
+    await fs.promises.rm(tmpPath, { force: true });
+  }
 }

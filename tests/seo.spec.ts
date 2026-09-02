@@ -156,10 +156,39 @@ test.describe("SEO Per-Page Checks", () => {
         await expect(
           page.locator('meta[property="og:description"]'),
         ).toHaveAttribute("content", /.+/);
-        await expect(page.locator('meta[property="og:image"]')).toHaveAttribute(
-          "content",
-          /.+/,
+
+        // og:image gets more than a presence check: BaseHead points it AND
+        // twitter:image at /og/<pathname>.png without ever checking that the
+        // card was generated, so a page missing from STATIC_PAGES ships a 404
+        // preview image in both locales — GEO audit #6, finding M1.
+        //
+        // The value is judged whole before anything is derived from it. Going
+        // straight to `new URL(ogImage ?? "", "https://jmrp.io").pathname`
+        // resolves a blank, whitespace-only or relative og:image to "/", whose
+        // 200 then "proves" a card that was never declared — and dropping the
+        // origin lets a card hosted on someone else's domain pass on the local
+        // path's 200. Open Graph wants an absolute URL and every card here is
+        // same-origin, which is also what makes swapping in the preview
+        // server's origin below legitimate. The first path character is
+        // spelled out rather than left to `\S+`, which matches "?" and "#":
+        // "https://jmrp.io/?" would otherwise clear the shape check and then
+        // resolve to "/" again, reopening the very hole one level down.
+        const ogImage = await page
+          .locator('meta[property="og:image"]')
+          .getAttribute("content");
+        expect(
+          ogImage,
+          `og:image is not an absolute same-origin URL: ${ogImage}`,
+        ).toMatch(/^https:\/\/jmrp\.io\/[^\s?#]\S*$/);
+
+        const ogImageResponse = await page.request.get(
+          new URL(ogImage!).pathname,
         );
+        expect(
+          ogImageResponse.status(),
+          `og:image ${ogImage} does not resolve`,
+        ).toBe(200);
+
         await expect(page.locator('meta[property="og:url"]')).toHaveAttribute(
           "content",
           /.+/,
@@ -368,6 +397,14 @@ test.describe("SEO & Metadata Checks", () => {
       "Blog Posts (Español)",
       "Developer Tools",
       "Developer Tools (Español)",
+      // The listing twins llms-full.txt never indexed: the series hubs, the
+      // tool categories — which were in no index at all, by neither their
+      // .md nor their HTML URL — and /feeds/. Twenty published documents.
+      "Series",
+      "Series (Español)",
+      "Tool Categories",
+      "Tool Categories (Español)",
+      "Feeds",
       "Curriculum Vitae",
       "Publications",
       // Advertised by llms.txt under "## Sections" and previously missing from
@@ -433,6 +470,22 @@ test.describe("SEO & Metadata Checks", () => {
     expect(esMarkdown).toHaveLength(12);
   });
 
+  test("llms.txt indexes the tool category twins", async ({ page }) => {
+    // These ten twins were in no index at all: llms.txt had no categories
+    // section, and /tools/index.md — whose generator builds exactly these
+    // lines — is never routed. Ten of the thirteen twins never fetched once
+    // in 22 days were these (GEO audit #6, A2).
+    const content = await (await page.request.get("/llms.txt")).text();
+    expect(content).toContain("## Tool Categories");
+    expect(content).toContain("## Tool Categories (Español)");
+    const twins =
+      content.match(
+        /]\(https:\/\/jmrp\.io\/(?:es\/)?tools\/categories\/[a-z]+\/index\.md\)/g,
+      ) ?? [];
+    // Five categories × two locales.
+    expect(twins).toHaveLength(10);
+  });
+
   test("every post has a markdown twin at its own URL", async ({ page }) => {
     for (const path of [
       "/blog/004-enabling-quic-http3-nginx/index.md",
@@ -449,6 +502,10 @@ test.describe("SEO & Metadata Checks", () => {
       // other context, and the body is what makes it worth pasting.
       expect(body, path).toContain("URL: https://jmrp.io");
       expect(body, path).toContain("Published:");
+      // The DERIVED content date, not the frontmatter `updatedDate` this line
+      // used to echo: 21 of 24 twins published a day up to 26 older than the
+      // page beside them, and two published none at all (audit #6, A3).
+      expect(body, path).toMatch(/^Updated: \d{4}-\d{2}-\d{2}$/m);
       // The re-verification claim reaches machines, not only the byline: post
       // 004 pins `lastVerified` with the version it was re-tested against.
       // Without this the twin silently drops the strongest freshness signal
@@ -467,6 +524,60 @@ test.describe("SEO & Metadata Checks", () => {
       "href",
       "/blog/004-enabling-quic-http3-nginx/index.md",
     );
+  });
+
+  test("every listing page with a twin points at it", async ({ page }) => {
+    // The four page components that never passed `markdownHref` served 20
+    // twins that no HTML announced (GEO audit #6, A2); ten of them had never
+    // been fetched once. The tag now comes from BaseHead alone, so one page
+    // per family per locale proves the derivation reaches all of them.
+    for (const pagePath of [
+      "/blog/series/",
+      "/blog/series/nginx-hardening/",
+      "/feeds/",
+      "/tools/categories/security/",
+      "/es/blog/series/",
+      "/es/blog/series/nginx-hardening/",
+      "/es/feeds/",
+      "/es/tools/categories/security/",
+    ]) {
+      await page.goto(pagePath);
+      const link = page.locator('link[rel="alternate"][type="text/markdown"]');
+      await expect(link, pagePath).toHaveAttribute(
+        "href",
+        `${pagePath}index.md`,
+      );
+    }
+  });
+
+  test("a newly announced twin is actually served", async ({ page }) => {
+    // The tag is only worth emitting if the file behind it answers. The
+    // equivalent assertion for posts is above; these are the families that
+    // had no tag at all until A2.
+    for (const path of [
+      "/tools/categories/security/index.md",
+      "/es/tools/categories/security/index.md",
+      "/blog/series/index.md",
+    ]) {
+      const response = await page.request.get(path);
+      expect(response.status(), path).toBe(200);
+      expect(response.headers()["content-type"], path).toContain(
+        "text/markdown",
+      );
+    }
+  });
+
+  test("a page without a twin does not claim one", async ({ page }) => {
+    // The four pure listings are excluded from twins on purpose — llms.txt
+    // already publishes that inventory (see the TWINNED_PAGES doc comment in
+    // src/utils/llms.ts) — so the tag must not appear there.
+    for (const pagePath of ["/blog/", "/tools/", "/es/blog/", "/es/tools/"]) {
+      await page.goto(pagePath);
+      await expect(
+        page.locator('link[rel="alternate"][type="text/markdown"]'),
+        pagePath,
+      ).toHaveCount(0);
+    }
   });
 
   test("the Spanish corpus reaches its post bodies", async ({ page }) => {

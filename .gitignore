@@ -12,6 +12,24 @@ dist_new/
 # Blue/green build output dirs (scripts/deploy-swap.mjs) + its atomic-swap temp symlink
 builds/
 .dist.tmp-*
+# Staging area for the six generated nginx snippets (security_headers.conf,
+# security_headers_assets.conf and maps/*.conf). The post-build integrations
+# write them here — outside dist/, so `fixPermissions` never hands them to
+# www-data, and on the same filesystem as /etc/nginx, so deploy-live.mjs can
+# rename(2) them into /etc/nginx/snippets/jmrp/ as a true atomic move after
+# the blue/green swap. Nothing generated is meant to survive in the worktree.
+# No trailing slash, for the same reason as `dist` above: a `dir/` pattern
+# matches only a real directory, so a staging path pointed elsewhere with a
+# symlink would fall out of the ignore and become committable.
+# The four http-level maps that USED to be generated straight into nginx/.
+# Named one by one on purpose: a `nginx/` or `nginx/*.conf` pattern would also
+# swallow nginx/handmade_redirects.conf — hand-written, tracked, and the only
+# thing the live vhost still includes from this directory (jmrp.io.conf:267).
+# The leading slash anchors each name to the repo root.
+/nginx/blog_redirects.conf
+/nginx/docs_redirects.conf
+/nginx/tag_redirects.conf
+/nginx/md_twin_alternates.conf
 # Astro generated types and runtime cache
 .astro/
 # Optimized images cache (speeds up builds)
@@ -147,3 +165,4 @@ accessibility-report.json
 
 # Local design-audit screenshots (not for the repo)
 design-audit/
+/.nginx-staged

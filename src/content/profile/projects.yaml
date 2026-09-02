@@ -24,11 +24,12 @@ type: projects
 #   browser's GET. Card link only, never JSON-LD: the running instance is a
 #   different entity from the program, and mcp.jmrp.io already publishes that
 #   node and links it to this project's `#software` @id via `targetProduct`.
-# * `listing` is the project's PRIMARY third-party listing (PyPI, the CrowdSec
-#   Hub, an MCP directory). It is the only registry link rendered on the card;
-#   `buildProjectSchema` folds its URL into `sameAs` on its own, so never
-#   repeat it under `sameAs`. `icon` is a bare Iconify id — the UnoCSS YAML
-#   extractor picks it up without the `i-` prefix.
+# * `listings` are the project's third-party listings worth navigating to
+#   (npm, PyPI, the CrowdSec Hub, an MCP directory) — at most three, rendered
+#   on the card in the authored order. `buildProjectSchema` folds their URLs
+#   into `sameAs` on its own, so never repeat one under `sameAs`. `icon` is a
+#   bare Iconify id — the UnoCSS YAML extractor picks it up without the `i-`
+#   prefix.
 # * `sameAs` holds the registry/identity URLs that are NOT rendered: secondary
 #   directories and the Zenodo DOI. Identity signal only, no navigation.
 # * `endpoint` is the raw callable MCP URL and the single source of truth for
@@ -64,6 +65,11 @@ projects:
       - label: npm
         url: https://www.npmjs.com/package/@jmrp.io/gitlab-mcp-server
         icon: simple-icons:npm
+      # PyPI ships the same native Go binary for Python toolchains (`pip`/
+      # `uvx`); a second install answer, so it sits with npm, before Glama.
+      - label: PyPI
+        url: https://pypi.org/project/jmrplens-gitlab-mcp-server/
+        icon: simple-icons:pypi
       - label: Glama
         url: https://glama.ai/mcp/servers/jmrplens/gitlab-mcp-server
         icon: mdi:view-grid-outline
@@ -88,8 +94,8 @@ projects:
       - { name: Go, wikidata: Q37227 }
       - { name: DevOps, wikidata: Q3025536 }
     summary:
-      en: Model Context Protocol server that exposes more than 1,000 GitLab operations as AI-accessible tools.
-      es: Servidor Model Context Protocol que expone más de 1.000 operaciones de GitLab como herramientas accesibles para asistentes de IA.
+      en: Model Context Protocol server that exposes 850+ GitLab actions as AI-accessible tools — 1,000+ on Enterprise.
+      es: Servidor Model Context Protocol que expone más de 850 acciones de GitLab como herramientas accesibles para asistentes de IA (más de 1.000 en Enterprise).
 
   - id: phonometry
     name: phonometry

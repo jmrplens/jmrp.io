@@ -7,6 +7,7 @@
 import type { Locale } from "@i18n/config";
 import { localeConfig } from "@i18n/config";
 import { useTranslations } from "@i18n/utils";
+import { CC_BY_4_0, licensePageUrl } from "@utils/license";
 import { getImage } from "astro:assets";
 import { type CollectionEntry, getCollection } from "astro:content";
 
@@ -33,6 +34,18 @@ export const escapeXml = (unsafe: string): string => {
     return c;
   });
 };
+
+/**
+ * The name the covers must be credited to.
+ *
+ * `/license/` names it literally ("Credit it to \"José Manuel Requena Plens\"")
+ * and the rights are the site author's, not the post author's — a post could
+ * one day carry a guest byline without the cover changing hands. This file
+ * already spells the name out for `<managingEditor>`, `<webMaster>` and the
+ * per-item `<author>` fallback; new code reads it from here instead of adding
+ * a fourth literal.
+ */
+const COVER_CREDIT = "José Manuel Requena Plens";
 
 /**
  * Generate a single RSS `<item>` element for a blog post.
@@ -75,13 +88,38 @@ export async function generateRssItem(
       // RSS 2.0 Enclosure (Used by most modern readers for the main image)
       customData += `<enclosure url="${escapeXml(imgUrl)}" length="0" type="image/jpeg" />\n`;
 
-      // Media RSS extensions (Common in Feedly, etc)
-      if (
+      // The covers' reuse terms, in the one channel that actually redistributes
+      // them. The commit that completed the image license metadata put it "in
+      // the channel that is read" and named HTML/JSON-LD; that left out Media
+      // RSS, which is the only place a cover leaves this origin and lands in
+      // someone else's reader (GEO audit 2026-09-02, M4). All three elements
+      // are standard Media RSS, and all three restate what /license/ says in
+      // prose and what the page's own ImageObject already says in JSON-LD.
+      //
+      // Scoped inside <media:content> rather than at item level: the item is
+      // the article, and an item-level element would also claim to cover any
+      // media added here later.
+      const coverRights = [
+        `<media:credit role="author">${escapeXml(COVER_CREDIT)}</media:credit>`,
+        // The post's year, not the build's — a notice that moves on every
+        // deploy says the cover was made the day the site last shipped. Same
+        // value the ImageObject's `copyrightNotice` carries on the page.
+        `<media:copyright url="${escapeXml(licensePageUrl(locale, "covers"))}">© ${post.data.publishedDate.getFullYear()} ${escapeXml(COVER_CREDIT)}</media:copyright>`,
+        // The canonical CC BY 4.0 URI, not the localized `deed.es` the Spanish
+        // page links for humans: `href` is an identifier a machine matches.
+        `<media:license type="text/html" href="${escapeXml(CC_BY_4_0)}">CC BY 4.0</media:license>`,
+      ].join("\n      ");
+
+      // Media RSS extensions (Common in Feedly, etc). Emitted whenever there is
+      // a cover, with the dimensions as optional attributes: they were the
+      // condition for the whole element, so an image whose size Astro could not
+      // report would have shipped with no terms at all.
+      const dimensions =
         typeof opt.attributes?.width === "number" &&
         typeof opt.attributes?.height === "number"
-      ) {
-        customData += `<media:content url="${escapeXml(imgUrl)}" medium="image" type="image/jpeg" width="${opt.attributes.width}" height="${opt.attributes.height}" />\n`;
-      }
+          ? ` width="${opt.attributes.width}" height="${opt.attributes.height}"`
+          : "";
+      customData += `<media:content url="${escapeXml(imgUrl)}" medium="image" type="image/jpeg"${dimensions}>\n      ${coverRights}\n      </media:content>\n`;
 
       if (
         typeof thumb.attributes?.width === "number" &&

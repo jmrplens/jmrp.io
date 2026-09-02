@@ -14,6 +14,7 @@ import {
   DOWNLOAD_SOURCES,
   DOWNLOADS_DISPLAY_MIN,
   fetchDockerHubPulls,
+  isVerificationAsset,
 } from "../download-sources.mjs";
 
 const API = "https://api.github.com";
@@ -46,6 +47,61 @@ export function githubSlug(links) {
 }
 
 /**
+ * Sums the release downloads that are actual installs.
+ *
+ * @param {{assets?: {name?: string, download_count?: number}[]}[]} releases - Release objects from the GitHub API.
+ * @returns {number} The combined download count of the distributable assets.
+ */
+function sumAssetDownloads(releases) {
+  let downloads = 0;
+  for (const rel of releases) {
+    for (const asset of rel.assets ?? []) {
+      // Checksums and signatures are fetched alongside the binary, so
+      // counting them would count the same install twice — the same
+      // rule the homepage total uses, imported rather than restated.
+      if (isVerificationAsset(asset.name)) continue;
+      downloads += asset.download_count ?? 0;
+    }
+  }
+  return downloads;
+}
+
+/**
+ * Reads a releases endpoint response into a release count and a download
+ * total. A repo with no readable release list simply contributes nothing.
+ *
+ * @param {Response} response - The `/releases` response.
+ * @returns {Promise<{releases:number, downloads:number}>} Counts from GitHub Releases alone.
+ */
+async function readReleases(response) {
+  if (!response.ok) return { releases: 0, downloads: 0 };
+  const rels = await response.json();
+  if (!Array.isArray(rels)) return { releases: 0, downloads: 0 };
+  return { releases: rels.length, downloads: sumAssetDownloads(rels) };
+}
+
+/**
+ * Counts the downloads a project collects outside GitHub Releases.
+ *
+ * A project usually ships through more than one channel — the MCP servers are
+ * on Docker Hub as well as in GitHub Releases — and the badge has to state ONE
+ * number or it understates the project. The channel map lives in
+ * `download-sources.mjs`, shared with the pre-build step that computes the
+ * homepage total, so the CV and the homepage cannot report the same project
+ * two different ways.
+ *
+ * @param {string} name - The repository name (the `DOWNLOAD_SOURCES` key).
+ * @returns {Promise<number>} Downloads from every non-Releases channel.
+ */
+async function fetchOtherChannelDownloads(name) {
+  const channels = DOWNLOAD_SOURCES[name];
+  const pulls = await Promise.all(
+    (channels?.docker ?? []).map(fetchDockerHubPulls),
+  );
+  return pulls.reduce((sum, n) => sum + n, 0) + (channels?.manual?.count ?? 0);
+}
+
+/**
  * Fetches star, release and combined-download counts for a repo (cached).
  * `downloads` covers every distribution channel of the project, not just
  * GitHub Releases.
@@ -67,32 +123,10 @@ export function fetchRepoStats(slug) {
         throw new Error(`GitHub ${slug}: HTTP ${repoRes.status}`);
       }
       const repo = await repoRes.json();
-      let releases = 0;
-      let downloads = 0;
-      if (relRes.ok) {
-        const rels = await relRes.json();
-        if (Array.isArray(rels)) {
-          releases = rels.length;
-          for (const rel of rels) {
-            for (const asset of rel.assets ?? []) {
-              downloads += asset.download_count ?? 0;
-            }
-          }
-        }
-      }
-      // A project usually ships through more than one channel — the MCP
-      // servers are on Docker Hub as well as in GitHub Releases — and the
-      // badge has to state ONE number or it understates the project. The
-      // channel map lives in `download-sources.mjs`, shared with the pre-build
-      // step that computes the homepage total, so the CV and the homepage
-      // cannot report the same project two different ways.
-      const name = slug.split("/", 2)[1] ?? "";
-      const channels = DOWNLOAD_SOURCES[name];
-      const pulls = await Promise.all(
-        (channels?.docker ?? []).map(fetchDockerHubPulls),
+      const { releases, downloads } = await readReleases(relRes);
+      const extra = await fetchOtherChannelDownloads(
+        slug.split("/", 2)[1] ?? "",
       );
-      const extra =
-        pulls.reduce((sum, n) => sum + n, 0) + (channels?.manual?.count ?? 0);
 
       return {
         stars: repo.stargazers_count ?? 0,

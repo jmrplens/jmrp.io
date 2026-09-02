@@ -1081,3 +1081,187 @@ test.describe("Locale-scoped entity @ids", () => {
     ).toEqual([]);
   });
 });
+
+/**
+ * Reference extraction — what the bibliography and `citation` publish.
+ *
+ * Both surfaces are built from one list in BlogPost.astro, collected from the
+ * raw MDX body with a regex, so markdown syntax can leak into a published URL
+ * or a published name — and a regex change can silently DROP a reference
+ * instead. All three happened or were risked, and neither the type checker nor
+ * Lychee could see any of them: the broken URL kept a valid Wikipedia *path*
+ * and only corrupted the fragment, which link checkers do not resolve; a name
+ * is just a string; and a missing reference produces no error at all
+ * (GEO audit 2026-09-02, M3).
+ *
+ * Reads `dist/` rather than driving a browser: the graph is server-emitted and
+ * 48 navigations would blow the per-test timeout. This mirrors the Spanish-@id
+ * sweep earlier in this file, which reads `dist/` for the same reason.
+ */
+test.describe("Post references", () => {
+  /** Every built post page, both locales. */
+  function postPagesIn(dir: string, found: string[] = []): string[] {
+    if (!fs.existsSync(dir)) return found;
+    for (const entry of fs.readdirSync(dir)) {
+      const full = path.join(dir, entry);
+      if (fs.statSync(full).isDirectory()) postPagesIn(full, found);
+      else if (entry === "index.html") found.push(full);
+    }
+    return found;
+  }
+
+  /**
+   * Raw markdown that must never reach a published citation name.
+   *
+   * Deliberately only the PAIRED forms that `stripEmphasis` in BlogPost.astro
+   * actually removes. A lone `**` or `__` is not a defect — CommonMark renders
+   * an unpaired delimiter literally, so "The C** standard" is the correct
+   * published name and flagging it would turn CI red on content the component
+   * cannot clean.
+   *
+   * Split into one regex per form rather than a single alternation: the
+   * combined pattern scores 23 on `sonarjs/regex-complexity`, over the repo's
+   * limit of 20. `_` is matched only when NOT intraword, so identifiers lifted
+   * out of inline code (`mbedtls_ct_memcmp`, `SOURCE_DATE_EPOCH`) do not trip
+   * it. `***x***` / `___x___` are covered by the `**` / `__` entries.
+   */
+  const RAW_MARKDOWN = [
+    /\*\*(?=\S)[\s\S]*?\S\*\*/u,
+    /~~(?=\S)[\s\S]*?\S~~/u,
+    /(?<![\p{L}\p{N}])__(?=\S)[\s\S]*?\S__(?![\p{L}\p{N}])/u,
+    /\*(?=\S)[^*\n]*?\S\*/u,
+    /(?<![\p{L}\p{N}])_(?=\S)[^_\n]*?\S_(?![\p{L}\p{N}])/u,
+  ];
+
+  /**
+   * The corpus-wide citation floor.
+   *
+   * A tripwire for a mass drop, NOT a pin on the exact count: the build ships
+   * 408 citations across 24 post pages today (minimum 9 on a single page), so
+   * this leaves room to remove a couple of posts without a false failure while
+   * still failing loudly if an extraction change stops matching. Raise it when
+   * the corpus grows enough to make it slack.
+   */
+  const MIN_TOTAL_CITATIONS = 300;
+
+  /** Entities Astro escapes inside a double-quoted attribute value. */
+  const ENTITIES: Record<string, string> = {
+    amp: "&",
+    lt: "<",
+    gt: ">",
+    quot: '"',
+    "#39": "'",
+    "#x27": "'",
+  };
+
+  /**
+   * Decodes an href read straight out of the built HTML.
+   *
+   * @param value - Raw attribute value.
+   * @returns The URL as the browser would resolve it.
+   */
+  function decodeHref(value: string): string {
+    return value.replaceAll(
+      /&(amp|lt|gt|quot|#39|#x27);/g,
+      (_, entity: string) => ENTITIES[entity] ?? _,
+    );
+  }
+
+  const postPages = [
+    ...postPagesIn(path.join("dist", "blog")),
+    ...postPagesIn(path.join("dist", "es", "blog")),
+  ].filter((file) => /\/blog\/\d{3}-/.test(file.replaceAll("\\", "/")));
+
+  test("citations publish resolvable URLs, rendered names and a bibliography", () => {
+    expect(postPages.length, "No built post pages found").toBeGreaterThan(0);
+
+    const badUrls: string[] = [];
+    const badNames: string[] = [];
+    const orphanCitations: string[] = [];
+    const emptyBibliographies: string[] = [];
+    let pagesWithCitations = 0;
+    let totalCitations = 0;
+
+    for (const file of postPages) {
+      const html = fs.readFileSync(file, "utf-8");
+      const raw =
+        /<script\b[^>]*application\/ld\+json[^>]*>([\s\S]*?)<\/script>/.exec(
+          html,
+        )?.[1];
+      if (!raw) continue;
+
+      const graph = (JSON.parse(raw) as JsonLdDocument)["@graph"] ?? [];
+      const article = graph.find((node) =>
+        ["BlogPosting", "TechArticle"].some((type) =>
+          matchesType(node["@type"], type),
+        ),
+      );
+      const citations = article?.citation;
+      const where = path.relative("dist", file);
+
+      // A rendered bibliography with an empty `citation` array (or the reverse)
+      // means the two surfaces have come apart, or extraction returned nothing.
+      if (!Array.isArray(citations) || citations.length === 0) {
+        if (html.includes("references-list")) emptyBibliographies.push(where);
+        continue;
+      }
+      pagesWithCitations++;
+      totalCitations += citations.length;
+
+      const hrefs = new Set(
+        [...html.matchAll(/<a\b[^>]*?href="([^"]*)"/g)].map((m) =>
+          decodeHref(m[1]),
+        ),
+      );
+
+      for (const citation of citations as { name?: string; url?: string }[]) {
+        const url = citation.url ?? "";
+        const name = citation.name ?? "";
+
+        // A backslash in a URL is always a markdown escape that survived.
+        if (url.includes("\\")) {
+          badUrls.push(`${where} → ${url}`);
+        } else {
+          try {
+            new URL(url, "https://jmrp.io/");
+          } catch {
+            badUrls.push(`${where} → ${url} (does not parse)`);
+          }
+        }
+
+        if (RAW_MARKDOWN.some((pattern) => pattern.test(name))) {
+          badNames.push(`${where} → ${JSON.stringify(name)}`);
+        }
+
+        // The graph and the visible bibliography are built from one list, so a
+        // citation URL that is not also an href means they have drifted apart.
+        if (!hrefs.has(url)) orphanCitations.push(`${where} → ${url}`);
+      }
+    }
+
+    expect(
+      pagesWithCitations,
+      "No post page published a citation array",
+    ).toBeGreaterThan(0);
+    expect(
+      badUrls,
+      `citation.url carrying a markdown escape or failing to parse:\n${badUrls.join("\n")}`,
+    ).toEqual([]);
+    expect(
+      badNames,
+      `citation.name carrying raw markdown emphasis — if the link text in the MDX has an UNPAIRED delimiter, fix the MDX; otherwise stripEmphasis in BlogPost.astro missed a form:\n${badNames.join("\n")}`,
+    ).toEqual([]);
+    expect(
+      orphanCitations,
+      `citation.url with no matching href in the page:\n${orphanCitations.join("\n")}`,
+    ).toEqual([]);
+    expect(
+      emptyBibliographies,
+      `pages rendering a bibliography with no citations:\n${emptyBibliographies.join("\n")}`,
+    ).toEqual([]);
+    expect(
+      totalCitations,
+      `The corpus published ${totalCitations} citations across ${pagesWithCitations} pages; a drop this large means reference extraction stopped matching something it used to match`,
+    ).toBeGreaterThanOrEqual(MIN_TOTAL_CITATIONS);
+  });
+});

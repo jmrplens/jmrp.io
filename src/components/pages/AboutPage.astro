@@ -16,7 +16,6 @@ import BaseLayout from "@layouts/BaseLayout.astro";
 import type { SiteConfig } from "@src/types";
 import { lastCommitDate } from "@utils/content-date";
 import { externalLinkProps } from "@utils/links";
-import { markdownTwinPath } from "@utils/llms";
 import { CANONICAL_ALUMNI_OF } from "@utils/person";
 import { getProjects, hostedHref } from "@utils/projects";
 import { getSiteUrl } from "@utils/site";
@@ -153,7 +152,6 @@ const personSchema = {
   description={t("pages.about.description")}
   type="profile"
   schema={personSchema}
-  markdownHref={markdownTwinPath(Astro.url.pathname)}
 >
   <div class="about container">
     <section class="about-hero">

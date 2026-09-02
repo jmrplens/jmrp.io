@@ -4,10 +4,10 @@ import path from "node:path";
 import type { AstroIntegrationLogger } from "astro";
 import { load } from "js-yaml";
 
-import { assertNginxSafe, writeNginxSnippet } from "./utils.js";
+import { assertNginxSafe, buildStampLine, writeNginxSnippet } from "./utils.js";
 
 /**
- * Generates `nginx/docs_redirects.conf`: stable `/docs/<project-id>` URLs on
+ * Generates `docs_redirects.conf`: stable `/docs/<project-id>` URLs on
  * jmrp.io that 301 to each project's real documentation site.
  *
  * Why these exist (author's call, 2026-08-22): the `homepage` field of every
@@ -20,9 +20,9 @@ import { assertNginxSafe, writeNginxSnippet } from "./utils.js";
  * redirect to its destination), and the visitor still lands on the docs.
  *
  * Derived from `projects.yaml` on every build, same pattern as
- * `blog_redirects.conf`: adding a project needs no nginx edit. Written to the
- * repo, not to dist/ — dist is the public blue/green symlink and a build from
- * an older revision would leave the vhost include dangling.
+ * `blog_redirects.conf`: adding a project needs no nginx edit. Staged for
+ * delivery rather than written into dist/ or into the repo — see
+ * `writeNginxSnippet` and the note at the write site below.
  */
 const MAP_VARIABLE = "$project_docs_redirect";
 
@@ -48,10 +48,18 @@ interface ProjectDocsEntry {
 /**
  * Writes the docs-redirect map for every project that declares a `docs` URL.
  *
+ * @param stagingDir - Staging root for the generated Nginx snippets; the
+ *   maps go in its `maps/` subdirectory, from where `deploy-live.mjs`
+ *   moves them after the swap.
+ * @param stamp - The per-build `# Build-Stamp:` banner, emitted verbatim as
+ *   the snippet's second line; it is what proves, from `nginx -T`, that
+ *   the running config came from this build.
  * @param logger - Astro integration logger.
  * @returns Resolves once the snippet has been written.
  */
 export async function generateDocsRedirects(
+  stagingDir: string,
+  stamp: string,
   logger: AstroIntegrationLogger,
 ): Promise<void> {
   const yamlPath = path.join(
@@ -182,6 +190,7 @@ export async function generateDocsRedirects(
     .join("\n");
 
   const content = `# GENERATED FILE — DO NOT EDIT.
+${buildStampLine(stamp)}
 # Written by src/integrations/post-build/docs-redirects.ts on every build,
 # derived from src/content/profile/projects.yaml.
 #
@@ -205,9 +214,17 @@ ${bareEntries}
 }
 `;
 
-  const outPath = path.join(process.cwd(), "nginx", "docs_redirects.conf");
+  // Staged rather than written into dist/ or into the repo working tree.
+  // dist is the public blue/green symlink, and a generated file under
+  // version control drifts from what Nginx actually loaded the moment a
+  // build runs without a deploy. `scripts/deploy-live.mjs` MOVES this file
+  // out of staging into the snippets directory the vhost includes, after
+  // the swap; until it does, Nginx keeps the previously delivered copy.
+  // The include there is a wildcard over the whole maps/ directory, so a
+  // file that has not been delivered yet costs one redirect, where an exact
+  // include of a missing path would instead refuse to start every vhost on
+  // the box.
+  const outPath = path.join(stagingDir, "maps", "docs_redirects.conf");
   await writeNginxSnippet(outPath, content);
-  logger.info(
-    `  ✓ Generated nginx/docs_redirects.conf (${pairs.length} project docs redirects)`,
-  );
+  logger.info(`  ✓ Staged ${outPath} (${pairs.length} project docs redirects)`);
 }

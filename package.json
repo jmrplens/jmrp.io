@@ -46,6 +46,7 @@
     "identity:build": "node scripts/ci/build-identity.mjs",
     "check:software-drift": "node scripts/ci/check-software-drift.mjs",
     "verify-icons": "node scripts/verify-icons.mjs",
+    "verify:assets": "node scripts/ci/check-public-asset-fidelity.mjs",
     "verify": "node scripts/run-verify.mjs"
   },
   "dependencies": {
