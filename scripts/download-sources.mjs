@@ -181,6 +181,50 @@ function ghHeaders(token) {
 }
 
 /**
+ * Fetches one page of a repository's releases. Throws on a non-OK response so
+ * the caller can fall back.
+ *
+ * A body that is not an array (an error object, a malformed 200) yields `[]`,
+ * which the caller reads as "no more pages" — the same stop condition as an
+ * empty page.
+ *
+ * @param {string} repo - Repository name under {@link OWNER}.
+ * @param {number} page - 1-based page number.
+ * @param {string} [token] - GitHub token; falls back to the environment.
+ * @returns {Promise<Array<{assets?: {name?: unknown, download_count?: number}[]}>>} The page's releases.
+ */
+async function fetchReleasesPage(repo, page, token) {
+  const res = await fetch(
+    `${GITHUB_API}/repos/${OWNER}/${repo}/releases?per_page=100&page=${page}`,
+    { headers: ghHeaders(token), signal: AbortSignal.timeout(15_000) },
+  );
+  if (!res.ok) throw new Error(`GitHub ${repo} releases: ${res.status}`);
+
+  const releases = await res.json();
+  return Array.isArray(releases) ? releases : [];
+}
+
+/**
+ * Splits the `download_count` of every asset on one page of releases into
+ * distributable downloads and verification artifacts.
+ *
+ * @param {Array<{assets?: {name?: unknown, download_count?: number}[]}>} releases - One page of releases.
+ * @returns {{artifacts:number, verification:number}} Downloads of distributable assets, and of verification assets.
+ */
+function sumPageDownloads(releases) {
+  let artifacts = 0;
+  let verification = 0;
+  for (const release of releases) {
+    for (const asset of release.assets ?? []) {
+      const count = asset.download_count ?? 0;
+      if (isVerificationAsset(asset.name)) verification += count;
+      else artifacts += count;
+    }
+  }
+  return { artifacts, verification };
+}
+
+/**
  * Sums `download_count` across every release asset of a repo, following
  * pagination, split by whether the asset is a download or verifies one.
  * Throws on a non-OK response so the caller can fall back.
@@ -193,22 +237,12 @@ export async function fetchReleaseDownloads(repo, token) {
   let artifacts = 0;
   let verification = 0;
   for (let page = 1; page <= 20; page++) {
-    const res = await fetch(
-      `${GITHUB_API}/repos/${OWNER}/${repo}/releases?per_page=100&page=${page}`,
-      { headers: ghHeaders(token), signal: AbortSignal.timeout(15_000) },
-    );
-    if (!res.ok) throw new Error(`GitHub ${repo} releases: ${res.status}`);
+    const releases = await fetchReleasesPage(repo, page, token);
+    if (releases.length === 0) break;
 
-    const releases = await res.json();
-    if (!Array.isArray(releases) || releases.length === 0) break;
-
-    for (const release of releases) {
-      for (const asset of release.assets ?? []) {
-        const count = asset.download_count ?? 0;
-        if (isVerificationAsset(asset.name)) verification += count;
-        else artifacts += count;
-      }
-    }
+    const totals = sumPageDownloads(releases);
+    artifacts += totals.artifacts;
+    verification += totals.verification;
     if (releases.length < 100) break; // last page
   }
   return { artifacts, verification };

@@ -117,6 +117,13 @@ export async function generateMdTwinAlternates(
     )
     .join("\n");
 
+  // Every bare `$` below is a literal Nginx variable, not a JS interpolation:
+  // in a template literal only `${` starts a substitution, so a bare `$` needs
+  // no escape and `\$` would be flagged as an unnecessary one. If you ever
+  // write an Nginx variable that is immediately followed by `{`, that one DOES
+  // need `\${` — otherwise the build would try to interpolate it. The three
+  // real `${…}` substitutions below are the twin count, the map variable name
+  // and the entry list.
   const content = `# GENERATED FILE — DO NOT EDIT.
 # Written by src/integrations/post-build/md-twin-alternates.ts on every build.
 #
@@ -148,7 +155,7 @@ export async function generateMdTwinAlternates(
 # TYPO. A request for /blog/series/ is resolved by \`try_files $uri $uri/\`, the
 # index module issues an INTERNAL redirect to /blog/series/index.html, and
 # locations are re-matched — so by the time the header filter evaluates
-# \`add_header\`, \$uri is the index.html form. Verified on this server:
+# \`add_header\`, $uri is the index.html form. Verified on this server:
 # \`curl https://jmrp.io/es/404/\` answers 200 with NO Link, NO Cache-Control and
 # NO Content-Language, because it is served from \`location = /es/404/index.html\`
 # and not from \`location /\`. Keying this map on "/blog/series/" would match
@@ -158,7 +165,7 @@ export async function generateMdTwinAlternates(
 # points at the directory form regardless.
 #
 # \`volatile\` IS LOAD-BEARING, for the same reason. Map results are cached per
-# request by default, and \$uri changes at that internal redirect. Measured in an
+# request by default, and $uri changes at that internal redirect. Measured in an
 # isolated nginx: with one reference from the rewrite phase, a NON-volatile map
 # caches the pre-redirect miss and the header comes out EMPTY at the header
 # filter, silently. Do not remove it to save a hash lookup.
@@ -167,13 +174,13 @@ export async function generateMdTwinAlternates(
 # \`add_header Link\` of the two HTML locations, so there is exactly one Link
 # header per response and the security-header snippet is untouched. When a page
 # has no twin the value is empty and the header keeps its base value. Same
-# dressing pattern as the \$srv_rdr_* maps.
+# dressing pattern as the $srv_rdr_* maps.
 #
 # Included at http level; consumed by the server block as:
-#     add_header Link '<base>\$jmrp_md_alternate' always;
+#     add_header Link '<base>$jmrp_md_alternate' always;
 #
 # THE TWO CONSUMPTION SITES ARE HAND-MAINTAINED AND NOT IN GIT. If you add a
-# third location that serves HTML, append \$jmrp_md_alternate to its Link header
+# third location that serves HTML, append $jmrp_md_alternate to its Link header
 # too, or the pages it serves lose the announcement with nothing to warn you.
 #
 # Twins: ${pages.length}

@@ -34,7 +34,7 @@
  * fails the build BEFORE deploy-swap.mjs retargets the `dist` symlink.
  *
  * Exit codes: 0 clean · 1 drift found (paths listed) · 2 the guard itself
- * could not run (missing index file, unreadable build).
+ * could not run (bad argument, missing index file, unreadable build).
  */
 
 import fs from "node:fs";
@@ -207,6 +207,52 @@ export function pagePathOf(distDir, file) {
   return rel.endsWith("/index.html") ? rel.slice(0, -"index.html".length) : rel;
 }
 
+/** One character of an HTML attribute name, as this guard reads them. */
+const NAME_CHAR = /[a-zA-Z-]/;
+
+/** One whitespace character, exactly what `\s` matches. */
+const SPACE_CHAR = /\s/;
+
+/**
+ * The double-quoted attributes of a single tag, keyed by lower-cased name.
+ *
+ * Scanned character by character rather than matched with
+ * `/([a-zA-Z-]+)\s*=\s*"([^"]*)"/g`: that pattern can start inside a name, so
+ * a long run of name characters is re-scanned from every offset and the search
+ * is super-linear (Sonar javascript:S8786). This reads each tag once and takes
+ * the same maximal name runs the regex took — a name run that is not followed
+ * by `="` is skipped, exactly as every start offset inside it used to fail.
+ *
+ * @param {string} tag - One tag source, e.g. `<link href="…" rel="…">`.
+ * @returns {Record<string, string>} Lower-cased attribute name -> raw value.
+ */
+function tagAttributes(tag) {
+  /** @type {Record<string, string>} */
+  const attrs = {};
+  let at = 0;
+  while (at < tag.length) {
+    if (!NAME_CHAR.test(tag[at])) {
+      at += 1;
+      continue;
+    }
+    const nameStart = at;
+    while (at < tag.length && NAME_CHAR.test(tag[at])) at += 1;
+    const name = tag.slice(nameStart, at);
+    while (at < tag.length && SPACE_CHAR.test(tag[at])) at += 1;
+    if (tag[at] !== "=") continue;
+    at += 1;
+    while (at < tag.length && SPACE_CHAR.test(tag[at])) at += 1;
+    if (tag[at] !== '"') continue;
+    const valueEnd = tag.indexOf('"', at + 1);
+    // An unterminated value leaves no quote pair after it, so no `name="value"`
+    // can follow either — the same point at which the regex stopped matching.
+    if (valueEnd === -1) break;
+    attrs[name.toLowerCase()] = tag.slice(at + 1, valueEnd);
+    at = valueEnd + 1;
+  }
+  return attrs;
+}
+
 /**
  * Every `<link>` tag that announces a markdown alternate.
  *
@@ -220,10 +266,7 @@ export function markdownLinkHrefs(html) {
   /** @type {string[]} */
   const hrefs = [];
   for (const tag of html.match(/<link\b[^>]*>/gi) ?? []) {
-    /** @type {Record<string, string>} */
-    const attrs = {};
-    for (const m of tag.matchAll(/([a-zA-Z-]+)\s*=\s*"([^"]*)"/g))
-      attrs[m[1].toLowerCase()] = m[2];
+    const attrs = tagAttributes(tag);
     const rel = (attrs.rel ?? "").toLowerCase().split(/\s+/);
     const type = (attrs.type ?? "").toLowerCase().split(";", 1)[0].trim();
     if (rel.includes("alternate") && type === "text/markdown" && attrs.href)
@@ -291,6 +334,25 @@ export function publishedDay(html) {
   return null;
 }
 
+/** The sentence punctuation a URL collects when it is written in prose. */
+const TRAILING_PUNCTUATION = ".,;:";
+
+/**
+ * Drops that punctuation from the end of a URL.
+ *
+ * A loop, not `/[.,;:]+$/`: an end-anchored run has to be re-tried from every
+ * offset of the run, which is super-linear (Sonar javascript:S8786). Trims
+ * exactly what the regex trimmed — the maximal trailing run, nothing else.
+ *
+ * @param {string} raw - A URL as it was found in the file.
+ * @returns {string} The same URL without trailing sentence punctuation.
+ */
+function trimTrailingPunctuation(raw) {
+  let end = raw.length;
+  while (end > 0 && TRAILING_PUNCTUATION.includes(raw[end - 1])) end -= 1;
+  return raw.slice(0, end);
+}
+
 /**
  * The root-relative paths an index file mentions as URLs of THIS site.
  *
@@ -306,7 +368,7 @@ export function listedPaths(text) {
   const paths = new Set();
   for (const raw of text.match(/https?:\/\/[^\s<>"')\]]+/g) ?? []) {
     try {
-      const url = new URL(raw.replace(/[.,;:]+$/, ""));
+      const url = new URL(trimTrailingPunctuation(raw));
       if (url.origin === SITE_ORIGIN) paths.add(url.pathname);
     } catch {
       /* not a URL after trimming */
@@ -468,6 +530,25 @@ function checkTableHygiene(pages, matched, violations) {
 }
 
 /**
+ * Rejects a twin whose page was not built.
+ *
+ * A twin nothing serves is a 200 with no page behind it: it can be linked and
+ * indexed, and nothing else on the site knows it exists.
+ *
+ * @param {Map<string, string>} pages - Built pages.
+ * @param {Set<string>} twins - Twin paths.
+ * @param {string[]} violations - Sink for problems found.
+ * @returns {void}
+ */
+function checkOrphanTwins(pages, twins, violations) {
+  for (const twin of [...twins].sort(byPath)) {
+    const page = twin.slice(0, -"index.md".length);
+    if (!pages.has(page))
+      violations.push(`orphan twin ${twin} — no ${page}index.html was built`);
+  }
+}
+
+/**
  * Checks that a page which HAS a twin announces it in both machine surfaces.
  *
  * @param {object} page - Page under test.
@@ -556,6 +637,25 @@ function checkIndexes({ pagePath, pageClass, twin }, indexes, violations) {
     violations.push(
       `${pagePath} has a twin but no sitemap entry — nothing can date it`,
     );
+}
+
+/**
+ * Rejects an index entry that promises a twin the build does not contain.
+ *
+ * The mirror of the orphan check: there the file exists with no page, here the
+ * indexes send a reader to a file that was never built.
+ *
+ * @param {object} indexes - Parsed index surfaces.
+ * @param {Set<string>} twins - Twin paths.
+ * @param {string[]} violations - Sink for problems found.
+ * @returns {void}
+ */
+function checkIndexedTwinsExist(indexes, twins, violations) {
+  for (const listed of new Set([...indexes.llms, ...indexes.llmsFull]))
+    if (listed.endsWith("/index.md") && !twins.has(listed))
+      violations.push(
+        `an index file lists ${listed}, which the build does not contain`,
+      );
 }
 
 /**
@@ -655,11 +755,7 @@ export function checkTwins(distDir) {
   const { classOf, matched } = classifyPages(pages, violations);
   checkTableHygiene(pages, matched, violations);
 
-  for (const twin of [...twins].sort(byPath)) {
-    const page = twin.slice(0, -"index.md".length);
-    if (!pages.has(page))
-      violations.push(`orphan twin ${twin} — no ${page}index.html was built`);
-  }
+  checkOrphanTwins(pages, twins, violations);
 
   for (const pagePath of [...pages.keys()].sort(byPath)) {
     const pageClass = classOf.get(pagePath);
@@ -700,11 +796,7 @@ export function checkTwins(distDir) {
     checkIndexes(page, indexes, violations);
   }
 
-  for (const listed of new Set([...indexes.llms, ...indexes.llmsFull]))
-    if (listed.endsWith("/index.md") && !twins.has(listed))
-      violations.push(
-        `an index file lists ${listed}, which the build does not contain`,
-      );
+  checkIndexedTwinsExist(indexes, twins, violations);
 
   return {
     violations,
@@ -716,14 +808,33 @@ export function checkTwins(distDir) {
   };
 }
 
+/** The checkout this guard belongs to: `<root>/scripts/ci/<this file>`. */
+const PROJECT_ROOT = path.resolve(fileURLToPath(import.meta.url), "../../..");
+
 /**
  * CLI entry point: check one build directory and report.
  *
+ * The argument arrives from the command line, so it is validated before a
+ * single file is read: resolving a path is not the same as trusting it
+ * (Sonar jssecurity:S8707). Build output always lives inside this checkout —
+ * `dist`, `builds/<color>`, or any `--outDir` beneath it — so a path that
+ * escapes it is either a typo or an attempt to aim the guard at unrelated
+ * files, and both earn the same refusal. A refusal exits 2, not 1: the guard
+ * could not run, the site has not drifted.
+ *
  * @param {string} distArg - Directory to check (default `dist`).
  * @returns {void}
+ * @throws {Error} When the argument is not a directory inside the checkout.
  */
 function main(distArg) {
   const distDir = path.resolve(process.cwd(), distArg);
+  if (distDir !== PROJECT_ROOT && !distDir.startsWith(PROJECT_ROOT + path.sep))
+    throw new Error(
+      `${distArg} resolves to ${distDir}, outside ${PROJECT_ROOT} — this ` +
+        `guard only reads build output of its own checkout`,
+    );
+  if (!fs.existsSync(distDir) || !fs.statSync(distDir).isDirectory())
+    throw new Error(`${distArg} (${distDir}) is not an existing directory`);
   const { violations, stats } = checkTwins(distDir);
   if (violations.length === 0) {
     console.log(

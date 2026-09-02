@@ -894,16 +894,17 @@ export function llmsPostShardPath(locale: "en" | "es", slug: string): string {
   return markdownTwinPath(`${locale === "es" ? "/es" : ""}/blog/${slug}/`);
 }
 
-/** Renders a single post as the `### title` block used by llms-full and shards. */
-function buildPostEntry(
-  p: CollectionEntry<"posts">,
-  siteUrl: string,
-  localePrefix: "" | "/es",
-  locale: "en" | "es",
+/**
+ * The `Updated:` line, emitted only when the post reads as revised.
+ *
+ * @param post - The post entry.
+ * @param published - The post's publication day, `YYYY-MM-DD`.
+ * @returns One line, or none.
+ */
+function postRevisionLines(
+  post: CollectionEntry<"posts">,
+  published: string,
 ): string[] {
-  const d = p.data;
-  const postUrl = `${siteUrl}${localePrefix}/blog/${d.slug}/`;
-  const published = d.publishedDate.toISOString().slice(0, 10);
   // The CONTENT date. `postDateModified` is the exact call `BlogPost.astro`
   // makes (line 65) for the visible "Updated on" line and for the JSON-LD
   // `dateModified`, and it backs the sitemap's <lastmod> too. This block
@@ -923,9 +924,118 @@ function buildPostEntry(
   // from the formula, so a brand-new post resolves to its own
   // `publishedDate`, and an `Updated:` equal to `Published:` would advertise
   // a revision that never happened.
-  const derived = postDateModified(p.id, d)?.slice(0, 10);
+  const derived = postDateModified(post.id, post.data)?.slice(0, 10);
   const revised =
     derived !== undefined && derived !== published ? derived : undefined;
+  return revised ? [`Updated: ${revised}`] : [];
+}
+
+/**
+ * The `Last verified:` line, with the versions the post was re-tested against.
+ *
+ * @param d - The post's frontmatter.
+ * @returns One line, or none.
+ */
+function postLastVerifiedLines(d: CollectionEntry<"posts">["data"]): string[] {
+  // The strongest freshness claim the article makes — re-tested on this
+  // date, against these versions — and it reached no machine-readable
+  // surface at all: the page renders it under the title and the twin
+  // dropped it, so a model reading the markdown could not tell a guide
+  // verified last week from one last touched two years ago. Same source as
+  // the page and the JSON-LD: the post's own `lastVerified` frontmatter.
+  const verified = d.lastVerified;
+  if (!verified) return [];
+  // The versions are appended only when there are any — the schema defaults
+  // them to an empty array, which would otherwise leave a dangling `·`.
+  const versions =
+    verified.versions.length > 0 ? ` · ${verified.versions.join(" · ")}` : "";
+  return [
+    `Last verified: ${verified.date.toISOString().slice(0, 10)}${versions}`,
+  ];
+}
+
+/**
+ * The FAQ block: every question with the answer under it.
+ *
+ * @param d - The post's frontmatter.
+ * @param locale - Post locale, which picks the heading.
+ * @returns The block's lines, or none when the post declares no FAQ.
+ */
+function postFaqLines(
+  d: CollectionEntry<"posts">["data"],
+  locale: "en" | "es",
+): string[] {
+  // The ANSWER, not only the question. Emitting the questions alone
+  // published the promise and withheld the payload: these pairs are the
+  // most directly citable prose on the site — they are written as the
+  // query a reader actually types — and the page already renders them and
+  // ships them as FAQPage JSON-LD.
+  const faq = d.faq;
+  if (!faq || faq.length === 0) return [];
+  return [
+    "",
+    CHROME.questions[locale],
+    "",
+    ...faq.flatMap((f) => [`**${f.question}**`, "", f.answer, ""]),
+  ];
+}
+
+/**
+ * The HowTo block: the guide's steps, numbered, by name only.
+ *
+ * @param d - The post's frontmatter.
+ * @param locale - Post locale, which picks the heading.
+ * @returns The block's lines, or none when the post declares no steps.
+ */
+function postHowToLines(
+  d: CollectionEntry<"posts">["data"],
+  locale: "en" | "es",
+): string[] {
+  const steps = d.howto?.steps ?? [];
+  if (steps.length === 0) return [];
+  return [
+    "",
+    `${CHROME.steps[locale]} (${d.howto?.name}):`,
+    ...steps.map((s, i) => `${i + 1}. ${s.name}`),
+  ];
+}
+
+/**
+ * The article body itself, rendered to markdown after a horizontal rule.
+ *
+ * @param p - The post entry.
+ * @param siteUrl - Absolute site origin.
+ * @param localePrefix - `/es` for Spanish, empty for English.
+ * @returns The rule and the rendered body, or none when the post has no body.
+ */
+function postBodyLines(
+  p: CollectionEntry<"posts">,
+  siteUrl: string,
+  localePrefix: "" | "/es",
+): string[] {
+  if (!p.body) return [];
+  return [
+    "",
+    "---",
+    "",
+    mdxToMarkdown(p.body, {
+      locale: localePrefix === "/es" ? "es" : "en",
+      siteUrl,
+      registry,
+    }),
+  ];
+}
+
+/** Renders a single post as the `### title` block used by llms-full and shards. */
+function buildPostEntry(
+  p: CollectionEntry<"posts">,
+  siteUrl: string,
+  localePrefix: "" | "/es",
+  locale: "en" | "es",
+): string[] {
+  const d = p.data;
+  const postUrl = `${siteUrl}${localePrefix}/blog/${d.slug}/`;
+  const published = d.publishedDate.toISOString().slice(0, 10);
   return [
     // No `### <title>` here: the only caller is the shard, whose `# <title>`
     // header names the post one line above. Emitting both put the article
@@ -940,62 +1050,17 @@ function buildPostEntry(
     "License: https://creativecommons.org/licenses/by/4.0/",
     `Type: ${d.articleType}`,
     `Published: ${published}`,
-    ...(revised ? [`Updated: ${revised}`] : []),
-    // The strongest freshness claim the article makes — re-tested on this
-    // date, against these versions — and it reached no machine-readable
-    // surface at all: the page renders it under the title and the twin
-    // dropped it, so a model reading the markdown could not tell a guide
-    // verified last week from one last touched two years ago. Same source as
-    // the page and the JSON-LD: the post's own `lastVerified` frontmatter.
-    // The versions are appended only when there are any — the schema defaults
-    // them to an empty array, which would otherwise leave a dangling `·`.
-    ...(d.lastVerified
-      ? [
-          `Last verified: ${d.lastVerified.date.toISOString().slice(0, 10)}${
-            d.lastVerified.versions.length > 0
-              ? ` · ${d.lastVerified.versions.join(" · ")}`
-              : ""
-          }`,
-        ]
-      : []),
+    ...postRevisionLines(p, published),
+    ...postLastVerifiedLines(d),
     ...(d.author ? [`Author: ${d.author}`] : []),
     ...(d.description ? [`Summary: ${d.description}`] : []),
     ...(d.tags.length > 0 ? [`Tags: ${d.tags.join(", ")}`] : []),
     ...(d.topics && d.topics.length > 0
       ? [`Topics: ${d.topics.map(namedTopic).join(", ")}`]
       : []),
-    // The ANSWER, not only the question. Emitting the questions alone
-    // published the promise and withheld the payload: these pairs are the
-    // most directly citable prose on the site — they are written as the
-    // query a reader actually types — and the page already renders them and
-    // ships them as FAQPage JSON-LD.
-    ...(d.faq && d.faq.length > 0
-      ? [
-          "",
-          CHROME.questions[locale],
-          "",
-          ...d.faq.flatMap((f) => [`**${f.question}**`, "", f.answer, ""]),
-        ]
-      : []),
-    ...((d.howto?.steps?.length ?? 0) > 0
-      ? [
-          "",
-          `${CHROME.steps[locale]} (${d.howto?.name}):`,
-          ...(d.howto?.steps ?? []).map((s, i) => `${i + 1}. ${s.name}`),
-        ]
-      : []),
-    ...(p.body
-      ? [
-          "",
-          "---",
-          "",
-          mdxToMarkdown(p.body, {
-            locale: localePrefix === "/es" ? "es" : "en",
-            siteUrl,
-            registry,
-          }),
-        ]
-      : []),
+    ...postFaqLines(d, locale),
+    ...postHowToLines(d, locale),
+    ...postBodyLines(p, siteUrl, localePrefix),
     "",
   ];
 }
