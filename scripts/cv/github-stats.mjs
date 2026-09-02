@@ -14,6 +14,7 @@ import {
   DOWNLOAD_SOURCES,
   DOWNLOADS_DISPLAY_MIN,
   fetchDockerHubPulls,
+  isVerificationAsset,
 } from "../download-sources.mjs";
 
 const API = "https://api.github.com";
@@ -75,6 +76,10 @@ export function fetchRepoStats(slug) {
           releases = rels.length;
           for (const rel of rels) {
             for (const asset of rel.assets ?? []) {
+              // Checksums and signatures are fetched alongside the binary, so
+              // counting them would count the same install twice — the same
+              // rule the homepage total uses, imported rather than restated.
+              if (isVerificationAsset(asset.name)) continue;
               downloads += asset.download_count ?? 0;
             }
           }

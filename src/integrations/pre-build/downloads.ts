@@ -20,6 +20,11 @@ import { safeStringify } from "../shared.js";
  * Which channels are counted — and which are left out, with the reason for
  * each — lives in `scripts/download-sources.mjs`, shared with the CV
  * generators so the same project cannot be reported two different ways.
+ *
+ * Checksum and signature assets are excluded from every figure (see
+ * `isVerificationAsset`): a release ships them next to the binary and every
+ * install fetches both, so counting them would report the same install twice.
+ * They are still reported, under `excluded`, so the exclusion is auditable.
  */
 const OUTPUT_DIR = "src/data";
 const OUTPUT_FILE = "downloads.json";
@@ -33,12 +38,19 @@ interface DownloadsData {
   total: number;
   /** ISO timestamp of the last successful refresh. */
   generatedAt: string;
-  /** Aggregate breakdown per kind of source. */
+  /** Aggregate breakdown per kind of source — a strict partition of `total`. */
   sources: {
     githubReleases: number;
     dockerHub: number;
     /** Hand-read counts (MathWorks blocks scripted requests). */
     manual: number;
+  };
+  /**
+   * Counted and published, but deliberately NOT part of `total`: checksum and
+   * signature fetches happen alongside a download, not instead of one.
+   */
+  excluded: {
+    githubVerification: number;
   };
   /** Date the hand-read counts were last verified. */
   manualVerifiedOn: string;
@@ -63,6 +75,7 @@ function writeZeroed(): void {
     total: 0,
     generatedAt: new Date().toISOString(),
     sources: { githubReleases: 0, dockerHub: 0, manual: 0 },
+    excluded: { githubVerification: 0 },
     manualVerifiedOn: MANUAL_COUNTS_VERIFIED_ON,
     projects: {},
   };
@@ -114,12 +127,13 @@ export async function setupDownloads(
   logger.info("Fetching cumulative download totals...");
 
   try {
-    const { total, sources, manualVerifiedOn, projects } =
+    const { total, sources, excluded, manualVerifiedOn, projects } =
       await fetchAllDownloads(token);
     const data: DownloadsData = {
       total,
       generatedAt: new Date().toISOString(),
       sources,
+      excluded,
       manualVerifiedOn,
       projects,
     };
@@ -135,7 +149,8 @@ export async function setupDownloads(
       `  ✓ Downloads total: ${data.total.toLocaleString("en-US")} ` +
         `(releases ${sources.githubReleases}, docker ${sources.dockerHub}, ` +
         `manual ${sources.manual}, ` +
-        `${Object.keys(projects).length} projects)`,
+        `${Object.keys(projects).length} projects; ` +
+        `${data.excluded.githubVerification} checksum/signature fetches excluded)`,
     );
   } catch (error) {
     const message =

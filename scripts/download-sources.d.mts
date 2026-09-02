@@ -6,6 +6,12 @@ export interface ProjectDownloads {
   total: number;
   /** Cumulative GitHub release-asset downloads. */
   releases: number;
+  /**
+   * Cumulative downloads of verification assets (checksums, signatures,
+   * SBOMs). Reported so the exclusion is auditable; NEVER a summand of
+   * `total` — see `isVerificationAsset`.
+   */
+  excludedVerification: number;
   /** Cumulative Docker Hub pulls. */
   docker: number;
   /** Hand-read counts from channels that refuse scripted requests. */
@@ -32,16 +38,24 @@ export const OWNER: string;
 export const DOWNLOADS_DISPLAY_MIN: number;
 
 /**
- * Sums `download_count` across every release asset of a repo.
+ * Sums `download_count` across every release asset of a repo, split by kind.
  *
  * @param repo - Repository name under the owner account.
  * @param token - GitHub token; falls back to the environment.
- * @returns Total asset downloads for the repo.
+ * @returns Downloads of distributable assets, and of verification assets.
  */
 export function fetchReleaseDownloads(
   repo: string,
   token?: string,
-): Promise<number>;
+): Promise<{ artifacts: number; verification: number }>;
+
+/**
+ * Whether a release asset verifies a download instead of being one.
+ *
+ * @param name - The release asset filename.
+ * @returns True when the asset verifies a download instead of being one.
+ */
+export function isVerificationAsset(name: string): boolean;
 
 /**
  * Reads the cumulative `pull_count` of a single Docker Hub image.
@@ -71,7 +85,10 @@ export function fetchProjectDownloads(
  */
 export function fetchAllDownloads(token?: string): Promise<{
   total: number;
+  /** A strict partition of `total`. */
   sources: { githubReleases: number; dockerHub: number; manual: number };
+  /** Counted and reported, but deliberately outside `total`. */
+  excluded: { githubVerification: number };
   manualVerifiedOn: string;
   projects: Record<string, ProjectDownloads>;
 }>;

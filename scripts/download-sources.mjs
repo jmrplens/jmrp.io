@@ -25,8 +25,10 @@ export const OWNER = "jmrplens";
  * same key `projects.yaml` uses as `id` and the one a CV GitHub link resolves
  * to, so a project is looked up by one identifier everywhere.
  *
- * `releases` counts the cumulative `download_count` of every release asset;
- * `docker` sums the cumulative `pull_count` of each Docker Hub image.
+ * `releases` counts the cumulative `download_count` of every release asset
+ * that is a distributable artifact — see {@link isVerificationAsset} for what
+ * is excluded and why; `docker` sums the cumulative `pull_count` of each
+ * Docker Hub image.
  *
  * `manual` is a count that cannot be fetched: MathWorks answers 403 to any
  * scripted request, so the File Exchange figures are read by hand from the
@@ -112,7 +114,50 @@ export const MANUAL_COUNTS_VERIFIED_ON = "2026-08-27";
  */
 export const DOWNLOADS_DISPLAY_MIN = 1000;
 
-/** @type {Map<string, Promise<{total:number, releases:number, docker:number, manual:number}>>} */
+/**
+ * Filenames whose stem is a checksum manifest (`checksums.txt` and anything
+ * built on top of it, such as `checksums.txt.sigstore.json`).
+ *
+ * `(?:\.|$)` rather than a word boundary: a real program could plausibly be
+ * called `foo-checksums-tool.tar.gz`, and that is a download.
+ */
+const CHECKSUM_MANIFEST = /(?:^|[_-])checksums?(?:\.|$)/i;
+
+/**
+ * Extensions that only ever appear on a signature, attestation or SBOM.
+ *
+ * Most of these match nothing today; they are listed so that turning on
+ * release signing or GitHub artifact attestations cannot silently re-inflate
+ * the published figure. Kept as a second pattern rather than one alternation
+ * because a single combined regex trips the lint rules `anchor-precedence`
+ * and — once `bundle` is in the list — `regex-complexity` (21 > 20).
+ */
+const VERIFICATION_EXTENSION =
+  /\.(?:asc|sig|pem|md5|sha\d+|bundle|sigstore\.json|spdx\.json|sbom\.json|intoto\.jsonl)$/i;
+
+/**
+ * Whether a release asset verifies a download instead of being one.
+ *
+ * A release ships the binary AND a `checksums.txt` next to it, and every
+ * documented install fetches both, so counting the checksum counts the same
+ * event twice. On the flagship project that is ~45 % of the raw release-asset
+ * figure, which is why the published number counts distributable artifacts
+ * only and the verification assets are reported in their own field.
+ *
+ * Validated against every distinct release-asset name the account has ever
+ * published; see `scripts/download-sources.test.mjs`.
+ *
+ * @param {string} name - The release asset filename.
+ * @returns {boolean} True when the asset verifies a download instead of being one.
+ */
+export function isVerificationAsset(name) {
+  return (
+    typeof name === "string" &&
+    (CHECKSUM_MANIFEST.test(name) || VERIFICATION_EXTENSION.test(name))
+  );
+}
+
+/** @type {Map<string, Promise<{total:number, releases:number, excludedVerification:number, docker:number, manual:number}>>} */
 const cache = new Map();
 
 /**
@@ -137,14 +182,16 @@ function ghHeaders(token) {
 
 /**
  * Sums `download_count` across every release asset of a repo, following
- * pagination. Throws on a non-OK response so the caller can fall back.
+ * pagination, split by whether the asset is a download or verifies one.
+ * Throws on a non-OK response so the caller can fall back.
  *
  * @param {string} repo - Repository name under {@link OWNER}.
  * @param {string} [token] - GitHub token; falls back to the environment.
- * @returns {Promise<number>} Total asset downloads for the repo.
+ * @returns {Promise<{artifacts:number, verification:number}>} Downloads of distributable assets, and of verification assets.
  */
 export async function fetchReleaseDownloads(repo, token) {
-  let total = 0;
+  let artifacts = 0;
+  let verification = 0;
   for (let page = 1; page <= 20; page++) {
     const res = await fetch(
       `${GITHUB_API}/repos/${OWNER}/${repo}/releases?per_page=100&page=${page}`,
@@ -157,12 +204,14 @@ export async function fetchReleaseDownloads(repo, token) {
 
     for (const release of releases) {
       for (const asset of release.assets ?? []) {
-        total += asset.download_count ?? 0;
+        const count = asset.download_count ?? 0;
+        if (isVerificationAsset(asset.name)) verification += count;
+        else artifacts += count;
       }
     }
     if (releases.length < 100) break; // last page
   }
-  return total;
+  return { artifacts, verification };
 }
 
 /**
@@ -195,7 +244,7 @@ export async function fetchDockerHubPulls(slug) {
  *
  * @param {string} repo - Repository name under {@link OWNER}.
  * @param {string} [token] - GitHub token; falls back to the environment.
- * @returns {Promise<{total:number, releases:number, docker:number, manual:number}>} Counts per channel.
+ * @returns {Promise<{total:number, releases:number, excludedVerification:number, docker:number, manual:number}>} Counts per channel.
  */
 export function fetchProjectDownloads(repo, token) {
   const cached = cache.get(repo);
@@ -203,16 +252,32 @@ export function fetchProjectDownloads(repo, token) {
 
   const config = DOWNLOAD_SOURCES[repo];
   if (!config)
-    return Promise.resolve({ total: 0, releases: 0, docker: 0, manual: 0 });
+    return Promise.resolve({
+      total: 0,
+      releases: 0,
+      excludedVerification: 0,
+      docker: 0,
+      manual: 0,
+    });
 
   const promise = (async () => {
-    const [releases, dockerCounts] = await Promise.all([
-      config.releases ? fetchReleaseDownloads(repo, token) : 0,
+    const [release, dockerCounts] = await Promise.all([
+      config.releases
+        ? fetchReleaseDownloads(repo, token)
+        : { artifacts: 0, verification: 0 },
       Promise.all((config.docker ?? []).map(fetchDockerHubPulls)),
     ]);
     const docker = dockerCounts.reduce((sum, n) => sum + n, 0);
     const manual = config.manual?.count ?? 0;
-    return { total: releases + docker + manual, releases, docker, manual };
+    // `total` sums the three CHANNELS only. `excludedVerification` rides along
+    // for auditability and is never a summand — see isVerificationAsset.
+    return {
+      total: release.artifacts + docker + manual,
+      releases: release.artifacts,
+      excludedVerification: release.verification,
+      docker,
+      manual,
+    };
   })();
 
   // Don't cache a rejection: a later caller should be able to retry.
@@ -225,7 +290,7 @@ export function fetchProjectDownloads(repo, token) {
  * Fetches every configured project at once and aggregates the grand total.
  *
  * @param {string} [token] - GitHub token; falls back to the environment.
- * @returns {Promise<{total:number, sources:{githubReleases:number, dockerHub:number, manual:number}, manualVerifiedOn:string, projects:Record<string,{total:number, releases:number, docker:number, manual:number}>}>} The full breakdown.
+ * @returns {Promise<{total:number, sources:{githubReleases:number, dockerHub:number, manual:number}, excluded:{githubVerification:number}, manualVerifiedOn:string, projects:Record<string,{total:number, releases:number, excludedVerification:number, docker:number, manual:number}>}>} The full breakdown.
  */
 export async function fetchAllDownloads(token) {
   const repos = Object.keys(DOWNLOAD_SOURCES);
@@ -233,22 +298,28 @@ export async function fetchAllDownloads(token) {
     repos.map((repo) => fetchProjectDownloads(repo, token)),
   );
 
-  /** @type {Record<string, {total:number, releases:number, docker:number, manual:number}>} */
+  /** @type {Record<string, {total:number, releases:number, excludedVerification:number, docker:number, manual:number}>} */
   const projects = {};
   let githubReleases = 0;
+  let githubVerification = 0;
   let dockerHub = 0;
   let manual = 0;
   for (const [index, repo] of repos.entries()) {
     const count = counts[index];
     projects[repo] = count;
     githubReleases += count.releases;
+    githubVerification += count.excludedVerification;
     dockerHub += count.docker;
     manual += count.manual;
   }
 
+  // `sources` is a strict partition of `total`; anything NOT in the total goes
+  // under `excluded`, so summing `sources` can never reproduce the inflated
+  // figure this split exists to remove.
   return {
     total: githubReleases + dockerHub + manual,
     sources: { githubReleases, dockerHub, manual },
+    excluded: { githubVerification },
     manualVerifiedOn: MANUAL_COUNTS_VERIFIED_ON,
     projects,
   };
