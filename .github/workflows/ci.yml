@@ -85,6 +85,21 @@ jobs:
         run: pnpm exec playwright install --with-deps chromium
       - name: Build Project (Production)
         run: pnpm run build
+        env:
+          # The build stages its generated Nginx snippets outside the served
+          # tree; on this runner the production root (/var/lib) is not
+          # writable, so point it somewhere that is AND that can be uploaded.
+          # `functional-tests` runs in a separate job and restores only
+          # `dist-build`, so without the artifact below the three CSP tests in
+          # tests/security.spec.ts fail: they read the generated
+          # security_headers.conf, which is no longer part of the build output.
+          POSTBUILD_NGINX_STAGING_DIR: ${{ github.workspace }}/.nginx-staged
+      - name: Upload staged Nginx snippets
+        uses: actions/upload-artifact@v7
+        with:
+          name: nginx-staged
+          path: .nginx-staged/
+          retention-days: 1
       - name: Upload build artifact
         uses: actions/upload-artifact@v7
         with:
@@ -496,6 +511,11 @@ jobs:
         with:
           name: dist-build
           path: dist
+      - name: Download staged Nginx snippets
+        uses: actions/download-artifact@v8
+        with:
+          name: nginx-staged
+          path: .nginx-staged
       - uses: ./.github/actions/setup
       - name: Cache Playwright Browsers
         id: playwright-cache
@@ -507,6 +527,8 @@ jobs:
         if: steps.playwright-cache.outputs.cache-hit != 'true'
         run: pnpm exec playwright install --with-deps chromium
       - name: Run Playwright tests
+        env:
+          POSTBUILD_NGINX_STAGING_DIR: ${{ github.workspace }}/.nginx-staged
         run: pnpm exec playwright test --project=functional --project=mobile-functional --project=a11y-static --project=performance
       - name: Upload functional report
         uses: actions/upload-artifact@v7

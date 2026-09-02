@@ -165,3 +165,4 @@ accessibility-report.json
 
 # Local design-audit screenshots (not for the repo)
 design-audit/
+/.nginx-staged
