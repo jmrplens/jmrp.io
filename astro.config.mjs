@@ -45,22 +45,45 @@ const imageOptimizerOptions = {
       {
         name: "preset-default",
         params: {
+          // Only names `preset-default` actually contains belong in here.
+          // SVGO warns on anything else and then ignores it, so a key with a
+          // typo — or naming a plugin the preset dropped — reads as intent
+          // while doing nothing. Six of them did exactly that until
+          // 2026-09-02, warning once per name per `multipass` pass — 12 lines
+          // per SVG actually optimized, so 12 for a cold build and none for a
+          // cache-warm one, since a cache hit never reaches SVGO at all:
+          //
+          //   `cleanupIDs`         — typo for `cleanupIds`; see below.
+          //   `removeViewBox`      — not in SVGO 4's preset, so viewBox is
+          //                          kept unconditionally and the intent of
+          //                          svg/svgo#1128 holds without the key.
+          //   `removeTitle`,       — all three wanted a plugin turned ON,
+          //   `removeStyleElement`,  which needs a top-level entry, not an
+          //   `removeDimensions`,    override. None are reinstated:
+          //   `removeRasterImages`   `removeTitle` would strip an SVG's
+          //                          accessible name, and the rest have
+          //                          nothing to act on (see below).
           overrides: {
             cleanupNumericValues: {
               floatPrecision: 1,
             },
-            removeViewBox: false, // https://github.com/svg/svgo/issues/1128
-            removeTitle: true,
-            removeDesc: true,
+            // KEEP ids: markers and gradients are referenced by `url(#id)`,
+            // and this plugin minifies ids and drops "unused" ones by
+            // default. The guard was misspelled `cleanupIDs` from the start,
+            // so ids were being cleaned all along — with no consequence,
+            // because the only SVG this optimizer ever reaches is
+            // `public/favicon.svg` (via `includePublic`) and it has no ids.
+            // Nothing else qualifies: no SVG enters the bundle, and the
+            // `dist/assets/extracted/*.svg` written by the post-build CSS
+            // data-URI pass are produced after Vite is done. Fixed anyway —
+            // the next SVG asset shouldn't have to rediscover this.
+            cleanupIds: false,
             removeUselessDefs: false, // KEEP definitions (markers for arrows)
+            removeDesc: true,
             collapseGroups: true,
-            cleanupIDs: false, // KEEP IDs (crucial for marker references)
             removeEmptyContainers: true,
             removeEmptyAttrs: true,
             cleanupAttrs: true,
-            removeStyleElement: true,
-            removeDimensions: true,
-            removeRasterImages: true,
           },
         },
       },

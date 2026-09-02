@@ -147,6 +147,11 @@ const VERIFICATION_EXTENSION =
  * Validated against every distinct release-asset name the account has ever
  * published; see `scripts/download-sources.test.mjs`.
  *
+ * Total on purpose: it answers `false` for anything that is not a string, so
+ * it never decides on a payload it cannot read. Rejecting such a payload is
+ * {@link readAssetDownloads}'s job, before this is ever called — inline the
+ * call and a nameless asset silently becomes a download again.
+ *
  * @param {string} name - The release asset filename.
  * @returns {boolean} True when the asset verifies a download instead of being one.
  */
@@ -181,6 +186,13 @@ function ghHeaders(token) {
 }
 
 /**
+ * One release asset exactly as the GitHub API hands it over: nothing about it
+ * is known until checked, which is what {@link readAssetDownloads} is for.
+ *
+ * @typedef {{id?: unknown, name?: unknown, download_count?: unknown}} ReleaseAsset
+ */
+
+/**
  * Fetches one page of a repository's releases. Throws on a non-OK response so
  * the caller can fall back.
  *
@@ -191,7 +203,7 @@ function ghHeaders(token) {
  * @param {string} repo - Repository name under {@link OWNER}.
  * @param {number} page - 1-based page number.
  * @param {string} [token] - GitHub token; falls back to the environment.
- * @returns {Promise<Array<{assets?: {name?: unknown, download_count?: number}[]}>>} The page's releases.
+ * @returns {Promise<Array<{assets?: ReleaseAsset[]}>>} The page's releases.
  */
 async function fetchReleasesPage(repo, page, token) {
   const res = await fetch(
@@ -205,19 +217,65 @@ async function fetchReleasesPage(repo, page, token) {
 }
 
 /**
+ * Reads one release asset into the split, rejecting a payload the classifier
+ * cannot judge.
+ *
+ * {@link isVerificationAsset} is a total predicate — it answers `false` for a
+ * name that is missing or not a string — so an asset arriving without one
+ * would be filed as a distributable artifact and inflate the published
+ * figure, which is the exact error this split exists to remove.
+ *
+ * It throws rather than skipping the asset, the same call
+ * {@link fetchDockerHubPulls} makes for a malformed body: the refresh stays
+ * atomic, so the caller's catch keeps the last total that was fully
+ * classifiable instead of persisting a quietly reduced one that no reader can
+ * tell from a genuine drop. Throwing costs no build either — the only caller,
+ * `setupDownloads`, catches, warns and leaves the previous `downloads.json`
+ * exactly where it was.
+ *
+ * @param {ReleaseAsset} asset - One release asset, straight from the API.
+ * @param {string} repo - Repository the asset belongs to, named in the error.
+ * @returns {{count:number, verifies:boolean}} Its download count, and whether it verifies a download instead of being one.
+ * @throws {TypeError} When the asset carries no usable name or count.
+ */
+function readAssetDownloads(asset, repo) {
+  // Optional chaining because the array ENTRY is as unchecked as its fields: a
+  // `null` asset has to fail with the same repo-naming error, not with a
+  // destructuring crash no build log can trace back to a repository.
+  const name = asset?.name;
+  if (typeof name !== "string" || name.length === 0) {
+    throw new TypeError(
+      `GitHub ${repo} releases: asset ${asset?.id ?? "?"} has no usable name`,
+    );
+  }
+  // `download_count` is checked here too because a non-number would turn every
+  // sum downstream into string concatenation — publishing nonsense rather than
+  // merely an inflated figure.
+  const count = asset.download_count ?? 0;
+  if (typeof count !== "number" || !Number.isFinite(count)) {
+    throw new TypeError(
+      `GitHub ${repo} releases: asset ${name} has no usable download_count`,
+    );
+  }
+  return { count, verifies: isVerificationAsset(name) };
+}
+
+/**
  * Splits the `download_count` of every asset on one page of releases into
  * distributable downloads and verification artifacts.
  *
- * @param {Array<{assets?: {name?: unknown, download_count?: number}[]}>} releases - One page of releases.
+ * @param {Array<{assets?: ReleaseAsset[]}>} releases - One page of releases.
+ * @param {string} repo - Repository the page belongs to, named in any error.
  * @returns {{artifacts:number, verification:number}} Downloads of distributable assets, and of verification assets.
+ * @throws {TypeError} When an asset carries no usable name or count.
  */
-function sumPageDownloads(releases) {
+function sumPageDownloads(releases, repo) {
   let artifacts = 0;
   let verification = 0;
   for (const release of releases) {
     for (const asset of release.assets ?? []) {
-      const count = asset.download_count ?? 0;
-      if (isVerificationAsset(asset.name)) verification += count;
+      const { count, verifies } = readAssetDownloads(asset, repo);
+      if (verifies) verification += count;
       else artifacts += count;
     }
   }
@@ -232,6 +290,7 @@ function sumPageDownloads(releases) {
  * @param {string} repo - Repository name under {@link OWNER}.
  * @param {string} [token] - GitHub token; falls back to the environment.
  * @returns {Promise<{artifacts:number, verification:number}>} Downloads of distributable assets, and of verification assets.
+ * @throws {TypeError} When an asset carries no usable name or count.
  */
 export async function fetchReleaseDownloads(repo, token) {
   let artifacts = 0;
@@ -240,7 +299,7 @@ export async function fetchReleaseDownloads(repo, token) {
     const releases = await fetchReleasesPage(repo, page, token);
     if (releases.length === 0) break;
 
-    const totals = sumPageDownloads(releases);
+    const totals = sumPageDownloads(releases, repo);
     artifacts += totals.artifacts;
     verification += totals.verification;
     if (releases.length < 100) break; // last page

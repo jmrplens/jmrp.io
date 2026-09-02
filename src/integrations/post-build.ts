@@ -99,14 +99,6 @@ export default function postBuildIntegration(): AstroIntegration {
           await timed("generateTagRedirects", logger, () =>
             generateTagRedirects(logger),
           );
-          // Fourth Nginx artifact: the markdown-twin alternate map. Derived
-          // from the twins the build actually wrote, so a page never announces
-          // a twin that does not exist, and removing one withdraws the
-          // announcement in the same build (GEO audit 2026-09-02, A2).
-          await timed("generateMdTwinAlternates", logger, () =>
-            generateMdTwinAlternates(distDir, logger),
-          );
-
           // Verification, not a transform: the built pages, their markdown
           // twins and the three index surfaces must agree. Runs BEFORE the
           // image/compression phase so a drift fails in ~0.2s instead of after
@@ -114,8 +106,29 @@ export default function postBuildIntegration(): AstroIntegration {
           // build before deploy-swap.mjs retargets the `dist` symlink, so a
           // drifted build can never become the live one. See GEO audit #6,
           // findings A2 / M5 / M8 (and A3, via the twin date rule).
+          //
+          // It also runs before generateMdTwinAlternates, and that order is
+          // load-bearing. Four steps here write OUTSIDE the build directory,
+          // into the working tree's nginx/ snippets the live vhost `include`s,
+          // and this is the one derived from exactly what the guard validates:
+          // the twins. Generating first meant a build that failed this check
+          // still left the announcement map rewritten from the twins of a
+          // build that never went live, waiting for the next unrelated
+          // `nginx -s reload` to publish it. Nothing is lost by checking
+          // first: guard and generator both only read distDir, so neither
+          // observes the other's effects, and a passing build still runs both.
+          // NOT closed by this move: generateBlogRedirects is also derived
+          // from the build output and still writes before the check.
           await timed("verifyMarkdownTwins", logger, () =>
             verifyMarkdownTwins(distDir),
+          );
+
+          // Fourth Nginx artifact: the markdown-twin alternate map. Derived
+          // from the twins the build actually wrote, so a page never announces
+          // a twin that does not exist, and removing one withdraws the
+          // announcement in the same build (GEO audit 2026-09-02, A2).
+          await timed("generateMdTwinAlternates", logger, () =>
+            generateMdTwinAlternates(distDir, logger),
           );
 
           // optimizeImages (re-compresses PNGs) and compressAssets (gzip/brotli
@@ -240,7 +253,8 @@ function fixPermissions(distDir: string, logger: AstroIntegrationLogger) {
  * the same runtime as the build. `stdio: "inherit"` so the offending PATHS land
  * in the build log, not a count. Exit 1 means drift; any other non-zero status
  * means the guard itself could not run, and saying "drift" there would be a lie
- * about what happened.
+ * about what happened. A child killed by a signal has a null status, so the
+ * signal is reported instead — "exit null" names no cause.
  *
  * @param distDir - The directory Astro just built into.
  */
@@ -259,8 +273,14 @@ function verifyMarkdownTwins(distDir: string) {
     );
   }
   if (result.status !== 0) {
+    // `status` is null exactly when a signal killed the child (OOM killer,
+    // a timeout, an interrupted build). Printing "exit null" there discards
+    // the only fact that explains the failure.
+    const cause = result.signal
+      ? `signal ${result.signal}`
+      : `exit ${result.status}`;
     throw new Error(
-      `check-markdown-twins could not run (exit ${result.status}) — this is a` +
+      `check-markdown-twins could not run (${cause}) — this is a` +
         " guard failure, not a drift report",
     );
   }

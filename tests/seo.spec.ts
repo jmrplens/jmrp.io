@@ -156,21 +156,33 @@ test.describe("SEO Per-Page Checks", () => {
         await expect(
           page.locator('meta[property="og:description"]'),
         ).toHaveAttribute("content", /.+/);
-        await expect(page.locator('meta[property="og:image"]')).toHaveAttribute(
-          "content",
-          /.+/,
-        );
 
-        // ...and the image it names must actually exist. BaseHead points
-        // og:image AND twitter:image at /og/<pathname>.png without ever
-        // checking that the card was generated, so a page missing from
-        // STATIC_PAGES ships a 404 preview image in both locales — GEO audit
-        // #6, finding M1. The presence-only assertion above could not see it.
+        // og:image gets more than a presence check: BaseHead points it AND
+        // twitter:image at /og/<pathname>.png without ever checking that the
+        // card was generated, so a page missing from STATIC_PAGES ships a 404
+        // preview image in both locales — GEO audit #6, finding M1.
+        //
+        // The value is judged whole before anything is derived from it. Going
+        // straight to `new URL(ogImage ?? "", "https://jmrp.io").pathname`
+        // resolves a blank, whitespace-only or relative og:image to "/", whose
+        // 200 then "proves" a card that was never declared — and dropping the
+        // origin lets a card hosted on someone else's domain pass on the local
+        // path's 200. Open Graph wants an absolute URL and every card here is
+        // same-origin, which is also what makes swapping in the preview
+        // server's origin below legitimate. The first path character is
+        // spelled out rather than left to `\S+`, which matches "?" and "#":
+        // "https://jmrp.io/?" would otherwise clear the shape check and then
+        // resolve to "/" again, reopening the very hole one level down.
         const ogImage = await page
           .locator('meta[property="og:image"]')
           .getAttribute("content");
+        expect(
+          ogImage,
+          `og:image is not an absolute same-origin URL: ${ogImage}`,
+        ).toMatch(/^https:\/\/jmrp\.io\/[^\s?#]\S*$/);
+
         const ogImageResponse = await page.request.get(
-          new URL(ogImage ?? "", "https://jmrp.io").pathname,
+          new URL(ogImage!).pathname,
         );
         expect(
           ogImageResponse.status(),

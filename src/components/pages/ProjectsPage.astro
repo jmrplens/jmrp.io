@@ -37,10 +37,23 @@ const t = useTranslations(locale);
 // The hand-read File Exchange counts carry the date they were read
 // (MANUAL_COUNTS_VERIFIED_ON, published in downloads.json). Printing it is the
 // difference between "we counted" and "we counted, here is when".
-const manualVerifiedOn = formatDate(
-  new Date(downloadsData.manualVerifiedOn),
-  locale,
-);
+//
+// The value is checked, not trusted: downloads.json is generated and
+// git-ignored, so a build host holds whatever its last successful refresh left
+// behind — a copy predating this field carries none — and the field itself
+// comes from a hand-edited constant. `Intl.DateTimeFormat.format` throws
+// `RangeError: Invalid time value` on an invalid Date, so a missing or
+// malformed value would fail the whole build over one parenthetical; without a
+// usable date the note is dropped instead and the figures it annotates stay.
+// The `typeof` guard is load-bearing: `new Date(null)` is the epoch, not an
+// invalid date, and would print "January 1, 1970" as if it had been read then.
+const verifiedOnRaw: unknown = downloadsData.manualVerifiedOn;
+const verifiedOn =
+  typeof verifiedOnRaw === "string" ? new Date(verifiedOnRaw) : undefined;
+const manualVerifiedOn =
+  verifiedOn && !Number.isNaN(verifiedOn.getTime())
+    ? formatDate(verifiedOn, locale)
+    : null;
 
 const projects = await getProjects();
 const aboutEntry = await getEntry("profile", "about");
@@ -143,18 +156,24 @@ const groups = [
         {t("pages.projects.heading")}
       </h1>
       <p class="projects-header__intro">{t("pages.projects.intro")}</p>
-      <p class="projects-header__note">
-        {t("pages.projects.downloadsNote", { date: manualVerifiedOn })}{" "}
-        {t("pages.projects.downloadsSourceLead")}{" "}
-        <a
-          href="https://github.com/jmrplens/jmrp.io/blob/main/scripts/download-sources.mjs"
-          target="_blank"
-          rel="external noopener noreferrer"
-          class="external-link"
-          aria-label={t("aria.opensNewTab", { text: "download-sources.mjs" })}
-          >download-sources.mjs</a
-        >.
-      </p>
+      {
+        manualVerifiedOn &&
+          // The note's markup is pinned. Inside this expression Prettier
+          // formats with JSX rules, where `singleAttributePerLine` breaks any
+          // element carrying two or more attributes and moves its children onto
+          // their own lines. Astro keeps that whitespace where JSX would strip
+          // it, so a reflowed anchor renders "download-sources.mjs ." — a space
+          // inside the link and another before the sentence's period. Spreading
+          // the attributes instead is not the way out: `spreadAttributes` also
+          // appends this component's scoped class to `class`, which the literal
+          // form does not carry.
+          // prettier-ignore
+          <p class="projects-header__note">
+            {t("pages.projects.downloadsNote", { date: manualVerifiedOn })}{" "}
+            {t("pages.projects.downloadsSourceLead")}{" "}
+            <a href="https://github.com/jmrplens/jmrp.io/blob/main/scripts/download-sources.mjs" target="_blank" rel="external noopener noreferrer" class="external-link" aria-label={t("aria.opensNewTab", { text: "download-sources.mjs" })}>download-sources.mjs</a>.
+          </p>
+      }
     </header>
 
     {

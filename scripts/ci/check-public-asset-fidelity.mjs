@@ -13,13 +13,22 @@
  * The CI check that ran on that commit validated the feed XML, not the image.
  *
  * For every image under `public/` this compares the built artefact with its
- * source: same format, same pixel dimensions, and the same picture — decoded
- * to raw pixels and compared channel by channel. Re-encoding moves those
- * numbers a little (measured on this site: at most 1.6 of 255 on the worst
- * asset); a different image moves them far more, and a resize or a format
- * change is caught outright before the pixel test runs. SVGs are rendered to a
- * fixed-size bitmap first, so an SVGO rewrite passes and a frozen older
- * drawing does not.
+ * source: same format, same pixel dimensions, same frame count, and the same
+ * picture — every frame of it, decoded to raw pixels and compared channel by
+ * channel. Re-encoding moves those numbers a little (measured on this site: at
+ * most 1.6 of 255 on the worst asset); a different image moves them far more,
+ * and a resize, a format change or a lost frame is caught outright before the
+ * pixel test runs. SVGs are rendered to a fixed-size bitmap first, so an SVGO
+ * rewrite passes and a frozen older drawing does not.
+ *
+ * Animated input is decoded in full rather than rejected, because the build
+ * accepts it: the optimizer asks sharp for every frame, but only when the
+ * extension is `.gif` (`vite-plugin-image-optimizer/dist/index.js:232`). An
+ * animated WebP or AVIF is therefore re-encoded from its first frame and loses
+ * the rest — precisely the silent content loss this file exists to catch, and
+ * one that a first-frame comparison cannot see. Nor can the dimension check
+ * below it: libvips reports the height of a single page, so a three-frame
+ * source and its flattened artefact both measure the same.
  *
  * Exits non-zero listing every asset that no longer matches.
  *
@@ -49,9 +58,10 @@ const IMAGE_GLOB = "**/*.{jpg,jpeg,png,gif,tiff,webp,svg,avif}";
 const GLOB_OPTIONS = { nodir: true, nocase: true, dot: true };
 
 /**
- * Largest mean absolute per-channel difference (0-255) still attributable to
- * re-encoding. The worst legitimate asset on this site measures 1.54; the
- * limit leaves roughly 4x headroom while a substituted image scores tens.
+ * Largest mean absolute per-channel difference (0-255), on any one frame,
+ * still attributable to re-encoding. The worst legitimate asset on this site
+ * measures 1.54; the limit leaves roughly 4x headroom while a substituted
+ * image scores tens.
  */
 const MAX_MEAN_ABS_DIFF = 6;
 
@@ -64,6 +74,11 @@ const SVG_RASTER_PX = 256;
  * palette quantization, cannot dominate the comparison) and the alpha channel
  * on its own (so a lost transparency mask is still caught).
  *
+ * `animated: true` makes libvips hand back every frame as one tall filmstrip
+ * instead of frame one alone; on a still image it is a no-op (verified: all 34
+ * raster assets under `public/` decode to byte-identical buffers either way —
+ * the 35th is the SVG, which never reaches this branch).
+ *
  * @param {string} file - Absolute path to the image.
  * @param {boolean} isSvg - Whether to render vector input to a bitmap first.
  * @returns {Promise<{ colour: Buffer, alpha: Buffer }>} Raw pixel buffers.
@@ -75,7 +90,7 @@ async function decode(file, isSvg) {
           fit: "contain",
           background: { r: 0, g: 0, b: 0, alpha: 0 },
         })
-      : sharp(file);
+      : sharp(file, { animated: true });
 
   const [colour, alpha] = await Promise.all([
     base().flatten({ background: "#000000" }).raw().toBuffer(),
@@ -85,16 +100,33 @@ async function decode(file, isSvg) {
 }
 
 /**
- * Mean absolute difference between two equally sized byte buffers.
+ * Worst per-frame mean absolute difference between two equally sized byte
+ * buffers, each holding `frames` equal-length frames back to back.
+ *
+ * Per frame rather than over the whole buffer so the tolerance keeps its
+ * meaning whatever the frame count: averaged across a 100-frame animation, a
+ * single wholly substituted frame would read as a hundredth of its true drift
+ * and slip under the limit. With `frames` of 1 this is a plain mean absolute
+ * difference over the buffer.
  *
  * @param {Buffer} a - First buffer.
- * @param {Buffer} b - Second buffer.
- * @returns {number} Mean absolute difference, in 0-255 units.
+ * @param {Buffer} b - Second buffer, of the same length.
+ * @param {number} frames - How many frames the buffers are divided into.
+ * @returns {{ diff: number, frame: number }} The worst mean absolute
+ *   difference, in 0-255 units, and the zero-based frame carrying it.
  */
-function meanAbsDiff(a, b) {
-  let sum = 0;
-  for (let i = 0; i < a.length; i++) sum += Math.abs(a[i] - b[i]);
-  return sum / a.length;
+function worstFrameMeanAbsDiff(a, b, frames) {
+  const span = a.length / frames;
+  let worst = { diff: 0, frame: 0 };
+  for (let frame = 0; frame < frames; frame++) {
+    let sum = 0;
+    for (let i = frame * span; i < (frame + 1) * span; i++) {
+      sum += Math.abs(a[i] - b[i]);
+    }
+    const diff = sum / span;
+    if (diff > worst.diff) worst = { diff, frame };
+  }
+  return worst;
 }
 
 /**
@@ -110,6 +142,7 @@ async function compareAsset(rel) {
   if (!fs.existsSync(out)) return `${rel}: absent from the build output`;
 
   const isSvg = rel.toLowerCase().endsWith(".svg");
+  let frames = 1;
   if (!isSvg) {
     const [a, b] = await Promise.all([
       sharp(src).metadata(),
@@ -121,6 +154,16 @@ async function compareAsset(rel) {
     if (a.format !== b.format) {
       return `${rel}: ${a.format} in public/, ${b.format} in the build output`;
     }
+    // Reported per format (1 on a still GIF, absent on a still PNG or
+    // WebP), so normalize before comparing. A drop to one frame is the
+    // shape a de-animating re-encode takes, and the dimension check above
+    // cannot show it.
+    const srcFrames = a.pages ?? 1;
+    const outFrames = b.pages ?? 1;
+    if (srcFrames !== outFrames) {
+      return `${rel}: ${srcFrames} frame(s) in public/, ${outFrames} in the build output`;
+    }
+    frames = srcFrames;
   }
 
   const [A, B] = await Promise.all([decode(src, isSvg), decode(out, isSvg)]);
@@ -128,10 +171,12 @@ async function compareAsset(rel) {
     return `${rel}: decoded geometry differs between public/ and the build output`;
   }
 
-  const colour = meanAbsDiff(A.colour, B.colour);
-  const alpha = meanAbsDiff(A.alpha, B.alpha);
-  if (colour > MAX_MEAN_ABS_DIFF || alpha > MAX_MEAN_ABS_DIFF) {
-    return `${rel}: the build output depicts a different image (colour ${colour.toFixed(2)}, alpha ${alpha.toFixed(2)}, limit ${MAX_MEAN_ABS_DIFF})`;
+  const colour = worstFrameMeanAbsDiff(A.colour, B.colour, frames);
+  const alpha = worstFrameMeanAbsDiff(A.alpha, B.alpha, frames);
+  if (colour.diff > MAX_MEAN_ABS_DIFF || alpha.diff > MAX_MEAN_ABS_DIFF) {
+    const worst = colour.diff >= alpha.diff ? colour : alpha;
+    const where = frames > 1 ? ` frame ${worst.frame + 1} of ${frames}:` : "";
+    return `${rel}:${where} the build output depicts a different image (colour ${colour.diff.toFixed(2)}, alpha ${alpha.diff.toFixed(2)}, limit ${MAX_MEAN_ABS_DIFF})`;
   }
   return null;
 }

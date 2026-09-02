@@ -105,7 +105,70 @@ Serving HTTP/3 and having it used are different questions, and only the second o
 
 That denominator needs two sentences of defense, because the honest version of this measurement is mostly about what has to be thrown away. I excluded HTTP/1.1 entirely, and the exclusion is not cosmetic: current browsers settle on h2 through ALPN against Cloudflare, so a request that claims a browser user-agent and still arrives over HTTP/1.1 is almost always a scraper with a forged one. There were plenty of those; one "desktop Chrome" bucket came in at 45.8% HTTP/1.1, which is not something desktop Chrome does. Dropping HTTP/1.1 removes the obvious forgeries, but it cannot promise the rest are clean: the Free plan exposes no bot score, and the browser dimension is itself derived from the user-agent string, so no independent field is left to filter on. That is also why there is no adoption-by-browser table here — I'm not publishing per-browser percentages built on a denominator I can't audit. The window is eight chained 24-hour queries, the longest range that plan will return, so it has eight two-minute seams in it: roughly 16 minutes missing in total.
 
-Two things about that number. The first is that it is a snapshot of that window, not a standing property of the site. Run the same query over the seven complete days from 26 August to 1 September 2026 and the share is **20.1%** — 10,508 of 52,341 — and it swings from day to day: 22.3%, 16.9%, 22.8%, 12.8%, 24.0%, 18.8%, 25.1%. The second is that neither reading can be re-derived later. The Free plan retains `httpRequestsAdaptiveGroups` for eight days and refuses anything older with `cannot request data older than 1w1d`, so both figures are dated observations that the source itself will not serve again. The per-day numbers are here for that reason: they are the only form in which the second measurement stays auditable.
+Two things about that number. The first is that it is a snapshot of that window, not a standing property of the site. Run the same query over the seven complete UTC days from 26 August to 1 September 2026 and the share is **20.1%** — 10,508 of 52,341 — and it swings from day to day:
+
+<Table title="HTTP/3 share per day — jmrp.io host, 26 August to 1 September 2026">
+  <thead>
+    <tr>
+      <th scope="col">Day (UTC)</th>
+      <th scope="col">HTTP/3</th>
+      <th scope="col">HTTP/2 + HTTP/3</th>
+      <th scope="col">HTTP/3 share</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>2026-08-26</td>
+      <td>2,013</td>
+      <td>9,046</td>
+      <td>22.3%</td>
+    </tr>
+    <tr>
+      <td>2026-08-27</td>
+      <td>1,765</td>
+      <td>10,457</td>
+      <td>16.9%</td>
+    </tr>
+    <tr>
+      <td>2026-08-28</td>
+      <td>1,630</td>
+      <td>7,142</td>
+      <td>22.8%</td>
+    </tr>
+    <tr>
+      <td>2026-08-29</td>
+      <td>882</td>
+      <td>6,902</td>
+      <td>12.8%</td>
+    </tr>
+    <tr>
+      <td>2026-08-30</td>
+      <td>1,544</td>
+      <td>6,423</td>
+      <td>24.0%</td>
+    </tr>
+    <tr>
+      <td>2026-08-31</td>
+      <td>1,272</td>
+      <td>6,778</td>
+      <td>18.8%</td>
+    </tr>
+    <tr>
+      <td>2026-09-01</td>
+      <td>1,402</td>
+      <td>5,593</td>
+      <td>25.1%</td>
+    </tr>
+    <tr>
+      <td><strong>Total</strong></td>
+      <td><strong>10,508</strong></td>
+      <td><strong>52,341</strong></td>
+      <td><strong>20.1%</strong></td>
+    </tr>
+  </tbody>
+</Table>
+
+The second is that neither reading can be re-derived later. The Free plan retains `httpRequestsAdaptiveGroups` for a rolling eight days and refuses anything older with `cannot request data older than 1w1d`, so both figures are dated observations that the source itself will not serve again. The table is here for that reason, and it publishes both counts rather than only the daily percentage, because the percentages on their own would not be enough: the busiest day carries almost twice the traffic of the quietest, so the seven rounded shares cannot reconstruct the weighted 20.1% — their unweighted mean is 20.4%. With every numerator and denominator on the page, the total is arithmetic anyone can check.
 
 One measured detail I did not expect. My origin does send the header this guide tells you to add — `add_header Alt-Svc 'h3=":443"; ma=86400' always;` sits in both TLS server blocks, and a request straight to the origin comes back carrying it. Through Cloudflare, that header is simply not there:
 

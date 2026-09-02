@@ -135,6 +135,32 @@ function computeConfigSignature(options: Record<string, unknown>): string {
 }
 
 /**
+ * Type guard for a manifest that can actually be consumed.
+ *
+ * Testing `"sources" in parsed` is not enough. `null`, an array and a string
+ * all satisfy it: the first then crashes this hook on `recorded[rel]`, and the
+ * other two read back as an empty record, which silently keeps every bundled
+ * blob under a provenance nothing established — the precise assumption this
+ * module exists to refuse. Anything that is not a plain object is corruption.
+ *
+ * Individual entries are not checked. A non-string value never equals a hex
+ * digest, so it fails safe: the blob is dropped and re-encoded.
+ *
+ * @param value - The parsed manifest, straight from `JSON.parse`.
+ * @returns Whether it carries a signature and a usable source map.
+ */
+function isImageSourceManifest(value: unknown): value is ImageSourceManifest {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return false;
+  const { configSignature, sources } = value as Record<string, unknown>;
+  return (
+    typeof configSignature === "string" &&
+    typeof sources === "object" &&
+    sources !== null &&
+    !Array.isArray(sources)
+  );
+}
+
+/**
  * Establishes what the cache on disk can be trusted for, dropping it whole
  * when it cannot be trusted at all.
  *
@@ -144,7 +170,8 @@ function computeConfigSignature(options: Record<string, unknown>): string {
  *   hashes are usable and the bundled blobs stay.
  * - The signature differs: the optimizer's settings changed, so every blob —
  *   bundled ones included — was produced under rules that no longer apply.
- * - There is no manifest, or it is corrupt: nothing on disk has a stated
+ * - There is no manifest, or it is corrupt, or its shape is unusable (a
+ *   `sources` that is not an object, say): nothing on disk has a stated
  *   provenance. Keeping the bundled half would assert it was produced under
  *   the current settings, which is precisely the unverified assumption that
  *   left 71 blobs on this repo predating a settings change (see the module
@@ -168,17 +195,13 @@ async function loadManifest(
     const parsed: unknown = JSON.parse(
       await fs.promises.readFile(manifestPath, "utf8"),
     );
-    if (
-      parsed &&
-      typeof parsed === "object" &&
-      "configSignature" in parsed &&
-      "sources" in parsed
-    ) {
-      const manifest = parsed as ImageSourceManifest;
-      if (manifest.configSignature === signature) {
-        return { recorded: manifest.sources, wiped: false };
+    if (isImageSourceManifest(parsed)) {
+      if (parsed.configSignature === signature) {
+        return { recorded: parsed.sources, wiped: false };
       }
       reason = "image optimizer settings changed since the last build";
+    } else {
+      reason = "malformed manifest — the cache has no usable provenance";
     }
   } catch {
     // Falls through to the wipe with the default reason.
