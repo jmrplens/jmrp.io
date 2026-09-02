@@ -215,17 +215,13 @@ const NOT_NAME_CHAR = /[^a-zA-Z-]/;
 const SPACE_CHAR = /\s/;
 
 /**
- * The double-quoted attributes of a single tag, keyed by lower-cased name.
+ * The offset of the first character at or after `from` that `charClass` does
+ * not match.
  *
- * Scanned character by character rather than matched with
- * `/([a-zA-Z-]+)\s*=\s*"([^"]*)"/g`: that pattern can start inside a name, so
- * a long run of name characters is re-scanned from every offset and the search
- * is super-linear (Sonar javascript:S8786). This reads each tag once and takes
- * the same maximal name runs the regex took — a name run that is not followed
- * by `="` is skipped, exactly as every start offset inside it used to fail.
- *
- * @param {string} tag - One tag source, e.g. `<link href="…" rel="…">`.
- * @returns {Record<string, string>} Lower-cased attribute name -> raw value.
+ * @param {string} tag - One tag source.
+ * @param {number} from - Offset to start scanning at.
+ * @param {RegExp} charClass - Single-character class to consume.
+ * @returns {number} The offset scanning stopped at, never less than `from`.
  */
 function skipWhile(tag, from, charClass) {
   let at = from;
@@ -263,6 +259,19 @@ function readAttribute(tag, from) {
   };
 }
 
+/**
+ * The double-quoted attributes of a single tag, keyed by lower-cased name.
+ *
+ * Scanned character by character rather than matched with
+ * `/([a-zA-Z-]+)\s*=\s*"([^"]*)"/g`: that pattern can start inside a name, so
+ * a long run of name characters is re-scanned from every offset and the search
+ * is super-linear (Sonar javascript:S8786). This reads each tag once and takes
+ * the same maximal name runs the regex took — a name run that is not followed
+ * by `="` is skipped, exactly as every start offset inside it used to fail.
+ *
+ * @param {string} tag - One tag source, e.g. `<link href="…" rel="…">`.
+ * @returns {Record<string, string>} Lower-cased attribute name -> raw value.
+ */
 function tagAttributes(tag) {
   /** @type {Record<string, string>} */
   const attrs = {};
