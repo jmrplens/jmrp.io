@@ -621,6 +621,17 @@ const aboutSchema = z.object({
      */
     sponsorUrl: z.url().optional(),
     /**
+     * Human-readable `name` of that `DonateAction`, emitted as language-tagged
+     * literals.
+     *
+     * Required, not optional, on purpose: the action reached production
+     * carrying an untagged English sentence — the only authored prose in a
+     * document six external sites splice in next to Spanish copy. A mandatory
+     * label means that cannot come back by omission. To retire the action,
+     * remove `sponsorUrl`; a label with no URL emits nothing.
+     */
+    sponsorLabel: LocalizedString,
+    /**
      * The profession, emitted as `hasOccupation`. Deliberately separate from
      * `worksFor` (site.yaml), which reads as present tense — the canonical
      * entity must not claim a current employer it no longer has.

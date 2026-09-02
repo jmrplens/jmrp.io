@@ -21,6 +21,7 @@
  * Emitting a matching node here is a merge, not a duplicate — which is why the
  * YAML requires `name`/`summary.en` to match those sites verbatim.
  */
+import { MIT_LICENSE } from "@utils/license";
 import { getSiteUrl } from "@utils/site";
 import { wikidataEntityUri, wikidataLabel } from "@utils/wikidata";
 import { getEntry } from "astro:content";
@@ -69,7 +70,9 @@ export interface Project {
  * without parsing an identifier string.
  */
 const LICENSE_URLS: Readonly<Record<string, string>> = {
-  MIT: "https://opensource.org/licenses/MIT",
+  // Shared with the tool pages, which state the same MIT grant for the same
+  // code: one identifier, defined once (GEO audit 2026-09-02, M4).
+  MIT: MIT_LICENSE,
   "GPL-3.0": "https://www.gnu.org/licenses/gpl-3.0.html",
   "AGPL-3.0": "https://www.gnu.org/licenses/agpl-3.0.html",
   "Apache-2.0": "https://www.apache.org/licenses/LICENSE-2.0",

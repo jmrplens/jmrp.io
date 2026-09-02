@@ -24,6 +24,7 @@ import { formatDate, useTranslatedPath, useTranslations } from "@i18n/utils";
 import BaseLayout from "@layouts/BaseLayout.astro";
 import type { SiteConfig } from "@src/types";
 import { formatDateDot, getReadingTime, tagUrlSegment } from "@utils/blog";
+import { CC_BY_4_0, licensePageUrl } from "@utils/license";
 import { llmsPostShardPath } from "@utils/llms";
 import { postDateModified } from "@utils/post-dates";
 import { getRelatedContent } from "@utils/related";
@@ -113,21 +114,62 @@ const bodyWithoutCode = (post.body || "")
   .replaceAll(/`([^`]*?)`/g, "$1");
 
 /**
+ * Strips CommonMark inline emphasis from a reference label.
+ *
+ * Link text is collected from the raw MDX body, so it still carries the
+ * delimiters the renderer consumes. `[*A Lesson In Timing Attacks*](…)` was
+ * published verbatim — asterisks included — as the visible bibliography entry
+ * AND as `citation.name` in the graph: 10 of the collected references across
+ * the corpus (four paper titles per locale, plus one bolded sentence per
+ * locale). `citation.name` is what a generative engine quotes, so shipping
+ * `**10,000 relays**` hands it markup to guess about (GEO audit 2026-09-02, M3).
+ *
+ * Delimiter rules follow CommonMark, deliberately:
+ * - `_` counts only when it is NOT intraword, so `mbedtls_ct_memcmp` and
+ *   `SOURCE_DATE_EPOCH` — which arrive here unwrapped out of inline code —
+ *   survive untouched, while `_A Lesson In Timing Attacks_` does not.
+ * - `*` has no such rule in CommonMark and needs none here: a run must open and
+ *   close on a non-space character, so `a * b` is left alone. `2*3 and 4*5`
+ *   correctly becomes `23 and 45` — CommonMark does allow intraword `*`.
+ *
+ * This is an approximation, not a delimiter-run implementation: the passes are
+ * leftmost-greedy, so nested/unbalanced runs can diverge from CommonMark —
+ * `*foo**bar*` yields `foobar` where CommonMark renders `foo**bar`. Zero
+ * occurrences in the corpus; same class as the unwrapped-inline-code risk
+ * noted above. If one ever appears, the fix is the link text in the MDX.
+ *
+ * @param text - Raw link text.
+ * @returns The same text with paired emphasis delimiters removed.
+ */
+const stripEmphasis = (text: string): string =>
+  text
+    .replaceAll(/(\*\*\*|___)(?=\S)([\s\S]*?\S)\1/g, "$2")
+    .replaceAll(/\*\*(?=\S)([\s\S]*?\S)\*\*/g, "$1")
+    .replaceAll(
+      /(?<![\p{L}\p{N}])__(?=\S)([\s\S]*?\S)__(?![\p{L}\p{N}])/gu,
+      "$1",
+    )
+    .replaceAll(/\*(?=\S)([^*\n]*?\S)\*/g, "$1")
+    .replaceAll(/(?<![\p{L}\p{N}])_(?=\S)([^_\n]*?\S)_(?![\p{L}\p{N}])/gu, "$1")
+    .replaceAll(/~~(?=\S)([\s\S]*?\S)~~/g, "$1");
+
+/**
  * The name a reference is published under, in the list and in `citation`.
  *
- * Whitespace is collapsed (an unwrapped code span can leave double spaces) and
- * an empty label falls back to the host, which is the same rule References.astro
- * already applies when rendering — the graph was the only surface still
- * publishing a blank citation name.
+ * Emphasis is stripped, whitespace is collapsed (an unwrapped code span can
+ * leave double spaces) and an empty label falls back to the host, which is the
+ * same rule References.astro already applies when rendering — the graph was the
+ * only surface still publishing a blank citation name.
  *
- * KEEP-IN-SYNC: `label` in src/components/ui/References.astro.
+ * KEEP-IN-SYNC: `label` in src/components/ui/References.astro (the empty-label
+ * fallback only; emphasis is stripped here, upstream of every consumer).
  *
  * @param text - Raw link text.
  * @param url - The reference URL.
  * @returns A non-empty label.
  */
 const referenceLabel = (text: string, url: string): string => {
-  const clean = text.replaceAll(/\s+/g, " ").trim();
+  const clean = stripEmphasis(text).replaceAll(/\s+/g, " ").trim();
   if (clean) return clean;
   try {
     return new URL(url, getSiteUrl()).hostname || url;
@@ -136,6 +178,22 @@ const referenceLabel = (text: string, url: string): string => {
   }
 };
 
+/** ASCII punctuation is the only thing CommonMark lets a backslash escape. */
+const MD_ESCAPE = /\\([!"#$%&'()*+,\-./:;<=>?@[\\\]^_`{|}~])/g;
+
+/**
+ * Turns a matched link destination into the URL to publish: unwraps the
+ * angle-bracket form and resolves backslash escapes.
+ *
+ * @param destination - Capture group 2 of `linkRegex`, verbatim.
+ * @returns The destination as a URL.
+ */
+const referenceUrl = (destination: string): string =>
+  (destination.startsWith("<") && destination.endsWith(">")
+    ? destination.slice(1, -1)
+    : destination
+  ).replaceAll(MD_ESCAPE, "$1");
+
 // Link-text group excludes newlines and `[`/`{` so the scan can't run from a
 // JSX array/object bracket (e.g. `events={[ … [Real Link](url)`) through to a
 // real link's `](`, which would otherwise capture a mangled multi-line "title".
@@ -143,12 +201,34 @@ const referenceLabel = (text: string, url: string): string => {
 // inline code is stripped above and a link whose whole text was code arrives
 // here as `[](url)`. Requiring one character dropped that citation instead of
 // letting `referenceLabel` fall back to the host.
-const linkRegex = /\[([^\]\n[{]*)\]\(([^)]+(?:\([^)]+\)[^)]*)*)\)/g;
+//
+// The DESTINATION group is a CommonMark inline-link destination, not "run to
+// the first `)`". Its predecessor — `([^)]+(?:\([^)]+\)[^)]*)*)` — reads as
+// paren-aware and is not: `[^)]+` already accepts `(`, so it always wins the
+// first `)` and the balanced branch is unreachable. Post 011 cites
+// `…#Cipher_block_chaining_\(CBC\)` and the site published the truncated
+// `…_\(CBC\` — backslashes and all — as the bibliography href and as
+// `citation.url`, three paragraphs below the correct `…_(CBC)` the markdown
+// renderer had emitted for the same link (GEO audit 2026-09-02, M3).
+//
+// The destination is one or more of: a plain character, a backslash escape, or
+// one balanced `(…)` group; an optional `"title"` follows it and is NOT part of
+// it. The angle-bracket form `(<…>)` is matched by the plain-character branch
+// and unwrapped in `referenceUrl`. Deliberately NOT modelled, because
+// `sonarjs/regex-complexity` caps this at 20 and each costs more than it
+// returns: `'…'`/`(…)` titles, whitespace between `(` and the destination, and
+// a destination containing a space inside `<…>`. Measured over the corpus:
+// 441 `](` occurrences in the raw MDX (376 inline links after the code-strip
+// above) — 2 with escaped parens (post 011 EN + ES), 0 balanced,
+// 0 angle-bracket, 0 with a title of any kind. Alternatives are disjoint on
+// their first character, so the `+` cannot backtrack super-linearly.
+const linkRegex =
+  /\[([^\]\n[{]*)\]\(((?:[^\s()\\]|\\[\s\S]|\([^()\n]*\))+)(?:[ \t]+"[^"\n]*")?\)/g;
 const collectedRefsFromMarkdown = [];
 let match;
 while ((match = linkRegex.exec(bodyWithoutCode)) !== null) {
-  const url = match[2];
-  if (url.startsWith("#")) continue;
+  const url = referenceUrl(match[2]);
+  if (!url || url.startsWith("#")) continue;
   collectedRefsFromMarkdown.push({ text: referenceLabel(match[1], url), url });
 }
 
@@ -255,7 +335,15 @@ const articleNode = {
   // would carry terms for the cover image and stay silent about the words
   // beside it — the same gap Search Console reported for the images, and
   // the one that would make the page's own claim untrue.
-  license: "https://creativecommons.org/licenses/by/4.0/",
+  license: CC_BY_4_0,
+  // The two things `license` alone cannot say, and that the page says in prose:
+  // material quoted from elsewhere is not covered, and code written FOR the
+  // article is freer than the prose around it. `usageInfo` is the property for
+  // exactly that qualification, and `#writing` is the section that states both
+  // (GEO audit 2026-09-02, M4). Locale-aware: the Spanish page's anchor is
+  // `#textos`, so a hard-coded `#writing` would be a dead link on 12 pages.
+  usageInfo: licensePageUrl(locale, "writing"),
+  copyrightHolder: personRef,
   image: {
     "@type": "ImageObject",
     url: new URL(jsonLdImage, getSiteUrl()).href,
@@ -289,8 +377,14 @@ const articleNode = {
     // links for humans, because this value is an identifier a machine matches
     // rather than a page it reads. The grant is real and irrevocable, which is
     // why the portrait is excluded from it and licensed separately.
-    license: "https://creativecommons.org/licenses/by/4.0/",
+    license: CC_BY_4_0,
     acquireLicensePage: new URL(translatePath("/license/"), getSiteUrl()).href,
+    // Who holds the right the license grants from. `creator` says who made it,
+    // `creditText` how to name them; neither states ownership, which is the one
+    // thing someone reusing it has to know to judge whether the grant is the
+    // owner's to make. No `usageInfo` here: `acquireLicensePage` already points
+    // at the page, and a third URL saying the same would be noise.
+    copyrightHolder: personRef,
     // Numeric, not a quoted string: schema.org types MediaObject width/height
     // as Distance | QuantitativeValue, never Text. E37 = pixel (UN/CEFACT).
     width: {
@@ -316,8 +410,8 @@ const articleNode = {
   // clean, chrome-free encoding of the same article exists (GEO audit
   // 2026-08-27, M8). `encoding` is schema.org's property for exactly that —
   // another encoding of the SAME CreativeWork — so it hangs off the article
-  // node instead of becoming a second work. Same path helper the `markdownHref`
-  // prop below uses, so the two can never point at different files.
+  // node instead of becoming a second work. Same path helper BaseHead resolves
+  // the head `<link>` with, so the two can never point at different files.
   encoding: {
     "@type": "MediaObject",
     "@id": markdownTwinUrl,
@@ -474,7 +568,6 @@ const articleSchema = [
   modifiedDate={isRevised ? revisedDate : undefined}
   tags={post.data.tags}
   schema={articleSchema}
-  markdownHref={markdownTwinPath}
 >
   {isFallback && <FallbackBanner locale={locale} />}
   <article

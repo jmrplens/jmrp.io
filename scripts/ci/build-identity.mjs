@@ -294,15 +294,27 @@ function buildIdentityDocument() {
     // new, and a funding page is not an identity anyway. `DonateAction` is the
     // property schema.org has for "you can donate here".
     //
-    // No `recipient`: the action hangs off the Person node itself, so the
-    // recipient is unambiguous. Naming it would mean an `@id` reference, and
-    // the six downstream sites splice this document into a graph where such a
-    // reference resolves only by luck.
+    // `recipient` names who receives the donation, and it is not optional
+    // politeness. schema.org defines `potentialAction` as "an idealized action
+    // in which this thing would play an OBJECT role", and a DonateAction's
+    // object is the thing donated — so the action on its own said the person
+    // was the donated good. schema.org's own DonateAction example ("John
+    // donated $10 to Steve") puts the human in `recipient`, which is the only
+    // property that states the receiving end; there is no inverse property to
+    // hang the action off its recipient instead.
+    //
+    // An earlier revision left it out, reasoning that the six downstream sites
+    // would resolve the `@id` "only by luck". They resolve it by construction:
+    // all six strip `@context` and splice THIS node into their graph verbatim,
+    // keeping this same `@id`, so the reference names the very node that
+    // carries it — exactly like `image.creator` below, which has shipped in
+    // this shape all along.
     // KEEP-IN-SYNC: src/components/layout/BaseHead.astro.
     ...(about.person.sponsorUrl && {
       potentialAction: {
         "@type": "DonateAction",
-        name: "Sponsor this work on GitHub",
+        name: localizedValues(about.person.sponsorLabel),
+        recipient: { "@id": PERSON_ID },
         target: {
           "@type": "EntryPoint",
           urlTemplate: about.person.sponsorUrl,
