@@ -487,7 +487,22 @@ export const common = {
       schemaName: "Blog - José Manuel Requena Plens",
       relatedTitle: "Related on this site",
       relatedTools: "Try the tool",
-      lastVerified: "Last verified {date}",
+      // Two claims sit in a post's header and they are not about the same
+      // thing: "Updated {date}" is when the TEXT last changed, and this line is
+      // when the author last re-ran the article's own instructions. "Last
+      // verified 1 August" beside "Updated 3 September" read as a contradiction
+      // — changed today, unchecked for a month — because both labels sounded
+      // like a claim about the same act. Naming the act ("re-tested") and what
+      // it was performed against removes the collision.
+      //
+      // The connector before the versions lives INSIDE the string on purpose:
+      // it is "against" in English and "con" in Spanish, and the ` · ` that
+      // used to stand in for it said nothing at all. The second variant is
+      // used when the post pins versions, which is every post today, but the
+      // schema defaults them to an empty array and a dangling "against" would
+      // be worse than no versions.
+      lastVerified: "Instructions re-tested {date}",
+      lastVerifiedVersions: "Instructions re-tested {date} against {versions}",
     },
     blogPost: {
       backToBlog: "Back to Blog",

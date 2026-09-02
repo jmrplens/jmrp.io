@@ -782,6 +782,18 @@ export async function generateLlmsTxt(siteUrl: string): Promise<string> {
     "",
     `> ${DESCRIPTION}`,
     "",
+    // The origin this index describes, stated once, so a copy of the file
+    // that travels away from the site still says where its content lives —
+    // the question the twins' own `Canonical:` line answers per page.
+    //
+    // Honest about its status: llmstxt.org defines no key-value header for
+    // this file either (an H1, a summary blockquote and H2 link lists is the
+    // whole format), so this is not a spec field. It is admissible as one of
+    // the "zero or more markdown sections … of any type except headings" the
+    // spec does allow, and it follows the precedent of the `Last updated:`
+    // line below it, which is the same kind of local convention.
+    `Canonical: ${siteUrl}/`,
+    "",
     `Last updated: ${today()}`,
     "",
     ABOUT,
@@ -931,7 +943,14 @@ function postRevisionLines(
 }
 
 /**
- * The `Last verified:` line, with the versions the post was re-tested against.
+ * The `Instructions re-tested:` line, with the versions it was re-tested
+ * against.
+ *
+ * The key follows the byline's wording (`pages.blog.lastVerified`) rather than
+ * the frontmatter's field name: `Last verified:` sat one line under `Updated:`
+ * here exactly as it sat beside "Updated …" on the page, and in both places the
+ * two labels read as competing claims about the same act instead of two
+ * different facts — when the text changed, and when the steps were last run.
  *
  * @param d - The post's frontmatter.
  * @returns One line, or none.
@@ -950,7 +969,7 @@ function postLastVerifiedLines(d: CollectionEntry<"posts">["data"]): string[] {
   const versions =
     verified.versions.length > 0 ? ` · ${verified.versions.join(" · ")}` : "";
   return [
-    `Last verified: ${verified.date.toISOString().slice(0, 10)}${versions}`,
+    `Instructions re-tested: ${verified.date.toISOString().slice(0, 10)}${versions}`,
   ];
 }
 
@@ -1040,7 +1059,10 @@ function buildPostEntry(
     // No `### <title>` here: the only caller is the shard, whose `# <title>`
     // header names the post one line above. Emitting both put the article
     // title in the document twice and pushed every real section down a level.
-    `URL: ${postUrl}`,
+    // The same key the page twins carry — see `documentHeader`. A post twin
+    // builds its header here rather than there, so the two have to be kept
+    // saying the same thing by hand.
+    `Canonical: ${postUrl}`,
     `Language: ${locale}`,
     `Alternate: ${alternateTwinUrl(postUrl, locale)}`,
     // The canonical CC BY URI, not the license page, because for a post the
@@ -1259,7 +1281,17 @@ export function documentHeader(
     // The build date, not a content date — `Updated:` below is the real one.
     `> Generated: ${today()}`,
     "",
-    `URL: ${url}`,
+    // `Canonical:`, not `URL:`. The value is the PAGE this document mirrors,
+    // and `URL:` never said which of the two it meant — this file, or the page
+    // it twins. The name is the one nginx already uses on these very bytes, in
+    // the `Link: <…>; rel="canonical"` header it sends with every twin, so the
+    // header and the body now answer with the same word.
+    //
+    // No standard is behind the rename: llmstxt.org defines the shape of
+    // `llms.txt` alone and says nothing at all about a header block inside a
+    // per-page markdown file. This block is this project's own convention, and
+    // its keys are ours to name.
+    `Canonical: ${url}`,
     // The keys stay English: they are the schema. The values are the language.
     `Language: ${locale}`,
     `Alternate: ${alternateTwinUrl(url, locale)}`,
@@ -1732,6 +1764,10 @@ export async function generateLlmsFullTxt(siteUrl: string): Promise<string> {
     "> This file is an index. Every entry links to a markdown twin that carries\n> the detail, which is what keeps the index itself small enough to fit in an\n> agent's context. Posts, tools, the CV and the publications each live at\n> their page's own URL with `index.md` appended.",
     "",
     `> Reuse: articles, page copy and blog covers are CC BY 4.0 with attribution; the source code is MIT; the portrait is reserved. Full terms: ${siteUrl}/license/`,
+    "",
+    // The same declaration llms.txt opens with, in this file's blockquote
+    // style: both indexes name one origin for everything they list.
+    `> Canonical: ${siteUrl}/`,
     "",
     // The build date, not a content date — see the same label on the shards.
     `> Generated: ${today()}`,

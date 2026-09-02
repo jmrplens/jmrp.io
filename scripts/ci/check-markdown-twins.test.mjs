@@ -70,7 +70,7 @@ function sibling(pagePath) {
 /** A twin body with the header fields every real twin carries. */
 function twinBody(pagePath, { updated = LASTMOD } = {}) {
   return (
-    `# Page\n\nURL: ${ORIGIN}${pagePath}\nLanguage: en\n` +
+    `# Page\n\nCanonical: ${ORIGIN}${pagePath}\nLanguage: en\n` +
     `Alternate: ${ORIGIN}${sibling(pagePath)}index.md\n` +
     (updated === null ? "" : `Updated: ${updated}\n`)
   );
@@ -352,12 +352,15 @@ test("an empty or stub twin does not satisfy 'the twin exists'", () => {
   );
 });
 
-test("a twin that names another page's URL is caught", () => {
+test("a twin that names another page as its canonical is caught", () => {
   const dir = makeSite(({ dir }) => {
     write(dir, "about/index.md", twinBody("/cv/"));
   });
   assert.ok(
-    has(run(dir), `/about/index.md does not declare "URL: ${ORIGIN}/about/"`),
+    has(
+      run(dir),
+      `/about/index.md does not declare "Canonical: ${ORIGIN}/about/"`,
+    ),
   );
 });
 
