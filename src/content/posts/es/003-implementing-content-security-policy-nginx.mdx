@@ -129,7 +129,7 @@ Esto no es hipotético — jmrp.io es en sí mismo la implementación de referen
 
 Las violaciones no se pierden en un log que nadie lee: tengo mi propio receptor (`scripts/csp-reporter.mjs`) que las saca a la luz en cuanto ocurren, en vez de depender de un servicio de terceros para saber qué se está rompiendo.
 
-Medido contra la API actual de Mozilla Observatory (v5), esta configuración obtiene una **calificación A+: puntuación 140, con los 10 tests pasados y cero fallos**. Esa es la cifra a día de hoy — no el 145 que puedes ver referenciado en otra parte de este sitio, de un commit de diciembre de 2025. Aquel total incluía un bonus de 5 puntos que Observatory concede por servir cookies con `Secure`/`HttpOnly`/`SameSite`; esas cookies eran dos valores dummy que no hacían nada útil, y eliminarlas —para que la página `/privacy/` de este sitio pueda afirmar honestamente que ninguna respuesta fija `Set-Cookie`— costó 5 puntos cosméticos en una política que ya no falla ni un solo test. Ese cambio mereció claramente la pena.
+Medido contra la API de Mozilla Observatory, esta configuración obtiene una **A+**. La calificación se ha mantenido en las dos generaciones de puntuación: 140 con los 10 tests pasados bajo el algoritmo v5, y 160 con los 12 pasados bajo v6, medido el 2 de septiembre de 2026. Ninguna de las dos es el 145 que el README de este repositorio anunció hasta hace poco, de un commit de diciembre de 2025. Aquel total incluía un bonus de 5 puntos que Observatory concede por servir cookies con `Secure`/`HttpOnly`/`SameSite`; esas cookies eran dos valores dummy que no hacían nada útil, y eliminarlas —para que la página `/privacy/` de este sitio pueda afirmar honestamente que ninguna respuesta fija `Set-Cookie`— costó 5 puntos cosméticos en una política que ya no falla ni un solo test. Ese cambio mereció claramente la pena, y el badge ahora lleva la calificación y no una puntuación, porque la calificación es la parte que no se mueve.
 
 ### Qué contienen de verdad los informes de violación
 
@@ -270,7 +270,7 @@ Con CSP, el navegador verifica cada recurso contra tu política **antes** de eje
 
 ---
 
-## Cómo funcionan los ataques XSS (y cómo CSP los detiene)
+## ¿Cómo funcionan los ataques XSS y cómo los detiene CSP?
 
 Para entender el valor de CSP, vamos a trazar un ataque XSS típico:
 
@@ -321,7 +321,7 @@ is required to enable inline execution.
 
 ---
 
-## Vectores de ataque que CSP previene
+## ¿Qué ataques previene realmente una CSP?
 
 CSP aborda múltiples categorías de amenazas. Así es como las diferentes directivas crean defensa en profundidad:
 
@@ -712,7 +712,7 @@ add_header Content-Security-Policy "
 
 ---
 
-## El reto de los scripts inline
+## ¿Por qué los scripts inline son la parte difícil de CSP?
 
 La mayoría de sitios web tienen scripts inline como este:
 
@@ -1013,7 +1013,7 @@ flowchart TB
   Esto es intencionado y en realidad aumenta la seguridad.
 </Callout>
 
-### Cuándo usar `'strict-dynamic'`
+### ¿Cuándo conviene usar `'strict-dynamic'`?
 
 <Table title="Casos de uso de strict-dynamic">
   <thead>
@@ -1080,7 +1080,7 @@ base-uri 'none';
 ```
 </Code>
 
-### Por qué las allowlists no funcionan
+### ¿Por qué no funcionan las allowlists?
 
 <Callout type="warning" icon="mdi:alert">
   **El 94,72 % de las CSP basadas en allowlists se pueden eludir** ([Investigación de Google, 2016](https://research.google/pubs/csp-is-dead-long-live-csp-on-the-insecurity-of-whitelists-and-the-future-of-content-security-policy/))
@@ -1697,7 +1697,7 @@ Either the 'unsafe-inline' keyword, a hash ('sha256-...'), or a nonce
 
 ---
 
-## Errores comunes
+## ¿Qué falla más a menudo al adoptar CSP?
 
 ### 1. Usar `'unsafe-inline'` para scripts
 
@@ -1887,5 +1887,5 @@ server {
 </StepByStep>
 
 <Callout type="success" icon="mdi:trophy">
-  **Resultado:** Esta es exactamente la configuración que corre en producción en este sitio — una calificación A+ con puntuación 140 y los 10 tests pasados en [Mozilla Observatory](https://developer.mozilla.org/en-US/observatory), con la funcionalidad completa del sitio intacta y los usuarios protegidos de ataques XSS.
+  **Resultado:** Esta es exactamente la configuración que corre en producción en este sitio — una calificación A+ en [Mozilla Observatory](https://developer.mozilla.org/en-US/observatory), con la funcionalidad completa del sitio intacta y los usuarios protegidos de ataques XSS.
 </Callout>

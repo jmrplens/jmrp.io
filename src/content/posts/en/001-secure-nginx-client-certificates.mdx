@@ -98,7 +98,7 @@ In this comprehensive guide, I'll walk you through implementing mTLS on Nginx, c
 
 ---
 
-## Why mTLS? The Zero Trust Approach
+## Why does Zero Trust rely on mTLS instead of passwords?
 
 In the modern security landscape, the perimeter-based model ("trust everything inside the firewall") is obsolete. **[Zero Trust](https://www.cloudflare.com/learning/security/glossary/what-is-zero-trust/)** assumes that attackers may already be inside your network and requires verification for every access request.
 
@@ -188,7 +188,7 @@ As for issuance: I keep a per-device OpenSSL workflow (a CSR, a config, and a me
 
 An honest confession: **I publish no CRL and no OCSP**. With three certificates on devices I physically control, revocation at this scale means reissuing from the CA — a reasonable trade-off here that would be unacceptable with dozens of clients. If your fleet grows, `ssl_crl` stops being optional.
 
-## One-Way TLS vs Mutual TLS
+## What is the difference between one-way TLS and mutual TLS?
 
 Understanding the difference is fundamental:
 
@@ -242,7 +242,7 @@ mTLS adds a second step: after verifying the server, the **server requests a cer
 
 ---
 
-## The mTLS handshake flow
+## What happens during an mTLS handshake?
 
 
 
@@ -1078,7 +1078,7 @@ ssl_dhparam /etc/nginx/dhparam.pem;
 
 ---
 
-## Advanced access control
+## How do you limit what each client certificate can reach?
 
 
 

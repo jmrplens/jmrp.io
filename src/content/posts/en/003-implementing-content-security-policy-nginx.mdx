@@ -128,7 +128,7 @@ This isn't a hypothetical — jmrp.io itself is the reference implementation for
 
 Violations don't disappear into a log nobody reads: I run my own receiver (`scripts/csp-reporter.mjs`) that surfaces them as they happen, instead of relying on a third party to tell me what's breaking.
 
-Measured against the current Mozilla Observatory API (v5), this configuration earns an **A+ rating: a score of 140, with all 10 tests passing and zero failures**. That's the number as of writing — not the 145 you might see referenced elsewhere on this site from a December 2025 commit. That older total included a 5-point bonus Observatory grants for serving cookies with `Secure`/`HttpOnly`/`SameSite`; those cookies were two placeholder values that did nothing useful, and removing them — so this site's `/privacy/` page can honestly claim no response ever sets `Set-Cookie` — cost 5 cosmetic points on a policy that already fails nothing. That trade was obviously worth it.
+Measured against the Mozilla Observatory API, this configuration earns an **A+**. The grade has held across both scoring generations: 140 with all 10 tests passing under algorithm v5, and 160 with all 12 passing under v6, measured 2 September 2026. Neither is the 145 this repository's README advertised until recently, from a December 2025 commit. That older total included a 5-point bonus Observatory grants for serving cookies with `Secure`/`HttpOnly`/`SameSite`; those cookies were two placeholder values that did nothing useful, and removing them — so this site's `/privacy/` page can honestly claim no response ever sets `Set-Cookie` — cost 5 cosmetic points on a policy that already fails nothing. That trade was obviously worth it, and the badge now carries the grade rather than a score, because the grade is the part that doesn't move.
 
 ### What the violation reports actually contain
 
@@ -268,7 +268,7 @@ With CSP, the browser checks every resource against your policy **before** execu
 
 ---
 
-## How XSS Attacks Work (and How CSP Stops Them)
+## How do XSS attacks work, and how does CSP stop them?
 
 To understand CSP's value, let's trace a typical XSS attack:
 
@@ -319,7 +319,7 @@ is required to enable inline execution.
 
 ---
 
-## Attack Vectors CSP Prevents
+## Which attacks does a CSP actually prevent?
 
 CSP addresses multiple threat categories. Here's how different directives create defense-in-depth:
 
@@ -710,7 +710,7 @@ add_header Content-Security-Policy "
 
 ---
 
-## The Inline Script Challenge
+## Why are inline scripts the hard part of CSP?
 
 Most websites have inline scripts like this:
 
@@ -1011,7 +1011,7 @@ flowchart TB
   This is by design and actually increases security.
 </Callout>
 
-### When to Use `'strict-dynamic'`
+### When should you use `'strict-dynamic'`?
 
 <Table title="strict-dynamic Use Cases">
   <thead>
@@ -1078,7 +1078,7 @@ base-uri 'none';
 ```
 </Code>
 
-### Why Allowlists Don't Work
+### Why don't allowlists work?
 
 <Callout type="warning" icon="mdi:alert">
   **94.72% of allowlist CSPs can be bypassed** ([Google Research, 2016](https://research.google/pubs/csp-is-dead-long-live-csp-on-the-insecurity-of-whitelists-and-the-future-of-content-security-policy/))
@@ -1695,7 +1695,7 @@ Either the 'unsafe-inline' keyword, a hash ('sha256-...'), or a nonce
 
 ---
 
-## Common Pitfalls
+## What goes wrong most often when adopting CSP?
 
 ### 1. Using `'unsafe-inline'` for Scripts
 
@@ -1885,7 +1885,7 @@ server {
 </StepByStep>
 
 <Callout type="success" icon="mdi:trophy">
-  **Result:** This is exactly the configuration running in production on this site — an A+ rating with a score of 140 and all 10 tests passing on [Mozilla Observatory](https://developer.mozilla.org/en-US/observatory), full site functionality intact, and users protected from XSS attacks.
+  **Result:** This is exactly the configuration running in production on this site — an A+ rating on [Mozilla Observatory](https://developer.mozilla.org/en-US/observatory), full site functionality intact, and users protected from XSS attacks.
 </Callout>
 
 

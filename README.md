@@ -2,7 +2,7 @@
 
 <!-- Project & Status -->
 
-![Astro](https://img.shields.io/badge/astro-7.0.2-orange?style=flat&logo=astro)
+![Astro](https://img.shields.io/github/package-json/dependency-version/jmrplens/jmrp.io/astro?logo=astro&color=orange&style=flat)
 ![Code license](https://img.shields.io/badge/code-MIT-blue.svg)
 ![Content license](https://img.shields.io/badge/content-CC%20BY%204.0-lightgrey.svg)
 [![Dependabot](https://badgen.net/badge/Dependabot/enabled/green?icon=dependabot)](https://github.com/jmrplens/jmrp.io/pulls)
@@ -15,9 +15,8 @@
 
 <!-- Performance & Security -->
 
-[![Mozilla Observatory Grade](https://img.shields.io/badge/Mozilla%20Observatory-145%2F100-brightgreen?style=flat-square&logo=mozilla)](https://observatory.mozilla.org/analyze/jmrp.io)
-![PageSpeed Desktop](https://img.shields.io/badge/PageSpeed%20Desktop-100-brightgreen)
-![PageSpeed Mobile](https://img.shields.io/badge/PageSpeed%20Mobile-100-brightgreen)
+[![Mozilla Observatory Grade](https://img.shields.io/badge/Mozilla%20Observatory-A%2B-brightgreen?style=flat-square&logo=mozilla)](https://developer.mozilla.org/en-US/observatory/analyze?host=jmrp.io)
+[![PageSpeed Insights](https://img.shields.io/badge/PageSpeed%20Insights-measure%20it-brightgreen?style=flat-square&logo=googlechrome&logoColor=white)](https://pagespeed.web.dev/analysis?url=https%3A%2F%2Fjmrp.io%2F)
 
 This is the source code for my personal website, **[jmrp.io](https://jmrp.io)**, built with **Astro 7**. It features a high-performance static architecture, robust security headers (including a strict CSP), and a focus on accessibility and modern web standards.
 
@@ -38,7 +37,7 @@ This is the source code for my personal website, **[jmrp.io](https://jmrp.io)**,
 ## 🚀 Features
 
 - **Performance**:
-  - **100/100 Google PageSpeed** (Desktop & Mobile).
+  - **Lighthouse Performance**: 100 on desktop; 92-99 on mobile.
   - **Core Web Vitals**: LCP < 0.8s, CLS < 0.031, FCP < 0.3s.
   - **SSG (Static Site Generation)**: All pages pre-rendered at build time.
   - **Islands Architecture**: Minimal JavaScript with Preact islands.

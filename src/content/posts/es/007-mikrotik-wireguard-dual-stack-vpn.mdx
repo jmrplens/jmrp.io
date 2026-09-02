@@ -133,7 +133,7 @@ delegado, para que el túnel sobreviva a los cambios de prefijo de tu ISP.
 
 ## Cómo lo ejecuto en mi propia infraestructura
 
-La configuración de arriba no es un ejercicio de laboratorio — es el WireGuard que corre hoy en mi propio RB5009UG+S+ con RouterOS 7.23.2, con la misma disposición de interfaces que esta guía, con el MTU estándar de 1500.
+La configuración de arriba no es un ejercicio de laboratorio — es el WireGuard que tengo en marcha en mi propio RB5009UG+S+, con la misma disposición de interfaces que esta guía y con el MTU estándar de 1500. La versión de RouterOS con la que se comprobó cada guía por última vez está sellada al principio de su propia página, y por eso el mismo router aparece con una versión distinta aquí y en [la guía del honeypot](/es/blog/006-implementing-mikrotik-honeypot/).
 
 Sinceramente, no hay ningún incidente que contar. Me gustaría ofrecerte una historia de terror sobre MSS clamping que fallara o un handshake que se rompiera en silencio, pero no es lo que ha pasado aquí: este túnel lleva tiempo funcionando sin un solo problema de uso, con buen rendimiento y conectividad dual-stack completa — IPv4 e IPv6 funcionan de extremo a extremo, siempre. Si tu despliegue sigue los pasos de arriba, ese es exactamente el resultado aburrido y fiable que deberías esperar.
 

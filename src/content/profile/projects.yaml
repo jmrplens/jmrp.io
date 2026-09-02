@@ -94,8 +94,8 @@ projects:
       - { name: Go, wikidata: Q37227 }
       - { name: DevOps, wikidata: Q3025536 }
     summary:
-      en: Model Context Protocol server that exposes more than 1,000 GitLab operations as AI-accessible tools.
-      es: Servidor Model Context Protocol que expone más de 1.000 operaciones de GitLab como herramientas accesibles para asistentes de IA.
+      en: Model Context Protocol server that exposes 850+ GitLab actions as AI-accessible tools — 1,000+ on Enterprise.
+      es: Servidor Model Context Protocol que expone más de 850 acciones de GitLab como herramientas accesibles para asistentes de IA (más de 1.000 en Enterprise).
 
   - id: phonometry
     name: phonometry

@@ -55,7 +55,7 @@ howto:
       anchor: "crea-tu-directorio-pki"
     - name: "Crear la certificate authority"
       text: "Escribe un archivo openssl.cnf completo con los valores por defecto de la CA, las políticas y los perfiles de extensión v3_ca y v3_client, y luego genera la clave privada de la CA de 4096 bits y un certificado de CA autofirmado válido 10 años."
-      anchor: "creando-tu-certificate-authority"
+      anchor: "crear-tu-certificate-authority"
     - name: "Generar certificados de cliente"
       text: "Para cada dispositivo, genera una clave privada, crea un CSR con el CN del cliente y fírmalo con tu CA usando las extensiones v3_client para producir un certificado de cliente."
       anchor: "genera-un-certificado-de-cliente"
@@ -64,13 +64,13 @@ howto:
       anchor: "crea-el-paquete-pkcs12-para-clientes"
     - name: "Configurar Nginx para mTLS"
       text: "En el bloque server, apunta ssl_client_certificate a tu CA, establece ssl_verify_client on, configura ssl_verify_depth y protocolos/cipher suites TLS fuertes, y luego comprueba con nginx -t y recarga."
-      anchor: "configurando-nginx-para-mtls"
+      anchor: "configurar-nginx-para-mtls"
     - name: "Añadir revocación de certificados (CRL)"
       text: "Revoca los certificados comprometidos con openssl ca -revoke, regenera el CRL con openssl ca -gencrl, habilítalo mediante ssl_crl y recarga Nginx cada vez que revoques un certificado."
       anchor: "revocación-de-certificados-crl-vs-ocsp"
     - name: "Instalar certificados en los dispositivos cliente"
       text: "Transfiere el archivo .p12 de forma segura e impórtalo en el keychain o almacén de certificados en iOS, macOS, Windows, Android, o mediante curl en Linux."
-      anchor: "instalando-certificados-en-los-clientes"
+      anchor: "instalar-certificados-en-los-clientes"
 ---
 
 import Callout from "@components/ui/Callout.astro";
@@ -99,7 +99,7 @@ En esta guía completa, te guiaré a través de la implementación de mTLS en Ng
 
 ---
 
-## ¿Por qué mTLS? El enfoque Zero Trust
+## ¿Por qué Zero Trust se apoya en mTLS y no en contraseñas?
 
 En el panorama de seguridad actual, el modelo basado en perímetro ("confía en todo lo que está dentro del firewall") está obsoleto. **[Zero Trust](https://www.cloudflare.com/learning/security/glossary/what-is-zero-trust/)** asume que los atacantes podrían estar ya dentro de tu red y requiere verificación para cada solicitud de acceso.
 
@@ -189,7 +189,7 @@ En cuanto a la emisión: mantengo un flujo con OpenSSL por dispositivo (un CSR, 
 
 Una confesión honesta: **no publico CRL ni OCSP**. Con tres certificados en dispositivos que controlo físicamente, revocar a esta escala significa reemitir desde la CA — un compromiso razonable aquí que sería inaceptable con decenas de clientes. Si tu flota crece, `ssl_crl` deja de ser opcional.
 
-## TLS Unidireccional vs Mutual TLS
+## ¿Qué diferencia hay entre TLS unidireccional y mutual TLS?
 
 Entender la diferencia es fundamental:
 
@@ -243,7 +243,7 @@ mTLS añade un segundo paso: después de verificar el servidor, el **servidor so
 
 ---
 
-## El flujo del handshake mTLS
+## ¿Qué ocurre durante un handshake mTLS?
 
 
 
@@ -334,7 +334,7 @@ echo 1000 | sudo tee crlnumber > /dev/null
 
 ---
 
-## Creando tu certificate authority
+## Crear tu certificate authority
 
 
 
@@ -684,7 +684,7 @@ Certificate:
 
 ---
 
-## Generando certificados de cliente
+## Generar certificados de cliente
 
 Cada cliente (dispositivo, usuario o servicio) necesita su propio certificado firmado por tu CA.
 
@@ -808,7 +808,7 @@ sudo openssl pkcs12 -export \
 
 ---
 
-## Configurando Nginx para mTLS
+## Configurar Nginx para mTLS
 
 Ahora configura Nginx para requerir y validar certificados de cliente.
 
@@ -1079,7 +1079,7 @@ ssl_dhparam /etc/nginx/dhparam.pem;
 
 ---
 
-## Control de acceso avanzado
+## ¿Cómo limitar a qué puede acceder cada certificado de cliente?
 
 
 
@@ -1606,7 +1606,7 @@ Programa esto en crontab para que se ejecute diariamente:
 
 ---
 
-## Instalando certificados en los clientes
+## Instalar certificados en los clientes
 
 
 

@@ -880,7 +880,7 @@ export const common = {
       editorialBody3:
         "Si algo de aquí está mal, dímelo. Basta con un correo breve indicando el artículo y el problema: sin cuenta y sin formulario. Los informes de vulnerabilidades tienen su propio canal y su clave PGP en security.txt.",
       editorialBody4:
-        "Las correcciones se hacen en el propio artículo, no en un hilo de comentarios. La fecha de revisión que se muestra en la página y en sus datos estructurados no se mantiene a mano: se calcula en tiempo de compilación como la más reciente de cuatro cosas —cuándo se publicó el artículo, cualquier fecha que yo le ponga a propósito, la última vez que lo volví a probar contra las versiones de software que nombra, y el último commit que cambió su sustancia—, así que no puede quedarse atrás respecto al texto, ni siquiera cuando el cambio es pequeño. Los cambios de formato que tocan todos los artículos a la vez se marcan como tales en ese historial y no mueven las fechas. No hay un registro de cambios por artículo: el registro de qué cambió, y cuándo, es el historial completo de ediciones de este sitio, que es público en su repositorio.",
+        "Las correcciones se hacen en el propio artículo, no en un hilo de comentarios. La fecha de revisión que se muestra en la página y en sus datos estructurados no se mantiene a mano: se calcula en tiempo de compilación como la más reciente de cuatro cosas —cuándo se publicó el artículo, cualquier fecha que yo le ponga a propósito, la última vez que lo volví a probar contra las versiones de software que nombra, y el último commit que cambió su sustancia—, así que no puede quedarse atrás respecto al texto, ni siquiera cuando el cambio es pequeño. Los cambios mecánicos —un retoque de formato, un atributo de enlace, una errata— no mueven las fechas. Los anteriores a esta regla están listados por hash de commit, cada uno con el motivo que lo justifica, en el módulo que calcula la fecha (src/utils/post-dates.ts); cualquiera posterior se declara en su propio mensaje de commit. No hay un registro de cambios por artículo: el registro de qué cambió, y cuándo, es el historial completo de ediciones de este sitio, que es público en su repositorio.",
       editorialReportLabel: "Reportar un error",
       editorialSecurityLabel: "security.txt",
     },
@@ -938,6 +938,10 @@ export const common = {
       docs: "Docs",
       hosted: "Instancia en vivo",
       downloads: "Descargas",
+      downloadsNote:
+        "Las cifras de descargas suman los artefactos de las releases de GitHub, los pulls de imagen de Docker Hub y las descargas de MATLAB File Exchange. Los ficheros de checksum, firma y SBOM no se cuentan: una release los publica junto al binario y cada instalación descarga ambos, así que contarlos sería contar dos veces la misma instalación. Las cifras del File Exchange se leen a mano ({date}) porque MathWorks rechaza las peticiones automatizadas, y un proyecto solo muestra su propia cifra al superar las 1.000 descargas, así que los números por proyecto de abajo no suman el total del sitio.",
+      downloadsSourceLead:
+        "La regla exacta, y la lista completa de canales contados y descartados:",
       topicsLabel: "Temas que cubre {project}",
       supportHeading: "Apoyo",
       supportIntro:

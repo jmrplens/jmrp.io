@@ -132,7 +132,7 @@ renumbering underneath it.
 
 ## How I run this on my own infrastructure
 
-The configuration above isn't a lab exercise — it's the WireGuard setup running today on my own RB5009UG+S+ on RouterOS 7.23.2, using the same interface layout as this guide, at the standard 1500 MTU.
+The configuration above isn't a lab exercise — it's the WireGuard setup I run on my own RB5009UG+S+, using the same interface layout as this guide, at the standard 1500 MTU. The RouterOS version each guide was last checked against is stamped at the top of its own page, which is why the same router shows a different version here and in [the honeypot guide](/blog/006-implementing-mikrotik-honeypot/).
 
 Honestly, there isn't an incident to report. I'd like to hand you a war story about MSS clamping gone wrong or a handshake that silently failed, but that's not what happened here: this tunnel has been running for a while without a single usage problem, with good throughput and full dual-stack connectivity — IPv4 and IPv6 both work end to end, every time. If your deployment follows the steps above, that's the boring, reliable outcome you should expect too.
 
