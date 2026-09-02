@@ -64,6 +64,14 @@ jobs:
         with:
           path: ~/.cache/ms-playwright
           key: playwright-browsers-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
+      # The loose `restore-keys` fallback below intentionally reuses a cache
+      # built from different image bytes and possibly different encoder
+      # settings. `pruneStaleOptimizedImageCache`
+      # (src/integrations/pre-build/image-cache.ts) runs before the build and
+      # drops whatever the restored manifest cannot certify — the whole
+      # directory when the settings signature does not match. Without that
+      # guard this fallback silently reproduced the frozen-favicon bug on
+      # every runner.
       - name: Cache Optimized Images
         uses: actions/cache@v6
         with:
@@ -149,6 +157,26 @@ jobs:
         with:
           name: log-eslint
           path: eslint.log
+          retention-days: 1
+
+  # Node's own test runner over scripts/**/*.test.mjs. Added with the
+  # optimized-image cache guard: its regression tests would otherwise only run
+  # inside `pnpm verify`, which on the production host builds and deploys.
+  sa-unit:
+    name: "SA: Unit Tests"
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ./.github/actions/setup
+      - name: Run unit tests
+        run: pnpm test:unit 2>&1 | tee unit-tests.log
+      - name: Upload unit test log
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: log-unit-tests
+          path: unit-tests.log
           retention-days: 1
 
   sa-audit:
@@ -437,6 +465,11 @@ jobs:
           name: dist-build
           path: dist
       - uses: ./.github/actions/setup
+      # The image optimizer caches by path, so a replaced public/ file can be
+      # published as the blob of the file it replaced. This compares every
+      # public/ image with the artefact the build actually emitted.
+      - name: Verify public/ assets survive the build
+        run: node scripts/ci/check-public-asset-fidelity.mjs dist
       - name: Analyze images
         run: |
           echo "## 🖼️ Image Optimization Analysis" >> $GITHUB_STEP_SUMMARY

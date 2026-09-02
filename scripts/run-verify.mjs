@@ -6,10 +6,10 @@
  *
  * Pipeline shape (two phases):
  *   1. Static phase  — Astro Check, ESLint, Prettier, Stylelint, Token sync,
- *      CSpell, JSDoc coverage. These never touch `dist/`, so they all run
- *      concurrently via `Promise.allSettled`, accumulating every failure. If
- *      any of them fail, the whole run stops here (report + exit 1) — the
- *      production build never starts.
+ *      unit tests, CSpell, JSDoc coverage. These never touch `dist/`, so they
+ *      all run concurrently via `Promise.allSettled`, accumulating every
+ *      failure. If any of them fail, the whole run stops here (report + exit
+ *      1) — the production build never starts.
  *   2. Build phase   — `pnpm run build`, in series. A build failure stops the
  *      run immediately (nothing after it can run without `dist/`).
  *   3. Dist phase    — ATS, HTML5 validation, RSS feed, Lychee. These only
@@ -256,6 +256,11 @@ async function runVerify() {
       name: "Lint: Homelab probe sync",
       command: "node scripts/ci/check-homelab-probe.mjs",
     },
+    // node:test units for the scripts/ helpers. They never touch dist/, so they
+    // belong in the static phase. NOTE: on this host `pnpm verify` phase 2 is a
+    // production deploy, so this is not the cheap way to run them — the
+    // `sa-unit` CI job is. Both are required.
+    { name: "Static: Unit tests", command: "pnpm test:unit" },
     { name: "Lint: Spelling (CSpell)", command: "pnpm exec cspell lint ." },
     {
       name: "Lint: JSDoc Coverage",
@@ -297,6 +302,15 @@ async function runVerify() {
       command: "node scripts/cv/verify-ats.mjs",
     },
     { name: "Lint: HTML5 Validation", command: "pnpm lint:html" },
+    {
+      // Does the build still publish the image that is in public/? The
+      // optimizer's cache is keyed by path, so a replaced file can be served
+      // from the blob of the one it replaced (see pre-build/image-cache.ts).
+      // On the production host this phase runs AFTER the swap, so it is an
+      // alarm here and a gate in CI (`sa-unit` + `image-optimization`).
+      name: "Lint: Public asset fidelity",
+      command: "node scripts/ci/check-public-asset-fidelity.mjs dist",
+    },
     {
       name: "Lint: RSS Feed",
       command: "node scripts/ci/validate-rss.mjs dist",

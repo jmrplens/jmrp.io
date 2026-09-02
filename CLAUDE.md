@@ -539,9 +539,11 @@ pnpm build
 
 ### Pre-Build Integrations
 
-| Integration | Purpose                             |
-| ----------- | ----------------------------------- |
-| `beacon.ts` | Cloudflare beacon analytics setup   |
+| Integration      | Purpose                                                    |
+| ---------------- | ---------------------------------------------------------- |
+| `beacon.ts`      | Cloudflare beacon analytics setup                          |
+| `downloads.ts`   | Release-download totals (`src/data/downloads.json`)        |
+| `image-cache.ts` | Certifies the optimized-image cache before every build. `vite-plugin-image-optimizer` keys its cache by PATH (`dist/index.js:241`), and that key encodes neither the `public/` file's content nor the encoder settings. Both holes bit: a replaced `public/favicon.png` shipped as the January 32x32 blob while both RSS feeds declared 144, and 71 of the 167 bundled blobs predate `cc25c54`, which added `compressionLevel: 9`. The guard hashes each `public/` source into `.cache/optimized-images/.image-sources.json` and drops what it cannot certify — the whole directory when the settings signature does not match or no manifest exists (one cold pass, 41 s measured; the 84 lossless AVIF are never cached, so they are not part of that cost). `scripts/ci/check-public-asset-fidelity.mjs` is the matching detector, in `pnpm verify` and CI. |
 
 ### Post-Build Pipeline (`astro:build:done`, `src/integrations/post-build.ts`)
 
@@ -550,8 +552,9 @@ Runs **inside** the build, before the swap — it only transforms the not-yet-li
 1. `extractCssDataUris()` — CSS data URI extraction to physical files
 2. `processHtmlFiles()` — SRI integrity hashes, nonce attributes, inline style → class, data URI extraction, HTML minification
 3. `finalizeCspConfig()` — Generates `security_headers.conf` + `security_headers_assets.conf` for Nginx
-4. `optimizeImages()` + `compressAssets()` **run concurrently** (`Promise.all`) — they touch disjoint file sets (PNG re-optimization vs gzip/Brotli over js/css/svg/json/xml/txt). Both are backed by a content-hash (SHA-256) cache under `.cache/postbuild-png*` / `.cache/postbuild-compression*`, keyed by a config signature so a settings/dependency change invalidates stale cache entries instead of serving them forever.
-5. `fixPermissions()` — chown/chmod for Nginx (`www-data`), only if `POSTBUILD_NGINX_SNIPPETS_PATH` is set
+4. `verifyMarkdownTwins()` — the one step that VERIFIES instead of transforming. Runs `scripts/ci/check-markdown-twins.mjs`, which fails the build when a page, its markdown twin, the `<link rel="alternate" type="text/markdown">` / JSON-LD `encoding` announcement, `llms.txt`, `llms-full.txt` and the sitemap disagree. Every built page must match exactly one entry of `PAGE_CLASSES`, so a new page type cannot silently skip twins (GEO audit #6, A2/M5/M8/A3).<br>**Adding a page**: twins are hand-written routes — a prose page needs `src/pages/<page>/index.md.ts` AND `src/pages/es/<page>/index.md.ts`, then its path added to the `singleton` entry of `PAGE_CLASSES`; a new route *shape* needs a new class entry with a `pattern` and a written `reason`. The failure message prints this remedy.
+5. `optimizeImages()` + `compressAssets()` **run concurrently** (`Promise.all`) — they touch disjoint file sets (PNG re-optimization vs gzip/Brotli over js/css/svg/json/xml/txt). Both are backed by a content-hash (SHA-256) cache under `.cache/postbuild-png*` / `.cache/postbuild-compression*`, keyed by a config signature so a settings/dependency change invalidates stale cache entries instead of serving them forever.
+6. `fixPermissions()` — chown/chmod for Nginx (`www-data`), only if `POSTBUILD_NGINX_SNIPPETS_PATH` is set
 
 > **Publish actions moved out**: copying `security_headers*.conf` to the system Nginx path + `nginx -t` + reload, and the Cloudflare cache purge, no longer run inside this hook (pre-swap). They now run from `scripts/deploy-live.mjs`, invoked by `pnpm build` *after* `deploy-swap.mjs` has retargeted `dist/` — see Deployment below.
 
@@ -774,7 +777,7 @@ Blog posts and tools content **are fully translated**. `src/content/posts/{en,es
 
 ### CI (`scripts/ci/`)
 
-~13 scripts: bundle analysis, accessibility/Lighthouse/HTML/image/link reports, JSDoc coverage, SonarQube issues, RSS validation, token-sync check, CI dashboard generation, PR comment updates, deployment cleanup. Dead report-formatting scripts (`deploy-report.mjs`, `format-accessibility-report.mjs`, `format-lighthouse-report.mjs`, `format-schema-report.mjs`, `utils/github.mjs`) were removed as unused; the `schema-validation` CI job itself still exists but no longer calls a standalone script — it just re-runs `pnpm typecheck`, since Schema.org correctness is enforced via `schema-dts` types checked there.
+~14 scripts: bundle analysis, accessibility/Lighthouse/HTML/image/link reports, JSDoc coverage, SonarQube issues, RSS validation, token-sync check, markdown-twin closure check (`check-markdown-twins.mjs`, also invoked from the post-build hook and unit-tested by `check-markdown-twins.test.mjs`), CI dashboard generation, PR comment updates, deployment cleanup. Dead report-formatting scripts (`deploy-report.mjs`, `format-accessibility-report.mjs`, `format-lighthouse-report.mjs`, `format-schema-report.mjs`, `utils/github.mjs`) were removed as unused; the `schema-validation` CI job itself still exists but no longer calls a standalone script — it just re-runs `pnpm typecheck`, since Schema.org correctness is enforced via `schema-dts` types checked there.
 
 ---
 
@@ -932,12 +935,14 @@ pnpm exec prettier --check .  # Format check (runs at end of build)
    - **Prettier** — `pnpm exec prettier --check .`
    - **Stylelint** — `pnpm lint:css`
    - **Token sync** — `node scripts/ci/check-token-sync.mjs`
+   - **Unit tests** — `pnpm test:unit` (`node --test "scripts/**/*.test.mjs"`; also a standalone CI job, `sa-unit`, because phase 2 of this pipeline is a production deploy)
    - **Spelling (CSpell)** — `pnpm exec cspell lint .`
    - **JSDoc Coverage** — `node scripts/ci/calculate-jsdoc-coverage.mjs`
 2. **Build phase (serial, hard stop)** — `pnpm run build` (includes pre-build + post-build integrations, blue/green swap, `deploy-live.mjs`); a failure here skips dist-dependent checks, Sonar, and E2E entirely.
 3. **Dist phase (parallel, accumulate)** — only reads `dist/`, so failures here are recorded but don't block Sonar/E2E:
    - **ATS: CV Compatibility** — `node scripts/cv/verify-ats.mjs`
    - **HTML5 Validation** — `pnpm lint:html`
+   - **Public asset fidelity** — `node scripts/ci/check-public-asset-fidelity.mjs dist` (every `public/` image must reach the build with the same format, dimensions and pixels). On the production host this phase runs after the build has already swapped `dist/`, so treat it as an alarm; the gate is the `image-optimization` CI job.
    - **RSS Feed Validation** — `node scripts/ci/validate-rss.mjs dist`
    - **Broken Links (Lychee)** — `lychee --config lychee.toml --root-dir dist dist/**/*.html`
 4. **Sonar phase (serial, non-blocking)**:

@@ -21,6 +21,7 @@ ahrefsbot
 aiohttp
 aire
 ajústala
+alab
 aleatoriza
 aleatorizado
 alertmanager
@@ -552,6 +553,8 @@ intégralos
 integridad
 interp
 interseca
+intoto
+intraword
 invassat
 IONOS
 ipcalc
@@ -712,6 +715,7 @@ mismo
 misparses
 misra
 missingok
+mlappinstall
 mobike
 modbus
 modicon
@@ -766,6 +770,7 @@ nivel
 nkhj
 nmap
 nobits
+nocase
 nodelay
 nodir
 nodos
@@ -1072,6 +1077,7 @@ sídney
 siem
 siempre
 sifa
+sigstore
 silverlight
 simplifícalo
 sistemas
@@ -1137,6 +1143,7 @@ Termius
 testeable
 texstudio
 texto
+textos
 thrs
 tieni
 tik's
