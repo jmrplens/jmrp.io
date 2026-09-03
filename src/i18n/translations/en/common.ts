@@ -972,7 +972,7 @@ export const common = {
     tools: {
       title: "Developer Tools",
       description:
-        "Free interactive developer tools for security, encoding, networking, and embedded systems. All tools run entirely in your browser — privacy first.",
+        "Free interactive developer tools for security, encoding, networking, and embedded systems. They run in your browser — privacy first.",
       intro:
         "Browser-based utilities for web security and development. All calculations happen locally—no data is sent to any server.",
       aboutTitle: "About These Tools",
@@ -1006,7 +1006,7 @@ export const common = {
       inCategory: "in this category",
       backToTools: "← Back to all tools",
       securityDesc:
-        "Free security tools that run entirely in your browser — CSP policy builder and hash calculator, certificate inspector, HTTP header analyzer, and more.",
+        "Free security tools that run in your browser — CSP policy builder and hash calculator, certificate inspector, HTTP header analyzer, and more.",
       developerDesc:
         "Free online developer utilities — Base64 encoder, regex tester, cron expression builder, Unix timestamp converter, and color contrast checker.",
       networkDesc:
@@ -1022,7 +1022,7 @@ export const common = {
       // category no longer has is a checkable lie. See also
       // docs/BLOG_POST_GUIDE.md's sibling note for tools.
       securityContext:
-        "Use these when you're hardening a site or checking someone else's work: build a Content-Security-Policy and hash its inline scripts, inspect a TLS certificate before trusting it, audit response headers, or reason about password and PIN strength with real numbers. Everything runs in your browser — nothing you paste leaves the page.",
+        "Use these when you're hardening a site or checking someone else's work: build a Content-Security-Policy and hash its inline scripts, inspect a TLS certificate before trusting it, audit response headers, or reason about password and PIN strength with real numbers. Everything is computed in your browser; the only exception is the header analyzer's optional fetch, which goes through a proxy on this site and is not logged.",
       developerContext:
         "The small conversions that interrupt real work: decoding a Base64 blob, testing a regex against sample text, writing a cron expression you can trust, turning a Unix timestamp into a date, or checking a color pair against WCAG. Each one does its job without an account, an upload, or a network request.",
       networkContext:
