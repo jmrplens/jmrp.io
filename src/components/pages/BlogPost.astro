@@ -71,6 +71,28 @@ const revisedDate = new Date(revisedIso);
 // publication date that reads identically.
 const isRevised = revisedIso.slice(0, 10) !== publishedIso.slice(0, 10);
 
+// The re-test claim, composed as ONE translated sentence rather than a label
+// plus a ` · ` plus a version list. It sits beside "Updated {date}" and the two
+// were reading as rival claims about the same act; the string now names the act
+// (the instructions were re-run) and the connector to the versions is part of
+// the translation, because English joins with "against" and Spanish with "con".
+const verified = post.data.lastVerified;
+// The variant without versions exists because the schema defaults `versions`
+// to an empty array: no post relies on it today, and a dangling "against"
+// would be the cost of assuming none ever will.
+const verifiedKey: TranslationKey = verified?.versions.length
+  ? "pages.blog.lastVerifiedVersions"
+  : "pages.blog.lastVerified";
+const verifiedLine = verified
+  ? t(verifiedKey, {
+      date: formatDate(verified.date, locale),
+      // Commas, not the ` · ` the byline uses elsewhere: this is now the inside
+      // of a sentence, and a middle dot there reads as a separator between two
+      // claims rather than as a list of versions.
+      versions: verified.versions.join(", "),
+    })
+  : undefined;
+
 // Post header meta: dot date + reading time + 1–2 amber category chips
 // (the full tag list lives in the JSON-LD / tag pages, not the header).
 const readingMin = getReadingTime(post);
@@ -705,15 +727,8 @@ const articleSchema = [
                   {post.data.author || siteData.author}
                 </span>
                 {
-                  post.data.lastVerified && (
-                    <span class="post-verified">
-                      {t("pages.blog.lastVerified", {
-                        date: formatDate(post.data.lastVerified.date, locale),
-                      })}
-                      {post.data.lastVerified.versions.length > 0 && (
-                        <> · {post.data.lastVerified.versions.join(" · ")}</>
-                      )}
-                    </span>
+                  verifiedLine && (
+                    <span class="post-verified">{verifiedLine}</span>
                   )
                 }
               </span>
@@ -1139,8 +1154,8 @@ const articleSchema = [
     color: var(--color-text-heading);
   }
 
-  /* Verified-against-version line below the author name — distinct from the
-     "updated on" date, which also covers typo/prose fixes with no re-test. */
+  /* The re-test line below the author name — distinct from the "updated on"
+     date, which also covers typo/prose fixes with no re-test behind them. */
   .post-verified {
     color: var(--color-text-muted);
   }

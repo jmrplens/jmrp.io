@@ -187,7 +187,10 @@ export async function homelabMarkdown(
     "",
     `> ${t("pages.homelab.twinIntro")}`,
     "",
-    `URL: ${siteUrl}${prefix}/homelab/`,
+    // `Canonical:`, the key every other twin carries (see `documentHeader`
+    // in `@utils/llms`). This one writes its header by hand because its
+    // freshness line is a live token rather than the build stamp.
+    `Canonical: ${siteUrl}${prefix}/homelab/`,
     `License: ${siteUrl}${prefix}/license/`,
     `Language: ${locale}`,
     `Alternate: ${siteUrl}${otherPrefix}/homelab/index.md`,

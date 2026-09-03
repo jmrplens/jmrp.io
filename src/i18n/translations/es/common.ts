@@ -488,7 +488,14 @@ export const common = {
       schemaName: "Blog - José Manuel Requena Plens",
       relatedTitle: "Relacionado en este sitio",
       relatedTools: "Prueba la herramienta",
-      lastVerified: "Verificado por última vez el {date}",
+      // See the note on the English pair: this line says the author re-ran the
+      // article's instructions, which "Actualizado el {date}" — when the text
+      // changed — does not. Not a calque: "probadas de nuevo … con" is how the
+      // claim is made in Spanish, and the connector is part of the string
+      // because it differs from the English one.
+      lastVerified: "Instrucciones probadas de nuevo el {date}",
+      lastVerifiedVersions:
+        "Instrucciones probadas de nuevo el {date} con {versions}",
     },
     blogPost: {
       backToBlog: "Volver al Blog",

@@ -719,10 +719,12 @@ function checkTwinBody(
       `${twin} does not start with a level-1 heading — an empty or stub twin ` +
         `satisfies "the file exists" and nothing else`,
     );
-  if (!new RegExp(`^URL: ${SITE_ORIGIN}${pagePath}$`, "m").test(body))
+  // `Canonical:`, the key the generators emit since the twin header stopped
+  // calling it `URL:` — which never said whether it meant the page or the .md.
+  if (!new RegExp(`^Canonical: ${SITE_ORIGIN}${pagePath}$`, "m").test(body))
     violations.push(
-      `${twin} does not declare "URL: ${SITE_ORIGIN}${pagePath}" — it is not ` +
-        `the twin of the page that serves it`,
+      `${twin} does not declare "Canonical: ${SITE_ORIGIN}${pagePath}" — it ` +
+        `is not the twin of the page that serves it`,
     );
 
   const alternate = body.match(/^Alternate: (\S+)/m)?.[1];

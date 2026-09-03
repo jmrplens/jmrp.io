@@ -132,11 +132,15 @@ const posts = defineCollection({
        * no re-verification behind them. Only set this when a re-test actually
        * happened — an invented date turns a trust signal into a checkable lie.
        *
-       * It is a term of the computed `dateModified` and it is emitted as
-       * `Last verified:` in the markdown twin: a re-verification IS a change
-       * to what the page claims, even when no prose moved. Post 011 used to
-       * advertise `dateModified: 2026-06-16` while its own byline said the
-       * instructions had been re-tested on 2026-08-22.
+       * It is a term of the computed `dateModified`, because a re-verification
+       * IS a change to what the page claims, even when no prose moved. Post 011
+       * used to advertise `dateModified: 2026-06-16` while its own byline said
+       * the instructions had been re-tested on 2026-08-22.
+       *
+       * The markdown twin emits it as `Instructions re-tested:`, which is the
+       * byline's wording too: next to `Updated:` — when the text last changed —
+       * a label like "last verified" reads as a rival claim about the same act
+       * rather than as a different fact.
        */
       lastVerified: z
         .object({

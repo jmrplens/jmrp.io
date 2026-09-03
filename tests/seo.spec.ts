@@ -500,7 +500,7 @@ test.describe("SEO & Metadata Checks", () => {
       const body = await response.text();
       // The header is what makes the file usable pasted into a chat with no
       // other context, and the body is what makes it worth pasting.
-      expect(body, path).toContain("URL: https://jmrp.io");
+      expect(body, path).toContain("Canonical: https://jmrp.io");
       expect(body, path).toContain("Published:");
       // The DERIVED content date, not the frontmatter `updatedDate` this line
       // used to echo: 21 of 24 twins published a day up to 26 older than the
@@ -511,7 +511,7 @@ test.describe("SEO & Metadata Checks", () => {
       // Without this the twin silently drops the strongest freshness signal
       // the article makes — which is how post 011 came to advertise a
       // `dateModified` 67 days older than its own page said it was.
-      expect(body, path).toMatch(/^Last verified: \d{4}-\d{2}-\d{2}/m);
+      expect(body, path).toMatch(/^Instructions re-tested: \d{4}-\d{2}-\d{2}/m);
       // No component tag may survive the conversion.
       expect(body, path).not.toMatch(/<\/?(Callout|Table|Mermaid|Code)\b/);
     }
