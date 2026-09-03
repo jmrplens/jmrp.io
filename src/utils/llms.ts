@@ -792,6 +792,14 @@ export async function generateLlmsTxt(siteUrl: string): Promise<string> {
     // the "zero or more markdown sections … of any type except headings" the
     // spec does allow, and it follows the precedent of the `Last updated:`
     // line below it, which is the same kind of local convention.
+    //
+    // Nor is it common practice: checked on 2026-09-03 against the llms.txt of
+    // developers.cloudflare.com, docs.anthropic.com, svelte.dev,
+    // docs.stripe.com and ai-sdk.dev — none carries a `Canonical:` line, and
+    // none carries a key-value header of any kind. Kept anyway because it is
+    // correct and costs a spec-compliant consumer nothing: what a parser reads
+    // is the H1, the summary blockquote and the H2 link lists. Recorded here so
+    // the next reader does not have to re-run that check to find out.
     `Canonical: ${siteUrl}/`,
     "",
     `Last updated: ${today()}`,
