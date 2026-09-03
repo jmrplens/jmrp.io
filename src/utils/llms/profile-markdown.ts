@@ -1,5 +1,8 @@
-import { useTranslations } from "@i18n/utils";
+import downloadsData from "@data/downloads.json";
+import { formatDate, useTranslations } from "@i18n/utils";
 import { getCVData } from "@utils/cv";
+import { DOWNLOADS_DISPLAY_MIN } from "@utils/downloads";
+import { featuredRepos } from "@utils/github-facts";
 import { getProjects, hostedHref } from "@utils/projects";
 import { getEntry } from "astro:content";
 
@@ -32,6 +35,68 @@ function namedTopic(topic: { name: string; wikidata: string }): string {
 /** `- **name** — detail`, with the detail omitted when absent. */
 function item(name: string, detail?: string): string {
   return detail ? `- **${name}** — ${detail}` : `- **${name}**`;
+}
+
+/**
+ * The download figure a project publishes, or `undefined` when it publishes
+ * none.
+ *
+ * The same document, the same threshold and therefore the same DECISION as
+ * `ProjectsPage.astro`: a project under `DOWNLOADS_DISPLAY_MIN` renders no
+ * figure, because "a small number next to a project reads as a verdict on it"
+ * — an editorial call the twin has no business overriding, and one the page's
+ * own methodology note states out loud ("a project shows its own figure only
+ * once it passes 1,000"). Publishing here what the page withholds would make
+ * that sentence false in the very document it travels in.
+ *
+ * The value is the exact integer, not the card's `~88k`. Same reasoning as
+ * `downloads.total` in `@utils/llms/home-facts`: the rounding exists to fit a
+ * card, and the compact form is derivable from the integer and not the
+ * reverse.
+ *
+ * @param id - The project's repository name, the key `downloads.json` uses.
+ * @returns The count to publish, or nothing.
+ */
+function downloadsOf(id: string): number | undefined {
+  const count = (
+    downloadsData.projects as Record<string, { total?: number } | undefined>
+  )[id]?.total;
+  return count !== undefined && count >= DOWNLOADS_DISPLAY_MIN
+    ? count
+    : undefined;
+}
+
+/**
+ * The page's own methodology paragraph, as the twin's opening prose.
+ *
+ * It is what closed audit #6's A4: what the figures below count, what they
+ * deliberately do not (checksums, signatures, SBOMs), which channel is read by
+ * hand and when, and why the per-project numbers do not sum to the site-wide
+ * total. Numbers without it are the finding it fixed, and the twin published
+ * neither.
+ *
+ * Dropped, exactly as the page drops it, when the hand-read date is missing or
+ * unparseable: `downloads.json` is generated and git-ignored, so a build host
+ * can hold a copy that predates the field, and `Intl.DateTimeFormat.format`
+ * throws on an invalid Date. The `typeof` guard is load-bearing there too —
+ * `new Date(null)` is the epoch, not an invalid date.
+ *
+ * @param locale - Which locale's copy, and which date format.
+ * @returns The paragraph and its trailing blank line, or nothing.
+ */
+function downloadsMethodologyLines(locale: "en" | "es"): Lines {
+  const t = useTranslations(locale);
+  const raw: unknown = downloadsData.manualVerifiedOn;
+  const verifiedOn = typeof raw === "string" ? new Date(raw) : undefined;
+  if (!verifiedOn || Number.isNaN(verifiedOn.getTime())) return [];
+  const source =
+    "https://github.com/jmrplens/jmrp.io/blob/main/scripts/download-sources.mjs";
+  return [
+    `${t("pages.projects.downloadsNote", {
+      date: formatDate(verifiedOn, locale),
+    })} ${t("pages.projects.downloadsSourceLead")} [download-sources.mjs](${source}).`,
+    "",
+  ];
 }
 
 /**
@@ -219,6 +284,18 @@ export async function usesLines(
  * their Q-ids, and every URL — because those are exactly what a model needs to
  * tell one project from another, and they exist nowhere else in prose form.
  *
+ * ── Why it also carries figures ───────────────────────────────────────────
+ * It did not, and that was GEO audit #7's A2: the page prints a download count
+ * on every project that has one plus the methodology paragraph behind them,
+ * and the twin printed no quantity of any kind. On the entity page for this
+ * author's software, the machine-readable copy could not say how much any of
+ * it is used — while the HOMEPAGE twin, covering four of these same projects,
+ * carried both a star count and a download total. Same defect audit #6 found
+ * on the homepage, one page over, which is what a per-page fix looks like.
+ *
+ * The star count comes through `@utils/github-facts`, the accessor added in
+ * that remediation, rather than a private fetch of the same endpoints.
+ *
  * @param locale - Which locale's summary to render.
  * @returns Markdown lines.
  */
@@ -233,22 +310,45 @@ export async function projectsLines(
   if (entry?.data.type !== "projects") {
     throw new Error("profile/projects.yaml is missing or has the wrong type");
   }
-  return entry.data.projects.flatMap((p) => [
-    `## ${p.name}`,
-    "",
-    p.summary[locale],
-    "",
-    `- Language: ${p.language}`,
-    `- License: ${p.license}`,
-    `- Status: ${p.status}`,
-    `- Topics: ${p.topics.map(namedTopic).join(", ")}`,
-    `- Repository: ${p.repo}`,
-    `- Documentation: ${locale === "es" ? (p.docsEs ?? p.docs) : p.docs}`,
-    ...(p.hosted ? [`- Hosted: ${p.hosted}`] : []),
-    ...(p.endpoint ? [`- Endpoint: ${p.endpoint}`] : []),
-    ...(p.sameAs && p.sameAs.length > 0
-      ? [`- Also at: ${p.sameAs.join(", ")}`]
-      : []),
-    "",
-  ]);
+  const projects = entry.data.projects;
+  // Keyed by `name`, which for these repositories is the `id` asked for —
+  // `project.name` is the display name and can differ ("Cloudflare DNS
+  // Updater" vs `Cloudflare-DNS-Updater`).
+  const repos = new Map(
+    (await featuredRepos(projects.map((p) => p.id))).map((repo) => [
+      repo.name,
+      repo,
+    ]),
+  );
+  return [
+    ...downloadsMethodologyLines(locale),
+    ...projects.flatMap((p) => {
+      const downloads = downloadsOf(p.id);
+      // Omitted rather than printed as `0`, the rule `whoamiFactLines` already
+      // applies to `repos.public`: a repository the fetch could not reach and
+      // one with no stars are indistinguishable here, and a figure that
+      // resolves to nothing is better left unsaid than published as a zero.
+      const stars = repos.get(p.id)?.stargazers_count;
+      return [
+        `## ${p.name}`,
+        "",
+        p.summary[locale],
+        "",
+        `- Language: ${p.language}`,
+        `- License: ${p.license}`,
+        `- Status: ${p.status}`,
+        ...(downloads === undefined ? [] : [`- Downloads: ${downloads}`]),
+        ...(stars ? [`- Stars: ${stars}`] : []),
+        `- Topics: ${p.topics.map(namedTopic).join(", ")}`,
+        `- Repository: ${p.repo}`,
+        `- Documentation: ${locale === "es" ? (p.docsEs ?? p.docs) : p.docs}`,
+        ...(p.hosted ? [`- Hosted: ${p.hosted}`] : []),
+        ...(p.endpoint ? [`- Endpoint: ${p.endpoint}`] : []),
+        ...(p.sameAs && p.sameAs.length > 0
+          ? [`- Also at: ${p.sameAs.join(", ")}`]
+          : []),
+        "",
+      ];
+    }),
+  ];
 }
