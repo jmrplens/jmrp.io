@@ -15,6 +15,7 @@ import {
   STYLE_CLASS_HASH_LENGTH,
 } from "./constants.js";
 import type { CspData } from "./types.js";
+import { restoreVerbatimTypography } from "./typography.js";
 import {
   getExtensionFromMime,
   getFileHash,
@@ -313,9 +314,9 @@ async function processSingleHtmlFile(
     if (movedCount > 0) isModified = true;
   }
 
-  // Undo SmartyPants inside code before anything else reads the DOM — the
-  // repaired text must be what gets hashed, minified and shipped.
-  if (restoreCodeTypography($)) isModified = true;
+  // Undo SmartyPants inside every verbatim surface before anything else reads
+  // the DOM — the repaired text must be what gets hashed, minified and shipped.
+  if (restoreVerbatimTypography($)) isModified = true;
 
   // Drop empty <p></p> nodes. MDX emits one wherever a raw-HTML block and a
   // markdown paragraph meet, which left 158 of them across the 34 tool pages
@@ -748,80 +749,6 @@ function removeEmptyParagraphs($: cheerio.CheerioAPI): boolean {
       modified = true;
     }
   });
-  return modified;
-}
-
-/**
- * Narrows a Cheerio child node to a DOM text node.
- *
- * `node.type === "text"` compares a string against domhandler's `ElementType`
- * enum, which ESLint rejects; `nodeType === 3` is the DOM-standard check and
- * carries the type narrowing needed to touch `.data`.
- *
- * @param node - Child node from a Cheerio `.contents()` traversal.
- * @returns `true` when the node is a text node.
- */
-function isTextNode(node: { nodeType?: number }): node is { data: string } & {
-  nodeType: number;
-} {
-  return node.nodeType === 3;
-}
-
-/**
- * Undoes SmartyPants' typographic substitution inside `<code>` and `<pre>`.
- *
- * Astro runs `remark-smartypants` at position 3 of the markdown chain — before
- * any user remark plugin and long before `rehypeRaw` — so it cannot be ordered
- * around from `astro.config.mjs`. Backtick spans survive (they are `inlineCode`
- * mdast nodes, which SmartyPants skips), but a raw `<code>` written as HTML —
- * which is the only option inside the HTML tables this site uses — leaves its
- * contents as a plain `text` node, and that does get typographic treatment.
- *
- * The damage is not cosmetic: it ships code that fails if copied. Measured on
- * the 2026-08-22 GEO audit — `‘unsafe-inline’` (invalid CSP keyword),
- * `return 200 “OK”;` (rejected by nginx) and `--with-http_v3_module` rendered
- * as `—with-http_v3_module` (a flag that does not exist). These are exactly
- * the fragments a generative engine lifts and reproduces as an answer.
- *
- * Only the three unambiguous substitutions are reverted:
- *   `‘ ’` → `'`   ·   `“ ”` → `"`   ·   `—` → `--`
- *
- * En dashes and ellipses are deliberately left alone: the corpus contains
- * *authored* ones inside code (`0–59` and `1–31` in cron-builder, `id,en,es,…`
- * in string-pool-packer) and they are indistinguishable from generated ones.
- * Neither breaks a copied command, unlike a curly quote or a mangled `--` flag.
- *
- * @param $ - Cheerio API for the page.
- * @returns `true` when at least one code fragment was repaired.
- */
-function restoreCodeTypography($: cheerio.CheerioAPI): boolean {
-  let modified = false;
-
-  $("code, pre").each((_, el) => {
-    const $el = $(el);
-    // Only leaf text is rewritten; nested elements are visited on their own
-    // turn, so a <code> wrapping <span>s is handled without double-processing.
-    $el
-      .contents()
-      .filter((_i, node) => isTextNode(node))
-      .each((_i, node) => {
-        if (!isTextNode(node)) return;
-        const original = node.data;
-        const repaired = original
-          .replaceAll(/[\u{2018}\u{2019}]/gu, "'")
-          .replaceAll(/[\u{201C}\u{201D}]/gu, '"')
-          // Only an em dash glued to a word character is a mangled `--flag`.
-          // A standalone one is authored: TimestampConverter.astro ships
-          // <code>—</code> as its empty-value placeholder, and .astro files
-          // never pass through SmartyPants at all.
-          .replaceAll(/\u{2014}(?=[\p{L}\p{N}])/gu, "--");
-        if (repaired !== original) {
-          node.data = repaired;
-          modified = true;
-        }
-      });
-  });
-
   return modified;
 }
 
