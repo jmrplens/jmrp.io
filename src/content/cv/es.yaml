@@ -613,7 +613,8 @@ sections:
         icon: logos:go
         description: >-
           Servidor MCP de GitLab de código abierto que expone más de 850 acciones
-          de GitLab (más de 1.000 en Enterprise) a asistentes de IA mediante un
+          de GitLab (más de 1.000 según edición y despliegue) a asistentes de IA
+          mediante un
           diseño dinámico de 2 herramientas (find/execute), con transportes
           stdio/HTTP/OAuth y modos seguro y de solo lectura.
         metrics:
@@ -651,8 +652,8 @@ sections:
           Biblioteca de acústica conforme a normas: metrología de niveles
           sonoros, psicoacústica, acústica de salas, edificación, ambiental y
           subacuática, vibración, electroacústica y simulación de ondas — cada
-          método implementado desde la norma, con 550 comprobaciones de
-          conformidad en CI frente a 367 normas. Antes PyOctaveBand.
+          método implementado desde la norma, con 613 comprobaciones de
+          conformidad en CI frente a 378 normas. Antes PyOctaveBand.
         metrics: [PyPI]
         links:
           - { label: GitHub, url: https://github.com/jmrplens/phonometry }

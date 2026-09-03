@@ -614,7 +614,8 @@ sections:
         icon: logos:go
         description: >-
           Open-source GitLab MCP server that exposes 850+ GitLab actions (1,000+
-          on Enterprise) to AI assistants through a dynamic 2-tool find/execute
+          depending on edition and deployment) to AI assistants through a dynamic
+          2-tool find/execute
           design, with stdio/HTTP/OAuth transports and safe & read-only modes.
         metrics:
           ["On npm & PyPI; listed on Glama, mcp.so, Cursor & mcpservers.org"]
@@ -648,8 +649,8 @@ sections:
           Standards-conformant acoustics library: sound level metrology,
           psychoacoustics, room, building, environmental and underwater
           acoustics, vibration, electroacoustics and wave simulation — every
-          method implemented from the standard, with 550 CI-enforced conformance
-          checks across 367 standards. Formerly PyOctaveBand.
+          method implemented from the standard, with 613 CI-enforced conformance
+          checks across 378 standards. Formerly PyOctaveBand.
         metrics: [PyPI]
         links:
           - { label: GitHub, url: https://github.com/jmrplens/phonometry }
