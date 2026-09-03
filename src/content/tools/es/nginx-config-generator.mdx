@@ -25,7 +25,7 @@ faq:
   - question: "¿Qué hace la funcionalidad tarpit?"
     answer: "El tarpit envía deliberadamente respuestas lentas a atacantes y escáneres que acceden a rutas bloqueadas o de exploits (como wp-admin o phpMyAdmin), desperdiciando su tiempo y recursos en lugar de devolver un error rápido."
   - question: "¿Con qué preset debería empezar?"
-    answer: "Elige el preset más cercano a tu caso de uso — Estático, Reverse Proxy, SPA, PHP-FPM, Servidor API o Fortificado — y personaliza desde ahí el dominio, la ruta raíz y las rutas de los certificados SSL."
+    answer: "Elige el preset más cercano a tu caso de uso — Sitio estático, Proxy inverso, SPA / React, PHP-FPM, API Backend o Reforzado — y personaliza desde ahí el dominio, la ruta raíz y las rutas de los certificados SSL."
 ---
 
 import NginxConfigGenerator from "@components/apps/NginxConfigGenerator.astro";
@@ -54,8 +54,8 @@ import {
 <h3>Características</h3>
 <ul>
   <li>
-    <strong>6 presets</strong> — Estático, Reverse Proxy, SPA, PHP-FPM,
-    Servidor API, Fortificado
+    <strong>6 presets</strong> — Sitio estático, Proxy inverso, SPA / React,
+    PHP-FPM, API Backend, Reforzado
   </li>
   <li>
     <strong>Bloques upstream</strong> — upstream con nombre, balanceo de carga

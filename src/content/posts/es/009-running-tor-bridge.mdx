@@ -598,12 +598,12 @@ Repasemos las secciones críticas:
   items={[
     { key: "BridgeRelay 1", value: "Modo bridge", description: "Le dice a Tor que es un bridge, no un relé público. Los bridges no figuran en el directorio público de Tor." },
     { key: "ORPort 0.0.0.0:9001", value: "Onion Router Port (IPv4)", description: "El puerto que Tor usa para comunicarse con otros relés. Usa 0.0.0.0 (no 127.0.0.1) si estás detrás de NAT — Tor necesita escuchar en todas las interfaces para que el autotest pase." },
-    { key: "ORPort [IPv6]:9001", value: "Onion Router Port (IPv6)", description: "Si tienes una dirección IPv6 global, añade una segunda línea ORPort con esa dirección entre corchetes. IPv6 no necesita NAT: la dirección es accesible directamente." },
+    { key: "ORPort [IPv6]:9001", value: "Onion Router Port (IPv6)", description: "Si tu servidor tiene una dirección IPv6 global, añade una segunda línea ORPort con ella. Las direcciones IPv6 son enrutables globalmente: no hace falta NAT ni reenvío de puertos, solo reglas de firewall." },
     { key: "ExtORPort auto", value: "Extended ORPort", description: "Canal de comunicación interno entre Tor y los pluggable transports. Con 'auto', Tor elige un puerto local al azar." },
     { key: "ServerTransportListenAddr obfs4", value: "Dirección de escucha de obfs4", description: "El puerto donde obfs4proxy espera las conexiones ofuscadas entrantes. Tiene que ser alcanzable desde Internet." },
     { key: "ServerTransportListenAddr webtunnel", value: "Dirección de escucha de WebTunnel", description: "Escucha solo en 127.0.0.1 porque Nginx gestiona el HTTPS público y hace de proxy inverso hacia este puerto." },
     { key: "DisableDebuggerAttachment 1", value: "Endurecimiento de seguridad", description: "Impide que herramientas como ptrace o gdb se enganchen al proceso de Tor. Protege las claves criptográficas en memoria frente a volcados y depuración." },
-    { key: "MaxMemInQueues 4096 MB", value: "Límite de memoria para colas", description: "Limita la memoria que Tor dedica a las colas de circuitos. Evita escenarios de OOM (falta de memoria) en servidores con mucha carga de tráfico." },
+    { key: "MaxMemInQueues 4096 MB", value: "Límite de memoria para colas", description: "Limita la memoria que Tor dedica a sus colas internas. Evita que el sistema mate el proceso por falta de memoria (OOM) en servidores con poca RAM. Ajusta el valor a la memoria de la que dispongas." },
     { key: "ConnDirectionStatistics 1", value: "Estadísticas de dirección de conexiones", description: "Habilita la recogida de estadísticas sobre el sentido de las conexiones (entrantes frente a salientes). Útil para analizar el tráfico del bridge." },
     { key: "DoSRefuseSingleHopClientRendezvous 1", value: "Protección DoS", description: "Rechaza los circuitos de encuentro (rendezvous) que llegan de clientes de un solo salto. Se usan habitualmente en abusos y ataques de denegación de servicio contra servicios ocultos." },
     { key: "MetricsPort", value: "Endpoint de Prometheus", description: "Expone las métricas internas de Tor en formato Prometheus. Restringe el acceso con MetricsPortPolicy." },
@@ -911,19 +911,25 @@ sudo iptables -A INPUT -p tcp --dport 443 -j ACCEPT
 
 ### IPv6: sin NAT
 
-<Callout type="info" title="IPv6 es directo: sin reenvío de puertos">
-A diferencia de IPv4, las direcciones IPv6 son enrutables globalmente. Tu servidor ya es accesible directamente en su dirección IPv6: no hace falta NAT ni reenvío de puertos. Solo tienes que asegurarte de que las reglas del firewall de tu router **permitan** el tráfico entrante al ORPort (TCP 9001) hacia tu servidor. Si usas MikroTik, añade una regla en el firewall IPv6 que acepte tráfico TCP al puerto 9001 en la dirección de tu servidor.
+A diferencia de IPv4, las direcciones IPv6 son **enrutables globalmente**: no hay NAT. Eso quiere decir que la dirección IPv6 de tu servidor es accesible desde Internet sin reenvío de puertos. Aun así, sigue haciendo falta:
+
+1. **Permitir los puertos en el firewall del servidor** (UFW cubre IPv4 e IPv6 a la vez)
+2. **Permitir los puertos en el firewall IPv6 del router** — casi todos los routers llevan un firewall IPv6 aparte que bloquea por defecto todo el tráfico entrante
+
+<Callout type="warning" title="El firewall IPv6 del router">
+Casi todos los routers **bloquean todo el tráfico IPv6 entrante** por defecto (a diferencia de IPv4, donde el "firewall" lo hace el propio NAT). Tienes que crear **reglas de permiso** explícitas en el firewall IPv6 del router para los puertos TCP 9001 y 4443; sin ellas nada llega a la dirección IPv6 de tu servidor. No hace falta NAT de destino: bastan reglas de aceptación en el firewall.
 </Callout>
 
-Comprueba que el puerto IPv6 está abierto:
-
-<TerminalCommand ariaLabel="Comprobar que el puerto IPv6 escucha y es accesible">
+<TerminalCommand ariaLabel="Comprobar las reglas del firewall IPv6">
 ```bash
-# Verifica que Tor escuche en IPv6
-ss -tlnp6 | grep 9001
+# Verify your server's IPv6 address
+ip -6 addr show scope global | grep inet6
 
-# Prueba de accesibilidad IPv6 desde otra máquina
-nc -6zv TU_DIRECCIÓN_IPV6 9001
+# Verify IPv6 firewall rules on the server
+sudo ip6tables -L INPUT -n | grep -E "9001|4443"
+
+# Test IPv6 reachability from another machine
+nc -6zv YOUR_IPV6_ADDRESS 9001
 ```
 </TerminalCommand>
 
@@ -1413,7 +1419,7 @@ Con todo configurado, repasa esta lista para confirmar que tu bridge funciona po
 <li data-check="check">El firewall permite los puertos de Tor: `ufw status | grep -E "9001|4443"`</li>
 <li data-check="check">Existe la huella digital del puente: `cat /var/lib/tor/fingerprint`</li>
 <li data-check="warning">Van apareciendo los flags del relé (¡paciencia!): Running y Valid en torno a 1 hora, Stable unos 7 días y Guard unos 8, según el flag</li>
-<li data-check="optional">Accesible por IPv6 desde fuera: `nc -6zv TU_IPV6 9001`</li>
+<li data-check="optional">Accesible por IPv6 desde fuera: `nc -6zv YOUR_IPV6 9001`</li>
 <li data-check="optional">El bypass de CrowdSec funciona (si procede): `cscli explain` con una línea de log de prueba</li>
 </CheckList>
 

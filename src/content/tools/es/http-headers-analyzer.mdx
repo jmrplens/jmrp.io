@@ -6,7 +6,7 @@ subtitle: "Analiza cabeceras HTTP de seguridad y obtén una puntuación con reco
 icon: "i-mdi:web"
 category: "security"
 publishedDate: 2026-02-18
-updatedDate: 2026-06-23
+updatedDate: 2026-09-03
 tags: ["http", "headers", "seguridad", "hsts", "csp", "análisis"]
 features:
   - "Analiza 10 cabeceras de seguridad críticas"
@@ -21,9 +21,9 @@ faq:
   - question: "¿Cómo se calcula la puntuación de seguridad?"
     answer: "Cada cabecera tiene un peso según su impacto, siendo Content-Security-Policy la de mayor valor (25 puntos) y X-XSS-Protection la menor (3 puntos). El total ponderado se traduce en una calificación de A+ (90-100) hasta F (0-29)."
   - question: "¿Por qué faltan algunas cabeceras al obtenerlas desde una URL?"
-    answer: "La función Fetch se ejecuta directamente en tu navegador, por lo que las restricciones de CORS pueden ocultar ciertas cabeceras de respuesta. Para obtener resultados completos, pega las cabeceras capturadas con curl -sI o copiadas desde DevTools del navegador."
+    answer: "Obtener pide las cabeceras al proxy propio de este sitio, y ese proxy hace una petición HEAD con su propio User-Agent y sin cookies. Las cabeceras que un servidor solo envía en GET, solo a una sesión iniciada o tras negociar el contenido no aparecerán, y si el sitio está detrás de un CDN verás las cabeceras del borde y no las del origen. Para una captura exacta, pega la salida de curl -sI o las cabeceras de respuesta copiadas desde DevTools del navegador."
   - question: "¿Se envían mis datos a un servidor al analizar las cabeceras?"
-    answer: "No. Todo el análisis se realiza íntegramente en tu navegador, y la solicitud opcional de Fetch se hace directamente desde tu navegador sin ningún proxy del lado del servidor."
+    answer: "El análisis nunca sale de tu navegador: lo que haya en el cuadro de texto se analiza, se puntúa y se califica en tu propia máquina. El botón Obtener es la excepción, porque un navegador no tiene permiso para leer las cabeceras de respuesta de otro sitio —CORS lo prohíbe—, así que la URL que indiques va a un pequeño proxy de este mismo dominio, que pide las cabeceras y te las devuelve. Ese proxy tiene el registro de acceso desactivado, así que la URL que inspeccionas no queda escrita junto a tu dirección, y el sitio inspeccionado ve este servidor y no a ti. Si pegas las cabeceras en vez de obtenerlas, no se envía nada."
   - question: "¿Debo configurar todavía X-XSS-Protection?"
     answer: "No. X-XSS-Protection es un filtro legacy que los navegadores modernos ignoran o que puede introducir vulnerabilidades; el valor recomendado es \"0\" para desactivarlo, y una Content-Security-Policy sólida es la defensa adecuada contra XSS."
 ---
@@ -49,7 +49,7 @@ import {
   seguridad. La herramienta evalúa 10 cabeceras de seguridad críticas, detecta
   fugas de información y proporciona una puntuación ponderada con
   recomendaciones prácticas. Puedes pegar las cabeceras manualmente u obtenerlas
-  directamente desde una URL.
+  desde una URL.
 </p>
 <h3>¿Qué cabeceras se analizan?</h3>
 <ul>
@@ -121,11 +121,12 @@ import {
 <h3>¿Cómo se usa?</h3>
 <ol>
   <li>
-    Introduce una URL y pulsa Fetch, o pega las cabeceras desde DevTools del
-    navegador o curl
+    Introduce una URL y pulsa Obtener, o pega las cabeceras desde DevTools
+    del navegador o curl
   </li>
   <li>
-    Pulsa Analyze para ver la puntuación de seguridad y las recomendaciones
+    Pulsa Analizar cabeceras para ver la puntuación de seguridad y las
+    recomendaciones
   </li>
   <li>
     Corrige las cabeceras que falten en la configuración de tu servidor y vuelve
@@ -134,11 +135,16 @@ import {
 </ol>
 <h3>¿Son privados mis datos?</h3>
 <p>
-  Todo el análisis se realiza íntegramente en tu navegador. Cuando usas la
-  función Fetch, la solicitud se hace directamente desde tu navegador — no se
-  utiliza ningún proxy del lado del servidor. Ten en cuenta que las
-  restricciones de CORS pueden limitar las cabeceras visibles; usa{" "}
-  <code>curl</code> para obtener resultados completos.
+  Todo el análisis se realiza íntegramente en tu navegador: las cabeceras del
+  cuadro de texto se analizan, se puntúan y se califican en tu propia máquina, y
+  no se envía nada de ellas a ninguna parte. El botón Obtener es la excepción.
+  CORS impide que un navegador lea las cabeceras de respuesta de otro sitio, así
+  que la URL que indiques va a un pequeño proxy de este mismo dominio que las
+  pide por ti. Ese proxy tiene el registro de acceso desactivado, así que la URL
+  que inspeccionas no queda escrita junto a tu dirección, y el sitio
+  inspeccionado ve este servidor y no a ti. Si prefieres que ni siquiera esa
+  petición salga, pega las cabeceras capturadas con <code>curl -sI</code> en
+  lugar de usar Obtener.
 </p>
 
 <h3>Referencia de comandos Linux</h3>

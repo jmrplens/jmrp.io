@@ -76,7 +76,7 @@ export const PROFILE_SECTIONS: {
       title: "Projects",
       lines: [
         "Open-source software authored and maintained by the author, each entry listing language, license, source repository and documentation site.",
-        "Includes: gitlab-mcp-server (Model Context Protocol server exposing 850+ GitLab actions to AI assistants — 1,000+ on Enterprise, Go), phonometry (Python acoustics library validated against 367 standards), cs-routeros-bouncer (CrowdSec bouncer for MikroTik RouterOS, Go), Cloudflare-DNS-Updater (dynamic DNS updater), libgen-mcp, and TFG-TFM_EPS (LaTeX thesis template for the Universitat Politècnica de València).",
+        "Includes: gitlab-mcp-server (Model Context Protocol server exposing 850+ GitLab actions to AI assistants — 1,000+ depending on edition and deployment, Go), phonometry (Python acoustics library validated against 378 standards), cs-routeros-bouncer (CrowdSec bouncer for MikroTik RouterOS, Go), Cloudflare-DNS-Updater (dynamic DNS updater), libgen-mcp, and TFG-TFM_EPS (LaTeX thesis template for the Universitat Politècnica de València).",
         "Both MCP servers also run as public hosted endpoints at mcp.jmrp.io, so a client can call them without building or installing anything.",
       ],
     },
@@ -84,7 +84,7 @@ export const PROFILE_SECTIONS: {
       title: "Proyectos",
       lines: [
         "Software de código abierto escrito y mantenido por el autor; cada entrada indica lenguaje, licencia, repositorio de código y sitio de documentación.",
-        "Incluye: gitlab-mcp-server (servidor Model Context Protocol que expone más de 850 acciones de GitLab a asistentes de IA —más de 1.000 en Enterprise—, en Go), phonometry (biblioteca de acústica en Python validada contra 367 normas publicadas), cs-routeros-bouncer (bouncer de CrowdSec para MikroTik RouterOS, en Go), Cloudflare-DNS-Updater (actualizador de DNS dinámico), libgen-mcp y TFG-TFM_EPS (plantilla LaTeX de tesis para la Universitat Politècnica de València).",
+        "Incluye: gitlab-mcp-server (servidor Model Context Protocol que expone más de 850 acciones de GitLab a asistentes de IA —más de 1.000 según edición y despliegue—, en Go), phonometry (biblioteca de acústica en Python validada contra 378 normas publicadas), cs-routeros-bouncer (bouncer de CrowdSec para MikroTik RouterOS, en Go), Cloudflare-DNS-Updater (actualizador de DNS dinámico), libgen-mcp y TFG-TFM_EPS (plantilla LaTeX de tesis para la Universitat Politècnica de València).",
         "Los dos servidores MCP corren además como endpoints públicos alojados en mcp.jmrp.io, así que un cliente puede llamarlos sin compilar ni instalar nada.",
       ],
     },

@@ -85,8 +85,8 @@ const MCP_PROSE: Record<string, { en: string; es: string }> = {
     es: "Busca y descarga libros, artículos, cómics, revistas y normas de Library Genesis. Sin credenciales.",
   },
   "gitlab-mcp-server": {
-    en: "850+ GitLab actions as tools (1,000+ on Enterprise). Needs a `PRIVATE-TOKEN` header per request; the token is never stored server-side.",
-    es: "Más de 850 acciones de GitLab como tools (más de 1.000 en Enterprise). Requiere una cabecera `PRIVATE-TOKEN` por petición; el token nunca se guarda en el servidor.",
+    en: "850+ GitLab actions as tools (1,000+ depending on edition and deployment). Needs a `PRIVATE-TOKEN` header per request; the token is never stored server-side.",
+    es: "Más de 850 acciones de GitLab como tools (más de 1.000 según edición y despliegue). Requiere una cabecera `PRIVATE-TOKEN` por petición; el token nunca se guarda en el servidor.",
   },
 };
 
@@ -790,7 +790,7 @@ export async function generateLlmsTxt(siteUrl: string): Promise<string> {
     // this file either (an H1, a summary blockquote and H2 link lists is the
     // whole format), so this is not a spec field. It is admissible as one of
     // the "zero or more markdown sections … of any type except headings" the
-    // spec does allow, and it follows the precedent of the `Last updated:`
+    // spec does allow, and it follows the precedent of the `Build-Date:`
     // line below it, which is the same kind of local convention.
     //
     // Nor is it common practice: checked on 2026-09-03 against the llms.txt of
@@ -802,7 +802,17 @@ export async function generateLlmsTxt(siteUrl: string): Promise<string> {
     // the next reader does not have to re-run that check to find out.
     `Canonical: ${siteUrl}/`,
     "",
-    `Last updated: ${today()}`,
+    // The build clock, under the same key the twins and `llms-full.txt` use.
+    //
+    // It read `Last updated:` until GEO audit #7, which is the most
+    // content-looking label the corpus had for a value that is nothing of the
+    // sort: this index is regenerated whole on every deploy, so the line moved
+    // to today whether or not a single word of what it lists had changed, and
+    // it is the first file a recency-weighted consumer reads. Same value, same
+    // reasoning and now the same word as the 94 twins — one vocabulary across
+    // every machine surface, with no date on any of them claiming to be a
+    // content date it is not.
+    `Build-Date: ${today()}`,
     "",
     ABOUT,
     "",
@@ -816,7 +826,7 @@ export async function generateLlmsTxt(siteUrl: string): Promise<string> {
     // to fetch. Everything it can reach from here is either CC BY 4.0 or says
     // so at the address below; the two exceptions are named rather than left
     // to be discovered after the fact.
-    `Reuse: the articles, the page copy and the blog cover images are licensed CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/) — reuse them, including commercially, crediting "José Manuel Requena Plens" and noting any change. The site's source code is MIT. The portrait used as the avatar is reserved and is not covered by either. Full terms: ${siteUrl}/license/`,
+    `Reuse: the articles and the blog cover images are licensed CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/) — reuse them, including commercially, crediting "José Manuel Requena Plens" and noting any change. The site's source code is MIT. The portrait used as the avatar is reserved and is not covered by either. Full terms: ${siteUrl}/license/`,
     "",
     sectionsBlock(siteUrl, "en"),
     "",
@@ -1088,6 +1098,13 @@ function buildPostEntry(
     ...(d.topics && d.topics.length > 0
       ? [`Topics: ${d.topics.map(namedTopic).join(", ")}`]
       : []),
+    // The build clock, last in the block and named for the artifact rather than
+    // the article — same key, same reasoning and same position as the page
+    // twins get from `documentHeader`. It stood above the whole entry as
+    // `> Generated:` until GEO audit #7 measured what that cost: on 60 of the
+    // 94 twins it was the first date in the file AND a later one than
+    // `Updated:`, because a deploy rebuilds every document and revises none.
+    `Build-Date: ${today()}`,
     ...postFaqLines(d, locale),
     ...postHowToLines(d, locale),
     ...postBodyLines(p, siteUrl, localePrefix),
@@ -1158,12 +1175,9 @@ export function generateLlmsPostTxt(
     "",
     `> ${CHROME.post[locale]} ${parent}`,
     "",
-    // `Generated`, not `Last updated`: this is the build date, identical across
-    // all 24 shards. Labelling it as the post's update date told every
-    // recency-weighted pipeline that the whole corpus changed today. The real
-    // dates are `Published:`/`Updated:` inside the entry.
-    `> Generated: ${today()}`,
-    "",
+    // The build date used to stand here, above the entry, as `> Generated:`.
+    // It now travels with the rest of the schema as the last key `buildPostEntry`
+    // emits — see the note there, and the matching one in `documentHeader`.
     ...buildPostEntry(post, siteUrl, localePrefix, locale),
   ].join("\n");
 }
@@ -1272,22 +1286,18 @@ export function documentHeader(
   // `Updated:` is the CONTENT date, resolved from the same function that
   // answers for the sitemap's <lastmod> and for the page's JSON-LD
   // `dateModified`, so the three surfaces cannot disagree. Without it every
-  // page twin carried only `Generated:` — the build clock, identical across
+  // page twin carried only a build date — the build clock, identical across
   // the whole corpus — while the HTML beside it declared a real date, and a
   // recency-weighted pipeline read the whole set as changed today.
   //
-  // `Generated:` stays exactly what it is: the build date. Resolved here
-  // rather than passed in through `extra` so a twin added later cannot omit
-  // it, and omitted entirely when git cannot answer, because an absent
-  // freshness signal is honest and a fabricated one is not.
+  // Resolved here rather than passed in through `extra` so a twin added later
+  // cannot omit it, and omitted entirely when git cannot answer, because an
+  // absent freshness signal is honest and a fabricated one is not.
   const modified = pageLastmod(stripLocalePrefix(new URL(url).pathname));
   return [
     `# ${title}`,
     "",
     `> ${CHROME.page[locale]} ${index}`,
-    "",
-    // The build date, not a content date — `Updated:` below is the real one.
-    `> Generated: ${today()}`,
     "",
     // `Canonical:`, not `URL:`. The value is the PAGE this document mirrors,
     // and `URL:` never said which of the two it meant — this file, or the page
@@ -1315,6 +1325,27 @@ export function documentHeader(
     // a blanket CC URI would be an overclaim on half of them.
     `License: ${new URL(locale === "es" ? "/es/license/" : "/license/", url).href}`,
     ...extra,
+    // The build clock, last and named for what it is.
+    //
+    // It used to stand as `> Generated: <date>` above everything, which made it
+    // the FIRST date in the document and, in 60 of the 94 twins, a LATER one
+    // than the `Updated:` line further down: the site is rebuilt on every
+    // deploy, the content is not. A pipeline that takes the topmost date, or
+    // reads "generated" as "produced this text", got the build clock — which is
+    // exactly what PR #478 stopped the PAGE doing and did not stop here.
+    //
+    // Not dropped, because a reader is entitled to know how old the rendering
+    // is; demoted to the last key of the block and renamed to a word that can
+    // only be about the artifact. `Build-` is already this repo's prefix for
+    // exactly this idea: the generated Nginx snippets carry `# Build-Stamp:`
+    // for the same purpose.
+    //
+    // After `extra`, not before it: the caller's keys describe the CONTENT
+    // (`Category:` and `Tags:` on the 44 tool and tool-category twins,
+    // `Status:`/`Perfil:` on the two homepage twins), and printing the build
+    // clock above them put it back in the middle of the block it was moved out
+    // of. Last means last.
+    `Build-Date: ${today()}`,
   ];
 }
 
@@ -1771,14 +1802,22 @@ export async function generateLlmsFullTxt(siteUrl: string): Promise<string> {
     "",
     "> This file is an index. Every entry links to a markdown twin that carries\n> the detail, which is what keeps the index itself small enough to fit in an\n> agent's context. Posts, tools, the CV and the publications each live at\n> their page's own URL with `index.md` appended.",
     "",
-    `> Reuse: articles, page copy and blog covers are CC BY 4.0 with attribution; the source code is MIT; the portrait is reserved. Full terms: ${siteUrl}/license/`,
+    `> Reuse: articles and blog covers are CC BY 4.0 with attribution; the source code is MIT; the portrait is reserved. Full terms: ${siteUrl}/license/`,
     "",
-    // The same declaration llms.txt opens with, in this file's blockquote
-    // style: both indexes name one origin for everything they list.
-    `> Canonical: ${siteUrl}/`,
+    // The same declaration llms.txt opens with, and in the same shape as
+    // llms.txt and all 96 twins write it: a plain line, not a blockquote.
+    // Written as `> Canonical:` inside a blockquote, it was the ONE copy of
+    // this key in the whole corpus that an anchored `^Canonical:` could not
+    // find — which is how a consumer that learned the key from a twin would
+    // look for it. Both indexes name one origin for everything they list, and
+    // now say so in the same shape.
+    `Canonical: ${siteUrl}/`,
     "",
-    // The build date, not a content date — see the same label on the shards.
-    `> Generated: ${today()}`,
+    // The build clock, named for the artifact, exactly as the twins name it.
+    // This file has no content date to compete with — it is regenerated whole
+    // on every build — but there is no reason for the index and the documents
+    // it indexes to call the same value by two different words.
+    `Build-Date: ${today()}`,
     "",
     "## About the Author",
     "",

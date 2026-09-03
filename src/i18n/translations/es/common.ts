@@ -1003,7 +1003,7 @@ export const common = {
       mikrotikDesc:
         "Herramientas gratuitas para MikroTik RouterOS — generador de configuración WireGuard VPN para configuraciones dual-stack. Procesamiento local.",
       securityContext:
-        "Úsalas cuando estés endureciendo un sitio o revisando el trabajo de otro: construye una Content-Security-Policy y calcula los hashes de sus scripts inline, inspecciona un certificado TLS antes de confiar en él, audita cabeceras de respuesta, o razona sobre la fortaleza de contraseñas y PIN con números reales. Todo corre en tu navegador — nada de lo que pegues sale de la página.",
+        "Úsalas cuando estés endureciendo un sitio o revisando el trabajo de otro: construye una Content-Security-Policy y calcula los hashes de sus scripts inline, inspecciona un certificado TLS antes de confiar en él, audita cabeceras de respuesta, o razona sobre la fortaleza de contraseñas y PIN con números reales. Todo se calcula en tu navegador; la única excepción es la obtención opcional del analizador de cabeceras, que pasa por un proxy de este sitio y no se registra.",
       developerContext:
         "Las pequeñas conversiones que interrumpen el trabajo de verdad: decodificar un blob Base64, probar una regex contra texto de ejemplo, escribir una expresión cron fiable, convertir un timestamp Unix en fecha o comprobar un par de colores contra WCAG. Cada una hace su trabajo sin cuenta, sin subir nada y sin peticiones de red.",
       networkContext:

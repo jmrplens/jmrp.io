@@ -23,7 +23,7 @@ faq:
   - question: "¿Por qué mis valores de registro de 32 bits aparecen incorrectos al decodificar?"
     answer: "Los registros Modbus son de 16 bits, por lo que los enteros y floats de 32 bits ocupan dos registros y los fabricantes no coinciden en el orden. Prueba a cambiar el orden de bytes entre Big-Endian, Little-Endian, Mid Big-Endian y Mid Little-Endian en el panel de interpretación de datos hasta que el valor coincida con tu dispositivo."
   - question: "¿Qué aspecto tiene una respuesta de excepción Modbus?"
-    answer: "El esclavo devuelve el function code en OR con 0x80 seguido de un código de excepción como 01 (Illegal Function) o 02 (Illegal Data Address). Pega la trama en el modo Decode y la herramienta detecta la excepción y nombra el error."
+    answer: "El esclavo devuelve el function code en OR con 0x80 seguido de un código de excepción como 01 (Illegal Function) o 02 (Illegal Data Address). Pega la trama en el modo Decodificar trama y la herramienta detecta la excepción y nombra el error."
   - question: "¿Se envían mis datos Modbus a un servidor?"
     answer: "No. Toda la construcción de tramas, decodificación, cálculo de CRC/LRC e interpretación de datos se realiza íntegramente en tu navegador; nada se transmite. El enlace compartible solo codifica los parámetros de la trama en los parámetros de la URL."
 ---
@@ -113,7 +113,7 @@ import {
 <h4>Modo construcción</h4>
 <ol>
   <li>
-    Selecciona el modo <strong>Build Frame</strong> (por defecto)
+    Selecciona el modo <strong>Construir trama</strong> (por defecto)
   </li>
   <li>Elige el protocolo (RTU, TCP o ASCII)</li>
   <li>
@@ -136,16 +136,16 @@ import {
 <h4>Modo decodificación</h4>
 <ol>
   <li>
-    Selecciona el modo <strong>Decode Frame</strong>
+    Selecciona el modo <strong>Decodificar trama</strong>
   </li>
   <li>
-    Elige el protocolo o usa <strong>Auto-detect</strong>
+    Elige el protocolo o usa <strong>Autodetectar</strong>
   </li>
   <li>
     Pega una trama en hexadecimal (p. ej., <code>01 03 04 00 0A 00 64 B2 62</code>)
   </li>
   <li>
-    Pulsa <strong>Decode</strong> o presiona Enter
+    Pulsa <strong>Decodificar</strong> o presiona Enter
   </li>
   <li>
     Selecciona el formato de interpretación de datos (uint16, int16, float32,
@@ -156,12 +156,12 @@ import {
 <h4>Constructor de respuestas</h4>
 <ol>
   <li>
-    Selecciona el modo <strong>Response Builder</strong>
+    Selecciona el modo <strong>Constructor de respuesta</strong>
   </li>
   <li>Elige el function code para la respuesta</li>
   <li>
     Introduce los datos de respuesta en bytes hexadecimales, o selecciona{" "}
-    <strong>Exception Response</strong> para construir una trama de error
+    <strong>Respuesta de excepción</strong> para construir una trama de error
   </li>
 </ol>
 

@@ -13,9 +13,21 @@ type: projects
 # * `name` and `summary.en` MUST match, verbatim, the `name`/`description`
 #   the project's own site publishes for that @id. Divergent values on a
 #   shared @id contradict each other and weaken the entity instead of
-#   reinforcing it. Verified against the live sites on 2026-07-28 for:
-#   gitlab-mcp-server, libgen-mcp, phonometry, cs-routeros-bouncer,
-#   Cloudflare-DNS-Updater. Projects without a docs site use the repo/CV copy.
+#   reinforcing it. Re-verified against the live @id nodes on 2026-09-03 for
+#   all five projects that have a docs site. Matching: phonometry,
+#   cs-routeros-bouncer, Cloudflare-DNS-Updater. Two still read differently,
+#   for different reasons. gitlab-mcp-server ("850+ actions — 1,000+ depending
+#   on edition and deployment" here vs "1000+ tools" there) is NOT
+#   drift: the author confirmed on 2026-09-03 that the two counts measure
+#   different GitLab tiers, so both are true and this entry is a deliberate,
+#   accepted exception to the verbatim rule. libgen-mcp (this copy says
+#   "search and download ... from Library Genesis", the docs site says
+#   "federated search, citation and reading ... across the Library Genesis
+#   catalog and open-access sources") is undecided: no third source says
+#   which side is stale, and the difference is a feature claim, not a figure.
+#   Nothing enforces this rule: it drifted unnoticed from 2026-07-28 to
+#   2026-09-03, when phonometry's figures had moved 550/58/367 → 613/60/378.
+#   Projects without a docs site use the repo/CV copy.
 # * `summary.es` is display-only. JSON-LD always emits `summary.en`, on both
 #   locales, because the software entity is language-neutral and its
 #   canonical description must not fork per page.
@@ -94,8 +106,8 @@ projects:
       - { name: Go, wikidata: Q37227 }
       - { name: DevOps, wikidata: Q3025536 }
     summary:
-      en: Model Context Protocol server that exposes 850+ GitLab actions as AI-accessible tools — 1,000+ on Enterprise.
-      es: Servidor Model Context Protocol que expone más de 850 acciones de GitLab como herramientas accesibles para asistentes de IA (más de 1.000 en Enterprise).
+      en: Model Context Protocol server that exposes 850+ GitLab actions as AI-accessible tools — 1,000+ depending on edition and deployment.
+      es: Servidor Model Context Protocol que expone más de 850 acciones de GitLab como herramientas accesibles para asistentes de IA — más de 1.000 según edición y despliegue.
 
   - id: phonometry
     name: phonometry
@@ -121,8 +133,8 @@ projects:
       - { name: Octave band, wikidata: Q2270252 }
       - { name: Python, wikidata: Q28865 }
     summary:
-      en: "Acoustic measurement, analysis and prediction for Python: sound level metrology, psychoacoustics, room and building acoustics, materials, vibration, environmental and transport noise, underwater acoustics, electroacoustics and wave simulation, with 550 CI-enforced conformance checks across 58 domains and 367 standards."
-      es: "Medición, análisis y predicción acústica para Python: metrología de niveles sonoros, psicoacústica, acústica de salas y edificación, materiales, vibración, ruido ambiental y de transporte, acústica subacuática, electroacústica y simulación de ondas, con 550 comprobaciones de conformidad en CI sobre 58 dominios y 367 normas."
+      en: "Acoustic measurement, analysis and prediction for Python: sound level metrology, psychoacoustics, room and building acoustics, materials, vibration, environmental and transport noise, underwater acoustics, electroacoustics and wave simulation, with 613 CI-enforced conformance checks across 60 domains and 378 standards."
+      es: "Medición, análisis y predicción acústica para Python: metrología de niveles sonoros, psicoacústica, acústica de salas y edificación, materiales, vibración, ruido ambiental y de transporte, acústica subacuática, electroacústica y simulación de ondas, con 613 comprobaciones de conformidad en CI sobre 60 dominios y 378 normas."
 
   - id: cs-routeros-bouncer
     name: cs-routeros-bouncer
