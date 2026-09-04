@@ -90,7 +90,7 @@
     "@types/xml2js": "^0.4.14",
     "@typescript-eslint/eslint-plugin": "^8.68.0",
     "@typescript-eslint/parser": "^8.68.0",
-    "@unocss/eslint-plugin": "^66.8.1",
+    "@unocss/eslint-plugin": "^66.9.1",
     "astro-eslint-parser": "^3.1.0",
     "axe-core": "^4.13.0",
     "axe-html-reporter": "^2.2.11",
