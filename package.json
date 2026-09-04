@@ -140,7 +140,7 @@
     "typescript-eslint": "^8.68.0",
     "unified": "^11.0.5",
     "unist-util-visit": "^5.1.0",
-    "vercel": "^59.9.1",
+    "vercel": "^59.10.0",
     "vite-plugin-image-optimizer": "^2.0.3",
     "xml2js": "^0.6.2"
   }
