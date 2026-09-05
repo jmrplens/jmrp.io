@@ -18,7 +18,7 @@ Lo que ese script envía, una vez por página vista, es un informe al endpoint d
 
 El beacon solo se inyecta en las compilaciones de producción y, además, lleva delante una comprobación que lo detiene si el nombre de host no es exactamente jmrp.io. El servidor de desarrollo, la vista previa y cualquier otra copia de este sitio no envían nada, sea cual sea la dirección desde la que se sirvan.
 
-Este dominio se sirve además a través de Cloudflare, que termina el TLS y ve por tanto todas las peticiones. En ese borde corre un worker propio que anota una fila por petición —ruta, código de respuesta, resultado de caché, país, ciudad, operador de red y tipo de cliente a grandes rasgos— en un conjunto de datos agregado que se conserva unos noventa días. No guarda la dirección IP ni ningún identificador de sesión. Existe porque el borde responde la mayoría de las peticiones desde su caché, así que este servidor no llega a verlas y sus propios registros no pueden decir qué páginas se leen de verdad.
+Este dominio se sirve además a través de Cloudflare, que termina el TLS y ve por tanto todas las peticiones. En ese borde corre un worker propio que anota una fila por petición con los mismos datos que los registros del servidor descritos más abajo, en un conjunto de datos que Cloudflare conserva unos noventa días; cada cinco minutos esas filas se copian a mi propia base de datos de monitorización, junto a los registros del servidor, y siguen sus mismas reglas. Existe porque el borde responde la mayoría de las peticiones desde su caché, así que este servidor no llega a verlas y sus propios registros no pueden decir qué páginas se leen de verdad.
 
 Estos números están para que yo sepa qué artículos merece la pena mantener actualizados. Ese es su único uso.
 
