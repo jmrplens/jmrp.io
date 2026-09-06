@@ -616,8 +616,8 @@ export const common = {
       edgeDefenseChip: "router + nginx",
       edgeDescription:
         "CrowdSec acts as a WAF: it analyses NGINX patterns and, together with the router honeypot, decides which IPs to block. Decisions fan out to every bouncer — NGINX, Cloudflare and the router via my cs-RouterOS-bouncer.",
-      linkTarpit: "How the tarpit works ↗",
-      linkHoneypot: "Honeypot & CrowdSec ↗",
+      linkTarpit: "How the tarpit works",
+      linkHoneypot: "Honeypot & CrowdSec",
       twinIntro:
         "Self-hosted infrastructure running on the author's own hardware and connections. Every figure below is substituted by nginx as this document is served, from the capture timestamped below; this file is never cached.",
       twinOverview: "At a glance",

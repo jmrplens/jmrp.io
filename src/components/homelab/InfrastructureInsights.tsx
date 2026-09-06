@@ -108,9 +108,12 @@ export interface InfrastructureTranslations {
   threatsBlocked: string;
   /** Prose describing how the WAF/honeypot pipeline decides what to block. */
   edgeDescription: string;
-  /** "Learn more" link label pointing to the tarpit write-up. */
+  /**
+   * "Learn more" label for the tarpit write-up. No ↗: the post is on this
+   * site, and the glyph is this site's mark for a link that leaves it.
+   */
   linkTarpit: string;
-  /** "Learn more" link label pointing to the honeypot/CrowdSec write-up. */
+  /** "Learn more" label for the honeypot write-up; internal, so no ↗ either. */
   linkHoneypot: string;
   /** One-line description of the defense data flow. */
   flowBand: string;
