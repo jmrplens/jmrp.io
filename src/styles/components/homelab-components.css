@@ -92,7 +92,7 @@
 /* The WAN card carries two directions, one per line, so its value is a pair of
    spans rather than a single string. Block display gives each its own line
    without a wrapper element; the slightly tighter size keeps the two-line card
-   the same height as its single-line neighbours. */
+   the same height as the single-line ones beside it. */
 .kpi-card__line {
   display: block;
   font-size: var(--text-xl);

@@ -237,10 +237,14 @@ export default function InfrastructureInsights({
             <li
               key={c.code}
               className="country-badge"
-              aria-label={`${c.code} \u{2014} ${c.count} ${t.hits}`}
               title={`${c.count} ${t.hits}`}
             >
               {c.code}
+              {/* The count is the badge's whole point for a screen reader, and
+                  `aria-label` cannot carry it: an <li> has an implicit
+                  listitem role, which takes no accessible name (html-validate
+                  aria-label-misuse). A hidden span reads it out instead. */}
+              <span className="sr-only">{` \u{2014} ${c.count} ${t.hits}`}</span>
             </li>
           ))}
         </ul>
