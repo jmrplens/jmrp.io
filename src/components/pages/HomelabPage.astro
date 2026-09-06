@@ -101,6 +101,9 @@ const infrastructureTranslations: InfrastructureTranslations = {
   crowdsecLayer: t("pages.homelab.crowdsecLayer"),
   honeypotHits: t("pages.homelab.honeypotHits"),
   blacklistScanners: t("pages.homelab.blacklistScanners"),
+  routerDrops: t("pages.homelab.routerDrops"),
+  banIps: t("pages.homelab.banIps"),
+  routerBlocklist: t("pages.homelab.routerBlocklist"),
   activeConnections: t("pages.homelab.activeConnections"),
   wanTraffic: t("pages.homelab.wanTraffic"),
   crowdsecBlocked: t("pages.homelab.crowdsecBlocked"),
@@ -115,7 +118,7 @@ const kpiTranslations: HomelabKpiTranslations = {
   ariaLabel: t("pages.homelab.kpiAriaLabel"),
   servicesOnline: t("pages.homelab.kpiServicesOnline"),
   // Breakdown ("· N infra · M Tor") appended below, once nodeCards/torServices exist.
-  monitoredNodes: t("pages.homelab.kpiMonitoredNodes"),
+  activeConnections: t("pages.homelab.kpiActiveConnections"),
   requests24h: t("pages.homelab.kpiRequests24h"),
   wan24h: t("pages.homelab.kpiWan24h"),
 };
@@ -177,10 +180,6 @@ const torServices: HomelabTorService[] = homelabTorServices(t);
 /** Infrastructure nodes shown in the compact live resource grid. */
 const nodeCards: NodeConfig[] = homelabNodes(t);
 
-// Node-count breakdown for the KPI band, derived from the real arrays so it stays
-// in sync (e.g. "monitored nodes · 5 infra · 4 Tor").
-kpiTranslations.monitoredNodes = `${t("pages.homelab.kpiMonitoredNodes")} · ${nodeCards.length} infra · ${torServices.length} Tor`;
-
 const nodeCardsTranslations: NodeCardsTranslations = {
   ariaLabel: t("pages.homelab.nodesAriaLabel"),
   cpu: t("pages.homelab.nodeCpu"),
@@ -191,10 +190,6 @@ const nodeCardsTranslations: NodeCardsTranslations = {
   statusHighLoad: t("pages.homelab.nodeStatusHighLoad"),
   noData: t("pages.homelab.noData"),
 };
-
-// Monitored-node headline count: infrastructure nodes + Tor nodes. Derived from
-// the rendered arrays so the figure never drifts from what the page shows.
-const monitoredNodesCount = nodeCards.length + torServices.length;
 
 // KPI denominator: only what nginx's health probe actually reports on, so the
 // numerator it injects can never exceed it. See `Service.probed`.
@@ -328,7 +323,6 @@ const servicesSchema = {
         <HomelabKpi
           translations={kpiTranslations}
           servicesCount={probedServices.length}
-          nodesCount={monitoredNodesCount}
           ssr={HLM.kpi}
         />
       </section>
@@ -340,6 +334,7 @@ const servicesSchema = {
         <InfrastructureInsights
           translations={infrastructureTranslations}
           ssr={HLM.edge}
+          origins={HLM.origins}
         />
       </section>
 

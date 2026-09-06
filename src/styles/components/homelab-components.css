@@ -89,6 +89,19 @@
   letter-spacing: -0.02em;
 }
 
+/* The WAN card carries two directions, one per line, so its value is a pair of
+   spans rather than a single string. Block display gives each its own line
+   without a wrapper element; the slightly tighter size keeps the two-line card
+   the same height as the single-line ones beside it. */
+.kpi-card__line {
+  display: block;
+  font-size: var(--text-xl);
+}
+
+.kpi-card__line + .kpi-card__line {
+  margin-block-start: 0.15em;
+}
+
 /* No-data placeholder (e.g. counter unavailable) reads as intentional, not a
    broken value (P7). The state is normally only seen off-origin (referer-gated
    API); in production the figure loads. */

@@ -182,6 +182,18 @@ export async function homelabMarkdown(
   const torServices = homelabTorServices(t);
   const nodes = homelabNodes(t);
 
+  /** "Attack regions (MikroTik): US 775, BG 183" — or nothing when all empty. */
+  const originLine = (
+    layer: string,
+    origins: readonly { code: string; count: string }[],
+  ): string[] => {
+    const used = origins.filter((o) => o.code && o.code !== "\u{2014}");
+    if (used.length === 0) return [];
+    const list = used.map((o) => `${o.code} ${o.count}`).join(", ");
+    const heading = `${t("pages.homelab.attackRegions")} (${layer})`;
+    return [`- ${label(heading)}: ${list}`];
+  };
+
   const out: string[] = [
     `# ${t("pages.homelab.title")}`,
     "",
@@ -234,9 +246,15 @@ export async function homelabMarkdown(
     `- ${label(t("pages.homelab.honeypotHits"))}: ${HLM.edge.honeypot}`,
     `- ${label(t("pages.homelab.tarpitHits"))}: ${HLM.edge.tarpit}`,
     `- ${label(t("pages.homelab.nginxBans"))}: ${HLM.edge.nginxBans}`,
-    `- ${label(t("pages.homelab.crowdsecBlocked"))}: ${HLM.edge.crowdsec}`,
+    `- ${label(t("pages.homelab.banIps"))}: ${HLM.edge.banIps}`,
     `- ${label(t("pages.homelab.blacklistScanners"))}: ${HLM.edge.blacklist}`,
-    `- ${label(t("pages.homelab.activeConnections"))}: ${HLM.edge.activeConnections}`,
+    `- ${label(t("pages.homelab.routerDrops"))}: ${HLM.edge.routerDrops}`,
+    `- ${label(t("pages.homelab.routerBlocklist"))}: ${HLM.edge.crowdsec}`,
+    // Country codes with their counts, per layer. A slot the server has no
+    // country for arrives as an em dash and is dropped, so a quiet day simply
+    // yields a shorter line — the same rule the page's badges follow.
+    ...originLine(t("pages.homelab.mikrotikTitle"), HLM.origins.router),
+    ...originLine(t("pages.homelab.crowdsecTitle"), HLM.origins.nginx),
     "",
   ];
 

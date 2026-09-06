@@ -1,11 +1,13 @@
+import type { ComponentChildren } from "preact";
+
 /** Translations required by HomelabKpi. Passed from the Astro parent. */
 export interface HomelabKpiTranslations {
   /** ARIA label for the KPI band region. */
   ariaLabel: string;
   /** Label under the "services online" figure. */
   servicesOnline: string;
-  /** Label under the "monitored nodes" figure. */
-  monitoredNodes: string;
+  /** Label under the "active connections" figure. */
+  activeConnections: string;
   /** Label under the "requests · 24h" figure. */
   requests24h: string;
   /** Label under the "WAN · 24h" figure. */
@@ -17,8 +19,7 @@ interface Props {
   readonly translations: HomelabKpiTranslations;
   /** Total number of public services rendered on the page (the denominator). */
   readonly servicesCount: number;
-  /** Number of monitored infrastructure nodes (computed at build). */
-  readonly nodesCount: number;
+
   /**
    * Pre-formatted display strings: the `HLM_*` tokens from `ssr-tokens.ts`,
    * replaced by nginx at serve time. The component renders them verbatim and
@@ -27,33 +28,46 @@ interface Props {
    */
   readonly ssr: {
     readonly online: string;
+    readonly activeConnections: string;
     readonly requests: string;
     readonly wan: string;
+    readonly wanUp: string;
   };
 }
 
 /**
  * Homelab KPI band — four headline figures above the edge-defense spotlight.
- * Two are structural (services total, nodes) and two arrive pre-formatted from
- * nginx as `HLM_*` tokens. The component fetches nothing: it renders on the
- * server and never hydrates.
+ * Only the services denominator is structural; the rest arrive pre-formatted
+ * from nginx as `HLM_*` tokens. The component fetches nothing: it renders on
+ * the server and never hydrates.
  */
 export default function HomelabKpi({
   translations: t,
   servicesCount,
-  nodesCount,
   ssr,
 }: Props) {
   // Server-injected values are already formatted; render them verbatim.
-  const kpis = [
+  const kpis: { v: ComponentChildren; l: string; empty: boolean }[] = [
     {
       v: `${ssr.online} / ${servicesCount}`,
       l: t.servicesOnline,
       empty: false,
     },
-    { v: String(nodesCount), l: t.monitoredNodes, empty: false },
+    { v: ssr.activeConnections, l: t.activeConnections, empty: false },
     { v: ssr.requests, l: t.requests24h, empty: false },
-    { v: ssr.wan, l: t.wan24h, empty: false },
+    // Up over down, one line each: the two directions in one card instead of
+    // the node count that used to sit here, and the upload was missing from
+    // the page entirely. Arrows carry the direction, so the lines need no words.
+    {
+      v: (
+        <>
+          <span className="kpi-card__line">{`\u{2191} ${ssr.wanUp}`}</span>
+          <span className="kpi-card__line">{`\u{2193} ${ssr.wan}`}</span>
+        </>
+      ),
+      l: t.wan24h,
+      empty: false,
+    },
   ];
 
   return (
