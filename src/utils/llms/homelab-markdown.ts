@@ -42,6 +42,10 @@ import {
 import { HLM } from "@components/homelab/ssr-tokens";
 import { useTranslations } from "@i18n/utils";
 
+/** Repository behind the bouncer the edge-defense copy names. */
+const BOUNCER_REPO = "https://github.com/jmrplens/cs-routeros-bouncer";
+const BOUNCER_NAME = "cs-RouterOS-bouncer";
+
 /**
  * A UI string used as a markdown label, with its first letter capitalized.
  *
@@ -223,9 +227,10 @@ export async function homelabMarkdown(
     `## ${t("pages.homelab.twinOverview")}`,
     "",
     `- ${label(t("pages.homelab.kpiServicesOnline"))}: ${HLM.kpi.online} / ${services.filter((s) => s.probed).length}`,
+    `- ${label(t("pages.homelab.kpiActiveConnections"))}: ${HLM.kpi.activeConnections}`,
     `- ${label(t("pages.homelab.kpiRequests24h"))}: ${HLM.kpi.requests}`,
-    `- ${label(t("pages.homelab.kpiWan24h"))}: ${HLM.kpi.wan}`,
-    `- ${nodes.length + torServices.length} ${t("pages.homelab.kpiMonitoredNodes")} (${nodes.length} infra, ${torServices.length} Tor)`,
+    // Both directions, the arrows saying which is which, as on the page.
+    `- ${label(t("pages.homelab.kpiWan24h"))}: \u{2191} ${HLM.kpi.wanUp}, \u{2193} ${HLM.kpi.wan}`,
     "",
     `## ${t("pages.homelab.servicesKicker")}`,
     "",
@@ -241,6 +246,11 @@ export async function homelabMarkdown(
 
     "",
     `## ${t("pages.homelab.edgeDefense")}`,
+    "",
+    // Same sentence as the page, the bouncer's name as a markdown link.
+    t("pages.homelab.edgeDescription")
+      .split(BOUNCER_NAME)
+      .join(`[${BOUNCER_NAME}](${BOUNCER_REPO})`),
     "",
     `- ${label(t("pages.homelab.securityBlocks"))}: ${HLM.edge.threats}`,
     `- ${label(t("pages.homelab.honeypotHits"))}: ${HLM.edge.honeypot}`,

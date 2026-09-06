@@ -1,3 +1,10 @@
+import type { ComponentChildren } from "preact";
+
+/** The bouncer's repository, linked from the spotlight copy that names it. */
+const BOUNCER_REPO = "https://github.com/jmrplens/cs-routeros-bouncer";
+/** The literal both locales use in `edgeDescription`; the link wraps it. */
+const BOUNCER_NAME = "cs-RouterOS-bouncer";
+
 /** Translations required by InfrastructureInsights. Passed from Astro parent. */
 export interface InfrastructureTranslations {
   /** ARIA label for the infrastructure insights container. */
@@ -170,42 +177,6 @@ interface Props {
   };
 }
 
-/** One country slot: the code and its pre-formatted count, both from tokens. */
-interface Origin {
-  readonly code: string;
-  readonly count: string;
-}
-
-interface Props {
-  readonly translations: InfrastructureTranslations;
-  /**
-   * Server-injected mode: pre-formatted display strings (the `HLM_*` tokens
-   * from `ssr-tokens.ts`, replaced by nginx at serve time). When set, the
-   * component renders them verbatim, fetches nothing, and is expected to be
-   * mounted WITHOUT a `client:*` directive. The attack-regions list is not
-   * available in this mode (it needs a variable-length payload, not a scalar
-   * token) and is simply omitted. See `ssr-tokens.ts` for the full contract.
-   */
-  readonly ssr: {
-    readonly threats: string;
-    readonly honeypot: string;
-    readonly tarpit: string;
-    readonly nginxBans: string;
-    readonly banIps: string;
-    readonly crowdsec: string;
-    readonly blacklist: string;
-    readonly routerDrops: string;
-  };
-  /**
-   * Busiest four attacking country codes per layer, as tokens. A slot the
-   * server has no country for resolves to an em dash and is skipped.
-   */
-  readonly origins: {
-    readonly router: readonly Origin[];
-    readonly nginx: readonly Origin[];
-  };
-}
-
 /**
  * Infrastructure insights component.
  * Displays real-time statistics from Nginx and InfluxDB.
@@ -253,6 +224,28 @@ export default function InfrastructureInsights({
 
   const threatsDisplay = ssr.threats;
 
+  // The description names the bouncer with the same literal in both locales;
+  // that word becomes a link to its repository. A translation that drops the
+  // name renders as plain text instead of breaking.
+  const describe = (text: string): ComponentChildren => {
+    const at = text.indexOf(BOUNCER_NAME);
+    if (at === -1) return <>{text}</>;
+    return (
+      <>
+        {text.slice(0, at)}
+        <a
+          href={BOUNCER_REPO}
+          className="insight-link"
+          rel="external noopener noreferrer"
+          target="_blank"
+        >
+          {BOUNCER_NAME}
+        </a>
+        {text.slice(at + BOUNCER_NAME.length)}
+      </>
+    );
+  };
+
   // Four headline sub-metrics shown in the hero band (all distinct real fields).
   const fwTop = [
     { label: t.honeypotHits, value: ssr.honeypot },
@@ -292,7 +285,7 @@ export default function InfrastructureInsights({
               <output className="edge-hero__num">{threatsDisplay}</output>
               <span className="edge-hero__label">{t.threatsBlocked}</span>
             </div>
-            <p className="edge-hero__desc">{t.edgeDescription}</p>
+            <p className="edge-hero__desc">{describe(t.edgeDescription)}</p>
           </div>
           <div className="edge-hero__metrics">
             {fwTop.map((m) => (
