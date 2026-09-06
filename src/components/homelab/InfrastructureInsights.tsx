@@ -132,6 +132,11 @@ export interface InfrastructureTranslations {
   banIps: string;
   /** Label for the size of the address list the router enforces. */
   routerBlocklist: string;
+  /**
+   * Accessible name of the bouncer link in the description: the repository
+   * name plus the "opens in new tab" notice, from `aria.opensNewTab`.
+   */
+  bouncerLinkAria: string;
   /** Label for the active connections metric. */
   activeConnections: string;
   /** Label for the WAN 24h traffic metric. */
@@ -235,9 +240,14 @@ export default function InfrastructureInsights({
         {text.slice(0, at)}
         <a
           href={BOUNCER_REPO}
-          className="insight-link"
+          // `external-link` is what draws the ↗, from global.css. The glyph is
+          // generated content rather than a <span> so copying the paragraph
+          // yields the sentence as written — the same reason the announcement
+          // lives in an attribute. See scripts/rehype-external-links-announced.
+          className="insight-link external-link"
           rel="external noopener noreferrer"
           target="_blank"
+          aria-label={t.bouncerLinkAria}
         >
           {BOUNCER_NAME}
         </a>

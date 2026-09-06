@@ -104,6 +104,9 @@ const infrastructureTranslations: InfrastructureTranslations = {
   routerDrops: t("pages.homelab.routerDrops"),
   banIps: t("pages.homelab.banIps"),
   routerBlocklist: t("pages.homelab.routerBlocklist"),
+  // The same `aria.opensNewTab` every other external link on the site uses, so
+  // the two locales cannot drift apart on this one link.
+  bouncerLinkAria: t("aria.opensNewTab", { text: "cs-RouterOS-bouncer" }),
   activeConnections: t("pages.homelab.activeConnections"),
   wanTraffic: t("pages.homelab.wanTraffic"),
   crowdsecBlocked: t("pages.homelab.crowdsecBlocked"),
