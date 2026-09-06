@@ -18,7 +18,7 @@ What that script sends, once per page view, is a report to Cloudflare's analytic
 
 The beacon is only injected into production builds, and it carries a check that stops it unless the page is being served from jmrp.io itself. Development runs, previews and any other copy of this site report nothing, whatever address they are served from.
 
-This domain is also served through Cloudflare, which terminates TLS and therefore sees every request. A small worker of mine runs at that edge and records one row per request — path, response status, cache result, country, city, network operator and coarse client type — in an aggregate dataset kept for about ninety days. It stores no IP address and no session identifier. It exists because the edge answers most requests from its cache, so this server never sees them and its own logs cannot say which pages are actually read.
+This domain is also served through Cloudflare, which terminates TLS and therefore sees every request. A small worker of mine runs at that edge and records one row per request with the same data as the server logs described below, in a dataset Cloudflare keeps for about ninety days; every five minutes those rows are copied into my own monitoring database, beside the server logs, and follow the same rules as they do. It exists because the edge answers most requests from its cache, so this server never sees them and its own logs cannot say which pages are actually read.
 
 These numbers exist to tell me which articles are worth keeping up to date. That is their only use.
 
