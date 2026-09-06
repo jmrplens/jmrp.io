@@ -119,6 +119,12 @@ export interface InfrastructureTranslations {
   honeypotHits: string;
   /** Label for the blacklisted scanners metric. */
   blacklistScanners: string;
+  /** Label for the packets the router dropped from banned sources, 24 h. */
+  routerDrops: string;
+  /** Label for the distinct IPs behind the nginx refusals, 24 h. */
+  banIps: string;
+  /** Label for the size of the address list the router enforces. */
+  routerBlocklist: string;
   /** Label for the active connections metric. */
   activeConnections: string;
   /** Label for the WAN 24h traffic metric. */
@@ -128,32 +134,10 @@ export interface InfrastructureTranslations {
 }
 
 /** Component props */
-interface Props {
-  readonly translations: InfrastructureTranslations;
-  /**
-   * Server-injected mode: pre-formatted display strings (the `HLM_*` tokens
-   * from `ssr-tokens.ts`, replaced by nginx at serve time). When set, the
-   * component renders them verbatim, fetches nothing, and is expected to be
-   * mounted WITHOUT a `client:*` directive. The attack-regions list is not
-   * available in this mode (it needs a variable-length payload, not a scalar
-   * token) and is simply omitted. See `ssr-tokens.ts` for the full contract.
-   */
-  readonly ssr: {
-    readonly threats: string;
-    readonly honeypot: string;
-    readonly tarpit: string;
-    readonly nginxBans: string;
-    readonly crowdsec: string;
-    readonly blacklist: string;
-    readonly wanRx: string;
-    readonly activeConnections: string;
-    readonly requests: string;
-  };
-}
-
-interface Country {
-  code: string;
-  count: number;
+/** One country slot: the code and its pre-formatted count, both from tokens. */
+interface Origin {
+  readonly code: string;
+  readonly count: string;
 }
 
 interface Props {
@@ -171,17 +155,55 @@ interface Props {
     readonly honeypot: string;
     readonly tarpit: string;
     readonly nginxBans: string;
+    readonly banIps: string;
     readonly crowdsec: string;
     readonly blacklist: string;
-    readonly wanRx: string;
-    readonly activeConnections: string;
-    readonly requests: string;
+    readonly routerDrops: string;
+  };
+  /**
+   * Busiest four attacking country codes per layer, as tokens. A slot the
+   * server has no country for resolves to an em dash and is skipped.
+   */
+  readonly origins: {
+    readonly router: readonly Origin[];
+    readonly nginx: readonly Origin[];
   };
 }
 
-interface Country {
-  code: string;
-  count: number;
+/** One country slot: the code and its pre-formatted count, both from tokens. */
+interface Origin {
+  readonly code: string;
+  readonly count: string;
+}
+
+interface Props {
+  readonly translations: InfrastructureTranslations;
+  /**
+   * Server-injected mode: pre-formatted display strings (the `HLM_*` tokens
+   * from `ssr-tokens.ts`, replaced by nginx at serve time). When set, the
+   * component renders them verbatim, fetches nothing, and is expected to be
+   * mounted WITHOUT a `client:*` directive. The attack-regions list is not
+   * available in this mode (it needs a variable-length payload, not a scalar
+   * token) and is simply omitted. See `ssr-tokens.ts` for the full contract.
+   */
+  readonly ssr: {
+    readonly threats: string;
+    readonly honeypot: string;
+    readonly tarpit: string;
+    readonly nginxBans: string;
+    readonly banIps: string;
+    readonly crowdsec: string;
+    readonly blacklist: string;
+    readonly routerDrops: string;
+  };
+  /**
+   * Busiest four attacking country codes per layer, as tokens. A slot the
+   * server has no country for resolves to an em dash and is skipped.
+   */
+  readonly origins: {
+    readonly router: readonly Origin[];
+    readonly nginx: readonly Origin[];
+  };
 }
 
 /**
@@ -193,10 +215,37 @@ interface Country {
 export default function InfrastructureInsights({
   translations: t,
   ssr,
+  origins,
 }: Props) {
-  // The attack-regions list needs a variable-length payload, which no `HLM_*`
-  // token can carry, so the server-injected page omits the block entirely.
-  const countries: Country[] = [];
+  // Four fixed token slots stand in for each variable-length list: a slot the
+  // server has no country for resolves to an em dash, which is what "unused"
+  // looks like from here.
+  const used = (list: readonly Origin[]) =>
+    list.filter((o) => o.code && o.code !== "\u{2014}");
+  const routerCountries = used(origins.router);
+  const nginxCountries = used(origins.nginx);
+  // Same badge list under each column, over that column's own countries.
+  const regions = (list: readonly Origin[]) =>
+    list.length > 0 && (
+      <div className="edge-regions">
+        <span className="edge-regions__label">{t.attackRegions}</span>
+        <ul
+          className="country-list"
+          aria-label={t.attackRegionsList}
+        >
+          {list.map((c) => (
+            <li
+              key={c.code}
+              className="country-badge"
+              aria-label={`${c.code} \u{2014} ${c.count} ${t.hits}`}
+              title={`${c.count} ${t.hits}`}
+            >
+              {c.code}
+            </li>
+          ))}
+        </ul>
+      </div>
+    );
 
   const threatsDisplay = ssr.threats;
 
@@ -211,12 +260,11 @@ export default function InfrastructureInsights({
   // Rows of the two layer columns.
   const rows = {
     blacklist: ssr.blacklist,
-    wanRx: `${ssr.wanRx} ↓`,
-    activeConnections: ssr.activeConnections,
+    routerDrops: ssr.routerDrops,
     crowdsec: ssr.crowdsec,
-    requests: ssr.requests,
     tarpit: ssr.tarpit,
     nginxBans: ssr.nginxBans,
+    banIps: ssr.banIps,
   };
 
   return (
@@ -287,14 +335,15 @@ export default function InfrastructureInsights({
                 <dd>{rows.blacklist}</dd>
               </div>
               <div className="edge-row">
-                <dt>{t.wanTraffic}</dt>
-                <dd>{rows.wanRx}</dd>
+                <dt>{t.routerDrops}</dt>
+                <dd>{rows.routerDrops}</dd>
               </div>
               <div className="edge-row">
-                <dt>{t.activeConnections}</dt>
-                <dd>{rows.activeConnections}</dd>
+                <dt>{t.routerBlocklist}</dt>
+                <dd>{rows.crowdsec}</dd>
               </div>
             </dl>
+            {regions(routerCountries)}
           </article>
 
           {/* Application layer — CrowdSec WAF + NGINX */}
@@ -319,14 +368,6 @@ export default function InfrastructureInsights({
             </header>
             <dl className="edge-rows">
               <div className="edge-row">
-                <dt>{t.crowdsecBlocked}</dt>
-                <dd>{rows.crowdsec}</dd>
-              </div>
-              <div className="edge-row">
-                <dt>{t.requestsReceived}</dt>
-                <dd>{rows.requests}</dd>
-              </div>
-              <div className="edge-row">
                 <dt>
                   <a
                     href={t.tarpitBlogUrl}
@@ -342,27 +383,12 @@ export default function InfrastructureInsights({
                 <dt>{t.nginxBans}</dt>
                 <dd>{rows.nginxBans}</dd>
               </div>
-            </dl>
-            {countries.length > 0 && (
-              <div className="edge-regions">
-                <span className="edge-regions__label">{t.attackRegions}</span>
-                <ul
-                  className="country-list"
-                  aria-label={t.attackRegionsList}
-                >
-                  {countries.map((c) => (
-                    <li
-                      key={c.code}
-                      className="country-badge"
-                      aria-label={`${c.code} — ${c.count} ${t.hits}`}
-                      title={`${c.count} ${t.hits}`}
-                    >
-                      {c.code}
-                    </li>
-                  ))}
-                </ul>
+              <div className="edge-row">
+                <dt>{t.banIps}</dt>
+                <dd>{rows.banIps}</dd>
               </div>
-            )}
+            </dl>
+            {regions(nginxCountries)}
           </article>
         </div>
       </div>

@@ -78,50 +78,89 @@ export interface NodeSsr {
 }
 
 /**
- * Requests received in the last 24 h. Declared once and shared: the SAME
- * figure is legitimately rendered in two places (the KPI band and the
- * edge-defense column), so both reference this constant instead of minting a
- * second token for one metric.
- */
-const REQ_24H = "HLM_REQ_24H";
-
-/**
  * The token registry. Keys are grouped by the component that renders them.
  * Every literal MUST match `^HLM_[A-Z0-9_]+$` and be unique PER METRIC — one
- * metric rendered in several places shares one token (see `REQ_24H` above),
- * but two different metrics must never share a literal.
+ * metric rendered in several places shares one literal, and two different
+ * metrics must never share one.
  */
 export const HLM = {
   /** KPI band (HomelabKpi). */
   kpi: {
     /** Services currently online (numerator; the denominator is static). */
     online: "HLM_ONLINE",
-    /** HTTP requests received in the last 24 h. */
-    requests: REQ_24H,
+    /**
+     * Connections the router is tracking right now. It replaced the monitored
+     * node count, a build-time constant the page already states beside it.
+     */
+    activeConnections: "HLM_ACTIVE_CONNECTIONS",
+    /** HTTP requests received in the last 24 h, origin and edge together. */
+    requests: "HLM_REQ_24H",
     /** WAN download traffic in the last 24 h. */
     wan: "HLM_WAN_24H",
+    /** WAN upload over the same window, rendered beside the download. */
+    wanUp: "HLM_WAN_TX_24H",
   },
 
-  /** Edge-defense spotlight (InfrastructureInsights). */
+  /**
+   * Edge-defense spotlight (InfrastructureInsights).
+   *
+   * Every figure here answers "what was stopped". Throughput belongs to the KPI
+   * band: WAN traffic, active connections and total requests used to sit in
+   * these two columns, where they read as part of the defence.
+   */
   edge: {
-    /** Aggregate threats blocked in 24 h (tarpit + nginx bans). */
+    /** Blocked in 24 h: tarpit hits + nginx refusals + honeypot hits. */
     threats: "HLM_THREATS_24H",
-    /** MikroTik honeypot hits. */
+    /** MikroTik honeypot hits, 24 h. */
     honeypot: "HLM_HONEYPOT_HITS",
     /** Nginx tarpit hits, 24 h. */
     tarpit: "HLM_TARPIT_HITS",
-    /** Nginx bans, 24 h. */
+    /** Requests the nginx bouncer refused, 24 h. */
     nginxBans: "HLM_NGINX_BANS",
-    /** CrowdSec blocked IPs (router blocklist size). */
+    /** Distinct IPs behind those refusals, 24 h. */
+    banIps: "HLM_NGINX_BAN_IPS",
+    /**
+     * Size of the CrowdSec address list the router enforces. It reads as a
+     * router figure, so it sits in the MikroTik column; the hero band above
+     * still carries it as one of the four headline numbers.
+     */
     crowdsec: "HLM_CROWDSEC_BLOCKED",
     /** Blacklisted port scanners on the router. */
     blacklist: "HLM_BLACKLIST_SCANNERS",
-    /** Router WAN download bytes, formatted. */
-    wanRx: "HLM_WAN_RX",
-    /** Active connections tracked by the router. */
-    activeConnections: "HLM_ACTIVE_CONNECTIONS",
-    /** Requests received, 24 h (same figure as the KPI band). */
-    requests: REQ_24H,
+    /**
+     * Packets the router dropped in 24 h because the source was on the
+     * CrowdSec address list. This is the layer before nginx: those packets
+     * never reached it, so no other figure on the page counts them.
+     */
+    routerDrops: "HLM_ROUTER_DROPS",
+  },
+
+  /**
+   * Where the blocked traffic came from, one list per layer: the four busiest
+   * country codes of the last 24 h with their counts. Two lists, because the
+   * columns stop different things — the router drops packets from its
+   * blocklist, nginx tarpits and refuses requests — and a single shared list
+   * would file the tarpit's countries under the router's heading.
+   *
+   * A list of variable length cannot be a token, so the four slots are fixed
+   * and a slot the server has no country for resolves to an em dash, which the
+   * component reads as "unused" and skips.
+   */
+  origins: {
+    /** GeoIP of the sources the router dropped (`router_drops`). */
+    router: [
+      { code: "HLM_ROUTER_CC1", count: "HLM_ROUTER_N1" },
+      { code: "HLM_ROUTER_CC2", count: "HLM_ROUTER_N2" },
+      { code: "HLM_ROUTER_CC3", count: "HLM_ROUTER_N3" },
+      { code: "HLM_ROUTER_CC4", count: "HLM_ROUTER_N4" },
+    ],
+    /** GeoIP of the clients the tarpit caught (`nginx_tarpit`). */
+    nginx: [
+      { code: "HLM_ATTACK_CC1", count: "HLM_ATTACK_N1" },
+      { code: "HLM_ATTACK_CC2", count: "HLM_ATTACK_N2" },
+      { code: "HLM_ATTACK_CC3", count: "HLM_ATTACK_N3" },
+      { code: "HLM_ATTACK_CC4", count: "HLM_ATTACK_N4" },
+    ],
   },
 
   /** Per-service stat pairs (ServiceStats). */
