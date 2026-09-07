@@ -216,6 +216,7 @@ test("isInjectedThirdPartyResource: translator hosts", () => {
     "translator.microsoft.com",
     "edge.microsoft.com",
     "deepl.com",
+    "mc.yandex.ru",
   ];
   for (const host of translatorHosts) {
     const report = { "blocked-uri": `https://${host}/some-asset.js` };

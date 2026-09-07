@@ -117,7 +117,7 @@ Browsers that lack `prefetch-src` support (notably Firefox) fall back to `defaul
 
 ### 4. Injected Third-Party Resources (`isInjectedThirdPartyResource`)
 
-The site's CSP restricts `font-src` and `media-src` to `'self'`, so any `data:` URI or remote (non-jmrp.io) font/media is injected by an extension or the browser's translator. Also covers `connect-src` to `data:` and known translator/extension origins (`translate.google.com`, `gstatic.com`, `yastatic.net`, `r2cdn.perplexity.ai`, `div.show`).
+The site's CSP restricts `font-src` and `media-src` to `'self'`, so any `data:` URI or remote (non-jmrp.io) font/media is injected by an extension or the browser's translator. Also covers `connect-src` to `data:` and known translator/extension origins (`translate.google.com`, `gstatic.com`, `yastatic.net`, `mc.yandex.ru`, `r2cdn.perplexity.ai`, `div.show`).
 
 ### 5. Injected Inline Styles (`isInjectedInlineStyle`)
 

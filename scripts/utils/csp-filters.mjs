@@ -24,9 +24,13 @@
 const OWN_ORIGIN = /(^|\.)jmrp\.io$/i;
 
 /** Browser/extension origins the site never references but that are injected
- *  by in-browser translators and extensions (fonts, icons, iframes, beacons). */
+ *  by in-browser translators and extensions (fonts, icons, iframes, beacons).
+ *  `mc.yandex.ru` is the Yandex Metrika beacon: the site has no Metrika
+ *  counter and `img-src` allows only its own origin, so every report naming it
+ *  is a pixel injected by an extension or an ISP. One visitor reported the same
+ *  three counter ids daily for nine days (2026-08-30 to 2026-09-07). */
 const TRANSLATOR_EXTENSION_HOSTS =
-  /(^|\.)(translate\.google\.com|translate\.googleapis\.com|gstatic\.com|yastatic\.net|r2cdn\.perplexity\.ai|div\.show|translator\.microsoft\.com|edge\.microsoft\.com|deepl\.com)$/i;
+  /(^|\.)(translate\.google\.com|translate\.googleapis\.com|gstatic\.com|yastatic\.net|mc\.yandex\.ru|r2cdn\.perplexity\.ai|div\.show|translator\.microsoft\.com|edge\.microsoft\.com|deepl\.com)$/i;
 
 /** Antivirus/security-suite hosts known to inject `<script>`/`<style>`
  *  elements into pages under their protection (Kaspersky Protection, Avast
