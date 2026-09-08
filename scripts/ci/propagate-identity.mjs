@@ -95,10 +95,19 @@ async function syncConsumer(consumer, owner, author, canonical) {
 
   const current = await gh(contentsUrl);
   if (current.status === 404) {
+    // A missing file in a repository that exists is a real problem: the
+    // snapshot was moved or renamed and this repo has silently stopped
+    // receiving the identity. A missing *repository* is not, and there is
+    // always one: a consumer is listed here while its site is still being
+    // built, so the entry is ready on the day it is published.
+    const repository = await gh(`/repos/${owner}/${repo}`);
+    if (repository.status === 404) {
+      return { repo, state: "not published", detail: "no repository yet" };
+    }
     return {
       repo,
       state: "error",
-      detail: `${snapshotPath} is gone — was the file moved?`,
+      detail: `${snapshotPath} is gone, was the file moved?`,
     };
   }
   if (current.status !== 200) {
@@ -182,7 +191,13 @@ for (const consumer of consumers) {
   results.push(await syncConsumer(consumer, owner, commitAuthor, canonical));
 }
 
-const ICON = { updated: "✓", "in sync": "·", stale: "→", error: "✗" };
+const ICON = {
+  updated: "✓",
+  "in sync": "·",
+  stale: "→",
+  "not published": "◦",
+  error: "✗",
+};
 for (const result of results) {
   const detail = result.detail ? ` — ${result.detail}` : "";
   console.log(
@@ -206,4 +221,8 @@ if (failed.length > 0) {
   console.error(`\n✗ ${failed.length} of ${results.length} failed.`);
   process.exit(1);
 }
-console.log(`\n✓ ${results.length} consumers accounted for.`);
+const pending = results.filter((r) => r.state === "not published").length;
+console.log(
+  `\n✓ ${results.length} consumers accounted for` +
+    (pending > 0 ? `, ${pending} not published yet.` : "."),
+);

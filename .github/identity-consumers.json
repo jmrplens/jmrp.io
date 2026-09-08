@@ -11,6 +11,10 @@
     "that, the script falls back to `dispatchWorkflow`. An empty prefix means the",
     "workflow has no path filter, so any push starts it.",
     "",
+    "A consumer may be listed before its repository is public: the script",
+    "reports it as `not published` and moves on, so the entry is already there",
+    "on the day it appears.",
+    "",
     "Adding a consumer is adding an entry here."
   ],
   "owner": "jmrplens",
@@ -47,6 +51,12 @@
       "repo": "Cloudflare-DNS-Updater",
       "snapshotPath": "docs/identity/person.snapshot.json",
       "buildPathPrefix": "docs/",
+      "dispatchWorkflow": "docs.yml"
+    },
+    {
+      "repo": "ghchronicle",
+      "snapshotPath": "site/identity/person.snapshot.json",
+      "buildPathPrefix": "site/",
       "dispatchWorkflow": "docs.yml"
     },
     {
