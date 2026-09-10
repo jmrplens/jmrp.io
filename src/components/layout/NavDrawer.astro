@@ -801,7 +801,13 @@ const staticRecent = postData.slice(0, 6);
         let p = (arg || "").trim().replace(/^~\/?/, "").replace(/^\//, "");
         if (p === "" || p === "~") return sectionBySeg[""]?.href || "/";
         const seg = p.split("/")[0];
-        return sectionBySeg[seg]?.href || null;
+        // An empty string, not null: meta-externalagent mines URL-shaped
+        // literals out of this inline script with a regex and requests the
+        // bare token `null` relative to the page (`/blog/null`, `/es/null`),
+        // 19 of 257 origin 404s in 48 h on 2026-09-10. Proven by its also
+        // fetching the Nedry images and the .mp3, which exist nowhere but in
+        // this script. The caller's `if (!href)` treats "" exactly like null.
+        return sectionBySeg[seg]?.href || "";
       }
       function navigate(href) {
         if (href) {
