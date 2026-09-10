@@ -50,38 +50,44 @@ const i18n = {
           type="button"
           class="ngx-preset-btn ngx-preset-active"
           data-preset="static"
-          >{t("tools.nginxConfigGenerator.presetStaticSite")}</button
         >
+          {t("tools.nginxConfigGenerator.presetStaticSite")}
+        </button>
         <button
           type="button"
           class="ngx-preset-btn"
           data-preset="reverse-proxy"
-          >{t("tools.nginxConfigGenerator.presetReverseProxy")}</button
         >
+          {t("tools.nginxConfigGenerator.presetReverseProxy")}
+        </button>
         <button
           type="button"
           class="ngx-preset-btn"
           data-preset="spa"
-          >{t("tools.nginxConfigGenerator.presetSpaReact")}</button
         >
+          {t("tools.nginxConfigGenerator.presetSpaReact")}
+        </button>
         <button
           type="button"
           class="ngx-preset-btn"
           data-preset="php"
-          >{t("tools.nginxConfigGenerator.presetPhpFpm")}</button
         >
+          {t("tools.nginxConfigGenerator.presetPhpFpm")}
+        </button>
         <button
           type="button"
           class="ngx-preset-btn"
           data-preset="api"
-          >{t("tools.nginxConfigGenerator.presetApiBackend")}</button
         >
+          {t("tools.nginxConfigGenerator.presetApiBackend")}
+        </button>
         <button
           type="button"
           class="ngx-preset-btn"
           data-preset="hardened"
-          >{t("tools.nginxConfigGenerator.presetHardened")}</button
         >
+          {t("tools.nginxConfigGenerator.presetHardened")}
+        </button>
       </div>
     </div>
 
@@ -100,8 +106,9 @@ const i18n = {
             <label
               class="ngx-label"
               for={`${uniqueId}-domain`}
-              >{t("tools.nginxConfigGenerator.labelDomain")}</label
             >
+              {t("tools.nginxConfigGenerator.labelDomain")}
+            </label>
             <input
               id={`${uniqueId}-domain`}
               class="ngx-input"
@@ -117,8 +124,9 @@ const i18n = {
             <label
               class="ngx-label"
               for={`${uniqueId}-root`}
-              >{t("tools.nginxConfigGenerator.labelRootPath")}</label
             >
+              {t("tools.nginxConfigGenerator.labelRootPath")}
+            </label>
             <input
               id={`${uniqueId}-root`}
               class="ngx-input"
@@ -134,8 +142,9 @@ const i18n = {
             <label
               class="ngx-label"
               for={`${uniqueId}-index`}
-              >{t("tools.nginxConfigGenerator.labelIndexFiles")}</label
             >
+              {t("tools.nginxConfigGenerator.labelIndexFiles")}
+            </label>
             <input
               id={`${uniqueId}-index`}
               class="ngx-input"
@@ -191,8 +200,9 @@ const i18n = {
             <label
               class="ngx-label"
               for={`${uniqueId}-php-socket`}
-              >{t("tools.nginxConfigGenerator.labelPhpSocket")}</label
             >
+              {t("tools.nginxConfigGenerator.labelPhpSocket")}
+            </label>
             <input
               id={`${uniqueId}-php-socket`}
               class="ngx-input"
@@ -242,8 +252,9 @@ const i18n = {
               <label
                 class="ngx-label"
                 for={`${uniqueId}-cert`}
-                >{t("tools.nginxConfigGenerator.labelCertificate")}</label
               >
+                {t("tools.nginxConfigGenerator.labelCertificate")}
+              </label>
               <input
                 id={`${uniqueId}-cert`}
                 class="ngx-input"
@@ -255,8 +266,9 @@ const i18n = {
               <label
                 class="ngx-label"
                 for={`${uniqueId}-key`}
-                >{t("tools.nginxConfigGenerator.labelPrivateKey")}</label
               >
+                {t("tools.nginxConfigGenerator.labelPrivateKey")}
+              </label>
               <input
                 id={`${uniqueId}-key`}
                 class="ngx-input"
@@ -353,8 +365,9 @@ const i18n = {
               <label
                 class="ngx-label"
                 for={`${uniqueId}-upstream-name`}
-                >{t("tools.nginxConfigGenerator.labelUpstreamName")}</label
               >
+                {t("tools.nginxConfigGenerator.labelUpstreamName")}
+              </label>
               <input
                 id={`${uniqueId}-upstream-name`}
                 class="ngx-input"
@@ -367,8 +380,9 @@ const i18n = {
               <label
                 class="ngx-label"
                 for={`${uniqueId}-upstream`}
-                >{t("tools.nginxConfigGenerator.labelBackendServers")}</label
               >
+                {t("tools.nginxConfigGenerator.labelBackendServers")}
+              </label>
               <input
                 id={`${uniqueId}-upstream`}
                 class="ngx-input"
@@ -376,30 +390,31 @@ const i18n = {
                 value="127.0.0.1:3000"
                 placeholder="127.0.0.1:3000"
               />
-              <span class="ngx-field-hint"
-                >{t("tools.nginxConfigGenerator.hintCommaSeparated")}</span
-              >
+              <span class="ngx-field-hint">
+                {t("tools.nginxConfigGenerator.hintCommaSeparated")}
+              </span>
             </div>
           </div>
           <div class="ngx-field">
             <label
               class="ngx-label"
               for={`${uniqueId}-lb-method`}
-              >{t("tools.nginxConfigGenerator.labelLoadBalancing")}</label
             >
+              {t("tools.nginxConfigGenerator.labelLoadBalancing")}
+            </label>
             <select
               id={`${uniqueId}-lb-method`}
               class="ngx-select"
             >
-              <option value="round-robin"
-                >{t("tools.nginxConfigGenerator.optRoundRobin")}</option
-              >
-              <option value="least_conn"
-                >{t("tools.nginxConfigGenerator.optLeastConn")}</option
-              >
-              <option value="ip_hash"
-                >{t("tools.nginxConfigGenerator.optIpHash")}</option
-              >
+              <option value="round-robin">
+                {t("tools.nginxConfigGenerator.optRoundRobin")}
+              </option>
+              <option value="least_conn">
+                {t("tools.nginxConfigGenerator.optLeastConn")}
+              </option>
+              <option value="ip_hash">
+                {t("tools.nginxConfigGenerator.optIpHash")}
+              </option>
             </select>
           </div>
           <div class="ngx-toggles-row">
@@ -423,8 +438,9 @@ const i18n = {
                 type="checkbox"
                 id={`${uniqueId}-proxy-buffering`}
               />
-              <span>{t("tools.nginxConfigGenerator.toggleProxyBuffering")}</span
-              >
+              <span>
+                {t("tools.nginxConfigGenerator.toggleProxyBuffering")}
+              </span>
             </label>
           </div>
           <div class="ngx-toggle-row">
@@ -445,8 +461,9 @@ const i18n = {
               <label
                 class="ngx-label"
                 for={`${uniqueId}-resolver-servers`}
-                >{t("tools.nginxConfigGenerator.labelResolverServers")}</label
               >
+                {t("tools.nginxConfigGenerator.labelResolverServers")}
+              </label>
               <input
                 id={`${uniqueId}-resolver-servers`}
                 class="ngx-input"
@@ -475,8 +492,9 @@ const i18n = {
                 <label
                   class="ngx-label"
                   for={`${uniqueId}-cache-zone`}
-                  >{t("tools.nginxConfigGenerator.labelZoneName")}</label
                 >
+                  {t("tools.nginxConfigGenerator.labelZoneName")}
+                </label>
                 <input
                   id={`${uniqueId}-cache-zone`}
                   class="ngx-input"
@@ -489,8 +507,9 @@ const i18n = {
                 <label
                   class="ngx-label"
                   for={`${uniqueId}-cache-valid-time`}
-                  >{t("tools.nginxConfigGenerator.labelCacheValid")}</label
                 >
+                  {t("tools.nginxConfigGenerator.labelCacheValid")}
+                </label>
                 <input
                   id={`${uniqueId}-cache-valid-time`}
                   class="ngx-input"
@@ -579,13 +598,13 @@ const i18n = {
             class="i-mdi:information-outline"
             aria-hidden="true"
           ></span>
-          <span
-            >{t("tools.nginxConfigGenerator.hintCspAdvanced")}
-            <a href="/tools/csp-builder/"
-              >{t("tools.nginxConfigGenerator.hintCspBuilderLink")}</a
-            >
-            {t("tools.nginxConfigGenerator.hintCspAdvancedSuffix")}</span
-          >
+          <span>
+            {t("tools.nginxConfigGenerator.hintCspAdvanced")}
+            <a href="/tools/csp-builder/">
+              {t("tools.nginxConfigGenerator.hintCspBuilderLink")}
+            </a>
+            {t("tools.nginxConfigGenerator.hintCspAdvancedSuffix")}
+          </span>
         </div>
       </div>
     </details>
@@ -627,8 +646,9 @@ const i18n = {
               <label
                 class="ngx-label"
                 for={`${uniqueId}-rate-value`}
-                >{t("tools.nginxConfigGenerator.labelRate")}</label
               >
+                {t("tools.nginxConfigGenerator.labelRate")}
+              </label>
               <input
                 id={`${uniqueId}-rate-value`}
                 class="ngx-input"
@@ -642,8 +662,9 @@ const i18n = {
               <label
                 class="ngx-label"
                 for={`${uniqueId}-rate-burst`}
-                >{t("tools.nginxConfigGenerator.labelBurst")}</label
               >
+                {t("tools.nginxConfigGenerator.labelBurst")}
+              </label>
               <input
                 id={`${uniqueId}-rate-burst`}
                 class="ngx-input"
@@ -696,12 +717,13 @@ const i18n = {
             class="i-mdi:information-outline"
             aria-hidden="true"
           ></span>
-          <span
-            >{t("tools.nginxConfigGenerator.hintTarpit")}
-            <a href="/blog/005-implementing-tarpit-nginx/"
-              >{t("tools.nginxConfigGenerator.hintTarpitLink")}</a
-            >.</span
-          >
+          <span>
+            {t("tools.nginxConfigGenerator.hintTarpit")}
+            <a href="/blog/005-implementing-tarpit-nginx/">
+              {t("tools.nginxConfigGenerator.hintTarpitLink")}
+            </a>
+            .
+          </span>
         </div>
       </div>
     </details>
@@ -797,8 +819,9 @@ const i18n = {
             <label
               class="ngx-label"
               for={`${uniqueId}-keepalive-timeout`}
-              >keepalive_timeout</label
             >
+              keepalive_timeout
+            </label>
             <input
               id={`${uniqueId}-keepalive-timeout`}
               class="ngx-input"
@@ -812,8 +835,9 @@ const i18n = {
             <label
               class="ngx-label"
               for={`${uniqueId}-client-body-timeout`}
-              >client_body_timeout</label
             >
+              client_body_timeout
+            </label>
             <input
               id={`${uniqueId}-client-body-timeout`}
               class="ngx-input"
@@ -827,8 +851,9 @@ const i18n = {
             <label
               class="ngx-label"
               for={`${uniqueId}-client-header-timeout`}
-              >client_header_timeout</label
             >
+              client_header_timeout
+            </label>
             <input
               id={`${uniqueId}-client-header-timeout`}
               class="ngx-input"
@@ -842,8 +867,9 @@ const i18n = {
             <label
               class="ngx-label"
               for={`${uniqueId}-send-timeout`}
-              >send_timeout</label
             >
+              send_timeout
+            </label>
             <input
               id={`${uniqueId}-send-timeout`}
               class="ngx-input"
@@ -877,8 +903,9 @@ const i18n = {
               <label
                 class="ngx-label"
                 for={`${uniqueId}-proxy-read-timeout`}
-                >proxy_read_timeout</label
               >
+                proxy_read_timeout
+              </label>
               <input
                 id={`${uniqueId}-proxy-read-timeout`}
                 class="ngx-input"
@@ -892,8 +919,9 @@ const i18n = {
               <label
                 class="ngx-label"
                 for={`${uniqueId}-proxy-connect-timeout`}
-                >proxy_connect_timeout</label
               >
+                proxy_connect_timeout
+              </label>
               <input
                 id={`${uniqueId}-proxy-connect-timeout`}
                 class="ngx-input"
@@ -918,9 +946,9 @@ const i18n = {
       <a href="/blog/004-enabling-quic-http3-nginx/">QUIC/HTTP3</a>
       <a href="/blog/005-implementing-tarpit-nginx/">Tarpit</a>
       <a href="/blog/003-implementing-content-security-policy-nginx/">CSP</a>
-      <a href="/blog/001-secure-nginx-client-certificates/"
-        >{t("tools.nginxConfigGenerator.relatedClientCerts")}</a
-      >
+      <a href="/blog/001-secure-nginx-client-certificates/">
+        {t("tools.nginxConfigGenerator.relatedClientCerts")}
+      </a>
     </div>
 
     {/* Output */}
@@ -945,22 +973,22 @@ const i18n = {
           {t("tools.shared.copy")}
         </button>
       </div>
-      {
-        /* eslint-disable astro/jsx-a11y/no-noninteractive-tabindex -- scrollable region requires keyboard access */
-      }
+      {/* eslint-disable astro/jsx-a11y/no-noninteractive-tabindex -- scrollable region requires keyboard access */}
       <pre
         class="ngx-output-code"
         tabindex="0"
         role="region"
-        aria-label={t(
-          "tools.nginxConfigGenerator.outputAriaLabel",
-        )}><code id={`${uniqueId}-output`} /></pre>
+        aria-label={t("tools.nginxConfigGenerator.outputAriaLabel")}
+      ><code id={`${uniqueId}-output`} /></pre>
       {/* eslint-enable astro/jsx-a11y/no-noninteractive-tabindex */}
     </div>
   </div>
 </div>
 
-<script is:inline define:vars={{ uniqueId, i18n }}>
+<script
+  is:inline
+  define:vars={{ uniqueId, i18n }}
+>
   (function () {
     var container = document.querySelector('[data-ngx-id="' + uniqueId + '"]');
     if (!container) return;

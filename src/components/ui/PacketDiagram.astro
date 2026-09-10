@@ -107,42 +107,38 @@ const summary =
       class:list={["packet__grid", dense && "packet__grid--dense"]}
       style={`grid-template-columns:repeat(${bitsPerRow},minmax(0,1fr));--pk-cols:${bitsPerRow}`}
     >
-      {ruler.map((n) => <span class="packet__bitnum">{n}</span>)}
-      {
-        segs.map((s) => (
-          <span
-            class:list={[
-              "packet__field",
-              s.continuation && "packet__field--cont",
-            ]}
-            style={`grid-column:span ${s.span};background-color:${s.color}`}
-            title={`${s.name || "…"} (${s.bits} bits)`}
-          >
-            <span class="packet__field-name">{s.name}</span>
-            {!s.continuation && (
-              <span class="packet__field-bits">{s.bits}</span>
-            )}
-          </span>
-        ))
-      }
+      {ruler.map((n) => (
+        <span class="packet__bitnum">{n}</span>
+      ))}
+      {segs.map((s) => (
+        <span
+          class:list={[
+            "packet__field",
+            s.continuation && "packet__field--cont",
+          ]}
+          style={`grid-column:span ${s.span};background-color:${s.color}`}
+          title={`${s.name || "…"} (${s.bits} bits)`}
+        >
+          <span class="packet__field-name">{s.name}</span>
+          {!s.continuation && <span class="packet__field-bits">{s.bits}</span>}
+        </span>
+      ))}
     </div>
   </div>
 
   <ul class="packet__legend">
-    {
-      fields.map((f, i) => (
-        <li class="packet__legend-item">
-          <span
-            class="packet__swatch"
-            style={`background-color:${fieldColors[i]}`}
-            aria-hidden="true"
-          />
-          <span class="packet__legend-text">
-            <b>{f.name}</b> — {f.bits} bits
-          </span>
-        </li>
-      ))
-    }
+    {fields.map((f, i) => (
+      <li class="packet__legend-item">
+        <span
+          class="packet__swatch"
+          style={`background-color:${fieldColors[i]}`}
+          aria-hidden="true"
+        />
+        <span class="packet__legend-text">
+          <b>{f.name}</b> — {f.bits} bits
+        </span>
+      </li>
+    ))}
   </ul>
 
   {caption && <p class="packet__caption">{caption}</p>}

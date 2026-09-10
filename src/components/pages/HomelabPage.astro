@@ -289,17 +289,14 @@ const servicesSchema = {
             class="realtime-pill__dot"
             aria-hidden="true"
           ></span>
-          {
-            /* HLM.asOf is replaced by nginx with the capture time in
+          {/* HLM.asOf is replaced by nginx with the capture time in
               Europe/Madrid, offset included.
-              See src/components/homelab/ssr-tokens.ts for the contract. */
-          }
+              See src/components/homelab/ssr-tokens.ts for the contract. */}
           {t("pages.homelab.realtimePill")} · {HLM.asOf}
         </p>
       </div>
 
-      {
-        /*
+      {/*
           Server-rendered prose, above the metrics.
 
           The metrics on this page carry no client-side JavaScript at all:
@@ -311,8 +308,7 @@ const servicesSchema = {
           does. These paragraphs still state only facts that hold between
           deploys, so they complement the injected figures rather than
           duplicating them.
-        */
-      }
+        */}
       <section
         class="homelab-summary"
         aria-label={t("pages.homelab.summaryAriaLabel")}
@@ -352,70 +348,67 @@ const servicesSchema = {
           {t("pages.homelab.servicesKicker")}
         </h2>
         <div class="services-grid">
-          {
-            services.map((service) => (
-              <ServiceCard
-                title={service.title}
-                icon={service.icon}
-                description={t(service.descriptionKey)}
-                link={service.url}
-                linkText={service.linkText}
-                statusText={
-                  service.probed
-                    ? serviceStatusTokens[service.id]?.status
-                    : undefined
-                }
-                statusClass={
-                  service.probed
-                    ? serviceStatusTokens[service.id]?.statusClass
-                    : undefined
-                }
-              >
-                {service.userInfo && (
-                  <div
-                    slot="extra"
-                    class="user-info"
-                  >
-                    {t("pages.homelab.userLabel")}{" "}
-                    <code>{service.userInfo}</code>
-                  </div>
-                )}
-                {service.mcpFleet && (
-                  <ul
-                    slot="extra"
-                    class="mcp-fleet"
-                    aria-label={t("pages.homelab.mcpFleetAria")}
-                  >
-                    {service.mcpFleet.map((row) => (
-                      <li class="mcp-fleet__row">
-                        <span
-                          class={`mcp-fleet__dot ${row.dotClass}`}
-                          aria-hidden="true"
-                        />
-                        <code class="mcp-fleet__endpoint">{row.endpoint}</code>
-                        <span class="mcp-fleet__meta">
-                          {row.version} · {row.alive}{" "}
-                          {t("pages.homelab.mcpInstances")}
-                        </span>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-                {service.statsType && (
-                  <div
-                    id={`${service.id}-stats`}
-                    class="stats-container"
-                  >
-                    <ServiceStats
-                      type={service.statsType}
-                      translations={serviceStatsTranslations}
-                      ssr={HLM.services[service.statsType]}
-                    />
-                  </div>
-                )}
-              </ServiceCard>
-            ))
-          }
+          {services.map((service) => (
+            <ServiceCard
+              title={service.title}
+              icon={service.icon}
+              description={t(service.descriptionKey)}
+              link={service.url}
+              linkText={service.linkText}
+              statusText={
+                service.probed
+                  ? serviceStatusTokens[service.id]?.status
+                  : undefined
+              }
+              statusClass={
+                service.probed
+                  ? serviceStatusTokens[service.id]?.statusClass
+                  : undefined
+              }
+            >
+              {service.userInfo && (
+                <div
+                  slot="extra"
+                  class="user-info"
+                >
+                  {t("pages.homelab.userLabel")} <code>{service.userInfo}</code>
+                </div>
+              )}
+              {service.mcpFleet && (
+                <ul
+                  slot="extra"
+                  class="mcp-fleet"
+                  aria-label={t("pages.homelab.mcpFleetAria")}
+                >
+                  {service.mcpFleet.map((row) => (
+                    <li class="mcp-fleet__row">
+                      <span
+                        class={`mcp-fleet__dot ${row.dotClass}`}
+                        aria-hidden="true"
+                      />
+                      <code class="mcp-fleet__endpoint">{row.endpoint}</code>
+                      <span class="mcp-fleet__meta">
+                        {row.version} · {row.alive}{" "}
+                        {t("pages.homelab.mcpInstances")}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+              {service.statsType && (
+                <div
+                  id={`${service.id}-stats`}
+                  class="stats-container"
+                >
+                  <ServiceStats
+                    type={service.statsType}
+                    translations={serviceStatsTranslations}
+                    ssr={HLM.services[service.statsType]}
+                  />
+                </div>
+              )}
+            </ServiceCard>
+          ))}
         </div>
       </section>
 
@@ -435,29 +428,27 @@ const servicesSchema = {
           ssr={{ nodesCount: torServices.length, ...HLM.torAggregate }}
         />
         <div class="services-grid">
-          {
-            torServices.map((service) => (
-              <ServiceCard
-                title={t(service.nameKey)}
-                icon={service.icon}
-                description={t(service.descriptionKey)}
-                link={service.url}
-                linkText={service.linkText}
-                statusText={t("pages.homelab.torRunning")}
+          {torServices.map((service) => (
+            <ServiceCard
+              title={t(service.nameKey)}
+              icon={service.icon}
+              description={t(service.descriptionKey)}
+              link={service.url}
+              linkText={service.linkText}
+              statusText={t("pages.homelab.torRunning")}
+            >
+              <div
+                id={`${service.id}-stats`}
+                class="stats-container"
               >
-                <div
-                  id={`${service.id}-stats`}
-                  class="stats-container"
-                >
-                  <TorStats
-                    type={service.torType}
-                    translations={torStatsTranslations}
-                    ssr={HLM.torNodes[service.torType]}
-                  />
-                </div>
-              </ServiceCard>
-            ))
-          }
+                <TorStats
+                  type={service.torType}
+                  translations={torStatsTranslations}
+                  ssr={HLM.torNodes[service.torType]}
+                />
+              </div>
+            </ServiceCard>
+          ))}
         </div>
       </section>
 

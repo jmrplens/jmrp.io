@@ -51,30 +51,26 @@ const common = { alt, loading, widths, sizes } as const;
 ---
 
 <figure class="theme-image">
-  {
-    src && (
+  {src && (
+    <Image
+      src={src}
+      {...common}
+    />
+  )}
+  {hasPair && (
+    <>
       <Image
-        src={src}
+        src={srcLight!}
         {...common}
+        class="theme-image__img theme-image__img--light"
       />
-    )
-  }
-  {
-    hasPair && (
-      <>
-        <Image
-          src={srcLight!}
-          {...common}
-          class="theme-image__img theme-image__img--light"
-        />
-        <Image
-          src={srcDark!}
-          {...common}
-          class="theme-image__img theme-image__img--dark"
-        />
-      </>
-    )
-  }
+      <Image
+        src={srcDark!}
+        {...common}
+        class="theme-image__img theme-image__img--dark"
+      />
+    </>
+  )}
   {caption && <figcaption class="theme-image__caption">{caption}</figcaption>}
 </figure>
 

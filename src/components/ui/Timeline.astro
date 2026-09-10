@@ -68,39 +68,37 @@ function parseMarkdownLinks(text: string): string {
 ---
 
 <ol class="timeline">
-  {
-    events.map((event) => {
-      const eventType = event.type || "default";
-      const typeClass = typeConfig[eventType];
-      const label = typeLabel[eventType];
-      return (
-        <li class={`tl-event ${typeClass}`}>
-          <span
-            class="tl-dot"
-            aria-hidden="true"
-          />
-          <time
-            class="tl-date"
-            datetime={event.date}
-          >
-            {event.date}
-          </time>
-          <div class="tl-content">
-            <div class="tl-title-row">
-              <span class="tl-title">{event.title}</span>
-              {label && <span class="tl-type">{label}</span>}
-            </div>
-            {event.description && (
-              <p
-                class="tl-description"
-                set:html={parseMarkdownLinks(event.description)}
-              />
-            )}
+  {events.map((event) => {
+    const eventType = event.type || "default";
+    const typeClass = typeConfig[eventType];
+    const label = typeLabel[eventType];
+    return (
+      <li class={`tl-event ${typeClass}`}>
+        <span
+          class="tl-dot"
+          aria-hidden="true"
+        />
+        <time
+          class="tl-date"
+          datetime={event.date}
+        >
+          {event.date}
+        </time>
+        <div class="tl-content">
+          <div class="tl-title-row">
+            <span class="tl-title">{event.title}</span>
+            {label && <span class="tl-type">{label}</span>}
           </div>
-        </li>
-      );
-    })
-  }
+          {event.description && (
+            <p
+              class="tl-description"
+              set:html={parseMarkdownLinks(event.description)}
+            />
+          )}
+        </div>
+      </li>
+    );
+  })}
 </ol>
 
 <style>

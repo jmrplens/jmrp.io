@@ -54,8 +54,9 @@ const i18n = {
         <label
           class="cc-picker-label"
           for={`${uniqueId}-fg-color`}
-          >{t("tools.colorContrastChecker.foregroundLabel")}</label
         >
+          {t("tools.colorContrastChecker.foregroundLabel")}
+        </label>
         <div class="cc-picker-row">
           <input
             type="color"
@@ -82,28 +83,30 @@ const i18n = {
             class="cc-format-btn"
             data-format="rgb"
           >
-            <span class="cc-format-label"
-              >{t("tools.colorContrastChecker.rgb")}</span
-            >
+            <span class="cc-format-label">
+              {t("tools.colorContrastChecker.rgb")}
+            </span>
             <span
               class="cc-format-value"
               data-fmt="rgb"
-              >—</span
             >
+              —
+            </span>
           </button>
           <button
             type="button"
             class="cc-format-btn"
             data-format="hsl"
           >
-            <span class="cc-format-label"
-              >{t("tools.colorContrastChecker.hsl")}</span
-            >
+            <span class="cc-format-label">
+              {t("tools.colorContrastChecker.hsl")}
+            </span>
             <span
               class="cc-format-value"
               data-fmt="hsl"
-              >—</span
             >
+              —
+            </span>
           </button>
         </div>
       </div>
@@ -120,8 +123,9 @@ const i18n = {
         <label
           class="cc-picker-label"
           for={`${uniqueId}-bg-color`}
-          >{t("tools.colorContrastChecker.background")}</label
         >
+          {t("tools.colorContrastChecker.background")}
+        </label>
         <div class="cc-picker-row">
           <input
             type="color"
@@ -148,28 +152,30 @@ const i18n = {
             class="cc-format-btn"
             data-format="rgb"
           >
-            <span class="cc-format-label"
-              >{t("tools.colorContrastChecker.rgb")}</span
-            >
+            <span class="cc-format-label">
+              {t("tools.colorContrastChecker.rgb")}
+            </span>
             <span
               class="cc-format-value"
               data-fmt="rgb"
-              >—</span
             >
+              —
+            </span>
           </button>
           <button
             type="button"
             class="cc-format-btn"
             data-format="hsl"
           >
-            <span class="cc-format-label"
-              >{t("tools.colorContrastChecker.hsl")}</span
-            >
+            <span class="cc-format-label">
+              {t("tools.colorContrastChecker.hsl")}
+            </span>
             <span
               class="cc-format-value"
               data-fmt="hsl"
-              >—</span
             >
+              —
+            </span>
           </button>
         </div>
       </div>
@@ -190,9 +196,8 @@ const i18n = {
         class="cc-preview-normal"
         id={`${uniqueId}-preview-normal`}
       >
-        {t("tools.colorContrastChecker.normalText")} (16px) — {
-          t("tools.colorContrastChecker.sampleNormalText")
-        }
+        {t("tools.colorContrastChecker.normalText")} (16px) —{" "}
+        {t("tools.colorContrastChecker.sampleNormalText")}
       </span>
       <span
         class="cc-preview-small"
@@ -204,20 +209,20 @@ const i18n = {
         class="cc-preview-ui"
         id={`${uniqueId}-preview-ui`}
       >
-        <span class="cc-preview-ui-label"
-          >{t("tools.colorContrastChecker.uiComponents")}</span
-        >
-        <span class="cc-ui-button"
-          >{t("tools.colorContrastChecker.button")}</span
-        >
+        <span class="cc-preview-ui-label">
+          {t("tools.colorContrastChecker.uiComponents")}
+        </span>
+        <span class="cc-ui-button">
+          {t("tools.colorContrastChecker.button")}
+        </span>
         <span class="cc-ui-icon">
           <span class="i-mdi:star"></span>
           <span class="i-mdi:check-circle"></span>
           <span class="i-mdi:alert"></span>
         </span>
-        <span class="cc-ui-border-box"
-          >{t("tools.colorContrastChecker.inputField")}</span
-        >
+        <span class="cc-ui-border-box">
+          {t("tools.colorContrastChecker.inputField")}
+        </span>
       </div>
     </div>
 
@@ -227,16 +232,17 @@ const i18n = {
       <div class="cc-score-card">
         <div class="cc-score-header">
           <span class="cc-score-badge">WCAG 2.2</span>
-          <span class="cc-score-subtitle"
-            >{t("tools.colorContrastChecker.contrastRatio")}</span
-          >
+          <span class="cc-score-subtitle">
+            {t("tools.colorContrastChecker.contrastRatio")}
+          </span>
         </div>
         <div class="cc-ratio-display">
           <span
             class="cc-ratio-value"
             id={`${uniqueId}-ratio`}
-            >—</span
           >
+            —
+          </span>
         </div>
         <div
           class="cc-gauge"
@@ -248,8 +254,7 @@ const i18n = {
             <div
               class="cc-gauge-fill"
               id={`${uniqueId}-gauge-fill`}
-            >
-            </div>
+            ></div>
           </div>
           <div class="cc-gauge-labels">
             <span>{t("tools.colorContrastChecker.gaugePoor")}</span>
@@ -264,16 +269,17 @@ const i18n = {
       <div class="cc-score-card">
         <div class="cc-score-header">
           <span class="cc-score-badge cc-score-badge-apca">APCA</span>
-          <span class="cc-score-subtitle"
-            >{t("tools.colorContrastChecker.lightnessContrast")}</span
-          >
+          <span class="cc-score-subtitle">
+            {t("tools.colorContrastChecker.lightnessContrast")}
+          </span>
         </div>
         <div class="cc-ratio-display">
           <span
             class="cc-ratio-value cc-apca-value"
             id={`${uniqueId}-apca`}
-            >—</span
           >
+            —
+          </span>
         </div>
         <div
           class="cc-apca-use"
@@ -295,9 +301,9 @@ const i18n = {
           id={`${uniqueId}-aa-normal`}
         >
           <span class="cc-wcag-badge">AA</span>
-          <span class="cc-wcag-text"
-            >{t("tools.colorContrastChecker.normalText")}</span
-          >
+          <span class="cc-wcag-text">
+            {t("tools.colorContrastChecker.normalText")}
+          </span>
           <span class="cc-wcag-min">(≥ 4.5:1)</span>
           <span class="cc-wcag-result">—</span>
         </div>
@@ -306,9 +312,9 @@ const i18n = {
           id={`${uniqueId}-aa-large`}
         >
           <span class="cc-wcag-badge">AA</span>
-          <span class="cc-wcag-text"
-            >{t("tools.colorContrastChecker.largeText")}</span
-          >
+          <span class="cc-wcag-text">
+            {t("tools.colorContrastChecker.largeText")}
+          </span>
           <span class="cc-wcag-min">(≥ 3:1)</span>
           <span class="cc-wcag-result">—</span>
         </div>
@@ -317,9 +323,9 @@ const i18n = {
           id={`${uniqueId}-aaa-normal`}
         >
           <span class="cc-wcag-badge cc-wcag-aaa">AAA</span>
-          <span class="cc-wcag-text"
-            >{t("tools.colorContrastChecker.normalText")}</span
-          >
+          <span class="cc-wcag-text">
+            {t("tools.colorContrastChecker.normalText")}
+          </span>
           <span class="cc-wcag-min">(≥ 7:1)</span>
           <span class="cc-wcag-result">—</span>
         </div>
@@ -328,9 +334,9 @@ const i18n = {
           id={`${uniqueId}-aaa-large`}
         >
           <span class="cc-wcag-badge cc-wcag-aaa">AAA</span>
-          <span class="cc-wcag-text"
-            >{t("tools.colorContrastChecker.largeText")}</span
-          >
+          <span class="cc-wcag-text">
+            {t("tools.colorContrastChecker.largeText")}
+          </span>
           <span class="cc-wcag-min">(≥ 4.5:1)</span>
           <span class="cc-wcag-result">—</span>
         </div>
@@ -339,9 +345,9 @@ const i18n = {
           id={`${uniqueId}-nontext`}
         >
           <span class="cc-wcag-badge cc-wcag-nontext">1.4.11</span>
-          <span class="cc-wcag-text"
-            >{t("tools.colorContrastChecker.nonText")}</span
-          >
+          <span class="cc-wcag-text">
+            {t("tools.colorContrastChecker.nonText")}
+          </span>
           <span class="cc-wcag-min">(≥ 3:1)</span>
           <span class="cc-wcag-result">—</span>
         </div>
@@ -361,8 +367,7 @@ const i18n = {
       <div
         class="cc-suggestion-cards"
         id={`${uniqueId}-suggestion-cards`}
-      >
-      </div>
+      ></div>
     </div>
 
     {/* Color blindness simulation */}
@@ -381,9 +386,9 @@ const i18n = {
         >
           <div class="cc-blindness-label">
             {t("tools.colorContrastChecker.protanopia")}
-            <span class="cc-blindness-pct"
-              >{t("tools.colorContrastChecker.protanopiaPct")}</span
-            >
+            <span class="cc-blindness-pct">
+              {t("tools.colorContrastChecker.protanopiaPct")}
+            </span>
           </div>
           <div class="cc-blindness-desc">
             {t("tools.colorContrastChecker.protanopiaDesc")}
@@ -396,9 +401,9 @@ const i18n = {
               class="cc-sim-swatch"
               data-sim-role="fg"
             ></span>
-            <span class="cc-sim-text"
-              >{t("tools.colorContrastChecker.sampleText")}</span
-            >
+            <span class="cc-sim-text">
+              {t("tools.colorContrastChecker.sampleText")}
+            </span>
             <span
               class="cc-sim-swatch"
               data-sim-role="bg"
@@ -417,9 +422,9 @@ const i18n = {
         >
           <div class="cc-blindness-label">
             {t("tools.colorContrastChecker.deuteranopia")}
-            <span class="cc-blindness-pct"
-              >{t("tools.colorContrastChecker.deuteranopiaPct")}</span
-            >
+            <span class="cc-blindness-pct">
+              {t("tools.colorContrastChecker.deuteranopiaPct")}
+            </span>
           </div>
           <div class="cc-blindness-desc">
             {t("tools.colorContrastChecker.deuteranopiaDesc")}
@@ -432,9 +437,9 @@ const i18n = {
               class="cc-sim-swatch"
               data-sim-role="fg"
             ></span>
-            <span class="cc-sim-text"
-              >{t("tools.colorContrastChecker.sampleText")}</span
-            >
+            <span class="cc-sim-text">
+              {t("tools.colorContrastChecker.sampleText")}
+            </span>
             <span
               class="cc-sim-swatch"
               data-sim-role="bg"
@@ -453,9 +458,9 @@ const i18n = {
         >
           <div class="cc-blindness-label">
             {t("tools.colorContrastChecker.tritanopia")}
-            <span class="cc-blindness-pct"
-              >{t("tools.colorContrastChecker.tritanopiaPct")}</span
-            >
+            <span class="cc-blindness-pct">
+              {t("tools.colorContrastChecker.tritanopiaPct")}
+            </span>
           </div>
           <div class="cc-blindness-desc">
             {t("tools.colorContrastChecker.tritanopiaDesc")}
@@ -468,9 +473,9 @@ const i18n = {
               class="cc-sim-swatch"
               data-sim-role="fg"
             ></span>
-            <span class="cc-sim-text"
-              >{t("tools.colorContrastChecker.sampleText")}</span
-            >
+            <span class="cc-sim-text">
+              {t("tools.colorContrastChecker.sampleText")}
+            </span>
             <span
               class="cc-sim-swatch"
               data-sim-role="bg"
@@ -489,9 +494,9 @@ const i18n = {
         >
           <div class="cc-blindness-label">
             {t("tools.colorContrastChecker.achromatopsia")}
-            <span class="cc-blindness-pct"
-              >{t("tools.colorContrastChecker.achromatopsiaPct")}</span
-            >
+            <span class="cc-blindness-pct">
+              {t("tools.colorContrastChecker.achromatopsiaPct")}
+            </span>
           </div>
           <div class="cc-blindness-desc">
             {t("tools.colorContrastChecker.achromatopsiaDesc")}
@@ -504,9 +509,9 @@ const i18n = {
               class="cc-sim-swatch"
               data-sim-role="fg"
             ></span>
-            <span class="cc-sim-text"
-              >{t("tools.colorContrastChecker.sampleText")}</span
-            >
+            <span class="cc-sim-text">
+              {t("tools.colorContrastChecker.sampleText")}
+            </span>
             <span
               class="cc-sim-swatch"
               data-sim-role="bg"
@@ -545,7 +550,10 @@ const i18n = {
   </div>
 </div>
 
-<script is:inline define:vars={{ uniqueId, i18n }}>
+<script
+  is:inline
+  define:vars={{ uniqueId, i18n }}
+>
   (function () {
     var container = document.querySelector('[data-cc-id="' + uniqueId + '"]');
     if (!container) return;

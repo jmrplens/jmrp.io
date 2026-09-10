@@ -23,44 +23,42 @@ const t = useTranslations(locale);
 const headingId = `faq-${crypto.getRandomValues(new Uint32Array(1))[0]}`;
 ---
 
-{
-  items.length > 0 && (
-    <section
-      class="faq"
-      aria-labelledby={headingId}
+{items.length > 0 && (
+  <section
+    class="faq"
+    aria-labelledby={headingId}
+  >
+    <h2
+      id={headingId}
+      class="faq__heading"
     >
-      <h2
-        id={headingId}
-        class="faq__heading"
-      >
-        <span
-          class="i-mdi:comment-question-outline faq__heading-icon"
-          aria-hidden="true"
-        />
-        {t("components.faqHeading")}
-      </h2>
-      <div class="faq__list">
-        {items.map((item) => (
-          <details class="faq__item">
-            <summary class="faq__question">
-              <span class="faq__question-text">{item.question}</span>
-              <span
-                class="faq__toggle"
-                aria-hidden="true"
-              >
-                <span class="i-mdi:plus faq__toggle-icon faq__toggle-icon--closed" />
-                <span class="i-mdi:minus faq__toggle-icon faq__toggle-icon--open" />
-              </span>
-            </summary>
-            <div class="faq__answer">
-              <p>{item.answer}</p>
-            </div>
-          </details>
-        ))}
-      </div>
-    </section>
-  )
-}
+      <span
+        class="i-mdi:comment-question-outline faq__heading-icon"
+        aria-hidden="true"
+      />
+      {t("components.faqHeading")}
+    </h2>
+    <div class="faq__list">
+      {items.map((item) => (
+        <details class="faq__item">
+          <summary class="faq__question">
+            <span class="faq__question-text">{item.question}</span>
+            <span
+              class="faq__toggle"
+              aria-hidden="true"
+            >
+              <span class="i-mdi:plus faq__toggle-icon faq__toggle-icon--closed" />
+              <span class="i-mdi:minus faq__toggle-icon faq__toggle-icon--open" />
+            </span>
+          </summary>
+          <div class="faq__answer">
+            <p>{item.answer}</p>
+          </div>
+        </details>
+      ))}
+    </div>
+  </section>
+)}
 
 <style>
   /* Section rhythm mirrors References.astro (.references-section/.header):

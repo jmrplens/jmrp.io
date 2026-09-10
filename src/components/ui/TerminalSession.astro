@@ -64,18 +64,18 @@ const finalAriaLabel =
         class="jmrp-term__dots"
         aria-hidden="true"
       >
-        <i></i><i></i><i></i>
+        <i></i>
+        <i></i>
+        <i></i>
       </span>
-      {
-        title && (
-          <span
-            class="jmrp-term__label jmrp-term__label--title"
-            aria-hidden="true"
-          >
-            {title}
-          </span>
-        )
-      }
+      {title && (
+        <span
+          class="jmrp-term__label jmrp-term__label--title"
+          aria-hidden="true"
+        >
+          {title}
+        </span>
+      )}
     </span>
     <CopyButton
       variant="terminal"

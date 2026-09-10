@@ -37,33 +37,31 @@ if (import.meta.env.DEV && alternativeUrl && !alternative) {
   <div class="dn-content">
     <p class="dn-message">
       <code>{feature}</code>
-      {t("components.stateNotice.isDeprecated").trim()}{
-        removalDate && (
-          <span class="dn-removal">
-            {t("components.deprecated.willBeRemoved", { date: removalDate })}
-          </span>
-        )
-      }.
+      {t("components.stateNotice.isDeprecated").trim()}
+      {removalDate && (
+        <span class="dn-removal">
+          {t("components.deprecated.willBeRemoved", { date: removalDate })}
+        </span>
+      )}
+      .
     </p>
-    {
-      alternative && (
-        <p class="dn-alternative">
-          <span class="dn-label">{t("components.deprecated.useInstead")}</span>
-          {alternativeUrl ? (
-            <a
-              href={alternativeUrl}
-              target="_blank"
-              rel="external noopener noreferrer"
-              aria-label={t("aria.opensNewTab", { text: alternative })}
-            >
-              <code>{alternative}</code>
-            </a>
-          ) : (
+    {alternative && (
+      <p class="dn-alternative">
+        <span class="dn-label">{t("components.deprecated.useInstead")}</span>
+        {alternativeUrl ? (
+          <a
+            href={alternativeUrl}
+            target="_blank"
+            rel="external noopener noreferrer"
+            aria-label={t("aria.opensNewTab", { text: alternative })}
+          >
             <code>{alternative}</code>
-          )}
-        </p>
-      )
-    }
+          </a>
+        ) : (
+          <code>{alternative}</code>
+        )}
+      </p>
+    )}
     <slot />
   </div>
 </aside>

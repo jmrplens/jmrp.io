@@ -53,16 +53,14 @@ const computedAriaLabel =
   >
     <slot />
   </div>
-  {
-    caption && (
-      <figcaption
-        id={captionId}
-        class="mermaid-caption"
-      >
-        {caption}
-      </figcaption>
-    )
-  }
+  {caption && (
+    <figcaption
+      id={captionId}
+      class="mermaid-caption"
+    >
+      {caption}
+    </figcaption>
+  )}
 </figure>
 
 <style>

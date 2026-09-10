@@ -17,21 +17,17 @@ const HeadingTag = `h${headingLevel}` as "h2" | "h3" | "h4" | "h5" | "h6";
 <div class="key-value">
   {title && <HeadingTag class="kv-title">{title}</HeadingTag>}
   <dl class="kv-list">
-    {
-      items.map((item) => (
-        <div class="kv-item">
-          <dt class="kv-key">
-            <span class="kv-key-badge">{item.key}</span>
-          </dt>
-          <dd class="kv-value">
-            <code>{item.value}</code>
-            {item.description && (
-              <span class="kv-desc">{item.description}</span>
-            )}
-          </dd>
-        </div>
-      ))
-    }
+    {items.map((item) => (
+      <div class="kv-item">
+        <dt class="kv-key">
+          <span class="kv-key-badge">{item.key}</span>
+        </dt>
+        <dd class="kv-value">
+          <code>{item.value}</code>
+          {item.description && <span class="kv-desc">{item.description}</span>}
+        </dd>
+      </div>
+    ))}
   </dl>
 </div>
 

@@ -44,16 +44,14 @@ const finalAriaLabel =
   aria-live="polite"
   aria-label={finalAriaLabel}
 >
-  {
-    title && (
-      <div
-        class="ts-output__title"
-        aria-hidden="true"
-      >
-        {title}
-      </div>
-    )
-  }
+  {title && (
+    <div
+      class="ts-output__title"
+      aria-hidden="true"
+    >
+      {title}
+    </div>
+  )}
   <div class="term-line-out">
     {
       /* One block per line so line breaks survive HTML minification. */

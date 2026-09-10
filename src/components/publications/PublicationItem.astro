@@ -103,31 +103,64 @@ const cleanedBibtex = cleanBibtex(pub.bibtex);
   <div class="pub-content">
     <div class="pub-venue">
       <span class={`pub-chip pub-chip--${kind}`}>{chipLabel}</span>
-      {
-        venue && (
-          <span class="pub-venue-name">
-            {venue}
-            {venue_short && <span class="venue-short">({venue_short})</span>}
-          </span>
-        )
-      }
+      {venue && (
+        <span class="pub-venue-name">
+          {venue}
+          {venue_short && <span class="venue-short">({venue_short})</span>}
+        </span>
+      )}
     </div>
     <h3 class="pub-title">{pub.title}</h3>
-    {
-      /* Co-author links are external too. They are announced via the wrapped
+    {/* Co-author links are external too. They are announced via the wrapped
         `aria.opensNewTab` label, but deliberately carry no ↗ glyph: the list
         is a dense inline run of up to 30 names and an arrow per name would
-        drown it. */
-    }
+        drown it. */}
     <div class="pub-authors">
-      {
-        (collapseAuthors ? visibleAuthors : authors).map(
-          (author: any, index: number, arr: any[]) => {
+      {(collapseAuthors ? visibleAuthors : authors).map(
+        (author: any, index: number, arr: any[]) => {
+          const authorClass = isSelfAuthor(author)
+            ? "pub-author-self"
+            : undefined;
+          return (
+            <>
+              {author.url ? (
+                <a
+                  class={authorClass}
+                  href={author.url}
+                  target="_blank"
+                  rel="external noopener noreferrer"
+                  data-astro-prefetch="false"
+                  aria-label={t("aria.opensNewTab", {
+                    text: t("aria.viewPublicationsBy", {
+                      author: `${author.given} ${author.family}`,
+                      title: pub.title,
+                    }),
+                  })}
+                >
+                  {author.given} {author.family}
+                </a>
+              ) : (
+                <span class={authorClass}>
+                  {author.given} {author.family}
+                </span>
+              )}
+              {(index < arr.length - 1 || collapseAuthors) && ", "}
+            </>
+          );
+        },
+      )}
+      {collapseAuthors && (
+        <details class="pub-etal">
+          <summary class="pub-etal__toggle">
+            {t("pages.publications.etAl")}
+          </summary>
+          {hiddenAuthors.map((author: any, index: number) => {
             const authorClass = isSelfAuthor(author)
               ? "pub-author-self"
               : undefined;
             return (
               <>
+                {index === 0 ? " " : ", "}
                 {author.url ? (
                   <a
                     class={authorClass}
@@ -149,56 +182,14 @@ const cleanedBibtex = cleanBibtex(pub.bibtex);
                     {author.given} {author.family}
                   </span>
                 )}
-                {(index < arr.length - 1 || collapseAuthors) && ", "}
               </>
             );
-          },
-        )
-      }
-      {
-        collapseAuthors && (
-          <details class="pub-etal">
-            <summary class="pub-etal__toggle">
-              {t("pages.publications.etAl")}
-            </summary>
-            {hiddenAuthors.map((author: any, index: number) => {
-              const authorClass = isSelfAuthor(author)
-                ? "pub-author-self"
-                : undefined;
-              return (
-                <>
-                  {index === 0 ? " " : ", "}
-                  {author.url ? (
-                    <a
-                      class={authorClass}
-                      href={author.url}
-                      target="_blank"
-                      rel="external noopener noreferrer"
-                      data-astro-prefetch="false"
-                      aria-label={t("aria.opensNewTab", {
-                        text: t("aria.viewPublicationsBy", {
-                          author: `${author.given} ${author.family}`,
-                          title: pub.title,
-                        }),
-                      })}
-                    >
-                      {author.given} {author.family}
-                    </a>
-                  ) : (
-                    <span class={authorClass}>
-                      {author.given} {author.family}
-                    </span>
-                  )}
-                </>
-              );
-            })}
-          </details>
-        )
-      }
+          })}
+        </details>
+      )}
     </div>
 
-    {
-      /* Action chips (WCAG 3.2.5): every external one wraps its existing
+    {/* Action chips (WCAG 3.2.5): every external one wraps its existing
         descriptive label in `aria.opensNewTab`, so the name still opens with
         the publication it belongs to and keeps the visible token (PDF, DOI,
         URL…) inside it — 2.5.3 Label in Name. No ↗ affordance here: these
@@ -207,172 +198,151 @@ const cleanedBibtex = cleanBibtex(pub.bibtex);
         Slides and Poster are the exception: their visible token is a bare
         English literal in both locales, so the Spanish `aria.viewSlides` /
         `aria.viewPoster` wording translates that token away and no longer contains it,
-        breaking Label in Name. They lead with the visible token instead. */
-    }
+        breaking Label in Name. They lead with the visible token instead. */}
     <div class="pub-actions">
-      {
-        pub.abstract && (
-          <button
-            class="btn-sm btn-abstract"
-            type="button"
-            data-id={pub.id}
-            aria-label={t("aria.toggleAbstract", { title: pub.title })}
-            aria-expanded="false"
-            aria-controls={abstractId}
-          >
-            <span class="i-fa-solid:align-left" />{" "}
-            {t("pages.publications.abstract")}
-          </button>
-        )
-      }
-      {
-        cleanedBibtex && (
-          <button
-            class="btn-sm btn-bibtex-toggle"
-            type="button"
-            data-id={pub.id}
-            aria-label={t("aria.toggleBibtex", { title: pub.title })}
-            aria-expanded="false"
-            aria-controls={bibtexId}
-          >
-            <span class="i-fa-solid:code" /> {t("pages.publications.bibtex")}
-          </button>
-        )
-      }
-      {
-        pdf && (
-          <a
-            href={pdf}
-            class="btn-sm"
-            target="_blank"
-            rel="external noopener noreferrer"
-            data-astro-prefetch="false"
-            aria-label={t("aria.opensNewTab", {
-              text: t("aria.downloadPdf", { title: pub.title }),
-            })}
-          >
-            <span class="i-fa-solid:file-pdf" /> PDF
-          </a>
-        )
-      }
-      {
-        doi && (
-          <a
-            href={doi}
-            class="btn-sm"
-            target="_blank"
-            rel="external noopener noreferrer"
-            data-astro-prefetch="false"
-            aria-label={t("aria.opensNewTab", {
-              text: t("aria.viewDoi", { title: pub.title }),
-            })}
-          >
-            <span class="i-fa-solid:external-link-alt" /> DOI
-          </a>
-        )
-      }
-      {
-        showUrl && (
-          <a
-            href={url}
-            class="btn-sm"
-            target="_blank"
-            rel="external noopener noreferrer"
-            data-astro-prefetch="false"
-            aria-label={t("aria.opensNewTab", {
-              text: t("aria.viewUrl", { title: pub.title }),
-            })}
-          >
-            <span class="i-fa-solid:link" /> URL
-          </a>
-        )
-      }
-      {
-        slides && (
-          <a
-            href={slides}
-            class="btn-sm"
-            target="_blank"
-            rel="external noopener noreferrer"
-            data-astro-prefetch="false"
-            aria-label={t("aria.opensNewTab", {
-              text: `${t("pages.publications.slides")} — ${pub.title}`,
-            })}
-          >
-            <span class="i-fa-solid:chalkboard-teacher" />{" "}
-            {t("pages.publications.slides")}
-          </a>
-        )
-      }
-      {
-        poster && (
-          <a
-            href={poster}
-            class="btn-sm"
-            target="_blank"
-            rel="external noopener noreferrer"
-            data-astro-prefetch="false"
-            aria-label={t("aria.opensNewTab", {
-              text: `${t("pages.publications.poster")} — ${pub.title}`,
-            })}
-          >
-            <span class="i-fa-solid:image" /> {t("pages.publications.poster")}
-          </a>
-        )
-      }
+      {pub.abstract && (
+        <button
+          class="btn-sm btn-abstract"
+          type="button"
+          data-id={pub.id}
+          aria-label={t("aria.toggleAbstract", { title: pub.title })}
+          aria-expanded="false"
+          aria-controls={abstractId}
+        >
+          <span class="i-fa-solid:align-left" />{" "}
+          {t("pages.publications.abstract")}
+        </button>
+      )}
+      {cleanedBibtex && (
+        <button
+          class="btn-sm btn-bibtex-toggle"
+          type="button"
+          data-id={pub.id}
+          aria-label={t("aria.toggleBibtex", { title: pub.title })}
+          aria-expanded="false"
+          aria-controls={bibtexId}
+        >
+          <span class="i-fa-solid:code" /> {t("pages.publications.bibtex")}
+        </button>
+      )}
+      {pdf && (
+        <a
+          href={pdf}
+          class="btn-sm"
+          target="_blank"
+          rel="external noopener noreferrer"
+          data-astro-prefetch="false"
+          aria-label={t("aria.opensNewTab", {
+            text: t("aria.downloadPdf", { title: pub.title }),
+          })}
+        >
+          <span class="i-fa-solid:file-pdf" /> PDF
+        </a>
+      )}
+      {doi && (
+        <a
+          href={doi}
+          class="btn-sm"
+          target="_blank"
+          rel="external noopener noreferrer"
+          data-astro-prefetch="false"
+          aria-label={t("aria.opensNewTab", {
+            text: t("aria.viewDoi", { title: pub.title }),
+          })}
+        >
+          <span class="i-fa-solid:external-link-alt" /> DOI
+        </a>
+      )}
+      {showUrl && (
+        <a
+          href={url}
+          class="btn-sm"
+          target="_blank"
+          rel="external noopener noreferrer"
+          data-astro-prefetch="false"
+          aria-label={t("aria.opensNewTab", {
+            text: t("aria.viewUrl", { title: pub.title }),
+          })}
+        >
+          <span class="i-fa-solid:link" /> URL
+        </a>
+      )}
+      {slides && (
+        <a
+          href={slides}
+          class="btn-sm"
+          target="_blank"
+          rel="external noopener noreferrer"
+          data-astro-prefetch="false"
+          aria-label={t("aria.opensNewTab", {
+            text: `${t("pages.publications.slides")} — ${pub.title}`,
+          })}
+        >
+          <span class="i-fa-solid:chalkboard-teacher" />{" "}
+          {t("pages.publications.slides")}
+        </a>
+      )}
+      {poster && (
+        <a
+          href={poster}
+          class="btn-sm"
+          target="_blank"
+          rel="external noopener noreferrer"
+          data-astro-prefetch="false"
+          aria-label={t("aria.opensNewTab", {
+            text: `${t("pages.publications.poster")} — ${pub.title}`,
+          })}
+        >
+          <span class="i-fa-solid:image" /> {t("pages.publications.poster")}
+        </a>
+      )}
     </div>
 
-    {
-      pub.abstract && (
-        <div
-          id={abstractId}
-          class="pub-abstract hidden"
-        >
-          <div class="pub-card-wrapper copy-container">
-            <div class="pub-card-header">
-              <div class="pub-card-title">
-                {t("pages.publications.abstract")}
-              </div>
-              <CopyButton
-                class="pub-copy-btn"
-                content={sanitize(pub.abstract)}
-                ariaLabel={t("aria.copyAbstract", { title: pub.title })}
-              />
-            </div>
-            <div
-              class="pub-card-content copy-content"
-              set:html={sanitize(pub.abstract)}
+    {pub.abstract && (
+      <div
+        id={abstractId}
+        class="pub-abstract hidden"
+      >
+        <div class="pub-card-wrapper copy-container">
+          <div class="pub-card-header">
+            <div class="pub-card-title">{t("pages.publications.abstract")}</div>
+            <CopyButton
+              class="pub-copy-btn"
+              content={sanitize(pub.abstract)}
+              ariaLabel={t("aria.copyAbstract", { title: pub.title })}
             />
           </div>
+          <div
+            class="pub-card-content copy-content"
+            set:html={sanitize(pub.abstract)}
+          />
         </div>
-      )
-    }
+      </div>
+    )}
 
-    {
-      cleanedBibtex && (
-        <div
-          id={bibtexId}
-          class="pub-bibtex hidden"
-        >
-          <div class="pub-card-wrapper copy-container">
-            <div class="pub-card-header">
-              <div class="pub-card-title">{t("pages.publications.bibtex")}</div>
-              <CopyButton
-                class="pub-copy-btn"
-                content={cleanedBibtex}
-                ariaLabel={t("aria.copyBibtex", { title: pub.title })}
-              />
-            </div>
-            <div class="pub-card-content">
-              <pre
-                class="bibtex-raw"
-                set:html={sanitize(cleanedBibtex)}
-              />
-            </div>
+    {cleanedBibtex && (
+      <div
+        id={bibtexId}
+        class="pub-bibtex hidden"
+      >
+        <div class="pub-card-wrapper copy-container">
+          <div class="pub-card-header">
+            <div class="pub-card-title">{t("pages.publications.bibtex")}</div>
+            <CopyButton
+              class="pub-copy-btn"
+              content={cleanedBibtex}
+              ariaLabel={t("aria.copyBibtex", { title: pub.title })}
+            />
+          </div>
+          <div class="pub-card-content">
+            <pre
+              class="bibtex-raw"
+              set:html={sanitize(cleanedBibtex)}
+            ></pre>
           </div>
         </div>
-      )
-    }
+      </div>
+    )}
   </div>
 </article>
 

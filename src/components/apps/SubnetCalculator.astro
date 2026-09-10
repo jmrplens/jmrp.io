@@ -235,8 +235,9 @@ const i18n = {
           <label
             for={`${id}-ip`}
             class="net-label"
-            >{t("tools.subnetCalculator.ipAddress")}</label
           >
+            {t("tools.subnetCalculator.ipAddress")}
+          </label>
           <input
             type="text"
             id={`${id}-ip`}
@@ -251,8 +252,9 @@ const i18n = {
           <label
             for={`${id}-cidr`}
             class="net-label"
-            >{t("tools.subnetCalculator.cidr")}</label
           >
+            {t("tools.subnetCalculator.cidr")}
+          </label>
           <div class="net-cidr-row">
             <span class="net-cidr-slash">/</span>
             <input
@@ -270,153 +272,145 @@ const i18n = {
         class="net-presets"
         id={`${id}-presets-v4`}
       >
-        <span class="net-presets-label"
-          >{t("tools.subnetCalculator.ipv4Label")}</span
-        >
-        {
-          [8, 16, 20, 24, 25, 26, 27, 28, 29, 30, 31, 32].map((c) => (
-            <button
-              type="button"
-              class="net-preset-btn"
-              data-cidr={String(c)}
-            >
-              /{c}
-            </button>
-          ))
-        }
+        <span class="net-presets-label">
+          {t("tools.subnetCalculator.ipv4Label")}
+        </span>
+        {[8, 16, 20, 24, 25, 26, 27, 28, 29, 30, 31, 32].map((c) => (
+          <button
+            type="button"
+            class="net-preset-btn"
+            data-cidr={String(c)}
+          >
+            /{c}
+          </button>
+        ))}
       </div>
       <div
         class="net-presets"
         id={`${id}-presets-v6`}
         hidden
       >
-        <span class="net-presets-label"
-          >{t("tools.subnetCalculator.ipv6Label")}</span
-        >
-        {
-          [32, 48, 56, 64, 80, 96, 112, 128].map((c) => (
-            <button
-              type="button"
-              class="net-preset-btn"
-              data-cidr={String(c)}
-            >
-              /{c}
-            </button>
-          ))
-        }
+        <span class="net-presets-label">
+          {t("tools.subnetCalculator.ipv6Label")}
+        </span>
+        {[32, 48, 56, 64, 80, 96, 112, 128].map((c) => (
+          <button
+            type="button"
+            class="net-preset-btn"
+            data-cidr={String(c)}
+          >
+            /{c}
+          </button>
+        ))}
       </div>
       <div
         class="net-presets"
         id={`${id}-scenarios-v4`}
       >
-        <span class="net-presets-label"
-          >{t("tools.subnetCalculator.scenarios")}</span
-        >
-        {
-          [
-            {
-              label: t("tools.subnetCalculator.scenarioHomeLan"),
-              ip: "192.168.1.0",
-              cidr: "24",
-            },
-            {
-              label: t("tools.subnetCalculator.scenarioOffice"),
-              ip: "10.0.0.0",
-              cidr: "22",
-            },
-            {
-              label: t("tools.subnetCalculator.scenarioDocker"),
-              ip: "172.17.0.0",
-              cidr: "16",
-            },
-            {
-              label: t("tools.subnetCalculator.scenarioAwsVpc"),
-              ip: "10.0.0.0",
-              cidr: "16",
-            },
-            {
-              label: t("tools.subnetCalculator.scenarioCgnat"),
-              ip: "100.64.0.0",
-              cidr: "10",
-            },
-            {
-              label: t("tools.subnetCalculator.scenarioP2pLink"),
-              ip: "10.255.255.252",
-              cidr: "30",
-            },
-            {
-              label: t("tools.subnetCalculator.scenarioWireGuard"),
-              ip: "10.13.13.0",
-              cidr: "24",
-            },
-          ].map((s) => (
-            <button
-              type="button"
-              class="net-preset-btn net-scenario-btn"
-              data-preset-ip={s.ip}
-              data-preset-cidr={s.cidr}
-            >
-              {s.label}
-            </button>
-          ))
-        }
+        <span class="net-presets-label">
+          {t("tools.subnetCalculator.scenarios")}
+        </span>
+        {[
+          {
+            label: t("tools.subnetCalculator.scenarioHomeLan"),
+            ip: "192.168.1.0",
+            cidr: "24",
+          },
+          {
+            label: t("tools.subnetCalculator.scenarioOffice"),
+            ip: "10.0.0.0",
+            cidr: "22",
+          },
+          {
+            label: t("tools.subnetCalculator.scenarioDocker"),
+            ip: "172.17.0.0",
+            cidr: "16",
+          },
+          {
+            label: t("tools.subnetCalculator.scenarioAwsVpc"),
+            ip: "10.0.0.0",
+            cidr: "16",
+          },
+          {
+            label: t("tools.subnetCalculator.scenarioCgnat"),
+            ip: "100.64.0.0",
+            cidr: "10",
+          },
+          {
+            label: t("tools.subnetCalculator.scenarioP2pLink"),
+            ip: "10.255.255.252",
+            cidr: "30",
+          },
+          {
+            label: t("tools.subnetCalculator.scenarioWireGuard"),
+            ip: "10.13.13.0",
+            cidr: "24",
+          },
+        ].map((s) => (
+          <button
+            type="button"
+            class="net-preset-btn net-scenario-btn"
+            data-preset-ip={s.ip}
+            data-preset-cidr={s.cidr}
+          >
+            {s.label}
+          </button>
+        ))}
       </div>
       <div
         class="net-presets"
         id={`${id}-scenarios-v6`}
         hidden
       >
-        <span class="net-presets-label"
-          >{t("tools.subnetCalculator.scenarios")}</span
-        >
-        {
-          [
-            {
-              label: t("tools.subnetCalculator.scenarioSubnet64"),
-              ip: "2001:db8:abcd:1::",
-              cidr: "64",
-            },
-            {
-              label: t("tools.subnetCalculator.scenarioHomeSite"),
-              ip: "fd00:1::",
-              cidr: "48",
-            },
-            {
-              label: t("tools.subnetCalculator.scenarioResidential56"),
-              ip: "2001:db8:ab00::",
-              cidr: "56",
-            },
-            {
-              label: t("tools.subnetCalculator.scenarioIsp32"),
-              ip: "2001:db8::",
-              cidr: "32",
-            },
-            {
-              label: t("tools.subnetCalculator.scenarioUla"),
-              ip: "fd00::",
-              cidr: "48",
-            },
-            {
-              label: t("tools.subnetCalculator.scenarioLinkLocal"),
-              ip: "fe80::",
-              cidr: "10",
-            },
-            {
-              label: t("tools.subnetCalculator.scenarioP2p127"),
-              ip: "2001:db8::0",
-              cidr: "127",
-            },
-          ].map((s) => (
-            <button
-              type="button"
-              class="net-preset-btn net-scenario-btn"
-              data-preset-ip={s.ip}
-              data-preset-cidr={s.cidr}
-            >
-              {s.label}
-            </button>
-          ))
-        }
+        <span class="net-presets-label">
+          {t("tools.subnetCalculator.scenarios")}
+        </span>
+        {[
+          {
+            label: t("tools.subnetCalculator.scenarioSubnet64"),
+            ip: "2001:db8:abcd:1::",
+            cidr: "64",
+          },
+          {
+            label: t("tools.subnetCalculator.scenarioHomeSite"),
+            ip: "fd00:1::",
+            cidr: "48",
+          },
+          {
+            label: t("tools.subnetCalculator.scenarioResidential56"),
+            ip: "2001:db8:ab00::",
+            cidr: "56",
+          },
+          {
+            label: t("tools.subnetCalculator.scenarioIsp32"),
+            ip: "2001:db8::",
+            cidr: "32",
+          },
+          {
+            label: t("tools.subnetCalculator.scenarioUla"),
+            ip: "fd00::",
+            cidr: "48",
+          },
+          {
+            label: t("tools.subnetCalculator.scenarioLinkLocal"),
+            ip: "fe80::",
+            cidr: "10",
+          },
+          {
+            label: t("tools.subnetCalculator.scenarioP2p127"),
+            ip: "2001:db8::0",
+            cidr: "127",
+          },
+        ].map((s) => (
+          <button
+            type="button"
+            class="net-preset-btn net-scenario-btn"
+            data-preset-ip={s.ip}
+            data-preset-cidr={s.cidr}
+          >
+            {s.label}
+          </button>
+        ))}
       </div>
     </div>
     <div class="net-actions">
@@ -461,8 +455,9 @@ const i18n = {
         <label
           for={`${id}-info-ip`}
           class="net-label"
-          >{t("tools.subnetCalculator.addressInputLabel")}</label
         >
+          {t("tools.subnetCalculator.addressInputLabel")}
+        </label>
         <input
           type="text"
           id={`${id}-info-ip`}
@@ -474,27 +469,25 @@ const i18n = {
         />
       </div>
       <div class="net-examples">
-        <span class="net-presets-label"
-          >{t("tools.subnetCalculator.examples")}</span
-        >
-        {
-          [
-            "10.0.0.1",
-            "2001:db8::1",
-            "::ffff:192.168.1.1",
-            "fe80::1",
-            "127.0.0.1",
-            "3232235777",
-          ].map((ex) => (
-            <button
-              type="button"
-              class="net-preset-btn"
-              data-example={ex}
-            >
-              {ex}
-            </button>
-          ))
-        }
+        <span class="net-presets-label">
+          {t("tools.subnetCalculator.examples")}
+        </span>
+        {[
+          "10.0.0.1",
+          "2001:db8::1",
+          "::ffff:192.168.1.1",
+          "fe80::1",
+          "127.0.0.1",
+          "3232235777",
+        ].map((ex) => (
+          <button
+            type="button"
+            class="net-preset-btn"
+            data-example={ex}
+          >
+            {ex}
+          </button>
+        ))}
       </div>
     </div>
     <div class="net-actions">
@@ -528,8 +521,9 @@ const i18n = {
           <label
             for={`${id}-vlsm-net`}
             class="net-label"
-            >{t("tools.subnetCalculator.baseNetwork")}</label
           >
+            {t("tools.subnetCalculator.baseNetwork")}
+          </label>
           <input
             type="text"
             id={`${id}-vlsm-net`}
@@ -544,8 +538,9 @@ const i18n = {
           <label
             for={`${id}-vlsm-cidr`}
             class="net-label"
-            >{t("tools.subnetCalculator.cidr")}</label
           >
+            {t("tools.subnetCalculator.cidr")}
+          </label>
           <div class="net-cidr-row">
             <span class="net-cidr-slash">/</span>
             <input
@@ -568,9 +563,9 @@ const i18n = {
       </div>
     </div>
     <div class="net-vlsm-header">
-      <span class="net-label"
-        >{t("tools.subnetCalculator.subnetRequirements")}</span
-      >
+      <span class="net-label">
+        {t("tools.subnetCalculator.subnetRequirements")}
+      </span>
     </div>
     <div id={`${id}-vlsm-reqs`}></div>
     <div class="net-actions">
@@ -615,8 +610,9 @@ const i18n = {
           <label
             for={`${id}-range-start`}
             class="net-label"
-            >{t("tools.subnetCalculator.startIp")}</label
           >
+            {t("tools.subnetCalculator.startIp")}
+          </label>
           <input
             type="text"
             id={`${id}-range-start`}
@@ -631,8 +627,9 @@ const i18n = {
           <label
             for={`${id}-range-end`}
             class="net-label"
-            >{t("tools.subnetCalculator.endIp")}</label
           >
+            {t("tools.subnetCalculator.endIp")}
+          </label>
           <input
             type="text"
             id={`${id}-range-end`}
@@ -686,7 +683,10 @@ const i18n = {
   </div>
 </div>
 
-<script is:inline define:vars={{ id, i18n }}>
+<script
+  is:inline
+  define:vars={{ id, i18n }}
+>
   (function () {
     var C = document.querySelector('[data-net-id="' + id + '"]');
     if (!C) return;

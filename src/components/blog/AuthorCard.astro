@@ -85,45 +85,39 @@ const externalRel = "external noopener noreferrer";
     >
       <a href={translatePath("/cv/")}>{t("pages.blogPost.authorViewCv")}</a>
       <a href={translatePath("/publications/")}>{t("nav.publications")}</a>
-      {
-        githubUrl && (
-          <a
-            href={githubUrl}
-            target="_blank"
-            rel={externalRel}
-            class="external-link"
-            aria-label={t("aria.opensNewTab", { text: "GitHub" })}
-          >
-            GitHub
-          </a>
-        )
-      }
-      {
-        scholarUrl && (
-          <a
-            href={scholarUrl}
-            target="_blank"
-            rel={externalRel}
-            class="external-link"
-            aria-label={t("aria.opensNewTab", { text: "Google Scholar" })}
-          >
-            Google Scholar
-          </a>
-        )
-      }
-      {
-        orcidUrl && (
-          <a
-            href={orcidUrl}
-            target="_blank"
-            rel={externalRel}
-            class="external-link"
-            aria-label={t("aria.opensNewTab", { text: "ORCID" })}
-          >
-            ORCID
-          </a>
-        )
-      }
+      {githubUrl && (
+        <a
+          href={githubUrl}
+          target="_blank"
+          rel={externalRel}
+          class="external-link"
+          aria-label={t("aria.opensNewTab", { text: "GitHub" })}
+        >
+          GitHub
+        </a>
+      )}
+      {scholarUrl && (
+        <a
+          href={scholarUrl}
+          target="_blank"
+          rel={externalRel}
+          class="external-link"
+          aria-label={t("aria.opensNewTab", { text: "Google Scholar" })}
+        >
+          Google Scholar
+        </a>
+      )}
+      {orcidUrl && (
+        <a
+          href={orcidUrl}
+          target="_blank"
+          rel={externalRel}
+          class="external-link"
+          aria-label={t("aria.opensNewTab", { text: "ORCID" })}
+        >
+          ORCID
+        </a>
+      )}
     </nav>
     <p class="author-card__disclosure">
       {t("pages.blogPost.aiDisclosure")}{" "}

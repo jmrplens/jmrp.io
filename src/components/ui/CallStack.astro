@@ -76,17 +76,15 @@ const summary =
   {title && <div class="cstack__title">{title}</div>}
 
   <ol class="cstack__frames">
-    {
-      resolved.map((f) => (
-        <li
-          class:list={["cstack__frame", f.accent && "cstack__frame--accent"]}
-          style={f.accent ? `--cs-accent:${f.accentColor}` : undefined}
-        >
-          <span class="cstack__name">{f.name}</span>
-          {f.detail && <span class="cstack__detail">{f.detail}</span>}
-        </li>
-      ))
-    }
+    {resolved.map((f) => (
+      <li
+        class:list={["cstack__frame", f.accent && "cstack__frame--accent"]}
+        style={f.accent ? `--cs-accent:${f.accentColor}` : undefined}
+      >
+        <span class="cstack__name">{f.name}</span>
+        {f.detail && <span class="cstack__detail">{f.detail}</span>}
+      </li>
+    ))}
   </ol>
 
   <p

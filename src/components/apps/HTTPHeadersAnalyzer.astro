@@ -217,8 +217,7 @@ set-cookie: __Secure-Pref=1; path=/; Secure; HttpOnly; SameSite=Strict
 server: jmrp.io`;
 ---
 
-{
-  /*
+{/*
   `data-hdr-token` carries a time-based HMAC, substituted per request by nginx
   (`sub_filter NGINX_HOMELAB_TOKEN`) and validated by /api/headers-proxy. Same
   mechanism the homelab API endpoints use. It is what stops that proxy from
@@ -228,8 +227,7 @@ server: jmrp.io`;
   This page is therefore excluded from the edge-nonce Worker's routes — a
   5-minute token inside a copy cached for 24 h would go stale and lock the tool
   out of its own backend. Same exclusion /homelab/ already has, same reason.
-*/
-}
+*/}
 <div
   class="hdr-analyzer"
   data-hdr-id={uniqueId}
@@ -274,8 +272,7 @@ server: jmrp.io`;
         class="hdr-fetch-status"
         id={`${uniqueId}-fetch-status`}
         hidden
-      >
-      </div>
+      ></div>
       <div class="hdr-separator">
         <span>{t("tools.httpHeadersAnalyzer.orPasteHeaders")}</span>
       </div>
@@ -299,8 +296,7 @@ server: jmrp.io`;
         rows="10"
         placeholder={t("tools.httpHeadersAnalyzer.pasteHeadersPlaceholder")}
         spellcheck="false"
-        >{sampleHeaders}</textarea
-      >
+      >{sampleHeaders}</textarea>
       <button
         type="button"
         class="hdr-analyze-btn"
@@ -346,21 +342,22 @@ server: jmrp.io`;
             <span
               class="hdr-score-value"
               id={`${uniqueId}-score-value`}
-              >0</span
             >
+              0
+            </span>
             <span class="hdr-score-max">/100</span>
           </div>
         </div>
         <span
           class="hdr-score-grade"
           id={`${uniqueId}-grade`}
-          >—</span
         >
+          —
+        </span>
         <div
           class="hdr-summary"
           id={`${uniqueId}-summary`}
-        >
-        </div>
+        ></div>
       </div>
     </div>
 
@@ -368,12 +365,14 @@ server: jmrp.io`;
     <div
       class="hdr-results"
       id={`${uniqueId}-results`}
-    >
-    </div>
+    ></div>
   </div>
 </div>
 
-<script is:inline define:vars={{ uniqueId, i18n }}>
+<script
+  is:inline
+  define:vars={{ uniqueId, i18n }}
+>
   (function () {
     const container = document.querySelector(`[data-hdr-id="${uniqueId}"]`);
     if (!container) return;

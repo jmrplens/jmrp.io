@@ -45,70 +45,62 @@ const linkRow = (project.links?.length ?? 0) > 1 ? project.links : undefined;
 <article class="project-card">
   <header class="project-header">
     <h3 class="project-name">
-      {
-        primaryLink ? (
-          <a
-            href={primaryLink.url}
-            target="_blank"
-            rel="external noopener noreferrer"
-            aria-label={t("aria.opensNewTab", {
-              text: primaryLink.ariaLabel ?? `${project.name} — GitHub`,
-            })}
-          >
-            {project.name}
-          </a>
-        ) : (
-          project.name
-        )
-      }
+      {primaryLink ? (
+        <a
+          href={primaryLink.url}
+          target="_blank"
+          rel="external noopener noreferrer"
+          aria-label={t("aria.opensNewTab", {
+            text: primaryLink.ariaLabel ?? `${project.name} — GitHub`,
+          })}
+        >
+          {project.name}
+        </a>
+      ) : (
+        project.name
+      )}
     </h3>
     {project.tech && <span class="project-tech-tag">{project.tech}</span>}
   </header>
 
-  {
-    project.description && (
-      <div
-        class="project-description"
-        set:html={mdHtml(project.description)}
-      />
-    )
-  }
+  {project.description && (
+    <div
+      class="project-description"
+      set:html={mdHtml(project.description)}
+    />
+  )}
 
-  {
-    project.metrics && project.metrics.length > 0 && (
-      <div class="project-metrics">
-        {project.metrics.map((m) => (
-          <span class:list={[{ "metric--star": m.includes("★") }]}>{m}</span>
-        ))}
-      </div>
-    )
-  }
+  {project.metrics && project.metrics.length > 0 && (
+    <div class="project-metrics">
+      {project.metrics.map((m) => (
+        <span class:list={[{ "metric--star": m.includes("★") }]}>{m}</span>
+      ))}
+    </div>
+  )}
 
-  {
-    linkRow && (
-      <ul
-        class="project-links"
-        aria-label={t("pages.cv.projectLinksAriaLabel", {
-          project: project.name,
-        })}
-      >
-        {linkRow.map((link) => (
-          <li>
-            <a
-              href={link.url}
-              target="_blank"
-              rel="external noopener noreferrer"
-              aria-label={t("aria.opensNewTab", {
-                text: link.ariaLabel ?? `${link.label} — ${project.name}`,
-              })}
-            >
-              {link.label}
-            </a>
-          </li>
-        ))}
-      </ul>
-    )
-  }
+  {linkRow && (
+    <ul
+      class="project-links"
+      aria-label={t("pages.cv.projectLinksAriaLabel", {
+        project: project.name,
+      })}
+    >
+      {linkRow.map((link) => (
+        <li>
+          <a
+            href={link.url}
+            target="_blank"
+            rel="external noopener noreferrer"
+            aria-label={t("aria.opensNewTab", {
+              text: link.ariaLabel ?? `${link.label} — ${project.name}`,
+            })}
+          >
+            {link.label}
+          </a>
+        </li>
+      ))}
+    </ul>
+  )}
 </article>
 
 <style>

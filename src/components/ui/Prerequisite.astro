@@ -31,8 +31,9 @@ const titleId = `prereq-${crypto.randomUUID().slice(0, 8)}`;
     <span
       class="prereq-title"
       id={titleId}
-      >{title}</span
     >
+      {title}
+    </span>
   </div>
   <div class="prereq-content">
     <slot />

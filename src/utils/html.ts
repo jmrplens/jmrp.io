@@ -17,6 +17,37 @@ export function stripHtml(html: string | undefined | null): string {
 }
 
 /**
+ * Wraps build-time generated CSS in a `<style>` element, as a raw string.
+ *
+ * A component whose CSS is computed per instance used to render it as
+ * `<style is:inline set:html={css}></style>`. Both halves of the toolchain
+ * object to that element: Stylelint's postcss-html extracts the `<style>` from
+ * the `.astro` source, finds nothing in it (the content arrives at render time)
+ * and fails with `no-empty-source`, while giving it a placeholder child to
+ * extract instead trades that for `astro(2006)`, which `astro check` raises as
+ * a warning and the pipeline treats as an error. Emitting the tag as a string
+ * through `<Fragment set:html={inlineStyleTag(css)} />` leaves no `<style>` in
+ * any file Stylelint reads (`lint:css` globs `.astro` and `.css` only) and no
+ * child for the compiler to warn about. The built HTML is unchanged, nonce
+ * included: the post-build pass adds it by walking the built page, so how the
+ * tag got there does not matter.
+ *
+ * @param css - Generated CSS. Trusted, build-time input only.
+ * @returns The `<style>` element as a string.
+ * @throws {Error} When the CSS could close the element early.
+ */
+export function inlineStyleTag(css: string): string {
+  // `set:html` does not escape, so a closing tag inside the payload would end
+  // the element early and put the rest of the CSS in the document as text.
+  // Nothing generated today can contain one; this fails the build rather than
+  // ship a broken page if that ever changes.
+  if (/<\/style/i.test(css)) {
+    throw new Error("inlineStyleTag: the CSS would close the style element");
+  }
+  return `<style>${css}</style>`;
+}
+
+/**
  * Strips HTML tags AND decodes entities to produce clean plain text.
  *
  * `stripHtml` (sanitize-html) HTML-encodes ampersands in its output

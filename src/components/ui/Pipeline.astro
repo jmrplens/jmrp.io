@@ -73,21 +73,19 @@ const summary =
   {title && <div class="pipeline__title">{title}</div>}
 
   <ol class="pipeline__flow">
-    {
-      resolved.map((s, i) => (
-        <li
-          class="pipeline__stage"
-          style={`--pl-accent:${s.accent}`}
-        >
-          <span class="pipeline__meta">
-            <span class="pipeline__num">{String(i + 1).padStart(2, "0")}</span>
-            {s.via && <span class="pipeline__via">· ← {s.via}</span>}
-          </span>
-          <span class="pipeline__name">{s.name}</span>
-          {s.note && <span class="pipeline__note">{s.note}</span>}
-        </li>
-      ))
-    }
+    {resolved.map((s, i) => (
+      <li
+        class="pipeline__stage"
+        style={`--pl-accent:${s.accent}`}
+      >
+        <span class="pipeline__meta">
+          <span class="pipeline__num">{String(i + 1).padStart(2, "0")}</span>
+          {s.via && <span class="pipeline__via">· ← {s.via}</span>}
+        </span>
+        <span class="pipeline__name">{s.name}</span>
+        {s.note && <span class="pipeline__note">{s.note}</span>}
+      </li>
+    ))}
   </ol>
 
   {caption && <p class="pipeline__caption">{caption}</p>}

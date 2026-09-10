@@ -70,24 +70,22 @@ const summary =
   {title && <div class="enc__title">{title}</div>}
 
   <ul class="enc__rows">
-    {
-      rendered.map((row) => (
-        <li class="enc__row">
-          <span class="enc__src">{row.label}</span>
-          <span class="enc__bytes">
-            {row.bytes.map((byte) => (
-              <span
-                class="enc__byte"
-                style={`--enc-byte:var(--cat-${byte.cat})`}
-              >
-                {byte.value}
-              </span>
-            ))}
-          </span>
-          {row.note && <span class="enc__note">{row.note}</span>}
-        </li>
-      ))
-    }
+    {rendered.map((row) => (
+      <li class="enc__row">
+        <span class="enc__src">{row.label}</span>
+        <span class="enc__bytes">
+          {row.bytes.map((byte) => (
+            <span
+              class="enc__byte"
+              style={`--enc-byte:var(--cat-${byte.cat})`}
+            >
+              {byte.value}
+            </span>
+          ))}
+        </span>
+        {row.note && <span class="enc__note">{row.note}</span>}
+      </li>
+    ))}
   </ul>
 
   {caption && <p class="enc__caption">{caption}</p>}

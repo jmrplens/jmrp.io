@@ -106,23 +106,21 @@ const rows = [
   {title && <div class="kst__title">{title}</div>}
 
   <div class="kst__rows">
-    {
-      rows.map((r) => (
-        <div class={`kst__row kst__row--${r.kind}`}>
-          <div class="kst__head">
-            <span class="kst__label">{r.label}</span>
-            <span class="kst__value">{r.value}</span>
-          </div>
-          <div class="kst__track">
-            <div
-              class={`kst__bar kst__bar--${r.kind}`}
-              style={`width:${r.pct.toFixed(2)}%`}
-            />
-          </div>
-          {r.note && <span class="kst__note">{r.note}</span>}
+    {rows.map((r) => (
+      <div class={`kst__row kst__row--${r.kind}`}>
+        <div class="kst__head">
+          <span class="kst__label">{r.label}</span>
+          <span class="kst__value">{r.value}</span>
         </div>
-      ))
-    }
+        <div class="kst__track">
+          <div
+            class={`kst__bar kst__bar--${r.kind}`}
+            style={`width:${r.pct.toFixed(2)}%`}
+          />
+        </div>
+        {r.note && <span class="kst__note">{r.note}</span>}
+      </div>
+    ))}
   </div>
 
   <p class={`kst__verdict kst__verdict--${verdictTone}`}>
@@ -141,12 +139,10 @@ const rows = [
   </p>
 
   <table class="sr-only">
-    <caption
-      >{
-        title ??
-          t("components.keyspaceThreat.tableCaption", { secret: secretLabel })
-      }</caption
-    >
+    <caption>
+      {title ??
+        t("components.keyspaceThreat.tableCaption", { secret: secretLabel })}
+    </caption>
     <thead>
       <tr>
         <th scope="col">{t("components.keyspaceThreat.quantity")}</th>
@@ -155,19 +151,17 @@ const rows = [
     </thead>
     <tbody>
       <tr>
-        <td
-          >{
-            t("components.keyspaceThreat.keyspaceRow", { secret: secretLabel })
-          }</td
-        >
+        <td>
+          {t("components.keyspaceThreat.keyspaceRow", { secret: secretLabel })}
+        </td>
         <td>{nf.format(keyspace)}</td>
       </tr>
       <tr>
         <td>{throughputLabel}</td>
-        <td
-          >{nf.format(throughput)}
-          {t("components.keyspaceThreat.guessesPerSec")}</td
-        >
+        <td>
+          {nf.format(throughput)}
+          {t("components.keyspaceThreat.guessesPerSec")}
+        </td>
       </tr>
       <tr>
         <td>{t("components.keyspaceThreat.verdict")}</td>

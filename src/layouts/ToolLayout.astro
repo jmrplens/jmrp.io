@@ -221,8 +221,7 @@ const pageSchema = faqNode
         <div
           class="lab-grid"
           aria-hidden="true"
-        >
-        </div>
+        ></div>
         <div class="page-header__body">
           <div class="header-icon">
             <span
@@ -238,10 +237,8 @@ const pageSchema = faqNode
         </div>
       </header>
 
-      {
-        /* The tool MDX supplies its own <ToolApp>/<ToolInfo> wrappers — see
-          ToolApp.astro for why the layout no longer owns them. */
-      }
+      {/* The tool MDX supplies its own <ToolApp>/<ToolInfo> wrappers — see
+          ToolApp.astro for why the layout no longer owns them. */}
       <slot />
 
       {faq && faq.length > 0 && <FAQ items={faq} />}

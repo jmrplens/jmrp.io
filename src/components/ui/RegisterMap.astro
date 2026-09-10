@@ -153,58 +153,54 @@ const summary =
       ]}
       style={`grid-template-columns:repeat(${width},minmax(0,1fr));--rm-cols:${width}`}
     >
-      {bitNumbers.map((n) => <span class="register-map__bitnum">{n}</span>)}
-      {
-        runs.map((run) => (
-          <span
-            class:list={[
-              "register-map__field",
-              run.reserved && "register-map__field--reserved",
-            ]}
-            style={
-              run.reserved
-                ? `grid-column:span ${run.span}`
-                : `grid-column:span ${run.span};background-color:${run.color}`
-            }
-            title={`${run.name} [${run.bitsLabel}]`}
-          >
-            <span class="register-map__field-name">{run.name}</span>
-            <span class="register-map__field-bits">{run.bitsLabel}</span>
-          </span>
-        ))
-      }
+      {bitNumbers.map((n) => (
+        <span class="register-map__bitnum">{n}</span>
+      ))}
+      {runs.map((run) => (
+        <span
+          class:list={[
+            "register-map__field",
+            run.reserved && "register-map__field--reserved",
+          ]}
+          style={
+            run.reserved
+              ? `grid-column:span ${run.span}`
+              : `grid-column:span ${run.span};background-color:${run.color}`
+          }
+          title={`${run.name} [${run.bitsLabel}]`}
+        >
+          <span class="register-map__field-name">{run.name}</span>
+          <span class="register-map__field-bits">{run.bitsLabel}</span>
+        </span>
+      ))}
     </div>
   </div>
 
   <ul class="register-map__legend">
-    {
-      parsed.map((p) => (
-        <li class="register-map__legend-item">
-          <span
-            class="register-map__swatch"
-            style={`background-color:${p.color}`}
-            aria-hidden="true"
-          />
-          <span class="register-map__legend-text">
-            <b>{p.name}</b> [{p.hi === p.lo ? p.hi : `${p.hi}:${p.lo}`}]
-            {p.note && <span class="register-map__note"> — {p.note}</span>}
-          </span>
-        </li>
-      ))
-    }
-    {
-      reservedRanges.length > 0 && (
-        <li class="register-map__legend-item">
-          <span
-            class="register-map__swatch register-map__swatch--reserved"
-            aria-hidden="true"
-          />
-          <span class="register-map__legend-text">
-            <b>{reservedLabel}</b> [{reservedRanges.join(", ")}]
-          </span>
-        </li>
-      )
-    }
+    {parsed.map((p) => (
+      <li class="register-map__legend-item">
+        <span
+          class="register-map__swatch"
+          style={`background-color:${p.color}`}
+          aria-hidden="true"
+        />
+        <span class="register-map__legend-text">
+          <b>{p.name}</b> [{p.hi === p.lo ? p.hi : `${p.hi}:${p.lo}`}]
+          {p.note && <span class="register-map__note"> — {p.note}</span>}
+        </span>
+      </li>
+    ))}
+    {reservedRanges.length > 0 && (
+      <li class="register-map__legend-item">
+        <span
+          class="register-map__swatch register-map__swatch--reserved"
+          aria-hidden="true"
+        />
+        <span class="register-map__legend-text">
+          <b>{reservedLabel}</b> [{reservedRanges.join(", ")}]
+        </span>
+      </li>
+    )}
   </ul>
 
   <table class="sr-only">
@@ -217,26 +213,22 @@ const summary =
       </tr>
     </thead>
     <tbody>
-      {
-        parsed.map((p) => (
+      {parsed.map((p) => (
+        <tr>
+          <td>{p.name}</td>
+          <td>{p.hi === p.lo ? p.hi : `${p.hi}:${p.lo}`}</td>
+          <td>{p.note ?? ""}</td>
+        </tr>
+      ))}
+      {runs
+        .filter((r) => r.reserved)
+        .map((r) => (
           <tr>
-            <td>{p.name}</td>
-            <td>{p.hi === p.lo ? p.hi : `${p.hi}:${p.lo}`}</td>
-            <td>{p.note ?? ""}</td>
+            <td>{reservedLabel}</td>
+            <td>{r.bitsLabel}</td>
+            <td />
           </tr>
-        ))
-      }
-      {
-        runs
-          .filter((r) => r.reserved)
-          .map((r) => (
-            <tr>
-              <td>{reservedLabel}</td>
-              <td>{r.bitsLabel}</td>
-              <td />
-            </tr>
-          ))
-      }
+        ))}
     </tbody>
   </table>
 

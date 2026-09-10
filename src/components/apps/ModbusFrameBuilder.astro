@@ -140,8 +140,9 @@ const i18n = {
           <label
             class="mbus-label"
             for={`${uniqueId}-protocol`}
-            >{t("tools.modbusFrameBuilder.protocol")}</label
           >
+            {t("tools.modbusFrameBuilder.protocol")}
+          </label>
           <select
             id={`${uniqueId}-protocol`}
             class="mbus-select"
@@ -155,8 +156,9 @@ const i18n = {
           <label
             class="mbus-label"
             for={`${uniqueId}-slave`}
-            >{t("tools.modbusFrameBuilder.slaveAddress")}</label
           >
+            {t("tools.modbusFrameBuilder.slaveAddress")}
+          </label>
           <input
             id={`${uniqueId}-slave`}
             class="mbus-input"
@@ -170,21 +172,22 @@ const i18n = {
           <label
             class="mbus-label"
             for={`${uniqueId}-addr-fmt`}
-            >{t("tools.modbusFrameBuilder.addressFormat")}</label
           >
+            {t("tools.modbusFrameBuilder.addressFormat")}
+          </label>
           <select
             id={`${uniqueId}-addr-fmt`}
             class="mbus-select"
           >
-            <option value="0based"
-              >{t("tools.modbusFrameBuilder.zeroBased")}</option
-            >
-            <option value="1based"
-              >{t("tools.modbusFrameBuilder.oneBased")}</option
-            >
-            <option value="modicon"
-              >{t("tools.modbusFrameBuilder.modicon")}</option
-            >
+            <option value="0based">
+              {t("tools.modbusFrameBuilder.zeroBased")}
+            </option>
+            <option value="1based">
+              {t("tools.modbusFrameBuilder.oneBased")}
+            </option>
+            <option value="modicon">
+              {t("tools.modbusFrameBuilder.modicon")}
+            </option>
           </select>
         </div>
       </div>
@@ -194,8 +197,9 @@ const i18n = {
         <label
           class="mbus-label"
           for={`${uniqueId}-func`}
-          >{t("tools.modbusFrameBuilder.functionCode")}</label
         >
+          {t("tools.modbusFrameBuilder.functionCode")}
+        </label>
         <select
           id={`${uniqueId}-func`}
           class="mbus-select"
@@ -205,8 +209,9 @@ const i18n = {
           <option
             value="03"
             selected
-            >03 — Read Holding Registers</option
           >
+            03 — Read Holding Registers
+          </option>
           <option value="04">04 — Read Input Registers</option>
           <option value="05">05 — Write Single Coil</option>
           <option value="06">06 — Write Single Register</option>
@@ -228,8 +233,9 @@ const i18n = {
             <label
               class="mbus-label"
               for={`${uniqueId}-start-addr`}
-              >{t("tools.modbusFrameBuilder.startAddress")}</label
             >
+              {t("tools.modbusFrameBuilder.startAddress")}
+            </label>
             <input
               id={`${uniqueId}-start-addr`}
               class="mbus-input"
@@ -241,15 +247,15 @@ const i18n = {
             <div
               class="mbus-addr-hint"
               id={`${uniqueId}-addr-hint`}
-            >
-            </div>
+            ></div>
           </div>
           <div class="mbus-field">
             <label
               class="mbus-label"
               for={`${uniqueId}-quantity`}
-              >{t("tools.modbusFrameBuilder.quantity")}</label
             >
+              {t("tools.modbusFrameBuilder.quantity")}
+            </label>
             <input
               id={`${uniqueId}-quantity`}
               class="mbus-input"
@@ -271,8 +277,9 @@ const i18n = {
         <label
           class="mbus-label"
           for={`${uniqueId}-write-data`}
-          >{t("tools.modbusFrameBuilder.writeValues")}</label
         >
+          {t("tools.modbusFrameBuilder.writeValues")}
+        </label>
         <input
           id={`${uniqueId}-write-data`}
           class="mbus-input"
@@ -293,15 +300,16 @@ const i18n = {
             <label
               class="mbus-label"
               for={`${uniqueId}-data-fmt`}
-              >{t("tools.modbusFrameBuilder.dataFormat")}</label
             >
+              {t("tools.modbusFrameBuilder.dataFormat")}
+            </label>
             <select
               id={`${uniqueId}-data-fmt`}
               class="mbus-select"
             >
-              <option value="hex"
-                >{t("tools.modbusFrameBuilder.hexBytes")}</option
-              >
+              <option value="hex">
+                {t("tools.modbusFrameBuilder.hexBytes")}
+              </option>
               <option value="uint16">Unsigned Int 16</option>
               <option value="int16">Signed Int 16</option>
               <option value="uint32">Unsigned Int 32</option>
@@ -312,8 +320,9 @@ const i18n = {
             <label
               class="mbus-label"
               for={`${uniqueId}-data-val`}
-              >{t("tools.modbusFrameBuilder.decimalValues")}</label
             >
+              {t("tools.modbusFrameBuilder.decimalValues")}
+            </label>
             <input
               id={`${uniqueId}-data-val`}
               class="mbus-input"
@@ -326,24 +335,25 @@ const i18n = {
             <label
               class="mbus-label"
               for={`${uniqueId}-byte-order`}
-              >{t("tools.modbusFrameBuilder.byteOrder")}</label
             >
+              {t("tools.modbusFrameBuilder.byteOrder")}
+            </label>
             <select
               id={`${uniqueId}-byte-order`}
               class="mbus-select"
             >
-              <option value="BE"
-                >{t("tools.modbusFrameBuilder.bigEndian")}</option
-              >
-              <option value="LE"
-                >{t("tools.modbusFrameBuilder.littleEndian")}</option
-              >
-              <option value="MBE"
-                >{t("tools.modbusFrameBuilder.midBigEndian")}</option
-              >
-              <option value="MLE"
-                >{t("tools.modbusFrameBuilder.midLittleEndian")}</option
-              >
+              <option value="BE">
+                {t("tools.modbusFrameBuilder.bigEndian")}
+              </option>
+              <option value="LE">
+                {t("tools.modbusFrameBuilder.littleEndian")}
+              </option>
+              <option value="MBE">
+                {t("tools.modbusFrameBuilder.midBigEndian")}
+              </option>
+              <option value="MLE">
+                {t("tools.modbusFrameBuilder.midLittleEndian")}
+              </option>
             </select>
           </div>
         </div>
@@ -368,8 +378,9 @@ const i18n = {
         <label
           class="mbus-label"
           for={`${uniqueId}-diag-sub`}
-          >{t("tools.modbusFrameBuilder.subFunction")}</label
         >
+          {t("tools.modbusFrameBuilder.subFunction")}
+        </label>
         <select
           id={`${uniqueId}-diag-sub`}
           class="mbus-select"
@@ -394,8 +405,9 @@ const i18n = {
           <label
             class="mbus-label"
             for={`${uniqueId}-write-addr`}
-            >{t("tools.modbusFrameBuilder.writeStartAddress")}</label
           >
+            {t("tools.modbusFrameBuilder.writeStartAddress")}
+          </label>
           <input
             id={`${uniqueId}-write-addr`}
             class="mbus-input"
@@ -409,8 +421,9 @@ const i18n = {
           <label
             class="mbus-label"
             for={`${uniqueId}-write-qty`}
-            >{t("tools.modbusFrameBuilder.writeQuantity")}</label
           >
+            {t("tools.modbusFrameBuilder.writeQuantity")}
+          </label>
           <input
             id={`${uniqueId}-write-qty`}
             class="mbus-input"
@@ -433,8 +446,9 @@ const i18n = {
             <label
               class="mbus-label"
               for={`${uniqueId}-transaction`}
-              >{t("tools.modbusFrameBuilder.transactionId")}</label
             >
+              {t("tools.modbusFrameBuilder.transactionId")}
+            </label>
             <input
               id={`${uniqueId}-transaction`}
               class="mbus-input"
@@ -448,8 +462,9 @@ const i18n = {
             <label
               class="mbus-label"
               for={`${uniqueId}-unit`}
-              >{t("tools.modbusFrameBuilder.unitId")}</label
             >
+              {t("tools.modbusFrameBuilder.unitId")}
+            </label>
             <input
               id={`${uniqueId}-unit`}
               class="mbus-input"
@@ -474,8 +489,9 @@ const i18n = {
           <label
             class="mbus-label"
             for={`${uniqueId}-decode-protocol`}
-            >{t("tools.modbusFrameBuilder.protocol")}</label
           >
+            {t("tools.modbusFrameBuilder.protocol")}
+          </label>
           <select
             id={`${uniqueId}-decode-protocol`}
             class="mbus-select"
@@ -483,17 +499,18 @@ const i18n = {
             <option value="rtu">RTU</option>
             <option value="tcp">TCP</option>
             <option value="ascii">ASCII</option>
-            <option value="auto"
-              >{t("tools.modbusFrameBuilder.autoDetect")}</option
-            >
+            <option value="auto">
+              {t("tools.modbusFrameBuilder.autoDetect")}
+            </option>
           </select>
         </div>
         <div class="mbus-field mbus-field-grow">
           <label
             class="mbus-label"
             for={`${uniqueId}-decode-input`}
-            >{t("tools.modbusFrameBuilder.hexFrame")}</label
           >
+            {t("tools.modbusFrameBuilder.hexFrame")}
+          </label>
           <input
             id={`${uniqueId}-decode-input`}
             class="mbus-input"
@@ -508,14 +525,16 @@ const i18n = {
           <label
             class="mbus-label"
             for={`${uniqueId}-decode-data-fmt`}
-            >{t("tools.modbusFrameBuilder.dataInterpretation")}</label
           >
+            {t("tools.modbusFrameBuilder.dataInterpretation")}
+          </label>
           <select
             id={`${uniqueId}-decode-data-fmt`}
             class="mbus-select"
           >
-            <option value="hex">{t("tools.modbusFrameBuilder.hexBytes")}</option
-            >
+            <option value="hex">
+              {t("tools.modbusFrameBuilder.hexBytes")}
+            </option>
             <option value="uint16">Unsigned Int 16</option>
             <option value="int16">Signed Int 16</option>
             <option value="uint32">Unsigned Int 32</option>
@@ -526,23 +545,25 @@ const i18n = {
           <label
             class="mbus-label"
             for={`${uniqueId}-decode-byte-order`}
-            >{t("tools.modbusFrameBuilder.byteOrder")}</label
           >
+            {t("tools.modbusFrameBuilder.byteOrder")}
+          </label>
           <select
             id={`${uniqueId}-decode-byte-order`}
             class="mbus-select"
           >
-            <option value="BE">{t("tools.modbusFrameBuilder.bigEndian")}</option
-            >
-            <option value="LE"
-              >{t("tools.modbusFrameBuilder.littleEndian")}</option
-            >
-            <option value="MBE"
-              >{t("tools.modbusFrameBuilder.midBigEndian")}</option
-            >
-            <option value="MLE"
-              >{t("tools.modbusFrameBuilder.midLittleEndian")}</option
-            >
+            <option value="BE">
+              {t("tools.modbusFrameBuilder.bigEndian")}
+            </option>
+            <option value="LE">
+              {t("tools.modbusFrameBuilder.littleEndian")}
+            </option>
+            <option value="MBE">
+              {t("tools.modbusFrameBuilder.midBigEndian")}
+            </option>
+            <option value="MLE">
+              {t("tools.modbusFrameBuilder.midLittleEndian")}
+            </option>
           </select>
         </div>
       </div>
@@ -576,8 +597,9 @@ const i18n = {
           <label
             class="mbus-label"
             for={`${uniqueId}-resp-protocol`}
-            >{t("tools.modbusFrameBuilder.protocol")}</label
           >
+            {t("tools.modbusFrameBuilder.protocol")}
+          </label>
           <select
             id={`${uniqueId}-resp-protocol`}
             class="mbus-select"
@@ -591,8 +613,9 @@ const i18n = {
           <label
             class="mbus-label"
             for={`${uniqueId}-resp-slave`}
-            >{t("tools.modbusFrameBuilder.slaveAddress")}</label
           >
+            {t("tools.modbusFrameBuilder.slaveAddress")}
+          </label>
           <input
             id={`${uniqueId}-resp-slave`}
             class="mbus-input"
@@ -606,8 +629,9 @@ const i18n = {
           <label
             class="mbus-label"
             for={`${uniqueId}-resp-fc`}
-            >{t("tools.modbusFrameBuilder.functionCode")}</label
           >
+            {t("tools.modbusFrameBuilder.functionCode")}
+          </label>
           <select
             id={`${uniqueId}-resp-fc`}
             class="mbus-select"
@@ -617,16 +641,17 @@ const i18n = {
             <option
               value="03"
               selected
-              >03 — Read Holding Registers</option
             >
+              03 — Read Holding Registers
+            </option>
             <option value="04">04 — Read Input Registers</option>
             <option value="05">05 — Write Single Coil</option>
             <option value="06">06 — Write Single Register</option>
             <option value="0F">0F — Write Multiple Coils</option>
             <option value="10">10 — Write Multiple Registers</option>
-            <option value="exception"
-              >{t("tools.modbusFrameBuilder.exceptionResponse")}</option
-            >
+            <option value="exception">
+              {t("tools.modbusFrameBuilder.exceptionResponse")}
+            </option>
           </select>
         </div>
       </div>
@@ -635,8 +660,9 @@ const i18n = {
           <label
             class="mbus-label"
             for={`${uniqueId}-resp-data`}
-            >{t("tools.modbusFrameBuilder.responseData")}</label
           >
+            {t("tools.modbusFrameBuilder.responseData")}
+          </label>
           <input
             id={`${uniqueId}-resp-data`}
             class="mbus-input"
@@ -647,8 +673,7 @@ const i18n = {
           <div
             class="mbus-addr-hint"
             id={`${uniqueId}-resp-hint`}
-          >
-          </div>
+          ></div>
         </div>
       </div>
       <div
@@ -660,8 +685,9 @@ const i18n = {
             <label
               class="mbus-label"
               for={`${uniqueId}-exc-fc`}
-              >{t("tools.modbusFrameBuilder.originalFc")}</label
             >
+              {t("tools.modbusFrameBuilder.originalFc")}
+            </label>
             <select
               id={`${uniqueId}-exc-fc`}
               class="mbus-select"
@@ -671,8 +697,9 @@ const i18n = {
               <option
                 value="03"
                 selected
-                >03</option
               >
+                03
+              </option>
               <option value="04">04</option>
               <option value="05">05</option>
               <option value="06">06</option>
@@ -684,8 +711,9 @@ const i18n = {
             <label
               class="mbus-label"
               for={`${uniqueId}-exc-code`}
-              >{t("tools.modbusFrameBuilder.exceptionCode")}</label
             >
+              {t("tools.modbusFrameBuilder.exceptionCode")}
+            </label>
             <select
               id={`${uniqueId}-exc-code`}
               class="mbus-select"
@@ -714,8 +742,9 @@ const i18n = {
             <label
               class="mbus-label"
               for={`${uniqueId}-resp-tid`}
-              >{t("tools.modbusFrameBuilder.transactionId")}</label
             >
+              {t("tools.modbusFrameBuilder.transactionId")}
+            </label>
             <input
               id={`${uniqueId}-resp-tid`}
               class="mbus-input"
@@ -729,8 +758,9 @@ const i18n = {
             <label
               class="mbus-label"
               for={`${uniqueId}-resp-uid`}
-              >{t("tools.modbusFrameBuilder.unitId")}</label
             >
+              {t("tools.modbusFrameBuilder.unitId")}
+            </label>
             <input
               id={`${uniqueId}-resp-uid`}
               class="mbus-input"
@@ -762,9 +792,9 @@ const i18n = {
           class="mbus-preset-btn"
           data-preset="read10holding"
         >
-          <span class="mbus-preset-label"
-            >{t("tools.modbusFrameBuilder.presetRead10Holding")}</span
-          >
+          <span class="mbus-preset-label">
+            {t("tools.modbusFrameBuilder.presetRead10Holding")}
+          </span>
           <code>01 03 00 00 00 0A</code>
         </button>
         <button
@@ -772,9 +802,9 @@ const i18n = {
           class="mbus-preset-btn"
           data-preset="read8coils"
         >
-          <span class="mbus-preset-label"
-            >{t("tools.modbusFrameBuilder.presetRead8Coils")}</span
-          >
+          <span class="mbus-preset-label">
+            {t("tools.modbusFrameBuilder.presetRead8Coils")}
+          </span>
           <code>01 01 00 00 00 08</code>
         </button>
         <button
@@ -782,9 +812,9 @@ const i18n = {
           class="mbus-preset-btn"
           data-preset="writesinglecoil"
         >
-          <span class="mbus-preset-label"
-            >{t("tools.modbusFrameBuilder.presetWriteSingleCoilOn")}</span
-          >
+          <span class="mbus-preset-label">
+            {t("tools.modbusFrameBuilder.presetWriteSingleCoilOn")}
+          </span>
           <code>01 05 00 00 FF 00</code>
         </button>
         <button
@@ -792,9 +822,9 @@ const i18n = {
           class="mbus-preset-btn"
           data-preset="writesingleregister"
         >
-          <span class="mbus-preset-label"
-            >{t("tools.modbusFrameBuilder.presetWriteRegister100")}</span
-          >
+          <span class="mbus-preset-label">
+            {t("tools.modbusFrameBuilder.presetWriteRegister100")}
+          </span>
           <code>01 06 00 00 00 64</code>
         </button>
         <button
@@ -802,9 +832,9 @@ const i18n = {
           class="mbus-preset-btn"
           data-preset="writemultiple"
         >
-          <span class="mbus-preset-label"
-            >{t("tools.modbusFrameBuilder.presetWrite2Registers")}</span
-          >
+          <span class="mbus-preset-label">
+            {t("tools.modbusFrameBuilder.presetWrite2Registers")}
+          </span>
           <code>01 10 00 00 00 02</code>
         </button>
         <button
@@ -812,9 +842,9 @@ const i18n = {
           class="mbus-preset-btn"
           data-preset="read5inputs"
         >
-          <span class="mbus-preset-label"
-            >{t("tools.modbusFrameBuilder.presetRead5InputRegs")}</span
-          >
+          <span class="mbus-preset-label">
+            {t("tools.modbusFrameBuilder.presetRead5InputRegs")}
+          </span>
           <code>01 04 00 00 00 05</code>
         </button>
         <button
@@ -822,9 +852,9 @@ const i18n = {
           class="mbus-preset-btn"
           data-preset="diagnostics"
         >
-          <span class="mbus-preset-label"
-            >{t("tools.modbusFrameBuilder.presetDiagnosticsEcho")}</span
-          >
+          <span class="mbus-preset-label">
+            {t("tools.modbusFrameBuilder.presetDiagnosticsEcho")}
+          </span>
           <code>01 08 00 00 12 34</code>
         </button>
         <button
@@ -832,9 +862,9 @@ const i18n = {
           class="mbus-preset-btn"
           data-preset="exceptionresp"
         >
-          <span class="mbus-preset-label"
-            >{t("tools.modbusFrameBuilder.presetExceptionResponse")}</span
-          >
+          <span class="mbus-preset-label">
+            {t("tools.modbusFrameBuilder.presetExceptionResponse")}
+          </span>
           <code>01 83 02</code>
         </button>
       </div>
@@ -893,22 +923,20 @@ const i18n = {
         class="mbus-frame-display"
         id={`${uniqueId}-frame`}
       >
-        <span class="mbus-frame-placeholder"
-          >{t("tools.modbusFrameBuilder.framePlaceholder")}</span
-        >
+        <span class="mbus-frame-placeholder">
+          {t("tools.modbusFrameBuilder.framePlaceholder")}
+        </span>
       </div>
       <div
         class="mbus-frame-breakdown"
         id={`${uniqueId}-breakdown`}
-      >
-      </div>
+      ></div>
       {/* Data interpretation results */}
       <div
         class="mbus-data-interp"
         id={`${uniqueId}-data-interp`}
         hidden
-      >
-      </div>
+      ></div>
     </div>
 
     {/* Share link */}
@@ -926,7 +954,10 @@ const i18n = {
   </div>
 </div>
 
-<script is:inline define:vars={{ uniqueId, i18n }}>
+<script
+  is:inline
+  define:vars={{ uniqueId, i18n }}
+>
   (function () {
     var root = document.querySelector('[data-mbus-id="' + uniqueId + '"]');
     if (!root) return;

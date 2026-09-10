@@ -37,24 +37,22 @@ const haystack = [
   data-search={haystack}
 >
   <div class="featured-post__media">
-    {
-      post.data.coverImage && (
-        <Image
-          src={post.data.coverImage}
-          alt=""
-          role="presentation"
-          format="webp"
-          class="featured-post__image"
-          width={640}
-          height={400}
-          widths={[480, 640, 960]}
-          sizes="(max-width: 860px) 100vw, 50vw"
-          quality={60}
-          loading="eager"
-          fetchpriority="high"
-        />
-      )
-    }
+    {post.data.coverImage && (
+      <Image
+        src={post.data.coverImage}
+        alt=""
+        role="presentation"
+        format="webp"
+        class="featured-post__image"
+        width={640}
+        height={400}
+        widths={[480, 640, 960]}
+        sizes="(max-width: 860px) 100vw, 50vw"
+        quality={60}
+        loading="eager"
+        fetchpriority="high"
+      />
+    )}
   </div>
   <div class="featured-post__body">
     <div class="featured-post__meta-top">
@@ -68,7 +66,9 @@ const haystack = [
         {formatDateDot(displayDate)}
       </time>
       <span aria-hidden="true">·</span>
-      <span>{readingTime} {t("pages.blog.minRead")}</span>
+      <span>
+        {readingTime} {t("pages.blog.minRead")}
+      </span>
     </div>
   </div>
 </a>

@@ -33,31 +33,29 @@ const pathFor = (loc: Locale): string =>
   role="group"
   aria-label={t("aria.languageSwitcher")}
 >
-  {
-    locales.map((loc) => {
-      const active = loc === locale;
-      const code = loc.toUpperCase();
-      return active ? (
-        <span
-          class="lang-seg lang-seg--active"
-          aria-current="true"
-        >
-          {code}
-        </span>
-      ) : (
-        <a
-          class="lang-seg"
-          href={pathFor(loc)}
-          hreflang={loc}
-          lang={loc}
-          aria-label={t("ui.switchLanguage", { lang: localeConfig[loc].label })}
-          data-astro-prefetch
-        >
-          {code}
-        </a>
-      );
-    })
-  }
+  {locales.map((loc) => {
+    const active = loc === locale;
+    const code = loc.toUpperCase();
+    return active ? (
+      <span
+        class="lang-seg lang-seg--active"
+        aria-current="true"
+      >
+        {code}
+      </span>
+    ) : (
+      <a
+        class="lang-seg"
+        href={pathFor(loc)}
+        hreflang={loc}
+        lang={loc}
+        aria-label={t("ui.switchLanguage", { lang: localeConfig[loc].label })}
+        data-astro-prefetch
+      >
+        {code}
+      </a>
+    );
+  })}
 </div>
 
 <style>

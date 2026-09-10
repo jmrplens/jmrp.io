@@ -74,31 +74,29 @@ const kindName: Record<Kind, string> = {
   {title && <div class="atk-tl__title">{title}</div>}
 
   <ol class="atk-tl__list">
-    {
-      steps.map((s, i) => {
-        const kind = s.kind ?? "attacker";
-        return (
-          <li class:list={["atk-tl__step", `atk-tl__step--${kind}`]}>
+    {steps.map((s, i) => {
+      const kind = s.kind ?? "attacker";
+      return (
+        <li class:list={["atk-tl__step", `atk-tl__step--${kind}`]}>
+          <span
+            class="atk-tl__node"
+            aria-hidden="true"
+          >
+            <span class="atk-tl__num">{i + 1}</span>
+          </span>
+          <span class="atk-tl__card">
             <span
-              class="atk-tl__node"
+              class:list={["atk-tl__icon", kindIcon[kind]]}
               aria-hidden="true"
-            >
-              <span class="atk-tl__num">{i + 1}</span>
+            />
+            <span class="atk-tl__body">
+              <span class="atk-tl__text">{s.text}</span>
+              {s.note && <span class="atk-tl__note">{s.note}</span>}
             </span>
-            <span class="atk-tl__card">
-              <span
-                class:list={["atk-tl__icon", kindIcon[kind]]}
-                aria-hidden="true"
-              />
-              <span class="atk-tl__body">
-                <span class="atk-tl__text">{s.text}</span>
-                {s.note && <span class="atk-tl__note">{s.note}</span>}
-              </span>
-            </span>
-          </li>
-        );
-      })
-    }
+          </span>
+        </li>
+      );
+    })}
   </ol>
 
   <table class="sr-only">
@@ -111,15 +109,13 @@ const kindName: Record<Kind, string> = {
       </tr>
     </thead>
     <tbody>
-      {
-        steps.map((s, i) => (
-          <tr>
-            <td>{i + 1}</td>
-            <td>{kindName[s.kind ?? "attacker"]}</td>
-            <td>{s.text}</td>
-          </tr>
-        ))
-      }
+      {steps.map((s, i) => (
+        <tr>
+          <td>{i + 1}</td>
+          <td>{kindName[s.kind ?? "attacker"]}</td>
+          <td>{s.text}</td>
+        </tr>
+      ))}
     </tbody>
   </table>
 

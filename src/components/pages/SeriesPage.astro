@@ -110,7 +110,9 @@ const afterBlocks = ["after1", "after2"];
       >
         {t(key("whyTitle"))}
       </h2>
-      {whyBlocks.map((block) => <p class="series-prose">{t(key(block))}</p>)}
+      {whyBlocks.map((block) => (
+        <p class="series-prose">{t(key(block))}</p>
+      ))}
     </section>
 
     <section
@@ -128,26 +130,24 @@ const afterBlocks = ["after1", "after2"];
         class="series-list"
         aria-label={t("series.ui.articlesLabel")}
       >
-        {
-          entries.map((entry) => (
-            <li class="series-entry">
-              <p class="series-entry__part">
-                {t("series.ui.partLabel", { position: entry.position })}
-              </p>
-              <h3 class="series-entry__title">
-                <a href={entry.href}>{entry.post.data.title}</a>
-              </h3>
-              <p class="series-entry__meta">
-                <span>{formatDateDot(entry.post.data.publishedDate)}</span>
-                <span aria-hidden="true">·</span>
-                <span>
-                  {entry.readingTime} {t("pages.blog.minRead")}
-                </span>
-              </p>
-              <p class="series-entry__note">{entry.note}</p>
-            </li>
-          ))
-        }
+        {entries.map((entry) => (
+          <li class="series-entry">
+            <p class="series-entry__part">
+              {t("series.ui.partLabel", { position: entry.position })}
+            </p>
+            <h3 class="series-entry__title">
+              <a href={entry.href}>{entry.post.data.title}</a>
+            </h3>
+            <p class="series-entry__meta">
+              <span>{formatDateDot(entry.post.data.publishedDate)}</span>
+              <span aria-hidden="true">·</span>
+              <span>
+                {entry.readingTime} {t("pages.blog.minRead")}
+              </span>
+            </p>
+            <p class="series-entry__note">{entry.note}</p>
+          </li>
+        ))}
       </ol>
     </section>
 
@@ -161,7 +161,9 @@ const afterBlocks = ["after1", "after2"];
       >
         {t(key("afterTitle"))}
       </h2>
-      {afterBlocks.map((block) => <p class="series-prose">{t(key(block))}</p>)}
+      {afterBlocks.map((block) => (
+        <p class="series-prose">{t(key(block))}</p>
+      ))}
     </section>
 
     <section
@@ -188,15 +190,13 @@ const afterBlocks = ["after1", "after2"];
         {t("series.ui.moreTitle")}
       </h2>
       <ul class="series-more">
-        {
-          otherSeries.map((other) => (
-            <li>
-              <a href={translatePath(`/blog/series/${other.slug}/`)}>
-                {t(`series.${other.slug}.title` as TranslationKey)}
-              </a>
-            </li>
-          ))
-        }
+        {otherSeries.map((other) => (
+          <li>
+            <a href={translatePath(`/blog/series/${other.slug}/`)}>
+              {t(`series.${other.slug}.title` as TranslationKey)}
+            </a>
+          </li>
+        ))}
       </ul>
     </nav>
 

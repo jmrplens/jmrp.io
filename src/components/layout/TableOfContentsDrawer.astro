@@ -20,67 +20,65 @@ const locale = (Astro.currentLocale ?? defaultLocale) as Locale;
 const t = useTranslations(locale);
 ---
 
-{
-  headings.length > 0 && (
-    <>
-      <button
-        id="toc-toggle-btn"
-        type="button"
-        class="toc-fab toc-trigger"
-        aria-label={t("aria.tableOfContents")}
-        aria-haspopup="true"
-        aria-expanded="false"
-      >
-        <span
-          class="i-mdi:format-list-bulleted toc-icon"
-          aria-hidden="true"
-        />
-      </button>
-
-      <div
-        id="toc-drawer"
-        class="toc-drawer"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="toc-title"
+{headings.length > 0 && (
+  <>
+    <button
+      id="toc-toggle-btn"
+      type="button"
+      class="toc-fab toc-trigger"
+      aria-label={t("aria.tableOfContents")}
+      aria-haspopup="true"
+      aria-expanded="false"
+    >
+      <span
+        class="i-mdi:format-list-bulleted toc-icon"
         aria-hidden="true"
-        inert
-      >
-        <div class="toc-header">
-          <h2 id="toc-title">{t("aria.tableOfContents")}</h2>
-          <button
-            id="toc-close-btn"
-            type="button"
-            class="toc-close"
-            aria-label={t("aria.close")}
-          >
-            <span
-              class="i-mdi:close"
-              aria-hidden="true"
-            />
-          </button>
-        </div>
-        <nav
-          class="toc-content"
-          aria-label={t("aria.tocDrawer")}
-        >
-          <ul>
-            {headings.map((heading) => (
-              <li class={`toc-depth-${heading.depth}`}>
-                <a href={`#${heading.slug}`}>{heading.text}</a>
-              </li>
-            ))}
-          </ul>
-        </nav>
-      </div>
-
-      <div
-        id="toc-backdrop"
-        class="toc-backdrop"
       />
-    </>
-  )
-}
+    </button>
+
+    <div
+      id="toc-drawer"
+      class="toc-drawer"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="toc-title"
+      aria-hidden="true"
+      inert
+    >
+      <div class="toc-header">
+        <h2 id="toc-title">{t("aria.tableOfContents")}</h2>
+        <button
+          id="toc-close-btn"
+          type="button"
+          class="toc-close"
+          aria-label={t("aria.close")}
+        >
+          <span
+            class="i-mdi:close"
+            aria-hidden="true"
+          />
+        </button>
+      </div>
+      <nav
+        class="toc-content"
+        aria-label={t("aria.tocDrawer")}
+      >
+        <ul>
+          {headings.map((heading) => (
+            <li class={`toc-depth-${heading.depth}`}>
+              <a href={`#${heading.slug}`}>{heading.text}</a>
+            </li>
+          ))}
+        </ul>
+      </nav>
+    </div>
+
+    <div
+      id="toc-backdrop"
+      class="toc-backdrop"
+    />
+  </>
+)}
 
 <script>
   function setupMobileTOC() {

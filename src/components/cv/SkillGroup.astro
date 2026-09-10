@@ -40,19 +40,17 @@ function isAdvanced(level: number | string | null | undefined): boolean {
 <div class="skill-group">
   <h3 class="skill-group-title">{group.category}</h3>
   <ul class="chip-list">
-    {
-      group.items.map((item) => {
-        const advanced = isAdvanced(item.level);
-        return (
-          <li class:list={["chip", { "chip--advanced": advanced }]}>
-            {item.name}
-            {advanced && (
-              <span class="sr-only">, {t("pages.cv.levelAdvanced")}</span>
-            )}
-          </li>
-        );
-      })
-    }
+    {group.items.map((item) => {
+      const advanced = isAdvanced(item.level);
+      return (
+        <li class:list={["chip", { "chip--advanced": advanced }]}>
+          {item.name}
+          {advanced && (
+            <span class="sr-only">, {t("pages.cv.levelAdvanced")}</span>
+          )}
+        </li>
+      );
+    })}
   </ul>
 </div>
 

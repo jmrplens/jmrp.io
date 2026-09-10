@@ -728,8 +728,7 @@ const jsonLD = {
   preload={[{ weight: "500", style: "normal" }]}
 />
 
-{
-  /*
+{/*
   Favicon set, ordered and typed for BOTH audiences.
 
   Search engines are the constraint here, not browsers. They read these tags
@@ -764,8 +763,7 @@ const jsonLD = {
   serve from the web app manifest instead. Storing those sizes as PNG inside
   the ICO would be cheap, but PNG-in-ICO needs Vista or newer, which excludes
   precisely the old consumers the large sizes would have been for.
-*/
-}
+*/}
 <link
   rel="icon"
   href="/favicon.ico"
@@ -795,27 +793,27 @@ const jsonLD = {
 />
 <link
   rel="manifest"
-  href={locale === defaultLocale
-    ? "/site.webmanifest"
-    : `/${locale}/site.webmanifest`}
+  href={
+    locale === defaultLocale
+      ? "/site.webmanifest"
+      : `/${locale}/site.webmanifest`
+  }
 />
 <link
   rel="sitemap"
   href="/sitemap-index.xml"
 />
-{
-  /*
-   * Reuse terms, in the one place the HTML spec puts them. `rel="license"` means
-   * "this hyperlink leads to a document describing the licensing information",
-   * which is exactly what /license/ is, so the same relation is correct on every
-   * page whatever kind of work it carries — an article under CC BY, the portrait
-   * that is excluded from it, or a tool page whose code is MIT.
-   *
-   * Deliberately not the Creative Commons URI: that would be right on a post and
-   * wrong on the other hundred pages. The CC URI is already emitted, per post,
-   * in the JSON-LD `license` of the article and of its cover.
-   */
-}
+{/*
+ * Reuse terms, in the one place the HTML spec puts them. `rel="license"` means
+ * "this hyperlink leads to a document describing the licensing information",
+ * which is exactly what /license/ is, so the same relation is correct on every
+ * page whatever kind of work it carries — an article under CC BY, the portrait
+ * that is excluded from it, or a tool page whose code is MIT.
+ *
+ * Deliberately not the Creative Commons URI: that would be right on a post and
+ * wrong on the other hundred pages. The CC URI is already emitted, per post,
+ * in the JSON-LD `license` of the article and of its cover.
+ */}
 <link
   rel="license"
   href={locale === defaultLocale ? "/license/" : `/${locale}/license/`}
@@ -827,33 +825,28 @@ const jsonLD = {
   href={locale === defaultLocale ? "/rss.xml" : `/${locale}/rss.xml`}
 />
 {/* RSS feed for alternate locale */}
-{
-  locales
-    .filter((l) => l !== locale)
-    .map((l) => {
-      const altT = useTranslations(l);
-      return (
-        <link
-          rel="alternate"
-          type="application/rss+xml"
-          title={altT("seo.rssFeedTitle")}
-          href={l === defaultLocale ? "/rss.xml" : `/${l}/rss.xml`}
-        />
-      );
-    })
-}
-{
-  /* Canonical identity document — the same #person node BaseHead renders inline,
-    exposed as a standalone, machine-readable JSON-LD file for direct fetch. */
-}
+{locales
+  .filter((l) => l !== locale)
+  .map((l) => {
+    const altT = useTranslations(l);
+    return (
+      <link
+        rel="alternate"
+        type="application/rss+xml"
+        title={altT("seo.rssFeedTitle")}
+        href={l === defaultLocale ? "/rss.xml" : `/${l}/rss.xml`}
+      />
+    );
+  })}
+{/* Canonical identity document — the same #person node BaseHead renders inline,
+    exposed as a standalone, machine-readable JSON-LD file for direct fetch. */}
 <link
   rel="alternate"
   type="application/ld+json"
   href="/identity/person.jsonld"
   title="Person entity (JSON-LD)"
 />
-{
-  /* The two link relations the llms.txt spec names, verbatim: "`rel="alternate"
+{/* The two link relations the llms.txt spec names, verbatim: "`rel="alternate"
     type="text/markdown"` points to the markdown version of a page, and
     `rel="describedby"` points to the llms.txt file that covers it."
 
@@ -869,23 +862,20 @@ const jsonLD = {
     spec never fixes. Omitting it is what the spec actually shows.
 
     robots.txt also points at these files, but only in comments, which nothing
-    parses. */
-}
+    parses. */}
 <link
   rel="describedby"
   href="/llms.txt"
   title="LLM context index (llmstxt.org)"
 />
-{
-  markdownHref && (
-    <link
-      rel="alternate"
-      type="text/markdown"
-      href={markdownHref}
-      title="This page as markdown"
-    />
-  )
-}
+{markdownHref && (
+  <link
+    rel="alternate"
+    type="text/markdown"
+    href={markdownHref}
+    title="This page as markdown"
+  />
+)}
 <meta
   name="generator"
   content={Astro.generator}
@@ -910,9 +900,11 @@ const jsonLD = {
 -->
 <meta
   name="robots"
-  content={noIndex
-    ? "noindex, follow"
-    : "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1"}
+  content={
+    noIndex
+      ? "noindex, follow"
+      : "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1"
+  }
 />
 
 <!-- SEO -->
@@ -935,25 +927,21 @@ const jsonLD = {
 />
 
 <!-- Hreflang alternates -->
-{
-  alternateLinks.map((alt) => (
-    <link
-      rel="alternate"
-      hreflang={alt.hreflang}
-      href={alt.url}
-    />
-  ))
-}
+{alternateLinks.map((alt) => (
+  <link
+    rel="alternate"
+    hreflang={alt.hreflang}
+    href={alt.url}
+  />
+))}
 
 <!-- Social Verification (rel="me" for identity verification) -->
-{
-  siteData.social_links?.map((link) => (
-    <link
-      rel="me"
-      href={link.url}
-    />
-  ))
-}
+{siteData.social_links?.map((link) => (
+  <link
+    rel="me"
+    href={link.url}
+  />
+))}
 
 <!-- Primary Meta Tags -->
 <title>{fullTitle}</title>
@@ -1007,52 +995,48 @@ const jsonLD = {
   property="og:locale"
   content={getOgLocale(locale)}
 />
-{
-  alternateLinks
-    .filter((alt) => alt.locale !== "x-default" && alt.locale !== locale)
-    .map((alt) => (
-      <meta
-        property="og:locale:alternate"
-        content={getOgLocale(alt.locale as Locale)}
-      />
-    ))
-}
+{alternateLinks
+  .filter((alt) => alt.locale !== "x-default" && alt.locale !== locale)
+  .map((alt) => (
+    <meta
+      property="og:locale:alternate"
+      content={getOgLocale(alt.locale as Locale)}
+    />
+  ))}
 <meta
   property="og:site_name"
   content={siteData.author}
 />
 
 <!-- Article Specific OG Tags -->
-{
-  type === "article" && (
-    <>
-      {publishDate && (
-        <meta
-          property="article:published_time"
-          content={publishDate.toISOString()}
-        />
-      )}
-      {modifiedDate && (
-        <meta
-          property="article:modified_time"
-          content={modifiedDate.toISOString()}
-        />
-      )}
-      {authors.map((author) => (
-        <meta
-          property="article:author"
-          content={author}
-        />
-      ))}
-      {tags.map((tag) => (
-        <meta
-          property="article:tag"
-          content={tag}
-        />
-      ))}
-    </>
-  )
-}
+{type === "article" && (
+  <>
+    {publishDate && (
+      <meta
+        property="article:published_time"
+        content={publishDate.toISOString()}
+      />
+    )}
+    {modifiedDate && (
+      <meta
+        property="article:modified_time"
+        content={modifiedDate.toISOString()}
+      />
+    )}
+    {authors.map((author) => (
+      <meta
+        property="article:author"
+        content={author}
+      />
+    ))}
+    {tags.map((tag) => (
+      <meta
+        property="article:tag"
+        content={tag}
+      />
+    ))}
+  </>
+)}
 
 <!-- Twitter card vocabulary. No twitter:site / twitter:creator here, and none
      is coming back: the author does not use the account (closed decision,
@@ -1087,23 +1071,21 @@ const jsonLD = {
 />
 
 <!-- Cloudflare Web Analytics (Static with SRI) -->
-{
-  import.meta.env.PROD && import.meta.env.PUBLIC_CF_BEACON_TOKEN && (
-    <script
-      is:inline
-      defer
-      src="/scripts/cf-beacon.js"
-      data-cf-beacon={JSON.stringify({
-        token: import.meta.env.PUBLIC_CF_BEACON_TOKEN,
-      })}
-      crossorigin="anonymous"
-    />
-  )
-}
+{import.meta.env.PROD && import.meta.env.PUBLIC_CF_BEACON_TOKEN && (
+  <script
+    is:inline
+    defer
+    src="/scripts/cf-beacon.js"
+    data-cf-beacon={JSON.stringify({
+      token: import.meta.env.PUBLIC_CF_BEACON_TOKEN,
+    })}
+    crossorigin="anonymous"
+  ></script>
+)}
 
 <!-- JSON-LD -->
 <script
   is:inline
   type="application/ld+json"
   set:html={safeJsonLd(jsonLD)}
-/>
+></script>

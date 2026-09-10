@@ -105,46 +105,43 @@ const cellWord: Record<Cell, string> = {
           <th
             scope="col"
             class="cap-mx__corner"
-            >{subjectHeader}</th
           >
-          {
-            columns.map((c) => (
-              <th
-                scope="col"
-                class="cap-mx__colhead"
-              >
-                {c}
-              </th>
-            ))
-          }
+            {subjectHeader}
+          </th>
+          {columns.map((c) => (
+            <th
+              scope="col"
+              class="cap-mx__colhead"
+            >
+              {c}
+            </th>
+          ))}
         </tr>
       </thead>
       <tbody>
-        {
-          rows.map((row) => (
-            <tr>
-              <th
-                scope="row"
-                class="cap-mx__rowhead"
-              >
-                <span class="cap-mx__rowlabel">{row.label}</span>
-                {row.note && <span class="cap-mx__rownote">{row.note}</span>}
-              </th>
-              {columns.map((_, c) => {
-                const v = row.cells[c] ?? "na";
-                return (
-                  <td class:list={["cap-mx__cell", `cap-mx__cell--${v}`]}>
-                    <span
-                      class:list={["cap-mx__icon", cellIcon[v]]}
-                      aria-hidden="true"
-                    />
-                    <span class="cap-mx__word">{cellWord[v]}</span>
-                  </td>
-                );
-              })}
-            </tr>
-          ))
-        }
+        {rows.map((row) => (
+          <tr>
+            <th
+              scope="row"
+              class="cap-mx__rowhead"
+            >
+              <span class="cap-mx__rowlabel">{row.label}</span>
+              {row.note && <span class="cap-mx__rownote">{row.note}</span>}
+            </th>
+            {columns.map((_, c) => {
+              const v = row.cells[c] ?? "na";
+              return (
+                <td class:list={["cap-mx__cell", `cap-mx__cell--${v}`]}>
+                  <span
+                    class:list={["cap-mx__icon", cellIcon[v]]}
+                    aria-hidden="true"
+                  />
+                  <span class="cap-mx__word">{cellWord[v]}</span>
+                </td>
+              );
+            })}
+          </tr>
+        ))}
       </tbody>
     </table>
   </div>

@@ -19,14 +19,12 @@ const t = useTranslations(locale);
   class="posts-grid"
   aria-label={t("aria.postsGrid")}
 >
-  {
-    posts.map((post, index) => (
-      <PostCard
-        post={post}
-        index={index + 1}
-      />
-    ))
-  }
+  {posts.map((post, index) => (
+    <PostCard
+      post={post}
+      index={index + 1}
+    />
+  ))}
   <p
     class="posts-grid__empty"
     hidden

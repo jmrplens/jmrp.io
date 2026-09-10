@@ -32,28 +32,24 @@ const methodColors: Record<Props["method"], string> = {
   <div class="ae-header">
     <span class={`ae-method ${methodColors[method]}`}>{method}</span>
     <code class="ae-path">{path}</code>
-    {
-      auth && (
-        <span
-          class="ae-auth"
-          role="note"
-          aria-label={t("aria.authRequired")}
-        >
-          {t("components.apiEndpoint.auth")}
-        </span>
-      )
-    }
+    {auth && (
+      <span
+        class="ae-auth"
+        role="note"
+        aria-label={t("aria.authRequired")}
+      >
+        {t("components.apiEndpoint.auth")}
+      </span>
+    )}
   </div>
 
   {description && <p class="ae-description">{description}</p>}
 
-  {
-    hasContent && (
-      <div class="ae-content">
-        <slot />
-      </div>
-    )
-  }
+  {hasContent && (
+    <div class="ae-content">
+      <slot />
+    </div>
+  )}
 </div>
 
 <style>

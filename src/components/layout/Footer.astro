@@ -238,67 +238,61 @@ const socialLinksWithType = socialLinks.map((link) => {
 <footer>
   <div class="container">
     <div class="footer-nav">
-      {
-        footerNav.map((item) => (
-          <a
-            href={item.href}
-            class="footer-nav__link"
-          >
-            {item.label}
-          </a>
-        ))
-      }
+      {footerNav.map((item) => (
+        <a
+          href={item.href}
+          class="footer-nav__link"
+        >
+          {item.label}
+        </a>
+      ))}
     </div>
     <p>
-      {
-        t("ui.copyright", {
-          year: String(today.getFullYear()),
-          author: siteConfig.author,
-        })
-      }
+      {t("ui.copyright", {
+        year: String(today.getFullYear()),
+        author: siteConfig.author,
+      })}
     </p>
     <div class="social-links">
-      {
-        socialLinksWithType.map((link) => (
-          <a
-            href={link.url}
-            target="_blank"
-            rel={normalizeExternalRel(link.rel)}
-            aria-label={t("aria.opensNewTab", {
-              text: t("aria.visitProfile", { name: link.label }),
-            })}
-            title={link.label}
-            class="social-btn"
-          >
-            {/* Render icons using pre-computed iconType */}
-            {link.iconType === "image" && link.imgLight && link.imgDark && (
-              <>
-                <Image
-                  src={link.imgLight}
-                  alt={link.label}
-                  width={28}
-                  height={28}
-                  class="social-icon light-icon"
-                  loading="lazy"
-                  decoding="async"
-                />
-                <Image
-                  src={link.imgDark}
-                  alt={link.label}
-                  width={28}
-                  height={28}
-                  class="social-icon dark-icon"
-                  loading="lazy"
-                  decoding="async"
-                />
-              </>
-            )}
-            {link.fullIconClass && (
-              <span class={`${link.fullIconClass} social-icon-svg`} />
-            )}
-          </a>
-        ))
-      }
+      {socialLinksWithType.map((link) => (
+        <a
+          href={link.url}
+          target="_blank"
+          rel={normalizeExternalRel(link.rel)}
+          aria-label={t("aria.opensNewTab", {
+            text: t("aria.visitProfile", { name: link.label }),
+          })}
+          title={link.label}
+          class="social-btn"
+        >
+          {/* Render icons using pre-computed iconType */}
+          {link.iconType === "image" && link.imgLight && link.imgDark && (
+            <>
+              <Image
+                src={link.imgLight}
+                alt={link.label}
+                width={28}
+                height={28}
+                class="social-icon light-icon"
+                loading="lazy"
+                decoding="async"
+              />
+              <Image
+                src={link.imgDark}
+                alt={link.label}
+                width={28}
+                height={28}
+                class="social-icon dark-icon"
+                loading="lazy"
+                decoding="async"
+              />
+            </>
+          )}
+          {link.fullIconClass && (
+            <span class={`${link.fullIconClass} social-icon-svg`} />
+          )}
+        </a>
+      ))}
     </div>
   </div>
 </footer>

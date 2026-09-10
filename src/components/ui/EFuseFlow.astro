@@ -82,54 +82,52 @@ const { title, lanes, caption, ariaLabel } = Astro.props as Props;
   {title && <div class="eff__title">{title}</div>}
 
   <div class="eff__lanes">
-    {
-      lanes.map((lane) => (
-        <div class={`eff__lane eff__lane--${lane.kind}`}>
-          <p class="eff__lane-title">{lane.title}</p>
+    {lanes.map((lane) => (
+      <div class={`eff__lane eff__lane--${lane.kind}`}>
+        <p class="eff__lane-title">{lane.title}</p>
 
-          <div class="eff__diagram">
-            <span class="eff__node eff__node--secret">
-              <span
-                class={`eff__node-icon ${lane.kind === "sealed" ? "i-mdi:lock" : "i-mdi:database-lock"}`}
-                aria-hidden="true"
-              />
-              <span class="eff__node-name">{lane.secret}</span>
-              {lane.secretNote && (
-                <span class="eff__node-note">{lane.secretNote}</span>
-              )}
-            </span>
-
+        <div class="eff__diagram">
+          <span class="eff__node eff__node--secret">
             <span
-              class="eff__edge"
-              aria-hidden="true"
-            >
-              <span class="eff__edge-label">{lane.crosses}</span>
-              <span class="eff__edge-arrow i-mdi:arrow-right-thin" />
-            </span>
-
-            <span class="eff__node eff__node--cpu">
-              <span
-                class="eff__node-icon i-mdi:cpu-64-bit"
-                aria-hidden="true"
-              />
-              <span class="eff__node-name">CPU / software</span>
-            </span>
-          </div>
-
-          <p class={`eff__reach eff__reach--${lane.reachable ? "yes" : "no"}`}>
-            <span
-              class={`eff__reach-icon ${lane.reachable ? "i-mdi:eye-outline" : "i-mdi:eye-off-outline"}`}
+              class={`eff__node-icon ${lane.kind === "sealed" ? "i-mdi:lock" : "i-mdi:database-lock"}`}
               aria-hidden="true"
             />
-            {lane.reachable
-              ? t("components.efuseFlow.reachYes")
-              : t("components.efuseFlow.reachNo")}
-          </p>
+            <span class="eff__node-name">{lane.secret}</span>
+            {lane.secretNote && (
+              <span class="eff__node-note">{lane.secretNote}</span>
+            )}
+          </span>
 
-          {lane.note && <p class="eff__note">{lane.note}</p>}
+          <span
+            class="eff__edge"
+            aria-hidden="true"
+          >
+            <span class="eff__edge-label">{lane.crosses}</span>
+            <span class="eff__edge-arrow i-mdi:arrow-right-thin" />
+          </span>
+
+          <span class="eff__node eff__node--cpu">
+            <span
+              class="eff__node-icon i-mdi:cpu-64-bit"
+              aria-hidden="true"
+            />
+            <span class="eff__node-name">CPU / software</span>
+          </span>
         </div>
-      ))
-    }
+
+        <p class={`eff__reach eff__reach--${lane.reachable ? "yes" : "no"}`}>
+          <span
+            class={`eff__reach-icon ${lane.reachable ? "i-mdi:eye-outline" : "i-mdi:eye-off-outline"}`}
+            aria-hidden="true"
+          />
+          {lane.reachable
+            ? t("components.efuseFlow.reachYes")
+            : t("components.efuseFlow.reachNo")}
+        </p>
+
+        {lane.note && <p class="eff__note">{lane.note}</p>}
+      </div>
+    ))}
   </div>
 
   <table class="sr-only">
@@ -143,23 +141,21 @@ const { title, lanes, caption, ariaLabel } = Astro.props as Props;
       </tr>
     </thead>
     <tbody>
-      {
-        lanes.map((lane) => (
-          <tr>
-            <td>{lane.title}</td>
-            <td>
-              {lane.secret}
-              {lane.secretNote ? ` (${lane.secretNote})` : ""}
-            </td>
-            <td>{lane.crosses}</td>
-            <td>
-              {lane.reachable
-                ? t("components.efuseFlow.yes")
-                : t("components.efuseFlow.no")}
-            </td>
-          </tr>
-        ))
-      }
+      {lanes.map((lane) => (
+        <tr>
+          <td>{lane.title}</td>
+          <td>
+            {lane.secret}
+            {lane.secretNote ? ` (${lane.secretNote})` : ""}
+          </td>
+          <td>{lane.crosses}</td>
+          <td>
+            {lane.reachable
+              ? t("components.efuseFlow.yes")
+              : t("components.efuseFlow.no")}
+          </td>
+        </tr>
+      ))}
     </tbody>
   </table>
 

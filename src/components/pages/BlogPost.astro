@@ -605,8 +605,7 @@ const articleSchema = [
       <div
         class="lab-grid"
         aria-hidden="true"
-      >
-      </div>
+      ></div>
       <div class="content-wrapper">
         <div class="header-meta">
           <a
@@ -617,21 +616,19 @@ const articleSchema = [
             {t("pages.blogPost.backToBlog")}
           </a>
           <div class="meta">
-            {
-              primaryTags.length > 0 && (
-                <div class="tags">
-                  {primaryTags.map((tag) => (
-                    <a
-                      href={translatePath(`/blog/tags/${tagUrlSegment(tag)}/`)}
-                      class="tag-chip"
-                      aria-label={t("aria.viewTaggedPosts", { tag })}
-                    >
-                      {tag}
-                    </a>
-                  ))}
-                </div>
-              )
-            }
+            {primaryTags.length > 0 && (
+              <div class="tags">
+                {primaryTags.map((tag) => (
+                  <a
+                    href={translatePath(`/blog/tags/${tagUrlSegment(tag)}/`)}
+                    class="tag-chip"
+                    aria-label={t("aria.viewTaggedPosts", { tag })}
+                  >
+                    {tag}
+                  </a>
+                ))}
+              </div>
+            )}
             <span
               class="meta-sep"
               aria-hidden="true"
@@ -651,18 +648,16 @@ const articleSchema = [
               {readingMin}
               {t("pages.blog.minRead")}
             </span>
-            {
-              isRevised && (
-                <time
-                  class="updated"
-                  datetime={revisedIso}
-                >
-                  {t("pages.blogPost.updatedOn", {
-                    date: formatDate(revisedDate, locale),
-                  })}
-                </time>
-              )
-            }
+            {isRevised && (
+              <time
+                class="updated"
+                datetime={revisedIso}
+              >
+                {t("pages.blogPost.updatedOn", {
+                  date: formatDate(revisedDate, locale),
+                })}
+              </time>
+            )}
             <span
               class="meta-sep"
               aria-hidden="true"
@@ -675,87 +670,76 @@ const articleSchema = [
 
         <div class="header-grid">
           <div class="header-content">
-            {
-              seriesInfo && (
-                <a
-                  class="series-band"
-                  href={translatePath(
-                    `/blog/series/${seriesInfo.series.slug}/`,
-                  )}
-                >
-                  <span
-                    class="i-mdi:bookmark-multiple-outline"
-                    aria-hidden="true"
-                  />
-                  <span>
-                    {t("series.ui.partLabel", {
-                      position: String(seriesInfo.position),
-                    })}
-                    {" / "}
-                    {seriesInfo.total} ·{" "}
-                    {/* Series copy lives under `series.<slug>.*` and the slug
+            {seriesInfo && (
+              <a
+                class="series-band"
+                href={translatePath(`/blog/series/${seriesInfo.series.slug}/`)}
+              >
+                <span
+                  class="i-mdi:bookmark-multiple-outline"
+                  aria-hidden="true"
+                />
+                <span>
+                  {t("series.ui.partLabel", {
+                    position: String(seriesInfo.position),
+                  })}
+                  {" / "}
+                  {seriesInfo.total} ·{" "}
+                  {/* Series copy lives under `series.<slug>.*` and the slug
                         is only known at runtime; same cast as SeriesPage.astro. */}
-                    {t(
-                      `series.${seriesInfo.series.slug}.title` as TranslationKey,
-                    )}
-                  </span>
-                </a>
-              )
-            }
+                  {t(
+                    `series.${seriesInfo.series.slug}.title` as TranslationKey,
+                  )}
+                </span>
+              </a>
+            )}
             <h1>{post.data.title}</h1>
-            {
-              /*
+            {/*
               `lead` when the post defines one, `description` otherwise. This
               element is named in the `speakable` selector below, so it is an
               extraction target — see the `lead` field docs in
               content.config.ts for why reusing the SERP description here made
               a poor one.
-            */
-            }
+            */}
             <p class="lead">{post.data.lead ?? post.data.description}</p>
             <div class="byline">
-              {
-                /* Monogram initials avatar — decorative; author name in adjacent text */
-              }
+              {/* Monogram initials avatar — decorative; author name in adjacent text */}
               <span
                 class="byline__avatar"
                 aria-hidden="true"
-                >JM</span
               >
+                JM
+              </span>
               <span class="byline__text">
                 <span class="byline__name">
                   {post.data.author || siteData.author}
                 </span>
-                {
-                  verifiedLine && (
-                    <span class="post-verified">{verifiedLine}</span>
-                  )
-                }
+                {verifiedLine && (
+                  <span class="post-verified">{verifiedLine}</span>
+                )}
               </span>
             </div>
           </div>
-          {
-            post.data.coverImage && (
-              <div class="cover-image-container">
-                <Picture
-                  src={post.data.coverImage}
-                  alt={t("pages.blogPost.coverImageAlt", {
-                    title: post.data.title,
-                  })}
-                  class="cover-image"
-                  width={post.data.coverImage.width}
-                  height={post.data.coverImage.height}
-                  formats={["avif", "webp"]}
-                  loading="eager"
-                  decoding="async"
-                  fetchpriority="high"
-                  widths={coverImageWidths}
-                  sizes={coverImageSizes}
-                  quality={70}
-                />
-              </div>
-            )
-          }
+          {post.data.coverImage && (
+            <div class="cover-image-container">
+              <Picture
+                src={post.data.coverImage}
+                alt={t("pages.blogPost.coverImageAlt", {
+                  title: post.data.title,
+                })}
+                class="cover-image"
+                width={post.data.coverImage.width}
+                height={post.data.coverImage.height}
+                formats={["avif", "webp"]}
+                loading="eager"
+                decoding="async"
+                fetchpriority="high"
+                widths={coverImageWidths}
+                sizes={coverImageSizes}
+                quality={70}
+              />
+            </div>
+          )}
         </div>
       </div>
     </header>
@@ -766,37 +750,33 @@ const articleSchema = [
         { "reading-section--with-toc": headings.length > 0 },
       ]}
     >
-      {
-        headings.length > 0 && (
-          <nav
-            class="toc-rail"
-            aria-label={t("aria.tableOfContents")}
+      {headings.length > 0 && (
+        <nav
+          class="toc-rail"
+          aria-label={t("aria.tableOfContents")}
+        >
+          <div
+            class="toc-rail__eyebrow"
+            aria-hidden="true"
           >
-            <div
-              class="toc-rail__eyebrow"
-              aria-hidden="true"
-            >
-              {t("aria.tableOfContents")}
-            </div>
-            <div class="toc-rail__nav">
-              <ul>
-                {headings.map((heading) => (
-                  <li class={`toc-depth-${heading.depth}`}>
-                    <a href={`#${heading.slug}`}>{heading.text}</a>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </nav>
-        )
-      }
+            {t("aria.tableOfContents")}
+          </div>
+          <div class="toc-rail__nav">
+            <ul>
+              {headings.map((heading) => (
+                <li class={`toc-depth-${heading.depth}`}>
+                  <a href={`#${heading.slug}`}>{heading.text}</a>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </nav>
+      )}
       <div class="prose">
         <Content components={{ Callout, Tabs, TabPanel, YouTube, Code }} />
-        {
-          post.data.faq && post.data.faq.length > 0 && (
-            <FAQ items={post.data.faq} />
-          )
-        }
+        {post.data.faq && post.data.faq.length > 0 && (
+          <FAQ items={post.data.faq} />
+        )}
         <RelatedContent
           posts={relatedContent.posts}
           tools={relatedContent.tools}

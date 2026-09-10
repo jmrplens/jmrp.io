@@ -57,11 +57,12 @@ interface Props {
 ---
 
 <!-- src/components/apps/MyTool.astro -->
-<div class="tool-container">
-  <!-- UI here -->
-</div>
+<div class="tool-container"><!-- UI here --></div>
 
-<script is:inline nonce="NGINX_CSP_NONCE">
+<script
+  is:inline
+  nonce="NGINX_CSP_NONCE"
+>
   // Vanilla JS — NO frameworks
   // Use data-* attributes for DOM selection
   // Generate IDs with crypto.getRandomValues()

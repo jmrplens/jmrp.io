@@ -135,15 +135,12 @@ const schema = {
       <div
         class="lab-grid"
         aria-hidden="true"
-      >
-      </div>
+      ></div>
       <p class="section-title">{meta.short}</p>
       <h1 class="cat-title">{meta.name}</h1>
-      {
-        /* Render the category description as body copy, not only in <head> and
+      {/* Render the category description as body copy, not only in <head> and
           JSON-LD. Without it these pages were 46-222 words of heading and link
-          grid, with no sentence saying what the category is. */
-      }
+          grid, with no sentence saying what the category is. */}
       <p class="cat-lead">{meta.description}</p>
       {
         /* When to reach for this class of tool — 2-3 sentences of real context
@@ -154,16 +151,14 @@ const schema = {
       }
       <p class="subtitle">
         {tools.length}
-        {
-          pluralize(
-            tools.length,
-            {
-              one: t("pages.toolsCategory.toolSingular"),
-              other: t("pages.toolsCategory.toolPlural"),
-            },
-            locale,
-          )
-        }
+        {pluralize(
+          tools.length,
+          {
+            one: t("pages.toolsCategory.toolSingular"),
+            other: t("pages.toolsCategory.toolPlural"),
+          },
+          locale,
+        )}
         {t("pages.toolsCategory.inCategory")}
       </p>
     </header>
@@ -178,57 +173,51 @@ const schema = {
       >
         {t("pages.tools.filterAll")} · {totalTools}
       </a>
-      {
-        chipCategories.map((c) => (
-          <a
-            href={translatePath(`/tools/categories/${c.id}/`)}
-            class:list={["chip", { "chip--active": c.id === category }]}
-            aria-current={c.id === category ? "page" : undefined}
-          >
-            {c.short}
-          </a>
-        ))
-      }
+      {chipCategories.map((c) => (
+        <a
+          href={translatePath(`/tools/categories/${c.id}/`)}
+          class:list={["chip", { "chip--active": c.id === category }]}
+          aria-current={c.id === category ? "page" : undefined}
+        >
+          {c.short}
+        </a>
+      ))}
     </nav>
 
     <div class="tools-grid">
-      {
-        tools.map(
-          (tool: {
-            data: {
-              slug: string;
-              title: string;
-              description: string;
-            };
-          }) => (
-            <a
-              href={translatePath(`/tools/${tool.data.slug}/`)}
-              class="tool-card"
-            >
-              <span class="tool-card__top">
-                <span class="tool-badge">
-                  <span class="sr-only">
-                    {t("pages.tools.categoryLabel")}:{" "}
-                  </span>
-                  {meta.short}
-                </span>
-                <span
-                  class="i-mdi:arrow-top-right tool-arrow"
-                  aria-hidden="true"
-                />
+      {tools.map(
+        (tool: {
+          data: {
+            slug: string;
+            title: string;
+            description: string;
+          };
+        }) => (
+          <a
+            href={translatePath(`/tools/${tool.data.slug}/`)}
+            class="tool-card"
+          >
+            <span class="tool-card__top">
+              <span class="tool-badge">
+                <span class="sr-only">{t("pages.tools.categoryLabel")}: </span>
+                {meta.short}
               </span>
-              <h2 class="tool-name">{tool.data.title}</h2>
-              <p class="tool-description">{tool.data.description}</p>
-            </a>
-          ),
-        )
-      }
+              <span
+                class="i-mdi:arrow-top-right tool-arrow"
+                aria-hidden="true"
+              />
+            </span>
+            <h2 class="tool-name">{tool.data.title}</h2>
+            <p class="tool-description">{tool.data.description}</p>
+          </a>
+        ),
+      )}
     </div>
 
     <div class="back-link">
-      <a href={translatePath("/tools/")}
-        >{t("pages.toolsCategory.backToTools")}</a
-      >
+      <a href={translatePath("/tools/")}>
+        {t("pages.toolsCategory.backToTools")}
+      </a>
     </div>
   </div>
 </BaseLayout>

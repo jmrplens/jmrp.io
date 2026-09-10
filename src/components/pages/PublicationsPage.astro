@@ -312,42 +312,37 @@ const collectionSchema = {
       <div
         class="lab-grid"
         aria-hidden="true"
-      >
-      </div>
+      ></div>
       <p class="section-title">{t("pages.publications.kicker")}</p>
       <h1 class="pub-page-title">{t("pages.publications.title")}</h1>
       <p class="pub-subtitle">{t("pages.publications.description")}</p>
       <p class="pub-period-note">
         {t("pages.publications.periodNote")}
-        {
-          orcidUrl && (
-            <a
-              href={orcidUrl}
-              class="pub-orcid-link"
-              rel="external noopener noreferrer"
-              target="_blank"
-              aria-label={t("aria.opensNewTab", {
-                text: t("aria.visitProfile", { name: "ORCID" }),
-              })}
-            >
-              <span
-                class="i-simple-icons:orcid pub-orcid-link__icon"
-                aria-hidden="true"
-              />
-              {t("pages.publications.orcidLink")}
-            </a>
-          )
-        }
+        {orcidUrl && (
+          <a
+            href={orcidUrl}
+            class="pub-orcid-link"
+            rel="external noopener noreferrer"
+            target="_blank"
+            aria-label={t("aria.opensNewTab", {
+              text: t("aria.visitProfile", { name: "ORCID" }),
+            })}
+          >
+            <span
+              class="i-simple-icons:orcid pub-orcid-link__icon"
+              aria-hidden="true"
+            />
+            {t("pages.publications.orcidLink")}
+          </a>
+        )}
       </p>
       <div class="pub-stats">
-        {
-          stats.map((stat) => (
-            <div class="pub-stat">
-              <p class="pub-stat__value">{stat.value}</p>
-              <p class="pub-stat__label">{stat.label}</p>
-            </div>
-          ))
-        }
+        {stats.map((stat) => (
+          <div class="pub-stat">
+            <p class="pub-stat__value">{stat.value}</p>
+            <p class="pub-stat__label">{stat.label}</p>
+          </div>
+        ))}
       </div>
     </header>
 
@@ -366,17 +361,15 @@ const collectionSchema = {
           >
             {t("pages.publications.filterAll")} · {allPublications.length}
           </button>
-          {
-            typeFilters.map((f) => (
-              <button
-                type="button"
-                class="pub-filter__pill"
-                data-kind={f.kind}
-              >
-                {f.label} · {f.count}
-              </button>
-            ))
-          }
+          {typeFilters.map((f) => (
+            <button
+              type="button"
+              class="pub-filter__pill"
+              data-kind={f.kind}
+            >
+              {f.label} · {f.count}
+            </button>
+          ))}
         </nav>
         <div class="pub-export">
           <p class="pub-filter__label">{t("pages.publications.export")}</p>
@@ -395,22 +388,20 @@ const collectionSchema = {
       </aside>
 
       <div class="pub-main">
-        {
-          yearGroups.map(([year, items]) => (
-            <section
-              class="pub-year-group"
-              aria-label={String(year)}
-              data-pub-year
-            >
-              <h2 class="pub-year-group__title">{year}</h2>
-              <div class="publications-list">
-                {items.map((pub) => (
-                  <PublicationItem pub={pub} />
-                ))}
-              </div>
-            </section>
-          ))
-        }
+        {yearGroups.map(([year, items]) => (
+          <section
+            class="pub-year-group"
+            aria-label={String(year)}
+            data-pub-year
+          >
+            <h2 class="pub-year-group__title">{year}</h2>
+            <div class="publications-list">
+              {items.map((pub) => (
+                <PublicationItem pub={pub} />
+              ))}
+            </div>
+          </section>
+        ))}
         <p
           class="pub-empty"
           hidden

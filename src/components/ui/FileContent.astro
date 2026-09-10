@@ -78,88 +78,38 @@ const copyAria = t("components.fileContent.copyContent", { filename });
 const linesText = `${lineCount} ${t("ui.lines")}`;
 ---
 
-{
-  collapsible ? (
-    <div
-      class="jmrp-file file-content-wrapper jmrp-file--collapsible copy-container"
-      data-testid={uuid}
-    >
-      {/* Copy button OUTSIDE <details> to avoid a nested-interactive control. */}
-      <CopyButton
-        class="jmrp-file__copy"
-        content={codeText}
-        ariaLabel={copyAria}
-      />
-      <details
-        class="jmrp-file__details"
-        open={open}
-        aria-label={finalAriaLabel}
-      >
-        <summary class="jmrp-file__head">
-          <span class="jmrp-file__id">
-            <svg
-              class="jmrp-file__chev"
-              viewBox="0 0 24 24"
-              width="14"
-              height="14"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2.4"
-              aria-hidden="true"
-            >
-              <path d="m9 6 6 6-6 6" />
-            </svg>
-            <svg
-              class="jmrp-file__icon"
-              viewBox="0 0 24 24"
-              width="15"
-              height="15"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="1.8"
-              aria-hidden="true"
-            >
-              <path d="M14 3v5h5M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-            </svg>
-            <span
-              class="jmrp-file__name"
-              set:html={filenameFormatted}
-            />
-          </span>
-          <span class="jmrp-file__meta">
-            <span class="jmrp-file__lines">{linesText}</span>
-          </span>
-        </summary>
-        <div class="jmrp-file__body">
-          {/* eslint-disable astro/jsx-a11y/no-noninteractive-tabindex -- focusable scroll region */}
-          <div
-            role="region"
-            tabindex="0"
-            aria-label={t("aria.codeContent", {
-              filename: `${filename} (${uuid})`,
-            })}
-            class="jmrp-file__scroll file-code-container"
-          >
-            {/* eslint-enable astro/jsx-a11y/no-noninteractive-tabindex */}
-            {language ? (
-              <Fragment set:html={highlightedHtml} />
-            ) : (
-              <div set:html={trimmedContent} />
-            )}
-          </div>
-        </div>
-      </details>
-    </div>
-  ) : (
-    <section
-      class="jmrp-file file-content-wrapper copy-container"
+{collapsible ? (
+  <div
+    class="jmrp-file file-content-wrapper jmrp-file--collapsible copy-container"
+    data-testid={uuid}
+  >
+    {/* Copy button OUTSIDE <details> to avoid a nested-interactive control. */}
+    <CopyButton
+      class="jmrp-file__copy"
+      content={codeText}
+      ariaLabel={copyAria}
+    />
+    <details
+      class="jmrp-file__details"
+      open={open}
       aria-label={finalAriaLabel}
-      data-testid={uuid}
     >
-      <div class="jmrp-file__head">
+      <summary class="jmrp-file__head">
         <span class="jmrp-file__id">
           <svg
-            class="jmrp-file__icon jmrp-file__icon--accent"
+            class="jmrp-file__chev"
+            viewBox="0 0 24 24"
+            width="14"
+            height="14"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2.4"
+            aria-hidden="true"
+          >
+            <path d="m9 6 6 6-6 6" />
+          </svg>
+          <svg
+            class="jmrp-file__icon"
             viewBox="0 0 24 24"
             width="15"
             height="15"
@@ -175,11 +125,10 @@ const linesText = `${lineCount} ${t("ui.lines")}`;
             set:html={filenameFormatted}
           />
         </span>
-        <CopyButton
-          content={codeText}
-          ariaLabel={copyAria}
-        />
-      </div>
+        <span class="jmrp-file__meta">
+          <span class="jmrp-file__lines">{linesText}</span>
+        </span>
+      </summary>
       <div class="jmrp-file__body">
         {/* eslint-disable astro/jsx-a11y/no-noninteractive-tabindex -- focusable scroll region */}
         <div
@@ -198,9 +147,58 @@ const linesText = `${lineCount} ${t("ui.lines")}`;
           )}
         </div>
       </div>
-    </section>
-  )
-}
+    </details>
+  </div>
+) : (
+  <section
+    class="jmrp-file file-content-wrapper copy-container"
+    aria-label={finalAriaLabel}
+    data-testid={uuid}
+  >
+    <div class="jmrp-file__head">
+      <span class="jmrp-file__id">
+        <svg
+          class="jmrp-file__icon jmrp-file__icon--accent"
+          viewBox="0 0 24 24"
+          width="15"
+          height="15"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.8"
+          aria-hidden="true"
+        >
+          <path d="M14 3v5h5M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+        </svg>
+        <span
+          class="jmrp-file__name"
+          set:html={filenameFormatted}
+        />
+      </span>
+      <CopyButton
+        content={codeText}
+        ariaLabel={copyAria}
+      />
+    </div>
+    <div class="jmrp-file__body">
+      {/* eslint-disable astro/jsx-a11y/no-noninteractive-tabindex -- focusable scroll region */}
+      <div
+        role="region"
+        tabindex="0"
+        aria-label={t("aria.codeContent", {
+          filename: `${filename} (${uuid})`,
+        })}
+        class="jmrp-file__scroll file-code-container"
+      >
+        {/* eslint-enable astro/jsx-a11y/no-noninteractive-tabindex */}
+        {language ? (
+          <Fragment set:html={highlightedHtml} />
+        ) : (
+          <div set:html={trimmedContent} />
+        )}
+      </div>
+    </div>
+  </section>
+)}
 
 <style>
   .jmrp-file {

@@ -158,7 +158,9 @@ const personSchema = {
       <div>
         <p class="section-title">{c.kicker}</p>
         <h1 class="page-title about-hero__title">{c.title}</h1>
-        {c.lead.map((para) => <p class="about-hero__lead">{para}</p>)}
+        {c.lead.map((para) => (
+          <p class="about-hero__lead">{para}</p>
+        ))}
         <p class="about-hero__note">{c.note}</p>
       </div>
       <div class="about-portrait">
@@ -182,113 +184,113 @@ const personSchema = {
       <div class="about-card">
         <p class="about-card__label">{c.labels.build}</p>
         <ul class="about-card__list">
-          {c.build.map((item) => <li>{item}</li>)}
+          {c.build.map((item) => (
+            <li>{item}</li>
+          ))}
         </ul>
       </div>
       <div class="about-card">
         <p class="about-card__label">{c.labels.writesAbout}</p>
         <ul class="about-card__list">
-          {c.writesAbout.map((item) => <li>{item}</li>)}
+          {c.writesAbout.map((item) => (
+            <li>{item}</li>
+          ))}
         </ul>
       </div>
       <div class="about-card">
         <p class="about-card__label">{c.labels.contact}</p>
         <ul class="about-card__list about-card__list--mono">
-          {
-            contactLinks.map((link) => (
-              <li>
-                <span class="about-card__key">{link.key} ·</span>{" "}
-                {link.email ? (
-                  <ObfuscatedEmail address={link.value} />
-                ) : (
-                  <a
-                    href={link.href}
-                    {...externalLinkProps(
-                      link.href ?? "",
-                      t("aria.opensNewTab", { text: link.value }),
-                    )}
-                  >
-                    {link.value}
-                  </a>
-                )}
-              </li>
-            ))
-          }
+          {contactLinks.map((link) => (
+            <li>
+              <span class="about-card__key">{link.key} ·</span>{" "}
+              {link.email ? (
+                <ObfuscatedEmail address={link.value} />
+              ) : (
+                <a
+                  href={link.href}
+                  {...externalLinkProps(
+                    link.href ?? "",
+                    t("aria.opensNewTab", { text: link.value }),
+                  )}
+                >
+                  {link.value}
+                </a>
+              )}
+            </li>
+          ))}
         </ul>
       </div>
     </section>
 
-    {
-      featuredProjects.length > 0 && (
-        <section
-          class="about-section"
-          aria-labelledby="about-projects-title"
+    {featuredProjects.length > 0 && (
+      <section
+        class="about-section"
+        aria-labelledby="about-projects-title"
+      >
+        <h2
+          class="about-section__title"
+          id="about-projects-title"
         >
-          <h2
-            class="about-section__title"
-            id="about-projects-title"
-          >
-            {c.labels.projects}
-          </h2>
-          <div class="about-projects">
-            {featuredProjects.map((p) => {
-              const href = projectHref(p);
-              const live = liveHref(p.name);
-              return (
-                <article class="proj-card">
-                  <div class="proj-card__head">
-                    {p.icon && (
-                      <span
-                        class={`i-${p.icon} proj-card__icon`}
-                        aria-hidden="true"
-                      />
-                    )}
-                    <h3 class="proj-card__name">
-                      {href ? (
-                        <a
-                          href={href}
-                          {...externalLinkProps(
-                            href,
-                            t("aria.opensNewTab", { text: p.name }),
-                          )}
-                        >
-                          {p.name}
-                        </a>
-                      ) : (
-                        p.name
-                      )}
-                    </h3>
-                  </div>
-                  {p.tech && <p class="proj-card__tech">{p.tech}</p>}
-                  {p.description && (
-                    <p class="proj-card__desc">{p.description}</p>
+          {c.labels.projects}
+        </h2>
+        <div class="about-projects">
+          {featuredProjects.map((p) => {
+            const href = projectHref(p);
+            const live = liveHref(p.name);
+            return (
+              <article class="proj-card">
+                <div class="proj-card__head">
+                  {p.icon && (
+                    <span
+                      class={`i-${p.icon} proj-card__icon`}
+                      aria-hidden="true"
+                    />
                   )}
-                  {live && (
-                    <p class="proj-card__links">
+                  <h3 class="proj-card__name">
+                    {href ? (
                       <a
-                        href={live}
+                        href={href}
                         {...externalLinkProps(
-                          live,
-                          t("aria.opensNewTab", {
-                            text: `${t("pages.projects.hosted")} — ${p.name}`,
-                          }),
+                          href,
+                          t("aria.opensNewTab", { text: p.name }),
                         )}
                       >
-                        <span
-                          class="i-mdi:api"
-                          aria-hidden="true"
-                        />
-                        {t("pages.projects.hosted")}
+                        {p.name}
                       </a>
-                    </p>
-                  )}
-                </article>
-              );
-            })}
-          </div>
-        </section>
-      )
-    }
+                    ) : (
+                      p.name
+                    )}
+                  </h3>
+                </div>
+                {p.tech && <p class="proj-card__tech">{p.tech}</p>}
+                {p.description && (
+                  <p class="proj-card__desc">{p.description}</p>
+                )}
+                {live && (
+                  <p class="proj-card__links">
+                    <a
+                      href={live}
+                      {...externalLinkProps(
+                        live,
+                        t("aria.opensNewTab", {
+                          text: `${t("pages.projects.hosted")} — ${p.name}`,
+                        }),
+                      )}
+                    >
+                      <span
+                        class="i-mdi:api"
+                        aria-hidden="true"
+                      />
+                      {t("pages.projects.hosted")}
+                    </a>
+                  </p>
+                )}
+              </article>
+            );
+          })}
+        </div>
+      </section>
+    )}
 
     <section
       class="about-section"
@@ -301,18 +303,16 @@ const personSchema = {
         {c.labels.education}
       </h2>
       <ul class="about-edu">
-        {
-          c.education.map((edu) => (
-            <li class="edu-row">
-              <span class="edu-row__year">{edu.year}</span>
-              <div class="edu-row__body">
-                <span class="edu-row__degree">{edu.degree}</span>
-                <span class="edu-row__org">{edu.org}</span>
-                <span class="edu-row__note">{edu.note}</span>
-              </div>
-            </li>
-          ))
-        }
+        {c.education.map((edu) => (
+          <li class="edu-row">
+            <span class="edu-row__year">{edu.year}</span>
+            <div class="edu-row__body">
+              <span class="edu-row__degree">{edu.degree}</span>
+              <span class="edu-row__org">{edu.org}</span>
+              <span class="edu-row__note">{edu.note}</span>
+            </div>
+          </li>
+        ))}
       </ul>
     </section>
 
@@ -327,11 +327,9 @@ const personSchema = {
       >
         {t("pages.about.editorialTitle")}
       </h2>
-      {
-        editorialParagraphs.map((key) => (
-          <p class="about-editorial__body">{t(key)}</p>
-        ))
-      }
+      {editorialParagraphs.map((key) => (
+        <p class="about-editorial__body">{t(key)}</p>
+      ))}
       <p class="about-editorial__links">
         <ObfuscatedEmail address="mail@jmrp.io" />
         <a

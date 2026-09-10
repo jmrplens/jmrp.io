@@ -27,16 +27,14 @@ const uniqueId = randomBytes(4).toString("hex");
   aria-labelledby={title ? `sbs-title-${uniqueId}` : undefined}
   aria-label={title ? undefined : t("aria.stepByStep")}
 >
-  {
-    title && (
-      <div
-        class="sbs-title"
-        id={`sbs-title-${uniqueId}`}
-      >
-        {title}
-      </div>
-    )
-  }
+  {title && (
+    <div
+      class="sbs-title"
+      id={`sbs-title-${uniqueId}`}
+    >
+      {title}
+    </div>
+  )}
   <ol class="sbs-steps">
     <slot />
   </ol>

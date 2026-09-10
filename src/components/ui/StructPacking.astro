@@ -137,63 +137,57 @@ const summary =
   {title && <div class="struct-packing__title">{title}</div>}
 
   <div class="struct-packing__track">
-    {
-      segments.map((seg) => {
-        const widthPct = (seg.bytes / totalSize) * 100;
-        return (
+    {segments.map((seg) => {
+      const widthPct = (seg.bytes / totalSize) * 100;
+      return (
+        <span
+          class="struct-packing__seg"
+          style={`flex-grow:${widthPct.toFixed(3)}`}
+          title={`${seg.label}: ${seg.detail} (@${seg.offset})`}
+        >
           <span
-            class="struct-packing__seg"
-            style={`flex-grow:${widthPct.toFixed(3)}`}
-            title={`${seg.label}: ${seg.detail} (@${seg.offset})`}
+            class:list={[
+              "struct-packing__bar",
+              seg.padding && "struct-packing__bar--pad",
+            ]}
+            style={seg.padding ? undefined : `background-color:${seg.color}`}
           >
-            <span
-              class:list={[
-                "struct-packing__bar",
-                seg.padding && "struct-packing__bar--pad",
-              ]}
-              style={seg.padding ? undefined : `background-color:${seg.color}`}
-            >
-              {widthPct >= 12 && (
-                <span class="struct-packing__name">{seg.label}</span>
-              )}
-            </span>
-            <span class="struct-packing__offset">@{seg.offset}</span>
+            {widthPct >= 12 && (
+              <span class="struct-packing__name">{seg.label}</span>
+            )}
           </span>
-        );
-      })
-    }
+          <span class="struct-packing__offset">@{seg.offset}</span>
+        </span>
+      );
+    })}
   </div>
 
   <ul class="struct-packing__legend">
-    {
-      segments.map((seg) => (
-        <li class="struct-packing__legend-item">
-          <span
-            class:list={[
-              "struct-packing__swatch",
-              seg.padding && "struct-packing__swatch--pad",
-            ]}
-            style={seg.padding ? undefined : `background-color:${seg.color}`}
-            aria-hidden="true"
-          />
-          <span class="struct-packing__legend-text">
-            <b>{seg.label}</b> · {seg.detail} · @{seg.offset}
-          </span>
-        </li>
-      ))
-    }
+    {segments.map((seg) => (
+      <li class="struct-packing__legend-item">
+        <span
+          class:list={[
+            "struct-packing__swatch",
+            seg.padding && "struct-packing__swatch--pad",
+          ]}
+          style={seg.padding ? undefined : `background-color:${seg.color}`}
+          aria-hidden="true"
+        />
+        <span class="struct-packing__legend-text">
+          <b>{seg.label}</b> · {seg.detail} · @{seg.offset}
+        </span>
+      </li>
+    ))}
   </ul>
 
   <p class="struct-packing__summary">
     <b>sizeof = {totalSize} B</b>
-    {
-      paddingBytes > 0 && (
-        <>
-          {" "}
-          · {paddingBytes} B {t("components.structPacking.padding")}
-        </>
-      )
-    }
+    {paddingBytes > 0 && (
+      <>
+        {" "}
+        · {paddingBytes} B {t("components.structPacking.padding")}
+      </>
+    )}
   </p>
 
   <table class="sr-only">
@@ -206,15 +200,13 @@ const summary =
       </tr>
     </thead>
     <tbody>
-      {
-        segments.map((seg) => (
-          <tr>
-            <td>{seg.label}</td>
-            <td>{seg.offset}</td>
-            <td>{seg.detail}</td>
-          </tr>
-        ))
-      }
+      {segments.map((seg) => (
+        <tr>
+          <td>{seg.label}</td>
+          <td>{seg.offset}</td>
+          <td>{seg.detail}</td>
+        </tr>
+      ))}
     </tbody>
   </table>
 
