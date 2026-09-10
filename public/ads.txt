@@ -1,0 +1,6 @@
+# jmrp.io sells no advertising and authorizes no seller to do so.
+# This is the IAB Tech Lab ads.txt 1.1 declaration for exactly that case
+# (section 4.9, "File without authorized advertising systems"): an empty file
+# no longer counts, and without this line an exchange cannot tell "no sellers"
+# from "no file", which is what lets a reseller spoof inventory as this domain.
+placeholder.example.com, placeholder, DIRECT, placeholder
