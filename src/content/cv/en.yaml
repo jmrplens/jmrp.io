@@ -618,7 +618,9 @@ sections:
           2-tool find/execute
           design, with stdio/HTTP/OAuth transports and safe & read-only modes.
         metrics:
-          ["On npm & PyPI; listed on Glama, mcp.so, Cursor & mcpservers.org"]
+          [
+            "On npm, PyPI & NuGet; listed on Glama, mcp.so, Cursor & mcpservers.org",
+          ]
         links:
           - {
               label: GitHub,

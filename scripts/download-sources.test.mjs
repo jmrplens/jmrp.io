@@ -14,7 +14,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 
-import { isVerificationAsset } from "./download-sources.mjs";
+import { isVerificationAsset, readNuGetTotal } from "./download-sources.mjs";
 
 test("isVerificationAsset: verification artifacts are excluded", () => {
   const verification = [
@@ -74,6 +74,57 @@ test("isVerificationAsset: tolerates a malformed asset payload", () => {
       isVerificationAsset(missing),
       false,
       `expected false: ${missing}`,
+    );
+  }
+});
+
+test("readNuGetTotal: reads the lifetime count of the package asked for", () => {
+  // Shape of a real `q=packageid:` response, trimmed to the fields read.
+  const body = {
+    totalHits: 1,
+    data: [{ id: "gitlab-mcp-server", version: "2.7.5", totalDownloads: 100 }],
+  };
+  assert.equal(readNuGetTotal(body, "gitlab-mcp-server"), 100);
+  // NuGet ids are case-insensitive, and the registry echoes the id in the
+  // casing it was published with, not the casing that was asked for.
+  assert.equal(readNuGetTotal(body, "GitLab-MCP-Server"), 100);
+});
+
+test("readNuGetTotal: never counts a package other than the one asked for", () => {
+  // `q=packageid:` is a query, not a lookup. A response carrying a near match
+  // must throw rather than let another author's package into the total.
+  const body = {
+    data: [
+      { id: "gitlab-mcp-server.linux-x64", totalDownloads: 49 },
+      { id: "someone-elses-gitlab-mcp-server", totalDownloads: 999_999 },
+    ],
+  };
+  assert.throws(
+    () => readNuGetTotal(body, "gitlab-mcp-server"),
+    /lists no such package/,
+  );
+});
+
+test("readNuGetTotal: rejects a payload it cannot believe", () => {
+  // Each of these would otherwise publish a figure that is not a count:
+  // an empty result reads as "the package is gone", a missing or non-numeric
+  // `totalDownloads` as a silent zero, and a string would turn every sum
+  // downstream into concatenation.
+  const unusable = [
+    undefined,
+    null,
+    {},
+    { data: [] },
+    { data: null },
+    { data: [{ id: "gitlab-mcp-server" }] },
+    { data: [{ id: "gitlab-mcp-server", totalDownloads: "100" }] },
+    { data: [{ id: "gitlab-mcp-server", totalDownloads: NaN }] },
+  ];
+  for (const body of unusable) {
+    assert.throws(
+      () => readNuGetTotal(body, "gitlab-mcp-server"),
+      TypeError,
+      `expected a throw for: ${JSON.stringify(body)}`,
     );
   }
 });

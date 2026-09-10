@@ -28,7 +28,15 @@ export const OWNER = "jmrplens";
  * `releases` counts the cumulative `download_count` of every release asset
  * that is a distributable artifact — see {@link isVerificationAsset} for what
  * is excluded and why; `docker` sums the cumulative `pull_count` of each
- * Docker Hub image.
+ * Docker Hub image; `nuget` sums the lifetime `totalDownloads` of each NuGet
+ * package id.
+ *
+ * `nuget` names ONLY the meta package. The GitLab server publishes seven ids —
+ * `gitlab-mcp-server` plus one per runtime identifier — and a single
+ * `dotnet tool install` pulls the meta package AND exactly one runtime
+ * package, so summing all seven would count one install roughly twice. The
+ * meta id is the one a reader installs and the only one that answers the
+ * question "how many installs", which is why the six others are left out.
  *
  * `manual` is a count that cannot be fetched: MathWorks answers 403 to any
  * scripted request, so the File Exchange figures are read by hand from the
@@ -68,6 +76,9 @@ export const DOWNLOAD_SOURCES = {
   "gitlab-mcp-server": {
     releases: true,
     docker: [`${OWNER}/gitlab-mcp-server`],
+    // `dotnet tool` channel. The bare id belongs to this owner here, unlike on
+    // npm (see the note above), so no scope or prefix is needed to name it.
+    nuget: ["gitlab-mcp-server"],
   },
   "libgen-mcp": { releases: true, docker: [`${OWNER}/libgen-mcp`] },
   "cs-routeros-bouncer": { releases: true, docker: [] },
@@ -162,7 +173,7 @@ export function isVerificationAsset(name) {
   );
 }
 
-/** @type {Map<string, Promise<{total:number, releases:number, excludedVerification:number, docker:number, manual:number}>>} */
+/** @type {Map<string, Promise<{total:number, releases:number, excludedVerification:number, docker:number, nuget:number, manual:number}>>} */
 const cache = new Map();
 
 /**
@@ -338,13 +349,114 @@ export async function fetchDockerHubPulls(slug) {
 }
 
 /**
+ * NuGet's public service index: the only entry point the registry documents as
+ * stable. The search endpoint it points at is regional
+ * (`azuresearch-usnc.nuget.org` at the time of writing), so resolving it here
+ * rather than hardcoding the host keeps a change of routing from turning into
+ * a silent 404 on every build.
+ */
+const NUGET_SERVICE_INDEX = "https://api.nuget.org/v3/index.json";
+
+/** @type {Promise<string> | undefined} Resolved search endpoint, once per process. */
+let nugetSearch;
+
+/**
+ * Resolves the `SearchQueryService` endpoint from NuGet's service index.
+ *
+ * @returns {Promise<string>} Absolute URL of the search endpoint.
+ * @throws {Error} When the index cannot be read or advertises no search service.
+ */
+function resolveNuGetSearch() {
+  nugetSearch ??= (async () => {
+    const res = await fetch(NUGET_SERVICE_INDEX, {
+      headers: { "User-Agent": UA },
+      signal: AbortSignal.timeout(15_000),
+    });
+    if (!res.ok) throw new Error(`NuGet service index: ${res.status}`);
+
+    const index = await res.json();
+    const service = (index?.resources ?? []).find(
+      (/** @type {{["@type"]?: unknown, ["@id"]?: unknown}} */ r) =>
+        typeof r?.["@type"] === "string" &&
+        r["@type"].startsWith("SearchQueryService") &&
+        typeof r["@id"] === "string",
+    );
+    if (!service) throw new Error("NuGet service index: no SearchQueryService");
+    return service["@id"];
+  })();
+  // Don't cache a rejection: a later caller should be able to retry.
+  nugetSearch.catch(() => {
+    nugetSearch = undefined;
+  });
+  return nugetSearch;
+}
+
+/**
+ * Reads the lifetime download count of one package out of a search response.
+ *
+ * Split from the request for the same reason {@link readAssetDownloads} is: it
+ * is the part that decides whether a payload can be believed, and it throws
+ * rather than returning 0 so the caller's catch keeps the last good total
+ * instead of publishing a quietly reduced one.
+ *
+ * The id is matched case-insensitively against the results instead of trusting
+ * the first: `q=packageid:` is a query, not a lookup, and a registry that ever
+ * answers it with a near match must not have that near match counted.
+ *
+ * @param {unknown} body - Parsed search response.
+ * @param {string} id - Package id that was asked for.
+ * @returns {number} The package's lifetime download count.
+ * @throws {TypeError} When the package is absent or carries no usable count.
+ */
+export function readNuGetTotal(body, id) {
+  const results =
+    /** @type {{data?: Array<{id?: unknown, totalDownloads?: unknown}>}} */ (
+      body
+    )?.data;
+  const match = (Array.isArray(results) ? results : []).find(
+    (entry) =>
+      typeof entry?.id === "string" &&
+      entry.id.toLowerCase() === id.toLowerCase(),
+  );
+  if (!match) {
+    throw new TypeError(`NuGet ${id}: the registry lists no such package`);
+  }
+  const total = match.totalDownloads;
+  if (typeof total !== "number" || !Number.isFinite(total)) {
+    throw new TypeError(`NuGet ${id}: missing totalDownloads`);
+  }
+  return total;
+}
+
+/**
+ * Reads the lifetime download count of a single NuGet package.
+ *
+ * @param {string} id - Package id, e.g. `gitlab-mcp-server`.
+ * @returns {Promise<number>} The package's lifetime download count.
+ * @throws {TypeError} When the package is absent or carries no usable count.
+ */
+export async function fetchNuGetDownloads(id) {
+  const search = await resolveNuGetSearch();
+  const url =
+    `${search}?q=packageid:${encodeURIComponent(id)}` +
+    "&prerelease=true&semVerLevel=2.0.0";
+  const res = await fetch(url, {
+    headers: { "User-Agent": UA },
+    signal: AbortSignal.timeout(15_000),
+  });
+  if (!res.ok) throw new Error(`NuGet ${id}: ${res.status}`);
+
+  return readNuGetTotal(await res.json(), id);
+}
+
+/**
  * Combined download count of one project across every channel it ships
  * through. Cached per process, so the CV page and the LaTeX generators do not
  * re-fetch what the pre-build step already asked for.
  *
  * @param {string} repo - Repository name under {@link OWNER}.
  * @param {string} [token] - GitHub token; falls back to the environment.
- * @returns {Promise<{total:number, releases:number, excludedVerification:number, docker:number, manual:number}>} Counts per channel.
+ * @returns {Promise<{total:number, releases:number, excludedVerification:number, docker:number, nuget:number, manual:number}>} Counts per channel.
  */
 export function fetchProjectDownloads(repo, token) {
   const cached = cache.get(repo);
@@ -357,25 +469,29 @@ export function fetchProjectDownloads(repo, token) {
       releases: 0,
       excludedVerification: 0,
       docker: 0,
+      nuget: 0,
       manual: 0,
     });
 
   const promise = (async () => {
-    const [release, dockerCounts] = await Promise.all([
+    const [release, dockerCounts, nugetCounts] = await Promise.all([
       config.releases
         ? fetchReleaseDownloads(repo, token)
         : { artifacts: 0, verification: 0 },
       Promise.all((config.docker ?? []).map(fetchDockerHubPulls)),
+      Promise.all((config.nuget ?? []).map(fetchNuGetDownloads)),
     ]);
     const docker = dockerCounts.reduce((sum, n) => sum + n, 0);
+    const nuget = nugetCounts.reduce((sum, n) => sum + n, 0);
     const manual = config.manual?.count ?? 0;
-    // `total` sums the three CHANNELS only. `excludedVerification` rides along
+    // `total` sums the four CHANNELS only. `excludedVerification` rides along
     // for auditability and is never a summand — see isVerificationAsset.
     return {
-      total: release.artifacts + docker + manual,
+      total: release.artifacts + docker + nuget + manual,
       releases: release.artifacts,
       excludedVerification: release.verification,
       docker,
+      nuget,
       manual,
     };
   })();
@@ -390,7 +506,7 @@ export function fetchProjectDownloads(repo, token) {
  * Fetches every configured project at once and aggregates the grand total.
  *
  * @param {string} [token] - GitHub token; falls back to the environment.
- * @returns {Promise<{total:number, sources:{githubReleases:number, dockerHub:number, manual:number}, excluded:{githubVerification:number}, manualVerifiedOn:string, projects:Record<string,{total:number, releases:number, excludedVerification:number, docker:number, manual:number}>}>} The full breakdown.
+ * @returns {Promise<{total:number, sources:{githubReleases:number, dockerHub:number, nuget:number, manual:number}, excluded:{githubVerification:number}, manualVerifiedOn:string, projects:Record<string,{total:number, releases:number, excludedVerification:number, docker:number, nuget:number, manual:number}>}>} The full breakdown.
  */
 export async function fetchAllDownloads(token) {
   const repos = Object.keys(DOWNLOAD_SOURCES);
@@ -398,11 +514,12 @@ export async function fetchAllDownloads(token) {
     repos.map((repo) => fetchProjectDownloads(repo, token)),
   );
 
-  /** @type {Record<string, {total:number, releases:number, excludedVerification:number, docker:number, manual:number}>} */
+  /** @type {Record<string, {total:number, releases:number, excludedVerification:number, docker:number, nuget:number, manual:number}>} */
   const projects = {};
   let githubReleases = 0;
   let githubVerification = 0;
   let dockerHub = 0;
+  let nuget = 0;
   let manual = 0;
   for (const [index, repo] of repos.entries()) {
     const count = counts[index];
@@ -410,6 +527,7 @@ export async function fetchAllDownloads(token) {
     githubReleases += count.releases;
     githubVerification += count.excludedVerification;
     dockerHub += count.docker;
+    nuget += count.nuget;
     manual += count.manual;
   }
 
@@ -417,8 +535,8 @@ export async function fetchAllDownloads(token) {
   // under `excluded`, so summing `sources` can never reproduce the inflated
   // figure this split exists to remove.
   return {
-    total: githubReleases + dockerHub + manual,
-    sources: { githubReleases, dockerHub, manual },
+    total: githubReleases + dockerHub + nuget + manual,
+    sources: { githubReleases, dockerHub, nuget, manual },
     excluded: { githubVerification },
     manualVerifiedOn: MANUAL_COUNTS_VERIFIED_ON,
     projects,
