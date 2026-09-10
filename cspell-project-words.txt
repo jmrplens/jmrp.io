@@ -97,6 +97,7 @@ avanti
 avanzado
 avcdn
 azul
+azuresearch
 backlink
 baiduspider
 baja
@@ -349,6 +350,7 @@ domhandler
 dominio
 domótica
 dorder
+dotnet
 downscales
 dport
 dproto
@@ -452,6 +454,7 @@ geoipupdate
 geolocalización
 gescoform
 getcwd
+ghchronicle
 GHSA
 githubactions
 gitlab
@@ -823,6 +826,7 @@ ouvrir
 overclaim
 overleafconfig
 Owasp
+packageid
 página
 páginas
 panish
@@ -1163,6 +1167,7 @@ toggleable
 tokenizado
 tootallnate
 topbar
+Toplist
 torproject
 torrc
 totp
@@ -1204,6 +1209,7 @@ urlencode
 usar
 userscript
 userscripts
+usnc
 usuario
 útil
 valència
