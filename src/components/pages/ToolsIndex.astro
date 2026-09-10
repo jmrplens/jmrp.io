@@ -115,8 +115,7 @@ const toolsSchema = {
       <div
         class="lab-grid"
         aria-hidden="true"
-      >
-      </div>
+      ></div>
       <p class="section-title">{t("nav.tools")}</p>
       <h1 class="tools-title">{t("pages.tools.title")}</h1>
       <p class="intro">{t("pages.tools.intro")}</p>
@@ -125,11 +124,9 @@ const toolsSchema = {
           class="status-dot"
           aria-hidden="true"
         ></span>
-        <span class="status-text"
-          >{t("pages.tools.statusPrivacy")} · {
-            t("pages.tools.statusTelemetry")
-          }</span
-        >
+        <span class="status-text">
+          {t("pages.tools.statusPrivacy")} · {t("pages.tools.statusTelemetry")}
+        </span>
       </p>
     </header>
 
@@ -144,40 +141,36 @@ const toolsSchema = {
       >
         {t("pages.tools.filterAll")} · {allTools.length}
       </a>
-      {
-        categories.map((category) => (
-          <a
-            href={translatePath(`/tools/categories/${category.id}/`)}
-            class="chip"
-          >
-            {category.short}
-          </a>
-        ))
-      }
+      {categories.map((category) => (
+        <a
+          href={translatePath(`/tools/categories/${category.id}/`)}
+          class="chip"
+        >
+          {category.short}
+        </a>
+      ))}
     </nav>
 
     <div class="tools-grid">
-      {
-        orderedTools.map(({ tool, short }) => (
-          <a
-            href={translatePath(`/tools/${tool.data.slug}/`)}
-            class="tool-card"
-          >
-            <span class="tool-card__top">
-              <span class={`tool-badge tool-badge--${tool.data.category}`}>
-                <span class="sr-only">{t("pages.tools.categoryLabel")}: </span>
-                {short}
-              </span>
-              <span
-                class="i-mdi:arrow-top-right tool-arrow"
-                aria-hidden="true"
-              />
+      {orderedTools.map(({ tool, short }) => (
+        <a
+          href={translatePath(`/tools/${tool.data.slug}/`)}
+          class="tool-card"
+        >
+          <span class="tool-card__top">
+            <span class={`tool-badge tool-badge--${tool.data.category}`}>
+              <span class="sr-only">{t("pages.tools.categoryLabel")}: </span>
+              {short}
             </span>
-            <h2 class="tool-name">{tool.data.title}</h2>
-            <p class="tool-description">{tool.data.description}</p>
-          </a>
-        ))
-      }
+            <span
+              class="i-mdi:arrow-top-right tool-arrow"
+              aria-hidden="true"
+            />
+          </span>
+          <h2 class="tool-name">{tool.data.title}</h2>
+          <p class="tool-description">{tool.data.description}</p>
+        </a>
+      ))}
     </div>
 
     <section
@@ -222,8 +215,10 @@ const toolsSchema = {
                 rel="external noopener noreferrer"
                 class="external-link"
                 aria-label={t("aria.opensNewTab", { text: "GitHub" })}
-                >GitHub</a
-              >.
+              >
+                GitHub
+              </a>
+              .
             </p>
           </div>
         </div>

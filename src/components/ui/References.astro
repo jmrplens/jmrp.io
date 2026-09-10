@@ -145,47 +145,45 @@ const entries = references
   .filter((entry) => entry !== null);
 ---
 
-{
-  entries.length > 0 && (
-    <div class="references-section">
-      <div class="header">
-        <span
-          class="i-mdi:book-open-page-variant-outline header-icon"
-          aria-hidden="true"
-        />
-        <h3>{t("components.references.title")}</h3>
-      </div>
-      <ol class="references-list">
-        {entries.map((entry) => (
-          <li class="reference-item">
-            <cite class="ref-cite">
-              <a
-                href={entry.href}
-                {...(entry.isExternalLink
-                  ? {
-                      target: "_blank",
-                      rel: "external noopener noreferrer",
-                      "aria-label": t("aria.opensNewTab", {
-                        text: entry.label,
-                      }),
-                    }
-                  : {})}
-                data-astro-prefetch="false"
-                class:list={[
-                  "reference-link",
-                  entry.isExternalLink && "external-link",
-                ]}
-              >
-                {entry.label}
-              </a>
-            </cite>
-            <span class="ref-publisher">{entry.publisher}</span>
-          </li>
-        ))}
-      </ol>
+{entries.length > 0 && (
+  <div class="references-section">
+    <div class="header">
+      <span
+        class="i-mdi:book-open-page-variant-outline header-icon"
+        aria-hidden="true"
+      />
+      <h3>{t("components.references.title")}</h3>
     </div>
-  )
-}
+    <ol class="references-list">
+      {entries.map((entry) => (
+        <li class="reference-item">
+          <cite class="ref-cite">
+            <a
+              href={entry.href}
+              {...(entry.isExternalLink
+                ? {
+                    target: "_blank",
+                    rel: "external noopener noreferrer",
+                    "aria-label": t("aria.opensNewTab", {
+                      text: entry.label,
+                    }),
+                  }
+                : {})}
+              data-astro-prefetch="false"
+              class:list={[
+                "reference-link",
+                entry.isExternalLink && "external-link",
+              ]}
+            >
+              {entry.label}
+            </a>
+          </cite>
+          <span class="ref-publisher">{entry.publisher}</span>
+        </li>
+      ))}
+    </ol>
+  </div>
+)}
 
 <style>
   .references-section {

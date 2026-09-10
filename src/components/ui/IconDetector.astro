@@ -18,15 +18,13 @@ const classes = icons.map((icon) =>
 );
 ---
 
-{
-  classes.length > 0 && (
-    <div
-      class="hidden"
-      aria-hidden="true"
-    >
-      {classes.map((cls) => (
-        <span class={cls} />
-      ))}
-    </div>
-  )
-}
+{classes.length > 0 && (
+  <div
+    class="hidden"
+    aria-hidden="true"
+  >
+    {classes.map((cls) => (
+      <span class={cls} />
+    ))}
+  </div>
+)}

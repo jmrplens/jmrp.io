@@ -27,10 +27,8 @@ const { Content } = await render(tool);
   publishedDate={tool.data.publishedDate}
   updatedDate={tool.data.updatedDate}
 >
-  {
-    /* The MDX body carries everything: its own app component (so the page's
+  {/* The MDX body carries everything: its own app component (so the page's
       CSS contains only that app's styles — see ToolApp.astro) plus the
-      documentation, each in its wrapper. */
-  }
+      documentation, each in its wrapper. */}
   <Content />
 </ToolLayout>

@@ -17,21 +17,19 @@ const { locale } = Astro.props;
 const t = useTranslations(locale);
 ---
 
-{
-  locale !== defaultLocale && (
-    <div
-      class="fallback-banner"
-      role="status"
-      aria-live="polite"
-    >
-      <span
-        class="fallback-banner__icon i-mdi:translate"
-        aria-hidden="true"
-      />
-      <p>{t("content.fallbackNotice")}</p>
-    </div>
-  )
-}
+{locale !== defaultLocale && (
+  <div
+    class="fallback-banner"
+    role="status"
+    aria-live="polite"
+  >
+    <span
+      class="fallback-banner__icon i-mdi:translate"
+      aria-hidden="true"
+    />
+    <p>{t("content.fallbackNotice")}</p>
+  </div>
+)}
 
 <style>
   .fallback-banner {

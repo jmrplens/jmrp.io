@@ -156,194 +156,186 @@ const groups = [
         {t("pages.projects.heading")}
       </h1>
       <p class="projects-header__intro">{t("pages.projects.intro")}</p>
-      {
-        manualVerifiedOn &&
-          // The note's markup is pinned. Inside this expression Prettier
-          // formats with JSX rules, where `singleAttributePerLine` breaks any
-          // element carrying two or more attributes and moves its children onto
-          // their own lines. Astro keeps that whitespace where JSX would strip
-          // it, so a reflowed anchor renders "download-sources.mjs ." — a space
-          // inside the link and another before the sentence's period. Spreading
-          // the attributes instead is not the way out: `spreadAttributes` also
-          // appends this component's scoped class to `class`, which the literal
-          // form does not carry.
-          // prettier-ignore
-          <p class="projects-header__note">
+      {manualVerifiedOn &&
+        // The note's markup is pinned. Inside this expression Prettier
+        // formats with JSX rules, where `singleAttributePerLine` breaks any
+        // element carrying two or more attributes and moves its children onto
+        // their own lines. Astro keeps that whitespace where JSX would strip
+        // it, so a reflowed anchor renders "download-sources.mjs ." — a space
+        // inside the link and another before the sentence's period. Spreading
+        // the attributes instead is not the way out: `spreadAttributes` also
+        // appends this component's scoped class to `class`, which the literal
+        // form does not carry.
+        // prettier-ignore
+        <p class="projects-header__note">
             {t("pages.projects.downloadsNote", { date: manualVerifiedOn })}{" "}
             {t("pages.projects.downloadsSourceLead")}{" "}
             <a href="https://github.com/jmrplens/jmrp.io/blob/main/scripts/download-sources.mjs" target="_blank" rel="external noopener noreferrer" class="external-link" aria-label={t("aria.opensNewTab", { text: "download-sources.mjs" })}>download-sources.mjs</a>.
-          </p>
-      }
+          </p>}
     </header>
 
-    {
-      groups.map((group) => (
-        <section
-          class="projects-group"
-          aria-labelledby={`projects-${group.key}`}
+    {groups.map((group) => (
+      <section
+        class="projects-group"
+        aria-labelledby={`projects-${group.key}`}
+      >
+        <h2
+          class="projects-group__title"
+          id={`projects-${group.key}`}
         >
-          <h2
-            class="projects-group__title"
-            id={`projects-${group.key}`}
-          >
-            {group.heading}
-          </h2>
-          <p class="projects-group__intro">{group.intro}</p>
+          {group.heading}
+        </h2>
+        <p class="projects-group__intro">{group.intro}</p>
 
-          <ul class="projects-grid">
-            {group.items.map((project) => (
-              <li class="proj-card">
-                <h3 class="proj-card__name">{project.name}</h3>
-                {project.name !== project.id && (
-                  <p class="proj-card__repo-name">{project.id}</p>
+        <ul class="projects-grid">
+          {group.items.map((project) => (
+            <li class="proj-card">
+              <h3 class="proj-card__name">{project.name}</h3>
+              {project.name !== project.id && (
+                <p class="proj-card__repo-name">{project.id}</p>
+              )}
+              <p class="proj-card__summary">{project.summary[locale]}</p>
+
+              <dl class="proj-card__meta">
+                <div class="proj-card__meta-pair">
+                  <dt>{t("pages.projects.language")}</dt>
+                  <dd>{project.language}</dd>
+                </div>
+                <div class="proj-card__meta-pair">
+                  <dt>{t("pages.projects.license")}</dt>
+                  <dd>
+                    <a
+                      href={licenseUrl(project.license)}
+                      target="_blank"
+                      rel="external noopener noreferrer"
+                      aria-label={t("aria.opensNewTab", {
+                        text: `${project.license} — ${project.name}`,
+                      })}
+                    >
+                      {project.license}
+                    </a>
+                  </dd>
+                </div>
+                {downloadsOf(project) && (
+                  <div class="proj-card__meta-pair">
+                    <dt>{t("pages.projects.downloads")}</dt>
+                    <dd>{downloadsOf(project)}</dd>
+                  </div>
                 )}
-                <p class="proj-card__summary">{project.summary[locale]}</p>
+              </dl>
 
-                <dl class="proj-card__meta">
-                  <div class="proj-card__meta-pair">
-                    <dt>{t("pages.projects.language")}</dt>
-                    <dd>{project.language}</dd>
-                  </div>
-                  <div class="proj-card__meta-pair">
-                    <dt>{t("pages.projects.license")}</dt>
-                    <dd>
-                      <a
-                        href={licenseUrl(project.license)}
-                        target="_blank"
-                        rel="external noopener noreferrer"
-                        aria-label={t("aria.opensNewTab", {
-                          text: `${project.license} — ${project.name}`,
-                        })}
-                      >
-                        {project.license}
-                      </a>
-                    </dd>
-                  </div>
-                  {downloadsOf(project) && (
-                    <div class="proj-card__meta-pair">
-                      <dt>{t("pages.projects.downloads")}</dt>
-                      <dd>{downloadsOf(project)}</dd>
-                    </div>
-                  )}
-                </dl>
+              <ul
+                class="proj-card__topics"
+                aria-label={t("pages.projects.topicsLabel", {
+                  project: project.name,
+                })}
+              >
+                {project.topics.map((topic) => (
+                  <li class="proj-card__topic">{topic.name}</li>
+                ))}
+              </ul>
 
-                <ul
-                  class="proj-card__topics"
-                  aria-label={t("pages.projects.topicsLabel", {
-                    project: project.name,
+              <p class="proj-card__links">
+                <a
+                  href={project.repo}
+                  target="_blank"
+                  rel="external noopener noreferrer"
+                  aria-label={t("aria.opensNewTab", {
+                    text: `${t("pages.projects.repo")} — ${project.name}`,
                   })}
                 >
-                  {project.topics.map((topic) => (
-                    <li class="proj-card__topic">{topic.name}</li>
-                  ))}
-                </ul>
-
-                <p class="proj-card__links">
+                  <span
+                    class="i-fa-brands:github"
+                    aria-hidden="true"
+                  />
+                  {t("pages.projects.repo")}
+                </a>
+                <a
+                  href={docsHref(project)}
+                  target="_blank"
+                  rel="external noopener noreferrer"
+                  aria-label={t("aria.opensNewTab", {
+                    text: `${t("pages.projects.docs")} — ${project.name}`,
+                  })}
+                >
+                  <span
+                    class="i-mdi:book-open-variant"
+                    aria-hidden="true"
+                  />
+                  {t("pages.projects.docs")}
+                </a>
+                {(project.listings ?? []).map((listing) => (
                   <a
-                    href={project.repo}
+                    href={listing.url}
                     target="_blank"
                     rel="external noopener noreferrer"
                     aria-label={t("aria.opensNewTab", {
-                      text: `${t("pages.projects.repo")} — ${project.name}`,
+                      text: `${listing.label} — ${project.name}`,
                     })}
                   >
                     <span
-                      class="i-fa-brands:github"
+                      class={`i-${listing.icon}`}
                       aria-hidden="true"
                     />
-                    {t("pages.projects.repo")}
+                    {listing.label}
                   </a>
+                ))}
+                {hostedHref(project, locale) && (
                   <a
-                    href={docsHref(project)}
+                    href={hostedHref(project, locale)}
                     target="_blank"
                     rel="external noopener noreferrer"
                     aria-label={t("aria.opensNewTab", {
-                      text: `${t("pages.projects.docs")} — ${project.name}`,
+                      text: `${t("pages.projects.hosted")} — ${project.name}`,
                     })}
                   >
                     <span
-                      class="i-mdi:book-open-variant"
+                      class="i-mdi:api"
                       aria-hidden="true"
                     />
-                    {t("pages.projects.docs")}
+                    {t("pages.projects.hosted")}
                   </a>
-                  {(project.listings ?? []).map((listing) => (
-                    <a
-                      href={listing.url}
-                      target="_blank"
-                      rel="external noopener noreferrer"
-                      aria-label={t("aria.opensNewTab", {
-                        text: `${listing.label} — ${project.name}`,
-                      })}
-                    >
-                      <span
-                        class={`i-${listing.icon}`}
-                        aria-hidden="true"
-                      />
-                      {listing.label}
-                    </a>
-                  ))}
-                  {hostedHref(project, locale) && (
-                    <a
-                      href={hostedHref(project, locale)}
-                      target="_blank"
-                      rel="external noopener noreferrer"
-                      aria-label={t("aria.opensNewTab", {
-                        text: `${t("pages.projects.hosted")} — ${project.name}`,
-                      })}
-                    >
-                      <span
-                        class="i-mdi:api"
-                        aria-hidden="true"
-                      />
-                      {t("pages.projects.hosted")}
-                    </a>
-                  )}
-                </p>
-              </li>
-            ))}
-          </ul>
-        </section>
-      ))
-    }
+                )}
+              </p>
+            </li>
+          ))}
+        </ul>
+      </section>
+    ))}
 
-    {
-      /*
-       * The one funding route this site has, stated where the work it funds is
-       * listed. It existed only as a `DonateAction` in the structured data of
-       * all 129 pages: machines were told there was a way to support the work
-       * and readers were told nothing, while the privacy page said nothing on
-       * the site is monetized. A visible link is what makes both true.
-       */
-    }
-    {
-      sponsorUrl && (
-        <section class="projects-support">
-          <h2 class="projects-support__title">
-            {t("pages.projects.supportHeading")}
-          </h2>
-          <p class="projects-support__intro">
-            {t("pages.projects.supportIntro")}
-          </p>
-          <p class="projects-support__links">
-            <a
-              href={sponsorUrl}
-              target="_blank"
-              rel="external noopener noreferrer"
-              aria-label={t("aria.opensNewTab", {
-                text: t("pages.projects.supportLink"),
-              })}
-            >
-              <span
-                class="i-mdi:heart-outline"
-                aria-hidden="true"
-              />
-              {t("pages.projects.supportLink")}
-            </a>
-          </p>
-        </section>
-      )
-    }
+    {/*
+     * The one funding route this site has, stated where the work it funds is
+     * listed. It existed only as a `DonateAction` in the structured data of
+     * all 129 pages: machines were told there was a way to support the work
+     * and readers were told nothing, while the privacy page said nothing on
+     * the site is monetized. A visible link is what makes both true.
+     */}
+    {sponsorUrl && (
+      <section class="projects-support">
+        <h2 class="projects-support__title">
+          {t("pages.projects.supportHeading")}
+        </h2>
+        <p class="projects-support__intro">
+          {t("pages.projects.supportIntro")}
+        </p>
+        <p class="projects-support__links">
+          <a
+            href={sponsorUrl}
+            target="_blank"
+            rel="external noopener noreferrer"
+            aria-label={t("aria.opensNewTab", {
+              text: t("pages.projects.supportLink"),
+            })}
+          >
+            <span
+              class="i-mdi:heart-outline"
+              aria-hidden="true"
+            />
+            {t("pages.projects.supportLink")}
+          </a>
+        </p>
+      </section>
+    )}
   </div>
 </BaseLayout>
 

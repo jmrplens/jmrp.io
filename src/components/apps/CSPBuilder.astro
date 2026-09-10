@@ -388,9 +388,9 @@ const i18n = {
       <span class="csp-toggle-track">
         <span class="csp-toggle-thumb"></span>
       </span>
-      <span class="csp-toggle-label"
-        >{t("tools.cspBuilder.reportOnlyMode")}</span
-      >
+      <span class="csp-toggle-label">
+        {t("tools.cspBuilder.reportOnlyMode")}
+      </span>
     </label>
   </div>
 
@@ -401,290 +401,282 @@ const i18n = {
       <span>{t("tools.cspBuilder.quickPresets")}</span>
     </div>
     <div class="csp-presets-grid">
-      {
-        presets.map((preset) => (
-          <button
-            type="button"
-            class="csp-preset-btn"
-            data-preset={preset.id}
-            title={preset.description}
-          >
-            <span class={preset.icon} />
-            <span>{preset.label}</span>
-          </button>
-        ))
-      }
+      {presets.map((preset) => (
+        <button
+          type="button"
+          class="csp-preset-btn"
+          data-preset={preset.id}
+          title={preset.description}
+        >
+          <span class={preset.icon} />
+          <span>{preset.label}</span>
+        </button>
+      ))}
     </div>
   </div>
 
   <div class="csp-layout">
     {/* Directive Selection */}
     <div class="csp-directives">
-      {
-        groupedDirectives.map((group) => (
-          <div class="csp-category">
-            {group.id === "essential" ? (
-              /* Core directives always visible */
-              <>
-                <div class="csp-category-header">
-                  <span class={`csp-category-icon ${group.icon}`} />
-                  <span class="csp-category-label">{group.label}</span>
-                </div>
-                <div class="csp-items">
-                  {group.directives.map((directive) => {
-                    const inputId = `${uniqueId}-${directive.name}`;
-                    return (
-                      <div class="csp-item-wrapper">
-                        <div class="csp-item">
-                          <input
-                            type="checkbox"
-                            id={inputId}
-                            class="csp-checkbox"
-                            checked={directive.defaultChecked}
-                            data-directive={directive.name}
-                            data-value={directive.value}
-                            data-default={
-                              directive.defaultChecked ? "true" : "false"
-                            }
-                            data-editable={
-                              directive.editable ? "true" : "false"
-                            }
-                            data-not-in-meta={
-                              directive.notInMeta ? "true" : "false"
-                            }
-                            aria-label={`${directive.name}: ${directive.description}`}
-                          />
-                          <span class="csp-item-check">
-                            <span class="csp-check-icon">✓</span>
-                          </span>
-                          <span class="csp-item-content">
-                            <span class="csp-directive-header">
-                              <code class="csp-directive-name">
-                                {directive.name}
-                              </code>
-                              {directive.requiredForStrict && (
-                                <span
-                                  class="csp-badge csp-strict-badge"
-                                  title={t("tools.cspBuilder.badgeStrictTitle")}
-                                >
-                                  {t("tools.cspBuilder.badgeStrict")}
-                                </span>
-                              )}
-                              {directive.deprecated && (
-                                <span
-                                  class="csp-badge csp-deprecated-badge"
-                                  title={t(
-                                    "tools.cspBuilder.badgeDeprecatedTitle",
-                                  )}
-                                >
-                                  {t("tools.cspBuilder.badgeDeprecated")}
-                                </span>
-                              )}
-                              {directive.notInMeta && (
-                                <span
-                                  class="csp-badge csp-meta-badge"
-                                  title={t("tools.cspBuilder.badgeNoMetaTitle")}
-                                >
-                                  {t("tools.cspBuilder.badgeNoMeta")}
-                                </span>
-                              )}
-                              {directive.editable && (
-                                <button
-                                  type="button"
-                                  class="csp-edit-btn"
-                                  data-for={directive.name}
-                                  aria-label={t(
-                                    "tools.cspBuilder.addCustomDomainsAriaLabel",
-                                  )}
-                                >
-                                  <span class="i-mdi:plus-circle-outline" />
-                                </button>
-                              )}
-                            </span>
-                            <span class="csp-directive-desc">
-                              {directive.description}
-                            </span>
-                            <code class="csp-directive-value">
-                              {directive.value}
+      {groupedDirectives.map((group) => (
+        <div class="csp-category">
+          {group.id === "essential" ? (
+            /* Core directives always visible */
+            <>
+              <div class="csp-category-header">
+                <span class={`csp-category-icon ${group.icon}`} />
+                <span class="csp-category-label">{group.label}</span>
+              </div>
+              <div class="csp-items">
+                {group.directives.map((directive) => {
+                  const inputId = `${uniqueId}-${directive.name}`;
+                  return (
+                    <div class="csp-item-wrapper">
+                      <div class="csp-item">
+                        <input
+                          type="checkbox"
+                          id={inputId}
+                          class="csp-checkbox"
+                          checked={directive.defaultChecked}
+                          data-directive={directive.name}
+                          data-value={directive.value}
+                          data-default={
+                            directive.defaultChecked ? "true" : "false"
+                          }
+                          data-editable={directive.editable ? "true" : "false"}
+                          data-not-in-meta={
+                            directive.notInMeta ? "true" : "false"
+                          }
+                          aria-label={`${directive.name}: ${directive.description}`}
+                        />
+                        <span class="csp-item-check">
+                          <span class="csp-check-icon">✓</span>
+                        </span>
+                        <span class="csp-item-content">
+                          <span class="csp-directive-header">
+                            <code class="csp-directive-name">
+                              {directive.name}
                             </code>
-                          </span>
-                        </div>
-                        {directive.editable && (
-                          <div
-                            class="csp-custom-values"
-                            data-for={directive.name}
-                            hidden
-                          >
-                            <div class="csp-custom-input-row">
-                              <input
-                                type="text"
-                                class="csp-custom-input"
-                                placeholder={t(
-                                  "tools.cspBuilder.addDomainPlaceholder",
+                            {directive.requiredForStrict && (
+                              <span
+                                class="csp-badge csp-strict-badge"
+                                title={t("tools.cspBuilder.badgeStrictTitle")}
+                              >
+                                {t("tools.cspBuilder.badgeStrict")}
+                              </span>
+                            )}
+                            {directive.deprecated && (
+                              <span
+                                class="csp-badge csp-deprecated-badge"
+                                title={t(
+                                  "tools.cspBuilder.badgeDeprecatedTitle",
                                 )}
-                                aria-label={t(
-                                  "tools.cspBuilder.addDomainToDirective",
-                                  { directive: directive.name },
-                                )}
-                                data-directive={directive.name}
-                              />
+                              >
+                                {t("tools.cspBuilder.badgeDeprecated")}
+                              </span>
+                            )}
+                            {directive.notInMeta && (
+                              <span
+                                class="csp-badge csp-meta-badge"
+                                title={t("tools.cspBuilder.badgeNoMetaTitle")}
+                              >
+                                {t("tools.cspBuilder.badgeNoMeta")}
+                              </span>
+                            )}
+                            {directive.editable && (
                               <button
                                 type="button"
-                                class="csp-add-value-btn"
+                                class="csp-edit-btn"
+                                data-for={directive.name}
                                 aria-label={t(
-                                  "tools.cspBuilder.addDomainAriaLabel",
+                                  "tools.cspBuilder.addCustomDomainsAriaLabel",
                                 )}
-                                data-directive={directive.name}
                               >
-                                <span class="i-mdi:plus" />
+                                <span class="i-mdi:plus-circle-outline" />
                               </button>
-                            </div>
-                            <div
-                              class="csp-custom-tags"
+                            )}
+                          </span>
+                          <span class="csp-directive-desc">
+                            {directive.description}
+                          </span>
+                          <code class="csp-directive-value">
+                            {directive.value}
+                          </code>
+                        </span>
+                      </div>
+                      {directive.editable && (
+                        <div
+                          class="csp-custom-values"
+                          data-for={directive.name}
+                          hidden
+                        >
+                          <div class="csp-custom-input-row">
+                            <input
+                              type="text"
+                              class="csp-custom-input"
+                              placeholder={t(
+                                "tools.cspBuilder.addDomainPlaceholder",
+                              )}
+                              aria-label={t(
+                                "tools.cspBuilder.addDomainToDirective",
+                                { directive: directive.name },
+                              )}
                               data-directive={directive.name}
                             />
+                            <button
+                              type="button"
+                              class="csp-add-value-btn"
+                              aria-label={t(
+                                "tools.cspBuilder.addDomainAriaLabel",
+                              )}
+                              data-directive={directive.name}
+                            >
+                              <span class="i-mdi:plus" />
+                            </button>
                           </div>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              </>
-            ) : (
-              /* Other categories are collapsible */
-              <details
-                class="csp-collapsible"
-                open={group.id === "security"}
-              >
-                <summary class="csp-category-header csp-category-toggle">
-                  <span class="csp-collapse-icon i-mdi:chevron-right" />
-                  <span class={`csp-category-icon ${group.icon}`} />
-                  <span class="csp-category-label">{group.label}</span>
-                </summary>
-                <div class="csp-items">
-                  {group.directives.map((directive) => {
-                    const inputId = `${uniqueId}-${directive.name}`;
-                    return (
-                      <div class="csp-item-wrapper">
-                        <div class="csp-item">
-                          <input
-                            type="checkbox"
-                            id={inputId}
-                            class="csp-checkbox"
-                            checked={directive.defaultChecked}
-                            data-directive={directive.name}
-                            data-value={directive.value}
-                            data-default={
-                              directive.defaultChecked ? "true" : "false"
-                            }
-                            data-editable={
-                              directive.editable ? "true" : "false"
-                            }
-                            data-not-in-meta={
-                              directive.notInMeta ? "true" : "false"
-                            }
-                            aria-label={`${directive.name}: ${directive.description}`}
-                          />
-                          <span class="csp-item-check">
-                            <span class="csp-check-icon">✓</span>
-                          </span>
-                          <span class="csp-item-content">
-                            <span class="csp-directive-header">
-                              <code class="csp-directive-name">
-                                {directive.name}
-                              </code>
-                              {directive.requiredForStrict && (
-                                <span
-                                  class="csp-badge csp-strict-badge"
-                                  title={t("tools.cspBuilder.badgeStrictTitle")}
-                                >
-                                  {t("tools.cspBuilder.badgeStrict")}
-                                </span>
-                              )}
-                              {directive.deprecated && (
-                                <span
-                                  class="csp-badge csp-deprecated-badge"
-                                  title={t(
-                                    "tools.cspBuilder.badgeDeprecatedTitle",
-                                  )}
-                                >
-                                  {t("tools.cspBuilder.badgeDeprecated")}
-                                </span>
-                              )}
-                              {directive.notInMeta && (
-                                <span
-                                  class="csp-badge csp-meta-badge"
-                                  title={t("tools.cspBuilder.badgeNoMetaTitle")}
-                                >
-                                  {t("tools.cspBuilder.badgeNoMeta")}
-                                </span>
-                              )}
-                              {directive.editable && (
-                                <button
-                                  type="button"
-                                  class="csp-edit-btn"
-                                  data-for={directive.name}
-                                  aria-label={t(
-                                    "tools.cspBuilder.addCustomDomainsAriaLabel",
-                                  )}
-                                >
-                                  <span class="i-mdi:plus-circle-outline" />
-                                </button>
-                              )}
-                            </span>
-                            <span class="csp-directive-desc">
-                              {directive.description}
-                            </span>
-                            <code class="csp-directive-value">
-                              {directive.value}
-                            </code>
-                          </span>
-                        </div>
-                        {directive.editable && (
                           <div
-                            class="csp-custom-values"
-                            data-for={directive.name}
-                            hidden
-                          >
-                            <div class="csp-custom-input-row">
-                              <input
-                                type="text"
-                                class="csp-custom-input"
-                                placeholder={t(
-                                  "tools.cspBuilder.addDomainPlaceholder",
+                            class="csp-custom-tags"
+                            data-directive={directive.name}
+                          />
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </>
+          ) : (
+            /* Other categories are collapsible */
+            <details
+              class="csp-collapsible"
+              open={group.id === "security"}
+            >
+              <summary class="csp-category-header csp-category-toggle">
+                <span class="csp-collapse-icon i-mdi:chevron-right" />
+                <span class={`csp-category-icon ${group.icon}`} />
+                <span class="csp-category-label">{group.label}</span>
+              </summary>
+              <div class="csp-items">
+                {group.directives.map((directive) => {
+                  const inputId = `${uniqueId}-${directive.name}`;
+                  return (
+                    <div class="csp-item-wrapper">
+                      <div class="csp-item">
+                        <input
+                          type="checkbox"
+                          id={inputId}
+                          class="csp-checkbox"
+                          checked={directive.defaultChecked}
+                          data-directive={directive.name}
+                          data-value={directive.value}
+                          data-default={
+                            directive.defaultChecked ? "true" : "false"
+                          }
+                          data-editable={directive.editable ? "true" : "false"}
+                          data-not-in-meta={
+                            directive.notInMeta ? "true" : "false"
+                          }
+                          aria-label={`${directive.name}: ${directive.description}`}
+                        />
+                        <span class="csp-item-check">
+                          <span class="csp-check-icon">✓</span>
+                        </span>
+                        <span class="csp-item-content">
+                          <span class="csp-directive-header">
+                            <code class="csp-directive-name">
+                              {directive.name}
+                            </code>
+                            {directive.requiredForStrict && (
+                              <span
+                                class="csp-badge csp-strict-badge"
+                                title={t("tools.cspBuilder.badgeStrictTitle")}
+                              >
+                                {t("tools.cspBuilder.badgeStrict")}
+                              </span>
+                            )}
+                            {directive.deprecated && (
+                              <span
+                                class="csp-badge csp-deprecated-badge"
+                                title={t(
+                                  "tools.cspBuilder.badgeDeprecatedTitle",
                                 )}
-                                aria-label={t(
-                                  "tools.cspBuilder.addDomainToDirective",
-                                  { directive: directive.name },
-                                )}
-                                data-directive={directive.name}
-                              />
+                              >
+                                {t("tools.cspBuilder.badgeDeprecated")}
+                              </span>
+                            )}
+                            {directive.notInMeta && (
+                              <span
+                                class="csp-badge csp-meta-badge"
+                                title={t("tools.cspBuilder.badgeNoMetaTitle")}
+                              >
+                                {t("tools.cspBuilder.badgeNoMeta")}
+                              </span>
+                            )}
+                            {directive.editable && (
                               <button
                                 type="button"
-                                class="csp-add-value-btn"
+                                class="csp-edit-btn"
+                                data-for={directive.name}
                                 aria-label={t(
-                                  "tools.cspBuilder.addDomainAriaLabel",
+                                  "tools.cspBuilder.addCustomDomainsAriaLabel",
                                 )}
-                                data-directive={directive.name}
                               >
-                                <span class="i-mdi:plus" />
+                                <span class="i-mdi:plus-circle-outline" />
                               </button>
-                            </div>
-                            <div
-                              class="csp-custom-tags"
+                            )}
+                          </span>
+                          <span class="csp-directive-desc">
+                            {directive.description}
+                          </span>
+                          <code class="csp-directive-value">
+                            {directive.value}
+                          </code>
+                        </span>
+                      </div>
+                      {directive.editable && (
+                        <div
+                          class="csp-custom-values"
+                          data-for={directive.name}
+                          hidden
+                        >
+                          <div class="csp-custom-input-row">
+                            <input
+                              type="text"
+                              class="csp-custom-input"
+                              placeholder={t(
+                                "tools.cspBuilder.addDomainPlaceholder",
+                              )}
+                              aria-label={t(
+                                "tools.cspBuilder.addDomainToDirective",
+                                { directive: directive.name },
+                              )}
                               data-directive={directive.name}
                             />
+                            <button
+                              type="button"
+                              class="csp-add-value-btn"
+                              aria-label={t(
+                                "tools.cspBuilder.addDomainAriaLabel",
+                              )}
+                              data-directive={directive.name}
+                            >
+                              <span class="i-mdi:plus" />
+                            </button>
                           </div>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              </details>
-            )}
-          </div>
-        ))
-      }
+                          <div
+                            class="csp-custom-tags"
+                            data-directive={directive.name}
+                          />
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </details>
+          )}
+        </div>
+      ))}
     </div>
 
     {/* Live Preview */}
@@ -699,28 +691,26 @@ const i18n = {
         <label
           for={`${uniqueId}-format`}
           class="csp-format-label"
-          >{t("tools.cspBuilder.formatLabel")}</label
         >
+          {t("tools.cspBuilder.formatLabel")}
+        </label>
         <select
           id={`${uniqueId}-format`}
           class="csp-format-select"
         >
-          {
-            exportFormats.map((format, idx) => (
-              <option
-                value={format.id}
-                selected={idx === 0}
-              >
-                {format.label}
-              </option>
-            ))
-          }
+          {exportFormats.map((format, idx) => (
+            <option
+              value={format.id}
+              selected={idx === 0}
+            >
+              {format.label}
+            </option>
+          ))}
         </select>
       </div>
 
       <div class="csp-output-wrapper">
-        <pre
-          class="csp-output"><code id={`${uniqueId}-output`}>Content-Security-Policy: ...</code></pre>
+        <pre class="csp-output"><code id={`${uniqueId}-output`}>Content-Security-Policy: ...</code></pre>
         <button
           class="csp-copy-btn"
           type="button"
@@ -732,14 +722,15 @@ const i18n = {
       </div>
 
       <div class="csp-rating">
-        <span class="csp-rating-label"
-          >{t("tools.cspBuilder.securityLevel")}</span
-        >
+        <span class="csp-rating-label">
+          {t("tools.cspBuilder.securityLevel")}
+        </span>
         <span
           class="csp-rating-badge"
           id={`${uniqueId}-rating`}
-          >...</span
         >
+          ...
+        </span>
       </div>
 
       {/* Warnings Section */}
@@ -777,7 +768,10 @@ const i18n = {
   </div>
 </div>
 
-<script is:inline define:vars={{ uniqueId, i18n }}>
+<script
+  is:inline
+  define:vars={{ uniqueId, i18n }}
+>
   // CSP Builder interactive functionality
   (function () {
     const container = document.querySelector(`[data-csp-id="${uniqueId}"]`);

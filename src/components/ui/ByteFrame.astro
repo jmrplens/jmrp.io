@@ -96,46 +96,42 @@ const summary =
   {title && <div class="byte-frame__title">{title}</div>}
 
   <div class="byte-frame__track">
-    {
-      segments.map((seg) => (
+    {segments.map((seg) => (
+      <span
+        class="byte-frame__seg"
+        style={`flex-grow:${seg.widthPct.toFixed(3)}`}
+        title={`${seg.label}: ${seg.sizeLabel} (${seg.offsetLabel})`}
+      >
         <span
-          class="byte-frame__seg"
-          style={`flex-grow:${seg.widthPct.toFixed(3)}`}
-          title={`${seg.label}: ${seg.sizeLabel} (${seg.offsetLabel})`}
+          class:list={[
+            "byte-frame__bar",
+            seg.variable && "byte-frame__bar--var",
+          ]}
+          style={`background-color:${seg.color}`}
         >
-          <span
-            class:list={[
-              "byte-frame__bar",
-              seg.variable && "byte-frame__bar--var",
-            ]}
-            style={`background-color:${seg.color}`}
-          >
-            {seg.widthPct >= 14 && (
-              <span class="byte-frame__name">{seg.label}</span>
-            )}
-          </span>
-          <span class="byte-frame__offset">{seg.offsetLabel}</span>
+          {seg.widthPct >= 14 && (
+            <span class="byte-frame__name">{seg.label}</span>
+          )}
         </span>
-      ))
-    }
+        <span class="byte-frame__offset">{seg.offsetLabel}</span>
+      </span>
+    ))}
   </div>
 
   <ul class="byte-frame__legend">
-    {
-      segments.map((seg) => (
-        <li class="byte-frame__legend-item">
-          <span
-            class="byte-frame__swatch"
-            style={`background-color:${seg.color}`}
-            aria-hidden="true"
-          />
-          <span class="byte-frame__legend-text">
-            <b>{seg.label}</b> · {seg.sizeLabel} · {seg.offsetLabel}
-            {seg.note && <span class="byte-frame__note"> — {seg.note}</span>}
-          </span>
-        </li>
-      ))
-    }
+    {segments.map((seg) => (
+      <li class="byte-frame__legend-item">
+        <span
+          class="byte-frame__swatch"
+          style={`background-color:${seg.color}`}
+          aria-hidden="true"
+        />
+        <span class="byte-frame__legend-text">
+          <b>{seg.label}</b> · {seg.sizeLabel} · {seg.offsetLabel}
+          {seg.note && <span class="byte-frame__note"> — {seg.note}</span>}
+        </span>
+      </li>
+    ))}
   </ul>
 
   <table class="sr-only">
@@ -148,15 +144,13 @@ const summary =
       </tr>
     </thead>
     <tbody>
-      {
-        segments.map((seg) => (
-          <tr>
-            <td>{seg.label}</td>
-            <td>{seg.offsetLabel}</td>
-            <td>{seg.sizeLabel}</td>
-          </tr>
-        ))
-      }
+      {segments.map((seg) => (
+        <tr>
+          <td>{seg.label}</td>
+          <td>{seg.offsetLabel}</td>
+          <td>{seg.sizeLabel}</td>
+        </tr>
+      ))}
     </tbody>
   </table>
 

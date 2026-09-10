@@ -265,46 +265,44 @@ const summary =
           ></line>
         </pattern>
       </defs>
-      {
-        rows.map((r) => (
-          <g style={`--wire:${r.color}`}>
-            <text
-              x={PAD_X}
-              y={r.yName}
-              class="timing__name"
-            >
-              {r.name}
-            </text>
-            {r.boxes.map((b) => (
-              <g>
-                <rect
-                  x={b.x}
-                  y={r.top}
-                  width={b.w}
-                  height={ROW_H}
-                  rx="3"
-                  fill={b.fill ? "none" : `url(#${uid}-hatch)`}
-                  class={b.fill ? "timing__data" : "timing__x"}
-                />
-                {b.label && (
-                  <text
-                    x={b.x + b.w / 2}
-                    y={r.yName}
-                    text-anchor="middle"
-                    class="timing__data-label"
-                  >
-                    {b.label}
-                  </text>
-                )}
-              </g>
-            ))}
-            <path
-              d={r.path}
-              class="timing__wire"
-            />
-          </g>
-        ))
-      }
+      {rows.map((r) => (
+        <g style={`--wire:${r.color}`}>
+          <text
+            x={PAD_X}
+            y={r.yName}
+            class="timing__name"
+          >
+            {r.name}
+          </text>
+          {r.boxes.map((b) => (
+            <g>
+              <rect
+                x={b.x}
+                y={r.top}
+                width={b.w}
+                height={ROW_H}
+                rx="3"
+                fill={b.fill ? "none" : `url(#${uid}-hatch)`}
+                class={b.fill ? "timing__data" : "timing__x"}
+              />
+              {b.label && (
+                <text
+                  x={b.x + b.w / 2}
+                  y={r.yName}
+                  text-anchor="middle"
+                  class="timing__data-label"
+                >
+                  {b.label}
+                </text>
+              )}
+            </g>
+          ))}
+          <path
+            d={r.path}
+            class="timing__wire"
+          />
+        </g>
+      ))}
     </svg>
   </div>
 

@@ -39,49 +39,43 @@ if (mdnUrl) {
   <div class="dc-header">
     <code class="dc-name">{name}</code>
     {since && <span class="dc-since">{since}</span>}
-    {
-      safeMdnUrl && (
-        <a
-          href={safeMdnUrl}
-          target="_blank"
-          rel="external noopener noreferrer"
-          class="dc-mdn external-link"
-          aria-label={t("aria.opensNewTab", {
-            text: t("aria.mdnDocs", { name }),
-          })}
-        >
-          MDN
-        </a>
-      )
-    }
+    {safeMdnUrl && (
+      <a
+        href={safeMdnUrl}
+        target="_blank"
+        rel="external noopener noreferrer"
+        class="dc-mdn external-link"
+        aria-label={t("aria.opensNewTab", {
+          text: t("aria.mdnDocs", { name }),
+        })}
+      >
+        MDN
+      </a>
+    )}
   </div>
 
-  {
-    (syntax || defaultValue || description) && (
-      <div class="dc-body">
-        {syntax && <p class="dc-mono-line">{syntax}</p>}
+  {(syntax || defaultValue || description) && (
+    <div class="dc-body">
+      {syntax && <p class="dc-mono-line">{syntax}</p>}
 
-        {defaultValue && (
-          <p class="dc-mono-line">
-            <span class="dc-default-key">
-              {t("components.directiveCard.default")}:
-            </span>{" "}
-            <span class="dc-default-val">{defaultValue}</span>
-          </p>
-        )}
+      {defaultValue && (
+        <p class="dc-mono-line">
+          <span class="dc-default-key">
+            {t("components.directiveCard.default")}:
+          </span>{" "}
+          <span class="dc-default-val">{defaultValue}</span>
+        </p>
+      )}
 
-        {description && <p class="dc-description">{description}</p>}
-      </div>
-    )
-  }
+      {description && <p class="dc-description">{description}</p>}
+    </div>
+  )}
 
-  {
-    hasContent && (
-      <div class="dc-content">
-        <slot />
-      </div>
-    )
-  }
+  {hasContent && (
+    <div class="dc-content">
+      <slot />
+    </div>
+  )}
 </div>
 
 <style>

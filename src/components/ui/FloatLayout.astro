@@ -91,30 +91,26 @@ const summary =
   {title && <div class="float__title">{title}</div>}
 
   <div class="float__bar">
-    {
-      groups.map((g) => (
-        <div
-          class="float__seg"
-          style={`flex-grow:${g.w};background-color:${g.color}`}
-        >
-          <span class="float__seg-name">{g.name}</span>
-          <span class="float__seg-w">{g.w} b</span>
-        </div>
-      ))
-    }
+    {groups.map((g) => (
+      <div
+        class="float__seg"
+        style={`flex-grow:${g.w};background-color:${g.color}`}
+      >
+        <span class="float__seg-name">{g.name}</span>
+        <span class="float__seg-w">{g.w} b</span>
+      </div>
+    ))}
   </div>
 
   <p class="float__bits">
-    {
-      groups.map((g) => (
-        <span
-          class="float__chunk"
-          style={`background-color:${g.color}`}
-        >
-          {g.bits}
-        </span>
-      ))
-    }
+    {groups.map((g) => (
+      <span
+        class="float__chunk"
+        style={`background-color:${g.color}`}
+      >
+        {g.bits}
+      </span>
+    ))}
   </p>
 
   <p class="float__decode">

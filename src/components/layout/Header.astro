@@ -54,10 +54,8 @@ const navLabelKeyMap: Record<string, TranslationKey> = {
 
 <header>
   {/* Zero-JS drawer state: focusable checkbox toggled by the burger/scrim. */}
-  {
-    /* Named by the burger label's sr-only text (an aria-label here would be
-      redundant with it — html-validate no-redundant-aria-label). */
-  }
+  {/* Named by the burger label's sr-only text (an aria-label here would be
+      redundant with it — html-validate no-redundant-aria-label). */}
   <input
     type="checkbox"
     id="nav-open"
@@ -78,32 +76,30 @@ const navLabelKeyMap: Record<string, TranslationKey> = {
     </a>
     <div class="nav-right">
       <ul class="nav-links">
-        {
-          navItems.map((item) => {
-            const labelKey = navLabelKeyMap[item.href];
-            const label = labelKey ? t(labelKey) : item.label;
-            const active = isCurrent(item.href);
-            return (
-              <li>
-                <a
-                  href={translatePath(item.href)}
-                  data-astro-prefetch
-                  aria-current={active ? "page" : undefined}
-                >
-                  {active && (
-                    <span
-                      class="nav-prefix"
-                      aria-hidden="true"
-                    >
-                      /
-                    </span>
-                  )}
-                  {label}
-                </a>
-              </li>
-            );
-          })
-        }
+        {navItems.map((item) => {
+          const labelKey = navLabelKeyMap[item.href];
+          const label = labelKey ? t(labelKey) : item.label;
+          const active = isCurrent(item.href);
+          return (
+            <li>
+              <a
+                href={translatePath(item.href)}
+                data-astro-prefetch
+                aria-current={active ? "page" : undefined}
+              >
+                {active && (
+                  <span
+                    class="nav-prefix"
+                    aria-hidden="true"
+                  >
+                    /
+                  </span>
+                )}
+                {label}
+              </a>
+            </li>
+          );
+        })}
       </ul>
       <LanguageSwitcher />
       <ThemeToggle />
@@ -119,10 +115,8 @@ const navLabelKeyMap: Record<string, TranslationKey> = {
           aria-hidden="true"
         ></span>
       </a>
-      {
-        /* `label` is naming-prohibited (no aria-label without a role), so the
-          accessible name is sr-only text content instead. */
-      }
+      {/* `label` is naming-prohibited (no aria-label without a role), so the
+          accessible name is sr-only text content instead. */}
       <label
         for="nav-open"
         id="menu-toggle"
@@ -141,10 +135,8 @@ const navLabelKeyMap: Record<string, TranslationKey> = {
     </div>
   </nav>
 
-  {
-    /* Scrim (zero-JS close via label) + the terminal drawer. Pointer-only,
-      redundant with the drawer's close control, so hidden from AT. */
-  }
+  {/* Scrim (zero-JS close via label) + the terminal drawer. Pointer-only,
+      redundant with the drawer's close control, so hidden from AT. */}
   <label
     for="nav-open"
     class="menu-backdrop"

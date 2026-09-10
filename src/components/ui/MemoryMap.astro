@@ -115,59 +115,56 @@ const summary =
   {title && <div class="memory-map__title">{title}</div>}
 
   <div class="memory-map__bars">
-    {
-      resolvedBars.map((bar) => {
-        const trackPct =
-          scale === "shared" ? Math.max(3, (bar.total / globalMax) * 100) : 100;
-        return (
-          <div class="memory-map__row">
-            <span class="memory-map__region">{bar.label}</span>
-            <div class="memory-map__track-wrap">
-              <div
-                class="memory-map__track"
-                style={`width:${trackPct.toFixed(2)}%`}
-              >
-                {bar.segments.map((seg) => {
-                  const widthPct =
-                    bar.total > 0
-                      ? (Math.max(0, seg.bytes) / bar.total) * 100
-                      : 100;
-                  // Only label segments wide enough to hold the text (>=20% of
-                  // the container); the legend below always carries the full name.
-                  const showLabel = (trackPct / 100) * widthPct >= 20;
-                  return (
-                    <span
-                      class="memory-map__seg"
-                      style={`flex-grow:${widthPct.toFixed(3)};background-color:${seg.resolvedColor}`}
-                      title={`${seg.label}: ${seg.sizeLabel ?? formatBytes(seg.bytes)}`}
-                    >
-                      {showLabel && (
-                        <span class="memory-map__seg-label">{seg.label}</span>
-                      )}
-                    </span>
-                  );
-                })}
-              </div>
-            </div>
-            <ul class="memory-map__legend">
-              {bar.segments.map((seg) => (
-                <li class="memory-map__legend-item">
+    {resolvedBars.map((bar) => {
+      const trackPct =
+        scale === "shared" ? Math.max(3, (bar.total / globalMax) * 100) : 100;
+      return (
+        <div class="memory-map__row">
+          <span class="memory-map__region">{bar.label}</span>
+          <div class="memory-map__track-wrap">
+            <div
+              class="memory-map__track"
+              style={`width:${trackPct.toFixed(2)}%`}
+            >
+              {bar.segments.map((seg) => {
+                const widthPct =
+                  bar.total > 0
+                    ? (Math.max(0, seg.bytes) / bar.total) * 100
+                    : 100;
+                // Only label segments wide enough to hold the text (>=20% of
+                // the container); the legend below always carries the full name.
+                const showLabel = (trackPct / 100) * widthPct >= 20;
+                return (
                   <span
-                    class="memory-map__swatch"
-                    style={`background-color:${seg.resolvedColor}`}
-                    aria-hidden="true"
-                  />
-                  <span class="memory-map__legend-text">
-                    {seg.label} —{" "}
-                    <b>{seg.sizeLabel ?? formatBytes(seg.bytes)}</b>
+                    class="memory-map__seg"
+                    style={`flex-grow:${widthPct.toFixed(3)};background-color:${seg.resolvedColor}`}
+                    title={`${seg.label}: ${seg.sizeLabel ?? formatBytes(seg.bytes)}`}
+                  >
+                    {showLabel && (
+                      <span class="memory-map__seg-label">{seg.label}</span>
+                    )}
                   </span>
-                </li>
-              ))}
-            </ul>
+                );
+              })}
+            </div>
           </div>
-        );
-      })
-    }
+          <ul class="memory-map__legend">
+            {bar.segments.map((seg) => (
+              <li class="memory-map__legend-item">
+                <span
+                  class="memory-map__swatch"
+                  style={`background-color:${seg.resolvedColor}`}
+                  aria-hidden="true"
+                />
+                <span class="memory-map__legend-text">
+                  {seg.label} — <b>{seg.sizeLabel ?? formatBytes(seg.bytes)}</b>
+                </span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      );
+    })}
   </div>
 
   <table class="sr-only">
@@ -180,17 +177,15 @@ const summary =
       </tr>
     </thead>
     <tbody>
-      {
-        bars.flatMap((bar) =>
-          bar.segments.map((seg) => (
-            <tr>
-              <td>{bar.label}</td>
-              <td>{seg.label}</td>
-              <td>{seg.sizeLabel ?? formatBytes(seg.bytes)}</td>
-            </tr>
-          )),
-        )
-      }
+      {bars.flatMap((bar) =>
+        bar.segments.map((seg) => (
+          <tr>
+            <td>{bar.label}</td>
+            <td>{seg.label}</td>
+            <td>{seg.sizeLabel ?? formatBytes(seg.bytes)}</td>
+          </tr>
+        )),
+      )}
     </tbody>
   </table>
 

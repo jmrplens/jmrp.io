@@ -84,43 +84,40 @@ const summary =
           <th
             scope="col"
             class="matrix__corner"
-            >{rowHeader}</th
           >
-          {
-            cols.map((c) => (
-              <th
-                scope="col"
-                class="matrix__colhead"
-              >
-                {c}
-              </th>
-            ))
-          }
+            {rowHeader}
+          </th>
+          {cols.map((c) => (
+            <th
+              scope="col"
+              class="matrix__colhead"
+            >
+              {c}
+            </th>
+          ))}
         </tr>
       </thead>
       <tbody>
-        {
-          rows.map((rLabel, r) => (
-            <tr>
-              <th
-                scope="row"
-                class="matrix__rowhead"
+        {rows.map((rLabel, r) => (
+          <tr>
+            <th
+              scope="row"
+              class="matrix__rowhead"
+            >
+              {rLabel}
+            </th>
+            {cols.map((_, c) => (
+              <td
+                class:list={[
+                  "matrix__cell",
+                  hi.has(`${r}:${c}`) && "matrix__cell--hi",
+                ]}
               >
-                {rLabel}
-              </th>
-              {cols.map((_, c) => (
-                <td
-                  class:list={[
-                    "matrix__cell",
-                    hi.has(`${r}:${c}`) && "matrix__cell--hi",
-                  ]}
-                >
-                  {cells[r]?.[c] ?? ""}
-                </td>
-              ))}
-            </tr>
-          ))
-        }
+                {cells[r]?.[c] ?? ""}
+              </td>
+            ))}
+          </tr>
+        ))}
       </tbody>
     </table>
   </div>

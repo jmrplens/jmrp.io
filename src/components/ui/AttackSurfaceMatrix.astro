@@ -87,77 +87,75 @@ const ICON: Record<Lane["kind"], string> = {
   {title && <div class="asm__title">{title}</div>}
 
   <div class="asm__lanes">
-    {
-      lanes.map((lane) => (
-        <div class={`asm__lane asm__lane--${lane.kind}`}>
-          <div class="asm__lane-head">
+    {lanes.map((lane) => (
+      <div class={`asm__lane asm__lane--${lane.kind}`}>
+        <div class="asm__lane-head">
+          <span
+            class={`asm__lane-icon ${ICON[lane.kind]}`}
+            aria-hidden="true"
+          />
+          <span class="asm__lane-titles">
+            <span class="asm__lane-title">{lane.title}</span>
+            {lane.subtitle && (
+              <span class="asm__lane-subtitle">{lane.subtitle}</span>
+            )}
+          </span>
+        </div>
+
+        {lane.rate && (
+          <p class="asm__rate">
             <span
-              class={`asm__lane-icon ${ICON[lane.kind]}`}
+              class="asm__rate-icon i-mdi:speedometer"
               aria-hidden="true"
             />
-            <span class="asm__lane-titles">
-              <span class="asm__lane-title">{lane.title}</span>
-              {lane.subtitle && (
-                <span class="asm__lane-subtitle">{lane.subtitle}</span>
-              )}
-            </span>
-          </div>
+            {lane.rate}
+          </p>
+        )}
 
-          {lane.rate && (
-            <p class="asm__rate">
+        <ul class="asm__list asm__list--can">
+          {lane.can.map((item) => (
+            <li>
               <span
-                class="asm__rate-icon i-mdi:speedometer"
+                class="asm__bullet i-mdi:check-bold"
                 aria-hidden="true"
               />
-              {lane.rate}
-            </p>
-          )}
+              {item}
+            </li>
+          ))}
+        </ul>
 
-          <ul class="asm__list asm__list--can">
-            {lane.can.map((item) => (
-              <li>
-                <span
-                  class="asm__bullet i-mdi:check-bold"
-                  aria-hidden="true"
-                />
-                {item}
-              </li>
-            ))}
-          </ul>
+        <ul class="asm__list asm__list--cannot">
+          {lane.cannot.map((item) => (
+            <li>
+              <span
+                class="asm__bullet i-mdi:close-thick"
+                aria-hidden="true"
+              />
+              {item}
+            </li>
+          ))}
+        </ul>
 
-          <ul class="asm__list asm__list--cannot">
-            {lane.cannot.map((item) => (
-              <li>
-                <span
-                  class="asm__bullet i-mdi:close-thick"
-                  aria-hidden="true"
-                />
-                {item}
-              </li>
-            ))}
-          </ul>
-
-          <p class="asm__stopped">
-            <span
-              class="asm__stopped-icon i-mdi:shield-lock"
-              aria-hidden="true"
-            />
-            <span>
-              <span class="asm__stopped-label">
-                {t("components.attackSurfaceMatrix.stoppedBy")}
-              </span>
-              {lane.stoppedBy}
+        <p class="asm__stopped">
+          <span
+            class="asm__stopped-icon i-mdi:shield-lock"
+            aria-hidden="true"
+          />
+          <span>
+            <span class="asm__stopped-label">
+              {t("components.attackSurfaceMatrix.stoppedBy")}
             </span>
-          </p>
-        </div>
-      ))
-    }
+            {lane.stoppedBy}
+          </span>
+        </p>
+      </div>
+    ))}
   </div>
 
   <table class="sr-only">
-    <caption
-      >{title ?? t("components.attackSurfaceMatrix.tableCaption")}</caption
-    >
+    <caption>
+      {title ?? t("components.attackSurfaceMatrix.tableCaption")}
+    </caption>
     <thead>
       <tr>
         <th scope="col">{t("components.attackSurfaceMatrix.attacker")}</th>
@@ -168,20 +166,18 @@ const ICON: Record<Lane["kind"], string> = {
       </tr>
     </thead>
     <tbody>
-      {
-        lanes.map((lane) => (
-          <tr>
-            <td>
-              {lane.title}
-              {lane.subtitle ? ` (${lane.subtitle})` : ""}
-            </td>
-            <td>{lane.rate ?? "—"}</td>
-            <td>{lane.can.join("; ")}</td>
-            <td>{lane.cannot.join("; ")}</td>
-            <td>{lane.stoppedBy}</td>
-          </tr>
-        ))
-      }
+      {lanes.map((lane) => (
+        <tr>
+          <td>
+            {lane.title}
+            {lane.subtitle ? ` (${lane.subtitle})` : ""}
+          </td>
+          <td>{lane.rate ?? "—"}</td>
+          <td>{lane.can.join("; ")}</td>
+          <td>{lane.cannot.join("; ")}</td>
+          <td>{lane.stoppedBy}</td>
+        </tr>
+      ))}
     </tbody>
   </table>
 

@@ -101,20 +101,23 @@ const i18n = {
           type="button"
           class="wg-preset-btn"
           data-preset="ipv4-only"
-          >{t("tools.wireguardConfigGenerator.presetIpv4Only")}</button
         >
+          {t("tools.wireguardConfigGenerator.presetIpv4Only")}
+        </button>
         <button
           type="button"
           class="wg-preset-btn wg-preset-active"
           data-preset="dual-stack"
-          >{t("tools.wireguardConfigGenerator.presetDualStack")}</button
         >
+          {t("tools.wireguardConfigGenerator.presetDualStack")}
+        </button>
         <button
           type="button"
           class="wg-preset-btn"
           data-preset="site-to-site"
-          >{t("tools.wireguardConfigGenerator.presetSiteToSite")}</button
         >
+          {t("tools.wireguardConfigGenerator.presetSiteToSite")}
+        </button>
       </div>
     </div>
 
@@ -133,8 +136,9 @@ const i18n = {
             <label
               class="wg-label"
               for={`${uniqueId}-iface-name`}
-              >{t("tools.wireguardConfigGenerator.labelInterfaceName")}</label
             >
+              {t("tools.wireguardConfigGenerator.labelInterfaceName")}
+            </label>
             <input
               id={`${uniqueId}-iface-name`}
               class="wg-input"
@@ -147,8 +151,9 @@ const i18n = {
             <label
               class="wg-label"
               for={`${uniqueId}-listen-port`}
-              >{t("tools.wireguardConfigGenerator.labelListenPort")}</label
             >
+              {t("tools.wireguardConfigGenerator.labelListenPort")}
+            </label>
             <input
               id={`${uniqueId}-listen-port`}
               class="wg-input"
@@ -163,8 +168,9 @@ const i18n = {
           <label
             class="wg-label"
             for={`${uniqueId}-iface-comment`}
-            >{t("tools.wireguardConfigGenerator.labelComment")}</label
           >
+            {t("tools.wireguardConfigGenerator.labelComment")}
+          </label>
           <input
             id={`${uniqueId}-iface-comment`}
             class="wg-input"
@@ -191,8 +197,9 @@ const i18n = {
             <label
               class="wg-label"
               for={`${uniqueId}-vpn-subnet`}
-              >{t("tools.wireguardConfigGenerator.labelVpnIpv4Subnet")}</label
             >
+              {t("tools.wireguardConfigGenerator.labelVpnIpv4Subnet")}
+            </label>
             <input
               id={`${uniqueId}-vpn-subnet`}
               class="wg-input"
@@ -200,16 +207,17 @@ const i18n = {
               value="192.168.100.0/24"
               placeholder="192.168.100.0/24"
             />
-            <span class="wg-field-hint"
-              >{t("tools.wireguardConfigGenerator.hintGatewayV4")}</span
-            >
+            <span class="wg-field-hint">
+              {t("tools.wireguardConfigGenerator.hintGatewayV4")}
+            </span>
           </div>
           <div class="wg-field">
             <label
               class="wg-label"
               for={`${uniqueId}-lan-subnet`}
-              >{t("tools.wireguardConfigGenerator.labelHomeLanSubnet")}</label
             >
+              {t("tools.wireguardConfigGenerator.labelHomeLanSubnet")}
+            </label>
             <input
               id={`${uniqueId}-lan-subnet`}
               class="wg-input"
@@ -237,8 +245,9 @@ const i18n = {
             <label
               class="wg-label"
               for={`${uniqueId}-vpn-ipv6`}
-              >{t("tools.wireguardConfigGenerator.labelVpnIpv6Prefix")}</label
             >
+              {t("tools.wireguardConfigGenerator.labelVpnIpv6Prefix")}
+            </label>
             <input
               id={`${uniqueId}-vpn-ipv6`}
               class="wg-input"
@@ -246,9 +255,9 @@ const i18n = {
               value="fd00:1111:2222:100::/64"
               placeholder="fd00:1111:2222:100::/64"
             />
-            <span class="wg-field-hint"
-              >{t("tools.wireguardConfigGenerator.hintGatewayV6")}</span
-            >
+            <span class="wg-field-hint">
+              {t("tools.wireguardConfigGenerator.hintGatewayV6")}
+            </span>
           </div>
         </div>
         <div class="wg-toggle-row">
@@ -257,9 +266,9 @@ const i18n = {
               id={`${uniqueId}-enable-extra-lans`}
               type="checkbox"
             />
-            <span
-              >{t("tools.wireguardConfigGenerator.toggleAdditionalLans")}</span
-            >
+            <span>
+              {t("tools.wireguardConfigGenerator.toggleAdditionalLans")}
+            </span>
           </label>
         </div>
         <div
@@ -271,8 +280,9 @@ const i18n = {
             <label
               class="wg-label"
               for={`${uniqueId}-extra-lans`}
-              >{t("tools.wireguardConfigGenerator.labelSubnets")}</label
             >
+              {t("tools.wireguardConfigGenerator.labelSubnets")}
+            </label>
             <input
               id={`${uniqueId}-extra-lans`}
               class="wg-input"
@@ -282,9 +292,9 @@ const i18n = {
                 "tools.wireguardConfigGenerator.placeholderExtraLans",
               )}
             />
-            <span class="wg-field-hint"
-              >{t("tools.wireguardConfigGenerator.hintExtraSubnets")}</span
-            >
+            <span class="wg-field-hint">
+              {t("tools.wireguardConfigGenerator.hintExtraSubnets")}
+            </span>
           </div>
         </div>
       </div>
@@ -305,8 +315,9 @@ const i18n = {
             <label
               class="wg-label"
               for={`${uniqueId}-endpoint`}
-              >{t("tools.wireguardConfigGenerator.labelPublicEndpoint")}</label
             >
+              {t("tools.wireguardConfigGenerator.labelPublicEndpoint")}
+            </label>
             <input
               id={`${uniqueId}-endpoint`}
               class="wg-input"
@@ -316,16 +327,17 @@ const i18n = {
                 "tools.wireguardConfigGenerator.placeholderEndpoint",
               )}
             />
-            <span class="wg-field-hint"
-              >{t("tools.wireguardConfigGenerator.hintEndpoint")}</span
-            >
+            <span class="wg-field-hint">
+              {t("tools.wireguardConfigGenerator.hintEndpoint")}
+            </span>
           </div>
           <div class="wg-field">
             <label
               class="wg-label"
               for={`${uniqueId}-dns`}
-              >{t("tools.wireguardConfigGenerator.labelDnsServers")}</label
             >
+              {t("tools.wireguardConfigGenerator.labelDnsServers")}
+            </label>
             <input
               id={`${uniqueId}-dns`}
               class="wg-input"
@@ -333,9 +345,9 @@ const i18n = {
               value=""
               placeholder={t("tools.wireguardConfigGenerator.placeholderDns")}
             />
-            <span class="wg-field-hint"
-              >{t("tools.wireguardConfigGenerator.hintDns")}</span
-            >
+            <span class="wg-field-hint">
+              {t("tools.wireguardConfigGenerator.hintDns")}
+            </span>
           </div>
         </div>
       </div>
@@ -374,8 +386,9 @@ const i18n = {
               <label
                 class="wg-label"
                 for={`${uniqueId}-mtu`}
-                >{t("tools.wireguardConfigGenerator.labelInterfaceMtu")}</label
               >
+                {t("tools.wireguardConfigGenerator.labelInterfaceMtu")}
+              </label>
               <input
                 id={`${uniqueId}-mtu`}
                 class="wg-input"
@@ -384,9 +397,9 @@ const i18n = {
                 min="1280"
                 max="9000"
               />
-              <span class="wg-field-hint"
-                >{t("tools.wireguardConfigGenerator.hintMtu")}</span
-              >
+              <span class="wg-field-hint">
+                {t("tools.wireguardConfigGenerator.hintMtu")}
+              </span>
             </div>
           </div>
         </div>
@@ -414,8 +427,9 @@ const i18n = {
               <label
                 class="wg-label"
                 for={`${uniqueId}-wan-list`}
-                >{t("tools.wireguardConfigGenerator.labelWanList")}</label
               >
+                {t("tools.wireguardConfigGenerator.labelWanList")}
+              </label>
               <input
                 id={`${uniqueId}-wan-list`}
                 class="wg-input"
@@ -428,8 +442,9 @@ const i18n = {
               <label
                 class="wg-label"
                 for={`${uniqueId}-vpn-list`}
-                >{t("tools.wireguardConfigGenerator.labelVpnList")}</label
               >
+                {t("tools.wireguardConfigGenerator.labelVpnList")}
+              </label>
               <input
                 id={`${uniqueId}-vpn-list`}
                 class="wg-input"
@@ -442,8 +457,9 @@ const i18n = {
               <label
                 class="wg-label"
                 for={`${uniqueId}-lan-list`}
-                >{t("tools.wireguardConfigGenerator.labelLanList")}</label
               >
+                {t("tools.wireguardConfigGenerator.labelLanList")}
+              </label>
               <input
                 id={`${uniqueId}-lan-list`}
                 class="wg-input"
@@ -490,11 +506,9 @@ const i18n = {
                 type="checkbox"
                 checked
               />
-              <span
-                >{
-                  t("tools.wireguardConfigGenerator.toggleAllowVpnInternet")
-                }</span
-              >
+              <span>
+                {t("tools.wireguardConfigGenerator.toggleAllowVpnInternet")}
+              </span>
             </label>
             <label class="wg-toggle-label">
               <input
@@ -502,9 +516,9 @@ const i18n = {
                 type="checkbox"
                 checked
               />
-              <span
-                >{t("tools.wireguardConfigGenerator.toggleAllowVpnLan")}</span
-              >
+              <span>
+                {t("tools.wireguardConfigGenerator.toggleAllowVpnLan")}
+              </span>
             </label>
             <label class="wg-toggle-label">
               <input
@@ -520,9 +534,9 @@ const i18n = {
                 type="checkbox"
                 checked
               />
-              <span
-                >{t("tools.wireguardConfigGenerator.toggleAddressList")}</span
-              >
+              <span>
+                {t("tools.wireguardConfigGenerator.toggleAddressList")}
+              </span>
             </label>
           </div>
           <div class="wg-toggles-row">
@@ -532,9 +546,9 @@ const i18n = {
                 type="checkbox"
                 checked
               />
-              <span
-                >{t("tools.wireguardConfigGenerator.toggleMssClamping")}</span
-              >
+              <span>
+                {t("tools.wireguardConfigGenerator.toggleMssClamping")}
+              </span>
             </label>
             <label class="wg-toggle-label">
               <input
@@ -542,9 +556,9 @@ const i18n = {
                 type="checkbox"
                 checked
               />
-              <span
-                >{t("tools.wireguardConfigGenerator.toggleRawSkipFlood")}</span
-              >
+              <span>
+                {t("tools.wireguardConfigGenerator.toggleRawSkipFlood")}
+              </span>
             </label>
           </div>
           <div
@@ -555,8 +569,9 @@ const i18n = {
               <label
                 class="wg-label"
                 for={`${uniqueId}-mss-value`}
-                >{t("tools.wireguardConfigGenerator.labelMssValue")}</label
               >
+                {t("tools.wireguardConfigGenerator.labelMssValue")}
+              </label>
               <input
                 id={`${uniqueId}-mss-value`}
                 class="wg-input"
@@ -565,9 +580,9 @@ const i18n = {
                 min="500"
                 max="9000"
               />
-              <span class="wg-field-hint"
-                >{t("tools.wireguardConfigGenerator.hintMssValue")}</span
-              >
+              <span class="wg-field-hint">
+                {t("tools.wireguardConfigGenerator.hintMssValue")}
+              </span>
             </div>
           </div>
         </div>
@@ -605,14 +620,12 @@ const i18n = {
           data-peer-index="0"
         >
           <div class="wg-peer-header">
-            <span class="wg-peer-number"
-              >{
-                t("tools.wireguardConfigGenerator.peerLabel").replace(
-                  "{n}",
-                  "1",
-                )
-              }</span
-            >
+            <span class="wg-peer-number">
+              {t("tools.wireguardConfigGenerator.peerLabel").replace(
+                "{n}",
+                "1",
+              )}
+            </span>
             <button
               type="button"
               class="wg-remove-peer-btn"
@@ -633,8 +646,9 @@ const i18n = {
               <label
                 class="wg-label"
                 for={`${uniqueId}-peer0-name`}
-                >{t("tools.wireguardConfigGenerator.labelName")}</label
               >
+                {t("tools.wireguardConfigGenerator.labelName")}
+              </label>
               <input
                 id={`${uniqueId}-peer0-name`}
                 class="wg-input wg-peer-name"
@@ -647,8 +661,9 @@ const i18n = {
               <label
                 class="wg-label"
                 for={`${uniqueId}-peer0-comment`}
-                >{t("tools.wireguardConfigGenerator.labelPeerComment")}</label
               >
+                {t("tools.wireguardConfigGenerator.labelPeerComment")}
+              </label>
               <input
                 id={`${uniqueId}-peer0-comment`}
                 class="wg-input wg-peer-comment"
@@ -665,8 +680,9 @@ const i18n = {
               <label
                 class="wg-label"
                 for={`${uniqueId}-peer0-ipv4`}
-                >{t("tools.wireguardConfigGenerator.labelIpv4Address")}</label
               >
+                {t("tools.wireguardConfigGenerator.labelIpv4Address")}
+              </label>
               <input
                 id={`${uniqueId}-peer0-ipv4`}
                 class="wg-input wg-peer-ipv4"
@@ -679,8 +695,9 @@ const i18n = {
               <label
                 class="wg-label"
                 for={`${uniqueId}-peer0-ipv6`}
-                >{t("tools.wireguardConfigGenerator.labelIpv6Address")}</label
               >
+                {t("tools.wireguardConfigGenerator.labelIpv6Address")}
+              </label>
               <input
                 id={`${uniqueId}-peer0-ipv6`}
                 class="wg-input wg-peer-ipv6"
@@ -695,8 +712,9 @@ const i18n = {
               <label
                 class="wg-label"
                 for={`${uniqueId}-peer0-keepalive`}
-                >{t("tools.wireguardConfigGenerator.labelKeepalive")}</label
               >
+                {t("tools.wireguardConfigGenerator.labelKeepalive")}
+              </label>
               <input
                 id={`${uniqueId}-peer0-keepalive`}
                 class="wg-input wg-peer-keepalive"
@@ -709,8 +727,9 @@ const i18n = {
               <label
                 class="wg-label"
                 for={`${uniqueId}-peer0-keygen`}
-                >{t("tools.wireguardConfigGenerator.labelKeyGeneration")}</label
               >
+                {t("tools.wireguardConfigGenerator.labelKeyGeneration")}
+              </label>
               <select
                 id={`${uniqueId}-peer0-keygen`}
                 class="wg-select wg-peer-keygen"
@@ -718,11 +737,12 @@ const i18n = {
                 <option
                   value="auto"
                   selected
-                  >{t("tools.wireguardConfigGenerator.optRouterosAuto")}</option
                 >
-                <option value="manual"
-                  >{t("tools.wireguardConfigGenerator.optManualKeys")}</option
-                >
+                  {t("tools.wireguardConfigGenerator.optRouterosAuto")}
+                </option>
+                <option value="manual">
+                  {t("tools.wireguardConfigGenerator.optManualKeys")}
+                </option>
               </select>
             </div>
           </div>
@@ -735,8 +755,9 @@ const i18n = {
                 <label
                   class="wg-label"
                   for={`${uniqueId}-peer0-privkey`}
-                  >{t("tools.wireguardConfigGenerator.labelPrivateKey")}</label
                 >
+                  {t("tools.wireguardConfigGenerator.labelPrivateKey")}
+                </label>
                 <div class="wg-key-row">
                   <input
                     id={`${uniqueId}-peer0-privkey`}
@@ -766,8 +787,9 @@ const i18n = {
                 <label
                   class="wg-label"
                   for={`${uniqueId}-peer0-pubkey`}
-                  >{t("tools.wireguardConfigGenerator.labelPublicKey")}</label
                 >
+                  {t("tools.wireguardConfigGenerator.labelPublicKey")}
+                </label>
                 <input
                   id={`${uniqueId}-peer0-pubkey`}
                   class="wg-input wg-peer-pubkey"
@@ -783,15 +805,14 @@ const i18n = {
                 <label
                   class="wg-label"
                   for={`${uniqueId}-peer0-psk`}
-                  >{t("tools.wireguardConfigGenerator.labelPresharedKey")}
-                  <span class="wg-field-hint"
-                    >{
-                      t(
-                        "tools.wireguardConfigGenerator.hintPresharedKeyOptional",
-                      )
-                    }</span
-                  ></label
                 >
+                  {t("tools.wireguardConfigGenerator.labelPresharedKey")}
+                  <span class="wg-field-hint">
+                    {t(
+                      "tools.wireguardConfigGenerator.hintPresharedKeyOptional",
+                    )}
+                  </span>
+                </label>
                 <div class="wg-key-row">
                   <input
                     id={`${uniqueId}-peer0-psk`}
@@ -847,11 +868,9 @@ const i18n = {
               type="checkbox"
               checked
             />
-            <span
-              >{
-                t("tools.wireguardConfigGenerator.toggleGenerateClientConf")
-              }</span
-            >
+            <span>
+              {t("tools.wireguardConfigGenerator.toggleGenerateClientConf")}
+            </span>
           </label>
         </div>
         <div class="wg-fields-row">
@@ -859,8 +878,9 @@ const i18n = {
             <label
               class="wg-label"
               for={`${uniqueId}-tunnel-mode`}
-              >{t("tools.wireguardConfigGenerator.labelTunnelMode")}</label
             >
+              {t("tools.wireguardConfigGenerator.labelTunnelMode")}
+            </label>
             <select
               id={`${uniqueId}-tunnel-mode`}
               class="wg-select"
@@ -868,11 +888,12 @@ const i18n = {
               <option
                 value="full"
                 selected
-                >{t("tools.wireguardConfigGenerator.optFullTunnel")}</option
               >
-              <option value="split"
-                >{t("tools.wireguardConfigGenerator.optSplitTunnel")}</option
-              >
+                {t("tools.wireguardConfigGenerator.optFullTunnel")}
+              </option>
+              <option value="split">
+                {t("tools.wireguardConfigGenerator.optSplitTunnel")}
+              </option>
             </select>
           </div>
         </div>
@@ -885,10 +906,9 @@ const i18n = {
             <label
               class="wg-label"
               for={`${uniqueId}-split-subnets`}
-              >{
-                t("tools.wireguardConfigGenerator.labelSplitTunnelSubnets")
-              }</label
             >
+              {t("tools.wireguardConfigGenerator.labelSplitTunnelSubnets")}
+            </label>
             <input
               id={`${uniqueId}-split-subnets`}
               class="wg-input"
@@ -898,9 +918,9 @@ const i18n = {
                 "tools.wireguardConfigGenerator.placeholderSplitSubnets",
               )}
             />
-            <span class="wg-field-hint"
-              >{t("tools.wireguardConfigGenerator.hintSplitSubnets")}</span
-            >
+            <span class="wg-field-hint">
+              {t("tools.wireguardConfigGenerator.hintSplitSubnets")}
+            </span>
           </div>
         </div>
       </div>
@@ -929,16 +949,13 @@ const i18n = {
           {t("tools.shared.copy")}
         </button>
       </div>
-      {
-        /* eslint-disable astro/jsx-a11y/no-noninteractive-tabindex -- scrollable region requires keyboard access */
-      }
+      {/* eslint-disable astro/jsx-a11y/no-noninteractive-tabindex -- scrollable region requires keyboard access */}
       <pre
         class="wg-output-code"
         tabindex="0"
         role="region"
-        aria-label={t(
-          "tools.wireguardConfigGenerator.outputRouterosAriaLabel",
-        )}><code id={`${uniqueId}-output-routeros`} /></pre>
+        aria-label={t("tools.wireguardConfigGenerator.outputRouterosAriaLabel")}
+      ><code id={`${uniqueId}-output-routeros`} /></pre>
       {/* eslint-enable astro/jsx-a11y/no-noninteractive-tabindex */}
     </div>
 
@@ -968,16 +985,13 @@ const i18n = {
           {t("tools.shared.copy")}
         </button>
       </div>
-      {
-        /* eslint-disable astro/jsx-a11y/no-noninteractive-tabindex -- scrollable region requires keyboard access */
-      }
+      {/* eslint-disable astro/jsx-a11y/no-noninteractive-tabindex -- scrollable region requires keyboard access */}
       <pre
         class="wg-output-code"
         tabindex="0"
         role="region"
-        aria-label={t(
-          "tools.wireguardConfigGenerator.outputClientAriaLabel",
-        )}><code id={`${uniqueId}-output-client`} /></pre>
+        aria-label={t("tools.wireguardConfigGenerator.outputClientAriaLabel")}
+      ><code id={`${uniqueId}-output-client`} /></pre>
       {/* eslint-enable astro/jsx-a11y/no-noninteractive-tabindex */}
     </div>
 
@@ -988,14 +1002,17 @@ const i18n = {
         aria-hidden="true"
       ></span>
       {t("tools.wireguardConfigGenerator.relatedFullGuide")}
-      <a href="/blog/007-mikrotik-wireguard-dual-stack-vpn/"
-        >{t("tools.wireguardConfigGenerator.relatedLinkText")}</a
-      >
+      <a href="/blog/007-mikrotik-wireguard-dual-stack-vpn/">
+        {t("tools.wireguardConfigGenerator.relatedLinkText")}
+      </a>
     </div>
   </div>
 </div>
 
-<script is:inline define:vars={{ uniqueId, i18n }}>
+<script
+  is:inline
+  define:vars={{ uniqueId, i18n }}
+>
   (function () {
     var container = document.querySelector('[data-wg-id="' + uniqueId + '"]');
     if (!container) return;

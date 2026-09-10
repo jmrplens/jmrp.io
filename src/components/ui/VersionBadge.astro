@@ -34,19 +34,17 @@ const displayValue = value ?? type.charAt(0).toUpperCase() + type.slice(1);
 ---
 
 <span class={`version-badge ${badgeClass}`}>
-  {
-    type === "new" && (
-      <span
-        class="badge-bullet"
-        aria-hidden="true"
-      >
-        ●
-      </span>
-    )
-  }
-  <span class="badge-text"
-    >{prefix ? `${prefix} ${displayValue}` : displayValue}</span
-  >
+  {type === "new" && (
+    <span
+      class="badge-bullet"
+      aria-hidden="true"
+    >
+      ●
+    </span>
+  )}
+  <span class="badge-text">
+    {prefix ? `${prefix} ${displayValue}` : displayValue}
+  </span>
 </span>
 
 <style>

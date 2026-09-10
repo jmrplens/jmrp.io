@@ -232,10 +232,8 @@ const staticRecent = postData.slice(0, 6);
     >
       <Logo showPath={false} />
     </span>
-    {
-      /* `label` is naming-prohibited (no aria-label without a role), so the
-        accessible name is sr-only text content instead. */
-    }
+    {/* `label` is naming-prohibited (no aria-label without a role), so the
+        accessible name is sr-only text content instead. */}
     <label
       for="nav-open"
       class="drawer__close"
@@ -247,15 +245,13 @@ const staticRecent = postData.slice(0, 6);
         aria-hidden="true"
       ></span>
     </label>
-    {
-      /* JS twin of the close label: a label is not focusable, so once the
+    {/* JS twin of the close label: a label is not focusable, so once the
          enhancement script's focus trap is active a keyboard user could only
          close via Esc. The script (Header.astro) swaps the label for this
          real <button> (focusable, native Enter/Space; clicking it unchecks
          #nav-open through the same close() flow). Hidden without JS on
          purpose — there is no trap then, the checkbox stays reachable, and a
-         dead button would be worse than none. */
-    }
+         dead button would be worse than none. */}
     <button
       type="button"
       class="drawer__close drawer__close--js"
@@ -269,17 +265,16 @@ const staticRecent = postData.slice(0, 6);
     </button>
   </div>
 
-  {
-    /* --- JS terminal input, kept at the TOP so the on-screen keyboard never
-     covers where you type. Suggestions appear inline only while typing. --- */
-  }
+  {/* --- JS terminal input, kept at the TOP so the on-screen keyboard never
+     covers where you type. Suggestions appear inline only while typing. --- */}
   <div class="term-io-top">
     <div class="term-input-line">
       <span
         class="term-prompt"
         aria-hidden="true"
-        >jmrp@home:<span id="term-cwd">~</span>$</span
       >
+        jmrp@home:<span id="term-cwd">~</span>$
+      </span>
       <input
         id="term-input"
         class="term-input"
@@ -296,8 +291,7 @@ const staticRecent = postData.slice(0, 6);
       id="term-suggest"
       class="term-suggest"
       hidden
-    >
-    </div>
+    ></div>
   </div>
 
   <div class="drawer__body">
@@ -307,37 +301,37 @@ const staticRecent = postData.slice(0, 6);
         <span
           class="term-line__prompt"
           aria-hidden="true"
-          >jmrp@home:~$</span
-        > tree -L 1
+        >
+          jmrp@home:~$
+        </span>{" "}
+        tree -L 1
       </p>
       <ul class="tree">
-        {
-          treeRows.map((row) => (
-            <li>
-              <a
-                href={row.href}
-                class="tree__row"
-                aria-current={row.current ? "page" : undefined}
+        {treeRows.map((row) => (
+          <li>
+            <a
+              href={row.href}
+              class="tree__row"
+              aria-current={row.current ? "page" : undefined}
+            >
+              <span
+                class="tree__glyph"
+                aria-hidden="true"
               >
-                <span
-                  class="tree__glyph"
-                  aria-hidden="true"
-                >
-                  {row.glyph}
-                </span>
-                <span
-                  class={`tree__icon ${row.icon}`}
-                  aria-hidden="true"
-                />
-                <span class="tree__label">{row.label}</span>
-                <span class="tree__path">{row.path}</span>
-                {row.current && (
-                  <span class="tree__here">{t("menu.youAreHere")}</span>
-                )}
-              </a>
-            </li>
-          ))
-        }
+                {row.glyph}
+              </span>
+              <span
+                class={`tree__icon ${row.icon}`}
+                aria-hidden="true"
+              />
+              <span class="tree__label">{row.label}</span>
+              <span class="tree__path">{row.path}</span>
+              {row.current && (
+                <span class="tree__here">{t("menu.youAreHere")}</span>
+              )}
+            </a>
+          </li>
+        ))}
       </ul>
 
       <details class="cmd">
@@ -350,20 +344,18 @@ const staticRecent = postData.slice(0, 6);
           <span class="cmd__hint">{t("menu.recent")}</span>
         </summary>
         <ul class="cmd__list">
-          {
-            staticRecent.map((p) => (
-              <li>
-                <a
-                  href={p.href}
-                  class="cmd__row"
-                >
-                  <span class="cmd__path">~/blog</span>
-                  <span class="cmd__rowlabel">{p.title}</span>
-                  <span class="cmd__marker">{p.date}</span>
-                </a>
-              </li>
-            ))
-          }
+          {staticRecent.map((p) => (
+            <li>
+              <a
+                href={p.href}
+                class="cmd__row"
+              >
+                <span class="cmd__path">~/blog</span>
+                <span class="cmd__rowlabel">{p.title}</span>
+                <span class="cmd__marker">{p.date}</span>
+              </a>
+            </li>
+          ))}
         </ul>
       </details>
 
@@ -377,19 +369,17 @@ const staticRecent = postData.slice(0, 6);
           <span class="cmd__hint">{t("menu.tags")}</span>
         </summary>
         <ul class="cmd__list cmd__list--tags">
-          {
-            staticTags.map((tg) => (
-              <li>
-                <a
-                  href={tg.href}
-                  class="cmd__tag"
-                >
-                  #{tg.tag}
-                  <span class="cmd__tag-count">{tg.count}</span>
-                </a>
-              </li>
-            ))
-          }
+          {staticTags.map((tg) => (
+            <li>
+              <a
+                href={tg.href}
+                class="cmd__tag"
+              >
+                #{tg.tag}
+                <span class="cmd__tag-count">{tg.count}</span>
+              </a>
+            </li>
+          ))}
         </ul>
       </details>
     </div>
@@ -401,8 +391,7 @@ const staticRecent = postData.slice(0, 6);
       role="region"
       aria-live="polite"
       aria-label={t("terminal.outputLabel")}
-    >
-    </div>
+    ></div>
   </div>
 
   {/* --- Hint at the very bottom: `help` reveals everything --- */}
@@ -450,18 +439,16 @@ const staticRecent = postData.slice(0, 6);
     </div>
   </div>
 
-  {
-    /* `is:inline` stated explicitly: Astro already treats a <script> with any
+  {/* `is:inline` stated explicitly: Astro already treats a <script> with any
       attribute as inline, and saying so silences the hint that warns the
       directive is being applied implicitly. This is a data island, not code —
-      there is nothing here for Astro to process. */
-  }
+      there is nothing here for Astro to process. */}
   <script
     is:inline
     type="application/json"
     id="nav-term-data"
     set:html={safeJsonLd(termData)}
-  />
+  ></script>
 </div>
 
 <script is:inline>

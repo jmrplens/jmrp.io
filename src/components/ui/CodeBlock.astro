@@ -54,13 +54,11 @@ const highlightedHtml = rawCode
   : "";
 ---
 
-{
-  highlightedHtml && (
-    <div class:list={["jmrp-code", "jmrp-code--bare", className]}>
-      <Fragment set:html={highlightedHtml} />
-    </div>
-  )
-}
+{highlightedHtml && (
+  <div class:list={["jmrp-code", "jmrp-code--bare", className]}>
+    <Fragment set:html={highlightedHtml} />
+  </div>
+)}
 
 <style>
   /* Bare: no header/copy, just the Shiki <pre> in a subtle box. The .jmrp-code

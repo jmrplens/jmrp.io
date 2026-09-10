@@ -68,22 +68,23 @@ const charsets = [
 >
   <div class="bfc-controls">
     <label class="bfc-ctrl">
-      <span class="bfc-ctrl-label"
-        >{t("tools.bruteForceCost.charsetLabel")}</span
-      >
+      <span class="bfc-ctrl-label">
+        {t("tools.bruteForceCost.charsetLabel")}
+      </span>
       <select
         class="bfc-select"
         data-bfc-charset
       >
-        {charsets.map((c) => <option value={c.size}>{c.label}</option>)}
+        {charsets.map((c) => (
+          <option value={c.size}>{c.label}</option>
+        ))}
       </select>
     </label>
 
     <label class="bfc-ctrl">
-      <span class="bfc-ctrl-label"
-        >{t("tools.bruteForceCost.lengthLabel")} (<span data-bfc-lenval>4</span
-        >)</span
-      >
+      <span class="bfc-ctrl-label">
+        {t("tools.bruteForceCost.lengthLabel")} (<span data-bfc-lenval>4</span>)
+      </span>
       <input
         type="range"
         class="bfc-range"
@@ -95,9 +96,9 @@ const charsets = [
     </label>
 
     <label class="bfc-ctrl">
-      <span class="bfc-ctrl-label"
-        >{t("tools.bruteForceCost.iterationsLabel")}</span
-      >
+      <span class="bfc-ctrl-label">
+        {t("tools.bruteForceCost.iterationsLabel")}
+      </span>
       <select
         class="bfc-select"
         data-bfc-iters
@@ -110,14 +111,16 @@ const charsets = [
     </label>
 
     <label class="bfc-ctrl">
-      <span class="bfc-ctrl-label"
-        >{t("tools.bruteForceCost.hardwareLabel")}</span
-      >
+      <span class="bfc-ctrl-label">
+        {t("tools.bruteForceCost.hardwareLabel")}
+      </span>
       <select
         class="bfc-select"
         data-bfc-hw
       >
-        {hardware.map((h) => <option value={h.sha}>{h.name}</option>)}
+        {hardware.map((h) => (
+          <option value={h.sha}>{h.name}</option>
+        ))}
         <option value="custom">{t("tools.bruteForceCost.custom")}</option>
       </select>
     </label>
@@ -129,9 +132,9 @@ const charsets = [
     hidden
   >
     <label class="bfc-ctrl">
-      <span class="bfc-ctrl-label"
-        >{t("tools.bruteForceCost.customRateLabel")}</span
-      >
+      <span class="bfc-ctrl-label">
+        {t("tools.bruteForceCost.customRateLabel")}
+      </span>
       <input
         type="number"
         class="bfc-input"
@@ -142,9 +145,9 @@ const charsets = [
       />
     </label>
     <label class="bfc-ctrl">
-      <span class="bfc-ctrl-label"
-        >{t("tools.bruteForceCost.customUnitLabel")}</span
-      >
+      <span class="bfc-ctrl-label">
+        {t("tools.bruteForceCost.customUnitLabel")}
+      </span>
       <select
         class="bfc-select"
         data-bfc-custom-unit
@@ -154,8 +157,9 @@ const charsets = [
         <option
           value="1000000"
           selected
-          >MH/s</option
         >
+          MH/s
+        </option>
         <option value="1000000000">GH/s</option>
       </select>
     </label>
@@ -167,9 +171,9 @@ const charsets = [
     hidden
   >
     <label class="bfc-ctrl">
-      <span class="bfc-ctrl-label"
-        >{t("tools.bruteForceCost.customItersLabel")}</span
-      >
+      <span class="bfc-ctrl-label">
+        {t("tools.bruteForceCost.customItersLabel")}
+      </span>
       <input
         type="number"
         class="bfc-input"
@@ -192,9 +196,9 @@ const charsets = [
       class="bfc-toggle-track"
       aria-hidden="true"
     ></span>
-    <span class="bfc-toggle-title"
-      >{t("tools.bruteForceCost.bindingLabel")}</span
-    >
+    <span class="bfc-toggle-title">
+      {t("tools.bruteForceCost.bindingLabel")}
+    </span>
     <span class="bfc-toggle-hint">{t("tools.bruteForceCost.bindingHint")}</span>
   </label>
 
@@ -207,23 +211,26 @@ const charsets = [
   >
     <div class="bfc-stats">
       <div class="bfc-stat">
-        <span class="bfc-stat-label"
-          >{t("tools.bruteForceCost.keyspaceLabel")}</span
-        >
+        <span class="bfc-stat-label">
+          {t("tools.bruteForceCost.keyspaceLabel")}
+        </span>
         <span
           class="bfc-stat-value"
           data-bfc-keyspace
-          >—</span
         >
+          —
+        </span>
       </div>
       <div class="bfc-stat">
-        <span class="bfc-stat-label">{t("tools.bruteForceCost.rateLabel")}</span
-        >
+        <span class="bfc-stat-label">
+          {t("tools.bruteForceCost.rateLabel")}
+        </span>
         <span
           class="bfc-stat-value"
           data-bfc-rate
-          >—</span
         >
+          —
+        </span>
       </div>
     </div>
 
@@ -234,13 +241,15 @@ const charsets = [
       <span
         class="bfc-headline-label"
         data-bfc-headline-label
-        >{t("tools.bruteForceCost.exhaustLabel")}</span
       >
+        {t("tools.bruteForceCost.exhaustLabel")}
+      </span>
       <span
         class="bfc-headline-value"
         data-bfc-time
-        >—</span
       >
+        —
+      </span>
       <span
         class="bfc-headline-sub"
         data-bfc-expected
@@ -250,8 +259,7 @@ const charsets = [
     <div
       class="bfc-verdict"
       data-bfc-verdict
-    >
-    </div>
+    ></div>
   </div>
 
   <p class="bfc-note">
@@ -263,7 +271,10 @@ const charsets = [
   </p>
 </div>
 
-<script is:inline define:vars={{ uniqueId, i18n }}>
+<script
+  is:inline
+  define:vars={{ uniqueId, i18n }}
+>
   const root = document.querySelector(`[data-bfc-id="${uniqueId}"]`);
   if (root) {
     const nf = new Intl.NumberFormat(root.dataset.bcp47);

@@ -73,19 +73,17 @@ const indexSchema = {
       class="series-index__list"
       aria-label={t("series.ui.indexListLabel")}
     >
-      {
-        items.map((item) => (
-          <li class="series-card">
-            <h2 class="series-card__title">
-              <a href={item.href}>{item.title}</a>
-            </h2>
-            <p class="series-card__count">
-              {t("series.ui.countLabel", { count: item.count })}
-            </p>
-            <p class="series-card__desc">{item.description}</p>
-          </li>
-        ))
-      }
+      {items.map((item) => (
+        <li class="series-card">
+          <h2 class="series-card__title">
+            <a href={item.href}>{item.title}</a>
+          </h2>
+          <p class="series-card__count">
+            {t("series.ui.countLabel", { count: item.count })}
+          </p>
+          <p class="series-card__desc">{item.description}</p>
+        </li>
+      ))}
     </ul>
 
     <p class="series-index__back">

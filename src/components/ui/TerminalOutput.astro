@@ -101,9 +101,7 @@ const scrollAria = title
     />
   </div>
   <div class="jmrp-term__body">
-    {
-      /* eslint-disable astro/jsx-a11y/no-noninteractive-tabindex -- focusable scroll region */
-    }
+    {/* eslint-disable astro/jsx-a11y/no-noninteractive-tabindex -- focusable scroll region */}
     <div
       class="jmrp-term__scroll"
       role="group"
@@ -111,16 +109,14 @@ const scrollAria = title
       aria-label={scrollAria}
     >
       {/* eslint-enable astro/jsx-a11y/no-noninteractive-tabindex */}
-      {
-        isHighlightedFence ? (
-          <div
-            class="jmrp-term__out"
-            set:html={trimmedContent}
-          />
-        ) : (
-          <pre class="jmrp-term__out">{outputText}</pre>
-        )
-      }
+      {isHighlightedFence ? (
+        <div
+          class="jmrp-term__out"
+          set:html={trimmedContent}
+        />
+      ) : (
+        <pre class="jmrp-term__out">{outputText}</pre>
+      )}
     </div>
   </div>
 </section>

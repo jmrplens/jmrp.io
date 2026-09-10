@@ -92,46 +92,44 @@ const usesSchema = {
     </header>
 
     <div class="uses-grid">
-      {
-        c.groups.map((group) => (
-          <section
-            class="uses-col"
-            aria-label={group.label.replace("// ", "")}
-          >
-            <h2 class="uses-col__title">{group.label}</h2>
-            <p class="uses-col__intro">{group.intro}</p>
-            <div class="uses-col__items">
-              {group.items.map((item) => {
-                // Hoisted out of the JSX attribute spread below: sonarjs
-                // flags a ternary nested inside another ternary's branch.
-                const linkProps = item.href
-                  ? externalLinkProps(
-                      item.href,
-                      t("aria.opensNewTab", { text: item.name }),
-                    )
-                  : {};
-                return (
-                  <div class="uses-item">
-                    <div class="uses-item__name">
-                      {item.href ? (
-                        <a
-                          href={resolveHref(item.href)}
-                          {...linkProps}
-                        >
-                          {item.name}
-                        </a>
-                      ) : (
-                        item.name
-                      )}
-                    </div>
-                    <div class="uses-item__detail">{item.detail}</div>
+      {c.groups.map((group) => (
+        <section
+          class="uses-col"
+          aria-label={group.label.replace("// ", "")}
+        >
+          <h2 class="uses-col__title">{group.label}</h2>
+          <p class="uses-col__intro">{group.intro}</p>
+          <div class="uses-col__items">
+            {group.items.map((item) => {
+              // Hoisted out of the JSX attribute spread below: sonarjs
+              // flags a ternary nested inside another ternary's branch.
+              const linkProps = item.href
+                ? externalLinkProps(
+                    item.href,
+                    t("aria.opensNewTab", { text: item.name }),
+                  )
+                : {};
+              return (
+                <div class="uses-item">
+                  <div class="uses-item__name">
+                    {item.href ? (
+                      <a
+                        href={resolveHref(item.href)}
+                        {...linkProps}
+                      >
+                        {item.name}
+                      </a>
+                    ) : (
+                      item.name
+                    )}
                   </div>
-                );
-              })}
-            </div>
-          </section>
-        ))
-      }
+                  <div class="uses-item__detail">{item.detail}</div>
+                </div>
+              );
+            })}
+          </div>
+        </section>
+      ))}
     </div>
   </div>
 </BaseLayout>

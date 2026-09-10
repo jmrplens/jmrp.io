@@ -68,23 +68,21 @@ if (ariaLabel) {
     aria-hidden="true"
     set:text={rawContent}
   />
-  {
-    renderedLines.map((line) =>
-      line.isComment || line.isEmpty ? (
-        <div class="jmrp-term__line">
-          <span class="term-out">{line.text}</span>
-        </div>
-      ) : (
-        <div class="jmrp-term__line">
-          <span
-            class="term-prompt"
-            aria-hidden="true"
-          >
-            {prompt}
-          </span>
-          <span class="term-cmd">{line.text}</span>
-        </div>
-      ),
-    )
-  }
+  {renderedLines.map((line) =>
+    line.isComment || line.isEmpty ? (
+      <div class="jmrp-term__line">
+        <span class="term-out">{line.text}</span>
+      </div>
+    ) : (
+      <div class="jmrp-term__line">
+        <span
+          class="term-prompt"
+          aria-hidden="true"
+        >
+          {prompt}
+        </span>
+        <span class="term-cmd">{line.text}</span>
+      </div>
+    ),
+  )}
 </div>

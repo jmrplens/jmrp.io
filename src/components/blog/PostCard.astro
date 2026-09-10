@@ -41,23 +41,21 @@ const haystack = [
     class="post-card__link"
     href={translatePath(`/blog/${post.data.slug}/`)}
   >
-    {
-      post.data.coverImage && (
-        <div class="post-card__cover">
-          <Image
-            class="post-card__cover-img"
-            src={post.data.coverImage}
-            alt=""
-            role="presentation"
-            width={640}
-            height={360}
-            widths={[320, 480, 640]}
-            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 380px"
-            loading="lazy"
-          />
-        </div>
-      )
-    }
+    {post.data.coverImage && (
+      <div class="post-card__cover">
+        <Image
+          class="post-card__cover-img"
+          src={post.data.coverImage}
+          alt=""
+          role="presentation"
+          width={640}
+          height={360}
+          widths={[320, 480, 640]}
+          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 380px"
+          loading="lazy"
+        />
+      </div>
+    )}
     <div class="post-card__body">
       <div class="post-card__top">
         <span class="post-card__tags">{tags.join(" · ")}</span>
@@ -75,7 +73,9 @@ const haystack = [
           {formatDateDot(displayDate)}
         </time>
         <span aria-hidden="true">·</span>
-        <span>{readingTime} {t("pages.blog.minRead")}</span>
+        <span>
+          {readingTime} {t("pages.blog.minRead")}
+        </span>
       </div>
     </div>
   </a>

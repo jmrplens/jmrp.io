@@ -167,28 +167,28 @@ const attacks = [
   <div class="ev-keys">
     <span class="ev-keys-note">{t("tools.etmEnvelope.keyDerivationNote")}</span>
     <div class="ev-key-row">
-      <span class="ev-key-tag ev-key-tag--enc"
-        >{t("tools.etmEnvelope.encKeyLabel")}</span
-      >
+      <span class="ev-key-tag ev-key-tag--enc">
+        {t("tools.etmEnvelope.encKeyLabel")}
+      </span>
       <code data-ev-enckey>…</code>
     </div>
     <div class="ev-key-row">
-      <span class="ev-key-tag ev-key-tag--mac"
-        >{t("tools.etmEnvelope.macKeyLabel")}</span
-      >
+      <span class="ev-key-tag ev-key-tag--mac">
+        {t("tools.etmEnvelope.macKeyLabel")}
+      </span>
       <code data-ev-mackey>…</code>
     </div>
   </div>
 
   {/* Envelope bytes */}
   <div class="ev-envelope-head">
-    <span class="ev-section-title"
-      >{t("tools.etmEnvelope.envelopeHeading")}
+    <span class="ev-section-title">
+      {t("tools.etmEnvelope.envelopeHeading")}
       <span
         class="ev-total"
         data-ev-total
-      ></span></span
-    >
+      ></span>
+    </span>
     <button
       type="button"
       class="ev-restore"
@@ -208,20 +208,18 @@ const attacks = [
     class="ev-envelope"
     data-ev-envelope
   >
-    {
-      segs.map((s) => (
+    {segs.map((s) => (
+      <div
+        class="ev-seg"
+        data-ev-seg-wrap={s.id}
+      >
+        <span class={`ev-seg-label ev-seg-label--${s.id}`}>{s.label}</span>
         <div
-          class="ev-seg"
-          data-ev-seg-wrap={s.id}
-        >
-          <span class={`ev-seg-label ev-seg-label--${s.id}`}>{s.label}</span>
-          <div
-            class="ev-bytes"
-            data-ev-bytes={s.id}
-          />
-        </div>
-      ))
-    }
+          class="ev-bytes"
+          data-ev-bytes={s.id}
+        />
+      </div>
+    ))}
   </div>
 
   {/* Attack toolbar */}
@@ -234,23 +232,21 @@ const attacks = [
     role="group"
     aria-label={t("tools.etmEnvelope.attacksHeading")}
   >
-    {
-      attacks.map((a) => (
-        <button
-          type="button"
-          class="ev-attack"
-          data-ev-attack={a.id}
-        >
-          <span
-            class={`${a.icon} ev-attack-icon`}
-            aria-hidden="true"
-          />
-          {t(
-            `tools.etmEnvelope.atk_${a.id}` as `tools.etmEnvelope.atk_flipCipher`,
-          )}
-        </button>
-      ))
-    }
+    {attacks.map((a) => (
+      <button
+        type="button"
+        class="ev-attack"
+        data-ev-attack={a.id}
+      >
+        <span
+          class={`${a.icon} ev-attack-icon`}
+          aria-hidden="true"
+        />
+        {t(
+          `tools.etmEnvelope.atk_${a.id}` as `tools.etmEnvelope.atk_flipCipher`,
+        )}
+      </button>
+    ))}
   </div>
 
   {/* Read-path mode */}
@@ -287,8 +283,7 @@ const attacks = [
     data-ev-verdict
     role="status"
     aria-live="polite"
-  >
-  </div>
+  ></div>
 
   {/* Padding-oracle attacker (decrypt-first only) */}
   <div class="ev-oracle">
@@ -310,14 +305,12 @@ const attacks = [
       data-ev-oracle-status
       role="status"
       aria-live="polite"
-    >
-    </p>
+    ></p>
     <div
       class="ev-oracle-out"
       data-ev-oracle-out
       hidden
-    >
-    </div>
+    ></div>
   </div>
 
   {/* CBC malleability (the attacker's lever) */}
@@ -331,12 +324,14 @@ const attacks = [
       data-ev-cbc
       role="status"
       aria-live="polite"
-    >
-    </p>
+    ></p>
   </div>
 </div>
 
-<script is:inline define:vars={{ uniqueId, i18n }}>
+<script
+  is:inline
+  define:vars={{ uniqueId, i18n }}
+>
   const root = document.querySelector(`[data-ev-id="${uniqueId}"]`);
   if (root) {
     const enc = new TextEncoder();

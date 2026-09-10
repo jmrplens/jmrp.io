@@ -75,32 +75,30 @@ const summary =
   {title && <div class="subnet__title">{title}</div>}
 
   <div class="subnet__octets">
-    {
-      octetBlocks.map((oct) => (
-        <span class="subnet__octet">
-          {oct.net && (
-            <b
-              class:list={[
-                "subnet__run subnet__run--net",
-                oct.host ? "subnet__run--split-l" : "",
-              ]}
-            >
-              {oct.net}
-            </b>
-          )}
-          {oct.host && (
-            <b
-              class:list={[
-                "subnet__run subnet__run--host",
-                oct.net ? "subnet__run--split-r" : "",
-              ]}
-            >
-              {oct.host}
-            </b>
-          )}
-        </span>
-      ))
-    }
+    {octetBlocks.map((oct) => (
+      <span class="subnet__octet">
+        {oct.net && (
+          <b
+            class:list={[
+              "subnet__run subnet__run--net",
+              oct.host ? "subnet__run--split-l" : "",
+            ]}
+          >
+            {oct.net}
+          </b>
+        )}
+        {oct.host && (
+          <b
+            class:list={[
+              "subnet__run subnet__run--host",
+              oct.net ? "subnet__run--split-r" : "",
+            ]}
+          >
+            {oct.host}
+          </b>
+        )}
+      </span>
+    ))}
   </div>
 
   <ul class="subnet__legend">
@@ -121,12 +119,18 @@ const summary =
   </ul>
 
   <dl class="subnet__facts">
-    <div><dt>Mask</dt><dd>{dotted(mask)}</dd></div>
+    <div>
+      <dt>Mask</dt>
+      <dd>{dotted(mask)}</dd>
+    </div>
     <div>
       <dt>Network</dt>
       <dd class="subnet__fact--net">{dotted(network)}</dd>
     </div>
-    <div><dt>Broadcast</dt><dd>{dotted(broadcast)}</dd></div>
+    <div>
+      <dt>Broadcast</dt>
+      <dd>{dotted(broadcast)}</dd>
+    </div>
     <div>
       <dt>Usable hosts</dt>
       <dd class="subnet__fact--hosts">

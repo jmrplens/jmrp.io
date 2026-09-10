@@ -99,55 +99,53 @@ const summary =
   {title && <div class="delta__title">{title}</div>}
 
   <div class="delta__rows">
-    {
-      computed.map((r) => (
-        <div class="delta__row">
-          <div class="delta__head">
-            <span class="delta__label">{r.label}</span>
-            <span class={`delta__badge delta__badge--${r.status}`}>
-              {r.arrow} {pf.format(r.pct)}%
-              <span class="delta__badge-abs">
-                ({r.diff > 0 ? "+" : ""}
-                {nf.format(r.diff)}
-                {unit})
-              </span>
+    {computed.map((r) => (
+      <div class="delta__row">
+        <div class="delta__head">
+          <span class="delta__label">{r.label}</span>
+          <span class={`delta__badge delta__badge--${r.status}`}>
+            {r.arrow} {pf.format(r.pct)}%
+            <span class="delta__badge-abs">
+              ({r.diff > 0 ? "+" : ""}
+              {nf.format(r.diff)}
+              {unit})
+            </span>
+          </span>
+        </div>
+        <div class="delta__bars">
+          <div class="delta__line">
+            <span class="delta__tag">
+              {t("components.deltaCompare.srBefore")}
+            </span>
+            <div class="delta__track">
+              <div
+                class="delta__bar delta__bar--before"
+                style={`width:${r.beforePct.toFixed(2)}%`}
+              />
+            </div>
+            <span class="delta__val delta__val--before">
+              {nf.format(r.before)}
+              {unit}
             </span>
           </div>
-          <div class="delta__bars">
-            <div class="delta__line">
-              <span class="delta__tag">
-                {t("components.deltaCompare.srBefore")}
-              </span>
-              <div class="delta__track">
-                <div
-                  class="delta__bar delta__bar--before"
-                  style={`width:${r.beforePct.toFixed(2)}%`}
-                />
-              </div>
-              <span class="delta__val delta__val--before">
-                {nf.format(r.before)}
-                {unit}
-              </span>
+          <div class="delta__line">
+            <span class="delta__tag">
+              {t("components.deltaCompare.srAfter")}
+            </span>
+            <div class="delta__track">
+              <div
+                class={`delta__bar delta__bar--${r.status}`}
+                style={`width:${r.afterPct.toFixed(2)}%`}
+              />
             </div>
-            <div class="delta__line">
-              <span class="delta__tag">
-                {t("components.deltaCompare.srAfter")}
-              </span>
-              <div class="delta__track">
-                <div
-                  class={`delta__bar delta__bar--${r.status}`}
-                  style={`width:${r.afterPct.toFixed(2)}%`}
-                />
-              </div>
-              <span class="delta__val delta__val--after">
-                {nf.format(r.after)}
-                {unit}
-              </span>
-            </div>
+            <span class="delta__val delta__val--after">
+              {nf.format(r.after)}
+              {unit}
+            </span>
           </div>
         </div>
-      ))
-    }
+      </div>
+    ))}
   </div>
 
   <table class="sr-only">
@@ -161,22 +159,20 @@ const summary =
       </tr>
     </thead>
     <tbody>
-      {
-        computed.map((r) => (
-          <tr>
-            <td>{r.label}</td>
-            <td>
-              {nf.format(r.before)}
-              {unit}
-            </td>
-            <td>
-              {nf.format(r.after)}
-              {unit}
-            </td>
-            <td>{pf.format(r.pct)}%</td>
-          </tr>
-        ))
-      }
+      {computed.map((r) => (
+        <tr>
+          <td>{r.label}</td>
+          <td>
+            {nf.format(r.before)}
+            {unit}
+          </td>
+          <td>
+            {nf.format(r.after)}
+            {unit}
+          </td>
+          <td>{pf.format(r.pct)}%</td>
+        </tr>
+      ))}
     </tbody>
   </table>
 

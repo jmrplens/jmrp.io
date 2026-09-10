@@ -138,8 +138,7 @@ const homeSchema = {
     <div
       class="lab-grid"
       aria-hidden="true"
-    >
-    </div>
+    ></div>
     <div class="hero__inner container">
       <div class="hero__text">
         <p class="hero__status">
@@ -158,11 +157,9 @@ const homeSchema = {
         />
 
         <div class="hero__bio">
-          {
-            hero.bio.map((paragraph: string) => (
-              <p set:html={sanitize(paragraph)} />
-            ))
-          }
+          {hero.bio.map((paragraph: string) => (
+            <p set:html={sanitize(paragraph)} />
+          ))}
         </div>
 
         <div class="hero__cta">
@@ -223,19 +220,17 @@ const homeSchema = {
               <span>repos.public</span>
               <span class="terminal__num">{whoami.repos}</span>
             </div>
-            {
-              lastPostDate !== null && (
-                <div class="terminal__metric">
-                  <span>last.post</span>
-                  <time
-                    class="terminal__num"
-                    datetime={lastPostDate}
-                  >
-                    {lastPostDate}
-                  </time>
-                </div>
-              )
-            }
+            {lastPostDate !== null && (
+              <div class="terminal__metric">
+                <span>last.post</span>
+                <time
+                  class="terminal__num"
+                  datetime={lastPostDate}
+                >
+                  {lastPostDate}
+                </time>
+              </div>
+            )}
           </div>
           <p class="terminal__cmd terminal__cmd--last">
             <span class="terminal__prompt">jmrp@home:~$</span>{" "}
@@ -249,132 +244,128 @@ const homeSchema = {
     </div>
   </section>
 
-  {
-    featuredProjects.length > 0 && (
-      <section class="home-section">
-        <div class="container">
-          <div class="home-section__head">
-            <h2 class="section-title standard">
-              {t("pages.home.featuredProjects")}
-            </h2>
-            <a
-              href={translatePath("/projects/")}
-              class="home-section__link"
-            >
-              {t("pages.home.viewAllProjects")}
-            </a>
-          </div>
-          <div class="proj-grid">
-            {featuredProjects.map((repo) => {
-              const meta = PROJECT_META[repo.name];
-              /*
-               * The whole card is the link, so its accessible name is its own
-               * text. `aria-label` REPLACES that name instead of extending it,
-               * so the notice is appended to the FULL visible text, in DOM
-               * order — the same rule the prose pipeline applies in
-               * scripts/rehype-external-links-announced.mjs. Labelling the
-               * card with just its title would drop the description from the
-               * accessible name while it stays on screen.
-               */
-              const cardText = [
-                meta?.category,
-                String(repo.stargazers_count),
-                repo.name,
-                repo.description,
-                repo.language,
-                meta?.tag,
-              ]
-                .filter(Boolean)
-                .join(" ");
-              return (
-                <a
-                  class="proj-card"
-                  href={repo.html_url}
-                  target="_blank"
-                  rel="external noopener noreferrer"
-                  aria-label={t("aria.opensNewTab", { text: cardText })}
-                >
-                  <div class="proj-card__top">
-                    {meta?.category && (
-                      <span class="proj-card__chip">{meta.category}</span>
+  {featuredProjects.length > 0 && (
+    <section class="home-section">
+      <div class="container">
+        <div class="home-section__head">
+          <h2 class="section-title standard">
+            {t("pages.home.featuredProjects")}
+          </h2>
+          <a
+            href={translatePath("/projects/")}
+            class="home-section__link"
+          >
+            {t("pages.home.viewAllProjects")}
+          </a>
+        </div>
+        <div class="proj-grid">
+          {featuredProjects.map((repo) => {
+            const meta = PROJECT_META[repo.name];
+            /*
+             * The whole card is the link, so its accessible name is its own
+             * text. `aria-label` REPLACES that name instead of extending it,
+             * so the notice is appended to the FULL visible text, in DOM
+             * order — the same rule the prose pipeline applies in
+             * scripts/rehype-external-links-announced.mjs. Labelling the
+             * card with just its title would drop the description from the
+             * accessible name while it stays on screen.
+             */
+            const cardText = [
+              meta?.category,
+              String(repo.stargazers_count),
+              repo.name,
+              repo.description,
+              repo.language,
+              meta?.tag,
+            ]
+              .filter(Boolean)
+              .join(" ");
+            return (
+              <a
+                class="proj-card"
+                href={repo.html_url}
+                target="_blank"
+                rel="external noopener noreferrer"
+                aria-label={t("aria.opensNewTab", { text: cardText })}
+              >
+                <div class="proj-card__top">
+                  {meta?.category && (
+                    <span class="proj-card__chip">{meta.category}</span>
+                  )}
+                  <span class="proj-card__metric">
+                    <span
+                      class="i-mdi:star-outline"
+                      aria-hidden="true"
+                    />
+                    {repo.stargazers_count}
+                  </span>
+                </div>
+                <h3 class="proj-card__title">{repo.name}</h3>
+                {repo.description && (
+                  <p class="proj-card__desc">{repo.description}</p>
+                )}
+                {(repo.language ?? meta?.tag) && (
+                  <div class="proj-card__foot">
+                    {repo.language && (
+                      <span class="proj-card__lang">
+                        <span
+                          class="proj-card__dot"
+                          style={`--lang-color:${langColors[repo.language] ?? "#8b949e"}`}
+                          aria-hidden="true"
+                        />
+                        {repo.language}
+                      </span>
                     )}
-                    <span class="proj-card__metric">
-                      <span
-                        class="i-mdi:star-outline"
-                        aria-hidden="true"
-                      />
-                      {repo.stargazers_count}
-                    </span>
+                    {meta?.tag && (
+                      <span class="proj-card__tag">{meta.tag}</span>
+                    )}
                   </div>
-                  <h3 class="proj-card__title">{repo.name}</h3>
-                  {repo.description && (
-                    <p class="proj-card__desc">{repo.description}</p>
-                  )}
-                  {(repo.language ?? meta?.tag) && (
-                    <div class="proj-card__foot">
-                      {repo.language && (
-                        <span class="proj-card__lang">
-                          <span
-                            class="proj-card__dot"
-                            style={`--lang-color:${langColors[repo.language] ?? "#8b949e"}`}
-                            aria-hidden="true"
-                          />
-                          {repo.language}
-                        </span>
-                      )}
-                      {meta?.tag && (
-                        <span class="proj-card__tag">{meta.tag}</span>
-                      )}
-                    </div>
-                  )}
-                </a>
-              );
-            })}
-          </div>
+                )}
+              </a>
+            );
+          })}
         </div>
-      </section>
-    )
-  }
+      </div>
+    </section>
+  )}
 
-  {
-    latestPosts.length > 0 && (
-      <section class="home-section">
-        <div class="container">
-          <div class="home-section__head">
-            <h2 class="section-title standard">
-              {t("pages.home.latestFromBlog")}
-            </h2>
-            <a
-              href={translatePath("/blog/")}
-              class="home-section__link"
-            >
-              {t("pages.home.viewAllPosts")}
-            </a>
-          </div>
-          <ul class="notes-list">
-            {latestPosts.map((post) => (
-              <li class="notes-item">
-                <span class="notes-date">
-                  {formatDateDot(post.data.publishedDate)}
-                </span>
-                <span class="notes-main">
-                  <a
-                    class="notes-title"
-                    href={translatePath(`/blog/${post.data.slug}/`)}
-                  >
-                    {post.data.title}
-                  </a>
-                  {post.data.tags?.[0] && (
-                    <span class="notes-tag">{post.data.tags[0]}</span>
-                  )}
-                </span>
-              </li>
-            ))}
-          </ul>
+  {latestPosts.length > 0 && (
+    <section class="home-section">
+      <div class="container">
+        <div class="home-section__head">
+          <h2 class="section-title standard">
+            {t("pages.home.latestFromBlog")}
+          </h2>
+          <a
+            href={translatePath("/blog/")}
+            class="home-section__link"
+          >
+            {t("pages.home.viewAllPosts")}
+          </a>
         </div>
-      </section>
-    )
-  }
+        <ul class="notes-list">
+          {latestPosts.map((post) => (
+            <li class="notes-item">
+              <span class="notes-date">
+                {formatDateDot(post.data.publishedDate)}
+              </span>
+              <span class="notes-main">
+                <a
+                  class="notes-title"
+                  href={translatePath(`/blog/${post.data.slug}/`)}
+                >
+                  {post.data.title}
+                </a>
+                {post.data.tags?.[0] && (
+                  <span class="notes-tag">{post.data.tags[0]}</span>
+                )}
+              </span>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </section>
+  )}
 </BaseLayout>
 
 <style>
