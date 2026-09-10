@@ -915,20 +915,43 @@ const groups = [
     }
   }
 
-  @supports (position-area: block-end) {
+  /* `max-block-size: stretch` is part of the condition, not just of the block:
+     it is what keeps the popup on screen (see below), so an engine that had
+     `position-area` without it would anchor the popup and then clip it. Such an
+     engine gets the centred base placement instead, which is always reachable. */
+  @supports (position-area: block-end) and (max-block-size: stretch) {
     @media (width > 640px) {
       .proj-listings {
         /* Releases the UA centring so the position-area places it instead. */
         inset: auto;
         justify-self: start;
-        margin: var(--space-xs) 0 0;
 
-        /* Below the trigger, growing towards the inline end, and flipped
-           rather than clipped when a card near the viewport edge leaves no
-           room. `transform-origin` cannot follow a flip (`@position-try` may
-           only change inset, margin and size), so a flipped popup grows from
-           the wrong corner: still anchored, still readable, one corner off. */
+        /* Bounds the height to the space the CHOSEN position area actually
+           has, which the viewport-relative `max-height` on the base rule does
+           not: that caps the box without moving it, so a trigger halfway down
+           a 900px laptop viewport got a 540px popup hanging 108px past the
+           bottom edge, and `overflow-y: auto` could not save it because a
+           fixed element does not scroll with the page. Measured after:
+           bottom = 696 / 896 / 1012 at viewport heights 700 / 900 / 1200,
+           always inside, with the list scrolling internally instead. */
+        max-block-size: stretch;
+
+        /* Both sides now: with `stretch` above, the bottom margin is the
+           gutter that stops the popup short of the viewport edge. */
+        margin: var(--space-xs) 0;
+
+        /* Below the trigger, growing towards the inline end. `transform-origin`
+           cannot follow a flip (`@position-try` may only change inset, margin
+           and size), so a flipped popup grows from the wrong corner: still
+           anchored, still readable, one corner off. */
         position-area: block-end span-inline-end;
+
+        /* Picks the roomiest candidate rather than the first that fits.
+           Load-bearing next to `stretch`: because the box can no longer
+           overflow, `flip-block` alone would never trigger, and a trigger low
+           on a tall page would get a 152px sliver below it instead of the full
+           676px above (measured at 1280x1200). */
+        position-try-order: most-block-size;
         position-try-fallbacks:
           flip-block,
           flip-inline,
