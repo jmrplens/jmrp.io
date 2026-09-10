@@ -20,26 +20,23 @@
       "file": "glama.svg",
       "label": "Glama",
       "site": "https://glama.ai",
-      "origin": "iconify",
-      "source": "https://api.iconify.design/thesvg/glama.svg",
-      "collection": "thesvg",
-      "collectionUrl": "https://github.com/glincker/thesvg",
-      "license": "MIT (collection packaging); mark remains Glama's trademark",
-      "modifications": ["removed width/height from the root element"]
-    },
-    {
-      "file": "lobehub.svg",
-      "label": "LobeHub",
-      "site": "https://lobehub.com",
-      "origin": "iconify",
-      "source": "https://api.iconify.design/thesvg/lobehub.svg",
-      "collection": "thesvg",
-      "collectionUrl": "https://github.com/glincker/thesvg",
-      "license": "MIT (collection packaging); mark remains LobeHub's trademark",
+      "origin": "site",
+      "source": "https://glama.ai/favicon.svg",
+      "terms": null,
+      "termsWording": "no terms, brand or press page found stating logo conditions",
+      "license": "no explicit grant; mark remains Glama's trademark",
       "modifications": [
-        "removed width/height from the root element",
-        "wrapped its 320-unit coordinate system in scale(.075) and set viewBox to 0 0 24 24"
-      ]
+        "dropped the black rounded plate rect",
+        "dropped the 45-unit safe-area inset the source file documents: that margin exists so the white llama does not fuse with the white circular chip Google Search draws around a favicon, and this popup draws no chip, so keeping it would only shrink the mark in the row",
+        "recolored the glyph path to currentColor",
+        "refitted to a 22-unit box from a measured bbox of 220x300",
+        "did NOT add shape-rendering=crispEdges, which the source file explicitly warns against: it snaps block edges to whole device pixels and at row size that collapses the ears"
+      ],
+      "supersedes": {
+        "source": "https://api.iconify.design/thesvg/glama.svg",
+        "collection": "thesvg",
+        "reason": "WRONG ARTWORK, do not restore it. `thesvg:glama` is a curvy line-art llama head wearing glasses and a cap, drawn with fill-rule=evenodd. Glama's actual mark is a pixel-block llama, and the two share nothing but the animal. The author spotted it on the rendered page. Treat that collection as unverified: it is a third-party logo dump, not a first-party source, and this is the second of its two icons that turned out to be unusable."
+      }
     },
     {
       "file": "mcpso.svg",
@@ -97,10 +94,16 @@
         "dropped the near-black plate rect",
         "flattened the orange accent dot to currentColor, so the mark is monochrome",
         "refitted to a 22-unit box from a measured bbox of 48.0x26.3"
-      ]
+      ],
+      "note": "The wide, low proportions and the flattened accent dot were put to the author and KEPT DELIBERATELY: he chose fidelity to the real mark over an evenly weighted column. Not an oversight, do not normalize it away."
     }
   ],
   "leftOnGenericIcon": [
+    {
+      "label": "LobeHub",
+      "site": "https://lobehub.com",
+      "reason": "publishes no SVG at all (/favicon.svg returns the HTML shell, not an image), only rasters: https://web-assets.lobehub.com/landing-rr/prod/assets/logo-DauBOjoN.png at 192x192 and /favicon-32x32.png. The mark is a multi-colour character, an orange face with large eyes and an open mouth under a purple cloud of hair with coloured dots, and its identity is those features. A monochrome silhouette of it keeps only the outline, which renders in the row as a featureless blob that identifies nothing: compared side by side against the official raster, the silhouette read as neither LobeHub nor anything else. Tracing the raster to recover the eyes and mouth would be inventing a logo, so the generic directory glyph is the honest answer. A silhouette derived from that character was vendored briefly and removed for this reason."
+    },
     {
       "label": "MCP Servers",
       "site": "https://mcpservers.org",

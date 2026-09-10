@@ -94,14 +94,15 @@ const DIRECTORIES: Readonly<Record<string, Directory>> = {
   },
   "glama.ai": { label: "Glama", icon: "vendored:glama" },
   "mcp.so": { icon: "vendored:mcpso" },
-  "lobehub.com": { label: "LobeHub", icon: "vendored:lobehub" },
   "pulsemcp.com": { label: "PulseMCP", icon: "vendored:pulsemcp" },
   "pickmcp.com": { label: "PickMCP", icon: "vendored:pickmcp" },
   "mcpvault.io": { label: "MCP Vault", icon: "vendored:mcpvault" },
-  // These two publish no vector mark at all, only a raster favicon, and
-  // tracing that would be inventing a logo. They keep the generic directory
-  // glyph; the reason is recorded under `leftOnGenericIcon` in provenance.json
-  // so the next person does not repeat the search.
+  // These three keep the generic directory glyph, each for a reason recorded
+  // under `leftOnGenericIcon` in provenance.json so nobody repeats the search:
+  // two publish no vector mark at all and tracing their raster favicon would
+  // be inventing a logo, and LobeHub's mark is a multi-colour character whose
+  // identity lives in its face, which a monochrome silhouette destroys.
+  "lobehub.com": { label: "LobeHub", icon: "mdi:view-grid-outline" },
   "mcpservers.org": { label: "MCP Servers", icon: "mdi:view-grid-outline" },
   "mcptoplist.com": { label: "MCP Toplist", icon: "mdi:view-grid-outline" },
 
