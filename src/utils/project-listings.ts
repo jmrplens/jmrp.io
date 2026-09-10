@@ -49,13 +49,12 @@ interface Directory {
  * pypi.org and glama.ai without, and a future URL that drops or adds it should
  * not silently fall through to the unmapped case.
  *
- * The icon says what KIND of listing it is, which is the distinction a reader
- * scanning sixteen unfamiliar names actually needs: a brand mark for the
- * package indexes you install from, a check seal for VerifyMCP (which audits
- * the running endpoint rather than listing a repository), the DOI mark for the
- * archived deposit, and one shared directory glyph for the MCP catalogues,
- * which differ only in name. That glyph is the one `projects.yaml` already
- * authors for Glama.
+ * Each entry carries its own brand mark, because a column of sixteen rows all
+ * wearing the same glyph gives a reader nothing to aim at. Marks come from
+ * Iconify where Iconify has them, and otherwise from the local `vendored`
+ * collection (`src/icons/vendored/`, provenance recorded alongside). Only two
+ * hosts publish no vector mark at all and keep the generic directory glyph;
+ * see the note on them below.
  */
 const DIRECTORIES: Readonly<Record<string, Directory>> = {
   // Package indexes: "how do I install this".
@@ -83,18 +82,27 @@ const DIRECTORIES: Readonly<Record<string, Directory>> = {
   // projects.yaml), so it gets its own mark.
   "verifymcp.io": { label: "VerifyMCP", icon: "mdi:check-decagram" },
 
-  // MCP catalogues. Cursor is the one with a mark of its own.
+  // MCP catalogues. Each carries its own mark: Cursor's is in `simple-icons`,
+  // the rest are in the local `vendored` collection because Iconify has none
+  // of them (`thesvg` has Glama and LobeHub, but pulling a 3752-icon package
+  // in for two icons is not worth it, so those two are vendored from the same
+  // upstream SVG). `src/icons/vendored/provenance.json` records where each
+  // file came from and what was changed.
   "cursor.directory": {
     label: "Cursor Directory",
     icon: "simple-icons:cursor",
   },
-  "glama.ai": { label: "Glama", icon: "mdi:view-grid-outline" },
-  "mcp.so": { icon: "mdi:view-grid-outline" },
-  "lobehub.com": { label: "LobeHub", icon: "mdi:view-grid-outline" },
-  "pulsemcp.com": { label: "PulseMCP", icon: "mdi:view-grid-outline" },
+  "glama.ai": { label: "Glama", icon: "vendored:glama" },
+  "mcp.so": { icon: "vendored:mcpso" },
+  "lobehub.com": { label: "LobeHub", icon: "vendored:lobehub" },
+  "pulsemcp.com": { label: "PulseMCP", icon: "vendored:pulsemcp" },
+  "pickmcp.com": { label: "PickMCP", icon: "vendored:pickmcp" },
+  "mcpvault.io": { label: "MCP Vault", icon: "vendored:mcpvault" },
+  // These two publish no vector mark at all, only a raster favicon, and
+  // tracing that would be inventing a logo. They keep the generic directory
+  // glyph; the reason is recorded under `leftOnGenericIcon` in provenance.json
+  // so the next person does not repeat the search.
   "mcpservers.org": { label: "MCP Servers", icon: "mdi:view-grid-outline" },
-  "pickmcp.com": { label: "PickMCP", icon: "mdi:view-grid-outline" },
-  "mcpvault.io": { label: "MCP Vault", icon: "mdi:view-grid-outline" },
   "mcptoplist.com": { label: "MCP Toplist", icon: "mdi:view-grid-outline" },
 
   // Fallback for any other GitHub URL; kept last of the github.com keys only
@@ -166,8 +174,34 @@ export interface ProjectListing {
 }
 
 /**
- * Every directory and registry a project is listed on, in authored order:
- * the rendered `listings` first, then the `sameAs` tail.
+ * Sort key for one listing: the lowercased visible LABEL.
+ *
+ * The label is what the reader scans, so it is what the order has to follow;
+ * sorting by host would put "npmjs.com" under N and "mcp.so" under M while the
+ * rows read "npm" and "mcp.so", and sorting by YAML order is no order at all.
+ *
+ * @param listing - The listing to key.
+ * @returns The comparison key.
+ */
+const sortKey = (listing: ProjectListing): string =>
+  listing.label.toLowerCase();
+
+/**
+ * Every directory and registry a project is listed on, ordered for reading:
+ * the entries the card already links first, then the rest, each group
+ * alphabetical by visible label.
+ *
+ * ── Why this order cannot drift ──────────────────────────────────────────
+ * The comparison is plain code-unit `<` on a `toLowerCase()`d label, NOT
+ * `localeCompare` and not `Intl.Collator`: those two read the runtime's
+ * default locale, so the same list could come out in one order on /projects/
+ * and another on /es/projects/, or change under a build host with a different
+ * `LANG`. Code-unit order on ASCII is total, deterministic and locale-free,
+ * and every label is ASCII because they are proper nouns that are never
+ * translated (see `Directory.label`). `toLowerCase` is locale-independent by
+ * spec, unlike `toLocaleLowerCase`, so it cannot introduce a Turkish-i style
+ * difference either. Ties are impossible: two entries with the same label
+ * would be the same directory, and the URL set is deduplicated below.
  *
  * Deliberately NOT included is the MCP Registry alias that
  * `buildProjectSchema` synthesizes from `registryId`. It is the one alias with
@@ -186,18 +220,28 @@ export function projectListings(project: Project): ProjectListing[] {
   const onCard = new Set(rendered.map((listing) => listing.url));
   const urls = [...new Set([...onCard, ...(project.sameAs ?? [])])];
 
-  return urls.map((url) => {
-    // Safe to parse unguarded: the collection schema validates every one of
-    // these fields with `z.url()`, so an unparseable URL fails the build.
-    const parsed = new URL(url);
-    const directory = directoryFor(parsed);
-    const host = bareHost(parsed.host);
-    return {
-      url,
-      label: directory.label ?? host,
-      icon: directory.icon,
-      host,
-      onCard: onCard.has(url),
-    };
-  });
+  return urls
+    .map((url) => {
+      // Safe to parse unguarded: the collection schema validates every one of
+      // these fields with `z.url()`, so an unparseable URL fails the build.
+      const parsed = new URL(url);
+      const directory = directoryFor(parsed);
+      const host = bareHost(parsed.host);
+      return {
+        url,
+        label: directory.label ?? host,
+        icon: directory.icon,
+        host,
+        onCard: onCard.has(url),
+      };
+    })
+    .sort((a, b) => {
+      // The card's own links first: those are the rows a reader arrives
+      // already knowing, so they belong at the top rather than scattered
+      // through the alphabet with a "shown on the card" mark to hunt for.
+      if (a.onCard !== b.onCard) return a.onCard ? -1 : 1;
+      const [ka, kb] = [sortKey(a), sortKey(b)];
+      if (ka < kb) return -1;
+      return ka > kb ? 1 : 0;
+    });
 }

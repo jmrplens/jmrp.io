@@ -1,0 +1,115 @@
+{
+  "$comment": [
+    "Third-party brand marks vendored into this repository so the /projects/",
+    "listings popover can show each directory's own logo instead of one shared",
+    "generic glyph. Loaded as the local UnoCSS collection `vendored` (see",
+    "uno.config.ts), referenced as `vendored:<id>` from the host map in",
+    "src/utils/project-listings.ts, and rendered only as a link to the site the",
+    "mark belongs to, which is referential use: no affiliation or endorsement",
+    "is claimed anywhere on the page.",
+    "Every entry records where the file came from, when it was fetched, what",
+    "the source states about its marks, and exactly what was changed. The",
+    "closure of this file against the directory, and the shape invariants each",
+    "SVG must satisfy, are enforced by scripts/ci/vendored-icons.test.mjs.",
+    "The marks remain the trademarks of their owners; a permissive license on",
+    "an icon collection covers the packaging, never the trademark."
+  ],
+  "fetchedOn": "2026-09-10",
+  "icons": [
+    {
+      "file": "glama.svg",
+      "label": "Glama",
+      "site": "https://glama.ai",
+      "origin": "iconify",
+      "source": "https://api.iconify.design/thesvg/glama.svg",
+      "collection": "thesvg",
+      "collectionUrl": "https://github.com/glincker/thesvg",
+      "license": "MIT (collection packaging); mark remains Glama's trademark",
+      "modifications": ["removed width/height from the root element"]
+    },
+    {
+      "file": "lobehub.svg",
+      "label": "LobeHub",
+      "site": "https://lobehub.com",
+      "origin": "iconify",
+      "source": "https://api.iconify.design/thesvg/lobehub.svg",
+      "collection": "thesvg",
+      "collectionUrl": "https://github.com/glincker/thesvg",
+      "license": "MIT (collection packaging); mark remains LobeHub's trademark",
+      "modifications": [
+        "removed width/height from the root element",
+        "wrapped its 320-unit coordinate system in scale(.075) and set viewBox to 0 0 24 24"
+      ]
+    },
+    {
+      "file": "mcpso.svg",
+      "label": "mcp.so",
+      "site": "https://mcp.so",
+      "origin": "site",
+      "source": "https://mcp.so/logo.svg",
+      "terms": "https://mcp.so/terms-of-service",
+      "termsWording": "The service and its original content, features, and functionality are owned by us and are protected by international copyright, trademark, and other intellectual property laws.",
+      "license": "no explicit grant; ownership assertion only, no restriction stated on referential use of the mark",
+      "modifications": [
+        "removed width/height/fill from the root element",
+        "moved the single paint onto a wrapping g fill=currentColor"
+      ]
+    },
+    {
+      "file": "pickmcp.svg",
+      "label": "PickMCP",
+      "site": "https://pickmcp.com",
+      "origin": "site",
+      "source": "https://pickmcp.com/favicon.svg",
+      "terms": null,
+      "termsWording": "no terms, brand or press page published (checked /terms, /brand, /press, /legal, /terms-of-service)",
+      "license": "no stated terms",
+      "modifications": [
+        "dropped the blue plate rect",
+        "redrew the remaining stroked square and inner square in 24 units with currentColor, fitted to a 22-unit box"
+      ]
+    },
+    {
+      "file": "pulsemcp.svg",
+      "label": "PulseMCP",
+      "site": "https://www.pulsemcp.com",
+      "origin": "site",
+      "source": "https://www.pulsemcp.com/favicon.svg",
+      "terms": "https://www.pulsemcp.com/terms-of-service",
+      "termsWording": "All content on the Website, including text, graphics, logos, images, and software, is the property of PulseMCP or its content suppliers and is protected by United States and international copyright laws.",
+      "license": "no explicit grant; ownership assertion only, no restriction stated on referential use of the mark",
+      "modifications": [
+        "dropped the white plate rect and its navy border rect",
+        "recolored the pixel-grid glyph path to currentColor",
+        "refitted to a 22-unit box from a measured bbox of 13.0x18.6"
+      ]
+    },
+    {
+      "file": "mcpvault.svg",
+      "label": "MCP Vault",
+      "site": "https://mcpvault.io",
+      "origin": "site",
+      "source": "https://mcpvault.io/icon.svg",
+      "terms": "https://mcpvault.io/terms",
+      "termsWording": "Repository names, logos and code belong to their respective owners. The compilation, grading system, verification results and original content of MCPVault belong to us.",
+      "license": "no explicit grant; ownership assertion only, no restriction stated on referential use of the mark",
+      "modifications": [
+        "dropped the near-black plate rect",
+        "flattened the orange accent dot to currentColor, so the mark is monochrome",
+        "refitted to a 22-unit box from a measured bbox of 48.0x26.3"
+      ]
+    }
+  ],
+  "leftOnGenericIcon": [
+    {
+      "label": "MCP Servers",
+      "site": "https://mcpservers.org",
+      "reason": "publishes no vector mark: the only own-brand asset is the raster /icon.png, all 17 inline SVGs in the page are lucide UI glyphs, and /logo.svg, /icon.svg, /favicon.svg, /brand/logo.svg, /images/logo.svg, /assets/logo.svg and /logo-mark.svg all 404. Tracing the PNG would be inventing a logo."
+    },
+    {
+      "label": "MCP Toplist",
+      "site": "https://mcptoplist.com",
+      "reason": "publishes no vector mark: the only own-brand asset is the raster /icon endpoint, the header is a text wordmark, all 11 inline SVGs in the page are generic UI glyphs, and the same seven candidate SVG paths all 404."
+    }
+  ]
+}

@@ -4,7 +4,7 @@
  * Scans all source and content files for icon patterns.
  * Custom extractor ensures icons in YAML/MDX/TS are detected even without 'i-' prefix.
  */
-import { readFileSync } from "node:fs";
+import { readdirSync, readFileSync } from "node:fs";
 
 import { defineConfig, presetIcons, presetWind4 } from "unocss";
 
@@ -17,7 +17,43 @@ const iconCollections = [
   "vscode-icons",
   "devicon",
   "tabler",
+  // Local, not an @iconify-json package. See `vendoredIcons` below.
+  "vendored",
 ];
+
+/** Where the vendored brand marks live, with their provenance record. */
+const VENDORED_DIR = "src/icons/vendored/";
+
+/**
+ * The `vendored` icon collection: third-party brand marks committed to this
+ * repository because Iconify does not carry them, normalized to the same shape
+ * as the Iconify ones (one 24-unit viewBox, currentColor, no sizing attrs).
+ * Provenance for every file is in `<VENDORED_DIR>/provenance.json` and the
+ * shape invariants are enforced by scripts/ci/vendored-icons.test.mjs.
+ *
+ * `presetIcons` takes a collection as a plain `name -> raw SVG` record, which
+ * is why this needs no loader package. `FileSystemIconLoader` from
+ * `@iconify/utils` would do the same job, but that package is only a
+ * TRANSITIVE dependency here (present at @iconify/utils@3.1.5 under unocss,
+ * not resolvable from the repo root), so importing it would be an undeclared
+ * dependency that a hoisting change could break.
+ *
+ * Named `vendored` so the origin of a mark is legible in the markup itself:
+ * `i-vendored:glama` is visibly not an Iconify collection.
+ *
+ * @returns Icon id (the file's basename) to its SVG source.
+ */
+function vendoredIcons(): Record<string, string> {
+  const dir = new URL(VENDORED_DIR, import.meta.url);
+  return Object.fromEntries(
+    readdirSync(dir)
+      .filter((file) => file.endsWith(".svg"))
+      .map((file) => [
+        file.replace(/\.svg$/, ""),
+        readFileSync(new URL(file, dir), "utf8"),
+      ]),
+  );
+}
 
 /**
  * Bare Iconify ids authored as `icon:` values in a source file, returned as
@@ -129,6 +165,9 @@ export default defineConfig({
     }),
     presetIcons({
       prefix: "i-",
+      collections: {
+        vendored: vendoredIcons(),
+      },
       extraProperties: {
         display: "inline-block",
         "vertical-align": "middle",

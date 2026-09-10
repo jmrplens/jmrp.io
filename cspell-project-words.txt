@@ -678,6 +678,7 @@ mbpoll
 mbus
 mcafee
 mcpservers
+mcpso
 mcptoplist
 mcpvault
 mdnwebdocs
@@ -1152,6 +1153,7 @@ testeable
 texstudio
 texto
 textos
+thesvg
 thrs
 tieni
 tik's
