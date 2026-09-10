@@ -191,7 +191,8 @@ function getBarColor(index: number, item: BarData): string {
 <div
   class="bar-chart-container"
   role="img"
-  aria-label={ariaLabel ||
+  aria-label={
+    ariaLabel ||
     (title
       ? t("components.barChart.ariaWithTitle", {
           title,
@@ -199,71 +200,68 @@ function getBarColor(index: number, item: BarData): string {
         })
       : t("components.barChart.ariaWithoutTitle", {
           count: String(data.length),
-        }))}
+        }))
+  }
   data-animated="false"
 >
   {title && <div class="bar-chart-title">{title}</div>}
 
   <ul class="bar-chart">
-    {
-      data.map((item, index) => {
-        const percentage = maxValue > 0 ? (item.value / maxValue) * 100 : 0;
-        const totalPercentage =
-          totalValue > 0 ? (item.value / totalValue) * 100 : 0;
-        const barColor = getBarColor(index, item);
-        const labelId = `bar-label-${chartId}-${index}`;
-        const barStyle = `--bar-width: ${percentage}%; --bar-index: ${index}; background-color: ${barColor};`;
+    {data.map((item, index) => {
+      const percentage = maxValue > 0 ? (item.value / maxValue) * 100 : 0;
+      const totalPercentage =
+        totalValue > 0 ? (item.value / totalValue) * 100 : 0;
+      const barColor = getBarColor(index, item);
+      const labelId = `bar-label-${chartId}-${index}`;
+      const barStyle = `--bar-width: ${percentage}%; --bar-index: ${index}; background-color: ${barColor};`;
 
-        return (
-          <li class="bar-row">
-            <div class="bar-meta">
+      return (
+        <li class="bar-row">
+          <div class="bar-meta">
+            <span
+              class="bar-label"
+              id={labelId}
+            >
+              {item.label}
+            </span>
+            {(showValue || showPercentage) && (
               <span
-                class="bar-label"
-                id={labelId}
+                class="bar-value"
+                aria-hidden="true"
               >
-                {item.label}
+                {showValue && (
+                  <span class="value">
+                    {nf.format(item.value)}
+                    {valueUnit && <span class="unit"> {valueUnit}</span>}
+                  </span>
+                )}
+                {showPercentage && showValue && (
+                  <span class="separator"> · </span>
+                )}
+                {showPercentage && (
+                  <span class="percentage">{pf.format(totalPercentage)}%</span>
+                )}
               </span>
-              {(showValue || showPercentage) && (
-                <span
-                  class="bar-value"
-                  aria-hidden="true"
-                >
-                  {showValue && (
-                    <span class="value">
-                      {nf.format(item.value)}
-                      {valueUnit && <span class="unit"> {valueUnit}</span>}
-                    </span>
-                  )}
-                  {showPercentage && showValue && (
-                    <span class="separator"> · </span>
-                  )}
-                  {showPercentage && (
-                    <span class="percentage">
-                      {pf.format(totalPercentage)}%
-                    </span>
-                  )}
-                </span>
-              )}
-            </div>
-            <div class="bar-track">
-              <div
-                class="bar-fill"
-                style={barStyle}
-                role="meter"
-                aria-labelledby={labelId}
-                aria-valuenow={item.value}
-                aria-valuemin={0}
-                aria-valuemax={maxValue}
-                aria-valuetext={`${nf.format(item.value)}${valueUnit ? ` ${valueUnit}` : ""} (${pf.format(totalPercentage)}% ${t("components.barChart.ofTotal")})`}
-                data-value={item.value}
-                data-max={maxValue}
-                title={`${item.label}: ${item.value}${valueUnit ? ` ${valueUnit}` : ""}`}
-              />
-            </div>
-          </li>
-        );
-      })
-    }
+            )}
+          </div>
+          <div class="bar-track">
+            <div
+              class="bar-fill"
+              style={barStyle}
+              role="meter"
+              aria-labelledby={labelId}
+              aria-valuenow={item.value}
+              aria-valuemin={0}
+              aria-valuemax={maxValue}
+              aria-valuetext={`${nf.format(item.value)}${valueUnit ? ` ${valueUnit}` : ""} (${pf.format(totalPercentage)}% ${t("components.barChart.ofTotal")})`}
+              data-value={item.value}
+              data-max={maxValue}
+              title={`${item.label}: ${item.value}${valueUnit ? ` ${valueUnit}` : ""}`}
+            />
+          </div>
+        </li>
+      );
+    })}
   </ul>
 
   <!-- Visually-hidden data table for screen readers -->
@@ -277,19 +275,17 @@ function getBarColor(index: number, item: BarData): string {
       </tr>
     </thead>
     <tbody>
-      {
-        data.map((item) => {
-          const totalPercentage =
-            totalValue > 0 ? (item.value / totalValue) * 100 : 0;
-          return (
-            <tr>
-              <td>{item.label}</td>
-              <td>{nf.format(item.value)}</td>
-              <td>{pf.format(totalPercentage)}%</td>
-            </tr>
-          );
-        })
-      }
+      {data.map((item) => {
+        const totalPercentage =
+          totalValue > 0 ? (item.value / totalValue) * 100 : 0;
+        return (
+          <tr>
+            <td>{item.label}</td>
+            <td>{nf.format(item.value)}</td>
+            <td>{pf.format(totalPercentage)}%</td>
+          </tr>
+        );
+      })}
     </tbody>
   </table>
 

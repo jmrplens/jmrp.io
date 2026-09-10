@@ -66,20 +66,20 @@ const summary =
   {title && <div class="nbases__title">{title}</div>}
 
   <dl class="nbases__grid">
-    {
-      baseRows.map((r) => (
-        <div class="nbases__row">
-          <dt class="nbases__base">{r.base}</dt>
-          <dd class:list={["nbases__val", r.accent && "nbases__val--accent"]}>
-            {r.val}
-          </dd>
-        </div>
-      ))
-    }
+    {baseRows.map((r) => (
+      <div class="nbases__row">
+        <dt class="nbases__base">{r.base}</dt>
+        <dd class:list={["nbases__val", r.accent && "nbases__val--accent"]}>
+          {r.val}
+        </dd>
+      </div>
+    ))}
     <div class="nbases__row">
       <dt class="nbases__base">Bin</dt>
       <dd class="nbases__val nbases__bin">
-        {nibbles.map((n) => <span class="nbases__nibble">{n}</span>)}
+        {nibbles.map((n) => (
+          <span class="nbases__nibble">{n}</span>
+        ))}
       </dd>
     </div>
   </dl>

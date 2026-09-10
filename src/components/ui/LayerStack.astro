@@ -73,17 +73,15 @@ const summary =
   {title && <div class="layers__title">{title}</div>}
 
   <ol class="layers__stack">
-    {
-      resolved.map((l) => (
-        <li
-          class:list={["layers__band", l.accent && "layers__band--accent"]}
-          style={l.accent ? `--ls-accent:${l.accentColor}` : undefined}
-        >
-          <span class="layers__name">{l.name}</span>
-          {l.note && <span class="layers__note">{l.note}</span>}
-        </li>
-      ))
-    }
+    {resolved.map((l) => (
+      <li
+        class:list={["layers__band", l.accent && "layers__band--accent"]}
+        style={l.accent ? `--ls-accent:${l.accentColor}` : undefined}
+      >
+        <span class="layers__name">{l.name}</span>
+        {l.note && <span class="layers__note">{l.note}</span>}
+      </li>
+    ))}
   </ol>
 
   {caption && <p class="layers__caption">{caption}</p>}

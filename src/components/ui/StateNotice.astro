@@ -100,41 +100,37 @@ const removalMessages: Record<NoticeType, string | null> = {
     <span class="sn-title">{displayTitle}</span>
   </div>
   <div class="sn-content">
-    {
-      feature && (
-        <p class="sn-message">
-          <code class="sn-feature">{feature}</code>
-          {stateMessages[type]}
-          {removalMessages[type] && (
-            <span class="sn-date">{removalMessages[type]}</span>
-          )}
-          .
-        </p>
-      )
-    }
-    {
-      alternative && (
-        <p class="sn-alternative">
-          <span class="sn-label">
-            {type === "deprecated"
-              ? t("components.stateNotice.useInstead")
-              : t("components.stateNotice.recommended")}
-          </span>
-          {alternativeUrl ? (
-            <a
-              href={alternativeUrl}
-              target="_blank"
-              rel="external noopener noreferrer"
-              aria-label={t("aria.opensNewTab", { text: alternative })}
-            >
-              <code class="sn-alt-code">{alternative}</code>
-            </a>
-          ) : (
+    {feature && (
+      <p class="sn-message">
+        <code class="sn-feature">{feature}</code>
+        {stateMessages[type]}
+        {removalMessages[type] && (
+          <span class="sn-date">{removalMessages[type]}</span>
+        )}
+        .
+      </p>
+    )}
+    {alternative && (
+      <p class="sn-alternative">
+        <span class="sn-label">
+          {type === "deprecated"
+            ? t("components.stateNotice.useInstead")
+            : t("components.stateNotice.recommended")}
+        </span>
+        {alternativeUrl ? (
+          <a
+            href={alternativeUrl}
+            target="_blank"
+            rel="external noopener noreferrer"
+            aria-label={t("aria.opensNewTab", { text: alternative })}
+          >
             <code class="sn-alt-code">{alternative}</code>
-          )}
-        </p>
-      )
-    }
+          </a>
+        ) : (
+          <code class="sn-alt-code">{alternative}</code>
+        )}
+      </p>
+    )}
     <slot />
   </div>
 </div>

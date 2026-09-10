@@ -101,42 +101,40 @@ const statusName: Record<Status, string> = {
   {title && <div class="ord-cmp__title">{title}</div>}
 
   <div class="ord-cmp__grid">
-    {
-      lanes.map((lane) => (
-        <div class:list={["ord-cmp__lane", `ord-cmp__lane--${lane.side}`]}>
-          <div class="ord-cmp__head">
-            <p class="ord-cmp__label">{lane.label}</p>
-            {lane.verdict && <p class="ord-cmp__verdict">{lane.verdict}</p>}
-          </div>
-          <ol class="ord-cmp__steps">
-            {lane.steps.map((s, i) => {
-              const status = s.status ?? "neutral";
-              return (
-                <li class:list={["ord-cmp__step", `ord-cmp__step--${status}`]}>
-                  <span
-                    class="ord-cmp__marker"
-                    aria-hidden="true"
-                  >
-                    <span class="ord-cmp__num">{i + 1}</span>
-                    {status !== "neutral" && (
-                      <span class="ord-cmp__badge">
-                        <span
-                          class:list={["ord-cmp__glyph", statusIcon[status]]}
-                        />
-                      </span>
-                    )}
-                  </span>
-                  <span class="ord-cmp__body">
-                    <span class="ord-cmp__text">{s.text}</span>
-                    {s.note && <span class="ord-cmp__note">{s.note}</span>}
-                  </span>
-                </li>
-              );
-            })}
-          </ol>
+    {lanes.map((lane) => (
+      <div class:list={["ord-cmp__lane", `ord-cmp__lane--${lane.side}`]}>
+        <div class="ord-cmp__head">
+          <p class="ord-cmp__label">{lane.label}</p>
+          {lane.verdict && <p class="ord-cmp__verdict">{lane.verdict}</p>}
         </div>
-      ))
-    }
+        <ol class="ord-cmp__steps">
+          {lane.steps.map((s, i) => {
+            const status = s.status ?? "neutral";
+            return (
+              <li class:list={["ord-cmp__step", `ord-cmp__step--${status}`]}>
+                <span
+                  class="ord-cmp__marker"
+                  aria-hidden="true"
+                >
+                  <span class="ord-cmp__num">{i + 1}</span>
+                  {status !== "neutral" && (
+                    <span class="ord-cmp__badge">
+                      <span
+                        class:list={["ord-cmp__glyph", statusIcon[status]]}
+                      />
+                    </span>
+                  )}
+                </span>
+                <span class="ord-cmp__body">
+                  <span class="ord-cmp__text">{s.text}</span>
+                  {s.note && <span class="ord-cmp__note">{s.note}</span>}
+                </span>
+              </li>
+            );
+          })}
+        </ol>
+      </div>
+    ))}
   </div>
 
   <table class="sr-only">
@@ -150,18 +148,16 @@ const statusName: Record<Status, string> = {
       </tr>
     </thead>
     <tbody>
-      {
-        lanes.map((lane) =>
-          lane.steps.map((s, i) => (
-            <tr>
-              <td>{lane.label}</td>
-              <td>{i + 1}</td>
-              <td>{s.text}</td>
-              <td>{statusName[s.status ?? "neutral"]}</td>
-            </tr>
-          )),
-        )
-      }
+      {lanes.map((lane) =>
+        lane.steps.map((s, i) => (
+          <tr>
+            <td>{lane.label}</td>
+            <td>{i + 1}</td>
+            <td>{s.text}</td>
+            <td>{statusName[s.status ?? "neutral"]}</td>
+          </tr>
+        )),
+      )}
     </tbody>
   </table>
 

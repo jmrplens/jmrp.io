@@ -33,40 +33,38 @@ const translatePath = useTranslatedPath(locale);
 const headingId = `related-${crypto.getRandomValues(new Uint32Array(1))[0]}`;
 ---
 
-{
-  (posts.length > 0 || tools.length > 0) && (
-    <nav
-      class="related"
-      aria-labelledby={headingId}
-    >
-      <div class="header">
-        <span
-          class="i-mdi:link-variant header-icon"
-          aria-hidden="true"
-        />
-        <h2 id={headingId}>{t("pages.blog.relatedTitle")}</h2>
-      </div>
-      <ul class="related__list">
-        {posts.map((p) => (
-          <li>
-            <a href={translatePath(`/blog/${p.slug}/`)}>{p.title}</a>
-          </li>
-        ))}
-        {tools.map((tool) => (
-          <li>
-            <a href={translatePath(`/tools/${tool.slug}/`)}>
-              <span
-                class="i-mdi:tools related__tool-icon"
-                aria-hidden="true"
-              />
-              {t("pages.blog.relatedTools")}: {tool.title}
-            </a>
-          </li>
-        ))}
-      </ul>
-    </nav>
-  )
-}
+{(posts.length > 0 || tools.length > 0) && (
+  <nav
+    class="related"
+    aria-labelledby={headingId}
+  >
+    <div class="header">
+      <span
+        class="i-mdi:link-variant header-icon"
+        aria-hidden="true"
+      />
+      <h2 id={headingId}>{t("pages.blog.relatedTitle")}</h2>
+    </div>
+    <ul class="related__list">
+      {posts.map((p) => (
+        <li>
+          <a href={translatePath(`/blog/${p.slug}/`)}>{p.title}</a>
+        </li>
+      ))}
+      {tools.map((tool) => (
+        <li>
+          <a href={translatePath(`/tools/${tool.slug}/`)}>
+            <span
+              class="i-mdi:tools related__tool-icon"
+              aria-hidden="true"
+            />
+            {t("pages.blog.relatedTools")}: {tool.title}
+          </a>
+        </li>
+      ))}
+    </ul>
+  </nav>
+)}
 
 <style>
   .related {

@@ -103,104 +103,94 @@ const summary =
 
   {beforeLabel && <span class="fj__phase">{beforeLabel}</span>}
 
-  {
-    before.map((node, i) => (
-      <>
-        {i > 0 && (
-          <svg
-            class="fj__link"
-            viewBox="0 0 16 28"
-            aria-hidden="true"
-          >
-            <line
-              x1="8"
-              y1="0"
-              x2="8"
-              y2="20"
-            />
-            <polygon points="8,27 4,19 12,19" />
-          </svg>
-        )}
-        <div class="fj__node">
-          <span class="fj__name">{node.name}</span>
-          {node.note && <span class="fj__note">{node.note}</span>}
-        </div>
-      </>
-    ))
-  }
+  {before.map((node, i) => (
+    <>
+      {i > 0 && (
+        <svg
+          class="fj__link"
+          viewBox="0 0 16 28"
+          aria-hidden="true"
+        >
+          <line
+            x1="8"
+            y1="0"
+            x2="8"
+            y2="20"
+          />
+          <polygon points="8,27 4,19 12,19" />
+        </svg>
+      )}
+      <div class="fj__node">
+        <span class="fj__name">{node.name}</span>
+        {node.note && <span class="fj__note">{node.note}</span>}
+      </div>
+    </>
+  ))}
 
-  {
-    before.length > 0 && (
-      <svg
-        class="fj__edge"
-        viewBox="0 0 100 40"
-        preserveAspectRatio="none"
-        aria-hidden="true"
-      >
-        {centers.map((x) => (
-          <path d={`M50 0 C50 20 ${x} 20 ${x} 40`} />
-        ))}
-      </svg>
-    )
-  }
+  {before.length > 0 && (
+    <svg
+      class="fj__edge"
+      viewBox="0 0 100 40"
+      preserveAspectRatio="none"
+      aria-hidden="true"
+    >
+      {centers.map((x) => (
+        <path d={`M50 0 C50 20 ${x} 20 ${x} 40`} />
+      ))}
+    </svg>
+  )}
 
   <div
     class={`fj__branches${before.length > 0 ? " fj__branches--forked" : ""}`}
     style={`--fj-cols:${Math.max(n, 1)}`}
   >
-    {
-      branchesR.map((node) => (
-        <div
-          class="fj__node fj__node--branch"
-          style={`--fj-accent:${node.accent};--fj-accent-text:${node.accentText}`}
-        >
-          <span class="fj__name">{node.name}</span>
-          {node.note && <span class="fj__note">{node.note}</span>}
-        </div>
-      ))
-    }
+    {branchesR.map((node) => (
+      <div
+        class="fj__node fj__node--branch"
+        style={`--fj-accent:${node.accent};--fj-accent-text:${node.accentText}`}
+      >
+        <span class="fj__name">{node.name}</span>
+        {node.note && <span class="fj__note">{node.note}</span>}
+      </div>
+    ))}
   </div>
 
-  {
-    after.length > 0 && (
-      <svg
-        class="fj__edge"
-        viewBox="0 0 100 40"
-        preserveAspectRatio="none"
-        aria-hidden="true"
-      >
-        {centers.map((x) => (
-          <path d={`M${x} 0 C${x} 20 50 20 50 40`} />
-        ))}
-      </svg>
-    )
-  }
+  {after.length > 0 && (
+    <svg
+      class="fj__edge"
+      viewBox="0 0 100 40"
+      preserveAspectRatio="none"
+      aria-hidden="true"
+    >
+      {centers.map((x) => (
+        <path d={`M${x} 0 C${x} 20 50 20 50 40`} />
+      ))}
+    </svg>
+  )}
 
-  {
-    after.map((node, i) => (
-      <>
-        {i > 0 && (
-          <svg
-            class="fj__link"
-            viewBox="0 0 16 28"
-            aria-hidden="true"
-          >
-            <line
-              x1="8"
-              y1="0"
-              x2="8"
-              y2="20"
-            />
-            <polygon points="8,27 4,19 12,19" />
-          </svg>
-        )}
-        <div class={`fj__node${i === 0 ? " fj__node--target" : ""}`}>
-          <span class="fj__name">{node.name}</span>
-          {node.note && <span class="fj__note">{node.note}</span>}
-        </div>
-      </>
-    ))
-  }
+  {after.map((node, i) => (
+    <>
+      {i > 0 && (
+        <svg
+          class="fj__link"
+          viewBox="0 0 16 28"
+          aria-hidden="true"
+        >
+          <line
+            x1="8"
+            y1="0"
+            x2="8"
+            y2="20"
+          />
+          <polygon points="8,27 4,19 12,19" />
+        </svg>
+      )}
+      <div class={`fj__node${i === 0 ? " fj__node--target" : ""}`}>
+        <span class="fj__name">{node.name}</span>
+        {node.note && <span class="fj__note">{node.note}</span>}
+      </div>
+    </>
+  ))}
 
   {afterLabel && <span class="fj__phase fj__phase--end">{afterLabel}</span>}
 

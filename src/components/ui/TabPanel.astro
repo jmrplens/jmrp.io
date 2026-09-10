@@ -31,14 +31,12 @@ const t = useTranslations(locale);
   <div class="panel-content">
     <slot />
   </div>
-  {
-    noPadding && (
-      <CopyButton
-        class="panel-copy-button"
-        ariaLabel={t("components.tabPanel.copyContent", { label })}
-      />
-    )
-  }
+  {noPadding && (
+    <CopyButton
+      class="panel-copy-button"
+      ariaLabel={t("components.tabPanel.copyContent", { label })}
+    />
+  )}
 </div>
 
 <style>

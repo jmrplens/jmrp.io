@@ -211,8 +211,7 @@ emyPxgcYxn/eR44/KJ4EBs+lVDR3veyJm+kXQ99b21/+jh5Xos1AnX5iItreGCc=
           class="cert-selector-pills"
           role="radiogroup"
           aria-label={t("tools.certInspector.selectCertificateAriaLabel")}
-        >
-        </div>
+        ></div>
       </div>
 
       <div class="cert-separator">
@@ -253,12 +252,14 @@ emyPxgcYxn/eR44/KJ4EBs+lVDR3veyJm+kXQ99b21/+jh5Xos1AnX5iItreGCc=
     <div
       class="cert-results"
       id={`${uniqueId}-results`}
-    >
-    </div>
+    ></div>
   </div>
 </div>
 
-<script is:inline define:vars={{ uniqueId, i18n }}>
+<script
+  is:inline
+  define:vars={{ uniqueId, i18n }}
+>
   (function () {
     var container = document.querySelector('[data-cert-id="' + uniqueId + '"]');
     if (!container) return;

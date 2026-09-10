@@ -61,32 +61,30 @@ const t = useTranslations(locale);
 
     <div class="cv-drawer-content">
       <ul class="cv-menu-list">
-        {
-          sections.map((section) => (
-            <li class="cv-menu-section">
-              <a
-                href={`#${section.slug}`}
-                class="cv-section-link"
-              >
-                {section.title}
-              </a>
-              {section.items && section.items.length > 0 && (
-                <ul class="cv-submenu-list">
-                  {section.items.map((item) => (
-                    <li>
-                      <a
-                        href={`#${item.slug}`}
-                        class="cv-item-link"
-                      >
-                        {item.title}
-                      </a>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </li>
-          ))
-        }
+        {sections.map((section) => (
+          <li class="cv-menu-section">
+            <a
+              href={`#${section.slug}`}
+              class="cv-section-link"
+            >
+              {section.title}
+            </a>
+            {section.items && section.items.length > 0 && (
+              <ul class="cv-submenu-list">
+                {section.items.map((item) => (
+                  <li>
+                    <a
+                      href={`#${item.slug}`}
+                      class="cv-item-link"
+                    >
+                      {item.title}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </li>
+        ))}
       </ul>
     </div>
   </div>
@@ -94,8 +92,7 @@ const t = useTranslations(locale);
   <div
     id="cv-backdrop"
     class="cv-backdrop"
-  >
-  </div>
+  ></div>
 </nav>
 
 <script>

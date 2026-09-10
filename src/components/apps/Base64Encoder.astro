@@ -116,7 +116,9 @@ const formats = [
           aria-label={t("tools.base64Encoder.inputFormatAriaLabel")}
         >
           <option value="text">{t("tools.base64Encoder.plainText")}</option>
-          {formats.map((f) => <option value={f.id}>{f.name}</option>)}
+          {formats.map((f) => (
+            <option value={f.id}>{f.name}</option>
+          ))}
         </select>
       </div>
       <textarea
@@ -126,14 +128,14 @@ const formats = [
         placeholder={t("tools.base64Encoder.inputPlaceholder")}
         spellcheck="false"
         aria-label={t("tools.base64Encoder.inputTextAriaLabel")}
-        >Hello, World! 🌍</textarea
-      >
+      >Hello, World! 🌍</textarea>
       <div class="enc-info-row">
         <span
           class="enc-byte-count"
           id={`${uniqueId}-input-bytes`}
-          >{t("tools.shared.zeroBytes")}</span
         >
+          {t("tools.shared.zeroBytes")}
+        </span>
       </div>
     </div>
 
@@ -169,12 +171,12 @@ const formats = [
           class="i-mdi:cloud-upload-outline enc-drop-icon"
           aria-hidden="true"
         ></span>
-        <span class="enc-drop-text"
-          >{t("tools.base64Encoder.dropFileText")}</span
-        >
-        <span class="enc-drop-hint"
-          >{t("tools.base64Encoder.dropFileSubtext")}</span
-        >
+        <span class="enc-drop-text">
+          {t("tools.base64Encoder.dropFileText")}
+        </span>
+        <span class="enc-drop-hint">
+          {t("tools.base64Encoder.dropFileSubtext")}
+        </span>
         <span class="enc-drop-privacy">
           <span
             class="i-mdi:shield-check-outline"
@@ -230,8 +232,7 @@ const formats = [
         <div
           class="enc-preview-content"
           id={`${uniqueId}-preview-content`}
-        >
-        </div>
+        ></div>
       </div>
     </div>
 
@@ -262,30 +263,25 @@ const formats = [
           class="enc-format-select enc-text-only-control"
           aria-label={t("tools.base64Encoder.outputFormatAriaLabel")}
         >
-          {
-            formats.map((f) => (
-              <option
-                value={f.id}
-                selected={f.id === "base64"}
-              >
-                {f.name}
-              </option>
-            ))
-          }
+          {formats.map((f) => (
+            <option
+              value={f.id}
+              selected={f.id === "base64"}
+            >
+              {f.name}
+            </option>
+          ))}
           <option value="text">{t("tools.base64Encoder.plainText")}</option>
         </select>
       </div>
       <div class="enc-output-wrapper">
-        {
-          /* eslint-disable astro/jsx-a11y/no-noninteractive-tabindex -- scrollable region requires keyboard access */
-        }
+        {/* eslint-disable astro/jsx-a11y/no-noninteractive-tabindex -- scrollable region requires keyboard access */}
         <pre
           class="enc-output"
           tabindex="0"
           role="region"
-          aria-label={t(
-            "tools.base64Encoder.outputAriaLabel",
-          )}><code id={`${uniqueId}-output`}>...</code></pre>
+          aria-label={t("tools.base64Encoder.outputAriaLabel")}
+        ><code id={`${uniqueId}-output`}>...</code></pre>
         {/* eslint-enable astro/jsx-a11y/no-noninteractive-tabindex */}
         <div class="enc-output-actions">
           <button
@@ -317,8 +313,9 @@ const formats = [
         <span
           class="enc-byte-count"
           id={`${uniqueId}-output-bytes`}
-          >{t("tools.shared.zeroBytes")}</span
         >
+          {t("tools.shared.zeroBytes")}
+        </span>
         <span
           class="enc-ratio"
           id={`${uniqueId}-ratio`}
@@ -334,7 +331,10 @@ const formats = [
   </div>
 </div>
 
-<script is:inline define:vars={{ uniqueId, i18n }}>
+<script
+  is:inline
+  define:vars={{ uniqueId, i18n }}
+>
   (function () {
     var container = document.querySelector('[data-enc-id="' + uniqueId + '"]');
     if (!container) return;

@@ -68,8 +68,7 @@ const algorithms = [
         placeholder={t("tools.hashCalculator.inputPlaceholder")}
         spellcheck="false"
         autocomplete="off"
-        >{defaultCode}</textarea
-      >
+      >{defaultCode}</textarea>
     </div>
 
     {/* Output Section */}
@@ -83,53 +82,51 @@ const algorithms = [
         class="hash-results"
         aria-live="polite"
       >
-        {
-          algorithms.map((algo) => (
-            <div
-              class="hash-result-item"
-              data-algorithm={algo.id}
-            >
-              <div class="hash-result-label">
-                {algo.name}
-                {algo.recommended && (
-                  <span class="hash-recommended">
-                    {t("tools.hashCalculator.recommended")}
-                  </span>
-                )}
-              </div>
-              <div class="hash-result-value">
-                <code data-hash-output={algo.id}>
-                  {t("tools.shared.calculating")}
-                </code>
-                <button
-                  class="hash-copy-btn"
-                  type="button"
-                  data-action="copy"
-                  data-target={algo.id}
-                  aria-label={t("tools.hashCalculator.copyShaHash").replace(
-                    "{algo}",
-                    () => algo.name,
-                  )}
-                >
-                  <span class="i-mdi:content-copy" />
-                </button>
-              </div>
+        {algorithms.map((algo) => (
+          <div
+            class="hash-result-item"
+            data-algorithm={algo.id}
+          >
+            <div class="hash-result-label">
+              {algo.name}
+              {algo.recommended && (
+                <span class="hash-recommended">
+                  {t("tools.hashCalculator.recommended")}
+                </span>
+              )}
             </div>
-          ))
-        }
+            <div class="hash-result-value">
+              <code data-hash-output={algo.id}>
+                {t("tools.shared.calculating")}
+              </code>
+              <button
+                class="hash-copy-btn"
+                type="button"
+                data-action="copy"
+                data-target={algo.id}
+                aria-label={t("tools.hashCalculator.copyShaHash").replace(
+                  "{algo}",
+                  () => algo.name,
+                )}
+              >
+                <span class="i-mdi:content-copy" />
+              </button>
+            </div>
+          </div>
+        ))}
       </div>
 
       {/* CSP Directive Preview */}
       <div class="hash-directive-section">
         <div class="hash-directive-header">
-          <span class="hash-result-label"
-            >{t("tools.hashCalculator.cspDirectiveLabel")}</span
-          >
+          <span class="hash-result-label">
+            {t("tools.hashCalculator.cspDirectiveLabel")}
+          </span>
         </div>
         <div class="hash-result-value hash-result-directive">
-          <code data-hash-output="directive"
-            >{t("tools.shared.calculating")}</code
-          >
+          <code data-hash-output="directive">
+            {t("tools.shared.calculating")}
+          </code>
           <button
             class="hash-copy-btn"
             type="button"
@@ -147,28 +144,28 @@ const algorithms = [
         <div class="hash-example-label">
           {t("tools.hashCalculator.htmlExampleLabel")}
         </div>
-        <pre
-          class="hash-example-code"><code data-hash-output="html">...</code></pre>
+        <pre class="hash-example-code"><code data-hash-output="html">...</code></pre>
       </div>
     </div>
   </div>
 
-  {
-    showExplanation && (
-      <div class="hash-explanation">
-        <div class="hash-explanation-icon">
-          <span class="i-mdi:information" />
-        </div>
-        <div class="hash-explanation-text">
-          <strong>{t("tools.hashCalculator.howItWorks")}</strong>
-          <Fragment set:html={t("tools.hashCalculator.howItWorksText")} />
-        </div>
+  {showExplanation && (
+    <div class="hash-explanation">
+      <div class="hash-explanation-icon">
+        <span class="i-mdi:information" />
       </div>
-    )
-  }
+      <div class="hash-explanation-text">
+        <strong>{t("tools.hashCalculator.howItWorks")}</strong>
+        <Fragment set:html={t("tools.hashCalculator.howItWorksText")} />
+      </div>
+    </div>
+  )}
 </div>
 
-<script is:inline define:vars={{ uniqueId, defaultCode, i18n }}>
+<script
+  is:inline
+  define:vars={{ uniqueId, defaultCode, i18n }}
+>
   // Hash Calculator functionality with multiple algorithms
   // Wrapped in an IIFE so the early-return guard below is valid under
   // Astro 7's stricter Rust compiler (top-level `return` is now an error).

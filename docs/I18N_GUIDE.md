@@ -470,7 +470,9 @@ const postText = pluralize(
 );
 ---
 
-<span>{count} {postText}</span>
+<span>
+  {count} {postText}
+</span>
 ```
 
 ## Anti-Patterns

@@ -57,25 +57,21 @@ const t = useTranslations(locale);
       class={`i-${icon} service-icon-chip`}
       aria-hidden="true"
     ></span>
-    {
-      statusText && (
-        <span class:list={["service-status-pill", statusClass]}>
-          <span
-            class="service-status-dot"
-            aria-hidden="true"
-          />
-          <span class="service-status-label">{statusText}</span>
-        </span>
-      )
-    }
+    {statusText && (
+      <span class:list={["service-status-pill", statusClass]}>
+        <span
+          class="service-status-dot"
+          aria-hidden="true"
+        />
+        <span class="service-status-label">{statusText}</span>
+      </span>
+    )}
   </div>
 
   {/* Title on its own line below the header row */}
   <h3 class="service-title">{title}</h3>
 
-  <p class="service-description">
-    {description}
-  </p>
+  <p class="service-description">{description}</p>
 
   {/* Extra content slot (e.g., Matrix user info) */}
   <slot name="extra" />
@@ -85,20 +81,18 @@ const t = useTranslations(locale);
     <slot />
   </div>
 
-  {
-    link && linkText && (
-      <a
-        href={link}
-        target="_blank"
-        rel="external noopener noreferrer"
-        class="service-link"
-        aria-label={t("aria.opensNewTab", { text: linkText })}
-      >
-        {linkText}
-        <span aria-hidden="true"> ↗</span>
-      </a>
-    )
-  }
+  {link && linkText && (
+    <a
+      href={link}
+      target="_blank"
+      rel="external noopener noreferrer"
+      class="service-link"
+      aria-label={t("aria.opensNewTab", { text: linkText })}
+    >
+      {linkText}
+      <span aria-hidden="true"> ↗</span>
+    </a>
+  )}
 </div>
 
 <style>

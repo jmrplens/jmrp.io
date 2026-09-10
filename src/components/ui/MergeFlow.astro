@@ -71,49 +71,47 @@ const summary =
   {title && <div class="mf__title">{title}</div>}
 
   <ol class="mf__stages">
-    {
-      stages.map((st, i) => (
-        <li class="mf__stage">
-          {i > 0 && (
-            <span
-              class="mf__carry"
-              aria-hidden="true"
-            >
-              ↓
-            </span>
-          )}
-          <div class="mf__inputs">
-            {st.inputs.map((inp, j) => (
-              <>
-                {j > 0 && (
-                  <span
-                    class="mf__plus"
-                    aria-hidden="true"
-                  >
-                    +
-                  </span>
-                )}
-                <span class="mf__chip">
-                  {inp.role && <span class="mf__role">{inp.role}</span>}
-                  <span class="mf__chip-name">{inp.name}</span>
-                </span>
-              </>
-            ))}
-          </div>
-          <span class="mf__op">{st.op}</span>
+    {stages.map((st, i) => (
+      <li class="mf__stage">
+        {i > 0 && (
           <span
-            class="mf__arrow"
+            class="mf__carry"
             aria-hidden="true"
           >
             ↓
           </span>
-          <div class="mf__out">
-            <span class="mf__out-name">{st.out.name}</span>
-            {st.out.note && <span class="mf__out-note">{st.out.note}</span>}
-          </div>
-        </li>
-      ))
-    }
+        )}
+        <div class="mf__inputs">
+          {st.inputs.map((inp, j) => (
+            <>
+              {j > 0 && (
+                <span
+                  class="mf__plus"
+                  aria-hidden="true"
+                >
+                  +
+                </span>
+              )}
+              <span class="mf__chip">
+                {inp.role && <span class="mf__role">{inp.role}</span>}
+                <span class="mf__chip-name">{inp.name}</span>
+              </span>
+            </>
+          ))}
+        </div>
+        <span class="mf__op">{st.op}</span>
+        <span
+          class="mf__arrow"
+          aria-hidden="true"
+        >
+          ↓
+        </span>
+        <div class="mf__out">
+          <span class="mf__out-name">{st.out.name}</span>
+          {st.out.note && <span class="mf__out-note">{st.out.note}</span>}
+        </div>
+      </li>
+    ))}
   </ol>
 
   {caption && <p class="mf__caption">{caption}</p>}
@@ -128,21 +126,17 @@ const summary =
       </tr>
     </thead>
     <tbody>
-      {
-        stages.map((st) => (
-          <tr>
-            <td>{st.op}</td>
-            <td>
-              {st.inputs
-                .map((inp) =>
-                  inp.role ? `${inp.name} (${inp.role})` : inp.name,
-                )
-                .join(" + ")}
-            </td>
-            <td>{st.out.name}</td>
-          </tr>
-        ))
-      }
+      {stages.map((st) => (
+        <tr>
+          <td>{st.op}</td>
+          <td>
+            {st.inputs
+              .map((inp) => (inp.role ? `${inp.name} (${inp.role})` : inp.name))
+              .join(" + ")}
+          </td>
+          <td>{st.out.name}</td>
+        </tr>
+      ))}
     </tbody>
   </table>
 </div>

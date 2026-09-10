@@ -88,18 +88,18 @@ if (ariaLabel) {
         class="jmrp-term__dots"
         aria-hidden="true"
       >
-        <i></i><i></i><i></i>
+        <i></i>
+        <i></i>
+        <i></i>
       </span>
-      {
-        title && (
-          <span
-            class="jmrp-term__label jmrp-term__label--title"
-            aria-hidden="true"
-          >
-            {title}
-          </span>
-        )
-      }
+      {title && (
+        <span
+          class="jmrp-term__label jmrp-term__label--title"
+          aria-hidden="true"
+        >
+          {title}
+        </span>
+      )}
     </span>
     <CopyButton
       variant="terminal"
@@ -110,9 +110,7 @@ if (ariaLabel) {
     />
   </div>
   <div class="jmrp-term__body">
-    {
-      /* eslint-disable astro/jsx-a11y/no-noninteractive-tabindex -- focusable scroll region */
-    }
+    {/* eslint-disable astro/jsx-a11y/no-noninteractive-tabindex -- focusable scroll region */}
     <div
       class="jmrp-term__scroll"
       role="region"
@@ -120,25 +118,23 @@ if (ariaLabel) {
       aria-label={finalAriaLabel}
     >
       {/* eslint-enable astro/jsx-a11y/no-noninteractive-tabindex */}
-      {
-        renderedLines.map((line) =>
-          line.isComment || line.isEmpty ? (
-            <div class="jmrp-term__line">
-              <span class="term-out">{line.text}</span>
-            </div>
-          ) : (
-            <div class="jmrp-term__line">
-              <span
-                class="term-prompt"
-                aria-hidden="true"
-              >
-                {prompt}
-              </span>
-              <span class="term-cmd">{line.text}</span>
-            </div>
-          ),
-        )
-      }
+      {renderedLines.map((line) =>
+        line.isComment || line.isEmpty ? (
+          <div class="jmrp-term__line">
+            <span class="term-out">{line.text}</span>
+          </div>
+        ) : (
+          <div class="jmrp-term__line">
+            <span
+              class="term-prompt"
+              aria-hidden="true"
+            >
+              {prompt}
+            </span>
+            <span class="term-cmd">{line.text}</span>
+          </div>
+        ),
+      )}
     </div>
   </div>
 </div>

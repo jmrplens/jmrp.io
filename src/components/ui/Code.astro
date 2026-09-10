@@ -118,48 +118,46 @@ const highlightedHtml = isEmpty
   : await highlightCode(rawCode, resolveShikiLanguage(lang));
 ---
 
-{
-  isEmpty ? (
-    <Fragment set:html="<!-- Empty code block skipped -->" />
-  ) : (
-    <figure
-      class:list={[
-        "jmrp-code",
-        "copy-container",
-        lineNumbers && "jmrp-code--ln",
-        className,
-      ]}
+{isEmpty ? (
+  <Fragment set:html="<!-- Empty code block skipped -->" />
+) : (
+  <figure
+    class:list={[
+      "jmrp-code",
+      "copy-container",
+      lineNumbers && "jmrp-code--ln",
+      className,
+    ]}
+    aria-label={finalAriaLabel}
+    data-testid={uuid}
+  >
+    <figcaption class="jmrp-code__head">
+      <span class="jmrp-code__id">
+        <span
+          class:list={["jmrp-code__dot", `lang-${langDotClass}`]}
+          aria-hidden="true"
+        />
+        <span class="jmrp-code__name">{title ?? langDisplay}</span>
+      </span>
+      <span class="jmrp-code__meta">
+        {title && <span class="jmrp-code__lang">{langDisplay}</span>}
+        <CopyButton
+          content={rawCode}
+          ariaLabel={t("components.code.copyAria", { label: finalAriaLabel })}
+        />
+      </span>
+    </figcaption>
+    {/* eslint-disable astro/jsx-a11y/no-noninteractive-tabindex -- focusable scroll region for keyboard access to wide code */}
+    <div
+      class="jmrp-code__scroll"
+      tabindex="0"
       aria-label={finalAriaLabel}
-      data-testid={uuid}
     >
-      <figcaption class="jmrp-code__head">
-        <span class="jmrp-code__id">
-          <span
-            class:list={["jmrp-code__dot", `lang-${langDotClass}`]}
-            aria-hidden="true"
-          />
-          <span class="jmrp-code__name">{title ?? langDisplay}</span>
-        </span>
-        <span class="jmrp-code__meta">
-          {title && <span class="jmrp-code__lang">{langDisplay}</span>}
-          <CopyButton
-            content={rawCode}
-            ariaLabel={t("components.code.copyAria", { label: finalAriaLabel })}
-          />
-        </span>
-      </figcaption>
-      {/* eslint-disable astro/jsx-a11y/no-noninteractive-tabindex -- focusable scroll region for keyboard access to wide code */}
-      <div
-        class="jmrp-code__scroll"
-        tabindex="0"
-        aria-label={finalAriaLabel}
-      >
-        {/* eslint-enable astro/jsx-a11y/no-noninteractive-tabindex */}
-        <Fragment set:html={highlightedHtml} />
-      </div>
-    </figure>
-  )
-}
+      {/* eslint-enable astro/jsx-a11y/no-noninteractive-tabindex */}
+      <Fragment set:html={highlightedHtml} />
+    </div>
+  </figure>
+)}
 
 <style>
   .jmrp-code__scroll {

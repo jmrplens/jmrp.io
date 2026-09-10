@@ -183,7 +183,9 @@ const i18n = {
         </button>
       </div>
       <div class="cron-field-labels">
-        {fields.map((f) => <span class="cron-field-label">{f.label}</span>)}
+        {fields.map((f) => (
+          <span class="cron-field-label">{f.label}</span>
+        ))}
       </div>
     </div>
 
@@ -205,63 +207,61 @@ const i18n = {
         ></span>
         <span>{t("tools.cronBuilder.fieldSelectors")}</span>
       </div>
-      {
-        fields.map((f) => (
-          <div
-            class="cron-field-group"
-            data-field={f.id}
-          >
-            <div class="cron-field-top">
-              <span class="cron-field-name">{f.label}</span>
-              <span class="cron-field-range">
-                ({f.min}–{f.max})
-              </span>
-              <div class="cron-field-quick">
-                <button
-                  type="button"
-                  class="cron-quick-btn"
-                  data-action="every"
-                >
-                  {t("tools.cronBuilder.everyWildcard")}
-                </button>
-                <button
-                  type="button"
-                  class="cron-quick-btn"
-                  data-action="clear"
-                >
-                  {t("tools.cronBuilder.clear")}
-                </button>
-              </div>
-            </div>
-            <div
-              class="cron-value-grid"
-              role="group"
-              aria-label={t("tools.cronBuilder.selectFieldValues").replace(
-                "{field}",
-                () => f.label.toLowerCase(),
-              )}
-            >
-              {Array.from({ length: f.max - f.min + 1 }, (_, i) => {
-                const val = f.min + i;
-                let displayLabel = String(val);
-                if (f.id === "month") displayLabel = monthLabels[i];
-                else if (f.id === "dow") displayLabel = dowLabels[i];
-                return (
-                  <button
-                    type="button"
-                    class="cron-val-btn"
-                    data-val={val}
-                    aria-label={`${f.label} ${displayLabel}`}
-                    aria-pressed="false"
-                  >
-                    {displayLabel}
-                  </button>
-                );
-              })}
+      {fields.map((f) => (
+        <div
+          class="cron-field-group"
+          data-field={f.id}
+        >
+          <div class="cron-field-top">
+            <span class="cron-field-name">{f.label}</span>
+            <span class="cron-field-range">
+              ({f.min}–{f.max})
+            </span>
+            <div class="cron-field-quick">
+              <button
+                type="button"
+                class="cron-quick-btn"
+                data-action="every"
+              >
+                {t("tools.cronBuilder.everyWildcard")}
+              </button>
+              <button
+                type="button"
+                class="cron-quick-btn"
+                data-action="clear"
+              >
+                {t("tools.cronBuilder.clear")}
+              </button>
             </div>
           </div>
-        ))
-      }
+          <div
+            class="cron-value-grid"
+            role="group"
+            aria-label={t("tools.cronBuilder.selectFieldValues").replace(
+              "{field}",
+              () => f.label.toLowerCase(),
+            )}
+          >
+            {Array.from({ length: f.max - f.min + 1 }, (_, i) => {
+              const val = f.min + i;
+              let displayLabel = String(val);
+              if (f.id === "month") displayLabel = monthLabels[i];
+              else if (f.id === "dow") displayLabel = dowLabels[i];
+              return (
+                <button
+                  type="button"
+                  class="cron-val-btn"
+                  data-val={val}
+                  aria-label={`${f.label} ${displayLabel}`}
+                  aria-pressed="false"
+                >
+                  {displayLabel}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      ))}
     </div>
 
     {/* Presets */}
@@ -274,18 +274,16 @@ const i18n = {
         {t("tools.cronBuilder.commonSchedules")}
       </span>
       <div class="cron-presets-grid">
-        {
-          presets.map((p) => (
-            <button
-              type="button"
-              class="cron-preset-btn"
-              data-value={p.value}
-            >
-              <code>{p.value}</code>
-              <span>{p.label}</span>
-            </button>
-          ))
-        }
+        {presets.map((p) => (
+          <button
+            type="button"
+            class="cron-preset-btn"
+            data-value={p.value}
+          >
+            <code>{p.value}</code>
+            <span>{p.label}</span>
+          </button>
+        ))}
       </div>
     </div>
 
@@ -298,17 +296,14 @@ const i18n = {
         ></span>
         <span>{t("tools.cronBuilder.nextExecutionsTitle")}</span>
       </div>
-      {
-        /* eslint-disable astro/jsx-a11y/no-noninteractive-tabindex -- scrollable region requires keyboard access */
-      }
+      {/* eslint-disable astro/jsx-a11y/no-noninteractive-tabindex -- scrollable region requires keyboard access */}
       <div
         class="cron-next-list"
         id={`${uniqueId}-next`}
         tabindex="0"
         role="region"
         aria-label={t("tools.cronBuilder.nextExecutionsAriaLabel")}
-      >
-      </div>
+      ></div>
       {/* eslint-enable astro/jsx-a11y/no-noninteractive-tabindex */}
     </div>
 
@@ -325,8 +320,9 @@ const i18n = {
         <code
           class="cron-crontab-expr"
           id={`${uniqueId}-crontab-expr`}
-          >0 3 * * *</code
         >
+          0 3 * * *
+        </code>
         <input
           type="text"
           id={`${uniqueId}-crontab-cmd`}
@@ -370,40 +366,44 @@ const i18n = {
           </thead>
           <tbody>
             <tr>
-              <td><code>*</code></td>
+              <td>
+                <code>*</code>
+              </td>
               <td>{t("tools.cronBuilder.symbolAsteriskMeaning")}</td>
-              <td
-                ><code>* * * * *</code> — {
-                  t("tools.cronBuilder.symbolAsteriskExample")
-                }</td
-              >
+              <td>
+                <code>* * * * *</code> —{" "}
+                {t("tools.cronBuilder.symbolAsteriskExample")}
+              </td>
             </tr>
             <tr>
-              <td><code>,</code></td>
+              <td>
+                <code>,</code>
+              </td>
               <td>{t("tools.cronBuilder.symbolCommaMeaning")}</td>
-              <td
-                ><code>0,30 * * * *</code> — {
-                  t("tools.cronBuilder.symbolCommaExample")
-                }</td
-              >
+              <td>
+                <code>0,30 * * * *</code> —{" "}
+                {t("tools.cronBuilder.symbolCommaExample")}
+              </td>
             </tr>
             <tr>
-              <td><code>-</code></td>
+              <td>
+                <code>-</code>
+              </td>
               <td>{t("tools.cronBuilder.symbolDashMeaning")}</td>
-              <td
-                ><code>0 9-17 * * *</code> — {
-                  t("tools.cronBuilder.symbolDashExample")
-                }</td
-              >
+              <td>
+                <code>0 9-17 * * *</code> —{" "}
+                {t("tools.cronBuilder.symbolDashExample")}
+              </td>
             </tr>
             <tr>
-              <td><code>/</code></td>
+              <td>
+                <code>/</code>
+              </td>
               <td>{t("tools.cronBuilder.symbolSlashMeaning")}</td>
-              <td
-                ><code>*/10 * * * *</code> — {
-                  t("tools.cronBuilder.symbolSlashExample")
-                }</td
-              >
+              <td>
+                <code>*/10 * * * *</code> —{" "}
+                {t("tools.cronBuilder.symbolSlashExample")}
+              </td>
             </tr>
           </tbody>
         </table>
@@ -447,7 +447,10 @@ const i18n = {
   </div>
 </div>
 
-<script is:inline define:vars={{ uniqueId, i18n }}>
+<script
+  is:inline
+  define:vars={{ uniqueId, i18n }}
+>
   (function () {
     var container = document.querySelector('[data-cron-id="' + uniqueId + '"]');
     if (!container) return;

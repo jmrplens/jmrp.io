@@ -84,8 +84,7 @@ const schema = {
 } satisfies CollectionPage;
 ---
 
-{
-  /*
+{/*
     `noindex, follow` — deliberate, and evidence-based rather than a blanket
     "listings are thin" rule.
 
@@ -104,8 +103,7 @@ const schema = {
     The curated series hubs under /blog/series/ are NOT treated this way. They
     carry original framing that exists nowhere else, which is exactly the thing
     a tag page lacks.
-  */
-}
+  */}
 <BaseLayout
   title={`${t("pages.blogTags.titlePrefix")}${tag}`}
   description={t("pages.blogTags.metaDescription", {
@@ -121,8 +119,7 @@ const schema = {
       <div
         class="lab-grid"
         aria-hidden="true"
-      >
-      </div>
+      ></div>
       <p class="kicker section-title">{t("pages.blog.kicker")}</p>
       <h1>#{tag}</h1>
       {hasTagIntro && <p class="tag-intro">{tagIntro}</p>}
@@ -132,9 +129,9 @@ const schema = {
         {t("pages.blogTags.aboutTopic")}
       </p>
       <div class="back-link">
-        <a href={translatePath("/blog/")}
-          >{t("pages.blogTags.backToAllPosts")}</a
-        >
+        <a href={translatePath("/blog/")}>
+          {t("pages.blogTags.backToAllPosts")}
+        </a>
       </div>
     </header>
 

@@ -33,20 +33,21 @@ const tld = lastDot === -1 ? "" : domainPart.slice(lastDot + 1);
 ---
 
 <span class:list={["obfuscated-email", className]}>
-  <span>{localPart}</span><i
+  <span>{localPart}</span>
+  <i
     class="obfuscated-email__at"
     aria-hidden="true"
-  ></i><span>{domainName}</span>{
-    tld && (
-      <>
-        <i
-          class="obfuscated-email__dot"
-          aria-hidden="true"
-        />
-        <span>{tld}</span>
-      </>
-    )
-  }
+  ></i>
+  <span>{domainName}</span>
+  {tld && (
+    <>
+      <i
+        class="obfuscated-email__dot"
+        aria-hidden="true"
+      />
+      <span>{tld}</span>
+    </>
+  )}
 </span>
 
 <style>

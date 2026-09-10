@@ -200,19 +200,17 @@ const i18n = {
 
       {/* Quick presets */}
       <div class="rgx-presets">
-        {
-          presets.map((p) => (
-            <button
-              type="button"
-              class="rgx-preset-btn"
-              data-pattern={p.pattern}
-              data-flags={p.flags}
-              data-sample={p.sample}
-            >
-              {p.label}
-            </button>
-          ))
-        }
+        {presets.map((p) => (
+          <button
+            type="button"
+            class="rgx-preset-btn"
+            data-pattern={p.pattern}
+            data-flags={p.flags}
+            data-sample={p.sample}
+          >
+            {p.label}
+          </button>
+        ))}
       </div>
 
       {/* Flag toggles */}
@@ -283,8 +281,7 @@ const i18n = {
         class="rgx-textarea"
         rows="7"
         spellcheck="false"
-        >{defaultTestString}</textarea
-      >
+      >{defaultTestString}</textarea>
     </div>
 
     {/* Replace section */}
@@ -335,8 +332,7 @@ const i18n = {
         <div
           class="rgx-replace-result"
           id={`${uniqueId}-replace-result`}
-        >
-        </div>
+        ></div>
       </div>
     </div>
 
@@ -353,14 +349,14 @@ const i18n = {
           <span
             class="rgx-match-count"
             id={`${uniqueId}-count`}
-            >0</span
           >
+            0
+          </span>
         </div>
         <div
           class="rgx-exec-time"
           id={`${uniqueId}-time`}
-        >
-        </div>
+        ></div>
       </div>
 
       {/* Highlighted matches */}
@@ -368,8 +364,7 @@ const i18n = {
         class="rgx-highlight-area"
         id={`${uniqueId}-highlight`}
         aria-live="polite"
-      >
-      </div>
+      ></div>
 
       {/* Match details */}
       <div class="rgx-details-header">
@@ -379,17 +374,14 @@ const i18n = {
         ></span>
         <span>{t("tools.regexTester.matchDetails")}</span>
       </div>
-      {
-        /* eslint-disable astro/jsx-a11y/no-noninteractive-tabindex -- scrollable region requires keyboard access */
-      }
+      {/* eslint-disable astro/jsx-a11y/no-noninteractive-tabindex -- scrollable region requires keyboard access */}
       <div
         class="rgx-details"
         id={`${uniqueId}-details`}
         tabindex="0"
         role="region"
         aria-label={t("tools.regexTester.matchDetailsAriaLabel")}
-      >
-      </div>
+      ></div>
       {/* eslint-enable astro/jsx-a11y/no-noninteractive-tabindex */}
 
       {/* Error display */}
@@ -420,25 +412,26 @@ const i18n = {
         ></span>
       </summary>
       <div class="rgx-quickref-grid">
-        {
-          quickRef.map((section) => (
-            <div class="rgx-quickref-cat">
-              <div class="rgx-quickref-cat-title">{section.cat}</div>
-              {section.items.map((item) => (
-                <div class="rgx-quickref-item">
-                  <code class="rgx-quickref-token">{item.token}</code>
-                  <span class="rgx-quickref-desc">{item.desc}</span>
-                </div>
-              ))}
-            </div>
-          ))
-        }
+        {quickRef.map((section) => (
+          <div class="rgx-quickref-cat">
+            <div class="rgx-quickref-cat-title">{section.cat}</div>
+            {section.items.map((item) => (
+              <div class="rgx-quickref-item">
+                <code class="rgx-quickref-token">{item.token}</code>
+                <span class="rgx-quickref-desc">{item.desc}</span>
+              </div>
+            ))}
+          </div>
+        ))}
       </div>
     </details>
   </div>
 </div>
 
-<script is:inline define:vars={{ uniqueId, i18n }}>
+<script
+  is:inline
+  define:vars={{ uniqueId, i18n }}
+>
   (function () {
     var container = document.querySelector('[data-rgx-id="' + uniqueId + '"]');
     if (!container) return;

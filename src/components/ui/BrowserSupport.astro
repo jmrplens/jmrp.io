@@ -63,22 +63,20 @@ const supportConfig: Record<
   aria-label={title}
 >
   <div class="bs-grid">
-    {
-      browsers.map((b) => (
-        <div class={`bs-item ${supportConfig[b.support].class}`}>
-          <span class="bs-name">{browserNames[b.browser]}</span>
-          <span
-            class="bs-glyph"
-            aria-hidden="true"
-          >
-            {supportConfig[b.support].glyph}
-          </span>
-          <span class="sr-only">{supportConfig[b.support].label}</span>
-          {b.version && <span class="bs-version">{b.version}+</span>}
-          {b.note && <span class="bs-note">{b.note}</span>}
-        </div>
-      ))
-    }
+    {browsers.map((b) => (
+      <div class={`bs-item ${supportConfig[b.support].class}`}>
+        <span class="bs-name">{browserNames[b.browser]}</span>
+        <span
+          class="bs-glyph"
+          aria-hidden="true"
+        >
+          {supportConfig[b.support].glyph}
+        </span>
+        <span class="sr-only">{supportConfig[b.support].label}</span>
+        {b.version && <span class="bs-version">{b.version}+</span>}
+        {b.note && <span class="bs-note">{b.note}</span>}
+      </div>
+    ))}
   </div>
 </section>
 

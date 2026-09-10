@@ -40,10 +40,12 @@ const config = ratingConfig[rating];
 <div
   class={`security-rating ${config.class}`}
   role="region"
-  aria-label={t("components.securityRating.ratingAria", {
-    rating,
-    label: config.label,
-  }) + (title ? `. ${title}` : "")}
+  aria-label={
+    t("components.securityRating.ratingAria", {
+      rating,
+      label: config.label,
+    }) + (title ? `. ${title}` : "")
+  }
 >
   <div
     class="sr-badge"

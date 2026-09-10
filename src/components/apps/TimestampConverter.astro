@@ -78,8 +78,9 @@ const i18n = {
       <code
         class="ts-current-value"
         id={`${uniqueId}-current`}
-        >—</code
       >
+        —
+      </code>
       <button
         type="button"
         class="ts-now-btn"
@@ -117,42 +118,45 @@ const i18n = {
             type="button"
             class="ts-unit-btn active"
             data-unit="auto"
-            >{t("tools.timestampConverter.auto")}</button
           >
+            {t("tools.timestampConverter.auto")}
+          </button>
           <button
             type="button"
             class="ts-unit-btn"
             data-unit="s"
-            >{t("tools.timestampConverter.seconds")}</button
           >
+            {t("tools.timestampConverter.seconds")}
+          </button>
           <button
             type="button"
             class="ts-unit-btn"
             data-unit="ms"
-            >{t("tools.timestampConverter.milliseconds")}</button
           >
+            {t("tools.timestampConverter.milliseconds")}
+          </button>
         </div>
       </div>
       <div
         class="ts-detect-hint"
         id={`${uniqueId}-detect-hint`}
         aria-live="polite"
-      >
-      </div>
+      ></div>
       <div
         class="ts-results"
         id={`${uniqueId}-ts-results`}
       >
         <div class="ts-result-item">
-          <span class="ts-result-label"
-            >{t("tools.timestampConverter.localTime")}</span
-          >
+          <span class="ts-result-label">
+            {t("tools.timestampConverter.localTime")}
+          </span>
           <div class="ts-result-with-copy">
             <code
               class="ts-result-value"
               id={`${uniqueId}-local`}
-              >—</code
             >
+              —
+            </code>
             <button
               type="button"
               class="ts-copy-btn"
@@ -164,15 +168,16 @@ const i18n = {
           </div>
         </div>
         <div class="ts-result-item">
-          <span class="ts-result-label"
-            >{t("tools.timestampConverter.utcIso8601")}</span
-          >
+          <span class="ts-result-label">
+            {t("tools.timestampConverter.utcIso8601")}
+          </span>
           <div class="ts-result-with-copy">
             <code
               class="ts-result-value"
               id={`${uniqueId}-utc`}
-              >—</code
             >
+              —
+            </code>
             <button
               type="button"
               class="ts-copy-btn"
@@ -184,15 +189,16 @@ const i18n = {
           </div>
         </div>
         <div class="ts-result-item">
-          <span class="ts-result-label"
-            >{t("tools.timestampConverter.rfc2822")}</span
-          >
+          <span class="ts-result-label">
+            {t("tools.timestampConverter.rfc2822")}
+          </span>
           <div class="ts-result-with-copy">
             <code
               class="ts-result-value"
               id={`${uniqueId}-rfc`}
-              >—</code
             >
+              —
+            </code>
             <button
               type="button"
               class="ts-copy-btn"
@@ -204,15 +210,16 @@ const i18n = {
           </div>
         </div>
         <div class="ts-result-item">
-          <span class="ts-result-label"
-            >{t("tools.timestampConverter.shortDate")}</span
-          >
+          <span class="ts-result-label">
+            {t("tools.timestampConverter.shortDate")}
+          </span>
           <div class="ts-result-with-copy">
             <code
               class="ts-result-value"
               id={`${uniqueId}-short`}
-              >—</code
             >
+              —
+            </code>
             <button
               type="button"
               class="ts-copy-btn"
@@ -224,44 +231,48 @@ const i18n = {
           </div>
         </div>
         <div class="ts-result-item">
-          <span class="ts-result-label"
-            >{t("tools.timestampConverter.relative")}</span
-          >
+          <span class="ts-result-label">
+            {t("tools.timestampConverter.relative")}
+          </span>
           <code
             class="ts-result-value"
             id={`${uniqueId}-relative`}
-            >—</code
           >
+            —
+          </code>
         </div>
         <div class="ts-result-item">
-          <span class="ts-result-label"
-            >{t("tools.timestampConverter.dayOfWeek")}</span
-          >
+          <span class="ts-result-label">
+            {t("tools.timestampConverter.dayOfWeek")}
+          </span>
           <code
             class="ts-result-value"
             id={`${uniqueId}-dow`}
-            >—</code
           >
+            —
+          </code>
         </div>
         <div class="ts-result-item">
-          <span class="ts-result-label"
-            >{t("tools.timestampConverter.weekNumber")}</span
-          >
+          <span class="ts-result-label">
+            {t("tools.timestampConverter.weekNumber")}
+          </span>
           <code
             class="ts-result-value"
             id={`${uniqueId}-week`}
-            >—</code
           >
+            —
+          </code>
         </div>
         <div class="ts-result-item">
-          <span class="ts-result-label"
-            >{t("tools.timestampConverter.dayOfYear")}</span
-          >
+          <span class="ts-result-label">
+            {t("tools.timestampConverter.dayOfYear")}
+          </span>
           <code
             class="ts-result-value"
             id={`${uniqueId}-doy`}
-            >—</code
           >
+            —
+          </code>
         </div>
       </div>
     </div>
@@ -277,9 +288,9 @@ const i18n = {
       </div>
       <div class="ts-date-inputs">
         <div class="ts-date-field">
-          <label for={`${uniqueId}-date`}
-            >{t("tools.timestampConverter.date")}</label
-          >
+          <label for={`${uniqueId}-date`}>
+            {t("tools.timestampConverter.date")}
+          </label>
           <input
             type="date"
             id={`${uniqueId}-date`}
@@ -287,9 +298,9 @@ const i18n = {
           />
         </div>
         <div class="ts-date-field">
-          <label for={`${uniqueId}-time`}
-            >{t("tools.timestampConverter.time")}</label
-          >
+          <label for={`${uniqueId}-time`}>
+            {t("tools.timestampConverter.time")}
+          </label>
           <input
             type="time"
             id={`${uniqueId}-time`}
@@ -300,15 +311,16 @@ const i18n = {
       </div>
       <div class="ts-results">
         <div class="ts-result-item">
-          <span class="ts-result-label"
-            >{t("tools.timestampConverter.unixSeconds")}</span
-          >
+          <span class="ts-result-label">
+            {t("tools.timestampConverter.unixSeconds")}
+          </span>
           <div class="ts-result-with-copy">
             <code
               class="ts-result-value"
               id={`${uniqueId}-unix-s`}
-              >—</code
             >
+              —
+            </code>
             <button
               type="button"
               class="ts-copy-btn"
@@ -320,15 +332,16 @@ const i18n = {
           </div>
         </div>
         <div class="ts-result-item">
-          <span class="ts-result-label"
-            >{t("tools.timestampConverter.unixMilliseconds")}</span
-          >
+          <span class="ts-result-label">
+            {t("tools.timestampConverter.unixMilliseconds")}
+          </span>
           <div class="ts-result-with-copy">
             <code
               class="ts-result-value"
               id={`${uniqueId}-unix-ms`}
-              >—</code
             >
+              —
+            </code>
             <button
               type="button"
               class="ts-copy-btn"
@@ -342,15 +355,16 @@ const i18n = {
           </div>
         </div>
         <div class="ts-result-item">
-          <span class="ts-result-label"
-            >{t("tools.timestampConverter.iso8601")}</span
-          >
+          <span class="ts-result-label">
+            {t("tools.timestampConverter.iso8601")}
+          </span>
           <div class="ts-result-with-copy">
             <code
               class="ts-result-value"
               id={`${uniqueId}-iso`}
-              >—</code
             >
+              —
+            </code>
             <button
               type="button"
               class="ts-copy-btn"
@@ -362,15 +376,16 @@ const i18n = {
           </div>
         </div>
         <div class="ts-result-item">
-          <span class="ts-result-label"
-            >{t("tools.timestampConverter.rfc2822")}</span
-          >
+          <span class="ts-result-label">
+            {t("tools.timestampConverter.rfc2822")}
+          </span>
           <div class="ts-result-with-copy">
             <code
               class="ts-result-value"
               id={`${uniqueId}-rfc2`}
-              >—</code
             >
+              —
+            </code>
             <button
               type="button"
               class="ts-copy-btn"
@@ -426,7 +441,10 @@ const i18n = {
   </div>
 </div>
 
-<script is:inline define:vars={{ uniqueId, i18n }}>
+<script
+  is:inline
+  define:vars={{ uniqueId, i18n }}
+>
   (function () {
     var container = document.querySelector('[data-ts-id="' + uniqueId + '"]');
     if (!container) return;

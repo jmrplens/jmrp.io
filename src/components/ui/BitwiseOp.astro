@@ -122,43 +122,39 @@ const summary =
 
   <div class="bitop__scroll">
     <div class="bitop__rows">
-      {
-        lines.map((line) => (
-          <div class="bitop__row">
-            <span class="bitop__label">{line.label}</span>
-            <span class="bitop__bits">
-              {line.bits ? (
-                line.bits.map((bit) => (
-                  <span
-                    class:list={["bitop__bit", bit === 1 && "bitop__bit--set"]}
-                  >
-                    {bit}
-                  </span>
-                ))
-              ) : (
-                <span class="bitop__nobits" />
-              )}
-            </span>
-            <span class="bitop__value">{line.value ?? ""}</span>
-          </div>
-        ))
-      }
+      {lines.map((line) => (
+        <div class="bitop__row">
+          <span class="bitop__label">{line.label}</span>
+          <span class="bitop__bits">
+            {line.bits ? (
+              line.bits.map((bit) => (
+                <span
+                  class:list={["bitop__bit", bit === 1 && "bitop__bit--set"]}
+                >
+                  {bit}
+                </span>
+              ))
+            ) : (
+              <span class="bitop__nobits" />
+            )}
+          </span>
+          <span class="bitop__value">{line.value ?? ""}</span>
+        </div>
+      ))}
       <div class="bitop__row bitop__row--result">
         <span class="bitop__label">{resultLabel}</span>
         <span class="bitop__bits">
-          {
-            bitsOf(result).map((bit) => (
-              <span
-                class:list={[
-                  "bitop__bit",
-                  "bitop__bit--res",
-                  bit === 1 && "bitop__bit--set",
-                ]}
-              >
-                {bit}
-              </span>
-            ))
-          }
+          {bitsOf(result).map((bit) => (
+            <span
+              class:list={[
+                "bitop__bit",
+                "bitop__bit--res",
+                bit === 1 && "bitop__bit--set",
+              ]}
+            >
+              {bit}
+            </span>
+          ))}
         </span>
         <span class="bitop__value">{hex(result)}</span>
       </div>

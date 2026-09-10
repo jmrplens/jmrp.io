@@ -381,55 +381,50 @@ const SIDEBAR_LINK_KINDS = new Set([
             role="group"
             aria-labelledby="cv-sb-dl-label"
           >
-            {
-              downloads.map((fmt) => (
-                <div
-                  class:list={["dl-format", { recommended: fmt.recommended }]}
-                >
-                  <div class="dl-format-head">
-                    <span
-                      class="dl-dot"
-                      aria-hidden="true"
-                    />
-                    <span class="dl-format-name">{fmt.format}</span>
-                    {fmt.recommended && (
-                      <span class="dl-badge">
-                        {t("pages.cv.downloadRecommended")}
-                      </span>
-                    )}
-                    {fmt.note && <span class="dl-format-note">{fmt.note}</span>}
-                  </div>
-                  <div class="dl-format-links">
-                    {fmt.files.map((file) => (
-                      <a
-                        class="dl-btn"
-                        href={file.url}
-                        download={file.download}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        aria-label={t("aria.opensNewTab", {
-                          text: `${file.label} · ${fmt.format} (PDF)`,
-                        })}
-                      >
-                        <span
-                          class="i-fa-solid:download"
-                          aria-hidden="true"
-                        />
-                        {file.label}
-                      </a>
-                    ))}
-                  </div>
+            {downloads.map((fmt) => (
+              <div class:list={["dl-format", { recommended: fmt.recommended }]}>
+                <div class="dl-format-head">
+                  <span
+                    class="dl-dot"
+                    aria-hidden="true"
+                  />
+                  <span class="dl-format-name">{fmt.format}</span>
+                  {fmt.recommended && (
+                    <span class="dl-badge">
+                      {t("pages.cv.downloadRecommended")}
+                    </span>
+                  )}
+                  {fmt.note && <span class="dl-format-note">{fmt.note}</span>}
                 </div>
-              ))
-            }
+                <div class="dl-format-links">
+                  {fmt.files.map((file) => (
+                    <a
+                      class="dl-btn"
+                      href={file.url}
+                      download={file.download}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      aria-label={t("aria.opensNewTab", {
+                        text: `${file.label} · ${fmt.format} (PDF)`,
+                      })}
+                    >
+                      <span
+                        class="i-fa-solid:download"
+                        aria-hidden="true"
+                      />
+                      {file.label}
+                    </a>
+                  ))}
+                </div>
+              </div>
+            ))}
           </div>
         </div>
 
         <div
           class="cv-sb-divider"
           aria-hidden="true"
-        >
-        </div>
+        ></div>
 
         <!-- Block: Contact links + location -->
         <div class="cv-sb-block">
@@ -440,96 +435,91 @@ const SIDEBAR_LINK_KINDS = new Set([
             {t("pages.cv.sidebarContact")}
           </p>
           <ul class="cv-sb-contact">
-            {
-              basics.links
-                .filter((l) => SIDEBAR_LINK_KINDS.has(l.kind ?? ""))
-                .map((link) => (
-                  <li>
-                    <a
-                      href={link.url}
-                      class="cv-sb-link"
-                      target="_blank"
-                      rel="external noopener noreferrer"
-                      aria-label={t("aria.opensNewTab", {
-                        text: link.ariaLabel || link.label,
-                      })}
+            {basics.links
+              .filter((l) => SIDEBAR_LINK_KINDS.has(l.kind ?? ""))
+              .map((link) => (
+                <li>
+                  <a
+                    href={link.url}
+                    class="cv-sb-link"
+                    target="_blank"
+                    rel="external noopener noreferrer"
+                    aria-label={t("aria.opensNewTab", {
+                      text: link.ariaLabel || link.label,
+                    })}
+                  >
+                    <span
+                      class="cv-sb-link-arrow"
+                      aria-hidden="true"
                     >
-                      <span
-                        class="cv-sb-link-arrow"
-                        aria-hidden="true"
-                      >
-                        ↳
-                      </span>
-                      {link.label}
-                    </a>
-                  </li>
-                ))
-            }
+                      ↳
+                    </span>
+                    {link.label}
+                  </a>
+                </li>
+              ))}
             <li>
               <span class="cv-sb-link cv-sb-location">
                 <span
                   class="cv-sb-link-arrow"
                   aria-hidden="true"
-                  >↳</span
                 >
+                  ↳
+                </span>
                 {basics.location}
               </span>
             </li>
           </ul>
         </div>
 
-        {
-          basics.objetivo && basics.objetivo.length > 0 && (
-            <div class="cv-sb-group">
-              <div
-                class="cv-sb-divider"
-                aria-hidden="true"
-              />
-              <div class="cv-sb-block">
-                <p
-                  class="cv-sb-eyebrow"
-                  id="cv-sb-objetivo-label"
-                >
-                  {t("pages.cv.sidebarObjective")}
-                </p>
-                <ul class="cv-sb-chips">
-                  {basics.objetivo.map((role) => (
-                    <li>
-                      <span class="cv-chip">{role}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
+        {basics.objetivo && basics.objetivo.length > 0 && (
+          <div class="cv-sb-group">
+            <div
+              class="cv-sb-divider"
+              aria-hidden="true"
+            />
+            <div class="cv-sb-block">
+              <p
+                class="cv-sb-eyebrow"
+                id="cv-sb-objetivo-label"
+              >
+                {t("pages.cv.sidebarObjective")}
+              </p>
+              <ul class="cv-sb-chips">
+                {basics.objetivo.map((role) => (
+                  <li>
+                    <span class="cv-chip">{role}</span>
+                  </li>
+                ))}
+              </ul>
             </div>
-          )
-        }
+          </div>
+        )}
 
-        {
-          basics.idiomas && basics.idiomas.length > 0 && (
-            <div class="cv-sb-group">
-              <div
-                class="cv-sb-divider"
-                aria-hidden="true"
-              />
-              <div class="cv-sb-block">
-                <p
-                  class="cv-sb-eyebrow"
-                  id="cv-sb-idiomas-label"
-                >
-                  {t("pages.cv.sidebarLanguages")}
-                </p>
-                <dl class="cv-sb-idiomas">
-                  {basics.idiomas.map((lang) => (
-                    <div class="cv-sb-idioma-row">
-                      <dt>{lang.name}</dt>
-                      <dd>{lang.level}</dd>
-                    </div>
-                  ))}
-                </dl>
-              </div>
+        {basics.idiomas && basics.idiomas.length > 0 && (
+          <div class="cv-sb-group">
+            <div
+              class="cv-sb-divider"
+              aria-hidden="true"
+            />
+            <div class="cv-sb-block">
+              <p
+                class="cv-sb-eyebrow"
+                id="cv-sb-idiomas-label"
+              >
+                {t("pages.cv.sidebarLanguages")}
+              </p>
+              <dl class="cv-sb-idiomas">
+                {basics.idiomas.map((lang) => (
+                  <div class="cv-sb-idioma-row">
+                    <dt>{lang.name}</dt>
+                    <dd>{lang.level}</dd>
+                  </div>
+                ))}
+              </dl>
             </div>
-          )
-        }
+          </div>
+        )}
       </aside>
 
       <!-- Right column: profile paragraph + CV sections -->
@@ -539,206 +529,204 @@ const SIDEBAR_LINK_KINDS = new Set([
           set:html={mdHtml(basics.profile)}
         />
 
-        {
-          sections.map((section) => (
-            <section
-              class="cv-section"
-              id={generateSlug(section.title)}
-              aria-label={section.title}
-            >
-              <div class="section-header">
-                <h2>{section.title}</h2>
-              </div>
+        {sections.map((section) => (
+          <section
+            class="cv-section"
+            id={generateSlug(section.title)}
+            aria-label={section.title}
+          >
+            <div class="section-header">
+              <h2>{section.title}</h2>
+            </div>
 
-              {(section.kind === "experience" ||
-                section.kind === "education") && (
-                <div class="timeline">
-                  {section.items.map((item, index) => {
-                    const title = "role" in item ? item.role : item.degree;
-                    return (
-                      <article
-                        class="timeline-item"
-                        id={generateSlug(`${section.title}-${title}-${index}`)}
-                      >
+            {(section.kind === "experience" ||
+              section.kind === "education") && (
+              <div class="timeline">
+                {section.items.map((item, index) => {
+                  const title = "role" in item ? item.role : item.degree;
+                  return (
+                    <article
+                      class="timeline-item"
+                      id={generateSlug(`${section.title}-${title}-${index}`)}
+                    >
+                      <div
+                        class:list={[
+                          "timeline-marker",
+                          { "timeline-marker--past": index > 0 },
+                        ]}
+                        aria-hidden="true"
+                      />
+                      <span class="item-year">{item.period}</span>
+                      <div class="timeline-content">
+                        <h3 class="item-title">{title}</h3>
+
                         <div
-                          class:list={[
-                            "timeline-marker",
-                            { "timeline-marker--past": index > 0 },
-                          ]}
-                          aria-hidden="true"
+                          class="item-institution"
+                          set:html={orgsHtml(item.org)}
                         />
-                        <span class="item-year">{item.period}</span>
-                        <div class="timeline-content">
-                          <h3 class="item-title">{title}</h3>
-
+                        {item.department && (
                           <div
-                            class="item-institution"
-                            set:html={orgsHtml(item.org)}
+                            class="item-department"
+                            set:html={mdHtml(orgMd(item.department))}
                           />
-                          {item.department && (
-                            <div
-                              class="item-department"
-                              set:html={mdHtml(orgMd(item.department))}
-                            />
-                          )}
-                          {item.location && (
-                            <div class="item-location">
-                              <span
-                                class="i-fa-solid:map-marker-alt"
-                                aria-hidden="true"
-                              />{" "}
-                              {item.location}
-                            </div>
-                          )}
+                        )}
+                        {item.location && (
+                          <div class="item-location">
+                            <span
+                              class="i-fa-solid:map-marker-alt"
+                              aria-hidden="true"
+                            />{" "}
+                            {item.location}
+                          </div>
+                        )}
 
-                          {item.summary && (
-                            <div
-                              class="item-summary"
-                              set:html={mdHtml(item.summary)}
-                            />
-                          )}
-                          {item.notes?.map((note) => (
-                            <div
-                              class="item-summary"
-                              set:html={mdHtml(note)}
-                            />
-                          ))}
+                        {item.summary && (
+                          <div
+                            class="item-summary"
+                            set:html={mdHtml(item.summary)}
+                          />
+                        )}
+                        {item.notes?.map((note) => (
+                          <div
+                            class="item-summary"
+                            set:html={mdHtml(note)}
+                          />
+                        ))}
 
-                          {item.bullets && item.bullets.length > 0 && (
-                            <ul class="item-description-list">
-                              {item.bullets.map((bullet) => (
-                                <li set:html={mdHtml(bullet)} />
+                        {item.bullets && item.bullets.length > 0 && (
+                          <ul class="item-description-list">
+                            {item.bullets.map((bullet) => (
+                              <li set:html={mdHtml(bullet)} />
+                            ))}
+                          </ul>
+                        )}
+
+                        {item.pubGroups?.map((pg) => (
+                          <div class="item-pubgroup">
+                            <strong>{pg.heading}</strong>
+                            <ul>
+                              {pg.items.map((pub) => (
+                                <li set:html={mdHtml(pub)} />
                               ))}
                             </ul>
-                          )}
+                          </div>
+                        ))}
 
-                          {item.pubGroups?.map((pg) => (
-                            <div class="item-pubgroup">
-                              <strong>{pg.heading}</strong>
-                              <ul>
-                                {pg.items.map((pub) => (
-                                  <li set:html={mdHtml(pub)} />
-                                ))}
-                              </ul>
-                            </div>
-                          ))}
-
-                          {"documents" in item && item.documents && (
-                            <div class="item-links">
-                              {item.documents.map((doc) => (
-                                <a
-                                  href={doc.url}
-                                  class="btn btn-sm"
-                                  target="_blank"
-                                  rel="external noopener noreferrer"
-                                  aria-label={t("aria.opensNewTab", {
-                                    text: doc.ariaLabel ?? doc.label,
-                                  })}
-                                >
-                                  <span
-                                    class="i-fa-solid:file-pdf"
-                                    aria-hidden="true"
-                                  />
-                                  {doc.label}
-                                </a>
-                              ))}
-                            </div>
-                          )}
-
-                          {item.links && item.links.length > 0 && (
-                            <div class="item-links">
-                              {item.links.map((link) => (
-                                <a
-                                  href={link.url}
-                                  class="btn btn-sm"
-                                  target="_blank"
-                                  rel="external noopener noreferrer"
-                                  aria-label={t("aria.opensNewTab", {
-                                    text: link.ariaLabel ?? link.label,
-                                  })}
-                                >
-                                  {link.label}
-                                </a>
-                              ))}
-                            </div>
-                          )}
-                        </div>
-                      </article>
-                    );
-                  })}
-                </div>
-              )}
-
-              {section.kind === "skills" && (
-                <>
-                  <div class="grid-layout grid-layout--skills">
-                    {section.groups.map((group, index) => (
-                      <div
-                        class="skill-group-wrapper"
-                        id={generateSlug(
-                          `${section.title}-${group.category}-${index}`,
+                        {"documents" in item && item.documents && (
+                          <div class="item-links">
+                            {item.documents.map((doc) => (
+                              <a
+                                href={doc.url}
+                                class="btn btn-sm"
+                                target="_blank"
+                                rel="external noopener noreferrer"
+                                aria-label={t("aria.opensNewTab", {
+                                  text: doc.ariaLabel ?? doc.label,
+                                })}
+                              >
+                                <span
+                                  class="i-fa-solid:file-pdf"
+                                  aria-hidden="true"
+                                />
+                                {doc.label}
+                              </a>
+                            ))}
+                          </div>
                         )}
-                      >
-                        <SkillGroup group={group} />
-                      </div>
-                    ))}
-                  </div>
-                  <div
-                    class="skills-legend"
-                    aria-hidden="true"
-                  >
-                    <span class="legend-item">
-                      <span class="legend-swatch legend-swatch--advanced" />
-                      {t("pages.cv.levelAdvanced")}
-                    </span>
-                    <span class="legend-item">
-                      <span class="legend-swatch" />
-                      {`${t("pages.cv.levelIntermediate")} / ${t("pages.cv.levelBasic").toLowerCase()}`}
-                    </span>
-                  </div>
-                </>
-              )}
 
-              {section.kind === "certificates" && (
-                <div class="grid-layout grid-layout--cards">
+                        {item.links && item.links.length > 0 && (
+                          <div class="item-links">
+                            {item.links.map((link) => (
+                              <a
+                                href={link.url}
+                                class="btn btn-sm"
+                                target="_blank"
+                                rel="external noopener noreferrer"
+                                aria-label={t("aria.opensNewTab", {
+                                  text: link.ariaLabel ?? link.label,
+                                })}
+                              >
+                                {link.label}
+                              </a>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </article>
+                  );
+                })}
+              </div>
+            )}
+
+            {section.kind === "skills" && (
+              <>
+                <div class="grid-layout grid-layout--skills">
                   {section.groups.map((group, index) => (
                     <div
-                      class="cert-group-wrapper"
+                      class="skill-group-wrapper"
                       id={generateSlug(
                         `${section.title}-${group.category}-${index}`,
                       )}
                     >
-                      <CertificateGroup group={group} />
+                      <SkillGroup group={group} />
                     </div>
                   ))}
                 </div>
-              )}
+                <div
+                  class="skills-legend"
+                  aria-hidden="true"
+                >
+                  <span class="legend-item">
+                    <span class="legend-swatch legend-swatch--advanced" />
+                    {t("pages.cv.levelAdvanced")}
+                  </span>
+                  <span class="legend-item">
+                    <span class="legend-swatch" />
+                    {`${t("pages.cv.levelIntermediate")} / ${t("pages.cv.levelBasic").toLowerCase()}`}
+                  </span>
+                </div>
+              </>
+            )}
 
-              {section.kind === "projects" && (
-                <div class="grid-layout grid-layout--cards">
-                  {section.items.map((project, index) => (
-                    <div
-                      class="project-card-wrapper"
-                      id={generateSlug(
-                        `${section.title}-${project.name}-${index}`,
-                      )}
-                    >
-                      <ProjectCard
-                        project={{
-                          ...project,
-                          metrics: [
-                            ...(projectStats.get(project.name) ?? []),
-                            ...(project.metrics ?? []),
-                          ],
-                        }}
-                      />
-                    </div>
-                  ))}
-                </div>
-              )}
-            </section>
-          ))
-        }
+            {section.kind === "certificates" && (
+              <div class="grid-layout grid-layout--cards">
+                {section.groups.map((group, index) => (
+                  <div
+                    class="cert-group-wrapper"
+                    id={generateSlug(
+                      `${section.title}-${group.category}-${index}`,
+                    )}
+                  >
+                    <CertificateGroup group={group} />
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {section.kind === "projects" && (
+              <div class="grid-layout grid-layout--cards">
+                {section.items.map((project, index) => (
+                  <div
+                    class="project-card-wrapper"
+                    id={generateSlug(
+                      `${section.title}-${project.name}-${index}`,
+                    )}
+                  >
+                    <ProjectCard
+                      project={{
+                        ...project,
+                        metrics: [
+                          ...(projectStats.get(project.name) ?? []),
+                          ...(project.metrics ?? []),
+                        ],
+                      }}
+                    />
+                  </div>
+                ))}
+              </div>
+            )}
+          </section>
+        ))}
       </div>
     </div>
   </div>

@@ -28,6 +28,15 @@ export default [
       // Gitignored but NOT ignored here until now, so a verification build
       // left inside it failed lint with errors from Preact's minified output.
       "**/.cache/**",
+      // Agent worktrees are whole checkouts of this repository living inside
+      // it, so `eslint .` would lint the copy as well as the original. Worse
+      // than duplicate findings: two candidate roots make typescript-eslint
+      // refuse to resolve types at all ("No tsconfigRootDir was set, and
+      // multiple candidate TSConfigRootDirs are present"), and every
+      // type-aware rule then reports the whole project as `any`. Measured
+      // 2026-09-10: 593 errors, none of them real. `.prettierignore` already
+      // skips `.claude/`.
+      "**/.claude/worktrees/**",
       "**/coverage/**",
       "**/public/scripts/**",
       "**/*.min.js",

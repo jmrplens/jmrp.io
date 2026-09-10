@@ -45,17 +45,15 @@ const icons: Record<IconItem["kind"], string> = {
   aria-label={ariaLabel}
 >
   <ul class="il__list">
-    {
-      items.map((it) => (
-        <li class="il__item">
-          <span
-            class={`i-${icons[it.kind]} il__icon il__icon--${it.kind}`}
-            aria-hidden="true"
-          />
-          <span class="il__text">{it.text}</span>
-        </li>
-      ))
-    }
+    {items.map((it) => (
+      <li class="il__item">
+        <span
+          class={`i-${icons[it.kind]} il__icon il__icon--${it.kind}`}
+          aria-hidden="true"
+        />
+        <span class="il__text">{it.text}</span>
+      </li>
+    ))}
   </ul>
 </div>
 

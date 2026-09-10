@@ -24,22 +24,20 @@ const translatePath = useTranslatedPath(locale);
     <div
       class="lab-grid"
       aria-hidden="true"
-    >
-    </div>
+    ></div>
 
     <div class="nf-wrapper">
       <h1 class="nf-code">
         <span
           class="nf-code-num"
           aria-hidden="true"
-          >404</span
         >
+          404
+        </span>
         <span class="sr-only">{t("pages.notFound.pageNotFound")}</span>
       </h1>
 
-      {
-        /* Decorative terminal flourish; meaning is carried by the heading + message. */
-      }
+      {/* Decorative terminal flourish; meaning is carried by the heading + message. */}
       <div
         class="nf-terminal"
         aria-hidden="true"
@@ -49,9 +47,8 @@ const translatePath = useTranslatedPath(locale);
           <span class="nf-cmd">cat $REQUEST_URI</span>
         </p>
         <p class="nf-line">
-          <span class="nf-out">cat: </span><span class="nf-err"
-            >{t("pages.notFound.pageNotFound")}</span
-          >
+          <span class="nf-out">cat: </span>
+          <span class="nf-err">{t("pages.notFound.pageNotFound")}</span>
         </p>
         <p class="nf-line">
           <span class="nf-prompt">jmrp@home:~$</span>{" "}
@@ -59,9 +56,7 @@ const translatePath = useTranslatedPath(locale);
         </p>
       </div>
 
-      {
-        /* Easter egg: click Nedry to hear "ah ah ah, you didn't say the magic word". */
-      }
+      {/* Easter egg: click Nedry to hear "ah ah ah, you didn't say the magic word". */}
       <button
         class="nf-nedry"
         type="button"
@@ -105,9 +100,7 @@ const translatePath = useTranslatedPath(locale);
       </div>
     </div>
 
-    {
-      /* eslint-disable astro/jsx-a11y/media-has-caption -- Decorative sound effect, no meaningful speech */
-    }
+    {/* eslint-disable astro/jsx-a11y/media-has-caption -- Decorative sound effect, no meaningful speech */}
     <audio
       data-nedry-audio
       loop

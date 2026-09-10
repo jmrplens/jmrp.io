@@ -84,31 +84,29 @@ const summary =
 
   <div class="gt__body">
     <div class="gt__chain">
-      {
-        steps.map((s, i) => (
-          <>
-            <div class="gt__gate">
-              <span class="gt__num">{i + 1}</span>
-              <span class="gt__text">
-                <span class="gt__label">{s.label}</span>
-                {s.detail && <span class="gt__detail">{s.detail}</span>}
-              </span>
-              <span
-                class="gt__x"
-                aria-hidden="true"
-              >
-                ✗
-              </span>
-            </div>
+      {steps.map((s, i) => (
+        <>
+          <div class="gt__gate">
+            <span class="gt__num">{i + 1}</span>
+            <span class="gt__text">
+              <span class="gt__label">{s.label}</span>
+              {s.detail && <span class="gt__detail">{s.detail}</span>}
+            </span>
             <span
-              class="gt__down"
+              class="gt__x"
               aria-hidden="true"
             >
-              ✓
+              ✗
             </span>
-          </>
-        ))
-      }
+          </div>
+          <span
+            class="gt__down"
+            aria-hidden="true"
+          >
+            ✓
+          </span>
+        </>
+      ))}
       <div class="gt__outcome gt__outcome--pass">
         <span class="gt__label">{pass.label}</span>
         {pass.detail && <span class="gt__detail">{pass.detail}</span>}
@@ -118,8 +116,7 @@ const summary =
     <div
       class="gt__rail"
       aria-hidden="true"
-    >
-    </div>
+    ></div>
 
     <div class="gt__outcome gt__outcome--reject">
       <span class="gt__reject-tag">{rejectTag}</span>
@@ -140,15 +137,13 @@ const summary =
       </tr>
     </thead>
     <tbody>
-      {
-        steps.map((s, i) => (
-          <tr>
-            <td>{s.label}</td>
-            <td>{i < steps.length - 1 ? steps[i + 1].label : pass.label}</td>
-            <td>{reject.label}</td>
-          </tr>
-        ))
-      }
+      {steps.map((s, i) => (
+        <tr>
+          <td>{s.label}</td>
+          <td>{i < steps.length - 1 ? steps[i + 1].label : pass.label}</td>
+          <td>{reject.label}</td>
+        </tr>
+      ))}
     </tbody>
   </table>
 </div>
