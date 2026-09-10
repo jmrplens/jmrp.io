@@ -80,5 +80,11 @@ auditConfig:
     # extract-zip symlink advisory: the "patched" 2.0.2 is unpublished (latest
     # on npm is still 2.0.1). Dev-only chain (lighthouse > puppeteer-core >
     # @puppeteer/browsers) extracting Google-served Chrome archives. Remove
-    # this entry as soon as extract-zip >2.0.1 ships. Reviewed 2026-08-13.
+    # this entry as soon as extract-zip >2.0.1 ships. Reviewed 2026-09-10.
     - GHSA-jmr9-qjv8-65gv
+    # The SAME defect, re-published under a second id on 2026-09-09: same
+    # package, same `<=2.0.1` range, same absent patch. It turned every CI run
+    # red on 2026-09-10, four days after the entry above was last reviewed.
+    # extract-zip has not been published since 2.0.1 (March 2023), so both
+    # entries leave together or not at all.
+    - GHSA-7pqw-9j4j-h8q3
