@@ -56,6 +56,17 @@ person:
     - "https://pypi.org/user/jmrplens/"
     - "https://hub.docker.com/u/jmrplens"
     - "https://www.npmjs.com/~jmrpio"
+    # NuGet: `dotnet tool` channel for the GitLab server, seven packages under
+    # this account (the meta package plus one per runtime identifier). NOTE the
+    # mirror image of the npm case above: on NuGet the bare id
+    # `gitlab-mcp-server` IS his, while on npm that same name belongs to
+    # another author and his packages live under the `@jmrp.io` scope.
+    - "https://www.nuget.org/profiles/jmrplens"
+    # MCP directory that publishes a maintainer profile, not just per-server
+    # pages: it carries the canonical name, the handle, a link to this site and
+    # both servers marked "verified via GitHub" — the directory checked the
+    # repositories against the account, so the tie is asserted at their end too.
+    - "https://mcptoplist.com/u/jmrplens"
     # Communities where he posts under the canonical handle. Each one was
     # verified by a link back to this site or to the GitHub account, not by the
     # handle alone — "jmrplens" is rare, but a matching handle is not proof.
