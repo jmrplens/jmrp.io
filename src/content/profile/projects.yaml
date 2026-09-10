@@ -71,21 +71,26 @@ projects:
     registryId: io.github.jmrplens/gitlab-mcp-server
     listings:
       # npm first: a reader looking at the card usually wants to install it.
-      # Glama keeps its link — it is a discovery directory, a different
-      # question — and its ranking depends on the link existing, not on where
-      # in the row it sits.
       - label: npm
         url: https://www.npmjs.com/package/@jmrp.io/gitlab-mcp-server
         icon: simple-icons:npm
       # PyPI ships the same native Go binary for Python toolchains (`pip`/
-      # `uvx`); a second install answer, so it sits with npm, before Glama.
+      # `uvx`); a second install answer, so it sits next to npm.
       - label: PyPI
         url: https://pypi.org/project/jmrplens-gitlab-mcp-server/
         icon: simple-icons:pypi
-      - label: Glama
-        url: https://glama.ai/mcp/servers/jmrplens/gitlab-mcp-server
-        icon: mdi:view-grid-outline
+      # NuGet is the third install answer (`dotnet tool`), and it took the slot
+      # Glama held: with only three rendered links, a way to install the thing
+      # beats a directory that lists it. Seven packages are published, the meta
+      # one and six runtime-specific; this is the meta one, the id a reader
+      # installs. Glama keeps its URL under `sameAs`, so the graph still states
+      # the alias — but it is no longer a rendered anchor, which is the price
+      # of the swap.
+      - label: NuGet
+        url: https://www.nuget.org/packages/gitlab-mcp-server
+        icon: simple-icons:nuget
     sameAs:
+      - https://glama.ai/mcp/servers/jmrplens/gitlab-mcp-server
       - https://cursor.directory/plugins/gitlab-mcp-server
       - https://mcp.so/server/gitlab-mcp-server/jmrplens
       - https://lobehub.com/mcp/jmrplens-gitlab-mcp-server
@@ -95,6 +100,11 @@ projects:
       # and publishes its own SoftwareApplication node for this server.
       - https://verifymcp.io/servers/jmrplens-gitlab-mcp-server/gitlab
       - https://pickmcp.com/servers/jmrplens/gitlab-mcp-server
+      - https://mcpvault.io/servers/gitlab-mcp-server
+      # MCP Toplist keys its pages by MCP Registry name, so the slug is the
+      # `registryId` above with its slash percent-encoded. The maintainer
+      # profile it derives from the same data is in `person.sameAs`.
+      - https://mcptoplist.com/server/io.github.jmrplens%2Fgitlab-mcp-server
       # WinGet: publisher namespace of his own in Microsoft's official
       # community repository, with the manifests signed by him.
       - https://github.com/microsoft/winget-pkgs/tree/master/manifests/j/jmrplens/gitlab-mcp-server
@@ -210,6 +220,12 @@ projects:
       # carries the transport segment; the bare /servers/<slug> path 302s here.
       - https://verifymcp.io/servers/jmrplens-libgen-mcp/libgen
       - https://pickmcp.com/servers/jmrplens/libgen-mcp
+      - https://mcpvault.io/servers/libgen-mcp
+      # Same percent-encoded `registryId` slug as the GitLab server above. It
+      # lists this one under the registry title, "Books & Papers MCP Server",
+      # not under the repository name — the two are the same server, which is
+      # exactly what an alias is for.
+      - https://mcptoplist.com/server/io.github.jmrplens%2Flibgen-mcp
       - https://hub.docker.com/r/jmrplens/libgen-mcp
     topics:
       - { name: Model Context Protocol, wikidata: Q133436854 }
