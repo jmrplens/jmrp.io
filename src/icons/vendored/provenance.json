@@ -1,0 +1,152 @@
+{
+  "$comment": [
+    "Third-party brand marks vendored into this repository so the /projects/",
+    "listings popover can show each directory's own logo instead of one shared",
+    "generic glyph. Loaded as the local UnoCSS collection `vendored` (see",
+    "uno.config.ts), referenced as `vendored:<id>` from the host map in",
+    "src/utils/project-listings.ts, and rendered only as a link to the site the",
+    "mark belongs to, which is referential use: no affiliation or endorsement",
+    "is claimed anywhere on the page.",
+    "Every entry records where the file came from, when it was fetched, what",
+    "the source states about its marks, and exactly what was changed. The",
+    "closure of this file against the directory, and the shape invariants each",
+    "SVG must satisfy, are enforced by scripts/ci/vendored-icons.test.mjs.",
+    "The marks remain the trademarks of their owners; a permissive license on",
+    "an icon collection covers the packaging, never the trademark."
+  ],
+  "fetchedOn": "2026-09-10",
+  "icons": [
+    {
+      "file": "glama.svg",
+      "label": "Glama",
+      "site": "https://glama.ai",
+      "origin": "site",
+      "source": "https://glama.ai/favicon.svg",
+      "terms": null,
+      "termsWording": "no terms, brand or press page found stating logo conditions",
+      "license": "no explicit grant; mark remains Glama's trademark",
+      "modifications": [
+        "dropped the black rounded plate rect",
+        "dropped the 45-unit safe-area inset the source file documents: that margin exists so the white llama does not fuse with the white circular chip Google Search draws around a favicon, and this popup draws no chip, so keeping it would only shrink the mark in the row",
+        "recolored the glyph path to currentColor",
+        "refitted to a 22-unit box from a measured bbox of 220x300",
+        "did NOT add shape-rendering=crispEdges, which the source file explicitly warns against: it snaps block edges to whole device pixels and at row size that collapses the ears"
+      ],
+      "supersedes": {
+        "source": "https://api.iconify.design/thesvg/glama.svg",
+        "collection": "thesvg",
+        "reason": "WRONG ARTWORK, do not restore it. `thesvg:glama` is a curvy line-art llama head wearing glasses and a cap, drawn with fill-rule=evenodd. Glama's actual mark is a pixel-block llama, and the two share nothing but the animal. The author spotted it on the rendered page. Treat that collection as unverified: it is a third-party logo dump, not a first-party source, and this is the second of its two icons that turned out to be unusable."
+      },
+      "tone": "monochrome"
+    },
+    {
+      "file": "mcpso.svg",
+      "label": "mcp.so",
+      "site": "https://mcp.so",
+      "origin": "site",
+      "source": "https://mcp.so/logo.svg",
+      "terms": "https://mcp.so/terms-of-service",
+      "termsWording": "The service and its original content, features, and functionality are owned by us and are protected by international copyright, trademark, and other intellectual property laws.",
+      "license": "no explicit grant; ownership assertion only, no restriction stated on referential use of the mark",
+      "modifications": [
+        "removed width/height/fill from the root element",
+        "moved the single paint onto a wrapping g fill=currentColor"
+      ],
+      "tone": "monochrome"
+    },
+    {
+      "file": "pickmcp.svg",
+      "label": "PickMCP",
+      "site": "https://pickmcp.com",
+      "origin": "site",
+      "source": "https://pickmcp.com/favicon.svg",
+      "terms": null,
+      "termsWording": "no terms, brand or press page published (checked /terms, /brand, /press, /legal, /terms-of-service)",
+      "license": "no stated terms",
+      "modifications": [
+        "dropped the blue plate rect",
+        "redrew the remaining stroked square and inner square in 24 units with currentColor, fitted to a 22-unit box"
+      ],
+      "tone": "monochrome"
+    },
+    {
+      "file": "pulsemcp.svg",
+      "label": "PulseMCP",
+      "site": "https://www.pulsemcp.com",
+      "origin": "site",
+      "source": "https://www.pulsemcp.com/favicon.svg",
+      "terms": "https://www.pulsemcp.com/terms-of-service",
+      "termsWording": "All content on the Website, including text, graphics, logos, images, and software, is the property of PulseMCP or its content suppliers and is protected by United States and international copyright laws.",
+      "license": "no explicit grant; ownership assertion only, no restriction stated on referential use of the mark",
+      "modifications": [
+        "dropped the white plate rect and its navy border rect",
+        "recolored the pixel-grid glyph path to currentColor",
+        "refitted to a 22-unit box from a measured bbox of 13.0x18.6"
+      ],
+      "tone": "monochrome"
+    },
+    {
+      "file": "mcpvault.svg",
+      "label": "MCP Vault",
+      "site": "https://mcpvault.io",
+      "origin": "site",
+      "source": "https://mcpvault.io/icon.svg",
+      "terms": "https://mcpvault.io/terms",
+      "termsWording": "Repository names, logos and code belong to their respective owners. The compilation, grading system, verification results and original content of MCPVault belong to us.",
+      "license": "no explicit grant; ownership assertion only, no restriction stated on referential use of the mark",
+      "modifications": [
+        "dropped the near-black plate rect",
+        "flattened the orange accent dot to currentColor, so the mark is monochrome",
+        "refitted to a 22-unit box from a measured bbox of 48.0x26.3"
+      ],
+      "note": "The wide, low proportions and the flattened accent dot were put to the author and KEPT DELIBERATELY: he chose fidelity to the real mark over an evenly weighted column. Not an oversight, do not normalize it away.",
+      "tone": "monochrome"
+    },
+    {
+      "file": "lobehub.svg",
+      "label": "LobeHub",
+      "site": "https://lobehub.com",
+      "origin": "site",
+      "source": "https://github.com/lobehub/lobe-icons/blob/master/src/LobeHub/components/Mono.tsx",
+      "package": "@lobehub/icons@5.18.0",
+      "terms": "https://github.com/lobehub/lobe-icons/blob/master/LICENSE",
+      "termsWording": "MIT License, Copyright (c) LobeHub. The library is published by LobeHub for exactly this use.",
+      "license": "MIT (LobeHub's own icon library); mark remains LobeHub's trademark",
+      "tone": "multitone",
+      "followsTheme": false,
+      "modifications": [
+        "extracted the SVG out of the React component: dropped the JSX size/style props and the <title>{TITLE}</title>, which the row does not need because the icon span is aria-hidden",
+        "wrapped its 320-unit coordinate system in scale(.075) and set viewBox to 0 0 24 24",
+        "left all seven greys exactly as published: #1A1A1A, #4F4F4F, #838383, #BFBFBF, #C8C8C8, #E1E1E1 and #fff. Recoloring them would be a deviation from the official artwork"
+      ],
+      "note": "This is the Mono variant LobeHub publish themselves, not a silhouette derived by us. It is the second attempt: a one-tone silhouette was vendored first and removed because flattening a multi-colour character destroys the eyes and the mouth, which is most of what identifies it. Being multi-tone it carries no currentColor, so UnoCSS serves it as a background image and it does NOT follow the theme: the same greys in light and dark. Checked on both popup surfaces at row size, the character reads on #16161a and on #f1f1ec, and the #1A1A1A pupils stay visible on the dark surface because they sit on the #fff eye shapes rather than on the surface. Sibling variants (Color, Avatar, Combine, Text, Morden) exist in the same library if this is ever revisited."
+    },
+    {
+      "file": "mcpservers.svg",
+      "label": "MCP Servers",
+      "site": "https://mcpservers.org",
+      "origin": "reconstruction",
+      "source": "https://mcpservers.org/icon.png",
+      "terms": null,
+      "termsWording": "no terms, brand or press page published",
+      "license": "no stated terms; mark remains MCP Servers' trademark",
+      "tone": "monochrome",
+      "modifications": [
+        "GEOMETRIC RECONSTRUCTION from the official 387x387 raster, measured rather than drawn: the mark exists in no vector form (/icon.svg, /logo.svg, /favicon.svg, /favicon.ico, /apple-touch-icon.png, /site.webmanifest, /manifest.json and /og.png all 404, the page carries no inline logo, and Iconify has nothing for it)",
+        "method: composite the source's alpha over white, threshold at grey<128, cancel the shared edges of every ink pixel to leave the exact ink outline on the pixel-corner lattice, stitch the surviving edges into closed rings, then simplify each ring with Douglas-Peucker at a 0.7 source-pixel tolerance",
+        "measured structure: 38652 ink pixels in 3 connected components, one per nested stroke, giving 3 boundary rings of 2970, 1430 and 750 lattice points; ink bbox 332x293 of 387; stroke width 19px measured across the vertical legs at y=280 and y=300; leg centre lines at x=38, 72 and 106 on the left and 283, 318 and 351 on the right, so the three strokes nest at a ~34px pitch, symmetric about x=194.75",
+        "emitted as one fill-rule=evenodd path in currentColor, refitted to the same 22-unit optical box as the other marks",
+        "FIT PROVED by rendering the result back at the source's own 387x387 pixel grid, through a viewBox that inverts the fitting transform so no resampling is involved, and comparing masks: 38 of 149769 pixels disagree, 0.025% of the canvas and 0.10% of the mark's own ink area. A 0.55 tolerance reaches 0 pixels of disagreement but costs 32KB; 0.7 was chosen at 10KB because this CSS is inlined per page and the icon renders at 16px, where 0.10% is far below one device pixel"
+      ],
+      "note": "Not a stroked-path reconstruction with derived vertices and cap radii: the ink outline itself was traced, which cannot get the geometry wrong by construction and is what the per-pixel proof above measures. The author asked for this one specifically; nothing is lost in monochrome because the mark is pure line geometry with no colour to flatten."
+    }
+  ],
+  "leftOnGenericIcon": [
+    {
+      "label": "MCP Toplist",
+      "site": "https://mcptoplist.com",
+      "reason": "publishes no vector mark: the only own-brand asset is the raster /icon endpoint, the header is a text wordmark, all 11 inline SVGs in the page are generic UI glyphs, and /logo.svg, /icon.svg, /favicon.svg, /brand/logo.svg, /images/logo.svg, /assets/logo.svg and /logo-mark.svg all 404.",
+      "decision": "CONFIRMED BY THE AUTHOR: he looked at the rendered page and chose to leave this one on the generic directory glyph. Not undecided and not an oversight."
+    }
+  ]
+}

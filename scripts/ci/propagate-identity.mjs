@@ -3,8 +3,10 @@
  * Propagates the canonical `#person` document to the sites that splice it into
  * their own @graph.
  *
- * The six consumers read the live document from raw.githubusercontent at build
+ * The consumers read the live document from raw.githubusercontent at build
  * time and keep a versioned `person.snapshot.json` as their offline fallback.
+ * How many there are is `.github/identity-consumers.json`, not a number
+ * written here: one of them is listed before its repository is public.
  * That snapshot was only ever refreshed by hand, so it froze: measured on
  * 2026-08-27, five of the six were still on the 2026-07-26 version. This script
  * rewrites it whenever the canonical document changes, and the commit itself —
@@ -95,10 +97,19 @@ async function syncConsumer(consumer, owner, author, canonical) {
 
   const current = await gh(contentsUrl);
   if (current.status === 404) {
+    // A missing file in a repository that exists is a real problem: the
+    // snapshot was moved or renamed and this repo has silently stopped
+    // receiving the identity. A missing *repository* is not, and there is
+    // always one: a consumer is listed here while its site is still being
+    // built, so the entry is ready on the day it is published.
+    const repository = await gh(`/repos/${owner}/${repo}`);
+    if (repository.status === 404) {
+      return { repo, state: "not published", detail: "no repository yet" };
+    }
     return {
       repo,
       state: "error",
-      detail: `${snapshotPath} is gone — was the file moved?`,
+      detail: `${snapshotPath} is gone, was the file moved?`,
     };
   }
   if (current.status !== 200) {
@@ -177,12 +188,18 @@ console.log(
 
 const results = [];
 for (const consumer of consumers) {
-  // Serially on purpose: six calls, and a credential failure should show up on
-  // the first one rather than six times at once.
+  // Serially on purpose: a handful of calls, and a credential failure should
+  // show up on the first one rather than on all of them at once.
   results.push(await syncConsumer(consumer, owner, commitAuthor, canonical));
 }
 
-const ICON = { updated: "✓", "in sync": "·", stale: "→", error: "✗" };
+const ICON = {
+  updated: "✓",
+  "in sync": "·",
+  stale: "→",
+  "not published": "◦",
+  error: "✗",
+};
 for (const result of results) {
   const detail = result.detail ? ` — ${result.detail}` : "";
   console.log(
@@ -206,4 +223,8 @@ if (failed.length > 0) {
   console.error(`\n✗ ${failed.length} of ${results.length} failed.`);
   process.exit(1);
 }
-console.log(`\n✓ ${results.length} consumers accounted for.`);
+const pending = results.filter((r) => r.state === "not published").length;
+console.log(
+  `\n✓ ${results.length} consumers accounted for` +
+    (pending > 0 ? `, ${pending} not published yet.` : "."),
+);

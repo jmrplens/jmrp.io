@@ -42,6 +42,8 @@ interface DownloadsData {
   sources: {
     githubReleases: number;
     dockerHub: number;
+    /** Lifetime NuGet downloads (meta packages only, no runtime-specific ids). */
+    nuget: number;
     /** Hand-read counts (MathWorks blocks scripted requests). */
     manual: number;
   };
@@ -74,7 +76,7 @@ function writeZeroed(): void {
   const empty: DownloadsData = {
     total: 0,
     generatedAt: new Date().toISOString(),
-    sources: { githubReleases: 0, dockerHub: 0, manual: 0 },
+    sources: { githubReleases: 0, dockerHub: 0, nuget: 0, manual: 0 },
     excluded: { githubVerification: 0 },
     manualVerifiedOn: MANUAL_COUNTS_VERIFIED_ON,
     projects: {},
@@ -148,7 +150,7 @@ export async function setupDownloads(
     logger.info(
       `  ✓ Downloads total: ${data.total.toLocaleString("en-US")} ` +
         `(releases ${sources.githubReleases}, docker ${sources.dockerHub}, ` +
-        `manual ${sources.manual}, ` +
+        `nuget ${sources.nuget}, manual ${sources.manual}, ` +
         `${Object.keys(projects).length} projects; ` +
         `${data.excluded.githubVerification} checksum/signature fetches excluded)`,
     );

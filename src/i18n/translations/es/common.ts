@@ -954,6 +954,13 @@ export const common = {
       downloadsSourceLead:
         "La regla exacta, y la lista completa de canales contados y descartados:",
       topicsLabel: "Temas que cubre {project}",
+      // Ver el comentario del bloque equivalente en en/common.ts: el nombre
+      // accesible del disparador se compone de su propio contenido, no de un
+      // aria-label.
+      listingsButton: "Todos los listados",
+      listingsButtonContext: "(directorios y registros de {project})",
+      listingsTitle: "Dónde está publicado {project}",
+      listingsOnCard: "visible en la tarjeta",
       supportHeading: "Apoyo",
       supportIntro:
         "Estos proyectos se mantienen en mi tiempo libre, sobre hardware que funciona en casa. Si alguno te ahorra una tarde, puedes patrocinar el trabajo en GitHub. En cualquier caso, aquí no hay nada tras un muro de pago, y nada te rastrea.",

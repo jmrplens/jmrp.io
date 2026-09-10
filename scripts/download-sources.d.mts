@@ -14,6 +14,8 @@ export interface ProjectDownloads {
   excludedVerification: number;
   /** Cumulative Docker Hub pulls. */
   docker: number;
+  /** Lifetime NuGet downloads, meta packages only. */
+  nuget: number;
   /** Hand-read counts from channels that refuse scripted requests. */
   manual: number;
 }
@@ -24,6 +26,8 @@ export const DOWNLOAD_SOURCES: Record<
   {
     releases: boolean;
     docker: string[];
+    /** NuGet package ids; absent when the project ships through no such feed. */
+    nuget?: string[];
     manual?: { source: string; count: number };
   }
 >;
@@ -66,6 +70,23 @@ export function isVerificationAsset(name: string): boolean;
 export function fetchDockerHubPulls(slug: string): Promise<number>;
 
 /**
+ * Reads the lifetime download count of a single NuGet package.
+ *
+ * @param id - Package id, e.g. `gitlab-mcp-server`.
+ * @returns The package's lifetime download count.
+ */
+export function fetchNuGetDownloads(id: string): Promise<number>;
+
+/**
+ * Reads the lifetime download count of one package out of a search response.
+ *
+ * @param body - Parsed search response.
+ * @param id - Package id that was asked for.
+ * @returns The package's lifetime download count.
+ */
+export function readNuGetTotal(body: unknown, id: string): number;
+
+/**
  * Combined download count of one project across every channel (cached).
  *
  * @param repo - Repository name under the owner account.
@@ -86,7 +107,12 @@ export function fetchProjectDownloads(
 export function fetchAllDownloads(token?: string): Promise<{
   total: number;
   /** A strict partition of `total`. */
-  sources: { githubReleases: number; dockerHub: number; manual: number };
+  sources: {
+    githubReleases: number;
+    dockerHub: number;
+    nuget: number;
+    manual: number;
+  };
   /** Counted and reported, but deliberately outside `total`. */
   excluded: { githubVerification: number };
   manualVerifiedOn: string;

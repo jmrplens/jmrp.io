@@ -97,6 +97,7 @@ avanti
 avanzado
 avcdn
 azul
+azuresearch
 backlink
 baiduspider
 baja
@@ -349,6 +350,7 @@ domhandler
 dominio
 domótica
 dorder
+dotnet
 downscales
 dport
 dproto
@@ -452,6 +454,7 @@ geoipupdate
 geolocalización
 gescoform
 getcwd
+ghchronicle
 GHSA
 githubactions
 gitlab
@@ -675,6 +678,9 @@ mbpoll
 mbus
 mcafee
 mcpservers
+mcpso
+mcptoplist
+mcpvault
 mdnwebdocs
 mdxjs
 medkit
@@ -724,6 +730,7 @@ monaco
 monitorea
 monlist
 morcillo
+Morden
 mosi
 movflags
 movistar
@@ -739,6 +746,7 @@ multilínea
 multiphysics
 multiplexa
 multiplexados
+multitone
 myadmin
 myjob
 nameopt
@@ -823,6 +831,7 @@ ouvrir
 overclaim
 overleafconfig
 Owasp
+packageid
 página
 páginas
 panish
@@ -849,12 +858,14 @@ pesa
 pestaña
 petición
 peticiones
+Peucker
 pfctl
 pfwp
 phishable
 phonometry
 phpinfo
 phpmyadmin
+pickmcp
 picó
 pizarra
 pkill
@@ -916,6 +927,7 @@ psychoacoustics
 pubgroup
 publicaciones
 publickey
+pulsemcp
 pwgen
 pycrowdsec
 pymodbus
@@ -1144,6 +1156,7 @@ testeable
 texstudio
 texto
 textos
+thesvg
 thrs
 tieni
 tik's
@@ -1163,6 +1176,7 @@ toggleable
 tokenizado
 tootallnate
 topbar
+Toplist
 torproject
 torrc
 totp
@@ -1204,6 +1218,7 @@ urlencode
 usar
 userscript
 userscripts
+usnc
 usuario
 útil
 valència
@@ -1213,6 +1228,7 @@ varint
 Vaudenay
 velocista
 verificar
+verifymcp
 verlust
 versiones
 vhosts
@@ -1249,6 +1265,7 @@ whistleblowers
 wikidata
 Wikidata
 winbox
+winget
 withastro
 wmem
 wordmark

@@ -968,6 +968,15 @@ export const common = {
       downloadsSourceLead:
         "The exact rule, and the full list of channels counted and skipped:",
       topicsLabel: "Topics covered by {project}",
+      // Listings popover. The trigger's accessible name is composed from its
+      // own content (visible label, then the count, then the screen-reader
+      // context below) rather than from an aria-label, so WCAG 2.5.3 Label in
+      // Name holds by construction and the three triggers on the page do not
+      // all announce as the same button.
+      listingsButton: "All listings",
+      listingsButtonContext: "(directories and registries for {project})",
+      listingsTitle: "Where {project} is listed",
+      listingsOnCard: "shown on the card",
       supportHeading: "Support",
       supportIntro:
         "These projects are maintained in my own time, on hardware that runs at home. If one of them saves you an afternoon, you can sponsor the work on GitHub. Nothing here sits behind a paywall either way, and nothing here tracks you.",
