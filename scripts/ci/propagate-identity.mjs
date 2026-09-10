@@ -3,8 +3,10 @@
  * Propagates the canonical `#person` document to the sites that splice it into
  * their own @graph.
  *
- * The six consumers read the live document from raw.githubusercontent at build
+ * The consumers read the live document from raw.githubusercontent at build
  * time and keep a versioned `person.snapshot.json` as their offline fallback.
+ * How many there are is `.github/identity-consumers.json`, not a number
+ * written here: one of them is listed before its repository is public.
  * That snapshot was only ever refreshed by hand, so it froze: measured on
  * 2026-08-27, five of the six were still on the 2026-07-26 version. This script
  * rewrites it whenever the canonical document changes, and the commit itself —
@@ -186,8 +188,8 @@ console.log(
 
 const results = [];
 for (const consumer of consumers) {
-  // Serially on purpose: six calls, and a credential failure should show up on
-  // the first one rather than six times at once.
+  // Serially on purpose: a handful of calls, and a credential failure should
+  // show up on the first one rather than on all of them at once.
   results.push(await syncConsumer(consumer, owner, commitAuthor, canonical));
 }
 

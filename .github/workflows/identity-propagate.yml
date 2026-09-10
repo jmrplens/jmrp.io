@@ -43,8 +43,8 @@ jobs:
           node-version-file: package.json
 
       # No `pnpm install` on purpose: the script has no dependencies, only
-      # `fetch` and `node:fs`. Installing the whole tree for six HTTP calls
-      # would be paying minutes for nothing.
+      # `fetch` and `node:fs`. Installing the whole tree for a handful of
+      # HTTP calls would be paying minutes for nothing.
       - name: Propagate the snapshot
         env:
           IDENTITY_SYNC_TOKEN: ${{ secrets.IDENTITY_SYNC_TOKEN }}
