@@ -794,12 +794,22 @@ const groups = [
        title is what says which project the list belongs to. */
     position: sticky;
     top: 0;
+
+    /* Load-bearing, not decoration. `position: sticky` makes this a positioned
+       element, but with `z-index: auto` it opens no stacking context, so it
+       paints in the same layer as every later sibling that opens one of its
+       own. Each row icon is exactly that: a `mask-image` element, and a
+       non-none mask opens a stacking context, so the icons of the rows sliding
+       underneath painted OVER the header, one of them across the title, while
+       the row TEXT was correctly hidden by the opaque background. A positive
+       z-index moves the header into the layer above them all. */
+    z-index: 1;
     display: flex;
     gap: var(--space-sm);
     align-items: center;
     padding: var(--space-sm) var(--space-md);
     background: var(--color-surface-2);
-    border-bottom: 1px solid var(--color-hair);
+    border-bottom: 1px solid var(--color-border);
   }
 
   .proj-listings__title {
