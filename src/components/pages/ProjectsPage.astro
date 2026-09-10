@@ -19,6 +19,7 @@ import { defaultLocale, type Locale } from "@i18n/config";
 import { formatDate, useTranslations } from "@i18n/utils";
 import BaseLayout from "@layouts/BaseLayout.astro";
 import { compactDownloads, DOWNLOADS_DISPLAY_MIN } from "@utils/downloads";
+import { type ProjectListing, projectListings } from "@utils/project-listings";
 import {
   buildProjectSchema,
   getProjects,
@@ -90,6 +91,50 @@ const downloadsOf = (project: Project): string | null => {
 /** Localized documentation URL — falls back to the English docs entry point. */
 const docsHref = (project: Project) =>
   locale === "es" && project.docsEs ? project.docsEs : project.docs;
+
+/*
+ * ── Listings popover ──────────────────────────────────────────────────────
+ * Resolved once per project here rather than inside the template: the trigger
+ * needs the count and the popover needs the list, and a template that called
+ * `projectListings` twice would parse every URL twice per card.
+ */
+const listingsById = new Map(
+  projects.map((project) => [project.id, projectListings(project)]),
+);
+
+/** Every directory and registry the project is listed on. */
+const listingsOf = (project: Project): ProjectListing[] =>
+  listingsById.get(project.id) ?? [];
+
+/**
+ * Whether the card gets a listings trigger at all.
+ *
+ * Only when the project has a URL the card does NOT already render: the button
+ * exists to reveal what is hidden, and on the eleven projects whose only
+ * listing is the one link already in the row it would open a popover that
+ * shows nothing new. Three projects qualify today (both MCP servers and
+ * phonometry, whose DOI is `sameAs`-only).
+ */
+const hasHiddenListings = (project: Project): boolean =>
+  listingsOf(project).some((listing) => !listing.onCard);
+
+/** DOM id of a project's popover; also the base of its title's id. */
+const listingsId = (project: Project): string => `listings-${project.id}`;
+
+/**
+ * The anchor's visible text, in visible order, for the "opens in new tab"
+ * label. Composed from the same strings the markup renders so `aria-label`
+ * extends the accessible name instead of replacing it (WCAG 2.5.3 Label in
+ * Name), the rule `@utils/links` documents for the rest of the site.
+ */
+const listingName = (listing: ProjectListing): string =>
+  [
+    listing.label,
+    listing.host === listing.label ? "" : listing.host,
+    listing.onCard ? t("pages.projects.listingsOnCard") : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
 
 /**
  * CollectionPage → ItemList → each `#software` node. The ItemList references
@@ -299,7 +344,108 @@ const groups = [
                       {t("pages.projects.hosted")}
                     </a>
                   )}
+                  {hasHiddenListings(project) && (
+                    <button
+                      type="button"
+                      class="proj-card__listings-btn"
+                      popovertarget={listingsId(project)}
+                    >
+                      <span
+                        class="i-mdi:earth"
+                        aria-hidden="true"
+                      />
+                      {t("pages.projects.listingsButton")}
+                      <span class="proj-card__listings-count">
+                        {listingsOf(project).length}
+                      </span>
+                      <span class="sr-only">
+                        {t("pages.projects.listingsButtonContext", {
+                          project: project.name,
+                        })}
+                      </span>
+                    </button>
+                  )}
                 </p>
+
+                {/*
+                 * Outside the <p> above on purpose: a <p> may only contain
+                 * phrasing content, so a <div popover> inside it is invalid
+                 * HTML. `popovertarget` binds by id and CSS anchoring binds to
+                 * the INVOKER, so neither needs DOM adjacency.
+                 */}
+                {hasHiddenListings(project) && (
+                  <div
+                    id={listingsId(project)}
+                    class="proj-listings"
+                    popover="auto"
+                    role="dialog"
+                    aria-labelledby={`${listingsId(project)}-title`}
+                  >
+                    <div class="proj-listings__head">
+                      <h4
+                        class="proj-listings__title"
+                        id={`${listingsId(project)}-title`}
+                      >
+                        {t("pages.projects.listingsTitle", {
+                          project: project.name,
+                        })}
+                      </h4>
+                      <button
+                        type="button"
+                        class="proj-listings__close"
+                        popovertarget={listingsId(project)}
+                        popovertargetaction="hide"
+                        aria-label={t("aria.close")}
+                      >
+                        <span
+                          class="i-mdi:close"
+                          aria-hidden="true"
+                        />
+                      </button>
+                    </div>
+                    <ul class="proj-listings__list">
+                      {listingsOf(project).map((listing) => (
+                        <li class="proj-listings__item">
+                          <a
+                            href={listing.url}
+                            target="_blank"
+                            rel="external noopener noreferrer"
+                            aria-label={t("aria.opensNewTab", {
+                              text: listingName(listing),
+                            })}
+                          >
+                            <span
+                              class={`proj-listings__icon i-${listing.icon}`}
+                              aria-hidden="true"
+                            />
+                            <span class="proj-listings__label">
+                              {listing.label}
+                            </span>
+                            {listing.host !== listing.label && (
+                              <span class="proj-listings__host">
+                                {listing.host}
+                              </span>
+                            )}
+                            {/*
+                             * Marked, not hidden: see `ProjectListing.onCard`.
+                             * The mark is an icon PLUS text, never colour
+                             * alone (WCAG 1.4.1).
+                             */}
+                            {listing.onCard && (
+                              <span class="proj-listings__flag">
+                                <span
+                                  class="i-mdi:check"
+                                  aria-hidden="true"
+                                />
+                                {t("pages.projects.listingsOnCard")}
+                              </span>
+                            )}
+                          </a>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
               </li>
             ))}
           </ul>
@@ -528,6 +674,268 @@ const groups = [
   .proj-card__links a:hover {
     text-decoration: underline;
     text-underline-offset: 3px;
+  }
+
+  /* ── Listings popover ─────────────────────────────────────────────────────
+     Zero client JS. The native `popover` attribute already does open, close,
+     light dismiss, Escape and focus return; CSS anchor positioning does the
+     placement. The trigger is the popover's IMPLICIT anchor, a role HTML gives
+     every `popovertarget` invoker, which is what makes this work with no
+     `anchor-name` at all: one shared name across twenty cards would resolve
+     every popover to the last button in tree order, and a unique name per card
+     could only come from an inline style, which the nonce-only CSP forbids.
+
+     Three placements, in order of increasing capability:
+
+     1. Base — any engine with `popover` (Chrome 114+, Safari 17+, Firefox
+        125+): the UA's own `inset: 0; margin: auto` centring, capped in size.
+        This IS the fallback for engines without anchor positioning, which
+        today means Firefox and Safari: the popup opens centred instead of
+        anchored, and everything else about it is unchanged.
+     2. Narrow viewports — a bottom sheet, at any capability. An anchored
+        bubble hanging off a 28px chip has nowhere to go on a 360px screen, and
+        a dialog floating mid-screen loses the connection to the card that was
+        just tapped; a sheet rising from the bottom edge is the phone idiom and
+        can be full-width, which is what a column of hostnames needs.
+     3. Wide viewports WITH anchor positioning — anchored under the trigger and
+        scaled out of its top-left corner, so it visibly grows from the button.
+
+     `--pop-from` is the closed-state transform, redefined per placement, so
+     the entry and exit transitions are declared once instead of three times
+     (the popup scales in on desktop and slides up on the sheet). */
+
+  .proj-card__listings-btn {
+    display: inline-flex;
+    gap: 6px;
+    align-items: center;
+
+    /* 24px is the WCAG 2.2 2.5.8 minimum; this row's links are text-sized, so
+       the one control among them has to be padded up to it deliberately. */
+    min-height: 28px;
+    padding: 3px 10px;
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    color: var(--color-text-muted);
+    cursor: pointer;
+    background: none;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-pill);
+  }
+
+  .proj-card__listings-btn:hover,
+  .proj-card__listings-btn:focus-visible {
+    color: var(--color-accent);
+    border-color: var(--color-border-hover);
+  }
+
+  .proj-card__listings-count {
+    padding: 0 5px;
+    font-variant-numeric: tabular-nums;
+    color: var(--color-text);
+    background: var(--color-bg-subtle);
+    border-radius: var(--radius-pill);
+  }
+
+  .proj-listings {
+    --pop-from: scale(0.96);
+
+    width: max-content;
+    max-width: min(24rem, calc(100vw - 2 * var(--space-md)));
+    max-height: min(60dvh, calc(100dvh - 2 * var(--space-md)));
+    padding: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    color: var(--color-text);
+
+    /* One step up the documented elevation scale from the card it belongs to
+       (bg < secondary < surface-2), which is how this design system says
+       "above" — it has no shadow tokens. */
+    background: var(--color-surface-2);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    opacity: 0%;
+    transform: var(--pop-from);
+  }
+
+  .proj-listings:popover-open {
+    opacity: 100%;
+    transform: none;
+  }
+
+  @starting-style {
+    .proj-listings:popover-open {
+      opacity: 0%;
+      transform: var(--pop-from);
+    }
+  }
+
+  /* Declared only here, so a reader who asked for less motion gets the popup
+     instantly instead of a 0.001ms-clamped animation. `display` and `overlay`
+     need `allow-discrete` or the exit half never runs and the popup vanishes
+     without its transition. */
+  @media (prefers-reduced-motion: no-preference) {
+    .proj-listings {
+      transition:
+        opacity var(--dur-2) var(--ease-out),
+        transform var(--dur-2) var(--ease-out),
+        display var(--dur-2) allow-discrete,
+        overlay var(--dur-2) allow-discrete;
+    }
+  }
+
+  /* Transparent on desktop: an anchored bubble that dims the page it points
+     into would hide the card it is about. The sheet gets a real scrim. */
+  .proj-listings::backdrop {
+    background: transparent;
+  }
+
+  .proj-listings__head {
+    /* Sticky because the longest list (sixteen entries) scrolls, and the
+       title is what says which project the list belongs to. */
+    position: sticky;
+    top: 0;
+    display: flex;
+    gap: var(--space-sm);
+    align-items: center;
+    padding: var(--space-sm) var(--space-md);
+    background: var(--color-surface-2);
+    border-bottom: 1px solid var(--color-hair);
+  }
+
+  .proj-listings__title {
+    margin: 0;
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    font-weight: var(--fw-medium);
+    color: var(--color-text-heading);
+    overflow-wrap: anywhere;
+  }
+
+  .proj-listings__close {
+    display: inline-flex;
+    flex: none;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    margin-left: auto;
+    font-size: var(--text-md);
+    color: var(--color-text-muted);
+    cursor: pointer;
+    background: none;
+    border: 1px solid transparent;
+    border-radius: var(--radius-sm);
+  }
+
+  .proj-listings__close:hover,
+  .proj-listings__close:focus-visible {
+    color: var(--color-accent);
+    border-color: var(--color-border);
+  }
+
+  .proj-listings__list {
+    padding: 0;
+    margin: 0;
+    list-style: none;
+  }
+
+  .proj-listings__item + .proj-listings__item {
+    border-top: 1px solid var(--color-hair);
+  }
+
+  .proj-listings__item a {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-xs) var(--space-sm);
+    align-items: center;
+    padding: var(--space-sm) var(--space-md);
+    font-size: var(--text-sm);
+    color: var(--color-text);
+    text-decoration: none;
+  }
+
+  .proj-listings__item a:hover,
+  .proj-listings__item a:focus-visible {
+    background: var(--color-bg-subtle);
+  }
+
+  .proj-listings__item a:hover .proj-listings__label,
+  .proj-listings__item a:focus-visible .proj-listings__label {
+    color: var(--color-accent);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+
+  .proj-listings__icon {
+    flex: none;
+    font-size: var(--text-md);
+    color: var(--color-text-muted);
+  }
+
+  .proj-listings__label {
+    font-weight: var(--fw-medium);
+    color: var(--color-text-heading);
+  }
+
+  .proj-listings__host {
+    font-family: var(--font-mono);
+    font-size: var(--text-micro);
+    color: var(--color-meta);
+    overflow-wrap: anywhere;
+  }
+
+  .proj-listings__flag {
+    display: inline-flex;
+    gap: 4px;
+    align-items: center;
+    margin-left: auto;
+    font-family: var(--font-mono);
+    font-size: var(--text-micro);
+    color: var(--color-meta);
+    white-space: nowrap;
+  }
+
+  @media (width <= 640px) {
+    .proj-listings {
+      --pop-from: translateY(100%);
+
+      inset: auto 0 0;
+      width: auto;
+      max-width: none;
+      max-height: 70dvh;
+
+      /* The UA's centring margin has to go, or the sheet floats. */
+      margin: 0;
+      border-width: 1px 0 0;
+      border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+    }
+
+    .proj-listings::backdrop {
+      background: var(--scrim);
+    }
+  }
+
+  @supports (position-area: block-end) {
+    @media (width > 640px) {
+      .proj-listings {
+        /* Releases the UA centring so the position-area places it instead. */
+        inset: auto;
+        justify-self: start;
+        margin: var(--space-xs) 0 0;
+
+        /* Below the trigger, growing towards the inline end, and flipped
+           rather than clipped when a card near the viewport edge leaves no
+           room. `transform-origin` cannot follow a flip (`@position-try` may
+           only change inset, margin and size), so a flipped popup grows from
+           the wrong corner: still anchored, still readable, one corner off. */
+        position-area: block-end span-inline-end;
+        position-try-fallbacks:
+          flip-block,
+          flip-inline,
+          flip-block flip-inline;
+        transform-origin: top left;
+      }
+    }
   }
 
   .projects-support {

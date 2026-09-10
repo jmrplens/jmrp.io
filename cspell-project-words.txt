@@ -678,6 +678,8 @@ mbpoll
 mbus
 mcafee
 mcpservers
+mcptoplist
+mcpvault
 mdnwebdocs
 mdxjs
 medkit
@@ -859,6 +861,7 @@ phishable
 phonometry
 phpinfo
 phpmyadmin
+pickmcp
 picó
 pizarra
 pkill
@@ -920,6 +923,7 @@ psychoacoustics
 pubgroup
 publicaciones
 publickey
+pulsemcp
 pwgen
 pycrowdsec
 pymodbus
@@ -1219,6 +1223,7 @@ varint
 Vaudenay
 velocista
 verificar
+verifymcp
 verlust
 versiones
 vhosts
@@ -1255,6 +1260,7 @@ whistleblowers
 wikidata
 Wikidata
 winbox
+winget
 withastro
 wmem
 wordmark

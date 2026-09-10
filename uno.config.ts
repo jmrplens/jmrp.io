@@ -79,6 +79,14 @@ export default defineConfig({
     // that page used nowhere else — and shipped four invisible Tor cards.
     ...authoredIcons("src/content/profile/projects.yaml"),
     ...authoredIcons("src/components/homelab/inventory.ts"),
+    // Same problem, third roster: the /projects/ listings popover builds
+    // `i-${listing.icon}` from a host-keyed map, so a directory reachable only
+    // through `sameAs` has its icon in no source file as a literal class.
+    // Measured by removing this line: `i-simple-icons:docker`,
+    // `i-mdi:microsoft-windows`, `i-simple-icons:doi` and
+    // `i-simple-icons:cursor` then reach 0 of the 128 built pages while their
+    // classes still ship in the HTML of /projects/ and /es/projects/.
+    ...authoredIcons("src/utils/project-listings.ts"),
     // Footer custom_social icons (dynamically generated from socials.yaml)
     "i-mdi:key",
     "i-simple-icons:mikrotik",
