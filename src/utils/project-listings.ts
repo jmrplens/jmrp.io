@@ -97,13 +97,16 @@ const DIRECTORIES: Readonly<Record<string, Directory>> = {
   "pulsemcp.com": { label: "PulseMCP", icon: "vendored:pulsemcp" },
   "pickmcp.com": { label: "PickMCP", icon: "vendored:pickmcp" },
   "mcpvault.io": { label: "MCP Vault", icon: "vendored:mcpvault" },
-  // These three keep the generic directory glyph, each for a reason recorded
-  // under `leftOnGenericIcon` in provenance.json so nobody repeats the search:
-  // two publish no vector mark at all and tracing their raster favicon would
-  // be inventing a logo, and LobeHub's mark is a multi-colour character whose
-  // identity lives in its face, which a monochrome silhouette destroys.
-  "lobehub.com": { label: "LobeHub", icon: "mdi:view-grid-outline" },
-  "mcpservers.org": { label: "MCP Servers", icon: "mdi:view-grid-outline" },
+  // LobeHub ships an official monochrome-grayscale variant of its character in
+  // its own MIT-licensed icon library, which keeps the eyes and mouth a
+  // silhouette had thrown away. It is multi-tone, so unlike every other icon
+  // here it renders as a background image and does NOT follow the theme; see
+  // its provenance entry.
+  "lobehub.com": { label: "LobeHub", icon: "vendored:lobehub" },
+  // Reconstructed from the official raster, pixel-measured rather than drawn.
+  "mcpservers.org": { label: "MCP Servers", icon: "vendored:mcpservers" },
+  // The last one on the generic directory glyph: it publishes no vector mark,
+  // and the author confirmed leaving it. See `leftOnGenericIcon`.
   "mcptoplist.com": { label: "MCP Toplist", icon: "mdi:view-grid-outline" },
 
   // Fallback for any other GitHub URL; kept last of the github.com keys only

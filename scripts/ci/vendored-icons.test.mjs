@@ -61,9 +61,29 @@ test("every provenance entry records where the mark came from", () => {
     assert.match(icon.site, /^https:\/\//, `${where}no site URL`);
     assert.match(icon.source, /^https:\/\//, `${where}no source URL`);
     assert.ok(
-      ["iconify", "site"].includes(icon.origin),
-      `${where}origin must be "iconify" or "site"`,
+      ["iconify", "site", "reconstruction"].includes(icon.origin),
+      `${where}origin must be "iconify", "site" or "reconstruction"`,
     );
+    // A mark's tone decides how UnoCSS serves it, so it is not cosmetic
+    // metadata: see the shape test below.
+    assert.ok(
+      ["monochrome", "multitone"].includes(icon.tone),
+      `${where}tone must be "monochrome" or "multitone"`,
+    );
+    if (icon.tone === "multitone") {
+      // Multi-tone artwork cannot be a currentColor mask, so UnoCSS serves it
+      // as a background image and it stays the same in both themes. That is a
+      // real limitation of the icon and has to be written down, not discovered.
+      assert.equal(
+        icon.followsTheme,
+        false,
+        `${where}a multitone mark renders as a background image, so it must record followsTheme: false`,
+      );
+      assert.ok(
+        icon.note,
+        `${where}a multitone mark must note why its fixed palette is acceptable`,
+      );
+    }
     // Either a license grant or the wording that stands in for one; a mark
     // with neither has not actually been checked.
     assert.ok(
@@ -113,20 +133,39 @@ test("every vendored icon is normalized to the repo's icon shape", () => {
       /\bid="/,
       `${where}no id attributes: they collide when marks share a page`,
     );
-    assert.doesNotMatch(
-      svg,
-      /#[0-9a-fA-F]{3,8}\b/,
-      `${where}no hard-coded colours; paint with currentColor`,
-    );
-    assert.doesNotMatch(
-      svg,
-      /(fill|stroke)="(?!none|currentColor)[^"]+"/,
-      `${where}every fill and stroke must be currentColor or none`,
-    );
-    assert.ok(
-      /(fill|stroke)="currentColor"/.test(svg),
-      `${where}nothing painted with currentColor: the mark would be invisible`,
-    );
+    // The paint rules depend on the mark's tone, because the two kinds go
+    // down different UnoCSS paths. A monochrome mark must be pure
+    // currentColor so it becomes a mask that follows the theme; a multitone
+    // one is official artwork whose palette is the point, so it keeps its
+    // own colours and must NOT claim currentColor, which would make UnoCSS
+    // treat it as a mask and flatten the whole thing to one tone.
+    const tone = manifest.icons.find((icon) => icon.file === file)?.tone;
+    if (tone === "monochrome") {
+      assert.doesNotMatch(
+        svg,
+        /#[0-9a-fA-F]{3,8}\b/,
+        `${where}no hard-coded colours in a monochrome mark; paint with currentColor`,
+      );
+      assert.doesNotMatch(
+        svg,
+        /(fill|stroke)="(?!none|currentColor)[^"]+"/,
+        `${where}every fill and stroke must be currentColor or none`,
+      );
+      assert.ok(
+        /(fill|stroke)="currentColor"/.test(svg),
+        `${where}nothing painted with currentColor: the mark would be invisible`,
+      );
+    } else {
+      assert.doesNotMatch(
+        svg,
+        /currentColor/,
+        `${where}a multitone mark must not mix in currentColor: UnoCSS would serve it as a mask and collapse its palette`,
+      );
+      assert.ok(
+        /(fill|stroke)="#[0-9a-fA-F]{3,8}"/.test(svg),
+        `${where}a multitone mark is expected to carry its own palette`,
+      );
+    }
     // One viewBox means one root: a nested <svg> would carry its own.
     assert.equal(
       svg.match(/<svg\b/g).length,
