@@ -14,6 +14,7 @@
 
 import { defaultLocale, type Locale } from "@i18n/config";
 import { useTranslations } from "@i18n/utils";
+import { inlineStyleTag } from "@utils/html";
 import * as cheerio from "cheerio";
 
 interface Props {
@@ -117,44 +118,38 @@ const instanceCss = labels
   data-tabs-id={uniqueId}
 >
   {/* Hidden radio inputs for CSS state management */}
-  {
-    labels.map((label, index) => (
-      <input
-        type="radio"
-        name={`tabs-${uniqueId}`}
-        id={`tab-${uniqueId}-${index}`}
-        class="tab-radio"
-        checked={index === 0}
-        aria-controls={`panel-${uniqueId}-${index}`}
-        aria-label={t("components.tabs.showTab", { label })}
-      />
-    ))
-  }
+  {labels.map((label, index) => (
+    <input
+      type="radio"
+      name={`tabs-${uniqueId}`}
+      id={`tab-${uniqueId}-${index}`}
+      class="tab-radio"
+      checked={index === 0}
+      aria-controls={`panel-${uniqueId}-${index}`}
+      aria-label={t("components.tabs.showTab", { label })}
+    />
+  ))}
 
   {/* Tab headers as labels - auto-generated from TabPanel children */}
   {/* Note: This is a CSS-only tab pattern. Accessibility is provided by the */}
   {/* hidden radio inputs which support arrow key navigation natively. */}
-  {
-    /* tabindex="0" keeps the header keyboard-scrollable when the tabs overflow
+  {/* tabindex="0" keeps the header keyboard-scrollable when the tabs overflow
       (axe scrollable-region-focusable); jsx-a11y's no-noninteractive-tabindex
-      rule doesn't model scroll containers, so it's disabled just here. */
-  }
+      rule doesn't model scroll containers, so it's disabled just here. */}
   {/* eslint-disable astro/jsx-a11y/no-noninteractive-tabindex */}
   <div
     class="tab-headers"
     tabindex="0"
   >
-    {
-      labels.map((label, index) => (
-        <label
-          for={`tab-${uniqueId}-${index}`}
-          id={`label-${uniqueId}-${index}`}
-          class="tab-label"
-        >
-          {label}
-        </label>
-      ))
-    }
+    {labels.map((label, index) => (
+      <label
+        for={`tab-${uniqueId}-${index}`}
+        id={`label-${uniqueId}-${index}`}
+        class="tab-label"
+      >
+        {label}
+      </label>
+    ))}
   </div>
   {/* eslint-enable astro/jsx-a11y/no-noninteractive-tabindex */}
 
@@ -165,15 +160,13 @@ const instanceCss = labels
   />
 </div>
 
-{/* Generate unique selectors for each panel (consolidated) */}
-{
-  instanceCss && (
-    <style
-      is:inline
-      set:html={instanceCss}
-    />
-  )
-}
+{/* Generate unique selectors for each panel (consolidated). Emitted as a
+    string rather than as a style element carrying `set:html`, which is what
+    this was until 2026-09-10: see `inlineStyleTag` for why both Stylelint and
+    `astro check` object to that element. The built HTML is identical, and the
+    tag name is deliberately absent from this file, comment included, because
+    Stylelint extracts it wherever it appears. */}
+{instanceCss && <Fragment set:html={inlineStyleTag(instanceCss)} />}
 
 <style is:global>
   .tabs-container {
