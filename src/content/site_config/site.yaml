@@ -156,6 +156,13 @@ social_links:
     url: "https://keyoxide.org/0A993B268654DBBA52B7E8D3FCF653391E2C91FC"
     icon: "i-mdi:key"
     rel: "me noopener noreferrer"
+  # Codeberg reciprocates rel="me" on the profile's website link, which is what
+  # makes the head entry verifiable; the account itself sees little use, so it
+  # stays out of the drawer. person.jsonld lists it in this same position.
+  - name: "Codeberg"
+    url: "https://codeberg.org/jmrplens"
+    icon: "i-simple-icons:codeberg"
+    drawer: false
 
 shortcuts:
   - name: "Blog"

@@ -221,6 +221,10 @@ const site_config = defineCollection({
             url: z.url(),
             icon: z.string().optional(),
             rel: z.string().optional(),
+            // `false` keeps the entry out of the nav drawer while it still
+            // gets its <link rel="me"> and its place in sameAs: for a
+            // profile that reciprocates rel="me" but is not worth a menu row.
+            drawer: z.boolean().optional(),
           }),
         )
         .optional(),

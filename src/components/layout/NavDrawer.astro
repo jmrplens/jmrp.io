@@ -116,7 +116,9 @@ const orcidId =
     ? socialsEntry.data.orcid_id
     : undefined;
 const social = [
-  ...socialLinks.map((s) => ({ name: s.name, url: s.url })),
+  ...socialLinks
+    .filter((s) => s.drawer !== false)
+    .map((s) => ({ name: s.name, url: s.url })),
   ...(orcidId ? [{ name: "ORCID", url: `https://orcid.org/${orcidId}` }] : []),
   ...(scholarId
     ? [
