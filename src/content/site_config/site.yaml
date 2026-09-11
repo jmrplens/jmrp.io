@@ -132,6 +132,12 @@ social_links:
   - name: "GitHub"
     url: "https://github.com/jmrplens"
     icon: "i-fa-brands:github"
+  # Second on purpose, and person.jsonld lists it second too: this list sets
+  # the order of the inline #person's sameAs, which must equal the canonical
+  # document byte for byte.
+  - name: "GitLab"
+    url: "https://gitlab.com/jmrp"
+    icon: "i-fa-brands:gitlab"
   - name: "LinkedIn"
     url: "https://www.linkedin.com/in/jmrplens"
     icon: "i-fa-brands:linkedin"
