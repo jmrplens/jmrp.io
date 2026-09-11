@@ -59,8 +59,9 @@ interface Props {
 export type TorType = "bridge" | "bridge-es1" | "relay" | "relay-es";
 
 /**
- * Live Tor node stats as a compact card. Bridges show clients helped (24h);
- * relays show connections (24h). Values arrive pre-formatted from nginx as
+ * Live Tor node stats as a compact card. Bridges show inbound connections
+ * (24h), which Tor counts per connection, not per client; relays show peers
+ * (24h). Values arrive pre-formatted from nginx as
  * `HLM_*` tokens; the component fetches nothing and never hydrates.
  *
  * @param props - Component properties.

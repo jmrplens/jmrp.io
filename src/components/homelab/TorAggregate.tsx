@@ -2,9 +2,9 @@
 export interface TorAggregateTranslations {
   /** Label for the number of monitored nodes. */
   nodes: string;
-  /** Label for the total clients helped (24h). */
+  /** Label for the total inbound connections (24h); not unique clients. */
   clients: string;
-  /** Label for the total advertised bandwidth. */
+  /** Label for the live traffic rate (read + write, all nodes). */
   bandwidth: string;
   /** Label for the total relayed traffic (24h). */
   traffic: string;

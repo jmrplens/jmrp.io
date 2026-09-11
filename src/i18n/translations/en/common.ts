@@ -671,8 +671,8 @@ export const common = {
       torSectionAria: "Tor network nodes",
       torKicker: "Tor Network",
       torNodes: "monitored nodes",
-      torClients: "clients helped · 24h",
-      torBandwidth: "advertised bandwidth",
+      torClients: "inbound connections · 24h",
+      torBandwidth: "live traffic",
       torTraffic: "relayed traffic · 24h",
       title: "Homelab",
       schemaName: "Homelab Infrastructure",
@@ -840,7 +840,7 @@ export const common = {
       torTraffic24h: "Traffic (24h)",
       torDownload: "↓ Download",
       torUpload: "↑ Upload",
-      torClients24h: "Clients (24h)",
+      torClients24h: "Connections (24h)",
       torOrConnections: "OR Connections",
       torCircuits: "Open Circuits",
       torConnections24h: "Peers (24h)",
@@ -964,7 +964,7 @@ export const common = {
       hosted: "Live instance",
       downloads: "Downloads",
       downloadsNote:
-        "Download figures combine GitHub release artifacts, Docker Hub image pulls and MATLAB File Exchange downloads. Checksum, signature and SBOM files are not counted: a release publishes them next to the binary and every install fetches both, so counting them would report the same install twice. The File Exchange figures are read by hand ({date}) because MathWorks refuses scripted requests, and a project shows its own figure only once it passes 1,000 — so the per-project numbers below do not add up to the site-wide total.",
+        "Download figures combine GitHub release artifacts, Docker Hub image pulls, NuGet installs and MATLAB File Exchange downloads. NuGet counts only the package a reader installs: each install also fetches one runtime package, and counting both would count it twice. Checksum, signature and SBOM files are not counted: a release publishes them next to the binary and every install fetches both, so counting them would report the same install twice. The File Exchange figures are read by hand ({date}) because MathWorks refuses scripted requests, and a project shows its own figure only once it passes 1,000 — so the per-project numbers below do not add up to the site-wide total.",
       downloadsSourceLead:
         "The exact rule, and the full list of channels counted and skipped:",
       topicsLabel: "Topics covered by {project}",

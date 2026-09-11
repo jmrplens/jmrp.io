@@ -34,7 +34,7 @@ export const OWNER = "jmrplens";
  * `nuget` names ONLY the meta package. The GitLab server publishes seven ids —
  * `gitlab-mcp-server` plus one per runtime identifier — and a single
  * `dotnet tool install` pulls the meta package AND exactly one runtime
- * package, so summing all seven would count one install roughly twice. The
+ * package, so summing all seven would count one install at least twice. The
  * meta id is the one a reader installs and the only one that answers the
  * question "how many installs", which is why the six others are left out.
  *
@@ -64,8 +64,13 @@ export const OWNER = "jmrplens";
  *   published figure go DOWN between builds as the window rolls. `pepy.tech`
  *   does have a lifetime number but gates it behind an API key, and its
  *   free badge rounds to one significant figure ("2k").
- * - **npm**: the `gitlab-mcp-server` package on the registry belongs to a
- *   different author (`unadlib`), not to this owner. Verified 2026-08-27.
+ * - **npm**: the bare `gitlab-mcp-server` package belongs to a different
+ *   author (`unadlib`), verified 2026-08-27. This owner's packages are the
+ *   scoped `@jmrp.io/gitlab-mcp-server` and `@jmrp.io/libgen-mcp`, which
+ *   /projects/ links to and which are NOT counted yet: npm's downloads API
+ *   has no lifetime counter, only ranges of at most 18 months (a wider
+ *   request is silently clamped), so a cumulative figure would need a ledger
+ *   of its own. 150 for the GitLab server on 2026-09-10.
  * - **CrowdSec Hub** (`cs-routeros-bouncer`): its download buttons point at
  *   the project's GitHub release assets, so hub traffic is already inside the
  *   `releases` figure. Counting the hub too would double-count it.
