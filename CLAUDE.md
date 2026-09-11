@@ -156,7 +156,7 @@ updatedDate: Date # Optional
 
 **`type: "site"` (site.yaml)**: `title`, `description`, `author`, `url`, `keywords`, `fediverse_creator`, `locale`, `name`, `jobTitle`, `social[]`, `person`, `social_links[]`, `theme_color`, `background_color`, `twitter_creator`, `logo_text`, `nav[]`, `hero { title, subtitle, bio[] }`, `featured_projects[]`, `shortcuts[]`.
 
-**`type: "socials"` (socials.yaml)**: `github_username`, `linkedin_username`, `mastodon_username`, `scholar_userid`, `matrix_id`, `work_url`, `custom_social[]`.
+**`type: "socials"` (socials.yaml)**: `github_username`, `gitlab_username`, `linkedin_username`, `mastodon_username`, `scholar_userid`, `matrix_id`, `work_url`, `custom_social[]`.
 
 ### `cv` — Resume Data (YAML)
 

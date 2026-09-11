@@ -72,6 +72,14 @@ if (socials.github_username) {
   });
 }
 
+if (socials.gitlab_username) {
+  socialLinks.push({
+    url: `https://gitlab.com/${socials.gitlab_username}`,
+    icon: "fa-brands:gitlab",
+    label: "GitLab",
+  });
+}
+
 if (socials.linkedin_username) {
   socialLinks.push({
     url: `https://www.linkedin.com/in/${socials.linkedin_username}`,

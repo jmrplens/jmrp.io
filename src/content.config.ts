@@ -263,6 +263,7 @@ const site_config = defineCollection({
     z.object({
       type: z.literal("socials"),
       github_username: z.string().optional(),
+      gitlab_username: z.string().optional(),
       linkedin_username: z.string().optional(),
       mastodon_username: z.string().optional(),
       bluesky_handle: z.string().optional(),
