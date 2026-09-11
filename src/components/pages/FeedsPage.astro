@@ -13,11 +13,13 @@
  * button, which is exactly what a reader app needs.
  */
 import CopyButton from "@components/ui/CopyButton.astro";
+import FAQ from "@components/ui/FAQ.astro";
 import { defaultLocale, type Locale } from "@i18n/config";
 import { useTranslatedPath, useTranslations } from "@i18n/utils";
 import BaseLayout from "@layouts/BaseLayout.astro";
 import { formatDateDot, getPostsForLocale } from "@utils/blog";
 import { externalLinkProps } from "@utils/links";
+import { getPageFaq, pageFaqNode } from "@utils/page-faq";
 import { getSiteUrl } from "@utils/site";
 import type { WebPage } from "schema-dts";
 
@@ -111,12 +113,17 @@ const feedsSchema = {
     ],
   },
 } satisfies WebPage;
+// The page's question-and-answer pairs (GEO audit #8): one source for the
+// visible section, the FAQPage node and the markdown twin. See @utils/page-faq.
+const pageFaq = await getPageFaq("/feeds/", locale);
+const faqNode =
+  pageFaq && pageFaqNode(pageFaq, pageUrl, feedsSchema["@id"], locale);
 ---
 
 <BaseLayout
   title={t("pages.feeds.title")}
   description={t("pages.feeds.description")}
-  schema={feedsSchema}
+  schema={faqNode ? [feedsSchema, faqNode].flat() : feedsSchema}
 >
   <div class="feeds container">
     <header class="feeds-header">
@@ -230,6 +237,7 @@ const feedsSchema = {
         {t("pages.feeds.backToBlog")} →
       </a>
     </section>
+    {pageFaq?.visible && <FAQ items={pageFaq.items} />}
   </div>
 </BaseLayout>
 

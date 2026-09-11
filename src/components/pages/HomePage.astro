@@ -4,6 +4,7 @@
  * Displays the hero section, biography, and quick links.
  * Content is configured via `src/content/site_config/site.yaml`.
  */
+import FAQ from "@components/ui/FAQ.astro";
 import downloadsData from "@data/downloads.json";
 import { defaultLocale, type Locale } from "@i18n/config";
 import { useTranslatedPath, useTranslations } from "@i18n/utils";
@@ -13,6 +14,7 @@ import { formatDateDot, getPostsForLocale } from "@utils/blog";
 import { langColors } from "@utils/github";
 import { featuredRepos, githubProfile } from "@utils/github-facts";
 import { sanitize } from "@utils/html";
+import { getPageFaq, pageFaqNode } from "@utils/page-faq";
 import { getSiteUrl } from "@utils/site";
 import { getEntry } from "astro:content";
 import type { WebPage } from "schema-dts";
@@ -127,12 +129,23 @@ const homeSchema = {
     cssSelector: [".hero__title", ".hero__subtitle", ".hero__bio"],
   },
 } satisfies WebPage;
+// The page's question-and-answer pairs (GEO audit #8): one source for the
+// visible section, the FAQPage node and the markdown twin. See @utils/page-faq.
+const pageFaq = await getPageFaq("/", locale);
+const faqNode =
+  pageFaq &&
+  pageFaqNode(
+    pageFaq,
+    new URL(Astro.url.pathname, getSiteUrl()).href,
+    homeSchema["@id"],
+    locale,
+  );
 ---
 
 <BaseLayout
   title={t("seo.siteTitle")}
   description={t("seo.siteDescription")}
-  schema={homeSchema}
+  schema={faqNode ? [homeSchema, faqNode].flat() : homeSchema}
 >
   <section class="hero">
     <div
@@ -366,6 +379,7 @@ const homeSchema = {
       </div>
     </section>
   )}
+  {pageFaq?.visible && <FAQ items={pageFaq.items} />}
 </BaseLayout>
 
 <style>

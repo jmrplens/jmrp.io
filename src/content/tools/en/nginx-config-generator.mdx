@@ -61,8 +61,10 @@ import {
     multiple backend servers
   </li>
   <li>
-    <strong>Modern SSL/TLS</strong> — QUIC/HTTP3, OCSP stapling, 0-RTT early
-    data, strong cipher suites, session tickets off, HSTS preload
+    <strong>Modern SSL/TLS</strong> — QUIC/HTTP3, 0-RTT early data, strong
+    cipher suites, session tickets off, HSTS preload, and optional OCSP
+    stapling, off by default because Let's Encrypt shut its OCSP service down in
+    2025
   </li>
   <li>
     <strong>Access control</strong> — Rate limiting with burst, block hidden
@@ -87,7 +89,7 @@ import {
 <ol>
   <li>Start with a preset that matches your use case</li>
   <li>Customize domain, root path, and SSL certificate paths</li>
-  <li>Enable QUIC/HTTP3, OCSP stapling, and modern TLS options</li>
+  <li>Enable QUIC/HTTP3 and modern TLS options, and OCSP stapling only if your CA still runs OCSP</li>
   <li>Configure access control: rate limiting, blocked paths, and tarpit</li>
   <li>Toggle security headers and performance optimizations</li>
   <li>

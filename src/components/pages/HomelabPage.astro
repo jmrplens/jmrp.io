@@ -30,6 +30,7 @@ import type { TorAggregateTranslations } from "@components/homelab/TorAggregate"
 import TorAggregate from "@components/homelab/TorAggregate";
 import type { TorStatsTranslations } from "@components/homelab/TorStats";
 import TorStats from "@components/homelab/TorStats";
+import FAQ from "@components/ui/FAQ.astro";
 import { defaultLocale, type Locale } from "@i18n/config";
 import {
   type TranslationKey,
@@ -37,6 +38,7 @@ import {
   useTranslations,
 } from "@i18n/utils";
 import BaseLayout from "@layouts/BaseLayout.astro";
+import { getPageFaq, pageFaqNode } from "@utils/page-faq";
 import type { LanguageTaggedValue } from "@utils/person";
 import { getSiteUrl } from "@utils/site";
 
@@ -266,12 +268,23 @@ const servicesSchema = {
     })),
   ],
 };
+// The page's question-and-answer pairs (GEO audit #8): one source for the
+// visible section, the FAQPage node and the markdown twin. See @utils/page-faq.
+const pageFaq = await getPageFaq("/homelab/", locale);
+const faqNode =
+  pageFaq &&
+  pageFaqNode(
+    pageFaq,
+    new URL(Astro.url.pathname, getSiteUrl()).href,
+    servicesSchema["@id"],
+    locale,
+  );
 ---
 
 <BaseLayout
   title={t("nav.homelab")}
   description={t("pages.homelab.description")}
-  schema={servicesSchema}
+  schema={faqNode ? [servicesSchema, faqNode].flat() : servicesSchema}
 >
   <section
     class="homelab-page"
@@ -474,6 +487,7 @@ const servicesSchema = {
           ssr={HLM.nodes}
         />
       </section>
+      {pageFaq?.visible && <FAQ items={pageFaq.items} />}
     </div>
   </section>
 </BaseLayout>

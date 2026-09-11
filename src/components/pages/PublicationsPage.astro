@@ -4,10 +4,12 @@
  * Lists academic publications stored in BibTeX format.
  */
 import PublicationItem from "@components/publications/PublicationItem.astro";
+import FAQ from "@components/ui/FAQ.astro";
 import { defaultLocale, type Locale } from "@i18n/config";
 import { type TranslationKey, useTranslations } from "@i18n/utils";
 import BaseLayout from "@layouts/BaseLayout.astro";
 import { stripHtml } from "@utils/html";
+import { getPageFaq, pageFaqNode } from "@utils/page-faq";
 import {
   getPublicationKind,
   getPublications,
@@ -300,12 +302,18 @@ const collectionSchema = {
     }),
   },
 } satisfies CollectionPage;
+// The page's question-and-answer pairs (GEO audit #8): one source for the
+// visible section, the FAQPage node and the markdown twin. See @utils/page-faq.
+const pageFaq = await getPageFaq("/publications/", locale);
+const faqNode =
+  pageFaq &&
+  pageFaqNode(pageFaq, collectionUrl, collectionSchema["@id"], locale);
 ---
 
 <BaseLayout
   title={t("pages.publications.title")}
   description={t("pages.publications.description")}
-  schema={collectionSchema}
+  schema={faqNode ? [collectionSchema, faqNode].flat() : collectionSchema}
 >
   <div class="container">
     <header class="pub-header">
@@ -411,6 +419,7 @@ const collectionSchema = {
         </p>
       </div>
     </div>
+    {pageFaq?.visible && <FAQ items={pageFaq.items} />}
   </div>
 
   <script is:inline>

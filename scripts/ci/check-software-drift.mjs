@@ -140,8 +140,18 @@ for (const project of projects) {
 
   // `sameAs` is multi-valued and merges, so a shorter list here is a missed
   // opportunity rather than a contradiction — reported separately.
+  // Ours is everything the built node states about the same thing: the docs,
+  // the repository (`url`/`codeRepository`), the rendered `listings` that
+  // `buildProjectSchema` folds into `sameAs` on its own, and `sameAs` itself.
+  // Leaving the listings out reported npm, PyPI, NuGet and the CrowdSec Hub as
+  // missing while the graph already carried them (GEO audit #8).
   const theirAliases = new Set([theirs.sameAs ?? []].flat());
-  const ourAliases = new Set([project.docs, ...(project.sameAs ?? [])]);
+  const ourAliases = new Set([
+    project.docs,
+    project.repo,
+    ...(project.listings ?? []).map((listing) => listing.url),
+    ...(project.sameAs ?? []),
+  ]);
   const missing = [...theirAliases.difference(ourAliases)];
 
   if (diffs.length === 0 && missing.length === 0) {

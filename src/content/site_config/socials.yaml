@@ -1,5 +1,6 @@
 type: "socials"
 github_username: jmrplens
+gitlab_username: jmrp # gitlab.com/jmrp, the same handle person.jsonld lists under sameAs
 linkedin_username: jmrplens # your LinkedIn user name
 mastodon_username: mstdn.jmrp.io/@jmrplens # your mastodon instance+username in the format instance.tld/@username
 bluesky_handle: jmrp.io # self-hosted AT Protocol PDS handle (→ https://bsky.app/profile/<handle>)

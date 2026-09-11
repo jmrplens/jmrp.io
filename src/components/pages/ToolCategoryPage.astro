@@ -4,9 +4,11 @@
  * Displays tools filtered by category, with the same filterable card
  * grid + chip bar as the tools landing.
  */
+import FAQ from "@components/ui/FAQ.astro";
 import { defaultLocale, type Locale } from "@i18n/config";
 import { pluralize, useTranslatedPath, useTranslations } from "@i18n/utils";
 import BaseLayout from "@layouts/BaseLayout.astro";
+import { getPageFaq, pageFaqNode } from "@utils/page-faq";
 import { getSiteUrl } from "@utils/site";
 import { getToolsForLocale } from "@utils/tools";
 import type { CollectionEntry } from "astro:content";
@@ -111,12 +113,23 @@ const schema = {
     ),
   },
 };
+// The page's question-and-answer pairs (GEO audit #8): one source for the
+// visible section, the FAQPage node and the markdown twin. See @utils/page-faq.
+const pageFaq = await getPageFaq(`/tools/categories/${category}/`, locale);
+const faqNode =
+  pageFaq &&
+  pageFaqNode(
+    pageFaq,
+    new URL(Astro.url.pathname, getSiteUrl()).href,
+    schema["@id"],
+    locale,
+  );
 ---
 
 <BaseLayout
   title={meta.name}
   description={meta.description}
-  schema={schema}
+  schema={faqNode ? [schema, faqNode].flat() : schema}
 >
   <div class="container">
     <nav
@@ -220,6 +233,7 @@ const schema = {
       </a>
     </div>
   </div>
+  {pageFaq?.visible && <FAQ items={pageFaq.items} />}
 </BaseLayout>
 
 <style>

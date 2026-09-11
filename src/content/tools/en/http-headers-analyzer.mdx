@@ -16,13 +16,13 @@ features:
   - "All analysis runs in your browser"
 faq:
   - question: "Which HTTP security headers does this tool check?"
-    answer: "It evaluates 10 critical headers including Content-Security-Policy, Strict-Transport-Security, X-Content-Type-Options, X-Frame-Options, Referrer-Policy, Permissions-Policy and the three Cross-Origin policies. It also flags information leakage from \"Server\", \"X-Powered-By\" and \"X-AspNet-Version\" headers."
+    answer: "The HTTP Security Headers Analyzer evaluates 10 critical headers including Content-Security-Policy, Strict-Transport-Security, X-Content-Type-Options, X-Frame-Options, Referrer-Policy, Permissions-Policy and the three Cross-Origin policies. It also flags information leakage from \"Server\", \"X-Powered-By\" and \"X-AspNet-Version\" headers."
   - question: "How is the security score calculated?"
     answer: "Each header carries a weight reflecting its impact, with Content-Security-Policy worth the most (25 points) and X-XSS-Protection the least (3 points). The weighted total maps to a letter grade from A+ (90-100) down to F (0-29)."
   - question: "Why are some headers missing when I fetch them from a URL?"
     answer: "Fetch asks this site's own proxy for the headers, and that proxy issues a HEAD request with its own User-Agent and no cookies. Headers a server only sends on GET, only to a signed-in session, or only after content negotiation will not appear, and if the site sits behind a CDN you see the edge's headers rather than the origin's. For an exact capture, paste the output of curl -sI or the response headers from browser DevTools."
   - question: "Is my data sent to a server when I analyze headers?"
-    answer: "The analysis never leaves your browser: whatever is in the text box is parsed, scored and graded on your own machine. The optional Fetch button is the exception, because a browser is not allowed to read another site's response headers — CORS forbids it — so the URL you submit goes to a small proxy on this domain, which requests the headers and hands them back. That proxy has its access log switched off, so the URL you inspect is never written beside your address, and the site being inspected sees this server rather than you. Paste headers instead of fetching and nothing is sent at all."
+    answer: "The analysis never leaves your browser: whatever is in the text box is parsed, scored and graded on your own machine. The optional Fetch button is the exception, because a browser is not allowed to read another site's response headers — CORS forbids it — so the URL you submit goes to a small proxy on this domain, which requests the headers and hands them back. That proxy writes no log( )of any kind, so the URL you inspect is never written beside your address, and the site being inspected sees this server rather than you. Paste headers instead of fetching and nothing is sent at all."
   - question: "Should I still set X-XSS-Protection?"
     answer: "No. X-XSS-Protection is a legacy filter that modern browsers ignore or that can introduce vulnerabilities; the recommended value is \"0\" to disable it, and a strong Content-Security-Policy is the proper XSS defense."
 ---
@@ -126,8 +126,8 @@ import {
   parsed, scored and graded on your own machine, and nothing about them is sent
   anywhere. The Fetch button is the exception. CORS stops a browser from reading
   another site's response headers, so the URL you submit goes to a small proxy
-  on this domain that requests them for you. That proxy has its access log
-  switched off, so the URL you inspect is never written beside your address, and
+  on this domain that requests them for you. That proxy writes no log(
+  )of any kind, so the URL you inspect is never written beside your address, and
   the site being inspected sees this server rather than you. To keep even that
   request off the network, paste headers captured with <code>curl -sI</code>
   instead of using Fetch.

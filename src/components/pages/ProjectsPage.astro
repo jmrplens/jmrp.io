@@ -14,11 +14,13 @@
  * projects with their own documentation, real usage, or both — no experiments,
  * forks or scratch repos.
  */
+import FAQ from "@components/ui/FAQ.astro";
 import downloadsData from "@data/downloads.json";
 import { defaultLocale, type Locale } from "@i18n/config";
 import { formatDate, useTranslations } from "@i18n/utils";
 import BaseLayout from "@layouts/BaseLayout.astro";
 import { compactDownloads, DOWNLOADS_DISPLAY_MIN } from "@utils/downloads";
+import { getPageFaq, pageFaqNode } from "@utils/page-faq";
 import { type ProjectListing, projectListings } from "@utils/project-listings";
 import {
   buildProjectSchema,
@@ -187,12 +189,17 @@ const groups = [
     items: archived,
   },
 ];
+// The page's question-and-answer pairs (GEO audit #8): one source for the
+// visible section, the FAQPage node and the markdown twin. See @utils/page-faq.
+const pageFaq = await getPageFaq("/projects/", locale);
+const faqNode =
+  pageFaq && pageFaqNode(pageFaq, pageUrl, projectsPageSchema["@id"], locale);
 ---
 
 <BaseLayout
   title={t("pages.projects.title")}
   description={t("pages.projects.description")}
-  schema={schema}
+  schema={faqNode ? [schema, faqNode].flat() : schema}
 >
   <div class="projects container">
     <header class="projects-header">
@@ -482,6 +489,7 @@ const groups = [
         </p>
       </section>
     )}
+    {pageFaq?.visible && <FAQ items={pageFaq.items} />}
   </div>
 </BaseLayout>
 

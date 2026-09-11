@@ -1,0 +1,103 @@
+# Question-and-answer pairs for the entity pages: the pages that have no
+# frontmatter of their own (home, cv, homelab, publications, feeds), the
+# profile YAMLs and the two documents. Posts and tools keep their `faq` in
+# their own frontmatter; this file covers the rest.
+#
+# Every answer restates what its page already says. Nothing here is a fact the
+# page does not carry, so a change to the page is a change to its answer.
+#
+# `visible: true` renders the pairs as a FAQ section at the end of the page,
+# emits them as FAQPage JSON-LD and writes them into the markdown twin.
+# `visible: false` (home) skips the section: the author judged that a FAQ does
+# not belong on the front page, and the pairs still reach the twin and the
+# graph, which is where an answer engine reads them. The tool category pages
+# are generated from their own `<cat>Context` string in the translations and
+# are not listed here.
+#
+# The two locales must list the same paths with the same number of pairs; the
+# Spanish file carries translations, not different questions.
+locale: en
+pages:
+  - path: /
+    visible: false
+    items:
+      - question: What is jmrp.io?
+        answer: "The personal site of José Manuel Requena Plens, a firmware and software engineer in Valencia, Spain. It holds his technical blog on firmware, networking, self-hosting and security, 17 tools that run entirely in the browser, his CV and publications, and the public MCP servers his homelab serves."
+      - question: What can I use here without an account?
+        answer: "Everything. The 17 tools (hash calculator, CSP builder, subnet calculator, WireGuard and nginx config generators, among others) process your input on your own machine, every post is published as markdown at its own URL plus index.md, and the MCP endpoints at mcp.jmrp.io accept any MCP client."
+
+  - path: /about/
+    visible: true
+    items:
+      - question: Who is José Manuel Requena Plens?
+        answer: "A firmware and software engineer based in Valencia, Spain, with an R&D background in acoustics: a degree in Telecommunication Engineering, a Master's in Acoustical Engineering and four years of predoctoral research at the UPV (2019–2023). Between 2023 and 2026 he built industrial embedded firmware in C on STM32 and FreeRTOS for solar inverters and battery storage, and he maintains 44 public repositories on GitHub."
+      - question: What software does he maintain?
+        answer: "Several Model Context Protocol servers written in Go (among them gitlab-mcp-server, which exposes 850+ GitLab actions, and libgen-mcp), phonometry (a standards-conformant acoustics library for Python), cs-routeros-bouncer (a CrowdSec bouncer for MikroTik RouterOS), Cloudflare-DNS-Updater, the 17 browser-only tools on this site, and Kleidos, a hardware password manager in C++ built in eight variants for different devices, each with its own screen and buttons, and the source of the firmware series on this blog."
+
+  - path: /projects/
+    visible: true
+    items:
+      - question: How are the download figures on this page counted?
+        answer: "They combine GitHub release artifacts, Docker Hub image pulls, NuGet installs of the meta package and MATLAB File Exchange downloads. Checksum, signature and SBOM files are excluded because every install fetches them next to the binary, and a project shows its own figure only once it passes 1,000."
+      - question: Which of these projects can be used without installing anything?
+        answer: "The MCP servers: gitlab-mcp-server at https://mcp.jmrp.io/gitlab and libgen-mcp at https://mcp.jmrp.io/libgen are public endpoints any MCP client can point at."
+      - question: Where are the MCP servers published?
+        answer: "gitlab-mcp-server on npm (@jmrp.io/gitlab-mcp-server), PyPI (jmrplens-gitlab-mcp-server), NuGet (gitlab-mcp-server), Docker Hub, WinGet and the official MCP Registry; libgen-mcp on npm (@jmrp.io/libgen-mcp), Docker Hub and the MCP Registry."
+
+  - path: /cv/
+    visible: true
+    items:
+      - question: What is his background and experience?
+        answer: "Degree in Telecommunication Engineering (Sound and Image) at the University of Alicante, Master's in Acoustical Engineering at the UPV, and predoctoral research at the UPV, CSIC and Hospital La Fe on ultrasound and acoustic metamaterials. From April 2023 to May 2026, R&D Software Developer at Power Electronics: firmware in C on STM32 for solar inverters, Modbus RTU/TCP, unit and on-hardware test automation. Open to on-site, remote or hybrid roles in firmware, software and QA."
+      - question: Is there a downloadable version of this CV?
+        answer: "Yes, as PDF in English and Spanish, each in three layouts: the designed one, an ATS-friendly one and an extended ATS one. Every version is generated from the same source as this page, so they never disagree."
+
+  - path: /homelab/
+    visible: true
+    items:
+      - question: What runs on this homelab?
+        answer: "A TrueNAS server (i5-14400, 64 GB, ZFS on 2× 18 TB plus NVMe), a Mastodon node (Ryzen 5 3550H, 64 GB), the nginx edge node that serves this site (Ryzen 5 5500U), a Home Assistant node, a MikroTik RB5009 router, two Tor bridges in Valencia and Alicante and two Tor relays on VPS in London and Madrid. On them: a Mastodon instance, a Matrix homeserver, a Bluesky PDS and the public MCP servers."
+      - question: Are the figures on this page live?
+        answer: "Yes. The page is static HTML with no JavaScript; nginx replaces each figure at serve time from the homelab's own metrics (InfluxDB, Prometheus and the services' APIs), refreshed at most once a minute. When a source cannot be read, the figure shows a dash rather than a number."
+      - question: How is the homelab defended?
+        answer: "CrowdSec analyses nginx traffic and, together with a honeypot on the router, decides which addresses to block; the decisions reach three bouncers: nginx, the server's firewall and the router through cs-routeros-bouncer. Probes for sensitive paths land in a tarpit that slows them down instead of answering."
+
+  - path: /publications/
+    visible: true
+    items:
+      - question: What has he published?
+        answer: "Fourteen works from his acoustics research (2018–2023): one journal article, eleven conference and workshop papers and two theses, on acoustic metamaterials, sound diffusers, rocket launch noise prediction and mitigation, loudspeaker enclosure design and room acoustics."
+      - question: Where can the papers be read?
+        answer: "All but one entry on this page carry a DOI on Zenodo, where the full text is archived and openly accessible; the list is also available on Google Scholar and ORCID."
+
+  - path: /uses/
+    visible: true
+    items:
+      - question: What does he work with day to day?
+        answer: 'A MacBook Pro (Intel i9, 64 GB) with two 4K LG 27" monitors on macOS, VS Code and Sublime Text as editors, Debian 12 and 13 on the servers, and C, C++, Python, Go and TypeScript as languages, plus Bash, LaTeX and MATLAB. The self-hosted side is the fleet described on /homelab/.'
+
+  - path: /privacy/
+    visible: true
+    items:
+      - question: Does this site use cookies or third-party scripts?
+        answer: "No. No response sets a cookie, no page loads a script, font, stylesheet or image from another domain, and there are no ads or affiliate links. The only third-party request a page makes is the analytics beacon's report to Cloudflare, sent from a script served by this domain, with the query string stripped first."
+      - question: What does the server record when I visit?
+        answer: "An ordinary access log: timestamp, IP address, request line, status, sizes and response time, referrer, user agent, the Accept and Accept-Language headers, the TLS version and the country, city, network operator and approximate coordinates a GeoIP database derives from the address. Kept for one year, used only for security and to see which articles are read. Cloudflare's edge worker records the same per request, plus what only the edge knows, for about ninety days."
+      - question: Do the tools send what I type anywhere?
+        answer: "Fifteen of the seventeen never do: they compute on your machine. The Certificate Inspector queries the public Certificate Transparency logs from your browser, and the HTTP Security Headers Analyzer sends the URL you submit to a proxy on this domain, which writes no log of any kind."
+
+  - path: /license/
+    visible: true
+    items:
+      - question: Can I reuse the articles and images from this site?
+        answer: 'The articles, the documentation of the tools and the blog''s cover images are under Creative Commons Attribution 4.0: republish, translate, quote or crop them with credit to "José Manuel Requena Plens" and, where possible, a link to the source page. Material quoted from elsewhere belongs to its owners and is not covered.'
+      - question: What is not covered by that license?
+        answer: "The portrait used as the site's avatar. It is a photograph of a person, so it may be used to refer to him (an article about his work, a talk announcement) but not to represent anyone else or to imply an endorsement. The site's source code and the tools are MIT-licensed separately."
+
+  - path: /feeds/
+    visible: true
+    items:
+      - question: How do I subscribe to this blog?
+        answer: "Paste https://jmrp.io/rss.xml (English) or https://jmrp.io/es/rss.xml (Spanish) into any RSS reader such as Feedbin, Miniflux, NetNewsWire or Thunderbird. No account is needed and nothing is tracked."
+      - question: What are the Bluesky feeds listed here?
+        answer: "Eight curated feeds about open source, programming and homelab, one per language, run from the @jmrp.io account: automated curation with human review, and any Bluesky account can follow them."

@@ -32,6 +32,7 @@ import {
 } from "@utils/llms/sections";
 import { CATEGORY_ORDER, categoryName } from "@utils/llms/tool-categories";
 import { markdownTwinPath } from "@utils/llms/twin-path";
+import { getPageFaq, pageFaqLines } from "@utils/page-faq";
 import { postDateModified } from "@utils/post-dates";
 import { getMcpServers, type McpServer } from "@utils/projects";
 import {
@@ -1514,6 +1515,7 @@ export async function generateCvMarkdown(
     ),
     "",
     ...cvToMarkdown(cv, siteUrl, locale),
+    ...pageFaqLines(await getPageFaq("/cv/", locale), locale),
     "",
   ].join("\n");
 }
@@ -1543,6 +1545,7 @@ export async function generatePublicationsMarkdown(
     ),
     "",
     ...publicationsLines(groups),
+    ...pageFaqLines(await getPageFaq("/publications/", locale), locale),
   ].join("\n");
 }
 
@@ -1706,6 +1709,7 @@ export async function generateHomeMarkdown(
     `## ${label.latest[locale]}`,
     "",
     ...latest,
+    ...pageFaqLines(await getPageFaq("/", locale), locale),
     "",
   ].join("\n");
 }
@@ -1744,6 +1748,7 @@ export async function generateProfileMarkdown(
     ),
     "",
     ...lines,
+    ...pageFaqLines(await getPageFaq(`/${page}/`, locale), locale),
   ].join("\n");
 }
 
@@ -1777,6 +1782,7 @@ export async function generatePageMarkdown(
     ),
     "",
     mdxToMarkdown(entry.body ?? "", { locale, siteUrl, registry }),
+    ...pageFaqLines(await getPageFaq(`/${slug}/`, locale), locale),
   ].join("\n");
 }
 

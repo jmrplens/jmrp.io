@@ -63,8 +63,10 @@ import {
     servidores backend
   </li>
   <li>
-    <strong>SSL/TLS moderno</strong> — QUIC/HTTP3, OCSP stapling, 0-RTT early
-    data, cipher suites robustos, session tickets desactivados, HSTS preload
+    <strong>SSL/TLS moderno</strong> — QUIC/HTTP3, 0-RTT early data, cipher
+    suites robustos, session tickets desactivados, HSTS preload y OCSP stapling
+    opcional, desactivado por defecto porque Let's Encrypt apagó su servicio OCSP
+    en 2025
   </li>
   <li>
     <strong>Control de acceso</strong> — rate limiting con burst, bloqueo de
@@ -90,7 +92,7 @@ import {
 <ol>
   <li>Empieza con un preset que se ajuste a tu caso de uso</li>
   <li>Personaliza el dominio, la ruta raíz y las rutas de los certificados SSL</li>
-  <li>Activa QUIC/HTTP3, OCSP stapling y las opciones TLS modernas</li>
+  <li>Activa QUIC/HTTP3 y las opciones TLS modernas, y OCSP stapling solo si tu CA aún ofrece OCSP</li>
   <li>Configura el control de acceso: rate limiting, rutas bloqueadas y tarpit</li>
   <li>Activa las cabeceras de seguridad y las optimizaciones de rendimiento</li>
   <li>

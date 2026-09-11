@@ -4,6 +4,14 @@ import path from "node:path";
 import process from "node:process";
 import { fileURLToPath } from "node:url";
 
+import { isSubstantive } from "./post-dates.js";
+
+// Field/record separators for the `git log` format below: control characters,
+// written as escapes, for the reasons given beside the same constants in
+// `post-dates.ts`.
+const FIELD_SEP = "\u{1F}";
+const RECORD_SEP = "\u{1E}";
+
 /**
  * Repository root, resolved by checking candidates rather than assuming one.
  *
@@ -49,6 +57,14 @@ const REPO_ROOT = [
  * the content source. It needs no new field to maintain and cannot drift from
  * the content, because it IS the content's history.
  *
+ * ── Substantive commits only ─────────────────────────────────────────────
+ * "Last touched" is not "last revised". A dependency bump that reformats 117
+ * files touches every tool component without changing a word a reader sees,
+ * and taking it as the date restamped 50 URLs as revised and resubmitted them
+ * to IndexNow (GEO audit #8, d88066c). So the answer is the newest commit that
+ * `isSubstantive` from `@utils/post-dates` accepts: the same rule, trailer and
+ * list that date the posts, so the site has one definition of a revision.
+ *
  * ── Fallback ─────────────────────────────────────────────────────────────
  * Returns `undefined` when git is unavailable or the file has no history (a
  * shallow CI checkout, an unpublished working copy). Callers must omit
@@ -71,7 +87,13 @@ export function lastCommitDate(repoRelativePath: string): string | undefined {
     const stdout = execFileSync(
       // eslint-disable-next-line sonarjs/no-os-command-from-path -- PATH is pinned below to /usr/bin:/bin, both root-owned
       "git",
-      ["log", "-1", "--format=%cI", "--", repoRelativePath],
+      [
+        "log",
+        "--no-merges",
+        `--format=%H${FIELD_SEP}%cI${FIELD_SEP}%s${FIELD_SEP}%(trailers:key=Content-Bump,valueonly,separator=%x2C)${RECORD_SEP}`,
+        "--",
+        repoRelativePath,
+      ],
       {
         cwd: REPO_ROOT,
         encoding: "utf8",
@@ -83,11 +105,22 @@ export function lastCommitDate(repoRelativePath: string): string | undefined {
         // PATH is a hard-coded literal of exactly those two directories, which
         // is precisely what it asks for.
         env: { ...process.env, PATH: "/usr/bin:/bin" }, // NOSONAR
+        maxBuffer: 8 * 1024 * 1024,
       },
-    ).trim();
-    // An empty result means the path is untracked or has no commits — not an
-    // error, but not a date either.
-    return stdout ? new Date(stdout).toISOString() : undefined;
+    );
+    // Newest first, so the first substantive record is the answer. An empty
+    // result means the path is untracked or has no commits, and a history of
+    // nothing but mechanical passes has no revision date either: not an
+    // error, but not a date.
+    for (const record of stdout.split(RECORD_SEP)) {
+      const [sha = "", when = "", subject = "", marker = ""] = record
+        .trim()
+        .split(FIELD_SEP);
+      if (!when || !isSubstantive(sha, subject, marker)) continue;
+      const parsed = new Date(when);
+      if (!Number.isNaN(parsed.getTime())) return parsed.toISOString();
+    }
+    return undefined;
   } catch {
     return undefined;
   }

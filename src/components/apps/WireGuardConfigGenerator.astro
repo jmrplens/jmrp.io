@@ -1424,18 +1424,50 @@ const i18n = {
     }
 
     // ── WireGuard key generation (Web Crypto API) ──
+    function toBase64(bytes) {
+      return btoa(String.fromCharCode.apply(null, bytes));
+    }
+
+    // A WireGuard key pair is an X25519 key pair. Web Crypto has shipped
+    // X25519 in every current engine (Chromium 133, Firefox 130, Safari 17),
+    // so the public key is derived here instead of being left to `wg pubkey`.
+    // Until GEO audit #8 this returned an empty public key and the caller
+    // filled the public-key field with "(derive with: echo '<private key>' |
+    // wg pubkey)", which the router script then emitted as the peer's
+    // public-key: an invalid script carrying the client's private key.
+    // Resolves to { privateKey, publicKey }; publicKey is "" only where the
+    // engine lacks X25519, and the caller then leaves that field empty.
     function generateWgKeyPair() {
-      // Generate 32 random bytes for private key
-      var privBytes = new Uint8Array(32);
-      crypto.getRandomValues(privBytes);
-      // Clamp for Curve25519
-      privBytes[0] &= 248;
-      privBytes[31] &= 127;
-      privBytes[31] |= 64;
-      var privKey = btoa(String.fromCharCode.apply(null, privBytes));
-      // Public key derivation requires Curve25519 which isn't in Web Crypto.
-      // We generate the private key and show a note about deriving public key.
-      return { privateKey: privKey, publicKey: "" };
+      return crypto.subtle
+        .generateKey({ name: "X25519" }, true, ["deriveBits"])
+        .then(function (pair) {
+          return Promise.all([
+            crypto.subtle.exportKey("pkcs8", pair.privateKey),
+            crypto.subtle.exportKey("raw", pair.publicKey),
+          ]);
+        })
+        .then(function (exported) {
+          // PKCS#8 for X25519 is a fixed 16-byte header then the 32-byte key.
+          var pkcs8 = new Uint8Array(exported[0]);
+          var privBytes = pkcs8.slice(pkcs8.length - 32);
+          // Clamp the way `wg genkey` prints it. X25519 clamps the scalar
+          // itself, so this does not change the public key derived above.
+          privBytes[0] &= 248;
+          privBytes[31] &= 127;
+          privBytes[31] |= 64;
+          return {
+            privateKey: toBase64(privBytes),
+            publicKey: toBase64(new Uint8Array(exported[1])),
+          };
+        })
+        .catch(function () {
+          var privBytes = new Uint8Array(32);
+          crypto.getRandomValues(privBytes);
+          privBytes[0] &= 248;
+          privBytes[31] &= 127;
+          privBytes[31] |= 64;
+          return { privateKey: toBase64(privBytes), publicKey: "" };
+        });
     }
 
     function generatePsk() {
@@ -1470,14 +1502,18 @@ const i18n = {
         btn.addEventListener("click", function () {
           var type = btn.getAttribute("data-keygen");
           if (type === "privkey") {
-            var keys = generateWgKeyPair();
-            var privInput = peerEl.querySelector(".wg-peer-privkey");
-            var pubInput = peerEl.querySelector(".wg-peer-pubkey");
-            if (privInput) privInput.value = keys.privateKey;
-            if (pubInput)
-              pubInput.value =
-                "(derive with: echo '" + keys.privateKey + "' | wg pubkey)";
-          } else if (type === "psk") {
+            generateWgKeyPair().then(function (keys) {
+              var privInput = peerEl.querySelector(".wg-peer-privkey");
+              var pubInput = peerEl.querySelector(".wg-peer-pubkey");
+              if (privInput) privInput.value = keys.privateKey;
+              // Never the private key, not even inside a hint: whatever sits
+              // in this field becomes the router's public-key for the peer.
+              if (pubInput) pubInput.value = keys.publicKey;
+              generate();
+            });
+            return;
+          }
+          if (type === "psk") {
             var pskInput = peerEl.querySelector(".wg-peer-psk");
             if (pskInput) pskInput.value = generatePsk();
           }

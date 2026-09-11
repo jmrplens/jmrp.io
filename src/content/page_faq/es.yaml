@@ -1,0 +1,87 @@
+# Spanish counterpart of en.yaml: same paths, same number of pairs, translated.
+# The rules are in en.yaml.
+locale: es
+pages:
+  - path: /
+    visible: false
+    items:
+      - question: ¿Qué es jmrp.io?
+        answer: "El sitio personal de José Manuel Requena Plens, ingeniero de firmware y software en Valencia. Reúne su blog técnico sobre firmware, redes, autoalojamiento y seguridad, 17 herramientas que funcionan por completo en el navegador, su CV y publicaciones, y los servidores MCP públicos que sirve su homelab."
+      - question: ¿Qué puedo usar aquí sin cuenta?
+        answer: "Todo. Las 17 herramientas (calculadora de hashes, generador de CSP, calculadora de subredes, generadores de configuración de WireGuard y nginx, entre otras) procesan lo que escribes en tu propia máquina, cada artículo se publica en markdown en su propia URL más index.md, y los endpoints MCP de mcp.jmrp.io aceptan cualquier cliente MCP."
+
+  - path: /about/
+    visible: true
+    items:
+      - question: ¿Quién es José Manuel Requena Plens?
+        answer: "Ingeniero de firmware y software en Valencia, con base en I+D en acústica: Ingeniería de Telecomunicación, Máster en Ingeniería Acústica y cuatro años de investigación predoctoral en la UPV (2019–2023). Entre 2023 y 2026 desarrolló firmware embebido industrial en C sobre STM32 y FreeRTOS para inversores solares y baterías, y mantiene 44 repositorios públicos en GitHub."
+      - question: ¿Qué software mantiene?
+        answer: "Varios servidores Model Context Protocol en Go (entre ellos gitlab-mcp-server, que expone más de 850 acciones de GitLab, y libgen-mcp), phonometry (biblioteca de acústica para Python conforme a normas), cs-routeros-bouncer (bouncer de CrowdSec para MikroTik RouterOS), Cloudflare-DNS-Updater, las 17 herramientas de navegador de este sitio y Kleidos, un gestor de contraseñas hardware en C++ con ocho variantes para dispositivos distintos, cada uno con su pantalla y sus botones, y el origen de la serie de firmware de este blog."
+
+  - path: /projects/
+    visible: true
+    items:
+      - question: ¿Cómo se cuentan las descargas de esta página?
+        answer: "Suman los artefactos de las releases de GitHub, los pulls de imagen de Docker Hub, las instalaciones de NuGet del paquete principal y las descargas de MATLAB File Exchange. Los ficheros de checksum, firma y SBOM se excluyen porque cada instalación los descarga junto al binario, y un proyecto solo muestra su cifra al superar las 1.000."
+      - question: ¿Cuáles de estos proyectos se pueden usar sin instalar nada?
+        answer: "Los servidores MCP: gitlab-mcp-server en https://mcp.jmrp.io/gitlab y libgen-mcp en https://mcp.jmrp.io/libgen son endpoints públicos a los que puede apuntar cualquier cliente MCP."
+      - question: ¿Dónde están publicados los servidores MCP?
+        answer: "gitlab-mcp-server en npm (@jmrp.io/gitlab-mcp-server), PyPI (jmrplens-gitlab-mcp-server), NuGet (gitlab-mcp-server), Docker Hub, WinGet y el registro MCP oficial; libgen-mcp en npm (@jmrp.io/libgen-mcp), Docker Hub y el registro MCP."
+
+  - path: /cv/
+    visible: true
+    items:
+      - question: ¿Cuál es su formación y experiencia?
+        answer: "Grado en Ingeniería de Telecomunicación (Sonido e Imagen) por la Universidad de Alicante, Máster en Ingeniería Acústica por la UPV e investigación predoctoral en la UPV, el CSIC y el Hospital La Fe sobre ultrasonidos y metamateriales acústicos. De abril de 2023 a mayo de 2026, desarrollador de software I+D en Power Electronics: firmware en C sobre STM32 para inversores solares, Modbus RTU/TCP y automatización de pruebas unitarias y en hardware. Abierto a puestos presenciales, remotos o híbridos de firmware, software y QA."
+      - question: ¿Hay una versión descargable de este CV?
+        answer: "Sí, en PDF en inglés y en español, cada uno en tres formatos: el de diseño, uno compatible con ATS y uno ATS extendido. Todas las versiones se generan de la misma fuente que esta página, así que nunca discrepan."
+
+  - path: /homelab/
+    visible: true
+    items:
+      - question: ¿Qué hay en este homelab?
+        answer: "Un servidor TrueNAS (i5-14400, 64 GB, ZFS sobre 2× 18 TB más NVMe), un nodo Mastodon (Ryzen 5 3550H, 64 GB), el nodo nginx que sirve este sitio (Ryzen 5 5500U), un nodo Home Assistant, un router MikroTik RB5009, dos puentes Tor en Valencia y Alicante y dos relés Tor en VPS de Londres y Madrid. Sobre ellos: una instancia Mastodon, un servidor Matrix, un PDS de Bluesky y los servidores MCP públicos."
+      - question: ¿Las cifras de esta página son en vivo?
+        answer: "Sí. La página es HTML estático sin JavaScript; nginx sustituye cada cifra al servirla con las métricas del propio homelab (InfluxDB, Prometheus y las API de los servicios), actualizadas como mucho una vez por minuto. Cuando una fuente no responde, la cifra muestra un guion en lugar de un número."
+      - question: ¿Cómo se defiende el homelab?
+        answer: "CrowdSec analiza el tráfico de nginx y, junto con un honeypot en el router, decide qué direcciones bloquear; las decisiones llegan a tres bouncers: nginx, el cortafuegos del servidor y el router mediante cs-routeros-bouncer. Las sondas a rutas sensibles caen en un tarpit que las ralentiza en vez de responder."
+
+  - path: /publications/
+    visible: true
+    items:
+      - question: ¿Qué ha publicado?
+        answer: "Catorce trabajos de su investigación en acústica (2018–2023): un artículo de revista, once comunicaciones en congresos y talleres y dos tesis, sobre metamateriales acústicos, difusores de sonido, predicción y mitigación del ruido de lanzamiento de cohetes, diseño de cajas de altavoces y acústica de salas."
+      - question: ¿Dónde se pueden leer los artículos?
+        answer: "Todas las entradas de esta página menos una llevan un DOI en Zenodo, donde el texto completo está archivado en abierto; la lista también está en Google Scholar y ORCID."
+
+  - path: /uses/
+    visible: true
+    items:
+      - question: ¿Con qué trabaja a diario?
+        answer: 'Un MacBook Pro (Intel i9, 64 GB) con dos monitores LG 27" 4K en macOS, VS Code y Sublime Text como editores, Debian 12 y 13 en los servidores, y C, C++, Python, Go y TypeScript como lenguajes, más Bash, LaTeX y MATLAB. La parte autoalojada es la flota descrita en /homelab/.'
+
+  - path: /privacy/
+    visible: true
+    items:
+      - question: ¿Este sitio usa cookies o scripts de terceros?
+        answer: "No. Ninguna respuesta pone una cookie, ninguna página carga un script, una fuente, una hoja de estilos ni una imagen de otro dominio, y no hay publicidad ni enlaces de afiliado. La única petición a un tercero que hace una página es el informe del beacon de analítica a Cloudflare, enviado desde un script servido por este dominio y sin la cadena de consulta."
+      - question: ¿Qué registra el servidor cuando visito el sitio?
+        answer: "Un registro de acceso normal: marca de tiempo, dirección IP, línea de petición, código, tamaños y tiempo de respuesta, página de procedencia, user agent, las cabeceras Accept y Accept-Language, la versión de TLS, y el país, la ciudad, el operador de red y las coordenadas aproximadas que una base GeoIP deduce de la dirección. Se conserva un año y solo sirve para seguridad y para saber qué artículos se leen. El worker de Cloudflare registra lo mismo por petición, más lo que solo sabe el borde, durante unos noventa días."
+      - question: ¿Las herramientas envían lo que escribo a algún sitio?
+        answer: "Quince de las diecisiete nunca: calculan en tu máquina. El Inspector de Certificados consulta los registros públicos de Certificate Transparency desde tu navegador, y el Analizador de Cabeceras HTTP de Seguridad envía la URL que indicas a un proxy de este dominio, que no escribe ningún registro."
+
+  - path: /license/
+    visible: true
+    items:
+      - question: ¿Puedo reutilizar los artículos y las imágenes de este sitio?
+        answer: "Los artículos, la documentación de las herramientas y las portadas del blog están bajo Creative Commons Reconocimiento 4.0: republícalos, tradúcelos, cítalos o recórtalos con crédito a «José Manuel Requena Plens» y, cuando sea posible, un enlace a la página de origen. Lo citado de otras fuentes pertenece a sus dueños y no está cubierto."
+      - question: ¿Qué no cubre esa licencia?
+        answer: "El retrato que sirve de avatar del sitio. Es la fotografía de una persona, así que puede usarse para referirse a él (un artículo sobre su trabajo, el anuncio de una charla), pero no para representar a nadie más ni sugerir un respaldo. El código fuente del sitio y de las herramientas tiene licencia MIT aparte."
+
+  - path: /feeds/
+    visible: true
+    items:
+      - question: ¿Cómo me suscribo a este blog?
+        answer: "Pega https://jmrp.io/rss.xml (inglés) o https://jmrp.io/es/rss.xml (español) en cualquier lector RSS, como Feedbin, Miniflux, NetNewsWire o Thunderbird. No hace falta cuenta y no se rastrea nada."
+      - question: ¿Qué son los feeds de Bluesky de esta página?
+        answer: "Ocho feeds curados sobre código abierto, programación y homelab, uno por idioma, gestionados desde la cuenta @jmrp.io: curación automática con revisión humana, y cualquier cuenta de Bluesky puede seguirlos."

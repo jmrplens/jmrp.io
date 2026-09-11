@@ -6,10 +6,12 @@
  * Per the "only mine" link policy, only the author's own services/projects
  * carry an `href` (internal paths are localized; full URLs used verbatim).
  */
+import FAQ from "@components/ui/FAQ.astro";
 import { defaultLocale, type Locale } from "@i18n/config";
 import { useTranslatedPath, useTranslations } from "@i18n/utils";
 import BaseLayout from "@layouts/BaseLayout.astro";
 import { externalLinkProps } from "@utils/links";
+import { getPageFaq, pageFaqNode } from "@utils/page-faq";
 import { getSiteUrl } from "@utils/site";
 import { getEntry } from "astro:content";
 import type { CollectionPage } from "schema-dts";
@@ -77,12 +79,23 @@ const usesSchema = {
       .map((entry, index) => ({ ...entry, position: index + 1 })),
   },
 } satisfies CollectionPage;
+// The page's question-and-answer pairs (GEO audit #8): one source for the
+// visible section, the FAQPage node and the markdown twin. See @utils/page-faq.
+const pageFaq = await getPageFaq("/uses/", locale);
+const faqNode =
+  pageFaq &&
+  pageFaqNode(
+    pageFaq,
+    new URL(Astro.url.pathname, getSiteUrl()).href,
+    usesSchema["@id"],
+    locale,
+  );
 ---
 
 <BaseLayout
   title={t("pages.uses.title")}
   description={t("pages.uses.description")}
-  schema={usesSchema}
+  schema={faqNode ? [usesSchema, faqNode].flat() : usesSchema}
 >
   <div class="uses container">
     <header class="uses-header">
@@ -131,6 +144,7 @@ const usesSchema = {
         </section>
       ))}
     </div>
+    {pageFaq?.visible && <FAQ items={pageFaq.items} />}
   </div>
 </BaseLayout>
 

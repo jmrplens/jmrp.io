@@ -994,9 +994,10 @@ server {
     ssl_session_timeout 1d;
     ssl_session_tickets off;  # Better security
     
-    # OCSP Stapling
-    ssl_stapling on;
-    ssl_stapling_verify on;
+    # No OCSP stapling. Let's Encrypt removed the OCSP URL from its
+    # certificates in May 2025 and shut its responders down in August 2025,
+    # so with this certificate ssl_stapling only logs "no OCSP responder URL"
+    # and does nothing. Keep it only for a CA that still runs OCSP.
 
     # ==========================================
     # QUIC-SPECIFIC SETTINGS

@@ -221,6 +221,10 @@ const site_config = defineCollection({
             url: z.url(),
             icon: z.string().optional(),
             rel: z.string().optional(),
+            // `false` keeps the entry out of the nav drawer while it still
+            // gets its <link rel="me"> and its place in sameAs: for a
+            // profile that reciprocates rel="me" but is not worth a menu row.
+            drawer: z.boolean().optional(),
           }),
         )
         .optional(),
@@ -263,6 +267,7 @@ const site_config = defineCollection({
     z.object({
       type: z.literal("socials"),
       github_username: z.string().optional(),
+      gitlab_username: z.string().optional(),
       linkedin_username: z.string().optional(),
       mastodon_username: z.string().optional(),
       bluesky_handle: z.string().optional(),
@@ -852,6 +857,43 @@ const pages = defineCollection({
   }),
 });
 
+/**
+ * Question-and-answer pairs for the pages that have no frontmatter of their
+ * own: home, the profile pages, the CV, the homelab, the publications, the
+ * feeds and the two documents. Posts and tools carry `faq` in their own
+ * frontmatter; until GEO audit #8 these twenty pages had no citable pair at
+ * all, and no answer engine fetched their twins.
+ *
+ * One file per locale, keyed by locale-stripped path. `visible` decides
+ * whether the page renders the section; the twin and the FAQPage node are
+ * emitted either way. `@utils/page-faq` is the only reader.
+ */
+const page_faq = defineCollection({
+  loader: glob({
+    pattern: "*.yaml",
+    base: "./src/content/page_faq",
+    generateId: ({ entry }) => stripExtension(entry),
+  }),
+  schema: z.object({
+    locale: z.enum(["en", "es"]),
+    pages: z.array(
+      z.object({
+        /** Locale-stripped path with both slashes, e.g. `/about/`. */
+        path: z.string().regex(/^\/(?:[a-z0-9-]+\/)*$/),
+        visible: z.boolean(),
+        items: z
+          .array(
+            z.object({
+              question: z.string().min(1),
+              answer: z.string().min(1),
+            }),
+          )
+          .min(1),
+      }),
+    ),
+  }),
+});
+
 export const collections = {
   posts,
   site_config,
@@ -860,4 +902,5 @@ export const collections = {
   tools,
   profile,
   pages,
+  page_faq,
 };

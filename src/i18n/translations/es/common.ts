@@ -605,7 +605,7 @@ export const common = {
       kpiWan24h: "tráfico WAN · 24h",
       edgeDefenseChip: "router + nginx",
       edgeDescription:
-        "CrowdSec actúa como WAF: analiza patrones en NGINX y, junto al honeypot del router, decide qué IPs bloquear. Los bloqueos se reparten a todos los bouncers — NGINX, Cloudflare y el router vía mi cs-RouterOS-bouncer.",
+        "CrowdSec actúa como WAF: analiza patrones en NGINX y, junto al honeypot del router, decide qué IPs bloquear. Los bloqueos se reparten a todos los bouncers: NGINX, el cortafuegos del servidor y el router vía mi cs-RouterOS-bouncer.",
       linkTarpit: "Cómo funciona el tarpit",
       linkHoneypot: "Honeypot & CrowdSec",
       twinIntro:
@@ -640,7 +640,7 @@ export const common = {
       nodeRouterRole: "MikroTik · CrowdSec",
       edgeDefense: "Defensa del Edge",
       flowBand:
-        "Honeypot MikroTik + patrones NGINX → CrowdSec · WAF → bouncers (NGINX / router / Cloudflare)",
+        "Honeypot MikroTik + patrones NGINX → CrowdSec · WAF → bouncers (NGINX / cortafuegos / router)",
       mikrotikTitle: "MikroTik",
       mikrotikLayer: "capa de red · honeypot",
       crowdsecTitle: "CrowdSec + NGINX",
@@ -656,8 +656,8 @@ export const common = {
       torSectionAria: "Nodos de la red Tor",
       torKicker: "Red Tor",
       torNodes: "nodos monitorizados",
-      torClients: "clientes ayudados · 24h",
-      torBandwidth: "ancho de banda anunciado",
+      torClients: "conexiones entrantes · 24h",
+      torBandwidth: "tráfico en vivo",
       torTraffic: "tráfico retransmitido · 24h",
       title: "Homelab",
       schemaName: "Infraestructura del Homelab",
@@ -826,7 +826,7 @@ export const common = {
       torTraffic24h: "Tráfico (24h)",
       torDownload: "↓ Descarga",
       torUpload: "↑ Subida",
-      torClients24h: "Clientes (24h)",
+      torClients24h: "Conexiones (24h)",
       torOrConnections: "Conexiones OR",
       torCircuits: "Circuitos Abiertos",
       torConnections24h: "Pares (24h)",
@@ -950,7 +950,7 @@ export const common = {
       hosted: "Instancia en vivo",
       downloads: "Descargas",
       downloadsNote:
-        "Las cifras de descargas suman los artefactos de las releases de GitHub, los pulls de imagen de Docker Hub y las descargas de MATLAB File Exchange. Los ficheros de checksum, firma y SBOM no se cuentan: una release los publica junto al binario y cada instalación descarga ambos, así que contarlos sería contar dos veces la misma instalación. Las cifras del File Exchange se leen a mano ({date}) porque MathWorks rechaza las peticiones automatizadas, y un proyecto solo muestra su propia cifra al superar las 1.000 descargas, así que los números por proyecto de abajo no suman el total del sitio.",
+        "Las cifras de descargas suman los artefactos de las releases de GitHub, los pulls de imagen de Docker Hub, las instalaciones de NuGet y las descargas de MATLAB File Exchange. De NuGet solo cuenta el paquete que se instala: cada instalación descarga además un paquete de runtime, y contar ambos la contaría dos veces. Los ficheros de checksum, firma y SBOM no se cuentan: una release los publica junto al binario y cada instalación descarga ambos, así que contarlos sería contar dos veces la misma instalación. Las cifras del File Exchange se leen a mano ({date}) porque MathWorks rechaza las peticiones automatizadas, y un proyecto solo muestra su propia cifra al superar las 1.000 descargas, así que los números por proyecto de abajo no suman el total del sitio.",
       downloadsSourceLead:
         "La regla exacta, y la lista completa de canales contados y descartados:",
       topicsLabel: "Temas que cubre {project}",

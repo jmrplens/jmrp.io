@@ -187,16 +187,70 @@ test("leaves a prose link's accessible name alone", () => {
 test("leaves authored en dashes, ellipses and standalone em dashes in code", () => {
   // cron-builder ships `0–59`, string-pool-packer `id,en,es,…`, and
   // TimestampConverter uses a bare <code>—</code> as its empty-value placeholder.
+  // A spaced em dash in program OUTPUT is authored too, so it stays.
   const { $, modified } = repair(
     `<code>0–59</code><code>id,en,es,…</code><code>—</code>` +
       `<div class="jmrp-term"><div class="jmrp-term__body">` +
-      `<span class="term-cmd">sleep 1 — done</span></div></div>`,
+      `<span class="term-out">sleep 1 — done</span></div></div>`,
   );
   assert.equal(modified, false);
   assert.equal($("code").eq(0).text(), "0–59");
   assert.equal($("code").eq(1).text(), "id,en,es,…");
   assert.equal($("code").eq(2).text(), "—");
-  assert.equal($(".term-cmd").text(), "sleep 1 — done");
+  assert.equal($(".term-out").text(), "sleep 1 — done");
+});
+
+test("restores a spaced `--` end-of-options marker on a command line", () => {
+  // GEO audit #8: /tools/modbus-frame-builder/ showed and copied
+  // `/dev/ttyUSB0 — 100`. The glued-to-a-word rule cannot see a lone `--`.
+  const cmd = "mbpoll -a 1 -r 0 -t 4 /dev/ttyUSB0 — 100";
+  const { $, modified } =
+    repair(`<div class="copy-container jmrp-term terminal-session">
+    <div class="jmrp-term__head"><button class="copy-button"
+      aria-label="Copy command: ${cmd}"
+      data-content="${encodeURIComponent(cmd)}"></button></div>
+    <div class="jmrp-term__body" aria-label="Terminal session: ${cmd}">
+      <div class="ts-command" aria-label="Terminal command: ${cmd}">
+        <div class="ts-command-raw" hidden>${cmd}</div>
+        <div class="jmrp-term__line"><span class="term-cmd">${cmd}</span></div>
+      </div>
+    </div>
+    <div class="copy-content" hidden>${cmd}</div>
+  </div>`);
+  const fixed = "mbpoll -a 1 -r 0 -t 4 /dev/ttyUSB0 -- 100";
+  assert.equal(modified, true);
+  assert.equal($(".term-cmd").text(), fixed);
+  assert.equal($(".ts-command-raw").text(), fixed);
+  assert.equal($(".jmrp-term > .copy-content").text(), fixed);
+  assert.equal(payload($), fixed);
+  assert.equal(
+    $(".ts-command").attr("aria-label"),
+    `Terminal command: ${fixed}`,
+  );
+  assert.equal($("button").attr("aria-label"), `Copy command: ${fixed}`);
+});
+
+test("keeps a spaced em dash in a comment line of a command payload", () => {
+  // Payloads carry comment lines ("# Hexadecimal (32 chars)"), and about
+  // twenty code comments on the site use a spaced em dash as prose.
+  const lines = "# Tor bridge — obfs4\ntor -f torrc — --verify-config";
+  const { $ } = repair(terminalCommand(lines));
+  assert.equal(
+    payload($),
+    "# Tor bridge — obfs4\ntor -f torrc -- --verify-config",
+  );
+});
+
+test("never applies the command rule to program output or code blocks", () => {
+  const out = "Status — OK";
+  const { $, modified } = repair(`<div class="jmrp-term">
+    <div class="jmrp-term__head"><button class="copy-button"
+      data-content="${encodeURIComponent(out)}"></button></div>
+    <div class="jmrp-term__body"><pre>${out}</pre></div>
+  </div><pre><code>a — b</code></pre>`);
+  assert.equal(modified, false);
+  assert.equal(payload($), out);
+  assert.equal($("pre code").text(), "a — b");
 });
 
 test("reports no change, and makes none, on a clean page", () => {

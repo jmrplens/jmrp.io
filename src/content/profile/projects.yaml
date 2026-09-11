@@ -20,13 +20,15 @@ type: projects
 #   on edition and deployment" here vs "1000+ tools" there) is NOT
 #   drift: the author confirmed on 2026-09-03 that the two counts measure
 #   different GitLab tiers, so both are true and this entry is a deliberate,
-#   accepted exception to the verbatim rule. libgen-mcp (this copy says
-#   "search and download ... from Library Genesis", the docs site says
-#   "federated search, citation and reading ... across the Library Genesis
-#   catalog and open-access sources") is undecided: no third source says
-#   which side is stale, and the difference is a feature claim, not a figure.
+#   accepted exception to the verbatim rule. libgen-mcp said "search and
+#   download ... from Library Genesis" here while its docs site, README, npm
+#   and GitHub description all said "federated search, citation and reading
+#   ... across the Library Genesis catalog and open-access sources"; this copy
+#   was the stale side and follows them since 2026-09-11.
 #   Nothing enforces this rule: it drifted unnoticed from 2026-07-28 to
-#   2026-09-03, when phonometry's figures had moved 550/58/367 → 613/60/378.
+#   2026-09-03, when phonometry's figures had moved 550/58/367 → 613/60/378,
+#   and again by 2026-09-11 (995/77/408, the figures its docs publish from
+#   4.0.0rc1 on; `node scripts/ci/check-software-drift.mjs` reports it).
 #   Projects without a docs site use the repo/CV copy.
 # * `summary.es` is display-only. JSON-LD always emits `summary.en`, on both
 #   locales, because the software entity is language-neutral and its
@@ -92,7 +94,7 @@ projects:
     sameAs:
       - https://glama.ai/mcp/servers/jmrplens/gitlab-mcp-server
       - https://cursor.directory/plugins/gitlab-mcp-server
-      - https://mcp.so/server/gitlab-mcp-server/jmrplens
+      - https://mcp.so/servers/gitlab-mcp-server-jmrplens
       - https://lobehub.com/mcp/jmrplens-gitlab-mcp-server
       - https://www.pulsemcp.com/servers/jmrplens-gitlab
       - https://mcpservers.org/servers/jmrplens/gitlab-mcp-server
@@ -143,8 +145,8 @@ projects:
       - { name: Octave band, wikidata: Q2270252 }
       - { name: Python, wikidata: Q28865 }
     summary:
-      en: "Acoustic measurement, analysis and prediction for Python: sound level metrology, psychoacoustics, room and building acoustics, materials, vibration, environmental and transport noise, underwater acoustics, electroacoustics and wave simulation, with 613 CI-enforced conformance checks across 60 domains and 378 standards."
-      es: "Medición, análisis y predicción acústica para Python: metrología de niveles sonoros, psicoacústica, acústica de salas y edificación, materiales, vibración, ruido ambiental y de transporte, acústica subacuática, electroacústica y simulación de ondas, con 613 comprobaciones de conformidad en CI sobre 60 dominios y 378 normas."
+      en: "Acoustic measurement, analysis and prediction for Python: sound level metrology, psychoacoustics, room and building acoustics, materials, vibration, environmental and transport noise, underwater acoustics, electroacoustics and wave simulation, with 995 CI-enforced conformance checks across 77 domains and 408 standards."
+      es: "Medición, análisis y predicción acústica para Python: metrología de niveles sonoros, psicoacústica, acústica de salas y edificación, materiales, vibración, ruido ambiental y de transporte, acústica subacuática, electroacústica y simulación de ondas, con 995 comprobaciones de conformidad en CI sobre 77 dominios y 408 normas."
 
   - id: cs-routeros-bouncer
     name: cs-routeros-bouncer
@@ -234,8 +236,8 @@ projects:
       - { name: Open access, wikidata: Q232932 }
       - { name: Go, wikidata: Q37227 }
     summary:
-      en: MCP server to search and download books, research papers, comics, magazines and standards from Library Genesis. No account required.
-      es: Servidor MCP para buscar y descargar libros, artículos de investigación, cómics, revistas y normas desde Library Genesis. Sin necesidad de cuenta.
+      en: MCP server for federated search, citation and reading of books, research papers, comics, magazines and standards across the Library Genesis catalog and open-access sources. No account required.
+      es: Servidor MCP para búsqueda federada, cita y lectura de libros, artículos de investigación, cómics, revistas y normas en el catálogo de Library Genesis y en fuentes de acceso abierto. Sin necesidad de cuenta.
 
   - id: TFG-TFM_EPS
     name: TFG-TFM_EPS

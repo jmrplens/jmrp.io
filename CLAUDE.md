@@ -156,7 +156,7 @@ updatedDate: Date # Optional
 
 **`type: "site"` (site.yaml)**: `title`, `description`, `author`, `url`, `keywords`, `fediverse_creator`, `locale`, `name`, `jobTitle`, `social[]`, `person`, `social_links[]`, `theme_color`, `background_color`, `twitter_creator`, `logo_text`, `nav[]`, `hero { title, subtitle, bio[] }`, `featured_projects[]`, `shortcuts[]`.
 
-**`type: "socials"` (socials.yaml)**: `github_username`, `linkedin_username`, `mastodon_username`, `scholar_userid`, `matrix_id`, `work_url`, `custom_social[]`.
+**`type: "socials"` (socials.yaml)**: `github_username`, `gitlab_username`, `linkedin_username`, `mastodon_username`, `scholar_userid`, `matrix_id`, `work_url`, `custom_social[]`.
 
 ### `cv` — Resume Data (YAML)
 
@@ -999,6 +999,13 @@ The final report lists every failed step across all phases (not just the first e
 > subject becomes. Historic passes that predate the trailer are listed by SHA in
 > `MECHANICAL_COMMITS` in that module; the list is closed, and anything new
 > declares itself in its own message.
+>
+> **The rule is site-wide, not just for posts.** Tool, category, home and
+> static pages are dated by `lastCommitDate` in `src/utils/content-date.ts`,
+> which asks the same `isSubstantive` question per source file. Until GEO audit
+> #8 they took the last commit of any kind, so #497's inert 117-file reformat
+> (d88066c, the one later entry in the list) restamped 50 URLs as revised. A
+> dependency or formatting PR that touches components needs the marker too.
 
 Full workflow + field reference: the `new-blog-post` skill and `docs/BLOG_POST_GUIDE.md`.
 

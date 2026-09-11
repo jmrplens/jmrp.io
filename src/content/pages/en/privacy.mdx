@@ -18,7 +18,7 @@ What that script sends, once per page view, is a report to Cloudflare's analytic
 
 The beacon is only injected into production builds, and it carries a check that stops it unless the page is being served from jmrp.io itself. Development runs, previews and any other copy of this site report nothing, whatever address they are served from.
 
-This domain is also served through Cloudflare, which terminates TLS and therefore sees every request. A small worker of mine runs at that edge and records one row per request with the same data as the server logs described below, in a dataset Cloudflare keeps for about ninety days; every five minutes those rows are copied into my own monitoring database, beside the server logs, and follow the same rules as they do. It exists because the edge answers most requests from its cache, so this server never sees them and its own logs cannot say which pages are actually read.
+This domain is also served through Cloudflare, which terminates TLS and therefore sees every request. A small worker of mine runs at that edge and records one row per request with the same data as the server logs described below, plus what only the edge knows: which Cloudflare data centre answered and whether it served the page from its cache, the round-trip time of your connection, Cloudflare's bot score, the Sec-Fetch headers your browser sends, and the region and time zone Cloudflare associates with your address. Those rows live in a dataset Cloudflare keeps for about ninety days; every five minutes those rows are copied into my own monitoring database, beside the server logs, and follow the same rules as they do. It exists because the edge answers most requests from its cache, so this server never sees them and its own logs cannot say which pages are actually read. Separately, Cloudflare keeps its own execution log of each request the worker handles, meaning the request, the response status and Cloudflare's metadata about both, for three days, visible only from my Cloudflare account; I use it only to debug the worker.
 
 These numbers exist to tell me which articles are worth keeping up to date. That is their only use.
 
@@ -38,7 +38,7 @@ A Content Security Policy enforces this from the server side rather than leaving
 
 ## Server logs
 
-The web server keeps ordinary access logs: timestamp, IP address, the full request line, response status, bytes sent, referrer, user agent, the hostname you asked for, and the country, city and network operator that a GeoIP database derives from the address. They are rotated daily and kept for one year, then deleted. This site runs an active tarpit and blocklist stack, which cannot work without knowing who is knocking.
+The web server keeps ordinary access logs: timestamp, IP address, the full request line, response status, request and response sizes, response time, referrer, user agent, the hostname you asked for, the content types and language your browser says it accepts, the TLS version of the connection, a Signature-Agent header if your client sends one, and the country, city, network operator and approximate coordinates of that city that a GeoIP database derives from the address. They are rotated daily and kept for one year, then deleted. This site runs an active tarpit and blocklist stack, which cannot work without knowing who is knocking.
 
 Those logs are operational and security records. They are not joined with analytics, not used to build reader profiles and not shared with anyone.
 
@@ -50,7 +50,7 @@ The interactive tools run in your browser. Whatever you type into them — hashe
 
 Two tools are deliberate exceptions because they cannot work otherwise. The Certificate Inspector searches the public Certificate Transparency logs — Cert Spotter and crt.sh — for the hostname you type, and it does so from your browser, so those two services see your address as if you had visited them yourself. The HTTP Security Headers Analyzer works the other way round: it sends the URL you submit to a small proxy on this domain, because a browser is not allowed to read another site's response headers, so the site being inspected sees this server and not you.
 
-In both cases the request is made only when you press the button, and carries only what you typed. That proxy has its access log switched off deliberately, so the URL you inspect is never written beside your address. Nothing you enter into a tool is stored here or associated with you.
+In both cases the request is made only when you press the button, and carries only what you typed. That proxy writes no log of any kind, access or error, deliberately, so the URL you inspect is never written beside your address. Nothing you enter into a tool is stored here or associated with you.
 
 ## No ads, no affiliates
 

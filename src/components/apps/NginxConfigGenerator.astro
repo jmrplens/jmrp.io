@@ -305,7 +305,6 @@ const i18n = {
               <input
                 type="checkbox"
                 id={`${uniqueId}-ocsp`}
-                checked
               />
               <span>OCSP Stapling</span>
             </label>
@@ -1279,7 +1278,16 @@ const i18n = {
 
         if (ocspCheck.checked) {
           lines.push("");
-          lines.push(I1 + "# OCSP Stapling");
+          // Off by default and in every preset since GEO audit #8: Let's
+          // Encrypt, the certificate path this generator defaults to, removed
+          // the OCSP URL from its certificates in May 2025 and turned its
+          // responders off in August 2025, so these lines only make nginx
+          // warn "no OCSP responder URL in the certificate".
+          lines.push(
+            I1 +
+              "# OCSP Stapling: only for a CA that still runs an OCSP responder",
+          );
+          lines.push(I1 + "# (Let's Encrypt stopped in 2025).");
           lines.push(I1 + "ssl_stapling on;");
           lines.push(I1 + "ssl_stapling_verify on;");
           lines.push(
@@ -1650,7 +1658,7 @@ const i18n = {
         http2Check.checked = true;
         http3Check.checked = false;
         hstsCheck.checked = true;
-        ocspCheck.checked = true;
+        ocspCheck.checked = false;
         sslEarlyCheck.checked = false;
         redirectCheck.checked = true;
         // Proxy
@@ -1694,7 +1702,7 @@ const i18n = {
         http2Check.checked = true;
         http3Check.checked = false;
         hstsCheck.checked = true;
-        ocspCheck.checked = true;
+        ocspCheck.checked = false;
         sslEarlyCheck.checked = false;
         redirectCheck.checked = true;
         // Proxy
@@ -1747,7 +1755,7 @@ const i18n = {
         http2Check.checked = true;
         http3Check.checked = false;
         hstsCheck.checked = true;
-        ocspCheck.checked = true;
+        ocspCheck.checked = false;
         sslEarlyCheck.checked = false;
         redirectCheck.checked = true;
         // Proxy
@@ -1792,7 +1800,7 @@ const i18n = {
         http2Check.checked = true;
         http3Check.checked = false;
         hstsCheck.checked = true;
-        ocspCheck.checked = true;
+        ocspCheck.checked = false;
         sslEarlyCheck.checked = false;
         redirectCheck.checked = true;
         // Proxy
@@ -1836,7 +1844,7 @@ const i18n = {
         http2Check.checked = true;
         http3Check.checked = false;
         hstsCheck.checked = true;
-        ocspCheck.checked = true;
+        ocspCheck.checked = false;
         sslEarlyCheck.checked = false;
         redirectCheck.checked = true;
         // Proxy
@@ -1890,7 +1898,7 @@ const i18n = {
         http2Check.checked = true;
         http3Check.checked = true;
         hstsCheck.checked = true;
-        ocspCheck.checked = true;
+        ocspCheck.checked = false;
         sslEarlyCheck.checked = true;
         redirectCheck.checked = true;
         // Proxy
