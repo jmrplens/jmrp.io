@@ -536,10 +536,15 @@ const staticRecent = postData.slice(0, 6);
       });
 
       // --- DOM helpers ---
+      // No `null` literal anywhere in this script, on purpose: #498 replaced
+      // one and the `<page>/null` requests kept coming (32 in the next 24 h,
+      // all from Meta's crawler), because five more were left. The crawler
+      // mines URL-shaped tokens out of inline JavaScript, and a bare `null`
+      // is one. `undefined` minifies to `void 0`, which is not.
       function el(tag, cls, text) {
         const n = document.createElement(tag);
         if (cls) n.className = cls;
-        if (text != null) n.textContent = text;
+        if (text !== undefined) n.textContent = text;
         return n;
       }
       function comment(text) {
@@ -740,20 +745,20 @@ const staticRecent = postData.slice(0, 6);
       }
       function notFound(c) {
         const row = el("div", "term-row term-row--error");
-        row.appendChild(el("span", null, T.notFound + ": "));
+        row.appendChild(el("span", "", T.notFound + ": "));
         row.appendChild(el("span", "term-cmd", c));
-        row.appendChild(el("span", null, " — " + T.typeHelp));
+        row.appendChild(el("span", "", " — " + T.typeHelp));
         return [row];
       }
 
       // --- Nedry easter egg (blocked commands) ---
-      let nedryAudio = null;
+      let nedryAudio;
       function stopNedry() {
         if (nedryAudio) {
           try {
             nedryAudio.pause();
           } catch (e) {}
-          nedryAudio = null;
+          nedryAudio = undefined;
         }
       }
       function nedry() {
