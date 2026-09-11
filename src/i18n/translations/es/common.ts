@@ -605,7 +605,7 @@ export const common = {
       kpiWan24h: "tráfico WAN · 24h",
       edgeDefenseChip: "router + nginx",
       edgeDescription:
-        "CrowdSec actúa como WAF: analiza patrones en NGINX y, junto al honeypot del router, decide qué IPs bloquear. Los bloqueos se reparten a todos los bouncers — NGINX, Cloudflare y el router vía mi cs-RouterOS-bouncer.",
+        "CrowdSec actúa como WAF: analiza patrones en NGINX y, junto al honeypot del router, decide qué IPs bloquear. Los bloqueos se reparten a todos los bouncers: NGINX, el cortafuegos del servidor y el router vía mi cs-RouterOS-bouncer.",
       linkTarpit: "Cómo funciona el tarpit",
       linkHoneypot: "Honeypot & CrowdSec",
       twinIntro:
@@ -640,7 +640,7 @@ export const common = {
       nodeRouterRole: "MikroTik · CrowdSec",
       edgeDefense: "Defensa del Edge",
       flowBand:
-        "Honeypot MikroTik + patrones NGINX → CrowdSec · WAF → bouncers (NGINX / router / Cloudflare)",
+        "Honeypot MikroTik + patrones NGINX → CrowdSec · WAF → bouncers (NGINX / cortafuegos / router)",
       mikrotikTitle: "MikroTik",
       mikrotikLayer: "capa de red · honeypot",
       crowdsecTitle: "CrowdSec + NGINX",
