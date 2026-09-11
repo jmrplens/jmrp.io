@@ -86,6 +86,27 @@ const VERBATIM_CARDS = ".jmrp-term, .jmrp-code, .jmrp-file";
 const VERBATIM_ATTRIBUTES = ["data-content", "aria-label"] as const;
 
 /**
+ * Where a line of text is a shell COMMAND, not output and not a code comment:
+ * the visible command line, a session's hidden raw copy of it, and a
+ * session's clipboard fallback, which holds its commands and nothing else.
+ */
+const COMMAND_TEXT_ROOTS = [
+  ".term-cmd",
+  ".ts-command-raw",
+  ".terminal-session > .copy-content",
+].join(", ");
+
+/**
+ * Cards whose clipboard payload and accessible names quote commands. The
+ * plain `.jmrp-term` of `<TerminalOutput>` is left out on purpose: its
+ * payload is program output, where a spaced em dash can be authored.
+ */
+const COMMAND_CARDS = ".terminal-session, .terminal-command-wrapper";
+
+/** A line that is a shell or C-style comment, where an em dash is prose. */
+const COMMENT_LINE = /^\s*(?:#|\/\/)/u;
+
+/**
  * Applies the three unambiguous reversals to one verbatim string.
  *
  * Only these three: `‘ ’` → `'` · `“ ”` → `"` · `—` glued to a word → `--`.
@@ -112,15 +133,49 @@ function repairVerbatimText(text: string): string {
 }
 
 /**
+ * Adds the one reversal that only holds on a command line: a SPACED em dash.
+ *
+ * SmartyPants turns the POSIX end-of-options marker `--` into `—` when it
+ * stands alone, which the glued-to-a-word rule above cannot see:
+ * `mbpoll -a 1 -r 0 -t 4 /dev/ttyUSB0 -- 100` shipped as `… /dev/ttyUSB0 —
+ * 100` on /tools/modbus-frame-builder/, visible and copied (GEO audit #8). On
+ * a command line a spaced em dash is never valid syntax, so it can only be
+ * that marker. Everywhere else it can be prose: 20 code comments on the site
+ * carry one ("# Tor Bridge Configuration — obfs4 + WebTunnel"), which is why
+ * comment lines inside a multi-line payload are skipped and why output and
+ * code blocks never get this rule at all.
+ *
+ * @param text - Command text, one command per line, possibly with comments.
+ * @returns The text with spaced em dashes on command lines restored to `--`.
+ */
+function repairCommandText(text: string): string {
+  return repairVerbatimText(text)
+    .split("\n")
+    .map((line) =>
+      COMMENT_LINE.test(line)
+        ? line
+        : line.replaceAll(/(?<=\s)\u{2014}(?=\s)/gu, "--"),
+    )
+    .join("\n");
+}
+
+/**
  * Repairs one attribute value, decoding it first when it is a URL-encoded
  * clipboard payload.
  *
  * @param name - Attribute name, from {@link VERBATIM_ATTRIBUTES}.
  * @param value - Current attribute value.
+ * @param isCommand - Whether the attribute belongs to a command card, whose
+ *   payload and accessible names quote command lines.
  * @returns The repaired value, or the original when nothing changed.
  */
-function repairVerbatimAttribute(name: string, value: string): string {
-  if (name !== "data-content") return repairVerbatimText(value);
+function repairVerbatimAttribute(
+  name: string,
+  value: string,
+  isCommand: boolean,
+): string {
+  const repair = isCommand ? repairCommandText : repairVerbatimText;
+  if (name !== "data-content") return repair(value);
   let decoded: string;
   try {
     decoded = decodeURIComponent(value);
@@ -128,7 +183,7 @@ function repairVerbatimAttribute(name: string, value: string): string {
     // Not a well-formed payload; leave it exactly as found.
     return value;
   }
-  const repaired = repairVerbatimText(decoded);
+  const repaired = repair(decoded);
   return repaired === decoded ? value : encodeURIComponent(repaired);
 }
 
@@ -177,7 +232,11 @@ export function restoreVerbatimTypography($: cheerio.CheerioAPI): boolean {
     .each((_i, node) => {
       if (!isTextNode(node) || visited.has(node)) return;
       visited.add(node);
-      const repaired = repairVerbatimText(node.data);
+      const repair =
+        $(node).closest(COMMAND_TEXT_ROOTS).length > 0
+          ? repairCommandText
+          : repairVerbatimText;
+      const repaired = repair(node.data);
       if (repaired !== node.data) {
         node.data = repaired;
         modified = true;
@@ -190,10 +249,11 @@ export function restoreVerbatimTypography($: cheerio.CheerioAPI): boolean {
     .addBack()
     .each((_i, el) => {
       const $el = $(el);
+      const isCommand = $el.closest(COMMAND_CARDS).length > 0;
       for (const name of VERBATIM_ATTRIBUTES) {
         const value = $el.attr(name);
         if (value === undefined) continue;
-        const repaired = repairVerbatimAttribute(name, value);
+        const repaired = repairVerbatimAttribute(name, value, isCommand);
         if (repaired !== value) {
           $el.attr(name, repaired);
           modified = true;
