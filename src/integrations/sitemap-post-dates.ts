@@ -19,17 +19,17 @@
  * otherwise, and for index/tag/category pages the newest date among the items
  * they list — a listing really is modified when a new entry appears in it.
  */
-import { execFileSync } from "node:child_process";
 import { readdirSync, readFileSync } from "node:fs";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
 import { load as parseYaml } from "js-yaml";
 
+import { lastCommitDate } from "../utils/content-date.js";
 import { postDateModified } from "../utils/post-dates.js";
 
-// Anchored to the process CWD rather than to `import.meta.url`, for the same
-// reason as REPO_ROOT below: Astro bundles this module into an SSR chunk whose
-// `import.meta.url` points at the build output, so the readdirSync fell into
+// Anchored to the process CWD rather than to `import.meta.url`: Astro bundles
+// this module into an SSR chunk whose `import.meta.url` points at the build
+// output, so the readdirSync fell into
 // its own catch and returned an empty list — silently, which is why /blog/ and
 // /tools/ came out with no `dateModified` while every other page worked.
 const SRC_DIR = pathToFileURL(`${process.cwd()}/src/`);
@@ -121,41 +121,24 @@ export function getPostDateMap(): Map<string, string> {
   return map;
 }
 
-// Same CWD anchoring as SRC_DIR above. This module is
-// imported both by the sitemap integration (running from source) and, since
-// M8, by BaseHead — which Astro bundles into an SSR chunk whose `import.meta.url`
-// points at the build output, not at src/integrations/. `git log` then ran from
-// the wrong directory and returned nothing, silently, so every injected
-// `dateModified` came out undefined. `pnpm build` always runs from the project
-// root, which is also the repo root.
-const REPO_ROOT = pathToFileURL(`${process.cwd()}/`);
-
 /**
- * Last commit date for a repo-relative path, as a full ISO timestamp.
+ * Last SUBSTANTIVE commit date for a repo-relative path, as a full ISO
+ * timestamp.
  *
- * Returns undefined when git cannot answer (shallow checkout, untracked file)
- * so callers can fall back deliberately instead of inheriting a wrong date.
+ * Delegates to `lastCommitDate` so a tool or static page is dated by the same
+ * rule as a post: a commit the `Content-Bump:` trailer, a cosmetic
+ * conventional type or `MECHANICAL_COMMITS` marks as mechanical does not move
+ * it. This used to be `git log -1` of its own, which is how #497's inert
+ * reformat restamped 50 URLs as revised (GEO audit #8). The paths are
+ * repo-root-relative; `lastCommitDate` resolves that root by checking for
+ * `.git` rather than trusting `import.meta.url`, which Astro relocates when it
+ * bundles BaseHead's copy of this module.
+ *
+ * Returns undefined when git cannot answer (untracked file, no history) so
+ * callers can fall back deliberately instead of inheriting a wrong date.
  */
 function gitDate(repoRelativePath: string): string | undefined {
-  try {
-    const stdout = execFileSync(
-      // eslint-disable-next-line sonarjs/no-os-command-from-path -- PATH is pinned below to /usr/bin:/bin, both root-owned
-      "git",
-      ["log", "-1", "--format=%cI", "--", repoRelativePath],
-      {
-        cwd: fileURLToPath(REPO_ROOT),
-        encoding: "utf8",
-        stdio: ["ignore", "pipe", "ignore"],
-        // Root-owned PATH only, so `git` cannot be shadowed by a writable
-        // directory inherited from the build shell. Mirrors
-        // `DEFAULT_SECURE_PATH` in `scripts/deploy-live.mjs`.
-        env: { ...process.env, PATH: "/usr/bin:/bin" }, // NOSONAR
-      },
-    ).trim();
-    return stdout ? new Date(stdout).toISOString() : undefined;
-  } catch {
-    return undefined;
-  }
+  return lastCommitDate(repoRelativePath);
 }
 
 /**
@@ -301,11 +284,16 @@ export function createLastmodResolver(): (
     // alone, the sitemap claimed February for a page whose content changed in
     // July (de6d9f1, "Retire Meshtastic from the homelab") — the oldest and
     // least truthful lastmod in the file. gitDate() accepts a directory
-    // pathspec, and newest() folds the two together.
+    // pathspec, and newest() folds the two together. Every panel's prose and
+    // label is a translation string, so the bundles count too, with the same
+    // over-reporting tradeoff as /about/: without them, correcting which
+    // bouncers receive CrowdSec's decisions left the date where it was.
     "/homelab/": [
       "src/pages/homelab.astro",
       "src/components/homelab",
       "src/components/pages/HomelabPage.astro",
+      "src/i18n/translations/en/common.ts",
+      "src/i18n/translations/es/common.ts",
     ],
     // The two document pages. Their copy is MDX under src/content/pages/, not
     // the translation bundles: the privacy entry still named those bundles long

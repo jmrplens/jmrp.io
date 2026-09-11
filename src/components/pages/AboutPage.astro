@@ -13,8 +13,8 @@ import { defaultLocale, type Locale } from "@i18n/config";
 import type { TranslationKey } from "@i18n/utils";
 import { useTranslatedPath, useTranslations } from "@i18n/utils";
 import BaseLayout from "@layouts/BaseLayout.astro";
+import { pageLastmod } from "@src/integrations/sitemap-post-dates";
 import type { SiteConfig } from "@src/types";
-import { lastCommitDate } from "@utils/content-date";
 import { externalLinkProps } from "@utils/links";
 import { CANONICAL_ALUMNI_OF } from "@utils/person";
 import { getProjects, hostedHref } from "@utils/projects";
@@ -103,8 +103,11 @@ const contactLinks = [
 // NOT redefine name/jobTitle/description/image/sameAs/knowsAbout, which are
 // now defined once in BaseHead.astro (sourced from this very file's
 // `person.jobTitle`/`person.description`, so there is no divergence).
-// Both locales render from the same YAML, so both share its modification date.
-const aboutModified = lastCommitDate("src/content/profile/about.yaml");
+// Same date as the sitemap's <lastmod> and the markdown twin: the page's copy
+// lives in the YAML, this component and the two translation bundles, and
+// dating the ProfilePage from the YAML alone published 2026-09-02 here while
+// both of those said 2026-09-10 (GEO audit #8).
+const aboutModified = pageLastmod("/about/");
 
 // The EN/ES counterpart of this page, so the two ProfilePage nodes can point
 // at each other the way BlogPost.astro already pairs article translations.

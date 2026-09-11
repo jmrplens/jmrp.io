@@ -999,6 +999,13 @@ The final report lists every failed step across all phases (not just the first e
 > subject becomes. Historic passes that predate the trailer are listed by SHA in
 > `MECHANICAL_COMMITS` in that module; the list is closed, and anything new
 > declares itself in its own message.
+>
+> **The rule is site-wide, not just for posts.** Tool, category, home and
+> static pages are dated by `lastCommitDate` in `src/utils/content-date.ts`,
+> which asks the same `isSubstantive` question per source file. Until GEO audit
+> #8 they took the last commit of any kind, so #497's inert 117-file reformat
+> (d88066c, the one later entry in the list) restamped 50 URLs as revised. A
+> dependency or formatting PR that touches components needs the marker too.
 
 Full workflow + field reference: the `new-blog-post` skill and `docs/BLOG_POST_GUIDE.md`.
 

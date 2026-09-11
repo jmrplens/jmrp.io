@@ -115,13 +115,19 @@ const COSMETIC_TYPES = new Set([
 ]);
 
 /**
- * Site-wide mechanical passes that predate the `Content-Bump:` trailer.
+ * Site-wide mechanical passes that did not declare themselves.
  *
- * Checked one by one against their own diff to `src/content/posts/`. The list
- * is CLOSED: anything new declares itself in its own commit message, which is
- * where the knowledge is. It is not a fan-out heuristic — that was tried and
- * rejected, because the genuinely substantive 205d494 touched 25 post files
- * while the purely mechanical f2eb953 touched 8.
+ * Checked one by one against their own diff. The list is CLOSED to new
+ * entries in the normal course: anything new declares itself in its own commit
+ * message, which is where the knowledge is. It is not a fan-out heuristic —
+ * that was tried and rejected, because the genuinely substantive 205d494
+ * touched 25 post files while the purely mechanical f2eb953 touched 8.
+ *
+ * The one later entry, d88066c, is here because the rule it broke did not yet
+ * reach the pages it restamped: until GEO audit #8 only posts consulted this
+ * set, while tool and static pages took the last commit of any kind (see
+ * `lastCommitDate` in `@utils/content-date`), so no trailer could have saved
+ * them.
  */
 const MECHANICAL_COMMITS = new Set([
   // fix #421 — the only edits to posts are a doubled fragment inside one
@@ -138,6 +144,12 @@ const MECHANICAL_COMMITS = new Set([
   // see the blocks. It also localized two ES chart labels, but both posts
   // already carry a later date from another term of the formula.
   "f2eb953ebaf23d4485fde002b98cc038c3fe7b1c",
+  // #497 — pnpm 12, dependency bumps and the 117-file prettier-plugin-astro
+  // 1.0 reformat, verified inert page by page in its own message. With no
+  // conventional type it counted as substantive, and it restamped all 34 tool
+  // URLs, their ten category pages, both homes and /homelab/ as revised on
+  // 2026-09-10, then resubmitted them to IndexNow and Bing.
+  "d88066cb208001cb22225030f4beff4ab14323b6",
 ]);
 
 /**
@@ -256,14 +268,22 @@ function toPostId(value: string): string {
 }
 
 /**
- * Whether a commit counts as a revision of the posts it touched.
+ * Whether a commit counts as a revision of the content it touched.
+ *
+ * Exported because the rule is the site's, not the blog's: `lastCommitDate` in
+ * `@utils/content-date`, which dates every tool and static page, asks the same
+ * question, so a reformat that leaves posts alone cannot restamp a tool.
  *
  * @param sha - Full commit hash.
  * @param subject - Commit subject line.
  * @param marker - Value of the `Content-Bump:` trailer, empty when absent.
  * @returns True when the commit should move the date.
  */
-function isSubstantive(sha: string, subject: string, marker: string): boolean {
+export function isSubstantive(
+  sha: string,
+  subject: string,
+  marker: string,
+): boolean {
   const override = marker.trim().toLowerCase();
   if (["skip", "no", "none"].includes(override)) return false;
   if (["force", "yes"].includes(override)) return true;
