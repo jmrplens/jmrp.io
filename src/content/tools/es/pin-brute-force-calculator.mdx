@@ -23,7 +23,7 @@ faq:
   - question: "¿Cómo vuelve inviable la fuerza bruta la vinculación al dispositivo?"
     answer: "La vinculación al dispositivo mezcla un secreto por-chip en la derivación de clave, así que cada intento necesita hardware que no puede extraerse de la flash volcada. El atacante ya no puede probar candidatos offline contra la bóveda exfiltrada."
   - question: "¿Cómo estima la calculadora la velocidad del atacante?"
-    answer: "Divide el rendimiento SHA-256 bruto de la GPU entre el trabajo de PBKDF2, tratando cada iteración como unas dos compresiones SHA-256. El espacio de claves dividido por ese ritmo da el tiempo de probar cada candidato; el tiempo esperado para encontrar el secreto es aproximadamente la mitad."
+    answer: "La calculadora de fuerza bruta de PIN divide el rendimiento SHA-256 bruto de la GPU entre el trabajo de PBKDF2, tratando cada iteración como unas dos compresiones SHA-256. El espacio de claves dividido por ese ritmo da el tiempo de probar cada candidato; el tiempo esperado para encontrar el secreto es aproximadamente la mitad."
   - question: "¿Se envía a algún servidor lo que escribo?"
     answer: "No. Cada valor se calcula en tu navegador con aritmética simple y no se transmite ninguna entrada a ningún sitio."
 ---

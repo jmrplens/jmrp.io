@@ -17,7 +17,7 @@ features:
 lang: "es"
 faq:
   - question: "¿Qué cabeceras HTTP de seguridad comprueba esta herramienta?"
-    answer: "Evalúa 10 cabeceras críticas, entre ellas Content-Security-Policy, Strict-Transport-Security, X-Content-Type-Options, X-Frame-Options, Referrer-Policy, Permissions-Policy y las tres políticas Cross-Origin. También detecta fugas de información en las cabeceras \"Server\", \"X-Powered-By\" y \"X-AspNet-Version\"."
+    answer: "El Analizador de Cabeceras HTTP de Seguridad evalúa 10 cabeceras críticas, entre ellas Content-Security-Policy, Strict-Transport-Security, X-Content-Type-Options, X-Frame-Options, Referrer-Policy, Permissions-Policy y las tres políticas Cross-Origin. También detecta fugas de información en las cabeceras \"Server\", \"X-Powered-By\" y \"X-AspNet-Version\"."
   - question: "¿Cómo se calcula la puntuación de seguridad?"
     answer: "Cada cabecera tiene un peso según su impacto, siendo Content-Security-Policy la de mayor valor (25 puntos) y X-XSS-Protection la menor (3 puntos). El total ponderado se traduce en una calificación de A+ (90-100) hasta F (0-29)."
   - question: "¿Por qué faltan algunas cabeceras al obtenerlas desde una URL?"

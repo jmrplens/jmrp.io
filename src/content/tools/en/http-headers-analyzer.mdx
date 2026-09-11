@@ -16,7 +16,7 @@ features:
   - "All analysis runs in your browser"
 faq:
   - question: "Which HTTP security headers does this tool check?"
-    answer: "It evaluates 10 critical headers including Content-Security-Policy, Strict-Transport-Security, X-Content-Type-Options, X-Frame-Options, Referrer-Policy, Permissions-Policy and the three Cross-Origin policies. It also flags information leakage from \"Server\", \"X-Powered-By\" and \"X-AspNet-Version\" headers."
+    answer: "The HTTP Security Headers Analyzer evaluates 10 critical headers including Content-Security-Policy, Strict-Transport-Security, X-Content-Type-Options, X-Frame-Options, Referrer-Policy, Permissions-Policy and the three Cross-Origin policies. It also flags information leakage from \"Server\", \"X-Powered-By\" and \"X-AspNet-Version\" headers."
   - question: "How is the security score calculated?"
     answer: "Each header carries a weight reflecting its impact, with Content-Security-Policy worth the most (25 points) and X-XSS-Protection the least (3 points). The weighted total maps to a letter grade from A+ (90-100) down to F (0-29)."
   - question: "Why are some headers missing when I fetch them from a URL?"

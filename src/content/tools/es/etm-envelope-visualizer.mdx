@@ -18,7 +18,7 @@ features:
 lang: "es"
 faq:
   - question: "¿Qué significa \"encrypt-then-MAC\"?"
-    answer: "Significa que primero ciframos el texto plano y luego calculamos un MAC sobre el texto cifrado resultante (más el byte de versión y el IV). En la lectura, el MAC se verifica antes de intentar cualquier descifrado."
+    answer: "Encrypt-then-MAC significa que primero ciframos el texto plano y luego calculamos un MAC sobre el texto cifrado resultante (más el byte de versión y el IV). En la lectura, el MAC se verifica antes de intentar cualquier descifrado."
   - question: "¿Por qué verificar el MAC antes de descifrar?"
     answer: "Comprobar el tag primero hace que un fichero manipulado nunca llegue al descifrado AES-CBC, lo que cierra los ataques de oráculo de padding. Si el tag no coincide, la lectura se bloquea ante el fallo y no se produce texto plano."
   - question: "¿Por qué usar claves distintas para el cifrado y el MAC?"
