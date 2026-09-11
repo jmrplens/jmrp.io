@@ -38,13 +38,12 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
-      - uses: actions/setup-node@v7
-        with:
-          node-version-file: package.json
+      # The script reads each consumer's workflow with js-yaml (since #499,
+      # to know whether the push it makes will trigger a build), so it needs
+      # the tree installed like any other job. The run #499 itself triggered
+      # died on `Cannot find package 'js-yaml'` before touching a consumer.
+      - uses: ./.github/actions/setup
 
-      # No `pnpm install` on purpose: the script has no dependencies, only
-      # `fetch` and `node:fs`. Installing the whole tree for a handful of
-      # HTTP calls would be paying minutes for nothing.
       - name: Propagate the snapshot
         env:
           IDENTITY_SYNC_TOKEN: ${{ secrets.IDENTITY_SYNC_TOKEN }}
