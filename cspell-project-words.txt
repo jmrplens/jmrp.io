@@ -301,6 +301,7 @@ depende
 depurabilidad
 desactualizadas
 desactualizados
+descargable
 descargables
 descárgalo
 descárgalos

@@ -41,6 +41,7 @@ import {
 } from "@components/homelab/inventory";
 import { HLM } from "@components/homelab/ssr-tokens";
 import { useTranslations } from "@i18n/utils";
+import { getPageFaq, pageFaqLines } from "@utils/page-faq";
 
 /** Repository behind the bouncer the edge-defense copy names. */
 const BOUNCER_REPO = "https://github.com/jmrplens/cs-routeros-bouncer";
@@ -265,6 +266,7 @@ export async function homelabMarkdown(
     // yields a shorter line — the same rule the page's badges follow.
     ...originLine(t("pages.homelab.mikrotikTitle"), HLM.origins.router),
     ...originLine(t("pages.homelab.crowdsecTitle"), HLM.origins.nginx),
+    ...pageFaqLines(await getPageFaq("/homelab/", locale), locale),
     "",
   ];
 

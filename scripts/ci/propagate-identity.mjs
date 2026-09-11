@@ -119,7 +119,7 @@ function globToRegExp(glob) {
  * watches `docs/src/**`, `docs/public/**` and a few files, not
  * `docs/identity/**`, so four syncs between 2026-08-29 and 2026-09-10 each
  * reported "updated" while its site kept serving a #person with 14 of 24
- * `sameAs` (GEO audit #8, A2). Anything unreadable or unrecognised answers
+ * `sameAs` (GEO audit #8, A2). Anything unreadable or unrecognized answers
  * false, which only costs a dispatch the push might have made unnecessary.
  *
  * @param {string} owner - Account that owns the repository.

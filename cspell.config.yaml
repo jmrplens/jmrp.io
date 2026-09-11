@@ -111,6 +111,12 @@ overrides:
     language: es,en
   - filename: "src/content/cv/es.yaml"
     language: es,en
+  # The entity pages' Q&A pairs, one file per locale
+  - filename: "src/content/page_faq/es.yaml"
+    language: es,en
+  # The category question and the twin heading carry their Spanish forms
+  - filename: "src/utils/page-faq.ts"
+    language: es,en
   - filename: "src/i18n/translations/es/**"
     language: es,en
   # Per-component markdown modules hold their own bilingual labels

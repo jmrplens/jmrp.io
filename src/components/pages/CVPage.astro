@@ -12,6 +12,7 @@ import CertificateGroup from "@components/cv/CertificateGroup.astro";
 import CVMenu, { type MenuSection } from "@components/cv/CVMenu.astro";
 import ProjectCard from "@components/cv/ProjectCard.astro";
 import SkillGroup from "@components/cv/SkillGroup.astro";
+import FAQ from "@components/ui/FAQ.astro";
 import { defaultLocale, type Locale } from "@i18n/config";
 import { useTranslations } from "@i18n/utils";
 import BaseLayout from "@layouts/BaseLayout.astro";
@@ -19,6 +20,7 @@ import { getCVData } from "@utils/cv";
 import { fetchRepoStats, formatStats, githubSlug } from "@utils/cv-github";
 import { markdownToHtml } from "@utils/cv-markdown";
 import { stripToText } from "@utils/html";
+import { getPageFaq, pageFaqNode } from "@utils/page-faq";
 import type { LanguageTaggedValue } from "@utils/person";
 import { CANONICAL_ALUMNI_OF } from "@utils/person";
 import { getAbsoluteUrl, getSiteUrl } from "@utils/site";
@@ -336,13 +338,24 @@ const SIDEBAR_LINK_KINDS = new Set([
   "linkedin",
   "scholar",
 ]);
+// The page's question-and-answer pairs (GEO audit #8): one source for the
+// visible section, the FAQPage node and the markdown twin. See @utils/page-faq.
+const pageFaq = await getPageFaq("/cv/", locale);
+const faqNode =
+  pageFaq &&
+  pageFaqNode(
+    pageFaq,
+    new URL(Astro.url.pathname, getSiteUrl()).href,
+    cvWebPage["@id"],
+    locale,
+  );
 ---
 
 <BaseLayout
   title={t("pages.cv.title")}
   description={t("pages.cv.description")}
   type="profile"
-  schema={cvSchema}
+  schema={faqNode ? [cvSchema, faqNode].flat() : cvSchema}
 >
   <div class="container">
     <h1 class="page-title cv-title">{t("pages.cv.heading")}</h1>
@@ -729,6 +742,7 @@ const SIDEBAR_LINK_KINDS = new Set([
         ))}
       </div>
     </div>
+    {pageFaq?.visible && <FAQ items={pageFaq.items} />}
   </div>
 
   <CVMenu sections={menuSections} />

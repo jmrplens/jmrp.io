@@ -9,6 +9,7 @@ import {
   markdownTwinPath,
 } from "@utils/llms";
 import { CATEGORY_ORDER, categoryName } from "@utils/llms/tool-categories";
+import { getPageFaq, pageFaqLines } from "@utils/page-faq";
 import { getSeries, getSeriesPosts, SERIES } from "@utils/series";
 
 /**
@@ -292,6 +293,11 @@ export async function generateToolCategoryMarkdown(
         `${siteUrl}${markdownTwinPath(otherPath)}`,
       );
     }),
+    // Locale-stripped: the FAQ is keyed by the page, not by its translation.
+    ...pageFaqLines(
+      await getPageFaq(`/tools/categories/${category}/`, locale),
+      locale,
+    ),
     "",
   ].join("\n");
 }
@@ -484,6 +490,7 @@ export async function generateFeedsMarkdown(
         post.data.description,
       );
     }),
+    ...pageFaqLines(await getPageFaq(`/feeds/`, locale), locale),
     "",
   ].join("\n");
 }
