@@ -340,7 +340,13 @@ try {
     "/etc/nginx/snippets/trusted_ip_map_dynamic.conf",
     "utf8",
   );
-  for (const m of dyn.matchAll(/^\s*([0-9a-f.:]+)(?:\/(\d+))?\s+1;/gimu)) {
+  // One line at a time: a single multiline regex over the whole file let
+  // `^\s*` and `\s+` overlap across line breaks and backtrack super-linearly
+  // on a malformed map (SonarCloud S5852). Per line the pattern is anchored
+  // at both ends and cannot.
+  for (const line of dyn.split("\n")) {
+    const m = /^[ \t]*([0-9a-f.:]+)(?:\/(\d+))?[ \t]+1;[ \t]*$/iu.exec(line);
+    if (!m) continue;
     const family = m[1].includes(":") ? "ipv6" : "ipv4";
     if (m[2]) TRUSTED.addSubnet(m[1], Number(m[2]), family);
     else TRUSTED.addAddress(m[1], family);
@@ -388,12 +394,13 @@ function miscParts(misc) {
  */
 function edgeRow(r, site) {
   const path = String(r.p || "/").split("?", 1)[0] || "/";
+  const request = r.qs ? `${path}?${r.qs}` : path;
   const misc = miscParts(r.misc);
   const tags = [
     "source=edge",
     `client_ip=${tagEsc(r.ip || "cf-edge")}`,
     `verb=${tagEsc(r.method || "GET")}`,
-    `request=${tagEsc(r.qs ? `${path}?${r.qs}` : path)}`,
+    `request=${tagEsc(request)}`,
     `request_clean=${tagEsc(path)}`,
     `resp_code=${tagEsc(r.st)}`,
     `referrer=${tagEsc(r.referer_full || r.ref || "-")}`,
@@ -412,21 +419,24 @@ function edgeRow(r, site) {
     // Every edge-served request came through the worker by definition.
     "edge=1",
   ];
-  const trusted = trustedFlag(r.ip);
-  if (trusted) tags.push(`trusted=${trusted}`);
-  const lang = primaryLanguage(r.lang);
-  if (lang) tags.push(`lang=${tagEsc(lang)}`);
-  const hv = httpVersion(r.proto);
-  if (hv) tags.push(`http_version=${hv}`);
-  if (r.tls) tags.push(`ssl_protocol=${tagEsc(r.tls)}`);
-  const ct = misc.contentType || CLASS_CONTENT_TYPE[r.c];
-  if (ct) tags.push(`resp_content_type=${tagEsc(ct)}`);
-  if (misc.region) tags.push(`geoip_region=${tagEsc(misc.region)}`);
-  if (misc.cipher) tags.push(`tls_cipher=${tagEsc(misc.cipher)}`);
-  if (misc.fetchDest) tags.push(`fetch_dest=${tagEsc(misc.fetchDest)}`);
-  if (misc.fetchMode) tags.push(`fetch_mode=${tagEsc(misc.fetchMode)}`);
-  if (misc.fetchSite) tags.push(`fetch_site=${tagEsc(misc.fetchSite)}`);
-  if (misc.verifiedBot) tags.push(`verified_bot=${tagEsc(misc.verifiedBot)}`);
+  // Tags the worker only sometimes knows: written when present, skipped
+  // when empty, so an absent value never becomes a "-" series of its own.
+  const optionalTags = [
+    ["trusted", trustedFlag(r.ip)],
+    ["lang", primaryLanguage(r.lang)],
+    ["http_version", httpVersion(r.proto)],
+    ["ssl_protocol", r.tls],
+    ["resp_content_type", misc.contentType || CLASS_CONTENT_TYPE[r.c]],
+    ["geoip_region", misc.region],
+    ["tls_cipher", misc.cipher],
+    ["fetch_dest", misc.fetchDest],
+    ["fetch_mode", misc.fetchMode],
+    ["fetch_site", misc.fetchSite],
+    ["verified_bot", misc.verifiedBot],
+  ];
+  for (const [name, value] of optionalTags) {
+    if (value) tags.push(`${name}=${tagEsc(value)}`);
+  }
   const contentLength = Number(r.contentLength) || 0;
   const fields = [
     `resp_bytes=${contentLength}i`,
@@ -437,10 +447,18 @@ function edgeRow(r, site) {
   if (lat !== 0 && lon !== 0 && Number.isFinite(lat) && Number.isFinite(lon)) {
     fields.push(`geoip_lat=${lat}`, `geoip_lon=${lon}`);
   }
-  if (Number(r.asn) > 0) fields.push(`geoip_asn=${Math.trunc(Number(r.asn))}i`);
-  if (Number(r.rtt) > 0) fields.push(`edge_rtt_ms=${Number(r.rtt)}`);
-  if (Number(r.edge_ms) > 0) fields.push(`edge_ms=${Number(r.edge_ms)}`);
-  if (Number(r.age) > 0) fields.push(`edge_age=${Math.trunc(Number(r.age))}i`);
+  // Positive numbers only; integers get line protocol's `i` suffix.
+  const optionalNumbers = [
+    ["geoip_asn", r.asn, true],
+    ["edge_rtt_ms", r.rtt, false],
+    ["edge_ms", r.edge_ms, false],
+    ["edge_age", r.age, true],
+  ];
+  for (const [name, raw, integer] of optionalNumbers) {
+    const value = Number(raw);
+    if (!Number.isFinite(value) || value <= 0) continue;
+    fields.push(integer ? `${name}=${Math.trunc(value)}i` : `${name}=${value}`);
+  }
   if (misc.cfRay) fields.push(`cf_ray=${fieldStr(misc.cfRay)}`);
   return { tags, fields };
 }

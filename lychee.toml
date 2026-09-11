@@ -124,6 +124,13 @@ exclude = [
     # Third-party site with intermittent availability (500s/timeouts observed
     # 2026-07-05..07); caused repeated false reds in verify. Linked from the CV.
     'https://acusticox\.com/',
+    # Codeberg sits behind an anti-scraper gate that stalls a burst of requests
+    # instead of answering them: 12 timeouts in one verify sweep on 2026-09-11,
+    # 200 in 0.3 s by hand a minute later and 0 errors on the very next cold
+    # sweep. Since the profile became a rel="me" on every page, one stall
+    # would fail every verify. Nothing else checks it: confirm by hand when
+    # the profile changes (`curl -4 -sI https://codeberg.org/jmrplens`).
+    'https://codeberg\.org/jmrplens',
 ]
 
 # File globs to check (used locally)

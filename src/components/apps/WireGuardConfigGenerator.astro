@@ -1437,37 +1437,35 @@ const i18n = {
     // public-key: an invalid script carrying the client's private key.
     // Resolves to { privateKey, publicKey }; publicKey is "" only where the
     // engine lacks X25519, and the caller then leaves that field empty.
-    function generateWgKeyPair() {
-      return crypto.subtle
-        .generateKey({ name: "X25519" }, true, ["deriveBits"])
-        .then(function (pair) {
-          return Promise.all([
-            crypto.subtle.exportKey("pkcs8", pair.privateKey),
-            crypto.subtle.exportKey("raw", pair.publicKey),
-          ]);
-        })
-        .then(function (exported) {
-          // PKCS#8 for X25519 is a fixed 16-byte header then the 32-byte key.
-          var pkcs8 = new Uint8Array(exported[0]);
-          var privBytes = pkcs8.slice(pkcs8.length - 32);
-          // Clamp the way `wg genkey` prints it. X25519 clamps the scalar
-          // itself, so this does not change the public key derived above.
-          privBytes[0] &= 248;
-          privBytes[31] &= 127;
-          privBytes[31] |= 64;
-          return {
-            privateKey: toBase64(privBytes),
-            publicKey: toBase64(new Uint8Array(exported[1])),
-          };
-        })
-        .catch(function () {
-          var privBytes = new Uint8Array(32);
-          crypto.getRandomValues(privBytes);
-          privBytes[0] &= 248;
-          privBytes[31] &= 127;
-          privBytes[31] |= 64;
-          return { privateKey: toBase64(privBytes), publicKey: "" };
-        });
+    async function generateWgKeyPair() {
+      try {
+        var pair = await crypto.subtle.generateKey({ name: "X25519" }, true, [
+          "deriveBits",
+        ]);
+        var exported = await Promise.all([
+          crypto.subtle.exportKey("pkcs8", pair.privateKey),
+          crypto.subtle.exportKey("raw", pair.publicKey),
+        ]);
+        // PKCS#8 for X25519 is a fixed 16-byte header then the 32-byte key.
+        var pkcs8 = new Uint8Array(exported[0]);
+        var privBytes = pkcs8.slice(pkcs8.length - 32);
+        // Clamp the way `wg genkey` prints it. X25519 clamps the scalar
+        // itself, so this does not change the public key derived above.
+        privBytes[0] &= 248;
+        privBytes[31] &= 127;
+        privBytes[31] |= 64;
+        return {
+          privateKey: toBase64(privBytes),
+          publicKey: toBase64(new Uint8Array(exported[1])),
+        };
+      } catch (_error) {
+        var fallback = new Uint8Array(32);
+        crypto.getRandomValues(fallback);
+        fallback[0] &= 248;
+        fallback[31] &= 127;
+        fallback[31] |= 64;
+        return { privateKey: toBase64(fallback), publicKey: "" };
+      }
     }
 
     function generatePsk() {
