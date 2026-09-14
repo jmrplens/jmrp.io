@@ -2,60 +2,51 @@
   "$comment": [
     "Sites that splice the `https://jmrp.io/#person` node into their own @graph.",
     "All of them read the canonical document from raw.githubusercontent at build",
-    "time and keep `snapshotPath` as an offline fallback;",
-    "scripts/ci/propagate-identity.mjs rewrites it when the canonical changes.",
+    "time, and since 2026-09-15 that is the only copy there is: the committed",
+    "`person.snapshot.json` fallback was removed from every one of them, and with",
+    "it the commit this repository used to push on each change. A consumer build",
+    "that cannot read the canonical document now fails instead of publishing a",
+    "stale identity, which is what makes keeping no copy safe.",
     "",
-    "`dispatchWorkflow` is that repo's docs build. After committing a snapshot",
-    "the script reads the workflow's own `on.push` filter: when it covers the",
-    "snapshot path the commit starts the build, otherwise the script dispatches",
-    "it. A declared prefix used to stand in for that check and was wrong for",
-    "cs-routeros-bouncer, whose site kept an old #person for two weeks.",
+    "`dispatchWorkflow` is that repository's docs build, and dispatching it IS the",
+    "propagation now. It must accept `workflow_dispatch`; nothing else about its",
+    "triggers matters any more, so the push-filter inspection that used to decide",
+    "between a commit and a dispatch is gone with the rest.",
     "",
-    "A consumer may be listed before its repository is public: the script",
-    "reports it as `not published` and moves on, so the entry is already there",
-    "on the day it appears.",
+    "A consumer may be listed before its repository is public: the script reports",
+    "it as `not published` and moves on, so the entry is already there on the day",
+    "it appears.",
     "",
     "Adding a consumer is adding an entry here."
   ],
   "owner": "jmrplens",
-  "commitAuthor": {
-    "name": "José M. Requena Plens",
-    "email": "jmrplens@gmail.com"
-  },
   "consumers": [
     {
       "repo": "gitlab-mcp-server",
-      "snapshotPath": "site/identity/person.snapshot.json",
       "dispatchWorkflow": "pages.yml"
     },
     {
       "repo": "phonometry",
-      "snapshotPath": "site/identity/person.snapshot.json",
       "dispatchWorkflow": "docs.yml"
     },
     {
       "repo": "libgen-mcp",
-      "snapshotPath": "site/identity/person.snapshot.json",
       "dispatchWorkflow": "pages.yml"
     },
     {
       "repo": "cs-routeros-bouncer",
-      "snapshotPath": "docs/identity/person.snapshot.json",
       "dispatchWorkflow": "docs.yml"
     },
     {
       "repo": "Cloudflare-DNS-Updater",
-      "snapshotPath": "docs/identity/person.snapshot.json",
       "dispatchWorkflow": "docs.yml"
     },
     {
       "repo": "ghchronicle",
-      "snapshotPath": "site/identity/person.snapshot.json",
       "dispatchWorkflow": "docs.yml"
     },
     {
       "repo": "jmrplens.github.io",
-      "snapshotPath": "src/data/person.snapshot.json",
       "dispatchWorkflow": "pages.yml"
     }
   ]

@@ -4,10 +4,11 @@
 # `paths` filter IS the condition, not a check performed afterwards, so a merge
 # that does not touch it costs no Actions time at all.
 #
-# What it does lives in scripts/ci/propagate-identity.mjs: rewrite each
-# consumer's versioned `person.snapshot.json` when it differs. That commit lands
-# inside the prefix each repo's Pages trigger watches, so their build starts on
-# its own — no chained calls needed.
+# What it does lives in scripts/ci/propagate-identity.mjs: dispatch each
+# consumer's docs build. That is the whole job since 2026-09-15, when the
+# committed `person.snapshot.json` fallback was removed from every consumer:
+# they fetch the canonical document at build time and fail the build if they
+# cannot read it, so a rebuild is the only thing propagation has to arrange.
 
 name: Identity propagation
 
