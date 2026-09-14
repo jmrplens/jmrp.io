@@ -262,6 +262,30 @@ projects:
       en: MCP server for federated search, citation and reading of books, research papers, comics, magazines and standards across the Library Genesis catalog and open-access sources. No account required.
       es: Servidor MCP para búsqueda federada, cita y lectura de libros, artículos de investigación, cómics, revistas y normas en el catálogo de Library Genesis y en fuentes de acceso abierto. Sin necesidad de cuenta.
 
+  # Published 2026-09-15 with its first tag. `name` and `summary.en` are
+  # verbatim the `#software` node its own site publishes, read from the live
+  # JSON-LD the day this was written.
+  - id: ghchronicle
+    name: ghchronicle
+    status: active
+    schemaType: SoftwareApplication
+    applicationCategory: DeveloperApplication
+    applicationSubCategory: Monitoring
+    language: Go
+    license: MIT
+    repo: https://github.com/jmrplens/ghchronicle
+    docs: https://jmrplens.github.io/ghchronicle/
+    docsEs: https://jmrplens.github.io/ghchronicle/es/
+    topics:
+      - { name: GitHub, wikidata: Q364 }
+      - { name: Time series, wikidata: Q186588 }
+      - { name: InfluxDB, wikidata: Q28127110 }
+      - { name: Grafana, wikidata: Q43399271 }
+      - { name: Go, wikidata: Q37227 }
+    summary:
+      en: Collects every metric GitHub exposes about an account and keeps it with the date it happened.
+      es: Recoge todas las métricas que GitHub expone sobre una cuenta y las guarda con la fecha en que ocurrieron.
+
   - id: TFG-TFM_EPS
     name: TFG-TFM_EPS
     status: active
