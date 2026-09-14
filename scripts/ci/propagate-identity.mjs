@@ -1,32 +1,31 @@
 #!/usr/bin/env node
 /**
- * Propagates the canonical `#person` document to the sites that splice it into
- * their own @graph.
+ * Triggers a docs build on every site that splices the canonical `#person`
+ * into its own @graph, so a change to the entity reaches them.
  *
- * The consumers read the live document from raw.githubusercontent at build
- * time and keep a versioned `person.snapshot.json` as their offline fallback.
- * How many there are is `.github/identity-consumers.json`, not a number
- * written here: one of them is listed before its repository is public.
- * That snapshot was only ever refreshed by hand, so it froze: measured on
- * 2026-08-27, five of the six were still on the 2026-07-26 version. This script
- * rewrites it whenever the canonical document changes, and then makes sure the
- * consumer's docs build runs: by its own push trigger when that trigger really
- * watches the snapshot's path, by a workflow dispatch otherwise.
+ * Each consumer FETCHES the canonical document from raw.githubusercontent at
+ * build time, and always did: that is the propagation. Until 2026-09-15 they
+ * also carried a committed `person.snapshot.json` as an offline fallback, and
+ * this script rewrote it on every change, which put a commit into six
+ * repositories whose history had nothing to do with the change. The fallback
+ * is gone and the commits with it, leaving the one thing that was ever needed:
+ * ask each site to rebuild.
  *
- * The payload is the canonical file VERBATIM. Verified byte for byte: it equals
- * what every consumer's own `sync-identity.mjs` writes
- * (`JSON.stringify(doc, null, 2)` plus a trailing newline), so propagating it
- * never leaves a repo at odds with its own `--check`.
+ * What makes dropping the copy safe is the other half of that change: a
+ * consumer build that cannot read the canonical document now FAILS, rather
+ * than quietly publishing a stale identity. There is no longer a silent
+ * degradation to protect against, so there is nothing to keep in sync.
  *
- * Commit messages are written in English on purpose: they land in the consumer
- * repositories, whose history is English, not in this one.
+ * How many consumers there are is `.github/identity-consumers.json`, not a
+ * number written here: one of them is listed before its repository is public.
  *
  * Usage:
- *   node scripts/ci/propagate-identity.mjs            # write
+ *   node scripts/ci/propagate-identity.mjs            # dispatch
  *   node scripts/ci/propagate-identity.mjs --dry-run  # report only
  *
- * Requires `IDENTITY_SYNC_TOKEN` (a fine-grained PAT with Contents:write and
- * Actions:write on those repos), or `GITHUB_TOKEN` when run locally.
+ * Requires `IDENTITY_SYNC_TOKEN` (a fine-grained PAT with Actions:write on
+ * those repositories), or `GITHUB_TOKEN` when run locally. Contents:write is
+ * no longer used and the token can be narrowed to match.
  *
  * @module
  */
@@ -35,18 +34,9 @@ import fs from "node:fs";
 import path from "node:path";
 import process from "node:process";
 
-import { load as parseYaml } from "js-yaml";
-
 const API = "https://api.github.com";
 const ROOT = process.cwd();
-const CANONICAL = path.join(ROOT, "public/identity/person.jsonld");
 const CONSUMERS = path.join(ROOT, ".github/identity-consumers.json");
-
-const COMMIT_MESSAGE =
-  "chore(identity): sync the canonical #person snapshot\n\n" +
-  "Propagated from jmrplens/jmrp.io, where the single source of\n" +
-  "https://jmrp.io/#person lives. The build already reads the live document;\n" +
-  "this refreshes the versioned fallback used when the network is not there.";
 
 const dryRun = process.argv.includes("--dry-run");
 const token = process.env.IDENTITY_SYNC_TOKEN || process.env.GITHUB_TOKEN;
@@ -54,8 +44,7 @@ const token = process.env.IDENTITY_SYNC_TOKEN || process.env.GITHUB_TOKEN;
 if (!token) {
   console.error(
     "✗ IDENTITY_SYNC_TOKEN is missing (GITHUB_TOKEN works locally). Without a\n" +
-      "  credential there is nothing to do: the consumers can be neither read\n" +
-      "  nor written.",
+      "  credential there is nothing to do: no build can be dispatched.",
   );
   process.exit(1);
 }
@@ -84,208 +73,64 @@ async function gh(url, init = {}) {
 }
 
 /**
- * Converts one GitHub Actions path filter to a RegExp.
+ * Asks one consumer to rebuild its documentation site.
  *
- * GitHub's filter syntax: `**` crosses directories, `*` and `?` do not, and a
- * leading `!` negates. Only what the consumers' workflows use is supported;
- * anything else fails closed in {@link pushTriggerCovers}.
+ * A repository that does not exist yet is reported and skipped rather than
+ * failing the run: the registry lists a consumer before it is published on
+ * purpose, so the entry is already there on the day it appears.
  *
- * @param {string} glob - One entry of `on.push.paths`.
- * @returns {RegExp} Anchored matcher for a repository-relative path.
+ * @param {{repo: string, dispatchWorkflow: string}} consumer - The target.
+ * @param {string} owner - Repository owner.
+ * @returns {Promise<{repo: string, state: string, detail?: string}>} Outcome.
  */
-function globToRegExp(glob) {
-  let source = "";
-  for (let i = 0; i < glob.length; i++) {
-    const char = glob[i];
-    if (char === "*" && glob[i + 1] === "*") {
-      source += ".*";
-      i++;
-    } else if (char === "*") {
-      source += "[^/]*";
-    } else if (char === "?") {
-      source += "[^/]";
-    } else {
-      source += char.replaceAll(/[.+^${}()|[\]\\]/g, String.raw`\$&`);
-    }
-  }
-  return new RegExp(`^${source}$`);
-}
-
-/**
- * Whether a push that only touches `file` starts the consumer's docs workflow.
- *
- * Read from the workflow itself rather than assumed. The consumers roster used
- * to declare a `buildPathPrefix` and trust it: cs-routeros-bouncer's docs.yml
- * watches `docs/src/**`, `docs/public/**` and a few files, not
- * `docs/identity/**`, so four syncs between 2026-08-29 and 2026-09-10 each
- * reported "updated" while its site kept serving a #person with 14 of 24
- * `sameAs` (GEO audit #8, A2). Anything unreadable or unrecognized answers
- * false, which only costs a dispatch the push might have made unnecessary.
- *
- * @param {string} owner - Account that owns the repository.
- * @param {string} repo - Consumer repository.
- * @param {string} workflow - Workflow file name under .github/workflows/.
- * @param {string} file - Repository-relative path of the committed snapshot.
- * @returns {Promise<boolean>} True only when the push trigger demonstrably fires.
- */
-async function pushTriggerCovers(owner, repo, workflow, file) {
-  const response = await gh(
-    `/repos/${owner}/${repo}/contents/.github/workflows/${workflow}`,
-  );
-  if (response.status !== 200) return false;
-  let on;
-  try {
-    const doc = parseYaml(
-      Buffer.from(response.body.content, "base64").toString("utf8"),
-    );
-    on = doc?.on;
-  } catch {
-    return false;
-  }
-  const push = on?.push;
-  if (on === "push" || (Array.isArray(on) && on.includes("push"))) return true;
-  if (push === undefined) return false;
-  if (push === null) return true; // `push:` with no filters fires on any path.
-  const branches = push.branches;
-  if (Array.isArray(branches) && !branches.includes("main")) return false;
-  if (Array.isArray(push["paths-ignore"])) {
-    return push["paths-ignore"].every((glob) => !globToRegExp(glob).test(file));
-  }
-  if (!Array.isArray(push.paths)) return true;
-  // Later entries win, and a `!pattern` excludes what an earlier one included.
-  let included = false;
-  for (const glob of push.paths) {
-    const negated = glob.startsWith("!");
-    if (globToRegExp(negated ? glob.slice(1) : glob).test(file)) {
-      included = !negated;
-    }
-  }
-  return included;
-}
-
-/**
- * Syncs one consumer: compares its snapshot with the canonical document and
- * rewrites it when they differ.
- *
- * @param {{repo: string, snapshotPath: string, dispatchWorkflow: string}} consumer - The target.
- * @param {string} owner - Account that owns the repositories.
- * @param {{name: string, email: string}} author - Commit author and committer.
- * @param {string} canonical - Canonical file contents.
- * @returns {Promise<{repo: string, state: string, detail: string}>} Outcome.
- */
-async function syncConsumer(consumer, owner, author, canonical) {
-  const { repo, snapshotPath } = consumer;
-  const contentsUrl = `/repos/${owner}/${repo}/contents/${snapshotPath}`;
-
-  const current = await gh(contentsUrl);
-  if (current.status === 404) {
-    // A missing file in a repository that exists is a real problem: the
-    // snapshot was moved or renamed and this repo has silently stopped
-    // receiving the identity. A missing *repository* is not, and there is
-    // always one: a consumer is listed here while its site is still being
-    // built, so the entry is ready on the day it is published.
-    const repository = await gh(`/repos/${owner}/${repo}`);
-    if (repository.status === 404) {
-      return { repo, state: "not published", detail: "no repository yet" };
-    }
-    return {
-      repo,
-      state: "error",
-      detail: `${snapshotPath} is gone, was the file moved?`,
-    };
-  }
-  if (current.status !== 200) {
-    return {
-      repo,
-      state: "error",
-      detail: `GET ${current.status}: ${current.body?.message ?? "no detail"}`,
-    };
-  }
-
-  const existing = Buffer.from(current.body.content, "base64").toString("utf8");
-  if (existing === canonical) return { repo, state: "in sync", detail: "" };
+async function dispatchConsumer(consumer, owner) {
+  const { repo, dispatchWorkflow } = consumer;
 
   if (dryRun) {
-    const delta = canonical.length - existing.length;
-    return {
-      repo,
-      state: "stale",
-      detail: `would write ${canonical.length} B (${delta >= 0 ? "+" : ""}${delta})`,
-    };
-  }
-
-  const put = await gh(contentsUrl, {
-    method: "PUT",
-    body: JSON.stringify({
-      message: COMMIT_MESSAGE,
-      content: Buffer.from(canonical, "utf8").toString("base64"),
-      // The sha is the concurrency guard: if the file moved under us between
-      // the read and the write, GitHub rejects it rather than clobbering.
-      sha: current.body.sha,
-      committer: author,
-      author,
-    }),
-  });
-
-  if (put.status !== 200 && put.status !== 201) {
-    return {
-      repo,
-      state: "error",
-      detail: `PUT ${put.status}: ${put.body?.message ?? "no detail"}`,
-    };
-  }
-
-  const commit = put.body.commit.sha.slice(0, 7);
-
-  // A commit only "updates" a consumer if its site gets rebuilt. When the
-  // docs workflow's own push filter covers the snapshot, the commit starts it;
-  // otherwise dispatch it by hand, which is what "updated" used to skip.
-  if (
-    await pushTriggerCovers(
-      owner,
-      repo,
-      consumer.dispatchWorkflow,
-      snapshotPath,
-    )
-  ) {
-    return { repo, state: "updated", detail: `commit ${commit}` };
+    return { repo, state: "would dispatch", detail: dispatchWorkflow };
   }
 
   const dispatch = await gh(
-    `/repos/${owner}/${repo}/actions/workflows/${consumer.dispatchWorkflow}/dispatches`,
+    `/repos/${owner}/${repo}/actions/workflows/${dispatchWorkflow}/dispatches`,
     { method: "POST", body: JSON.stringify({ ref: "main" }) },
   );
+
+  if (dispatch.status === 204) {
+    return { repo, state: "dispatched", detail: dispatchWorkflow };
+  }
+  if (dispatch.status === 404) {
+    // Either the repository is not public yet or the workflow was renamed.
+    // Both are worth naming, and neither is worth failing the whole run for.
+    return {
+      repo,
+      state: "not published",
+      detail: `no ${dispatchWorkflow}, or the repository is not there yet`,
+    };
+  }
   return {
     repo,
-    state: dispatch.status === 204 ? "updated" : "error",
-    detail:
-      dispatch.status === 204
-        ? `commit ${commit} + manual dispatch`
-        : `commit ${commit} but the dispatch failed (${dispatch.status})`,
+    state: "error",
+    detail: `dispatch of ${dispatchWorkflow} returned ${dispatch.status}`,
   };
 }
 
-const canonical = fs.readFileSync(CANONICAL, "utf8");
-const { owner, commitAuthor, consumers } = JSON.parse(
-  fs.readFileSync(CONSUMERS, "utf8"),
-);
+const { owner, consumers } = JSON.parse(fs.readFileSync(CONSUMERS, "utf8"));
 
 console.log(
-  `${dryRun ? "[dry-run] " : ""}Propagating ${canonical.length} B to ` +
-    `${consumers.length} consumers...\n`,
+  `${dryRun ? "[dry-run] " : ""}Asking ${consumers.length} consumers to ` +
+    `rebuild against the canonical #person...\n`,
 );
 
 const results = [];
 for (const consumer of consumers) {
   // Serially on purpose: a handful of calls, and a credential failure should
   // show up on the first one rather than on all of them at once.
-  results.push(await syncConsumer(consumer, owner, commitAuthor, canonical));
+  results.push(await dispatchConsumer(consumer, owner));
 }
 
 const ICON = {
-  updated: "✓",
-  "in sync": "·",
-  stale: "→",
+  dispatched: "✓",
+  "would dispatch": "·",
   "not published": "◦",
   error: "✗",
 };
