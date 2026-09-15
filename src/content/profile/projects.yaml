@@ -112,6 +112,23 @@ projects:
       - https://github.com/microsoft/winget-pkgs/tree/master/manifests/j/jmrplens/gitlab-mcp-server
       - https://hub.docker.com/r/jmrplens/gitlab-mcp-server
       - https://doi.org/10.5281/zenodo.21215045
+      # MCPBeat lists both servers. Its pages answer 200 to ordinary clients
+      # (checked from three external nodes on 2026-09-15), but not from this
+      # host: its Cloudflare rules serve us a challenge even from a headless
+      # browser, so the contents were never read from here.
+      - https://mcpbeat.com/mcp-servers/jmrplens/gitlab-mcp-server/
+      # mcpmetrics probes the LIVE endpoint, like VerifyMCP above, and
+      # publishes availability rather than a catalogue entry: 85 probes since
+      # 2026-09-08, all answered, 500 ms median (read 2026-09-15).
+      - https://mcpmetrics.io/servers/io-github-jmrplens-gitlab-mcp-server
+      # HVTracker scores trust signals instead of listing the server, and
+      # tracks only this one: its libgen-mcp page is a 404. Its evidence is not
+      # all correct, and the URL is kept knowing it: on 2026-09-15 it graded
+      # the project C partly on "no package-provenance attestation found",
+      # while the npm registry does report `dist.attestations` for
+      # @jmrp.io/gitlab-mcp-server@3.0.0. Their own "Suggest correction" link
+      # is the way to fix that.
+      - https://hvtracker.net/agents/gitlab-mcp-server/
     topics:
       - { name: Model Context Protocol, wikidata: Q133436854 }
       - { name: GitLab, wikidata: Q16639197 }
@@ -229,6 +246,12 @@ projects:
       # exactly what an alias is for.
       - https://mcptoplist.com/server/io.github.jmrplens%2Flibgen-mcp
       - https://hub.docker.com/r/jmrplens/libgen-mcp
+      # Same two as GitLab MCP Server above, where the notes are. HVTracker
+      # has no page for this one.
+      - https://mcpbeat.com/mcp-servers/jmrplens/libgen-mcp/
+      # 84 probes since 2026-09-08, all answered, 295 ms median, 4 tools read
+      # (2026-09-15).
+      - https://mcpmetrics.io/servers/io-github-jmrplens-libgen-mcp
     topics:
       - { name: Model Context Protocol, wikidata: Q133436854 }
       - { name: Library Genesis, wikidata: Q22017206 }
@@ -238,6 +261,30 @@ projects:
     summary:
       en: MCP server for federated search, citation and reading of books, research papers, comics, magazines and standards across the Library Genesis catalog and open-access sources. No account required.
       es: Servidor MCP para búsqueda federada, cita y lectura de libros, artículos de investigación, cómics, revistas y normas en el catálogo de Library Genesis y en fuentes de acceso abierto. Sin necesidad de cuenta.
+
+  # Published 2026-09-15 with its first tag. `name` and `summary.en` are
+  # verbatim the `#software` node its own site publishes, read from the live
+  # JSON-LD the day this was written.
+  - id: ghchronicle
+    name: ghchronicle
+    status: active
+    schemaType: SoftwareApplication
+    applicationCategory: DeveloperApplication
+    applicationSubCategory: Monitoring
+    language: Go
+    license: MIT
+    repo: https://github.com/jmrplens/ghchronicle
+    docs: https://jmrplens.github.io/ghchronicle/
+    docsEs: https://jmrplens.github.io/ghchronicle/es/
+    topics:
+      - { name: GitHub, wikidata: Q364 }
+      - { name: Time series, wikidata: Q186588 }
+      - { name: InfluxDB, wikidata: Q28127110 }
+      - { name: Grafana, wikidata: Q43399271 }
+      - { name: Go, wikidata: Q37227 }
+    summary:
+      en: Collects every metric GitHub exposes about an account and keeps it with the date it happened.
+      es: Recoge todas las métricas que GitHub expone sobre una cuenta y las guarda con la fecha en que ocurrieron.
 
   - id: TFG-TFM_EPS
     name: TFG-TFM_EPS

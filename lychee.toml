@@ -32,6 +32,14 @@ exclude = [
     # it is only the human-facing www host that refuses datacenter traffic.
     'https://www\.npmjs\.com/.*',
     'https://www\.iacr\.org/.*',
+    # MCPBeat is a third case again. It answers 403 to lychee from a GitHub
+    # runner AND to this server, browser user-agent and headless Chromium
+    # included, while plain HTTP clients on other networks get 200 (checked
+    # from three check-host nodes on 2026-09-15). So the pages are real and
+    # reachable for readers, and out of reach for anything automated, here
+    # or in CI. Kept in `sameAs` as an identity statement, excluded here
+    # because the checker can never confirm it.
+    'https://mcpbeat\.com/.*',
     'https://gitlab\.torproject\.org/.*',
     'https://www\.abuseipdb\.com/.*',
     # The 404 page legitimately answers 404; it is its own canonical. The

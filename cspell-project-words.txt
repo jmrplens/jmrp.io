@@ -483,6 +483,7 @@ habilítalo
 hace
 halten
 hardvard
+hvtracker
 hashcat
 hashrate
 headlesschrome
@@ -678,6 +679,8 @@ mbedtls
 mbpoll
 mbus
 mcafee
+mcpbeat
+mcpmetrics
 mcpservers
 mcpso
 mcptoplist

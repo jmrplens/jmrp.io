@@ -82,6 +82,13 @@ const DIRECTORIES: Readonly<Record<string, Directory>> = {
   // projects.yaml), so it gets its own mark.
   "verifymcp.io": { label: "VerifyMCP", icon: "mdi:check-decagram" },
 
+  // Two more that measure the running server rather than list the repository,
+  // so they sit with VerifyMCP and not with the catalogues below. Semantic
+  // marks, like VerifyMCP's and CrowdSec Hub's: neither publishes a vector
+  // brand mark, and what they DO is the useful thing to signal.
+  "mcpmetrics.io": { label: "mcpmetrics", icon: "mdi:speedometer" },
+  "hvtracker.net": { label: "HVTracker", icon: "mdi:shield-search" },
+
   // MCP catalogues. Each carries its own mark: Cursor's is in `simple-icons`,
   // the rest are in the local `vendored` collection because Iconify has none
   // of them (`thesvg` has Glama and LobeHub, but pulling a 3752-icon package
@@ -97,6 +104,9 @@ const DIRECTORIES: Readonly<Record<string, Directory>> = {
   "pulsemcp.com": { label: "PulseMCP", icon: "vendored:pulsemcp" },
   "pickmcp.com": { label: "PickMCP", icon: "vendored:pickmcp" },
   "mcpvault.io": { label: "MCP Vault", icon: "vendored:mcpvault" },
+  // No vector mark read from the site: its Cloudflare rules answer this host
+  // with a challenge, so it keeps a semantic glyph until someone can look.
+  "mcpbeat.com": { label: "MCPBeat", icon: "mdi:pulse" },
   // LobeHub ships an official monochrome-grayscale variant of its character in
   // its own MIT-licensed icon library, which keeps the eyes and mouth a
   // silhouette had thrown away. It is multi-tone, so unlike every other icon
