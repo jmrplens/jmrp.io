@@ -45,7 +45,7 @@ jobs:
       # died on `Cannot find package 'js-yaml'` before touching a consumer.
       - uses: ./.github/actions/setup
 
-      - name: Propagate the snapshot
+      - name: Dispatch the consumer builds
         env:
           IDENTITY_SYNC_TOKEN: ${{ secrets.IDENTITY_SYNC_TOKEN }}
         run: |
