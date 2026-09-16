@@ -188,6 +188,32 @@ projects:
       en: CrowdSec bouncer for MikroTik RouterOS — automatic firewall management via the RouterOS API
       es: Bouncer de CrowdSec para MikroTik RouterOS — gestión automática del firewall a través de la API de RouterOS
 
+  # Published 2026-09-16. `name` and `summary.en` are verbatim the `#software`
+  # node its own site publishes, read from the live JSON-LD the day this was
+  # written. No `listings`: at the time of writing the repository has no
+  # GitHub release and no published package, so there is nowhere to send a
+  # reader but the repository and the docs.
+  - id: mikroscope
+    name: mikroscope
+    status: active
+    schemaType: SoftwareApplication
+    applicationCategory: DeveloperApplication
+    applicationSubCategory: Monitoring
+    language: Go
+    license: MIT
+    repo: https://github.com/jmrplens/mikroscope
+    docs: https://jmrplens.github.io/mikroscope/
+    docsEs: https://jmrplens.github.io/mikroscope/es/
+    topics:
+      - { name: RouterOS, wikidata: Q12036888 }
+      - { name: MikroTik, wikidata: Q913580 }
+      - { name: Telemetry, wikidata: Q209867 }
+      - { name: Linux kernel, wikidata: Q14579 }
+      - { name: Go, wikidata: Q37227 }
+    summary:
+      en: Sub-second kernel telemetry from inside a MikroTik router, with the cost of the observer measured rather than claimed.
+      es: Telemetría del kernel con resolución de menos de un segundo desde dentro de un router MikroTik, con el coste del observador medido y no afirmado.
+
   - id: Cloudflare-DNS-Updater
     name: Cloudflare DNS Updater
     status: active
