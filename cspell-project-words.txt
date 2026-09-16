@@ -717,6 +717,7 @@ microservicios
 middlebox
 middleboxes
 mikro
+mikroscope
 mikrotik
 milisegundo
 milisegundos
