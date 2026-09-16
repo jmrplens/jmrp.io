@@ -190,9 +190,14 @@ projects:
 
   # Published 2026-09-16. `name` and `summary.en` are verbatim the `#software`
   # node its own site publishes, read from the live JSON-LD the day this was
-  # written. No `listings`: at the time of writing the repository has no
-  # GitHub release and no published package, so there is nowhere to send a
-  # reader but the repository and the docs.
+  # written.
+  #
+  # One listing, not three: v1.0.0 ships 44 release assets, but the only one
+  # that lives in a registry a reader can browse is the agent image. The
+  # binaries, their SPDX SBOMs and the sigstore signatures are attached to the
+  # release itself, which the repo link already reaches. A listing answers
+  # "how do I install this", and for a router that is the image the device
+  # pulls.
   - id: mikroscope
     name: mikroscope
     status: active
@@ -204,6 +209,10 @@ projects:
     repo: https://github.com/jmrplens/mikroscope
     docs: https://jmrplens.github.io/mikroscope/
     docsEs: https://jmrplens.github.io/mikroscope/es/
+    listings:
+      - label: GitHub Container Registry
+        url: https://github.com/jmrplens/mikroscope/pkgs/container/mikroscope-agent
+        icon: simple-icons:github
     topics:
       - { name: RouterOS, wikidata: Q12036888 }
       - { name: MikroTik, wikidata: Q913580 }
