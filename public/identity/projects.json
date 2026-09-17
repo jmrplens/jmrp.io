@@ -17,8 +17,8 @@
       "repo": "https://github.com/jmrplens/gitlab-mcp-server",
       "docs": "https://jmrplens.github.io/gitlab-mcp-server/",
       "docsEs": "https://jmrplens.github.io/gitlab-mcp-server/es/",
-      "description": "Model Context Protocol server that exposes 850+ GitLab actions as AI-accessible tools — 1,000+ depending on edition and deployment.",
-      "descriptionEs": "Servidor Model Context Protocol que expone más de 850 acciones de GitLab como herramientas accesibles para asistentes de IA — más de 1.000 según edición y despliegue.",
+      "description": "Model Context Protocol server that exposes more than 1,000 GitLab operations as AI-accessible tools.",
+      "descriptionEs": "Servidor Model Context Protocol que expone más de 1.000 operaciones de GitLab como herramientas accesibles para asistentes de IA.",
       "keywords": [
         "Model Context Protocol",
         "GitLab",
@@ -43,6 +43,13 @@
         "https://github.com/microsoft/winget-pkgs/tree/master/manifests/j/jmrplens/gitlab-mcp-server",
         "https://hub.docker.com/r/jmrplens/gitlab-mcp-server",
         "https://doi.org/10.5281/zenodo.21215045",
+        "https://pkg.go.dev/github.com/jmrplens/gitlab-mcp-server/v3",
+        "https://deps.dev/go/github.com%2Fjmrplens%2Fgitlab-mcp-server%2Fv2",
+        "https://libraries.io/go/github.com%2Fjmrplens%2Fgitlab-mcp-server",
+        "https://github.com/jmrplens/gitlab-mcp-server/pkgs/container/gitlab-mcp-server",
+        "https://smithery.ai/servers/jmrp/gitlab-mcp-server",
+        "https://mcpmarket.com/server/gitlab-32",
+        "https://enterprisedna.co/directories/mcp/jmrplens-gitlab-mcp-server",
         "https://mcpbeat.com/mcp-servers/jmrplens/gitlab-mcp-server/",
         "https://mcpmetrics.io/servers/io-github-jmrplens-gitlab-mcp-server",
         "https://hvtracker.net/agents/gitlab-mcp-server/"
@@ -63,8 +70,8 @@
       "repo": "https://github.com/jmrplens/phonometry",
       "docs": "https://jmrplens.github.io/phonometry/",
       "docsEs": "https://jmrplens.github.io/phonometry/es/",
-      "description": "Acoustic measurement, analysis and prediction for Python: sound level metrology, psychoacoustics, room and building acoustics, materials, vibration, environmental and transport noise, underwater acoustics, electroacoustics and wave simulation, with 995 CI-enforced conformance checks across 77 domains and 408 standards.",
-      "descriptionEs": "Medición, análisis y predicción acústica para Python: metrología de niveles sonoros, psicoacústica, acústica de salas y edificación, materiales, vibración, ruido ambiental y de transporte, acústica subacuática, electroacústica y simulación de ondas, con 995 comprobaciones de conformidad en CI sobre 77 dominios y 408 normas.",
+      "description": "Acoustic measurement, analysis and prediction for Python: sound level metrology, psychoacoustics, room and building acoustics, materials, vibration, environmental and transport noise, underwater acoustics, electroacoustics and wave simulation, with 1261 CI-enforced conformance checks across 87 domains and 461 standards.",
+      "descriptionEs": "Medición, análisis y predicción acústica para Python: metrología de niveles sonoros, psicoacústica, acústica de salas y edificación, materiales, vibración, ruido ambiental y de transporte, acústica subacuática, electroacústica y simulación de ondas, con 1261 comprobaciones de conformidad en CI sobre 87 dominios y 461 normas.",
       "keywords": [
         "Acoustics",
         "Signal processing",
@@ -196,6 +203,8 @@
         "https://mcpvault.io/servers/libgen-mcp",
         "https://mcptoplist.com/server/io.github.jmrplens%2Flibgen-mcp",
         "https://hub.docker.com/r/jmrplens/libgen-mcp",
+        "https://pkg.go.dev/github.com/jmrplens/libgen-mcp",
+        "https://smithery.ai/servers/@jmrp/libgen-mcp",
         "https://mcpbeat.com/mcp-servers/jmrplens/libgen-mcp/",
         "https://mcpmetrics.io/servers/io-github-jmrplens-libgen-mcp"
       ]

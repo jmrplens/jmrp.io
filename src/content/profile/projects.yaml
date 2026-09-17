@@ -28,7 +28,9 @@ type: projects
 #   Nothing enforces this rule: it drifted unnoticed from 2026-07-28 to
 #   2026-09-03, when phonometry's figures had moved 550/58/367 → 613/60/378,
 #   and again by 2026-09-11 (995/77/408, the figures its docs publish from
-#   4.0.0rc1 on; `node scripts/ci/check-software-drift.mjs` reports it).
+#   4.0.0rc1 on), and again by 2026-09-17 (1261/87/461). The checker
+#   `node scripts/ci/check-software-drift.mjs` is what reports it each time;
+#   nothing prevents it, so read that report rather than trusting this copy.
 #   Projects without a docs site use the repo/CV copy.
 # * `summary.es` is display-only. JSON-LD always emits `summary.en`, on both
 #   locales, because the software entity is language-neutral and its
@@ -114,6 +116,16 @@ projects:
       - https://github.com/microsoft/winget-pkgs/tree/master/manifests/j/jmrplens/gitlab-mcp-server
       - https://hub.docker.com/r/jmrplens/gitlab-mcp-server
       - https://doi.org/10.5281/zenodo.21215045
+      # Seven more its own site lists and this file lacked, found by
+      # check-software-drift.mjs. Each one requested before being written
+      # down. Package indexes for the Go module first, then the directories.
+      - https://pkg.go.dev/github.com/jmrplens/gitlab-mcp-server/v3
+      - https://deps.dev/go/github.com%2Fjmrplens%2Fgitlab-mcp-server%2Fv2
+      - https://libraries.io/go/github.com%2Fjmrplens%2Fgitlab-mcp-server
+      - https://github.com/jmrplens/gitlab-mcp-server/pkgs/container/gitlab-mcp-server
+      - https://smithery.ai/servers/jmrp/gitlab-mcp-server
+      - https://mcpmarket.com/server/gitlab-32
+      - https://enterprisedna.co/directories/mcp/jmrplens-gitlab-mcp-server
       # MCPBeat lists both servers. Its pages answer 200 to ordinary clients
       # (checked from three external nodes on 2026-09-15), but not from this
       # host: its Cloudflare rules serve us a challenge even from a headless
@@ -137,8 +149,8 @@ projects:
       - { name: Go, wikidata: Q37227 }
       - { name: DevOps, wikidata: Q3025536 }
     summary:
-      en: Model Context Protocol server that exposes 850+ GitLab actions as AI-accessible tools — 1,000+ depending on edition and deployment.
-      es: Servidor Model Context Protocol que expone más de 850 acciones de GitLab como herramientas accesibles para asistentes de IA — más de 1.000 según edición y despliegue.
+      en: Model Context Protocol server that exposes more than 1,000 GitLab operations as AI-accessible tools.
+      es: Servidor Model Context Protocol que expone más de 1.000 operaciones de GitLab como herramientas accesibles para asistentes de IA.
 
   - id: phonometry
     name: phonometry
@@ -166,8 +178,8 @@ projects:
       - { name: Octave band, wikidata: Q2270252 }
       - { name: Python, wikidata: Q28865 }
     summary:
-      en: "Acoustic measurement, analysis and prediction for Python: sound level metrology, psychoacoustics, room and building acoustics, materials, vibration, environmental and transport noise, underwater acoustics, electroacoustics and wave simulation, with 995 CI-enforced conformance checks across 77 domains and 408 standards."
-      es: "Medición, análisis y predicción acústica para Python: metrología de niveles sonoros, psicoacústica, acústica de salas y edificación, materiales, vibración, ruido ambiental y de transporte, acústica subacuática, electroacústica y simulación de ondas, con 995 comprobaciones de conformidad en CI sobre 77 dominios y 408 normas."
+      en: "Acoustic measurement, analysis and prediction for Python: sound level metrology, psychoacoustics, room and building acoustics, materials, vibration, environmental and transport noise, underwater acoustics, electroacoustics and wave simulation, with 1261 CI-enforced conformance checks across 87 domains and 461 standards."
+      es: "Medición, análisis y predicción acústica para Python: metrología de niveles sonoros, psicoacústica, acústica de salas y edificación, materiales, vibración, ruido ambiental y de transporte, acústica subacuática, electroacústica y simulación de ondas, con 1261 comprobaciones de conformidad en CI sobre 87 dominios y 461 normas."
 
   - id: cs-routeros-bouncer
     name: cs-routeros-bouncer
@@ -301,6 +313,12 @@ projects:
       # exactly what an alias is for.
       - https://mcptoplist.com/server/io.github.jmrplens%2Flibgen-mcp
       - https://hub.docker.com/r/jmrplens/libgen-mcp
+      # Two more its own site lists. The third it publishes, a
+      # registry.modelcontextprotocol.io SEARCH query, is deliberately not
+      # here: that registry is API-only, which is why this file states it as
+      # `registryId` above instead of pretending it is a page to visit.
+      - https://pkg.go.dev/github.com/jmrplens/libgen-mcp
+      - https://smithery.ai/servers/@jmrp/libgen-mcp
       # Same two as GitLab MCP Server above, where the notes are. HVTracker
       # has no page for this one.
       - https://mcpbeat.com/mcp-servers/jmrplens/libgen-mcp/
