@@ -135,6 +135,12 @@ overrides:
   # source file's dictionaries for the same reason.
   - filename: "public/identity/person.jsonld"
     language: es,en
+  # Same case, same reason: the canonical project list is GENERATED from
+  # profile/projects.yaml above and carries its `summary.es` verbatim as
+  # `descriptionEs`. Checked rather than ignored, because a generated file that
+  # nothing checks is where a typo in the source would go to hide.
+  - filename: "public/identity/projects.json"
+    language: es,en
   # OG image generator has per-locale (ES+EN) titles/subtitles/category labels
   - filename: "src/pages/og/**"
     language: es,en

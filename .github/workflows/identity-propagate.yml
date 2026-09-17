@@ -1,8 +1,10 @@
-# Propagates the canonical `#person` document to the sites that splice it in.
+# Propagates the canonical artifacts to the sites that read them: the `#person`
+# document every project site splices into its graph, and the project list the
+# documentation hub builds its own pages from.
 #
-# Fires ONLY when a push to `main` carries a diff in the canonical document: the
-# `paths` filter IS the condition, not a check performed afterwards, so a merge
-# that does not touch it costs no Actions time at all.
+# Fires ONLY when a push to `main` carries a diff in one of them: the `paths`
+# filter IS the condition, not a check performed afterwards, so a merge that
+# touches neither costs no Actions time at all.
 #
 # What it does lives in scripts/ci/propagate-identity.mjs: dispatch each
 # consumer's docs build. That is the whole job since 2026-09-15, when the
@@ -15,7 +17,7 @@ name: Identity propagation
 on:
   push:
     branches: [main]
-    paths: ["public/identity/person.jsonld"]
+    paths: ["public/identity/person.jsonld", "public/identity/projects.json"]
   workflow_dispatch:
     inputs:
       dry_run:
