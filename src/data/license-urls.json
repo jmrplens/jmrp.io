@@ -1,0 +1,8 @@
+{
+  "$comment": "SPDX identifier to canonical license URL. The ONE table: src/utils/license.ts, src/utils/projects.ts and scripts/ci/build-projects.mjs all read it, so a Node script that cannot import a .ts does not need its own copy. Same arrangement as knows-about-wikidata.json.",
+  "MIT": "https://opensource.org/licenses/MIT",
+  "GPL-3.0": "https://www.gnu.org/licenses/gpl-3.0.html",
+  "AGPL-3.0": "https://www.gnu.org/licenses/agpl-3.0.html",
+  "Apache-2.0": "https://www.apache.org/licenses/LICENSE-2.0",
+  "BSD-3-Clause": "https://opensource.org/licenses/BSD-3-Clause"
+}

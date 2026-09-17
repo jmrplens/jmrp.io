@@ -13,6 +13,7 @@
  * sweep in is the portrait, the one thing kept outside CC BY on purpose
  * precisely because that grant cannot be withdrawn.
  */
+import licenseUrls from "@data/license-urls.json";
 import type { Locale } from "@i18n/config";
 import { useTranslatedPath } from "@i18n/utils";
 import { getSiteUrl } from "@utils/site";
@@ -33,7 +34,7 @@ export const CC_BY_4_0 = "https://creativecommons.org/licenses/by/4.0/";
  * `/projects/` and the tool pages name one identifier rather than two spellings
  * of the same license that nothing keeps in step.
  */
-export const MIT_LICENSE = "https://opensource.org/licenses/MIT";
+export const MIT_LICENSE: string = licenseUrls.MIT;
 
 /** A section of the license page, addressable in either locale. */
 export type LicenseSection =
