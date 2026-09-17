@@ -249,6 +249,10 @@ async function runVerify() {
       command: "node scripts/ci/build-identity.mjs --check",
     },
     {
+      name: "Lint: Project list sync",
+      command: "node scripts/ci/build-projects.mjs --check",
+    },
+    {
       name: "Lint: Token sync",
       command: "node scripts/ci/check-token-sync.mjs",
     },

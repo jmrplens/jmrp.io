@@ -66,6 +66,8 @@ projects:
     license: MIT
     repo: https://github.com/jmrplens/gitlab-mcp-server
     docs: https://jmrplens.github.io/gitlab-mcp-server/
+    kicker: MCP server · AI tooling
+    operatingSystem: Linux, macOS, Windows
     docsEs: https://jmrplens.github.io/gitlab-mcp-server/es/
     hosted: https://mcp.jmrp.io/servers/gitlab/
     hostedEs: https://mcp.jmrp.io/es/servers/gitlab/
@@ -148,6 +150,8 @@ projects:
     license: MIT
     repo: https://github.com/jmrplens/phonometry
     docs: https://jmrplens.github.io/phonometry/
+    kicker: Acoustics · DSP
+    operatingSystem: Linux, macOS, Windows
     docsEs: https://jmrplens.github.io/phonometry/es/
     listings:
       - label: PyPI
@@ -174,6 +178,8 @@ projects:
     license: MIT
     repo: https://github.com/jmrplens/cs-routeros-bouncer
     docs: https://jmrplens.github.io/cs-routeros-bouncer/
+    kicker: Security · networking
+    operatingSystem: Linux, macOS, Windows, FreeBSD
     listings:
       - label: CrowdSec Hub
         url: https://app.crowdsec.net/hub/author/jmrplens/remediation-components/cs-routeros-bouncer
@@ -208,6 +214,8 @@ projects:
     license: MIT
     repo: https://github.com/jmrplens/mikroscope
     docs: https://jmrplens.github.io/mikroscope/
+    kicker: Telemetry · MikroTik RouterOS
+    operatingSystem: Linux, macOS, Windows
     docsEs: https://jmrplens.github.io/mikroscope/es/
     # Both registries carry the same agent image. ghcr goes first because it
     # is the pull the docs name, and the authored order is the rendered one.
@@ -241,6 +249,8 @@ projects:
     license: MIT
     repo: https://github.com/jmrplens/Cloudflare-DNS-Updater
     docs: https://jmrplens.github.io/Cloudflare-DNS-Updater/
+    kicker: Networking · DDNS
+    operatingSystem: Linux, macOS, BSD
     topics:
       - { name: Dynamic DNS, wikidata: Q1268848 }
       - { name: Cloudflare, wikidata: Q4778915 }
@@ -260,6 +270,8 @@ projects:
     license: MIT
     repo: https://github.com/jmrplens/libgen-mcp
     docs: https://jmrplens.github.io/libgen-mcp/
+    kicker: MCP server · AI tooling
+    operatingSystem: Linux, macOS, Windows
     hosted: https://mcp.jmrp.io/servers/libgen/
     hostedEs: https://mcp.jmrp.io/es/servers/libgen/
     endpoint: https://mcp.jmrp.io/libgen
@@ -318,6 +330,8 @@ projects:
     license: MIT
     repo: https://github.com/jmrplens/ghchronicle
     docs: https://jmrplens.github.io/ghchronicle/
+    kicker: Collector · GitHub observability
+    operatingSystem: Linux, macOS, Windows
     docsEs: https://jmrplens.github.io/ghchronicle/es/
     topics:
       - { name: GitHub, wikidata: Q364 }

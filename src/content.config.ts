@@ -733,6 +733,20 @@ const ProjectEntry = z.object({
   /** Spanish documentation, when the project publishes a translated site. */
   docsEs: z.url().optional(),
   /**
+   * Two fields that exist for the documentation hub on jmrplens.github.io,
+   * which consumes this list at build time the way the five project sites
+   * consume `#person`. They live here rather than there so that adding a
+   * project stays one edit in one repository.
+   *
+   * `kicker` is the short editorial label its card shows ("Security ·
+   * networking"), which nothing on jmrp.io renders; `operatingSystem` feeds
+   * the SoftwareApplication node that hub emits. Both are optional: a project
+   * whose documentation does not live on that host never reaches it, and the
+   * hub filters on exactly that.
+   */
+  kicker: z.string().optional(),
+  operatingSystem: z.string().optional(),
+  /**
    * Where a public, already-running instance of this software is documented
    * and can be tried (currently the MCP servers on mcp.jmrp.io). It points at
    * that page, NOT at the raw endpoint: the MCP endpoints answer 405 to the
