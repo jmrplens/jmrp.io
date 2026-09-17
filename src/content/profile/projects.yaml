@@ -209,17 +209,18 @@ projects:
     repo: https://github.com/jmrplens/mikroscope
     docs: https://jmrplens.github.io/mikroscope/
     docsEs: https://jmrplens.github.io/mikroscope/es/
+    # Both registries carry the same agent image. ghcr goes first because it
+    # is the pull the docs name, and the authored order is the rendered one.
+    # No `sameAs` for either: a listing URL is folded into the software
+    # entity's `sameAs` automatically, and repeating it here would state it
+    # twice.
     listings:
       - label: GitHub Container Registry
         url: https://github.com/jmrplens/mikroscope/pkgs/container/mikroscope-agent
         icon: simple-icons:github
-    # The same image, mirrored. It stays out of `listings` and in `sameAs`
-    # because the README documents one pull and it is the ghcr one: a rendered
-    # card link that sends a reader to the mirror would contradict the install
-    # instructions it sits next to. As an identity statement it is still true,
-    # which is what `sameAs` is for.
-    sameAs:
-      - https://hub.docker.com/r/jmrplens/mikroscope-agent
+      - label: Docker Hub
+        url: https://hub.docker.com/r/jmrplens/mikroscope-agent
+        icon: simple-icons:docker
     topics:
       - { name: RouterOS, wikidata: Q12036888 }
       - { name: MikroTik, wikidata: Q913580 }
