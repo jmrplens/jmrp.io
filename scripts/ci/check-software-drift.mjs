@@ -78,11 +78,13 @@ const projects = loadYaml(
   readFileSync(join(ROOT, "src/content/profile/projects.yaml"), "utf8"),
 ).projects;
 
-const LICENSE_URLS = {
-  MIT: "https://opensource.org/licenses/MIT",
-  "GPL-3.0": "https://www.gnu.org/licenses/gpl-3.0.html",
-  "AGPL-3.0": "https://www.gnu.org/licenses/agpl-3.0.html",
-};
+// The one table the site reads, shared rather than restated: this script
+// compares what each project's own site claims against what jmrp.io claims,
+// and a private copy of the answer is the last place that comparison should
+// get its expectations from. It also carried only three of the five ids.
+const LICENSE_URLS = JSON.parse(
+  readFileSync(join(ROOT, "src/data/license-urls.json"), "utf8"),
+);
 
 let contradictions = 0;
 let unreachable = 0;

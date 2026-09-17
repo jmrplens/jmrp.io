@@ -54,14 +54,16 @@ const ROOT = process.cwd();
 const SOURCE = path.join(ROOT, "src/content/profile/projects.yaml");
 const TARGET = path.join(ROOT, "public/identity/projects.json");
 
-/** SPDX id to canonical license URL. Mirrors `LICENSE_URLS` in @utils/projects. */
-const LICENSE_URLS = {
-  MIT: "https://opensource.org/license/mit",
-  "GPL-3.0": "https://www.gnu.org/licenses/gpl-3.0.html",
-  "AGPL-3.0": "https://www.gnu.org/licenses/agpl-3.0.html",
-  "Apache-2.0": "https://www.apache.org/licenses/LICENSE-2.0",
-  "BSD-3-Clause": "https://opensource.org/licenses/BSD-3-Clause",
-};
+/**
+ * SPDX id to canonical license URL, read from the one table the site reads.
+ *
+ * A .mjs script cannot import a .ts module, which is what used to justify a
+ * second copy here. It can read JSON, so there is one table and no copy to
+ * keep in step. `src/data/knows-about-wikidata.json` is shared the same way.
+ */
+const LICENSE_URLS = JSON.parse(
+  fs.readFileSync(path.join(ROOT, "src/data/license-urls.json"), "utf8"),
+);
 
 /**
  * Projects the YAML describes, in the authored order, as flat records.
