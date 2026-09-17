@@ -213,6 +213,13 @@ projects:
       - label: GitHub Container Registry
         url: https://github.com/jmrplens/mikroscope/pkgs/container/mikroscope-agent
         icon: simple-icons:github
+    # The same image, mirrored. It stays out of `listings` and in `sameAs`
+    # because the README documents one pull and it is the ghcr one: a rendered
+    # card link that sends a reader to the mirror would contradict the install
+    # instructions it sits next to. As an identity statement it is still true,
+    # which is what `sameAs` is for.
+    sameAs:
+      - https://hub.docker.com/r/jmrplens/mikroscope-agent
     topics:
       - { name: RouterOS, wikidata: Q12036888 }
       - { name: MikroTik, wikidata: Q913580 }
