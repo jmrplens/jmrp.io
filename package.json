@@ -113,7 +113,7 @@
     "he": "^1.2.0",
     "html-minifier-terser": "^7.2.0",
     "html-validate": "^11.15.0",
-    "js-yaml": "^5.4.1",
+    "js-yaml": "^5.4.2",
     "lighthouse": "^13.4.1",
     "mermaid-isomorphic": "^3.1.0",
     "opentype.js": "^2.0.0",
