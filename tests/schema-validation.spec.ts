@@ -1238,7 +1238,8 @@ test.describe("Post references", () => {
 
         // The graph and the visible bibliography are built from one list, so a
         // citation URL that is not also an href means they have drifted apart.
-        if (!hrefs.has(url)) orphanCitations.push(`${where} → ${url}`);
+        if (!hrefs.has(new URL(url, "https://jmrp.io/").href))
+          orphanCitations.push(`${where} → ${url}`);
       }
     }
 
