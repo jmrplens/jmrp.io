@@ -139,7 +139,9 @@
       "sameAs": [
         "https://github.com/jmrplens/mikroscope",
         "https://github.com/jmrplens/mikroscope/pkgs/container/mikroscope-agent",
-        "https://hub.docker.com/r/jmrplens/mikroscope-agent"
+        "https://hub.docker.com/r/jmrplens/mikroscope-agent",
+        "https://hub.docker.com/r/jmrplens/mikroscope",
+        "https://github.com/jmrplens/mikroscope/pkgs/container/mikroscope"
       ]
     },
     {
@@ -195,6 +197,8 @@
         "https://github.com/jmrplens/libgen-mcp",
         "https://www.npmjs.com/package/@jmrp.io/libgen-mcp",
         "https://glama.ai/mcp/servers/jmrplens/libgen-mcp",
+        "https://www.nuget.org/packages/libgen-mcp",
+        "https://pypi.org/project/libgen-mcp/",
         "https://cursor.directory/plugins/libgen-mcp",
         "https://lobehub.com/mcp/jmrplens-libgen-mcp",
         "https://mcp.so/servers/libgen-mcp-d62341",
@@ -234,7 +238,10 @@
         "Go"
       ],
       "sameAs": [
-        "https://github.com/jmrplens/ghchronicle"
+        "https://github.com/jmrplens/ghchronicle",
+        "https://github.com/jmrplens/ghchronicle/pkgs/container/ghchronicle",
+        "https://hub.docker.com/r/jmrplens/ghchronicle",
+        "https://github.com/marketplace/actions/ghchronicle"
       ]
     },
     {
