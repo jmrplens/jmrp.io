@@ -105,9 +105,17 @@ function stalePersonLines(nodes) {
     const ours = JSON.stringify(canonicalPerson[list] ?? []);
     const theirs = JSON.stringify(served[list] ?? []);
     if (ours !== theirs) {
+      // Same length with different contents is the usual case (a URL that
+      // changed spelling), so name the first entry the served copy lacks.
+      const servedSet = new Set([served[list] ?? []].flat().map(String));
+      const firstMissing = [canonicalPerson[list] ?? []]
+        .flat()
+        .map((entry) => (typeof entry === "string" ? entry : entry["@id"]))
+        .find((entry) => !servedSet.has(entry));
       lines.push(
         `#person ${list}: served ${(served[list] ?? []).length}, ` +
-          `canonical ${(canonicalPerson[list] ?? []).length}`,
+          `canonical ${(canonicalPerson[list] ?? []).length}` +
+          (firstMissing ? `, served copy lacks ${firstMissing}` : ""),
       );
     }
   }
