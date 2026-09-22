@@ -53,17 +53,16 @@ export function readDownloadsData(root) {
 
 /**
  * Age of the snapshot in milliseconds, from its own `generatedAt`, or
- * Infinity when there is no usable snapshot.
+ * undefined when there is no usable snapshot or no readable timestamp.
  *
  * @param {Record<string, unknown> | undefined} data - The parsed snapshot.
- * @returns {number} Milliseconds since it was generated.
+ * @returns {number | undefined} Milliseconds since it was generated.
  */
 export function snapshotAgeMs(data) {
-  const generatedAt =
-    data && typeof data.generatedAt === "string"
-      ? Date.parse(data.generatedAt)
-      : NaN;
-  return Number.isNaN(generatedAt) ? Infinity : Date.now() - generatedAt;
+  if (!data || typeof data.generatedAt !== "string") return;
+  const generatedAt = Date.parse(data.generatedAt);
+  if (Number.isNaN(generatedAt)) return;
+  return Date.now() - generatedAt;
 }
 
 /**
@@ -91,7 +90,7 @@ export async function refreshDownloadsFile({
 }) {
   const existing = readDownloadsData(root);
   const age = snapshotAgeMs(existing);
-  if (existing && age < maxAgeMs) {
+  if (existing && age !== undefined && age < maxAgeMs) {
     log(
       `  ✓ Reusing ${DOWNLOADS_DATA_PATH} written ${Math.round(age / 60_000)} min ago.`,
     );

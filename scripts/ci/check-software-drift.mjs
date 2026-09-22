@@ -210,8 +210,15 @@ for (const project of projects) {
   // libgen's docs). Either names the same entry; neither is missing from the
   // other (GEO audit #9, LOW).
   const registryHost = "registry.modelcontextprotocol.io";
+  const isRegistryUrl = (url) => {
+    try {
+      return new URL(url).hostname === registryHost;
+    } catch {
+      return false;
+    }
+  };
   const missing = [...theirAliases.difference(ourAliases)].filter(
-    (url) => !(project.registryId && url.includes(registryHost)),
+    (url) => !(project.registryId && isRegistryUrl(url)),
   );
 
   if (diffs.length === 0 && missing.length === 0 && personLines.length === 0) {

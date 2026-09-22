@@ -400,7 +400,22 @@ function resolveNuGetSearch() {
         typeof r["@id"] === "string",
     );
     if (!service) throw new Error("NuGet service index: no SearchQueryService");
-    return service["@id"];
+    // The endpoint comes from a document fetched over the network: accept it
+    // only on NuGet's own hosts over HTTPS, so a tampered index cannot point
+    // the build at an arbitrary server.
+    const endpoint = new URL(service["@id"]);
+    if (
+      endpoint.protocol !== "https:" ||
+      !(
+        endpoint.hostname === "nuget.org" ||
+        endpoint.hostname.endsWith(".nuget.org")
+      )
+    ) {
+      throw new Error(
+        `NuGet service index: unexpected search host ${endpoint.hostname}`,
+      );
+    }
+    return endpoint.href;
   })();
   // Don't cache a rejection: a later caller should be able to retry.
   nugetSearch.catch(() => {

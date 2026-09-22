@@ -27,7 +27,9 @@ import { fetchGitHubProfile, fetchOwnerStars } from "./github";
 
 /** The figures the placeholders resolve to, already formatted for prose. */
 export interface SiteFacts {
+  /** Public repositories of the account, forks included, or a dash. */
   publicRepos: string;
+  /** Stargazers summed over the account's public repositories, or a dash. */
   stars: string;
 }
 
