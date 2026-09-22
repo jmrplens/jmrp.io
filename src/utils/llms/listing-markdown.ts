@@ -421,6 +421,7 @@ export async function generateSeriesMarkdown(
     "",
     t(key("limits1")),
     "",
+    ...pageFaqLines(await getPageFaq(`/blog/series/${slug}/`, locale), locale),
     `## ${WORDS.otherSeries[locale]}`,
     "",
     ...SERIES.filter((other) => other.slug !== slug).map((other) => {
