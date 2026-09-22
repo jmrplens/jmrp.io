@@ -102,9 +102,6 @@ projects:
       - https://lobehub.com/mcp/jmrplens-gitlab-mcp-server
       - https://www.pulsemcp.com/servers/jmrplens-gitlab
       - https://mcpservers.org/servers/jmrplens/gitlab-mcp-server
-      # VerifyMCP audits the LIVE endpoint (mcp.jmrp.io/gitlab), not the repo,
-      # and publishes its own SoftwareApplication node for this server.
-      - https://verifymcp.io/servers/jmrplens-gitlab-mcp-server/gitlab
       - https://pickmcp.com/servers/jmrplens/gitlab-mcp-server
       - https://mcpvault.io/servers/gitlab-mcp-server
       # MCP Toplist keys its pages by MCP Registry name, so the slug is the
@@ -131,10 +128,6 @@ projects:
       # host: its Cloudflare rules serve us a challenge even from a headless
       # browser, so the contents were never read from here.
       - https://mcpbeat.com/mcp-servers/jmrplens/gitlab-mcp-server/
-      # mcpmetrics probes the LIVE endpoint, like VerifyMCP above, and
-      # publishes availability rather than a catalogue entry: 85 probes since
-      # 2026-09-08, all answered, 500 ms median (read 2026-09-15).
-      - https://mcpmetrics.io/servers/io-github-jmrplens-gitlab-mcp-server
       # HVTracker scores trust signals instead of listing the server, and
       # tracks only this one: its libgen-mcp page is a 404. Its evidence is not
       # all correct, and the URL is kept knowing it: on 2026-09-15 it graded
@@ -143,6 +136,16 @@ projects:
       # @jmrp.io/gitlab-mcp-server@3.0.0. Their own "Suggest correction" link
       # is the way to fix that.
       - https://hvtracker.net/agents/gitlab-mcp-server/
+    # These describe the running instance at `endpoint`, not the program: they
+    # alias the `<endpoint>#api` node, which mcp.jmrp.io publishes in full.
+    endpointSameAs:
+      # VerifyMCP audits the LIVE endpoint (mcp.jmrp.io/gitlab) and publishes
+      # its own node for this server.
+      - https://verifymcp.io/servers/jmrplens-gitlab-mcp-server/gitlab
+      # mcpmetrics probes the LIVE endpoint and publishes availability rather
+      # than a catalogue entry: 85 probes since 2026-09-08, all answered,
+      # 500 ms median (read 2026-09-15).
+      - https://mcpmetrics.io/servers/io-github-jmrplens-gitlab-mcp-server
     topics:
       - { name: Model Context Protocol, wikidata: Q133436854 }
       - { name: GitLab, wikidata: Q16639197 }
@@ -314,9 +317,6 @@ projects:
       - https://lobehub.com/mcp/jmrplens-libgen-mcp
       # The real slug carries a suffix; /server/libgen-mcp/jmrplens is a 404.
       - https://mcp.so/servers/libgen-mcp-d62341
-      # VerifyMCP audits the LIVE endpoint (mcp.jmrp.io/libgen). Canonical URL
-      # carries the transport segment; the bare /servers/<slug> path 302s here.
-      - https://verifymcp.io/servers/jmrplens-libgen-mcp/libgen
       - https://pickmcp.com/servers/jmrplens/libgen-mcp
       - https://mcpvault.io/servers/libgen-mcp
       # Same percent-encoded `registryId` slug as the GitLab server above. It
@@ -334,8 +334,13 @@ projects:
       # Same two as GitLab MCP Server above, where the notes are. HVTracker
       # has no page for this one.
       - https://mcpbeat.com/mcp-servers/jmrplens/libgen-mcp/
-      # 84 probes since 2026-09-08, all answered, 295 ms median, 4 tools read
-      # (2026-09-15).
+    # Same split as the GitLab server: these describe the running instance.
+    endpointSameAs:
+      # VerifyMCP audits the LIVE endpoint (mcp.jmrp.io/libgen). Canonical URL
+      # carries the transport segment; the bare /servers/<slug> path 302s here.
+      - https://verifymcp.io/servers/jmrplens-libgen-mcp/libgen
+      # mcpmetrics: 84 probes since 2026-09-08, all answered, 295 ms median,
+      # 4 tools read (2026-09-15).
       - https://mcpmetrics.io/servers/io-github-jmrplens-libgen-mcp
     topics:
       - { name: Model Context Protocol, wikidata: Q133436854 }

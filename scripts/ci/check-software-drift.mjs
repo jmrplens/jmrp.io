@@ -193,6 +193,9 @@ for (const project of projects) {
     project.repo,
     ...(project.listings ?? []).map((listing) => listing.url),
     ...(project.sameAs ?? []),
+    // Endpoint aliases sit on the `#api` node here; a docs site that keeps
+    // them on `#software` is not missing anything jmrp.io lacks.
+    ...(project.endpointSameAs ?? []),
   ]);
   // The MCP Registry has no permalink per server, so the two sites spell its
   // alias differently (the `/versions` resource here, a `?search=` query on

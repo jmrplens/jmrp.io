@@ -816,6 +816,13 @@ const ProjectEntry = z.object({
     .optional(),
   /** Extra canonical URLs for the software entity (registries, PyPI, DOI). */
   sameAs: z.array(z.url()).optional(),
+  /**
+   * Pages that describe the RUNNING endpoint (`endpoint`), not the program:
+   * uptime probes, live audits. They are `sameAs` of the `<endpoint>#api`
+   * node mcp.jmrp.io publishes, which /projects/ restates as a partial node,
+   * and never of `#software` (GEO audit #9). Only meaningful with `endpoint`.
+   */
+  endpointSameAs: z.array(z.url()).optional(),
   topics: z.array(ProjectTopic).min(1),
   summary: LocalizedString,
 });

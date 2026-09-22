@@ -105,6 +105,7 @@ function toRecords(raw) {
       ...(p.listings ?? []).map((l) => l.url),
       ...(p.sameAs ?? []),
     ],
+    ...(p.endpointSameAs && { endpointSameAs: p.endpointSameAs }),
   }));
 }
 

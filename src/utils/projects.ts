@@ -62,6 +62,8 @@ export interface Project {
   /** Third-party listings: rendered as card links AND folded into `sameAs`. */
   listings?: { label: string; url: string; icon: string }[];
   sameAs?: string[];
+  /** Pages describing the running endpoint; `sameAs` of `<endpoint>#api`. */
+  endpointSameAs?: string[];
   topics: ProjectTopic[];
   summary: { en: string; es: string };
 }

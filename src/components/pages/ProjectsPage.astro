@@ -27,8 +27,9 @@ import {
   getProjects,
   hostedHref,
   licenseUrl,
-  type Project,
+  mcpApiId,
   softwareId,
+  type Project,
 } from "@utils/projects";
 import { getSiteUrl } from "@utils/site";
 import { getEntry } from "astro:content";
@@ -193,7 +194,26 @@ const projectsPageSchema = {
   },
 } satisfies CollectionPage;
 
-const schema = [projectsPageSchema, ...projects.map(buildProjectSchema)];
+// The pages that describe a RUNNING endpoint (uptime probes, live audits)
+// alias the `<endpoint>#api` node mcp.jmrp.io publishes, not the program:
+// restated here as a partial node that merges with it by @id, so the
+// aliases stop hanging off `#software` (GEO audit #9, LOW).
+const apiAliasNodes = projects
+  .filter(
+    (project) =>
+      typeof project.endpoint === "string" &&
+      (project.endpointSameAs?.length ?? 0) > 0,
+  )
+  .map((project) => ({
+    "@type": ["WebAPI", "SoftwareApplication"],
+    "@id": mcpApiId(project.endpoint as string),
+    sameAs: project.endpointSameAs,
+  }));
+const schema = [
+  projectsPageSchema,
+  ...projects.map(buildProjectSchema),
+  ...apiAliasNodes,
+];
 
 const groups = [
   {
