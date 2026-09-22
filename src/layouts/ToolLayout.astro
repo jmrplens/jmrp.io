@@ -13,8 +13,13 @@
  */
 import FAQ from "@components/ui/FAQ.astro";
 import { defaultLocale, type Locale } from "@i18n/config";
-import { useTranslatedPath, useTranslations } from "@i18n/utils";
+import {
+  stripLocalePrefix,
+  useTranslatedPath,
+  useTranslations,
+} from "@i18n/utils";
 import BaseLayout from "@layouts/BaseLayout.astro";
+import { pageLastmod } from "@src/integrations/sitemap-post-dates";
 import { CC_BY_4_0, licensePageUrl, MIT_LICENSE } from "@utils/license";
 import { getSiteUrl } from "@utils/site";
 import type { CollectionEntry } from "astro:content";
@@ -98,6 +103,23 @@ const toolTranslationLink =
   locale === "es"
     ? { translationOfWork: { "@id": `${counterpartToolUrl}#software` } }
     : { workTranslation: { "@id": `${counterpartToolUrl}#software` } };
+// The application node's `dateModified` is the page's derived date, not the
+// frontmatter's. `updatedDate` is a floor the author types; the resolver the
+// sitemap and BaseHead's page node use folds in the last substantive commit
+// to the MDX and to the app component it imports. Reading the frontmatter here
+// left the graph with two dates for one tool: the WebPage said 2026-09-11 (the
+// day the WireGuard generator's key derivation changed) while the
+// SoftwareApplication, the node that IS the tool, said 2026-06-23 (GEO audit
+// #9, M5). The later of the two wins so the floor still holds.
+const pagePath = stripLocalePrefix(Astro.url.pathname) || "/";
+const derivedModified = pageLastmod(pagePath, locale);
+const floorModified = (updatedDate ?? publishedDate)?.toISOString();
+// ISO 8601 strings order lexically, so the latest is the last one sorted.
+const softwareModified = [derivedModified, floorModified]
+  .filter((date): date is string => typeof date === "string")
+  .sort((a, b) => a.localeCompare(b))
+  .at(-1);
+
 // `@context` is intentionally omitted: this node is merged into the page-level
 // JSON-LD `@graph`, which already declares the context.
 const baseToolSchema = {
@@ -132,7 +154,7 @@ const baseToolSchema = {
   ...(features && features.length > 0 && { featureList: features }),
   ...(publishedDate && {
     datePublished: publishedDate.toISOString(),
-    dateModified: (updatedDate ?? publishedDate).toISOString(),
+    dateModified: softwareModified,
   }),
 } satisfies SoftwareApplication;
 const toolSchema = { ...baseToolSchema, ...extraSchema };
