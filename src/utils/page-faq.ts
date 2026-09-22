@@ -17,6 +17,7 @@ import { getEntry } from "astro:content";
 import type { FAQPage } from "schema-dts";
 
 import { CATEGORY_ORDER, categoryName } from "./llms/tool-categories";
+import { fillSiteFacts, getSiteFacts } from "./site-facts";
 
 /** One question with its answer, as the page states it. */
 export interface FaqItem {
@@ -82,7 +83,17 @@ export async function getPageFaq(
 
   const entry = await getEntry("page_faq", locale);
   const page = entry?.data.pages.find((p) => p.path === path);
-  return page ? { visible: page.visible, items: page.items } : undefined;
+  if (!page) return undefined;
+  // Answers may quote the figures site-facts.ts derives; fill them here so the
+  // visible section, the FAQPage node and the twin all read the same number.
+  const siteFacts = await getSiteFacts();
+  return {
+    visible: page.visible,
+    items: page.items.map((item) => ({
+      ...item,
+      answer: fillSiteFacts(item.answer, siteFacts),
+    })),
+  };
 }
 
 /**

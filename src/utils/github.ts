@@ -97,6 +97,37 @@ export async function fetchGitHubProfile(): Promise<GitHubProfile> {
 }
 
 /**
+ * Sums the stargazers of every public repository the configured user owns.
+ *
+ * One page of 100 covers the account (51 repositories on 2026-09-22); the
+ * loop is there so a second page is never silently dropped. Returns 0 when
+ * the API cannot be read, which callers render as a dash, never as "0 stars".
+ *
+ * @returns The star total, or 0 when unavailable.
+ */
+export async function fetchOwnerStars(): Promise<number> {
+  const headers = getGitHubHeaders();
+  let total = 0;
+  try {
+    for (let page = 1; page <= 5; page++) {
+      const res = await fetch(
+        `https://api.github.com/users/${USERNAME}/repos?type=owner&per_page=100&page=${page}`,
+        { headers },
+      );
+      if (!res.ok) throw new Error(`GitHub API error: ${res.status}`);
+      const repos = (await res.json()) as GitHubRepo[];
+      for (const repo of repos) total += repo.stargazers_count ?? 0;
+      if (repos.length < 100) break;
+    }
+    return total;
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    console.warn(`Failed to fetch the star total: ${errorMessage}`);
+    return 0;
+  }
+}
+
+/**
  * Fetches specific repositories by name for the configured user.
  * Deduplicates names and batches requests to be respectful of API limits.
  */
