@@ -8,9 +8,7 @@
  * @module
  */
 
-import path from "node:path";
 import process from "node:process";
-import { fileURLToPath } from "node:url";
 
 import {
   DOWNLOAD_SOURCES,
@@ -20,11 +18,12 @@ import {
 } from "../download-sources.mjs";
 import { readDownloadsData } from "../refresh-downloads.mjs";
 
-const ROOT = path.resolve(
-  path.dirname(fileURLToPath(import.meta.url)),
-  "..",
-  "..",
-);
+// The repository root is the working directory, not a path derived from this
+// file's URL: inside the Astro build this module is bundled into a chunk
+// under the output directory, and a root resolved from there found no
+// snapshot, so /cv/ fell back to live figures (~115k) while the PDFs, built
+// by plain Node with the right root, read the snapshot (~116k).
+const ROOT = process.cwd();
 
 /**
  * The downloads snapshot the site renders from, read once per process.
