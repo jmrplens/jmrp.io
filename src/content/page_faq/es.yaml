@@ -14,7 +14,7 @@ pages:
     visible: true
     items:
       - question: ¿Quién es José Manuel Requena Plens?
-        answer: "Ingeniero de firmware y software en Valencia, con base en I+D en acústica: Ingeniería de Telecomunicación, Máster en Ingeniería Acústica y cuatro años de investigación predoctoral en la UPV (2019–2023). Entre 2023 y 2026 desarrolló firmware embebido industrial en C sobre STM32 y FreeRTOS para inversores solares y baterías, y mantiene 44 repositorios públicos en GitHub."
+        answer: "Ingeniero de firmware y software en Valencia, con base en I+D en acústica: Ingeniería de Telecomunicación, Máster en Ingeniería Acústica y cuatro años de investigación predoctoral en la UPV (2019–2023). Entre 2023 y 2026 desarrolló firmware embebido industrial en C sobre STM32 y FreeRTOS para inversores solares y baterías, y mantiene {publicRepos} repositorios públicos en GitHub."
       - question: ¿Qué software mantiene?
         answer: "Varios servidores Model Context Protocol en Go (entre ellos gitlab-mcp-server, que expone más de 850 acciones de GitLab, y libgen-mcp), phonometry (biblioteca de acústica para Python conforme a normas), cs-routeros-bouncer (bouncer de CrowdSec para MikroTik RouterOS), Cloudflare-DNS-Updater, las 17 herramientas de navegador de este sitio y Kleidos, un gestor de contraseñas hardware en C++ con ocho variantes para dispositivos distintos, cada uno con su pantalla y sus botones, y el origen de la serie de firmware de este blog."
 
@@ -26,7 +26,7 @@ pages:
       - question: ¿Cuáles de estos proyectos se pueden usar sin instalar nada?
         answer: "Los servidores MCP: gitlab-mcp-server en https://mcp.jmrp.io/gitlab y libgen-mcp en https://mcp.jmrp.io/libgen son endpoints públicos a los que puede apuntar cualquier cliente MCP."
       - question: ¿Dónde están publicados los servidores MCP?
-        answer: "gitlab-mcp-server en npm (@jmrp.io/gitlab-mcp-server), PyPI (jmrplens-gitlab-mcp-server), NuGet (gitlab-mcp-server), Docker Hub, WinGet y el registro MCP oficial; libgen-mcp en npm (@jmrp.io/libgen-mcp), Docker Hub y el registro MCP."
+        answer: "gitlab-mcp-server en npm (@jmrp.io/gitlab-mcp-server), PyPI (jmrplens-gitlab-mcp-server), NuGet (gitlab-mcp-server), Docker Hub, WinGet y el registro MCP oficial; libgen-mcp en npm (@jmrp.io/libgen-mcp), PyPI (libgen-mcp), NuGet (libgen-mcp), Docker Hub y el registro MCP."
 
   - path: /cv/
     visible: true

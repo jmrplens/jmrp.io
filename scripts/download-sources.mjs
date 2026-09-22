@@ -31,8 +31,8 @@ export const OWNER = "jmrplens";
  * Docker Hub image; `nuget` sums the lifetime `totalDownloads` of each NuGet
  * package id.
  *
- * `nuget` names ONLY the meta package. The GitLab server publishes seven ids —
- * `gitlab-mcp-server` plus one per runtime identifier — and a single
+ * `nuget` names ONLY the meta package. The GitLab server and libgen-mcp each
+ * publish seven ids, the meta package plus one per runtime identifier, and a single
  * `dotnet tool install` pulls the meta package AND exactly one runtime
  * package, so summing all seven would count one install at least twice. The
  * meta id is the one a reader installs and the only one that answers the
@@ -85,7 +85,20 @@ export const DOWNLOAD_SOURCES = {
     // npm (see the note above), so no scope or prefix is needed to name it.
     nuget: ["gitlab-mcp-server"],
   },
-  "libgen-mcp": { releases: true, docker: [`${OWNER}/libgen-mcp`] },
+  "libgen-mcp": {
+    releases: true,
+    docker: [`${OWNER}/libgen-mcp`],
+    // Same `dotnet tool` arrangement as the GitLab server since 2026-09-19:
+    // one meta package plus one id per runtime, so only the meta id counts.
+    nuget: ["libgen-mcp"],
+  },
+  // Two images: the in-router agent, which is the one a reader installs, and
+  // the CLI that talks to it. Both are pulls of this project.
+  mikroscope: {
+    releases: true,
+    docker: [`${OWNER}/mikroscope-agent`, `${OWNER}/mikroscope`],
+  },
+  ghchronicle: { releases: true, docker: [`${OWNER}/ghchronicle`] },
   "cs-routeros-bouncer": { releases: true, docker: [] },
   // No releases yet (the first is in the making) — listed so the count starts
   // being picked up the moment one is published, with no edit here.

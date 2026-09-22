@@ -241,6 +241,10 @@ projects:
       - label: Docker Hub
         url: https://hub.docker.com/r/jmrplens/mikroscope-agent
         icon: simple-icons:docker
+    sameAs:
+      # The CLI that talks to the agent, shipped as its own image.
+      - https://hub.docker.com/r/jmrplens/mikroscope
+      - https://github.com/jmrplens/mikroscope/pkgs/container/mikroscope
     topics:
       - { name: RouterOS, wikidata: Q12036888 }
       - { name: MikroTik, wikidata: Q913580 }
@@ -297,7 +301,15 @@ projects:
       - label: Glama
         url: https://glama.ai/mcp/servers/jmrplens/libgen-mcp
         icon: mdi:view-grid-outline
+      # `dotnet tool install libgen-mcp`, published 2026-09-19 with the same
+      # meta-plus-runtimes layout as the GitLab server's package.
+      - label: NuGet
+        url: https://www.nuget.org/packages/libgen-mcp
+        icon: simple-icons:nuget
     sameAs:
+      # PyPI ships the same binary for Python toolchains (`pip` and `uv`),
+      # also since 2026-09-19; the three rendered slots are taken.
+      - https://pypi.org/project/libgen-mcp/
       - https://cursor.directory/plugins/libgen-mcp
       - https://lobehub.com/mcp/jmrplens-libgen-mcp
       # The real slug carries a suffix; /server/libgen-mcp/jmrplens is a 404.
@@ -351,6 +363,16 @@ projects:
     kicker: Collector · GitHub observability
     operatingSystem: Linux, macOS, Windows
     docsEs: https://jmrplens.github.io/ghchronicle/es/
+    listings:
+      - label: GitHub Container Registry
+        url: https://github.com/jmrplens/ghchronicle/pkgs/container/ghchronicle
+        icon: simple-icons:github
+      - label: Docker Hub
+        url: https://hub.docker.com/r/jmrplens/ghchronicle
+        icon: simple-icons:docker
+      - label: GitHub Marketplace
+        url: https://github.com/marketplace/actions/ghchronicle
+        icon: simple-icons:githubactions
     topics:
       - { name: GitHub, wikidata: Q364 }
       - { name: Time series, wikidata: Q186588 }
