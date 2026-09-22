@@ -375,6 +375,15 @@ export async function fetchDockerHubPulls(slug) {
  */
 const NUGET_SERVICE_INDEX = "https://api.nuget.org/v3/index.json";
 
+/**
+ * The `SearchQueryService` endpoints NuGet's index has advertised (read
+ * 2026-09-22): the one the index names is used, the first is the fallback.
+ */
+const NUGET_SEARCH_ENDPOINTS = [
+  "https://azuresearch-usnc.nuget.org/query",
+  "https://azuresearch-ussc.nuget.org/query",
+];
+
 /** @type {Promise<string> | undefined} Resolved search endpoint, once per process. */
 let nugetSearch;
 
@@ -400,22 +409,15 @@ function resolveNuGetSearch() {
         typeof r["@id"] === "string",
     );
     if (!service) throw new Error("NuGet service index: no SearchQueryService");
-    // The endpoint comes from a document fetched over the network: accept it
-    // only on NuGet's own hosts over HTTPS, so a tampered index cannot point
-    // the build at an arbitrary server.
-    const endpoint = new URL(service["@id"]);
-    if (
-      endpoint.protocol !== "https:" ||
-      !(
-        endpoint.hostname === "nuget.org" ||
-        endpoint.hostname.endsWith(".nuget.org")
-      )
-    ) {
-      throw new Error(
-        `NuGet service index: unexpected search host ${endpoint.hostname}`,
-      );
-    }
-    return endpoint.href;
+    // The endpoint comes from a document fetched over the network, so it is
+    // never used as such: the index only selects one of the endpoints this
+    // file knows, and the request goes to that literal. An index advertising
+    // an unknown host cannot point the build anywhere.
+    const advertised = String(service["@id"]).replace(/\/$/, "");
+    return (
+      NUGET_SEARCH_ENDPOINTS.find((known) => known === advertised) ??
+      NUGET_SEARCH_ENDPOINTS[0]
+    );
   })();
   // Don't cache a rejection: a later caller should be able to retry.
   nugetSearch.catch(() => {

@@ -123,7 +123,10 @@ export async function refreshDownloadsFile({
     return { data, refreshed: true };
   } catch (error) {
     if (!existing) throw error;
-    const message = error instanceof Error ? error.message : String(error);
+    // One line, whatever the network put in the message.
+    const message = (
+      error instanceof Error ? error.message : String(error)
+    ).replaceAll(/[\r\n\t]+/g, " ");
     warn(
       `Could not refresh download totals (${message}). Keeping the existing ${DOWNLOADS_DATA_PATH}.`,
     );
