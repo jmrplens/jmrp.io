@@ -42,6 +42,10 @@
       "dispatchWorkflow": "docs.yml"
     },
     {
+      "repo": "mikroscope",
+      "dispatchWorkflow": "docs.yml"
+    },
+    {
       "repo": "ghchronicle",
       "dispatchWorkflow": "docs.yml"
     },
