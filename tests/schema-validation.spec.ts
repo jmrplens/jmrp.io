@@ -1208,9 +1208,12 @@ test.describe("Post references", () => {
       pagesWithCitations++;
       totalCitations += citations.length;
 
+      // Resolved against the site, because the graph publishes absolute
+      // URLs for internal references while the page keeps them relative
+      // (GEO audit #9: a node is read out of context, an anchor is not).
       const hrefs = new Set(
-        [...html.matchAll(/<a\b[^>]*?href="([^"]*)"/g)].map((m) =>
-          decodeHref(m[1]),
+        [...html.matchAll(/<a\b[^>]*?href="([^"]*)"/g)].map(
+          (m) => new URL(decodeHref(m[1]), "https://jmrp.io/").href,
         ),
       );
 
