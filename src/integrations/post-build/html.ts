@@ -573,7 +573,10 @@ function addIntegrity(
   hashCache: Map<string, string>,
 ): boolean {
   if (isSriEligible($el, type) && !$el.attr("integrity")) {
-    if (url.endsWith("cf-beacon.js")) return false;
+    // cf-beacon.js used to be skipped here. It is hardened at the start of
+    // this pass, before any page is read, so its bytes are final by the time
+    // a tag is hashed; the one same-origin script without SRI was the one
+    // that talks to a third party (GEO audit #9, LOW).
     const filePath = resolveFile(url, path.dirname(file), distDir);
     if (filePath) {
       const hash = getFileHash(filePath, hashCache);

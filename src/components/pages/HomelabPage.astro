@@ -242,6 +242,9 @@ const servicesSchema = {
     cssSelector: [".page-title", ".homelab-hero__intro"],
   },
   "@id": new URL("#collection", new URL(Astro.url.pathname, getSiteUrl())).href,
+  // `url` is what BaseHead matches to inject the page's derived
+  // `dateModified`; without it the node carried neither (GEO audit #9, LOW).
+  url: new URL(Astro.url.pathname, getSiteUrl()).href,
   name: t("pages.homelab.schemaName"),
   inLanguage: locale,
   isPartOf: { "@id": new URL("#website", getSiteUrl()).href },

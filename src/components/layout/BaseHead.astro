@@ -375,6 +375,10 @@ const websiteSchema = {
       contentUrl: new URL(CANONICAL_PERSON_IMAGE.path, getSiteUrl()).href,
       creator: { "@id": new URL("#person", getSiteUrl()).href },
       creditText: siteData.author,
+      // The person who owns the portrait's rights, next to the person who is
+      // credited for it; the two are the same here, and a reader that checks
+      // `copyrightHolder` before reusing an image found nothing (GEO audit #9).
+      copyrightHolder: { "@id": new URL("#person", getSiteUrl()).href },
       copyrightNotice: `© ${siteData.author}`,
       // The two license fields Search Console reports as missing once a node
       // carries creator/creditText/copyrightNotice: `license` states the terms,

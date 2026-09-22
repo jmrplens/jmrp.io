@@ -26,6 +26,7 @@ import { load as parseYaml } from "js-yaml";
 
 import { lastCommitDate } from "../utils/content-date.js";
 import { postDateModified } from "../utils/post-dates.js";
+import { getSeries } from "../utils/series.js";
 
 // Anchored to the process CWD rather than to `import.meta.url`: Astro bundles
 // this module into an SSR chunk whose `import.meta.url` points at the build
@@ -360,8 +361,25 @@ export function createLastmodResolver(): (
     // and over-reporting within the same corpus is far cheaper than the build
     // clock this replaces.
     if (path === "/blog/" || path.startsWith("/blog/tags/")) return newestPost;
-    if (path === "/blog/series/" || path.startsWith("/blog/series/"))
-      return newestPost;
+    // A series hub lists ITS posts, so it is modified when one of them is, not
+    // when any post is: dated by the newest post, every edit to any post
+    // restamped all the hubs and resubmitted them to IndexNow with an
+    // unchanged body (GEO audit #9, LOW). The index of series still lists
+    // every series, so the newest post is the right date for it.
+    const seriesSlug = /^\/blog\/series\/([^/]+)\/?$/.exec(path)?.[1];
+    if (seriesSlug) {
+      const series = getSeries(seriesSlug);
+      if (series) {
+        const dates: (string | undefined)[] = [];
+        for (const [key, iso] of postDates) {
+          const slug = key.replace(/^[a-z]{2}\//, "");
+          if (series.posts.some((prefix) => slug.startsWith(`${prefix}-`)))
+            dates.push(iso);
+        }
+        return newest(...dates);
+      }
+    }
+    if (path === "/blog/series/") return newestPost;
     if (path === "/tools/" || path.startsWith("/tools/categories/"))
       return newestTool;
 

@@ -512,7 +512,9 @@ const articleNode = {
     citation: finalReferences.map((ref) => ({
       "@type": "CreativeWork" as const,
       name: ref.text,
-      url: ref.url,
+      // Internal references are collected as the relative links the post
+      // wrote; the node is read out of context, so it carries the absolute URL.
+      url: new URL(ref.url, getSiteUrl()).href,
     })),
   }),
 } satisfies BlogPosting | TechArticle;

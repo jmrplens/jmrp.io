@@ -31,6 +31,8 @@ import type {
   Thing,
 } from "schema-dts";
 
+import { CANONICAL_ALUMNI_OF } from "./person";
+
 /** A Wikidata-grounded subject of a project. */
 export interface ProjectTopic {
   name: string;
@@ -150,14 +152,28 @@ export const mcpApiId = (server: McpServer | string): string =>
  * @param topic - The topic to express as a schema.org Thing.
  * @returns A `Thing` node identified by its Wikidata entity URI.
  */
-const topicThing = (topic: ProjectTopic): Thing => ({
-  "@type": "Thing",
-  // The chip on /projects/ keeps the authored spelling; the graph publishes
-  // Wikidata's own label so this `@id` agrees with the same `@id` emitted
-  // from post topics and from #person.knowsAbout.
-  name: wikidataLabel(topic.wikidata, topic.name),
-  "@id": wikidataEntityUri(topic.wikidata),
-});
+/** The `@id`s the canonical Person node already types as universities. */
+const ALUMNI_IDS = new Set(
+  CANONICAL_ALUMNI_OF.map((org) => (org as { "@id"?: string })["@id"]),
+);
+
+const topicThing = (topic: ProjectTopic): Thing | { "@id": string } => {
+  const id = wikidataEntityUri(topic.wikidata);
+  // An entity the canonical Person node already describes with a richer type
+  // (the universities under `alumniOf` are EducationalOrganization) is
+  // referenced, not restated: a second node with the same `@id` and `@type:
+  // Thing` gave the University of Alicante two types in one graph (GEO audit
+  // #9, LOW).
+  if (ALUMNI_IDS.has(id)) return { "@id": id };
+  return {
+    "@type": "Thing",
+    // The chip on /projects/ keeps the authored spelling; the graph publishes
+    // Wikidata's own label so this `@id` agrees with the same `@id` emitted
+    // from post topics and from #person.knowsAbout.
+    name: wikidataLabel(topic.wikidata, topic.name),
+    "@id": id,
+  };
+};
 
 /**
  * The MCP servers' entry in the official registry, as a resolvable URL.
@@ -222,6 +238,11 @@ export function buildProjectSchema(project: Project): Record<string, unknown> {
     programmingLanguage: project.language,
     license: licenseUrl(project.license),
     isAccessibleForFree: true,
+    // `archived` lived only in projects.json and the twin; the graph said
+    // nothing, so a reader of the node could not tell a maintained project
+    // from one frozen years ago. creativeWorkStatus is schema.org's lifecycle
+    // property on every CreativeWork, SoftwareApplication included.
+    ...(project.status === "archived" && { creativeWorkStatus: "Archived" }),
     author: personRef,
     creator: personRef,
     maintainer: personRef,

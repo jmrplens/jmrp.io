@@ -77,6 +77,9 @@ const collectionUrl = new URL("#collection", baseUrl).href;
 const toolsSchema = {
   "@type": "CollectionPage",
   "@id": collectionUrl,
+  // `url` is what BaseHead matches to inject the page's derived
+  // `dateModified`; without it the node carried neither (GEO audit #9, LOW).
+  url: baseUrl.href,
   name: t("pages.tools.title"),
   description: t("pages.tools.description"),
   inLanguage: locale,

@@ -194,7 +194,14 @@ for (const project of projects) {
     ...(project.listings ?? []).map((listing) => listing.url),
     ...(project.sameAs ?? []),
   ]);
-  const missing = [...theirAliases.difference(ourAliases)];
+  // The MCP Registry has no permalink per server, so the two sites spell its
+  // alias differently (the `/versions` resource here, a `?search=` query on
+  // libgen's docs). Either names the same entry; neither is missing from the
+  // other (GEO audit #9, LOW).
+  const registryHost = "registry.modelcontextprotocol.io";
+  const missing = [...theirAliases.difference(ourAliases)].filter(
+    (url) => !(project.registryId && url.includes(registryHost)),
+  );
 
   if (diffs.length === 0 && missing.length === 0 && personLines.length === 0) {
     console.log(`✓ ${project.id}`);
