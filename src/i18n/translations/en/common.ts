@@ -947,6 +947,9 @@ export const common = {
         "Open-source projects by José Manuel Requena Plens — MCP servers, acoustics tooling and network security, each with source, docs and license.",
       schemaDescription:
         "Curated index of the open-source software authored and maintained by José Manuel Requena Plens, with language, license, source repository and documentation for each project.",
+      datasetName: "Public projects of José Manuel Requena Plens (JSON)",
+      datasetDescription:
+        "The same project list as this page as one JSON document: name, status, license, repository, documentation and third-party listings for each project, generated from the same source.",
       kicker: "PROJECTS",
       heading: "What I build, and where it lives.",
       intro:
