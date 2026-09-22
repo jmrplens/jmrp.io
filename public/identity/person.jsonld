@@ -65,6 +65,9 @@
       "@id": "https://jmrp.io/#person"
     },
     "creditText": "José Manuel Requena Plens",
+    "copyrightHolder": {
+      "@id": "https://jmrp.io/#person"
+    },
     "copyrightNotice": "© José Manuel Requena Plens",
     "license": "https://jmrp.io/license/#portrait",
     "acquireLicensePage": "https://jmrp.io/license/#permission",
@@ -335,7 +338,7 @@
     "https://codeberg.org/jmrplens",
     "https://scholar.google.com/citations?user=9b0kPaUAAAAJ",
     "https://orcid.org/0000-0003-1250-6212",
-    "https://www.researchgate.net/profile/Jose_Requena_Plens-2",
+    "https://www.researchgate.net/profile/Jose-Requena-Plens-2",
     "https://www.mathworks.com/matlabcentral/profile/authors/5890853",
     "https://pypi.org/user/jmrplens/",
     "https://hub.docker.com/u/jmrplens",

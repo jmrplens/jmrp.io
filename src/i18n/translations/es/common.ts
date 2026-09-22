@@ -933,6 +933,9 @@ export const common = {
         "Proyectos open source de José Manuel Requena Plens: servidores MCP, herramientas de acústica y seguridad de red, con código, docs y licencia.",
       schemaDescription:
         "Índice curado del software open source escrito y mantenido por José Manuel Requena Plens, con lenguaje, licencia, repositorio de código y documentación de cada proyecto.",
+      datasetName: "Proyectos públicos de José Manuel Requena Plens (JSON)",
+      datasetDescription:
+        "La misma lista de proyectos de esta página en un único documento JSON: nombre, estado, licencia, repositorio, documentación y listados de terceros de cada proyecto, generado desde la misma fuente.",
       kicker: "PROYECTOS",
       heading: "Lo que construyo, y dónde vive.",
       intro:

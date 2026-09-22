@@ -33,6 +33,11 @@ import path from "node:path";
 import process from "node:process";
 import { fileURLToPath } from "node:url";
 
+import {
+  DOWNLOADS_DATA_PATH,
+  refreshDownloadsFile,
+} from "../refresh-downloads.mjs";
+
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, "..", "..");
 const SCRIPT = path.join(ROOT, "cv_latex", "compile_cv.sh");
@@ -70,6 +75,13 @@ const INPUT_FILES = [
   // distribution channels declared here, so a change to the channel map
   // changes the numbers printed in the PDFs.
   path.join(ROOT, "scripts", "download-sources.mjs"),
+  // The download figures themselves. Refreshed by `main()` before the hash is
+  // taken, so a build whose numbers moved recompiles and one whose numbers
+  // did not is skipped; `generatedAt` is left out of the hash for that reason
+  // (see `hashableContent`). Before this the PDFs fetched their own figures
+  // and only when something ELSE changed, so they trailed the page next to
+  // them by a build or more (GEO audit #9, A1).
+  path.join(ROOT, DOWNLOADS_DATA_PATH),
 ];
 
 /** The six PDFs `compile_cv.sh` produces; all must exist for a skip to be safe. */
@@ -109,13 +121,34 @@ function collectInputFiles() {
   return files.sort((a, b) => a.localeCompare(b));
 }
 
+/**
+ * The bytes of an input file that matter to the PDFs. The downloads snapshot
+ * carries the time it was written, which changes on every refresh whether or
+ * not a single figure did; hashing it would recompile the six PDFs (~70 s) on
+ * every build for nothing.
+ *
+ * @param {string} file - Absolute path of the input file.
+ * @returns {Buffer | string} What to hash for it.
+ */
+function hashableContent(file) {
+  const content = fs.readFileSync(file);
+  if (path.relative(ROOT, file) !== DOWNLOADS_DATA_PATH) return content;
+  try {
+    const snapshot = JSON.parse(content.toString("utf8"));
+    delete snapshot.generatedAt;
+    return JSON.stringify(snapshot);
+  } catch {
+    return content;
+  }
+}
+
 /** SHA-256 over the input files' relative paths and contents. */
 function computeInputHash(files) {
   const hash = crypto.createHash("sha256");
   for (const file of files) {
     hash.update(path.relative(ROOT, file));
     hash.update("\0");
-    hash.update(fs.readFileSync(file));
+    hash.update(hashableContent(file));
     hash.update("\0");
   }
   return hash.digest("hex");
@@ -153,7 +186,7 @@ function writeCache(inputHash, fileCount) {
   }
 }
 
-function main() {
+async function main() {
   if (process.env.CI) {
     console.log(
       "CV build: CI detected — skipping LaTeX, using committed PDFs.",
@@ -169,6 +202,23 @@ function main() {
 
   const force =
     process.argv.includes("--force") || process.env.CV_BUILD_FORCE === "1";
+
+  // Fresh figures before the hash, always: this is the snapshot the Astro
+  // build that follows will reuse, so the page and the PDFs read one file.
+  try {
+    await refreshDownloadsFile({
+      root: ROOT,
+      token: process.env.GITHUB_TOKEN || process.env.GH_TOKEN,
+      maxAgeMs: 0,
+      log: console.log,
+    });
+  } catch (error) {
+    // No snapshot at all and no network: the compile below would embed
+    // nothing but zeros, and the Astro build would fail on the import anyway.
+    const message = error instanceof Error ? error.message : String(error);
+    throw new Error(`CV build: could not fetch download totals (${message})`);
+  }
+
   const inputFiles = collectInputFiles();
   const inputHash = computeInputHash(inputFiles);
 
@@ -193,4 +243,4 @@ function main() {
   writeCache(inputHash, inputFiles.length);
 }
 
-main();
+await main();

@@ -535,7 +535,9 @@ I'd rather state that boundary plainly than oversell it. The generation counter 
 
 ## Does encrypt-then-MAC need separate keys?
 
-Yes — and the envelope does it deliberately: one key to encrypt, one to MAC, both derived from the same PIN-derived master (the same instinct that says your house key, car key, and mailbox key should be three different keys). The security argument for encrypt-then-MAC assumes the encryption and authentication keys are *independent*; reusing one key for both jobs voids the guarantee and invites cross-protocol mischief. So the vault derives separate sub-keys from a single master key, each tagged with a distinct domain-separation label, following the long-standing [key-separation guidance](https://csrc.nist.gov/pubs/sp/800/57/pt1/r5/final) — [NIST SP 800-57 Part 1](https://nvlpubs.nist.gov/nistpubs/SpecialPublications/NIST.SP.800-57pt1r5.pdf) puts it plainly: "a single key should be used for only one purpose":
+Yes. The security argument for encrypt-then-MAC assumes the encryption key and the authentication key are *independent*; reusing one key for both jobs voids the guarantee and invites cross-protocol mischief, so the vault derives one sub-key to encrypt and another to MAC from the same PIN-derived master key, each under its own domain-separation label.
+
+It is the same instinct that says your house key, car key and mailbox key should be three different keys, and it follows the long-standing [key-separation guidance](https://csrc.nist.gov/pubs/sp/800/57/pt1/r5/final) — [NIST SP 800-57 Part 1](https://nvlpubs.nist.gov/nistpubs/SpecialPublications/NIST.SP.800-57pt1r5.pdf) puts it plainly: "a single key should be used for only one purpose":
 
 <Code lang="cpp" title="vault_keys — distinct labels per purpose">
 ```cpp

@@ -78,6 +78,50 @@ const projects = loadYaml(
   readFileSync(join(ROOT, "src/content/profile/projects.yaml"), "utf8"),
 ).projects;
 
+// The canonical Person node, for the second comparison below. Every docs site
+// splices `https://jmrp.io/#person` into its own graph at build time, so a
+// site whose served node lags the canonical one is publishing a stale
+// identity, whatever its `#software` node says. `sameAs` and `owns` are the
+// two lists that change; `knowsAbout` is additive on the consumer side and
+// left out on purpose.
+const PERSON_ID = "https://jmrp.io/#person";
+const canonicalPerson = JSON.parse(
+  readFileSync(join(ROOT, "public/identity/person.jsonld"), "utf8"),
+);
+const PERSON_LISTS = ["sameAs", "owns"];
+
+/**
+ * Compares the `#person` node a page serves with the canonical document.
+ *
+ * @param {Record<string, unknown>[]} nodes - The page's flattened graph.
+ * @returns {string[]} One line per divergent list, empty when the page carries
+ *   no `#person` node at all (a page that does not splice it cannot lag it).
+ */
+function stalePersonLines(nodes) {
+  const served = nodes.find((n) => n["@id"] === PERSON_ID && n.sameAs);
+  if (!served) return [];
+  const lines = [];
+  for (const list of PERSON_LISTS) {
+    const ours = JSON.stringify(canonicalPerson[list] ?? []);
+    const theirs = JSON.stringify(served[list] ?? []);
+    if (ours !== theirs) {
+      // Same length with different contents is the usual case (a URL that
+      // changed spelling), so name the first entry the served copy lacks.
+      const servedSet = new Set([served[list] ?? []].flat().map(String));
+      const firstMissing = [canonicalPerson[list] ?? []]
+        .flat()
+        .map((entry) => (typeof entry === "string" ? entry : entry["@id"]))
+        .find((entry) => !servedSet.has(entry));
+      lines.push(
+        `#person ${list}: served ${(served[list] ?? []).length}, ` +
+          `canonical ${(canonicalPerson[list] ?? []).length}` +
+          (firstMissing ? `, served copy lacks ${firstMissing}` : ""),
+      );
+    }
+  }
+  return lines;
+}
+
 // The one table the site reads, shared rather than restated: this script
 // compares what each project's own site claims against what jmrp.io claims,
 // and a private copy of the answer is the last place that comparison should
@@ -89,6 +133,7 @@ const LICENSE_URLS = JSON.parse(
 let contradictions = 0;
 let unreachable = 0;
 let missingNodes = 0;
+let stalePersons = 0;
 
 for (const project of projects) {
   // Only projects with their own documentation site can contradict anything;
@@ -97,11 +142,14 @@ for (const project of projects) {
 
   const softwareId = `https://github.com/jmrplens/${project.id}#software`;
   let theirs;
+  let personLines = [];
   try {
-    theirs = (await graphOf(project.docs)).find(
+    const nodes = await graphOf(project.docs);
+    theirs = nodes.find(
       (n) =>
         n["@id"] === softwareId && (n["@type"] ?? "").startsWith("Software"),
     );
+    personLines = stalePersonLines(nodes);
   } catch (error) {
     console.log(
       `\n⚠ ${project.id}: could not read ${project.docs} (${error.message})`,
@@ -153,15 +201,40 @@ for (const project of projects) {
     project.repo,
     ...(project.listings ?? []).map((listing) => listing.url),
     ...(project.sameAs ?? []),
+    // Endpoint aliases sit on the `#api` node here; a docs site that keeps
+    // them on `#software` is not missing anything jmrp.io lacks.
+    ...(project.endpointSameAs ?? []),
   ]);
-  const missing = [...theirAliases.difference(ourAliases)];
+  // The MCP Registry has no permalink per server, so the two sites spell its
+  // alias differently (the `/versions` resource here, a `?search=` query on
+  // libgen's docs). Either names the same entry; neither is missing from the
+  // other (GEO audit #9, LOW).
+  const registryHost = "registry.modelcontextprotocol.io";
+  const isRegistryUrl = (url) => {
+    try {
+      return new URL(url).hostname === registryHost;
+    } catch {
+      return false;
+    }
+  };
+  const missing = [...theirAliases.difference(ourAliases)].filter(
+    (url) => !(project.registryId && isRegistryUrl(url)),
+  );
 
-  if (diffs.length === 0 && missing.length === 0) {
+  if (diffs.length === 0 && missing.length === 0 && personLines.length === 0) {
     console.log(`✓ ${project.id}`);
     continue;
   }
 
   console.log(`\n✗ ${project.id}`);
+  if (personLines.length > 0) {
+    // mikroscope spliced the canonical node without being in the consumer
+    // roster, so a change to the canonical never reached it until its author's
+    // next push; the site that served the stale node looked fine from the
+    // roster's side (GEO audit #9, A4). The served page is what counts.
+    stalePersons++;
+    for (const line of personLines) console.log(`   ${line} (stale)`);
+  }
   for (const p of diffs) {
     contradictions++;
     console.log(`   ${p} CONTRADICTS`);
@@ -181,7 +254,8 @@ for (const project of projects) {
 console.log(
   `\n${contradictions} contradiction(s), ` +
     `${unreachable} site(s) unreadable, ` +
-    `${missingNodes} readable site(s) with no #software node.`,
+    `${missingNodes} readable site(s) with no #software node, ` +
+    `${stalePersons} site(s) serving a stale #person.`,
 );
 if (contradictions > 0) {
   console.log(

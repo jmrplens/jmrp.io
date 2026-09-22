@@ -31,8 +31,8 @@ export const OWNER = "jmrplens";
  * Docker Hub image; `nuget` sums the lifetime `totalDownloads` of each NuGet
  * package id.
  *
- * `nuget` names ONLY the meta package. The GitLab server publishes seven ids —
- * `gitlab-mcp-server` plus one per runtime identifier — and a single
+ * `nuget` names ONLY the meta package. The GitLab server and libgen-mcp each
+ * publish seven ids, the meta package plus one per runtime identifier, and a single
  * `dotnet tool install` pulls the meta package AND exactly one runtime
  * package, so summing all seven would count one install at least twice. The
  * meta id is the one a reader installs and the only one that answers the
@@ -85,7 +85,20 @@ export const DOWNLOAD_SOURCES = {
     // npm (see the note above), so no scope or prefix is needed to name it.
     nuget: ["gitlab-mcp-server"],
   },
-  "libgen-mcp": { releases: true, docker: [`${OWNER}/libgen-mcp`] },
+  "libgen-mcp": {
+    releases: true,
+    docker: [`${OWNER}/libgen-mcp`],
+    // Same `dotnet tool` arrangement as the GitLab server since 2026-09-19:
+    // one meta package plus one id per runtime, so only the meta id counts.
+    nuget: ["libgen-mcp"],
+  },
+  // Two images: the in-router agent, which is the one a reader installs, and
+  // the CLI that talks to it. Both are pulls of this project.
+  mikroscope: {
+    releases: true,
+    docker: [`${OWNER}/mikroscope-agent`, `${OWNER}/mikroscope`],
+  },
+  ghchronicle: { releases: true, docker: [`${OWNER}/ghchronicle`] },
   "cs-routeros-bouncer": { releases: true, docker: [] },
   // No releases yet (the first is in the making) — listed so the count starts
   // being picked up the moment one is published, with no edit here.
@@ -362,6 +375,15 @@ export async function fetchDockerHubPulls(slug) {
  */
 const NUGET_SERVICE_INDEX = "https://api.nuget.org/v3/index.json";
 
+/**
+ * The `SearchQueryService` endpoints NuGet's index has advertised (read
+ * 2026-09-22): the one the index names is used, the first is the fallback.
+ */
+const NUGET_SEARCH_ENDPOINTS = [
+  "https://azuresearch-usnc.nuget.org/query",
+  "https://azuresearch-ussc.nuget.org/query",
+];
+
 /** @type {Promise<string> | undefined} Resolved search endpoint, once per process. */
 let nugetSearch;
 
@@ -387,7 +409,15 @@ function resolveNuGetSearch() {
         typeof r["@id"] === "string",
     );
     if (!service) throw new Error("NuGet service index: no SearchQueryService");
-    return service["@id"];
+    // The endpoint comes from a document fetched over the network, so it is
+    // never used as such: the index only selects one of the endpoints this
+    // file knows, and the request goes to that literal. An index advertising
+    // an unknown host cannot point the build anywhere.
+    const advertised = String(service["@id"]).replace(/\/$/, "");
+    return (
+      NUGET_SEARCH_ENDPOINTS.find((known) => known === advertised) ??
+      NUGET_SEARCH_ENDPOINTS[0]
+    );
   })();
   // Don't cache a rejection: a later caller should be able to retry.
   nugetSearch.catch(() => {

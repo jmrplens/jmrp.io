@@ -270,6 +270,8 @@ With CSP, the browser checks every resource against your policy **before** execu
 
 ## How do XSS attacks work, and how does CSP stop them?
 
+An XSS attack gets the victim's browser to run script the attacker chose inside your page's origin, usually through input the page echoed back without escaping it. CSP stops it because the browser refuses to execute any script the policy does not authorize, so the injected code reaches the page and still never runs.
+
 To understand CSP's value, let's trace a typical XSS attack:
 
 <Mermaid caption="XSS attack flow without CSP protection" maxWidth="750px">
@@ -711,6 +713,8 @@ add_header Content-Security-Policy "
 ---
 
 ## Why are inline scripts the hard part of CSP?
+
+Inline scripts are the hard part because a strict policy blocks every `<script>` block that carries no nonce or hash, and the usual escape hatch, `'unsafe-inline'`, reopens exactly the door XSS walks through. Each inline block therefore has to carry a per-request nonce or move to an external file, and that is the work most sites underestimate.
 
 Most websites have inline scripts like this:
 
@@ -1696,6 +1700,8 @@ Either the 'unsafe-inline' keyword, a hash ('sha256-...'), or a nonce
 ---
 
 ## What goes wrong most often when adopting CSP?
+
+The five mistakes that come up most often are allowing `'unsafe-inline'` for scripts, listing sources so broad that they allow the attacker's host too, leaving out a directive the policy needs (`base-uri`, `object-src`, `form-action`), forgetting `always` on the Nginx `add_header` so error pages ship without the header, and losing the header to `add_header` inheritance in a nested block. Each keeps the header on the wire while removing the protection.
 
 ### 1. Using `'unsafe-inline'` for Scripts
 

@@ -244,7 +244,7 @@ mTLS adds a second step: after verifying the server, the **server requests a cer
 
 ## What happens during an mTLS handshake?
 
-
+In an mTLS handshake both sides prove who they are: after the ClientHello and the server's certificate, the server sends a CertificateRequest, the client answers with its own certificate plus a CertificateVerify signature over the handshake so far, and only when the server has checked that signature against its CA do the two sides exchange keys and start sending application data. A client without a certificate the CA signed never gets past that step.
 
 Understanding the handshake helps with debugging.
 
@@ -1080,7 +1080,7 @@ ssl_dhparam /etc/nginx/dhparam.pem;
 
 ## How do you limit what each client certificate can reach?
 
-
+You limit access by checking who the certificate says the client is, not just that it is valid: Nginx exposes the certificate's subject, serial and fingerprint as variables, and a `map` over one of them (or an `if` inside a `location`) decides which certificates each path accepts, answering 403 to every other holder of a valid certificate.
 
 By default, _any_ client with a valid certificate signed by your CA can access the site.
 

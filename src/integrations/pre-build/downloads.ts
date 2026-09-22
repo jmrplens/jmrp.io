@@ -1,13 +1,14 @@
 import fs from "node:fs";
 import path from "node:path";
+import process from "node:process";
 
 import { type AstroIntegrationLogger } from "astro";
 
 import {
-  fetchAllDownloads,
   MANUAL_COUNTS_VERIFIED_ON,
   type ProjectDownloads,
 } from "../../../scripts/download-sources.mjs";
+import { refreshDownloadsFile } from "../../../scripts/refresh-downloads.mjs";
 import { safeStringify } from "../shared.js";
 
 /**
@@ -110,12 +111,15 @@ export function ensureDownloadsData(logger: AstroIntegrationLogger): void {
 
 /**
  * Refreshes {@link DOWNLOADS_DATA_PATH} with the latest cumulative download
- * totals. Never throws, and always leaves a readable file behind: the pages
- * import it statically, so its absence is a build failure rather than a
- * missing figure.
+ * totals, unless `build:cv` wrote one moments ago, in which case that snapshot
+ * is the one the pages render from: the CV PDFs were compiled from it, and the
+ * page beside them must not show a second fetch's slightly different number
+ * (GEO audit #9, A1). Never throws, and always leaves a readable file behind:
+ * the pages import it statically, so its absence is a build failure rather
+ * than a missing figure.
  *
  * The file is generated, not tracked. On a failed refresh an existing copy is
- * kept — the build host accumulates its own last-known-good across builds — and
+ * kept (the build host accumulates its own last-known-good across builds) and
  * a host that has none gets a zeroed file, which both consumers already render
  * as a dash instead of a number.
  *
@@ -129,46 +133,22 @@ export async function setupDownloads(
   logger.info("Fetching cumulative download totals...");
 
   try {
-    const { total, sources, excluded, manualVerifiedOn, projects } =
-      await fetchAllDownloads(token);
-    const data: DownloadsData = {
-      total,
-      generatedAt: new Date().toISOString(),
-      sources,
-      excluded,
-      manualVerifiedOn,
-      projects,
-    };
-
-    if (!fs.existsSync(outputDirAbs)) {
-      fs.mkdirSync(outputDirAbs, { recursive: true });
-    }
-    const tmpPath = `${outputPath}.tmp`;
-    fs.writeFileSync(tmpPath, `${JSON.stringify(data, null, 2)}\n`);
-    fs.renameSync(tmpPath, outputPath);
-
-    logger.info(
-      `  ✓ Downloads total: ${data.total.toLocaleString("en-US")} ` +
-        `(releases ${sources.githubReleases}, docker ${sources.dockerHub}, ` +
-        `nuget ${sources.nuget}, manual ${sources.manual}, ` +
-        `${Object.keys(projects).length} projects; ` +
-        `${data.excluded.githubVerification} checksum/signature fetches excluded)`,
-    );
+    await refreshDownloadsFile({
+      root: process.cwd(),
+      token,
+      log: (line) => logger.info(line),
+      warn: (line) => logger.warn(line),
+    });
   } catch (error) {
+    // Only reachable with no snapshot at all AND no network: `refreshDownloadsFile`
+    // keeps an existing snapshot on failure. A zeroed file lets the build
+    // render, with a dash where the number would be.
     const message =
       error instanceof Error ? error.message : safeStringify(error);
-    if (fs.existsSync(outputPath)) {
-      logger.warn(
-        `Could not refresh download totals (${message}). Keeping existing ${OUTPUT_FILE}.`,
-      );
-    } else {
-      // Unreachable in practice — `ensureDownloadsData` runs first on every
-      // command — but a warning here is cheaper than a mystery if it ever is.
-      writeZeroed();
-      logger.warn(
-        `Could not fetch download totals (${message}) and no cached file ` +
-          `exists. Wrote a zeroed ${OUTPUT_FILE} so the build still renders.`,
-      );
-    }
+    writeZeroed();
+    logger.warn(
+      `Could not fetch download totals (${message}) and no cached file ` +
+        `exists. Wrote a zeroed ${OUTPUT_FILE} so the build still renders.`,
+    );
   }
 }

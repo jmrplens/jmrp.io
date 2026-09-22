@@ -21,6 +21,7 @@ import { getPageFaq, pageFaqNode } from "@utils/page-faq";
 import { CANONICAL_ALUMNI_OF } from "@utils/person";
 import { getProjects, hostedHref } from "@utils/projects";
 import { getSiteUrl } from "@utils/site";
+import { fillSiteFacts, getSiteFacts } from "@utils/site-facts";
 import { Image } from "astro:assets";
 import { getEntry } from "astro:content";
 import type { ProfilePage } from "schema-dts";
@@ -36,6 +37,10 @@ if (aboutEntry.data.type !== "about")
   throw new Error("profile/about.yaml is not type: about");
 const about = aboutEntry.data;
 const c = about[locale];
+// The lead quotes the repository and star counts; they are placeholders in
+// the YAML and the build fills them (see site-facts.ts).
+const siteFacts = await getSiteFacts();
+const lead = c.lead.map((para) => fillSiteFacts(para, siteFacts));
 
 const siteEntry = await getEntry("site_config", "site");
 const siteData = (siteEntry?.data || {}) as SiteConfig;
@@ -174,7 +179,7 @@ const faqNode =
       <div>
         <p class="section-title">{c.kicker}</p>
         <h1 class="page-title about-hero__title">{c.title}</h1>
-        {c.lead.map((para) => (
+        {lead.map((para) => (
           <p class="about-hero__lead">{para}</p>
         ))}
         <p class="about-hero__note">{c.note}</p>

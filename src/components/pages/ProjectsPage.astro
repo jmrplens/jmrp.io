@@ -27,6 +27,7 @@ import {
   getProjects,
   hostedHref,
   licenseUrl,
+  mcpApiId,
   type Project,
   softwareId,
 } from "@utils/projects";
@@ -159,6 +160,26 @@ const projectsPageSchema = {
   inLanguage: locale,
   isPartOf: { "@id": new URL("#website", getSiteUrl()).href },
   about: { "@id": new URL("#person", getSiteUrl()).href },
+  // The same list as a machine-readable document. `/identity/projects.json` is
+  // generated from projects.yaml by `scripts/ci/build-projects.mjs` and read by
+  // the hub at build time, but nothing on the site named it: not the graph, not
+  // llms.txt, not this page (GEO audit #9, M4). A Dataset with one
+  // DataDownload is how schema.org points at a file that holds the entities a
+  // page lists.
+  hasPart: {
+    "@type": "Dataset",
+    "@id": new URL("/identity/projects.json", getSiteUrl()).href,
+    name: t("pages.projects.datasetName"),
+    description: t("pages.projects.datasetDescription"),
+    inLanguage: "en",
+    creator: { "@id": new URL("#person", getSiteUrl()).href },
+    isBasedOn: pageUrl,
+    distribution: {
+      "@type": "DataDownload",
+      encodingFormat: "application/json",
+      contentUrl: new URL("/identity/projects.json", getSiteUrl()).href,
+    },
+  },
   mainEntity: {
     "@type": "ItemList",
     "@id": `${pageUrl}#project-list`,
@@ -173,7 +194,26 @@ const projectsPageSchema = {
   },
 } satisfies CollectionPage;
 
-const schema = [projectsPageSchema, ...projects.map(buildProjectSchema)];
+// The pages that describe a RUNNING endpoint (uptime probes, live audits)
+// alias the `<endpoint>#api` node mcp.jmrp.io publishes, not the program:
+// restated here as a partial node that merges with it by @id, so the
+// aliases stop hanging off `#software` (GEO audit #9, LOW).
+const apiAliasNodes = projects
+  .filter(
+    (project) =>
+      typeof project.endpoint === "string" &&
+      (project.endpointSameAs?.length ?? 0) > 0,
+  )
+  .map((project) => ({
+    "@type": ["WebAPI", "SoftwareApplication"],
+    "@id": mcpApiId(project.endpoint as string),
+    sameAs: project.endpointSameAs,
+  }));
+const schema = [
+  projectsPageSchema,
+  ...projects.map(buildProjectSchema),
+  ...apiAliasNodes,
+];
 
 const groups = [
   {

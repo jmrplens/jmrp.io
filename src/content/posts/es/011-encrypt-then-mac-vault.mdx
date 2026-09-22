@@ -536,7 +536,9 @@ Prefiero enunciar ese límite con claridad antes que sobrevenderlo. El contador 
 
 ## ¿Necesita encrypt-then-MAC claves separadas?
 
-Sí — y el sobre lo hace de forma deliberada: una clave para cifrar y otra para el MAC, ambas derivadas de la misma clave maestra que sale del PIN (el mismo instinto que dice que la llave de casa, la del coche y la del buzón deberían ser tres llaves distintas). El argumento de seguridad de encrypt-then-MAC asume que las claves de cifrado y de autenticación son _independientes_; reutilizar una sola clave para ambos trabajos anula la garantía e invita a travesuras entre protocolos. Así que la bóveda deriva sub-claves separadas a partir de una única clave maestra, cada una etiquetada con una etiqueta de separación de dominio distinta, siguiendo la [guía de separación de claves](https://csrc.nist.gov/pubs/sp/800/57/pt1/r5/final) de toda la vida — el [NIST SP 800-57 Part 1](https://nvlpubs.nist.gov/nistpubs/SpecialPublications/NIST.SP.800-57pt1r5.pdf) lo dice sin rodeos: "una clave debería usarse para un solo propósito":
+Sí. El argumento de seguridad de encrypt-then-MAC asume que la clave de cifrado y la de autenticación son _independientes_; reutilizar una sola clave para ambos trabajos anula la garantía e invita a travesuras entre protocolos, así que la bóveda deriva una sub-clave para cifrar y otra para el MAC a partir de la misma clave maestra que sale del PIN, cada una bajo su propia etiqueta de separación de dominio.
+
+Es el mismo instinto que dice que la llave de casa, la del coche y la del buzón deberían ser tres llaves distintas, y sigue la [guía de separación de claves](https://csrc.nist.gov/pubs/sp/800/57/pt1/r5/final) de toda la vida — el [NIST SP 800-57 Part 1](https://nvlpubs.nist.gov/nistpubs/SpecialPublications/NIST.SP.800-57pt1r5.pdf) lo dice sin rodeos: "una clave debería usarse para un solo propósito":
 
 <Code lang="cpp" title="vault_keys — etiquetas distintas por propósito">
 ```cpp

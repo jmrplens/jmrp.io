@@ -26,6 +26,7 @@ import { load as parseYaml } from "js-yaml";
 
 import { lastCommitDate } from "../utils/content-date.js";
 import { postDateModified } from "../utils/post-dates.js";
+import { getSeries } from "../utils/series.js";
 
 // Anchored to the process CWD rather than to `import.meta.url`: Astro bundles
 // this module into an SSR chunk whose `import.meta.url` points at the build
@@ -360,8 +361,9 @@ export function createLastmodResolver(): (
     // and over-reporting within the same corpus is far cheaper than the build
     // clock this replaces.
     if (path === "/blog/" || path.startsWith("/blog/tags/")) return newestPost;
-    if (path === "/blog/series/" || path.startsWith("/blog/series/"))
-      return newestPost;
+    const seriesSlug = /^\/blog\/series\/([^/]+)\/?$/.exec(path)?.[1];
+    if (seriesSlug) return seriesHubDate(seriesSlug, postDates) ?? newestPost;
+    if (path === "/blog/series/") return newestPost;
     if (path === "/tools/" || path.startsWith("/tools/categories/"))
       return newestTool;
 
@@ -372,6 +374,35 @@ export function createLastmodResolver(): (
 
     return staticDates.get(path);
   };
+}
+
+/**
+ * The date of a series hub: the newest post of THAT series.
+ *
+ * A hub lists its own posts, so it is modified when one of them is, not when
+ * any post is. Dated by the newest post of the whole blog, every edit to any
+ * post restamped all the hubs and resubmitted them to IndexNow with an
+ * unchanged body (GEO audit #9, LOW). The index of series still lists every
+ * series, so the newest post remains the right date for it.
+ *
+ * @param slug - The series URL segment.
+ * @param postDates - Post dates keyed `<locale>/<post slug>`.
+ * @returns ISO timestamp, or undefined for an unknown series or one with no
+ *   dated post.
+ */
+function seriesHubDate(
+  slug: string,
+  postDates: Map<string, string>,
+): string | undefined {
+  const series = getSeries(slug);
+  if (!series) return undefined;
+  const dates: (string | undefined)[] = [];
+  for (const [key, iso] of postDates) {
+    const postSlug = key.replace(/^[a-z]{2}\//, "");
+    if (series.posts.some((prefix) => postSlug.startsWith(`${prefix}-`)))
+      dates.push(iso);
+  }
+  return newest(...dates);
 }
 
 /** Lazily-built singleton behind {@link pageLastmod}. */

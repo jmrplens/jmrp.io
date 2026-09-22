@@ -1463,6 +1463,8 @@ Antes de desplegar HTTP/3 en producción, verifica:
 
 ## ¿Cuándo NO deberías usar QUIC?
 
+Quédate en HTTP/2 sobre TCP cuando UDP esté bloqueado o limitado en el camino (los cortafuegos corporativos lo hacen), cuando la CPU del servidor sea el cuello de botella (QUIC cifra en espacio de usuario y cuesta más por byte), cuando tus usuarios estén en redes estables y sin pérdidas donde la recuperación de QUIC no tiene nada que arreglar, o cuando un balanceador delante de Nginx no pueda pasar UDP. En todos esos casos TCP rinde igual y es más sencillo de operar.
+
 Aunque QUIC ofrece beneficios significativos, hay escenarios donde TCP puede ser preferible:
 
 <Callout type="warning" title="Consideraciones sobre el fallback de protocolo" icon="mdi:alert">

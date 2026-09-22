@@ -22,7 +22,7 @@ faq:
   - question: "Why are some headers missing when I fetch them from a URL?"
     answer: "Fetch asks this site's own proxy for the headers, and that proxy issues a HEAD request with its own User-Agent and no cookies. Headers a server only sends on GET, only to a signed-in session, or only after content negotiation will not appear, and if the site sits behind a CDN you see the edge's headers rather than the origin's. For an exact capture, paste the output of curl -sI or the response headers from browser DevTools."
   - question: "Is my data sent to a server when I analyze headers?"
-    answer: "The analysis never leaves your browser: whatever is in the text box is parsed, scored and graded on your own machine. The optional Fetch button is the exception, because a browser is not allowed to read another site's response headers — CORS forbids it — so the URL you submit goes to a small proxy on this domain, which requests the headers and hands them back. That proxy writes no log( )of any kind, so the URL you inspect is never written beside your address, and the site being inspected sees this server rather than you. Paste headers instead of fetching and nothing is sent at all."
+    answer: "The analysis never leaves your browser: whatever is in the text box is parsed, scored and graded on your own machine. The optional Fetch button is the exception, because a browser is not allowed to read another site's response headers (CORS forbids it) so the URL you submit goes to a small proxy on this domain, which requests the headers and hands them back. That proxy writes no log of any kind, so the URL you inspect is never written beside your address, and the site being inspected sees this server rather than you. Paste headers instead of fetching and nothing is sent at all."
   - question: "Should I still set X-XSS-Protection?"
     answer: "No. X-XSS-Protection is a legacy filter that modern browsers ignore or that can introduce vulnerabilities; the recommended value is \"0\" to disable it, and a strong Content-Security-Policy is the proper XSS defense."
 ---
@@ -52,37 +52,37 @@ import {
 <h3>Which headers are analyzed?</h3>
 <ul>
   <li>
-    <strong>Content-Security-Policy</strong> (25 pts) — XSS and injection
+    <strong>Content-Security-Policy</strong> (25 pts): XSS and injection
     prevention
   </li>
   <li>
-    <strong>Strict-Transport-Security</strong> (15 pts) — HTTPS enforcement
+    <strong>Strict-Transport-Security</strong> (15 pts): HTTPS enforcement
   </li>
   <li>
-    <strong>X-Content-Type-Options</strong> (10 pts) — MIME sniffing prevention
+    <strong>X-Content-Type-Options</strong> (10 pts): MIME sniffing prevention
   </li>
   <li>
-    <strong>X-Frame-Options</strong> (8 pts) — clickjacking protection
+    <strong>X-Frame-Options</strong> (8 pts): clickjacking protection
   </li>
   <li>
-    <strong>Referrer-Policy</strong> (8 pts) — referrer information control
+    <strong>Referrer-Policy</strong> (8 pts): referrer information control
   </li>
   <li>
-    <strong>Permissions-Policy</strong> (8 pts) — browser feature restrictions
+    <strong>Permissions-Policy</strong> (8 pts): browser feature restrictions
   </li>
   <li>
-    <strong>Cross-Origin-Opener-Policy</strong> (8 pts) — browsing context
+    <strong>Cross-Origin-Opener-Policy</strong> (8 pts): browsing context
     isolation
   </li>
   <li>
-    <strong>Cross-Origin-Resource-Policy</strong> (8 pts) — resource loading
+    <strong>Cross-Origin-Resource-Policy</strong> (8 pts): resource loading
     control
   </li>
   <li>
-    <strong>Cross-Origin-Embedder-Policy</strong> (7 pts) — embedding control
+    <strong>Cross-Origin-Embedder-Policy</strong> (7 pts): embedding control
   </li>
   <li>
-    <strong>X-XSS-Protection</strong> (3 pts) — legacy XSS filter (should be
+    <strong>X-XSS-Protection</strong> (3 pts): legacy XSS filter (should be
     disabled)
   </li>
 </ul>
@@ -94,22 +94,22 @@ import {
 <h3>Grading Scale</h3>
 <ul>
   <li>
-    <strong>A+</strong> (90-100) — Excellent security posture
+    <strong>A+</strong> (90-100): Excellent security posture
   </li>
   <li>
-    <strong>A</strong> (80-89) — Strong, minor improvements possible
+    <strong>A</strong> (80-89): Strong, minor improvements possible
   </li>
   <li>
-    <strong>B</strong> (70-79) — Good, some headers missing
+    <strong>B</strong> (70-79): Good, some headers missing
   </li>
   <li>
-    <strong>C</strong> (50-69) — Fair, several important headers missing
+    <strong>C</strong> (50-69): Fair, several important headers missing
   </li>
   <li>
-    <strong>D</strong> (30-49) — Poor, major gaps
+    <strong>D</strong> (30-49): Poor, major gaps
   </li>
   <li>
-    <strong>F</strong> (0-29) — Critical, most headers missing
+    <strong>F</strong> (0-29): Critical, most headers missing
   </li>
 </ul>
 <h3>How do I use it?</h3>
@@ -126,8 +126,8 @@ import {
   parsed, scored and graded on your own machine, and nothing about them is sent
   anywhere. The Fetch button is the exception. CORS stops a browser from reading
   another site's response headers, so the URL you submit goes to a small proxy
-  on this domain that requests them for you. That proxy writes no log(
-  )of any kind, so the URL you inspect is never written beside your address, and
+  on this domain that requests them for you. That proxy writes no log
+  of any kind, so the URL you inspect is never written beside your address, and
   the site being inspected sees this server rather than you. To keep even that
   request off the network, paste headers captured with <code>curl -sI</code>
   instead of using Fetch.
@@ -136,7 +136,7 @@ import {
 <h3>Linux Command Reference</h3>
 <p>You can inspect HTTP headers from the terminal using these tools:</p>
 
-<h4>curl — Headers Only</h4>
+<h4>curl: Headers Only</h4>
 <TerminalSession>
   <TerminalSessionCommand>
     curl -sI https://example.com
@@ -155,7 +155,7 @@ import {
   </TerminalSessionOutput>
 </TerminalSession>
 
-<h4>curl — Filter Security Headers</h4>
+<h4>curl: Filter Security Headers</h4>
 <TerminalSession>
   <TerminalSessionCommand>
     ```
@@ -176,7 +176,7 @@ import {
   </TerminalSessionOutput>
 </TerminalSession>
 
-<h4>curl — Verbose (TLS + Headers)</h4>
+<h4>curl: Verbose (TLS + Headers)</h4>
 <TerminalSession>
   <TerminalSessionCommand>
     ```
@@ -193,7 +193,7 @@ import {
   </TerminalSessionOutput>
 </TerminalSession>
 
-<h4>wget — Spider Mode</h4>
+<h4>wget: Spider Mode</h4>
 <TerminalSession>
   <TerminalSessionCommand>
     ```

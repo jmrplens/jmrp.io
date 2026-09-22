@@ -14,6 +14,7 @@ import type { TranslationKey } from "@i18n/utils";
 import { useTranslatedPath, useTranslations } from "@i18n/utils";
 import BaseLayout from "@layouts/BaseLayout.astro";
 import { formatDateDot, getReadingTime } from "@utils/blog";
+import { getPageFaq, pageFaqNode } from "@utils/page-faq";
 import { SERIES, type Series } from "@utils/series";
 import { getSiteUrl } from "@utils/site";
 import type { CollectionEntry } from "astro:content";
@@ -80,6 +81,12 @@ const seriesSchema = {
   },
 } satisfies CollectionPage;
 
+// The hub's question-and-answer pair, derived from its lead (GEO audit #9):
+// graph and twin only, like the category pages, since the lead is on screen.
+const pageFaq = await getPageFaq(`/blog/series/${series.slug}/`, locale);
+const faqNode =
+  pageFaq && pageFaqNode(pageFaq, seriesUrl, seriesSchema["@id"], locale);
+
 /** Prose blocks, in reading order. */
 const whyBlocks = ["why1", "why2", "why3"];
 const afterBlocks = ["after1", "after2"];
@@ -88,7 +95,7 @@ const afterBlocks = ["after1", "after2"];
 <BaseLayout
   title={t(key("title"))}
   description={t(key("description"))}
-  schema={seriesSchema}
+  schema={faqNode ? [seriesSchema, faqNode] : seriesSchema}
 >
   <div class="series container">
     <header class="series-header">

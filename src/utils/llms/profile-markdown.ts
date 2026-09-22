@@ -4,6 +4,7 @@ import { getCVData } from "@utils/cv";
 import { DOWNLOADS_DISPLAY_MIN } from "@utils/downloads";
 import { featuredRepos } from "@utils/github-facts";
 import { getProjects, hostedHref } from "@utils/projects";
+import { fillSiteFacts, getSiteFacts } from "@utils/site-facts";
 import { getEntry } from "astro:content";
 
 /**
@@ -163,8 +164,9 @@ export async function aboutLines(
     return project;
   });
 
+  const siteFacts = await getSiteFacts();
   return [
-    ...d.lead,
+    ...d.lead.map((para) => fillSiteFacts(para, siteFacts)),
     "",
     d.note,
     "",

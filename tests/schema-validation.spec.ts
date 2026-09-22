@@ -1208,9 +1208,12 @@ test.describe("Post references", () => {
       pagesWithCitations++;
       totalCitations += citations.length;
 
+      // Resolved against the site, because the graph publishes absolute
+      // URLs for internal references while the page keeps them relative
+      // (GEO audit #9: a node is read out of context, an anchor is not).
       const hrefs = new Set(
-        [...html.matchAll(/<a\b[^>]*?href="([^"]*)"/g)].map((m) =>
-          decodeHref(m[1]),
+        [...html.matchAll(/<a\b[^>]*?href="([^"]*)"/g)].map(
+          (m) => new URL(decodeHref(m[1]), "https://jmrp.io/").href,
         ),
       );
 
@@ -1235,7 +1238,8 @@ test.describe("Post references", () => {
 
         // The graph and the visible bibliography are built from one list, so a
         // citation URL that is not also an href means they have drifted apart.
-        if (!hrefs.has(url)) orphanCitations.push(`${where} → ${url}`);
+        if (!hrefs.has(new URL(url, "https://jmrp.io/").href))
+          orphanCitations.push(`${where} → ${url}`);
       }
     }
 

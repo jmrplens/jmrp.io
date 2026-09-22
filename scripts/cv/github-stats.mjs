@@ -16,6 +16,26 @@ import {
   fetchDockerHubPulls,
   isVerificationAsset,
 } from "../download-sources.mjs";
+import { readDownloadsData } from "../refresh-downloads.mjs";
+
+// The repository root is the working directory, not a path derived from this
+// file's URL: inside the Astro build this module is bundled into a chunk
+// under the output directory, and a root resolved from there found no
+// snapshot, so /cv/ fell back to live figures (~115k) while the PDFs, built
+// by plain Node with the right root, read the snapshot (~116k).
+const ROOT = process.cwd();
+
+/**
+ * The downloads snapshot the site renders from, read once per process.
+ *
+ * The badge's download figure comes from here, not from a fetch of its own:
+ * `build:cv` refreshes this file before compiling and the Astro build reuses
+ * it, so the PDFs and `/cv/` cannot state two different totals for one
+ * project (GEO audit #9, A1). Undefined when there is no snapshot (a fresh
+ * clone, or the generators run by hand), in which case the live path below
+ * is the fallback.
+ */
+const snapshot = readDownloadsData(ROOT);
 
 const API = "https://api.github.com";
 /** @type {Map<string, Promise<{stars:number, releases:number, downloads:number}>>} */
@@ -124,14 +144,17 @@ export function fetchRepoStats(slug) {
       }
       const repo = await repoRes.json();
       const { releases, downloads } = await readReleases(relRes);
-      const extra = await fetchOtherChannelDownloads(
-        slug.split("/", 2)[1] ?? "",
-      );
+      const name = slug.split("/", 2)[1] ?? "";
+      const snapshotted = snapshot?.projects?.[name]?.total;
+      const combined =
+        typeof snapshotted === "number"
+          ? snapshotted
+          : downloads + (await fetchOtherChannelDownloads(name));
 
       return {
         stars: repo.stargazers_count ?? 0,
         releases,
-        downloads: downloads + extra,
+        downloads: combined,
       };
     } catch (error) {
       // Don't cache failures so a later call can retry.

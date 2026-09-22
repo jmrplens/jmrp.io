@@ -17,6 +17,8 @@ import { getEntry } from "astro:content";
 import type { FAQPage } from "schema-dts";
 
 import { CATEGORY_ORDER, categoryName } from "./llms/tool-categories";
+import { getSeries } from "./series";
+import { fillSiteFacts, getSiteFacts } from "./site-facts";
 
 /** One question with its answer, as the page states it. */
 export interface FaqItem {
@@ -40,6 +42,17 @@ const CATEGORY_QUESTION = {
   en: (name: string) => `What do the ${name} on jmrp.io do?`,
   es: (name: string) =>
     `¿Qué hacen las ${name.charAt(0).toLowerCase()}${name.slice(1)} de jmrp.io?`,
+} as const;
+
+/**
+ * The question a series hub answers about its series. The answer is the lead
+ * paragraph the hub already renders, so the pair cannot say something the
+ * page does not (GEO audit #9: the eight hubs were the only twins with no
+ * question-and-answer block).
+ */
+const SERIES_QUESTION = {
+  en: (title: string) => `What is the "${title}" series about?`,
+  es: (title: string) => `¿De qué trata la serie «${title}»?`,
 } as const;
 
 /** Heading of the twin's block; shared with posts and tools in `llms.ts`. */
@@ -80,9 +93,37 @@ export async function getPageFaq(
     };
   }
 
+  // Series hubs: same shape as the categories, from the hub's own lead.
+  const seriesSlug = /^\/blog\/series\/([a-z0-9-]+)\/$/.exec(path)?.[1];
+  if (seriesSlug) {
+    if (!getSeries(seriesSlug)) return undefined;
+    const t = useTranslations(locale);
+    const key = (suffix: string) =>
+      `series.${seriesSlug}.${suffix}` as TranslationKey;
+    return {
+      visible: false,
+      items: [
+        {
+          question: SERIES_QUESTION[locale](t(key("title"))),
+          answer: t(key("lead")),
+        },
+      ],
+    };
+  }
+
   const entry = await getEntry("page_faq", locale);
   const page = entry?.data.pages.find((p) => p.path === path);
-  return page ? { visible: page.visible, items: page.items } : undefined;
+  if (!page) return undefined;
+  // Answers may quote the figures site-facts.ts derives; fill them here so the
+  // visible section, the FAQPage node and the twin all read the same number.
+  const siteFacts = await getSiteFacts();
+  return {
+    visible: page.visible,
+    items: page.items.map((item) => ({
+      ...item,
+      answer: fillSiteFacts(item.answer, siteFacts),
+    })),
+  };
 }
 
 /**

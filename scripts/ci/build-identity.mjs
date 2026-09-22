@@ -337,6 +337,10 @@ function buildIdentityDocument() {
       contentUrl: IMAGE.url,
       creator: { "@id": PERSON_ID },
       creditText: site.author,
+      // The rights holder of the portrait, beside the person credited for it:
+      // BaseHead states it on the inline copy, and the two copies must be equal
+      // byte for byte (GEO audit #9, LOW).
+      copyrightHolder: { "@id": PERSON_ID },
       copyrightNotice: `© ${site.author}`,
       // The two license fields Search Console reports as missing once a node
       // carries creator/creditText/copyrightNotice: `license` states the terms,

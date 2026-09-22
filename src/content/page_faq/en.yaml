@@ -30,7 +30,7 @@ pages:
     visible: true
     items:
       - question: Who is José Manuel Requena Plens?
-        answer: "A firmware and software engineer based in Valencia, Spain, with an R&D background in acoustics: a degree in Telecommunication Engineering, a Master's in Acoustical Engineering and four years of predoctoral research at the UPV (2019–2023). Between 2023 and 2026 he built industrial embedded firmware in C on STM32 and FreeRTOS for solar inverters and battery storage, and he maintains 44 public repositories on GitHub."
+        answer: "A firmware and software engineer based in Valencia, Spain, with an R&D background in acoustics: a degree in Telecommunication Engineering, a Master's in Acoustical Engineering and four years of predoctoral research at the UPV (2019–2023). Between 2023 and 2026 he built industrial embedded firmware in C on STM32 and FreeRTOS for solar inverters and battery storage, and he maintains {publicRepos} public repositories on GitHub."
       - question: What software does he maintain?
         answer: "Several Model Context Protocol servers written in Go (among them gitlab-mcp-server, which exposes 850+ GitLab actions, and libgen-mcp), phonometry (a standards-conformant acoustics library for Python), cs-routeros-bouncer (a CrowdSec bouncer for MikroTik RouterOS), Cloudflare-DNS-Updater, the 17 browser-only tools on this site, and Kleidos, a hardware password manager in C++ built in eight variants for different devices, each with its own screen and buttons, and the source of the firmware series on this blog."
 
@@ -38,11 +38,11 @@ pages:
     visible: true
     items:
       - question: How are the download figures on this page counted?
-        answer: "They combine GitHub release artifacts, Docker Hub image pulls, NuGet installs of the meta package and MATLAB File Exchange downloads. Checksum, signature and SBOM files are excluded because every install fetches them next to the binary, and a project shows its own figure only once it passes 1,000."
+        answer: "The figures combine GitHub release artifacts, Docker Hub image pulls, NuGet installs of the meta package and MATLAB File Exchange downloads. Checksum, signature and SBOM files are excluded because every install fetches them next to the binary, and a project shows its own figure only once it passes 1,000."
       - question: Which of these projects can be used without installing anything?
         answer: "The MCP servers: gitlab-mcp-server at https://mcp.jmrp.io/gitlab and libgen-mcp at https://mcp.jmrp.io/libgen are public endpoints any MCP client can point at."
       - question: Where are the MCP servers published?
-        answer: "gitlab-mcp-server on npm (@jmrp.io/gitlab-mcp-server), PyPI (jmrplens-gitlab-mcp-server), NuGet (gitlab-mcp-server), Docker Hub, WinGet and the official MCP Registry; libgen-mcp on npm (@jmrp.io/libgen-mcp), Docker Hub and the MCP Registry."
+        answer: "gitlab-mcp-server on npm (@jmrp.io/gitlab-mcp-server), PyPI (jmrplens-gitlab-mcp-server), NuGet (gitlab-mcp-server), Docker Hub, WinGet and the official MCP Registry; libgen-mcp on npm (@jmrp.io/libgen-mcp), PyPI (libgen-mcp), NuGet (libgen-mcp), Docker Hub and the MCP Registry."
 
   - path: /cv/
     visible: true

@@ -1334,6 +1334,8 @@ sudo systemctl enable --now tor-bypass-crowdsec.service
 
 ## How do the bridge's components fit together?
 
+The bridge is one Tor process reachable through two pluggable transports, obfs4 and WebTunnel, which the router exposes with IPv4 port forwards and IPv6 firewall rules while CrowdSec bypass rules keep those ports open; both transports hand their connections to Tor over ExtORPort, Tor talks outbound to the network, and Prometheus scrapes the MetricsPort that Grafana draws from.
+
 Here's the complete architecture of what you've built:
 
 <Mermaid caption="Complete Tor Bridge Architecture (Dual-Stack IPv4 + IPv6)" maxWidth="900px" ariaLabel="Architecture diagram showing the dual-stack Tor bridge setup. Censored users connect via obfs4 or WebTunnel through the router. IPv4 uses NAT port forwarding, IPv6 uses direct firewall rules. CrowdSec bypass rules protect Tor ports. obfs4proxy and webtunnel-server feed into the Tor process via ExtORPort. Tor connects outbound to the Tor network. Prometheus scrapes MetricsPort for Grafana dashboards.">
@@ -1425,6 +1427,8 @@ After everything is set up, run through this checklist to confirm your bridge is
 ---
 
 ## What does a bridge need once it is running?
+
+A running bridge needs three things from you: patience, because bootstrap, descriptor publication and BridgeDB distribution take one to two days and the Stable flag about a week; monitoring, because the metrics it exposes are the only way to know it is still helping anyone; and routine maintenance, meaning updates, uptime and an occasional check that its ports are still reachable from outside.
 
 ### What happens after you start the bridge?
 

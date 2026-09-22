@@ -23,7 +23,7 @@ faq:
   - question: "¿Por qué faltan algunas cabeceras al obtenerlas desde una URL?"
     answer: "Obtener pide las cabeceras al proxy propio de este sitio, y ese proxy hace una petición HEAD con su propio User-Agent y sin cookies. Las cabeceras que un servidor solo envía en GET, solo a una sesión iniciada o tras negociar el contenido no aparecerán, y si el sitio está detrás de un CDN verás las cabeceras del borde y no las del origen. Para una captura exacta, pega la salida de curl -sI o las cabeceras de respuesta copiadas desde DevTools del navegador."
   - question: "¿Se envían mis datos a un servidor al analizar las cabeceras?"
-    answer: "El análisis nunca sale de tu navegador: lo que haya en el cuadro de texto se analiza, se puntúa y se califica en tu propia máquina. El botón Obtener es la excepción, porque un navegador no tiene permiso para leer las cabeceras de respuesta de otro sitio —CORS lo prohíbe—, así que la URL que indiques va a un pequeño proxy de este mismo dominio, que pide las cabeceras y te las devuelve. Ese proxy no escribe( )ningún registro, así que la URL que inspeccionas no queda escrita junto a tu dirección, y el sitio inspeccionado ve este servidor y no a ti. Si pegas las cabeceras en vez de obtenerlas, no se envía nada."
+    answer: "El análisis nunca sale de tu navegador: lo que haya en el cuadro de texto se analiza, se puntúa y se califica en tu propia máquina. El botón Obtener es la excepción, porque un navegador no tiene permiso para leer las cabeceras de respuesta de otro sitio (CORS lo prohíbe), así que la URL que indiques va a un pequeño proxy de este mismo dominio, que pide las cabeceras y te las devuelve. Ese proxy no escribe ningún registro, así que la URL que inspeccionas no queda escrita junto a tu dirección, y el sitio inspeccionado ve este servidor y no a ti. Si pegas las cabeceras en vez de obtenerlas, no se envía nada."
   - question: "¿Debo configurar todavía X-XSS-Protection?"
     answer: "No. X-XSS-Protection es un filtro legacy que los navegadores modernos ignoran o que puede introducir vulnerabilidades; el valor recomendado es \"0\" para desactivarlo, y una Content-Security-Policy sólida es la defensa adecuada contra XSS."
 ---
@@ -54,41 +54,41 @@ import {
 <h3>¿Qué cabeceras se analizan?</h3>
 <ul>
   <li>
-    <strong>Content-Security-Policy</strong> (25 pts) — prevención de XSS e
+    <strong>Content-Security-Policy</strong> (25 pts): prevención de XSS e
     inyecciones
   </li>
   <li>
-    <strong>Strict-Transport-Security</strong> (15 pts) — forzado de HTTPS
+    <strong>Strict-Transport-Security</strong> (15 pts): forzado de HTTPS
   </li>
   <li>
-    <strong>X-Content-Type-Options</strong> (10 pts) — prevención de MIME
+    <strong>X-Content-Type-Options</strong> (10 pts): prevención de MIME
     sniffing
   </li>
   <li>
-    <strong>X-Frame-Options</strong> (8 pts) — protección contra clickjacking
+    <strong>X-Frame-Options</strong> (8 pts): protección contra clickjacking
   </li>
   <li>
-    <strong>Referrer-Policy</strong> (8 pts) — control de información del
+    <strong>Referrer-Policy</strong> (8 pts): control de información del
     referrer
   </li>
   <li>
-    <strong>Permissions-Policy</strong> (8 pts) — restricciones de
+    <strong>Permissions-Policy</strong> (8 pts): restricciones de
     funcionalidades del navegador
   </li>
   <li>
-    <strong>Cross-Origin-Opener-Policy</strong> (8 pts) — aislamiento del
+    <strong>Cross-Origin-Opener-Policy</strong> (8 pts): aislamiento del
     contexto de navegación
   </li>
   <li>
-    <strong>Cross-Origin-Resource-Policy</strong> (8 pts) — control de carga de
+    <strong>Cross-Origin-Resource-Policy</strong> (8 pts): control de carga de
     recursos
   </li>
   <li>
-    <strong>Cross-Origin-Embedder-Policy</strong> (7 pts) — control de
+    <strong>Cross-Origin-Embedder-Policy</strong> (7 pts): control de
     incrustación
   </li>
   <li>
-    <strong>X-XSS-Protection</strong> (3 pts) — filtro XSS legacy (debe estar
+    <strong>X-XSS-Protection</strong> (3 pts): filtro XSS legacy (debe estar
     desactivado)
   </li>
 </ul>
@@ -100,22 +100,22 @@ import {
 <h3>Escala de calificación</h3>
 <ul>
   <li>
-    <strong>A+</strong> (90-100) — Postura de seguridad excelente
+    <strong>A+</strong> (90-100): Postura de seguridad excelente
   </li>
   <li>
-    <strong>A</strong> (80-89) — Sólida, con mejoras menores posibles
+    <strong>A</strong> (80-89): Sólida, con mejoras menores posibles
   </li>
   <li>
-    <strong>B</strong> (70-79) — Buena, faltan algunas cabeceras
+    <strong>B</strong> (70-79): Buena, faltan algunas cabeceras
   </li>
   <li>
-    <strong>C</strong> (50-69) — Aceptable, faltan varias cabeceras importantes
+    <strong>C</strong> (50-69): Aceptable, faltan varias cabeceras importantes
   </li>
   <li>
-    <strong>D</strong> (30-49) — Deficiente, con carencias importantes
+    <strong>D</strong> (30-49): Deficiente, con carencias importantes
   </li>
   <li>
-    <strong>F</strong> (0-29) — Crítica, faltan la mayoría de cabeceras
+    <strong>F</strong> (0-29): Crítica, faltan la mayoría de cabeceras
   </li>
 </ul>
 <h3>¿Cómo se usa?</h3>
@@ -140,7 +140,7 @@ import {
   no se envía nada de ellas a ninguna parte. El botón Obtener es la excepción.
   CORS impide que un navegador lea las cabeceras de respuesta de otro sitio, así
   que la URL que indiques va a un pequeño proxy de este mismo dominio que las
-  pide por ti. Ese proxy no escribe( )ningún registro, así que la URL
+  pide por ti. Ese proxy no escribe ningún registro, así que la URL
   que inspeccionas no queda escrita junto a tu dirección, y el sitio
   inspeccionado ve este servidor y no a ti. Si prefieres que ni siquiera esa
   petición salga, pega las cabeceras capturadas con <code>curl -sI</code> en
@@ -153,7 +153,7 @@ import {
   herramientas:
 </p>
 
-<h4>curl — Solo cabeceras</h4>
+<h4>curl: Solo cabeceras</h4>
 <TerminalSession>
   <TerminalSessionCommand>
     curl -sI https://example.com
@@ -172,7 +172,7 @@ import {
   </TerminalSessionOutput>
 </TerminalSession>
 
-<h4>curl — Filtrar cabeceras de seguridad</h4>
+<h4>curl: Filtrar cabeceras de seguridad</h4>
 <TerminalSession>
   <TerminalSessionCommand>
     ```
@@ -193,7 +193,7 @@ import {
   </TerminalSessionOutput>
 </TerminalSession>
 
-<h4>curl — Verbose (TLS + cabeceras)</h4>
+<h4>curl: Verbose (TLS + cabeceras)</h4>
 <TerminalSession>
   <TerminalSessionCommand>
     ```
@@ -210,7 +210,7 @@ import {
   </TerminalSessionOutput>
 </TerminalSession>
 
-<h4>wget — Modo spider</h4>
+<h4>wget: Modo spider</h4>
 <TerminalSession>
   <TerminalSessionCommand>
     ```

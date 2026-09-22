@@ -888,6 +888,7 @@ export async function generateLlmsTxt(siteUrl: string): Promise<string> {
     "## Optional",
     "",
     `- [Person entity (JSON-LD)](${siteUrl}/identity/person.jsonld): Machine-readable identity node for the author`,
+    `- [Project list (JSON)](${siteUrl}/identity/projects.json): Every public project on /projects/ as one JSON document (name, status, license, repository, docs, listings), generated from the same source as the page`,
     // No byte figure: the hand-maintained one drifted twice and ended up
     // claiming ~1.2 MB for a 58 KB file, while robots.txt claimed ~43 KB for
     // the same file. A pipeline budgeting on either number skipped it.
@@ -1599,9 +1600,11 @@ function heroToMarkdown(html: string, siteUrl: string): string {
  * simply wrong: `/projects/` publishes the CURATED description from
  * `projects.yaml`, so the repository's own description — the string carrying
  * "850+ GitLab actions (1,000+ Enterprise)" — reached no generated markdown
- * document at all. What does drift is the hand-written "38 public
- * repositories … more than 350 stars (August 2026)" in `about.yaml`;
- * deriving is the cure for that class, not the cause.
+ * document at all. What did drift was the hand-written "38 public
+ * repositories … more than 350 stars (August 2026)" in `about.yaml`, retyped
+ * as 44 at the next audit and wrong again eleven days later; since GEO audit
+ * #9 the sentence carries placeholders that `site-facts.ts` fills. Deriving is
+ * the cure for that class, not the cause.
  *
  * @param siteUrl - Absolute site origin.
  * @param locale - Which locale.
