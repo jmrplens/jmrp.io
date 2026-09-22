@@ -65,6 +65,9 @@
       "@id": "https://jmrp.io/#person"
     },
     "creditText": "José Manuel Requena Plens",
+    "copyrightHolder": {
+      "@id": "https://jmrp.io/#person"
+    },
     "copyrightNotice": "© José Manuel Requena Plens",
     "license": "https://jmrp.io/license/#portrait",
     "acquireLicensePage": "https://jmrp.io/license/#permission",
