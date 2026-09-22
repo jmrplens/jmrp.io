@@ -84,6 +84,15 @@ export default [
       "unicorn/prefer-simple-condition-first": "off", // v72: reorders && operands, clashing with intentional cheap-guard-first short-circuits (e.g. `import.meta.env.DEV &&`)
       "unicorn/prefer-dom-node-html-methods": "off", // v72: .getHTML() serializes differently than .innerHTML — not a drop-in replacement
       "unicorn/single-line-block-comment-style": "off", // v73: would expand the repo's idiomatic one-line JSDoc (`/** … */`) into multiline blocks — 782 purely stylistic hits
+      // v76 (2026-09): five new stylistic rules, 122 hits between them, none a
+      // defect. Rewriting if/else into ternaries or inverting guards is the kind
+      // of churn a dependency bump must not carry; scoped off like their
+      // predecessors above.
+      "unicorn/prefer-ternary": "off",
+      "unicorn/prefer-early-return": "off",
+      "unicorn/prefer-combined-guards": "off",
+      "unicorn/prefer-continue": "off",
+      "unicorn/prefer-logical-operator-over-ternary": "off",
       // Buffer.from(x, "base64") is standard Node and is the right type for the
       // crypto/fs (Buffer) flows in post-build; the Uint8Array.fromBase64 form
       // is adopted where it's a clean swap (scripts/preview-rss.mjs).
@@ -337,6 +346,12 @@ export default [
       // conditions is out of scope for a dependency bump — scoped off here
       // (after sonarjs.configs.recommended re-enables it globally).
       "sonarjs/no-fixed-wait-in-tests": "off",
+      // sonarjs v4.2.1 added no-networkidle-wait. The 13 `networkidle` waits
+      // here sit on pages with no client JS beyond the beacon, where the
+      // event fires promptly and is what the assertion needs (every request
+      // done); a per-test observable condition is not better. Same scope as
+      // the fixed-wait rule above.
+      "sonarjs/no-networkidle-wait": "off",
     },
   },
   {

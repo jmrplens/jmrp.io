@@ -499,6 +499,26 @@ export default defineConfig({
       // los presupuestos de tamaño los vigila el job de bundle-size en CI y
       // la compresión real (brotli 11) ocurre en el post-build.
       reportCompressedSize: false,
+      // `rolldownOptions` and `onLog`, verified: Vite 8 reads the user's hooks
+      // from `build.rolldownOptions`, and `onLog` is the one it invokes for
+      // Rolldown diagnostics (an `onwarn` beside it never fired).
+      rolldownOptions: {
+        // Vite 8.3 (Rolldown) warns once per MDX module about the
+        // `"use astro:head-inject"` directive Astro itself puts at the top of
+        // every content module and consumes in its own plugin: 64 identical
+        // MODULE_LEVEL_DIRECTIVE lines per build, none actionable here (Vite
+        // 8.2 was silent). Only that directive is dropped; every other log
+        // still reaches the default handler.
+        onLog(level, log, handler) {
+          if (
+            log.code === "MODULE_LEVEL_DIRECTIVE" &&
+            String(log.message).includes("astro:head-inject")
+          ) {
+            return;
+          }
+          handler(level, log);
+        },
+      },
     },
     server: {},
     ssr: {
