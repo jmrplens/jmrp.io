@@ -39,6 +39,39 @@ function escapeRegex(value: string): string {
   return value.replaceAll(/[.*+?^${}()|[\]\\]/gu, String.raw`\$&`);
 }
 
+/**
+ * The two regex map entries that carry a deeper path across to a docs site.
+ *
+ * Every docs site is Starlight on GitHub Pages, which serves each page as
+ * `<page>/index.html` and answers `<page>` (no trailing slash) with its own
+ * 301 to `<page>/`. Forwarding the path verbatim therefore cost two hops for
+ * any deep link typed without the slash: ours, then GitHub's (measured
+ * 2026-09-24 on all seven sites with inner pages). The second entry appends
+ * the slash itself, so the visitor lands in one hop.
+ *
+ * The first entry exempts paths whose last segment carries an extension: the
+ * markdown twins (`<page>/index.md`), `llms.txt`, `sitemap-index.xml`,
+ * `favicon.svg`. Those are files, a slash would 404 them, and nginx picks the
+ * first regex that matches, so this one has to come first. No page slug on
+ * any of the sites contains a dot (checked across their sitemaps), so the
+ * extension test cannot misfile a page.
+ *
+ * @param prefix - The regex-escaped path prefix, e.g. `/docs/libgen-mcp`.
+ * @param capture - The nginx variable name for the captured remainder.
+ * @param base - The docs site root without its trailing slash.
+ * @returns The two map lines, file form first.
+ */
+function deepPathEntries(
+  prefix: string,
+  capture: string,
+  base: string,
+): string[] {
+  return [
+    String.raw`    ~*^${prefix}(?<${capture}>/.+\.[a-z0-9]+)$  "${base}$${capture}$is_args$args";`,
+    `    ~*^${prefix}(?<${capture}>/.+?)/?$  "${base}$${capture}/$is_args$args";`,
+  ];
+}
+
 /** Shape of the fields this step reads from a `projects.yaml` entry. */
 interface ProjectDocsEntry {
   id?: string;
@@ -156,7 +189,7 @@ export async function generateDocsRedirects(
       return [
         `    "${from}"  "${to}$is_args$args";`,
         `    "${from}/"  "${to}$is_args$args";`,
-        `    ~*^/docs/${escapeRegex(id)}(?<${capture}>/.+)$  "${base}$${capture}$is_args$args";`,
+        ...deepPathEntries(`/docs/${escapeRegex(id)}`, capture, base),
       ];
     })
     .join("\n");
@@ -184,7 +217,7 @@ export async function generateDocsRedirects(
       return [
         `    "/${id}"  "${to}$is_args$args";`,
         `    "/${id}/"  "${to}$is_args$args";`,
-        `    ~*^/${escapeRegex(id)}(?<${capture}>/.+)$  "${base}$${capture}$is_args$args";`,
+        ...deepPathEntries(`/${escapeRegex(id)}`, capture, base),
       ];
     })
     .join("\n");
@@ -203,8 +236,10 @@ ${buildStampLine(stamp)}
 # Included at http level; consumed by the server block as:
 #     if (${MAP_VARIABLE}) { return 301 ${MAP_VARIABLE}; }
 #
-# Projects: ${pairs.length} — two exact keys (bare and trailing slash) plus one
-# regex per project that forwards any deeper path to the same docs site.
+# Projects: ${pairs.length} — two exact keys (bare and trailing slash) plus two
+# regexes per project that forward any deeper path to the same docs site: a
+# file (last segment with an extension) goes verbatim, a page always gets its
+# trailing slash so GitHub Pages does not add a second redirect.
 
 map $uri ${MAP_VARIABLE} {
     default "";
