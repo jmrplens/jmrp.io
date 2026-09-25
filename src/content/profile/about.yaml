@@ -15,8 +15,8 @@ person:
     en: R&D · Firmware & Software Engineer
     es: I+D · Ingeniero de Firmware y Software
   description:
-    en: Firmware and software engineer in Valencia, Spain — industrial embedded systems, open-source tooling, and self-hosted infrastructure.
-    es: Ingeniero de firmware y software en Valencia — sistemas embebidos industriales, herramientas open source e infraestructura self-hosted.
+    en: "Firmware and software engineer in Valencia, Spain: industrial embedded systems, open-source tooling, and self-hosted infrastructure."
+    es: "Ingeniero de firmware y software en Valencia: sistemas embebidos industriales, herramientas open source e infraestructura self-hosted."
 
   # Machine-readable contact for the canonical entity. Already public in
   # plaintext in public/.well-known/security.txt, so this exposes nothing new —
