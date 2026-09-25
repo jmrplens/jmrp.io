@@ -361,6 +361,31 @@ test.describe("SEO & Metadata Checks", () => {
     expect(content).toContain("## Contact");
   });
 
+  test("llms-full.txt lists every active project in both languages", async ({
+    page,
+  }) => {
+    // The roster line used to be written by hand and missed three projects
+    // that /projects/ already showed. It is generated from projects.yaml now;
+    // this pins it against the published feed built from the same YAML.
+    const feed = (await (
+      await page.request.get("/identity/projects.json")
+    ).json()) as { projects: { id: string; status: string }[] };
+    const active = feed.projects
+      .filter((project) => project.status === "active")
+      .map((project) => project.id);
+    expect(active.length).toBeGreaterThan(0);
+
+    const content = await (await page.request.get("/llms-full.txt")).text();
+    const lines = content.split("\n");
+    for (const prefix of ["Includes: ", "Incluye: "]) {
+      const roster = lines.find((line) => line.startsWith(prefix));
+      expect(roster, `no "${prefix}" line`).toBeDefined();
+      for (const id of active) {
+        expect(roster, `${id} missing from "${prefix}"`).toContain(`${id} (`);
+      }
+    }
+  });
+
   /* eslint-disable playwright/no-conditional-in-test -- fence/heading parsing
      needs branching to walk the file line by line */
   test("llms-full.txt nests post/tool body headings below their own title, respecting code fences", async ({

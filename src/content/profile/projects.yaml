@@ -28,7 +28,8 @@ type: projects
 #   Nothing enforces this rule: it drifted unnoticed from 2026-07-28 to
 #   2026-09-03, when phonometry's figures had moved 550/58/367 → 613/60/378,
 #   and again by 2026-09-11 (995/77/408, the figures its docs publish from
-#   4.0.0rc1 on), and again by 2026-09-17 (1261/87/461). The checker
+#   4.0.0rc1 on), and again by 2026-09-17 (1261/87/461) and by 2026-09-25
+#   (1447/97/477). The checker
 #   `node scripts/ci/check-software-drift.mjs` is what reports it each time;
 #   nothing prevents it, so read that report rather than trusting this copy.
 #   Projects without a docs site use the repo/CV copy.
@@ -181,8 +182,8 @@ projects:
       - { name: Octave band, wikidata: Q2270252 }
       - { name: Python, wikidata: Q28865 }
     summary:
-      en: "Acoustic measurement, analysis and prediction for Python: sound level metrology, psychoacoustics, room and building acoustics, materials, vibration, environmental and transport noise, underwater acoustics, electroacoustics and wave simulation, with 1261 CI-enforced conformance checks across 87 domains and 461 standards."
-      es: "Medición, análisis y predicción acústica para Python: metrología de niveles sonoros, psicoacústica, acústica de salas y edificación, materiales, vibración, ruido ambiental y de transporte, acústica subacuática, electroacústica y simulación de ondas, con 1261 comprobaciones de conformidad en CI sobre 87 dominios y 461 normas."
+      en: "Acoustic measurement, analysis and prediction for Python: sound level metrology, psychoacoustics, room and building acoustics, materials, vibration, environmental and transport noise, underwater acoustics, electroacoustics and wave simulation, with 1447 CI-enforced conformance checks across 97 domains and 477 standards."
+      es: "Medición, análisis y predicción acústica para Python: metrología de niveles sonoros, psicoacústica, acústica de salas y edificación, materiales, vibración, ruido ambiental y de transporte, acústica subacuática, electroacústica y simulación de ondas, con 1447 comprobaciones de conformidad en CI sobre 97 dominios y 477 normas."
 
   - id: cs-routeros-bouncer
     name: cs-routeros-bouncer
@@ -206,8 +207,8 @@ projects:
       - { name: Intrusion detection system, wikidata: Q745881 }
       - { name: Go, wikidata: Q37227 }
     summary:
-      en: CrowdSec bouncer for MikroTik RouterOS — automatic firewall management via the RouterOS API
-      es: Bouncer de CrowdSec para MikroTik RouterOS — gestión automática del firewall a través de la API de RouterOS
+      en: "CrowdSec bouncer for MikroTik RouterOS: automatic firewall management via the RouterOS API"
+      es: "Bouncer de CrowdSec para MikroTik RouterOS: gestión automática del firewall mediante la API de RouterOS"
 
   # Published 2026-09-16. `name` and `summary.en` are verbatim the `#software`
   # node its own site publishes, read from the live JSON-LD the day this was
@@ -248,6 +249,8 @@ projects:
       # The CLI that talks to the agent, shipped as its own image.
       - https://hub.docker.com/r/jmrplens/mikroscope
       - https://github.com/jmrplens/mikroscope/pkgs/container/mikroscope
+      # The Go module page its own site lists in the same `sameAs`.
+      - https://pkg.go.dev/github.com/jmrplens/mikroscope
     topics:
       - { name: RouterOS, wikidata: Q12036888 }
       - { name: MikroTik, wikidata: Q913580 }
@@ -256,7 +259,7 @@ projects:
       - { name: Go, wikidata: Q37227 }
     summary:
       en: Sub-second kernel telemetry from inside a MikroTik router, with the cost of the observer measured rather than claimed.
-      es: Telemetría del kernel con resolución de menos de un segundo desde dentro de un router MikroTik, con el coste del observador medido y no afirmado.
+      es: Telemetría de kernel por debajo del segundo desde dentro de un router MikroTik, con el coste del observador medido y no prometido.
 
   - id: Cloudflare-DNS-Updater
     name: Cloudflare DNS Updater
@@ -329,8 +332,15 @@ projects:
       # registry.modelcontextprotocol.io SEARCH query, is deliberately not
       # here: that registry is API-only, which is why this file states it as
       # `registryId` above instead of pretending it is a page to visit.
-      - https://pkg.go.dev/github.com/jmrplens/libgen-mcp
-      - https://smithery.ai/servers/@jmrp/libgen-mcp
+      # The module moved to /v2: the path without it stops at v1.7.3, so its
+      # page describes a release `go install` no longer picks.
+      - https://pkg.go.dev/github.com/jmrplens/libgen-mcp/v2
+      # Same URL form as the GitLab server's Smithery alias, and the one
+      # libgen's README badge and its own site link.
+      - https://smithery.ai/servers/jmrp/libgen-mcp
+      # Two more its site lists.
+      - https://github.com/jmrplens/libgen-mcp/pkgs/container/libgen-mcp
+      - https://deepwiki.com/jmrplens/libgen-mcp
       # Same two as GitLab MCP Server above, where the notes are. HVTracker
       # has no page for this one.
       - https://mcpbeat.com/mcp-servers/jmrplens/libgen-mcp/
@@ -378,6 +388,10 @@ projects:
       - label: GitHub Marketplace
         url: https://github.com/marketplace/actions/ghchronicle
         icon: simple-icons:githubactions
+    sameAs:
+      # The module path is /v2 since v2.4.1: under the v1 path, `go install
+      # ...@latest` resolved to v1.0.0. Its own site lists the same URL.
+      - https://pkg.go.dev/github.com/jmrplens/ghchronicle/v2
     topics:
       - { name: GitHub, wikidata: Q364 }
       - { name: Time series, wikidata: Q186588 }

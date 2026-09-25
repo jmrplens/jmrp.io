@@ -28,13 +28,19 @@ import {
 import {
   HOME_SECTIONS,
   PROFILE_SECTIONS,
+  PROJECT_ROSTER,
   SITE_SECTIONS,
 } from "@utils/llms/sections";
 import { CATEGORY_ORDER, categoryName } from "@utils/llms/tool-categories";
 import { markdownTwinPath } from "@utils/llms/twin-path";
 import { getPageFaq, pageFaqLines } from "@utils/page-faq";
 import { postDateModified } from "@utils/post-dates";
-import { getMcpServers, type McpServer } from "@utils/projects";
+import {
+  getMcpServers,
+  getProjects,
+  type McpServer,
+  type Project,
+} from "@utils/projects";
 import {
   getPublications,
   type PublicationGroup,
@@ -252,6 +258,44 @@ const TWINNED_PAGES: ReadonlySet<string> = new Set([
 ]);
 
 /**
+ * The lines {@link PROJECT_ROSTER} stands for: every active project as
+ * "id (summary, language)", then the ones that also run as a hosted endpoint.
+ *
+ * Built from `projects.yaml` so a new project cannot be left out of the
+ * corpus: the hand-written list it replaces had missed three.
+ *
+ * @param projects - Every project, in YAML order.
+ * @param servers - The hosted MCP fleet, in YAML order.
+ * @param locale - Language of the document being built.
+ * @returns The roster lines for that locale.
+ */
+function projectRosterLines(
+  projects: Project[],
+  servers: McpServer[],
+  locale: "en" | "es",
+): string[] {
+  const list = new Intl.ListFormat(locale, { type: "conjunction" });
+  const entries = projects
+    .filter((project) => project.status === "active")
+    .map((project) => {
+      const summary = project.summary[locale].replace(/\.$/u, "");
+      const language =
+        locale === "es" ? `en ${project.language}` : project.language;
+      return `${project.id} (${summary}, ${language})`;
+    });
+  const hosted = list.format(servers.map((server) => server.id));
+  return locale === "es"
+    ? [
+        `Incluye: ${entries.join("; ")}.`,
+        `${hosted} corren además como endpoints públicos alojados en mcp.jmrp.io, así que un cliente puede llamarlos sin compilar ni instalar nada.`,
+      ]
+    : [
+        `Includes: ${entries.join("; ")}.`,
+        `${hosted} also run as public hosted endpoints at mcp.jmrp.io, so a client can call them without building or installing anything.`,
+      ];
+}
+
+/**
  * Renders {@link PROFILE_SECTIONS} as llms-full.txt blocks.
  *
  * @param siteUrl - Absolute site origin.
@@ -260,11 +304,16 @@ const TWINNED_PAGES: ReadonlySet<string> = new Set([
  *   Spanish section headings, which is worse than omitting it.
  * @returns Markdown lines, ready to splice into the document.
  */
-function buildProfileSections(
+async function buildProfileSections(
   siteUrl: string,
   locale: "en" | "es" = "en",
-): string[] {
+): Promise<string[]> {
   const localePrefix = locale === "es" ? "/es" : "";
+  const roster = projectRosterLines(
+    await getProjects(),
+    await getMcpServers(),
+    locale,
+  );
   return PROFILE_SECTIONS.flatMap((section) => {
     const localized = locale === "es" ? section.es : section.en;
     return [
@@ -281,7 +330,9 @@ function buildProfileSections(
           ]
         : []),
       "",
-      ...localized.lines,
+      ...localized.lines.flatMap((line) =>
+        line === PROJECT_ROSTER ? roster : [line],
+      ),
       "",
     ];
   });
@@ -1876,8 +1927,8 @@ export async function generateLlmsFullTxt(siteUrl: string): Promise<string> {
     // languages. `buildProfileSections` always took a locale and was only ever
     // called with "en", so /es/projects/ and /es/uses/ appeared nowhere in the
     // corpus even though their twins had been published for months.
-    ...buildProfileSections(siteUrl, "en"),
-    ...buildProfileSections(siteUrl, "es"),
+    ...(await buildProfileSections(siteUrl, "en")),
+    ...(await buildProfileSections(siteUrl, "es")),
     // Per-locale like the post/tool sections: the combined document carries
     // both languages, each per-locale variant only its own.
     await mcpBlock("en"),

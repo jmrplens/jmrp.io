@@ -72,8 +72,8 @@
       "repo": "https://github.com/jmrplens/phonometry",
       "docs": "https://jmrplens.github.io/phonometry/",
       "docsEs": "https://jmrplens.github.io/phonometry/es/",
-      "description": "Acoustic measurement, analysis and prediction for Python: sound level metrology, psychoacoustics, room and building acoustics, materials, vibration, environmental and transport noise, underwater acoustics, electroacoustics and wave simulation, with 1261 CI-enforced conformance checks across 87 domains and 461 standards.",
-      "descriptionEs": "Medición, análisis y predicción acústica para Python: metrología de niveles sonoros, psicoacústica, acústica de salas y edificación, materiales, vibración, ruido ambiental y de transporte, acústica subacuática, electroacústica y simulación de ondas, con 1261 comprobaciones de conformidad en CI sobre 87 dominios y 461 normas.",
+      "description": "Acoustic measurement, analysis and prediction for Python: sound level metrology, psychoacoustics, room and building acoustics, materials, vibration, environmental and transport noise, underwater acoustics, electroacoustics and wave simulation, with 1447 CI-enforced conformance checks across 97 domains and 477 standards.",
+      "descriptionEs": "Medición, análisis y predicción acústica para Python: metrología de niveles sonoros, psicoacústica, acústica de salas y edificación, materiales, vibración, ruido ambiental y de transporte, acústica subacuática, electroacústica y simulación de ondas, con 1447 comprobaciones de conformidad en CI sobre 97 dominios y 477 normas.",
       "keywords": [
         "Acoustics",
         "Signal processing",
@@ -100,8 +100,8 @@
       "operatingSystem": "Linux, macOS, Windows, FreeBSD",
       "repo": "https://github.com/jmrplens/cs-routeros-bouncer",
       "docs": "https://jmrplens.github.io/cs-routeros-bouncer/",
-      "description": "CrowdSec bouncer for MikroTik RouterOS — automatic firewall management via the RouterOS API",
-      "descriptionEs": "Bouncer de CrowdSec para MikroTik RouterOS — gestión automática del firewall a través de la API de RouterOS",
+      "description": "CrowdSec bouncer for MikroTik RouterOS: automatic firewall management via the RouterOS API",
+      "descriptionEs": "Bouncer de CrowdSec para MikroTik RouterOS: gestión automática del firewall mediante la API de RouterOS",
       "keywords": [
         "Network security",
         "RouterOS",
@@ -130,7 +130,7 @@
       "docs": "https://jmrplens.github.io/mikroscope/",
       "docsEs": "https://jmrplens.github.io/mikroscope/es/",
       "description": "Sub-second kernel telemetry from inside a MikroTik router, with the cost of the observer measured rather than claimed.",
-      "descriptionEs": "Telemetría del kernel con resolución de menos de un segundo desde dentro de un router MikroTik, con el coste del observador medido y no afirmado.",
+      "descriptionEs": "Telemetría de kernel por debajo del segundo desde dentro de un router MikroTik, con el coste del observador medido y no prometido.",
       "keywords": [
         "RouterOS",
         "MikroTik",
@@ -143,7 +143,8 @@
         "https://github.com/jmrplens/mikroscope/pkgs/container/mikroscope-agent",
         "https://hub.docker.com/r/jmrplens/mikroscope-agent",
         "https://hub.docker.com/r/jmrplens/mikroscope",
-        "https://github.com/jmrplens/mikroscope/pkgs/container/mikroscope"
+        "https://github.com/jmrplens/mikroscope/pkgs/container/mikroscope",
+        "https://pkg.go.dev/github.com/jmrplens/mikroscope"
       ]
     },
     {
@@ -208,8 +209,10 @@
         "https://mcpvault.io/servers/libgen-mcp",
         "https://mcptoplist.com/server/io.github.jmrplens%2Flibgen-mcp",
         "https://hub.docker.com/r/jmrplens/libgen-mcp",
-        "https://pkg.go.dev/github.com/jmrplens/libgen-mcp",
-        "https://smithery.ai/servers/@jmrp/libgen-mcp",
+        "https://pkg.go.dev/github.com/jmrplens/libgen-mcp/v2",
+        "https://smithery.ai/servers/jmrp/libgen-mcp",
+        "https://github.com/jmrplens/libgen-mcp/pkgs/container/libgen-mcp",
+        "https://deepwiki.com/jmrplens/libgen-mcp",
         "https://mcpbeat.com/mcp-servers/jmrplens/libgen-mcp/"
       ],
       "endpointSameAs": [
@@ -245,7 +248,8 @@
         "https://github.com/jmrplens/ghchronicle",
         "https://github.com/jmrplens/ghchronicle/pkgs/container/ghchronicle",
         "https://hub.docker.com/r/jmrplens/ghchronicle",
-        "https://github.com/marketplace/actions/ghchronicle"
+        "https://github.com/marketplace/actions/ghchronicle",
+        "https://pkg.go.dev/github.com/jmrplens/ghchronicle/v2"
       ]
     },
     {

@@ -14,6 +14,17 @@
 // cspell:locale es,en — half of every entry is Spanish by design.
 
 /**
+ * Stands in for the lines that list the projects themselves. `llms.ts`
+ * replaces it with one line per locale built from `projects.yaml` (every
+ * active project, as "id (summary, language)") plus the hosted MCP servers.
+ *
+ * Those lines were written by hand here and drifted the way copies do: two
+ * shipped projects (ghchronicle, mikroscope) and portainer-mcp never reached
+ * the list, and TFG-TFM_EPS was credited to the wrong university.
+ */
+export const PROJECT_ROSTER = "{{project-roster}}";
+
+/**
  * Site sections that `llms.txt` advertises under "## Sections" but that
  * `llms-full.txt` used to omit entirely.
  *
@@ -76,16 +87,14 @@ export const PROFILE_SECTIONS: {
       title: "Projects",
       lines: [
         "Open-source software authored and maintained by the author, each entry listing language, license, source repository and documentation site.",
-        "Includes: gitlab-mcp-server (Model Context Protocol server exposing 850+ GitLab actions to AI assistants — 1,000+ depending on edition and deployment, Go), phonometry (Python acoustics library validated against 408 standards), cs-routeros-bouncer (CrowdSec bouncer for MikroTik RouterOS, Go), Cloudflare-DNS-Updater (dynamic DNS updater), libgen-mcp, and TFG-TFM_EPS (LaTeX thesis template for the Universitat Politècnica de València).",
-        "Both MCP servers also run as public hosted endpoints at mcp.jmrp.io, so a client can call them without building or installing anything.",
+        PROJECT_ROSTER,
       ],
     },
     es: {
       title: "Proyectos",
       lines: [
         "Software de código abierto escrito y mantenido por el autor; cada entrada indica lenguaje, licencia, repositorio de código y sitio de documentación.",
-        "Incluye: gitlab-mcp-server (servidor Model Context Protocol que expone más de 850 acciones de GitLab a asistentes de IA —más de 1.000 según edición y despliegue—, en Go), phonometry (biblioteca de acústica en Python validada contra 408 normas publicadas), cs-routeros-bouncer (bouncer de CrowdSec para MikroTik RouterOS, en Go), Cloudflare-DNS-Updater (actualizador de DNS dinámico), libgen-mcp y TFG-TFM_EPS (plantilla LaTeX de tesis para la Universitat Politècnica de València).",
-        "Los dos servidores MCP corren además como endpoints públicos alojados en mcp.jmrp.io, así que un cliente puede llamarlos sin compilar ni instalar nada.",
+        PROJECT_ROSTER,
       ],
     },
   },

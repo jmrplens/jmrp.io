@@ -181,12 +181,29 @@ for (const project of projects) {
     url: project.repo,
   };
 
+  // A bilingual site states `description` as language-tagged literals. The
+  // English one is what `summary.en` must match; comparing the whole array
+  // against a string reported mikroscope and ghchronicle as contradicting
+  // while their English text was identical. The Spanish literal is checked
+  // against `summary.es` further down, as a note: that copy is display-only.
+  const theirDescriptions = [theirs.description ?? []].flat();
+  const tagged = (lang) =>
+    theirDescriptions.find((literal) => literal?.["@language"] === lang)?.[
+      "@value"
+    ];
+  const theirValue = (p) =>
+    p === "description" && tagged("en") !== undefined
+      ? tagged("en")
+      : theirs[p];
+
   const diffs = CONTRADICTABLE.filter(
     (p) =>
-      theirs[p] !== undefined &&
+      theirValue(p) !== undefined &&
       ours[p] !== undefined &&
-      JSON.stringify(theirs[p]) !== JSON.stringify(ours[p]),
+      JSON.stringify(theirValue(p)) !== JSON.stringify(ours[p]),
   );
+  const esDrift =
+    tagged("es") !== undefined && tagged("es") !== project.summary.es;
 
   // `sameAs` is multi-valued and merges, so a shorter list here is a missed
   // opportunity rather than a contradiction — reported separately.
@@ -221,7 +238,12 @@ for (const project of projects) {
     (url) => !(project.registryId && isRegistryUrl(url)),
   );
 
-  if (diffs.length === 0 && missing.length === 0 && personLines.length === 0) {
+  if (
+    diffs.length === 0 &&
+    missing.length === 0 &&
+    personLines.length === 0 &&
+    !esDrift
+  ) {
     console.log(`✓ ${project.id}`);
     continue;
   }
@@ -238,8 +260,13 @@ for (const project of projects) {
   for (const p of diffs) {
     contradictions++;
     console.log(`   ${p} CONTRADICTS`);
-    console.log(`     their site : ${JSON.stringify(theirs[p])}`);
+    console.log(`     their site : ${JSON.stringify(theirValue(p))}`);
     console.log(`     projects.yaml: ${JSON.stringify(ours[p])}`);
+  }
+  if (esDrift) {
+    console.log(`   summary.es differs (display-only, not counted)`);
+    console.log(`     their site : ${JSON.stringify(tagged("es"))}`);
+    console.log(`     projects.yaml: ${JSON.stringify(project.summary.es)}`);
   }
   if (missing.length > 0) {
     console.log(`   sameAs entries their site has and projects.yaml lacks:`);
