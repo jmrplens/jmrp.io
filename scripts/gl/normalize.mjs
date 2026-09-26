@@ -38,8 +38,10 @@ export function projectPathFromWebUrl(webUrl) {
   }
   if (url.origin !== GITLAB_WEB_ORIGIN) return null;
   const [projectPart] = url.pathname.split("/-/", 1);
-  const fullPath = projectPart.replace(/^\/+/, "").replace(/\/+$/, "");
-  const segments = fullPath.split("/");
+  // Split and drop empty segments rather than trimming slashes with a
+  // regex: an anchored `\/+$` backtracks super-linearly on long inputs.
+  const segments = projectPart.split("/").filter(Boolean);
+  const fullPath = segments.join("/");
   const valid =
     segments.length >= 2 && segments.every((s) => /^[\w.-]+$/.test(s));
   return valid ? fullPath : null;
