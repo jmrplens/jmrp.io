@@ -39,6 +39,7 @@
 
 import { spawnSync } from "node:child_process";
 import fs from "node:fs";
+import path from "node:path";
 
 import { collectDataset } from "./build-data.mjs";
 import { resolveInfluxConfig } from "./influx.mjs";
@@ -147,7 +148,8 @@ export function acquireLock(
         throw error;
       }
     }
-    let holder = NaN;
+    // 0 is never a live PID, so an unreadable lock counts as stale.
+    let holder = 0;
     try {
       holder = Number.parseInt(fs.readFileSync(lockPath, "utf8"), 10);
     } catch {
@@ -225,6 +227,20 @@ export function describeDecision(decision, maxAgeDays) {
 }
 
 /**
+ * Absolute path of the pnpm to run: `PNPM_BIN` when set, else the corepack
+ * shim next to the running node (this host uses only corepack). Resolved
+ * without a PATH lookup, so the job cannot be steered by a writable PATH
+ * entry.
+ *
+ * @returns {string} Absolute pnpm path.
+ */
+export function resolvePnpm() {
+  const explicit = process.env.PNPM_BIN;
+  if (explicit && path.isAbsolute(explicit)) return explicit;
+  return path.join(path.dirname(process.execPath), "pnpm");
+}
+
+/**
  * Runs `pnpm build` in `cwd`, streaming its output, and returns its exit
  * code.
  *
@@ -232,7 +248,8 @@ export function describeDecision(decision, maxAgeDays) {
  * @returns {number} Exit code (1 when it could not start or was signalled).
  */
 function runBuild(cwd) {
-  const result = spawnSync("pnpm", ["build"], {
+  const pnpm = resolvePnpm();
+  const result = spawnSync(pnpm, ["build"], {
     cwd,
     env: process.env,
     stdio: "inherit",
@@ -242,6 +259,30 @@ function runBuild(cwd) {
     return 1;
   }
   return result.status ?? 1;
+}
+
+/**
+ * Collects a fresh dataset, or returns null (logged) when InfluxDB or GitLab
+ * cannot be read: the job never rebuilds from the fixture.
+ *
+ * @param {string} root - Repository root.
+ * @returns {Promise<object | null>} The dataset, or null.
+ */
+async function collectFreshDataset(root) {
+  try {
+    return await collectDataset(resolveInfluxConfig(), root, {
+      warn: (line) => console.warn(`${LOG_PREFIX} ${line}`),
+      loadGitlab: loadGitlabStrict,
+    });
+  } catch (error) {
+    const message = (
+      error instanceof Error ? error.message : String(error)
+    ).replaceAll(/[\r\n\t]+/g, " ");
+    console.log(
+      `${LOG_PREFIX} could not collect a fresh dataset (${message}); not rebuilding.`,
+    );
+    return null;
+  }
 }
 
 /**
@@ -271,21 +312,8 @@ async function main(argv) {
   }
 
   try {
-    let dataset;
-    try {
-      dataset = await collectDataset(resolveInfluxConfig(), root, {
-        warn: (line) => console.warn(`${LOG_PREFIX} ${line}`),
-        loadGitlab: loadGitlabStrict,
-      });
-    } catch (error) {
-      const message = (
-        error instanceof Error ? error.message : String(error)
-      ).replaceAll(/[\r\n\t]+/g, " ");
-      console.log(
-        `${LOG_PREFIX} could not collect a fresh dataset (${message}); not rebuilding.`,
-      );
-      return 0;
-    }
+    const dataset = await collectFreshDataset(root);
+    if (!dataset) return 0;
 
     const current = hashProjection(dataset);
     const decision = decideRebuild({

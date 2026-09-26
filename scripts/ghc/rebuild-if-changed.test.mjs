@@ -124,3 +124,22 @@ test("describeDecision names the reason", () => {
     /no rebuild state/,
   );
 });
+
+test("resolvePnpm: absolute, next to node unless PNPM_BIN is absolute", async () => {
+  const { resolvePnpm } = await import("./rebuild-if-changed.mjs");
+  const saved = process.env.PNPM_BIN;
+  try {
+    delete process.env.PNPM_BIN;
+    assert.equal(
+      resolvePnpm(),
+      path.join(path.dirname(process.execPath), "pnpm"),
+    );
+    process.env.PNPM_BIN = "relative/pnpm";
+    assert.ok(path.isAbsolute(resolvePnpm()));
+    process.env.PNPM_BIN = "/opt/pnpm/bin/pnpm";
+    assert.equal(resolvePnpm(), "/opt/pnpm/bin/pnpm");
+  } finally {
+    if (saved === undefined) delete process.env.PNPM_BIN;
+    else process.env.PNPM_BIN = saved;
+  }
+});
