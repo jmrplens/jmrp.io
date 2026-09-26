@@ -41,10 +41,7 @@ const tiles = [
   >
     {t("pages.projects.activity.regionLabel")}
   </h2>
-  <dl
-    class="activity-band__tiles"
-    aria-label={t("pages.projects.activity.regionLabel")}
-  >
+  <dl class="activity-band__tiles">
     {tiles.map((tile) => (
       <div class="activity-band__tile">
         <dd class="activity-band__value">{tile.value}</dd>
@@ -75,7 +72,11 @@ const tiles = [
   }
 
   .activity-band__tile {
+    /* A long value (or a raw token when no nginx substitutes it) wraps
+       instead of pushing the grid past the viewport. */
+    min-inline-size: 0;
     padding: var(--space-sm) var(--space-md);
+    overflow-wrap: anywhere;
     border-left: 1px solid var(--color-hair);
   }
 

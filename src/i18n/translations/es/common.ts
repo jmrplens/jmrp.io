@@ -1030,7 +1030,7 @@ export const common = {
     projectsContributions: {
       title: "Aportaciones open source",
       description:
-        "Pull requests, respuestas aceptadas en GitHub Discussions y empaquetado que José Manuel Requena Plens ha aportado a proyectos que no mantiene, agrupado por año y proyecto.",
+        "Pull requests de código y documentación de José Manuel Requena Plens fusionadas en proyectos que no mantiene, con respuestas aceptadas y logros.",
       schemaDescription:
         "Foto de código, documentación y empaquetado aportados a proyectos open source de terceros, más respuestas aceptadas en GitHub Discussions, generada en build desde ghchronicle.",
       kicker: "// PROYECTOS",

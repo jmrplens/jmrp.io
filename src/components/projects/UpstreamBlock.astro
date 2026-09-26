@@ -89,10 +89,7 @@ const monthYear = (iso: string | null): string | null =>
     <p class="upstream__lead">{t("pages.projects.upstream.intro")}</p>
   </div>
 
-  <dl
-    class="upstream__tiles"
-    aria-label={t("pages.projects.upstream.heading")}
-  >
+  <dl class="upstream__tiles">
     {tiles.map((tile) => (
       <div class="upstream__tile">
         <dd>{tile.value}</dd>
@@ -234,7 +231,11 @@ const monthYear = (iso: string | null): string | null =>
   }
 
   .upstream__tile {
+    /* A long value (or a raw token when no nginx substitutes it) wraps
+       instead of pushing the grid past the viewport. */
+    min-inline-size: 0;
     padding: var(--space-sm) var(--space-md);
+    overflow-wrap: anywhere;
     border-left: 1px solid var(--color-hair);
   }
 

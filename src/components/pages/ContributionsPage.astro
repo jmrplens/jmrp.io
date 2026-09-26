@@ -454,14 +454,10 @@ const faqNode = pageFaq && pageFaqNode(pageFaq, pageUrl, schema["@id"], locale);
         <p class="contrib-intro">
           {t("pages.projectsContributions.distributionIntro")}
         </p>
-        {/* eslint-disable astro/jsx-a11y/no-noninteractive-tabindex -- focusable scroll region for keyboard access to a wide table (axe scrollable-region-focusable), same pattern as MaintenanceTable.astro */}
-        <div
-          class="table-wrap"
-          role="region"
-          tabindex="0"
-          aria-labelledby="distribution-heading"
-        >
-          {/* eslint-enable astro/jsx-a11y/no-noninteractive-tabindex */}
+        {/* Two columns that wrap: the table fits at any width, so it needs
+            no scroll region (and a region named like its section would be a
+            duplicate landmark). */}
+        <div class="table-wrap">
           <table class="listings">
             <thead>
               <tr>

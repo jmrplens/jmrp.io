@@ -133,6 +133,16 @@ const STATIC_PAGES: Record<string, Record<Locale, OgProps>> = {
       subtitle: "Software open source que construyo y mantengo · jmrp.io",
     },
   },
+  "projects/contributions": {
+    en: {
+      title: "Open-source contributions",
+      subtitle: "Code and docs merged into other projects · jmrp.io",
+    },
+    es: {
+      title: "Aportaciones open source",
+      subtitle: "Código y documentación en proyectos ajenos · jmrp.io",
+    },
+  },
   homelab: {
     en: {
       title: "Homelab",

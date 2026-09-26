@@ -1046,7 +1046,7 @@ export const common = {
     projectsContributions: {
       title: "Open-source contributions",
       description:
-        "Pull requests, accepted GitHub Discussions answers and packaging José Manuel Requena Plens has contributed to projects he does not maintain, grouped by year and project.",
+        "Code and docs pull requests José Manuel Requena Plens has merged into projects he does not maintain, plus accepted answers and GitHub achievements.",
       schemaDescription:
         "Snapshot of code, documentation and packaging contributed to third-party open-source projects, plus accepted answers in GitHub Discussions, generated at build time from ghchronicle.",
       kicker: "// PROJECTS",

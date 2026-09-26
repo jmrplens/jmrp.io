@@ -100,7 +100,7 @@ export const PROFILE_SECTIONS: {
       lines: [
         "Open-source software authored and maintained by the author, each entry listing language, license, source repository and documentation site.",
         PROJECT_ROSTER,
-        `As of ${CONTRIBUTIONS_SNAPSHOT_NOTE_DATE}, the page also names code and documentation the author contributed to projects he does not maintain — merged pull requests, accepted GitHub Discussions answers, and packaging that lists his own tools in public registries. The full ledger, grouped by year and project, is at /projects/contributions/.`,
+        `As of ${CONTRIBUTIONS_SNAPSHOT_NOTE_DATE}, the page also names code and documentation the author contributed to projects he does not maintain: merged pull requests, accepted GitHub Discussions answers, and packaging that lists his own tools in public registries. The full ledger, grouped by project, is at /projects/contributions/.`,
       ],
     },
     es: {
@@ -108,7 +108,22 @@ export const PROFILE_SECTIONS: {
       lines: [
         "Software de código abierto escrito y mantenido por el autor; cada entrada indica lenguaje, licencia, repositorio de código y sitio de documentación.",
         PROJECT_ROSTER,
-        `A fecha de ${CONTRIBUTIONS_SNAPSHOT_NOTE_DATE}, la página también recoge código y documentación que el autor ha aportado a proyectos que no mantiene: pull requests fusionadas, respuestas aceptadas en GitHub Discussions y empaquetado que lista sus propias herramientas en registros públicos. El libro completo, agrupado por año y proyecto, está en /projects/contributions/.`,
+        `A fecha de ${CONTRIBUTIONS_SNAPSHOT_NOTE_DATE}, la página también recoge código y documentación que el autor ha aportado a proyectos que no mantiene: pull requests fusionadas, respuestas aceptadas en GitHub Discussions y empaquetado que lista sus propias herramientas en registros públicos. El libro completo, agrupado por proyecto, está en /projects/contributions/.`,
+      ],
+    },
+  },
+  {
+    url: "/projects/contributions/",
+    en: {
+      title: "Open-source contributions",
+      lines: [
+        `A build-time snapshot (${CONTRIBUTIONS_SNAPSHOT_NOTE_DATE}) of the author's work on projects he does not maintain: code and documentation pull requests grouped by project, pull requests that list his own tools in package managers, registries and curated lists, accepted GitHub Discussions answers, and GitHub achievements. The figures come from the author's own GitHub collector (ghchronicle) and link to each pull request.`,
+      ],
+    },
+    es: {
+      title: "Aportaciones open source",
+      lines: [
+        `Instantánea del build (${CONTRIBUTIONS_SNAPSHOT_NOTE_DATE}) del trabajo del autor en proyectos que no mantiene: pull requests de código y documentación agrupadas por proyecto, pull requests que publican sus propias herramientas en gestores de paquetes, registros y listas curadas, respuestas aceptadas en GitHub Discussions y logros de GitHub. Las cifras salen del recolector de GitHub del propio autor (ghchronicle) y cada pull request enlaza a GitHub.`,
       ],
     },
   },
@@ -294,12 +309,12 @@ export const SITE_SECTIONS: {
     en: {
       title: "Open-source contributions",
       description:
-        "Code and documentation merged into projects he does not maintain, accepted GitHub Discussions answers, and packaging PRs, grouped by year and project",
+        "Code and documentation merged into projects he does not maintain, accepted GitHub Discussions answers, and packaging PRs, grouped by project",
     },
     es: {
       title: "Aportaciones open source",
       description:
-        "Código y documentación fusionados en proyectos que no mantiene, respuestas aceptadas en GitHub Discussions y PR de empaquetado, agrupados por año y proyecto",
+        "Código y documentación fusionados en proyectos que no mantiene, respuestas aceptadas en GitHub Discussions y PR de empaquetado, agrupados por proyecto",
     },
   },
   {
@@ -411,6 +426,17 @@ export const HOME_SECTIONS: {
     },
   },
   { path: "/projects/", title: { en: "Projects", es: "Proyectos" } },
+  {
+    path: "/projects/contributions/",
+    title: {
+      en: "Open-source contributions",
+      es: "Aportaciones open source",
+    },
+    note: {
+      en: "Build-time snapshot: code and docs pull requests merged into projects the author does not maintain, listings of his own tools, accepted answers and achievements.",
+      es: "Instantánea del build: pull requests de código y documentación fusionadas en proyectos que el autor no mantiene, listados de sus herramientas, respuestas aceptadas y logros.",
+    },
+  },
   {
     path: "/publications/",
     title: { en: "Publications", es: "Publicaciones" },
