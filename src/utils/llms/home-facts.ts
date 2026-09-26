@@ -58,18 +58,17 @@ export function whoamiFactLines(facts: {
 }
 
 /**
- * The featured projects, with the figures the page shows on each card.
+ * The featured projects, with the facts the page shows on each card.
  *
- * `Stars:` and `Language:` stay English in both locales, like every other
- * field key in the twins: `/projects/index.md` already publishes
- * `Language: Go` in its Spanish copy, and `documentHeader` states the rule —
- * the keys are the schema, the values are the language.
+ * `Language:` stays English in both locales, like every other field key in
+ * the twins: `/projects/index.md` already publishes `Language: Go` in its
+ * Spanish copy, and `documentHeader` states the rule: the keys are the
+ * schema, the values are the language.
  *
  * The cards arrive already resolved by `@utils/featured-projects`, the one
- * accessor the page itself renders, so the twin cannot print a star count or
- * a summary the page beside it does not show. The summary is the curated,
- * localized copy from `projects.yaml` (the Spanish twin is Spanish), and the
- * star count is the ghchronicle figure /projects/ serves, as of the build.
+ * accessor the page itself renders, so the twin cannot print a summary the
+ * page beside it does not show. The summary is the curated, localized copy
+ * from `projects.yaml` (the Spanish twin is Spanish).
  *
  * @param cards - The resolved cards, in `featured_projects` order.
  * @returns Markdown list lines.

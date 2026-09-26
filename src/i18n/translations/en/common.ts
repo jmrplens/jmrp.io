@@ -1006,6 +1006,12 @@ export const common = {
         activityDaysSuffix: "{count} days in 12 months",
         communityLabel: "Community",
         countFromPeople: "{count} from {people}",
+        issueCountOne: "{count} issue",
+        issueCount: "{count} issues",
+        prCountOne: "{count} PR",
+        prCount: "{count} PRs",
+        peopleCountOne: "{count} person",
+        peopleCount: "{count} people",
       },
       // ── "Contributions to other projects" block ─────────────────────────
       upstream: {
@@ -1065,6 +1071,9 @@ export const common = {
       openedOn: "opened {date}",
       mergedIn: "merged in {duration}",
       underReview: "under review",
+      durationHours: "{count} h",
+      durationDaysOne: "{count} day",
+      durationDays: "{count} days",
       summaryMerged: "{count} merged",
       summaryOpen: "{count} open",
       summaryClosed: "{count} closed",

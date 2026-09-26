@@ -98,9 +98,15 @@ export function resolveInfluxConfig(env = process.env) {
 const RETRY_DELAY_MS = 500;
 
 /**
+ * Error names a timed-out fetch rejects with: `AbortSignal.timeout` yields a
+ * `TimeoutError`, a manually aborted controller an `AbortError`.
+ */
+const ABORT_NAMES = new Set(["AbortError", "TimeoutError"]);
+
+/**
  * Whether `error` is (or, for an {@link InfluxQueryError}, wraps via its
- * `cause`) a fetch abort — i.e. the request's own `AbortController` firing
- * because it outran {@link DEFAULT_TIMEOUT_MS}, not a real server error.
+ * `cause`) a fetch abort or timeout, i.e. the request's own timeout signal
+ * firing because it outran {@link DEFAULT_TIMEOUT_MS}, not a real server error.
  * Only this case is worth retrying: a non-2xx response or an unparsable
  * body will fail again identically.
  *
@@ -108,11 +114,11 @@ const RETRY_DELAY_MS = 500;
  * @returns {boolean} True for an abort/timeout.
  */
 function isAbortError(error) {
-  if (error instanceof Error && error.name === "AbortError") return true;
+  if (error instanceof Error && ABORT_NAMES.has(error.name)) return true;
   return (
     error instanceof InfluxQueryError &&
     error.cause instanceof Error &&
-    error.cause.name === "AbortError"
+    ABORT_NAMES.has(error.cause.name)
   );
 }
 
@@ -171,26 +177,27 @@ async function queryInfluxOnce(sql, config) {
   endpoint.searchParams.set("db", db);
   endpoint.searchParams.set("q", sql);
 
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), DEFAULT_TIMEOUT_MS);
+  // AbortSignal.timeout covers the whole exchange, body included: a timer
+  // cleared once the headers arrive would leave `response.text()` free to
+  // hang on a stalled body.
+  const signal = AbortSignal.timeout(DEFAULT_TIMEOUT_MS);
   let response;
+  let text;
   try {
     response = await fetch(endpoint, {
       headers: { Authorization: `Bearer ${token}` },
-      signal: controller.signal,
+      signal,
     });
+    text = await response.text();
   } catch (error) {
     throw new InfluxQueryError(
-      `InfluxDB query failed to send (${db}): ${
+      `InfluxDB query failed (${db}): ${
         error instanceof Error ? error.message : String(error)
       }`,
       { cause: error },
     );
-  } finally {
-    clearTimeout(timer);
   }
 
-  const text = await response.text();
   if (!response.ok) {
     throw new InfluxQueryError(
       `InfluxDB query returned ${response.status}: ${text.slice(0, 300)}`,

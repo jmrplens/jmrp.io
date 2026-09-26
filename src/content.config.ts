@@ -903,7 +903,8 @@ const contributionsSchema = z.object({
    * upstream project into one entity (`henrygd/beszel-docs` folds into
    * "Beszel") and for giving an org-scoped series a readable name
    * (`modelcontextprotocol/go-sdk` → "MCP Go SDK"). A repo absent from this
-   * map displays under its own `owner/repo` full name. This is also how
+   * map displays under its bare repo name (`acmesh-official/acme.sh` →
+   * "acme.sh"), without the owner. This is also how
    * `PRJ_CODE_UPSTREAMS` (owner decision: "unit of a project" = a GitHub
    * owner, with optional YAML folding — PLAN.md 8.2 #3) counts distinct
    * PROJECTS rather than distinct repos.

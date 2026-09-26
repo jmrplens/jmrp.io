@@ -420,6 +420,7 @@ export async function getCommunityIssueContributors(config) {
       count(DISTINCT author) AS people
     FROM gh_issue
     WHERE time >= '2008-01-01' AND owner = '${OWNER}'
+      AND repo IN (${sqlRepoList(ALL_ROSTER_REPOS)})
       AND author <> '${OWNER}' AND author NOT LIKE '%[bot]' AND author NOT LIKE '%bot'
       AND author <> 'codacy-badger'
     GROUP BY repo`;
@@ -449,7 +450,9 @@ export async function getCommunityPrContributors(config) {
   const sql = `SELECT repo, count(DISTINCT number) AS prs,
       count(DISTINCT author) AS people, string_agg(DISTINCT author, ',') AS authors
     FROM gh_pull_request
-    WHERE time >= '2008-01-01' AND author <> '${OWNER}'
+    WHERE time >= '2008-01-01' AND owner = '${OWNER}'
+      AND repo IN (${sqlRepoList(ALL_ROSTER_REPOS)})
+      AND author <> '${OWNER}'
       AND author NOT LIKE '%[bot]' AND author NOT LIKE '%bot'
       AND author <> 'codacy-badger'
     GROUP BY repo`;
@@ -982,7 +985,7 @@ export async function getRepoHygiene(config, repos = MAINTENANCE_REPOS) {
     SELECT p.repo, string_agg(CASE WHEN p.present THEN p.file END, ',') AS present
     FROM gh_policy_file p
     JOIN l ON p.full_name = l.full_name AND p.file = l.file AND p.time = l.t
-    WHERE p.repo IN (${roster}) AND p.file <> 'FUNDING'
+    WHERE p.repo IN (${roster}) AND lower(p.file) <> 'funding'
     GROUP BY p.repo`;
   const policyRows = await queryInflux(policySql, config);
 

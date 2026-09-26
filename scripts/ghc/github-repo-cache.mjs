@@ -21,6 +21,9 @@ import path from "node:path";
 
 const GITHUB_API = "https://api.github.com";
 
+/** Per-request timeout; a timed-out repo falls back to its cached entry. */
+const FETCH_TIMEOUT_MS = 15_000;
+
 /** Default on-disk cache path, relative to the repository root. */
 export const DEFAULT_CACHE_PATH = ".cache/ghc/github-repos.json";
 
@@ -106,7 +109,10 @@ export async function fetchRepoMeta(fullNames, options = {}) {
       const cached = cache[fullName];
       if (cached && now - cached.fetchedAt < ttlMs) return;
       try {
-        const res = await fetch(`${GITHUB_API}/repos/${fullName}`, { headers });
+        const res = await fetch(`${GITHUB_API}/repos/${fullName}`, {
+          headers,
+          signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
+        });
         if (!res.ok)
           throw new Error(`GitHub API ${res.status} for ${fullName}`);
         const data = await res.json();

@@ -290,6 +290,11 @@ export function createLastmodResolver(): (
       "src/components/pages/ContributionsPage.astro",
       "src/components/projects",
       "src/pages/projects/contributions.astro",
+      "src/pages/es/projects/contributions.astro",
+      // Every heading, pill and duration word is a translation string: same
+      // reasoning and over-reporting tradeoff as /about/ and /homelab/.
+      "src/i18n/translations/en/common.ts",
+      "src/i18n/translations/es/common.ts",
     ],
     "/cv/": ["src/content/cv/en.yaml", "src/content/cv/es.yaml"],
     "/publications/": [

@@ -20,6 +20,7 @@ import {
   ensureDataset,
   FIXTURE_PATH,
   isRedacted,
+  mergeContributedTo,
   shapeAchievements,
 } from "./build-data.mjs";
 
@@ -286,4 +287,84 @@ test("ensureDataset copies the fixture only when DATA_PATH is missing", () => {
   fs.writeFileSync(outPath, '{"already":"here"}');
   assert.equal(ensureDataset(root), false);
   assert.equal(fs.readFileSync(outPath, "utf8"), '{"already":"here"}');
+});
+
+test("mergeContributedTo folds rows that share a display name across platforms", () => {
+  const merged = mergeContributedTo([
+    {
+      project: "Example Project",
+      repo: "example-org/example-project",
+      platform: "github",
+      merged: 2,
+      lastMergedAt: "2026-01-10T00:00:00.000Z",
+      stars: 50,
+    },
+    {
+      project: "Other Project",
+      repo: "example-org/other-project",
+      platform: "github",
+      merged: 1,
+      lastMergedAt: "2026-02-01T00:00:00.000Z",
+      stars: 10,
+    },
+    {
+      project: "Example Project",
+      repo: "example-group/example-project",
+      platform: "gitlab",
+      merged: 3,
+      lastMergedAt: "2026-03-05T00:00:00.000Z",
+      stars: 200,
+    },
+  ]);
+  assert.equal(merged.length, 2);
+  assert.deepEqual(merged[0], {
+    project: "Example Project",
+    repo: "example-group/example-project",
+    platform: "gitlab",
+    stars: 200,
+    merged: 5,
+    lastMergedAt: "2026-03-05T00:00:00.000Z",
+  });
+  assert.equal(merged[1].project, "Other Project");
+});
+
+test("mergeContributedTo keeps the starred row over an unknown star count and sorts unknowns last", () => {
+  const merged = mergeContributedTo([
+    {
+      project: "Unknown Stars",
+      repo: "example-org/unknown",
+      platform: "github",
+      merged: 1,
+      lastMergedAt: null,
+      stars: null,
+    },
+    {
+      project: "Example Project",
+      repo: "example-group/example-project",
+      platform: "gitlab",
+      merged: 1,
+      lastMergedAt: "2026-04-01T00:00:00.000Z",
+      stars: null,
+    },
+    {
+      project: "Example Project",
+      repo: "example-org/example-project",
+      platform: "github",
+      merged: 1,
+      lastMergedAt: "2026-01-01T00:00:00.000Z",
+      stars: 3,
+    },
+  ]);
+  assert.deepEqual(
+    merged.map((row) => [row.project, row.repo, row.merged, row.lastMergedAt]),
+    [
+      [
+        "Example Project",
+        "example-org/example-project",
+        2,
+        "2026-04-01T00:00:00.000Z",
+      ],
+      ["Unknown Stars", "example-org/unknown", 1, null],
+    ],
+  );
 });

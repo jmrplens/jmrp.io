@@ -102,3 +102,38 @@ test("queryInflux does not retry an unparsable response body", async () => {
     },
   );
 });
+
+test("queryInflux retries once when the body read times out (TimeoutError)", async () => {
+  let calls = 0;
+  await withMockFetch(
+    async () => {
+      calls += 1;
+      if (calls === 1) {
+        return {
+          ok: true,
+          text: async () => {
+            throw new DOMException("The operation timed out.", "TimeoutError");
+          },
+        };
+      }
+      return { ok: true, text: async () => '[{"n":2}]' };
+    },
+    async () => {
+      const rows = await queryInflux("select 1", CONFIG);
+      assert.deepEqual(rows, [{ n: 2 }]);
+      assert.equal(calls, 2, "a body timeout must be retried exactly once");
+    },
+  );
+});
+
+test("queryInflux passes a timeout signal to fetch", async () => {
+  await withMockFetch(
+    async (_url, init) => {
+      assert.ok(init?.signal instanceof AbortSignal);
+      return { ok: true, text: async () => "[]" };
+    },
+    async () => {
+      assert.deepEqual(await queryInflux("select 1", CONFIG), []);
+    },
+  );
+});

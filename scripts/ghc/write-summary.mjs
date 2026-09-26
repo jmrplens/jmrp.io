@@ -206,8 +206,8 @@ export async function collectGitlabSummary(
  * and the classes that hide a row with nothing to show.
  *
  * @param {string} id - Token segment from `projectTokenId`.
- * @param {{stars: number, stars30d: number} | undefined} star - Star row.
- * @param {{tag: string, ageDays: number} | undefined} release - Release row.
+ * @param {{stars: number, stars30d: number}} [star] - Star row, if any.
+ * @param {{tag: string, ageDays: number}} [release] - Release row, if any.
  * @returns {Record<string, number | string | null>} The card's tokens.
  */
 function cardTokens(id, star, release) {
@@ -224,6 +224,34 @@ function cardTokens(id, star, release) {
 }
 
 /**
+ * The global (not per-card) summary tokens and how each is read from the
+ * raw data. The ONE list of global keys: {@link buildSummaryTokens} fills
+ * every entry and {@link buildNullSummary} nulls the same keys, so the live
+ * and degraded shapes cannot drift apart.
+ *
+ * @type {Readonly<Record<string, (raw: RawSummaryData, gitlab: GitlabSummary | null) => number | string | null>>}
+ */
+export const GLOBAL_SUMMARY_TOKENS = Object.freeze({
+  PRJ_CODE_MERGED: (raw, gitlab) =>
+    raw.codeVsListingSplit.codeOrDocs.merged + (gitlab?.merged ?? 0),
+  PRJ_CODE_UPSTREAMS: (raw, gitlab) =>
+    new Set([...raw.codeUpstreamProjects, ...(gitlab?.projects ?? [])]).size,
+  PRJ_LISTING_MERGED: (raw) => raw.codeVsListingSplit.listing.merged,
+  // CODE PRs only (excludes contributions.yaml listingRepos): the owner
+  // decided the open-review tile must not blend packaging/listing PRs into
+  // the "under review" figure. `contributionTotals.prOpen` (all kinds) is
+  // still available for the subpage's book-keeping totals.
+  PRJ_PR_OPEN: (raw, gitlab) =>
+    raw.codeVsListingSplit.codeOrDocs.open + (gitlab?.open ?? 0),
+  PRJ_ANSWERS: (raw) => raw.answersCount,
+  PRJ_RELEASES_90D: (raw) => raw.headerBand.releases90d,
+  PRJ_STARS_30D: (raw) => raw.headerBand.stars30d,
+  PRJ_ACTIVE_DAYS: (raw) => raw.activityBand.activeDays,
+  PRJ_STREAK: (raw) => raw.activityBand.streakDays,
+  PRJ_AS_OF: (raw) => raw.freshness.asOf,
+});
+
+/**
  * Shapes {@link RawSummaryData} into the flat `PRJ_*` token map this module
  * publishes — pure and network-free, so it is unit-tested with canned data.
  *
@@ -237,28 +265,13 @@ function cardTokens(id, star, release) {
  * @returns {Record<string, number | string | null>} Token → primitive.
  */
 export function buildSummaryTokens(raw, gitlab = null) {
-  const upstreams = new Set([
-    ...raw.codeUpstreamProjects,
-    ...(gitlab?.projects ?? []),
-  ]);
   /** @type {Record<string, number | string | null>} */
-  const tokens = {
-    PRJ_CODE_MERGED:
-      raw.codeVsListingSplit.codeOrDocs.merged + (gitlab?.merged ?? 0),
-    PRJ_CODE_UPSTREAMS: upstreams.size,
-    PRJ_LISTING_MERGED: raw.codeVsListingSplit.listing.merged,
-    // CODE PRs only (excludes contributions.yaml listingRepos) — the owner
-    // decided the open-review tile must not blend packaging/listing PRs into
-    // the "under review" figure. `contributionTotals.prOpen` (all kinds) is
-    // still available for the subpage's book-keeping totals.
-    PRJ_PR_OPEN: raw.codeVsListingSplit.codeOrDocs.open + (gitlab?.open ?? 0),
-    PRJ_ANSWERS: raw.answersCount,
-    PRJ_RELEASES_90D: raw.headerBand.releases90d,
-    PRJ_STARS_30D: raw.headerBand.stars30d,
-    PRJ_ACTIVE_DAYS: raw.activityBand.activeDays,
-    PRJ_STREAK: raw.activityBand.streakDays,
-    PRJ_AS_OF: raw.freshness.asOf,
-  };
+  const tokens = Object.fromEntries(
+    Object.entries(GLOBAL_SUMMARY_TOKENS).map(([key, read]) => [
+      key,
+      read(raw, gitlab),
+    ]),
+  );
 
   const starsByRepo = new Map(raw.stars.map((row) => [row.repo, row]));
   const releaseByRepo = new Map(raw.releases.map((row) => [row.repo, row]));
@@ -285,29 +298,13 @@ export function buildSummaryTokens(raw, gitlab = null) {
  * @returns {Record<string, number | string | null>} Token → `null` (mostly).
  */
 export function buildNullSummary() {
-  const globalKeys = [
-    "PRJ_CODE_MERGED",
-    "PRJ_CODE_UPSTREAMS",
-    "PRJ_LISTING_MERGED",
-    "PRJ_PR_OPEN",
-    "PRJ_ANSWERS",
-    "PRJ_RELEASES_90D",
-    "PRJ_STARS_30D",
-    "PRJ_ACTIVE_DAYS",
-    "PRJ_STREAK",
-    "PRJ_AS_OF",
-  ];
   /** @type {Record<string, number | string | null>} */
-  const tokens = Object.fromEntries(globalKeys.map((key) => [key, null]));
+  const tokens = Object.fromEntries(
+    Object.keys(GLOBAL_SUMMARY_TOKENS).map((key) => [key, null]),
+  );
   for (const repoId of ACTIVE_REPOS) {
-    const id = projectTokenId(repoId);
-    tokens[`PRJ_${id}_STARS`] = null;
-    tokens[`PRJ_${id}_STARS_30D`] = null;
-    tokens[`PRJ_${id}_STARS_CLASS`] = HIDE_CLASS;
-    tokens[`PRJ_${id}_STARS_30D_CLASS`] = HIDE_CLASS;
-    tokens[`PRJ_${id}_REL_TAG`] = null;
-    tokens[`PRJ_${id}_REL_AGE`] = null;
-    tokens[`PRJ_${id}_REL_CLASS`] = HIDE_CLASS;
+    // No star row and no release: every value null, every row hidden.
+    Object.assign(tokens, cardTokens(projectTokenId(repoId)));
   }
   return tokens;
 }

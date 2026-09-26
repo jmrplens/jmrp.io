@@ -990,6 +990,12 @@ export const common = {
         activityDaysSuffix: "{count} días en 12 meses",
         communityLabel: "Comunidad",
         countFromPeople: "{count} de {people}",
+        issueCountOne: "{count} issue",
+        issueCount: "{count} issues",
+        prCountOne: "{count} PR",
+        prCount: "{count} PR",
+        peopleCountOne: "{count} persona",
+        peopleCount: "{count} personas",
       },
       // ── Bloque «Aportaciones a otros proyectos» ───────────────────────────
       upstream: {
@@ -1049,6 +1055,9 @@ export const common = {
       openedOn: "abierta {date}",
       mergedIn: "fusionada en {duration}",
       underReview: "en revisión",
+      durationHours: "{count} h",
+      durationDaysOne: "{count} día",
+      durationDays: "{count} días",
       summaryMerged: "{count} fusionadas",
       summaryOpen: "{count} abiertas",
       summaryClosed: "{count} cerradas",

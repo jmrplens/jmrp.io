@@ -58,6 +58,14 @@ import { formatValue } from "../../scripts/ghc/format.mjs";
 /** Same contract as the `PRJ_[A-Z0-9_]+` pattern in ssr-tokens.ts. */
 const PRJ_TOKEN_RE = /PRJ_[A-Z0-9_]+/g;
 
+/**
+ * The same pattern without the `g` flag, for the presence check: `.test()`
+ * on a global regex advances its shared `lastIndex`, so a match in one
+ * response would make the next response's check start mid-body and could
+ * skip its substitution entirely.
+ */
+const PRJ_TOKEN_PROBE_RE = /PRJ_[A-Z0-9_]+/;
+
 /** Relative path of the live summary `write-summary.mjs` writes. */
 const SUMMARY_PATH = ".cache/ghc/projects-summary.json";
 
@@ -184,7 +192,7 @@ function substitutePrjTokens(
   root: string,
   locale: "en" | "es",
 ): string {
-  if (!PRJ_TOKEN_RE.test(body)) return body;
+  if (!PRJ_TOKEN_PROBE_RE.test(body)) return body;
   const tokens = loadTokens(root);
   return body.replaceAll(PRJ_TOKEN_RE, (match) =>
     match in tokens ? formatValue(match, tokens[match], locale) : FALLBACK,

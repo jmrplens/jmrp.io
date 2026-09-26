@@ -231,6 +231,54 @@ function addToLedger(ledgerByYear, project, item, contributions) {
 }
 
 /**
+ * @typedef {object} ContributedToRow
+ * @property {string} project Display name the row is grouped under.
+ * @property {string} repo Repository that represents the row (link target).
+ * @property {"github" | "gitlab"} platform Platform of `repo`.
+ * @property {number} merged Merged code/docs PRs or MRs.
+ * @property {string | null} lastMergedAt ISO timestamp of the latest merge.
+ * @property {number | null} stars Star count of `repo`, or null if unknown.
+ */
+
+/**
+ * Merges "Contributed to" rows that share a display name, so a project with
+ * merged work on both GitHub and GitLab (or two repos folded to the same
+ * name) appears once: merge counts are summed, the latest merge date wins,
+ * and the row with more stars keeps its `repo`, `platform` and `stars`. The
+ * result is sorted by stars, unknown counts last.
+ *
+ * @param {ContributedToRow[]} rows Rows from both platforms, in any order.
+ * @returns {ContributedToRow[]} One row per project, most-starred first.
+ */
+export function mergeContributedTo(rows) {
+  /** @type {Map<string, ContributedToRow>} */
+  const byProject = new Map();
+  for (const row of rows) {
+    const existing = byProject.get(row.project);
+    if (!existing) {
+      byProject.set(row.project, { ...row });
+      continue;
+    }
+    const lastMergedAt =
+      (row.lastMergedAt ?? "") > (existing.lastMergedAt ?? "")
+        ? row.lastMergedAt
+        : existing.lastMergedAt;
+    const lead = (row.stars ?? -1) > (existing.stars ?? -1) ? row : existing;
+    byProject.set(row.project, {
+      project: row.project,
+      repo: lead.repo,
+      platform: lead.platform,
+      stars: lead.stars,
+      merged: existing.merged + row.merged,
+      lastMergedAt,
+    });
+  }
+  return [...byProject.values()].sort(
+    (a, b) => (b.stars ?? -1) - (a.stars ?? -1),
+  );
+}
+
+/**
  * Runs every build-time query and shapes the dataset. Network-calling;
  * {@link buildDataset} below wraps it with the fixture fallback.
  *
@@ -363,7 +411,7 @@ export async function collectDataset(
     [...foldedCode.values()].map((entry) => entry.primaryRepo),
     { root },
   );
-  const contributedTo = [
+  const contributedTo = mergeContributedTo([
     ...[...foldedCode.values()].map((entry) => ({
       project: entry.project,
       repo: entry.primaryRepo,
@@ -373,7 +421,7 @@ export async function collectDataset(
       stars: repoMeta[entry.primaryRepo]?.stars ?? null,
     })),
     ...gitlabContributedTo(gitlab, contributions.displayName),
-  ].sort((a, b) => (b.stars ?? -1) - (a.stars ?? -1));
+  ]);
 
   // Hours to merge of every merged code/docs PR or MR, both platforms, for
   // the combined median.

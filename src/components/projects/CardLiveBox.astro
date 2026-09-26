@@ -13,7 +13,7 @@
  */
 import { type ProjectCardSsr } from "@components/projects/ssr-tokens";
 import { defaultLocale, type Locale } from "@i18n/config";
-import { useTranslations } from "@i18n/utils";
+import { pluralize, useTranslations } from "@i18n/utils";
 
 interface Props {
   readonly projectName: string;
@@ -35,42 +35,34 @@ const t = useTranslations(locale);
 // PLAN.md 4.2: only worth showing past a handful of days.
 const showActivity = typeof activeDays12m === "number" && activeDays12m > 5;
 
-/** "3 issues"/"1 issue" — count + unit, unit already plural-selected. */
-function unitCount(n: number, forms: { one: string; other: string }): string {
-  return `${n} ${n === 1 ? forms.one : forms.other}`;
-}
+type CountKey = "issueCount" | "prCount" | "peopleCount";
 
-/** "N PR"/"N PRs" — English pluralizes the abbreviation, Spanish does not. */
-function prCount(n: number): string {
-  const suffix = n !== 1 && locale === "en" ? "s" : "";
-  return `${n} PR${suffix}`;
-}
-
-/** "N persona(s)"/"N person/people", localized. */
-function peopleCount(n: number): string {
-  return unitCount(n, {
-    one: locale === "es" ? "persona" : "person",
-    other: locale === "es" ? "personas" : "people",
-  });
+/** "1 issue"/"3 issues", "1 PR"/"3 PRs", "1 person"/"3 people", localized. */
+function countOf(key: CountKey, count: number): string {
+  return pluralize(
+    count,
+    {
+      one: t(`pages.projects.card.${key}One`, { count }),
+      other: t(`pages.projects.card.${key}`, { count }),
+    },
+    locale,
+  );
 }
 
 const communityParts: string[] = [];
 if (communityIssues) {
   communityParts.push(
     t("pages.projects.card.countFromPeople", {
-      count: unitCount(communityIssues.issues, {
-        one: "issue",
-        other: "issues",
-      }),
-      people: peopleCount(communityIssues.people),
+      count: countOf("issueCount", communityIssues.issues),
+      people: countOf("peopleCount", communityIssues.people),
     }),
   );
 }
 if (communityPrs) {
   communityParts.push(
     t("pages.projects.card.countFromPeople", {
-      count: prCount(communityPrs.prs),
-      people: peopleCount(communityPrs.people),
+      count: countOf("prCount", communityPrs.prs),
+      people: countOf("peopleCount", communityPrs.people),
     }),
   );
 }

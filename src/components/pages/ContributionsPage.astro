@@ -34,6 +34,7 @@ import { getEntry } from "astro:content";
 import type { CollectionPage, ItemList, SoftwareSourceCode } from "schema-dts";
 
 import { foldProjectName } from "../../../scripts/ghc/contributions-yaml.mjs";
+import { OWNER as GITHUB_OWNER } from "../../../scripts/ghc/roster.mjs";
 
 const locale = (Astro.currentLocale ?? defaultLocale) as Locale;
 const t = useTranslations(locale);
@@ -145,7 +146,7 @@ function githubSearchUrl(items: readonly { fullName: string }[]): string {
   const repos = [...new Set(items.map((it) => it.fullName))]
     .map((fullName) => `repo:${fullName}`)
     .join(" ");
-  const query = `is:pr author:jmrplens ${repos}`;
+  const query = `is:pr author:${GITHUB_OWNER} ${repos}`;
   return `https://github.com/search?type=pullrequests&q=${encodeURIComponent(query)}`;
 }
 
@@ -156,11 +157,19 @@ const MAX_ITEMS_PER_PROJECT = 10;
 /** Duration between two points, in hours, as a short localized string. */
 function formatHours(hours: number): string {
   if (hours < 24) {
-    const rounded = Math.round(hours);
-    return `${rounded} ${pluralize(rounded, { one: "h", other: "h" }, locale)}`;
+    return t("pages.projectsContributions.durationHours", {
+      count: Math.round(hours),
+    });
   }
-  const days = Math.round(hours / 24);
-  return `${days} ${pluralize(days, { one: locale === "es" ? "día" : "day", other: locale === "es" ? "días" : "days" }, locale)}`;
+  const count = Math.round(hours / 24);
+  return pluralize(
+    count,
+    {
+      one: t("pages.projectsContributions.durationDaysOne", { count }),
+      other: t("pages.projectsContributions.durationDays", { count }),
+    },
+    locale,
+  );
 }
 
 /** A ledger item's lifecycle state. */

@@ -61,7 +61,33 @@ function ledgerItemLabel(
     item.redacted || !item.title
       ? t("pages.projectsContributions.itemRedacted")
       : itemTitleLine(item);
-  return `${label} (${item.state})`;
+  return `${label} (${stateLabel(item.state, t)})`;
+}
+
+/**
+ * A ledger item's state in the page's own pill words (merged/open/not
+ * merged), localized and lowercased to read as a parenthetical in prose.
+ */
+function stateLabel(
+  state: string,
+  t: ReturnType<typeof useTranslations>,
+): string {
+  if (state === "merged")
+    return t("pages.projectsContributions.itemMergedPill").toLowerCase();
+  if (state === "open")
+    return t("pages.projectsContributions.itemOpenPill").toLowerCase();
+  return t("pages.projectsContributions.itemNotMergedPill").toLowerCase();
+}
+
+/** A "{count} merged/open" label, with the singular form for 1. */
+function countLabel(
+  key: "summaryMerged" | "summaryOpen",
+  count: number,
+  t: ReturnType<typeof useTranslations>,
+): string {
+  return t(`pages.projectsContributions.${key}${count === 1 ? "One" : ""}`, {
+    count,
+  });
 }
 
 /** `owner/repo #number title` (`!iid` for a GitLab merge request), split out so it is never nested inside a ternary. */
@@ -268,7 +294,7 @@ export async function contributionsPageMarkdown(
           Date.parse(b.items[0].createdAt) - Date.parse(a.items[0].createdAt),
       )
       .flatMap(({ project, items, merged, open }) => [
-        `- **${project}** (${platformName(items[0]?.platform, t)}): ${merged} merged, ${open} open`,
+        `- **${project}** (${platformName(items[0]?.platform, t)}): ${countLabel("summaryMerged", merged, t)}, ${countLabel("summaryOpen", open, t)}`,
         ...items.slice(0, 10).map((it) => `  - ${ledgerItemLabel(it, t)}`),
       ]),
     ...(notMerged > 0
@@ -287,9 +313,10 @@ export async function contributionsPageMarkdown(
     .map(([own, targets]) => {
       const parts = Object.entries(targets).map(([name, row]) => {
         const link = `[${name}](https://github.com/${row.fullName})`;
-        if (row.merged === 0) return `${link} (under review)`;
+        if (row.merged === 0)
+          return `${link} (${t("pages.projectsContributions.underReview")})`;
         const times = row.merged > 1 ? " ×" + String(row.merged) : "";
-        return `${link}${times} (merged)`;
+        return `${link}${times} (${stateLabel("merged", t)})`;
       });
       return `- **${own}**: ${parts.join(", ")}`;
     });

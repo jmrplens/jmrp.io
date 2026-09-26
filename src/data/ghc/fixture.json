@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-09-26T20:06:56.402Z",
+  "generatedAt": "2026-09-26T20:35:39.488Z",
   "asOf": "2026-09-26T13:03:19.304686700",
   "summary": {
     "contributionTotals": {
@@ -1544,9 +1544,14 @@
   "communityContributors": {
     "issues": [
       {
-        "repo": "A-Lab",
-        "issues": 5,
-        "people": 5
+        "repo": "cs-routeros-bouncer",
+        "issues": 7,
+        "people": 6
+      },
+      {
+        "repo": "gitlab-mcp-server",
+        "issues": 3,
+        "people": 3
       },
       {
         "repo": "TFG-TFM_EPS",
@@ -1559,29 +1564,24 @@
         "people": 14
       },
       {
-        "repo": "Cloudflare-DNS-Updater",
-        "issues": 7,
-        "people": 7
-      },
-      {
-        "repo": "gitlab-mcp-server",
-        "issues": 3,
-        "people": 3
-      },
-      {
         "repo": "libgen-mcp",
         "issues": 1,
         "people": 1
       },
       {
+        "repo": "Cloudflare-DNS-Updater",
+        "issues": 7,
+        "people": 7
+      },
+      {
+        "repo": "A-Lab",
+        "issues": 5,
+        "people": 5
+      },
+      {
         "repo": "FDTDexamples",
         "issues": 1,
         "people": 1
-      },
-      {
-        "repo": "cs-routeros-bouncer",
-        "issues": 7,
-        "people": 6
       }
     ],
     "prs": [
@@ -1591,19 +1591,14 @@
         "people": 2
       },
       {
-        "repo": "gitlab-mcp-server",
-        "prs": 6,
-        "people": 4
-      },
-      {
         "repo": "SetFigPaper",
         "prs": 1,
         "people": 1
       },
       {
-        "repo": "portainer-mcp-enhanced",
+        "repo": "phonometry",
         "prs": 3,
-        "people": 3
+        "people": 2
       },
       {
         "repo": "mastodon_official_profiles",
@@ -1611,19 +1606,19 @@
         "people": 4
       },
       {
-        "repo": "libgen-mcp",
-        "prs": 1,
-        "people": 1
-      },
-      {
         "repo": "Cloudflare-DNS-Updater",
         "prs": 3,
         "people": 3
       },
       {
-        "repo": "phonometry",
-        "prs": 3,
-        "people": 2
+        "repo": "gitlab-mcp-server",
+        "prs": 6,
+        "people": 4
+      },
+      {
+        "repo": "libgen-mcp",
+        "prs": 1,
+        "people": 1
       }
     ]
   },
@@ -1777,9 +1772,9 @@
         "repo": "gitlab-mcp-server",
         "jobs": 24,
         "os": [
-          "Linux",
           "macOS",
-          "Windows"
+          "Windows",
+          "Linux"
         ]
       },
       "ciPassRate90d": {
@@ -1800,25 +1795,24 @@
       "hygiene": {
         "repo": "gitlab-mcp-server",
         "policyFiles": [
-          "funding",
-          "security",
           "dependabot",
+          "security",
           "codeowners"
         ],
         "rulesetRules": [
-          "required_status_checks",
-          "non_fast_forward",
           "pull_request",
-          "deletion",
-          "update"
+          "update",
+          "non_fast_forward",
+          "required_status_checks",
+          "deletion"
         ],
         "hasClassicProtection": false,
         "dependabotEcosystems": [
+          "gomod",
           "docker-compose",
           "github-actions",
-          "npm",
-          "gomod",
-          "docker"
+          "docker",
+          "npm"
         ]
       },
       "docsPublished": {
@@ -1835,9 +1829,9 @@
         "repo": "phonometry",
         "jobs": 32,
         "os": [
+          "Linux",
           "macOS",
-          "Windows",
-          "Linux"
+          "Windows"
         ]
       },
       "ciPassRate90d": {
@@ -1858,16 +1852,15 @@
       "hygiene": {
         "repo": "phonometry",
         "policyFiles": [
-          "security",
           "dependabot",
-          "funding"
+          "security"
         ],
         "rulesetRules": [],
         "hasClassicProtection": true,
         "dependabotEcosystems": [
-          "pip",
+          "npm",
           "github-actions",
-          "npm"
+          "pip"
         ]
       },
       "docsPublished": {
@@ -1905,19 +1898,18 @@
       "hygiene": {
         "repo": "cs-routeros-bouncer",
         "policyFiles": [
-          "codeowners",
-          "funding",
           "security",
-          "dependabot"
+          "dependabot",
+          "codeowners"
         ],
         "rulesetRules": [],
         "hasClassicProtection": true,
         "dependabotEcosystems": [
-          "gomod",
           "github-actions",
+          "docker",
           "npm",
-          "docker-compose",
-          "docker"
+          "gomod",
+          "docker-compose"
         ]
       },
       "docsPublished": {
@@ -1958,12 +1950,11 @@
         "repo": "mikroscope",
         "policyFiles": [
           "security",
-          "funding",
           "dependabot"
         ],
         "rulesetRules": [
-          "deletion",
           "pull_request",
+          "deletion",
           "required_status_checks",
           "non_fast_forward"
         ],
@@ -2008,7 +1999,6 @@
       "hygiene": {
         "repo": "Cloudflare-DNS-Updater",
         "policyFiles": [
-          "funding",
           "security",
           "codeowners"
         ],
@@ -2030,9 +2020,9 @@
         "repo": "libgen-mcp",
         "jobs": 20,
         "os": [
+          "Linux",
           "macOS",
-          "Windows",
-          "Linux"
+          "Windows"
         ]
       },
       "ciPassRate90d": {
@@ -2053,23 +2043,22 @@
       "hygiene": {
         "repo": "libgen-mcp",
         "policyFiles": [
-          "security",
-          "funding",
           "codeowners",
+          "security",
           "dependabot"
         ],
         "rulesetRules": [
           "non_fast_forward",
-          "deletion",
           "required_status_checks",
-          "pull_request"
+          "pull_request",
+          "deletion"
         ],
         "hasClassicProtection": false,
         "dependabotEcosystems": [
-          "gomod",
-          "npm",
           "docker",
-          "github-actions"
+          "gomod",
+          "github-actions",
+          "npm"
         ]
       },
       "docsPublished": {
@@ -2087,8 +2076,8 @@
         "jobs": 22,
         "os": [
           "macOS",
-          "Linux",
-          "Windows"
+          "Windows",
+          "Linux"
         ]
       },
       "ciPassRate90d": {
@@ -2110,21 +2099,20 @@
         "repo": "ghchronicle",
         "policyFiles": [
           "security",
-          "dependabot",
-          "funding"
+          "dependabot"
         ],
         "rulesetRules": [
+          "deletion",
           "pull_request",
           "non_fast_forward",
-          "deletion",
           "required_status_checks"
         ],
         "hasClassicProtection": false,
         "dependabotEcosystems": [
-          "docker",
-          "github-actions",
           "npm",
-          "gomod"
+          "gomod",
+          "docker",
+          "github-actions"
         ]
       },
       "docsPublished": {
@@ -2155,8 +2143,7 @@
         "repo": "portainer-mcp",
         "policyFiles": [
           "security",
-          "codeowners",
-          "funding"
+          "codeowners"
         ],
         "rulesetRules": [],
         "hasClassicProtection": false,
@@ -2166,7 +2153,7 @@
     }
   ],
   "gitlab": {
-    "fetchedAt": "2026-09-26T20:06:56.202Z",
+    "fetchedAt": "2026-09-26T20:35:39.324Z",
     "username": "jmrp",
     "items": [
       {
