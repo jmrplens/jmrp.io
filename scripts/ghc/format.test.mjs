@@ -23,7 +23,7 @@ test("kindForToken: the site-wide PRJ_STARS_30D is int-signed", () => {
 });
 
 test("kindForToken: a per-card *_STARS_30D is plain int, not int-signed", () => {
-  assert.equal(kindForToken("PRJ_GITLAB_MCP_SERVER_STARS_30D"), "int");
+  assert.equal(kindForToken("PRJ_PHONOMETRY_STARS_30D"), "int");
 });
 
 test("kindForToken: *_REL_AGE is rel-days", () => {

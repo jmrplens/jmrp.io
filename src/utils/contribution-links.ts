@@ -42,9 +42,13 @@ export function repoUrl(
 
 /** The fields every contribution item carries that its URL depends on. */
 export interface ContributionRef {
+  /** Repository full name or GitLab project path. */
   readonly fullName: string;
+  /** PR/issue number, or the GitLab merge request IID. */
   readonly number: number;
+  /** Pull/merge request or issue: they live under different URL paths. */
   readonly kind: "pull_request" | "issue";
+  /** Where it lives; absent means GitHub. */
   readonly platform?: string | null;
 }
 

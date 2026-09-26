@@ -11,7 +11,7 @@ import { test } from "node:test";
 
 import { createGitlabClient } from "./client.mjs";
 
-const TOKEN = "glpat-test-secret";
+const TOKEN = "placeholder-token";
 
 /**
  * A fake `fetch` answering from a list of canned responses, recording calls.

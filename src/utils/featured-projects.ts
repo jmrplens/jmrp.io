@@ -27,6 +27,7 @@ import { getProjects } from "@utils/projects";
 export interface FeaturedProjectCard {
   /** GitHub repository name, also the card title. */
   readonly id: string;
+  /** Repository page the card links to. */
   readonly url: string;
   /** Curated language from `projects.yaml` (the one /projects/ prints). */
   readonly language: string | null;
