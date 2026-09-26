@@ -1,0 +1,166 @@
+type: contributions
+
+# Curation data for the "Contributions to other projects" block on /projects/
+# and the /projects/contributions/ subpage. Everything COUNTED (the PR/issue
+# numbers themselves) comes live from ghchronicle; this file only decides how
+# to CLASSIFY, FOLD, HIDE and EXPLAIN those items. See
+# `plan/projects-ghchronicle/{PLAN,datos,destacadas}.md` for the sourcing.
+#
+# ── Rules for editing ────────────────────────────────────────────────────
+# * `listingRepos` are full names WHOSE MERGED/OPEN PRs FROM THIS ACCOUNT are
+#   packaging or listing entries (a winget manifest bump, an awesome-list
+#   line), not code or docs. Verified against `datos.md` idea 1's tested SQL
+#   (`full_name IN (...) OR repo LIKE 'awesome-%'`) on 2026-09-26.
+# * `exclude` items are hidden from the DETAILED build-time ledger and the
+#   subpage (title, URL, everything) — never from the live summary counts,
+#   which must keep matching GitHub's own public search results exactly.
+#   Each one is documented below with why it is here; add a new entry only
+#   with the same kind of verification.
+# * `displayName` folds sibling repos of one upstream project (a code repo +
+#   its docs repo) or names an org-scoped series, per the owner's decision
+#   that a "project" is a GitHub owner with optional folding (PLAN.md 8.2
+#   #3). A repo NOT listed here displays under its own bare repo name (the
+#   part after the `/`, e.g. `acmesh-official/acme.sh` → "acme.sh") — never
+#   the full `owner/repo` (fixed 2026-09-26, review round #1). Only add an
+#   entry when the bare repo name itself needs recasing/expanding
+#   (`renovatebot/renovate` → "Renovate") or when a listing repo needs a
+#   human label for the "Distribution and listings" section
+#   (`microsoft/winget-pkgs` → "winget").
+# * `featured` is ordered; the UI takes the first 3 for /projects/ and all of
+#   it (up to 6) for the subpage. Every entry must be MERGED (or, for an
+#   issue, a genuine accepted contribution) and carry no pending-disclosure
+#   security content. `why.en`/`why.es` are one line, written by the owner or
+#   verified against the PR/issue before being written down — see
+#   `destacadas.md` section 3 for how these six were chosen among 60 upstream
+#   items (33 merged, 15 open, 11 closed unmerged) and 13 accepted Discussion
+#   answers, all cross-checked against the live GitHub API on 2026-09-26.
+# * `securityTitleAllow` is empty on purpose: PLAN.md 8.2 #10 (whether to
+#   allow-list titles that match `/security|CVE|vulnerab/i` at all) is an
+#   open owner decision. Until answered, every such title stays hidden by
+#   default, which is the safe failure mode.
+# * `listingAliases` maps a pre-rename spelling to the current roster project
+#   id (`roster.mjs`'s `ACTIVE_REPOS`), so `deriveOwnProjects()` in
+#   `build-data.mjs` can still fold an older listing PR (titled before a
+#   rename) under the project's current id. Every listing PR's own project is
+#   otherwise derived automatically from its title — see that function's doc
+#   comment in `contributions-yaml.mjs`; this map is only for the one case
+#   the title itself cannot name correctly.
+
+listingRepos:
+  # The account's own projects being published to a package manager or
+  # registry — not code contributed to someone else's project.
+  - microsoft/winget-pkgs
+  - docker/mcp-registry
+  - conda-forge/staged-recipes
+  - crowdsecurity/hub
+  # Every `awesome-*` list entry is the same shape: "add my project to your
+  # list". `datos.md` idea 1 matched these by `repo LIKE 'awesome-%'`; listed
+  # explicitly here since YAML has no LIKE pattern.
+  - punkpeye/awesome-mcp-servers
+  - wolffcatskyy/awesome-crowdsec
+  - faroit/awesome-python-scientific-audio
+  - Nitnelav/awesome-acoustic
+  - jlbyh2o/awesome-mikrotik
+
+exclude:
+  # Title asserts a CVE fix; the maintainer showed the server is NOT
+  # vulnerable (the address is recorded at connect time) and closed it as
+  # not relevant. Showing this would be an incorrect security claim on the
+  # portfolio. destacadas.md: "NEVER SHOW".
+  - ARM-software/MDK-Middleware#131
+  # Declined by the maintainer (the UI cannot produce the rewritten
+  # condition column). Not a contribution that landed anywhere.
+  - openobserve/openobserve#14252
+  # PEP 541 package-name request: an account/admin request, not a code or
+  # docs contribution.
+  - pypi/support#12078
+
+displayName:
+  # Same change, code and docs: henrygd/beszel#2327 + henrygd/beszel-docs#82.
+  # BOTH repos map to the same display name "Beszel" — folding only works
+  # when every sibling repo (the code repo included, not just the docs one)
+  # resolves to the identical string.
+  henrygd/beszel: Beszel
+  henrygd/beszel-docs: Beszel
+  # An official multi-language SDK; the Go and Rust SDKs are DIFFERENT
+  # programs under one org, so they get distinct display names rather than
+  # folding together (destacadas.md section 5).
+  modelcontextprotocol/go-sdk: MCP Go SDK
+  modelcontextprotocol/rust-sdk: MCP Rust SDK
+  # opencloud-eu/web-extensions#575 (open PR) grew out of an accepted answer
+  # in opencloud-eu/opencloud#3587 — same org, one project.
+  opencloud-eu/web-extensions: OpenCloud
+  opencloud-eu/opencloud: OpenCloud
+  alshedivat/al-folio: al-folio
+  # Bare repo name alone would read wrong or lowercase — review round #1,
+  # item 3.
+  podman-container-tools/podman: Podman
+  renovatebot/renovate: Renovate
+  TriliumNext/Trilium: Trilium Notes
+  NginxProxyManager/nginx-proxy-manager: Nginx Proxy Manager
+  # Listing-repo labels for the "Distribution and listings" section (review
+  # round #1, item 13) — the `awesome-*` repos read fine under their own bare
+  # repo name and need no entry here.
+  microsoft/winget-pkgs: winget
+  docker/mcp-registry: Docker MCP Registry
+  crowdsecurity/hub: CrowdSec Hub
+  conda-forge/staged-recipes: conda-forge
+  Kong/kong: Kong
+  glanceapp/glance: Glance
+  electron/asar: Electron asar
+  perry-mitchell/webdav-client: webdav-client
+  creativeprojects/go-selfupdate: go-selfupdate
+  portainer/portainer-mcp: Portainer MCP
+  sanny32/OpenModScan: OpenModScan
+  acmesh-official/acme.sh: acme.sh
+  YunoHost-Apps/coturn_ynh: YunoHost coturn
+
+# See this file's header comment. Currently just the one pre-rename PyOctave
+# → phonometry titles (conda-forge/staged-recipes#34074 "Adding
+# pyoctaveband").
+listingAliases:
+  pyoctaveband: phonometry
+
+# `why.en`/`why.es` are DOUBLE-QUOTED: several mention PR numbers as
+# "#1234", and a plain (unquoted) YAML scalar treats a `#` preceded by
+# whitespace as a comment marker — even mid-string, even inside a folded
+# multi-line value. Quoting avoids that trap entirely.
+featured:
+  - repo: TriliumNext/Trilium
+    number: 11448
+    kind: pull_request
+    why:
+      en: "Made TOTP codes single-use at login, as RFC 6238 requires, and added one time step of clock-drift tolerance, with tests."
+      es: "Hizo que los códigos TOTP sean de un solo uso en el inicio de sesión, como exige el RFC 6238, y añadió tolerancia de un paso de tiempo a la deriva de reloj, con tests."
+  - repo: NginxProxyManager/nginx-proxy-manager
+    number: 5836
+    kind: pull_request
+    why:
+      en: "Tokens issued before a password change are now rejected, so resetting a password ends the sessions the old one opened; covered by a Cypress API test."
+      es: "Los tokens emitidos antes de un cambio de contraseña ahora se rechazan, así que restablecer la contraseña cierra las sesiones abiertas con la anterior; cubierto por un test de API en Cypress."
+  - repo: modelcontextprotocol/go-sdk
+    number: 1274
+    kind: pull_request
+    why:
+      en: "Five merged fixes to the official MCP Go SDK (#1255, #1268, #1269, #1273, #1274) that bring protocol-version negotiation, cancellation and pre-initialize handling in line with the specification, each with tests."
+      es: "Cinco correcciones fusionadas en el SDK oficial de MCP para Go (#1255, #1268, #1269, #1273, #1274) que ajustan a la especificación la negociación de versión del protocolo, la cancelación y el tratamiento de llamadas previas a initialize, cada una con tests."
+  - repo: henrygd/beszel
+    number: 2327
+    kind: pull_request
+    why:
+      en: "Added TRUSTED_PROXY_IPS, an IP/CIDR allowlist so the trusted auth header is only honoured from the reverse proxy, and documented it."
+      es: "Añadió TRUSTED_PROXY_IPS, una lista de IP/CIDR permitidas para que la cabecera de autenticación de confianza solo se acepte desde el proxy inverso, y la documentó."
+  - repo: acmesh-official/acme.sh
+    number: 7237
+    kind: pull_request
+    why:
+      en: "Fixed DNS manual mode reusing the previous certificate on renewal (and failing on first issuance) by polling the ACME order the current run created."
+      es: "Corrigió que el modo DNS manual reutilizara el certificado anterior al renovar (y fallara en la primera emisión) consultando el pedido ACME creado en la ejecución actual."
+  - repo: sanny32/OpenModScan
+    number: 74
+    kind: pull_request
+    why:
+      en: "Registered the --help and --version options in this Qt/C++ Modbus scanner so the existing handlers run from the command line."
+      es: "Registró las opciones --help y --version en este escáner Modbus en Qt/C++ para que los manejadores ya existentes se ejecuten desde la línea de comandos."
+
+securityTitleAllow: []

@@ -1,0 +1,447 @@
+---
+/**
+ * "Contributions to other projects" block on /projects/ — between the active
+ * and archived project groups (PLAN.md 2.1: "unit of a project = a GitHub
+ * owner"). Four tiles are LIVE `PRJ_*` SSR tokens; highlights and the
+ * "Contributed to" strip are build-time, resolved once by `ProjectsPage.astro`
+ * from `contributions.yaml` and `src/data/ghc/projects-contributions.json`.
+ */
+import { PRJ } from "@components/projects/ssr-tokens";
+import { defaultLocale, type Locale } from "@i18n/config";
+import { formatCompactStars, formatDate, useTranslations } from "@i18n/utils";
+
+/** One curated highlight, already localized and resolved by the caller. */
+export interface UpstreamHighlight {
+  readonly repo: string;
+  readonly number: number;
+  readonly kind: "pull_request" | "issue";
+  readonly why: string;
+  readonly url: string;
+  readonly stars: number | null;
+}
+
+/** One row of the "Contributed to" strip. */
+export interface ContributedToRow {
+  readonly project: string;
+  readonly url: string;
+  readonly stars: number | null;
+  readonly lastMergedAt: string | null;
+}
+
+interface Props {
+  readonly highlights: readonly UpstreamHighlight[];
+  readonly contributedTo: readonly ContributedToRow[];
+  readonly contributedToRemaining: number;
+  /** Build-time snapshot date, for the "list as of" footnote. */
+  readonly listAsOf: Date;
+  readonly subpageHref: string;
+}
+
+const {
+  highlights,
+  contributedTo,
+  contributedToRemaining,
+  listAsOf,
+  subpageHref,
+} = Astro.props;
+
+const locale = (Astro.currentLocale ?? defaultLocale) as Locale;
+const t = useTranslations(locale);
+
+const tiles = [
+  {
+    value: PRJ.upstream.codeMerged,
+    label: t("pages.projects.upstream.tileCodeMerged"),
+  },
+  {
+    value: PRJ.upstream.codeUpstreams,
+    label: t("pages.projects.upstream.tileCodeUpstreams"),
+  },
+  {
+    value: PRJ.upstream.prOpen,
+    label: t("pages.projects.upstream.tilePrOpen"),
+  },
+  {
+    value: PRJ.upstream.answers,
+    label: t("pages.projects.upstream.tileAnswers"),
+  },
+];
+
+const monthYear = (iso: string | null): string | null =>
+  iso
+    ? formatDate(new Date(iso), locale, { year: "numeric", month: "short" })
+    : null;
+---
+
+<section
+  class="upstream"
+  id="upstream"
+  aria-labelledby="upstream-heading"
+>
+  <div class="upstream__intro">
+    <p class="section-title">{t("pages.projects.upstream.kicker")}</p>
+    <h2
+      id="upstream-heading"
+      class="upstream__heading"
+    >
+      {t("pages.projects.upstream.heading")}
+    </h2>
+    <p class="upstream__lead">{t("pages.projects.upstream.intro")}</p>
+  </div>
+
+  <dl
+    class="upstream__tiles"
+    aria-label={t("pages.projects.upstream.heading")}
+  >
+    {tiles.map((tile) => (
+      <div class="upstream__tile">
+        <dd>{tile.value}</dd>
+        <dt>{tile.label}</dt>
+      </div>
+    ))}
+  </dl>
+  <p class="upstream__listing-note">
+    {t("pages.projects.upstream.listingNote", {
+      count: PRJ.upstream.listingMerged,
+    })}
+  </p>
+
+  {highlights.length > 0 && (
+    <div>
+      <h3 class="upstream__subheading">
+        {t("pages.projects.upstream.highlightsTitle")}
+      </h3>
+      <ol class="upstream__highlights">
+        {highlights.map((highlight) => (
+          <li>
+            <span class="pill pill--ok">
+              <span
+                class="i-mdi:check-circle-outline"
+                aria-hidden="true"
+              />
+              {t("pages.projects.upstream.mergedPill")}
+            </span>
+            <span class="upstream__highlight-title">
+              <a
+                class="external-link"
+                href={highlight.url}
+                target="_blank"
+                rel="external noopener noreferrer"
+                lang="en"
+                aria-label={t("aria.opensNewTab", {
+                  text: `${highlight.repo} #${highlight.number}`,
+                })}
+                set:text={`${highlight.repo} #${highlight.number}`}
+              />
+            </span>
+            <p class="upstream__highlight-why">{highlight.why}</p>
+            {highlight.stars !== null && (
+              <p class="upstream__highlight-meta">
+                {formatCompactStars(highlight.stars, locale)}{" "}
+                <span aria-hidden="true">★</span>
+                <span class="sr-only">{t("aria.starsUnit")}</span>
+              </p>
+            )}
+          </li>
+        ))}
+      </ol>
+    </div>
+  )}
+
+  {contributedTo.length > 0 && (
+    <div>
+      <h3 class="upstream__subheading">
+        {t("pages.projects.upstream.contributedToTitle")}
+      </h3>
+      <ol class="upstream__strip">
+        {contributedTo.map((row) => (
+          <li>
+            <a
+              class="external-link"
+              href={row.url}
+              target="_blank"
+              rel="external noopener noreferrer"
+              lang="en"
+              aria-label={t("aria.opensNewTab", { text: row.project })}
+              set:text={row.project}
+            />
+            <span class="upstream__strip-meta">
+              {row.stars !== null && (
+                <>
+                  {formatCompactStars(row.stars, locale)}{" "}
+                  <span aria-hidden="true">★</span>
+                  <span class="sr-only">{t("aria.starsUnit")}</span>
+                </>
+              )}
+              {row.stars !== null && monthYear(row.lastMergedAt) ? " · " : ""}
+              {monthYear(row.lastMergedAt)}
+            </span>
+          </li>
+        ))}
+      </ol>
+      {contributedToRemaining > 0 && (
+        <p class="upstream__strip-more">
+          {t("pages.projects.upstream.andMore", {
+            count: contributedToRemaining,
+            date: formatDate(listAsOf, locale),
+          })}
+        </p>
+      )}
+    </div>
+  )}
+
+  <div class="upstream__foot">
+    <p class="live">
+      {t("pages.projects.upstream.liveLabel", { time: PRJ.asOf })}
+    </p>
+    <a
+      class="btn"
+      href={subpageHref}
+    >
+      {t("pages.projects.upstream.subpageLink")}
+    </a>
+  </div>
+</section>
+
+<style>
+  .upstream {
+    padding: var(--space-lg);
+    margin: var(--space-lg-xl) 0;
+    background: var(--color-bg-secondary);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+  }
+
+  .upstream__heading {
+    margin: var(--space-xs) 0 var(--space-sm);
+    font-size: 1.4rem;
+  }
+
+  .upstream__lead {
+    max-width: 62ch;
+    margin: 0;
+    font-size: var(--text-sm);
+    color: var(--color-text);
+  }
+
+  .upstream__tiles {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    padding: 0;
+    margin: var(--space-md) 0 0;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+  }
+
+  .upstream__tile {
+    padding: var(--space-sm) var(--space-md);
+    border-left: 1px solid var(--color-hair);
+  }
+
+  .upstream__tile:first-child {
+    border-left: 0;
+  }
+
+  .upstream__tile dd {
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: var(--text-xl);
+    font-weight: var(--fw-semibold);
+    font-variant-numeric: tabular-nums;
+    color: var(--color-text-heading);
+  }
+
+  .upstream__tile dt {
+    margin: 2px 0 0;
+    font-size: var(--text-xs);
+    color: var(--color-text-muted);
+  }
+
+  .upstream__listing-note {
+    margin: var(--space-sm) 0 0;
+    font-size: var(--text-sm);
+    color: var(--color-text-muted);
+  }
+
+  .upstream__subheading {
+    margin: var(--space-lg) 0 var(--space-sm);
+    font-size: 1.05rem;
+  }
+
+  .upstream__highlights {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
+    padding: 0;
+    margin: 0;
+    list-style: none;
+  }
+
+  .upstream__highlights li {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 2px var(--space-sm);
+    align-items: baseline;
+  }
+
+  .pill {
+    display: inline-flex;
+    gap: 4px;
+    align-items: center;
+    padding: 1px 8px;
+    font-family: var(--font-mono);
+    font-size: var(--text-micro);
+    white-space: nowrap;
+    border: 1px solid currentcolor;
+    border-radius: var(--radius-pill);
+  }
+
+  .pill--ok {
+    color: var(--color-success, var(--color-accent));
+  }
+
+  .upstream__highlight-title {
+    font-weight: var(--fw-semibold);
+    color: var(--color-text-heading);
+  }
+
+  .upstream__highlight-title a {
+    color: inherit;
+    text-decoration: none;
+  }
+
+  .upstream__highlight-title a:hover,
+  .upstream__highlight-title a:focus-visible {
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+
+  .upstream__highlight-why {
+    grid-column: 2;
+    margin: 0;
+    font-size: var(--text-sm);
+    color: var(--color-text);
+  }
+
+  .upstream__highlight-meta {
+    grid-column: 2;
+    margin: 0;
+    font-family: var(--font-mono);
+    font-size: var(--text-micro);
+    color: var(--color-text-muted);
+  }
+
+  .upstream__strip {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr));
+    gap: 0 var(--space-lg);
+    padding: 0;
+    margin: 0;
+    list-style: none;
+  }
+
+  .upstream__strip li {
+    display: flex;
+    gap: var(--space-sm);
+    justify-content: space-between;
+    padding: 7px 0;
+    font-size: var(--text-sm);
+    border-bottom: 1px solid var(--color-hair);
+  }
+
+  .upstream__strip a {
+    color: var(--color-text);
+    text-decoration: none;
+  }
+
+  .upstream__strip a:hover,
+  .upstream__strip a:focus-visible {
+    color: var(--color-accent);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+
+  .upstream__strip-meta {
+    font-family: var(--font-mono);
+    font-size: var(--text-micro);
+    font-variant-numeric: tabular-nums;
+    color: var(--color-text-muted);
+    white-space: nowrap;
+  }
+
+  .upstream__strip-more {
+    margin: var(--space-sm) 0 0;
+    font-size: var(--text-xs);
+    color: var(--color-text-muted);
+  }
+
+  .upstream__foot {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-sm) var(--space-lg);
+    align-items: center;
+    justify-content: space-between;
+    padding-top: var(--space-md);
+    margin-top: var(--space-sm);
+    border-top: 1px solid var(--color-hair);
+  }
+
+  .live {
+    display: inline-flex;
+    gap: 6px;
+    align-items: center;
+    margin: 0;
+    font-family: var(--font-mono);
+    font-size: var(--text-micro);
+    color: var(--color-text-muted);
+  }
+
+  .live::before {
+    width: 7px;
+    height: 7px;
+    content: "";
+    background: var(--color-success, var(--color-accent));
+    border-radius: 50%;
+  }
+
+  .btn {
+    display: inline-block;
+    padding: 8px 14px;
+    font-family: var(--font-mono);
+    font-size: var(--text-sm);
+    color: var(--color-accent);
+    text-decoration: none;
+    border: 1px solid var(--color-accent);
+    border-radius: var(--radius-sm);
+  }
+
+  .btn:hover,
+  .btn:focus-visible {
+    background: var(--color-bg-subtle);
+  }
+
+  @media (width <= 560px) {
+    .upstream__highlights li {
+      grid-template-columns: 1fr;
+    }
+
+    .upstream__highlights li > * {
+      grid-column: 1;
+      justify-self: start;
+    }
+  }
+
+  @media (width <= 640px) {
+    .upstream__tiles {
+      grid-template-columns: repeat(2, 1fr);
+    }
+
+    .upstream__tile:nth-child(3) {
+      border-left: 0;
+    }
+
+    .upstream__tile:nth-child(n + 3) {
+      border-top: 1px solid var(--color-hair);
+    }
+  }
+</style>

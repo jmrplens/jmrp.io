@@ -1,0 +1,236 @@
+---
+/**
+ * GitHub achievements shelf — the small, closing section of
+ * /projects/contributions/ (PLAN.md section 3). Badges are drawn as clean
+ * CSS/SVG discs with the tier spelled out in text (never color alone,
+ * WCAG 1.4.1); nothing hotlinks `github.githubassets.com` (CSP forbids
+ * cross-origin images from that host, and it would leak a referrer to
+ * GitHub besides).
+ *
+ * Data is `shapeAchievements()`'s output from `build-data.mjs`: only the
+ * four badges the owner decided to show, Pull Shark's raw count already
+ * redacted to `null` (it is an authenticated total that includes private
+ * PRs — never printed).
+ */
+import { defaultLocale, type Locale } from "@i18n/config";
+import { useTranslations } from "@i18n/utils";
+
+/** One shown achievement, as `shapeAchievements()` emits it. */
+export interface Achievement {
+  readonly achievement: string;
+  readonly name: string;
+  readonly tierNumber: number;
+  readonly tierName: "gold" | "silver" | "bronze" | "default";
+  readonly count: number | null;
+  readonly nextThreshold: number;
+  readonly percent: number;
+  readonly agrees: boolean;
+}
+
+interface Props {
+  readonly achievements: readonly Achievement[];
+  /** Real, verifiable count of accepted Discussions answers — NOT the
+   * Galaxy Brain badge's own (lagging) `count`; see the module doc comment
+   * in `build-data.mjs` and PLAN.md 3: never show them side by side. */
+  readonly acceptedAnswersCount: number;
+  /** Anchor id of the accepted-answers section, for Galaxy Brain's link. */
+  readonly answersAnchor: string;
+}
+
+const { achievements, acceptedAnswersCount, answersAnchor } = Astro.props;
+const locale = (Astro.currentLocale ?? defaultLocale) as Locale;
+const t = useTranslations(locale);
+
+const TIER_KEY = {
+  gold: "tierGold",
+  silver: "tierSilver",
+  bronze: "tierBronze",
+  default: "tierBase",
+} as const;
+
+const INITIALS: Record<string, string> = {
+  "pull-shark": "PS",
+  "pair-extraordinaire": "PE",
+  "galaxy-brain": "GB",
+  starstruck: "ST",
+};
+---
+
+<section aria-labelledby="achievements-heading">
+  <h2
+    id="achievements-heading"
+    class="ach-heading"
+  >
+    {t("pages.projectsContributions.achievementsHeading")}
+  </h2>
+  <ul class="ach">
+    {achievements.map((a) => (
+      <li>
+        <span
+          class={`ach__badge ach__badge--${a.tierName}`}
+          aria-hidden="true"
+        >
+          {INITIALS[a.achievement] ?? a.name.slice(0, 2).toUpperCase()}
+          <small>{`x${a.tierNumber}`}</small>
+        </span>
+        <b class="ach__name">{a.name}</b>
+        <span class="ach__tier">
+          {t(`pages.projectsContributions.${TIER_KEY[a.tierName]}`)}
+        </span>
+        {a.achievement === "galaxy-brain" ? (
+          <span class="ach__extra">
+            <a href={`#${answersAnchor}`}>
+              {t("pages.projectsContributions.answersHeading", {
+                count: acceptedAnswersCount,
+              })}
+            </a>
+          </span>
+        ) : (
+          a.agrees &&
+          a.nextThreshold > 0 &&
+          a.count !== null && (
+            <>
+              <span class="ach__extra">
+                {t("pages.projectsContributions.achievementProgress", {
+                  value: a.count,
+                  max: a.nextThreshold,
+                  label: t("pages.projectsContributions.achievementEstimated"),
+                })}
+              </span>
+              <meter
+                min="0"
+                max={a.nextThreshold}
+                value={a.count}
+                low={0}
+                optimum={a.nextThreshold}
+                aria-label={`${a.count} / ${a.nextThreshold} (${t("pages.projectsContributions.achievementEstimated")})`}
+              />
+            </>
+          )
+        )}
+      </li>
+    ))}
+  </ul>
+  <p class="ach__hidden-note">
+    {t("pages.projectsContributions.achievementsHiddenNote")}
+  </p>
+</section>
+
+<style>
+  .ach-heading {
+    margin: 0 0 var(--space-md);
+    font-size: 1.25rem;
+  }
+
+  .ach {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 230px), 1fr));
+    gap: var(--space-md);
+    padding: 0;
+    margin: 0;
+    list-style: none;
+  }
+
+  .ach li {
+    display: grid;
+    grid-template-columns: 56px 1fr;
+    gap: 4px var(--space-sm);
+    align-items: center;
+    padding: var(--space-sm);
+    background: var(--color-bg-secondary);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+  }
+
+  .ach__badge {
+    position: relative;
+    display: grid;
+    grid-row: span 3;
+    place-items: center;
+    width: 56px;
+    height: 56px;
+    font-family: var(--font-display);
+    font-size: var(--text-md);
+    font-weight: var(--fw-bold);
+    color: #0a0a0b;
+    border-radius: 50%;
+  }
+
+  .ach__badge small {
+    position: absolute;
+    right: -4px;
+    bottom: -2px;
+    padding: 1px 5px;
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    color: var(--color-bg);
+    background: var(--color-text-heading);
+    border-radius: var(--radius-pill);
+  }
+
+  .ach__badge--gold {
+    background: linear-gradient(135deg, #f7d774, #c9962a);
+  }
+
+  .ach__badge--silver {
+    background: linear-gradient(135deg, #e8e8e8, #9ea3a8);
+  }
+
+  .ach__badge--bronze {
+    background: linear-gradient(135deg, #e7a36a, #9c5a2c);
+  }
+
+  .ach__badge--default {
+    background: linear-gradient(135deg, #9fd3c7, #4f8f86);
+  }
+
+  .ach__name {
+    color: var(--color-text-heading);
+  }
+
+  .ach__tier,
+  .ach__extra {
+    font-family: var(--font-mono);
+    font-size: var(--text-micro);
+    color: var(--color-text-muted);
+  }
+
+  .ach__extra a {
+    color: var(--color-accent);
+  }
+
+  .ach meter {
+    grid-column: 2;
+    inline-size: 100%;
+    block-size: 6px;
+    appearance: none;
+    background: var(--color-border);
+    border: 0;
+    border-radius: 3px;
+  }
+
+  .ach meter::-webkit-meter-bar {
+    block-size: 6px;
+    background: var(--color-border);
+    border: 0;
+    border-radius: 3px;
+  }
+
+  .ach meter::-webkit-meter-optimum-value,
+  .ach meter::-webkit-meter-suboptimum-value,
+  .ach meter::-webkit-meter-even-less-good-value {
+    background: var(--color-accent);
+    border-radius: 3px;
+  }
+
+  .ach meter::-moz-meter-bar {
+    background: var(--color-accent);
+    border-radius: 3px;
+  }
+
+  .ach__hidden-note {
+    margin: var(--space-sm) 0 0;
+    font-size: var(--text-xs);
+    color: var(--color-text-muted);
+  }
+</style>

@@ -25,6 +25,18 @@
 export const PROJECT_ROSTER = "{{project-roster}}";
 
 /**
+ * The snapshot date printed in the static "contributions" sentence below.
+ * llms-full.txt is a corpus digest, never live tokens (`PRJ_*` is forbidden
+ * here — `check-projects-ssr.mjs`), so this is a HAND-MAINTAINED date: bump
+ * it only when the underlying figures at /projects/contributions/ change
+ * materially, not on every data refresh. A mechanical pass must not touch
+ * this string without also reviewing it (see CLAUDE.md "Dates are computed,
+ * not remembered" — this sentence is the one deliberate exception, and
+ * `Content-Bump: skip` still applies to the surrounding prose).
+ */
+const CONTRIBUTIONS_SNAPSHOT_NOTE_DATE = "2026-09-26";
+
+/**
  * Site sections that `llms.txt` advertises under "## Sections" but that
  * `llms-full.txt` used to omit entirely.
  *
@@ -88,6 +100,7 @@ export const PROFILE_SECTIONS: {
       lines: [
         "Open-source software authored and maintained by the author, each entry listing language, license, source repository and documentation site.",
         PROJECT_ROSTER,
+        `As of ${CONTRIBUTIONS_SNAPSHOT_NOTE_DATE}, the page also names code and documentation the author contributed to projects he does not maintain — merged pull requests, accepted GitHub Discussions answers, and packaging that lists his own tools in public registries. The full ledger, grouped by year and project, is at /projects/contributions/.`,
       ],
     },
     es: {
@@ -95,6 +108,7 @@ export const PROFILE_SECTIONS: {
       lines: [
         "Software de código abierto escrito y mantenido por el autor; cada entrada indica lenguaje, licencia, repositorio de código y sitio de documentación.",
         PROJECT_ROSTER,
+        `A fecha de ${CONTRIBUTIONS_SNAPSHOT_NOTE_DATE}, la página también recoge código y documentación que el autor ha aportado a proyectos que no mantiene: pull requests fusionadas, respuestas aceptadas en GitHub Discussions y empaquetado que lista sus propias herramientas en registros públicos. El libro completo, agrupado por año y proyecto, está en /projects/contributions/.`,
       ],
     },
   },
@@ -273,6 +287,19 @@ export const SITE_SECTIONS: {
       title: "Proyectos",
       description:
         "Software libre que escribe y mantiene — servidores MCP, herramientas de acústica, seguridad de red",
+    },
+  },
+  {
+    path: "/projects/contributions/",
+    en: {
+      title: "Open-source contributions",
+      description:
+        "Code and documentation merged into projects he does not maintain, accepted GitHub Discussions answers, and packaging PRs, grouped by year and project",
+    },
+    es: {
+      title: "Aportaciones open source",
+      description:
+        "Código y documentación fusionados en proyectos que no mantiene, respuestas aceptadas en GitHub Discussions y PR de empaquetado, agrupados por año y proyecto",
     },
   },
   {

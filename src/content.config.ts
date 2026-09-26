@@ -832,6 +832,77 @@ const projectsSchema = z.object({
   projects: z.array(ProjectEntry).min(1),
 });
 
+/**
+ * One hand-picked upstream contribution shown as a "Highlight": the first 3
+ * (authored order) render on /projects/, up to 6 on
+ * /projects/contributions/. See `plan/projects-ghchronicle/destacadas.md` for
+ * how these were chosen and verified (merged, released where applicable, no
+ * pending-disclosure security content).
+ */
+const ContributionsFeatured = z.object({
+  /** `owner/repo` full name, e.g. `"TriliumNext/Trilium"`. */
+  repo: z.string().regex(/^[\w.-]+\/[\w.-]+$/, "owner/repo"),
+  number: z.number().int().positive(),
+  kind: z.enum(["pull_request", "issue"]),
+  /** One-line "why this matters" — never a restatement of the PR title. */
+  why: LocalizedString,
+});
+
+/**
+ * Curation data for the "Contributions to other projects" block on
+ * /projects/ and the /projects/contributions/ subpage. Read by
+ * `scripts/ghc/build-data.mjs` (build-time lists) and
+ * `scripts/ghc/write-summary.mjs` (the live "projects" fold, for
+ * `PRJ_CODE_UPSTREAMS`) — see `plan/projects-ghchronicle/PLAN.md` section
+ * 7.6. Never consumed by a page directly: both scripts read this collection
+ * via `getCollection("profile")` and re-shape it into their own JSON output.
+ */
+const contributionsSchema = z.object({
+  type: z.literal("contributions"),
+  /**
+   * `owner/repo` full names classified as packaging/distribution rather than
+   * code or docs (winget manifest bumps, awesome-list entries, registry
+   * listings for the account's OWN projects). Drives the
+   * "code & docs" vs. "packaging & listings" split — `datos.md` idea 1.
+   */
+  listingRepos: z
+    .array(z.string().regex(/^[\w.-]+\/[\w.-]+$/, "owner/repo"))
+    .min(1),
+  /**
+   * `owner/repo#number` identifiers whose TITLE and URL must never render in
+   * the build-time ledger or subpage — a false security claim
+   * (ARM-software/MDK-Middleware#131), a declined report
+   * (openobserve/openobserve#14252), or an account-admin request that is not
+   * a contribution (pypi/support#12078). The live SUMMARY counts (which must
+   * match GitHub's own public search results) are computed straight from
+   * ghchronicle and are NOT affected by this list — only the detailed,
+   * per-item listing is.
+   */
+  exclude: z
+    .array(z.string().regex(/^[\w.-]+\/[\w.-]+#\d+$/, "owner/repo#number"))
+    .default([]),
+  /**
+   * `owner/repo` → display name, for folding sibling repos of the same
+   * upstream project into one entity (`henrygd/beszel-docs` folds into
+   * "Beszel") and for giving an org-scoped series a readable name
+   * (`modelcontextprotocol/go-sdk` → "MCP Go SDK"). A repo absent from this
+   * map displays under its own `owner/repo` full name. This is also how
+   * `PRJ_CODE_UPSTREAMS` (owner decision: "unit of a project" = a GitHub
+   * owner, with optional YAML folding — PLAN.md 8.2 #3) counts distinct
+   * PROJECTS rather than distinct repos.
+   */
+  displayName: z.record(z.string(), z.string()).default({}),
+  featured: z.array(ContributionsFeatured).min(1).max(6),
+  /**
+   * Title-matching regex source strings (JS `RegExp`, case-insensitive):
+   * titles that would otherwise be hidden by the default
+   * `/security|CVE|vulnerab/i` filter but are explicitly cleared to show
+   * (merged, released, no pending disclosure). Empty by default — nothing is
+   * allow-listed until reviewed. See PLAN.md 8.2 #10.
+   */
+  securityTitleAllow: z.array(z.string()).default([]),
+});
+
 const profile = defineCollection({
   loader: glob({
     pattern: "**/*.yaml",
@@ -842,6 +913,7 @@ const profile = defineCollection({
     aboutSchema,
     usesSchema,
     projectsSchema,
+    contributionsSchema,
   ]),
 });
 

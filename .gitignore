@@ -43,6 +43,11 @@ builds/
 # gets a zeroed file from the integration, and both pages already render a dash
 # rather than a figure when the total is 0.
 src/data/downloads.json
+# Live /projects contributions dataset, refreshed at pre-build from
+# ghchronicle's InfluxDB (scripts/ghc/build-data.mjs). Same reasoning as
+# downloads.json above: `src/data/ghc/fixture.json` is the committed
+# last-known-good a fresh clone or a LAN-less build falls back to.
+src/data/ghc/projects-contributions.json
 # Package manager dependencies
 node_modules/
 

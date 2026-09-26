@@ -17,6 +17,7 @@ import { remarkMermaidBypass } from "./scripts/remark-mermaid-bypass.mjs";
 import postBuildIntegration from "./src/integrations/post-build.ts";
 import preBuildIntegration from "./src/integrations/pre-build.ts";
 import { createLastmodResolver } from "./src/integrations/sitemap-post-dates.ts";
+import { devPrjTokenPlugin } from "./src/integrations/vite-plugin-dev-prj-tokens.ts";
 import { vitePrefetchNoncePlugin } from "./src/integrations/vite-plugin-prefetch-nonce.ts";
 import routerosGrammar from "./src/languages/routeros.tmLanguage.json";
 
@@ -485,6 +486,9 @@ export default defineConfig({
   vite: {
     plugins: [
       vitePrefetchNoncePlugin(),
+      // `apply: "serve"` inside the plugin itself excludes it from
+      // `astro build`'s Vite instance — see the module doc comment.
+      devPrjTokenPlugin(),
       ViteImageOptimizer(imageOptimizerOptions),
     ],
     css: {

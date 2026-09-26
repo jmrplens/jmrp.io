@@ -60,6 +60,13 @@ ignorePaths:
   # descriptions in eight languages (de, fr, it, ja, nl, pt…), copied exactly
   # as published. Spell-checking EN/ES dictionaries against them is all noise.
   - src/data/bluesky-feeds.json
+  # Verbatim third-party GitHub owner/repo names, PR titles and package
+  # ecosystem identifiers (ghchronicle's /projects/contributions/ dataset,
+  # `scripts/ghc/build-data.mjs`) — the committed fixture AND the generated,
+  # gitignored copy the pre-build step writes over it locally. Same reasoning
+  # as bluesky-feeds.json above: this is a snapshot of what other people named
+  # their projects, not project prose.
+  - src/data/ghc/**
   # Vendored third-party script (Cloudflare's beacon, self-hosted): its
   # minified identifiers are not project vocabulary.
   - public/scripts/cf-beacon.js

@@ -253,6 +253,7 @@ const TWINNED_PAGES: ReadonlySet<string> = new Set([
   "/license/",
   "/privacy/",
   "/projects/",
+  "/projects/contributions/",
   "/publications/",
   "/uses/",
 ]);
@@ -1308,7 +1309,7 @@ const CHROME = {
  * @param locale - Locale of THIS document.
  * @returns Absolute URL of the other locale's twin.
  */
-function alternateTwinUrl(url: string, locale: "en" | "es"): string {
+export function alternateTwinUrl(url: string, locale: "en" | "es"): string {
   const { origin, pathname } = new URL(url);
   const other =
     locale === "es" ? pathname.replace("/es/", "/") : `/es${pathname}`;

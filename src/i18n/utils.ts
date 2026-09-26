@@ -249,6 +249,29 @@ export function formatNumber(
 }
 
 /**
+ * Formats a star (or other large) count as a compact, lowercase-`k`
+ * abbreviation above 1,000 — `"38k"` / `"5.2k"` (en), `"38k"` / `"5,2k"`
+ * (es) — and as a plain grouped integer below it. `Intl`'s own `"compact"`
+ * notation is not used here: it renders `"38K"` (uppercase) in English and
+ * spells out `"38 mil"` in Spanish, neither of which matches the informal
+ * `"k"` abbreviation this site uses for upstream-project star counts on
+ * `/projects/` and `/projects/contributions/`.
+ *
+ * @param value - The count to format (assumed non-negative).
+ * @param locale - The target locale, for the decimal separator.
+ * @returns The compact string, e.g. `"708"`, `"5.2k"` / `"5,2k"`, `"38k"`.
+ */
+export function formatCompactStars(value: number, locale: Locale): string {
+  if (value < 1000) return formatNumber(value, locale);
+  const rounded = Math.round(value / 100) / 10;
+  const decimalSeparator = locale === "es" ? "," : ".";
+  const digits = Number.isSafeInteger(rounded)
+    ? String(rounded)
+    : rounded.toFixed(1).replace(".", () => decimalSeparator);
+  return `${digits}k`;
+}
+
+/**
  * Select the correct plural form for a count.
  *
  * @param count - The numeric count.

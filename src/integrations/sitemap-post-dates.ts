@@ -274,7 +274,23 @@ export function createLastmodResolver(): (
       "src/i18n/translations/es/common.ts",
     ],
     "/uses/": ["src/content/profile/uses.yaml"],
-    "/projects/": ["src/content/profile/projects.yaml"],
+    // NEVER src/data/ghc/*.json: those are pre-build output, refreshed on
+    // every build from a live query, and are .gitignore'd besides — keying
+    // lastmod to them would restamp both pages on every deploy regardless of
+    // whether anything editorial changed. contributions.yaml IS curation
+    // content (the "why", the featured picks) and belongs here.
+    "/projects/": [
+      "src/content/profile/projects.yaml",
+      "src/content/profile/contributions.yaml",
+      "src/components/pages/ProjectsPage.astro",
+      "src/components/projects",
+    ],
+    "/projects/contributions/": [
+      "src/content/profile/contributions.yaml",
+      "src/components/pages/ContributionsPage.astro",
+      "src/components/projects",
+      "src/pages/projects/contributions.astro",
+    ],
     "/cv/": ["src/content/cv/en.yaml", "src/content/cv/es.yaml"],
     "/publications/": [
       "src/content/publications_data/papers.bib",
