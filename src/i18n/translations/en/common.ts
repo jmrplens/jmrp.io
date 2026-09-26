@@ -463,11 +463,8 @@ export const common = {
       viewAllPosts: "View all posts →",
       featuredProjects: "Featured Projects",
       viewAllProjects: "View all projects →",
-      upstreamStrip: "{prs} into {projects}, including {names}.",
-      upstreamPrsOne: "{count} code or docs pull request merged",
-      upstreamPrsOther: "{count} code and docs pull requests merged",
-      upstreamProjectsOne: "{count} other open-source project",
-      upstreamProjectsOther: "{count} other open-source projects",
+      upstreamStrip:
+        "I also contribute code and documentation to other open-source projects, such as {names}.",
       upstreamLink: "See the contributions →",
       availability: "Available for projects · Valencia (UTC+1)",
       terminalRole: "Firmware / Software Eng.",
