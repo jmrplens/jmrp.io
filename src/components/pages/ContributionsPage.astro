@@ -29,9 +29,17 @@ import {
   repoUrl,
 } from "@utils/contribution-links";
 import { getPageFaq, pageFaqNode } from "@utils/page-faq";
+import type { LanguageTaggedValue } from "@utils/person";
 import { getSiteUrl } from "@utils/site";
 import { getEntry } from "astro:content";
-import type { CollectionPage, ItemList, SoftwareSourceCode } from "schema-dts";
+import type {
+  CollectionPage,
+  CreativeWork,
+  ItemList,
+  Person,
+  SoftwareSourceCode,
+  Text,
+} from "schema-dts";
 
 import { foldProjectName } from "../../../scripts/ghc/contributions-yaml.mjs";
 import { OWNER as GITHUB_OWNER } from "../../../scripts/ghc/roster.mjs";
@@ -41,7 +49,6 @@ const t = useTranslations(locale);
 const translatePath = useTranslatedPath(locale);
 
 const pageUrl = new URL(Astro.url.pathname, getSiteUrl()).href;
-const projectsUrl = new URL(translatePath("/projects/"), getSiteUrl()).href;
 
 const contributionsEntry = await getEntry("profile", "contributions");
 if (contributionsEntry?.data.type !== "contributions") {
@@ -284,6 +291,130 @@ const issuesByProject = new Map(
 
 const answersAnchor = "answers";
 
+const personRef = { "@id": new URL("#person", getSiteUrl()).href };
+
+/**
+ * An upstream project as JSON-LD: anonymous (no @id minted in a third
+ * party's namespace, nor duplicated per locale under jmrp.io), identified by
+ * its repository page.
+ *
+ * @param name - Display name, as the page prints it.
+ * @param repo - `owner/repo` or GitLab full path.
+ * @param platform - Where the repository lives.
+ * @returns The SoftwareSourceCode node.
+ */
+function upstreamNode(
+  name: string,
+  repo: string,
+  platform: string | null | undefined,
+) {
+  const url = repoUrl(repo, platform);
+  return {
+    "@type": "SoftwareSourceCode",
+    name,
+    url,
+    codeRepository: url,
+  } satisfies SoftwareSourceCode;
+}
+
+// Every "Contributed to" row has at least one merged change, so the person is
+// a contributor of each: the edge this page documents, stated in the one
+// direction schema.org defines (there is no Person → "contributed to").
+const upstreamList = {
+  "@type": "ItemList",
+  "@id": `${pageUrl}#upstream-list`,
+  name: t("pages.projectsContributions.heading"),
+  numberOfItems: contributedTo.length,
+  itemListOrder: "https://schema.org/ItemListUnordered",
+  itemListElement: contributedTo.map((row, index) => ({
+    "@type": "ListItem" as const,
+    position: index + 1,
+    item: {
+      ...upstreamNode(row.project, row.repo, row.platform),
+      contributor: personRef,
+    } satisfies SoftwareSourceCode,
+  })),
+} satisfies ItemList;
+
+// The curated highlights, as the visible list shows them: name and link as
+// printed, the localized "why" as the description. Only merged changes (a
+// declined PR is not part of the upstream code), and no dates, because the
+// page shows none.
+const mergedKeys = new Set(
+  allLedgerItems
+    .filter(({ item }) => item.state === "merged")
+    .map(({ item }) => itemUrl(item)),
+);
+const mergedHighlights = highlights.filter((h) => mergedKeys.has(h.url));
+const highlightList = {
+  "@type": "ItemList",
+  "@id": `${pageUrl}#highlights`,
+  name: t("pages.projectsContributions.highlightsHeading"),
+  numberOfItems: mergedHighlights.length,
+  itemListOrder: "https://schema.org/ItemListOrderAscending",
+  itemListElement: mergedHighlights.map((h, index) => ({
+    "@type": "ListItem" as const,
+    position: index + 1,
+    item: {
+      "@type": "CreativeWork",
+      name: `${h.repo} ${itemRef(h)}`,
+      url: h.url,
+      description: h.why,
+      author: personRef,
+      inLanguage: locale,
+      isPartOf: upstreamNode(
+        foldProjectName(h.repo, displayName),
+        h.repo,
+        h.platform,
+      ),
+    } satisfies CreativeWork,
+  })),
+} satisfies ItemList;
+
+// GitHub's tier words ("Gold") are translated on the page; achievement and
+// brand names are not. Base-tier badges show no tier word.
+const AWARD_TIER_KEY = {
+  gold: "awardTierGold",
+  silver: "awardTierSilver",
+  bronze: "awardTierBronze",
+} as const;
+
+/**
+ * One shown achievement as the award text the shelf displays.
+ *
+ * @param a - The achievement.
+ * @returns E.g. "GitHub Pull Shark (Gold)" or "GitLab Level 3 Contributor".
+ */
+function awardText(a: (typeof achievements)[number]): string {
+  const platform =
+    a.platform === "gitlab"
+      ? t("pages.projectsContributions.platformGitlab")
+      : t("pages.projectsContributions.platformGithub");
+  if (a.platform === "gitlab" || a.tierName === "default") {
+    return `${platform} ${a.name}`;
+  }
+  const tier = t(`pages.projectsContributions.${AWARD_TIER_KEY[a.tierName]}`);
+  return `${platform} ${a.name} (${tier})`;
+}
+
+// Page-local additions to the shared `#person` @id, the same pattern /cv/
+// uses for `worksFor`: never written into BaseHead's canonical node or into
+// public/identity/person.jsonld, which six other sites consume. Each value is
+// tagged with this page's language, so the EN and ES pages merge into one
+// node that carries each award once per language rather than as two
+// unrelated strings.
+const personAwards = {
+  "@type": "Person",
+  "@id": personRef["@id"],
+  award: achievements.map(
+    (a) =>
+      ({
+        "@value": awardText(a),
+        "@language": locale,
+      }) satisfies LanguageTaggedValue as unknown as Text,
+  ),
+} satisfies Person;
+
 const schema = {
   "@type": "CollectionPage",
   "@id": `${pageUrl}#contributions`,
@@ -292,24 +423,11 @@ const schema = {
   url: pageUrl,
   inLanguage: locale,
   isPartOf: { "@id": new URL("#website", getSiteUrl()).href },
-  about: { "@id": new URL("#person", getSiteUrl()).href },
-  breadcrumb: { "@id": `${projectsUrl}#projects` },
-  mainEntity: {
-    "@type": "ItemList",
-    "@id": `${pageUrl}#upstream-list`,
-    name: t("pages.projectsContributions.heading"),
-    numberOfItems: contributedTo.length,
-    itemListOrder: "https://schema.org/ItemListUnordered",
-    itemListElement: contributedTo.map((row, index) => ({
-      "@type": "ListItem" as const,
-      position: index + 1,
-      item: {
-        "@type": "SoftwareSourceCode",
-        name: row.project,
-        codeRepository: repoUrl(row.repo, row.platform),
-      } satisfies SoftwareSourceCode,
-    })),
-  } satisfies ItemList,
+  about: personRef,
+  // The BreadcrumbList BaseHead emits for this very page.
+  breadcrumb: { "@id": `${pageUrl}#breadcrumb` },
+  mainEntity: upstreamList,
+  ...(mergedHighlights.length > 0 && { hasPart: highlightList }),
 } satisfies CollectionPage;
 
 const pageFaq = await getPageFaq("/projects/contributions/", locale);
@@ -319,7 +437,11 @@ const faqNode = pageFaq && pageFaqNode(pageFaq, pageUrl, schema["@id"], locale);
 <BaseLayout
   title={t("pages.projectsContributions.title")}
   description={t("pages.projectsContributions.description")}
-  schema={faqNode ? [schema, faqNode].flat() : schema}
+  schema={[
+    schema,
+    ...(achievements.length > 0 ? [personAwards] : []),
+    ...(faqNode ? [faqNode].flat() : []),
+  ]}
 >
   <div class="contrib container">
     <header class="contrib-header">
@@ -410,7 +532,11 @@ const faqNode = pageFaq && pageFaqNode(pageFaq, pageUrl, schema["@id"], locale);
         {t("pages.projectsContributions.ledgerHeading")}
       </h2>
       {projectEntries.map((entry, entryIndex) => (
-        <details open={entryIndex === 0}>
+        <details
+          open={entryIndex === 0}
+          data-project={entry.project}
+          data-merged={entry.merged}
+        >
           <summary>
             <b class="ledger-name">
               {entry.project}

@@ -47,6 +47,8 @@ export interface Project {
   schemaType: "SoftwareApplication" | "SoftwareSourceCode";
   applicationCategory?: string;
   applicationSubCategory?: string;
+  /** Platforms the software runs on; rendered on the card as "Runs on". */
+  operatingSystem?: string;
   language: string;
   license: string;
   repo: string;
@@ -278,6 +280,12 @@ export function buildProjectSchema(project: Project): Record<string, unknown> {
         }),
         ...(project.applicationSubCategory && {
           applicationSubCategory: project.applicationSubCategory,
+        }),
+        // The same value the documentation hub emits for this @id, and the
+        // one the card shows as "Runs on" (not the CI matrix, which is the
+        // maintenance table's "CI on" column and usually narrower).
+        ...(project.operatingSystem && {
+          operatingSystem: project.operatingSystem,
         }),
         offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
       } satisfies SoftwareApplication);

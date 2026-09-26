@@ -427,6 +427,12 @@ const faqNode =
                       </a>
                     </dd>
                   </div>
+                  {project.operatingSystem && (
+                    <div class="proj-card__meta-pair">
+                      <dt>{t("pages.projects.runsOn")}</dt>
+                      <dd>{project.operatingSystem}</dd>
+                    </div>
+                  )}
                   {downloadsOf(project) && (
                     <div class="proj-card__meta-pair">
                       <dt>{t("pages.projects.downloads")}</dt>

@@ -122,6 +122,15 @@ displayName:
   gitlab-org/cells/http-router: GitLab
   gitlab-org/api/client-go: GitLab Go client
 
+# Display name → the repository that stands for a folded project: its link,
+# its star count and its JSON-LD `codeRepository`. Without an entry the repo
+# with the most merged code wins (ties: more stars, then the full name), so
+# this is only for a group where that rule picks the wrong one. Beszel has
+# one merge in each repo; the featured change (henrygd/beszel#2327) and the
+# program itself live in the code repo, not the docs one.
+canonicalRepo:
+  Beszel: henrygd/beszel
+
 # GitLab.com account whose authored merge requests and issues are counted
 # next to the GitHub ones (scripts/gl/). `excludeNamespaces` are the owner's
 # own top-level namespaces: his GitLab repositories are mirrors of GitHub

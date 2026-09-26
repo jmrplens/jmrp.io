@@ -739,8 +739,10 @@ const ProjectEntry = z.object({
    * project stays one edit in one repository.
    *
    * `kicker` is the short editorial label its card shows ("Security ·
-   * networking"), which nothing on jmrp.io renders; `operatingSystem` feeds
-   * the SoftwareApplication node that hub emits. Both are optional: a project
+   * networking"), which nothing on jmrp.io renders. `operatingSystem` feeds
+   * the SoftwareApplication node that hub emits, and jmrp.io's own node for
+   * the same @id, and the /projects/ card shows it as "Runs on" (a claim
+   * about where the software runs, not the CI matrix). Both are optional: a project
    * whose documentation does not live on that host never reaches it, and the
    * hub filters on exactly that.
    */
@@ -910,6 +912,15 @@ const contributionsSchema = z.object({
    * PROJECTS rather than distinct repos.
    */
   displayName: z.record(z.string(), z.string()).default({}),
+  /**
+   * Display name → the `owner/repo` (or GitLab path) that stands for a folded
+   * project, when the merge count alone picks the wrong one (Beszel: one
+   * merge in the code repo, one in the docs repo). Read by
+   * `pickPrimaryRepo()` in `scripts/ghc/contributions-yaml.mjs`.
+   */
+  canonicalRepo: z
+    .record(z.string(), z.string().regex(/^[\w.-]+(\/[\w.-]+)+$/, "owner/repo"))
+    .default({}),
   featured: z.array(ContributionsFeatured).min(1).max(7),
   /**
    * GitLab.com account whose authored merge requests and issues are added to

@@ -27,6 +27,7 @@ import {
   foldProjectName,
   itemKey,
   loadContributionsConfig,
+  pickPrimaryRepo,
 } from "./contributions-yaml.mjs";
 import { ensureAchievementBadges } from "./fetch-achievement-badges.mjs";
 import { fetchRepoMeta } from "./github-repo-cache.mjs";
@@ -244,13 +245,16 @@ function addToLedger(ledgerByYear, project, item, contributions) {
  * Merges "Contributed to" rows that share a display name, so a project with
  * merged work on both GitHub and GitLab (or two repos folded to the same
  * name) appears once: merge counts are summed, the latest merge date wins,
- * and the row with more stars keeps its `repo`, `platform` and `stars`. The
- * result is sorted by stars, unknown counts last.
+ * and the row {@link pickPrimaryRepo} chooses (the project's canonical repo,
+ * else the one with more merges, else more stars) keeps its `repo`,
+ * `platform` and `stars`. The result is sorted by stars, unknown counts last.
  *
  * @param {ContributedToRow[]} rows Rows from both platforms, in any order.
+ * @param {Record<string, string>} [canonicalRepo] Display name → the repo
+ *   that stands for the project (`contributions.yaml` `canonicalRepo`).
  * @returns {ContributedToRow[]} One row per project, most-starred first.
  */
-export function mergeContributedTo(rows) {
+export function mergeContributedTo(rows, canonicalRepo = {}) {
   /** @type {Map<string, ContributedToRow>} */
   const byProject = new Map();
   for (const row of rows) {
@@ -263,7 +267,7 @@ export function mergeContributedTo(rows) {
       (row.lastMergedAt ?? "") > (existing.lastMergedAt ?? "")
         ? row.lastMergedAt
         : existing.lastMergedAt;
-    const lead = (row.stars ?? -1) > (existing.stars ?? -1) ? row : existing;
+    const lead = pickPrimaryRepo([existing, row], canonicalRepo[row.project]);
     byProject.set(row.project, {
       project: row.project,
       repo: lead.repo,
@@ -379,49 +383,53 @@ export async function collectDataset(
   // ── "Contributed to" strip: folded projects with merged code/docs, ranked
   // by star count (fetched live from GitHub, cached) ──
   /** @type {Map<string, {project: string, merged: number, lastMergedAt: string,
-   *   primaryRepo: string}>} */
+   *   primaryRepo: string, perRepo: {repo: string, merged: number}[]}>} */
   const foldedCode = new Map();
   for (const repo of upstreamRepos) {
     if (repo.merged === 0 || listingSet.has(repo.fullName)) continue;
     const project = foldProjectName(repo.fullName, contributions.displayName);
-    const existing = foldedCode.get(project);
-    if (existing) {
-      existing.merged += repo.merged;
-      if ((repo.lastMergedAt ?? "") > (existing.lastMergedAt ?? "")) {
-        existing.lastMergedAt = repo.lastMergedAt;
-      }
-      // The repo with the most merges represents the group's star count/link.
-      if (
-        repo.merged >
-        (upstreamRepos.find((r) => r.fullName === existing.primaryRepo)
-          ?.merged ?? 0)
-      ) {
-        existing.primaryRepo = repo.fullName;
-      }
-    } else {
-      foldedCode.set(project, {
-        project,
-        merged: repo.merged,
-        lastMergedAt: repo.lastMergedAt,
-        primaryRepo: repo.fullName,
-      });
+    const existing = foldedCode.get(project) ?? {
+      project,
+      merged: 0,
+      lastMergedAt: repo.lastMergedAt,
+      primaryRepo: repo.fullName,
+      perRepo: [],
+    };
+    existing.merged += repo.merged;
+    if ((repo.lastMergedAt ?? "") > (existing.lastMergedAt ?? "")) {
+      existing.lastMergedAt = repo.lastMergedAt;
     }
+    existing.perRepo.push({ repo: repo.fullName, merged: repo.merged });
+    // The canonical repo (or the one with the most merges) represents the
+    // group's star count and link.
+    existing.primaryRepo = pickPrimaryRepo(
+      existing.perRepo,
+      contributions.canonicalRepo[project],
+    ).repo;
+    foldedCode.set(project, existing);
   }
   const repoMeta = await fetchRepoMeta(
     [...foldedCode.values()].map((entry) => entry.primaryRepo),
     { root },
   );
-  const contributedTo = mergeContributedTo([
-    ...[...foldedCode.values()].map((entry) => ({
-      project: entry.project,
-      repo: entry.primaryRepo,
-      platform: "github",
-      merged: entry.merged,
-      lastMergedAt: entry.lastMergedAt,
-      stars: repoMeta[entry.primaryRepo]?.stars ?? null,
-    })),
-    ...gitlabContributedTo(gitlab, contributions.displayName),
-  ]);
+  const contributedTo = mergeContributedTo(
+    [
+      ...[...foldedCode.values()].map((entry) => ({
+        project: entry.project,
+        repo: entry.primaryRepo,
+        platform: "github",
+        merged: entry.merged,
+        lastMergedAt: entry.lastMergedAt,
+        stars: repoMeta[entry.primaryRepo]?.stars ?? null,
+      })),
+      ...gitlabContributedTo(
+        gitlab,
+        contributions.displayName,
+        contributions.canonicalRepo,
+      ),
+    ],
+    contributions.canonicalRepo,
+  );
 
   // Hours to merge of every merged code/docs PR or MR, both platforms, for
   // the combined median.

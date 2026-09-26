@@ -13,7 +13,7 @@ import path from "node:path";
 
 import { createGitlabClient } from "../gl/client.mjs";
 import { collectGitlab } from "../gl/collect.mjs";
-import { foldProjectName } from "./contributions-yaml.mjs";
+import { foldProjectName, pickPrimaryRepo } from "./contributions-yaml.mjs";
 import { ensureGitlabAchievementBadges } from "./fetch-achievement-badges.mjs";
 
 /** An empty GitLab part: what a build with no GitLab data at all renders. */
@@ -158,10 +158,12 @@ export function combineSummary(summary, gitlabItems, codeMergeHours) {
  *   createdAt: string, hoursToMerge: number | null}[],
  *   projects: readonly {fullName: string, stars: number | null}[]}} part - GitLab part.
  * @param {Record<string, string>} displayName - Folding map.
+ * @param {Record<string, string>} [canonicalRepo] - Display name → the
+ *   project path that stands for the group, overriding the merge count.
  * @returns {{project: string, repo: string, platform: 'gitlab', merged: number,
  *   lastMergedAt: string | null, stars: number | null}[]} Rows.
  */
-export function gitlabContributedTo(part, displayName) {
+export function gitlabContributedTo(part, displayName, canonicalRepo = {}) {
   const starsByRepo = new Map(part.projects.map((p) => [p.fullName, p.stars]));
   /** @type {Map<string, {merged: number, lastMergedAt: string | null, perRepo: Map<string, number>}>} */
   const groups = new Map();
@@ -185,7 +187,14 @@ export function gitlabContributedTo(part, displayName) {
     groups.set(project, group);
   }
   return [...groups].map(([project, group]) => {
-    const [repo] = [...group.perRepo].sort((a, b) => b[1] - a[1])[0];
+    const { repo } = pickPrimaryRepo(
+      [...group.perRepo].map(([fullName, merged]) => ({
+        repo: fullName,
+        merged,
+        stars: starsByRepo.get(fullName) ?? null,
+      })),
+      canonicalRepo[project],
+    );
     return {
       project,
       repo,

@@ -18,6 +18,7 @@ import {
   foldProjectName,
   itemKey,
   loadContributionsConfig,
+  pickPrimaryRepo,
 } from "./contributions-yaml.mjs";
 
 /**
@@ -202,4 +203,31 @@ test("itemKey uses GitLab's ! for merge requests and # otherwise", () => {
     itemKey({ fullName: "henrygd/beszel", number: 2327, kind: "pull_request" }),
     "henrygd/beszel#2327",
   );
+});
+
+test("pickPrimaryRepo prefers the canonical repo, then merges, stars and name", () => {
+  const docs = { repo: "henrygd/beszel-docs", merged: 1, stars: 21 };
+  const code = { repo: "henrygd/beszel", merged: 1, stars: 20_000 };
+  assert.equal(pickPrimaryRepo([docs, code], "henrygd/beszel-docs"), docs);
+  assert.equal(pickPrimaryRepo([docs, code]), code);
+  assert.equal(
+    pickPrimaryRepo([code, { ...docs, merged: 3 }]).repo,
+    "henrygd/beszel-docs",
+  );
+  // Same merges, unknown stars on both: the order of arrival never decides.
+  const a = { repo: "org/b-repo", merged: 2, stars: null };
+  const b = { repo: "org/a-repo", merged: 2, stars: null };
+  assert.equal(pickPrimaryRepo([a, b]), b);
+  assert.equal(pickPrimaryRepo([b, a]), b);
+  // A canonical entry that is not among the candidates is ignored.
+  assert.equal(pickPrimaryRepo([a, b], "org/elsewhere"), b);
+});
+
+test("the real contributions.yaml names henrygd/beszel as Beszel's canonical repo", () => {
+  const root = path.resolve(import.meta.dirname, "../..");
+  const config = loadContributionsConfig(root);
+  assert.equal(config.canonicalRepo.Beszel, "henrygd/beszel");
+  for (const [project, repo] of Object.entries(config.canonicalRepo)) {
+    assert.equal(foldProjectName(repo, config.displayName), project, repo);
+  }
 });
