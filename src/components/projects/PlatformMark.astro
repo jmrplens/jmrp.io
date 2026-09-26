@@ -29,13 +29,17 @@ const name =
     }
     aria-hidden="true"
   ></span>
-  <span class="sr-only">{` (${t("pages.projectsContributions.onPlatform", { platform: name })})`}</span>
+  <span class="sr-only">{`${name}: `}</span>
 </span>
 
 <style>
+  /* Sits before the name it qualifies, so it never wraps onto a line of
+     its own after a long title. */
   .platform-mark {
     display: inline-flex;
     align-items: center;
+    margin-inline-end: 0.35em;
+    vertical-align: -0.1em;
   }
 
   .platform-mark__icon {

@@ -1026,7 +1026,7 @@ export const common = {
         andMore: "and {count} more · list as of {date}",
         liveLabel:
           "Live from GitHub via ghchronicle and from GitLab · updated {time}",
-        subpageLink: "All contributions, by year and project →",
+        subpageLink: "All contributions, by project →",
       },
       // ── "How I maintain the projects" ───────────────────────────────────
       maintenance: {
@@ -1075,7 +1075,6 @@ export const common = {
       seeAllOnGitlab: "All my merge requests to {repo} on GitLab",
       platformGithub: "GitHub",
       platformGitlab: "GitLab",
-      onPlatform: "on {platform}",
       shownNewest: "Showing the {shown} most recent.",
       notMergedHeading: "Not merged ({count}), counted only",
       distributionHeading: "Distribution and listings",

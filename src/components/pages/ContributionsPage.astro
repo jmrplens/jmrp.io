@@ -366,6 +366,7 @@ const faqNode = pageFaq && pageFaqNode(pageFaq, pageUrl, schema["@id"], locale);
                 {t("pages.projectsContributions.itemMergedPill")}
               </span>
               <span class="hl__title">
+                <PlatformMark platform={h.platform} />
                 <a
                   class="external-link"
                   href={h.url}
@@ -377,7 +378,6 @@ const faqNode = pageFaq && pageFaqNode(pageFaq, pageUrl, schema["@id"], locale);
                   })}
                   set:text={`${h.repo} ${itemRef(h)}`}
                 />
-                <PlatformMark platform={h.platform} />
               </span>
               <p class="hl__why">{h.why}</p>
               {h.stars !== null && (
@@ -441,7 +441,6 @@ const faqNode = pageFaq && pageFaqNode(pageFaq, pageUrl, schema["@id"], locale);
                       })}
                       set:text={itemLabel(entry.items, item)}
                     />
-                    <PlatformMark platform={item.platform} />
                   </span>
                 )}
                 <span class="items__w">{itemTiming(item)}</span>
@@ -716,6 +715,20 @@ const faqNode = pageFaq && pageFaqNode(pageFaq, pageUrl, schema["@id"], locale);
 
   .contrib-tile:first-child {
     border-left: 0;
+  }
+
+  @media (width <= 640px) {
+    .contrib-tiles {
+      grid-template-columns: repeat(2, 1fr);
+    }
+
+    .contrib-tile:nth-child(3) {
+      border-left: 0;
+    }
+
+    .contrib-tile:nth-child(n + 3) {
+      border-top: 1px solid var(--color-hair);
+    }
   }
 
   .contrib-tile dd {

@@ -123,6 +123,7 @@ const monthYear = (iso: string | null): string | null =>
               {t("pages.projects.upstream.mergedPill")}
             </span>
             <span class="upstream__highlight-title">
+              <PlatformMark platform={highlight.platform} />
               <a
                 class="external-link"
                 href={highlight.url}
@@ -134,7 +135,6 @@ const monthYear = (iso: string | null): string | null =>
                 })}
                 set:text={`${highlight.repo} ${itemRef(highlight)}`}
               />
-              <PlatformMark platform={highlight.platform} />
             </span>
             <p class="upstream__highlight-why">{highlight.why}</p>
             {highlight.stars !== null && (
@@ -159,6 +159,7 @@ const monthYear = (iso: string | null): string | null =>
         {contributedTo.map((row) => (
           <li>
             <span class="upstream__strip-name">
+              <PlatformMark platform={row.platform} />
               <a
                 class="external-link"
                 href={row.url}
@@ -168,7 +169,6 @@ const monthYear = (iso: string | null): string | null =>
                 aria-label={t("aria.opensNewTab", { text: row.project })}
                 set:text={row.project}
               />
-              <PlatformMark platform={row.platform} />
             </span>
             <span class="upstream__strip-meta">
               {row.stars !== null && (
