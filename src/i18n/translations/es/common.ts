@@ -997,10 +997,10 @@ export const common = {
         heading: "Aportaciones a otros proyectos",
         intro:
           "Código y documentación que he escrito para proyectos que no mantengo, junto con el empaquetado que lleva mis herramientas a registros públicos.",
-        tileCodeMerged: "PR de código y docs fusionadas",
+        tileCodeMerged: "PR y MR de código y docs fusionadas",
         tileCodeUpstreams: "proyectos con código fusionado",
         tileListingMerged: "PR de listados fusionadas",
-        tilePrOpen: "PR de código en revisión",
+        tilePrOpen: "PR y MR de código en revisión",
         tileAnswers: "respuestas aceptadas en GitHub Discussions",
         listingNote: "+ {count} PR de empaquetado y listados fusionadas",
         highlightsTitle: "Destacadas",
@@ -1008,7 +1008,8 @@ export const common = {
         openPill: "Abierta",
         contributedToTitle: "He contribuido a",
         andMore: "y {count} proyectos más · lista a fecha de {date}",
-        liveLabel: "En vivo desde GitHub vía ghchronicle · actualizado {time}",
+        liveLabel:
+          "En vivo desde GitHub vía ghchronicle y desde GitLab · actualizado {time}",
         subpageLink: "Todas las aportaciones, por año y proyecto →",
       },
       // ── «Cómo mantengo los proyectos» ─────────────────────────────────────
@@ -1030,16 +1031,16 @@ export const common = {
     projectsContributions: {
       title: "Aportaciones open source",
       description:
-        "Pull requests de código y documentación de José Manuel Requena Plens fusionadas en proyectos que no mantiene, con respuestas aceptadas y logros.",
+        "Código y documentación de José Manuel Requena Plens fusionados en proyectos de GitHub y GitLab que no mantiene, con respuestas aceptadas y logros.",
       schemaDescription:
-        "Foto de código, documentación y empaquetado aportados a proyectos open source de terceros, más respuestas aceptadas en GitHub Discussions, generada en build desde ghchronicle.",
+        "Foto de código, documentación y empaquetado aportados a proyectos open source de terceros en GitHub y GitLab, más respuestas aceptadas en GitHub Discussions, generada en build desde ghchronicle y la API de GitLab.",
       kicker: "// PROYECTOS",
       backToProjects: "← Proyectos",
       heading: "Aportaciones open source",
       snapshotIntro:
-        "Foto a fecha de {date} · {prs} pull requests y {issues} issues en {repos} repositorios que no son míos.",
+        "Foto a fecha de {date} · {prs} pull requests y merge requests y {issues} issues en {repos} repositorios que no son míos, en GitHub y GitLab.",
       highlightsHeading: "Destacadas",
-      highlightsSubIntro: "Las tres de /projects/ y tres más:",
+      highlightsSubIntro: "Las tres de /projects/ y cuatro más:",
       ledgerHeading: "Código y documentación",
       itemMergedPill: "Fusionada",
       itemOpenPill: "Abierta",
@@ -1055,6 +1056,10 @@ export const common = {
       summaryOpenOne: "{count} abierta",
       summaryClosedOne: "{count} cerrada",
       seeAllOnGithub: "Las {total} PR a {project} en GitHub",
+      seeAllOnGitlab: "Todas mis merge requests a {repo} en GitLab",
+      platformGithub: "GitHub",
+      platformGitlab: "GitLab",
+      onPlatform: "en {platform}",
       shownNewest: "Se muestran las {shown} más recientes.",
       notMergedHeading: "No fusionadas ({count}), solo se cuentan",
       distributionHeading: "Distribución y listados",
@@ -1074,9 +1079,11 @@ export const common = {
         "{accepted} aceptadas de {discussions} discusiones respondidas en {repos} repositorios. Cada una enlaza a su hilo; no se publica quién aceptó cada respuesta.",
       issuesHeading:
         "Issues reportadas ({total}: {open} abiertas, {closed} cerradas)",
-      achievementsHeading: "Logros de GitHub",
+      achievementsHeading: "Logros en GitHub y GitLab",
       achievementsHiddenNote:
-        "Solo se muestran estos. Ocultos a propósito: Quickdraw, YOLO, Arctic Code Vault Contributor y Public Sponsor.",
+        "De GitHub solo se muestran estos. Ocultos a propósito: Quickdraw, YOLO, Arctic Code Vault Contributor y Public Sponsor.",
+      achievementAwarded: "otorgado en {date}",
+      badgeAltGitlab: "Logro {name}, otorgado por GitLab",
       achievementEstimated: "estimado",
       achievementProgress: "{value} de {max} ({label})",
       tierGold: "Oro, nivel máximo",

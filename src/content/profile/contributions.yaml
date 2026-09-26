@@ -27,7 +27,8 @@ type: contributions
 #   human label for the "Distribution and listings" section
 #   (`microsoft/winget-pkgs` → "winget").
 # * `featured` is ordered; the UI takes the first 3 for /projects/ and all of
-#   it (up to 6) for the subpage. Every entry must be MERGED (or, for an
+#   it (up to 7) for the subpage. An entry may set `platform: gitlab` (a
+#   merge request on GitLab.com; `kind: pull_request`, `number` = the iid). Every entry must be MERGED (or, for an
 #   issue, a genuine accepted contribution) and carry no pending-disclosure
 #   security content. `why.en`/`why.es` are one line, written by the owner or
 #   verified against the PR/issue before being written down — see
@@ -114,6 +115,23 @@ displayName:
   sanny32/OpenModScan: OpenModScan
   acmesh-official/acme.sh: acme.sh
   YunoHost-Apps/coturn_ynh: YunoHost coturn
+  # GitLab.com projects are keyed by their full path, which can be nested.
+  # The GitLab application and its Cells HTTP router are one project to a
+  # reader; the Go client library is a separate program.
+  gitlab-org/gitlab: GitLab
+  gitlab-org/cells/http-router: GitLab
+  gitlab-org/api/client-go: GitLab Go client
+
+# GitLab.com account whose authored merge requests and issues are counted
+# next to the GitHub ones (scripts/gl/). `excludeNamespaces` are the owner's
+# own top-level namespaces: his GitLab repositories are mirrors of GitHub
+# ones, so work there is not a contribution to someone else's project.
+gitlab:
+  username: jmrp
+  userId: 15767218
+  excludeNamespaces:
+    - jmrp
+    - plens1
 
 # See this file's header comment. Currently just the one pre-rename PyOctave
 # → phonometry titles (conda-forge/staged-recipes#34074 "Adding
@@ -144,6 +162,15 @@ featured:
     why:
       en: "Five merged fixes to the official MCP Go SDK (#1255, #1268, #1269, #1273, #1274) that bring protocol-version negotiation, cancellation and pre-initialize handling in line with the specification, each with tests."
       es: "Cinco correcciones fusionadas en el SDK oficial de MCP para Go (#1255, #1268, #1269, #1273, #1274) que ajustan a la especificación la negociación de versión del protocolo, la cancelación y el tratamiento de llamadas previas a initialize, cada una con tests."
+  # GitLab merge request (`platform: gitlab`, `number` is the MR iid).
+  # Fourth: after the three shown on /projects/, which stay as they were.
+  - repo: gitlab-org/gitlab
+    number: 255300
+    kind: pull_request
+    platform: gitlab
+    why:
+      en: "Revoked identities in a GPG key are no longer listed or accepted as verified emails, so a commit signed under a revoked UID stops showing as Verified; covered by specs with new GnuPG fixtures."
+      es: "Las identidades revocadas de una clave GPG ya no se listan ni se aceptan como correos verificados, así que un commit firmado con un UID revocado deja de mostrarse como Verified; cubierto por specs con fixtures nuevos de GnuPG."
   - repo: henrygd/beszel
     number: 2327
     kind: pull_request

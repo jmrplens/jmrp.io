@@ -9,6 +9,7 @@
  */
 import AchievementShelf from "@components/projects/AchievementShelf.astro";
 import { asContributionsDataset } from "@components/projects/dataset-types";
+import PlatformMark from "@components/projects/PlatformMark.astro";
 import FAQ from "@components/ui/FAQ.astro";
 import rawContributionsData from "@data/ghc/projects-contributions.json";
 import { defaultLocale, type Locale } from "@i18n/config";
@@ -21,6 +22,12 @@ import {
   useTranslations,
 } from "@i18n/utils";
 import BaseLayout from "@layouts/BaseLayout.astro";
+import {
+  itemRef,
+  itemUrl,
+  platformOf,
+  repoUrl,
+} from "@utils/contribution-links";
 import { getPageFaq, pageFaqNode } from "@utils/page-faq";
 import { getSiteUrl } from "@utils/site";
 import { getEntry } from "astro:content";
@@ -54,26 +61,19 @@ const {
 } = contributionsData;
 
 const asOfDate = new Date(contributionsData.asOf);
-
-/** `owner/repo` → its GitHub URL. */
-const repoUrl = (fullName: string): string => `https://github.com/${fullName}`;
-const highlightUrl = (h: {
-  repo: string;
-  number: number;
-  kind: "pull_request" | "issue";
-}): string =>
-  `${repoUrl(h.repo)}/${h.kind === "issue" ? "issues" : "pull"}/${h.number}`;
+const gitlabUsername = contributionsData.gitlab?.username ?? "jmrp";
 
 const contributedToStarsByProject = new Map(
   contributedTo.map((row) => [row.project, row.stars]),
 );
 
-const highlights = rawHighlights.slice(0, 6).map((h) => ({
+const highlights = rawHighlights.slice(0, 7).map((h) => ({
   repo: h.repo,
   number: h.number,
-  kind: h.kind as "pull_request" | "issue",
+  kind: h.kind,
+  platform: platformOf(h.platform),
   why: h.why[locale],
-  url: highlightUrl(h),
+  url: itemUrl({ ...h, fullName: h.repo }),
   stars:
     contributedToStarsByProject.get(foldProjectName(h.repo, displayName)) ??
     null,
@@ -98,16 +98,46 @@ function countLabel(
 }
 
 /**
- * A ledger row's visible label: "#N title", prefixed with the repo name only
- * when the project group spans more than one repository.
+ * A ledger row's visible label: "#N title" (GitLab merge requests: "!N
+ * title"), prefixed with the repo name only when the project group spans
+ * more than one repository.
  */
 function itemLabel(
   items: readonly { fullName: string }[],
-  item: { fullName: string; number: number; title: string | null },
+  item: {
+    fullName: string;
+    number: number;
+    title: string | null;
+    kind: "pull_request" | "issue";
+    platform?: string;
+  },
 ): string {
   const multiRepo = new Set(items.map((it) => it.fullName)).size > 1;
-  const prefix = multiRepo ? `${item.fullName.split("/", 2)[1]} ` : "";
-  return `${prefix}#${item.number} ${item.title ?? ""}`.trim();
+  const prefix = multiRepo ? `${item.fullName.split("/").at(-1) ?? ""} ` : "";
+  return `${prefix}${itemRef(item)} ${item.title ?? ""}`.trim();
+}
+
+/**
+ * GitLab's merge request list, filtered to this account, for the project
+ * with the most items in one folded group (GitLab has no cross-project
+ * search a visitor can open without signing in).
+ */
+function gitlabListing(items: readonly { fullName: string }[]): {
+  repo: string;
+  url: string;
+} {
+  const counts = new Map<string, number>();
+  for (const it of items)
+    counts.set(it.fullName, (counts.get(it.fullName) ?? 0) + 1);
+  const [repo] = [...counts].sort((a, b) => b[1] - a[1])[0];
+  const params = new URLSearchParams({
+    author_username: gitlabUsername,
+    state: "all",
+  });
+  return {
+    repo,
+    url: `${repoUrl(repo, "gitlab")}/-/merge_requests?${params.toString()}`,
+  };
 }
 
 /** GitHub search for this account's PRs in every repo of one folded project. */
@@ -175,6 +205,7 @@ interface LedgerProject {
   items: (typeof ledgerByYear)[string][string];
   merged: number;
   open: number;
+  platform: "github" | "gitlab";
 }
 
 // One box per project across every year. Closed-unmerged PRs are a single
@@ -199,6 +230,7 @@ const projectEntries: LedgerProject[] = [...itemsByProject]
     ),
     merged: items.filter((it) => it.state === "merged").length,
     open: items.filter((it) => it.state === "open").length,
+    platform: platformOf(items[0]?.platform),
   }))
   // Projects with merged work first, then open-only ones; each group by
   // most recent activity, so an old project cannot outrank this month's.
@@ -219,7 +251,7 @@ const listingsByOwn = Object.entries(contributionsData.listingsByOwnProject)
     targets: Object.entries(targets).map(([name, row]) => ({
       name,
       fullName: row.fullName,
-      url: repoUrl(row.fullName),
+      url: repoUrl(row.fullName, "github"),
       merged: row.merged,
       open: row.open,
     })),
@@ -265,7 +297,7 @@ const schema = {
       item: {
         "@type": "SoftwareSourceCode",
         name: row.project,
-        codeRepository: repoUrl(row.repo),
+        codeRepository: repoUrl(row.repo, row.platform),
       } satisfies SoftwareSourceCode,
     })),
   } satisfies ItemList,
@@ -341,10 +373,11 @@ const faqNode = pageFaq && pageFaqNode(pageFaq, pageUrl, schema["@id"], locale);
                   rel="external noopener noreferrer"
                   lang="en"
                   aria-label={t("aria.opensNewTab", {
-                    text: `${h.repo} #${h.number}`,
+                    text: `${h.repo} ${itemRef(h)}`,
                   })}
-                  set:text={`${h.repo} #${h.number}`}
+                  set:text={`${h.repo} ${itemRef(h)}`}
                 />
+                <PlatformMark platform={h.platform} />
               </span>
               <p class="hl__why">{h.why}</p>
               {h.stars !== null && (
@@ -370,7 +403,10 @@ const faqNode = pageFaq && pageFaqNode(pageFaq, pageUrl, schema["@id"], locale);
       {projectEntries.map((entry, entryIndex) => (
         <details open={entryIndex === 0}>
           <summary>
-            <b>{entry.project}</b>
+            <b class="ledger-name">
+              {entry.project}
+              <PlatformMark platform={entry.platform} />
+            </b>
             <span>
               {entry.merged > 0 && countLabel("summaryMerged", entry.merged)}
               {entry.merged > 0 && entry.open > 0 && " · "}
@@ -393,45 +429,71 @@ const faqNode = pageFaq && pageFaqNode(pageFaq, pageUrl, schema["@id"], locale);
                 {item.redacted || !item.title ? (
                   <span>{t("pages.projectsContributions.itemRedacted")}</span>
                 ) : (
-                  <a
-                    class="external-link"
-                    href={`${repoUrl(item.fullName)}/${item.kind === "issue" ? "issues" : "pull"}/${item.number}`}
-                    target="_blank"
-                    rel="external noopener noreferrer"
-                    lang="en"
-                    aria-label={t("aria.opensNewTab", {
-                      text: `${item.fullName} #${item.number}: ${item.title}`,
-                    })}
-                    set:text={itemLabel(entry.items, item)}
-                  />
+                  <span class="items__t">
+                    <a
+                      class="external-link"
+                      href={itemUrl(item)}
+                      target="_blank"
+                      rel="external noopener noreferrer"
+                      lang="en"
+                      aria-label={t("aria.opensNewTab", {
+                        text: `${item.fullName} ${itemRef(item)}: ${item.title}`,
+                      })}
+                      set:text={itemLabel(entry.items, item)}
+                    />
+                    <PlatformMark platform={item.platform} />
+                  </span>
                 )}
                 <span class="items__w">{itemTiming(item)}</span>
               </li>
             ))}
           </ul>
-          {entry.items.length > MAX_ITEMS_PER_PROJECT && (
-            <p class="items__more">
-              {t("pages.projectsContributions.shownNewest", {
-                shown: MAX_ITEMS_PER_PROJECT,
-              })}{" "}
-              <a
-                class="external-link"
-                href={githubSearchUrl(entry.items)}
-                target="_blank"
-                rel="external noopener noreferrer"
-                aria-label={t("aria.opensNewTab", {
-                  text: t("pages.projectsContributions.seeAllOnGithub", {
+          {entry.items.length > MAX_ITEMS_PER_PROJECT &&
+            entry.platform === "gitlab" && (
+              <p class="items__more">
+                {t("pages.projectsContributions.shownNewest", {
+                  shown: MAX_ITEMS_PER_PROJECT,
+                })}{" "}
+                <a
+                  class="external-link"
+                  href={gitlabListing(entry.items).url}
+                  target="_blank"
+                  rel="external noopener noreferrer"
+                  aria-label={t("aria.opensNewTab", {
+                    text: t("pages.projectsContributions.seeAllOnGitlab", {
+                      repo: gitlabListing(entry.items).repo,
+                    }),
+                  })}
+                  set:text={t("pages.projectsContributions.seeAllOnGitlab", {
+                    repo: gitlabListing(entry.items).repo,
+                  })}
+                />
+              </p>
+            )}
+          {entry.items.length > MAX_ITEMS_PER_PROJECT &&
+            entry.platform === "github" && (
+              <p class="items__more">
+                {t("pages.projectsContributions.shownNewest", {
+                  shown: MAX_ITEMS_PER_PROJECT,
+                })}{" "}
+                <a
+                  class="external-link"
+                  href={githubSearchUrl(entry.items)}
+                  target="_blank"
+                  rel="external noopener noreferrer"
+                  aria-label={t("aria.opensNewTab", {
+                    text: t("pages.projectsContributions.seeAllOnGithub", {
+                      total: entry.items.length,
+                      project: entry.project,
+                    }),
+                  })}
+                  set:text={t("pages.projectsContributions.seeAllOnGithub", {
                     total: entry.items.length,
                     project: entry.project,
-                  }),
-                })}
-                set:text={t("pages.projectsContributions.seeAllOnGithub", {
-                  total: entry.items.length,
-                  project: entry.project,
-                })}
-              />
-            </p>
-          )}
+                  })}
+                />
+              </p>
+            )}
         </details>
       ))}
       {notMergedCount > 0 && (
@@ -715,6 +777,10 @@ const faqNode = pageFaq && pageFaqNode(pageFaq, pageUrl, schema["@id"], locale);
   }
 
   .hl__title {
+    display: inline-flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    align-items: center;
     font-weight: var(--fw-semibold);
     color: var(--color-text-heading);
   }
@@ -792,6 +858,21 @@ const faqNode = pageFaq && pageFaqNode(pageFaq, pageUrl, schema["@id"], locale);
   summary b {
     font-family: var(--font-display);
     color: var(--color-text-heading);
+  }
+
+  .ledger-name {
+    display: inline-flex;
+    gap: 6px;
+    align-items: center;
+  }
+
+  .items__t {
+    overflow-wrap: anywhere;
+  }
+
+  .items__t :global(.platform-mark) {
+    margin-inline-start: 6px;
+    vertical-align: -0.125em;
   }
 
   summary span {

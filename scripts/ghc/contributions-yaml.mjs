@@ -24,10 +24,22 @@ export const CONTRIBUTIONS_YAML_PATH = "src/content/profile/contributions.yaml";
 
 /**
  * @typedef {object} FeaturedContribution
- * @property {string} repo - `owner/repo` full name.
- * @property {number} number
- * @property {'pull_request'|'issue'} kind
+ * @property {string} repo - `owner/repo` full name (a GitLab project's full
+ *   path, which may hold more than one slash).
+ * @property {number} number - PR/issue number, or a GitLab MR's `iid`.
+ * @property {'pull_request'|'issue'} kind - A GitLab merge request is
+ *   `pull_request`.
+ * @property {'github'|'gitlab'} platform - Where it lives; defaults to
+ *   `github`.
  * @property {{en: string, es: string}} why
+ */
+
+/**
+ * @typedef {object} GitlabContributionsSettings
+ * @property {string} username - GitLab.com username.
+ * @property {number} userId - GitLab.com numeric user id.
+ * @property {string[]} excludeNamespaces - The owner's own top-level
+ *   namespaces (mirrors of GitHub repositories), never counted.
  */
 
 /**
@@ -45,6 +57,8 @@ export const CONTRIBUTIONS_YAML_PATH = "src/content/profile/contributions.yaml";
  *   spelling of an own (`roster.mjs` `ACTIVE_REPOS`) project id → that id,
  *   for matching a listing PR's title when the PR predates a project rename
  *   (e.g. `pyoctaveband` → `phonometry`).
+ * @property {GitlabContributionsSettings | null} gitlab - GitLab.com
+ *   account settings, or null when the file declares none.
  */
 
 /**
@@ -79,7 +93,10 @@ export function loadContributionsConfig(root = process.cwd()) {
       raw.displayName && typeof raw.displayName === "object"
         ? raw.displayName
         : {},
-    featured: raw.featured,
+    featured: raw.featured.map((entry) => ({
+      ...entry,
+      platform: entry.platform === "gitlab" ? "gitlab" : "github",
+    })),
     securityTitleAllow: Array.isArray(raw.securityTitleAllow)
       ? raw.securityTitleAllow
       : [],
@@ -87,13 +104,50 @@ export function loadContributionsConfig(root = process.cwd()) {
       raw.listingAliases && typeof raw.listingAliases === "object"
         ? raw.listingAliases
         : {},
+    gitlab: shapeGitlabSettings(raw.gitlab),
   };
+}
+
+/**
+ * Shapes the optional `gitlab` block.
+ *
+ * @param {unknown} raw - The parsed `gitlab` value.
+ * @returns {GitlabContributionsSettings | null} The settings, or null.
+ */
+function shapeGitlabSettings(raw) {
+  if (!raw || typeof raw !== "object") return null;
+  const block = /** @type {Record<string, unknown>} */ (raw);
+  if (typeof block.username !== "string" || typeof block.userId !== "number") {
+    return null;
+  }
+  return {
+    username: block.username,
+    userId: block.userId,
+    excludeNamespaces: Array.isArray(block.excludeNamespaces)
+      ? block.excludeNamespaces.map(String)
+      : [],
+  };
+}
+
+/**
+ * The identifier `exclude` entries use for one ledger item:
+ * `path!iid` for a GitLab merge request (GitLab's own reference syntax),
+ * `path#number` for everything else.
+ *
+ * @param {{fullName: string, number: number, kind: string, platform?: string}} item - A ledger item.
+ * @returns {string} The key.
+ */
+export function itemKey(item) {
+  const sigil =
+    item.platform === "gitlab" && item.kind === "pull_request" ? "!" : "#";
+  return `${item.fullName}${sigil}${item.number}`;
 }
 
 /**
  * Folds a repo's `owner/repo` full name into its display "project" name via
  * `displayName`, falling back to the bare repo name (the part after the
- * `/`) when no override is configured — never the full `owner/repo`. This is
+ * `/`; for a nested GitLab path, the last segment) when no override is
+ * configured, never the full `owner/repo`. This is
  * the folding the owner decided on (PLAN.md 8.2 #3): a "project" is a GitHub
  * owner, with this file able to override the label per repo; the bare-repo
  * default (2026-09-26 fix) already reads right for most upstreams
@@ -107,7 +161,7 @@ export function loadContributionsConfig(root = process.cwd()) {
  * @returns {string} The display name.
  */
 export function foldProjectName(fullName, displayName) {
-  return displayName[fullName] ?? fullName.split("/", 2)[1] ?? fullName;
+  return displayName[fullName] ?? fullName.split("/").at(-1) ?? fullName;
 }
 
 /**

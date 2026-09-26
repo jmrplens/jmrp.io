@@ -19,7 +19,9 @@ import {
   badgeFileName,
   BADGES_DIR,
   ensureAchievementBadges,
+  ensureGitlabAchievementBadges,
   isBadgeUrl,
+  isGitlabBadgeUrl,
 } from "./fetch-achievement-badges.mjs";
 
 const GOLD =
@@ -131,4 +133,74 @@ test("a URL for another host or tier is never requested", async () => {
   );
   assert.equal(calls.length, 0);
   assert.equal(out.failed.length, 2);
+});
+
+/**
+ * The same URL over plain HTTP, built at run time.
+ *
+ * @param {string} url - An https URL.
+ * @returns {string} The insecure variant.
+ */
+function insecureUrl(url) {
+  const parsed = new URL(url);
+  parsed.protocol = "http:";
+  return parsed.href;
+}
+
+test("isGitlabBadgeUrl accepts only GitLab.com achievement avatars", () => {
+  assert.equal(
+    isGitlabBadgeUrl(
+      "https://gitlab.com/uploads/-/system/achievements/achievement/avatar/61/contributor-level-3.png?v=1765202121",
+    ),
+    true,
+  );
+  for (const url of [
+    "https://evil.example/uploads/-/system/achievements/achievement/avatar/61/x.png",
+    "https://gitlab.com/uploads/-/system/user/avatar/1/x.png",
+    "https://gitlab.com/uploads/-/system/achievements/achievement/avatar/61/x.svg",
+    "https://gitlab.com/uploads/-/system/achievements/achievement/avatar/61/x.png?next=https://evil.example",
+    insecureUrl(
+      "https://gitlab.com/uploads/-/system/achievements/achievement/avatar/61/x.png",
+    ),
+  ]) {
+    assert.equal(isGitlabBadgeUrl(url), false, url);
+  }
+});
+
+test("ensureGitlabAchievementBadges stores <slug>.png and never fetches a bad URL", async () => {
+  const root = tempRoot();
+  const png = await sharp({
+    create: { width: 256, height: 256, channels: 4, background: "#fc6d26" },
+  })
+    .png()
+    .toBuffer();
+  const fetched = [];
+  const outcome = await ensureGitlabAchievementBadges(
+    [
+      {
+        achievement: "gitlab-level-3-contributor",
+        image:
+          "https://gitlab.com/uploads/-/system/achievements/achievement/avatar/61/contributor-level-3.png?v=1",
+      },
+      {
+        achievement: "gitlab-other",
+        image: "https://evil.example/x.png",
+      },
+    ],
+    {
+      root,
+      fetchImpl: async (url) => {
+        fetched.push(String(url));
+        return new Response(png);
+      },
+      warn: () => {},
+    },
+  );
+  assert.deepEqual(outcome.fetched, ["gitlab-level-3-contributor.png"]);
+  assert.deepEqual(outcome.failed, ["gitlab-other.png"]);
+  assert.equal(fetched.length, 1);
+  const meta = await sharp(
+    path.join(root, BADGES_DIR, "gitlab-level-3-contributor.png"),
+  ).metadata();
+  assert.equal(meta.width, BADGE_SIZE);
 });

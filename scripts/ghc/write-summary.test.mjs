@@ -52,7 +52,19 @@ function fixtureRaw() {
         medianHoursToMerge: 8.85,
       },
     },
-    codeUpstreamsCount: 11,
+    codeUpstreamProjects: [
+      "Beszel",
+      "MCP Go SDK",
+      "MCP Rust SDK",
+      "Nginx Proxy Manager",
+      "Podman",
+      "Renovate",
+      "Trilium Notes",
+      "acme.sh",
+      "al-folio",
+      "go-selfupdate",
+      "OpenModScan",
+    ],
     answersCount: 13,
     headerBand: {
       stars: 382,
@@ -173,6 +185,7 @@ test("writeProjectsSummary writes tokens and a generatedAt stamp on success", as
     outPath,
     config: { url: "unused", token: "unused" },
     collect: async () => fixtureRaw(),
+    collectGitlab: async () => null,
     warn: () => {},
   });
   assert.equal(result.refreshed, true);
@@ -189,6 +202,7 @@ test("writeProjectsSummary keeps the previous file when the refresh fails and on
     outPath,
     config: { url: "unused", token: "unused" },
     collect: async () => fixtureRaw(),
+    collectGitlab: async () => null,
     warn: () => {},
   });
   const before = fs.readFileSync(outPath, "utf8");
@@ -200,6 +214,7 @@ test("writeProjectsSummary keeps the previous file when the refresh fails and on
     collect: async () => {
       throw new Error("InfluxDB unreachable");
     },
+    collectGitlab: async () => null,
     warn: (line) => {
       warnings.push(line);
     },
@@ -223,6 +238,7 @@ test("writeProjectsSummary writes a fully-null summary when there is no previous
     collect: async () => {
       throw new Error("InfluxDB unreachable");
     },
+    collectGitlab: async () => null,
     warn: () => {},
   });
 
@@ -239,6 +255,7 @@ test("writeProjectsSummary never leaves a .tmp file behind on success", async ()
     outPath,
     config: { url: "unused", token: "unused" },
     collect: async () => fixtureRaw(),
+    collectGitlab: async () => null,
     warn: () => {},
   });
   const siblings = fs.readdirSync(path.dirname(outPath));
@@ -246,4 +263,96 @@ test("writeProjectsSummary never leaves a .tmp file behind on success", async ()
     siblings.filter((name) => name.includes(".tmp")),
     [],
   );
+});
+
+// ── GitLab.com half ───────────────────────────────────────────────────────
+
+/** A canned GitLab half. */
+function gitlabHalf() {
+  return {
+    fetchedAt: "2026-09-26T18:00:00.000Z",
+    merged: 26,
+    open: 6,
+    closed: 8,
+    // "Beszel" duplicates a GitHub name on purpose: the union counts it once.
+    projects: ["GitLab", "GitLab Go client", "Beszel"],
+  };
+}
+
+test("buildSummaryTokens sums the GitLab half into the code figures", () => {
+  const tokens = buildSummaryTokens(fixtureRaw(), gitlabHalf());
+  assert.equal(tokens.PRJ_CODE_MERGED, 19 + 26);
+  assert.equal(tokens.PRJ_PR_OPEN, 10 + 6);
+  assert.equal(tokens.PRJ_CODE_UPSTREAMS, 11 + 2);
+  // Listing PRs are a GitHub-only classification.
+  assert.equal(tokens.PRJ_LISTING_MERGED, 14);
+});
+
+test("writeProjectsSummary persists the GitLab half beside the tokens", async () => {
+  const outPath = tempOutPath();
+  const result = await writeProjectsSummary({
+    outPath,
+    config: { url: "unused", token: "unused" },
+    collect: async () => fixtureRaw(),
+    collectGitlab: async () => gitlabHalf(),
+    warn: () => {},
+  });
+  assert.equal(result.refreshed, true);
+  const onDisk = JSON.parse(fs.readFileSync(outPath, "utf8"));
+  assert.deepEqual(onDisk.gitlab, gitlabHalf());
+  assert.equal(onDisk.tokens.PRJ_CODE_MERGED, 45);
+});
+
+test("writeProjectsSummary reuses the last good GitLab half when GitLab.com fails", async () => {
+  const outPath = tempOutPath();
+  await writeProjectsSummary({
+    outPath,
+    config: { url: "unused", token: "unused" },
+    collect: async () => fixtureRaw(),
+    collectGitlab: async () => gitlabHalf(),
+    warn: () => {},
+  });
+
+  const warnings = [];
+  const result = await writeProjectsSummary({
+    outPath,
+    config: { url: "unused", token: "unused" },
+    collect: async () => fixtureRaw(),
+    collectGitlab: async () => {
+      throw new Error("GitLab unreachable");
+    },
+    warn: (line) => {
+      warnings.push(line);
+    },
+  });
+
+  // Written (the GitHub half is fresh) but not reported as fully refreshed.
+  assert.equal(result.wrote, true);
+  assert.equal(result.refreshed, false);
+  const onDisk = JSON.parse(fs.readFileSync(outPath, "utf8"));
+  assert.equal(
+    onDisk.tokens.PRJ_CODE_MERGED,
+    45,
+    "no drop by the GitLab share",
+  );
+  assert.equal(onDisk.tokens.PRJ_PR_OPEN, 16);
+  assert.deepEqual(onDisk.gitlab, gitlabHalf());
+  assert.ok(warnings.some((line) => line.includes("GitLab unreachable")));
+});
+
+test("writeProjectsSummary publishes GitHub-only figures when GitLab never succeeded", async () => {
+  const outPath = tempOutPath();
+  const result = await writeProjectsSummary({
+    outPath,
+    config: { url: "unused", token: "unused" },
+    collect: async () => fixtureRaw(),
+    collectGitlab: async () => {
+      throw new Error("GitLab unreachable");
+    },
+    warn: () => {},
+  });
+  assert.equal(result.refreshed, false);
+  const onDisk = JSON.parse(fs.readFileSync(outPath, "utf8"));
+  assert.equal(onDisk.tokens.PRJ_CODE_MERGED, 19);
+  assert.equal(onDisk.gitlab, null);
 });

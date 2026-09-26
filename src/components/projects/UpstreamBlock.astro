@@ -6,15 +6,18 @@
  * "Contributed to" strip are build-time, resolved once by `ProjectsPage.astro`
  * from `contributions.yaml` and `src/data/ghc/projects-contributions.json`.
  */
+import PlatformMark from "@components/projects/PlatformMark.astro";
 import { PRJ } from "@components/projects/ssr-tokens";
 import { defaultLocale, type Locale } from "@i18n/config";
 import { formatCompactStars, formatDate, useTranslations } from "@i18n/utils";
+import { itemRef, type Platform } from "@utils/contribution-links";
 
 /** One curated highlight, already localized and resolved by the caller. */
 export interface UpstreamHighlight {
   readonly repo: string;
   readonly number: number;
   readonly kind: "pull_request" | "issue";
+  readonly platform: Platform;
   readonly why: string;
   readonly url: string;
   readonly stars: number | null;
@@ -23,6 +26,7 @@ export interface UpstreamHighlight {
 /** One row of the "Contributed to" strip. */
 export interface ContributedToRow {
   readonly project: string;
+  readonly platform: Platform;
   readonly url: string;
   readonly stars: number | null;
   readonly lastMergedAt: string | null;
@@ -126,10 +130,11 @@ const monthYear = (iso: string | null): string | null =>
                 rel="external noopener noreferrer"
                 lang="en"
                 aria-label={t("aria.opensNewTab", {
-                  text: `${highlight.repo} #${highlight.number}`,
+                  text: `${highlight.repo} ${itemRef(highlight)}`,
                 })}
-                set:text={`${highlight.repo} #${highlight.number}`}
+                set:text={`${highlight.repo} ${itemRef(highlight)}`}
               />
+              <PlatformMark platform={highlight.platform} />
             </span>
             <p class="upstream__highlight-why">{highlight.why}</p>
             {highlight.stars !== null && (
@@ -153,15 +158,18 @@ const monthYear = (iso: string | null): string | null =>
       <ol class="upstream__strip">
         {contributedTo.map((row) => (
           <li>
-            <a
-              class="external-link"
-              href={row.url}
-              target="_blank"
-              rel="external noopener noreferrer"
-              lang="en"
-              aria-label={t("aria.opensNewTab", { text: row.project })}
-              set:text={row.project}
-            />
+            <span class="upstream__strip-name">
+              <a
+                class="external-link"
+                href={row.url}
+                target="_blank"
+                rel="external noopener noreferrer"
+                lang="en"
+                aria-label={t("aria.opensNewTab", { text: row.project })}
+                set:text={row.project}
+              />
+              <PlatformMark platform={row.platform} />
+            </span>
             <span class="upstream__strip-meta">
               {row.stars !== null && (
                 <>
@@ -302,6 +310,10 @@ const monthYear = (iso: string | null): string | null =>
   }
 
   .upstream__highlight-title {
+    display: inline-flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    align-items: center;
     font-weight: var(--fw-semibold);
     color: var(--color-text-heading);
   }
@@ -360,6 +372,12 @@ const monthYear = (iso: string | null): string | null =>
     color: var(--color-accent);
     text-decoration: underline;
     text-underline-offset: 3px;
+  }
+
+  .upstream__strip-name {
+    display: inline-flex;
+    gap: 6px;
+    align-items: center;
   }
 
   .upstream__strip-meta {

@@ -16,6 +16,7 @@ import { test } from "node:test";
 import {
   deriveOwnProjects,
   foldProjectName,
+  itemKey,
   loadContributionsConfig,
 } from "./contributions-yaml.mjs";
 
@@ -146,12 +147,59 @@ test("deriveOwnProjects returns an empty list when the title names no roster pro
 test("the real repository contributions.yaml loads and folds beszel + beszel-docs to the same name", () => {
   const root = path.resolve(import.meta.dirname, "../..");
   const config = loadContributionsConfig(root);
-  assert.ok(config.featured.length > 0 && config.featured.length <= 6);
+  assert.ok(config.featured.length > 0 && config.featured.length <= 7);
   assert.equal(
     foldProjectName("henrygd/beszel", config.displayName),
     foldProjectName("henrygd/beszel-docs", config.displayName),
   );
   for (const item of config.exclude) {
-    assert.match(item, /^[\w.-]+\/[\w.-]+#\d+$/, item);
+    assert.match(item, /^[\w.-]+(\/[\w.-]+)+[#!]\d+$/, item);
   }
+  // GitLab: the application and its Cells router fold into one project; the
+  // Go client stays separate; the owner's own namespaces are excluded.
+  assert.equal(
+    foldProjectName("gitlab-org/gitlab", config.displayName),
+    foldProjectName("gitlab-org/cells/http-router", config.displayName),
+  );
+  assert.notEqual(
+    foldProjectName("gitlab-org/api/client-go", config.displayName),
+    foldProjectName("gitlab-org/gitlab", config.displayName),
+  );
+  assert.deepEqual(config.gitlab?.excludeNamespaces, ["jmrp", "plens1"]);
+  assert.ok(
+    config.featured.some(
+      (entry) =>
+        entry.platform === "gitlab" && entry.repo === "gitlab-org/gitlab",
+    ),
+  );
+});
+
+test("foldProjectName falls back to the last segment of a nested GitLab path", () => {
+  assert.equal(foldProjectName("gitlab-org/api/client-go", {}), "client-go");
+  assert.equal(foldProjectName("acmesh-official/acme.sh", {}), "acme.sh");
+});
+
+test("itemKey uses GitLab's ! for merge requests and # otherwise", () => {
+  assert.equal(
+    itemKey({
+      fullName: "gitlab-org/gitlab",
+      number: 255_300,
+      kind: "pull_request",
+      platform: "gitlab",
+    }),
+    "gitlab-org/gitlab!255300",
+  );
+  assert.equal(
+    itemKey({
+      fullName: "gitlab-org/gitlab",
+      number: 630_305,
+      kind: "issue",
+      platform: "gitlab",
+    }),
+    "gitlab-org/gitlab#630305",
+  );
+  assert.equal(
+    itemKey({ fullName: "henrygd/beszel", number: 2327, kind: "pull_request" }),
+    "henrygd/beszel#2327",
+  );
 });

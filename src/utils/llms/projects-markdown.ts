@@ -1,5 +1,11 @@
 import rawContributionsData from "@data/ghc/projects-contributions.json";
 import { formatDate, useTranslations } from "@i18n/utils";
+import {
+  itemRef,
+  itemUrl,
+  platformOf,
+  repoUrl,
+} from "@utils/contribution-links";
 import { getPageFaq, pageFaqLines } from "@utils/page-faq";
 import { getEntry } from "astro:content";
 
@@ -28,18 +34,14 @@ const contributionsData = asContributionsDataset(rawContributionsData);
 /** A rendered markdown document, as lines. */
 type Lines = string[];
 
-/** `owner/repo` → its GitHub URL. */
-function repoUrl(fullName: string): string {
-  return `https://github.com/${fullName}`;
-}
-
-/** A highlight/ledger item's GitHub URL. */
-function itemUrl(
-  fullName: string,
-  number: number,
-  kind: "pull_request" | "issue",
+/** "GitHub" / "GitLab" for a platform field. */
+function platformName(
+  platform: string | undefined,
+  t: ReturnType<typeof useTranslations>,
 ): string {
-  return `${repoUrl(fullName)}/${kind === "issue" ? "issues" : "pull"}/${number}`;
+  return platformOf(platform) === "gitlab"
+    ? t("pages.projectsContributions.platformGitlab")
+    : t("pages.projectsContributions.platformGithub");
 }
 
 /** One ledger item's title (or a redaction notice) plus its state, for the ledger's bullet lines. */
@@ -50,6 +52,8 @@ function ledgerItemLabel(
     fullName: string;
     number: number;
     state: string;
+    kind: "pull_request" | "issue";
+    platform?: string;
   },
   t: ReturnType<typeof useTranslations>,
 ): string {
@@ -60,13 +64,15 @@ function ledgerItemLabel(
   return `${label} (${item.state})`;
 }
 
-/** `owner/repo #number title` — split out so it is never nested inside a ternary. */
+/** `owner/repo #number title` (`!iid` for a GitLab merge request), split out so it is never nested inside a ternary. */
 function itemTitleLine(item: {
   fullName: string;
   number: number;
   title: string | null;
+  kind: "pull_request" | "issue";
+  platform?: string;
 }): string {
-  return `${item.fullName} #${item.number} ${item.title ?? ""}`;
+  return `${item.fullName} ${itemRef(item)} ${item.title ?? ""}`;
 }
 
 /** Localized tier label ("Gold, max tier", "Silver", …) for a GitHub achievement. */
@@ -106,12 +112,12 @@ async function upstreamLines(locale: "en" | "es"): Promise<Lines> {
     .slice(0, 3)
     .map(
       (h) =>
-        `- **${h.repo} #${h.number}** (${itemUrl(h.repo, h.number, h.kind)}): ${h.why[locale]}`,
+        `- **${h.repo} ${itemRef(h)}** (${platformName(h.platform, t)}, ${itemUrl({ ...h, fullName: h.repo })}): ${h.why[locale]}`,
     );
 
   const stripLines = contributionsData.contributedTo.slice(0, 6).map((row) => {
     const stars = row.stars === null ? "" : ` (${row.stars}★)`;
-    return `- ${row.project}${stars}: ${repoUrl(row.repo)}`;
+    return `- ${row.project}${stars}: ${repoUrl(row.repo, row.platform)}`;
   });
 
   return [
@@ -226,7 +232,7 @@ export async function contributionsPageMarkdown(
     const stars = contributedToStars.get(project);
     const starsNote = stars ? ` (${stars}★)` : "";
     return [
-      `- **${h.repo} #${h.number}**${starsNote}: ${h.why[locale]} (${itemUrl(h.repo, h.number, h.kind)})`,
+      `- **${h.repo} ${itemRef(h)}**${starsNote}: ${h.why[locale]} (${platformName(h.platform, t)}, ${itemUrl({ ...h, fullName: h.repo })})`,
     ];
   });
 
@@ -262,7 +268,7 @@ export async function contributionsPageMarkdown(
           Date.parse(b.items[0].createdAt) - Date.parse(a.items[0].createdAt),
       )
       .flatMap(({ project, items, merged, open }) => [
-        `- **${project}**: ${merged} merged, ${open} open`,
+        `- **${project}** (${platformName(items[0]?.platform, t)}): ${merged} merged, ${open} open`,
         ...items.slice(0, 10).map((it) => `  - ${ledgerItemLabel(it, t)}`),
       ]),
     ...(notMerged > 0
@@ -292,9 +298,19 @@ export async function contributionsPageMarkdown(
     (a) => `- ${a.fullName} #${a.number}: [${a.title}](${a.answerUrl})`,
   );
 
-  const achievementLines = achievements.map(
-    (a) => `- **${a.name}**: ${tierLabel(a.tierName, t)}`,
-  );
+  const achievementLines = achievements.map((a) => {
+    if (a.platform !== "gitlab") {
+      return `- **${a.name}** (GitHub): ${tierLabel(a.tierName, t)}`;
+    }
+    const awarded = a.awardedAt
+      ? t("pages.projectsContributions.achievementAwarded", {
+          date: formatDate(new Date(a.awardedAt), locale),
+        })
+      : null;
+    return awarded
+      ? `- **${a.name}** (GitLab): ${awarded}`
+      : `- **${a.name}** (GitLab)`;
+  });
 
   return [
     ...documentHeader(

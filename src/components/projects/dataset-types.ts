@@ -19,11 +19,15 @@
  * @module
  */
 
+/** Where a contribution lives. Absent in datasets older than GitLab support. */
+export type ContributionPlatform = "github" | "gitlab";
+
 /** One curated highlight (`contributions.yaml`'s `featured`). */
 export interface HighlightItem {
   readonly repo: string;
   readonly number: number;
   readonly kind: "pull_request" | "issue";
+  readonly platform?: ContributionPlatform;
   readonly why: { readonly en: string; readonly es: string };
   readonly redacted: boolean;
 }
@@ -32,6 +36,7 @@ export interface HighlightItem {
 export interface ContributedToItem {
   readonly project: string;
   readonly repo: string;
+  readonly platform?: ContributionPlatform;
   readonly merged: number;
   readonly lastMergedAt: string | null;
   readonly stars: number | null;
@@ -48,6 +53,7 @@ export interface AcceptedAnswerItem {
 
 /** One PR or issue in the full external-contributions ledger. */
 export interface LedgerItem {
+  readonly platform?: ContributionPlatform;
   readonly kind: "pull_request" | "issue";
   readonly state: "merged" | "open" | "closed";
   readonly fullName: string;
@@ -64,6 +70,7 @@ export type LedgerByYear = Record<string, Record<string, LedgerItem[]>>;
 
 /** One shown GitHub achievement (`shapeAchievements()`'s output). */
 export interface AchievementItem {
+  readonly platform?: ContributionPlatform;
   readonly achievement: string;
   readonly name: string;
   readonly tierNumber: number;
@@ -72,6 +79,23 @@ export interface AchievementItem {
   readonly nextThreshold: number;
   readonly percent: number;
   readonly agrees: boolean;
+  /** GitLab only: when GitLab awarded it. */
+  readonly awardedAt?: string | null;
+  /** GitLab only: GitLab's own description of the achievement. */
+  readonly description?: string | null;
+}
+
+/** The raw GitLab.com part (`scripts/gl/collect.mjs`), kept for fallback. */
+export interface GitlabPart {
+  readonly fetchedAt: string | null;
+  readonly username: string | null;
+  readonly items: readonly LedgerItem[];
+  readonly projects: readonly {
+    readonly fullName: string;
+    readonly name: string;
+    readonly stars: number | null;
+    readonly webUrl: string;
+  }[];
 }
 
 /** One repo's community-issue-contributor count. */
@@ -165,6 +189,13 @@ export interface ContributionsDataset {
       readonly discussions: number;
       readonly repos: number;
     };
+    /** PR/MR and issue counts per platform (the totals above are sums). */
+    readonly byPlatform?: Readonly<
+      Record<
+        ContributionPlatform,
+        { readonly prs: number; readonly issues: number }
+      >
+    >;
   };
   readonly highlights: readonly HighlightItem[];
   readonly contributedTo: readonly ContributedToItem[];
@@ -207,6 +238,7 @@ export interface ContributionsDataset {
     readonly within7Days: number;
   };
   readonly maintenance: readonly MaintenanceItem[];
+  readonly gitlab?: GitlabPart;
 }
 
 /**

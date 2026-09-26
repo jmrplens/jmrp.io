@@ -28,14 +28,31 @@
  * `null`) so a downstream consumer that requires every declared key to
  * exist never crashes on a missing key — only on a missing FILE.
  *
+ * ── GitLab.com ────────────────────────────────────────────────────────
+ * `PRJ_CODE_MERGED`, `PRJ_PR_OPEN` and `PRJ_CODE_UPSTREAMS` are GitHub +
+ * GitLab.com sums (GitLab merge requests are all code or docs: it has no
+ * listing repositories). The GitLab half is fetched with the read-only
+ * `GITLAB_COM_TOKEN_READ_ONLY` and persisted beside the tokens, under
+ * `gitlab`, in the same file. When GitLab.com fails, the LAST GOOD GitLab
+ * half from that file is reused (and the failure logged), so the published
+ * figures never drop by the GitLab share for one bad sweep. Token names are
+ * unchanged, so the nginx Lua module needs no change: it reads `tokens`
+ * only.
+ *
  * @module
  */
 
 import fs from "node:fs";
 import path from "node:path";
 
+import { createGitlabClient } from "../gl/client.mjs";
+import { collectGitlab } from "../gl/collect.mjs";
+import { summarizeGitlab } from "../gl/normalize.mjs";
 import { runWithConcurrency } from "./concurrency.mjs";
-import { loadContributionsConfig } from "./contributions-yaml.mjs";
+import {
+  foldProjectName,
+  loadContributionsConfig,
+} from "./contributions-yaml.mjs";
 import { resolveInfluxConfig } from "./influx.mjs";
 import {
   getAcceptedAnswers,
@@ -120,13 +137,15 @@ export async function collectSummaryData(config, root) {
   const codeUpstreamProjects = new Set(
     upstreamRepos
       .filter((repo) => repo.merged > 0 && !listingSet.has(repo.fullName))
-      .map((repo) => contributions.displayName[repo.fullName] ?? repo.fullName),
+      .map((repo) => foldProjectName(repo.fullName, contributions.displayName)),
   );
 
   return {
     contributionTotals,
     codeVsListingSplit,
-    codeUpstreamsCount: codeUpstreamProjects.size,
+    codeUpstreamProjects: [...codeUpstreamProjects].toSorted((a, b) =>
+      a.localeCompare(b),
+    ),
     answersCount: acceptedAnswers.length,
     headerBand,
     activityBand,
@@ -140,7 +159,8 @@ export async function collectSummaryData(config, root) {
  * @typedef {object} RawSummaryData
  * @property {Awaited<ReturnType<typeof getContributionTotals>>} contributionTotals
  * @property {Awaited<ReturnType<typeof getCodeVsListingSplit>>} codeVsListingSplit
- * @property {number} codeUpstreamsCount
+ * @property {string[]} codeUpstreamProjects - Folded GitHub project names
+ *   with at least one merged code/docs PR.
  * @property {number} answersCount
  * @property {Awaited<ReturnType<typeof getHeaderActivityBand>>} headerBand
  * @property {Awaited<ReturnType<typeof getActivityBand>>} activityBand
@@ -148,6 +168,38 @@ export async function collectSummaryData(config, root) {
  * @property {Awaited<ReturnType<typeof getStars>>} stars
  * @property {Awaited<ReturnType<typeof getLatestRelease>>} releases
  */
+
+/**
+ * @typedef {object} GitlabSummary
+ * @property {string} fetchedAt - When this GitLab half was collected.
+ * @property {number} merged - Merged merge requests.
+ * @property {number} open - Open merge requests.
+ * @property {number} closed - Closed, unmerged merge requests.
+ * @property {string[]} projects - Folded project names with a merged MR.
+ */
+
+/**
+ * Collects the GitLab.com half of the live summary: authored merge requests
+ * in public, non-own projects, counted and folded.
+ *
+ * @param {string} root - Repository root, for `contributions.yaml`.
+ * @param {() => import('../gl/client.mjs').GitlabClient} [makeClient] - Injectable client factory.
+ * @returns {Promise<GitlabSummary | null>} The half, or null when
+ *   `contributions.yaml` declares no GitLab account.
+ */
+export async function collectGitlabSummary(
+  root,
+  makeClient = () => createGitlabClient(),
+) {
+  const contributions = loadContributionsConfig(root);
+  if (!contributions.gitlab) return null;
+  const { items, fetchedAt } = await collectGitlab(
+    makeClient(),
+    contributions.gitlab,
+    { withIssues: false, withAchievements: false },
+  );
+  return { fetchedAt, ...summarizeGitlab(items, contributions.displayName) };
+}
 
 /**
  * Shapes {@link RawSummaryData} into the flat `PRJ_*` token map this module
@@ -158,19 +210,26 @@ export async function collectSummaryData(config, root) {
  * consumer that iterates the registry never hits a missing key.
  *
  * @param {RawSummaryData} raw - From {@link collectSummaryData}.
+ * @param {GitlabSummary | null} [gitlab] - The GitLab.com half, summed into
+ *   the code/docs figures; null leaves them GitHub-only.
  * @returns {Record<string, number | string | null>} Token → primitive.
  */
-export function buildSummaryTokens(raw) {
+export function buildSummaryTokens(raw, gitlab = null) {
+  const upstreams = new Set([
+    ...raw.codeUpstreamProjects,
+    ...(gitlab?.projects ?? []),
+  ]);
   /** @type {Record<string, number | string | null>} */
   const tokens = {
-    PRJ_CODE_MERGED: raw.codeVsListingSplit.codeOrDocs.merged,
-    PRJ_CODE_UPSTREAMS: raw.codeUpstreamsCount,
+    PRJ_CODE_MERGED:
+      raw.codeVsListingSplit.codeOrDocs.merged + (gitlab?.merged ?? 0),
+    PRJ_CODE_UPSTREAMS: upstreams.size,
     PRJ_LISTING_MERGED: raw.codeVsListingSplit.listing.merged,
     // CODE PRs only (excludes contributions.yaml listingRepos) — the owner
     // decided the open-review tile must not blend packaging/listing PRs into
     // the "under review" figure. `contributionTotals.prOpen` (all kinds) is
     // still available for the subpage's book-keeping totals.
-    PRJ_PR_OPEN: raw.codeVsListingSplit.codeOrDocs.open,
+    PRJ_PR_OPEN: raw.codeVsListingSplit.codeOrDocs.open + (gitlab?.open ?? 0),
     PRJ_ANSWERS: raw.answersCount,
     PRJ_RELEASES_90D: raw.headerBand.releases90d,
     PRJ_STARS_30D: raw.headerBand.stars30d,
@@ -254,6 +313,54 @@ function writeJsonAtomic(outPath, data) {
 }
 
 /**
+ * The previous summary file's GitLab half, if any.
+ *
+ * @param {string} outPath - Summary file path.
+ * @returns {GitlabSummary | null} The last good half.
+ */
+function readLastGitlabHalf(outPath) {
+  try {
+    const previous = JSON.parse(fs.readFileSync(outPath, "utf8"));
+    const half = previous?.gitlab;
+    return half &&
+      typeof half.merged === "number" &&
+      Array.isArray(half.projects)
+      ? half
+      : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Fetches the GitLab half, or reuses the last good one from `outPath` when
+ * GitLab.com fails. Never throws.
+ *
+ * @param {string} root - Repository root.
+ * @param {string} outPath - Summary file path (holds the last good half).
+ * @param {(root: string) => Promise<GitlabSummary | null>} collectHalf - Collector.
+ * @param {(line: string) => void} warn - Warning sink.
+ * @returns {Promise<{gitlab: GitlabSummary | null, fresh: boolean}>} The half
+ *   to publish, and whether it is fresh.
+ */
+async function resolveGitlabHalf(root, outPath, collectHalf, warn) {
+  try {
+    return { gitlab: await collectHalf(root), fresh: true };
+  } catch (error) {
+    const message = (
+      error instanceof Error ? error.message : String(error)
+    ).replaceAll(/[\r\n\t]+/g, " ");
+    const last = readLastGitlabHalf(outPath);
+    warn(
+      last
+        ? `Could not refresh the GitLab.com half of the /projects summary (${message}). Reusing the last good one from ${last.fetchedAt}.`
+        : `Could not refresh the GitLab.com half of the /projects summary (${message}) and none was saved before; the figures are GitHub-only until it succeeds.`,
+    );
+    return { gitlab: last, fresh: false };
+  }
+}
+
+/**
  * Refreshes the live /projects summary JSON at `outPath` (default
  * {@link DEFAULT_SUMMARY_PATH} under `root`).
  *
@@ -268,6 +375,8 @@ function writeJsonAtomic(outPath, data) {
  *   [options.collect] - Overrides {@link collectSummaryData}; unit tests use
  *   this to avoid a real InfluxDB connection while exercising the real
  *   atomic-write / last-good-on-failure logic below.
+ * @param {(root: string) => Promise<GitlabSummary | null>} [options.collectGitlab]
+ *   Overrides {@link collectGitlabSummary} (tests).
  * @returns {Promise<{
  *   tokens: Record<string, number | string | null>,
  *   wrote: boolean,
@@ -276,7 +385,9 @@ function writeJsonAtomic(outPath, data) {
  *   (`false` only for the "keep the existing file untouched" fallback); and
  *   whether the tokens are FRESH live data (`false` for both fallbacks, so a
  *   caller — e.g. a systemd `OnFailure=` — can alert on `!refreshed` even
- *   though the file on disk is always valid JSON either way).
+ *   though the file on disk is always valid JSON either way). A GitLab.com
+ *   failure also leaves `refreshed` false, even though the GitHub half is
+ *   fresh and the last good GitLab half was reused.
  */
 export async function writeProjectsSummary({
   root = process.cwd(),
@@ -285,23 +396,31 @@ export async function writeProjectsSummary({
   log = () => {},
   warn = console.warn,
   collect = collectSummaryData,
+  collectGitlab: collectGitlabHalf = collectGitlabSummary,
 } = {}) {
   const resolvedOutPath = outPath ?? path.join(root, DEFAULT_SUMMARY_PATH);
   const resolvedConfig = config ?? resolveInfluxConfig();
 
   try {
     const raw = await collect(resolvedConfig, root);
-    const tokens = buildSummaryTokens(raw);
+    const { gitlab, fresh: gitlabFresh } = await resolveGitlabHalf(
+      root,
+      resolvedOutPath,
+      collectGitlabHalf,
+      warn,
+    );
+    const tokens = buildSummaryTokens(raw, gitlab);
     writeJsonAtomic(resolvedOutPath, {
       schemaVersion: 1,
       generatedAt: new Date().toISOString(),
       tokens,
+      gitlab,
     });
     log(
       `  ✓ Wrote ${resolvedOutPath} (${Object.keys(tokens).length} tokens, ` +
-        `as_of ${String(tokens.PRJ_AS_OF)})`,
+        `as_of ${String(tokens.PRJ_AS_OF)}, GitLab ${gitlabFresh ? "fresh" : "last good"})`,
     );
-    return { tokens, wrote: true, refreshed: true };
+    return { tokens, wrote: true, refreshed: gitlabFresh };
   } catch (error) {
     const message = (
       error instanceof Error ? error.message : String(error)

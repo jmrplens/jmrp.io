@@ -89,3 +89,50 @@ test("listing PRs group under the own project named in the title", () => {
     },
   );
 });
+
+test("GitLab merge requests join the code ledger, keyed by path!iid for exclude", () => {
+  const out = splitLedger(
+    [
+      item({
+        platform: "gitlab",
+        fullName: "gitlab-org/gitlab",
+        number: 255_300,
+      }),
+      item({
+        platform: "gitlab",
+        fullName: "gitlab-org/gitlab",
+        number: 7,
+        state: "open",
+      }),
+      item({
+        platform: "gitlab",
+        fullName: "gitlab-org/gitlab",
+        number: 7,
+        kind: "issue",
+        state: "open",
+      }),
+    ],
+    {
+      ...contributions,
+      exclude: ["gitlab-org/gitlab!7"],
+      displayName: { "gitlab-org/gitlab": "GitLab" },
+    },
+    listingSet,
+  );
+  // The excluded MR !7 is gone; issue #7 (a different item) stays.
+  assert.deepEqual(
+    out.ledgerByYear["2026"].GitLab.map((it) => it.number),
+    [255_300],
+  );
+  assert.deepEqual(out.issuesByProject, { GitLab: { open: 1, closed: 0 } });
+});
+
+test("a GitLab project named like a GitHub listing repo is still code", () => {
+  const out = splitLedger(
+    [item({ platform: "gitlab", fullName: "microsoft/winget-pkgs" })],
+    contributions,
+    listingSet,
+  );
+  assert.deepEqual(out.listingsByOwnProject, {});
+  assert.equal(out.ledgerByYear["2026"]["winget-pkgs"].length, 1);
+});

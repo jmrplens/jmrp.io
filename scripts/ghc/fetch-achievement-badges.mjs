@@ -46,7 +46,8 @@ export const BADGES_DIR = "src/assets/achievements";
 /** Side, in pixels, of the stored badge (3x the rendered 56 px). */
 export const BADGE_SIZE = 168;
 
-/** Largest response accepted, in bytes (GitHub's originals are ~110 KB). */
+/** Largest response accepted, in bytes (GitHub's originals are ~110 KB,
+ * GitLab's achievement avatars ~35 KB). */
 const MAX_BYTES = 1024 * 1024;
 
 /** Per-request timeout. */
@@ -117,6 +118,70 @@ async function downloadBadge(url, fetchImpl) {
 }
 
 /**
+ * GitLab achievement avatars: only GitLab.com's own uploads path, one PNG.
+ * The URL comes from the GraphQL API, so it is held to this exact shape
+ * before anything is requested.
+ */
+const GITLAB_BADGE_URL_RE =
+  /^https:\/\/gitlab\.com\/uploads\/-\/system\/achievements\/achievement\/avatar\/\d+\/[\w.-]+\.png(\?v=\d+)?$/;
+
+/**
+ * Checks that `url` is a GitLab.com achievement avatar.
+ *
+ * @param {string} url - Candidate URL from the API.
+ * @returns {boolean} Whether the URL may be fetched.
+ */
+export function isGitlabBadgeUrl(url) {
+  return GITLAB_BADGE_URL_RE.test(url);
+}
+
+/**
+ * Downloads each planned badge that is not on disk yet. Never throws.
+ *
+ * @param {readonly {file: string, url: string, valid: boolean}[]} plan - What to fetch.
+ * @param {object} options - See {@link ensureAchievementBadges}.
+ * @param {string} options.root - Repository root.
+ * @param {boolean} options.force - Re-download badges already on disk.
+ * @param {typeof fetch} options.fetchImpl - Injectable `fetch`.
+ * @param {(line: string) => void} options.log - Progress sink.
+ * @param {(line: string) => void} options.warn - Warning sink.
+ * @returns {Promise<{fetched: string[], kept: string[], failed: string[]}>}
+ *   File names by outcome.
+ */
+async function ensureBadgeFiles(plan, { root, force, fetchImpl, log, warn }) {
+  const dir = path.join(root, BADGES_DIR);
+  const outcome = { fetched: [], kept: [], failed: [] };
+  for (const { file, url, valid } of plan) {
+    const target = path.join(dir, file);
+    if (!force && fs.existsSync(target)) {
+      outcome.kept.push(file);
+      continue;
+    }
+    if (!valid) {
+      warn(`  Achievement badge ${file}: no usable image URL, skipped.`);
+      outcome.failed.push(file);
+      continue;
+    }
+    try {
+      const png = await downloadBadge(url, fetchImpl);
+      fs.mkdirSync(dir, { recursive: true });
+      const tmp = `${target}.tmp-${process.pid}`;
+      fs.writeFileSync(tmp, png);
+      fs.renameSync(tmp, target);
+      outcome.fetched.push(file);
+      log(`  ✓ Achievement badge ${file} (${png.length} B)`);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      warn(
+        `  Achievement badge ${file}: download failed (${message}); keeping what is committed.`,
+      );
+      outcome.failed.push(file);
+    }
+  }
+  return outcome;
+}
+
+/**
  * Makes sure every given achievement has its badge on disk. Never throws.
  *
  * @param {readonly {achievement: string, tierName: string, image?: string | null}[]} rows
@@ -140,39 +205,46 @@ export async function ensureAchievementBadges(
     warn = console.warn,
   } = {},
 ) {
-  const dir = path.join(root, BADGES_DIR);
-  const outcome = { fetched: [], kept: [], failed: [] };
-  for (const row of rows) {
-    if (!TIERS.has(row.tierName)) continue;
-    const file = badgeFileName(row.achievement, row.tierName);
-    const target = path.join(dir, file);
-    if (!force && fs.existsSync(target)) {
-      outcome.kept.push(file);
-      continue;
-    }
-    const url = row.image ?? "";
-    if (!isBadgeUrl(url, row.achievement, row.tierName)) {
-      warn(`  Achievement badge ${file}: no usable image URL, skipped.`);
-      outcome.failed.push(file);
-      continue;
-    }
-    try {
-      const png = await downloadBadge(url, fetchImpl);
-      fs.mkdirSync(dir, { recursive: true });
-      const tmp = `${target}.tmp-${process.pid}`;
-      fs.writeFileSync(tmp, png);
-      fs.renameSync(tmp, target);
-      outcome.fetched.push(file);
-      log(`  ✓ Achievement badge ${file} (${png.length} B)`);
-    } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      warn(
-        `  Achievement badge ${file}: download failed (${message}); keeping what is committed.`,
-      );
-      outcome.failed.push(file);
-    }
-  }
-  return outcome;
+  const plan = rows
+    .filter((row) => TIERS.has(row.tierName))
+    .map((row) => ({
+      file: badgeFileName(row.achievement, row.tierName),
+      url: row.image ?? "",
+      valid: isBadgeUrl(row.image ?? "", row.achievement, row.tierName),
+    }));
+  return ensureBadgeFiles(plan, { root, force, fetchImpl, log, warn });
+}
+
+/**
+ * Same as {@link ensureAchievementBadges} for GitLab achievements, which have
+ * no tiers: each is saved as `src/assets/achievements/<slug>.png`, where the
+ * slug already starts with `gitlab-` (`normalizeAchievement` in
+ * `scripts/gl/normalize.mjs`). The artwork is GitLab Inc.'s, shown only to
+ * depict an achievement GitLab awarded this account.
+ *
+ * @param {readonly {achievement: string, image?: string | null}[]} rows - GitLab rows.
+ * @param {Parameters<typeof ensureAchievementBadges>[1]} [options] - Options.
+ * @returns {Promise<{fetched: string[], kept: string[], failed: string[]}>}
+ *   File names by outcome.
+ */
+export async function ensureGitlabAchievementBadges(
+  rows,
+  {
+    root = process.cwd(),
+    force = false,
+    fetchImpl = fetch,
+    log = () => {},
+    warn = console.warn,
+  } = {},
+) {
+  const plan = rows
+    .filter((row) => /^gitlab-[a-z0-9-]+$/.test(row.achievement))
+    .map((row) => ({
+      file: `${row.achievement}.png`,
+      url: row.image ?? "",
+      valid: isGitlabBadgeUrl(row.image ?? ""),
+    }));
+  return ensureBadgeFiles(plan, { root, force, fetchImpl, log, warn });
 }
 
 // Standalone: `node scripts/ghc/fetch-achievement-badges.mjs [--force]`

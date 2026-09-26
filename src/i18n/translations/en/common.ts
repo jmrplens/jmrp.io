@@ -1013,10 +1013,10 @@ export const common = {
         heading: "Contributions to other projects",
         intro:
           "Code and documentation I wrote for projects I do not maintain, plus the packaging that puts my own tools in public registries.",
-        tileCodeMerged: "code & docs PRs merged",
+        tileCodeMerged: "code & docs PRs and MRs merged",
         tileCodeUpstreams: "upstream projects",
         tileListingMerged: "listing PRs merged",
-        tilePrOpen: "code PRs under review",
+        tilePrOpen: "code PRs and MRs under review",
         tileAnswers: "accepted answers in GitHub Discussions",
         listingNote: "+ {count} packaging and listing PRs merged",
         highlightsTitle: "Highlights",
@@ -1024,7 +1024,8 @@ export const common = {
         openPill: "Open",
         contributedToTitle: "Contributed to",
         andMore: "and {count} more · list as of {date}",
-        liveLabel: "Live from GitHub via ghchronicle · updated {time}",
+        liveLabel:
+          "Live from GitHub via ghchronicle and from GitLab · updated {time}",
         subpageLink: "All contributions, by year and project →",
       },
       // ── "How I maintain the projects" ───────────────────────────────────
@@ -1046,16 +1047,16 @@ export const common = {
     projectsContributions: {
       title: "Open-source contributions",
       description:
-        "Code and docs pull requests José Manuel Requena Plens has merged into projects he does not maintain, plus accepted answers and GitHub achievements.",
+        "Code and docs that José Manuel Requena Plens has merged into GitHub and GitLab projects he does not maintain, plus accepted answers and achievements.",
       schemaDescription:
-        "Snapshot of code, documentation and packaging contributed to third-party open-source projects, plus accepted answers in GitHub Discussions, generated at build time from ghchronicle.",
+        "Snapshot of code, documentation and packaging contributed to third-party open-source projects on GitHub and GitLab, plus accepted answers in GitHub Discussions, generated at build time from ghchronicle and the GitLab API.",
       kicker: "// PROJECTS",
       backToProjects: "← Projects",
       heading: "Open-source contributions",
       snapshotIntro:
-        "Snapshot as of {date} · {prs} pull requests and {issues} issues in {repos} repositories that are not mine.",
+        "Snapshot as of {date} · {prs} pull and merge requests and {issues} issues in {repos} repositories that are not mine, on GitHub and GitLab.",
       highlightsHeading: "Highlights",
-      highlightsSubIntro: "The three from /projects/ and three more:",
+      highlightsSubIntro: "The three from /projects/ and four more:",
       ledgerHeading: "Code and documentation",
       itemMergedPill: "Merged",
       itemOpenPill: "Open",
@@ -1071,6 +1072,10 @@ export const common = {
       summaryOpenOne: "{count} open",
       summaryClosedOne: "{count} closed",
       seeAllOnGithub: "All {total} pull requests to {project} on GitHub",
+      seeAllOnGitlab: "All my merge requests to {repo} on GitLab",
+      platformGithub: "GitHub",
+      platformGitlab: "GitLab",
+      onPlatform: "on {platform}",
       shownNewest: "Showing the {shown} most recent.",
       notMergedHeading: "Not merged ({count}), counted only",
       distributionHeading: "Distribution and listings",
@@ -1089,9 +1094,11 @@ export const common = {
       answersFooter:
         "{accepted} accepted out of {discussions} discussions answered in {repos} repositories. Each one links to its thread; who accepted it is never published.",
       issuesHeading: "Issues reported ({total}: {open} open, {closed} closed)",
-      achievementsHeading: "GitHub achievements",
+      achievementsHeading: "Achievements on GitHub and GitLab",
       achievementsHiddenNote:
-        "Only these are shown. Hidden by design: Quickdraw, YOLO, Arctic Code Vault Contributor and Public Sponsor.",
+        "Only these GitHub achievements are shown. Hidden by design: Quickdraw, YOLO, Arctic Code Vault Contributor and Public Sponsor.",
+      achievementAwarded: "awarded {date}",
+      badgeAltGitlab: "{name} achievement, awarded by GitLab",
       achievementEstimated: "estimated",
       achievementProgress: "{value} of {max} ({label})",
       tierGold: "Gold, max tier",

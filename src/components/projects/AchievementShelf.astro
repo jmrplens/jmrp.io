@@ -1,7 +1,9 @@
 ---
 /**
- * GitHub achievements shelf — the small, closing section of
- * /projects/contributions/ (PLAN.md section 3). Each badge is GitHub's own
+ * Achievements shelf: the small, closing section of
+ * /projects/contributions/ (PLAN.md section 3), one group per platform
+ * (GitHub, then GitLab), each under its own heading with the platform's
+ * mark. Each badge is GitHub's own
  * artwork for the tier currently held, with the tier also spelled out in
  * text (never color alone, WCAG 1.4.1).
  *
@@ -19,14 +21,20 @@
  * four badges the owner decided to show, Pull Shark's raw count already
  * redacted to `null` (it is an authenticated total that includes private
  * PRs — never printed).
+ *
+ * GitLab achievements (`platform: "gitlab"`) have no tiers or progress: the
+ * shelf shows GitLab's own badge (self-hosted the same way, from GitLab.com's
+ * uploads, by `ensureGitlabAchievementBadges` as
+ * `src/assets/achievements/<slug>.png`) and the award date instead.
  */
 import { defaultLocale, type Locale } from "@i18n/config";
-import { useTranslations } from "@i18n/utils";
+import { formatDate, useTranslations } from "@i18n/utils";
 import type { ImageMetadata } from "astro";
 import { Picture } from "astro:assets";
 
 /** One shown achievement, as `shapeAchievements()` emits it. */
 export interface Achievement {
+  readonly platform?: "github" | "gitlab";
   readonly achievement: string;
   readonly name: string;
   readonly tierNumber: number;
@@ -35,6 +43,7 @@ export interface Achievement {
   readonly nextThreshold: number;
   readonly percent: number;
   readonly agrees: boolean;
+  readonly awardedAt?: string | null;
 }
 
 interface Props {
@@ -80,9 +89,48 @@ const badgeFiles = import.meta.glob<ImageMetadata>(
  * @param tierName - Tier name as GitHub spells it in the file name.
  * @returns The image, or undefined when no file exists yet.
  */
-function badgeFor(slug: string, tierName: string): ImageMetadata | undefined {
-  return badgeFiles[`/src/assets/achievements/${slug}-${tierName}.png`];
+function badgeFor(a: Achievement): ImageMetadata | undefined {
+  const file =
+    a.platform === "gitlab" ? a.achievement : `${a.achievement}-${a.tierName}`;
+  return badgeFiles[`/src/assets/achievements/${file}.png`];
 }
+
+/** The badge's alt text: tier for GitHub, the awarding platform for GitLab. */
+function altFor(a: Achievement): string {
+  return a.platform === "gitlab"
+    ? t("pages.projectsContributions.badgeAltGitlab", { name: a.name })
+    : t(`pages.projectsContributions.${ALT_KEY[a.tierName]}`, {
+        name: a.name,
+      });
+}
+
+/** The line under the name: the tier (GitHub) or the award month (GitLab). */
+function tierLine(a: Achievement): string {
+  if (a.platform === "gitlab") {
+    return a.awardedAt
+      ? t("pages.projectsContributions.achievementAwarded", {
+          date: formatDate(new Date(a.awardedAt), locale, {
+            year: "numeric",
+            month: "short",
+          }),
+        })
+      : "";
+  }
+  return t(`pages.projectsContributions.${TIER_KEY[a.tierName]}`);
+}
+
+const groups = [
+  {
+    platform: "github" as const,
+    heading: t("pages.projectsContributions.platformGithub"),
+    items: achievements.filter((a) => a.platform !== "gitlab"),
+  },
+  {
+    platform: "gitlab" as const,
+    heading: t("pages.projectsContributions.platformGitlab"),
+    items: achievements.filter((a) => a.platform === "gitlab"),
+  },
+].filter((group) => group.items.length > 0);
 
 const INITIALS: Record<string, string> = {
   "pull-shark": "PS",
@@ -99,91 +147,125 @@ const INITIALS: Record<string, string> = {
   >
     {t("pages.projectsContributions.achievementsHeading")}
   </h2>
-  <ul class="ach">
-    {achievements.map((a) => {
-      const badge = badgeFor(a.achievement, a.tierName);
-      return (
-        <li>
-          <span class="ach__badge">
-            {badge ? (
-              <Picture
-                src={badge}
-                alt={t(`pages.projectsContributions.${ALT_KEY[a.tierName]}`, {
-                  name: a.name,
-                })}
-                class="ach__img"
-                width={BADGE_PX}
-                height={BADGE_PX}
-                densities={[1, 2, 3]}
-                formats={["avif", "webp"]}
-                loading="lazy"
-                decoding="async"
-              />
-            ) : (
-              <span
-                class="ach__disc"
-                aria-hidden="true"
-              >
-                {INITIALS[a.achievement] ?? a.name.slice(0, 2).toUpperCase()}
+  {groups.map((group) => (
+    <div class="ach-group">
+      <h3 class="ach-group__heading">
+        <span
+          class={
+            group.platform === "gitlab"
+              ? "i-mdi:gitlab ach-group__icon"
+              : "i-mdi:github ach-group__icon"
+          }
+          aria-hidden="true"
+        />
+        {group.heading}
+      </h3>
+      <ul class="ach">
+        {group.items.map((a) => {
+          const badge = badgeFor(a);
+          return (
+            <li>
+              <span class="ach__badge">
+                {badge ? (
+                  <Picture
+                    src={badge}
+                    alt={altFor(a)}
+                    class="ach__img"
+                    width={BADGE_PX}
+                    height={BADGE_PX}
+                    densities={[1, 2, 3]}
+                    formats={["avif", "webp"]}
+                    loading="lazy"
+                    decoding="async"
+                  />
+                ) : (
+                  <span
+                    class="ach__disc"
+                    aria-hidden="true"
+                  >
+                    {INITIALS[a.achievement] ??
+                      a.name.slice(0, 2).toUpperCase()}
+                  </span>
+                )}
+                {a.platform !== "gitlab" && a.tierNumber > 1 && (
+                  <small
+                    class="ach__multiplier"
+                    aria-hidden="true"
+                  >{`x${a.tierNumber}`}</small>
+                )}
               </span>
-            )}
-            {a.tierNumber > 1 && (
-              <small
-                class="ach__multiplier"
-                aria-hidden="true"
-              >{`x${a.tierNumber}`}</small>
-            )}
-          </span>
-          <b class="ach__name">{a.name}</b>
-          <span class="ach__tier">
-            {t(`pages.projectsContributions.${TIER_KEY[a.tierName]}`)}
-          </span>
-          {a.achievement === "galaxy-brain" ? (
-            <span class="ach__extra">
-              <a href={`#${answersAnchor}`}>
-                {t("pages.projectsContributions.answersHeading", {
-                  count: acceptedAnswersCount,
-                })}
-              </a>
-            </span>
-          ) : (
-            a.agrees &&
-            a.nextThreshold > 0 &&
-            a.count !== null && (
-              <>
+              <b class="ach__name">{a.name}</b>
+              <span class="ach__tier">{tierLine(a)}</span>
+              {a.achievement === "galaxy-brain" ? (
                 <span class="ach__extra">
-                  {t("pages.projectsContributions.achievementProgress", {
-                    value: a.count,
-                    max: a.nextThreshold,
-                    label: t(
-                      "pages.projectsContributions.achievementEstimated",
-                    ),
-                  })}
+                  <a href={`#${answersAnchor}`}>
+                    {t("pages.projectsContributions.answersHeading", {
+                      count: acceptedAnswersCount,
+                    })}
+                  </a>
                 </span>
-                <meter
-                  min="0"
-                  max={a.nextThreshold}
-                  value={a.count}
-                  low={0}
-                  optimum={a.nextThreshold}
-                  aria-label={`${a.count} / ${a.nextThreshold} (${t("pages.projectsContributions.achievementEstimated")})`}
-                />
-              </>
-            )
-          )}
-        </li>
-      );
-    })}
-  </ul>
-  <p class="ach__hidden-note">
-    {t("pages.projectsContributions.achievementsHiddenNote")}
-  </p>
+              ) : (
+                a.agrees &&
+                a.nextThreshold > 0 &&
+                a.count !== null && (
+                  <>
+                    <span class="ach__extra">
+                      {t("pages.projectsContributions.achievementProgress", {
+                        value: a.count,
+                        max: a.nextThreshold,
+                        label: t(
+                          "pages.projectsContributions.achievementEstimated",
+                        ),
+                      })}
+                    </span>
+                    <meter
+                      min="0"
+                      max={a.nextThreshold}
+                      value={a.count}
+                      low={0}
+                      optimum={a.nextThreshold}
+                      aria-label={`${a.count} / ${a.nextThreshold} (${t("pages.projectsContributions.achievementEstimated")})`}
+                    />
+                  </>
+                )
+              )}
+            </li>
+          );
+        })}
+      </ul>
+      {group.platform === "github" && (
+        <p class="ach__hidden-note">
+          {t("pages.projectsContributions.achievementsHiddenNote")}
+        </p>
+      )}
+    </div>
+  ))}
 </section>
 
 <style>
   .ach-heading {
     margin: 0 0 var(--space-md);
     font-size: 1.25rem;
+  }
+
+  .ach-group + .ach-group {
+    margin-top: var(--space-lg);
+  }
+
+  .ach-group__heading {
+    display: flex;
+    gap: var(--space-xs);
+    align-items: center;
+    margin: 0 0 var(--space-sm);
+    font-family: var(--font-mono);
+    font-size: var(--text-sm);
+    font-weight: var(--fw-medium);
+    color: var(--color-text-muted);
+  }
+
+  .ach-group__icon {
+    inline-size: 1.125em;
+    block-size: 1.125em;
   }
 
   .ach {

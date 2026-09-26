@@ -846,10 +846,17 @@ const projectsSchema = z.object({
  * pending-disclosure security content).
  */
 const ContributionsFeatured = z.object({
-  /** `owner/repo` full name, e.g. `"TriliumNext/Trilium"`. */
-  repo: z.string().regex(/^[\w.-]+\/[\w.-]+$/, "owner/repo"),
+  /**
+   * `owner/repo` full name, e.g. `"TriliumNext/Trilium"`; for GitLab, the
+   * project's full path, which may be nested (`"gitlab-org/api/client-go"`).
+   */
+  repo: z.string().regex(/^[\w.-]+(\/[\w.-]+)+$/, "owner/repo"),
+  /** PR/issue number, or a GitLab merge request's `iid`. */
   number: z.number().int().positive(),
+  /** A GitLab merge request is `pull_request`. */
   kind: z.enum(["pull_request", "issue"]),
+  /** Where the item lives; decides its URL (`/pull/N` or `/-/merge_requests/N`). */
+  platform: z.enum(["github", "gitlab"]).default("github"),
   /** One-line "why this matters" — never a restatement of the PR title. */
   why: LocalizedString,
 });
@@ -885,7 +892,11 @@ const contributionsSchema = z.object({
    * per-item listing is.
    */
   exclude: z
-    .array(z.string().regex(/^[\w.-]+\/[\w.-]+#\d+$/, "owner/repo#number"))
+    .array(
+      z
+        .string()
+        .regex(/^[\w.-]+(\/[\w.-]+)+[#!]\d+$/, "owner/repo#number or path!iid"),
+    )
     .default([]),
   /**
    * `owner/repo` → display name, for folding sibling repos of the same
@@ -898,7 +909,20 @@ const contributionsSchema = z.object({
    * PROJECTS rather than distinct repos.
    */
   displayName: z.record(z.string(), z.string()).default({}),
-  featured: z.array(ContributionsFeatured).min(1).max(6),
+  featured: z.array(ContributionsFeatured).min(1).max(7),
+  /**
+   * GitLab.com account whose authored merge requests and issues are added to
+   * the GitHub ones. `excludeNamespaces` are the owner's own top-level
+   * namespaces (mirrors of his GitHub repositories), never counted as
+   * contributions to someone else's project.
+   */
+  gitlab: z
+    .object({
+      username: z.string().regex(/^[\w.-]+$/),
+      userId: z.number().int().positive(),
+      excludeNamespaces: z.array(z.string()).default([]),
+    })
+    .optional(),
   /**
    * Title-matching regex source strings (JS `RegExp`, case-insensitive):
    * titles that would otherwise be hidden by the default

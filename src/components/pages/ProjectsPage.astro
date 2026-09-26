@@ -31,6 +31,7 @@ import rawContributionsData from "@data/ghc/projects-contributions.json";
 import { defaultLocale, type Locale } from "@i18n/config";
 import { formatDate, useTranslatedPath, useTranslations } from "@i18n/utils";
 import BaseLayout from "@layouts/BaseLayout.astro";
+import { itemUrl, platformOf, repoUrl } from "@utils/contribution-links";
 import { compactDownloads, DOWNLOADS_DISPLAY_MIN } from "@utils/downloads";
 import { getPageFaq, pageFaqNode } from "@utils/page-faq";
 import { type ProjectListing, projectListings } from "@utils/project-listings";
@@ -97,17 +98,6 @@ if (contributionsEntry?.data.type !== "contributions") {
 }
 const { displayName } = contributionsEntry.data;
 
-/** `owner/repo` → its GitHub URL. */
-const repoUrl = (fullName: string): string => `https://github.com/${fullName}`;
-
-/** A highlight's GitHub URL — `/pull/<n>` or `/issues/<n>`. */
-const highlightUrl = (h: {
-  repo: string;
-  number: number;
-  kind: "pull_request" | "issue";
-}): string =>
-  `${repoUrl(h.repo)}/${h.kind === "issue" ? "issues" : "pull"}/${h.number}`;
-
 const contributedToMap = new Map(
   contributionsData.contributedTo.map((row) => [row.project, row]),
 );
@@ -119,9 +109,10 @@ const highlights: UpstreamHighlight[] = contributionsData.highlights
     return {
       repo: h.repo,
       number: h.number,
-      kind: h.kind as "pull_request" | "issue",
+      kind: h.kind,
+      platform: platformOf(h.platform),
       why: h.why[locale],
-      url: highlightUrl(h),
+      url: itemUrl({ ...h, fullName: h.repo }),
       stars: contributedToMap.get(project)?.stars ?? null,
     };
   });
@@ -131,7 +122,8 @@ const contributedToShown: ContributedToRow[] = contributionsData.contributedTo
   .slice(0, CONTRIBUTED_TO_SHOWN)
   .map((row) => ({
     project: row.project,
-    url: repoUrl(row.repo),
+    platform: platformOf(row.platform),
+    url: repoUrl(row.repo, row.platform),
     stars: row.stars,
     lastMergedAt: row.lastMergedAt,
   }));

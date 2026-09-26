@@ -301,6 +301,7 @@ export async function getFullLedger(config) {
       closedOrStampedAt - secondsOpen * 1000,
     ).toISOString();
     return {
+      platform: /** @type {const} */ ("github"),
       kind: row.kind === "issue" ? "issue" : "pull_request",
       state: /** @type {'merged'|'open'|'closed'} */ (row.state),
       fullName: String(row.full_name),
@@ -316,6 +317,8 @@ export async function getFullLedger(config) {
 
 /**
  * @typedef {object} LedgerItem
+ * @property {'github'|'gitlab'} platform - Where the item lives; GitLab
+ *   items come from `scripts/gl/normalize.mjs` in this same shape.
  * @property {'pull_request'|'issue'} kind
  * @property {'merged'|'open'|'closed'} state
  * @property {string} fullName - `owner/repo`.

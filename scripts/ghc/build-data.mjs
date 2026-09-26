@@ -25,11 +25,18 @@ import { runWithConcurrency } from "./concurrency.mjs";
 import {
   deriveOwnProjects,
   foldProjectName,
+  itemKey,
   loadContributionsConfig,
 } from "./contributions-yaml.mjs";
 import { ensureAchievementBadges } from "./fetch-achievement-badges.mjs";
 import { fetchRepoMeta } from "./github-repo-cache.mjs";
 import { resolveInfluxConfig } from "./influx.mjs";
+import {
+  combineSummary,
+  gitlabContributedTo,
+  loadGitlabPart,
+  shapeGitlabAchievements,
+} from "./merge-gitlab.mjs";
 import {
   getAcceptedAnswers,
   getAchievements,
@@ -116,13 +123,13 @@ const DEFAULT_SECURITY_TITLE_RE = /security|cve|vulnerab/i;
  * title matches the default security pattern and nothing in
  * `securityTitleAllow` clears it.
  *
- * @param {{fullName: string, number: number, title: string}} item - A ledger item.
+ * @param {{fullName: string, number: number, title: string, kind?: string, platform?: string}} item - A ledger item.
  * @param {import('./contributions-yaml.mjs').ContributionsConfig} contributions - Curation config.
  * @returns {boolean} True when the item must be redacted.
  */
 export function isRedacted(item, contributions) {
-  const key = `${item.fullName}#${item.number}`;
-  if (contributions.exclude.includes(key)) return true;
+  if (contributions.exclude.includes(itemKey({ kind: "", ...item })))
+    return true;
   if (!DEFAULT_SECURITY_TITLE_RE.test(item.title)) return false;
   return contributions.securityTitleAllow.every(
     (pattern) => !new RegExp(pattern, "i").test(item.title),
@@ -147,14 +154,15 @@ export function splitLedger(fullLedger, contributions, listingSet) {
   /** @type {Record<string, Record<string, {fullName: string, merged: number, open: number}>>} */
   const listingsByOwnProject = {};
   for (const item of fullLedger) {
-    if (excludeSet.has(`${item.fullName}#${item.number}`)) continue;
+    if (excludeSet.has(itemKey(item))) continue;
     const project = foldProjectName(item.fullName, contributions.displayName);
     if (item.kind === "issue") {
       issuesByProject[project] ??= { open: 0, closed: 0 };
       issuesByProject[project][item.state === "open" ? "open" : "closed"] += 1;
       continue;
     }
-    if (listingSet.has(item.fullName)) {
+    // Listing repositories are a GitHub classification; GitLab has none.
+    if (item.platform !== "gitlab" && listingSet.has(item.fullName)) {
       if (item.state === "closed") continue;
       const owners = deriveOwnProjects(
         item.title,
@@ -193,9 +201,17 @@ export function splitLedger(fullLedger, contributions, listingSet) {
  * @param {import('./influx.mjs').InfluxConfig} config - Connection settings.
  * @param {string} root - Repository root (for `contributions.yaml` and the
  *   GitHub metadata cache).
+ * @param {object} [options] - Options.
+ * @param {(line: string) => void} [options.warn] - Warning sink.
+ * @param {typeof loadGitlabPart} [options.loadGitlab] - Injectable GitLab
+ *   loader (tests).
  * @returns {Promise<object>} The dataset, ready to serialize.
  */
-export async function collectDataset(config, root) {
+export async function collectDataset(
+  config,
+  root,
+  { warn = console.warn, loadGitlab = loadGitlabPart } = {},
+) {
   const contributions = loadContributionsConfig(root);
   const listingSet = new Set(contributions.listingRepos);
 
@@ -249,6 +265,15 @@ export async function collectDataset(config, root) {
     { root },
   );
 
+  // GitLab.com: collected live, or the fixture's GitLab part (only that
+  // part) when GitLab.com is unreachable. Never throws.
+  const { part: gitlab } = await loadGitlab({
+    root,
+    fixturePath: path.join(root, FIXTURE_PATH),
+    contributions,
+    warn,
+  });
+
   const docsPublished = await getDocsPublished(
     config,
     MAINTENANCE_REPOS.map((repo) => `${OWNER}/${repo}`),
@@ -262,7 +287,7 @@ export async function collectDataset(config, root) {
   // GitHub's own search). Closed listing PRs are superseded attempts and are
   // dropped. ──
   const { ledgerByYear, issuesByProject, listingsByOwnProject } = splitLedger(
-    fullLedger,
+    [...fullLedger, ...gitlab.items],
     contributions,
     listingSet,
   );
@@ -302,26 +327,44 @@ export async function collectDataset(config, root) {
     [...foldedCode.values()].map((entry) => entry.primaryRepo),
     { root },
   );
-  const contributedTo = [...foldedCode.values()]
-    .map((entry) => ({
+  const contributedTo = [
+    ...[...foldedCode.values()].map((entry) => ({
       project: entry.project,
       repo: entry.primaryRepo,
+      platform: "github",
       merged: entry.merged,
       lastMergedAt: entry.lastMergedAt,
       stars: repoMeta[entry.primaryRepo]?.stars ?? null,
-    }))
-    .sort((a, b) => (b.stars ?? -1) - (a.stars ?? -1));
+    })),
+    ...gitlabContributedTo(gitlab, contributions.displayName),
+  ].sort((a, b) => (b.stars ?? -1) - (a.stars ?? -1));
+
+  // Hours to merge of every merged code/docs PR or MR, both platforms, for
+  // the combined median.
+  const codeMergeHours = [...fullLedger, ...gitlab.items]
+    .filter(
+      (item) =>
+        item.kind === "pull_request" &&
+        item.state === "merged" &&
+        item.hoursToMerge !== null &&
+        (item.platform === "gitlab" || !listingSet.has(item.fullName)),
+    )
+    .map((item) => item.hoursToMerge);
 
   return {
     schemaVersion: 1,
     generatedAt: new Date().toISOString(),
     asOf: freshness.asOf,
-    summary: {
-      contributionTotals,
-      codeVsListingSplit,
-      answersCount: acceptedAnswers.length,
-      discussionTotals,
-    },
+    summary: combineSummary(
+      {
+        contributionTotals,
+        codeVsListingSplit,
+        answersCount: acceptedAnswers.length,
+        discussionTotals,
+      },
+      gitlab.items,
+      codeMergeHours,
+    ),
     highlights: contributions.featured.map((entry) => ({
       ...entry,
       redacted: false,
@@ -331,7 +374,13 @@ export async function collectDataset(config, root) {
     ledgerByYear,
     issuesByProject,
     listingsByOwnProject,
-    achievements: shapeAchievements(achievements),
+    achievements: [
+      ...shapeAchievements(achievements).map((row) => ({
+        platform: "github",
+        ...row,
+      })),
+      ...shapeGitlabAchievements(gitlab.achievements),
+    ],
     communityContributors: { issues: issueContributors, prs: prContributors },
     upstreamLandedCommits,
     dependabot,
@@ -348,6 +397,9 @@ export async function collectDataset(config, root) {
       docsPublished:
         docsPublished.find((r) => r.fullName === `${OWNER}/${repo}`) ?? null,
     })),
+    // The raw GitLab.com part, kept whole so a build that cannot reach
+    // GitLab.com falls back to exactly this part of the committed fixture.
+    gitlab,
   };
 }
 
@@ -360,7 +412,8 @@ export async function collectDataset(config, root) {
  * @param {import('./influx.mjs').InfluxConfig} [options.config] - Connection settings.
  * @param {(line: string) => void} [options.log] - Progress sink.
  * @param {(line: string) => void} [options.warn] - Warning sink.
- * @param {(config: import('./influx.mjs').InfluxConfig, root: string) => Promise<object>}
+ * @param {(config: import('./influx.mjs').InfluxConfig, root: string,
+ *   options: {warn: (line: string) => void}) => Promise<object>}
  *   [options.collect] - Overrides {@link collectDataset}; unit tests use
  *   this to exercise the atomic-write / fixture-fallback logic without a
  *   real InfluxDB connection.
@@ -378,7 +431,7 @@ export async function buildDataset({
 
   try {
     const resolvedConfig = config ?? resolveInfluxConfig();
-    const dataset = await collect(resolvedConfig, root);
+    const dataset = await collect(resolvedConfig, root, { warn });
     fs.mkdirSync(path.dirname(outPath), { recursive: true });
     const tmpPath = `${outPath}.tmp-${process.pid}`;
     fs.writeFileSync(tmpPath, `${JSON.stringify(dataset, null, 2)}\n`);
