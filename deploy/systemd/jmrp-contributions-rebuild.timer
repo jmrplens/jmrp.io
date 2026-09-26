@@ -1,0 +1,12 @@
+# Runs jmrp-contributions-rebuild.service once a day. See the service file
+# for what it does and how to install or disable it.
+[Unit]
+Description=Daily jmrp.io rebuild check for the contributions data
+
+[Timer]
+OnCalendar=*-*-* 04:30:00 Europe/Madrid
+RandomizedDelaySec=15min
+Persistent=true
+
+[Install]
+WantedBy=timers.target

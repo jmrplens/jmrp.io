@@ -782,6 +782,7 @@ Blog posts and tools content **are fully translated**. `src/content/posts/{en,es
 | `test-mermaid.mjs`              | Verify mermaid-isomorphic SSR works                     |
 | `deploy-swap.mjs`               | Blue/green build dir selection + atomic `dist` symlink swap |
 | `deploy-live.mjs`               | Post-swap publish actions: moves the staged Nginx snippets into place + reload, Cloudflare purge, IndexNow/Bing submission (production-root guarded) |
+| `ghc/rebuild-if-changed.mjs`   | Daily scheduled rebuild (systemd timer) only when the displayed contributions data changed or the last build is > 7 days old; `--dry-run` to inspect |
 
 ### CI (`scripts/ci/`)
 
@@ -903,12 +904,25 @@ Steps (`pnpm build` = `scripts/deploy-swap.mjs prepare` → `astro build --outDi
    - MOVES the six staged snippets from `.nginx-staged/` into `POSTBUILD_NGINX_SNIPPETS_DIR` (`/etc/nginx/snippets/jmrp/`, the four maps into its `maps/` subdirectory), driven by the build's `manifest.json` rather than a glob, pruning any `maps/*.conf` the manifest does not list; then verifies config (`nginx -t`), reloads Nginx and clears the site's Nginx cache — restoring all six destinations and parking the rejected content outside staging if anything fails. Any failure here — no manifest, a failed move, a failed `nginx -t`, or a reload whose rollback also fails — is **fatal**: the delivery is undone and `deploy-live.mjs` exits 1, failing `pnpm build`. It can no longer report success having delivered nothing; the only case that prints "skipping" is an unset gating variable. The swap has already happened by then, so the new site stays live with the previous Nginx config. A move, not a copy: nothing generated survives in `.nginx-staged/` or in `dist/`
    - Purges the Cloudflare cache via API
    - Submits sitemap URLs to IndexNow and the Bing Webmaster API
+   - Records the display projection hash of `src/data/ghc/projects-contributions.json` (the dataset this build rendered) in `/var/lib/jmrp.io/ghc/rebuild-state.json`, for the scheduled rebuild below; non-fatal
 5. CSP Reporter runs as separate service (`scripts/csp-reporter.mjs`)
 
 > **Production-root guard**: This repo is checked out in multiple worktrees (production at `/var/www/jmrp.io`, plus any staging worktree) that would deliver into the same Nginx snippets directory and purge the same Cloudflare zone. `deploy-live.mjs` is a no-op — skipped entirely, before doing any work — unless `process.cwd()` matches the production root (default `/var/www/jmrp.io`, override via `DEPLOY_LIVE_PRODUCTION_ROOT`) or `DEPLOY_LIVE_FORCE=1` is set. Individual actions are further gated on their own env vars being present (Nginx deploy on `POSTBUILD_NGINX_SNIPPETS_DIR`, Cloudflare purge on `PRIVATE_CF_ZONE_ID`/`PRIVATE_CF_API_TOKEN`, IndexNow on `POSTBUILD_INDEXNOW`, Bing on `BING_WEBMASTER_API_KEY`).
 >
 > **First production deploy after merging this branch**: production's `/var/www/jmrp.io/dist` is still a real directory (legacy layout). `deploy-swap.mjs swap` auto-migrates it into `builds/<color>` on first run (rename the real dir out of the way, then symlink in the new build) — but that rename-then-symlink isn't atomic as *one* step, so there's a sub-millisecond window where `dist` exists as neither the old dir nor the new symlink. In practice this is negligible, but to eliminate it entirely, pre-convert `dist` to a symlink by hand before the first post-merge build (e.g. `mv dist builds/blue && ln -s builds/blue dist`).
 > **No lock for concurrent builds**: nothing prevents two `pnpm build` invocations from racing on `deploy-swap.mjs`; keep deploys serial.
+
+### Scheduled contributions rebuild
+
+`/projects/contributions/`, the build-time blocks of `/projects` and the home "upstream" line are rendered at BUILD time from `src/data/ghc/projects-contributions.json` (pre-build step `scripts/ghc/build-data.mjs`), so they only move when production is rebuilt. The live `PRJ_*` figures on `/projects` are separate (nginx Lua + `jmrp-projects-summary.timer`) and untouched by this.
+
+- **What runs**: `deploy/systemd/jmrp-contributions-rebuild.timer` (daily 04:30 Europe/Madrid, up to 15 min random delay, `Persistent=true`) starts `jmrp-contributions-rebuild.service`, which runs `node scripts/ghc/rebuild-if-changed.mjs` in `/var/www/jmrp.io` with `/etc/jmrp.io/ghc-read.env`. The unit files live in the repo for review; install them by hand (instructions in the `.service` header).
+- **Decision**: it collects a fresh dataset in memory with the build's own `collectDataset`, hashes its **display projection** (`scripts/ghc/rebuild-state.mjs`) and runs `pnpm build` (a full deploy) only when that hash differs from the one recorded for the live build, when no state exists, or when the recorded build is older than `GHC_REBUILD_MAX_AGE_DAYS` (default 7). If InfluxDB or GitLab.com cannot be collected it logs and exits 0 without building: never rebuild from the fixture.
+- **Projection rule**: ledger items (project, platform, kind, repo, number, state, title/redacted), `listingsByOwnProject`, `issuesByProject`, accepted answers (repo, number), achievements (id, tier name/number, and the progress count only where the shelf prints it), highlights, `contributedTo` membership and order with stars rounded as `formatCompactStars` prints them plus the month of the last merge, and the intro/tile counts. Excluded as volatile or stale-tolerant: `generatedAt`, `asOf`, comment counts, `hoursToMerge` and its medians, `discussionTotals`, `maintenance`, `communityContributors`, `upstreamLandedCommits`, `dependabot`, exact star counts. Change what the pages render from the dataset, change the projection (and its tests) too.
+- **State**: `/var/lib/jmrp.io/ghc/rebuild-state.json` (override `GHC_REBUILD_STATE`), `{ projectionHash, sections, builtAt }`. Written by `deploy-live.mjs` after every successful production deploy (manual ones included) and by the script after its own build. `node scripts/ghc/rebuild-if-changed.mjs --record-state` records the dataset file on disk by hand.
+- **Safety**: skips if any `astro build` process is running and holds the PID lock `/var/lib/jmrp.io/ghc/rebuild.lock` (override `GHC_REBUILD_LOCK`; a lock with a dead PID is stale). A manual `pnpm build` does not take that lock, so do not start one by hand at 04:30-04:45.
+- **Inspect**: `set -a; . /etc/jmrp.io/ghc-read.env; set +a; node scripts/ghc/rebuild-if-changed.mjs --dry-run` prints the decision and which projection sections changed, without building, locking or writing state. Logs: `journalctl -u jmrp-contributions-rebuild`.
+- **Disable**: `systemctl disable --now jmrp-contributions-rebuild.timer`.
 
 ---
 
