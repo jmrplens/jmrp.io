@@ -184,6 +184,11 @@ projects:
     summary:
       en: "Acoustic measurement, analysis and prediction for Python: sound level metrology, psychoacoustics, room and building acoustics, materials, vibration, environmental and transport noise, underwater acoustics, electroacoustics and wave simulation, with 1447 CI-enforced conformance checks across 97 domains and 477 standards."
       es: "Medición, análisis y predicción acústica para Python: metrología de niveles sonoros, psicoacústica, acústica de salas y edificación, materiales, vibración, ruido ambiental y de transporte, acústica subacuática, electroacústica y simulación de ondas, con 1447 comprobaciones de conformidad en CI sobre 97 dominios y 477 normas."
+    # Homepage card only (too long above for a card). Keep its figures in step
+    # with `summary` when those change.
+    cardSummary:
+      en: "Acoustic measurement, analysis and prediction for Python, with 1447 CI-enforced conformance checks across 97 domains and 477 standards."
+      es: "Medición, análisis y predicción acústica para Python, con 1447 comprobaciones de conformidad en CI sobre 97 dominios y 477 normas."
 
   - id: cs-routeros-bouncer
     name: cs-routeros-bouncer

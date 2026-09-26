@@ -69,6 +69,25 @@ test("isRedacted shows an ordinary title untouched", () => {
   assert.equal(isRedacted(item, CONTRIBUTIONS), false);
 });
 
+test("shapeAchievements never carries GitHub's badge image URL", () => {
+  const [row] = shapeAchievements([
+    {
+      achievement: "starstruck",
+      name: "Starstruck",
+      tierNumber: 1,
+      tierName: "default",
+      count: 118,
+      nextThreshold: 128,
+      percent: 92.2,
+      agrees: true,
+      image:
+        "https://github.githubassets.com/assets/starstruck-default-b6610abad518.png",
+    },
+  ]);
+  assert.equal("image" in row, false);
+  assert.equal(row.count, 118);
+});
+
 test("shapeAchievements keeps only the 4 shown badges", () => {
   const rows = [
     {

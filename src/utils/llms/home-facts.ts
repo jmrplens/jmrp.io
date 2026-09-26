@@ -9,7 +9,7 @@
  * Every localized label arrives as a parameter, so all Spanish copy stays in
  * `@utils/llms`, which is the path cspell's `es,en` override names.
  */
-import type { GitHubRepo } from "@utils/github";
+import type { FeaturedProjectCard } from "@utils/featured-projects";
 
 /**
  * The hero's `~/whoami` card, as header lines.
@@ -65,38 +65,27 @@ export function whoamiFactLines(facts: {
  * `Language: Go` in its Spanish copy, and `documentHeader` states the rule —
  * the keys are the schema, the values are the language.
  *
- * The description is the REPOSITORY's own, which is the string carrying
- * "850+ GitLab actions (1,000+ Enterprise)". It stays English on the Spanish
- * twin because that is what the Spanish page shows: the GitHub API does not
- * localize it. `/projects/` is not a second copy of it — that page publishes
- * the curated description from `projects.yaml`, which is why "850+" reached
- * no generated markdown document at all.
+ * The cards arrive already resolved by `@utils/featured-projects`, the one
+ * accessor the page itself renders, so the twin cannot print a star count or
+ * a summary the page beside it does not show. The summary is the curated,
+ * localized copy from `projects.yaml` (the Spanish twin is Spanish), and the
+ * star count is the ghchronicle figure /projects/ serves, as of the build.
  *
- * A repository the fetch could not reach degrades to name and URL alone, the
- * shape this list had before, rather than dropping the project.
- *
- * @param names - `featured_projects` from site.yaml, in its own order.
- * @param repos - Whatever the shared GitHub fetch returned, in any order.
+ * @param cards - The resolved cards, in `featured_projects` order.
  * @returns Markdown list lines.
  */
 export function featuredProjectLines(
-  names: readonly string[],
-  repos: readonly GitHubRepo[],
+  cards: readonly FeaturedProjectCard[],
 ): string[] {
-  const byName = new Map(repos.map((repo) => [repo.name, repo]));
-  return names.flatMap((name) => {
-    const repo = byName.get(name);
+  return cards.flatMap((card) => {
     const facts = [
-      repo ? `Stars: ${repo.stargazers_count}` : undefined,
-      repo?.language ? `Language: ${repo.language}` : undefined,
+      card.stars === null ? undefined : `Stars: ${card.stars}`,
+      card.language ? `Language: ${card.language}` : undefined,
     ].filter((fact): fact is string => fact !== undefined);
-    // Hoisted rather than interpolated inline: a template literal nested
-    // inside another is `sonarjs/no-nested-template-literals`, an error here.
-    const url = repo?.html_url ?? `https://github.com/jmrplens/${name}`;
     return [
-      `- ${name} — ${url}`,
+      `- ${card.id} — ${card.url}`,
       ...(facts.length > 0 ? [`  ${facts.join(" · ")}`] : []),
-      ...(repo?.description ? [`  ${repo.description}`] : []),
+      ...(card.summary ? [`  ${card.summary}`] : []),
     ];
   });
 }

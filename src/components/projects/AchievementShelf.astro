@@ -1,11 +1,19 @@
 ---
 /**
  * GitHub achievements shelf — the small, closing section of
- * /projects/contributions/ (PLAN.md section 3). Badges are drawn as clean
- * CSS/SVG discs with the tier spelled out in text (never color alone,
- * WCAG 1.4.1); nothing hotlinks `github.githubassets.com` (CSP forbids
- * cross-origin images from that host, and it would leak a referrer to
- * GitHub besides).
+ * /projects/contributions/ (PLAN.md section 3). Each badge is GitHub's own
+ * artwork for the tier currently held, with the tier also spelled out in
+ * text (never color alone, WCAG 1.4.1).
+ *
+ * The images are GitHub, Inc.'s badge artwork, shown only to depict the
+ * achievements GitHub awarded this account. They are NOT loaded from
+ * `github.githubassets.com` (CSP forbids cross-origin images from that
+ * host, and it would leak a referrer to GitHub besides): ghchronicle stores
+ * each badge's URL in the `image` field of `gh_achievement`, and
+ * `scripts/ghc/fetch-achievement-badges.mjs` self-hosts it under the stable
+ * key `src/assets/achievements/<slug>-<tier>.png`, which Astro turns into
+ * AVIF/WebP here. A tier with no file yet (newly earned, fetched on a host
+ * with no route to GitHub) falls back to a plain disc with initials.
  *
  * Data is `shapeAchievements()`'s output from `build-data.mjs`: only the
  * four badges the owner decided to show, Pull Shark's raw count already
@@ -14,6 +22,8 @@
  */
 import { defaultLocale, type Locale } from "@i18n/config";
 import { useTranslations } from "@i18n/utils";
+import type { ImageMetadata } from "astro";
+import { Picture } from "astro:assets";
 
 /** One shown achievement, as `shapeAchievements()` emits it. */
 export interface Achievement {
@@ -48,6 +58,32 @@ const TIER_KEY = {
   default: "tierBase",
 } as const;
 
+const ALT_KEY = {
+  gold: "badgeAltGold",
+  silver: "badgeAltSilver",
+  bronze: "badgeAltBronze",
+  default: "badgeAltBase",
+} as const;
+
+/** Rendered badge side, in CSS pixels (the stored PNG is 3x this). */
+const BADGE_PX = 56;
+
+const badgeFiles = import.meta.glob<ImageMetadata>(
+  "/src/assets/achievements/*.png",
+  { eager: true, import: "default" },
+);
+
+/**
+ * The self-hosted badge for one achievement at one tier, if committed.
+ *
+ * @param slug - Achievement slug.
+ * @param tierName - Tier name as GitHub spells it in the file name.
+ * @returns The image, or undefined when no file exists yet.
+ */
+function badgeFor(slug: string, tierName: string): ImageMetadata | undefined {
+  return badgeFiles[`/src/assets/achievements/${slug}-${tierName}.png`];
+}
+
 const INITIALS: Record<string, string> = {
   "pull-shark": "PS",
   "pair-extraordinaire": "PE",
@@ -64,52 +100,80 @@ const INITIALS: Record<string, string> = {
     {t("pages.projectsContributions.achievementsHeading")}
   </h2>
   <ul class="ach">
-    {achievements.map((a) => (
-      <li>
-        <span
-          class={`ach__badge ach__badge--${a.tierName}`}
-          aria-hidden="true"
-        >
-          {INITIALS[a.achievement] ?? a.name.slice(0, 2).toUpperCase()}
-          <small>{`x${a.tierNumber}`}</small>
-        </span>
-        <b class="ach__name">{a.name}</b>
-        <span class="ach__tier">
-          {t(`pages.projectsContributions.${TIER_KEY[a.tierName]}`)}
-        </span>
-        {a.achievement === "galaxy-brain" ? (
-          <span class="ach__extra">
-            <a href={`#${answersAnchor}`}>
-              {t("pages.projectsContributions.answersHeading", {
-                count: acceptedAnswersCount,
-              })}
-            </a>
-          </span>
-        ) : (
-          a.agrees &&
-          a.nextThreshold > 0 &&
-          a.count !== null && (
-            <>
-              <span class="ach__extra">
-                {t("pages.projectsContributions.achievementProgress", {
-                  value: a.count,
-                  max: a.nextThreshold,
-                  label: t("pages.projectsContributions.achievementEstimated"),
+    {achievements.map((a) => {
+      const badge = badgeFor(a.achievement, a.tierName);
+      return (
+        <li>
+          <span class="ach__badge">
+            {badge ? (
+              <Picture
+                src={badge}
+                alt={t(`pages.projectsContributions.${ALT_KEY[a.tierName]}`, {
+                  name: a.name,
                 })}
-              </span>
-              <meter
-                min="0"
-                max={a.nextThreshold}
-                value={a.count}
-                low={0}
-                optimum={a.nextThreshold}
-                aria-label={`${a.count} / ${a.nextThreshold} (${t("pages.projectsContributions.achievementEstimated")})`}
+                class="ach__img"
+                width={BADGE_PX}
+                height={BADGE_PX}
+                densities={[1, 2, 3]}
+                formats={["avif", "webp"]}
+                loading="lazy"
+                decoding="async"
               />
-            </>
-          )
-        )}
-      </li>
-    ))}
+            ) : (
+              <span
+                class="ach__disc"
+                aria-hidden="true"
+              >
+                {INITIALS[a.achievement] ?? a.name.slice(0, 2).toUpperCase()}
+              </span>
+            )}
+            {a.tierNumber > 1 && (
+              <small
+                class="ach__multiplier"
+                aria-hidden="true"
+              >{`x${a.tierNumber}`}</small>
+            )}
+          </span>
+          <b class="ach__name">{a.name}</b>
+          <span class="ach__tier">
+            {t(`pages.projectsContributions.${TIER_KEY[a.tierName]}`)}
+          </span>
+          {a.achievement === "galaxy-brain" ? (
+            <span class="ach__extra">
+              <a href={`#${answersAnchor}`}>
+                {t("pages.projectsContributions.answersHeading", {
+                  count: acceptedAnswersCount,
+                })}
+              </a>
+            </span>
+          ) : (
+            a.agrees &&
+            a.nextThreshold > 0 &&
+            a.count !== null && (
+              <>
+                <span class="ach__extra">
+                  {t("pages.projectsContributions.achievementProgress", {
+                    value: a.count,
+                    max: a.nextThreshold,
+                    label: t(
+                      "pages.projectsContributions.achievementEstimated",
+                    ),
+                  })}
+                </span>
+                <meter
+                  min="0"
+                  max={a.nextThreshold}
+                  value={a.count}
+                  low={0}
+                  optimum={a.nextThreshold}
+                  aria-label={`${a.count} / ${a.nextThreshold} (${t("pages.projectsContributions.achievementEstimated")})`}
+                />
+              </>
+            )
+          )}
+        </li>
+      );
+    })}
   </ul>
   <p class="ach__hidden-note">
     {t("pages.projectsContributions.achievementsHiddenNote")}
@@ -144,44 +208,47 @@ const INITIALS: Record<string, string> = {
 
   .ach__badge {
     position: relative;
-    display: grid;
     grid-row: span 3;
-    place-items: center;
     width: 56px;
     height: 56px;
+  }
+
+  .ach__badge :global(picture),
+  .ach__img {
+    display: block;
+    width: 56px;
+    height: 56px;
+  }
+
+  .ach__disc {
+    display: grid;
+    place-items: center;
+    width: 100%;
+    height: 100%;
     font-family: var(--font-display);
     font-size: var(--text-md);
     font-weight: var(--fw-bold);
-    color: #0a0a0b;
+    color: var(--color-text-heading);
+    background: var(--color-bg-subtle);
+    border: 1px solid var(--color-border);
     border-radius: 50%;
   }
 
-  .ach__badge small {
+  /* GitHub draws the multiplier as a pill over the badge, never on the
+     first tier; same here. The tier is also spelled out beside it. */
+  .ach__multiplier {
     position: absolute;
     right: -4px;
     bottom: -2px;
-    padding: 1px 5px;
+    padding: 1px 6px;
     font-family: var(--font-mono);
     font-size: 10.5px;
+    font-weight: var(--fw-semibold);
+    line-height: 1.4;
     color: var(--color-bg);
     background: var(--color-text-heading);
+    border: 1px solid var(--color-bg-secondary);
     border-radius: var(--radius-pill);
-  }
-
-  .ach__badge--gold {
-    background: linear-gradient(135deg, #f7d774, #c9962a);
-  }
-
-  .ach__badge--silver {
-    background: linear-gradient(135deg, #e8e8e8, #9ea3a8);
-  }
-
-  .ach__badge--bronze {
-    background: linear-gradient(135deg, #e7a36a, #9c5a2c);
-  }
-
-  .ach__badge--default {
-    background: linear-gradient(135deg, #9fd3c7, #4f8f86);
   }
 
   .ach__name {

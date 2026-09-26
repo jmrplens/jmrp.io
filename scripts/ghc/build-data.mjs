@@ -27,6 +27,7 @@ import {
   foldProjectName,
   loadContributionsConfig,
 } from "./contributions-yaml.mjs";
+import { ensureAchievementBadges } from "./fetch-achievement-badges.mjs";
 import { fetchRepoMeta } from "./github-repo-cache.mjs";
 import { resolveInfluxConfig } from "./influx.mjs";
 import {
@@ -50,7 +51,12 @@ import {
   getUpstreamLandedCommits,
   getUpstreamRepos,
 } from "./queries.mjs";
-import { ACTIVE_REPOS, MAINTENANCE_REPOS, OWNER } from "./roster.mjs";
+import {
+  ACTIVE_REPOS,
+  MAINTENANCE_REPOS,
+  OWNER,
+  SHOWN_ACHIEVEMENTS,
+} from "./roster.mjs";
 
 /** Path of the generated dataset, relative to the repository root. */
 export const DATA_PATH = "src/data/ghc/projects-contributions.json";
@@ -76,27 +82,15 @@ const FRESHNESS_FAMILIES = [
 ];
 
 /**
- * The only 4 badges the owner decided to show (task brief, and
- * `datos.md`'s "Nunca publicar" for `profile-achievements`): Pull Shark,
- * Pair Extraordinaire, Galaxy Brain, Starstruck. Arctic Code Vault
- * Contributor, Public Sponsor, Quickdraw and YOLO are dropped entirely —
- * the last two read as trivia or a negative to a recruiter, and the first
- * two carry no progress.
- */
-const SHOWN_ACHIEVEMENTS = new Set([
-  "pull-shark",
-  "pair-extraordinaire",
-  "galaxy-brain",
-  "starstruck",
-]);
-
-/**
  * Filters achievements to {@link SHOWN_ACHIEVEMENTS} and redacts Pull
  * Shark's raw `count` (2382 on 2026-09-26): it is an AUTHENTICATED search
  * total that includes ~90 private-repo PRs, and `datos.md` is explicit that
  * it must never be printed as a public figure — the tier (`tierName`
  * "gold", `tierNumber` 4, `percent` 100) already says everything that is
  * safe to show, and it is at max tier so no progress bar is needed either.
+ * Also drops ghchronicle's `image` URL: the badge is self-hosted under a
+ * stable key (`fetch-achievement-badges.mjs`), so the dataset never
+ * carries a `github.githubassets.com` address.
  *
  * @param {Awaited<ReturnType<typeof getAchievements>>} achievements - Raw rows.
  * @returns {Awaited<ReturnType<typeof getAchievements>>} Filtered, redacted rows.
@@ -104,7 +98,7 @@ const SHOWN_ACHIEVEMENTS = new Set([
 export function shapeAchievements(achievements) {
   return achievements
     .filter((row) => SHOWN_ACHIEVEMENTS.has(row.achievement))
-    .map((row) =>
+    .map(({ image: _image, ...row }) =>
       row.achievement === "pull-shark" ? { ...row, count: null } : row,
     );
 }
@@ -246,6 +240,13 @@ export async function collectDataset(config, root) {
       () => getRepoHygiene(config, MAINTENANCE_REPOS),
     ],
     QUERY_CONCURRENCY,
+  );
+
+  // Self-host the badge artwork for the shown achievements at the tier now
+  // held. Never throws; a failure keeps the committed files.
+  await ensureAchievementBadges(
+    achievements.filter((row) => SHOWN_ACHIEVEMENTS.has(row.achievement)),
+    { root },
   );
 
   const docsPublished = await getDocsPublished(

@@ -152,3 +152,18 @@ export function sqlFullNameList(fullNames) {
 export function projectTokenId(repoId) {
   return repoId.toUpperCase().replaceAll(/[^A-Z0-9]+/g, "_");
 }
+
+/**
+ * The only 4 badges the owner decided to show (task brief, and
+ * `datos.md`'s "Nunca publicar" for `profile-achievements`): Pull Shark,
+ * Pair Extraordinaire, Galaxy Brain, Starstruck. Arctic Code Vault
+ * Contributor, Public Sponsor, Quickdraw and YOLO are dropped entirely —
+ * the last two read as trivia or a negative to a recruiter, and the first
+ * two carry no progress.
+ */
+export const SHOWN_ACHIEVEMENTS = new Set([
+  "pull-shark",
+  "pair-extraordinaire",
+  "galaxy-brain",
+  "starstruck",
+]);

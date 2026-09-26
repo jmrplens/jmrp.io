@@ -15,7 +15,11 @@ import {
 import { pageLastmod } from "@src/integrations/sitemap-post-dates";
 import type { CVData, SiteConfig } from "@src/types";
 import { getCVData } from "@utils/cv";
-import { featuredRepos, githubProfile } from "@utils/github-facts";
+import {
+  featuredProjectCards,
+  upstreamSummary,
+} from "@utils/featured-projects";
+import { githubProfile } from "@utils/github-facts";
 import { stripToText } from "@utils/html";
 import { featuredProjectLines, whoamiFactLines } from "@utils/llms/home-facts";
 import { registry } from "@utils/llms/mdx/registry";
@@ -1643,10 +1647,10 @@ function heroToMarkdown(html: string, siteUrl: string): string {
  * in markdown without parsing one page of HTML.
  *
  * The featured projects carry the same figures the page prints on each card —
- * star count, language and the repository's own one-line description. Not a
- * second fetch: both read `@utils/github-facts`, which settles one promise
- * per build, so the twin cannot report a star count the page beside it does
- * not show. The note that used to stand here called this "a second,
+ * star count, language and the curated, localized summary from
+ * `projects.yaml`. Not a second reading: both call `@utils/featured-projects`,
+ * whose GitHub fetch and ghchronicle read settle once per build, so the twin
+ * cannot report a star count the page beside it does not show. The note that used to stand here called this "a second,
  * independently-drifting copy"; that was a fair warning against a private
  * fetch, and the shared accessor is what answers it. Its other half was
  * simply wrong: `/projects/` publishes the CURATED description from
@@ -1707,11 +1711,11 @@ export async function generateHomeMarkdown(
     ];
   });
 
-  const featuredNames = siteData.featured_projects ?? [];
   const featured = featuredProjectLines(
-    featuredNames,
-    await featuredRepos(featuredNames),
+    await featuredProjectCards(siteData.featured_projects ?? [], locale),
   );
+  // The build-time line under the cards, same function the page calls.
+  const upstream = upstreamSummary(locale);
   // The rest of the hero's `~/whoami` card. `Status:` and `Role:` were
   // already published in the header; these five are the same card's other
   // rows, and they were every entity figure the twin dropped (audit #6, A5):
@@ -1760,6 +1764,9 @@ export async function generateHomeMarkdown(
     `## ${label.featured[locale]}`,
     "",
     ...featured,
+    ...(upstream
+      ? ["", `${upstream} ${siteUrl}${prefix}/projects/contributions/`]
+      : []),
     "",
     `## ${label.latest[locale]}`,
     "",

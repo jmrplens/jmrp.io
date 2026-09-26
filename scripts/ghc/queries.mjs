@@ -484,7 +484,7 @@ export async function getCommunityPrContributors(config) {
  */
 export async function getAchievements(config) {
   const sql = `SELECT a.achievement, a.name, a.tier_number, a.tier_name,
-      p.count, p.next_threshold, p.percent, p.agrees
+      a.image, p.count, p.next_threshold, p.percent, p.agrees
     FROM gh_achievement a
     LEFT JOIN gh_achievement_progress p
       ON p.achievement = a.achievement AND p.time = a.time
@@ -501,6 +501,7 @@ export async function getAchievements(config) {
     nextThreshold: numOrNull(row.next_threshold),
     percent: numOrNull(row.percent),
     agrees: [1, "1", true].includes(row.agrees),
+    image: row.image ? String(row.image) : null,
   }));
 }
 
@@ -515,6 +516,9 @@ export async function getAchievements(config) {
  * @property {number | null} percent
  * @property {boolean} agrees - Whether the collector's own tier estimate
  *   agrees with GitHub's displayed tier; render a progress bar only when true.
+ * @property {string | null} image - GitHub's badge image URL for this tier
+ *   (`github.githubassets.com`); only `fetch-achievement-badges.mjs` reads
+ *   it, to self-host the file. Never rendered, never loaded by a browser.
  */
 
 // ─────────────────────────────────────────────────────────────────────────

@@ -189,4 +189,5 @@ export const langColors: Record<string, string> = {
   Go: "#00ADD8",
   Rust: "#dea584",
   PHP: "#4F5D95",
+  TeX: "#3D6117",
 };

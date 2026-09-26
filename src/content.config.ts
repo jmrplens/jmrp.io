@@ -825,6 +825,12 @@ const ProjectEntry = z.object({
   endpointSameAs: z.array(z.url()).optional(),
   topics: z.array(ProjectTopic).min(1),
   summary: LocalizedString,
+  /**
+   * Shorter copy for the homepage's featured card, when `summary` is too long
+   * for one. Display-only: never emitted in JSON-LD and never compared against
+   * the project's own docs site, so it carries no `#software` contract.
+   */
+  cardSummary: LocalizedString.optional(),
 });
 
 const projectsSchema = z.object({

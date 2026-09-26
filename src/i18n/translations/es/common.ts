@@ -464,6 +464,14 @@ export const common = {
       viewAllPosts: "Ver todas las entradas →",
       featuredProjects: "Proyectos destacados",
       viewAllProjects: "Ver todos los proyectos →",
+      upstreamStrip: "{prs} en {projects}, entre ellos {names}.",
+      upstreamPrsOne:
+        "{count} pull request de código o documentación fusionada",
+      upstreamPrsOther:
+        "{count} pull requests de código y documentación fusionadas",
+      upstreamProjectsOne: "{count} proyecto open source ajeno",
+      upstreamProjectsOther: "{count} proyectos open source ajenos",
+      upstreamLink: "Ver las contribuciones →",
       availability: "Disponible para proyectos · Valencia (UTC+1)",
       terminalRole: "Ing. Firmware / Software",
       terminalLabel: "Resumen de perfil",
@@ -1080,6 +1088,10 @@ export const common = {
       tierSilver: "Plata",
       tierBronze: "Bronce",
       tierBase: "Base",
+      badgeAltGold: "Logro {name}, nivel oro",
+      badgeAltSilver: "Logro {name}, nivel plata",
+      badgeAltBronze: "Logro {name}, nivel bronce",
+      badgeAltBase: "Logro {name}, nivel base",
       liveLabel: "En vivo desde GitHub vía ghchronicle · actualizado {time}",
     },
     tools: {

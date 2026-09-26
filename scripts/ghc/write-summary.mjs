@@ -328,9 +328,12 @@ export async function writeProjectsSummary({
   }
 }
 
-// Allow `node scripts/ghc/write-summary.mjs` to run standalone.
+// Allow `node scripts/ghc/write-summary.mjs` to run standalone. In
+// production the systemd timer sets GHC_SUMMARY_PATH to the file nginx
+// serves on /stats/projects (/var/lib/jmrp.io/ghc/projects-summary.json).
 if (import.meta.url === `file://${process.argv[1]}`) {
   const { refreshed } = await writeProjectsSummary({
+    outPath: process.env.GHC_SUMMARY_PATH || undefined,
     log: (line) => console.log(line),
     warn: (line) => console.warn(line),
   });
