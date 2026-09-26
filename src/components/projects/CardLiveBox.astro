@@ -1,0 +1,162 @@
+---
+/**
+ * Per-card live + build-time meta for an ACTIVE project card on /projects/:
+ * stars (+30d delta), latest release (+age), active days in the last 12
+ * months and a community summary.
+ *
+ * Stars/release/downloads are `PRJ_*` SSR tokens (live, nginx-substituted);
+ * everything else is build-time data from
+ * `src/data/ghc/projects-contributions.json`, resolved once by the caller
+ * (`ProjectsPage.astro`) and passed in already-shaped — this component only
+ * renders, matching the rest of the page's "resolve in frontmatter, render
+ * in template" convention.
+ */
+import { type ProjectCardSsr } from "@components/projects/ssr-tokens";
+import { defaultLocale, type Locale } from "@i18n/config";
+import { pluralize, useTranslations } from "@i18n/utils";
+
+interface Props {
+  readonly projectName: string;
+  readonly ssr: ProjectCardSsr;
+  /** Active days in the last 12 months (build-time), when known. */
+  readonly activeDays12m?: number;
+  /** `{issues, people}` from other people, when the threshold (>=2) is met. */
+  readonly communityIssues?: { issues: number; people: number };
+  /** `{prs, people}` from other people, when the threshold (>=2) is met. */
+  readonly communityPrs?: { prs: number; people: number };
+}
+
+const { projectName, ssr, activeDays12m, communityIssues, communityPrs } =
+  Astro.props;
+
+const locale = (Astro.currentLocale ?? defaultLocale) as Locale;
+const t = useTranslations(locale);
+
+// PLAN.md 4.2: only worth showing past a handful of days.
+const showActivity = typeof activeDays12m === "number" && activeDays12m > 5;
+
+type CountKey = "issueCount" | "prCount" | "peopleCount";
+
+/** "1 issue"/"3 issues", "1 PR"/"3 PRs", "1 person"/"3 people", localized. */
+function countOf(key: CountKey, count: number): string {
+  return pluralize(
+    count,
+    {
+      one: t(`pages.projects.card.${key}One`, { count }),
+      other: t(`pages.projects.card.${key}`, { count }),
+    },
+    locale,
+  );
+}
+
+const communityParts: string[] = [];
+if (communityIssues) {
+  communityParts.push(
+    t("pages.projects.card.countFromPeople", {
+      count: countOf("issueCount", communityIssues.issues),
+      people: countOf("peopleCount", communityIssues.people),
+    }),
+  );
+}
+if (communityPrs) {
+  communityParts.push(
+    t("pages.projects.card.countFromPeople", {
+      count: countOf("prCount", communityPrs.prs),
+      people: countOf("peopleCount", communityPrs.people),
+    }),
+  );
+}
+// Separator, not translatable prose: both locales already use "·" elsewhere
+// on this page (the activity-band label, the upstream block's "live" stamp).
+const communityLine =
+  communityParts.length > 0 ? communityParts.join(" · ") : null;
+---
+
+<dl class="card-live">
+  <dt class={ssr.starsClass}>{t("pages.projects.card.starsLabel")}</dt>
+  <dd class={ssr.starsClass}>
+    {ssr.stars}
+    <span class={`card-live__delta ${ssr.stars30dClass}`}>
+      {t("pages.projects.card.stars30dSuffix", { count: ssr.stars30d })}
+    </span>
+  </dd>
+
+  <dt class={ssr.relClass}>{t("pages.projects.card.releaseLabel")}</dt>
+  <dd class={ssr.relClass}>
+    {ssr.relTag}
+    {" · "}
+    {ssr.relAge}
+  </dd>
+
+  {/*
+   * Downloads: TOTAL only, never the weekly delta — an explicit owner
+   * decision overriding the mockup, which showed a 7-day delta token. The
+   * total is already the existing build-time `downloadsOf(project)` figure
+   * in the card's standard meta row above this box (src/data/downloads.json,
+   * refreshed at pre-build — see ProjectsPage.astro), so it is intentionally
+   * NOT repeated here. The `PRJ_<ID>_DL_7D`/`_DL_7D_CLASS` tokens this
+   * component never rendered were retired from `ssr-tokens.ts` and
+   * `write-summary.mjs` for exactly that reason — a live token nothing
+   * renders is dead weight in every summary the systemd timer writes.
+   */}
+
+  {showActivity && (
+    <>
+      <dt>{t("pages.projects.card.activityLabel")}</dt>
+      <dd>
+        {t("pages.projects.card.activityDaysSuffix", { count: activeDays12m })}
+      </dd>
+    </>
+  )}
+
+  {communityLine && (
+    <>
+      <dt>{t("pages.projects.card.communityLabel")}</dt>
+      <dd>{communityLine}</dd>
+    </>
+  )}
+</dl>
+
+<style>
+  .card-live {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 4px var(--space-sm);
+
+    /* Baseline, so the small mono label sits on the same line as the
+       larger value instead of hanging from its top edge. */
+    align-items: baseline;
+    padding-top: var(--space-sm);
+    margin: 0 0 var(--space-sm);
+    font-size: var(--text-sm);
+    border-top: 1px dashed var(--color-border);
+  }
+
+  .card-live dt {
+    font-family: var(--font-mono);
+    font-size: var(--text-micro);
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+
+  .card-live dd {
+    min-inline-size: 4ch;
+    margin: 0;
+    font-variant-numeric: tabular-nums;
+    color: var(--color-text-heading);
+  }
+
+  .card-live__delta {
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    color: var(--color-success, var(--color-accent));
+  }
+
+  /* Hide-class contract: nginx (or the dev plugin) writes "prj-hide" into
+     this token when the figure has nothing to show — never removed from the
+     DOM by client JS, always decided server-side. */
+  .prj-hide {
+    display: none;
+  }
+</style>

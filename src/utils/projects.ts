@@ -66,6 +66,8 @@ export interface Project {
   endpointSameAs?: string[];
   topics: ProjectTopic[];
   summary: { en: string; es: string };
+  /** Shorter homepage-card copy; see the schema in content.config.ts. */
+  cardSummary?: { en: string; es: string };
 }
 
 /**

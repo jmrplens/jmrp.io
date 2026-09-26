@@ -95,6 +95,7 @@ export const PAGE_CLASSES = [
       "/license/",
       "/privacy/",
       "/projects/",
+      "/projects/contributions/",
       "/publications/",
       "/uses/",
     ],

@@ -14,11 +14,24 @@
  * projects with their own documentation, real usage, or both — no experiments,
  * forks or scratch repos.
  */
+import ActivityBand from "@components/projects/ActivityBand.astro";
+import CardLiveBox from "@components/projects/CardLiveBox.astro";
+import { asContributionsDataset } from "@components/projects/dataset-types";
+import MaintenanceTable, {
+  type MaintenanceRow,
+} from "@components/projects/MaintenanceTable.astro";
+import { PRJ } from "@components/projects/ssr-tokens";
+import UpstreamBlock, {
+  type ContributedToRow,
+  type UpstreamHighlight,
+} from "@components/projects/UpstreamBlock.astro";
 import FAQ from "@components/ui/FAQ.astro";
 import downloadsData from "@data/downloads.json";
+import rawContributionsData from "@data/ghc/projects-contributions.json";
 import { defaultLocale, type Locale } from "@i18n/config";
-import { formatDate, useTranslations } from "@i18n/utils";
+import { formatDate, useTranslatedPath, useTranslations } from "@i18n/utils";
 import BaseLayout from "@layouts/BaseLayout.astro";
+import { itemUrl, platformOf, repoUrl } from "@utils/contribution-links";
 import { compactDownloads, DOWNLOADS_DISPLAY_MIN } from "@utils/downloads";
 import { getPageFaq, pageFaqNode } from "@utils/page-faq";
 import { type ProjectListing, projectListings } from "@utils/project-listings";
@@ -34,6 +47,9 @@ import {
 import { getSiteUrl } from "@utils/site";
 import { getEntry } from "astro:content";
 import type { CollectionPage } from "schema-dts";
+
+import { foldProjectName } from "../../../scripts/ghc/contributions-yaml.mjs";
+import { ACTIVE_REPOS } from "../../../scripts/ghc/roster.mjs";
 
 const locale = (Astro.currentLocale ?? defaultLocale) as Locale;
 const t = useTranslations(locale);
@@ -69,6 +85,100 @@ const sponsorUrl =
     : undefined;
 const active = projects.filter((p) => p.status === "active");
 const archived = projects.filter((p) => p.status === "archived");
+
+const translatePath = useTranslatedPath(locale);
+const contributionsData = asContributionsDataset(rawContributionsData);
+
+// ── Upstream contributions (PLAN.md section 2) ────────────────────────────
+const contributionsEntry = await getEntry("profile", "contributions");
+if (contributionsEntry?.data.type !== "contributions") {
+  throw new Error(
+    "profile/contributions.yaml is missing or has the wrong type",
+  );
+}
+const { displayName } = contributionsEntry.data;
+
+const contributedToMap = new Map(
+  contributionsData.contributedTo.map((row) => [row.project, row]),
+);
+
+const highlights: UpstreamHighlight[] = contributionsData.highlights
+  .slice(0, 3)
+  .map((h) => {
+    const project = foldProjectName(h.repo, displayName);
+    return {
+      repo: h.repo,
+      number: h.number,
+      kind: h.kind,
+      platform: platformOf(h.platform),
+      why: h.why[locale],
+      url: itemUrl({ ...h, fullName: h.repo }),
+      stars: contributedToMap.get(project)?.stars ?? null,
+    };
+  });
+
+const CONTRIBUTED_TO_SHOWN = 6;
+const contributedToShown: ContributedToRow[] = contributionsData.contributedTo
+  .slice(0, CONTRIBUTED_TO_SHOWN)
+  .map((row) => ({
+    project: row.project,
+    platform: platformOf(row.platform),
+    url: repoUrl(row.repo, row.platform),
+    stars: row.stars,
+    lastMergedAt: row.lastMergedAt,
+  }));
+const contributedToRemaining = Math.max(
+  0,
+  contributionsData.contributedTo.length - CONTRIBUTED_TO_SHOWN,
+);
+const contributionsAsOf = new Date(contributionsData.asOf);
+
+// ── "How I maintain the projects" (PLAN.md section 5) ─────────────────────
+const projectNameById = new Map(projects.map((p) => [p.id, p.name]));
+const maintenanceByRepo = new Map(
+  contributionsData.maintenance.map((m) => [m.repo, m]),
+);
+const maintenanceRows: MaintenanceRow[] = contributionsData.maintenance.map(
+  (m) => ({
+    projectName: projectNameById.get(m.repo) ?? m.repo,
+    ci: m.ci.os.length > 0 ? { jobs: m.ci.jobs, os: m.ci.os } : null,
+    ciPassRate90d: m.ciPassRate90d,
+    codeQl:
+      m.codeQl && m.codeQl.languages.length > 0
+        ? { languages: m.codeQl.languages }
+        : null,
+  }),
+);
+const dependabotSentence =
+  contributionsData.dependabot.total > 0
+    ? t("pages.projects.maintenance.dependabotSentence", {
+        fixed: contributionsData.dependabot.total,
+        repos: contributionsData.dependabot.perRepo.length,
+        days: Math.round(contributionsData.dependabot.medianDays ?? 0),
+      })
+    : null;
+
+// ── Per-card live + build-time meta, active roster only ───────────────────
+/** Whether `id` is a repo the live SSR token registry covers. */
+function isActiveRepoId(id: string): id is (typeof ACTIVE_REPOS)[number] {
+  return (ACTIVE_REPOS as readonly string[]).includes(id);
+}
+const COMMUNITY_MIN_PEOPLE = 2;
+const communityIssuesByRepo = new Map(
+  contributionsData.communityContributors.issues
+    .filter((r) => r.people >= COMMUNITY_MIN_PEOPLE)
+    .map((r) => [r.repo, r]),
+);
+const communityPrsByRepo = new Map(
+  contributionsData.communityContributors.prs
+    .filter((r) => r.people >= COMMUNITY_MIN_PEOPLE)
+    .map((r) => [r.repo, r]),
+);
+
+const contributionsPageUrl = new URL(
+  translatePath("/projects/contributions/"),
+  getSiteUrl(),
+).href;
 
 const pageUrl = new URL(Astro.url.pathname, getSiteUrl()).href;
 
@@ -166,20 +276,26 @@ const projectsPageSchema = {
   // llms.txt, not this page (GEO audit #9, M4). A Dataset with one
   // DataDownload is how schema.org points at a file that holds the entities a
   // page lists.
-  hasPart: {
-    "@type": "Dataset",
-    "@id": new URL("/identity/projects.json", getSiteUrl()).href,
-    name: t("pages.projects.datasetName"),
-    description: t("pages.projects.datasetDescription"),
-    inLanguage: "en",
-    creator: { "@id": new URL("#person", getSiteUrl()).href },
-    isBasedOn: pageUrl,
-    distribution: {
-      "@type": "DataDownload",
-      encodingFormat: "application/json",
-      contentUrl: new URL("/identity/projects.json", getSiteUrl()).href,
+  hasPart: [
+    {
+      "@type": "Dataset",
+      "@id": new URL("/identity/projects.json", getSiteUrl()).href,
+      name: t("pages.projects.datasetName"),
+      description: t("pages.projects.datasetDescription"),
+      inLanguage: "en",
+      creator: { "@id": new URL("#person", getSiteUrl()).href },
+      isBasedOn: pageUrl,
+      distribution: {
+        "@type": "DataDownload",
+        encodingFormat: "application/json",
+        contentUrl: new URL("/identity/projects.json", getSiteUrl()).href,
+      },
     },
-  },
+    // The full contributions ledger, as its own CollectionPage — the node
+    // itself is defined once, in ContributionsPage.astro, at the same @id;
+    // this is a reference, not a duplicate definition.
+    { "@id": `${contributionsPageUrl}#contributions` },
+  ],
   mainEntity: {
     "@type": "ItemList",
     "@id": `${pageUrl}#project-list`,
@@ -266,234 +382,265 @@ const faqNode =
           </p>}
     </header>
 
+    <ActivityBand />
+
     {groups.map((group) => (
-      <section
-        class="projects-group"
-        aria-labelledby={`projects-${group.key}`}
-      >
-        <h2
-          class="projects-group__title"
-          id={`projects-${group.key}`}
+      <>
+        <section
+          class="projects-group"
+          aria-labelledby={`projects-${group.key}`}
         >
-          {group.heading}
-        </h2>
-        <p class="projects-group__intro">{group.intro}</p>
+          <h2
+            class="projects-group__title"
+            id={`projects-${group.key}`}
+          >
+            {group.heading}
+          </h2>
+          <p class="projects-group__intro">{group.intro}</p>
 
-        <ul class="projects-grid">
-          {group.items.map((project) => (
-            <li class="proj-card">
-              <h3 class="proj-card__name">{project.name}</h3>
-              {project.name !== project.id && (
-                <p class="proj-card__repo-name">{project.id}</p>
-              )}
-              <p class="proj-card__summary">{project.summary[locale]}</p>
+          <ul class="projects-grid">
+            {group.items.map((project) => (
+              <li class="proj-card">
+                <h3 class="proj-card__name">{project.name}</h3>
+                {project.name !== project.id && (
+                  <p class="proj-card__repo-name">{project.id}</p>
+                )}
+                <p class="proj-card__summary">{project.summary[locale]}</p>
 
-              <dl class="proj-card__meta">
-                <div class="proj-card__meta-pair">
-                  <dt>{t("pages.projects.language")}</dt>
-                  <dd>{project.language}</dd>
-                </div>
-                <div class="proj-card__meta-pair">
-                  <dt>{t("pages.projects.license")}</dt>
-                  <dd>
+                <dl class="proj-card__meta">
+                  <div class="proj-card__meta-pair">
+                    <dt>{t("pages.projects.language")}</dt>
+                    <dd>{project.language}</dd>
+                  </div>
+                  <div class="proj-card__meta-pair">
+                    <dt>{t("pages.projects.license")}</dt>
+                    <dd>
+                      <a
+                        href={licenseUrl(project.license)}
+                        target="_blank"
+                        rel="external noopener noreferrer"
+                        aria-label={t("aria.opensNewTab", {
+                          text: `${project.license} — ${project.name}`,
+                        })}
+                      >
+                        {project.license}
+                      </a>
+                    </dd>
+                  </div>
+                  {downloadsOf(project) && (
+                    <div class="proj-card__meta-pair">
+                      <dt>{t("pages.projects.downloads")}</dt>
+                      <dd>{downloadsOf(project)}</dd>
+                    </div>
+                  )}
+                </dl>
+
+                {isActiveRepoId(project.id) && (
+                  <CardLiveBox
+                    projectName={project.name}
+                    ssr={PRJ.cards[project.id]}
+                    activeDays12m={
+                      maintenanceByRepo.get(project.id)?.activeDays12m
+                    }
+                    communityIssues={communityIssuesByRepo.get(project.id)}
+                    communityPrs={communityPrsByRepo.get(project.id)}
+                  />
+                )}
+
+                <ul
+                  class="proj-card__topics"
+                  aria-label={t("pages.projects.topicsLabel", {
+                    project: project.name,
+                  })}
+                >
+                  {project.topics.map((topic) => (
+                    <li class="proj-card__topic">{topic.name}</li>
+                  ))}
+                </ul>
+
+                <p class="proj-card__links">
+                  <a
+                    href={project.repo}
+                    target="_blank"
+                    rel="external noopener noreferrer"
+                    aria-label={t("aria.opensNewTab", {
+                      text: `${t("pages.projects.repo")} — ${project.name}`,
+                    })}
+                  >
+                    <span
+                      class="i-fa-brands:github"
+                      aria-hidden="true"
+                    />
+                    {t("pages.projects.repo")}
+                  </a>
+                  <a
+                    href={docsHref(project)}
+                    target="_blank"
+                    rel="external noopener noreferrer"
+                    aria-label={t("aria.opensNewTab", {
+                      text: `${t("pages.projects.docs")} — ${project.name}`,
+                    })}
+                  >
+                    <span
+                      class="i-mdi:book-open-variant"
+                      aria-hidden="true"
+                    />
+                    {t("pages.projects.docs")}
+                  </a>
+                  {(project.listings ?? []).map((listing) => (
                     <a
-                      href={licenseUrl(project.license)}
+                      href={listing.url}
                       target="_blank"
                       rel="external noopener noreferrer"
                       aria-label={t("aria.opensNewTab", {
-                        text: `${project.license} — ${project.name}`,
+                        text: `${listing.label} — ${project.name}`,
                       })}
-                    >
-                      {project.license}
-                    </a>
-                  </dd>
-                </div>
-                {downloadsOf(project) && (
-                  <div class="proj-card__meta-pair">
-                    <dt>{t("pages.projects.downloads")}</dt>
-                    <dd>{downloadsOf(project)}</dd>
-                  </div>
-                )}
-              </dl>
-
-              <ul
-                class="proj-card__topics"
-                aria-label={t("pages.projects.topicsLabel", {
-                  project: project.name,
-                })}
-              >
-                {project.topics.map((topic) => (
-                  <li class="proj-card__topic">{topic.name}</li>
-                ))}
-              </ul>
-
-              <p class="proj-card__links">
-                <a
-                  href={project.repo}
-                  target="_blank"
-                  rel="external noopener noreferrer"
-                  aria-label={t("aria.opensNewTab", {
-                    text: `${t("pages.projects.repo")} — ${project.name}`,
-                  })}
-                >
-                  <span
-                    class="i-fa-brands:github"
-                    aria-hidden="true"
-                  />
-                  {t("pages.projects.repo")}
-                </a>
-                <a
-                  href={docsHref(project)}
-                  target="_blank"
-                  rel="external noopener noreferrer"
-                  aria-label={t("aria.opensNewTab", {
-                    text: `${t("pages.projects.docs")} — ${project.name}`,
-                  })}
-                >
-                  <span
-                    class="i-mdi:book-open-variant"
-                    aria-hidden="true"
-                  />
-                  {t("pages.projects.docs")}
-                </a>
-                {(project.listings ?? []).map((listing) => (
-                  <a
-                    href={listing.url}
-                    target="_blank"
-                    rel="external noopener noreferrer"
-                    aria-label={t("aria.opensNewTab", {
-                      text: `${listing.label} — ${project.name}`,
-                    })}
-                  >
-                    <span
-                      class={`i-${listing.icon}`}
-                      aria-hidden="true"
-                    />
-                    {listing.label}
-                  </a>
-                ))}
-                {hostedHref(project, locale) && (
-                  <a
-                    href={hostedHref(project, locale)}
-                    target="_blank"
-                    rel="external noopener noreferrer"
-                    aria-label={t("aria.opensNewTab", {
-                      text: `${t("pages.projects.hosted")} — ${project.name}`,
-                    })}
-                  >
-                    <span
-                      class="i-mdi:api"
-                      aria-hidden="true"
-                    />
-                    {t("pages.projects.hosted")}
-                  </a>
-                )}
-                {hasHiddenListings(project) && (
-                  <button
-                    type="button"
-                    class="proj-card__listings-btn"
-                    popovertarget={listingsId(project)}
-                  >
-                    <span
-                      class="i-mdi:earth"
-                      aria-hidden="true"
-                    />
-                    {t("pages.projects.listingsButton")}
-                    <span class="proj-card__listings-count">
-                      {listingsOf(project).length}
-                    </span>
-                    <span class="sr-only">
-                      {t("pages.projects.listingsButtonContext", {
-                        project: project.name,
-                      })}
-                    </span>
-                  </button>
-                )}
-              </p>
-
-              {/*
-               * Outside the <p> above on purpose: a <p> may only contain
-               * phrasing content, so a <div popover> inside it is invalid
-               * HTML. `popovertarget` binds by id and CSS anchoring binds to
-               * the INVOKER, so neither needs DOM adjacency.
-               */}
-              {hasHiddenListings(project) && (
-                <div
-                  id={listingsId(project)}
-                  class="proj-listings"
-                  popover="auto"
-                  role="dialog"
-                  aria-labelledby={`${listingsId(project)}-title`}
-                >
-                  <div class="proj-listings__head">
-                    <h4
-                      class="proj-listings__title"
-                      id={`${listingsId(project)}-title`}
-                    >
-                      {t("pages.projects.listingsTitle", {
-                        project: project.name,
-                      })}
-                    </h4>
-                    <button
-                      type="button"
-                      class="proj-listings__close"
-                      popovertarget={listingsId(project)}
-                      popovertargetaction="hide"
-                      aria-label={t("aria.close")}
                     >
                       <span
-                        class="i-mdi:close"
+                        class={`i-${listing.icon}`}
                         aria-hidden="true"
                       />
+                      {listing.label}
+                    </a>
+                  ))}
+                  {hostedHref(project, locale) && (
+                    <a
+                      href={hostedHref(project, locale)}
+                      target="_blank"
+                      rel="external noopener noreferrer"
+                      aria-label={t("aria.opensNewTab", {
+                        text: `${t("pages.projects.hosted")} — ${project.name}`,
+                      })}
+                    >
+                      <span
+                        class="i-mdi:api"
+                        aria-hidden="true"
+                      />
+                      {t("pages.projects.hosted")}
+                    </a>
+                  )}
+                  {hasHiddenListings(project) && (
+                    <button
+                      type="button"
+                      class="proj-card__listings-btn"
+                      popovertarget={listingsId(project)}
+                    >
+                      <span
+                        class="i-mdi:earth"
+                        aria-hidden="true"
+                      />
+                      {t("pages.projects.listingsButton")}
+                      <span class="proj-card__listings-count">
+                        {listingsOf(project).length}
+                      </span>
+                      <span class="sr-only">
+                        {t("pages.projects.listingsButtonContext", {
+                          project: project.name,
+                        })}
+                      </span>
                     </button>
+                  )}
+                </p>
+
+                {/*
+                 * Outside the <p> above on purpose: a <p> may only contain
+                 * phrasing content, so a <div popover> inside it is invalid
+                 * HTML. `popovertarget` binds by id and CSS anchoring binds to
+                 * the INVOKER, so neither needs DOM adjacency.
+                 */}
+                {hasHiddenListings(project) && (
+                  <div
+                    id={listingsId(project)}
+                    class="proj-listings"
+                    popover="auto"
+                    role="dialog"
+                    aria-labelledby={`${listingsId(project)}-title`}
+                  >
+                    <div class="proj-listings__head">
+                      <h4
+                        class="proj-listings__title"
+                        id={`${listingsId(project)}-title`}
+                      >
+                        {t("pages.projects.listingsTitle", {
+                          project: project.name,
+                        })}
+                      </h4>
+                      <button
+                        type="button"
+                        class="proj-listings__close"
+                        popovertarget={listingsId(project)}
+                        popovertargetaction="hide"
+                        aria-label={t("aria.close")}
+                      >
+                        <span
+                          class="i-mdi:close"
+                          aria-hidden="true"
+                        />
+                      </button>
+                    </div>
+                    <ul class="proj-listings__list">
+                      {listingsOf(project).map((listing) => (
+                        <li class="proj-listings__item">
+                          <a
+                            href={listing.url}
+                            target="_blank"
+                            rel="external noopener noreferrer"
+                            aria-label={t("aria.opensNewTab", {
+                              text: listingName(listing),
+                            })}
+                          >
+                            <span
+                              class={`proj-listings__icon i-${listing.icon}`}
+                              aria-hidden="true"
+                            />
+                            <span class="proj-listings__label">
+                              {listing.label}
+                            </span>
+                            {listing.host !== listing.label && (
+                              <span class="proj-listings__host">
+                                {listing.host}
+                              </span>
+                            )}
+                            {/*
+                             * Marked, not hidden: see `ProjectListing.onCard`.
+                             * The mark is an icon PLUS text, never colour
+                             * alone (WCAG 1.4.1).
+                             */}
+                            {listing.onCard && (
+                              <span class="proj-listings__flag">
+                                <span
+                                  class="i-mdi:check"
+                                  aria-hidden="true"
+                                />
+                                {t("pages.projects.listingsOnCard")}
+                              </span>
+                            )}
+                          </a>
+                        </li>
+                      ))}
+                    </ul>
                   </div>
-                  <ul class="proj-listings__list">
-                    {listingsOf(project).map((listing) => (
-                      <li class="proj-listings__item">
-                        <a
-                          href={listing.url}
-                          target="_blank"
-                          rel="external noopener noreferrer"
-                          aria-label={t("aria.opensNewTab", {
-                            text: listingName(listing),
-                          })}
-                        >
-                          <span
-                            class={`proj-listings__icon i-${listing.icon}`}
-                            aria-hidden="true"
-                          />
-                          <span class="proj-listings__label">
-                            {listing.label}
-                          </span>
-                          {listing.host !== listing.label && (
-                            <span class="proj-listings__host">
-                              {listing.host}
-                            </span>
-                          )}
-                          {/*
-                           * Marked, not hidden: see `ProjectListing.onCard`.
-                           * The mark is an icon PLUS text, never colour
-                           * alone (WCAG 1.4.1).
-                           */}
-                          {listing.onCard && (
-                            <span class="proj-listings__flag">
-                              <span
-                                class="i-mdi:check"
-                                aria-hidden="true"
-                              />
-                              {t("pages.projects.listingsOnCard")}
-                            </span>
-                          )}
-                        </a>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-            </li>
-          ))}
-        </ul>
-      </section>
+                )}
+              </li>
+            ))}
+          </ul>
+        </section>
+        {group.key === "active" && (
+          <>
+            <UpstreamBlock
+              highlights={highlights}
+              contributedTo={contributedToShown}
+              contributedToRemaining={contributedToRemaining}
+              listAsOf={contributionsAsOf}
+              subpageHref={translatePath("/projects/contributions/")}
+            />
+            <MaintenanceTable
+              rows={maintenanceRows}
+              dependabotSentence={dependabotSentence}
+            />
+          </>
+        )}
+      </>
     ))}
 
     {/*

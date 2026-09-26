@@ -1,0 +1,50 @@
+---
+/**
+ * A small GitHub/GitLab mark for a contribution row: the icon is decorative
+ * (`aria-hidden`), and the platform name is spoken through visually hidden
+ * text, so the platform never depends on the icon alone (WCAG 1.1.1, 1.4.1).
+ */
+import { defaultLocale, type Locale } from "@i18n/config";
+import { useTranslations } from "@i18n/utils";
+import { type Platform, platformOf } from "@utils/contribution-links";
+
+interface Props {
+  readonly platform?: string | null;
+}
+
+const platform: Platform = platformOf(Astro.props.platform);
+const t = useTranslations((Astro.currentLocale ?? defaultLocale) as Locale);
+const name =
+  platform === "gitlab"
+    ? t("pages.projectsContributions.platformGitlab")
+    : t("pages.projectsContributions.platformGithub");
+---
+
+<span class="platform-mark">
+  <span
+    class={
+      platform === "gitlab"
+        ? "i-mdi:gitlab platform-mark__icon"
+        : "i-mdi:github platform-mark__icon"
+    }
+    aria-hidden="true"
+  ></span>
+  <span class="sr-only">{`${name}: `}</span>
+</span>
+
+<style>
+  /* Sits before the name it qualifies, so it never wraps onto a line of
+     its own after a long title. */
+  .platform-mark {
+    display: inline-flex;
+    align-items: center;
+    margin-inline-end: 0.35em;
+    vertical-align: -0.1em;
+  }
+
+  .platform-mark__icon {
+    inline-size: 1em;
+    block-size: 1em;
+    color: var(--color-text-muted);
+  }
+</style>

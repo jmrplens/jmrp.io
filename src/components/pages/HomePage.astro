@@ -11,8 +11,12 @@ import { useTranslatedPath, useTranslations } from "@i18n/utils";
 import BaseLayout from "@layouts/BaseLayout.astro";
 import type { SiteConfig } from "@src/types";
 import { formatDateDot, getPostsForLocale } from "@utils/blog";
+import {
+  featuredProjectCards,
+  upstreamSummary,
+} from "@utils/featured-projects";
 import { langColors } from "@utils/github";
-import { featuredRepos, githubProfile } from "@utils/github-facts";
+import { githubProfile } from "@utils/github-facts";
 import { sanitize } from "@utils/html";
 import { getPageFaq, pageFaqNode } from "@utils/page-faq";
 import { getSiteUrl } from "@utils/site";
@@ -33,16 +37,20 @@ const hero = {
   bio: [t("pages.home.heroBio1"), t("pages.home.heroBio2")],
 };
 
-// Fetched through @utils/github-facts, which memoizes both calls for the whole
-// build. That is what makes the homepage's markdown twin able to publish THESE
-// figures rather than its own second reading of the same endpoints — a star
-// count can move between two fetches inside one build, and the twin's job is
-// to mirror this page exactly.
+// Resolved through @utils/featured-projects (cards) and @utils/github-facts
+// (profile), both memoized for the whole build. That is what makes the
+// homepage's markdown twin able to publish THESE figures rather than its own
+// second reading of the same sources, and the cards' summaries come
+// from the data /projects/ renders, so the two pages do not disagree.
 const [postEntries, featuredProjects, ghProfile] = await Promise.all([
   getPostsForLocale(locale),
-  featuredRepos(siteData.featured_projects ?? []),
+  featuredProjectCards(siteData.featured_projects ?? [], locale),
   githubProfile(),
 ]);
+
+// Build-time "N PRs merged into M other projects" line; see its doc comment
+// for why the homepage carries no live token.
+const upstreamStrip = upstreamSummary(locale);
 
 // Process posts
 const latestPosts = postEntries.slice(0, 4).map((e) => e.post);
@@ -60,7 +68,8 @@ const PROJECT_META: Readonly<
     category: "devops · networking",
     tag: "Cloudflare API",
   },
-  "TFG-TFM_EPS": { category: "docs · templates", tag: "LaTeX" },
+  mikroscope: { category: "telemetry · routeros", tag: "Docker" },
+  "TFG-TFM_EPS": { category: "docs · templates", tag: "CI" },
   "cs-routeros-bouncer": {
     category: "network · security",
     tag: "RouterOS API",
@@ -272,8 +281,8 @@ const faqNode =
           </a>
         </div>
         <div class="proj-grid">
-          {featuredProjects.map((repo) => {
-            const meta = PROJECT_META[repo.name];
+          {featuredProjects.map((card) => {
+            const meta = PROJECT_META[card.id];
             /*
              * The whole card is the link, so its accessible name is its own
              * text. `aria-label` REPLACES that name instead of extending it,
@@ -285,18 +294,21 @@ const faqNode =
              */
             const cardText = [
               meta?.category,
-              String(repo.stargazers_count),
-              repo.name,
-              repo.description,
-              repo.language,
+              card.id,
+              card.summary,
+              card.language,
               meta?.tag,
             ]
               .filter(Boolean)
               .join(" ");
+            const langColor =
+              (card.language && langColors[card.language]) ??
+              (card.githubLanguage && langColors[card.githubLanguage]) ??
+              "#8b949e";
             return (
               <a
                 class="proj-card"
-                href={repo.html_url}
+                href={card.url}
                 target="_blank"
                 rel="external noopener noreferrer"
                 aria-label={t("aria.opensNewTab", { text: cardText })}
@@ -305,28 +317,19 @@ const faqNode =
                   {meta?.category && (
                     <span class="proj-card__chip">{meta.category}</span>
                   )}
-                  <span class="proj-card__metric">
-                    <span
-                      class="i-mdi:star-outline"
-                      aria-hidden="true"
-                    />
-                    {repo.stargazers_count}
-                  </span>
                 </div>
-                <h3 class="proj-card__title">{repo.name}</h3>
-                {repo.description && (
-                  <p class="proj-card__desc">{repo.description}</p>
-                )}
-                {(repo.language ?? meta?.tag) && (
+                <h3 class="proj-card__title">{card.id}</h3>
+                {card.summary && <p class="proj-card__desc">{card.summary}</p>}
+                {(card.language ?? meta?.tag) && (
                   <div class="proj-card__foot">
-                    {repo.language && (
+                    {card.language && (
                       <span class="proj-card__lang">
                         <span
                           class="proj-card__dot"
-                          style={`--lang-color:${langColors[repo.language] ?? "#8b949e"}`}
+                          style={`--lang-color:${langColor}`}
                           aria-hidden="true"
                         />
-                        {repo.language}
+                        {card.language}
                       </span>
                     )}
                     {meta?.tag && (
@@ -338,6 +341,21 @@ const faqNode =
             );
           })}
         </div>
+        {upstreamStrip && (
+          <p class="upstream-strip">
+            <span
+              class="i-tabler:git-merge upstream-strip__icon"
+              aria-hidden="true"
+            />
+            <span class="upstream-strip__text">{upstreamStrip}</span>
+            <a
+              href={translatePath("/projects/contributions/")}
+              class="upstream-strip__link"
+            >
+              {t("pages.home.upstreamLink")}
+            </a>
+          </p>
+        )}
       </div>
     </section>
   )}
@@ -702,16 +720,6 @@ const faqNode =
     border-radius: var(--radius-sm);
   }
 
-  .proj-card__metric {
-    display: inline-flex;
-    gap: 0.35em;
-    align-items: center;
-    margin-left: auto;
-    font-family: var(--font-mono);
-    font-size: var(--text-micro);
-    color: var(--color-text-muted);
-  }
-
   .proj-card__title {
     margin: 0 0 var(--space-sm);
     font-family: var(--font-display);
@@ -755,6 +763,54 @@ const faqNode =
 
   .proj-card__tag {
     color: var(--color-text-muted);
+  }
+
+  /* Upstream contributions strip — build-time line under the project grid */
+  .upstream-strip {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-sm) var(--space-md);
+    align-items: center;
+    padding: var(--space-md) var(--space-md-lg);
+    margin: var(--space-md) 0 0;
+    font-size: var(--text-base);
+    line-height: 1.5;
+    color: var(--color-text);
+    background: var(--color-bg-secondary);
+    border: 1px dashed var(--color-border);
+    border-radius: var(--radius-lg);
+  }
+
+  .upstream-strip__icon {
+    flex-shrink: 0;
+    width: 1.15rem;
+    height: 1.15rem;
+    color: var(--color-accent);
+  }
+
+  .upstream-strip__text {
+    flex: 1 1 24ch;
+    min-width: 0;
+  }
+
+  .upstream-strip__link {
+    display: inline-block;
+
+    /* WCAG 2.5.8: standalone link, touch target >= 24px */
+    padding-block: 4px;
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    font-weight: var(--fw-medium);
+    color: var(--color-accent);
+    letter-spacing: 0.02em;
+    white-space: nowrap;
+    text-decoration: none;
+    border-radius: var(--radius-sm);
+  }
+
+  .upstream-strip__link:hover {
+    text-decoration: underline;
+    text-underline-offset: 3px;
   }
 
   /* Latest notes list */

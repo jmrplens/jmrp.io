@@ -2,16 +2,19 @@ aalarge
 Abbrechen
 abre
 abuseipdb
+académicas
 accionable
 acelerómetros
 acento
 achromatopsia
+acmesh
 Actívalo
 actuadores
 acústicos
 acusticox
 addrlist
 adminer
+Advertencias
 aeroacoustics
 aeroacústica
 Afee
@@ -25,9 +28,11 @@ alab
 aleatoriza
 aleatorizado
 alertmanager
+alexandrewillame
 alginato
 algoritmos
 alimentario
+alshedivat
 amazonbot
 ámbar
 amicro
@@ -50,6 +55,7 @@ aplicable
 aplus
 apng
 apnic
+Aportaciones
 apparmor
 applebot
 aprox
@@ -119,6 +125,8 @@ Bellare
 beneficio
 berlanga
 berlín
+beszel
+Beszel
 bibtex
 bigdog
 bingbot
@@ -136,6 +144,7 @@ blackhole
 blinkmacsystemfont
 blocklists
 blockquotes
+bloque
 bloqueantes
 bluesky
 Bluesky
@@ -151,6 +160,8 @@ cada
 calcules
 calcuta
 calibrado
+calidad
+Cambios
 camo
 campello
 cancelar
@@ -186,6 +197,7 @@ cierra
 cierre
 cifrador
 cilíndricos
+cinco
 ciphersuites
 ciphertext
 ciphertexts
@@ -205,6 +217,7 @@ cloudflare
 cloudflareinsights
 cnet
 cnrs
+codacy
 codeberg
 Codeberg
 códec
@@ -244,10 +257,12 @@ continuar
 conversor
 cópiala
 copytruncate
+correcciones
 cplusplus
 cppreference
 crackeo
 crawlable
+creativeprojects
 credentialless
 críptico
 cripto
@@ -409,9 +424,11 @@ exfiltrated
 exfiltration
 experimento
 experto
+explícita
 externalagent
 externo
 facebookexternalhit
+faroit
 fastcgi
 fastly
 faststart
@@ -438,6 +455,7 @@ fmerge
 focusables
 fondo
 footgun
+fossabot
 fouc
 Fragmento
 français
@@ -457,8 +475,10 @@ geolocalización
 gescoform
 getcwd
 ghchronicle
+ghfeed
 GHSA
 githubactions
+githubassets
 gitlab
 gitleaks
 Glama
@@ -490,6 +510,7 @@ headlesschrome
 healthz
 Helme
 helpdesk
+henrygd
 herramienta
 herramientas
 heurística
@@ -503,6 +524,7 @@ hnum
 hoct
 homelab
 homeserver
+honzahommer
 hoster
 hotspots
 howto
@@ -560,6 +582,7 @@ integridad
 interp
 interseca
 intoto
+intraweb
 intraword
 invassat
 IONOS
@@ -582,6 +605,7 @@ jesús
 jetbrains
 jfif
 jiménez
+jlbyh
 jlogo
 jmrp
 jmrpio
@@ -641,6 +665,7 @@ linearization
 linkedin
 linkitems
 linkname
+lista
 listarlos
 llamante
 llevan
@@ -661,6 +686,7 @@ malformados
 malwarebytes
 Malwarebytes
 manejador
+manejadores
 mantenible
 mantiene
 mapbox
@@ -717,6 +743,7 @@ microcontrollers
 microservicios
 middlebox
 middleboxes
+Mikkel
 mikro
 mikroscope
 mikrotik
@@ -781,6 +808,7 @@ nginx
 ngtcp
 nikto
 nimda
+Nitnelav
 nivel
 nkhj
 nmap
@@ -789,6 +817,7 @@ nocase
 nodelay
 nodir
 nodos
+nofixture
 noindexed
 nonced
 nontext
@@ -823,6 +852,7 @@ omgilibot
 ondrej
 ondřej
 oneshot
+opencloud
 openpgp
 openpgpkey
 optimisation
@@ -916,6 +946,7 @@ primera
 PRIO
 priorizaba
 privkey
+Problemas
 profdent
 profesional
 progmem
@@ -933,8 +964,10 @@ psicoacústica
 psychoacoustics
 pubgroup
 publicaciones
+publicar
 publickey
 pulsemcp
+punkpeye
 pwgen
 pycrowdsec
 pymodbus
@@ -947,6 +980,7 @@ qualys
 quasis
 qube
 queda
+Quickdraw
 quickref
 quictls
 quimico
@@ -978,6 +1012,7 @@ redirección
 redirecciones
 Rediseñé
 rediseño
+reejecución
 reemitir
 reempaqueta
 reenvíos
@@ -1064,6 +1099,7 @@ sameorigin
 sánchez
 sanitización
 sanitizar
+sanny
 sapc
 saura
 scannerwork
@@ -1075,6 +1111,8 @@ securepassword
 segoe
 segs
 seleccionable
+selfupdate
+sello
 semiempírico
 Semrush
 semrushbot
@@ -1118,6 +1156,8 @@ soriano
 spamd
 spanish
 spañol
+sparkline
+sparklines
 speculationrules
 spidering
 sqlmap
@@ -1132,6 +1172,7 @@ strs
 subacuática
 subclaves
 subnetting
+subpage
 subred
 subredes
 subresource
@@ -1149,6 +1190,7 @@ también
 tampermonkey
 tareas
 tarjeta
+tarjetas
 tarpit
 tarpiteadas
 tarpits
@@ -1193,6 +1235,7 @@ tradúcelos
 transmítela
 tresor
 trevorcox
+Trilium
 tritanopía
 trixie
 truecolor
@@ -1210,6 +1253,8 @@ unadlib
 unban
 unbans
 undecryptable
+undeferred
+undercounts
 unforgeable
 unhashed
 universitat
@@ -1255,6 +1300,7 @@ vlsm
 volcarla
 volcarlo
 volver
+vulnerab
 wbgetentities
 wbsearchentities
 wcag
@@ -1297,3 +1343,13 @@ Zenodo
 zeroize
 zgrab
 zurück
+pyoctaveband
+recasing
+coturn
+glanceapp
+glpat
+kong
+mitchell
+podman
+webdav
+Yuno

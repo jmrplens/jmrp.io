@@ -6,6 +6,11 @@ import { loadEnv } from "vite";
 
 import { setupCfBeacon } from "./pre-build/beacon.js";
 import { ensureDownloadsData, setupDownloads } from "./pre-build/downloads.js";
+import {
+  ensureGhcProjectsData,
+  refreshDevProjectsSummary,
+  setupGhcProjectsData,
+} from "./pre-build/ghc-projects.js";
 import { pruneStaleOptimizedImageCache } from "./pre-build/image-cache.js";
 import { timed } from "./timing.js";
 
@@ -50,6 +55,10 @@ export default function preBuildIntegration(imageOptimizer: {
           // just for the build that refreshes it. This writes a zeroed file
           // only when there is none at all, and never touches the network.
           ensureDownloadsData(logger);
+          // Same reasoning, for the /projects contributions dataset: both
+          // ProjectsPage.astro and ContributionsPage.astro import it
+          // statically.
+          ensureGhcProjectsData(logger);
 
           // Only fetch the beacon + the real download totals when building for
           // production. The beacon keeps its committed baseline on failure;
@@ -60,6 +69,17 @@ export default function preBuildIntegration(imageOptimizer: {
             );
             await timed("setupDownloads", logger, () =>
               setupDownloads(logger, env.GITHUB_TOKEN),
+            );
+            await timed("setupGhcProjectsData", logger, () =>
+              setupGhcProjectsData(logger),
+            );
+          } else if (command === "dev") {
+            // Best-effort refresh of the LIVE summary so the `PRJ_*`
+            // substitution Vite plugin has real numbers, never blocking and
+            // never part of a production build (see the function's doc
+            // comment).
+            await timed("refreshDevProjectsSummary", logger, () =>
+              refreshDevProjectsSummary(logger),
             );
           }
 

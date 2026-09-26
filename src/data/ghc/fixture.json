@@ -1,0 +1,2653 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-09-26T20:35:39.488Z",
+  "asOf": "2026-09-26T13:03:19.304686700",
+  "summary": {
+    "contributionTotals": {
+      "prMerged": 59,
+      "prOpen": 21,
+      "prClosed": 19,
+      "issuesOpen": 26,
+      "issuesClosed": 19,
+      "repos": 54,
+      "owners": 48,
+      "reposWithMerge": 21,
+      "lastPrDate": "2026-09-26T00:00:00"
+    },
+    "codeVsListingSplit": {
+      "codeOrDocs": {
+        "merged": 45,
+        "open": 16,
+        "closed": 16,
+        "reposMerged": 15,
+        "medianHoursToMerge": 49.774166666666666
+      },
+      "listing": {
+        "merged": 14,
+        "open": 5,
+        "closed": 3,
+        "reposMerged": 6,
+        "medianHoursToMerge": 8.850694444444445
+      }
+    },
+    "answersCount": 15,
+    "discussionTotals": {
+      "comments": 99,
+      "discussions": 75,
+      "repos": 52
+    },
+    "byPlatform": {
+      "github": {
+        "prs": 59,
+        "issues": 43
+      },
+      "gitlab": {
+        "prs": 40,
+        "issues": 2
+      }
+    }
+  },
+  "highlights": [
+    {
+      "repo": "TriliumNext/Trilium",
+      "number": 11448,
+      "kind": "pull_request",
+      "why": {
+        "en": "Made TOTP codes single-use at login, as RFC 6238 requires, and added one time step of clock-drift tolerance, with tests.",
+        "es": "Hizo que los códigos TOTP sean de un solo uso en el inicio de sesión, como exige el RFC 6238, y añadió tolerancia de un paso de tiempo a la deriva de reloj, con tests."
+      },
+      "platform": "github",
+      "redacted": false
+    },
+    {
+      "repo": "NginxProxyManager/nginx-proxy-manager",
+      "number": 5836,
+      "kind": "pull_request",
+      "why": {
+        "en": "Tokens issued before a password change are now rejected, so resetting a password ends the sessions the old one opened; covered by a Cypress API test.",
+        "es": "Los tokens emitidos antes de un cambio de contraseña ahora se rechazan, así que restablecer la contraseña cierra las sesiones abiertas con la anterior; cubierto por un test de API en Cypress."
+      },
+      "platform": "github",
+      "redacted": false
+    },
+    {
+      "repo": "modelcontextprotocol/go-sdk",
+      "number": 1274,
+      "kind": "pull_request",
+      "why": {
+        "en": "Five merged fixes to the official MCP Go SDK (#1255, #1268, #1269, #1273, #1274) that bring protocol-version negotiation, cancellation and pre-initialize handling in line with the specification, each with tests.",
+        "es": "Cinco correcciones fusionadas en el SDK oficial de MCP para Go (#1255, #1268, #1269, #1273, #1274) que ajustan a la especificación la negociación de versión del protocolo, la cancelación y el tratamiento de llamadas previas a initialize, cada una con tests."
+      },
+      "platform": "github",
+      "redacted": false
+    },
+    {
+      "repo": "gitlab-org/gitlab",
+      "number": 255300,
+      "kind": "pull_request",
+      "platform": "gitlab",
+      "why": {
+        "en": "Revoked identities in a GPG key are no longer listed or accepted as verified emails, so a commit signed under a revoked UID stops showing as Verified; covered by specs with new GnuPG fixtures.",
+        "es": "Las identidades revocadas de una clave GPG ya no se listan ni se aceptan como correos verificados, así que un commit firmado con un UID revocado deja de mostrarse como Verified; cubierto por specs con fixtures nuevos de GnuPG."
+      },
+      "redacted": false
+    },
+    {
+      "repo": "henrygd/beszel",
+      "number": 2327,
+      "kind": "pull_request",
+      "why": {
+        "en": "Added TRUSTED_PROXY_IPS, an IP/CIDR allowlist so the trusted auth header is only honoured from the reverse proxy, and documented it.",
+        "es": "Añadió TRUSTED_PROXY_IPS, una lista de IP/CIDR permitidas para que la cabecera de autenticación de confianza solo se acepte desde el proxy inverso, y la documentó."
+      },
+      "platform": "github",
+      "redacted": false
+    },
+    {
+      "repo": "acmesh-official/acme.sh",
+      "number": 7237,
+      "kind": "pull_request",
+      "why": {
+        "en": "Fixed DNS manual mode reusing the previous certificate on renewal (and failing on first issuance) by polling the ACME order the current run created.",
+        "es": "Corrigió que el modo DNS manual reutilizara el certificado anterior al renovar (y fallara en la primera emisión) consultando el pedido ACME creado en la ejecución actual."
+      },
+      "platform": "github",
+      "redacted": false
+    },
+    {
+      "repo": "sanny32/OpenModScan",
+      "number": 74,
+      "kind": "pull_request",
+      "why": {
+        "en": "Registered the --help and --version options in this Qt/C++ Modbus scanner so the existing handlers run from the command line.",
+        "es": "Registró las opciones --help y --version en este escáner Modbus en Qt/C++ para que los manejadores ya existentes se ejecuten desde la línea de comandos."
+      },
+      "platform": "github",
+      "redacted": false
+    }
+  ],
+  "contributedTo": [
+    {
+      "project": "acme.sh",
+      "repo": "acmesh-official/acme.sh",
+      "platform": "github",
+      "merged": 1,
+      "lastMergedAt": "2026-09-10T13:56:24",
+      "stars": 47712
+    },
+    {
+      "project": "Trilium Notes",
+      "repo": "TriliumNext/Trilium",
+      "platform": "github",
+      "merged": 2,
+      "lastMergedAt": "2026-09-11T19:57:57",
+      "stars": 37997
+    },
+    {
+      "project": "Nginx Proxy Manager",
+      "repo": "NginxProxyManager/nginx-proxy-manager",
+      "platform": "github",
+      "merged": 1,
+      "lastMergedAt": "2026-09-08T21:27:01",
+      "stars": 34240
+    },
+    {
+      "project": "Podman",
+      "repo": "podman-container-tools/podman",
+      "platform": "github",
+      "merged": 1,
+      "lastMergedAt": "2026-09-14T16:45:18",
+      "stars": 32941
+    },
+    {
+      "project": "Beszel",
+      "repo": "henrygd/beszel",
+      "platform": "github",
+      "merged": 2,
+      "lastMergedAt": "2026-09-17T17:55:13",
+      "stars": 25763
+    },
+    {
+      "project": "Renovate",
+      "repo": "renovatebot/renovate",
+      "platform": "github",
+      "merged": 1,
+      "lastMergedAt": "2026-09-12T11:30:04",
+      "stars": 22600
+    },
+    {
+      "project": "al-folio",
+      "repo": "alshedivat/al-folio",
+      "platform": "github",
+      "merged": 3,
+      "lastMergedAt": "2023-07-12T01:53:53",
+      "stars": 16202
+    },
+    {
+      "project": "GitLab",
+      "repo": "gitlab-org/gitlab",
+      "platform": "gitlab",
+      "merged": 11,
+      "lastMergedAt": "2026-09-24T10:51:44.599Z",
+      "stars": 6146
+    },
+    {
+      "project": "MCP Go SDK",
+      "repo": "modelcontextprotocol/go-sdk",
+      "platform": "github",
+      "merged": 5,
+      "lastMergedAt": "2026-09-21T13:26:27",
+      "stars": 5153
+    },
+    {
+      "project": "OpenModScan",
+      "repo": "sanny32/OpenModScan",
+      "platform": "github",
+      "merged": 1,
+      "lastMergedAt": "2026-04-10T18:09:29",
+      "stars": 708
+    },
+    {
+      "project": "Portainer MCP",
+      "repo": "portainer/portainer-mcp",
+      "platform": "github",
+      "merged": 1,
+      "lastMergedAt": "2026-02-26T01:15:54",
+      "stars": 236
+    },
+    {
+      "project": "GitLab Go client",
+      "repo": "gitlab-org/api/client-go",
+      "platform": "gitlab",
+      "merged": 15,
+      "lastMergedAt": "2026-09-24T18:46:11.887Z",
+      "stars": 106
+    },
+    {
+      "project": "YunoHost coturn",
+      "repo": "YunoHost-Apps/coturn_ynh",
+      "platform": "github",
+      "merged": 1,
+      "lastMergedAt": "2023-03-26T06:14:38",
+      "stars": 8
+    }
+  ],
+  "acceptedAnswers": [
+    {
+      "fullName": "haugene/docker-transmission-openvpn",
+      "number": 3042,
+      "title": "I've clearly misconfigured something...",
+      "answerUrl": "https://github.com/haugene/docker-transmission-openvpn/discussions/3042#discussioncomment-18615420",
+      "answeredAt": "2026-09-26T17:20:47"
+    },
+    {
+      "fullName": "starship/starship",
+      "number": 7750,
+      "title": "Is the COPR for Fedora having issues?",
+      "answerUrl": "https://github.com/starship/starship/discussions/7750#discussioncomment-18614615",
+      "answeredAt": "2026-09-26T16:05:41"
+    },
+    {
+      "fullName": "lemker/unifi-os-server",
+      "number": 209,
+      "title": "does it work on hosts without systemd?",
+      "answerUrl": "https://github.com/lemker/unifi-os-server/discussions/209#discussioncomment-18606653",
+      "answeredAt": "2026-09-25T23:40:03"
+    },
+    {
+      "fullName": "jeffvli/feishin",
+      "number": 2536,
+      "title": "Firewall Settings for DLNA Discovery",
+      "answerUrl": "https://github.com/jeffvli/feishin/discussions/2536#discussioncomment-18605963",
+      "answeredAt": "2026-09-25T21:46:40"
+    },
+    {
+      "fullName": "opencloud-eu/opencloud",
+      "number": 3587,
+      "title": "How to use what kind of geotagged images with maps app?",
+      "answerUrl": "https://github.com/opencloud-eu/opencloud/discussions/3587#discussioncomment-18605569",
+      "answeredAt": "2026-09-25T20:57:18"
+    },
+    {
+      "fullName": "borgbase/vorta",
+      "number": 2561,
+      "title": "Share backup with 2 users",
+      "answerUrl": "https://github.com/borgbase/vorta/discussions/2561#discussioncomment-18582580",
+      "answeredAt": "2026-09-24T14:12:02"
+    },
+    {
+      "fullName": "fosrl/pangolin",
+      "number": 3792,
+      "title": "Wildcard also routes pangolin...",
+      "answerUrl": "https://github.com/fosrl/pangolin/discussions/3792#discussioncomment-18580425",
+      "answeredAt": "2026-09-24T11:23:59"
+    },
+    {
+      "fullName": "chaitin/SafeLine",
+      "number": 1319,
+      "title": "Bot Protect Break Phone Apps",
+      "answerUrl": "https://github.com/chaitin/SafeLine/discussions/1319#discussioncomment-18403164",
+      "answeredAt": "2026-09-11T15:45:29"
+    },
+    {
+      "fullName": "podman-container-tools/podman",
+      "number": 29710,
+      "title": "Mounting a group-writable folder into a systemd controlled quadlet for an unprivileged user",
+      "answerUrl": "https://github.com/podman-container-tools/podman/discussions/29710#discussioncomment-18342497",
+      "answeredAt": "2026-09-08T05:34:28"
+    },
+    {
+      "fullName": "podman-container-tools/podman",
+      "number": 29443,
+      "title": "bind mount path traversal depends on subuid mapping, not just DAC permissions",
+      "answerUrl": "https://github.com/podman-container-tools/podman/discussions/29443#discussioncomment-18338360",
+      "answeredAt": "2026-09-07T22:52:23"
+    },
+    {
+      "fullName": "Siteimprove/alfa",
+      "number": 2171,
+      "title": "How do you handle difficult-to-reproduce accessibility rule discrepancies in Alfa?",
+      "answerUrl": "https://github.com/Siteimprove/alfa/discussions/2171#discussioncomment-18308548",
+      "answeredAt": "2026-09-05T20:26:57"
+    },
+    {
+      "fullName": "fosrl/pangolin",
+      "number": 3698,
+      "title": "Way to bypass auth for some subdomains in wildcard resource?",
+      "answerUrl": "https://github.com/fosrl/pangolin/discussions/3698#discussioncomment-18303155",
+      "answeredAt": "2026-09-05T10:44:23"
+    },
+    {
+      "fullName": "forwardemail/forwardemail.net",
+      "number": 525,
+      "title": "How to not forward plus addressing to an alias?",
+      "answerUrl": "https://github.com/forwardemail/forwardemail.net/discussions/525#discussioncomment-18283966",
+      "answeredAt": "2026-09-04T08:48:27"
+    },
+    {
+      "fullName": "11ty/buildawesome",
+      "number": 4284,
+      "title": "Removing the trailing \"/\" of the domain specified in metadata.js",
+      "answerUrl": "https://github.com/11ty/buildawesome/discussions/4284#discussioncomment-18280354",
+      "answeredAt": "2026-09-04T04:13:45"
+    },
+    {
+      "fullName": "l5yth/potato-mesh",
+      "number": 574,
+      "title": "\"Map tiles unavailable\"",
+      "answerUrl": "https://github.com/l5yth/potato-mesh/discussions/574#discussioncomment-15285004",
+      "answeredAt": "2025-12-18T02:18:42"
+    }
+  ],
+  "ledgerByYear": {
+    "2021": {
+      "al-folio": [
+        {
+          "platform": "github",
+          "kind": "pull_request",
+          "state": "closed",
+          "fullName": "alshedivat/al-folio",
+          "number": 492,
+          "createdAt": "2021-12-05T18:07:07.000Z",
+          "hoursToMerge": null,
+          "comments": 0,
+          "title": "Implementation of chart.js",
+          "redacted": false
+        },
+        {
+          "platform": "github",
+          "kind": "pull_request",
+          "state": "merged",
+          "fullName": "alshedivat/al-folio",
+          "number": 481,
+          "createdAt": "2021-12-01T13:29:05.000Z",
+          "hoursToMerge": 722.2936111111111,
+          "comments": 18,
+          "title": "Better SEO, OpenGraph, schema.org and clean generated code",
+          "redacted": false
+        },
+        {
+          "platform": "github",
+          "kind": "pull_request",
+          "state": "closed",
+          "fullName": "alshedivat/al-folio",
+          "number": 471,
+          "createdAt": "2021-11-21T21:45:18.000Z",
+          "hoursToMerge": null,
+          "comments": 6,
+          "title": "Badly placed backslash in responsive_img.html",
+          "redacted": false
+        },
+        {
+          "platform": "github",
+          "kind": "pull_request",
+          "state": "closed",
+          "fullName": "alshedivat/al-folio",
+          "number": 459,
+          "createdAt": "2021-11-16T18:56:25.000Z",
+          "hoursToMerge": null,
+          "comments": 0,
+          "title": "Update publications.md",
+          "redacted": false
+        },
+        {
+          "platform": "github",
+          "kind": "pull_request",
+          "state": "closed",
+          "fullName": "alshedivat/al-folio",
+          "number": 466,
+          "createdAt": "2021-11-20T01:04:28.000Z",
+          "hoursToMerge": null,
+          "comments": 1,
+          "title": "Unnecesary .js",
+          "redacted": false
+        },
+        {
+          "platform": "github",
+          "kind": "pull_request",
+          "state": "closed",
+          "fullName": "alshedivat/al-folio",
+          "number": 465,
+          "createdAt": "2021-11-19T23:28:13.000Z",
+          "hoursToMerge": null,
+          "comments": 2,
+          "title": "jQuery should be load in head",
+          "redacted": false
+        },
+        {
+          "platform": "github",
+          "kind": "pull_request",
+          "state": "merged",
+          "fullName": "alshedivat/al-folio",
+          "number": 436,
+          "createdAt": "2021-10-27T21:45:19.000Z",
+          "hoursToMerge": 49.774166666666666,
+          "comments": 2,
+          "title": "Update deploy.yml",
+          "redacted": false
+        }
+      ]
+    },
+    "2023": {
+      "al-folio": [
+        {
+          "platform": "github",
+          "kind": "pull_request",
+          "state": "merged",
+          "fullName": "alshedivat/al-folio",
+          "number": 1339,
+          "createdAt": "2023-04-19T19:12:48.000Z",
+          "hoursToMerge": 1996.6847222222223,
+          "comments": 8,
+          "title": "CV Restyled",
+          "redacted": false
+        }
+      ],
+      "YunoHost coturn": [
+        {
+          "platform": "github",
+          "kind": "pull_request",
+          "state": "merged",
+          "fullName": "YunoHost-Apps/coturn_ynh",
+          "number": 17,
+          "createdAt": "2023-03-25T20:43:21.000Z",
+          "hoursToMerge": 7.521388888888889,
+          "comments": 0,
+          "title": "Minor bug cron_coturn",
+          "redacted": false
+        }
+      ]
+    },
+    "2024": {
+      "home-assistant-petkit": [
+        {
+          "platform": "github",
+          "kind": "pull_request",
+          "state": "closed",
+          "fullName": "RobertD502/home-assistant-petkit",
+          "number": 102,
+          "createdAt": "2024-12-10T19:26:52.000Z",
+          "hoursToMerge": null,
+          "comments": 1,
+          "title": "[Translation] Spanish JSON",
+          "redacted": false
+        }
+      ]
+    },
+    "2026": {
+      "go-selfupdate": [
+        {
+          "platform": "github",
+          "kind": "pull_request",
+          "state": "open",
+          "fullName": "creativeprojects/go-selfupdate",
+          "number": 58,
+          "createdAt": "2026-07-24T21:41:11.000Z",
+          "hoursToMerge": null,
+          "comments": 2,
+          "title": "fix: replace unmaintained golang.org/x/crypto/openpgp with ProtonMail fork",
+          "redacted": false
+        }
+      ],
+      "Electron asar": [
+        {
+          "platform": "github",
+          "kind": "pull_request",
+          "state": "open",
+          "fullName": "electron/asar",
+          "number": 464,
+          "createdAt": "2026-08-07T09:14:56.000Z",
+          "hoursToMerge": null,
+          "comments": 0,
+          "title": "fix: extract archives with 2 GiB or more of data",
+          "redacted": false
+        }
+      ],
+      "Glance": [
+        {
+          "platform": "github",
+          "kind": "pull_request",
+          "state": "open",
+          "fullName": "glanceapp/glance",
+          "number": 1075,
+          "createdAt": "2026-09-06T19:49:16.000Z",
+          "hoursToMerge": null,
+          "comments": 0,
+          "title": "Fall back to the feed URL when a feed's own link is relative",
+          "redacted": false
+        }
+      ],
+      "Kong": [
+        {
+          "platform": "github",
+          "kind": "pull_request",
+          "state": "open",
+          "fullName": "Kong/kong",
+          "number": 15019,
+          "createdAt": "2026-09-24T09:52:57.000Z",
+          "hoursToMerge": null,
+          "comments": 1,
+          "title": "fix(dns): do not cache answers with a zero TTL",
+          "redacted": false
+        }
+      ],
+      "MCP Go SDK": [
+        {
+          "platform": "github",
+          "kind": "pull_request",
+          "state": "open",
+          "fullName": "modelcontextprotocol/go-sdk",
+          "number": 1266,
+          "createdAt": "2026-09-13T16:18:39.000Z",
+          "hoursToMerge": null,
+          "comments": 0,
+          "title": "mcp: choose the interaction pattern from the negotiated protocol version",
+          "redacted": false
+        },
+        {
+          "platform": "github",
+          "kind": "pull_request",
+          "state": "open",
+          "fullName": "modelcontextprotocol/go-sdk",
+          "number": 1267,
+          "createdAt": "2026-09-13T16:18:41.000Z",
+          "hoursToMerge": null,
+          "comments": 2,
+          "title": "mcp: send no response for a request the peer cancelled",
+          "redacted": false
+        },
+        {
+          "platform": "github",
+          "kind": "pull_request",
+          "state": "open",
+          "fullName": "modelcontextprotocol/go-sdk",
+          "number": 1293,
+          "createdAt": "2026-09-24T18:36:07.000Z",
+          "hoursToMerge": null,
+          "comments": 0,
+          "title": "mcp: extend the write deadline on every write to a keep-alive stream",
+          "redacted": false
+        },
+        {
+          "platform": "github",
+          "kind": "pull_request",
+          "state": "merged",
+          "fullName": "modelcontextprotocol/go-sdk",
+          "number": 1274,
+          "createdAt": "2026-09-15T13:35:07.000Z",
+          "hoursToMerge": 141.85555555555555,
+          "comments": 0,
+          "title": "mcp: record the negotiated protocol version on every path that records one",
+          "redacted": false
+        },
+        {
+          "platform": "github",
+          "kind": "pull_request",
+          "state": "merged",
+          "fullName": "modelcontextprotocol/go-sdk",
+          "number": 1273,
+          "createdAt": "2026-09-15T13:34:05.000Z",
+          "hoursToMerge": 41.03861111111111,
+          "comments": 0,
+          "title": "mcp: refuse a call on a legacy session before initialize",
+          "redacted": false
+        },
+        {
+          "platform": "github",
+          "kind": "pull_request",
+          "state": "merged",
+          "fullName": "modelcontextprotocol/go-sdk",
+          "number": 1269,
+          "createdAt": "2026-09-13T16:18:46.000Z",
+          "hoursToMerge": 22.450555555555557,
+          "comments": 0,
+          "title": "mcp: add HasParams so middleware can tell whether params are present",
+          "redacted": false
+        },
+        {
+          "platform": "github",
+          "kind": "pull_request",
+          "state": "merged",
+          "fullName": "modelcontextprotocol/go-sdk",
+          "number": 1268,
+          "createdAt": "2026-09-13T16:18:44.000Z",
+          "hoursToMerge": 21.519444444444446,
+          "comments": 1,
+          "title": "mcp: classify the per-request protocol version by membership",
+          "redacted": false
+        },
+        {
+          "platform": "github",
+          "kind": "pull_request",
+          "state": "merged",
+          "fullName": "modelcontextprotocol/go-sdk",
+          "number": 1255,
+          "createdAt": "2026-09-12T17:41:25.000Z",
+          "hoursToMerge": 39.86833333333333,
+          "comments": 1,
+          "title": "mcp: carry a cancelled notification's reason as the request's cancel cause",
+          "redacted": false
+        }
+      ],
+      "MCP Rust SDK": [
+        {
+          "platform": "github",
+          "kind": "pull_request",
+          "state": "open",
+          "fullName": "modelcontextprotocol/rust-sdk",
+          "number": 1300,
+          "createdAt": "2026-09-26T00:59:27.000Z",
+          "hoursToMerge": null,
+          "comments": 0,
+          "title": "fix(model): decode float fields through serde_json::Number",
+          "redacted": false
+        }
+      ],
+      "OpenCloud": [
+        {
+          "platform": "github",
+          "kind": "pull_request",
+          "state": "open",
+          "fullName": "opencloud-eu/web-extensions",
+          "number": 575,
+          "createdAt": "2026-09-26T10:10:00.000Z",
+          "hoursToMerge": null,
+          "comments": 0,
+          "title": "docs(maps): explain where the location data comes from",
+          "redacted": false
+        }
+      ],
+      "webdav-client": [
+        {
+          "platform": "github",
+          "kind": "pull_request",
+          "state": "open",
+          "fullName": "perry-mitchell/webdav-client",
+          "number": 418,
+          "createdAt": "2026-09-12T06:34:03.000Z",
+          "hoursToMerge": null,
+          "comments": 0,
+          "title": "fix: keep the whole reason phrase in stat errors",
+          "redacted": false
+        }
+      ],
+      "Beszel": [
+        {
+          "platform": "github",
+          "kind": "pull_request",
+          "state": "merged",
+          "fullName": "henrygd/beszel-docs",
+          "number": 82,
+          "createdAt": "2026-09-11T14:27:52.000Z",
+          "hoursToMerge": 145.45583333333335,
+          "comments": 0,
+          "title": "docs: document TRUSTED_PROXY_IPS for the trusted auth header",
+          "redacted": false
+        },
+        {
+          "platform": "github",
+          "kind": "pull_request",
+          "state": "merged",
+          "fullName": "henrygd/beszel",
+          "number": 2327,
+          "createdAt": "2026-09-11T14:28:04.000Z",
+          "hoursToMerge": 145.34527777777777,
+          "comments": 0,
+          "title": "feat(hub): add TRUSTED_PROXY_IPS allowlist for TRUSTED_AUTH_HEADER",
+          "redacted": false
+        }
+      ],
+      "Podman": [
+        {
+          "platform": "github",
+          "kind": "pull_request",
+          "state": "merged",
+          "fullName": "podman-container-tools/podman",
+          "number": 29730,
+          "createdAt": "2026-09-07T22:03:51.000Z",
+          "hoursToMerge": 160.69083333333333,
+          "comments": 5,
+          "title": "Document rootless bind-mount access through an unmapped parent",
+          "redacted": false
+        }
+      ],
+      "Renovate": [
+        {
+          "platform": "github",
+          "kind": "pull_request",
+          "state": "merged",
+          "fullName": "renovatebot/renovate",
+          "number": 45901,
+          "createdAt": "2026-09-12T08:26:30.000Z",
+          "hoursToMerge": 1.0594444444444444,
+          "comments": 3,
+          "title": "docs(hostRules): replace the stale matchHost port warning",
+          "redacted": false
+        }
+      ],
+      "Trilium Notes": [
+        {
+          "platform": "github",
+          "kind": "pull_request",
+          "state": "merged",
+          "fullName": "TriliumNext/Trilium",
+          "number": 11448,
+          "createdAt": "2026-09-11T05:58:50.000Z",
+          "hoursToMerge": 11.985277777777778,
+          "comments": 3,
+          "title": "TOTP: accept each code only once, and one time step of clock drift",
+          "redacted": false
+        },
+        {
+          "platform": "github",
+          "kind": "pull_request",
+          "state": "merged",
+          "fullName": "TriliumNext/Trilium",
+          "number": 11368,
+          "createdAt": "2026-09-06T07:03:55.000Z",
+          "hoursToMerge": 11.122777777777777,
+          "comments": 5,
+          "title": "Markdown: register slash commands as completion sources instead of a second autocompletion extension",
+          "redacted": false
+        }
+      ],
+      "acme.sh": [
+        {
+          "platform": "github",
+          "kind": "pull_request",
+          "state": "merged",
+          "fullName": "acmesh-official/acme.sh",
+          "number": 7237,
+          "createdAt": "2026-09-06T17:45:57.000Z",
+          "hoursToMerge": 90.17416666666666,
+          "comments": 0,
+          "title": "Poll the order this run created, not the one the previous cert came from",
+          "redacted": false
+        }
+      ],
+      "Nginx Proxy Manager": [
+        {
+          "platform": "github",
+          "kind": "pull_request",
+          "state": "merged",
+          "fullName": "NginxProxyManager/nginx-proxy-manager",
+          "number": 5836,
+          "createdAt": "2026-09-06T15:55:07.000Z",
+          "hoursToMerge": 51.531666666666666,
+          "comments": 2,
+          "title": "Invalidate tokens issued before a password change",
+          "redacted": false
+        }
+      ],
+      "OpenModScan": [
+        {
+          "platform": "github",
+          "kind": "pull_request",
+          "state": "merged",
+          "fullName": "sanny32/OpenModScan",
+          "number": 74,
+          "createdAt": "2026-04-08T16:05:36.000Z",
+          "hoursToMerge": 48.06472222222222,
+          "comments": 1,
+          "title": "Wire --version and --help flags to existing display functions",
+          "redacted": false
+        }
+      ],
+      "Portainer MCP": [
+        {
+          "platform": "github",
+          "kind": "pull_request",
+          "state": "merged",
+          "fullName": "portainer/portainer-mcp",
+          "number": 45,
+          "createdAt": "2026-02-24T16:18:55.000Z",
+          "hoursToMerge": 31.94972222222222,
+          "comments": 9,
+          "title": "feat: add local (non-edge) Docker Compose stack management tools",
+          "redacted": false
+        }
+      ],
+      "GitLab": [
+        {
+          "platform": "gitlab",
+          "kind": "pull_request",
+          "state": "merged",
+          "fullName": "gitlab-org/cells/http-router",
+          "number": 1354,
+          "createdAt": "2026-09-24T09:40:02.243Z",
+          "hoursToMerge": 1.195098888888889,
+          "comments": 7,
+          "title": "Sync routes snapshot: add the merge request cancel_auto_merge API route",
+          "redacted": false
+        },
+        {
+          "platform": "gitlab",
+          "kind": "pull_request",
+          "state": "open",
+          "fullName": "gitlab-org/gitlab",
+          "number": 256936,
+          "createdAt": "2026-09-22T10:28:44.881Z",
+          "hoursToMerge": null,
+          "comments": 19,
+          "title": "Expose the instance plan in the metadata API",
+          "redacted": false
+        },
+        {
+          "platform": "gitlab",
+          "kind": "pull_request",
+          "state": "open",
+          "fullName": "gitlab-org/gitlab",
+          "number": 255704,
+          "createdAt": "2026-09-15T17:12:21.079Z",
+          "hoursToMerge": null,
+          "comments": 44,
+          "title": "Document and deprecate cancel_merge_when_pipeline_succeeds",
+          "redacted": false
+        },
+        {
+          "platform": "gitlab",
+          "kind": "pull_request",
+          "state": "open",
+          "fullName": "gitlab-org/gitlab",
+          "number": 255702,
+          "createdAt": "2026-09-15T17:11:06.304Z",
+          "hoursToMerge": null,
+          "comments": 50,
+          "title": "Add cancel_auto_merge merge request API endpoint",
+          "redacted": false
+        },
+        {
+          "platform": "gitlab",
+          "kind": "pull_request",
+          "state": "merged",
+          "fullName": "gitlab-org/gitlab",
+          "number": 255300,
+          "createdAt": "2026-09-14T09:54:58.576Z",
+          "hoursToMerge": 219.46644527777778,
+          "comments": 34,
+          "title": "Ignore revoked UIDs when listing the identities of a GPG key",
+          "redacted": false
+        },
+        {
+          "platform": "gitlab",
+          "kind": "pull_request",
+          "state": "closed",
+          "fullName": "gitlab-org/gitlab",
+          "number": 255239,
+          "createdAt": "2026-09-13T19:14:47.513Z",
+          "hoursToMerge": null,
+          "comments": 16,
+          "title": "Return the merge request when cancelling an auto-merge",
+          "redacted": false
+        },
+        {
+          "platform": "gitlab",
+          "kind": "pull_request",
+          "state": "open",
+          "fullName": "gitlab-org/gitlab",
+          "number": 254699,
+          "createdAt": "2026-09-10T10:17:12.713Z",
+          "hoursToMerge": null,
+          "comments": 24,
+          "title": "Fix two project group listing response entity annotations",
+          "redacted": false
+        },
+        {
+          "platform": "gitlab",
+          "kind": "pull_request",
+          "state": "merged",
+          "fullName": "gitlab-org/gitlab",
+          "number": 254698,
+          "createdAt": "2026-09-10T10:03:21.750Z",
+          "hoursToMerge": 97.70576888888888,
+          "comments": 16,
+          "title": "Fix three job token scope response entity annotations",
+          "redacted": false
+        },
+        {
+          "platform": "gitlab",
+          "kind": "pull_request",
+          "state": "merged",
+          "fullName": "gitlab-org/gitlab",
+          "number": 254552,
+          "createdAt": "2026-09-09T16:58:27.138Z",
+          "hoursToMerge": 326.3722305555556,
+          "comments": 26,
+          "title": "Document the snippet clone URLs and the public snippet import fields",
+          "redacted": false
+        },
+        {
+          "platform": "gitlab",
+          "kind": "pull_request",
+          "state": "merged",
+          "fullName": "gitlab-org/gitlab",
+          "number": 254547,
+          "createdAt": "2026-09-09T16:50:33.173Z",
+          "hoursToMerge": 310.88613194444446,
+          "comments": 14,
+          "title": "Document conan_package_name and correct the package versions object",
+          "redacted": false
+        },
+        {
+          "platform": "gitlab",
+          "kind": "pull_request",
+          "state": "merged",
+          "fullName": "gitlab-org/gitlab",
+          "number": 254543,
+          "createdAt": "2026-09-09T16:41:54.320Z",
+          "hoursToMerge": 311.0447491666667,
+          "comments": 19,
+          "title": "Document the namespace compute minute and storage attributes",
+          "redacted": false
+        },
+        {
+          "platform": "gitlab",
+          "kind": "pull_request",
+          "state": "merged",
+          "fullName": "gitlab-org/gitlab",
+          "number": 254542,
+          "createdAt": "2026-09-09T16:36:25.585Z",
+          "hoursToMerge": 143.08318277777778,
+          "comments": 20,
+          "title": "Document the wiki_page field in the events API",
+          "redacted": false
+        },
+        {
+          "platform": "gitlab",
+          "kind": "pull_request",
+          "state": "open",
+          "fullName": "gitlab-org/gitlab",
+          "number": 254540,
+          "createdAt": "2026-09-09T16:31:23.779Z",
+          "hoursToMerge": null,
+          "comments": 18,
+          "title": "Document last_used_at and usage_type in the deploy keys API",
+          "redacted": false
+        },
+        {
+          "platform": "gitlab",
+          "kind": "pull_request",
+          "state": "merged",
+          "fullName": "gitlab-org/gitlab",
+          "number": 254538,
+          "createdAt": "2026-09-09T16:24:42.649Z",
+          "hoursToMerge": 310.9419883333333,
+          "comments": 12,
+          "title": "Document the system hook response fields the API sends",
+          "redacted": false
+        },
+        {
+          "platform": "gitlab",
+          "kind": "pull_request",
+          "state": "merged",
+          "fullName": "gitlab-org/gitlab",
+          "number": 254519,
+          "createdAt": "2026-09-09T14:51:41.192Z",
+          "hoursToMerge": 41.79652138888889,
+          "comments": 8,
+          "title": "Document public_email and email in the service accounts API",
+          "redacted": false
+        },
+        {
+          "platform": "gitlab",
+          "kind": "pull_request",
+          "state": "merged",
+          "fullName": "gitlab-org/gitlab",
+          "number": 254511,
+          "createdAt": "2026-09-09T14:40:05.602Z",
+          "hoursToMerge": 114.60309916666667,
+          "comments": 14,
+          "title": "Document is_receptive in the cluster agents API",
+          "redacted": false
+        },
+        {
+          "platform": "gitlab",
+          "kind": "pull_request",
+          "state": "merged",
+          "fullName": "gitlab-org/gitlab",
+          "number": 254507,
+          "createdAt": "2026-09-09T14:35:19.441Z",
+          "hoursToMerge": 26.383521388888887,
+          "comments": 11,
+          "title": "Document file_extension in the secure files API",
+          "redacted": false
+        }
+      ],
+      "GitLab Go client": [
+        {
+          "platform": "gitlab",
+          "kind": "pull_request",
+          "state": "merged",
+          "fullName": "gitlab-org/api/client-go",
+          "number": 3053,
+          "createdAt": "2026-09-09T16:54:58.908Z",
+          "hoursToMerge": 31.09242972222222,
+          "comments": 14,
+          "title": "feat(snippets): add the four fields the snippet entity sends to Snippet",
+          "redacted": false
+        },
+        {
+          "platform": "gitlab",
+          "kind": "pull_request",
+          "state": "merged",
+          "fullName": "gitlab-org/api/client-go",
+          "number": 3052,
+          "createdAt": "2026-09-09T16:48:49.921Z",
+          "hoursToMerge": 361.95610166666665,
+          "comments": 14,
+          "title": "feat(packages): add ConanPackageName, CreatorID and Versions to Package",
+          "redacted": false
+        },
+        {
+          "platform": "gitlab",
+          "kind": "pull_request",
+          "state": "merged",
+          "fullName": "gitlab-org/api/client-go",
+          "number": 3051,
+          "createdAt": "2026-09-09T16:40:38.386Z",
+          "hoursToMerge": 123.93164361111111,
+          "comments": 13,
+          "title": "feat(namespaces): add the eight fields the namespace entity sends to Namespace",
+          "redacted": false
+        },
+        {
+          "platform": "gitlab",
+          "kind": "pull_request",
+          "state": "merged",
+          "fullName": "gitlab-org/api/client-go",
+          "number": 3050,
+          "createdAt": "2026-09-09T16:35:13.660Z",
+          "hoursToMerge": 123.47376638888889,
+          "comments": 13,
+          "title": "feat(events): add Imported, ImportedFrom and WikiPage to both event structs",
+          "redacted": false
+        },
+        {
+          "platform": "gitlab",
+          "kind": "pull_request",
+          "state": "merged",
+          "fullName": "gitlab-org/api/client-go",
+          "number": 3049,
+          "createdAt": "2026-09-09T16:28:04.372Z",
+          "hoursToMerge": 32.17534833333333,
+          "comments": 11,
+          "title": "feat(deploy_keys): add LastUsedAt and UsageType to both deploy key structs",
+          "redacted": false
+        },
+        {
+          "platform": "gitlab",
+          "kind": "pull_request",
+          "state": "open",
+          "fullName": "gitlab-org/api/client-go",
+          "number": 3048,
+          "createdAt": "2026-09-09T16:19:12.241Z",
+          "hoursToMerge": null,
+          "comments": 17,
+          "title": "feat(system_hooks): add seven fields GitLab sends to the Hook struct",
+          "redacted": false
+        },
+        {
+          "platform": "gitlab",
+          "kind": "pull_request",
+          "state": "merged",
+          "fullName": "gitlab-org/api/client-go",
+          "number": 3047,
+          "createdAt": "2026-09-09T13:02:30.379Z",
+          "hoursToMerge": 11.954209166666667,
+          "comments": 9,
+          "title": "feat(group_serviceaccounts): add PublicEmail and UnconfirmedEmail to GroupServiceAccount",
+          "redacted": false
+        },
+        {
+          "platform": "gitlab",
+          "kind": "pull_request",
+          "state": "merged",
+          "fullName": "gitlab-org/api/client-go",
+          "number": 3046,
+          "createdAt": "2026-09-09T08:28:52.989Z",
+          "hoursToMerge": 5.595134444444445,
+          "comments": 8,
+          "title": "fix(group_scim): correct the GroupSCIMIdentity json tag to extern_uid",
+          "redacted": false
+        },
+        {
+          "platform": "gitlab",
+          "kind": "pull_request",
+          "state": "merged",
+          "fullName": "gitlab-org/api/client-go",
+          "number": 3045,
+          "createdAt": "2026-09-09T08:28:48.100Z",
+          "hoursToMerge": 15.60422111111111,
+          "comments": 11,
+          "title": "feat(secure_files): add FileExtension to SecureFile",
+          "redacted": false
+        },
+        {
+          "platform": "gitlab",
+          "kind": "pull_request",
+          "state": "merged",
+          "fullName": "gitlab-org/api/client-go",
+          "number": 3044,
+          "createdAt": "2026-09-09T08:28:42.588Z",
+          "hoursToMerge": 83.83147694444445,
+          "comments": 9,
+          "title": "feat(license_templates): add Popular to LicenseTemplate",
+          "redacted": false
+        },
+        {
+          "platform": "gitlab",
+          "kind": "pull_request",
+          "state": "merged",
+          "fullName": "gitlab-org/api/client-go",
+          "number": 3043,
+          "createdAt": "2026-09-09T08:28:27.289Z",
+          "hoursToMerge": 15.61403138888889,
+          "comments": 9,
+          "title": "feat(cluster_agents): add IsReceptive to the Agent struct",
+          "redacted": false
+        },
+        {
+          "platform": "gitlab",
+          "kind": "pull_request",
+          "state": "merged",
+          "fullName": "gitlab-org/api/client-go",
+          "number": 3042,
+          "createdAt": "2026-09-09T08:28:22.391Z",
+          "hoursToMerge": 4.076775277777778,
+          "comments": 7,
+          "title": "feat(broadcast_messages): add the Color field to BroadcastMessage",
+          "redacted": false
+        },
+        {
+          "platform": "gitlab",
+          "kind": "pull_request",
+          "state": "merged",
+          "fullName": "gitlab-org/api/client-go",
+          "number": 3041,
+          "createdAt": "2026-09-09T08:28:16.931Z",
+          "hoursToMerge": 107.29709333333334,
+          "comments": 15,
+          "title": "feat(topics): add OrganizationID to the Topic struct",
+          "redacted": false
+        },
+        {
+          "platform": "gitlab",
+          "kind": "pull_request",
+          "state": "merged",
+          "fullName": "gitlab-org/api/client-go",
+          "number": 3040,
+          "createdAt": "2026-09-09T08:26:56.959Z",
+          "hoursToMerge": 5.386254444444444,
+          "comments": 7,
+          "title": "feat(appearance): add SiteName to Appearance and ChangeAppearanceOptions",
+          "redacted": false
+        },
+        {
+          "platform": "gitlab",
+          "kind": "pull_request",
+          "state": "closed",
+          "fullName": "gitlab-org/api/client-go",
+          "number": 3039,
+          "createdAt": "2026-09-09T08:19:26.284Z",
+          "hoursToMerge": null,
+          "comments": 4,
+          "title": "fix: correct GroupSCIMIdentity json tag to the extern_uid key GitLab sends",
+          "redacted": false
+        },
+        {
+          "platform": "gitlab",
+          "kind": "pull_request",
+          "state": "closed",
+          "fullName": "gitlab-org/api/client-go",
+          "number": 3038,
+          "createdAt": "2026-09-09T08:14:00.679Z",
+          "hoursToMerge": null,
+          "comments": 4,
+          "title": "feat(secure_files): add FileExtension to SecureFile",
+          "redacted": false
+        },
+        {
+          "platform": "gitlab",
+          "kind": "pull_request",
+          "state": "closed",
+          "fullName": "gitlab-org/api/client-go",
+          "number": 3037,
+          "createdAt": "2026-09-09T08:11:50.561Z",
+          "hoursToMerge": null,
+          "comments": 4,
+          "title": "feat(license_templates): add Popular to LicenseTemplate",
+          "redacted": false
+        },
+        {
+          "platform": "gitlab",
+          "kind": "pull_request",
+          "state": "closed",
+          "fullName": "gitlab-org/api/client-go",
+          "number": 3036,
+          "createdAt": "2026-09-09T08:11:16.481Z",
+          "hoursToMerge": null,
+          "comments": 4,
+          "title": "Add IsReceptive to the cluster agent Agent struct",
+          "redacted": false
+        },
+        {
+          "platform": "gitlab",
+          "kind": "pull_request",
+          "state": "closed",
+          "fullName": "gitlab-org/api/client-go",
+          "number": 3035,
+          "createdAt": "2026-09-09T08:05:09.540Z",
+          "hoursToMerge": null,
+          "comments": 4,
+          "title": "feat(broadcast_messages): add the Color field to BroadcastMessage",
+          "redacted": false
+        },
+        {
+          "platform": "gitlab",
+          "kind": "pull_request",
+          "state": "closed",
+          "fullName": "gitlab-org/api/client-go",
+          "number": 3034,
+          "createdAt": "2026-09-09T08:02:34.084Z",
+          "hoursToMerge": null,
+          "comments": 4,
+          "title": "feat(topics): add OrganizationID to the Topic struct",
+          "redacted": false
+        },
+        {
+          "platform": "gitlab",
+          "kind": "pull_request",
+          "state": "closed",
+          "fullName": "gitlab-org/api/client-go",
+          "number": 3033,
+          "createdAt": "2026-09-09T08:01:39.957Z",
+          "hoursToMerge": null,
+          "comments": 4,
+          "title": "Add SiteName to Appearance and ChangeAppearanceOptions",
+          "redacted": false
+        },
+        {
+          "platform": "gitlab",
+          "kind": "pull_request",
+          "state": "merged",
+          "fullName": "gitlab-org/api/client-go",
+          "number": 3006,
+          "createdAt": "2026-08-24T15:05:33.083Z",
+          "hoursToMerge": 29.920951666666667,
+          "comments": 11,
+          "title": "fix(issues): avoid panic unmarshalling an Issue with no id",
+          "redacted": false
+        },
+        {
+          "platform": "gitlab",
+          "kind": "pull_request",
+          "state": "merged",
+          "fullName": "gitlab-org/api/client-go",
+          "number": 2996,
+          "createdAt": "2026-08-18T00:05:04.539Z",
+          "hoursToMerge": 375.74991666666665,
+          "comments": 19,
+          "title": "fix(group_boards): return the single updated list from UpdateIssueBoardList",
+          "redacted": false
+        }
+      ]
+    }
+  },
+  "issuesByProject": {
+    "Kong": {
+      "open": 1,
+      "closed": 0
+    },
+    "htmlbeautifier": {
+      "open": 1,
+      "closed": 0
+    },
+    "elasticsearch8_ynh": {
+      "open": 1,
+      "closed": 0
+    },
+    "bats-core": {
+      "open": 1,
+      "closed": 0
+    },
+    "mcp-marketplace": {
+      "open": 1,
+      "closed": 0
+    },
+    "go-selfupdate": {
+      "open": 1,
+      "closed": 0
+    },
+    "DNN-HA": {
+      "open": 1,
+      "closed": 0
+    },
+    "rest-api-description": {
+      "open": 1,
+      "closed": 0
+    },
+    "ecko": {
+      "open": 1,
+      "closed": 0
+    },
+    "metatext": {
+      "open": 1,
+      "closed": 0
+    },
+    "MCP Go SDK": {
+      "open": 8,
+      "closed": 5
+    },
+    "MCP Rust SDK": {
+      "open": 1,
+      "closed": 0
+    },
+    "codex": {
+      "open": 1,
+      "closed": 0
+    },
+    "asu": {
+      "open": 1,
+      "closed": 0
+    },
+    "webdav-client": {
+      "open": 1,
+      "closed": 0
+    },
+    "csv-to-md-table-action": {
+      "open": 1,
+      "closed": 0
+    },
+    "acoustic-toolbox": {
+      "open": 0,
+      "closed": 1
+    },
+    "Portainer MCP": {
+      "open": 0,
+      "closed": 1
+    },
+    "CrowdSec Hub": {
+      "open": 0,
+      "closed": 1
+    },
+    "potato-mesh": {
+      "open": 0,
+      "closed": 2
+    },
+    "meshmonitor": {
+      "open": 0,
+      "closed": 2
+    },
+    "homeassistant-edata": {
+      "open": 0,
+      "closed": 1
+    },
+    "pixelfed": {
+      "open": 0,
+      "closed": 1
+    },
+    "pixelfed_ynh": {
+      "open": 0,
+      "closed": 1
+    },
+    "YunoHost coturn": {
+      "open": 0,
+      "closed": 1
+    },
+    "repository-mirroring-action": {
+      "open": 0,
+      "closed": 1
+    },
+    "al-folio": {
+      "open": 0,
+      "closed": 1
+    },
+    "papercite": {
+      "open": 0,
+      "closed": 1
+    },
+    "GitLab": {
+      "open": 1,
+      "closed": 0
+    },
+    "GitLab Go client": {
+      "open": 1,
+      "closed": 0
+    }
+  },
+  "listingsByOwnProject": {
+    "phonometry": {
+      "conda-forge": {
+        "fullName": "conda-forge/staged-recipes",
+        "merged": 0,
+        "open": 1
+      },
+      "awesome-python-scientific-audio": {
+        "fullName": "faroit/awesome-python-scientific-audio",
+        "merged": 1,
+        "open": 0
+      },
+      "awesome-acoustic": {
+        "fullName": "Nitnelav/awesome-acoustic",
+        "merged": 1,
+        "open": 0
+      }
+    },
+    "gitlab-mcp-server": {
+      "Docker MCP Registry": {
+        "fullName": "docker/mcp-registry",
+        "merged": 0,
+        "open": 1
+      },
+      "awesome-mcp-servers": {
+        "fullName": "punkpeye/awesome-mcp-servers",
+        "merged": 1,
+        "open": 1
+      },
+      "winget": {
+        "fullName": "microsoft/winget-pkgs",
+        "merged": 8,
+        "open": 0
+      }
+    },
+    "libgen-mcp": {
+      "Docker MCP Registry": {
+        "fullName": "docker/mcp-registry",
+        "merged": 0,
+        "open": 1
+      },
+      "winget": {
+        "fullName": "microsoft/winget-pkgs",
+        "merged": 0,
+        "open": 1
+      }
+    },
+    "mikroscope": {
+      "awesome-mikrotik": {
+        "fullName": "jlbyh2o/awesome-mikrotik",
+        "merged": 0,
+        "open": 1
+      }
+    },
+    "cs-routeros-bouncer": {
+      "awesome-crowdsec": {
+        "fullName": "wolffcatskyy/awesome-crowdsec",
+        "merged": 1,
+        "open": 0
+      },
+      "CrowdSec Hub": {
+        "fullName": "crowdsecurity/hub",
+        "merged": 2,
+        "open": 0
+      }
+    }
+  },
+  "achievements": [
+    {
+      "platform": "github",
+      "achievement": "pull-shark",
+      "name": "Pull Shark",
+      "tierNumber": 4,
+      "tierName": "gold",
+      "count": null,
+      "nextThreshold": 0,
+      "percent": 100,
+      "agrees": true
+    },
+    {
+      "platform": "github",
+      "achievement": "pair-extraordinaire",
+      "name": "Pair Extraordinaire",
+      "tierNumber": 3,
+      "tierName": "silver",
+      "count": 33,
+      "nextThreshold": 48,
+      "percent": 68.8,
+      "agrees": true
+    },
+    {
+      "platform": "github",
+      "achievement": "galaxy-brain",
+      "name": "Galaxy Brain",
+      "tierNumber": 2,
+      "tierName": "bronze",
+      "count": 11,
+      "nextThreshold": 16,
+      "percent": 68.8,
+      "agrees": true
+    },
+    {
+      "platform": "github",
+      "achievement": "starstruck",
+      "name": "Starstruck",
+      "tierNumber": 1,
+      "tierName": "default",
+      "count": 118,
+      "nextThreshold": 128,
+      "percent": 92.2,
+      "agrees": true
+    },
+    {
+      "platform": "gitlab",
+      "achievement": "gitlab-level-3-contributor",
+      "name": "Level 3 Contributor",
+      "tierNumber": 1,
+      "tierName": "default",
+      "count": null,
+      "nextThreshold": 0,
+      "percent": 0,
+      "agrees": false,
+      "description": "Wider community member who has earned 2,500 to 7,499 points contributing to GitLab.",
+      "awardedAt": "2026-09-14T20:11:50Z"
+    }
+  ],
+  "communityContributors": {
+    "issues": [
+      {
+        "repo": "cs-routeros-bouncer",
+        "issues": 7,
+        "people": 6
+      },
+      {
+        "repo": "gitlab-mcp-server",
+        "issues": 3,
+        "people": 3
+      },
+      {
+        "repo": "TFG-TFM_EPS",
+        "issues": 3,
+        "people": 3
+      },
+      {
+        "repo": "phonometry",
+        "issues": 16,
+        "people": 14
+      },
+      {
+        "repo": "libgen-mcp",
+        "issues": 1,
+        "people": 1
+      },
+      {
+        "repo": "Cloudflare-DNS-Updater",
+        "issues": 7,
+        "people": 7
+      },
+      {
+        "repo": "A-Lab",
+        "issues": 5,
+        "people": 5
+      },
+      {
+        "repo": "FDTDexamples",
+        "issues": 1,
+        "people": 1
+      }
+    ],
+    "prs": [
+      {
+        "repo": "TFG-TFM_EPS",
+        "prs": 3,
+        "people": 2
+      },
+      {
+        "repo": "SetFigPaper",
+        "prs": 1,
+        "people": 1
+      },
+      {
+        "repo": "phonometry",
+        "prs": 3,
+        "people": 2
+      },
+      {
+        "repo": "mastodon_official_profiles",
+        "prs": 8,
+        "people": 4
+      },
+      {
+        "repo": "Cloudflare-DNS-Updater",
+        "prs": 3,
+        "people": 3
+      },
+      {
+        "repo": "gitlab-mcp-server",
+        "prs": 6,
+        "people": 4
+      },
+      {
+        "repo": "libgen-mcp",
+        "prs": 1,
+        "people": 1
+      }
+    ]
+  },
+  "upstreamLandedCommits": [
+    {
+      "fullName": "wolffcatskyy/awesome-crowdsec",
+      "commits": 1,
+      "days": 1,
+      "firstLandedAt": "2026-09-22T00:00:00",
+      "lastLandedAt": "2026-09-22T00:00:00"
+    },
+    {
+      "fullName": "modelcontextprotocol/go-sdk",
+      "commits": 5,
+      "days": 3,
+      "firstLandedAt": "2026-09-14T00:00:00",
+      "lastLandedAt": "2026-09-21T00:00:00"
+    },
+    {
+      "fullName": "henrygd/beszel",
+      "commits": 1,
+      "days": 1,
+      "firstLandedAt": "2026-09-17T00:00:00",
+      "lastLandedAt": "2026-09-17T00:00:00"
+    },
+    {
+      "fullName": "henrygd/beszel-docs",
+      "commits": 1,
+      "days": 1,
+      "firstLandedAt": "2026-09-17T00:00:00",
+      "lastLandedAt": "2026-09-17T00:00:00"
+    },
+    {
+      "fullName": "renovatebot/renovate",
+      "commits": 1,
+      "days": 1,
+      "firstLandedAt": "2026-09-12T00:00:00",
+      "lastLandedAt": "2026-09-12T00:00:00"
+    },
+    {
+      "fullName": "TriliumNext/Trilium",
+      "commits": 7,
+      "days": 2,
+      "firstLandedAt": "2026-09-06T00:00:00",
+      "lastLandedAt": "2026-09-11T00:00:00"
+    },
+    {
+      "fullName": "podman-container-tools/podman",
+      "commits": 1,
+      "days": 1,
+      "firstLandedAt": "2026-09-11T00:00:00",
+      "lastLandedAt": "2026-09-11T00:00:00"
+    },
+    {
+      "fullName": "faroit/awesome-python-scientific-audio",
+      "commits": 1,
+      "days": 1,
+      "firstLandedAt": "2026-09-11T00:00:00",
+      "lastLandedAt": "2026-09-11T00:00:00"
+    },
+    {
+      "fullName": "acmesh-official/acme.sh",
+      "commits": 1,
+      "days": 1,
+      "firstLandedAt": "2026-09-10T00:00:00",
+      "lastLandedAt": "2026-09-10T00:00:00"
+    },
+    {
+      "fullName": "NginxProxyManager/nginx-proxy-manager",
+      "commits": 2,
+      "days": 1,
+      "firstLandedAt": "2026-09-06T00:00:00",
+      "lastLandedAt": "2026-09-06T00:00:00"
+    },
+    {
+      "fullName": "microsoft/winget-pkgs",
+      "commits": 8,
+      "days": 8,
+      "firstLandedAt": "2026-07-21T00:00:00",
+      "lastLandedAt": "2026-09-04T00:00:00"
+    },
+    {
+      "fullName": "crowdsecurity/hub",
+      "commits": 2,
+      "days": 2,
+      "firstLandedAt": "2026-03-13T00:00:00",
+      "lastLandedAt": "2026-08-27T00:00:00"
+    },
+    {
+      "fullName": "Nitnelav/awesome-acoustic",
+      "commits": 1,
+      "days": 1,
+      "firstLandedAt": "2026-07-27T00:00:00",
+      "lastLandedAt": "2026-07-27T00:00:00"
+    },
+    {
+      "fullName": "sanny32/OpenModScan",
+      "commits": 1,
+      "days": 1,
+      "firstLandedAt": "2026-04-08T00:00:00",
+      "lastLandedAt": "2026-04-08T00:00:00"
+    },
+    {
+      "fullName": "alshedivat/al-folio",
+      "commits": 5,
+      "days": 3,
+      "firstLandedAt": "2021-10-30T00:00:00",
+      "lastLandedAt": "2023-07-12T00:00:00"
+    },
+    {
+      "fullName": "YunoHost-Apps/coturn_ynh",
+      "commits": 2,
+      "days": 1,
+      "firstLandedAt": "2023-03-25T00:00:00",
+      "lastLandedAt": "2023-03-25T00:00:00"
+    }
+  ],
+  "dependabot": {
+    "perRepo": [
+      {
+        "repo": "phonometry",
+        "fixed": 17,
+        "medianDays": 4.575335648148148
+      },
+      {
+        "repo": "cs-routeros-bouncer",
+        "fixed": 38,
+        "medianDays": 7.102384259259259
+      },
+      {
+        "repo": "gitlab-mcp-server",
+        "fixed": 39,
+        "medianDays": 1.556898148148148
+      },
+      {
+        "repo": "mikroscope",
+        "fixed": 2,
+        "medianDays": 4.684195601851852
+      }
+    ],
+    "total": 96,
+    "medianDays": 4.5753414351851855,
+    "within7Days": 70
+  },
+  "maintenance": [
+    {
+      "repo": "gitlab-mcp-server",
+      "activeDays12m": 94,
+      "lastOwnerCommitAt": "2026-09-26T13:38:56",
+      "ci": {
+        "repo": "gitlab-mcp-server",
+        "jobs": 24,
+        "os": [
+          "macOS",
+          "Windows",
+          "Linux"
+        ]
+      },
+      "ciPassRate90d": {
+        "repo": "gitlab-mcp-server",
+        "ok": 533,
+        "ko": 17,
+        "pct": 96.9
+      },
+      "codeQl": {
+        "repo": "gitlab-mcp-server",
+        "languages": [
+          "actions",
+          "go",
+          "javascript-typescript"
+        ],
+        "lastScanAt": "2026-09-26T13:44:57"
+      },
+      "hygiene": {
+        "repo": "gitlab-mcp-server",
+        "policyFiles": [
+          "dependabot",
+          "security",
+          "codeowners"
+        ],
+        "rulesetRules": [
+          "pull_request",
+          "update",
+          "non_fast_forward",
+          "required_status_checks",
+          "deletion"
+        ],
+        "hasClassicProtection": false,
+        "dependabotEcosystems": [
+          "gomod",
+          "docker-compose",
+          "github-actions",
+          "docker",
+          "npm"
+        ]
+      },
+      "docsPublished": {
+        "fullName": "jmrplens/gitlab-mcp-server",
+        "lastPublishAt": "2026-09-25T21:39:03",
+        "deploysIn90d": 141
+      }
+    },
+    {
+      "repo": "phonometry",
+      "activeDays12m": 89,
+      "lastOwnerCommitAt": "2026-09-25T11:56:33",
+      "ci": {
+        "repo": "phonometry",
+        "jobs": 32,
+        "os": [
+          "Linux",
+          "macOS",
+          "Windows"
+        ]
+      },
+      "ciPassRate90d": {
+        "repo": "phonometry",
+        "ok": 1193,
+        "ko": 80,
+        "pct": 93.7
+      },
+      "codeQl": {
+        "repo": "phonometry",
+        "languages": [
+          "actions",
+          "javascript-typescript",
+          "python"
+        ],
+        "lastScanAt": "2026-09-26T11:40:35"
+      },
+      "hygiene": {
+        "repo": "phonometry",
+        "policyFiles": [
+          "dependabot",
+          "security"
+        ],
+        "rulesetRules": [],
+        "hasClassicProtection": true,
+        "dependabotEcosystems": [
+          "npm",
+          "github-actions",
+          "pip"
+        ]
+      },
+      "docsPublished": {
+        "fullName": "jmrplens/phonometry",
+        "lastPublishAt": "2026-09-25T12:22:06",
+        "deploysIn90d": 494
+      }
+    },
+    {
+      "repo": "cs-routeros-bouncer",
+      "activeDays12m": 32,
+      "lastOwnerCommitAt": "2026-09-25T16:11:50",
+      "ci": {
+        "repo": "cs-routeros-bouncer",
+        "jobs": 13,
+        "os": [
+          "Linux"
+        ]
+      },
+      "ciPassRate90d": {
+        "repo": "cs-routeros-bouncer",
+        "ok": 135,
+        "ko": 6,
+        "pct": 95.7
+      },
+      "codeQl": {
+        "repo": "cs-routeros-bouncer",
+        "languages": [
+          "actions",
+          "go",
+          "javascript-typescript"
+        ],
+        "lastScanAt": "2026-09-25T16:13:34"
+      },
+      "hygiene": {
+        "repo": "cs-routeros-bouncer",
+        "policyFiles": [
+          "security",
+          "dependabot",
+          "codeowners"
+        ],
+        "rulesetRules": [],
+        "hasClassicProtection": true,
+        "dependabotEcosystems": [
+          "github-actions",
+          "docker",
+          "npm",
+          "gomod",
+          "docker-compose"
+        ]
+      },
+      "docsPublished": {
+        "fullName": "jmrplens/cs-routeros-bouncer",
+        "lastPublishAt": "2026-09-25T16:13:16",
+        "deploysIn90d": 43
+      }
+    },
+    {
+      "repo": "mikroscope",
+      "activeDays12m": 8,
+      "lastOwnerCommitAt": "2026-09-25T16:54:30",
+      "ci": {
+        "repo": "mikroscope",
+        "jobs": 31,
+        "os": [
+          "macOS",
+          "Windows",
+          "Linux"
+        ]
+      },
+      "ciPassRate90d": {
+        "repo": "mikroscope",
+        "ok": 182,
+        "ko": 5,
+        "pct": 97.3
+      },
+      "codeQl": {
+        "repo": "mikroscope",
+        "languages": [
+          "actions",
+          "go",
+          "javascript-typescript"
+        ],
+        "lastScanAt": "2026-09-25T16:55:45"
+      },
+      "hygiene": {
+        "repo": "mikroscope",
+        "policyFiles": [
+          "security",
+          "dependabot"
+        ],
+        "rulesetRules": [
+          "pull_request",
+          "deletion",
+          "required_status_checks",
+          "non_fast_forward"
+        ],
+        "hasClassicProtection": false,
+        "dependabotEcosystems": [
+          "github-actions",
+          "npm",
+          "gomod"
+        ]
+      },
+      "docsPublished": {
+        "fullName": "jmrplens/mikroscope",
+        "lastPublishAt": "2026-09-25T16:57:45",
+        "deploysIn90d": 58
+      }
+    },
+    {
+      "repo": "Cloudflare-DNS-Updater",
+      "activeDays12m": 21,
+      "lastOwnerCommitAt": "2026-09-14T23:28:18",
+      "ci": {
+        "repo": "Cloudflare-DNS-Updater",
+        "jobs": 1,
+        "os": [
+          "Linux"
+        ]
+      },
+      "ciPassRate90d": {
+        "repo": "Cloudflare-DNS-Updater",
+        "ok": 116,
+        "ko": 18,
+        "pct": 86.6
+      },
+      "codeQl": {
+        "repo": "Cloudflare-DNS-Updater",
+        "languages": [
+          "actions",
+          "c-cpp"
+        ],
+        "lastScanAt": "2026-09-20T09:56:37"
+      },
+      "hygiene": {
+        "repo": "Cloudflare-DNS-Updater",
+        "policyFiles": [
+          "security",
+          "codeowners"
+        ],
+        "rulesetRules": [],
+        "hasClassicProtection": false,
+        "dependabotEcosystems": []
+      },
+      "docsPublished": {
+        "fullName": "jmrplens/Cloudflare-DNS-Updater",
+        "lastPublishAt": "2026-09-25T10:56:51",
+        "deploysIn90d": 40
+      }
+    },
+    {
+      "repo": "libgen-mcp",
+      "activeDays12m": 41,
+      "lastOwnerCommitAt": "2026-09-25T10:33:50",
+      "ci": {
+        "repo": "libgen-mcp",
+        "jobs": 20,
+        "os": [
+          "Linux",
+          "macOS",
+          "Windows"
+        ]
+      },
+      "ciPassRate90d": {
+        "repo": "libgen-mcp",
+        "ok": 435,
+        "ko": 10,
+        "pct": 97.8
+      },
+      "codeQl": {
+        "repo": "libgen-mcp",
+        "languages": [
+          "actions",
+          "go",
+          "javascript-typescript"
+        ],
+        "lastScanAt": "2026-09-25T10:36:21"
+      },
+      "hygiene": {
+        "repo": "libgen-mcp",
+        "policyFiles": [
+          "codeowners",
+          "security",
+          "dependabot"
+        ],
+        "rulesetRules": [
+          "non_fast_forward",
+          "required_status_checks",
+          "pull_request",
+          "deletion"
+        ],
+        "hasClassicProtection": false,
+        "dependabotEcosystems": [
+          "docker",
+          "gomod",
+          "github-actions",
+          "npm"
+        ]
+      },
+      "docsPublished": {
+        "fullName": "jmrplens/libgen-mcp",
+        "lastPublishAt": "2026-09-25T10:57:04",
+        "deploysIn90d": 136
+      }
+    },
+    {
+      "repo": "ghchronicle",
+      "activeDays12m": 9,
+      "lastOwnerCommitAt": "2026-09-25T13:53:26",
+      "ci": {
+        "repo": "ghchronicle",
+        "jobs": 22,
+        "os": [
+          "macOS",
+          "Windows",
+          "Linux"
+        ]
+      },
+      "ciPassRate90d": {
+        "repo": "ghchronicle",
+        "ok": 185,
+        "ko": 3,
+        "pct": 98.4
+      },
+      "codeQl": {
+        "repo": "ghchronicle",
+        "languages": [
+          "actions",
+          "go",
+          "javascript-typescript"
+        ],
+        "lastScanAt": "2026-09-25T13:55:01"
+      },
+      "hygiene": {
+        "repo": "ghchronicle",
+        "policyFiles": [
+          "security",
+          "dependabot"
+        ],
+        "rulesetRules": [
+          "deletion",
+          "pull_request",
+          "non_fast_forward",
+          "required_status_checks"
+        ],
+        "hasClassicProtection": false,
+        "dependabotEcosystems": [
+          "npm",
+          "gomod",
+          "docker",
+          "github-actions"
+        ]
+      },
+      "docsPublished": {
+        "fullName": "jmrplens/ghchronicle",
+        "lastPublishAt": "2026-09-25T13:57:37",
+        "deploysIn90d": 60
+      }
+    },
+    {
+      "repo": "portainer-mcp",
+      "activeDays12m": 18,
+      "lastOwnerCommitAt": "2026-08-29T11:53:52",
+      "ci": {
+        "repo": "portainer-mcp",
+        "jobs": 14,
+        "os": [
+          "Linux"
+        ]
+      },
+      "ciPassRate90d": {
+        "repo": "portainer-mcp",
+        "ok": 36,
+        "ko": 2,
+        "pct": 94.7
+      },
+      "codeQl": null,
+      "hygiene": {
+        "repo": "portainer-mcp",
+        "policyFiles": [
+          "security",
+          "codeowners"
+        ],
+        "rulesetRules": [],
+        "hasClassicProtection": false,
+        "dependabotEcosystems": []
+      },
+      "docsPublished": null
+    }
+  ],
+  "gitlab": {
+    "fetchedAt": "2026-09-26T20:35:39.324Z",
+    "username": "jmrp",
+    "items": [
+      {
+        "platform": "gitlab",
+        "kind": "pull_request",
+        "state": "merged",
+        "fullName": "gitlab-org/cells/http-router",
+        "number": 1354,
+        "createdAt": "2026-09-24T09:40:02.243Z",
+        "hoursToMerge": 1.195098888888889,
+        "comments": 7,
+        "title": "Sync routes snapshot: add the merge request cancel_auto_merge API route"
+      },
+      {
+        "platform": "gitlab",
+        "kind": "pull_request",
+        "state": "open",
+        "fullName": "gitlab-org/gitlab",
+        "number": 256936,
+        "createdAt": "2026-09-22T10:28:44.881Z",
+        "hoursToMerge": null,
+        "comments": 19,
+        "title": "Expose the instance plan in the metadata API"
+      },
+      {
+        "platform": "gitlab",
+        "kind": "issue",
+        "state": "open",
+        "fullName": "gitlab-org/gitlab",
+        "number": 630305,
+        "createdAt": "2026-09-22T10:27:39.232Z",
+        "hoursToMerge": null,
+        "comments": 1,
+        "title": "Expose the instance plan in the metadata API, readable by any authenticated user"
+      },
+      {
+        "platform": "gitlab",
+        "kind": "pull_request",
+        "state": "open",
+        "fullName": "gitlab-org/gitlab",
+        "number": 255704,
+        "createdAt": "2026-09-15T17:12:21.079Z",
+        "hoursToMerge": null,
+        "comments": 44,
+        "title": "Document and deprecate cancel_merge_when_pipeline_succeeds"
+      },
+      {
+        "platform": "gitlab",
+        "kind": "pull_request",
+        "state": "open",
+        "fullName": "gitlab-org/gitlab",
+        "number": 255702,
+        "createdAt": "2026-09-15T17:11:06.304Z",
+        "hoursToMerge": null,
+        "comments": 50,
+        "title": "Add cancel_auto_merge merge request API endpoint"
+      },
+      {
+        "platform": "gitlab",
+        "kind": "pull_request",
+        "state": "merged",
+        "fullName": "gitlab-org/gitlab",
+        "number": 255300,
+        "createdAt": "2026-09-14T09:54:58.576Z",
+        "hoursToMerge": 219.46644527777778,
+        "comments": 34,
+        "title": "Ignore revoked UIDs when listing the identities of a GPG key"
+      },
+      {
+        "platform": "gitlab",
+        "kind": "pull_request",
+        "state": "closed",
+        "fullName": "gitlab-org/gitlab",
+        "number": 255239,
+        "createdAt": "2026-09-13T19:14:47.513Z",
+        "hoursToMerge": null,
+        "comments": 16,
+        "title": "Return the merge request when cancelling an auto-merge"
+      },
+      {
+        "platform": "gitlab",
+        "kind": "pull_request",
+        "state": "open",
+        "fullName": "gitlab-org/gitlab",
+        "number": 254699,
+        "createdAt": "2026-09-10T10:17:12.713Z",
+        "hoursToMerge": null,
+        "comments": 24,
+        "title": "Fix two project group listing response entity annotations"
+      },
+      {
+        "platform": "gitlab",
+        "kind": "pull_request",
+        "state": "merged",
+        "fullName": "gitlab-org/gitlab",
+        "number": 254698,
+        "createdAt": "2026-09-10T10:03:21.750Z",
+        "hoursToMerge": 97.70576888888888,
+        "comments": 16,
+        "title": "Fix three job token scope response entity annotations"
+      },
+      {
+        "platform": "gitlab",
+        "kind": "pull_request",
+        "state": "merged",
+        "fullName": "gitlab-org/gitlab",
+        "number": 254552,
+        "createdAt": "2026-09-09T16:58:27.138Z",
+        "hoursToMerge": 326.3722305555556,
+        "comments": 26,
+        "title": "Document the snippet clone URLs and the public snippet import fields"
+      },
+      {
+        "platform": "gitlab",
+        "kind": "pull_request",
+        "state": "merged",
+        "fullName": "gitlab-org/api/client-go",
+        "number": 3053,
+        "createdAt": "2026-09-09T16:54:58.908Z",
+        "hoursToMerge": 31.09242972222222,
+        "comments": 14,
+        "title": "feat(snippets): add the four fields the snippet entity sends to Snippet"
+      },
+      {
+        "platform": "gitlab",
+        "kind": "pull_request",
+        "state": "merged",
+        "fullName": "gitlab-org/gitlab",
+        "number": 254547,
+        "createdAt": "2026-09-09T16:50:33.173Z",
+        "hoursToMerge": 310.88613194444446,
+        "comments": 14,
+        "title": "Document conan_package_name and correct the package versions object"
+      },
+      {
+        "platform": "gitlab",
+        "kind": "pull_request",
+        "state": "merged",
+        "fullName": "gitlab-org/api/client-go",
+        "number": 3052,
+        "createdAt": "2026-09-09T16:48:49.921Z",
+        "hoursToMerge": 361.95610166666665,
+        "comments": 14,
+        "title": "feat(packages): add ConanPackageName, CreatorID and Versions to Package"
+      },
+      {
+        "platform": "gitlab",
+        "kind": "pull_request",
+        "state": "merged",
+        "fullName": "gitlab-org/gitlab",
+        "number": 254543,
+        "createdAt": "2026-09-09T16:41:54.320Z",
+        "hoursToMerge": 311.0447491666667,
+        "comments": 19,
+        "title": "Document the namespace compute minute and storage attributes"
+      },
+      {
+        "platform": "gitlab",
+        "kind": "pull_request",
+        "state": "merged",
+        "fullName": "gitlab-org/api/client-go",
+        "number": 3051,
+        "createdAt": "2026-09-09T16:40:38.386Z",
+        "hoursToMerge": 123.93164361111111,
+        "comments": 13,
+        "title": "feat(namespaces): add the eight fields the namespace entity sends to Namespace"
+      },
+      {
+        "platform": "gitlab",
+        "kind": "pull_request",
+        "state": "merged",
+        "fullName": "gitlab-org/gitlab",
+        "number": 254542,
+        "createdAt": "2026-09-09T16:36:25.585Z",
+        "hoursToMerge": 143.08318277777778,
+        "comments": 20,
+        "title": "Document the wiki_page field in the events API"
+      },
+      {
+        "platform": "gitlab",
+        "kind": "pull_request",
+        "state": "merged",
+        "fullName": "gitlab-org/api/client-go",
+        "number": 3050,
+        "createdAt": "2026-09-09T16:35:13.660Z",
+        "hoursToMerge": 123.47376638888889,
+        "comments": 13,
+        "title": "feat(events): add Imported, ImportedFrom and WikiPage to both event structs"
+      },
+      {
+        "platform": "gitlab",
+        "kind": "pull_request",
+        "state": "open",
+        "fullName": "gitlab-org/gitlab",
+        "number": 254540,
+        "createdAt": "2026-09-09T16:31:23.779Z",
+        "hoursToMerge": null,
+        "comments": 18,
+        "title": "Document last_used_at and usage_type in the deploy keys API"
+      },
+      {
+        "platform": "gitlab",
+        "kind": "pull_request",
+        "state": "merged",
+        "fullName": "gitlab-org/api/client-go",
+        "number": 3049,
+        "createdAt": "2026-09-09T16:28:04.372Z",
+        "hoursToMerge": 32.17534833333333,
+        "comments": 11,
+        "title": "feat(deploy_keys): add LastUsedAt and UsageType to both deploy key structs"
+      },
+      {
+        "platform": "gitlab",
+        "kind": "pull_request",
+        "state": "merged",
+        "fullName": "gitlab-org/gitlab",
+        "number": 254538,
+        "createdAt": "2026-09-09T16:24:42.649Z",
+        "hoursToMerge": 310.9419883333333,
+        "comments": 12,
+        "title": "Document the system hook response fields the API sends"
+      },
+      {
+        "platform": "gitlab",
+        "kind": "pull_request",
+        "state": "open",
+        "fullName": "gitlab-org/api/client-go",
+        "number": 3048,
+        "createdAt": "2026-09-09T16:19:12.241Z",
+        "hoursToMerge": null,
+        "comments": 17,
+        "title": "feat(system_hooks): add seven fields GitLab sends to the Hook struct"
+      },
+      {
+        "platform": "gitlab",
+        "kind": "pull_request",
+        "state": "merged",
+        "fullName": "gitlab-org/gitlab",
+        "number": 254519,
+        "createdAt": "2026-09-09T14:51:41.192Z",
+        "hoursToMerge": 41.79652138888889,
+        "comments": 8,
+        "title": "Document public_email and email in the service accounts API"
+      },
+      {
+        "platform": "gitlab",
+        "kind": "pull_request",
+        "state": "merged",
+        "fullName": "gitlab-org/gitlab",
+        "number": 254511,
+        "createdAt": "2026-09-09T14:40:05.602Z",
+        "hoursToMerge": 114.60309916666667,
+        "comments": 14,
+        "title": "Document is_receptive in the cluster agents API"
+      },
+      {
+        "platform": "gitlab",
+        "kind": "pull_request",
+        "state": "merged",
+        "fullName": "gitlab-org/gitlab",
+        "number": 254507,
+        "createdAt": "2026-09-09T14:35:19.441Z",
+        "hoursToMerge": 26.383521388888887,
+        "comments": 11,
+        "title": "Document file_extension in the secure files API"
+      },
+      {
+        "platform": "gitlab",
+        "kind": "issue",
+        "state": "open",
+        "fullName": "gitlab-org/api/client-go",
+        "number": 2300,
+        "createdAt": "2026-09-09T14:08:08.290Z",
+        "hoursToMerge": null,
+        "comments": 9,
+        "title": "Measuring API drift: 897 fields GitLab sends that this library does not model"
+      },
+      {
+        "platform": "gitlab",
+        "kind": "pull_request",
+        "state": "merged",
+        "fullName": "gitlab-org/api/client-go",
+        "number": 3047,
+        "createdAt": "2026-09-09T13:02:30.379Z",
+        "hoursToMerge": 11.954209166666667,
+        "comments": 9,
+        "title": "feat(group_serviceaccounts): add PublicEmail and UnconfirmedEmail to GroupServiceAccount"
+      },
+      {
+        "platform": "gitlab",
+        "kind": "pull_request",
+        "state": "merged",
+        "fullName": "gitlab-org/api/client-go",
+        "number": 3046,
+        "createdAt": "2026-09-09T08:28:52.989Z",
+        "hoursToMerge": 5.595134444444445,
+        "comments": 8,
+        "title": "fix(group_scim): correct the GroupSCIMIdentity json tag to extern_uid"
+      },
+      {
+        "platform": "gitlab",
+        "kind": "pull_request",
+        "state": "merged",
+        "fullName": "gitlab-org/api/client-go",
+        "number": 3045,
+        "createdAt": "2026-09-09T08:28:48.100Z",
+        "hoursToMerge": 15.60422111111111,
+        "comments": 11,
+        "title": "feat(secure_files): add FileExtension to SecureFile"
+      },
+      {
+        "platform": "gitlab",
+        "kind": "pull_request",
+        "state": "merged",
+        "fullName": "gitlab-org/api/client-go",
+        "number": 3044,
+        "createdAt": "2026-09-09T08:28:42.588Z",
+        "hoursToMerge": 83.83147694444445,
+        "comments": 9,
+        "title": "feat(license_templates): add Popular to LicenseTemplate"
+      },
+      {
+        "platform": "gitlab",
+        "kind": "pull_request",
+        "state": "merged",
+        "fullName": "gitlab-org/api/client-go",
+        "number": 3043,
+        "createdAt": "2026-09-09T08:28:27.289Z",
+        "hoursToMerge": 15.61403138888889,
+        "comments": 9,
+        "title": "feat(cluster_agents): add IsReceptive to the Agent struct"
+      },
+      {
+        "platform": "gitlab",
+        "kind": "pull_request",
+        "state": "merged",
+        "fullName": "gitlab-org/api/client-go",
+        "number": 3042,
+        "createdAt": "2026-09-09T08:28:22.391Z",
+        "hoursToMerge": 4.076775277777778,
+        "comments": 7,
+        "title": "feat(broadcast_messages): add the Color field to BroadcastMessage"
+      },
+      {
+        "platform": "gitlab",
+        "kind": "pull_request",
+        "state": "merged",
+        "fullName": "gitlab-org/api/client-go",
+        "number": 3041,
+        "createdAt": "2026-09-09T08:28:16.931Z",
+        "hoursToMerge": 107.29709333333334,
+        "comments": 15,
+        "title": "feat(topics): add OrganizationID to the Topic struct"
+      },
+      {
+        "platform": "gitlab",
+        "kind": "pull_request",
+        "state": "merged",
+        "fullName": "gitlab-org/api/client-go",
+        "number": 3040,
+        "createdAt": "2026-09-09T08:26:56.959Z",
+        "hoursToMerge": 5.386254444444444,
+        "comments": 7,
+        "title": "feat(appearance): add SiteName to Appearance and ChangeAppearanceOptions"
+      },
+      {
+        "platform": "gitlab",
+        "kind": "pull_request",
+        "state": "closed",
+        "fullName": "gitlab-org/api/client-go",
+        "number": 3039,
+        "createdAt": "2026-09-09T08:19:26.284Z",
+        "hoursToMerge": null,
+        "comments": 4,
+        "title": "fix: correct GroupSCIMIdentity json tag to the extern_uid key GitLab sends"
+      },
+      {
+        "platform": "gitlab",
+        "kind": "pull_request",
+        "state": "closed",
+        "fullName": "gitlab-org/api/client-go",
+        "number": 3038,
+        "createdAt": "2026-09-09T08:14:00.679Z",
+        "hoursToMerge": null,
+        "comments": 4,
+        "title": "feat(secure_files): add FileExtension to SecureFile"
+      },
+      {
+        "platform": "gitlab",
+        "kind": "pull_request",
+        "state": "closed",
+        "fullName": "gitlab-org/api/client-go",
+        "number": 3037,
+        "createdAt": "2026-09-09T08:11:50.561Z",
+        "hoursToMerge": null,
+        "comments": 4,
+        "title": "feat(license_templates): add Popular to LicenseTemplate"
+      },
+      {
+        "platform": "gitlab",
+        "kind": "pull_request",
+        "state": "closed",
+        "fullName": "gitlab-org/api/client-go",
+        "number": 3036,
+        "createdAt": "2026-09-09T08:11:16.481Z",
+        "hoursToMerge": null,
+        "comments": 4,
+        "title": "Add IsReceptive to the cluster agent Agent struct"
+      },
+      {
+        "platform": "gitlab",
+        "kind": "pull_request",
+        "state": "closed",
+        "fullName": "gitlab-org/api/client-go",
+        "number": 3035,
+        "createdAt": "2026-09-09T08:05:09.540Z",
+        "hoursToMerge": null,
+        "comments": 4,
+        "title": "feat(broadcast_messages): add the Color field to BroadcastMessage"
+      },
+      {
+        "platform": "gitlab",
+        "kind": "pull_request",
+        "state": "closed",
+        "fullName": "gitlab-org/api/client-go",
+        "number": 3034,
+        "createdAt": "2026-09-09T08:02:34.084Z",
+        "hoursToMerge": null,
+        "comments": 4,
+        "title": "feat(topics): add OrganizationID to the Topic struct"
+      },
+      {
+        "platform": "gitlab",
+        "kind": "pull_request",
+        "state": "closed",
+        "fullName": "gitlab-org/api/client-go",
+        "number": 3033,
+        "createdAt": "2026-09-09T08:01:39.957Z",
+        "hoursToMerge": null,
+        "comments": 4,
+        "title": "Add SiteName to Appearance and ChangeAppearanceOptions"
+      },
+      {
+        "platform": "gitlab",
+        "kind": "pull_request",
+        "state": "merged",
+        "fullName": "gitlab-org/api/client-go",
+        "number": 3006,
+        "createdAt": "2026-08-24T15:05:33.083Z",
+        "hoursToMerge": 29.920951666666667,
+        "comments": 11,
+        "title": "fix(issues): avoid panic unmarshalling an Issue with no id"
+      },
+      {
+        "platform": "gitlab",
+        "kind": "pull_request",
+        "state": "merged",
+        "fullName": "gitlab-org/api/client-go",
+        "number": 2996,
+        "createdAt": "2026-08-18T00:05:04.539Z",
+        "hoursToMerge": 375.74991666666665,
+        "comments": 19,
+        "title": "fix(group_boards): return the single updated list from UpdateIssueBoardList"
+      }
+    ],
+    "projects": [
+      {
+        "fullName": "gitlab-org/api/client-go",
+        "name": "client-go",
+        "stars": 106,
+        "webUrl": "https://gitlab.com/gitlab-org/api/client-go"
+      },
+      {
+        "fullName": "gitlab-org/cells/http-router",
+        "name": "HTTP Router",
+        "stars": 4,
+        "webUrl": "https://gitlab.com/gitlab-org/cells/http-router"
+      },
+      {
+        "fullName": "gitlab-org/gitlab",
+        "name": "GitLab",
+        "stars": 6146,
+        "webUrl": "https://gitlab.com/gitlab-org/gitlab"
+      }
+    ],
+    "achievements": [
+      {
+        "platform": "gitlab",
+        "achievement": "gitlab-level-3-contributor",
+        "name": "Level 3 Contributor",
+        "description": "Wider community member who has earned 2,500 to 7,499 points contributing to GitLab.",
+        "namespace": "gitlab-org/achievements",
+        "awardedAt": "2026-09-14T20:11:50Z"
+      }
+    ]
+  }
+}

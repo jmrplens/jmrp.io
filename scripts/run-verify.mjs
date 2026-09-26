@@ -307,6 +307,12 @@ async function runVerify() {
     },
     { name: "Lint: HTML5 Validation", command: "pnpm lint:html" },
     {
+      // PRJ_* tokens in the build vs the summary's declared keys, no token
+      // leaked outside /projects, and (on the server) the served summary.
+      name: "Lint: Projects token sync",
+      command: "node scripts/ci/check-projects-tokens.mjs dist",
+    },
+    {
       // Does the build still publish the image that is in public/? The
       // optimizer's cache is keyed by path, so a replaced file can be served
       // from the blob of the one it replaced (see pre-build/image-cache.ts).

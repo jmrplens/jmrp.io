@@ -205,7 +205,7 @@ hero:
 featured_projects:
   - "gitlab-mcp-server"
   - "phonometry"
-  - "Cloudflare-DNS-Updater"
+  - "cs-routeros-bouncer"
   - "TFG-TFM_EPS"
 
 # Language-neutral technical facts for the homepage hero "whoami" terminal.

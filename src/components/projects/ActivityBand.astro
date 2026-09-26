@@ -1,0 +1,125 @@
+---
+/**
+ * Activity band — 4 live tiles above the project cards on /projects/, plus a
+ * "live from GitHub" stamp. Every figure is a `PRJ_*` SSR token
+ * (`ssr-tokens.ts`), substituted by nginx at serve time in production and by
+ * `vite-plugin-dev-prj-tokens.ts` in `astro dev`; this component renders the
+ * token literals verbatim and never formats or fetches anything itself —
+ * same contract as `HomelabKpi.tsx` for `HLM_*`.
+ */
+import { PRJ } from "@components/projects/ssr-tokens";
+import { defaultLocale, type Locale } from "@i18n/config";
+import { useTranslations } from "@i18n/utils";
+
+const locale = (Astro.currentLocale ?? defaultLocale) as Locale;
+const t = useTranslations(locale);
+
+const tiles = [
+  {
+    value: PRJ.activity.releases90d,
+    label: t("pages.projects.activity.releases90d"),
+  },
+  {
+    value: PRJ.activity.stars30d,
+    label: t("pages.projects.activity.stars30d"),
+  },
+  {
+    value: PRJ.activity.activeDays,
+    label: t("pages.projects.activity.activeDays"),
+  },
+  { value: PRJ.activity.streak, label: t("pages.projects.activity.streak") },
+];
+---
+
+<section
+  class="activity-band"
+  aria-labelledby="activity-band-heading"
+>
+  <h2
+    id="activity-band-heading"
+    class="sr-only"
+  >
+    {t("pages.projects.activity.regionLabel")}
+  </h2>
+  <dl class="activity-band__tiles">
+    {tiles.map((tile) => (
+      <div class="activity-band__tile">
+        <dd class="activity-band__value">{tile.value}</dd>
+        <dt class="activity-band__label">{tile.label}</dt>
+      </div>
+    ))}
+  </dl>
+  <p class="activity-band__live">
+    {t("pages.projects.activity.liveLabel", { time: PRJ.asOf })}
+  </p>
+</section>
+
+<style>
+  .activity-band {
+    padding-bottom: var(--space-lg);
+    margin-bottom: var(--space-lg);
+    border-bottom: 1px solid var(--color-hair);
+  }
+
+  .activity-band__tiles {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    padding: 0;
+    margin: 0;
+    background: var(--color-bg-secondary);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+  }
+
+  .activity-band__tile {
+    /* A long value (or a raw token when no nginx substitutes it) wraps
+       instead of pushing the grid past the viewport. */
+    min-inline-size: 0;
+    padding: var(--space-sm) var(--space-md);
+    overflow-wrap: anywhere;
+    border-left: 1px solid var(--color-hair);
+  }
+
+  .activity-band__tile:first-child {
+    border-left: 0;
+  }
+
+  .activity-band__value {
+    min-inline-size: 3ch;
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: var(--text-xl);
+    font-weight: var(--fw-semibold);
+    font-variant-numeric: tabular-nums;
+    line-height: 1.15;
+    color: var(--color-text-heading);
+  }
+
+  .activity-band__label {
+    margin: 2px 0 0;
+    font-size: var(--text-xs);
+    line-height: 1.35;
+    color: var(--color-text-muted);
+  }
+
+  .activity-band__live {
+    margin: var(--space-sm) 0 0;
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    color: var(--color-text-muted);
+  }
+
+  @media (width <= 640px) {
+    .activity-band__tiles {
+      grid-template-columns: repeat(2, 1fr);
+    }
+
+    .activity-band__tile:nth-child(3) {
+      border-left: 0;
+    }
+
+    .activity-band__tile:nth-child(n + 3) {
+      border-top: 1px solid var(--color-hair);
+    }
+  }
+</style>

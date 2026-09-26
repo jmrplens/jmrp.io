@@ -1,0 +1,471 @@
+/**
+ * Writes the LIVE /projects summary JSON: a flat map of `PRJ_*` token →
+ * already-validated primitive (number, string or null), plus `as_of`.
+ *
+ * This is the repo-side half of the architecture
+ * `plan/projects-ghchronicle/json-vs-influx.md` recommends: this script (run
+ * from a systemd timer on the production host, per PLAN.md section 7.1)
+ * queries InfluxDB 3 and writes a small JSON file; a LATER task's nginx Lua
+ * module (`projects_ssr_metrics.lua`, not part of this change) reads that
+ * file — through the same stale-while-revalidate engine
+ * `homelab_ssr_metrics.lua` already runs — and substitutes `PRJ_*` tokens
+ * with locale-formatted text. No InfluxDB token or query classification
+ * logic ever needs to reach nginx.
+ *
+ * ── Local development ──────────────────────────────────────────────────
+ * `source /etc/ghchronicle/ghchronicle.env && export GHC_INFLUX_TOKEN="$INFLUX_TOKEN"`
+ * then `node scripts/ghc/write-summary.mjs`. The token is read-only against
+ * the `github` database; see PLAN.md 8.2 #2 for the token-scope decision.
+ * NEVER print, log or write the token anywhere — `influx.mjs` already
+ * enforces this for its own error messages.
+ *
+ * ── Failure behavior ──────────────────────────────────────────────────
+ * A failed query keeps the previous summary file untouched (the "last good"
+ * pattern `refreshDownloadsFile` in `scripts/refresh-downloads.mjs` already
+ * uses) and reports the failure through `warn`; it never throws when a
+ * previous file exists to fall back to. With no previous file AND a failed
+ * fetch, it writes a fully-null summary (every token present, every value
+ * `null`) so a downstream consumer that requires every declared key to
+ * exist never crashes on a missing key — only on a missing FILE.
+ *
+ * ── GitLab.com ────────────────────────────────────────────────────────
+ * `PRJ_CODE_MERGED`, `PRJ_PR_OPEN` and `PRJ_CODE_UPSTREAMS` are GitHub +
+ * GitLab.com sums (GitLab merge requests are all code or docs: it has no
+ * listing repositories). The GitLab half is fetched with the read-only
+ * `GITLAB_COM_TOKEN_READ_ONLY` and persisted beside the tokens, under
+ * `gitlab`, in the same file. When GitLab.com fails, the LAST GOOD GitLab
+ * half from that file is reused (and the failure logged), so the published
+ * figures never drop by the GitLab share for one bad sweep. Token names are
+ * unchanged, so the nginx Lua module needs no change: it reads `tokens`
+ * only.
+ *
+ * @module
+ */
+
+import fs from "node:fs";
+import path from "node:path";
+
+import { createGitlabClient } from "../gl/client.mjs";
+import { collectGitlab } from "../gl/collect.mjs";
+import { summarizeGitlab } from "../gl/normalize.mjs";
+import { runWithConcurrency } from "./concurrency.mjs";
+import {
+  foldProjectName,
+  loadContributionsConfig,
+} from "./contributions-yaml.mjs";
+import { resolveInfluxConfig } from "./influx.mjs";
+import {
+  getAcceptedAnswers,
+  getActivityBand,
+  getCodeVsListingSplit,
+  getContributionTotals,
+  getFreshness,
+  getHeaderActivityBand,
+  getLatestRelease,
+  getStars,
+  getUpstreamRepos,
+} from "./queries.mjs";
+import { ACTIVE_REPOS, projectTokenId } from "./roster.mjs";
+
+/** Default output path, relative to the repository root. */
+export const DEFAULT_SUMMARY_PATH = ".cache/ghc/projects-summary.json";
+
+/** Collector families whose oldest successful sweep backs every live number
+ * this summary publishes (contributions, stars, releases). */
+const FRESHNESS_FAMILIES = [
+  "outbound",
+  "discussions",
+  "repo",
+  "stars",
+  "totals",
+];
+
+/** CSS class applied to a `*_CLASS` token to hide the figure it gates. */
+const HIDE_CLASS = "prj-hide";
+/** CSS class applied when the figure should render. */
+const SHOW_CLASS = "";
+
+/** How many of this module's InfluxDB queries may run at once. Firing all
+ * ~10 concurrently intermittently aborted under `influx.mjs`'s 20 s
+ * timeout; a small cap plus `influx.mjs`'s own one-retry-on-abort is enough
+ * headroom without serializing the whole collection. */
+const QUERY_CONCURRENCY = 3;
+
+/**
+ * Runs every query the live summary needs and returns the raw shaped
+ * results — no token names yet, so this half is independently testable
+ * against a live database without asserting on the token contract, and
+ * {@link buildSummaryTokens} is independently testable with canned data and
+ * no network.
+ *
+ * @param {import('./influx.mjs').InfluxConfig} config - Connection settings.
+ * @param {string} root - Repository root, for reading `contributions.yaml`.
+ * @returns {Promise<RawSummaryData>} Raw query results.
+ */
+export async function collectSummaryData(config, root) {
+  const contributions = loadContributionsConfig(root);
+  const listingSet = new Set(contributions.listingRepos);
+
+  const [
+    contributionTotals,
+    codeVsListingSplit,
+    upstreamRepos,
+    acceptedAnswers,
+    headerBand,
+    activityBand,
+    freshness,
+    stars,
+    releases,
+  ] = await runWithConcurrency(
+    [
+      () => getContributionTotals(config),
+      () => getCodeVsListingSplit(config, contributions.listingRepos),
+      () => getUpstreamRepos(config),
+      () => getAcceptedAnswers(config),
+      () => getHeaderActivityBand(config),
+      () => getActivityBand(config),
+      () => getFreshness(config, FRESHNESS_FAMILIES),
+      () => getStars(config, ACTIVE_REPOS),
+      () => getLatestRelease(config, ACTIVE_REPOS),
+    ],
+    QUERY_CONCURRENCY,
+  );
+
+  // Distinct upstream PROJECTS (owner, folded per contributions.yaml's
+  // displayName) with at least one merged CODE/DOCS pull request — listing
+  // repos excluded, per the owner's "unit of a project" decision.
+  const codeUpstreamProjects = new Set(
+    upstreamRepos
+      .filter((repo) => repo.merged > 0 && !listingSet.has(repo.fullName))
+      .map((repo) => foldProjectName(repo.fullName, contributions.displayName)),
+  );
+
+  return {
+    contributionTotals,
+    codeVsListingSplit,
+    codeUpstreamProjects: [...codeUpstreamProjects].toSorted((a, b) =>
+      a.localeCompare(b),
+    ),
+    answersCount: acceptedAnswers.length,
+    headerBand,
+    activityBand,
+    freshness,
+    stars,
+    releases,
+  };
+}
+
+/**
+ * @typedef {object} RawSummaryData
+ * @property {Awaited<ReturnType<typeof getContributionTotals>>} contributionTotals
+ * @property {Awaited<ReturnType<typeof getCodeVsListingSplit>>} codeVsListingSplit
+ * @property {string[]} codeUpstreamProjects - Folded GitHub project names
+ *   with at least one merged code/docs PR.
+ * @property {number} answersCount
+ * @property {Awaited<ReturnType<typeof getHeaderActivityBand>>} headerBand
+ * @property {Awaited<ReturnType<typeof getActivityBand>>} activityBand
+ * @property {Awaited<ReturnType<typeof getFreshness>>} freshness
+ * @property {Awaited<ReturnType<typeof getStars>>} stars
+ * @property {Awaited<ReturnType<typeof getLatestRelease>>} releases
+ */
+
+/**
+ * @typedef {object} GitlabSummary
+ * @property {string} fetchedAt - When this GitLab half was collected.
+ * @property {number} merged - Merged merge requests.
+ * @property {number} open - Open merge requests.
+ * @property {number} closed - Closed, unmerged merge requests.
+ * @property {string[]} projects - Folded project names with a merged MR.
+ */
+
+/**
+ * Collects the GitLab.com half of the live summary: authored merge requests
+ * in public, non-own projects, counted and folded.
+ *
+ * @param {string} root - Repository root, for `contributions.yaml`.
+ * @param {() => import('../gl/client.mjs').GitlabClient} [makeClient] - Injectable client factory.
+ * @returns {Promise<GitlabSummary | null>} The half, or null when
+ *   `contributions.yaml` declares no GitLab account.
+ */
+export async function collectGitlabSummary(
+  root,
+  makeClient = () => createGitlabClient(),
+) {
+  const contributions = loadContributionsConfig(root);
+  if (!contributions.gitlab) return null;
+  const { items, fetchedAt } = await collectGitlab(
+    makeClient(),
+    contributions.gitlab,
+    { withIssues: false, withAchievements: false },
+  );
+  return { fetchedAt, ...summarizeGitlab(items, contributions.displayName) };
+}
+
+/**
+ * One active card's tokens: stars, their 30-day delta, the latest release,
+ * and the classes that hide a row with nothing to show.
+ *
+ * @param {string} id - Token segment from `projectTokenId`.
+ * @param {{stars: number, stars30d: number}} [star] - Star row, if any.
+ * @param {{tag: string, ageDays: number}} [release] - Release row, if any.
+ * @returns {Record<string, number | string | null>} The card's tokens.
+ */
+function cardTokens(id, star, release) {
+  return {
+    [`PRJ_${id}_STARS`]: star ? star.stars : null,
+    [`PRJ_${id}_STARS_30D`]: star ? star.stars30d : null,
+    // A card with no stars shows no stars row: "0" reads as a verdict.
+    [`PRJ_${id}_STARS_CLASS`]: star?.stars > 0 ? SHOW_CLASS : HIDE_CLASS,
+    [`PRJ_${id}_STARS_30D_CLASS`]: star?.stars30d > 0 ? SHOW_CLASS : HIDE_CLASS,
+    [`PRJ_${id}_REL_TAG`]: release ? release.tag : null,
+    [`PRJ_${id}_REL_AGE`]: release ? release.ageDays : null,
+    [`PRJ_${id}_REL_CLASS`]: release ? SHOW_CLASS : HIDE_CLASS,
+  };
+}
+
+/**
+ * The global (not per-card) summary tokens and how each is read from the
+ * raw data. The ONE list of global keys: {@link buildSummaryTokens} fills
+ * every entry and {@link buildNullSummary} nulls the same keys, so the live
+ * and degraded shapes cannot drift apart.
+ *
+ * @type {Readonly<Record<string, (raw: RawSummaryData, gitlab: GitlabSummary | null) => number | string | null>>}
+ */
+export const GLOBAL_SUMMARY_TOKENS = Object.freeze({
+  PRJ_CODE_MERGED: (raw, gitlab) =>
+    raw.codeVsListingSplit.codeOrDocs.merged + (gitlab?.merged ?? 0),
+  PRJ_CODE_UPSTREAMS: (raw, gitlab) =>
+    new Set([...raw.codeUpstreamProjects, ...(gitlab?.projects ?? [])]).size,
+  PRJ_LISTING_MERGED: (raw) => raw.codeVsListingSplit.listing.merged,
+  // CODE PRs only (excludes contributions.yaml listingRepos): the owner
+  // decided the open-review tile must not blend packaging/listing PRs into
+  // the "under review" figure. `contributionTotals.prOpen` (all kinds) is
+  // still available for the subpage's book-keeping totals.
+  PRJ_PR_OPEN: (raw, gitlab) =>
+    raw.codeVsListingSplit.codeOrDocs.open + (gitlab?.open ?? 0),
+  PRJ_ANSWERS: (raw) => raw.answersCount,
+  PRJ_RELEASES_90D: (raw) => raw.headerBand.releases90d,
+  PRJ_STARS_30D: (raw) => raw.headerBand.stars30d,
+  PRJ_ACTIVE_DAYS: (raw) => raw.activityBand.activeDays,
+  PRJ_STREAK: (raw) => raw.activityBand.streakDays,
+  PRJ_AS_OF: (raw) => raw.freshness.asOf,
+});
+
+/**
+ * Shapes {@link RawSummaryData} into the flat `PRJ_*` token map this module
+ * publishes — pure and network-free, so it is unit-tested with canned data.
+ *
+ * Every token declared in `src/components/projects/ssr-tokens.ts` is present
+ * in the returned object, `null` where the underlying data is absent, so a
+ * consumer that iterates the registry never hits a missing key.
+ *
+ * @param {RawSummaryData} raw - From {@link collectSummaryData}.
+ * @param {GitlabSummary | null} [gitlab] - The GitLab.com half, summed into
+ *   the code/docs figures; null leaves them GitHub-only.
+ * @returns {Record<string, number | string | null>} Token → primitive.
+ */
+export function buildSummaryTokens(raw, gitlab = null) {
+  /** @type {Record<string, number | string | null>} */
+  const tokens = Object.fromEntries(
+    Object.entries(GLOBAL_SUMMARY_TOKENS).map(([key, read]) => [
+      key,
+      read(raw, gitlab),
+    ]),
+  );
+
+  const starsByRepo = new Map(raw.stars.map((row) => [row.repo, row]));
+  const releaseByRepo = new Map(raw.releases.map((row) => [row.repo, row]));
+  for (const repoId of ACTIVE_REPOS) {
+    Object.assign(
+      tokens,
+      cardTokens(
+        projectTokenId(repoId),
+        starsByRepo.get(repoId),
+        releaseByRepo.get(repoId),
+      ),
+    );
+  }
+
+  return tokens;
+}
+
+/**
+ * Builds a fully-null summary (every card token declared, every value
+ * `null`) — the degraded state written only when NO previous summary exists
+ * and the live fetch also failed, so a consumer sees "no data everywhere"
+ * instead of a missing file.
+ *
+ * @returns {Record<string, number | string | null>} Token → `null` (mostly).
+ */
+export function buildNullSummary() {
+  /** @type {Record<string, number | string | null>} */
+  const tokens = Object.fromEntries(
+    Object.keys(GLOBAL_SUMMARY_TOKENS).map((key) => [key, null]),
+  );
+  for (const repoId of ACTIVE_REPOS) {
+    // No star row and no release: every value null, every row hidden.
+    Object.assign(tokens, cardTokens(projectTokenId(repoId)));
+  }
+  return tokens;
+}
+
+/**
+ * Writes `data` to `outPath` atomically (temp file + rename), creating the
+ * parent directory if needed.
+ *
+ * @param {string} outPath - Absolute path to write.
+ * @param {Record<string, unknown>} data - JSON-serializable payload.
+ */
+function writeJsonAtomic(outPath, data) {
+  fs.mkdirSync(path.dirname(outPath), { recursive: true });
+  const tmpPath = `${outPath}.tmp-${process.pid}`;
+  fs.writeFileSync(tmpPath, `${JSON.stringify(data, null, 2)}\n`);
+  fs.renameSync(tmpPath, outPath);
+}
+
+/**
+ * The previous summary file's GitLab half, if any.
+ *
+ * @param {string} outPath - Summary file path.
+ * @returns {GitlabSummary | null} The last good half.
+ */
+function readLastGitlabHalf(outPath) {
+  try {
+    const previous = JSON.parse(fs.readFileSync(outPath, "utf8"));
+    const half = previous?.gitlab;
+    return half &&
+      typeof half.merged === "number" &&
+      Array.isArray(half.projects)
+      ? half
+      : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Fetches the GitLab half, or reuses the last good one from `outPath` when
+ * GitLab.com fails. Never throws.
+ *
+ * @param {string} root - Repository root.
+ * @param {string} outPath - Summary file path (holds the last good half).
+ * @param {(root: string) => Promise<GitlabSummary | null>} collectHalf - Collector.
+ * @param {(line: string) => void} warn - Warning sink.
+ * @returns {Promise<{gitlab: GitlabSummary | null, fresh: boolean}>} The half
+ *   to publish, and whether it is fresh.
+ */
+async function resolveGitlabHalf(root, outPath, collectHalf, warn) {
+  try {
+    return { gitlab: await collectHalf(root), fresh: true };
+  } catch (error) {
+    const message = (
+      error instanceof Error ? error.message : String(error)
+    ).replaceAll(/[\r\n\t]+/g, " ");
+    const last = readLastGitlabHalf(outPath);
+    warn(
+      last
+        ? `Could not refresh the GitLab.com half of the /projects summary (${message}). Reusing the last good one from ${last.fetchedAt}.`
+        : `Could not refresh the GitLab.com half of the /projects summary (${message}) and none was saved before; the figures are GitHub-only until it succeeds.`,
+    );
+    return { gitlab: last, fresh: false };
+  }
+}
+
+/**
+ * Refreshes the live /projects summary JSON at `outPath` (default
+ * {@link DEFAULT_SUMMARY_PATH} under `root`).
+ *
+ * @param {object} [options] - Options.
+ * @param {string} [options.root] - Repository root; defaults to `process.cwd()`.
+ * @param {string} [options.outPath] - Absolute output path; overrides `root`-relative default.
+ * @param {import('./influx.mjs').InfluxConfig} [options.config] - Connection
+ *   settings; defaults to {@link resolveInfluxConfig}.
+ * @param {(line: string) => void} [options.log] - Progress sink.
+ * @param {(line: string) => void} [options.warn] - Warning sink.
+ * @param {(config: import('./influx.mjs').InfluxConfig, root: string) => Promise<RawSummaryData>}
+ *   [options.collect] - Overrides {@link collectSummaryData}; unit tests use
+ *   this to avoid a real InfluxDB connection while exercising the real
+ *   atomic-write / last-good-on-failure logic below.
+ * @param {(root: string) => Promise<GitlabSummary | null>} [options.collectGitlab]
+ *   Overrides {@link collectGitlabSummary} (tests).
+ * @returns {Promise<{
+ *   tokens: Record<string, number | string | null>,
+ *   wrote: boolean,
+ *   refreshed: boolean,
+ * }>} The tokens now on disk; whether this call wrote the file at all
+ *   (`false` only for the "keep the existing file untouched" fallback); and
+ *   whether the tokens are FRESH live data (`false` for both fallbacks, so a
+ *   caller — e.g. a systemd `OnFailure=` — can alert on `!refreshed` even
+ *   though the file on disk is always valid JSON either way). A GitLab.com
+ *   failure also leaves `refreshed` false, even though the GitHub half is
+ *   fresh and the last good GitLab half was reused.
+ */
+export async function writeProjectsSummary({
+  root = process.cwd(),
+  outPath,
+  config,
+  log = () => {},
+  warn = console.warn,
+  collect = collectSummaryData,
+  collectGitlab: collectGitlabHalf = collectGitlabSummary,
+} = {}) {
+  const resolvedOutPath = outPath ?? path.join(root, DEFAULT_SUMMARY_PATH);
+  const resolvedConfig = config ?? resolveInfluxConfig();
+
+  try {
+    const raw = await collect(resolvedConfig, root);
+    const { gitlab, fresh: gitlabFresh } = await resolveGitlabHalf(
+      root,
+      resolvedOutPath,
+      collectGitlabHalf,
+      warn,
+    );
+    const tokens = buildSummaryTokens(raw, gitlab);
+    writeJsonAtomic(resolvedOutPath, {
+      schemaVersion: 1,
+      generatedAt: new Date().toISOString(),
+      tokens,
+      gitlab,
+    });
+    log(
+      `  ✓ Wrote ${resolvedOutPath} (${Object.keys(tokens).length} tokens, ` +
+        `as_of ${String(tokens.PRJ_AS_OF)}, GitLab ${gitlabFresh ? "fresh" : "last good"})`,
+    );
+    return { tokens, wrote: true, refreshed: gitlabFresh };
+  } catch (error) {
+    const message = (
+      error instanceof Error ? error.message : String(error)
+    ).replaceAll(/[\r\n\t]+/g, " ");
+    if (fs.existsSync(resolvedOutPath)) {
+      warn(
+        `Could not refresh the /projects summary (${message}). Keeping the existing ${resolvedOutPath}.`,
+      );
+      const existing = JSON.parse(fs.readFileSync(resolvedOutPath, "utf8"));
+      return { tokens: existing.tokens, wrote: false, refreshed: false };
+    }
+    warn(
+      `Could not refresh the /projects summary (${message}) and no cached ` +
+        `file exists. Writing a fully-null summary so consumers see "no data" ` +
+        "rather than a missing file.",
+    );
+    const tokens = buildNullSummary();
+    writeJsonAtomic(resolvedOutPath, {
+      schemaVersion: 1,
+      generatedAt: new Date().toISOString(),
+      tokens,
+    });
+    return { tokens, wrote: true, refreshed: false };
+  }
+}
+
+// Allow `node scripts/ghc/write-summary.mjs` to run standalone. In
+// production the systemd timer sets GHC_SUMMARY_PATH to the file nginx
+// serves on /stats/projects (/var/lib/jmrp.io/ghc/projects-summary.json).
+if (import.meta.url === `file://${process.argv[1]}`) {
+  const { refreshed } = await writeProjectsSummary({
+    outPath: process.env.GHC_SUMMARY_PATH || undefined,
+    log: (line) => console.log(line),
+    warn: (line) => console.warn(line),
+  });
+  process.exit(refreshed ? 0 : 1);
+}

@@ -1,0 +1,208 @@
+---
+/**
+ * "How I maintain the projects" — a build-time engineering table (PLAN.md
+ * section 5). Static: every cell comes from
+ * `src/data/ghc/projects-contributions.json`'s `maintenance` array,
+ * refreshed at build, not a live SSR token — the underlying facts (CI
+ * matrix, CodeQL coverage) change at most monthly.
+ */
+import { defaultLocale, type Locale } from "@i18n/config";
+import { useTranslations } from "@i18n/utils";
+
+/** Friendly labels for CodeQL's internal language identifiers. */
+const CODEQL_LABELS: Record<string, string> = {
+  go: "Go",
+  python: "Python",
+  "javascript-typescript": "JS/TS",
+  "c-cpp": "C/C++",
+  "java-kotlin": "Java/Kotlin",
+  ruby: "Ruby",
+  swift: "Swift",
+};
+
+/** One maintenance row, already joined with the project's display name. */
+export interface MaintenanceRow {
+  readonly projectName: string;
+  readonly ci: { readonly jobs: number; readonly os: readonly string[] } | null;
+  readonly ciPassRate90d: { readonly pct: number } | null;
+  readonly codeQl: { readonly languages: readonly string[] } | null;
+}
+
+interface Props {
+  readonly rows: readonly MaintenanceRow[];
+  /** Pre-formatted Dependabot sentence, already localized and interpolated. */
+  readonly dependabotSentence: string | null;
+}
+
+const { rows, dependabotSentence } = Astro.props;
+const locale = (Astro.currentLocale ?? defaultLocale) as Locale;
+const t = useTranslations(locale);
+
+/** Runner OS in one fixed order, so every row reads the same way. */
+const OS_ORDER = ["Linux", "macOS", "Windows"];
+const sortOs = (os: readonly string[]): string[] =>
+  [...os].sort(
+    (a, b) => (OS_ORDER.indexOf(a) + 1 || 99) - (OS_ORDER.indexOf(b) + 1 || 99),
+  );
+
+const codeQlLabel = (languages: readonly string[]): string =>
+  languages
+    .filter((lang) => lang !== "actions")
+    .map((lang) => CODEQL_LABELS[lang] ?? lang)
+    .join(", ");
+---
+
+<section
+  class="maintenance"
+  aria-labelledby="maintenance-heading"
+>
+  <p class="section-title">{t("pages.projects.maintenance.kicker")}</p>
+  <h2
+    id="maintenance-heading"
+    class="maintenance__heading"
+  >
+    {t("pages.projects.maintenance.heading")}
+  </h2>
+
+  {/* eslint-disable astro/jsx-a11y/no-noninteractive-tabindex -- focusable scroll region for keyboard access to a wide table (axe scrollable-region-focusable), same pattern as Code.astro/Tabs.astro */}
+  <div
+    class="maintenance__scroll"
+    tabindex="0"
+    role="region"
+    aria-label={t("pages.projects.maintenance.tableLabel")}
+  >
+    {/* eslint-enable astro/jsx-a11y/no-noninteractive-tabindex */}
+    <table>
+      <thead>
+        <tr>
+          <th scope="col">{t("pages.projects.maintenance.colProject")}</th>
+          <th scope="col">{t("pages.projects.maintenance.colCiOn")}</th>
+          <th scope="col">{t("pages.projects.maintenance.colCiJobs")}</th>
+          <th scope="col">{t("pages.projects.maintenance.colPassRate")}</th>
+          <th scope="col">{t("pages.projects.maintenance.colCodeQl")}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {rows.map((row) => (
+          <tr>
+            <th scope="row">{row.projectName}</th>
+            <td>
+              {row.ci
+                ? sortOs(row.ci.os).join(", ")
+                : t("pages.projects.maintenance.noData")}
+            </td>
+            <td class="n">
+              {row.ci ? row.ci.jobs : t("pages.projects.maintenance.noData")}
+            </td>
+            <td class="n">
+              {row.ciPassRate90d
+                ? `${row.ciPassRate90d.pct.toFixed(1)}%`
+                : t("pages.projects.maintenance.passRatePending")}
+            </td>
+            <td>
+              {row.codeQl && row.codeQl.languages.length > 0 ? (
+                <span class="maintenance__yes">
+                  <span
+                    class="i-mdi:check"
+                    aria-hidden="true"
+                  />
+                  {codeQlLabel(row.codeQl.languages)}
+                </span>
+              ) : (
+                <span class="maintenance__no">
+                  {t("pages.projects.maintenance.noData")}
+                </span>
+              )}
+            </td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  </div>
+
+  {dependabotSentence && (
+    <p class="maintenance__dependabot">{dependabotSentence}</p>
+  )}
+</section>
+
+<style>
+  .maintenance {
+    margin: var(--space-lg-xl) 0;
+  }
+
+  .maintenance__heading {
+    margin: var(--space-xs) 0 var(--space-md);
+    font-size: 1.35rem;
+  }
+
+  .maintenance__scroll {
+    overflow-x: auto;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+  }
+
+  .maintenance__scroll:focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: -2px;
+  }
+
+  table {
+    width: 100%;
+    min-width: 42rem;
+    font-size: var(--text-sm);
+    border-collapse: collapse;
+  }
+
+  th,
+  td {
+    padding: 9px var(--space-sm);
+    vertical-align: top;
+    text-align: left;
+    border-bottom: 1px solid var(--color-hair);
+  }
+
+  thead th {
+    font-family: var(--font-mono);
+    font-size: var(--text-micro);
+    font-weight: var(--fw-medium);
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    background: var(--color-bg-subtle);
+  }
+
+  tbody tr:last-child td,
+  tbody tr:last-child th {
+    border-bottom: 0;
+  }
+
+  tbody th {
+    font-weight: var(--fw-medium);
+    color: var(--color-text-heading);
+  }
+
+  td.n {
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+
+  .maintenance__yes {
+    display: inline-flex;
+    gap: 4px;
+    align-items: center;
+    color: var(--color-success, var(--color-accent));
+  }
+
+  .maintenance__no {
+    font-style: italic;
+    color: var(--color-text-muted);
+  }
+
+  .maintenance__dependabot {
+    max-width: 62ch;
+    margin: var(--space-sm) 0 0;
+    font-size: var(--text-sm);
+    font-variant-numeric: tabular-nums;
+    color: var(--color-text);
+  }
+</style>

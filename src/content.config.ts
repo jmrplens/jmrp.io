@@ -825,11 +825,113 @@ const ProjectEntry = z.object({
   endpointSameAs: z.array(z.url()).optional(),
   topics: z.array(ProjectTopic).min(1),
   summary: LocalizedString,
+  /**
+   * Shorter copy for the homepage's featured card, when `summary` is too long
+   * for one. Display-only: never emitted in JSON-LD and never compared against
+   * the project's own docs site, so it carries no `#software` contract.
+   */
+  cardSummary: LocalizedString.optional(),
 });
 
 const projectsSchema = z.object({
   type: z.literal("projects"),
   projects: z.array(ProjectEntry).min(1),
+});
+
+/**
+ * One hand-picked upstream contribution shown as a "Highlight": the first 3
+ * (authored order) render on /projects/, up to 6 on
+ * /projects/contributions/. See `plan/projects-ghchronicle/destacadas.md` for
+ * how these were chosen and verified (merged, released where applicable, no
+ * pending-disclosure security content).
+ */
+const ContributionsFeatured = z.object({
+  /**
+   * `owner/repo` full name, e.g. `"TriliumNext/Trilium"`; for GitLab, the
+   * project's full path, which may be nested (`"gitlab-org/api/client-go"`).
+   */
+  repo: z.string().regex(/^[\w.-]+(\/[\w.-]+)+$/, "owner/repo"),
+  /** PR/issue number, or a GitLab merge request's `iid`. */
+  number: z.number().int().positive(),
+  /** A GitLab merge request is `pull_request`. */
+  kind: z.enum(["pull_request", "issue"]),
+  /** Where the item lives; decides its URL (`/pull/N` or `/-/merge_requests/N`). */
+  platform: z.enum(["github", "gitlab"]).default("github"),
+  /** One-line "why this matters" — never a restatement of the PR title. */
+  why: LocalizedString,
+});
+
+/**
+ * Curation data for the "Contributions to other projects" block on
+ * /projects/ and the /projects/contributions/ subpage. Read by
+ * `scripts/ghc/build-data.mjs` (build-time lists) and
+ * `scripts/ghc/write-summary.mjs` (the live "projects" fold, for
+ * `PRJ_CODE_UPSTREAMS`) — see `plan/projects-ghchronicle/PLAN.md` section
+ * 7.6. Never consumed by a page directly: both scripts read this collection
+ * via `getCollection("profile")` and re-shape it into their own JSON output.
+ */
+const contributionsSchema = z.object({
+  type: z.literal("contributions"),
+  /**
+   * `owner/repo` full names classified as packaging/distribution rather than
+   * code or docs (winget manifest bumps, awesome-list entries, registry
+   * listings for the account's OWN projects). Drives the
+   * "code & docs" vs. "packaging & listings" split — `datos.md` idea 1.
+   */
+  listingRepos: z
+    .array(z.string().regex(/^[\w.-]+\/[\w.-]+$/, "owner/repo"))
+    .min(1),
+  /**
+   * `owner/repo#number` identifiers whose TITLE and URL must never render in
+   * the build-time ledger or subpage — a false security claim
+   * (ARM-software/MDK-Middleware#131), a declined report
+   * (openobserve/openobserve#14252), or an account-admin request that is not
+   * a contribution (pypi/support#12078). The live SUMMARY counts (which must
+   * match GitHub's own public search results) are computed straight from
+   * ghchronicle and are NOT affected by this list — only the detailed,
+   * per-item listing is.
+   */
+  exclude: z
+    .array(
+      z
+        .string()
+        .regex(/^[\w.-]+(\/[\w.-]+)+[#!]\d+$/, "owner/repo#number or path!iid"),
+    )
+    .default([]),
+  /**
+   * `owner/repo` → display name, for folding sibling repos of the same
+   * upstream project into one entity (`henrygd/beszel-docs` folds into
+   * "Beszel") and for giving an org-scoped series a readable name
+   * (`modelcontextprotocol/go-sdk` → "MCP Go SDK"). A repo absent from this
+   * map displays under its bare repo name (`acmesh-official/acme.sh` →
+   * "acme.sh"), without the owner. This is also how
+   * `PRJ_CODE_UPSTREAMS` (owner decision: "unit of a project" = a GitHub
+   * owner, with optional YAML folding — PLAN.md 8.2 #3) counts distinct
+   * PROJECTS rather than distinct repos.
+   */
+  displayName: z.record(z.string(), z.string()).default({}),
+  featured: z.array(ContributionsFeatured).min(1).max(7),
+  /**
+   * GitLab.com account whose authored merge requests and issues are added to
+   * the GitHub ones. `excludeNamespaces` are the owner's own top-level
+   * namespaces (mirrors of his GitHub repositories), never counted as
+   * contributions to someone else's project.
+   */
+  gitlab: z
+    .object({
+      username: z.string().regex(/^[\w.-]+$/),
+      userId: z.number().int().positive(),
+      excludeNamespaces: z.array(z.string()).default([]),
+    })
+    .optional(),
+  /**
+   * Title-matching regex source strings (JS `RegExp`, case-insensitive):
+   * titles that would otherwise be hidden by the default
+   * `/security|CVE|vulnerab/i` filter but are explicitly cleared to show
+   * (merged, released, no pending disclosure). Empty by default — nothing is
+   * allow-listed until reviewed. See PLAN.md 8.2 #10.
+   */
+  securityTitleAllow: z.array(z.string()).default([]),
 });
 
 const profile = defineCollection({
@@ -842,6 +944,7 @@ const profile = defineCollection({
     aboutSchema,
     usesSchema,
     projectsSchema,
+    contributionsSchema,
   ]),
 });
 
