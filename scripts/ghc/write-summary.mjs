@@ -202,6 +202,28 @@ export async function collectGitlabSummary(
 }
 
 /**
+ * One active card's tokens: stars, their 30-day delta, the latest release,
+ * and the classes that hide a row with nothing to show.
+ *
+ * @param {string} id - Token segment from `projectTokenId`.
+ * @param {{stars: number, stars30d: number} | undefined} star - Star row.
+ * @param {{tag: string, ageDays: number} | undefined} release - Release row.
+ * @returns {Record<string, number | string | null>} The card's tokens.
+ */
+function cardTokens(id, star, release) {
+  return {
+    [`PRJ_${id}_STARS`]: star ? star.stars : null,
+    [`PRJ_${id}_STARS_30D`]: star ? star.stars30d : null,
+    // A card with no stars shows no stars row: "0" reads as a verdict.
+    [`PRJ_${id}_STARS_CLASS`]: star?.stars > 0 ? SHOW_CLASS : HIDE_CLASS,
+    [`PRJ_${id}_STARS_30D_CLASS`]: star?.stars30d > 0 ? SHOW_CLASS : HIDE_CLASS,
+    [`PRJ_${id}_REL_TAG`]: release ? release.tag : null,
+    [`PRJ_${id}_REL_AGE`]: release ? release.ageDays : null,
+    [`PRJ_${id}_REL_CLASS`]: release ? SHOW_CLASS : HIDE_CLASS,
+  };
+}
+
+/**
  * Shapes {@link RawSummaryData} into the flat `PRJ_*` token map this module
  * publishes — pure and network-free, so it is unit-tested with canned data.
  *
@@ -240,23 +262,15 @@ export function buildSummaryTokens(raw, gitlab = null) {
 
   const starsByRepo = new Map(raw.stars.map((row) => [row.repo, row]));
   const releaseByRepo = new Map(raw.releases.map((row) => [row.repo, row]));
-
   for (const repoId of ACTIVE_REPOS) {
-    const id = projectTokenId(repoId);
-    const star = starsByRepo.get(repoId);
-    const release = releaseByRepo.get(repoId);
-
-    tokens[`PRJ_${id}_STARS`] = star ? star.stars : null;
-    tokens[`PRJ_${id}_STARS_30D`] = star ? star.stars30d : null;
-    // A card with no stars shows no stars row: "0" reads as a verdict.
-    tokens[`PRJ_${id}_STARS_CLASS`] =
-      star && star.stars > 0 ? SHOW_CLASS : HIDE_CLASS;
-    tokens[`PRJ_${id}_STARS_30D_CLASS`] =
-      star && star.stars30d > 0 ? SHOW_CLASS : HIDE_CLASS;
-
-    tokens[`PRJ_${id}_REL_TAG`] = release ? release.tag : null;
-    tokens[`PRJ_${id}_REL_AGE`] = release ? release.ageDays : null;
-    tokens[`PRJ_${id}_REL_CLASS`] = release ? SHOW_CLASS : HIDE_CLASS;
+    Object.assign(
+      tokens,
+      cardTokens(
+        projectTokenId(repoId),
+        starsByRepo.get(repoId),
+        releaseByRepo.get(repoId),
+      ),
+    );
   }
 
   return tokens;

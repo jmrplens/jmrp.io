@@ -52,6 +52,21 @@ function isAbort(error) {
 }
 
 /**
+ * Builds a REST URL under `/api/v4` with its query parameters.
+ *
+ * @param {string} path - Path under `/api/v4`, starting with `/`.
+ * @param {Record<string, string | number>} [params] - Query parameters.
+ * @returns {URL} The full URL.
+ */
+function apiUrl(path, params = {}) {
+  const url = new URL(`/api/v4${path}`, GITLAB_ORIGIN);
+  for (const [key, value] of Object.entries(params)) {
+    url.searchParams.set(key, String(value));
+  }
+  return url;
+}
+
+/**
  * Builds a client. Throws when no token is configured, so a caller can fall
  * back to its committed snapshot instead of silently publishing zeros.
  *
@@ -95,21 +110,6 @@ export function createGitlabClient({
         throw error;
       }
     }
-  }
-
-  /**
-   * Builds a REST URL under `/api/v4` with its query parameters.
-   *
-   * @param {string} path - Path under `/api/v4`, starting with `/`.
-   * @param {Record<string, string | number>} [params] - Query parameters.
-   * @returns {URL} The full URL.
-   */
-  function apiUrl(path, params = {}) {
-    const url = new URL(`/api/v4${path}`, GITLAB_ORIGIN);
-    for (const [key, value] of Object.entries(params)) {
-      url.searchParams.set(key, String(value));
-    }
-    return url;
   }
 
   return {

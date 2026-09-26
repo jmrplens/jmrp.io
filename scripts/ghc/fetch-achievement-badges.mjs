@@ -87,7 +87,7 @@ export function badgeFileName(slug, tierName) {
  */
 export function isBadgeUrl(url, slug, tierName) {
   const match = BADGE_URL_RE.exec(url);
-  return Boolean(match && match[1] === slug && match[2] === tierName);
+  return match?.[1] === slug && match?.[2] === tierName;
 }
 
 /**

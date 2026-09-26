@@ -148,50 +148,86 @@ export function isRedacted(item, contributions) {
  */
 export function splitLedger(fullLedger, contributions, listingSet) {
   const excludeSet = new Set(contributions.exclude);
-  const ledgerByYear = {};
-  /** @type {Record<string, {open: number, closed: number}>} */
-  const issuesByProject = {};
-  /** @type {Record<string, Record<string, {fullName: string, merged: number, open: number}>>} */
-  const listingsByOwnProject = {};
+  const views = {
+    ledgerByYear: {},
+    /** @type {Record<string, {open: number, closed: number}>} */
+    issuesByProject: {},
+    /** @type {Record<string, Record<string, {fullName: string, merged: number, open: number}>>} */
+    listingsByOwnProject: {},
+  };
   for (const item of fullLedger) {
     if (excludeSet.has(itemKey(item))) continue;
     const project = foldProjectName(item.fullName, contributions.displayName);
     if (item.kind === "issue") {
-      issuesByProject[project] ??= { open: 0, closed: 0 };
-      issuesByProject[project][item.state === "open" ? "open" : "closed"] += 1;
-      continue;
+      countIssue(views.issuesByProject, project, item);
+    } else if (item.platform !== "gitlab" && listingSet.has(item.fullName)) {
+      // Listing repositories are a GitHub classification; GitLab has none.
+      countListing(views.listingsByOwnProject, project, item, contributions);
+    } else {
+      addToLedger(views.ledgerByYear, project, item, contributions);
     }
-    // Listing repositories are a GitHub classification; GitLab has none.
-    if (item.platform !== "gitlab" && listingSet.has(item.fullName)) {
-      if (item.state === "closed") continue;
-      const owners = deriveOwnProjects(
-        item.title,
-        ACTIVE_REPOS,
-        contributions.listingAliases,
-      );
-      for (const own of owners.length > 0 ? owners : ["other"]) {
-        listingsByOwnProject[own] ??= {};
-        const row = (listingsByOwnProject[own][project] ??= {
-          fullName: item.fullName,
-          merged: 0,
-          open: 0,
-        });
-        row[item.state === "merged" ? "merged" : "open"] += 1;
-      }
-      continue;
-    }
-    const year = item.createdAt.slice(0, 4);
-    ledgerByYear[year] ??= {};
-    ledgerByYear[year][project] ??= [];
-    const redacted = isRedacted(item, contributions);
-    ledgerByYear[year][project].push({
-      ...item,
-      title: redacted ? null : item.title,
-      redacted,
-    });
   }
+  return views;
+}
 
-  return { ledgerByYear, issuesByProject, listingsByOwnProject };
+/**
+ * Counts one issue under its folded project.
+ *
+ * @param {Record<string, {open: number, closed: number}>} issuesByProject - Accumulator.
+ * @param {string} project - Folded project name.
+ * @param {import('./queries.mjs').LedgerItem} item - The issue.
+ */
+function countIssue(issuesByProject, project, item) {
+  issuesByProject[project] ??= { open: 0, closed: 0 };
+  issuesByProject[project][item.state === "open" ? "open" : "closed"] += 1;
+}
+
+/**
+ * Counts one listing PR under every own project its title names. Closed
+ * listing PRs are superseded attempts and are dropped.
+ *
+ * @param {Record<string, Record<string, {fullName: string, merged: number, open: number}>>} listingsByOwnProject - Accumulator.
+ * @param {string} project - Folded name of the listing target.
+ * @param {import('./queries.mjs').LedgerItem} item - The listing PR.
+ * @param {import('./contributions-yaml.mjs').ContributionsConfig} contributions - Curation config.
+ */
+function countListing(listingsByOwnProject, project, item, contributions) {
+  if (item.state === "closed") return;
+  const owners = deriveOwnProjects(
+    item.title,
+    ACTIVE_REPOS,
+    contributions.listingAliases,
+  );
+  for (const own of owners.length > 0 ? owners : ["other"]) {
+    listingsByOwnProject[own] ??= {};
+    const row = (listingsByOwnProject[own][project] ??= {
+      fullName: item.fullName,
+      merged: 0,
+      open: 0,
+    });
+    row[item.state === "merged" ? "merged" : "open"] += 1;
+  }
+}
+
+/**
+ * Files one code/docs PR under its creation year and folded project,
+ * redacting the title when the curation rules require it.
+ *
+ * @param {Record<string, Record<string, object[]>>} ledgerByYear - Accumulator.
+ * @param {string} project - Folded project name.
+ * @param {import('./queries.mjs').LedgerItem} item - The PR or MR.
+ * @param {import('./contributions-yaml.mjs').ContributionsConfig} contributions - Curation config.
+ */
+function addToLedger(ledgerByYear, project, item, contributions) {
+  const year = item.createdAt.slice(0, 4);
+  ledgerByYear[year] ??= {};
+  ledgerByYear[year][project] ??= [];
+  const redacted = isRedacted(item, contributions);
+  ledgerByYear[year][project].push({
+    ...item,
+    title: redacted ? null : item.title,
+    redacted,
+  });
 }
 
 /**

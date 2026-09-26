@@ -87,7 +87,13 @@ function groupThousands(value, locale) {
   const sign = rounded < 0 ? "-" : "";
   const digits = Math.abs(rounded).toString();
   const separator = locale === "es" ? "." : ",";
-  const grouped = digits.replaceAll(/\B(?=(\d{3})+(?!\d))/g, () => separator);
+  // Group from the right in threes; a loop instead of the usual
+  // lookahead regex, which backtracks super-linearly on long inputs.
+  const groups = [];
+  for (let end = digits.length; end > 0; end -= 3) {
+    groups.unshift(digits.slice(Math.max(0, end - 3), end));
+  }
+  const grouped = groups.join(separator);
   return sign + grouped;
 }
 
@@ -199,7 +205,7 @@ function utcOffsetInTimeZone(date) {
   }).formatToParts(date);
   const tzName =
     parts.find((part) => part.type === "timeZoneName")?.value ?? "GMT";
-  const match = tzName.match(/^GMT([+-]\d+)(?::(\d+))?$/);
+  const match = /^GMT([+-]\d+)(?::(\d+))?$/.exec(tzName);
   if (!match) return "UTC";
   const [, hours, minutes] = match;
   return minutes ? `UTC${hours}:${minutes}` : `UTC${hours}`;

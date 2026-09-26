@@ -204,10 +204,7 @@ export async function getCodeVsListingSplit(config, listingRepos) {
         break;
       }
       case "closed": {
-        {
-          bucket.closed += 1;
-          // No default
-        }
+        bucket.closed += 1;
         break;
       }
     }
@@ -937,8 +934,8 @@ export async function getDependabotFixed(config, repos = MAINTENANCE_REPOS) {
   const perRepoSeconds = new Map();
   const allSeconds = [];
   for (const row of rows) {
-    const seconds = num(row.seconds_to_resolve, NaN);
-    if (Number.isNaN(seconds)) continue;
+    const seconds = numOrNull(row.seconds_to_resolve);
+    if (seconds === null) continue;
     const repo = String(row.repo);
     if (!perRepoSeconds.has(repo)) perRepoSeconds.set(repo, []);
     perRepoSeconds.get(repo).push(seconds);

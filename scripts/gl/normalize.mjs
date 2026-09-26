@@ -39,7 +39,10 @@ export function projectPathFromWebUrl(webUrl) {
   if (url.origin !== GITLAB_WEB_ORIGIN) return null;
   const [projectPart] = url.pathname.split("/-/", 1);
   const fullPath = projectPart.replace(/^\/+/, "").replace(/\/+$/, "");
-  return /^[\w.-]+(\/[\w.-]+)+$/.test(fullPath) ? fullPath : null;
+  const segments = fullPath.split("/");
+  const valid =
+    segments.length >= 2 && segments.every((s) => /^[\w.-]+$/.test(s));
+  return valid ? fullPath : null;
 }
 
 /**
@@ -84,6 +87,17 @@ function ledgerState(state) {
  */
 
 /**
+ * A REST field as a string, or "" when it is absent or not a string (so an
+ * unexpected object never stringifies to "[object Object]").
+ *
+ * @param {unknown} value - The raw field.
+ * @returns {string} The string value.
+ */
+function str(value) {
+  return typeof value === "string" ? value : "";
+}
+
+/**
  * One merge request or issue row → a ledger item, or null when the row has
  * no usable project path or is confidential.
  *
@@ -93,11 +107,11 @@ function ledgerState(state) {
  */
 export function normalizeItem(row, kind) {
   if (row.confidential === true) return null;
-  const fullName = projectPathFromWebUrl(String(row.web_url ?? ""));
-  const createdAt = Date.parse(String(row.created_at ?? ""));
+  const fullName = projectPathFromWebUrl(str(row.web_url));
+  const createdAt = Date.parse(str(row.created_at));
   if (!fullName || Number.isNaN(createdAt)) return null;
   const state = ledgerState(row.state);
-  const mergedAt = Date.parse(String(row.merged_at ?? ""));
+  const mergedAt = Date.parse(str(row.merged_at));
   return {
     platform: "gitlab",
     kind,
