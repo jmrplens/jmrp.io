@@ -2,53 +2,26 @@
  * The homepage's featured project cards, resolved once for the page AND its
  * markdown twin.
  *
- * Three sources, each chosen so the homepage cannot contradict /projects/:
+ * Two sources, each chosen so the homepage cannot contradict /projects/:
  *
  * - **Which projects**: `featured_projects` in `site.yaml`, in its order.
  * - **Words**: `projects.yaml`, the curated bilingual copy /projects/ renders
  *   (`cardSummary` when a project's `summary` is too long for a card, else
  *   `summary`). The GitHub description used before was English-only, so the
  *   Spanish homepage showed English prose.
- * - **Stars**: the ghchronicle live summary (see SUMMARY_CANDIDATES,
- *   token `PRJ_<ID>_STARS`), the SAME number nginx substitutes into the
- *   /projects/ cards. The homepage stays build-time on purpose (it is
- *   edge-cached, no `PRJ_*` token may reach it), so this is that figure as of
- *   the build: the two pages agree at deploy time, and /projects/ may run
- *   ahead by the stars gained since. When the summary is missing, stale or
- *   null for a repo, the GitHub API count (`@utils/github-facts`, memoized
- *   per build) stands in, so a host with no ghchronicle still shows a figure.
+ *
+ * No star counts, by the owner's decision (2026-09-26): featured projects
+ * are chosen for what they say about the work, and a star count next to a
+ * young or niche project reads as a verdict. /projects/ shows them live.
  *
  * @module
  */
-import fs from "node:fs";
-import path from "node:path";
-
 import { asContributionsDataset } from "@components/projects/dataset-types";
 import rawContributionsData from "@data/ghc/projects-contributions.json";
 import type { Locale } from "@i18n/config";
 import { pluralize, type TranslationKey, useTranslations } from "@i18n/utils";
 import { featuredRepos } from "@utils/github-facts";
 import { getProjects } from "@utils/projects";
-
-import { projectTokenId } from "../../scripts/ghc/roster.mjs";
-
-/**
- * Where the live summary is, first match wins: an explicit
- * `GHC_SUMMARY_PATH`, the file the production timer writes for nginx, then
- * the repo-local copy `astro dev` refreshes.
- */
-const SUMMARY_CANDIDATES = [
-  process.env.GHC_SUMMARY_PATH,
-  "/var/lib/jmrp.io/ghc/projects-summary.json",
-  path.join(process.cwd(), ".cache/ghc/projects-summary.json"),
-].filter((candidate): candidate is string => Boolean(candidate));
-
-/**
- * Older than this, the summary no longer describes the present: its systemd
- * timer runs every 10 minutes, so two days without a write means it stopped,
- * and the GitHub API reading taken during this build is the fresher figure.
- */
-const SUMMARY_MAX_AGE_MS = 48 * 60 * 60 * 1000;
 
 /** One featured card, already localized. */
 export interface FeaturedProjectCard {
@@ -59,47 +32,8 @@ export interface FeaturedProjectCard {
   readonly language: string | null;
   /** GitHub's language name for the colour dot, when it differs. */
   readonly githubLanguage: string | null;
-  /** Star count, or `null` when neither source knows it. */
-  readonly stars: number | null;
   /** Localized one-paragraph summary. */
   readonly summary: string | null;
-}
-
-let summaryStarsCache: Map<string, number> | undefined;
-
-/**
- * `PRJ_<ID>_STARS` values from the live summary, or an empty map when the
- * file is absent, unreadable or older than {@link SUMMARY_MAX_AGE_MS}.
- * Read once per build.
- */
-function summaryStars(): Map<string, number> {
-  if (summaryStarsCache) return summaryStarsCache;
-  const stars = new Map<string, number>();
-  try {
-    const summaryPath = SUMMARY_CANDIDATES.find((candidate) =>
-      fs.existsSync(candidate),
-    );
-    if (!summaryPath) throw new Error("no projects summary");
-    const raw = JSON.parse(fs.readFileSync(summaryPath, "utf8")) as {
-      generatedAt?: string;
-      tokens?: Record<string, unknown>;
-    };
-    const generatedAt = Date.parse(raw.generatedAt ?? "");
-    if (
-      Number.isFinite(generatedAt) &&
-      Date.now() - generatedAt <= SUMMARY_MAX_AGE_MS
-    ) {
-      for (const [key, value] of Object.entries(raw.tokens ?? {})) {
-        const match = /^PRJ_(.+)_STARS$/.exec(key);
-        if (match?.[1] && typeof value === "number" && Number.isFinite(value))
-          stars.set(match[1], value);
-      }
-    }
-  } catch {
-    // No summary on this host (fresh clone, CI): the API figure stands in.
-  }
-  summaryStarsCache = stars;
-  return stars;
 }
 
 /**
@@ -121,7 +55,6 @@ export async function featuredProjectCards(
   ]);
   const projectById = new Map(projects.map((p) => [p.id, p]));
   const repoByName = new Map(repos.map((r) => [r.name, r]));
-  const live = summaryStars();
 
   return names.flatMap((id) => {
     const project = projectById.get(id);
@@ -139,7 +72,6 @@ export async function featuredProjectCards(
           `https://github.com/jmrplens/${id}`,
         language: project?.language ?? repo?.language ?? null,
         githubLanguage: repo?.language ?? null,
-        stars: live.get(projectTokenId(id)) ?? repo?.stargazers_count ?? null,
         summary: summary ?? null,
       },
     ];

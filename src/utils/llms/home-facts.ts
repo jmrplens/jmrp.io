@@ -79,7 +79,6 @@ export function featuredProjectLines(
 ): string[] {
   return cards.flatMap((card) => {
     const facts = [
-      card.stars === null ? undefined : `Stars: ${card.stars}`,
       card.language ? `Language: ${card.language}` : undefined,
     ].filter((fact): fact is string => fact !== undefined);
     return [

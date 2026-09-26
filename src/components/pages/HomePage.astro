@@ -40,7 +40,7 @@ const hero = {
 // Resolved through @utils/featured-projects (cards) and @utils/github-facts
 // (profile), both memoized for the whole build. That is what makes the
 // homepage's markdown twin able to publish THESE figures rather than its own
-// second reading of the same sources, and the cards' stars and summaries come
+// second reading of the same sources, and the cards' summaries come
 // from the data /projects/ renders, so the two pages do not disagree.
 const [postEntries, featuredProjects, ghProfile] = await Promise.all([
   getPostsForLocale(locale),
@@ -294,7 +294,6 @@ const faqNode =
              */
             const cardText = [
               meta?.category,
-              card.stars === null ? undefined : String(card.stars),
               card.id,
               card.summary,
               card.language,
@@ -317,15 +316,6 @@ const faqNode =
                 <div class="proj-card__top">
                   {meta?.category && (
                     <span class="proj-card__chip">{meta.category}</span>
-                  )}
-                  {card.stars !== null && (
-                    <span class="proj-card__metric">
-                      <span
-                        class="i-mdi:star-outline"
-                        aria-hidden="true"
-                      />
-                      {card.stars}
-                    </span>
                   )}
                 </div>
                 <h3 class="proj-card__title">{card.id}</h3>
@@ -728,16 +718,6 @@ const faqNode =
     color: var(--color-accent);
     background: var(--accent-dim);
     border-radius: var(--radius-sm);
-  }
-
-  .proj-card__metric {
-    display: inline-flex;
-    gap: 0.35em;
-    align-items: center;
-    margin-left: auto;
-    font-family: var(--font-mono);
-    font-size: var(--text-micro);
-    color: var(--color-text-muted);
   }
 
   .proj-card__title {
