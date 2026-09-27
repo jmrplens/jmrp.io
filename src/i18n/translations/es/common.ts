@@ -26,6 +26,7 @@ export const common = {
     series: "Series",
     contributions: "Contribuciones",
     feeds: "Feeds",
+    socialLabel: "Perfiles",
     available: "disponible",
   },
 

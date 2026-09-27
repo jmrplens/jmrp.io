@@ -72,7 +72,27 @@ const isCurrent = (href: string) => withSlash === href;
 const isWithin = (href: string) =>
   href === "/" ? withSlash === "/" : withSlash.startsWith(href);
 
-const sections = navItems.map((item) => {
+/**
+ * The drawer's own order: work first (projects, writing, tools), then the
+ * homelab and the profile pages. Sections missing from site.yaml's `nav`
+ * are skipped; any extra one goes last, in its site.yaml order.
+ */
+const DRAWER_ORDER = [
+  "/",
+  "/projects/",
+  "/blog/",
+  "/tools/",
+  "/homelab/",
+  "/cv/",
+  "/publications/",
+];
+const rank = (href: string) => {
+  const index = DRAWER_ORDER.indexOf(href);
+  return index === -1 ? DRAWER_ORDER.length : index;
+};
+const orderedNav = navItems.toSorted((a, b) => rank(a.href) - rank(b.href));
+
+const sections = orderedNav.map((item) => {
   const labelKey = navLabelKeyMap[item.href];
   const subs = (subItemsMap[item.href] ?? []).map((sub) => ({
     href: translatePath(sub.href),
@@ -91,7 +111,21 @@ const sections = navItems.map((item) => {
   };
 });
 
-/** Secondary pages: smaller, in one group under the sections. */
+/**
+ * The social profiles worth a tap from a phone: code (GitHub, GitLab), work
+ * (LinkedIn) and the two social networks the author posts on. The rest of
+ * the footer's list (Matrix, Keyoxide, Codeberg) stays in the page footer.
+ */
+const DRAWER_SOCIALS = ["GitHub", "GitLab", "LinkedIn", "Mastodon", "Bluesky"];
+const socialLinks =
+  (siteData && "social_links" in siteData
+    ? siteData.social_links
+    : undefined) ?? [];
+const socials = DRAWER_SOCIALS.map((name) =>
+  socialLinks.find((link) => link.name === name),
+).filter((link) => link !== undefined);
+
+/** Secondary pages: smaller, in one group at the bottom. */
 const morePages: { href: string; key: TranslationKey }[] = [
   { href: "/about/", key: "nav.about" },
   { href: "/uses/", key: "nav.uses" },
@@ -193,7 +227,9 @@ const more = morePages.map((page) => ({
         ))}
       </ul>
     </nav>
+  </div>
 
+  <div class="drawer__bottom">
     <nav
       class="more"
       aria-label={t("menu.moreLabel")}
@@ -218,6 +254,27 @@ const more = morePages.map((page) => ({
         ))}
       </ul>
     </nav>
+    <ul
+      class="socials"
+      aria-label={t("menu.socialLabel")}
+    >
+      {socials.map((link) => (
+        <li>
+          <a
+            href={link.url}
+            class="socials__link"
+            target="_blank"
+            rel="external noopener noreferrer me"
+            aria-label={t("aria.opensNewTab", { text: link.name })}
+          >
+            <span
+              class={link.icon}
+              aria-hidden="true"
+            />
+          </a>
+        </li>
+      ))}
+    </ul>
   </div>
 
   <div class="drawer__foot">
@@ -231,18 +288,6 @@ const more = morePages.map((page) => ({
     <div class="drawer__foot-right">
       <LanguageSwitcher />
       <ThemeToggle id="theme-toggle-drawer" />
-      <a
-        href="https://github.com/jmrplens"
-        class="drawer__gh"
-        target="_blank"
-        rel="external noopener noreferrer"
-        aria-label={t("aria.opensNewTab", { text: "GitHub" })}
-      >
-        <span
-          class="i-fa-brands:github"
-          aria-hidden="true"
-        ></span>
-      </a>
     </div>
   </div>
 </div>
@@ -320,11 +365,8 @@ const more = morePages.map((page) => ({
   }
 
   .drawer__body {
-    display: flex;
     flex: 1;
-    flex-direction: column;
-    gap: var(--space-lg);
-    padding: var(--space-md) 12px var(--space-lg);
+    padding: 10px 12px;
     overflow-y: auto;
   }
 
@@ -340,17 +382,16 @@ const more = morePages.map((page) => ({
   .menu__list {
     display: flex;
     flex-direction: column;
-    gap: 2px;
   }
 
   .menu__link {
     display: flex;
     gap: 14px;
     align-items: center;
-    min-height: 48px;
+    min-height: 44px;
     padding: 0 12px;
     font-family: var(--font-display);
-    font-size: 1.05rem;
+    font-size: 1rem;
     font-weight: var(--fw-medium);
     color: var(--color-text);
     text-decoration: none;
@@ -394,15 +435,14 @@ const more = morePages.map((page) => ({
   .menu__sub {
     display: flex;
     flex-direction: column;
-    gap: 2px;
-    margin: 2px 0 6px calc(12px + 0.6rem - 1px);
+    margin: 0 0 4px calc(12px + 0.6rem - 1px);
     border-left: 1px solid var(--color-hair);
   }
 
   .menu__sub-link {
     display: flex;
     align-items: center;
-    min-height: 44px;
+    min-height: 40px;
     padding: 0 12px 0 calc(14px + 0.6rem);
     font-size: var(--text-sm);
     font-weight: var(--fw-normal);
@@ -424,14 +464,17 @@ const more = morePages.map((page) => ({
     border-left: 3px solid var(--color-accent);
   }
 
-  /* --- Secondary pages --- */
-  .more {
-    padding: var(--space-md) 12px 0;
+  /* --- Bottom block: secondary pages and profiles, above the footer --- */
+  .drawer__bottom {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 10px 18px 6px;
     border-top: 1px solid var(--color-hair);
   }
 
   .more__title {
-    margin: 0 0 var(--space-xs);
+    margin: 0;
     font-family: var(--font-mono);
     font-size: var(--text-micro);
     color: var(--color-text-muted);
@@ -448,7 +491,7 @@ const more = morePages.map((page) => ({
   .more__link {
     display: inline-flex;
     align-items: center;
-    min-height: 44px;
+    min-height: 36px;
     font-size: var(--text-sm);
     font-weight: var(--fw-normal);
     color: var(--color-text);
@@ -497,7 +540,15 @@ const more = morePages.map((page) => ({
     align-items: center;
   }
 
-  .drawer__gh {
+  .socials {
+    display: flex;
+    gap: 4px;
+    padding: 0;
+    margin: 0 0 0 -10px;
+    list-style: none;
+  }
+
+  .socials__link {
     display: grid;
     place-items: center;
     width: 44px;
@@ -506,20 +557,20 @@ const more = morePages.map((page) => ({
     border-radius: var(--radius-sm);
   }
 
-  .drawer__gh > span {
+  .socials__link > span {
     width: 1.1rem;
     height: 1.1rem;
   }
 
-  .drawer__gh:hover,
-  .drawer__gh:focus-visible {
+  .socials__link:hover,
+  .socials__link:focus-visible {
     color: var(--color-text-heading);
     background: var(--color-surface-2);
   }
 
   /* Consistent accent focus ring on every drawer control (WCAG 2.4.11). */
   .drawer__close:focus-visible,
-  .drawer__gh:focus-visible,
+  .socials__link:focus-visible,
   .menu__link:focus-visible,
   .menu__sub-link:focus-visible,
   .more__link:focus-visible {
