@@ -326,8 +326,8 @@ async function processSingleHtmlFile(
   if (removeEmptyParagraphs($)) isModified = true;
 
   // External links out of Astro's viewport prefetch (GEO audit #10): it
-  // observes every <a> on the page and only then finds a cross-origin URL
-  // unprefetchable, so /projects/ with ~200 outbound links spent a ~350 ms
+  // observes every <a> on the page and only then finds that a cross-origin URL
+  // cannot be prefetched, so /projects/ with ~200 outbound links spent a ~350 ms
   // long task (TBT 230 ms on mobile) watching links it can never fetch.
   if (skipPrefetchOnExternalLinks($)) isModified = true;
 
