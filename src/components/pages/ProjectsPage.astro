@@ -28,9 +28,11 @@ import rawContributionsData from "@data/ghc/projects-contributions.json";
 import { defaultLocale, type Locale } from "@i18n/config";
 import { formatDate, useTranslatedPath, useTranslations } from "@i18n/utils";
 import BaseLayout from "@layouts/BaseLayout.astro";
+import { lastCommitDate } from "@utils/content-date";
 import { platformOf, repoUrl } from "@utils/contribution-links";
 import { compactDownloads, DOWNLOADS_DISPLAY_MIN } from "@utils/downloads";
 import { getPageFaq, pageFaqNode } from "@utils/page-faq";
+import type { LanguageTaggedValue } from "@utils/person";
 import {
   COMMUNITY_MIN_PEOPLE,
   dependabotSentence as dependabotSentenceFor,
@@ -49,7 +51,7 @@ import {
 } from "@utils/projects";
 import { getSiteUrl } from "@utils/site";
 import { getEntry } from "astro:content";
-import type { CollectionPage } from "schema-dts";
+import type { CollectionPage, Text } from "schema-dts";
 
 import { ACTIVE_REPOS } from "../../../scripts/ghc/roster.mjs";
 
@@ -224,6 +226,20 @@ const listingName = (listing: ProjectListing): string =>
  * the software by @id only; the full nodes are appended to the same @graph
  * below, so the list stays a pure ordering over entities defined once.
  */
+// The Dataset below is one node on both locales: its name and description in
+// both languages, tagged, like every other shared node.
+const tEnDataset = useTranslations("en");
+const tEsDataset = useTranslations("es");
+const datasetLabel = (
+  key: "pages.projects.datasetName" | "pages.projects.datasetDescription",
+): LanguageTaggedValue[] => [
+  { "@value": tEnDataset(key), "@language": "en" },
+  { "@value": tEsDataset(key), "@language": "es" },
+];
+// When the file itself last changed (it is committed, regenerated from
+// projects.yaml by scripts/ci/build-projects.mjs).
+const datasetModified = lastCommitDate("public/identity/projects.json");
+
 const projectsPageSchema = {
   "@type": "CollectionPage",
   // Answer target for this page: its title and the one-line intro under it.
@@ -250,14 +266,22 @@ const projectsPageSchema = {
     {
       "@type": "Dataset",
       "@id": new URL("/identity/projects.json", getSiteUrl()).href,
-      name: t("pages.projects.datasetName"),
-      description: t("pages.projects.datasetDescription"),
+      // One node at one @id on both locales: name and description in both
+      // languages, tagged, and every other value locale-neutral, so the EN
+      // and ES pages no longer describe the same file two ways (GEO audit
+      // #10: the only shared @id that diverged).
+      name: datasetLabel("pages.projects.datasetName") as unknown as Text,
+      description: datasetLabel(
+        "pages.projects.datasetDescription",
+      ) as unknown as Text,
       inLanguage: "en",
+      url: new URL("/projects/", getSiteUrl()).href,
+      ...(datasetModified && { dateModified: datasetModified }),
       creator: { "@id": new URL("#person", getSiteUrl()).href },
       // The site's data files are CC BY 4.0, stated on /license/ ("Data").
       // Google's Dataset rich results report a Dataset without it.
       license: "https://creativecommons.org/licenses/by/4.0/",
-      isBasedOn: pageUrl,
+      isBasedOn: new URL("/projects/", getSiteUrl()).href,
       distribution: {
         "@type": "DataDownload",
         encodingFormat: "application/json",

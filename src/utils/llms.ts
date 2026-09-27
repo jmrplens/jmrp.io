@@ -900,7 +900,7 @@ export async function generateLlmsTxt(siteUrl: string): Promise<string> {
     // to fetch. Everything it can reach from here is either CC BY 4.0 or says
     // so at the address below; the two exceptions are named rather than left
     // to be discovered after the fact.
-    `Reuse: the articles and the blog cover images are licensed CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/); reuse them, including commercially, crediting "José Manuel Requena Plens" and noting any change. The site's source code is MIT. The portrait used as the avatar is reserved and is not covered by either. Full terms: ${siteUrl}/license/`,
+    `Reuse: the articles, the blog cover images and the site's data files (such as ${siteUrl}/identity/projects.json) are licensed CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/); reuse them, including commercially, crediting "José Manuel Requena Plens" and noting any change. The site's source code is MIT. The portrait used as the avatar is reserved and is not covered by either. Full terms: ${siteUrl}/license/`,
     "",
     sectionsBlock(siteUrl, "en"),
     "",
@@ -1898,7 +1898,7 @@ export async function generateLlmsFullTxt(siteUrl: string): Promise<string> {
     "",
     "> This file is an index. Every entry links to a markdown twin that carries\n> the detail, which is what keeps the index itself small enough to fit in an\n> agent's context. Posts, tools, the CV and the publications each live at\n> their page's own URL with `index.md` appended.",
     "",
-    `> Reuse: articles and blog covers are CC BY 4.0 with attribution; the source code is MIT; the portrait is reserved. Full terms: ${siteUrl}/license/`,
+    `> Reuse: articles, blog covers and data files are CC BY 4.0 with attribution; the source code is MIT; the portrait is reserved. Full terms: ${siteUrl}/license/`,
     "",
     // The same declaration llms.txt opens with, and in the same shape as
     // llms.txt and all 96 twins write it: a plain line, not a blockquote.
