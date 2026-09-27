@@ -93,10 +93,10 @@ const contributionsData = asContributionsDataset(rawContributionsData);
 
 // ── Upstream contributions (PLAN.md section 2) ────────────────────────────
 const contributionsEntry = await getEntry("profile", "contributions");
-const shortNames =
-  contributionsEntry?.data.type === "contributions"
+const shortNames: Record<string, string> =
+  (contributionsEntry?.data.type === "contributions"
     ? contributionsEntry.data.shortName
-    : {};
+    : undefined) ?? {};
 const CONTRIBUTED_TO_SHOWN = 6;
 const contributedToShown: ContributedToRow[] = contributionsData.contributedTo
   .slice(0, CONTRIBUTED_TO_SHOWN)
