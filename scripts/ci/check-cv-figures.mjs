@@ -62,9 +62,21 @@ function downloadBadges(text, word) {
   return [...found].toSorted((a, b) => a.localeCompare(b));
 }
 
+/**
+ * The PDF text extractor, looked up in fixed system directories rather than
+ * on PATH, so a writable PATH entry cannot stand in for it.
+ *
+ * @returns {string | undefined} Its absolute path, if installed.
+ */
+function findPdftotext() {
+  return ["/usr/bin", "/usr/local/bin", "/opt/homebrew/bin"]
+    .map((dir) => path.join(dir, "pdftotext"))
+    .find((candidate) => fs.existsSync(candidate));
+}
+
 function main() {
-  const probe = spawnSync("pdftotext", ["-v"], { encoding: "utf8" });
-  if (probe.error) {
+  const pdftotext = findPdftotext();
+  if (!pdftotext) {
     console.log("CV figures: pdftotext not installed, skipping.");
     return;
   }
@@ -78,7 +90,7 @@ function main() {
       continue;
     }
     for (const pdf of pdfs) {
-      const run = spawnSync("pdftotext", [path.join(DIST, "pdf", pdf), "-"], {
+      const run = spawnSync(pdftotext, [path.join(DIST, "pdf", pdf), "-"], {
         encoding: "utf8",
       });
       const actual = downloadBadges(run.stdout ?? "", word).join(", ");

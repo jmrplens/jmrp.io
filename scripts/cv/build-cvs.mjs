@@ -235,8 +235,9 @@ async function main() {
       ? "CV build: --force — compiling all CV PDFs from the YAML…"
       : "CV build: inputs changed — compiling all CV PDFs from the YAML…",
   );
-  // NOSONAR: runs a repo-owned script via "bash" on a trusted host (skipped in CI).
-  execFileSync("bash", [SCRIPT], {
+  // A repo-owned script, run by an absolute interpreter path so nothing on
+  // PATH can stand in for it (skipped in CI).
+  execFileSync("/bin/bash", [SCRIPT], {
     stdio: "inherit",
     // The generators run from cv_latex/: name the root, and make a missing
     // downloads snapshot fatal so the PDFs cannot disagree with /cv/.
@@ -245,7 +246,7 @@ async function main() {
       JMRP_REPO_ROOT: ROOT,
       CV_REQUIRE_DOWNLOADS_SNAPSHOT: "1",
     },
-  }); // NOSONAR
+  });
 
   // Cache only after a successful compile: execFileSync throws on failure, so a
   // broken run never records a hash that would skip the next attempt.

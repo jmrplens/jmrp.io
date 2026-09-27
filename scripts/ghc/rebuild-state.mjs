@@ -409,10 +409,7 @@ export function writeState(statePath, state) {
  * @returns {string} ISO timestamp.
  */
 export function displayChangedAt(dataset, state, now = new Date()) {
-  if (
-    state &&
-    state.projectionHash === hashProjection(dataset).projectionHash
-  ) {
+  if (state?.projectionHash === hashProjection(dataset).projectionHash) {
     return state.displayChangedAt ?? state.builtAt ?? now.toISOString();
   }
   return now.toISOString();
