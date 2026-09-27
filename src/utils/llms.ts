@@ -30,6 +30,7 @@ import {
   usesLines,
 } from "@utils/llms/profile-markdown";
 import {
+  CONTRIBUTIONS_URL,
   HOME_SECTIONS,
   PROFILE_SECTIONS,
   PROJECT_ROSTER,
@@ -68,7 +69,7 @@ export { markdownTwinPath } from "@utils/llms/twin-path";
 
 /** Curated, site-level narrative reused by both files. */
 const DESCRIPTION =
-  "Personal technical blog and portfolio of José Manuel Requena Plens — R&D Engineer specializing in Embedded Systems, Acoustics, and Industrial Software Development.";
+  "Personal technical blog and portfolio of José Manuel Requena Plens, R&D Engineer specializing in Embedded Systems, Acoustics, and Industrial Software Development.";
 
 const ABOUT =
   "José Manuel Requena Plens (JMRP) is a multidisciplinary engineer working across firmware, embedded systems, and applied research. Background in solar-inverter firmware and industrial control systems, Acoustics research, noise mitigation for the European Space Agency (ESA), and biomedical ultrasound at UPV. Active open source contributor and self-hoster.";
@@ -105,12 +106,12 @@ const MCP_INTRO = {
   en: [
     "## MCP Servers (self-hosted, different domain)",
     "",
-    "- [mcp.jmrp.io](https://mcp.jmrp.io/): Public Model Context Protocol servers the author runs on his own infrastructure, with a browser inspector to try them. Streamable HTTP transport; `POST` only — a `GET` on an endpoint returns 405 by design.",
+    "- [mcp.jmrp.io](https://mcp.jmrp.io/): Public Model Context Protocol servers the author runs on his own infrastructure, with a browser inspector to try them. Streamable HTTP transport; `POST` only: a `GET` on an endpoint returns 405 by design.",
   ],
   es: [
     "## Servidores MCP (autoalojados, en otro dominio)",
     "",
-    "- [mcp.jmrp.io](https://mcp.jmrp.io/es/): Servidores públicos de Model Context Protocol que el autor ejecuta en su propia infraestructura, con un inspector en el navegador para probarlos. Transporte Streamable HTTP; solo `POST` — un `GET` a un endpoint devuelve 405 por diseño.",
+    "- [mcp.jmrp.io](https://mcp.jmrp.io/es/): Servidores públicos de Model Context Protocol que el autor ejecuta en su propia infraestructura, con un inspector en el navegador para probarlos. Transporte Streamable HTTP; solo `POST`: un `GET` a un endpoint devuelve 405 por diseño.",
   ],
 };
 
@@ -213,7 +214,7 @@ function hostLabel(url: string): string {
 
 const TECHNICAL_DETAILS = [
   "Built with Astro 7 (Static Site Generation)",
-  "Bilingual: English (default) and Spanish — all content available in both languages under the /es/ prefix",
+  "Bilingual: English (default) and Spanish; all content available in both languages under the /es/ prefix",
   "Zero client-side JavaScript (except progressive enhancement islands)",
   "WCAG 2.2 AA/AAA accessibility compliant",
   "Content Security Policy with SRI hashes",
@@ -336,7 +337,13 @@ async function buildProfileSections(
         : []),
       "",
       ...localized.lines.flatMap((line) =>
-        line === PROJECT_ROSTER ? roster : [line],
+        line === PROJECT_ROSTER
+          ? roster
+          : [
+              line
+                .split(CONTRIBUTIONS_URL)
+                .join(`${siteUrl}${localePrefix}/projects/contributions/`),
+            ],
       ),
       "",
     ];
@@ -406,7 +413,7 @@ function suffixed(value?: string): string {
 
 /** ` — text`, or nothing when the value is absent. */
 function dashed(value?: string): string {
-  return value ? ` — ${value}` : "";
+  return value ? `: ${value}` : "";
 }
 
 /** `Name (Q123)` — extracted so the post entry is not a nested template. */
@@ -423,12 +430,12 @@ function labelledUrl(link: { label: string; url: string }): string {
 const CV_SECTION_BODY = {
   experience: (section, ctx) =>
     section.items.flatMap((item) => [
-      `- **${item.role}** — ${ctx.orgs(item.org)}`,
+      `- **${item.role}**: ${ctx.orgs(item.org)}`,
       ...ctx.chrono(item),
     ]),
   education: (section, ctx) =>
     section.items.flatMap((item) => [
-      `- **${item.degree}** — ${ctx.orgs(item.org)}`,
+      `- **${item.degree}**: ${ctx.orgs(item.org)}`,
       ...ctx.chrono(item),
     ]),
   skills: (section, ctx) => [
@@ -495,7 +502,7 @@ function cvBasicsLines(
   prose: (text: string) => string,
 ): string[] {
   return [
-    `**${b.name}** — ${b.headline}`,
+    `**${b.name}**: ${b.headline}`,
     "",
     ...(b.location ? [`${L.location}: ${b.location}`] : []),
     ...(b.availability ? [`${L.availability}: ${b.availability}`] : []),
@@ -530,7 +537,7 @@ function cvDownloadLines(
     `## ${L.downloads}`,
     "",
     ...downloads.flatMap((fmt) => {
-      const note = fmt.note ? ` — ${fmt.note}` : "";
+      const note = fmt.note ? `: ${fmt.note}` : "";
       return fmt.files.map(
         (file) =>
           `- [${file.label} · ${fmt.format}](${siteUrl}${file.url})${note}`,
@@ -883,7 +890,7 @@ export async function generateLlmsTxt(siteUrl: string): Promise<string> {
     // to fetch. Everything it can reach from here is either CC BY 4.0 or says
     // so at the address below; the two exceptions are named rather than left
     // to be discovered after the fact.
-    `Reuse: the articles and the blog cover images are licensed CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/) — reuse them, including commercially, crediting "José Manuel Requena Plens" and noting any change. The site's source code is MIT. The portrait used as the avatar is reserved and is not covered by either. Full terms: ${siteUrl}/license/`,
+    `Reuse: the articles and the blog cover images are licensed CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/); reuse them, including commercially, crediting "José Manuel Requena Plens" and noting any change. The site's source code is MIT. The portrait used as the avatar is reserved and is not covered by either. Full terms: ${siteUrl}/license/`,
     "",
     sectionsBlock(siteUrl, "en"),
     "",
@@ -948,7 +955,7 @@ export async function generateLlmsTxt(siteUrl: string): Promise<string> {
     // No byte figure: the hand-maintained one drifted twice and ended up
     // claiming ~1.2 MB for a 58 KB file, while robots.txt claimed ~43 KB for
     // the same file. A pipeline budgeting on either number skipped it.
-    `- [Full context](${siteUrl}/llms-full.txt): Both languages in one document — every tool in full, plus a linked index of every post`,
+    `- [Full context](${siteUrl}/llms-full.txt): Both languages in one document: every tool in full, plus a linked index of every post`,
     `- [RSS feed (EN)](${siteUrl}/rss.xml): English blog feed`,
     `- [RSS feed (ES)](${siteUrl}/es/rss.xml): Spanish blog feed`,
     "",
@@ -1713,6 +1720,7 @@ export async function generateHomeMarkdown(
 
   const featured = featuredProjectLines(
     await featuredProjectCards(siteData.featured_projects ?? [], locale),
+    t("pages.projects.language"),
   );
   // The build-time line under the cards, same function the page calls.
   const upstream = upstreamSummary(locale);
@@ -1864,7 +1872,7 @@ export async function generateLlmsFullTxt(siteUrl: string): Promise<string> {
   const toolSectionEs = buildToolSection(toolsEs, siteUrl);
 
   const lines = [
-    "# jmrp.io — Full Context",
+    "# jmrp.io: Full Context",
     "",
     `> ${DESCRIPTION}`,
     "",

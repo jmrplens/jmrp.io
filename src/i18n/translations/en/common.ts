@@ -989,6 +989,17 @@ export const common = {
       supportIntro:
         "These projects are maintained in my own time, on hardware that runs at home. If one of them saves you an afternoon, you can sponsor the work on GitHub. Nothing here sits behind a paywall either way, and nothing here tracks you.",
       supportLink: "Sponsor on GitHub",
+      // ── Field labels of the markdown twin (/projects/index.md) ──────────
+      twin: {
+        status: "Status",
+        statusActive: "active",
+        statusArchived: "archived",
+        topics: "Topics",
+        repository: "Repository",
+        documentation: "Documentation",
+        endpoint: "Endpoint",
+        alsoAt: "Also at",
+      },
       // ── Activity band (live SSR tokens, nginx-substituted) ──────────────
       activity: {
         regionLabel: "Recent GitHub activity",
@@ -1106,6 +1117,7 @@ export const common = {
       achievementsHeading: "Achievements on GitHub and GitLab",
       achievementsHiddenNote:
         "Only these GitHub achievements are shown. Hidden by design: Quickdraw, YOLO, Arctic Code Vault Contributor and Public Sponsor.",
+      achievementAwardedOn: "awarded on {date}",
       achievementAwarded: "awarded {date}",
       badgeAltGitlab: "{name} achievement, awarded by GitLab",
       achievementEstimated: "estimated",

@@ -15,9 +15,8 @@ import type { FeaturedProjectCard } from "@utils/featured-projects";
  * The hero's `~/whoami` card, as header lines.
  *
  * The three dotted keys are copied verbatim: they are metric IDENTIFIERS, the
- * name of the figure rather than a word about it, and they are published as
- * they are for the same reason `/projects/index.md` publishes `Language: Go`
- * inside its Spanish twin. `Focus`/`Base` are header keys and are localized,
+ * name of the figure rather than a word about it, so they are published as
+ * they are in both locales. `Focus`/`Base` are header keys and are localized,
  * following `Status:`/`Role:` — which the twin has always localized in the
  * Spanish document, even though the page renders `role` as a lowercase
  * `<dt>`, exactly as it renders `focus` and `base`. The twin's header keys
@@ -60,10 +59,10 @@ export function whoamiFactLines(facts: {
 /**
  * The featured projects, with the facts the page shows on each card.
  *
- * `Language:` stays English in both locales, like every other field key in
- * the twins: `/projects/index.md` already publishes `Language: Go` in its
- * Spanish copy, and `documentHeader` states the rule: the keys are the
- * schema, the values are the language.
+ * The `Language` label arrives localized, like `Focus` and `Base` above: the
+ * Spanish twin used to print `Language: Go` under Spanish summaries (twin
+ * audit 2026-09-27, W8), while the CV twin already localized its field
+ * labels. Only `documentHeader`'s own keys stay fixed across locales.
  *
  * The cards arrive already resolved by `@utils/featured-projects`, the one
  * accessor the page itself renders, so the twin cannot print a summary the
@@ -71,17 +70,19 @@ export function whoamiFactLines(facts: {
  * from `projects.yaml` (the Spanish twin is Spanish).
  *
  * @param cards - The resolved cards, in `featured_projects` order.
+ * @param languageLabel - The localized "Language" label.
  * @returns Markdown list lines.
  */
 export function featuredProjectLines(
   cards: readonly FeaturedProjectCard[],
+  languageLabel: string,
 ): string[] {
   return cards.flatMap((card) => {
     const facts = [
-      card.language ? `Language: ${card.language}` : undefined,
+      card.language ? `${languageLabel}: ${card.language}` : undefined,
     ].filter((fact): fact is string => fact !== undefined);
     return [
-      `- ${card.id} — ${card.url}`,
+      `- ${card.id}: ${card.url}`,
       ...(facts.length > 0 ? [`  ${facts.join(" · ")}`] : []),
       ...(card.summary ? [`  ${card.summary}`] : []),
     ];

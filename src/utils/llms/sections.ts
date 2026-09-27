@@ -37,6 +37,14 @@ export const PROJECT_ROSTER = "{{project-roster}}";
 const CONTRIBUTIONS_SNAPSHOT_NOTE_DATE = "2026-09-26";
 
 /**
+ * Stands for the absolute, localized URL of /projects/contributions/ inside
+ * a {@link PROFILE_SECTIONS} line; `buildProfileSections` substitutes it.
+ * The lines used to print the bare path, relative to nothing once the
+ * document is read away from the site, and English in the Spanish section.
+ */
+export const CONTRIBUTIONS_URL = "{{contributions-url}}";
+
+/**
  * Site sections that `llms.txt` advertises under "## Sections" but that
  * `llms-full.txt` used to omit entirely.
  *
@@ -66,13 +74,13 @@ export const PROFILE_SECTIONS: {
     en: {
       title: "Home",
       lines: [
-        "Orientation page: who the author is, and where everything on the site lives. Its markdown twin is a map — every section with its own twin listed beside it — so an agent can reach the whole site in markdown without parsing one page of HTML.",
+        "Orientation page: who the author is, and where everything on the site lives. Its markdown twin is a map, every section with its own twin listed beside it, so an agent can reach the whole site in markdown without parsing one page of HTML.",
       ],
     },
     es: {
       title: "Inicio",
       lines: [
-        "Página de orientación: quién es el autor y dónde vive cada cosa del sitio. Su gemelo markdown es un mapa —cada sección con su propio gemelo al lado—, así que un agente alcanza el sitio entero en markdown sin analizar una sola página de HTML.",
+        "Página de orientación: quién es el autor y dónde vive cada cosa del sitio. Su gemelo markdown es un mapa, cada sección con su propio gemelo al lado, así que un agente alcanza el sitio entero en markdown sin analizar una sola página de HTML.",
       ],
     },
   },
@@ -100,7 +108,7 @@ export const PROFILE_SECTIONS: {
       lines: [
         "Open-source software authored and maintained by the author, each entry listing language, license, source repository and documentation site.",
         PROJECT_ROSTER,
-        `As of ${CONTRIBUTIONS_SNAPSHOT_NOTE_DATE}, the page also names code and documentation the author contributed to projects he does not maintain: merged pull requests, accepted GitHub Discussions answers, and packaging that lists his own tools in public registries. The full ledger, grouped by project, is at /projects/contributions/.`,
+        `As of ${CONTRIBUTIONS_SNAPSHOT_NOTE_DATE}, the page also names code and documentation the author contributed to projects he does not maintain on GitHub and GitLab: merged pull and merge requests, accepted GitHub Discussions answers, and packaging that lists his own tools in public registries. The full ledger, grouped by project, is at ${CONTRIBUTIONS_URL}.`,
       ],
     },
     es: {
@@ -108,7 +116,7 @@ export const PROFILE_SECTIONS: {
       lines: [
         "Software de código abierto escrito y mantenido por el autor; cada entrada indica lenguaje, licencia, repositorio de código y sitio de documentación.",
         PROJECT_ROSTER,
-        `A fecha de ${CONTRIBUTIONS_SNAPSHOT_NOTE_DATE}, la página también recoge código y documentación que el autor ha aportado a proyectos que no mantiene: pull requests fusionadas, respuestas aceptadas en GitHub Discussions y empaquetado que lista sus propias herramientas en registros públicos. El libro completo, agrupado por proyecto, está en /projects/contributions/.`,
+        `A fecha de ${CONTRIBUTIONS_SNAPSHOT_NOTE_DATE}, la página también recoge código y documentación que el autor ha aportado a proyectos que no mantiene en GitHub y GitLab: pull requests y merge requests fusionadas, respuestas aceptadas en GitHub Discussions y empaquetado que lista sus propias herramientas en registros públicos. El libro completo, agrupado por proyecto, está en ${CONTRIBUTIONS_URL}.`,
       ],
     },
   },
@@ -117,13 +125,13 @@ export const PROFILE_SECTIONS: {
     en: {
       title: "Open-source contributions",
       lines: [
-        `A build-time snapshot (${CONTRIBUTIONS_SNAPSHOT_NOTE_DATE}) of the author's work on projects he does not maintain: code and documentation pull requests grouped by project, pull requests that list his own tools in package managers, registries and curated lists, accepted GitHub Discussions answers, and GitHub achievements. The figures come from the author's own GitHub collector (ghchronicle) and link to each pull request.`,
+        `A build-time snapshot (${CONTRIBUTIONS_SNAPSHOT_NOTE_DATE}) of the author's work on GitHub and GitLab projects he does not maintain: code and documentation pull and merge requests grouped by project, the issues he reported, pull requests that list his own tools in package managers, registries and curated lists, accepted GitHub Discussions answers, and achievements on GitHub and GitLab. The figures come from the author's own GitHub collector (ghchronicle) and the GitLab API, and each item links to its pull request, merge request or thread. Full page: ${CONTRIBUTIONS_URL}`,
       ],
     },
     es: {
       title: "Aportaciones open source",
       lines: [
-        `Instantánea del build (${CONTRIBUTIONS_SNAPSHOT_NOTE_DATE}) del trabajo del autor en proyectos que no mantiene: pull requests de código y documentación agrupadas por proyecto, pull requests que publican sus propias herramientas en gestores de paquetes, registros y listas curadas, respuestas aceptadas en GitHub Discussions y logros de GitHub. Las cifras salen del recolector de GitHub del propio autor (ghchronicle) y cada pull request enlaza a GitHub.`,
+        `Instantánea del build (${CONTRIBUTIONS_SNAPSHOT_NOTE_DATE}) del trabajo del autor en proyectos de GitHub y GitLab que no mantiene: pull requests y merge requests de código y documentación agrupadas por proyecto, las issues que ha reportado, pull requests que publican sus propias herramientas en gestores de paquetes, registros y listas curadas, respuestas aceptadas en GitHub Discussions y logros en GitHub y GitLab. Las cifras salen del recolector de GitHub del propio autor (ghchronicle) y de la API de GitLab, y cada elemento enlaza a su pull request, merge request o hilo. Página completa: ${CONTRIBUTIONS_URL}`,
       ],
     },
   },
@@ -135,7 +143,7 @@ export const PROFILE_SECTIONS: {
         "Self-hosted infrastructure run by the author on his own hardware and connections, with live metrics on the page.",
         "Services include a Mastodon instance (mstdn.jmrp.io), a Matrix homeserver, an AT Protocol PDS, Home Assistant, Immich, Jellyfin, and monitoring.",
         "Model Context Protocol servers are published at mcp.jmrp.io, running on the same infrastructure: libgen (no credentials) and gitlab (per-request token).",
-        "Tor: four nodes — two bridges running obfs4 and WebTunnel, one in Valencia and one in Alicante, and two middle relays on IONOS VPS instances, one in London and one in Madrid.",
+        "Tor: four nodes, two bridges running obfs4 and WebTunnel, one in Valencia and one in Alicante, and two middle relays on IONOS VPS instances, one in London and one in Madrid.",
         "Security pipeline: a MikroTik honeypot and nginx pattern matching feed CrowdSec, which drives bouncers on the router and the web tier.",
       ],
     },
@@ -145,7 +153,7 @@ export const PROFILE_SECTIONS: {
         "Infraestructura autoalojada que el autor opera sobre su propio hardware y sus propias conexiones, con métricas en tiempo real en la página.",
         "Entre los servicios hay una instancia de Mastodon (mstdn.jmrp.io), un homeserver de Matrix, un PDS de AT Protocol, Home Assistant, Immich, Jellyfin y monitorización.",
         "Los servidores Model Context Protocol se publican en mcp.jmrp.io, sobre la misma infraestructura: libgen (sin credenciales) y gitlab (token por petición).",
-        "Tor: cuatro nodos — dos puentes que ejecutan obfs4 y WebTunnel, uno en Valencia y otro en Alicante, y dos relays intermedios en VPS de IONOS, uno en Londres y otro en Madrid.",
+        "Tor: cuatro nodos, dos puentes que ejecutan obfs4 y WebTunnel, uno en Valencia y otro en Alicante, y dos relays intermedios en VPS de IONOS, uno en Londres y otro en Madrid.",
         "Tubería de seguridad: un honeypot en MikroTik y la coincidencia de patrones de nginx alimentan a CrowdSec, que a su vez acciona los bouncers del router y de la capa web.",
       ],
     },
@@ -249,12 +257,12 @@ export const SITE_SECTIONS: {
     en: {
       title: "About",
       description:
-        "Who José Manuel Requena Plens is — firmware & software engineer, background, featured open-source projects, and the editorial & corrections policy",
+        "Who José Manuel Requena Plens is: firmware & software engineer, background, featured open-source projects, and the editorial & corrections policy",
     },
     es: {
       title: "Perfil",
       description:
-        "Quién es José Manuel Requena Plens — ingeniero de firmware y software, trayectoria, proyectos destacados y la política editorial y de correcciones",
+        "Quién es José Manuel Requena Plens: ingeniero de firmware y software, trayectoria, proyectos destacados y la política editorial y de correcciones",
     },
   },
   {
@@ -283,12 +291,12 @@ export const SITE_SECTIONS: {
     en: {
       title: "Homelab",
       description:
-        "Self-hosted infrastructure — Mastodon, Matrix, AT Protocol PDS, MCP servers, Tor relays",
+        "Self-hosted infrastructure: Mastodon, Matrix, AT Protocol PDS, MCP servers, Tor relays",
     },
     es: {
       title: "Homelab",
       description:
-        "Infraestructura autoalojada — Mastodon, Matrix, PDS de AT Protocol, servidores MCP, relés Tor",
+        "Infraestructura autoalojada: Mastodon, Matrix, PDS de AT Protocol, servidores MCP, relés Tor",
     },
   },
   {
@@ -296,12 +304,12 @@ export const SITE_SECTIONS: {
     en: {
       title: "Projects",
       description:
-        "Curated open-source software he authors and maintains — MCP servers, acoustics tooling, network security; language, license, source and docs per project",
+        "Curated open-source software he authors and maintains: MCP servers, acoustics tooling, network security; language, license, source and docs per project",
     },
     es: {
       title: "Proyectos",
       description:
-        "Software libre que escribe y mantiene — servidores MCP, herramientas de acústica, seguridad de red",
+        "Software libre que escribe y mantiene: servidores MCP, herramientas de acústica, seguridad de red",
     },
   },
   {
@@ -309,12 +317,12 @@ export const SITE_SECTIONS: {
     en: {
       title: "Open-source contributions",
       description:
-        "Code and documentation merged into projects he does not maintain, accepted GitHub Discussions answers, and packaging PRs, grouped by project",
+        "Code and documentation merged into GitHub and GitLab projects he does not maintain, accepted GitHub Discussions answers, and packaging PRs, grouped by project",
     },
     es: {
       title: "Aportaciones open source",
       description:
-        "Código y documentación fusionados en proyectos que no mantiene, respuestas aceptadas en GitHub Discussions y PR de empaquetado, agrupados por proyecto",
+        "Código y documentación fusionados en proyectos de GitHub y GitLab que no mantiene, respuestas aceptadas en GitHub Discussions y PR de empaquetado, agrupados por proyecto",
     },
   },
   {
@@ -359,12 +367,12 @@ export const SITE_SECTIONS: {
     en: {
       title: "Privacy",
       description:
-        "What the site measures and what it does not — no cookies, no third-party scripts, no ads; the access log fields and their one-year retention, the edge worker, and the report a browser can send back on its own, all named rather than summarized",
+        "What the site measures and what it does not: no cookies, no third-party scripts, no ads; the access log fields and their one-year retention, the edge worker, and the report a browser can send back on its own, all named rather than summarized",
     },
     es: {
       title: "Privacidad",
       description:
-        "Qué mide el sitio y qué no — sin cookies, sin scripts de terceros, sin anuncios; los campos del registro de acceso y su retención de un año, el worker del borde, y el informe que un navegador puede enviar por su cuenta, todos nombrados en vez de resumidos",
+        "Qué mide el sitio y qué no: sin cookies, sin scripts de terceros, sin anuncios; los campos del registro de acceso y su retención de un año, el worker del borde, y el informe que un navegador puede enviar por su cuenta, todos nombrados en vez de resumidos",
     },
   },
 
@@ -373,12 +381,12 @@ export const SITE_SECTIONS: {
     en: {
       title: "License",
       description:
-        "Reuse terms, stated per kind of work — articles and blog cover images under CC BY 4.0, the site source MIT-licensed, and the portrait reserved because it identifies a person",
+        "Reuse terms, stated per kind of work: articles and blog cover images under CC BY 4.0, the site source MIT-licensed, and the portrait reserved because it identifies a person",
     },
     es: {
       title: "Licencia",
       description:
-        "Condiciones de reutilización, por tipo de obra — artículos y portadas del blog bajo CC BY 4.0, código del sitio bajo MIT, y retrato reservado por identificar a una persona",
+        "Condiciones de reutilización, por tipo de obra: artículos y portadas del blog bajo CC BY 4.0, código del sitio bajo MIT, y retrato reservado por identificar a una persona",
     },
   },
 ];
@@ -433,8 +441,8 @@ export const HOME_SECTIONS: {
       es: "Aportaciones open source",
     },
     note: {
-      en: "Build-time snapshot: code and docs pull requests merged into projects the author does not maintain, listings of his own tools, accepted answers and achievements.",
-      es: "Instantánea del build: pull requests de código y documentación fusionadas en proyectos que el autor no mantiene, listados de sus herramientas, respuestas aceptadas y logros.",
+      en: "Build-time snapshot: code and docs pull and merge requests merged into GitHub and GitLab projects the author does not maintain, listings of his own tools, accepted answers and achievements.",
+      es: "Instantánea del build: pull requests y merge requests de código y documentación fusionadas en proyectos de GitHub y GitLab que el autor no mantiene, listados de sus herramientas, respuestas aceptadas y logros.",
     },
   },
   {

@@ -13,7 +13,11 @@
  */
 import { type ProjectCardSsr } from "@components/projects/ssr-tokens";
 import { defaultLocale, type Locale } from "@i18n/config";
-import { pluralize, useTranslations } from "@i18n/utils";
+import { useTranslations } from "@i18n/utils";
+import {
+  ACTIVITY_MIN_DAYS,
+  communityLine as formatCommunityLine,
+} from "@utils/project-facts";
 
 interface Props {
   readonly projectName: string;
@@ -33,43 +37,14 @@ const locale = (Astro.currentLocale ?? defaultLocale) as Locale;
 const t = useTranslations(locale);
 
 // PLAN.md 4.2: only worth showing past a handful of days.
-const showActivity = typeof activeDays12m === "number" && activeDays12m > 5;
+const showActivity =
+  typeof activeDays12m === "number" && activeDays12m > ACTIVITY_MIN_DAYS;
 
-type CountKey = "issueCount" | "prCount" | "peopleCount";
-
-/** "1 issue"/"3 issues", "1 PR"/"3 PRs", "1 person"/"3 people", localized. */
-function countOf(key: CountKey, count: number): string {
-  return pluralize(
-    count,
-    {
-      one: t(`pages.projects.card.${key}One`, { count }),
-      other: t(`pages.projects.card.${key}`, { count }),
-    },
-    locale,
-  );
-}
-
-const communityParts: string[] = [];
-if (communityIssues) {
-  communityParts.push(
-    t("pages.projects.card.countFromPeople", {
-      count: countOf("issueCount", communityIssues.issues),
-      people: countOf("peopleCount", communityIssues.people),
-    }),
-  );
-}
-if (communityPrs) {
-  communityParts.push(
-    t("pages.projects.card.countFromPeople", {
-      count: countOf("prCount", communityPrs.prs),
-      people: countOf("peopleCount", communityPrs.people),
-    }),
-  );
-}
-// Separator, not translatable prose: both locales already use "·" elsewhere
-// on this page (the activity-band label, the upstream block's "live" stamp).
-const communityLine =
-  communityParts.length > 0 ? communityParts.join(" · ") : null;
+const communityLine = formatCommunityLine(
+  communityIssues,
+  communityPrs,
+  locale,
+);
 ---
 
 <dl class="card-live">

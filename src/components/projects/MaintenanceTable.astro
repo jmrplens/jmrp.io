@@ -8,25 +8,11 @@
  */
 import { defaultLocale, type Locale } from "@i18n/config";
 import { useTranslations } from "@i18n/utils";
-
-/** Friendly labels for CodeQL's internal language identifiers. */
-const CODEQL_LABELS: Record<string, string> = {
-  go: "Go",
-  python: "Python",
-  "javascript-typescript": "JS/TS",
-  "c-cpp": "C/C++",
-  "java-kotlin": "Java/Kotlin",
-  ruby: "Ruby",
-  swift: "Swift",
-};
-
-/** One maintenance row, already joined with the project's display name. */
-export interface MaintenanceRow {
-  readonly projectName: string;
-  readonly ci: { readonly jobs: number; readonly os: readonly string[] } | null;
-  readonly ciPassRate90d: { readonly pct: number } | null;
-  readonly codeQl: { readonly languages: readonly string[] } | null;
-}
+import {
+  codeQlLabel,
+  type MaintenanceRow,
+  sortCiOs as sortOs,
+} from "@utils/project-facts";
 
 interface Props {
   readonly rows: readonly MaintenanceRow[];
@@ -37,19 +23,6 @@ interface Props {
 const { rows, dependabotSentence } = Astro.props;
 const locale = (Astro.currentLocale ?? defaultLocale) as Locale;
 const t = useTranslations(locale);
-
-/** Runner OS in one fixed order, so every row reads the same way. */
-const OS_ORDER = ["Linux", "macOS", "Windows"];
-const sortOs = (os: readonly string[]): string[] =>
-  [...os].sort(
-    (a, b) => (OS_ORDER.indexOf(a) + 1 || 99) - (OS_ORDER.indexOf(b) + 1 || 99),
-  );
-
-const codeQlLabel = (languages: readonly string[]): string =>
-  languages
-    .filter((lang) => lang !== "actions")
-    .map((lang) => CODEQL_LABELS[lang] ?? lang)
-    .join(", ");
 ---
 
 <section

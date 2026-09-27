@@ -17,7 +17,6 @@ import {
   formatCompactStars,
   formatDate,
   formatNumber,
-  pluralize,
   useTranslatedPath,
   useTranslations,
 } from "@i18n/utils";
@@ -30,6 +29,12 @@ import {
 } from "@utils/contribution-links";
 import { getPageFaq, pageFaqNode } from "@utils/page-faq";
 import type { LanguageTaggedValue } from "@utils/person";
+import {
+  formatMergeDuration,
+  githubSearchUrl as githubSearchUrlFor,
+  gitlabListing as gitlabListingFor,
+  LEDGER_MAX_ITEMS,
+} from "@utils/project-facts";
 import { getSiteUrl } from "@utils/site";
 import { getEntry } from "astro:content";
 import type {
@@ -134,49 +139,21 @@ function gitlabListing(items: readonly { fullName: string }[]): {
   repo: string;
   url: string;
 } {
-  const counts = new Map<string, number>();
-  for (const it of items)
-    counts.set(it.fullName, (counts.get(it.fullName) ?? 0) + 1);
-  const [repo] = [...counts].sort((a, b) => b[1] - a[1])[0];
-  const params = new URLSearchParams({
-    author_username: gitlabUsername,
-    state: "all",
-  });
-  return {
-    repo,
-    url: `${repoUrl(repo, "gitlab")}/-/merge_requests?${params.toString()}`,
-  };
+  return gitlabListingFor(items, gitlabUsername);
 }
 
 /** GitHub search for this account's PRs in every repo of one folded project. */
 function githubSearchUrl(items: readonly { fullName: string }[]): string {
-  const repos = [...new Set(items.map((it) => it.fullName))]
-    .map((fullName) => `repo:${fullName}`)
-    .join(" ");
-  const query = `is:pr author:${GITHUB_OWNER} ${repos}`;
-  return `https://github.com/search?type=pullrequests&q=${encodeURIComponent(query)}`;
+  return githubSearchUrlFor(items, GITHUB_OWNER);
 }
 
 // ── Code and documentation ledger: one box per project, no years ──────────
 const years = Object.keys(ledgerByYear).sort((a, b) => Number(b) - Number(a));
-const MAX_ITEMS_PER_PROJECT = 10;
+const MAX_ITEMS_PER_PROJECT = LEDGER_MAX_ITEMS;
 
 /** Duration between two points, in hours, as a short localized string. */
 function formatHours(hours: number): string {
-  if (hours < 24) {
-    return t("pages.projectsContributions.durationHours", {
-      count: Math.round(hours),
-    });
-  }
-  const count = Math.round(hours / 24);
-  return pluralize(
-    count,
-    {
-      one: t("pages.projectsContributions.durationDaysOne", { count }),
-      other: t("pages.projectsContributions.durationDays", { count }),
-    },
-    locale,
-  );
+  return formatMergeDuration(hours, locale);
 }
 
 /** A ledger item's lifecycle state. */

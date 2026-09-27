@@ -113,7 +113,7 @@ function serviceBlock(
     out.push("", `**${t("pages.homelab.twinFleet")}**`, "");
     for (const row of service.mcpFleet) {
       out.push(
-        `- \`${row.endpoint}\` — ${t("pages.homelab.torVersion")} ${row.version}, ${row.alive} ${t("pages.homelab.twinReplicas")}`,
+        `- \`${row.endpoint}\`: ${t("pages.homelab.torVersion")} ${row.version}, ${row.alive} ${t("pages.homelab.twinReplicas")}`,
       );
     }
   }
@@ -163,7 +163,7 @@ function nodeLine(
   const ssr = HLM.nodes[node.key as keyof typeof HLM.nodes];
   return ssr
     ? [
-        `- **${node.name}** (${node.role}) — ${t("pages.homelab.nodeCpu")} ${ssr.cpu}, ${t("pages.homelab.nodeRam")} ${ssr.mem}, ${t("pages.homelab.cpuTemp")} ${ssr.temp} (${ssr.status})`,
+        `- **${node.name}** (${node.role}): ${t("pages.homelab.nodeCpu")} ${ssr.cpu}, ${t("pages.homelab.nodeRam")} ${ssr.mem}, ${t("pages.homelab.cpuTemp")} ${ssr.temp} (${ssr.status})`,
       ]
     : [];
 }

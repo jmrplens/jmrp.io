@@ -1,11 +1,23 @@
 import downloadsData from "@data/downloads.json";
+import rawContributionsData from "@data/ghc/projects-contributions.json";
 import { formatDate, useTranslations } from "@i18n/utils";
 import { getCVData } from "@utils/cv";
 import { DOWNLOADS_DISPLAY_MIN } from "@utils/downloads";
 import { featuredRepos } from "@utils/github-facts";
-import { getProjects, hostedHref } from "@utils/projects";
+import {
+  ACTIVITY_MIN_DAYS,
+  communityFor,
+  communityLine,
+} from "@utils/project-facts";
+import { getProjects, hostedHref, type Project } from "@utils/projects";
 import { fillSiteFacts, getSiteFacts } from "@utils/site-facts";
 import { getEntry } from "astro:content";
+
+import { ACTIVE_REPOS } from "../../../scripts/ghc/roster.mjs";
+import { asContributionsDataset } from "../../components/projects/dataset-types";
+import { PRJ } from "../../components/projects/ssr-tokens";
+
+const contributionsData = asContributionsDataset(rawContributionsData);
 
 /**
  * Markdown twins for the three profile pages whose content is structured data.
@@ -33,9 +45,9 @@ function namedTopic(topic: { name: string; wikidata: string }): string {
   return `${topic.name} (${topic.wikidata})`;
 }
 
-/** `- **name** — detail`, with the detail omitted when absent. */
+/** `- **name**: detail`, with the detail omitted when absent. */
 function item(name: string, detail?: string): string {
-  return detail ? `- **${name}** — ${detail}` : `- **${name}**`;
+  return detail ? `- **${name}**: ${detail}` : `- **${name}**`;
 }
 
 /**
@@ -271,7 +283,7 @@ export async function usesLines(
         // have to search for. The site's link policy only puts one on the
         // author's own services, so this is never an ad.
         i.href
-          ? `${item(i.name, i.detail)} — ${i.href}`
+          ? `${item(i.name, i.detail)} · ${i.href}`
           : item(i.name, i.detail),
       ),
       "",
@@ -279,24 +291,182 @@ export async function usesLines(
   ];
 }
 
+/** What a project card needs besides the project itself. */
+interface CardContext {
+  /** Build-time star counts, by repository name. */
+  readonly stars: ReadonlyMap<string, number | undefined>;
+  /**
+   * Whether live `PRJ_*` tokens may be emitted. Only `/projects/index.md` is
+   * substituted by nginx (`TOKEN_PAGES` in `check-projects-tokens.mjs`); any
+   * other document that printed one would publish the raw placeholder.
+   */
+  readonly live: boolean;
+}
+
+/** Whether `id` is a repository the live token registry covers. */
+function isActiveRepoId(id: string): id is (typeof ACTIVE_REPOS)[number] {
+  return (ACTIVE_REPOS as readonly string[]).includes(id);
+}
+
 /**
- * The `/projects/` page as markdown.
+ * The facts one `/projects/` card prints, as markdown lines: the static meta
+ * row (language, license, "Runs on", downloads), the live box of an active
+ * card (stars with the 30-day delta, latest version, activity, community),
+ * then topics and every link.
  *
- * Emits the facts the page's JSON-LD carries — language, license, topics with
- * their Q-ids, and every URL — because those are exactly what a model needs to
- * tell one project from another, and they exist nowhere else in prose form.
+ * Field labels are the page's own, localized: the Spanish twin used to print
+ * `Language:`, `License:`, `Status: active` beside Spanish prose (twin audit
+ * 2026-09-27, W8). Only the document header keeps its fixed English keys.
  *
- * ── Why it also carries figures ───────────────────────────────────────────
- * It did not, and that was GEO audit #7's A2: the page prints a download count
- * on every project that has one plus the methodology paragraph behind them,
- * and the twin printed no quantity of any kind. On the entity page for this
- * author's software, the machine-readable copy could not say how much any of
- * it is used — while the HOMEPAGE twin, covering four of these same projects,
- * carried both a star count and a download total. Same defect audit #6 found
- * on the homepage, one page over, which is what a per-page fix looks like.
+ * @param p - The project.
+ * @param locale - Which locale.
+ * @param ctx - Build-time stars and whether live tokens are allowed.
+ * @returns Markdown lines, ending with a blank line.
+ */
+function projectCardLines(
+  p: Project,
+  locale: "en" | "es",
+  ctx: CardContext,
+): Lines {
+  const t = useTranslations(locale);
+  const downloads = downloadsOf(p.id);
+  const live = ctx.live && isActiveRepoId(p.id) ? PRJ.cards[p.id] : undefined;
+  // Omitted rather than printed as `0`, the rule `whoamiFactLines` already
+  // applies to `repos.public`: a repository the fetch could not reach and
+  // one with no stars are indistinguishable here.
+  const buildStars = ctx.stars.get(p.id);
+  const maintenance = contributionsData.maintenance.find(
+    (m) => m.repo === p.id,
+  );
+  const activeDays = maintenance?.activeDays12m;
+  const community = isActiveRepoId(p.id)
+    ? communityFor(contributionsData.communityContributors, p.id)
+    : {};
+  const communityText = communityLine(community.issues, community.prs, locale);
+  const hosted = hostedHref(p, locale);
+  let starsLine: string[] = [];
+  if (live) {
+    // The same two tokens the card renders. The markdown cannot hide a row
+    // the way the card's `*_CLASS` tokens do, so a zero prints as a zero.
+    starsLine = [
+      `- ${t("pages.projects.card.starsLabel")}: ${live.stars} (${t("pages.projects.card.stars30dSuffix", { count: live.stars30d })})`,
+      `- ${t("pages.projects.card.releaseLabel")}: ${live.relTag} · ${live.relAge}`,
+    ];
+  } else if (buildStars) {
+    starsLine = [`- ${t("pages.projects.card.starsLabel")}: ${buildStars}`];
+  }
+  return [
+    `### ${p.name}`,
+    "",
+    p.summary[locale],
+    "",
+    `- ${t("pages.projects.language")}: ${p.language}`,
+    `- ${t("pages.projects.license")}: ${p.license}`,
+    `- ${t("pages.projects.twin.status")}: ${t(p.status === "active" ? "pages.projects.twin.statusActive" : "pages.projects.twin.statusArchived")}`,
+    ...(p.operatingSystem
+      ? [`- ${t("pages.projects.runsOn")}: ${p.operatingSystem}`]
+      : []),
+    ...(downloads === undefined
+      ? []
+      : [`- ${t("pages.projects.downloads")}: ${downloads}`]),
+    ...starsLine,
+    ...(isActiveRepoId(p.id) &&
+    typeof activeDays === "number" &&
+    activeDays > ACTIVITY_MIN_DAYS
+      ? [
+          `- ${t("pages.projects.card.activityLabel")}: ${t("pages.projects.card.activityDaysSuffix", { count: activeDays })}`,
+        ]
+      : []),
+    ...(communityText
+      ? [`- ${t("pages.projects.card.communityLabel")}: ${communityText}`]
+      : []),
+    `- ${t("pages.projects.twin.topics")}: ${p.topics.map(namedTopic).join(", ")}`,
+    `- ${t("pages.projects.twin.repository")}: ${p.repo}`,
+    `- ${t("pages.projects.twin.documentation")}: ${locale === "es" ? (p.docsEs ?? p.docs) : p.docs}`,
+    // The localized page, as the card links it: the Spanish twin used to
+    // point at the English mcp.jmrp.io page (twin audit 2026-09-27, E2).
+    ...(hosted ? [`- ${t("pages.projects.hosted")}: ${hosted}`] : []),
+    ...(p.endpoint
+      ? [`- ${t("pages.projects.twin.endpoint")}: ${p.endpoint}`]
+      : []),
+    ...(p.sameAs && p.sameAs.length > 0
+      ? [`- ${t("pages.projects.twin.alsoAt")}: ${p.sameAs.join(", ")}`]
+      : []),
+    "",
+  ];
+}
+
+/**
+ * One of the page's two project groups (maintained, archived): its heading,
+ * its intro and every card, in `projects.yaml` order.
  *
- * The star count comes through `@utils/github-facts`, the accessor added in
- * that remediation, rather than a private fetch of the same endpoints.
+ * @param status - Which group.
+ * @param locale - Which locale.
+ * @param options - Whether live `PRJ_*` tokens may be emitted.
+ * @param options.live - True only for `/projects/index.md`.
+ * @returns Markdown lines.
+ */
+export async function projectGroupLines(
+  status: "active" | "archived",
+  locale: "en" | "es",
+  options: { live: boolean },
+): Promise<Lines> {
+  const t = useTranslations(locale);
+  const projects = (await getProjects()).filter((p) => p.status === status);
+  if (projects.length === 0) return [];
+  // Keyed by `name`, which for these repositories is the `id` asked for;
+  // `project.name` is the display name and can differ ("Cloudflare DNS
+  // Updater" vs `Cloudflare-DNS-Updater`).
+  const stars = new Map(
+    (await featuredRepos(projects.map((p) => p.id))).map((repo) => [
+      repo.name,
+      repo.stargazers_count,
+    ]),
+  );
+  const heading = t(
+    status === "active"
+      ? "pages.projects.activeHeading"
+      : "pages.projects.archivedHeading",
+  ).replace(/^\/\/\s*/u, "");
+  const intro = t(
+    status === "active"
+      ? "pages.projects.activeIntro"
+      : "pages.projects.archivedIntro",
+  );
+  return [
+    `## ${heading}`,
+    "",
+    intro,
+    "",
+    ...projects.flatMap((p) =>
+      projectCardLines(p, locale, { stars, live: options.live }),
+    ),
+  ];
+}
+
+/**
+ * The page's methodology note, exported for `/projects/index.md`, which
+ * assembles the page in its own order.
+ *
+ * @param locale - Which locale.
+ * @returns The paragraph and its trailing blank line, or nothing.
+ */
+export function projectsMethodologyLines(locale: "en" | "es"): Lines {
+  return downloadsMethodologyLines(locale);
+}
+
+/**
+ * The `/projects/` page as markdown, without live tokens.
+ *
+ * Emits the facts the page's JSON-LD carries: language, license, topics with
+ * their Q-ids, and every URL, because those are exactly what a model needs
+ * to tell one project from another, and they exist nowhere else in prose
+ * form. It also carries the figures (GEO audit #7, A2): the download count
+ * of every project that has one plus the methodology paragraph behind them,
+ * and the star count through `@utils/github-facts`.
+ *
+ * `/projects/index.md` itself is assembled by `projectsPageMarkdown`, which
+ * interleaves the upstream and maintenance blocks and allows live tokens.
  *
  * @param locale - Which locale's summary to render.
  * @returns Markdown lines.
@@ -305,52 +475,9 @@ export async function projectsLines(
   locale: "en" | "es",
   _siteUrl: string,
 ): Promise<Lines> {
-  const entry = await getEntry("profile", "projects");
-  // Throwing, like AboutPage and UsesPage do for the same condition: a twin
-  // with a header and no body would publish an empty document and keep the
-  // build green.
-  if (entry?.data.type !== "projects") {
-    throw new Error("profile/projects.yaml is missing or has the wrong type");
-  }
-  const projects = entry.data.projects;
-  // Keyed by `name`, which for these repositories is the `id` asked for —
-  // `project.name` is the display name and can differ ("Cloudflare DNS
-  // Updater" vs `Cloudflare-DNS-Updater`).
-  const repos = new Map(
-    (await featuredRepos(projects.map((p) => p.id))).map((repo) => [
-      repo.name,
-      repo,
-    ]),
-  );
   return [
     ...downloadsMethodologyLines(locale),
-    ...projects.flatMap((p) => {
-      const downloads = downloadsOf(p.id);
-      // Omitted rather than printed as `0`, the rule `whoamiFactLines` already
-      // applies to `repos.public`: a repository the fetch could not reach and
-      // one with no stars are indistinguishable here, and a figure that
-      // resolves to nothing is better left unsaid than published as a zero.
-      const stars = repos.get(p.id)?.stargazers_count;
-      return [
-        `## ${p.name}`,
-        "",
-        p.summary[locale],
-        "",
-        `- Language: ${p.language}`,
-        `- License: ${p.license}`,
-        `- Status: ${p.status}`,
-        ...(downloads === undefined ? [] : [`- Downloads: ${downloads}`]),
-        ...(stars ? [`- Stars: ${stars}`] : []),
-        `- Topics: ${p.topics.map(namedTopic).join(", ")}`,
-        `- Repository: ${p.repo}`,
-        `- Documentation: ${locale === "es" ? (p.docsEs ?? p.docs) : p.docs}`,
-        ...(p.hosted ? [`- Hosted: ${p.hosted}`] : []),
-        ...(p.endpoint ? [`- Endpoint: ${p.endpoint}`] : []),
-        ...(p.sameAs && p.sameAs.length > 0
-          ? [`- Also at: ${p.sameAs.join(", ")}`]
-          : []),
-        "",
-      ];
-    }),
+    ...(await projectGroupLines("active", locale, { live: false })),
+    ...(await projectGroupLines("archived", locale, { live: false })),
   ];
 }
