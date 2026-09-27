@@ -37,7 +37,7 @@ export const common = {
     noResults: "no results for",
     notFound: "command not found",
     typeHelp: "type help",
-    location: "Valencia, ES (UTC+1)",
+    location: "Valencia, ES (CET/CEST)",
     blocked: "permission denied — nice try",
     usage: "usage",
     nedryDenied: "ACCESS DENIED",
@@ -467,7 +467,7 @@ export const common = {
       upstreamStrip:
         "I also contribute code and documentation to other open-source projects, such as {names}.",
       upstreamLink: "See the contributions →",
-      availability: "Available for projects · Valencia (UTC+1)",
+      availability: "Available for projects · Valencia (CET/CEST)",
       terminalRole: "Firmware / Software Eng.",
       terminalLabel: "Profile summary",
     },
@@ -972,8 +972,10 @@ export const common = {
       docs: "Docs",
       hosted: "Live instance",
       downloads: "Downloads",
+      twinIntro:
+        "Every open-source project the author maintains, and the author's contributions to other projects. Stars, releases and the recent-activity figures are substituted by nginx as this document is served, from the capture timestamped below; this file is never cached.",
       downloadsNote:
-        "Download figures combine GitHub release artifacts, Docker Hub image pulls, NuGet installs and MATLAB File Exchange downloads. NuGet counts only the package a reader installs: each install also fetches one runtime package, and counting both would count it twice. Checksum, signature and SBOM files are not counted: a release publishes them next to the binary and every install fetches both, so counting them would report the same install twice. The File Exchange figures are read by hand ({date}) because MathWorks refuses scripted requests, and a project shows its own figure only once it passes 1,000 — so the per-project numbers below do not add up to the site-wide total.",
+        "Download figures combine GitHub release artifacts, Docker Hub image pulls, NuGet installs and MATLAB File Exchange downloads. NuGet counts only the package a reader installs: each install also fetches one runtime package, and counting both would count it twice. Checksum, signature and SBOM files are not counted: a release publishes them next to the binary and every install fetches both, so counting them would report the same install twice. The File Exchange figures are read by hand ({date}) because MathWorks refuses scripted requests, and a project shows its own figure only once it passes 1,000, so the per-project numbers below do not add up to the site-wide total.",
       downloadsSourceLead:
         "The exact rule, and the full list of channels counted and skipped:",
       topicsLabel: "Topics covered by {project}",

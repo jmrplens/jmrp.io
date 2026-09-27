@@ -421,6 +421,12 @@ const personAwards = {
 
 const schema = {
   "@type": "CollectionPage",
+  // Answer target: the title and the intro under it, as on every other
+  // entity page (GEO audit #10, M1: the only one without it).
+  speakable: {
+    "@type": "SpeakableSpecification",
+    cssSelector: [".contrib-header__title", ".contrib-header__intro"],
+  },
   "@id": `${pageUrl}#contributions`,
   name: t("pages.projectsContributions.title"),
   description: t("pages.projectsContributions.schemaDescription"),

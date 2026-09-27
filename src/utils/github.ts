@@ -16,6 +16,8 @@ export interface GitHubRepo {
   stargazers_count: number;
   /** Number of forks. */
   forks_count: number;
+  /** Whether the repository is a fork of another one. */
+  fork?: boolean;
   /** ISO 8601 timestamp of the last update. */
   updated_at: string;
 }
@@ -97,17 +99,25 @@ export async function fetchGitHubProfile(): Promise<GitHubProfile> {
 }
 
 /**
- * Sums the stargazers of every public repository the configured user owns.
+ * The account's own public repositories (forks left out) and the stargazers
+ * they collected.
  *
- * One page of 100 covers the account (51 repositories on 2026-09-22); the
- * loop is there so a second page is never silently dropped. Returns 0 when
- * the API cannot be read, which callers render as a dash, never as "0 stars".
+ * Forks are left out of both: 28 of the 57 public repositories were forks on
+ * 2026-09-27, and "57 repositories that have collected 393 stars" credited
+ * the author with other people's projects and 8 of their stars (GEO audit
+ * #10). One page of 100 covers the account; the loop is there so a second
+ * page is never silently dropped. Returns zeros when the API cannot be read,
+ * which callers render as a dash, never as "0".
  *
- * @returns The star total, or 0 when unavailable.
+ * @returns The own-repository count and their star total.
  */
-export async function fetchOwnerStars(): Promise<number> {
+export async function fetchOwnRepoFacts(): Promise<{
+  ownRepos: number;
+  stars: number;
+}> {
   const headers = getGitHubHeaders();
-  let total = 0;
+  let ownRepos = 0;
+  let stars = 0;
   try {
     for (let page = 1; page <= 5; page++) {
       const res = await fetch(
@@ -116,14 +126,18 @@ export async function fetchOwnerStars(): Promise<number> {
       );
       if (!res.ok) throw new Error(`GitHub API error: ${res.status}`);
       const repos = (await res.json()) as GitHubRepo[];
-      for (const repo of repos) total += repo.stargazers_count ?? 0;
+      for (const repo of repos) {
+        if (repo.fork) continue;
+        ownRepos += 1;
+        stars += repo.stargazers_count ?? 0;
+      }
       if (repos.length < 100) break;
     }
-    return total;
+    return { ownRepos, stars };
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
-    console.warn(`Failed to fetch the star total: ${errorMessage}`);
-    return 0;
+    console.warn(`Failed to fetch the repository facts: ${errorMessage}`);
+    return { ownRepos: 0, stars: 0 };
   }
 }
 
