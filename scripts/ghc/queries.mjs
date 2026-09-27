@@ -564,9 +564,9 @@ export async function getStars(config, repos = ACTIVE_REPOS) {
  * Latest stable release per ACTIVE roster repo (drafts and prereleases
  * excluded). Idea 17, CORRECTED: the original `min(age_days)` over every
  * hourly snapshot in a 1-day window came out up to a day short (verified
- * against `published_at` for all 8 repos); this version picks the row from
- * the single latest snapshot time per repo (`mt` window function) before
- * ranking by `age_days`.
+ * against `published_at` for all 8 repos); this version reads the rows of
+ * the single latest snapshot time per repo (`mt` window function) and lets
+ * {@link pickLatestReleases} rank them.
  *
  * @param {import('./influx.mjs').InfluxConfig} config - Connection settings.
  * @param {readonly string[]} [repos] - Repos to query; defaults to
@@ -581,18 +581,61 @@ export async function getLatestRelease(config, repos = ACTIVE_REPOS) {
       WHERE time >= now() - INTERVAL '1 day'
         AND owner = '${OWNER}' AND draft = 'false' AND prerelease = 'false'
         AND repo IN (${roster})
-    ), c AS (
-      SELECT repo, tag, age_days,
-        ROW_NUMBER() OVER (PARTITION BY repo ORDER BY age_days ASC) AS rn
-      FROM s WHERE time = mt
     )
-    SELECT repo, tag, age_days FROM c WHERE rn = 1`;
+    SELECT repo, tag, age_days FROM s WHERE time = mt`;
   const rows = await queryInflux(sql, config);
-  return rows.map((row) => ({
-    repo: String(row.repo),
-    tag: String(row.tag),
-    ageDays: num(row.age_days),
-  }));
+  return pickLatestReleases(
+    rows.map((row) => ({
+      repo: String(row.repo),
+      tag: String(row.tag),
+      ageDays: num(row.age_days),
+    })),
+  );
+}
+
+/**
+ * Picks each repo's newest release from one snapshot's rows: the smallest
+ * `ageDays`, then, because `age_days` is a whole number of days and two
+ * releases shipped the same day tie on it, the highest version tag. The
+ * `gh_release` table has no publish timestamp to break the tie with (its
+ * columns: age_days, assets, downloads, draft, full_name, owner,
+ * prerelease, repo, tag, time, url), and the SQL `ROW_NUMBER()` it
+ * replaced broke it arbitrarily: /projects/ showed ghchronicle v2.5.0 after
+ * v2.5.1 had shipped the same day (production audit 2026-09-27, N2). Tags
+ * compare numerically segment by segment (`v2.5.10` above `v2.5.9`), and a
+ * full version outranks a floating major tag of the same release (`v1.0.0`
+ * above `v1`). Pure; output ordered by repo.
+ *
+ * @param {readonly {repo: string, tag: string, ageDays: number}[]} rows -
+ *   Release rows of the latest snapshot.
+ * @returns {{repo: string, tag: string, ageDays: number}[]} One row per repo.
+ */
+export function pickLatestReleases(rows) {
+  /** @type {Map<string, {repo: string, tag: string, ageDays: number}>} */
+  const best = new Map();
+  for (const row of rows) {
+    const current = best.get(row.repo);
+    if (
+      !current ||
+      row.ageDays < current.ageDays ||
+      (row.ageDays === current.ageDays &&
+        compareVersionTags(row.tag, current.tag) > 0)
+    ) {
+      best.set(row.repo, row);
+    }
+  }
+  return [...best.values()].sort((a, b) => a.repo.localeCompare(b.repo));
+}
+
+/**
+ * Orders two release tags by version, numerically per segment.
+ *
+ * @param {string} a - A tag such as `v2.5.1`.
+ * @param {string} b - Another tag.
+ * @returns {number} Positive when `a` is the higher version.
+ */
+export function compareVersionTags(a, b) {
+  return a.localeCompare(b, "en", { numeric: true });
 }
 
 /**
