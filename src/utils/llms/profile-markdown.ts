@@ -1,6 +1,6 @@
 import downloadsData from "@data/downloads.json";
 import rawContributionsData from "@data/ghc/projects-contributions.json";
-import { formatDate, useTranslations } from "@i18n/utils";
+import { formatDate, formatNumber, useTranslations } from "@i18n/utils";
 import { getCVData } from "@utils/cv";
 import { DOWNLOADS_DISPLAY_MIN } from "@utils/downloads";
 import { featuredRepos } from "@utils/github-facts";
@@ -222,7 +222,7 @@ export async function aboutLines(
       ...(() => {
         const live = hosted.find((candidate) => candidate.id === project.name);
         const href = live && hostedHref(live, locale);
-        return href ? [`- Hosted: ${href}`] : [];
+        return href ? [`- ${t("pages.projects.hosted")}: ${href}`] : [];
       })(),
       "",
     ]),
@@ -346,11 +346,28 @@ function projectCardLines(
   const hosted = hostedHref(p, locale);
   let starsLine: string[] = [];
   if (live) {
-    // The same two tokens the card renders. The markdown cannot hide a row
-    // the way the card's `*_CLASS` tokens do, so a zero prints as a zero.
+    // The same tokens the card renders. The card hides a row at serve time
+    // with its `*_CLASS` token; markdown has no CSS, so a row is printed only
+    // when the build-time facts say the card shows it (production audit
+    // 2026-09-27, N7): no stars row at 0 stars, no "(+N in 30 d)" at a zero
+    // gain, no version row without a stable release. The edge case: those
+    // facts are as of the build, so a first release or first star after it
+    // reaches the twin with the next rebuild, while the page shows it at
+    // once. Without the facts (an older dataset) the rows are omitted.
+    const facts = contributionsData.cardFacts?.[p.id];
+    const gain =
+      facts && facts.stars30d > 0
+        ? ` (${t("pages.projects.card.stars30dSuffix", { count: live.stars30d })})`
+        : "";
     starsLine = [
-      `- ${t("pages.projects.card.starsLabel")}: ${live.stars} (${t("pages.projects.card.stars30dSuffix", { count: live.stars30d })})`,
-      `- ${t("pages.projects.card.releaseLabel")}: ${live.relTag} · ${live.relAge}`,
+      ...(facts && facts.stars > 0
+        ? [`- ${t("pages.projects.card.starsLabel")}: ${live.stars}${gain}`]
+        : []),
+      ...(facts?.releaseTag
+        ? [
+            `- ${t("pages.projects.card.releaseLabel")}: ${live.relTag} · ${live.relAge}`,
+          ]
+        : []),
     ];
   } else if (buildStars) {
     starsLine = [`- ${t("pages.projects.card.starsLabel")}: ${buildStars}`];
@@ -368,7 +385,9 @@ function projectCardLines(
       : []),
     ...(downloads === undefined
       ? []
-      : [`- ${t("pages.projects.downloads")}: ${downloads}`]),
+      : [
+          `- ${t("pages.projects.downloads")}: ${formatNumber(downloads, locale)}`,
+        ]),
     ...starsLine,
     ...(isActiveRepoId(p.id) &&
     typeof activeDays === "number" &&

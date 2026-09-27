@@ -143,7 +143,10 @@ function torBlock(
     // for both. See `torHeadlineKey`.
     `- ${label(t(torHeadlineKey(node.torType)))}: ${ssr.headline}`,
     `- ${label(t("pages.homelab.torLocation"))}: ${ssr.location}`,
-    `- ${label(t("pages.homelab.torBandwidth"))}: ${ssr.bandwidth}`,
+    // The card's own label: the per-node figure is the ADVERTISED bandwidth
+    // ("Adv. Bandwidth"), not the aggregate band's live traffic; the twin
+    // used the band's label for it (production audit 2026-09-27, N4).
+    `- ${label(t("pages.homelab.torAdvertisedBandwidth"))}: ${ssr.bandwidth}`,
     `- ${node.url}`,
     "",
   ];
@@ -238,6 +241,13 @@ export async function homelabMarkdown(
     ...services.flatMap((service) => serviceBlock(service, t)),
 
     `## ${t("pages.homelab.torKicker")}`,
+    "",
+    // The aggregate band above the node cards, same tokens and labels as
+    // `TorAggregate` (N4: the twin went straight to the first card).
+    `- ${label(t("pages.homelab.torNodes"))}: ${torServices.length}`,
+    `- ${label(t("pages.homelab.torClients"))}: ${HLM.torAggregate.clients}`,
+    `- ${label(t("pages.homelab.torBandwidth"))}: ${HLM.torAggregate.bandwidth}`,
+    `- ${label(t("pages.homelab.torTraffic"))}: ${HLM.torAggregate.traffic}`,
     "",
     ...torServices.flatMap((node) => torBlock(node, t)),
 

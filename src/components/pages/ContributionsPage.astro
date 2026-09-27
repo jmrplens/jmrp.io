@@ -21,6 +21,7 @@ import {
   useTranslations,
 } from "@i18n/utils";
 import BaseLayout from "@layouts/BaseLayout.astro";
+import { listedContributionCounts } from "@utils/contribution-counts";
 import {
   itemRef,
   itemUrl,
@@ -92,13 +93,13 @@ const highlights = rawHighlights.slice(0, 7).map((h) => ({
     null,
 }));
 
-const totalPrs =
-  summary.contributionTotals.prMerged +
-  summary.contributionTotals.prOpen +
-  summary.contributionTotals.prClosed;
-const totalIssues =
-  summary.contributionTotals.issuesOpen +
-  summary.contributionTotals.issuesClosed;
+// Every count above a list is the count OF that list (production audit
+// 2026-09-27, N1); `contributionTotals` also counts what `exclude` hides.
+const listed = listedContributionCounts({
+  ledgerByYear,
+  issuesByProject: contributionsData.issuesByProject,
+  listingSplit: summary.codeVsListingSplit.listing,
+});
 
 /** A "{count} merged/open/closed" label with the singular form for 1. */
 function countLabel(
@@ -232,9 +233,7 @@ const projectEntries: LedgerProject[] = [...itemsByProject]
       Number(b.merged > 0) - Number(a.merged > 0) ||
       Date.parse(b.items[0].createdAt) - Date.parse(a.items[0].createdAt),
   );
-const notMergedCount = allLedgerItems.filter(
-  ({ item }) => item.state === "closed",
-).length;
+const notMergedCount = listed.codeNotMerged;
 
 // ── Distribution and listings, grouped by MY project, then by target ─────
 const listingsByOwn = Object.entries(contributionsData.listingsByOwnProject)
@@ -433,8 +432,8 @@ const faqNode = pageFaq && pageFaqNode(pageFaq, pageUrl, schema["@id"], locale);
       <p class="contrib-header__intro">
         {t("pages.projectsContributions.snapshotIntro", {
           date: formatDate(asOfDate, locale),
-          prs: formatNumber(totalPrs, locale),
-          issues: formatNumber(totalIssues, locale),
+          prs: formatNumber(listed.prs, locale),
+          issues: formatNumber(listed.issues, locale),
           repos: formatNumber(summary.contributionTotals.repos, locale),
         })}
       </p>
@@ -442,15 +441,15 @@ const faqNode = pageFaq && pageFaqNode(pageFaq, pageUrl, schema["@id"], locale);
 
     <dl class="contrib-tiles">
       <div class="contrib-tile">
-        <dd>{summary.codeVsListingSplit.codeOrDocs.merged}</dd>
+        <dd>{listed.codeMerged}</dd>
         <dt>{t("pages.projects.upstream.tileCodeMerged")}</dt>
       </div>
       <div class="contrib-tile">
-        <dd>{summary.codeVsListingSplit.listing.merged}</dd>
+        <dd>{listed.listingMerged}</dd>
         <dt>{t("pages.projects.upstream.tileListingMerged")}</dt>
       </div>
       <div class="contrib-tile">
-        <dd>{summary.codeVsListingSplit.codeOrDocs.open}</dd>
+        <dd>{listed.codeOpen}</dd>
         <dt>{t("pages.projects.upstream.tilePrOpen")}</dt>
       </div>
       <div class="contrib-tile">
@@ -742,9 +741,9 @@ const faqNode = pageFaq && pageFaqNode(pageFaq, pageUrl, schema["@id"], locale);
       <summary>
         <b>
           {t("pages.projectsContributions.issuesHeading", {
-            total: totalIssues,
-            open: summary.contributionTotals.issuesOpen,
-            closed: summary.contributionTotals.issuesClosed,
+            total: listed.issues,
+            open: listed.issuesOpen,
+            closed: listed.issuesClosed,
           })}
         </b>
         <span

@@ -812,3 +812,71 @@ test.describe("SEO & Metadata Checks", () => {
     expect(proxy?.disallow).toBe(false);
   });
 });
+
+// ---------------------------------------------------------------------------
+// Markdown twins: counts that match their rows, the page's own figures
+// (production audit 2026-09-27)
+// ---------------------------------------------------------------------------
+
+test.describe("Markdown twins: production audit 2026-09-27", () => {
+  test("contributions: the issues heading counts the rows under it (N1)", async ({
+    page,
+  }) => {
+    const text = await (
+      await page.request.get("/projects/contributions/index.md")
+    ).text();
+    const heading =
+      /^## Issues reported \((\d+): (\d+) open, (\d+) closed\)$/m.exec(text);
+    expect(heading).not.toBeNull();
+    const [, total, open, closed] = (heading ?? []).map(Number);
+    const section = text.slice(text.indexOf(heading?.[0] ?? ""));
+    const rows = section.split("\n## ", 1)[0].split("\n");
+    const sum = (re: RegExp) =>
+      rows.reduce((acc, line) => acc + Number(re.exec(line)?.[1] ?? 0), 0);
+    expect(sum(/^- .+?: (\d+) open/)).toBe(open);
+    expect(sum(/(\d+) closed$/)).toBe(closed);
+    expect(open + closed).toBe(total);
+  });
+
+  test("homelab: the Tor summary and the per-node label match the page (N4)", async ({
+    page,
+  }) => {
+    for (const [path, advertised] of [
+      ["/homelab/index.md", "Adv. Bandwidth"],
+      ["/es/homelab/index.md", "BW Anunciado"],
+    ]) {
+      const text = await (await page.request.get(path)).text();
+      // The aggregate band's three tokens, exactly as TorAggregate uses them
+      // (raw in preview; nginx substitutes them in production).
+      for (const token of [
+        "HLM_TOR_CLIENTS_24H",
+        "HLM_TOR_BANDWIDTH",
+        "HLM_TOR_TRAFFIC_24H",
+      ]) {
+        expect(text, `${path} ${token}`).toContain(token);
+      }
+      expect(text, path).toContain(`- ${advertised}: HLM_TOR_BRIDGE_BW`);
+    }
+  });
+
+  test("llms-full.txt dates the contributions snapshot like the page (N5)", async ({
+    page,
+  }) => {
+    const twin = await (
+      await page.request.get("/projects/contributions/index.md")
+    ).text();
+    const date = /^Snapshot as of (.+?) · /m.exec(twin)?.[1];
+    expect(date).toBeTruthy();
+    const full = await (await page.request.get("/llms-full.txt")).text();
+    expect(full).toContain(`A build-time snapshot (${date})`);
+    expect(full).toContain(`As of ${date}, the page also names`);
+  });
+
+  test("projects: the listing note keeps its plus sign (N8)", async ({
+    page,
+  }) => {
+    const text = await (await page.request.get("/projects/index.md")).text();
+    expect(text).toMatch(/^\\\+ PRJ_\w+ packaging and listing PRs merged$/m);
+    expect(text).not.toMatch(/^\+ /m);
+  });
+});

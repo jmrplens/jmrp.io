@@ -17,7 +17,7 @@ import type {
   MaintenanceItem,
 } from "@components/projects/dataset-types";
 import type { Locale } from "@i18n/config";
-import { pluralize, useTranslations } from "@i18n/utils";
+import { formatNumber, pluralize, useTranslations } from "@i18n/utils";
 
 import { repoUrl } from "./contribution-links";
 
@@ -97,6 +97,23 @@ export function maintenanceRows(
 }
 
 /**
+ * A CI pass rate with one decimal and the locale's decimal separator:
+ * "96.9%" / "96,9%". `toFixed` printed a point in Spanish too (production
+ * audit 2026-09-27, N3). The sign follows the number without a space, as
+ * the /homelab/ figures print it ("CPU 5,4%").
+ *
+ * @param pct - Percentage, 0 to 100.
+ * @param locale - Which locale's separator.
+ * @returns The formatted percentage.
+ */
+export function formatPassRate(pct: number, locale: Locale): string {
+  return `${formatNumber(pct, locale, {
+    minimumFractionDigits: 1,
+    maximumFractionDigits: 1,
+  })}%`;
+}
+
+/**
  * The three text cells of a maintenance row after the project name, exactly
  * as the table prints them.
  *
@@ -114,7 +131,7 @@ export function maintenanceCells(
     ciOn: row.ci ? sortCiOs(row.ci.os).join(", ") : noData,
     jobs: row.ci ? String(row.ci.jobs) : noData,
     passRate: row.ciPassRate90d
-      ? `${row.ciPassRate90d.pct.toFixed(1)}%`
+      ? formatPassRate(row.ciPassRate90d.pct, locale)
       : t("pages.projects.maintenance.passRatePending"),
     codeQl:
       row.codeQl && row.codeQl.languages.length > 0

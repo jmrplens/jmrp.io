@@ -276,6 +276,9 @@ const projectsPageSchema = {
       description: t("pages.projects.datasetDescription"),
       inLanguage: "en",
       creator: { "@id": new URL("#person", getSiteUrl()).href },
+      // The site's data files are CC BY 4.0, stated on /license/ ("Data").
+      // Google's Dataset rich results report a Dataset without it.
+      license: "https://creativecommons.org/licenses/by/4.0/",
       isBasedOn: pageUrl,
       distribution: {
         "@type": "DataDownload",
