@@ -504,6 +504,19 @@ const pathSegments =
   rawSegments[0] === locale ? rawSegments.slice(1) : rawSegments;
 /** URL segments that group children without being a page themselves. */
 const STRUCTURAL_SEGMENTS = new Set(["categories", "tags"]);
+/**
+ * Localized names for every ancestor a trail can pass through, keyed by the
+ * locale-free path. The visible breadcrumbs and back links use these same
+ * keys, so the schema names what the reader sees: the Spanish trail used to
+ * say "Projects" and "Tools" (the capitalized slug) while the page said
+ * "Proyectos" and "Herramientas". The slug stays only as a last resort.
+ */
+const breadcrumbLabelKeyMap: Record<string, TranslationKey> = {
+  ...navLabelKeyMap,
+  "/about/": "nav.about",
+  "/uses/": "nav.uses",
+  "/blog/series/": "series.ui.indexTitle",
+};
 
 const breadcrumbRoot = new URL(translatePath("/"), getSiteUrl()).href;
 const breadcrumbList = {
@@ -540,10 +553,18 @@ const breadcrumbList = {
         const isLastSegment = index === pathSegments.length - 1;
         const absoluteUrl = new URL(path, getSiteUrl()).href;
 
-        // Prefer page title for the last segment if available
-        const fallbackName = segment
-          .replaceAll("-", " ")
-          .replaceAll(/\b\w/g, (l) => l.toUpperCase());
+        // Prefer page title for the last segment if available; ancestors take
+        // their localized label, and only an unmapped path falls back to the
+        // capitalized slug.
+        const labelKey =
+          breadcrumbLabelKeyMap[
+            `/${pathSegments.slice(0, index + 1).join("/")}/`
+          ];
+        const fallbackName = labelKey
+          ? t(labelKey)
+          : segment
+              .replaceAll("-", " ")
+              .replaceAll(/\b\w/g, (l) => l.toUpperCase());
         const name =
           isLastSegment && title && title !== siteData.title
             ? title

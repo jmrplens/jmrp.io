@@ -2,6 +2,7 @@ import remarkMdx from "remark-mdx";
 import remarkParse from "remark-parse";
 import { unified } from "unified";
 
+import { absolutizeRootLinks } from "../absolute-links";
 import type {
   ComponentMarkdown,
   EstreeNode,
@@ -521,5 +522,13 @@ export function mdxToMarkdown(
     return parts.join(inline ? "" : "\n\n");
   }
 
-  return collapseBlankRuns(renderChildren(tree)).trim() + "\n";
+  // Root-relative links from the MDX (`[text](/homelab/)`) resolve nowhere
+  // once the twin is read away from the site; everything else a twin prints
+  // is already absolute (twin audit 2026-09-27, W10).
+  return (
+    absolutizeRootLinks(
+      collapseBlankRuns(renderChildren(tree)).trim(),
+      options.siteUrl,
+    ) + "\n"
+  );
 }

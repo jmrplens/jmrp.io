@@ -17,9 +17,7 @@
 import ActivityBand from "@components/projects/ActivityBand.astro";
 import CardLiveBox from "@components/projects/CardLiveBox.astro";
 import { asContributionsDataset } from "@components/projects/dataset-types";
-import MaintenanceTable, {
-  type MaintenanceRow,
-} from "@components/projects/MaintenanceTable.astro";
+import MaintenanceTable from "@components/projects/MaintenanceTable.astro";
 import { PRJ } from "@components/projects/ssr-tokens";
 import UpstreamBlock, {
   type ContributedToRow,
@@ -34,6 +32,12 @@ import BaseLayout from "@layouts/BaseLayout.astro";
 import { itemUrl, platformOf, repoUrl } from "@utils/contribution-links";
 import { compactDownloads, DOWNLOADS_DISPLAY_MIN } from "@utils/downloads";
 import { getPageFaq, pageFaqNode } from "@utils/page-faq";
+import {
+  COMMUNITY_MIN_PEOPLE,
+  dependabotSentence as dependabotSentenceFor,
+  type MaintenanceRow,
+  maintenanceRows as shapeMaintenanceRows,
+} from "@utils/project-facts";
 import { type ProjectListing, projectListings } from "@utils/project-listings";
 import {
   buildProjectSchema,
@@ -138,32 +142,20 @@ const projectNameById = new Map(projects.map((p) => [p.id, p.name]));
 const maintenanceByRepo = new Map(
   contributionsData.maintenance.map((m) => [m.repo, m]),
 );
-const maintenanceRows: MaintenanceRow[] = contributionsData.maintenance.map(
-  (m) => ({
-    projectName: projectNameById.get(m.repo) ?? m.repo,
-    ci: m.ci.os.length > 0 ? { jobs: m.ci.jobs, os: m.ci.os } : null,
-    ciPassRate90d: m.ciPassRate90d,
-    codeQl:
-      m.codeQl && m.codeQl.languages.length > 0
-        ? { languages: m.codeQl.languages }
-        : null,
-  }),
+const maintenanceRows: MaintenanceRow[] = shapeMaintenanceRows(
+  contributionsData.maintenance,
+  projectNameById,
 );
-const dependabotSentence =
-  contributionsData.dependabot.total > 0
-    ? t("pages.projects.maintenance.dependabotSentence", {
-        fixed: contributionsData.dependabot.total,
-        repos: contributionsData.dependabot.perRepo.length,
-        days: Math.round(contributionsData.dependabot.medianDays ?? 0),
-      })
-    : null;
+const dependabotSentence = dependabotSentenceFor(
+  contributionsData.dependabot,
+  locale,
+);
 
 // ── Per-card live + build-time meta, active roster only ───────────────────
 /** Whether `id` is a repo the live SSR token registry covers. */
 function isActiveRepoId(id: string): id is (typeof ACTIVE_REPOS)[number] {
   return (ACTIVE_REPOS as readonly string[]).includes(id);
 }
-const COMMUNITY_MIN_PEOPLE = 2;
 const communityIssuesByRepo = new Map(
   contributionsData.communityContributors.issues
     .filter((r) => r.people >= COMMUNITY_MIN_PEOPLE)

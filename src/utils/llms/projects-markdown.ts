@@ -7,15 +7,32 @@ import {
   repoUrl,
 } from "@utils/contribution-links";
 import { getPageFaq, pageFaqLines } from "@utils/page-faq";
+import {
+  dependabotSentence,
+  formatMergeDuration,
+  githubSearchUrl,
+  gitlabListing,
+  LEDGER_MAX_ITEMS,
+  maintenanceCells,
+  maintenanceRows,
+} from "@utils/project-facts";
+import { getProjects } from "@utils/projects";
 import { getEntry } from "astro:content";
 
 import { foldProjectName } from "../../../scripts/ghc/contributions-yaml.mjs";
+import { OWNER as GITHUB_OWNER } from "../../../scripts/ghc/roster.mjs";
 import { asContributionsDataset } from "../../components/projects/dataset-types";
 import { PRJ } from "../../components/projects/ssr-tokens";
 import { alternateTwinUrl, documentHeader } from "../llms";
-import { projectsLines } from "./profile-markdown";
+import {
+  projectGroupLines,
+  projectsMethodologyLines,
+} from "./profile-markdown";
 
 const contributionsData = asContributionsDataset(rawContributionsData);
+
+/** Upstream projects the /projects/ strip shows, as `ProjectsPage.astro`. */
+const CONTRIBUTED_TO_SHOWN = 6;
 
 /**
  * Markdown twins for /projects/ (live `PRJ_*` tokens, like the homelab twin)
@@ -44,7 +61,13 @@ function platformName(
     : t("pages.projectsContributions.platformGithub");
 }
 
-/** One ledger item's title (or a redaction notice) plus its state, for the ledger's bullet lines. */
+/**
+ * One ledger item's title (or a redaction notice) plus its state and timing,
+ * for the ledger's bullet lines: "(merged in 6 days)", "(open, under
+ * review)", "(merged, opened September 3, 2026)" when the merge time is
+ * unknown. The page prints the same timing beside every item; the twin
+ * used to print only the state (twin audit 2026-09-27, W4).
+ */
 function ledgerItemLabel(
   item: {
     redacted: boolean;
@@ -54,14 +77,55 @@ function ledgerItemLabel(
     state: string;
     kind: "pull_request" | "issue";
     platform?: string;
+    hoursToMerge: number | null;
+    createdAt: string;
   },
   t: ReturnType<typeof useTranslations>,
+  locale: "en" | "es",
 ): string {
   const label =
     item.redacted || !item.title
       ? t("pages.projectsContributions.itemRedacted")
       : itemTitleLine(item);
-  return `${label} (${stateLabel(item.state, t)})`;
+  if (item.state === "merged" && item.hoursToMerge !== null) {
+    return `${label} (${t("pages.projectsContributions.mergedIn", {
+      duration: formatMergeDuration(item.hoursToMerge, locale),
+    })})`;
+  }
+  const timing =
+    item.state === "open"
+      ? t("pages.projectsContributions.underReview")
+      : t("pages.projectsContributions.openedOn", {
+          date: formatDate(new Date(item.createdAt), locale),
+        });
+  return `${label} (${stateLabel(item.state, t)}, ${timing})`;
+}
+
+/**
+ * The "Showing the 10 most recent." note with the link to the full listing,
+ * exactly as the page prints it under a truncated project.
+ *
+ * @param project - The folded project name.
+ * @param items - All of the project's items.
+ * @param t - Translator.
+ * @returns One markdown line.
+ */
+function truncationNote(
+  project: string,
+  items: readonly { fullName: string; platform?: string }[],
+  t: ReturnType<typeof useTranslations>,
+): string {
+  const shown = t("pages.projectsContributions.shownNewest", {
+    shown: LEDGER_MAX_ITEMS,
+  });
+  if (platformOf(items[0]?.platform) === "gitlab") {
+    const listing = gitlabListing(
+      items,
+      contributionsData.gitlab?.username ?? "jmrp",
+    );
+    return `${shown} [${t("pages.projectsContributions.seeAllOnGitlab", { repo: listing.repo })}](${listing.url})`;
+  }
+  return `${shown} [${t("pages.projectsContributions.seeAllOnGithub", { total: items.length, project })}](${githubSearchUrl(items, GITHUB_OWNER)})`;
 }
 
 /**
@@ -81,7 +145,7 @@ function stateLabel(
 
 /** A "{count} merged/open" label, with the singular form for 1. */
 function countLabel(
-  key: "summaryMerged" | "summaryOpen",
+  key: "summaryMerged" | "summaryOpen" | "summaryClosed",
   count: number,
   t: ReturnType<typeof useTranslations>,
 ): string {
@@ -122,17 +186,12 @@ function tierLabel(
  * the page itself.
  *
  * @param locale - Target locale.
+ * @param siteUrl - Absolute site origin, for the link to the subpage.
  * @returns Markdown lines.
  */
-async function upstreamLines(locale: "en" | "es"): Promise<Lines> {
+function upstreamLines(locale: "en" | "es", siteUrl: string): Lines {
   const t = useTranslations(locale);
-  const contributionsEntry = await getEntry("profile", "contributions");
-  if (contributionsEntry?.data.type !== "contributions") {
-    throw new Error(
-      "profile/contributions.yaml is missing or has the wrong type",
-    );
-  }
-  const { displayName } = contributionsEntry.data;
+  const prefix = locale === "es" ? "/es" : "";
 
   const highlightLines = contributionsData.highlights
     .slice(0, 3)
@@ -141,10 +200,19 @@ async function upstreamLines(locale: "en" | "es"): Promise<Lines> {
         `- **${h.repo} ${itemRef(h)}** (${platformName(h.platform, t)}, ${itemUrl({ ...h, fullName: h.repo })}): ${h.why[locale]}`,
     );
 
-  const stripLines = contributionsData.contributedTo.slice(0, 6).map((row) => {
-    const stars = row.stars === null ? "" : ` (${row.stars}★)`;
-    return `- ${row.project}${stars}: ${repoUrl(row.repo, row.platform)}`;
-  });
+  const stripLines = contributionsData.contributedTo
+    .slice(0, CONTRIBUTED_TO_SHOWN)
+    .map((row) => {
+      const stars = row.stars === null ? "" : ` (${row.stars}★)`;
+      return `- ${row.project}${stars}: ${repoUrl(row.repo, row.platform)}`;
+    });
+  // The page's "and 7 more · list as of <date>" line under the strip: without
+  // it the twin read as if six projects were the whole list.
+  const remaining = Math.max(
+    0,
+    contributionsData.contributedTo.length - CONTRIBUTED_TO_SHOWN,
+  );
+  const subpage = `${siteUrl}${prefix}/projects/contributions/`;
 
   return [
     `## ${t("pages.projects.upstream.heading")}`,
@@ -166,15 +234,101 @@ async function upstreamLines(locale: "en" | "es"): Promise<Lines> {
     `### ${t("pages.projects.upstream.contributedToTitle")}`,
     "",
     ...stripLines,
+    ...(remaining > 0
+      ? [
+          "",
+          t("pages.projects.upstream.andMore", {
+            count: remaining,
+            date: formatDate(new Date(contributionsData.asOf), locale),
+          }),
+        ]
+      : []),
     "",
     t("pages.projects.upstream.liveLabel", { time: PRJ.asOf }),
     "",
-    // Referenced by full name so this line means the same thing even when
-    // it is read out of context (an excerpt in a corpus digest, a partial
-    // fetch) — folding `foldProjectName` in without using it would leave an
-    // unused import and fail lint; used here for a project-count sanity
-    // note that would otherwise silently drift from PRJ_CODE_UPSTREAMS.
-    `<!-- ${new Set(contributionsData.contributedTo.map((r) => foldProjectName(r.repo, displayName))).size} folded upstream projects known at build time -->`,
+    // The page's button to the subpage, which the twin only named inside an
+    // HTML comment (twin audit 2026-09-27, W1).
+    `[${t("pages.projects.upstream.subpageLink").replace(/\s*→$/u, "")}](${subpage})`,
+    "",
+  ];
+}
+
+/**
+ * The activity band at the top of /projects/: four live figures and their
+ * capture time, as the page prints them.
+ *
+ * @param locale - Target locale.
+ * @returns Markdown lines.
+ */
+function activityBandLines(locale: "en" | "es"): Lines {
+  const t = useTranslations(locale);
+  return [
+    `## ${t("pages.projects.activity.regionLabel")}`,
+    "",
+    `- ${t("pages.projects.activity.releases90d")}: ${PRJ.activity.releases90d}`,
+    `- ${t("pages.projects.activity.stars30d")}: ${PRJ.activity.stars30d}`,
+    `- ${t("pages.projects.activity.activeDays")}: ${PRJ.activity.activeDays}`,
+    `- ${t("pages.projects.activity.streak")}: ${PRJ.activity.streak}`,
+    "",
+    t("pages.projects.activity.liveLabel", { time: PRJ.asOf }),
+    "",
+  ];
+}
+
+/**
+ * "How I maintain the projects": the page's table, as a markdown table with
+ * the same columns and cell texts, plus the Dependabot sentence under it
+ * (twin audit 2026-09-27, W2).
+ *
+ * @param locale - Target locale.
+ * @returns Markdown lines.
+ */
+async function maintenanceLines(locale: "en" | "es"): Promise<Lines> {
+  const t = useTranslations(locale);
+  const nameById = new Map((await getProjects()).map((p) => [p.id, p.name]));
+  const rows = maintenanceRows(contributionsData.maintenance, nameById);
+  if (rows.length === 0) return [];
+  const sentence = dependabotSentence(contributionsData.dependabot, locale);
+  const cols = [
+    t("pages.projects.maintenance.colProject"),
+    t("pages.projects.maintenance.colCiOn"),
+    t("pages.projects.maintenance.colCiJobs"),
+    t("pages.projects.maintenance.colPassRate"),
+    t("pages.projects.maintenance.colCodeQl"),
+  ];
+  return [
+    `## ${t("pages.projects.maintenance.heading")}`,
+    "",
+    `| ${cols.join(" | ")} |`,
+    `| ${cols.map(() => "---").join(" | ")} |`,
+    ...rows.map((row) => {
+      const c = maintenanceCells(row, locale);
+      return `| ${row.projectName} | ${c.ciOn} | ${c.jobs} | ${c.passRate} | ${c.codeQl} |`;
+    }),
+    "",
+    ...(sentence ? [sentence, ""] : []),
+  ];
+}
+
+/**
+ * The page's support section, when the author publishes a sponsor link.
+ *
+ * @param locale - Target locale.
+ * @returns Markdown lines.
+ */
+async function supportLines(locale: "en" | "es"): Promise<Lines> {
+  const t = useTranslations(locale);
+  const about = await getEntry("profile", "about");
+  const sponsorUrl =
+    about?.data.type === "about" ? about.data.person.sponsorUrl : undefined;
+  if (!sponsorUrl) return [];
+  return [
+    `## ${t("pages.projects.supportHeading")}`,
+    "",
+    t("pages.projects.supportIntro"),
+    "",
+    `- ${t("pages.projects.supportLink")}: ${sponsorUrl}`,
+    "",
   ];
 }
 
@@ -195,8 +349,7 @@ export async function projectsPageMarkdown(
   const prefix = locale === "es" ? "/es" : "";
   const url = `${siteUrl}${prefix}/projects/`;
 
-  const body = await projectsLines(locale, siteUrl);
-  const upstream = await upstreamLines(locale);
+  const upstream = upstreamLines(locale, siteUrl);
 
   return [
     `# ${locale === "es" ? "Proyectos" : "Projects"}`,
@@ -207,8 +360,15 @@ export async function projectsPageMarkdown(
     `License: ${new URL(locale === "es" ? "/es/license/" : "/license/", url).href}`,
     `Live: ${PRJ.asOf}`,
     "",
-    ...body,
+    // The page's own order: note, activity band, maintained projects, the
+    // upstream block, the maintenance table, archived projects, support.
+    ...projectsMethodologyLines(locale),
+    ...activityBandLines(locale),
+    ...(await projectGroupLines("active", locale, { live: true })),
     ...upstream,
+    ...(await maintenanceLines(locale)),
+    ...(await projectGroupLines("archived", locale, { live: true })),
+    ...(await supportLines(locale)),
     ...pageFaqLines(await getPageFaq("/projects/", locale), locale),
   ].join("\n");
 }
@@ -294,8 +454,22 @@ export async function contributionsPageMarkdown(
           Date.parse(b.items[0].createdAt) - Date.parse(a.items[0].createdAt),
       )
       .flatMap(({ project, items, merged, open }) => [
-        `- **${project}** (${platformName(items[0]?.platform, t)}): ${countLabel("summaryMerged", merged, t)}, ${countLabel("summaryOpen", open, t)}`,
-        ...items.slice(0, 10).map((it) => `  - ${ledgerItemLabel(it, t)}`),
+        // Only the non-zero counts, joined as the page's summary joins them.
+        `- **${project}** (${platformName(items[0]?.platform, t)}): ${[
+          merged > 0 ? countLabel("summaryMerged", merged, t) : "",
+          open > 0 ? countLabel("summaryOpen", open, t) : "",
+        ]
+          .filter(Boolean)
+          .join(" · ")}`,
+        ...items
+          .slice(0, LEDGER_MAX_ITEMS)
+          .map((it) => `  - ${ledgerItemLabel(it, t, locale)}`),
+        // The page says when it cut the list and links the full one; the
+        // twin cut at the same place without saying so (twin audit
+        // 2026-09-27, W4).
+        ...(items.length > LEDGER_MAX_ITEMS
+          ? [`  - ${truncationNote(project, items, t)}`]
+          : []),
       ]),
     ...(notMerged > 0
       ? [
@@ -313,10 +487,24 @@ export async function contributionsPageMarkdown(
     .map(([own, targets]) => {
       const parts = Object.entries(targets).map(([name, row]) => {
         const link = `[${name}](https://github.com/${row.fullName})`;
-        if (row.merged === 0)
-          return `${link} (${t("pages.projectsContributions.underReview")})`;
-        const times = row.merged > 1 ? " ×" + String(row.merged) : "";
-        return `${link}${times} (${stateLabel("merged", t)})`;
+        // Every state the page's pills show: a target can have merged work
+        // AND a PR under review, and the twin used to drop the second
+        // (twin audit 2026-09-27, W5). The merged count uses the page's own
+        // plural key instead of "×8 (merged)" beside a singular noun (W6).
+        const states = [
+          ...(row.merged > 1
+            ? [
+                t("pages.projectsContributions.mergedTimes", {
+                  count: row.merged,
+                }),
+              ]
+            : []),
+          ...(row.merged === 1 ? [stateLabel("merged", t)] : []),
+          ...(row.open > 0
+            ? [t("pages.projectsContributions.underReview")]
+            : []),
+        ];
+        return `${link} (${states.join(", ")})`;
       });
       return `- **${own}**: ${parts.join(", ")}`;
     });
@@ -325,12 +513,30 @@ export async function contributionsPageMarkdown(
     (a) => `- ${a.fullName} #${a.number}: [${a.title}](${a.answerUrl})`,
   );
 
+  // The page's shelf, line by line: tier and multiplier ("x4") for GitHub,
+  // the estimated progress to the next tier where the page shows it, the
+  // award date for GitLab, and the note naming the achievements hidden by
+  // design (twin audit 2026-09-27, W4).
   const achievementLines = achievements.map((a) => {
     if (a.platform !== "gitlab") {
-      return `- **${a.name}** (GitHub): ${tierLabel(a.tierName, t)}`;
+      const multiplier = a.tierNumber > 1 ? ` x${a.tierNumber}` : "";
+      const progress =
+        a.achievement !== "galaxy-brain" &&
+        a.agrees &&
+        a.nextThreshold > 0 &&
+        a.count !== null
+          ? `; ${t("pages.projectsContributions.achievementProgress", {
+              value: a.count,
+              max: a.nextThreshold,
+              label: t("pages.projectsContributions.achievementEstimated"),
+            })}`
+          : "";
+      return `- **${a.name}**${multiplier} (GitHub): ${tierLabel(a.tierName, t)}${progress}`;
     }
+    // A full date takes "on"/"el"; the page's month-and-year form keeps
+    // "en", which is wrong before a full date in Spanish (W6).
     const awarded = a.awardedAt
-      ? t("pages.projectsContributions.achievementAwarded", {
+      ? t("pages.projectsContributions.achievementAwardedOn", {
           date: formatDate(new Date(a.awardedAt), locale),
         })
       : null;
@@ -338,6 +544,21 @@ export async function contributionsPageMarkdown(
       ? `- **${a.name}** (GitLab): ${awarded}`
       : `- **${a.name}** (GitLab)`;
   });
+  const hasGithubAchievements = achievements.some(
+    (a) => a.platform !== "gitlab",
+  );
+
+  // "Issues reported", with the per-project breakdown the page lists, in the
+  // page's order (most issues first).
+  const issueLines = Object.entries(contributionsData.issuesByProject)
+    .toSorted(([, a], [, b]) => b.open + b.closed - (a.open + a.closed))
+    .map(([project, counts]) => {
+      const parts = [
+        counts.open > 0 ? countLabel("summaryOpen", counts.open, t) : "",
+        counts.closed > 0 ? countLabel("summaryClosed", counts.closed, t) : "",
+      ].filter(Boolean);
+      return `- ${project}: ${parts.join(" · ")}`;
+    });
 
   return [
     ...documentHeader(
@@ -374,10 +595,27 @@ export async function contributionsPageMarkdown(
     "",
     ...answerLines,
     "",
+    t("pages.projectsContributions.answersFooter", {
+      accepted: summary.answersCount,
+      discussions: summary.discussionTotals.discussions,
+      repos: summary.discussionTotals.repos,
+    }),
+    "",
+    `## ${t("pages.projectsContributions.issuesHeading", {
+      total: totalIssues,
+      open: summary.contributionTotals.issuesOpen,
+      closed: summary.contributionTotals.issuesClosed,
+    })}`,
+    "",
+    ...issueLines,
+    "",
     `## ${t("pages.projectsContributions.achievementsHeading")}`,
     "",
     ...achievementLines,
     "",
+    ...(hasGithubAchievements
+      ? [t("pages.projectsContributions.achievementsHiddenNote"), ""]
+      : []),
     ...pageFaqLines(
       await getPageFaq("/projects/contributions/", locale),
       locale,

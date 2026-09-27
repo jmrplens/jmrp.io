@@ -168,7 +168,7 @@ export async function generateBlogIndexMarkdown(
         `${siteUrl}${markdownTwinPath(path)}`,
         post.data.description,
       );
-      return `${line} — ${formatDateDot(post.data.publishedDate)}, ${getReadingTime(post)} ${t("pages.blog.minRead")}`;
+      return `${line} · ${formatDateDot(post.data.publishedDate)}, ${getReadingTime(post)} ${t("pages.blog.minRead")}`;
     }),
     "",
     `## ${WORDS.series[locale]}`,
@@ -399,7 +399,7 @@ export async function generateSeriesMarkdown(
     ...posts.flatMap((post, index) => {
       const postPath = `${prefix}/blog/${post.data.slug}/`;
       return [
-        `### ${t("series.ui.partLabel", { position: index + 1 })} — ${post.data.title}`,
+        `### ${t("series.ui.partLabel", { position: index + 1 })}: ${post.data.title}`,
         "",
         `URL: ${siteUrl}${postPath}`,
         `Markdown: ${siteUrl}${markdownTwinPath(postPath)}`,
