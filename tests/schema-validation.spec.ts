@@ -18,6 +18,7 @@ import path from "node:path";
 
 import type { Page } from "@playwright/test";
 import { expect, test } from "@playwright/test";
+import { load as parseYaml } from "js-yaml";
 
 /** JSON-LD schema object */
 interface JsonLdSchema {
@@ -1268,4 +1269,237 @@ test.describe("Post references", () => {
       `The corpus published ${totalCitations} citations across ${pagesWithCitations} pages; a drop this large means reference extraction stopped matching something it used to match`,
     ).toBeGreaterThanOrEqual(MIN_TOTAL_CITATIONS);
   });
+});
+
+// ─── /projects/ and /projects/contributions/ ─────────────────────────
+
+/**
+ * The two project pages publish only what they render: every node below is
+ * checked against the visible element it describes, in both locales, so the
+ * graph cannot drift from the page (a list rebuilt from another source, a
+ * label that stops matching, an excluded PR reaching the markup).
+ */
+test.describe("Projects and contributions graphs", () => {
+  const PERSON_ID = "https://jmrp.io/#person";
+  const LOCALES = [
+    { prefix: "", runsOn: "Runs on" },
+    { prefix: "/es", runsOn: "Funciona en" },
+  ] as const;
+
+  /** A top-level graph node by exact `@id`. */
+  function nodeById(jsonLd: JsonLdDocument, id: string): JsonLdSchema | null {
+    return (jsonLd["@graph"] ?? []).find((node) => node["@id"] === id) ?? null;
+  }
+
+  /** `{ "@id": … }` reference's target. */
+  function refId(value: unknown): unknown {
+    return value && typeof value === "object"
+      ? (value as Record<string, unknown>)["@id"]
+      : undefined;
+  }
+
+  /** The `item` of each ListItem in an ItemList. */
+  function listItems(list: unknown): JsonLdSchema[] {
+    const elements = (list as Record<string, unknown> | undefined)
+      ?.itemListElement;
+    if (!Array.isArray(elements)) return [];
+    return elements.map(
+      (entry) => (entry as Record<string, unknown>).item as JsonLdSchema,
+    );
+  }
+
+  /** The URLs an `exclude` entry of contributions.yaml could appear as. */
+  function excludedUrlFragments(): string[] {
+    const raw = parseYaml(
+      fs.readFileSync(
+        path.resolve("src/content/profile/contributions.yaml"),
+        "utf8",
+      ),
+    ) as { exclude?: string[] };
+    return (raw.exclude ?? []).flatMap((key) => {
+      const match = /^(.+)([#!])(\d+)$/.exec(key);
+      if (!match) return [];
+      const [, repo, sigil, number] = match;
+      return sigil === "!"
+        ? [`${repo}/-/merge_requests/${number}`]
+        : [
+            `${repo}/pull/${number}`,
+            `${repo}/issues/${number}`,
+            `${repo}/discussions/${number}`,
+            `${repo}/-/issues/${number}`,
+          ];
+    });
+  }
+
+  for (const { prefix, runsOn } of LOCALES) {
+    const lang = prefix ? "es" : "en";
+
+    test(`contributions page graph matches its rows (${lang})`, async ({
+      page,
+    }) => {
+      await blockCloudflare(page);
+      const pageUrl = `https://jmrp.io${prefix}/projects/contributions/`;
+      await page.goto(`${prefix}/projects/contributions/`);
+      const jsonLd = await getJsonLd(page);
+
+      const collection = nodeById(jsonLd, `${pageUrl}#contributions`);
+      expect(collection).not.toBeNull();
+      if (!collection) return;
+      expect(refId(collection.about)).toBe(PERSON_ID);
+
+      // The breadcrumb is this page's own BreadcrumbList, not a page node.
+      const breadcrumbId = refId(collection.breadcrumb);
+      expect(breadcrumbId).toBe(`${pageUrl}#breadcrumb`);
+      const breadcrumb = nodeById(jsonLd, String(breadcrumbId));
+      expect(breadcrumb?.["@type"]).toBe("BreadcrumbList");
+
+      // "Contributed to": one SoftwareSourceCode per ledger project with
+      // merged work, each naming the person as a contributor.
+      const upstream = listItems(collection.mainEntity);
+      const visibleMerged = await page
+        .locator("details[data-project]")
+        .evaluateAll((els) =>
+          els
+            .filter((el) => Number((el as HTMLElement).dataset.merged) > 0)
+            .map((el) => (el as HTMLElement).dataset.project ?? ""),
+        );
+      const byName = (a: unknown, b: unknown) =>
+        String(a).localeCompare(String(b));
+      expect(upstream.map((item) => item.name).toSorted(byName)).toEqual(
+        visibleMerged.toSorted(byName),
+      );
+      for (const item of upstream) {
+        expect(item["@type"]).toBe("SoftwareSourceCode");
+        expect(item["@id"]).toBeUndefined();
+        expect(refId(item.contributor)).toBe(PERSON_ID);
+        expect(item.url).toBe(item.codeRepository);
+        expect(["github.com", "gitlab.com"]).toContain(
+          new URL(String(item.url)).hostname,
+        );
+      }
+
+      // Highlights: the visible list, name, link and "why" as printed.
+      const highlights = listItems(collection.hasPart);
+      const visibleHighlights = await page
+        .locator("ol.hl > li")
+        .evaluateAll((els) =>
+          els.map((el) => {
+            const link = el.querySelector(":scope .hl__title a");
+            return {
+              name: link?.textContent?.trim() ?? "",
+              url: link?.getAttribute("href") ?? "",
+              why: el.querySelector(".hl__why")?.textContent?.trim() ?? "",
+            };
+          }),
+        );
+      expect(
+        highlights.map((h) => ({
+          name: h.name,
+          url: h.url,
+          why: h.description,
+        })),
+      ).toEqual(visibleHighlights);
+      for (const h of highlights) {
+        expect(h["@type"]).toBe("CreativeWork");
+        expect(refId(h.author)).toBe(PERSON_ID);
+        expect(h.inLanguage).toBe(lang);
+        expect(h.datePublished).toBeUndefined();
+        const upstreamRepo = (h.isPartOf as JsonLdSchema).codeRepository;
+        expect(String(h.url).startsWith(`${String(upstreamRepo)}/`)).toBe(true);
+      }
+
+      // Nothing hidden by `exclude` reaches the graph.
+      const graphText = JSON.stringify(jsonLd);
+      for (const fragment of excludedUrlFragments()) {
+        expect(graphText, fragment).not.toContain(fragment);
+      }
+
+      // Achievements: a page-local #person carrying only `award`, one value
+      // per badge on the shelf, tagged with this page's language.
+      const awardNodes = (jsonLd["@graph"] ?? []).filter(
+        (node) => node["@type"] === "Person" && node["@id"] === PERSON_ID,
+      );
+      expect(awardNodes).toHaveLength(1);
+      const [awardNode] = awardNodes;
+      expect(
+        Object.keys(awardNode).toSorted((a, b) => a.localeCompare(b)),
+      ).toEqual(["@id", "@type", "award"]);
+      const awards = awardNode.award as {
+        "@value": string;
+        "@language": string;
+      }[];
+      for (const award of awards) expect(award["@language"]).toBe(lang);
+      const visibleAwards = await page
+        .locator(".ach-group")
+        .evaluateAll((groups) =>
+          groups.flatMap((group) => {
+            const platform =
+              group.querySelector(".ach-group__heading")?.textContent?.trim() ??
+              "";
+            return [...group.querySelectorAll(":scope .ach > li")].map((li) => {
+              const name =
+                li.querySelector(".ach__name")?.textContent?.trim() ?? "";
+              const tier =
+                li.querySelector(".ach__tier")?.textContent?.trim() ?? "";
+              // GitHub tier lines read "Gold, max tier" / "Silver" / "Base";
+              // GitLab's reads "awarded <date>" and carries no tier.
+              const [word] = tier.split(",", 1);
+              const showsTier =
+                platform === "GitHub" && word !== "" && word !== "Base";
+              return showsTier
+                ? `${platform} ${name} (${word})`
+                : `${platform} ${name}`;
+            });
+          }),
+        );
+      expect(visibleAwards.length).toBeGreaterThan(0);
+      expect(awards.map((award) => award["@value"])).toEqual(visibleAwards);
+    });
+
+    test(`projects page graph matches its cards (${lang})`, async ({
+      page,
+    }) => {
+      await blockCloudflare(page);
+      const pageUrl = `https://jmrp.io${prefix}/projects/`;
+      await page.goto(`${prefix}/projects/`);
+      const jsonLd = await getJsonLd(page);
+
+      const collection = nodeById(jsonLd, `${pageUrl}#projects`);
+      expect(collection).not.toBeNull();
+      if (!collection) return;
+
+      const listIds = (
+        ((collection.mainEntity as JsonLdSchema).itemListElement ??
+          []) as Record<string, unknown>[]
+      ).map((entry) => refId(entry.item));
+      const software = listIds.map((id) => nodeById(jsonLd, String(id)));
+      for (const node of software) expect(node).not.toBeNull();
+
+      const cards = await page.locator("li.proj-card").evaluateAll(
+        (els, label) =>
+          els.map((el) => {
+            const pair = [...el.querySelectorAll(".proj-card__meta-pair")].find(
+              (p) => p.querySelector("dt")?.textContent?.trim() === label,
+            );
+            return {
+              name: el.querySelector(".proj-card__name")?.textContent?.trim(),
+              runsOn: pair?.querySelector("dd")?.textContent?.trim() ?? null,
+            };
+          }),
+        runsOn,
+      );
+      expect(software.map((node) => node?.name)).toEqual(
+        cards.map((card) => card.name),
+      );
+
+      // operatingSystem is emitted exactly where the card shows "Runs on".
+      const withOs = cards.filter((card) => card.runsOn !== null);
+      expect(withOs.length).toBeGreaterThan(0);
+      for (const [index, card] of cards.entries()) {
+        expect(software[index]?.operatingSystem ?? null, card.name).toBe(
+          card.runsOn,
+        );
+      }
+    });
+  }
 });

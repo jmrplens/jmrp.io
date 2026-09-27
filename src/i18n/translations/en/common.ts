@@ -966,6 +966,7 @@ export const common = {
         "No longer maintained, kept public and read-only. Mostly research and instrumentation work from the acoustics years.",
       language: "Language",
       license: "License",
+      runsOn: "Runs on",
       repo: "Source",
       docs: "Docs",
       hosted: "Live instance",
@@ -1113,6 +1114,10 @@ export const common = {
       tierSilver: "Silver",
       tierBronze: "Bronze",
       tierBase: "Base",
+      // Bare tier names for the JSON-LD `award` strings ("GitHub Pull Shark (Gold)").
+      awardTierGold: "Gold",
+      awardTierSilver: "Silver",
+      awardTierBronze: "Bronze",
       badgeAltGold: "{name} achievement, gold tier",
       badgeAltSilver: "{name} achievement, silver tier",
       badgeAltBronze: "{name} achievement, bronze tier",

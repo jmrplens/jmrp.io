@@ -368,3 +368,35 @@ test("mergeContributedTo keeps the starred row over an unknown star count and so
     ],
   );
 });
+
+test("mergeContributedTo lets the canonical repo lead over merges and stars", () => {
+  const rows = [
+    {
+      project: "Example Project",
+      repo: "example-group/example-project",
+      platform: "gitlab",
+      merged: 3,
+      lastMergedAt: "2026-03-05T00:00:00.000Z",
+      stars: 200,
+    },
+    {
+      project: "Example Project",
+      repo: "example-org/example-project",
+      platform: "github",
+      merged: 1,
+      lastMergedAt: "2026-01-01T00:00:00.000Z",
+      stars: 3,
+    },
+  ];
+  const [merged] = mergeContributedTo(rows, {
+    "Example Project": "example-org/example-project",
+  });
+  assert.equal(merged.repo, "example-org/example-project");
+  assert.equal(merged.platform, "github");
+  assert.equal(merged.stars, 3);
+  assert.equal(merged.merged, 4);
+  assert.equal(
+    mergeContributedTo(rows)[0].repo,
+    "example-group/example-project",
+  );
+});

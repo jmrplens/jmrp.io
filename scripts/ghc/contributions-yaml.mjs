@@ -50,6 +50,9 @@ export const CONTRIBUTIONS_YAML_PATH = "src/content/profile/contributions.yaml";
  *   the detailed build-time ledger.
  * @property {Record<string, string>} displayName - `owner/repo` → display
  *   name, for folding sibling repos into one project.
+ * @property {Record<string, string>} canonicalRepo - Display name → the
+ *   `owner/repo` (or GitLab path) that stands for a folded project, when
+ *   the merge count alone cannot decide it. See {@link pickPrimaryRepo}.
  * @property {FeaturedContribution[]} featured - Curated highlights, ordered.
  * @property {string[]} securityTitleAllow - Regex source strings allow-listed
  *   past the default security-title filter.
@@ -92,6 +95,10 @@ export function loadContributionsConfig(root = process.cwd()) {
     displayName:
       raw.displayName && typeof raw.displayName === "object"
         ? raw.displayName
+        : {},
+    canonicalRepo:
+      raw.canonicalRepo && typeof raw.canonicalRepo === "object"
+        ? raw.canonicalRepo
         : {},
     featured: raw.featured.map((entry) => ({
       ...entry,
@@ -162,6 +169,38 @@ export function itemKey(item) {
  */
 export function foldProjectName(fullName, displayName) {
   return displayName[fullName] ?? fullName.split("/").at(-1) ?? fullName;
+}
+
+/**
+ * @typedef {object} RepoCandidate
+ * @property {string} repo - `owner/repo` full name (or GitLab path).
+ * @property {number} merged - Merged code/docs PRs or MRs in that repo.
+ * @property {number | null} [stars] - Star count, when known.
+ */
+
+/**
+ * Chooses the repository that stands for a folded project (its link, its
+ * star count and its JSON-LD `codeRepository`). In order: the project's
+ * `canonicalRepo` entry when it is one of the candidates, then the repo with
+ * the most merged code, then the one with more stars, then the
+ * alphabetically first full name, so the choice never depends on the order
+ * the rows happened to arrive in (Beszel used to take `henrygd/beszel-docs`
+ * that way, while its featured PR lives in `henrygd/beszel`).
+ *
+ * @template {RepoCandidate} T
+ * @param {readonly T[]} candidates - The folded project's repos; non-empty.
+ * @param {string} [canonical] - `canonicalRepo[project]`, if any.
+ * @returns {T} The candidate that represents the project.
+ */
+export function pickPrimaryRepo(candidates, canonical) {
+  const explicit = candidates.find((c) => c.repo === canonical);
+  if (explicit) return explicit;
+  return [...candidates].sort(
+    (a, b) =>
+      b.merged - a.merged ||
+      (b.stars ?? -1) - (a.stars ?? -1) ||
+      a.repo.localeCompare(b.repo),
+  )[0];
 }
 
 /**
