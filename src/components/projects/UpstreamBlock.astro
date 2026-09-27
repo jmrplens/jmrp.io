@@ -252,6 +252,7 @@ const monthYear = (iso: string | null): string | null =>
 
   .upstream__strip {
     display: grid;
+
     /* Two columns at most: a row holds the name plus language, stars and
        month, which a third column is too narrow for. */
     grid-template-columns: repeat(auto-fill, minmax(min(100%, 400px), 1fr));

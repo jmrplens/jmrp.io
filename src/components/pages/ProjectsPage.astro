@@ -416,7 +416,6 @@ const faqNode =
 
                 {isActiveRepoId(project.id) && (
                   <CardLiveBox
-                    projectName={project.name}
                     ssr={PRJ.cards[project.id]}
                     activeDays12m={
                       maintenanceByRepo.get(project.id)?.activeDays12m
