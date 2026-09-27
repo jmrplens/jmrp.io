@@ -469,6 +469,43 @@ test.describe("i18n: BreadcrumbList", () => {
     expect(crumbs?.itemListElement?.length).toBeGreaterThan(1);
     expect(crumbs?.itemListElement?.[0]?.item).toBe("https://jmrp.io/");
   });
+
+  // Ancestor names come from the same localized labels as the visible
+  // breadcrumb and back links. They used to be the capitalized slug, so the
+  // Spanish trails read "Projects" and "Tools" beside "Proyectos" and
+  // "Herramientas" on the page.
+  const ancestorCases = [
+    { path: "/es/projects/contributions/", ancestors: ["Inicio", "Proyectos"] },
+    {
+      path: "/es/tools/hash-calculator/",
+      ancestors: ["Inicio", "Herramientas"],
+    },
+    {
+      path: "/es/tools/categories/security/",
+      ancestors: ["Inicio", "Herramientas"],
+    },
+    {
+      path: "/es/blog/series/nginx-hardening/",
+      ancestors: ["Inicio", "Blog", "Series"],
+    },
+    { path: "/projects/contributions/", ancestors: ["Home", "Projects"] },
+    { path: "/tools/hash-calculator/", ancestors: ["Home", "Tools"] },
+  ];
+  for (const { path, ancestors } of ancestorCases) {
+    test(`ancestor names are localized on ${path}`, async ({ page }) => {
+      await page.goto(path);
+      const blocks = await page
+        .locator('script[type="application/ld+json"]')
+        .evaluateAll((els) => els.map((el) => el.textContent ?? ""));
+      const crumbs = blocks
+        .map((b) => JSON.parse(b) as Parameters<typeof findBreadcrumbList>[0])
+        .map((schema) => findBreadcrumbList(schema))
+        .find(Boolean);
+      expect(crumbs).toBeTruthy();
+      const names = crumbs?.itemListElement?.map((i) => i.name) ?? [];
+      expect(names.slice(0, ancestors.length)).toEqual(ancestors);
+    });
+  }
 });
 
 // ---------------------------------------------------------------------------
