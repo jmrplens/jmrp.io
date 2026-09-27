@@ -130,6 +130,7 @@ const contributedToShown: ContributedToRow[] = contributionsData.contributedTo
     url: repoUrl(row.repo, row.platform),
     stars: row.stars,
     lastMergedAt: row.lastMergedAt,
+    language: row.language ?? null,
   }));
 const contributedToRemaining = Math.max(
   0,

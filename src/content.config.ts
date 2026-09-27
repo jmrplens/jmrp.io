@@ -859,6 +859,12 @@ const ContributionsFeatured = z.object({
   kind: z.enum(["pull_request", "issue"]),
   /** Where the item lives; decides its URL (`/pull/N` or `/-/merge_requests/N`). */
   platform: z.enum(["github", "gitlab"]).default("github"),
+  /**
+   * Every PR/MR this highlight stands for, in the same repository, when it
+   * covers more than one (the MCP Go SDK entry names five); its size line
+   * sums them. Defaults to `[number]`.
+   */
+  numbers: z.array(z.number().int().positive()).min(1).optional(),
   /** One-line "why this matters" — never a restatement of the PR title. */
   why: LocalizedString,
 });
@@ -921,6 +927,12 @@ const contributionsSchema = z.object({
   canonicalRepo: z
     .record(z.string(), z.string().regex(/^[\w.-]+(\/[\w.-]+)+$/, "owner/repo"))
     .default({}),
+  /**
+   * Display name → the language shown for that project on the subpage,
+   * replacing the main language GitHub or GitLab detects for its repository
+   * when that does not describe the work contributed; `null` hides it.
+   */
+  language: z.record(z.string(), z.string().min(1).nullable()).default({}),
   featured: z.array(ContributionsFeatured).min(1).max(7),
   /**
    * GitLab.com account whose authored merge requests and issues are added to

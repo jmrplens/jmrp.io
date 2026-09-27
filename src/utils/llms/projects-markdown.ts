@@ -7,6 +7,7 @@ import {
   platformOf,
   repoUrl,
 } from "@utils/contribution-links";
+import { diffSizeText, itemDiffSize, languageCounts } from "@utils/diff-size";
 import { getPageFaq, pageFaqLines } from "@utils/page-faq";
 import {
   dependabotSentence,
@@ -80,14 +81,23 @@ function ledgerItemLabel(
     platform?: string;
     hoursToMerge: number | null;
     createdAt: string;
+    additions?: number | null;
+    deletions?: number | null;
+    changedFiles?: number | null;
   },
   t: ReturnType<typeof useTranslations>,
   locale: "en" | "es",
 ): string {
-  const label =
+  const title =
     item.redacted || !item.title
       ? t("pages.projectsContributions.itemRedacted")
       : itemTitleLine(item);
+  const size = diffSizeText(
+    itemDiffSize(item),
+    platformOf(item.platform),
+    locale,
+  )?.plain;
+  const label = size ? `${title} [${size}]` : title;
   if (item.state === "merged" && item.hoursToMerge !== null) {
     return `${label} (${t("pages.projectsContributions.mergedIn", {
       duration: formatMergeDuration(item.hoursToMerge, locale),
@@ -204,8 +214,11 @@ function upstreamLines(locale: "en" | "es", siteUrl: string): Lines {
   const stripLines = contributionsData.contributedTo
     .slice(0, CONTRIBUTED_TO_SHOWN)
     .map((row) => {
-      const stars = row.stars === null ? "" : ` (${row.stars}★)`;
-      return `- ${row.project}${stars}: ${repoUrl(row.repo, row.platform)}`;
+      const notes = [row.language, row.stars === null ? null : `${row.stars}★`]
+        .filter(Boolean)
+        .join(", ");
+      const meta = notes ? ` (${notes})` : "";
+      return `- ${row.project}${meta}: ${repoUrl(row.repo, row.platform)}`;
     });
   // The page's "and 7 more · list as of <date>" line under the strip: without
   // it the twin read as if six projects were the whole list.
@@ -414,15 +427,23 @@ export async function contributionsPageMarkdown(
     listingSplit: summary.codeVsListingSplit.listing,
   });
 
+  const byLanguage = languageCounts(contributionsData.contributedTo);
   const contributedToStars = new Map(
     contributionsData.contributedTo.map((row) => [row.project, row.stars]),
   );
   const highlightLines = contributionsData.highlights.flatMap((h) => {
     const project = foldProjectName(h.repo, displayName);
     const stars = contributedToStars.get(project);
-    const starsNote = stars ? ` (${stars}★)` : "";
+    const notes = [
+      h.language,
+      diffSizeText(h.size, platformOf(h.platform), locale)?.plain,
+      stars ? `${stars}★` : null,
+    ]
+      .filter(Boolean)
+      .join(", ");
+    const metaNote = notes ? ` (${notes})` : "";
     return [
-      `- **${h.repo} ${itemRef(h)}**${starsNote}: ${h.why[locale]} (${platformName(h.platform, t)}, ${itemUrl({ ...h, fullName: h.repo })})`,
+      `- **${h.repo} ${itemRef(h)}**${metaNote}: ${h.why[locale]} (${platformName(h.platform, t)}, ${itemUrl({ ...h, fullName: h.repo })})`,
     ];
   });
 
@@ -582,6 +603,14 @@ export async function contributionsPageMarkdown(
     `- ${t("pages.projects.upstream.tilePrOpen")}: ${listed.codeOpen}`,
     `- ${t("pages.projects.upstream.tileAnswers")}: ${summary.answersCount}`,
     "",
+    ...(byLanguage.length > 0
+      ? [
+          `${t("pages.projectsContributions.languagesLead")} ${byLanguage
+            .map(([language, count]) => `${language} ${count}`)
+            .join(", ")}`,
+          "",
+        ]
+      : []),
     `## ${t("pages.projectsContributions.highlightsHeading")}`,
     "",
     ...highlightLines,

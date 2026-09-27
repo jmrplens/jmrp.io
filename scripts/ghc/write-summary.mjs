@@ -196,7 +196,7 @@ export async function collectGitlabSummary(
   const { items, fetchedAt } = await collectGitlab(
     makeClient(),
     contributions.gitlab,
-    { withIssues: false, withAchievements: false },
+    { withIssues: false, withAchievements: false, withDetails: false },
   );
   return { fetchedAt, ...summarizeGitlab(items, contributions.displayName) };
 }

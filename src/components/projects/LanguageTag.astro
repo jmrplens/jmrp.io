@@ -1,0 +1,36 @@
+---
+/**
+ * A project's main language as a small bordered tag. The visible name is
+ * prefixed, for assistive technology only, with what it is.
+ */
+import { defaultLocale, type Locale } from "@i18n/config";
+import { useTranslations } from "@i18n/utils";
+
+interface Props {
+  readonly language: string | null | undefined;
+}
+
+const t = useTranslations((Astro.currentLocale ?? defaultLocale) as Locale);
+const { language } = Astro.props;
+---
+
+{language && (
+  <span class="lang-tag">
+    <span class="sr-only">{t("aria.mainLanguage")} </span>
+    <span lang="en">{language}</span>
+  </span>
+)}
+
+<style>
+  .lang-tag {
+    display: inline-block;
+    padding: 0 6px;
+    font-family: var(--font-mono);
+    font-size: var(--text-micro);
+    line-height: 1.5;
+    color: var(--color-text);
+    white-space: nowrap;
+    border: var(--border-1);
+    border-radius: var(--radius-sm);
+  }
+</style>

@@ -131,6 +131,16 @@ displayName:
 canonicalRepo:
   Beszel: henrygd/beszel
 
+# Display name → the language shown for a project on the subpage (its
+# "Contributed to" row, its highlight and the by-language line) when the one
+# GitHub or GitLab detects for the repository does not describe the work
+# contributed; null hides it. Without an entry the detected main language is
+# shown. Portainer MCP was Go when portainer/portainer-mcp#45 landed
+# (cmd/portainer-mcp/mcp.go, internal/mcp/local_stack.go); the repository
+# has since been rewritten and GitHub now calls it Python.
+language:
+  Portainer MCP: Go
+
 # GitLab.com account whose authored merge requests and issues are counted
 # next to the GitHub ones (scripts/gl/). `excludeNamespaces` are the owner's
 # own top-level namespaces: his GitLab repositories are mirrors of GitHub
@@ -167,6 +177,8 @@ featured:
       es: "Los tokens emitidos antes de un cambio de contraseña ahora se rechazan, así que restablecer la contraseña cierra las sesiones abiertas con la anterior; cubierto por un test de API en Cypress."
   - repo: modelcontextprotocol/go-sdk
     number: 1274
+    # The five merged PRs the `why` names; the size line sums them.
+    numbers: [1255, 1268, 1269, 1273, 1274]
     kind: pull_request
     why:
       en: "Five merged fixes to the official MCP Go SDK (#1255, #1268, #1269, #1273, #1274) that bring protocol-version negotiation, cancellation and pre-initialize handling in line with the specification, each with tests."

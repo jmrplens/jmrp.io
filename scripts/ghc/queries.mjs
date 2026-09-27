@@ -295,7 +295,7 @@ export async function getUpstreamRepos(config) {
 export async function getFullLedger(config) {
   const sql = `${dedupedContributionsCte()}
     SELECT kind, state, full_name, number, time, seconds_open,
-      seconds_to_merge, comments, title
+      seconds_to_merge, comments, title, additions, deletions, changed_files
     FROM r WHERE rn = 1
     ORDER BY time DESC`;
   const rows = await queryInflux(sql, config);
@@ -316,6 +316,11 @@ export async function getFullLedger(config) {
         row.state === "merged" ? num(row.seconds_to_merge) / 3600 : null,
       comments: num(row.comments),
       title: typeof row.title === "string" ? row.title : "",
+      // Diff size, pull requests only (ghchronicle 2.6.0,
+      // jmrplens/ghchronicle#79); null for an issue or a row without it.
+      additions: row.kind === "issue" ? null : numOrNull(row.additions),
+      deletions: row.kind === "issue" ? null : numOrNull(row.deletions),
+      changedFiles: row.kind === "issue" ? null : numOrNull(row.changed_files),
     };
   });
 }
@@ -332,6 +337,9 @@ export async function getFullLedger(config) {
  * @property {number | null} hoursToMerge - Only set when `state === 'merged'`.
  * @property {number} comments
  * @property {string} title - Raw GitHub title; caller must HTML-escape it.
+ * @property {number | null} additions - Lines added; pull requests only.
+ * @property {number | null} deletions - Lines removed; pull requests only.
+ * @property {number | null} changedFiles - Files touched; pull requests only.
  */
 
 // ─────────────────────────────────────────────────────────────────────────
@@ -682,25 +690,29 @@ export function compareVersionTags(a, b) {
  *
  * @param {import('./influx.mjs').InfluxConfig} config - Connection settings.
  * @param {readonly string[]} fullNames - `owner/repo` names to look up.
- * @returns {Promise<Record<string, {stars: number, isPrivate: boolean}>>}
- *   Keyed by full name; a repository with no row is absent.
+ * @returns {Promise<Record<string, {stars: number, isPrivate: boolean,
+ *   language: string | null}>>} Keyed by full name; a repository with no
+ *   row is absent. `language` is GitHub's primary language for the
+ *   repository, null when it detects none (a list, a manifest store).
  */
 export async function getUpstreamRepoMeta(config, fullNames) {
   if (fullNames.length === 0) return {};
-  const sql = `SELECT full_name, stars, private FROM (
-      SELECT full_name, stars, private,
+  const sql = `SELECT full_name, stars, private, language FROM (
+      SELECT full_name, stars, private, language,
         ROW_NUMBER() OVER (PARTITION BY full_name ORDER BY time DESC) AS rn
       FROM gh_upstream_repo
       WHERE time >= now() - INTERVAL '3650 days'
         AND full_name IN (${sqlFullNameList(fullNames)})
     ) WHERE rn = 1`;
   const rows = await queryInflux(sql, config);
-  /** @type {Record<string, {stars: number, isPrivate: boolean}>} */
+  /** @type {Record<string, {stars: number, isPrivate: boolean, language: string | null}>} */
   const out = {};
   for (const row of rows) {
     out[String(row.full_name)] = {
       stars: num(row.stars),
       isPrivate: [true, "true", 1, "1"].includes(row.private),
+      language:
+        typeof row.language === "string" && row.language ? row.language : null,
     };
   }
   return out;

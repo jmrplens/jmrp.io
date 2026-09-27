@@ -15,10 +15,12 @@ import path from "node:path";
 import { test } from "node:test";
 
 import {
+  applyLanguageOverride,
   buildDataset,
   DATA_PATH,
   ensureDataset,
   FIXTURE_PATH,
+  highlightSize,
   isRedacted,
   mergeContributedTo,
   shapeAchievements,
@@ -314,6 +316,7 @@ test("mergeContributedTo folds rows that share a display name across platforms",
       merged: 3,
       lastMergedAt: "2026-03-05T00:00:00.000Z",
       stars: 200,
+      language: "Ruby",
     },
   ]);
   assert.equal(merged.length, 2);
@@ -322,6 +325,7 @@ test("mergeContributedTo folds rows that share a display name across platforms",
     repo: "example-group/example-project",
     platform: "gitlab",
     stars: 200,
+    language: "Ruby",
     merged: 5,
     lastMergedAt: "2026-03-05T00:00:00.000Z",
   });
@@ -398,5 +402,94 @@ test("mergeContributedTo lets the canonical repo lead over merges and stars", ()
   assert.equal(
     mergeContributedTo(rows)[0].repo,
     "example-group/example-project",
+  );
+});
+
+test("applyLanguageOverride replaces, hides, or keeps the detected language", () => {
+  const overrides = { "Portainer MCP": "Go", Hidden: null };
+  assert.equal(
+    applyLanguageOverride(
+      { project: "Portainer MCP", language: "Python" },
+      overrides,
+    ).language,
+    "Go",
+  );
+  assert.equal(
+    applyLanguageOverride({ project: "Hidden", language: "HTML" }, overrides)
+      .language,
+    null,
+  );
+  assert.equal(
+    applyLanguageOverride({ project: "Other", language: "Rust" }, overrides)
+      .language,
+    "Rust",
+  );
+  assert.equal(
+    applyLanguageOverride({ project: "Other" }, overrides).language,
+    null,
+  );
+});
+
+test("highlightSize sums every listed PR and stays null without sizes", () => {
+  const items = [
+    {
+      platform: "github",
+      kind: "pull_request",
+      fullName: "o/r",
+      number: 1,
+      additions: 10,
+      deletions: 2,
+      changedFiles: 3,
+    },
+    {
+      platform: "github",
+      kind: "pull_request",
+      fullName: "o/r",
+      number: 2,
+      additions: 5,
+      deletions: 0,
+      changedFiles: 1,
+    },
+    {
+      platform: "github",
+      kind: "pull_request",
+      fullName: "o/r",
+      number: 3,
+      additions: 99,
+      deletions: 9,
+      changedFiles: 9,
+    },
+    {
+      platform: "gitlab",
+      kind: "pull_request",
+      fullName: "o/r",
+      number: 1,
+      additions: 1,
+      deletions: 1,
+      changedFiles: 1,
+    },
+  ];
+  assert.deepEqual(
+    highlightSize({ repo: "o/r", platform: "github", numbers: [1, 2] }, items),
+    { prs: 2, additions: 15, deletions: 2, changedFiles: 4 },
+  );
+  assert.equal(
+    highlightSize({ repo: "o/r", platform: "github", numbers: [7] }, items),
+    null,
+  );
+  // A file count without line counts keeps the files and drops the lines.
+  assert.deepEqual(
+    highlightSize({ repo: "x/y", platform: "github", numbers: [1] }, [
+      {
+        platform: "github",
+        kind: "pull_request",
+        fullName: "x/y",
+        number: 1,
+        additions: null,
+        deletions: null,
+        changedFiles: 4,
+      },
+    ]),
+    { prs: 1, additions: null, deletions: null, changedFiles: 4 },
   );
 });

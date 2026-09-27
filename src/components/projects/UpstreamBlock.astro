@@ -6,6 +6,7 @@
  * "Contributed to" strip are build-time, resolved once by `ProjectsPage.astro`
  * from `contributions.yaml` and `src/data/ghc/projects-contributions.json`.
  */
+import LanguageTag from "@components/projects/LanguageTag.astro";
 import PlatformMark from "@components/projects/PlatformMark.astro";
 import { PRJ } from "@components/projects/ssr-tokens";
 import { defaultLocale, type Locale } from "@i18n/config";
@@ -30,6 +31,8 @@ export interface ContributedToRow {
   readonly url: string;
   readonly stars: number | null;
   readonly lastMergedAt: string | null;
+  /** Main language, or null when unknown or hidden. */
+  readonly language: string | null;
 }
 
 interface Props {
@@ -171,6 +174,7 @@ const monthYear = (iso: string | null): string | null =>
               />
             </span>
             <span class="upstream__strip-meta">
+              <LanguageTag language={row.language} />
               {row.stars !== null && (
                 <>
                   {formatCompactStars(row.stars, locale)}{" "}
@@ -355,7 +359,8 @@ const monthYear = (iso: string | null): string | null =>
 
   .upstream__strip li {
     display: flex;
-    gap: var(--space-sm);
+    flex-wrap: wrap;
+    gap: 2px var(--space-sm);
     justify-content: space-between;
     padding: 7px 0;
     font-size: var(--text-sm);
@@ -381,6 +386,10 @@ const monthYear = (iso: string | null): string | null =>
   }
 
   .upstream__strip-meta {
+    display: inline-flex;
+    gap: 6px;
+    align-items: baseline;
+    margin-inline-start: auto;
     font-family: var(--font-mono);
     font-size: var(--text-micro);
     font-variant-numeric: tabular-nums;
