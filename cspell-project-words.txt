@@ -859,6 +859,7 @@ omgilibot
 ondrej
 ondřej
 oneshot
+openai
 opencloud
 openpgp
 openpgpkey
@@ -1129,6 +1130,7 @@ Semrush
 semrushbot
 sendfile
 seqmp
+serde
 serializa
 serialización
 SERP
