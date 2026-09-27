@@ -72,27 +72,7 @@ const isCurrent = (href: string) => withSlash === href;
 const isWithin = (href: string) =>
   href === "/" ? withSlash === "/" : withSlash.startsWith(href);
 
-/**
- * The drawer's own order: work first (projects, writing, tools), then the
- * homelab and the profile pages. Sections missing from site.yaml's `nav`
- * are skipped; any extra one goes last, in its site.yaml order.
- */
-const DRAWER_ORDER = [
-  "/",
-  "/projects/",
-  "/blog/",
-  "/tools/",
-  "/homelab/",
-  "/cv/",
-  "/publications/",
-];
-const rank = (href: string) => {
-  const index = DRAWER_ORDER.indexOf(href);
-  return index === -1 ? DRAWER_ORDER.length : index;
-};
-const orderedNav = navItems.toSorted((a, b) => rank(a.href) - rank(b.href));
-
-const sections = orderedNav.map((item) => {
+const sections = navItems.map((item) => {
   const labelKey = navLabelKeyMap[item.href];
   const subs = (subItemsMap[item.href] ?? []).map((sub) => ({
     href: translatePath(sub.href),
