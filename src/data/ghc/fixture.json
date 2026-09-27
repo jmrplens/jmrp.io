@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-09-27T14:40:32.897Z",
+  "generatedAt": "2026-09-27T14:50:10.743Z",
   "asOf": "2026-09-27T13:58:22.255627955",
   "summary": {
     "contributionTotals": {
@@ -179,25 +179,25 @@
       "language": "Shell"
     },
     {
-      "repo": "sanny32/OpenModScan",
-      "number": 74,
+      "repo": "modelcontextprotocol/rust-sdk",
+      "number": 1300,
       "kind": "pull_request",
       "why": {
-        "en": "Registered the --help and --version options in this Qt/C++ Modbus scanner so the existing handlers run from the command line.",
-        "es": "Registró las opciones --help y --version en este escáner Modbus en Qt/C++ para que los manejadores ya existentes se ejecuten desde la línea de comandos."
+        "en": "Float fields now decode through serde_json::Number, so a build that turns on serde_json's arbitrary_precision (the OpenAI Codex CLI is one) no longer drops tool results, progress notifications and sampling requests that carry a decimal; with tests.",
+        "es": "Los campos decimales ahora se decodifican a través de serde_json::Number, así que un build que activa arbitrary_precision de serde_json (el Codex CLI de OpenAI es uno) ya no pierde resultados de herramientas, notificaciones de progreso ni peticiones de sampling con decimales; con tests."
       },
       "platform": "github",
       "numbers": [
-        74
+        1300
       ],
       "redacted": false,
       "size": {
         "prs": 1,
-        "additions": 51,
-        "deletions": 3,
+        "additions": 371,
+        "deletions": 9,
         "changedFiles": 6
       },
-      "language": "C++"
+      "language": "Rust"
     }
   ],
   "contributedTo": [
@@ -1894,14 +1894,14 @@
         "people": 5
       },
       {
-        "repo": "TFG-TFM_EPS",
-        "issues": 3,
-        "people": 3
-      },
-      {
         "repo": "phonometry",
         "issues": 16,
         "people": 14
+      },
+      {
+        "repo": "TFG-TFM_EPS",
+        "issues": 3,
+        "people": 3
       },
       {
         "repo": "Cloudflare-DNS-Updater",
@@ -1909,14 +1909,14 @@
         "people": 7
       },
       {
-        "repo": "cs-routeros-bouncer",
-        "issues": 7,
-        "people": 6
-      },
-      {
         "repo": "gitlab-mcp-server",
         "issues": 3,
         "people": 3
+      },
+      {
+        "repo": "cs-routeros-bouncer",
+        "issues": 7,
+        "people": 6
       },
       {
         "repo": "FDTDexamples",
@@ -1941,6 +1941,16 @@
         "people": 4
       },
       {
+        "repo": "mastodon_official_profiles",
+        "prs": 8,
+        "people": 4
+      },
+      {
+        "repo": "libgen-mcp",
+        "prs": 1,
+        "people": 1
+      },
+      {
         "repo": "SetFigPaper",
         "prs": 1,
         "people": 1
@@ -1951,19 +1961,9 @@
         "people": 2
       },
       {
-        "repo": "mastodon_official_profiles",
-        "prs": 8,
-        "people": 4
-      },
-      {
         "repo": "Cloudflare-DNS-Updater",
         "prs": 3,
         "people": 3
-      },
-      {
-        "repo": "libgen-mcp",
-        "prs": 1,
-        "people": 1
       }
     ]
   },
@@ -2125,8 +2125,8 @@
         "jobs": 24,
         "os": [
           "macOS",
-          "Linux",
-          "Windows"
+          "Windows",
+          "Linux"
         ]
       },
       "ciPassRate90d": {
@@ -2147,24 +2147,24 @@
       "hygiene": {
         "repo": "gitlab-mcp-server",
         "policyFiles": [
+          "codeowners",
           "dependabot",
-          "security",
-          "codeowners"
+          "security"
         ],
         "rulesetRules": [
-          "non_fast_forward",
           "pull_request",
           "update",
           "deletion",
+          "non_fast_forward",
           "required_status_checks"
         ],
         "hasClassicProtection": false,
         "dependabotEcosystems": [
-          "npm",
           "docker",
-          "gomod",
           "github-actions",
-          "docker-compose"
+          "gomod",
+          "docker-compose",
+          "npm"
         ]
       },
       "docsPublished": {
@@ -2181,8 +2181,8 @@
         "repo": "phonometry",
         "jobs": 32,
         "os": [
-          "Windows",
           "macOS",
+          "Windows",
           "Linux"
         ]
       },
@@ -2204,15 +2204,15 @@
       "hygiene": {
         "repo": "phonometry",
         "policyFiles": [
-          "dependabot",
-          "security"
+          "security",
+          "dependabot"
         ],
         "rulesetRules": [],
         "hasClassicProtection": true,
         "dependabotEcosystems": [
+          "github-actions",
           "pip",
-          "npm",
-          "github-actions"
+          "npm"
         ]
       },
       "docsPublished": {
@@ -2250,17 +2250,17 @@
       "hygiene": {
         "repo": "cs-routeros-bouncer",
         "policyFiles": [
-          "security",
           "codeowners",
+          "security",
           "dependabot"
         ],
         "rulesetRules": [],
         "hasClassicProtection": true,
         "dependabotEcosystems": [
-          "docker",
           "github-actions",
-          "npm",
           "gomod",
+          "docker",
+          "npm",
           "docker-compose"
         ]
       },
@@ -2278,9 +2278,9 @@
         "repo": "mikroscope",
         "jobs": 32,
         "os": [
-          "macOS",
+          "Linux",
           "Windows",
-          "Linux"
+          "macOS"
         ]
       },
       "ciPassRate90d": {
@@ -2305,16 +2305,16 @@
           "security"
         ],
         "rulesetRules": [
-          "pull_request",
           "non_fast_forward",
+          "deletion",
           "required_status_checks",
-          "deletion"
+          "pull_request"
         ],
         "hasClassicProtection": false,
         "dependabotEcosystems": [
-          "gomod",
           "github-actions",
-          "npm"
+          "npm",
+          "gomod"
         ]
       },
       "docsPublished": {
@@ -2351,8 +2351,8 @@
       "hygiene": {
         "repo": "Cloudflare-DNS-Updater",
         "policyFiles": [
-          "codeowners",
-          "security"
+          "security",
+          "codeowners"
         ],
         "rulesetRules": [],
         "hasClassicProtection": false,
@@ -2372,9 +2372,9 @@
         "repo": "libgen-mcp",
         "jobs": 20,
         "os": [
+          "Linux",
           "Windows",
-          "macOS",
-          "Linux"
+          "macOS"
         ]
       },
       "ciPassRate90d": {
@@ -2395,21 +2395,21 @@
       "hygiene": {
         "repo": "libgen-mcp",
         "policyFiles": [
+          "dependabot",
           "security",
-          "codeowners",
-          "dependabot"
+          "codeowners"
         ],
         "rulesetRules": [
-          "deletion",
           "pull_request",
           "required_status_checks",
+          "deletion",
           "non_fast_forward"
         ],
         "hasClassicProtection": false,
         "dependabotEcosystems": [
+          "github-actions",
           "docker",
           "npm",
-          "github-actions",
           "gomod"
         ]
       },
@@ -2427,9 +2427,9 @@
         "repo": "ghchronicle",
         "jobs": 22,
         "os": [
-          "macOS",
+          "Windows",
           "Linux",
-          "Windows"
+          "macOS"
         ]
       },
       "ciPassRate90d": {
@@ -2454,17 +2454,17 @@
           "dependabot"
         ],
         "rulesetRules": [
-          "deletion",
           "non_fast_forward",
-          "pull_request",
-          "required_status_checks"
+          "required_status_checks",
+          "deletion",
+          "pull_request"
         ],
         "hasClassicProtection": false,
         "dependabotEcosystems": [
-          "github-actions",
-          "docker",
           "gomod",
-          "npm"
+          "npm",
+          "docker",
+          "github-actions"
         ]
       },
       "docsPublished": {
@@ -2552,7 +2552,7 @@
     }
   },
   "gitlab": {
-    "fetchedAt": "2026-09-27T14:40:32.668Z",
+    "fetchedAt": "2026-09-27T14:50:10.415Z",
     "username": "jmrp",
     "items": [
       {

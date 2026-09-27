@@ -204,11 +204,15 @@ featured:
     why:
       en: "Fixed DNS manual mode reusing the previous certificate on renewal (and failing on first issuance) by polling the ACME order the current run created."
       es: "Corrigió que el modo DNS manual reutilizara el certificado anterior al renovar (y fallara en la primera emisión) consultando el pedido ACME creado en la ejecución actual."
-  - repo: sanny32/OpenModScan
-    number: 74
+  # Silent message loss in the official Rust SDK whenever another crate turns
+  # on serde_json's arbitrary_precision (Cargo feature unification); the
+  # OpenAI Codex CLI is built that way (openai/codex#38979). Fixes
+  # modelcontextprotocol/rust-sdk#1299.
+  - repo: modelcontextprotocol/rust-sdk
+    number: 1300
     kind: pull_request
     why:
-      en: "Registered the --help and --version options in this Qt/C++ Modbus scanner so the existing handlers run from the command line."
-      es: "Registró las opciones --help y --version en este escáner Modbus en Qt/C++ para que los manejadores ya existentes se ejecuten desde la línea de comandos."
+      en: "Float fields now decode through serde_json::Number, so a build that turns on serde_json's arbitrary_precision (the OpenAI Codex CLI is one) no longer drops tool results, progress notifications and sampling requests that carry a decimal; with tests."
+      es: "Los campos decimales ahora se decodifican a través de serde_json::Number, así que un build que activa arbitrary_precision de serde_json (el Codex CLI de OpenAI es uno) ya no pierde resultados de herramientas, notificaciones de progreso ni peticiones de sampling con decimales; con tests."
 
 securityTitleAllow: []
