@@ -34,6 +34,30 @@ import { getSeries } from "../utils/series.js";
 // its own catch and returned an empty list — silently, which is why /blog/ and
 // /tools/ came out with no `dateModified` while every other page worked.
 const SRC_DIR = pathToFileURL(`${process.cwd()}/src/`);
+
+/** Pages whose rendered lists come from the build-time contributions dataset. */
+const DATA_DATED_PAGES = new Set(["/projects/", "/projects/contributions/"]);
+
+/**
+ * `displayChangedAt` of the build-time contributions dataset: when what the
+ * pages show from it last changed (see `scripts/ghc/rebuild-state.mjs`).
+ * Undefined when the file or the field is missing.
+ *
+ * @returns The ISO timestamp, if known.
+ */
+function datasetDisplayChangedAt(): string | undefined {
+  try {
+    const raw = readFileSync(
+      fileURLToPath(new URL("data/ghc/projects-contributions.json", SRC_DIR)),
+      "utf8",
+    );
+    const value = (JSON.parse(raw) as { displayChangedAt?: unknown })
+      .displayChangedAt;
+    return typeof value === "string" ? value : undefined;
+  } catch {
+    return undefined;
+  }
+}
 const POSTS_DIR = new URL("content/posts/", SRC_DIR);
 const LOCALE_DIRS = ["en", "es"];
 
@@ -413,6 +437,16 @@ export function createLastmodResolver(): (
     // the page just as much as an edit to its own copy does. Same shop-window
     // reasoning as "/" above, folded with its static sources.
     if (path === "/feeds/") return newest(staticDates.get(path), newestPost);
+
+    // The contributions lists are rendered from a dataset that is not in git
+    // (see the note on `/projects/` above), so git alone never saw them
+    // change: after a scheduled rebuild with new data, the page said
+    // "Snapshot as of" today and "Updated" the day of its last commit (GEO
+    // audit #10, M3). The dataset carries the moment its DISPLAYED part last
+    // changed, which is what moves the date, and nothing else in it does.
+    if (DATA_DATED_PAGES.has(path)) {
+      return newest(staticDates.get(path), datasetDisplayChangedAt());
+    }
 
     return staticDates.get(path);
   };

@@ -62,6 +62,11 @@ import {
   getUpstreamRepos,
 } from "./queries.mjs";
 import {
+  displayChangedAt,
+  readState,
+  resolveStatePath,
+} from "./rebuild-state.mjs";
+import {
   ACTIVE_REPOS,
   MAINTENANCE_REPOS,
   OWNER,
@@ -656,6 +661,12 @@ export async function buildDataset({
   try {
     const resolvedConfig = config ?? resolveInfluxConfig();
     const dataset = await collect(resolvedConfig, root, { warn });
+    // When the displayed part last changed, against the state the live build
+    // recorded; the pages' dates fold it in (GEO audit #10, M3).
+    dataset.displayChangedAt = displayChangedAt(
+      dataset,
+      readState(resolveStatePath()),
+    );
     fs.mkdirSync(path.dirname(outPath), { recursive: true });
     const tmpPath = `${outPath}.tmp-${process.pid}`;
     fs.writeFileSync(tmpPath, `${JSON.stringify(dataset, null, 2)}\n`);
