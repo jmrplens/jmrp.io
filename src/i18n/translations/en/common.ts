@@ -402,13 +402,11 @@ export const common = {
       heroSubtitle:
         "Embedded Firmware & Software Engineer. <br>Bridging the gap between <strong>firmware</strong>, software, and applied research.",
       heroBio1:
-        "I'm José Manuel Requena Plens, an R&D engineer based in Valencia, Spain, specializing in embedded firmware (C/C++, STM32/ESP32), industrial software development, and applied acoustics research. My path runs from academic research in acoustics to industrial firmware development — and that breadth is what motivates me the most.",
+        "I'm José Manuel Requena Plens, an R&D engineer based in Valencia, Spain, specializing in embedded firmware (C/C++, STM32/ESP32), industrial software development, and applied acoustics research. My path runs from academic research in acoustics to industrial firmware development, and that breadth is what motivates me the most.",
       heroBio2:
         "I thrive on integrating hardware and software end to end. I'm an active Open Source contributor whose tools are used by developers around the world, and a passionate self-hoster. My homelab serves this site and the <a href='https://mcp.jmrp.io/' target='_blank' rel='external noopener noreferrer' class='external-link' aria-label='public MCP servers (opens in new tab)'>public MCP servers</a> anyone can point an AI client at. <a href='/cv/'>Check out my CV</a> to see the full journey.",
       viewCV: "View CV",
       viewCVAria: "View CV - my professional curriculum vitae",
-      readBlog: "Read Blog",
-      readBlogAria: "Read Blog - articles and tutorials",
       projects: "Projects",
       projectsAria: "Projects - view my work on GitHub",
       homelab: "Homelab",
@@ -421,8 +419,10 @@ export const common = {
         "I also contribute code and documentation to other open-source projects, such as {names}.",
       upstreamLink: "See the contributions →",
       availability: "Available for projects · Valencia (CET/CEST)",
-      terminalRole: "Firmware / Software Eng.",
+      availabilityShort: "Available · Valencia",
+      seeProjects: "See projects",
       terminalLabel: "Profile summary",
+      terminalRole: "Firmware / Software Eng.",
     },
     blog: {
       title: "Blog",

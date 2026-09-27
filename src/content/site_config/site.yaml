@@ -211,5 +211,5 @@ featured_projects:
 # Language-neutral technical facts for the homepage hero "whoami" terminal.
 # `role` is localized copy and lives in the i18n layer (pages.home.terminalRole).
 terminal:
-  focus: "Firmware · Acoustics · DevSecOps"
+  focus: "Firmware · Software · QA"
   base: "Valencia, ES"

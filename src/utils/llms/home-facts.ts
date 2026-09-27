@@ -12,26 +12,19 @@
 import type { FeaturedProjectCard } from "@utils/featured-projects";
 
 /**
- * The hero's `~/whoami` card, as header lines.
+ * The hero's `~/whoami` terminal, as header lines.
  *
- * The three dotted keys are copied verbatim: they are metric IDENTIFIERS, the
- * name of the figure rather than a word about it, so they are published as
- * they are in both locales. `Focus`/`Base` are header keys and are localized,
- * following `Status:`/`Role:` — which the twin has always localized in the
- * Spanish document, even though the page renders `role` as a lowercase
- * `<dt>`, exactly as it renders `focus` and `base`. The twin's header keys
- * are its own schema, not a transcription of the card's typography.
+ * `Focus`/`Base` are header keys and are localized, following
+ * `Status:`/`Role:`. The two figures keep dotted metric identifiers, the name
+ * of the figure rather than a word about it, published as they are in both
+ * locales: `downloads.total` (the exact integer; the page rounds it to fit a
+ * tile, and the compact form is derivable from the integer, not the
+ * reverse) and `repos.own` (public repositories that are not forks, the
+ * figure /about/ also states).
  *
- * `downloads.total` carries the exact integer rather than the page's rounded
- * form: the rounding exists to fit a terminal widget, the compact form is
- * derivable from the integer and not the reverse, and taking the raw value
- * avoids duplicating `formatCompact`, which lives unexported in
- * `HomePage.astro`.
- *
- * A figure that resolves to nothing is omitted rather than printed. Both
- * surfaces treat `0` as unknown: `fetchGitHubProfile`'s offline fallback
- * reports `public_repos: 0` and the page renders an em dash there, so in a
- * machine surface the honest form is no line at all.
+ * A figure that resolves to nothing is omitted rather than printed: the page
+ * renders an em dash there, so in a machine surface the honest form is no
+ * line at all.
  *
  * @param facts - Already-resolved values plus the two localized labels.
  * @returns Header lines, in the card's own order.
@@ -42,8 +35,7 @@ export function whoamiFactLines(facts: {
   baseLabel: string;
   base?: string;
   downloadsTotal: number;
-  publicRepos: number;
-  lastPostDate?: string;
+  ownRepos: string;
 }): string[] {
   return [
     ...(facts.focus ? [`${facts.focusLabel}: ${facts.focus}`] : []),
@@ -51,8 +43,7 @@ export function whoamiFactLines(facts: {
     ...(facts.downloadsTotal > 0
       ? [`downloads.total: ${facts.downloadsTotal}`]
       : []),
-    ...(facts.publicRepos > 0 ? [`repos.public: ${facts.publicRepos}`] : []),
-    ...(facts.lastPostDate ? [`last.post: ${facts.lastPostDate}`] : []),
+    ...(/^\d+$/.test(facts.ownRepos) ? [`repos.own: ${facts.ownRepos}`] : []),
   ];
 }
 
@@ -82,7 +73,7 @@ export function featuredProjectLines(
       card.language ? `${languageLabel}: ${card.language}` : undefined,
     ].filter((fact): fact is string => fact !== undefined);
     return [
-      `- ${card.id}: ${card.url}`,
+      `- ${card.name}: ${card.url}`,
       ...(facts.length > 0 ? [`  ${facts.join(" · ")}`] : []),
       ...(card.summary ? [`  ${card.summary}`] : []),
     ];
