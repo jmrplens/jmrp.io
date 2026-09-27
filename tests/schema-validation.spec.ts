@@ -1381,7 +1381,13 @@ test.describe("Projects and contributions graphs", () => {
 
       // "Contributed to": one SoftwareSourceCode per ledger project with
       // merged work, each naming the person as a contributor.
-      const upstream = listItems(collection.mainEntity);
+      // mainEntity holds both lists (GEO audit #10, M2: an ItemList in
+      // `hasPart` is outside its CreativeWork range).
+      const entities = [collection.mainEntity].flat() as JsonLdSchema[];
+      const listById = (id: string) =>
+        entities.find((entity) => entity["@id"] === id);
+      expect(collection.hasPart).toBeUndefined();
+      const upstream = listItems(listById(`${pageUrl}#upstream-list`));
       const visibleMerged = await page
         .locator("details[data-project]")
         .evaluateAll((els) =>
@@ -1405,7 +1411,7 @@ test.describe("Projects and contributions graphs", () => {
       }
 
       // Highlights: the visible list, name, link and "why" as printed.
-      const highlights = listItems(collection.hasPart);
+      const highlights = listItems(listById(`${pageUrl}#highlights`));
       const visibleHighlights = await page
         .locator("ol.hl > li")
         .evaluateAll((els) =>

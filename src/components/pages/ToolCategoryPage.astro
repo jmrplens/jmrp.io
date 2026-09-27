@@ -12,6 +12,7 @@ import { getPageFaq, pageFaqNode } from "@utils/page-faq";
 import { getSiteUrl } from "@utils/site";
 import { getToolsForLocale } from "@utils/tools";
 import type { CollectionEntry } from "astro:content";
+import type { CollectionPage } from "schema-dts";
 
 interface Props {
   /** The category identifier. */
@@ -112,7 +113,7 @@ const schema = {
       }),
     ),
   },
-};
+} satisfies CollectionPage;
 // The page's question-and-answer pairs (GEO audit #8): one source for the
 // visible section, the FAQPage node and the markdown twin. See @utils/page-faq.
 const pageFaq = await getPageFaq(`/tools/categories/${category}/`, locale);

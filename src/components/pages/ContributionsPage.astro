@@ -421,8 +421,11 @@ const schema = {
   about: personRef,
   // The BreadcrumbList BaseHead emits for this very page.
   breadcrumb: { "@id": `${pageUrl}#breadcrumb` },
-  mainEntity: upstreamList,
-  ...(mergedHighlights.length > 0 && { hasPart: highlightList }),
+  // Both lists the page is about. `hasPart` would be wrong for the
+  // highlights: its range is CreativeWork and an ItemList is not one, which
+  // the Schema Markup Validator reports as a severe error (GEO audit #10, M2).
+  mainEntity:
+    mergedHighlights.length > 0 ? [upstreamList, highlightList] : upstreamList,
 } satisfies CollectionPage;
 
 const pageFaq = await getPageFaq("/projects/contributions/", locale);
