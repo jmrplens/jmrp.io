@@ -30,7 +30,6 @@ import {
   pickPrimaryRepo,
 } from "./contributions-yaml.mjs";
 import { ensureAchievementBadges } from "./fetch-achievement-badges.mjs";
-import { fetchRepoMeta } from "./github-repo-cache.mjs";
 import { resolveInfluxConfig } from "./influx.mjs";
 import {
   combineSummary,
@@ -59,6 +58,7 @@ import {
   getRepoHygiene,
   getStars,
   getUpstreamLandedCommits,
+  getUpstreamRepoMeta,
   getUpstreamRepos,
 } from "./queries.mjs";
 import {
@@ -414,9 +414,11 @@ export async function collectDataset(
     ).repo;
     foldedCode.set(project, existing);
   }
-  const repoMeta = await fetchRepoMeta(
+  // Upstream stars come from ghchronicle's `gh_upstream_repo` (2.6.0);
+  // a repository it has no row for renders with no star count.
+  const repoMeta = await getUpstreamRepoMeta(
+    config,
     [...foldedCode.values()].map((entry) => entry.primaryRepo),
-    { root },
   );
   const contributedTo = mergeContributedTo(
     [

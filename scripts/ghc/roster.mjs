@@ -36,11 +36,11 @@ export const ACTIVE_REPOS = /** @type {const} */ ([
 ]);
 
 /**
- * Archived projects. `include_archived=false` in ghchronicle's own config
- * freezes their `gh_repo` rows at the day they were archived (see
- * `datos.md`, familia `repo-stats`), so they never get live per-card tokens —
- * only the frozen count, read with a wide window, feeds roster-wide totals
- * (idea 18 in `datos.md`).
+ * Archived projects. They get no per-card tokens, only a share of the
+ * roster-wide star and fork totals, read from `gh_repo_total`, which
+ * ghchronicle writes for archived repositories on every `totals` sweep since
+ * 2.5.2 (jmrplens/ghchronicle#78; before that their `gh_repo` rows froze at
+ * the last backfill).
  */
 export const ARCHIVED_REPOS = /** @type {const} */ ([
   "A-Lab",

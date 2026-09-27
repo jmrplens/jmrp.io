@@ -90,17 +90,25 @@ function medianOf(values) {
  * shared by every query below that needs the full ledger. Open items are
  * re-stamped daily, and a state change (open → merged/closed) creates a new
  * series under the same `(full_name, number, kind)` — always take the latest
- * row (`datos.md`, idea 0's "Advertencias").
+ * row (`datos.md`, idea 0's "Advertencias"). Rows whose repository is
+ * private are dropped after that pick: the collector runs its searches with
+ * the account's token, so an organization's private repository can come back
+ * beside the public ones, and since ghchronicle 2.6.0 each row says so in
+ * `private` (jmrplens/ghchronicle#79). A row written before 2.6.0 has no
+ * `private` and is kept, as it was before the field existed.
  *
- * @returns {string} A `WITH r AS (...)` CTE prefix.
+ * @returns {string} A `WITH ... r AS (...)` CTE prefix; `r` holds only
+ *   `rn = 1` rows, and callers keep their `WHERE rn = 1` as a no-op guard.
  */
 function dedupedContributionsCte() {
-  return `WITH r AS (
+  return `WITH r_all AS (
     SELECT *, ROW_NUMBER() OVER (
       PARTITION BY full_name, number, kind ORDER BY time DESC
     ) AS rn
     FROM gh_external_contribution
     WHERE time >= '2018-01-01' AND user = 'jmrplens'
+  ), r AS (
+    SELECT * FROM r_all WHERE rn = 1 AND coalesce(private, false) = false
   )`;
 }
 
@@ -353,6 +361,7 @@ export async function getAcceptedAnswers(config) {
     FROM gh_discussion_comment
     WHERE time >= now() - INTERVAL '3650 days'
       AND own = 'false' AND is_answer = 'true' AND answered_by = 'jmrplens'
+      AND coalesce(private, false) = false
     GROUP BY full_name, number, url
     ORDER BY answered_at DESC`;
   const rows = await queryInflux(sql, config);
@@ -378,7 +387,8 @@ export async function getDiscussionTotals(config) {
       count(DISTINCT full_name || '#' || number) AS discussions,
       count(DISTINCT full_name) AS repos
     FROM gh_discussion_comment
-    WHERE own = 'false' AND time >= now() - INTERVAL '3650 days'`;
+    WHERE own = 'false' AND time >= now() - INTERVAL '3650 days'
+      AND coalesce(private, false) = false`;
   const [row] = await queryInflux(sql, config);
   return {
     comments: num(row?.comments),
@@ -561,64 +571,87 @@ export async function getStars(config, repos = ACTIVE_REPOS) {
 }
 
 /**
- * Latest stable release per ACTIVE roster repo (drafts and prereleases
- * excluded). Idea 17, CORRECTED: the original `min(age_days)` over every
- * hourly snapshot in a 1-day window came out up to a day short (verified
- * against `published_at` for all 8 repos); this version reads the rows of
- * the single latest snapshot time per repo (`mt` window function) and lets
- * {@link pickLatestReleases} rank them.
+ * Latest stable release per ACTIVE roster repo (prereleases excluded), read
+ * from `gh_release_published`: one row per release at its publication
+ * instant, written since ghchronicle 2.6.0 (jmrplens/ghchronicle#80). Until
+ * then the only date was `gh_release.age_days`, whole days counted back from
+ * the sweep, so the publication had to be reconstructed and came out a day
+ * late for anything published later in the day than the sweep ran (idea 17
+ * in `datos.md`, and the production audit of 2026-09-27, N2).
+ *
+ * `ageDays` is still what the `*_REL_AGE` token carries, now counted from the
+ * real publication at query time: whole days elapsed, floored, so a release
+ * published 23 hours ago reads "today", as the relative-days format expects.
  *
  * @param {import('./influx.mjs').InfluxConfig} config - Connection settings.
  * @param {readonly string[]} [repos] - Repos to query; defaults to
  *   `ACTIVE_REPOS`.
- * @returns {Promise<{repo: string, tag: string, ageDays: number}[]>}
+ * @param {number} [nowMs] - Clock, for tests.
+ * @returns {Promise<{repo: string, tag: string, publishedAt: string, ageDays: number}[]>}
  */
-export async function getLatestRelease(config, repos = ACTIVE_REPOS) {
+export async function getLatestRelease(
+  config,
+  repos = ACTIVE_REPOS,
+  nowMs = Date.now(),
+) {
   const roster = sqlRepoList(repos);
-  const sql = `WITH s AS (
-      SELECT repo, tag, age_days, time, max(time) OVER (PARTITION BY repo) AS mt
-      FROM gh_release
-      WHERE time >= now() - INTERVAL '1 day'
-        AND owner = '${OWNER}' AND draft = 'false' AND prerelease = 'false'
-        AND repo IN (${roster})
-    )
-    SELECT repo, tag, age_days FROM s WHERE time = mt`;
+  const sql = `SELECT repo, tag, time
+    FROM gh_release_published
+    WHERE time >= now() - INTERVAL '3650 days'
+      AND owner = '${OWNER}' AND prerelease = false
+      AND repo IN (${roster})`;
   const rows = await queryInflux(sql, config);
   return pickLatestReleases(
-    rows.map((row) => ({
-      repo: String(row.repo),
-      tag: String(row.tag),
-      ageDays: num(row.age_days),
-    })),
+    rows.map((row) => {
+      const publishedAt = influxTimeToIso(String(row.time));
+      return {
+        repo: String(row.repo),
+        tag: String(row.tag),
+        publishedAt,
+        ageDays: Math.max(
+          0,
+          Math.floor((nowMs - Date.parse(publishedAt)) / 86_400_000),
+        ),
+      };
+    }),
   );
 }
 
 /**
- * Picks each repo's newest release from one snapshot's rows: the smallest
- * `ageDays`, then, because `age_days` is a whole number of days and two
- * releases shipped the same day tie on it, the highest version tag. The
- * `gh_release` table has no publish timestamp to break the tie with (its
- * columns: age_days, assets, downloads, draft, full_name, owner,
- * prerelease, repo, tag, time, url), and the SQL `ROW_NUMBER()` it
- * replaced broke it arbitrarily: /projects/ showed ghchronicle v2.5.0 after
- * v2.5.1 had shipped the same day (production audit 2026-09-27, N2). Tags
+ * Normalizes an InfluxDB timestamp to ISO 8601 UTC. The SQL API returns
+ * `2026-09-25T11:58:52` or `2026-09-25T11:58:52.188292945`, with no zone
+ * designator and up to nanoseconds; both are UTC.
+ *
+ * @param {string} raw - Timestamp as the API returns it.
+ * @returns {string} ISO string with a `Z`.
+ */
+export function influxTimeToIso(raw) {
+  const trimmed = raw.replace(/(\.\d{3})\d*/, "$1");
+  return new Date(
+    /(?:[zZ]|[+-]\d\d:?\d\d)$/.test(trimmed) ? trimmed : `${trimmed}Z`,
+  ).toISOString();
+}
+
+/**
+ * Picks each repo's newest release: the latest `publishedAt`, then, for two
+ * releases published in the same second, the highest version tag. Tags
  * compare numerically segment by segment (`v2.5.10` above `v2.5.9`), and a
  * full version outranks a floating major tag of the same release (`v1.0.0`
  * above `v1`). Pure; output ordered by repo.
  *
- * @param {readonly {repo: string, tag: string, ageDays: number}[]} rows -
- *   Release rows of the latest snapshot.
- * @returns {{repo: string, tag: string, ageDays: number}[]} One row per repo.
+ * @template {{repo: string, tag: string, publishedAt: string}} T
+ * @param {readonly T[]} rows - Release rows.
+ * @returns {T[]} One row per repo.
  */
 export function pickLatestReleases(rows) {
-  /** @type {Map<string, {repo: string, tag: string, ageDays: number}>} */
+  /** @type {Map<string, T>} */
   const best = new Map();
   for (const row of rows) {
     const current = best.get(row.repo);
     if (
       !current ||
-      row.ageDays < current.ageDays ||
-      (row.ageDays === current.ageDays &&
+      row.publishedAt > current.publishedAt ||
+      (row.publishedAt === current.publishedAt &&
         compareVersionTags(row.tag, current.tag) > 0)
     ) {
       best.set(row.repo, row);
@@ -639,10 +672,52 @@ export function compareVersionTags(a, b) {
 }
 
 /**
- * Header activity band: stars/forks (ALL roster, active + archived — the
- * 30-day window keeps the frozen archived rows from dropping out, per idea
- * 18's fix), stars gained in 30 days (active roster only), and releases
- * shipped in the last 90/30 days (active roster only).
+ * Stars and visibility of third-party repositories the account contributed
+ * to, from `gh_upstream_repo`: one row per repository the outbound searches
+ * reached, stamped at each sweep, written since ghchronicle 2.6.0
+ * (jmrplens/ghchronicle#79). A repository whose items are all closed keeps
+ * the row of the last sweep or backfill that read one of them, so the window
+ * is wide and the newest row per repository wins. Replaces a build-time
+ * GitHub REST lookup per repository.
+ *
+ * @param {import('./influx.mjs').InfluxConfig} config - Connection settings.
+ * @param {readonly string[]} fullNames - `owner/repo` names to look up.
+ * @returns {Promise<Record<string, {stars: number, isPrivate: boolean}>>}
+ *   Keyed by full name; a repository with no row is absent.
+ */
+export async function getUpstreamRepoMeta(config, fullNames) {
+  if (fullNames.length === 0) return {};
+  const sql = `SELECT full_name, stars, private FROM (
+      SELECT full_name, stars, private,
+        ROW_NUMBER() OVER (PARTITION BY full_name ORDER BY time DESC) AS rn
+      FROM gh_upstream_repo
+      WHERE time >= now() - INTERVAL '3650 days'
+        AND full_name IN (${sqlFullNameList(fullNames)})
+    ) WHERE rn = 1`;
+  const rows = await queryInflux(sql, config);
+  /** @type {Record<string, {stars: number, isPrivate: boolean}>} */
+  const out = {};
+  for (const row of rows) {
+    out[String(row.full_name)] = {
+      stars: num(row.stars),
+      isPrivate: [true, "true", 1, "1"].includes(row.private),
+    };
+  }
+  return out;
+}
+
+/**
+ * Header activity band: stars/forks (ALL roster, active + archived), stars
+ * gained in 30 days (active roster only), and releases published in the
+ * last 90/30 days (active roster only).
+ *
+ * Stars and forks come from `gh_repo_total`, which every `totals` sweep
+ * writes for every repository, archived ones included, since ghchronicle
+ * 2.5.2 (jmrplens/ghchronicle#78). They used to come from `gh_repo`, which
+ * the collector stops writing for an archived repository, so its count froze
+ * at the last backfill (FFT2octave read 4 stars there on 2026-09-27, 3 on
+ * GitHub). The releases count reads `gh_release_published`, one row per
+ * release at its publication (jmrplens/ghchronicle#80).
  *
  * @param {import('./influx.mjs').InfluxConfig} config - Connection settings.
  * @returns {Promise<{
@@ -657,8 +732,8 @@ export async function getHeaderActivityBand(config) {
   const starsSql = `SELECT sum(stars) AS stars, sum(forks) AS forks, count(*) AS repos
     FROM (
       SELECT *, ROW_NUMBER() OVER (PARTITION BY repo ORDER BY time DESC) AS rn
-      FROM gh_repo
-      WHERE time >= now() - INTERVAL '30 days' AND owner = '${OWNER}' AND repo IN (${fullRoster})
+      FROM gh_repo_total
+      WHERE time >= now() - INTERVAL '3 days' AND owner = '${OWNER}' AND repo IN (${fullRoster})
     ) WHERE rn = 1 AND visibility = 'public'`;
   const [starsRow] = await queryInflux(starsSql, config);
 
@@ -666,16 +741,13 @@ export async function getHeaderActivityBand(config) {
     WHERE time >= now() - INTERVAL '30 days' AND owner = '${OWNER}' AND repo IN (${activeRoster})`;
   const [stars30dRow] = await queryInflux(stars30dSql, config);
 
-  const releasesSql = `WITH c AS (
-      SELECT repo, tag, age_days,
-        ROW_NUMBER() OVER (PARTITION BY repo, tag ORDER BY time DESC) AS rn
-      FROM gh_release
-      WHERE time >= now() - INTERVAL '2 days' AND owner = '${OWNER}' AND draft = 'false'
-        AND repo IN (${activeRoster})
-    )
-    SELECT count(*) FILTER (WHERE age_days <= 90) AS rel_90d,
-      count(*) FILTER (WHERE age_days <= 30) AS rel_30d
-    FROM c WHERE rn = 1`;
+  const releasesSql = `SELECT
+      count(DISTINCT repo || '@' || tag) AS rel_90d,
+      count(DISTINCT CASE WHEN time >= now() - INTERVAL '30 days'
+        THEN repo || '@' || tag END) AS rel_30d
+    FROM gh_release_published
+    WHERE time >= now() - INTERVAL '90 days' AND owner = '${OWNER}'
+      AND repo IN (${activeRoster})`;
   const [releasesRow] = await queryInflux(releasesSql, config);
 
   return {

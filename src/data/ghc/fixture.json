@@ -1,26 +1,26 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-09-26T20:35:39.488Z",
-  "asOf": "2026-09-26T13:03:19.304686700",
+  "generatedAt": "2026-09-27T13:35:02.658Z",
+  "asOf": "2026-09-27T12:59:41.188292945",
   "summary": {
     "contributionTotals": {
-      "prMerged": 59,
+      "prMerged": 60,
       "prOpen": 21,
       "prClosed": 19,
-      "issuesOpen": 26,
-      "issuesClosed": 19,
-      "repos": 54,
-      "owners": 48,
-      "reposWithMerge": 21,
-      "lastPrDate": "2026-09-26T00:00:00"
+      "issuesOpen": 25,
+      "issuesClosed": 20,
+      "repos": 55,
+      "owners": 49,
+      "reposWithMerge": 22,
+      "lastPrDate": "2026-09-27T03:55:12"
     },
     "codeVsListingSplit": {
       "codeOrDocs": {
-        "merged": 45,
+        "merged": 46,
         "open": 16,
         "closed": 16,
-        "reposMerged": 15,
-        "medianHoursToMerge": 49.774166666666666
+        "reposMerged": 16,
+        "medianHoursToMerge": 48.919444444444444
       },
       "listing": {
         "merged": 14,
@@ -30,15 +30,15 @@
         "medianHoursToMerge": 8.850694444444445
       }
     },
-    "answersCount": 15,
+    "answersCount": 16,
     "discussionTotals": {
-      "comments": 99,
-      "discussions": 75,
-      "repos": 52
+      "comments": 103,
+      "discussions": 78,
+      "repos": 55
     },
     "byPlatform": {
       "github": {
-        "prs": 59,
+        "prs": 60,
         "issues": 43
       },
       "gitlab": {
@@ -133,7 +133,7 @@
       "platform": "github",
       "merged": 1,
       "lastMergedAt": "2026-09-10T13:56:24",
-      "stars": 47712
+      "stars": 47724
     },
     {
       "project": "Trilium Notes",
@@ -141,7 +141,7 @@
       "platform": "github",
       "merged": 2,
       "lastMergedAt": "2026-09-11T19:57:57",
-      "stars": 37997
+      "stars": 38021
     },
     {
       "project": "Nginx Proxy Manager",
@@ -149,7 +149,7 @@
       "platform": "github",
       "merged": 1,
       "lastMergedAt": "2026-09-08T21:27:01",
-      "stars": 34240
+      "stars": 34247
     },
     {
       "project": "Podman",
@@ -157,7 +157,7 @@
       "platform": "github",
       "merged": 1,
       "lastMergedAt": "2026-09-14T16:45:18",
-      "stars": 32941
+      "stars": 32949
     },
     {
       "project": "Beszel",
@@ -165,7 +165,7 @@
       "platform": "github",
       "merged": 2,
       "lastMergedAt": "2026-09-17T17:55:13",
-      "stars": 25763
+      "stars": 25784
     },
     {
       "project": "Renovate",
@@ -173,7 +173,7 @@
       "platform": "github",
       "merged": 1,
       "lastMergedAt": "2026-09-12T11:30:04",
-      "stars": 22600
+      "stars": 22606
     },
     {
       "project": "al-folio",
@@ -181,7 +181,7 @@
       "platform": "github",
       "merged": 3,
       "lastMergedAt": "2023-07-12T01:53:53",
-      "stars": 16202
+      "stars": 16207
     },
     {
       "project": "GitLab",
@@ -197,7 +197,15 @@
       "platform": "github",
       "merged": 5,
       "lastMergedAt": "2026-09-21T13:26:27",
-      "stars": 5153
+      "stars": 5157
+    },
+    {
+      "project": "MCP Rust SDK",
+      "repo": "modelcontextprotocol/rust-sdk",
+      "platform": "github",
+      "merged": 1,
+      "lastMergedAt": "2026-09-27T03:55:12",
+      "stars": 3957
     },
     {
       "project": "OpenModScan",
@@ -221,7 +229,7 @@
       "platform": "gitlab",
       "merged": 15,
       "lastMergedAt": "2026-09-24T18:46:11.887Z",
-      "stars": 106
+      "stars": 107
     },
     {
       "project": "YunoHost coturn",
@@ -267,6 +275,13 @@
       "title": "How to use what kind of geotagged images with maps app?",
       "answerUrl": "https://github.com/opencloud-eu/opencloud/discussions/3587#discussioncomment-18605569",
       "answeredAt": "2026-09-25T20:57:18"
+    },
+    {
+      "fullName": "podman-container-tools/podman",
+      "number": 29817,
+      "title": "How does Podman work with the different firewall providers? I can't access a web server migrated from Docker.",
+      "answerUrl": "https://github.com/podman-container-tools/podman/discussions/29817#discussioncomment-18586958",
+      "answeredAt": "2026-09-24T20:43:58"
     },
     {
       "fullName": "borgbase/vorta",
@@ -475,6 +490,20 @@
       ]
     },
     "2026": {
+      "MCP Rust SDK": [
+        {
+          "platform": "github",
+          "kind": "pull_request",
+          "state": "merged",
+          "fullName": "modelcontextprotocol/rust-sdk",
+          "number": 1300,
+          "createdAt": "2026-09-26T00:59:27.000Z",
+          "hoursToMerge": 24.929166666666667,
+          "comments": 0,
+          "title": "fix(model): decode float fields through serde_json::Number",
+          "redacted": false
+        }
+      ],
       "go-selfupdate": [
         {
           "platform": "github",
@@ -514,20 +543,6 @@
           "hoursToMerge": null,
           "comments": 0,
           "title": "Fall back to the feed URL when a feed's own link is relative",
-          "redacted": false
-        }
-      ],
-      "Kong": [
-        {
-          "platform": "github",
-          "kind": "pull_request",
-          "state": "open",
-          "fullName": "Kong/kong",
-          "number": 15019,
-          "createdAt": "2026-09-24T09:52:57.000Z",
-          "hoursToMerge": null,
-          "comments": 1,
-          "title": "fix(dns): do not cache answers with a zero TTL",
           "redacted": false
         }
       ],
@@ -629,20 +644,6 @@
           "redacted": false
         }
       ],
-      "MCP Rust SDK": [
-        {
-          "platform": "github",
-          "kind": "pull_request",
-          "state": "open",
-          "fullName": "modelcontextprotocol/rust-sdk",
-          "number": 1300,
-          "createdAt": "2026-09-26T00:59:27.000Z",
-          "hoursToMerge": null,
-          "comments": 0,
-          "title": "fix(model): decode float fields through serde_json::Number",
-          "redacted": false
-        }
-      ],
       "OpenCloud": [
         {
           "platform": "github",
@@ -668,6 +669,34 @@
           "hoursToMerge": null,
           "comments": 0,
           "title": "fix: keep the whole reason phrase in stat errors",
+          "redacted": false
+        }
+      ],
+      "webpage": [
+        {
+          "platform": "github",
+          "kind": "pull_request",
+          "state": "open",
+          "fullName": "probe-rs/webpage",
+          "number": 301,
+          "createdAt": "2026-09-26T19:49:53.000Z",
+          "hoursToMerge": null,
+          "comments": 0,
+          "title": "Fix the Olimex udev rules: drop the 0x prefix",
+          "redacted": false
+        }
+      ],
+      "Kong": [
+        {
+          "platform": "github",
+          "kind": "pull_request",
+          "state": "open",
+          "fullName": "Kong/kong",
+          "number": 15019,
+          "createdAt": "2026-09-24T09:52:57.000Z",
+          "hoursToMerge": null,
+          "comments": 1,
+          "title": "fix(dns): do not cache answers with a zero TTL",
           "redacted": false
         }
       ],
@@ -1294,9 +1323,13 @@
     }
   },
   "issuesByProject": {
-    "Kong": {
-      "open": 1,
-      "closed": 0
+    "MCP Rust SDK": {
+      "open": 0,
+      "closed": 1
+    },
+    "MCP Go SDK": {
+      "open": 8,
+      "closed": 5
     },
     "htmlbeautifier": {
       "open": 1,
@@ -1334,11 +1367,7 @@
       "open": 1,
       "closed": 0
     },
-    "MCP Go SDK": {
-      "open": 8,
-      "closed": 5
-    },
-    "MCP Rust SDK": {
+    "Kong": {
       "open": 1,
       "closed": 0
     },
@@ -1496,23 +1525,23 @@
     },
     {
       "platform": "github",
+      "achievement": "galaxy-brain",
+      "name": "Galaxy Brain",
+      "tierNumber": 3,
+      "tierName": "silver",
+      "count": 16,
+      "nextThreshold": 32,
+      "percent": 50,
+      "agrees": true
+    },
+    {
+      "platform": "github",
       "achievement": "pair-extraordinaire",
       "name": "Pair Extraordinaire",
       "tierNumber": 3,
       "tierName": "silver",
       "count": 33,
       "nextThreshold": 48,
-      "percent": 68.8,
-      "agrees": true
-    },
-    {
-      "platform": "github",
-      "achievement": "galaxy-brain",
-      "name": "Galaxy Brain",
-      "tierNumber": 2,
-      "tierName": "bronze",
-      "count": 11,
-      "nextThreshold": 16,
       "percent": 68.8,
       "agrees": true
     },
@@ -1544,34 +1573,24 @@
   "communityContributors": {
     "issues": [
       {
-        "repo": "cs-routeros-bouncer",
-        "issues": 7,
-        "people": 6
-      },
-      {
-        "repo": "gitlab-mcp-server",
-        "issues": 3,
-        "people": 3
-      },
-      {
-        "repo": "TFG-TFM_EPS",
-        "issues": 3,
-        "people": 3
-      },
-      {
         "repo": "phonometry",
         "issues": 16,
         "people": 14
       },
       {
-        "repo": "libgen-mcp",
-        "issues": 1,
-        "people": 1
+        "repo": "cs-routeros-bouncer",
+        "issues": 7,
+        "people": 6
       },
       {
         "repo": "Cloudflare-DNS-Updater",
         "issues": 7,
         "people": 7
+      },
+      {
+        "repo": "gitlab-mcp-server",
+        "issues": 3,
+        "people": 3
       },
       {
         "repo": "A-Lab",
@@ -1582,6 +1601,16 @@
         "repo": "FDTDexamples",
         "issues": 1,
         "people": 1
+      },
+      {
+        "repo": "libgen-mcp",
+        "issues": 1,
+        "people": 1
+      },
+      {
+        "repo": "TFG-TFM_EPS",
+        "issues": 3,
+        "people": 3
       }
     ],
     "prs": [
@@ -1596,14 +1625,14 @@
         "people": 1
       },
       {
-        "repo": "phonometry",
-        "prs": 3,
-        "people": 2
-      },
-      {
         "repo": "mastodon_official_profiles",
         "prs": 8,
         "people": 4
+      },
+      {
+        "repo": "phonometry",
+        "prs": 3,
+        "people": 2
       },
       {
         "repo": "Cloudflare-DNS-Updater",
@@ -1623,6 +1652,13 @@
     ]
   },
   "upstreamLandedCommits": [
+    {
+      "fullName": "modelcontextprotocol/rust-sdk",
+      "commits": 1,
+      "days": 1,
+      "firstLandedAt": "2026-09-27T00:00:00",
+      "lastLandedAt": "2026-09-27T00:00:00"
+    },
     {
       "fullName": "wolffcatskyy/awesome-crowdsec",
       "commits": 1,
@@ -1739,9 +1775,9 @@
   "dependabot": {
     "perRepo": [
       {
-        "repo": "phonometry",
-        "fixed": 17,
-        "medianDays": 4.575335648148148
+        "repo": "gitlab-mcp-server",
+        "fixed": 39,
+        "medianDays": 1.556898148148148
       },
       {
         "repo": "cs-routeros-bouncer",
@@ -1749,9 +1785,9 @@
         "medianDays": 7.102384259259259
       },
       {
-        "repo": "gitlab-mcp-server",
-        "fixed": 39,
-        "medianDays": 1.556898148148148
+        "repo": "phonometry",
+        "fixed": 17,
+        "medianDays": 4.575335648148148
       },
       {
         "repo": "mikroscope",
@@ -1766,20 +1802,20 @@
   "maintenance": [
     {
       "repo": "gitlab-mcp-server",
-      "activeDays12m": 94,
-      "lastOwnerCommitAt": "2026-09-26T13:38:56",
+      "activeDays12m": 96,
+      "lastOwnerCommitAt": "2026-09-27T11:53:36",
       "ci": {
         "repo": "gitlab-mcp-server",
         "jobs": 24,
         "os": [
-          "macOS",
           "Windows",
+          "macOS",
           "Linux"
         ]
       },
       "ciPassRate90d": {
         "repo": "gitlab-mcp-server",
-        "ok": 533,
+        "ok": 537,
         "ko": 17,
         "pct": 96.9
       },
@@ -1790,35 +1826,35 @@
           "go",
           "javascript-typescript"
         ],
-        "lastScanAt": "2026-09-26T13:44:57"
+        "lastScanAt": "2026-09-27T11:59:53"
       },
       "hygiene": {
         "repo": "gitlab-mcp-server",
         "policyFiles": [
-          "dependabot",
           "security",
-          "codeowners"
+          "codeowners",
+          "dependabot"
         ],
         "rulesetRules": [
-          "pull_request",
-          "update",
           "non_fast_forward",
           "required_status_checks",
-          "deletion"
+          "update",
+          "deletion",
+          "pull_request"
         ],
         "hasClassicProtection": false,
         "dependabotEcosystems": [
-          "gomod",
+          "npm",
           "docker-compose",
-          "github-actions",
+          "gomod",
           "docker",
-          "npm"
+          "github-actions"
         ]
       },
       "docsPublished": {
         "fullName": "jmrplens/gitlab-mcp-server",
-        "lastPublishAt": "2026-09-25T21:39:03",
-        "deploysIn90d": 141
+        "lastPublishAt": "2026-09-27T11:55:06",
+        "deploysIn90d": 142
       }
     },
     {
@@ -1836,7 +1872,7 @@
       },
       "ciPassRate90d": {
         "repo": "phonometry",
-        "ok": 1193,
+        "ok": 1190,
         "ko": 80,
         "pct": 93.7
       },
@@ -1858,9 +1894,9 @@
         "rulesetRules": [],
         "hasClassicProtection": true,
         "dependabotEcosystems": [
-          "npm",
+          "pip",
           "github-actions",
-          "pip"
+          "npm"
         ]
       },
       "docsPublished": {
@@ -1883,8 +1919,8 @@
       "ciPassRate90d": {
         "repo": "cs-routeros-bouncer",
         "ok": 135,
-        "ko": 6,
-        "pct": 95.7
+        "ko": 4,
+        "pct": 97.1
       },
       "codeQl": {
         "repo": "cs-routeros-bouncer",
@@ -1898,18 +1934,18 @@
       "hygiene": {
         "repo": "cs-routeros-bouncer",
         "policyFiles": [
-          "security",
           "dependabot",
+          "security",
           "codeowners"
         ],
         "rulesetRules": [],
         "hasClassicProtection": true,
         "dependabotEcosystems": [
-          "github-actions",
-          "docker",
           "npm",
           "gomod",
-          "docker-compose"
+          "docker-compose",
+          "github-actions",
+          "docker"
         ]
       },
       "docsPublished": {
@@ -1920,22 +1956,22 @@
     },
     {
       "repo": "mikroscope",
-      "activeDays12m": 8,
-      "lastOwnerCommitAt": "2026-09-25T16:54:30",
+      "activeDays12m": 9,
+      "lastOwnerCommitAt": "2026-09-27T12:16:37",
       "ci": {
         "repo": "mikroscope",
-        "jobs": 31,
+        "jobs": 32,
         "os": [
           "macOS",
-          "Windows",
-          "Linux"
+          "Linux",
+          "Windows"
         ]
       },
       "ciPassRate90d": {
         "repo": "mikroscope",
-        "ok": 182,
+        "ok": 188,
         "ko": 5,
-        "pct": 97.3
+        "pct": 97.4
       },
       "codeQl": {
         "repo": "mikroscope",
@@ -1944,7 +1980,7 @@
           "go",
           "javascript-typescript"
         ],
-        "lastScanAt": "2026-09-25T16:55:45"
+        "lastScanAt": "2026-09-27T12:18:12"
       },
       "hygiene": {
         "repo": "mikroscope",
@@ -1954,21 +1990,21 @@
         ],
         "rulesetRules": [
           "pull_request",
+          "non_fast_forward",
           "deletion",
-          "required_status_checks",
-          "non_fast_forward"
+          "required_status_checks"
         ],
         "hasClassicProtection": false,
         "dependabotEcosystems": [
-          "github-actions",
+          "gomod",
           "npm",
-          "gomod"
+          "github-actions"
         ]
       },
       "docsPublished": {
         "fullName": "jmrplens/mikroscope",
-        "lastPublishAt": "2026-09-25T16:57:45",
-        "deploysIn90d": 58
+        "lastPublishAt": "2026-09-27T12:19:56",
+        "deploysIn90d": 60
       }
     },
     {
@@ -1984,9 +2020,9 @@
       },
       "ciPassRate90d": {
         "repo": "Cloudflare-DNS-Updater",
-        "ok": 116,
-        "ko": 18,
-        "pct": 86.6
+        "ok": 113,
+        "ko": 15,
+        "pct": 88.3
       },
       "codeQl": {
         "repo": "Cloudflare-DNS-Updater",
@@ -1994,13 +2030,13 @@
           "actions",
           "c-cpp"
         ],
-        "lastScanAt": "2026-09-20T09:56:37"
+        "lastScanAt": "2026-09-27T09:58:22"
       },
       "hygiene": {
         "repo": "Cloudflare-DNS-Updater",
         "policyFiles": [
-          "security",
-          "codeowners"
+          "codeowners",
+          "security"
         ],
         "rulesetRules": [],
         "hasClassicProtection": false,
@@ -2044,21 +2080,21 @@
         "repo": "libgen-mcp",
         "policyFiles": [
           "codeowners",
-          "security",
-          "dependabot"
+          "dependabot",
+          "security"
         ],
         "rulesetRules": [
           "non_fast_forward",
+          "deletion",
           "required_status_checks",
-          "pull_request",
-          "deletion"
+          "pull_request"
         ],
         "hasClassicProtection": false,
         "dependabotEcosystems": [
           "docker",
-          "gomod",
+          "npm",
           "github-actions",
-          "npm"
+          "gomod"
         ]
       },
       "docsPublished": {
@@ -2069,22 +2105,22 @@
     },
     {
       "repo": "ghchronicle",
-      "activeDays12m": 9,
-      "lastOwnerCommitAt": "2026-09-25T13:53:26",
+      "activeDays12m": 10,
+      "lastOwnerCommitAt": "2026-09-27T11:05:02",
       "ci": {
         "repo": "ghchronicle",
         "jobs": 22,
         "os": [
+          "Linux",
           "macOS",
-          "Windows",
-          "Linux"
+          "Windows"
         ]
       },
       "ciPassRate90d": {
         "repo": "ghchronicle",
-        "ok": 185,
+        "ok": 194,
         "ko": 3,
-        "pct": 98.4
+        "pct": 98.5
       },
       "codeQl": {
         "repo": "ghchronicle",
@@ -2093,7 +2129,7 @@
           "go",
           "javascript-typescript"
         ],
-        "lastScanAt": "2026-09-25T13:55:01"
+        "lastScanAt": "2026-09-27T11:17:38"
       },
       "hygiene": {
         "repo": "ghchronicle",
@@ -2102,23 +2138,23 @@
           "dependabot"
         ],
         "rulesetRules": [
-          "deletion",
-          "pull_request",
           "non_fast_forward",
+          "pull_request",
+          "deletion",
           "required_status_checks"
         ],
         "hasClassicProtection": false,
         "dependabotEcosystems": [
-          "npm",
           "gomod",
-          "docker",
-          "github-actions"
+          "npm",
+          "github-actions",
+          "docker"
         ]
       },
       "docsPublished": {
         "fullName": "jmrplens/ghchronicle",
-        "lastPublishAt": "2026-09-25T13:57:37",
-        "deploysIn90d": 60
+        "lastPublishAt": "2026-09-27T13:13:06",
+        "deploysIn90d": 63
       }
     },
     {
@@ -2200,7 +2236,7 @@
     }
   },
   "gitlab": {
-    "fetchedAt": "2026-09-26T20:35:39.324Z",
+    "fetchedAt": "2026-09-27T13:35:02.371Z",
     "username": "jmrp",
     "items": [
       {
@@ -2670,7 +2706,7 @@
       {
         "fullName": "gitlab-org/api/client-go",
         "name": "client-go",
-        "stars": 106,
+        "stars": 107,
         "webUrl": "https://gitlab.com/gitlab-org/api/client-go"
       },
       {
