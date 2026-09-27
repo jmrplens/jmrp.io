@@ -1,5 +1,10 @@
 cache = true
 max_cache_age = "1d"
+# A server error or a rate limit says nothing about the link, and a cached one
+# keeps failing every run for a day after the host recovers: on 2026-09-27
+# GitHub answered 503 for one /blob/ link, the link answered 200 minutes later,
+# and the next run still failed on the cached "Error (cached)".
+cache_exclude_status = ["429", "500..=599"]
 
 no_progress = true
 
