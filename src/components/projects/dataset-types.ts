@@ -238,6 +238,11 @@ export interface MaintenanceItem {
 
 /** The full generated dataset. */
 export interface ContributionsDataset {
+  /**
+   * Repositories the subpage's listed rows live in (both platforms, after
+   * `exclude`); absent in datasets older than GEO audit #10.
+   */
+  readonly listedRepos?: number;
   /** Bumped when the shape changes incompatibly. */
   readonly schemaVersion: number;
   /** ISO time this dataset was written. */

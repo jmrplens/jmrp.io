@@ -325,6 +325,12 @@ async function processSingleHtmlFile(
   // anything with text or an element child stays.
   if (removeEmptyParagraphs($)) isModified = true;
 
+  // External links out of Astro's viewport prefetch (GEO audit #10): it
+  // observes every <a> on the page and only then finds that a cross-origin URL
+  // cannot be prefetched, so /projects/ with ~200 outbound links spent a ~350 ms
+  // long task (TBT 230 ms on mobile) watching links it can never fetch.
+  if (skipPrefetchOnExternalLinks($)) isModified = true;
+
   // Handle styles
   if (processStyles($, enableCsp)) isModified = true;
 
@@ -731,6 +737,39 @@ function processCodeBlocks(
     modified = true;
   });
   return modified;
+}
+
+/** The site's own host; links to it keep Astro's prefetch. */
+const SITE_HOST =
+  URL.parse(process.env.PUBLIC_SITE_URL ?? "https://jmrp.io")?.host ??
+  "jmrp.io";
+
+/**
+ * Marks every absolute http(s) link to another origin with
+ * `data-astro-prefetch="false"`, so Astro's prefetch script never observes
+ * it. A link that already sets the attribute is left alone.
+ *
+ * @param $ - The parsed document.
+ * @returns Whether any link was changed.
+ */
+function skipPrefetchOnExternalLinks($: cheerio.CheerioAPI): boolean {
+  let changed = false;
+  $("a[href]").each((_, el) => {
+    const $a = $(el);
+    if ($a.attr("data-astro-prefetch") !== undefined) return;
+    const href = $a.attr("href") ?? "";
+    if (!/^https?:\/\//i.test(href)) return;
+    let host: string;
+    try {
+      host = new URL(href).host;
+    } catch {
+      return;
+    }
+    if (host === SITE_HOST) return;
+    $a.attr("data-astro-prefetch", "false");
+    changed = true;
+  });
+  return changed;
 }
 
 /**

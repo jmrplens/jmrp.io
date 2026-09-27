@@ -311,6 +311,8 @@ export function hashProjection(dataset) {
  * @property {string} projectionHash Hash of the projection the live build used.
  * @property {Record<string, string>} [sections] Per-section hashes.
  * @property {string} builtAt ISO timestamp of that build.
+ * @property {string} [displayChangedAt] When the projection last changed, as
+ *   the dataset of that build recorded it.
  */
 
 /**
@@ -394,6 +396,26 @@ export function writeState(statePath, state) {
 }
 
 /**
+ * When the displayed part of `dataset` last changed. Its projection is the
+ * one the live site was built from (same hash as `state`): that build's
+ * moment carries over (`displayChangedAt`, or `builtAt` for a state written
+ * before the field existed). Otherwise something the pages show is new, and
+ * the moment is `now`. The pages' `dateModified` and sitemap `lastmod` fold
+ * this in, so a data-only rebuild moves the date and nothing else does. Pure.
+ *
+ * @param {any} dataset - The freshly collected dataset.
+ * @param {RebuildState | null} state - The recorded live state, if any.
+ * @param {Date} [now] - Current time.
+ * @returns {string} ISO timestamp.
+ */
+export function displayChangedAt(dataset, state, now = new Date()) {
+  if (state?.projectionHash === hashProjection(dataset).projectionHash) {
+    return state.displayChangedAt ?? state.builtAt ?? now.toISOString();
+  }
+  return now.toISOString();
+}
+
+/**
  * Records the dataset a build just used (the file on disk, not a fresh
  * collection) as the live projection. Called after a successful deploy.
  *
@@ -413,7 +435,15 @@ export function recordBuiltDataset({
   now = new Date(),
 } = {}) {
   const dataset = JSON.parse(fs.readFileSync(datasetPath, "utf8"));
-  const state = { ...hashProjection(dataset), builtAt: now.toISOString() };
+  const builtAt = now.toISOString();
+  const state = {
+    ...hashProjection(dataset),
+    builtAt,
+    displayChangedAt:
+      typeof dataset.displayChangedAt === "string"
+        ? dataset.displayChangedAt
+        : builtAt,
+  };
   writeState(statePath, state);
   return state;
 }

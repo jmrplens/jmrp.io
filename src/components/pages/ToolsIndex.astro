@@ -10,6 +10,7 @@ import BaseLayout from "@layouts/BaseLayout.astro";
 import { getSiteUrl } from "@utils/site";
 import { getToolsForLocale } from "@utils/tools";
 import type { CollectionEntry } from "astro:content";
+import type { CollectionPage, SoftwareApplication } from "schema-dts";
 
 /**
  * Google's SoftwareApplication `applicationCategory` values, keyed by the
@@ -103,9 +104,9 @@ const toolsSchema = {
       applicationCategory:
         APPLICATION_CATEGORY[tool.data.category] ?? "DeveloperApplication",
       operatingSystem: "Web Browser",
-    };
+    } satisfies SoftwareApplication;
   }),
-};
+} satisfies CollectionPage;
 ---
 
 <BaseLayout

@@ -81,43 +81,59 @@ const projects = loadYaml(
 // The canonical Person node, for the second comparison below. Every docs site
 // splices `https://jmrp.io/#person` into its own graph at build time, so a
 // site whose served node lags the canonical one is publishing a stale
-// identity, whatever its `#software` node says. `sameAs` and `owns` are the
-// two lists that change; `knowsAbout` is additive on the consumer side and
-// left out on purpose.
+// identity, whatever its `#software` node says. Every property is compared
+// except `knowsAbout`, which is additive on the consumer side: comparing only
+// `sameAs` and `owns` missed mcp.jmrp.io serving the description #526
+// replaced (GEO audit #10).
 const PERSON_ID = "https://jmrp.io/#person";
 const canonicalPerson = JSON.parse(
   readFileSync(join(ROOT, "public/identity/person.jsonld"), "utf8"),
 );
-const PERSON_LISTS = ["sameAs", "owns"];
+const PERSON_KEYS = Object.keys(canonicalPerson).filter(
+  (key) => !key.startsWith("@") && key !== "knowsAbout",
+);
+
+// Pages that splice the canonical `#person` but are not a project's `docs`
+// site, so the loop below would never visit them.
+const EXTRA_PERSON_PAGES = ["https://mcp.jmrp.io/"];
 
 /**
  * Compares the `#person` node a page serves with the canonical document.
  *
  * @param {Record<string, unknown>[]} nodes - The page's flattened graph.
- * @returns {string[]} One line per divergent list, empty when the page carries
- *   no `#person` node at all (a page that does not splice it cannot lag it).
+ * @returns {string[]} One line per divergent property, empty when the page
+ *   carries no `#person` node at all (a page that does not splice it cannot
+ *   lag it).
  */
 function stalePersonLines(nodes) {
   const served = nodes.find((n) => n["@id"] === PERSON_ID && n.sameAs);
   if (!served) return [];
   const lines = [];
-  for (const list of PERSON_LISTS) {
-    const ours = JSON.stringify(canonicalPerson[list] ?? []);
-    const theirs = JSON.stringify(served[list] ?? []);
-    if (ours !== theirs) {
-      // Same length with different contents is the usual case (a URL that
-      // changed spelling), so name the first entry the served copy lacks.
-      const servedSet = new Set([served[list] ?? []].flat().map(String));
-      const firstMissing = [canonicalPerson[list] ?? []]
-        .flat()
-        .map((entry) => (typeof entry === "string" ? entry : entry["@id"]))
-        .find((entry) => !servedSet.has(entry));
-      lines.push(
-        `#person ${list}: served ${(served[list] ?? []).length}, ` +
-          `canonical ${(canonicalPerson[list] ?? []).length}` +
-          (firstMissing ? `, served copy lacks ${firstMissing}` : ""),
-      );
+  for (const key of PERSON_KEYS) {
+    const ours = JSON.stringify(canonicalPerson[key] ?? null);
+    const theirs = JSON.stringify(served[key] ?? null);
+    if (ours === theirs) continue;
+    if (!Array.isArray(canonicalPerson[key])) {
+      lines.push(`#person ${key}: served copy differs from the canonical one`);
+      continue;
     }
+    // Same length with different contents is the usual case (a URL that
+    // changed spelling), so name the first entry the served copy lacks.
+    const servedSet = new Set(
+      [served[key] ?? []].flat().map((entry) => JSON.stringify(entry)),
+    );
+    const firstMissing = canonicalPerson[key].find(
+      (entry) => !servedSet.has(JSON.stringify(entry)),
+    );
+    const label =
+      typeof firstMissing === "string"
+        ? firstMissing
+        : (firstMissing?.["@id"] ?? JSON.stringify(firstMissing));
+    lines.push(
+      `#person ${key}: served ${[served[key] ?? []].flat().length}, ` +
+        `canonical ${canonicalPerson[key].length}` +
+        (firstMissing ? `, served copy lacks ${label}` : ""),
+    );
   }
   return lines;
 }
@@ -272,6 +288,21 @@ for (const project of projects) {
     console.log(`   sameAs entries their site has and projects.yaml lacks:`);
     for (const u of missing) console.log(`     ${u}`);
   }
+}
+
+for (const page of EXTRA_PERSON_PAGES) {
+  let lines;
+  try {
+    lines = stalePersonLines(await graphOf(page));
+  } catch (error) {
+    console.log(`\n⚠ ${page}: could not read it (${error.message})`);
+    unreachable++;
+    continue;
+  }
+  if (lines.length === 0) continue;
+  stalePersons++;
+  console.log(`\n✗ ${page}`);
+  for (const line of lines) console.log(`   ${line} (stale)`);
 }
 
 // Three distinct outcomes, deliberately not collapsed into one number: a site

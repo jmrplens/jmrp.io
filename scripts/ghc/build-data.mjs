@@ -62,6 +62,11 @@ import {
   getUpstreamRepos,
 } from "./queries.mjs";
 import {
+  displayChangedAt,
+  readState,
+  resolveStatePath,
+} from "./rebuild-state.mjs";
+import {
   ACTIVE_REPOS,
   MAINTENANCE_REPOS,
   OWNER,
@@ -147,7 +152,8 @@ export function isRedacted(item, contributions) {
  * @param {import('./queries.mjs').LedgerItem[]} fullLedger - Every item.
  * @param {import('./contributions-yaml.mjs').ContributionsConfig} contributions - Curation config.
  * @param {Set<string>} listingSet - `contributions.listingRepos` as a set.
- * @returns {{ledgerByYear: object, issuesByProject: object, listingsByOwnProject: object}} The three views.
+ * @returns {{ledgerByYear: object, issuesByProject: object, listingsByOwnProject: object, listedRepos: number}}
+ *   The three views, and how many repositories the listed items live in.
  */
 export function splitLedger(fullLedger, contributions, listingSet) {
   const excludeSet = new Set(contributions.exclude);
@@ -157,9 +163,21 @@ export function splitLedger(fullLedger, contributions, listingSet) {
     issuesByProject: {},
     /** @type {Record<string, Record<string, {fullName: string, merged: number, open: number}>>} */
     listingsByOwnProject: {},
+    listedRepos: 0,
   };
+  /** @type {Set<string>} */
+  const repos = new Set();
   for (const item of fullLedger) {
     if (excludeSet.has(itemKey(item))) continue;
+    // A closed listing PR is dropped from every list below, so its
+    // repository is not one the page lists work in.
+    const droppedListing =
+      item.kind !== "issue" &&
+      item.platform !== "gitlab" &&
+      listingSet.has(item.fullName) &&
+      item.state === "closed";
+    if (!droppedListing)
+      repos.add(`${item.platform ?? "github"}:${item.fullName}`);
     const project = foldProjectName(item.fullName, contributions.displayName);
     if (item.kind === "issue") {
       countIssue(views.issuesByProject, project, item);
@@ -170,6 +188,7 @@ export function splitLedger(fullLedger, contributions, listingSet) {
       addToLedger(views.ledgerByYear, project, item, contributions);
     }
   }
+  views.listedRepos = repos.size;
   return views;
 }
 
@@ -469,11 +488,8 @@ export async function collectDataset(
   // every list (it still counts in the live summary, which must match
   // GitHub's own search). Closed listing PRs are superseded attempts and are
   // dropped. ──
-  const { ledgerByYear, issuesByProject, listingsByOwnProject } = splitLedger(
-    [...fullLedger, ...gitlab.items],
-    contributions,
-    listingSet,
-  );
+  const { ledgerByYear, issuesByProject, listingsByOwnProject, listedRepos } =
+    splitLedger([...fullLedger, ...gitlab.items], contributions, listingSet);
 
   // ── "Contributed to" strip: folded projects with merged code/docs, ranked
   // by star count (fetched live from GitHub, cached) ──
@@ -555,6 +571,10 @@ export async function collectDataset(
       gitlab.items,
       codeMergeHours,
     ),
+    // Repositories the subpage's rows live in, both platforms, after
+    // `exclude` (GEO audit #10: the header said 55 from the search totals,
+    // three of them only the excluded items' repositories).
+    listedRepos,
     highlights: contributions.featured.map((entry) => ({
       ...entry,
       redacted: false,
@@ -656,6 +676,12 @@ export async function buildDataset({
   try {
     const resolvedConfig = config ?? resolveInfluxConfig();
     const dataset = await collect(resolvedConfig, root, { warn });
+    // When the displayed part last changed, against the state the live build
+    // recorded; the pages' dates fold it in (GEO audit #10, M3).
+    dataset.displayChangedAt = displayChangedAt(
+      dataset,
+      readState(resolveStatePath()),
+    );
     fs.mkdirSync(path.dirname(outPath), { recursive: true });
     const tmpPath = `${outPath}.tmp-${process.pid}`;
     fs.writeFileSync(tmpPath, `${JSON.stringify(dataset, null, 2)}\n`);

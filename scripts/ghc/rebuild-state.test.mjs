@@ -9,11 +9,12 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { test } from "node:test";
+import { describe, it, test } from "node:test";
 
 import {
   compactStars,
   decideRebuild,
+  displayChangedAt,
   hashProjection,
   readState,
   recordBuiltDataset,
@@ -375,4 +376,42 @@ test("recordBuiltDataset writes a state readState accepts", () => {
   } finally {
     fs.rmSync(dir, { recursive: true, force: true });
   }
+});
+
+describe("displayChangedAt", () => {
+  const dataset = { highlights: [], contributedTo: [], summary: {} };
+  const now = new Date("2026-09-28T04:30:00Z");
+
+  it("keeps the live build's moment while the projection is unchanged", () => {
+    const { projectionHash } = hashProjection(dataset);
+    assert.equal(
+      displayChangedAt(
+        dataset,
+        {
+          projectionHash,
+          builtAt: "2026-09-27T15:00:00.000Z",
+          displayChangedAt: "2026-09-20T10:00:00.000Z",
+        },
+        now,
+      ),
+      "2026-09-20T10:00:00.000Z",
+    );
+    // A state written before the field existed falls back to builtAt.
+    assert.equal(
+      displayChangedAt(
+        dataset,
+        { projectionHash, builtAt: "2026-09-27T15:00:00.000Z" },
+        now,
+      ),
+      "2026-09-27T15:00:00.000Z",
+    );
+  });
+
+  it("is now when what the pages show changed, or with no state", () => {
+    assert.equal(
+      displayChangedAt(dataset, { projectionHash: "other", builtAt: "x" }, now),
+      now.toISOString(),
+    );
+    assert.equal(displayChangedAt(dataset, null, now), now.toISOString());
+  });
 });

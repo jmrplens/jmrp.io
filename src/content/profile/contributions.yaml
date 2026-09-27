@@ -187,8 +187,8 @@ featured:
     numbers: [1255, 1268, 1269, 1273, 1274]
     kind: pull_request
     why:
-      en: "Five merged fixes to the official MCP Go SDK (#1255, #1268, #1269, #1273, #1274) that bring protocol-version negotiation, cancellation and pre-initialize handling in line with the specification, each with tests."
-      es: "Cinco correcciones fusionadas en el SDK oficial de MCP para Go (#1255, #1268, #1269, #1273, #1274) que ajustan a la especificación la negociación de versión del protocolo, la cancelación y el tratamiento de llamadas previas a initialize, cada una con tests."
+      en: "Five merged changes to the official MCP Go SDK (#1255, #1268, #1269, #1273, #1274): four bring protocol-version negotiation, cancellation and pre-initialize handling in line with the specification, and one adds HasParams so middleware can tell whether a request carries params; each with tests."
+      es: "Cinco cambios fusionados en el SDK oficial de MCP para Go (#1255, #1268, #1269, #1273, #1274): cuatro ajustan a la especificación la negociación de versión del protocolo, la cancelación y el tratamiento de llamadas previas a initialize, y uno añade HasParams para que el middleware sepa si una petición lleva parámetros; cada uno con tests."
   # GitLab merge request (`platform: gitlab`, `number` is the MR iid).
   - repo: gitlab-org/gitlab
     number: 255300

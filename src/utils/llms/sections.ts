@@ -381,7 +381,7 @@ export const SITE_SECTIONS: {
     en: {
       title: "License",
       description:
-        "Reuse terms, stated per kind of work: articles and blog cover images under CC BY 4.0, the site source MIT-licensed, and the portrait reserved because it identifies a person",
+        "Reuse terms, stated per kind of work: articles, blog cover images and data files under CC BY 4.0, the site source MIT-licensed, and the portrait reserved because it identifies a person",
     },
     es: {
       title: "Licencia",

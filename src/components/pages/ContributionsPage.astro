@@ -283,9 +283,11 @@ const answersAnchor = "answers";
 const personRef = { "@id": new URL("#person", getSiteUrl()).href };
 
 /**
- * An upstream project as JSON-LD: anonymous (no @id minted in a third
- * party's namespace, nor duplicated per locale under jmrp.io), identified by
- * its repository page.
+ * An upstream project as JSON-LD, identified by its repository page: the
+ * `@id` IS that URL, the project's own address, not one minted under
+ * jmrp.io, so the EN and ES pages, the upstream list and every highlight's
+ * `isPartOf` name one node (GEO audit #10: 21 blank nodes that nothing
+ * connected).
  *
  * @param name - Display name, as the page prints it.
  * @param repo - `owner/repo` or GitLab full path.
@@ -303,6 +305,7 @@ function upstreamNode(
   const url = repoUrl(repo, platform);
   return {
     "@type": "SoftwareSourceCode",
+    "@id": url,
     name,
     url,
     codeRepository: url,
@@ -352,9 +355,15 @@ const highlightList = {
       "@type": "CreativeWork",
       name: `${h.repo} ${itemRef(h)}`,
       url: h.url,
-      description: h.why,
+      // The "why" is written for this page, in its language; the pull or
+      // merge request itself is in English (GEO audit #10: `inLanguage`
+      // "es" claimed the Spanish page's PRs were Spanish works).
+      description: {
+        "@value": h.why,
+        "@language": locale,
+      } satisfies LanguageTaggedValue as unknown as Text,
       author: personRef,
-      inLanguage: locale,
+      inLanguage: "en",
       isPartOf: upstreamNode(
         foldProjectName(h.repo, displayName),
         h.repo,
@@ -412,6 +421,12 @@ const personAwards = {
 
 const schema = {
   "@type": "CollectionPage",
+  // Answer target: the title and the intro under it, as on every other
+  // entity page (GEO audit #10, M1: the only one without it).
+  speakable: {
+    "@type": "SpeakableSpecification",
+    cssSelector: [".contrib-header__title", ".contrib-header__intro"],
+  },
   "@id": `${pageUrl}#contributions`,
   name: t("pages.projectsContributions.title"),
   description: t("pages.projectsContributions.schemaDescription"),
@@ -421,8 +436,11 @@ const schema = {
   about: personRef,
   // The BreadcrumbList BaseHead emits for this very page.
   breadcrumb: { "@id": `${pageUrl}#breadcrumb` },
-  mainEntity: upstreamList,
-  ...(mergedHighlights.length > 0 && { hasPart: highlightList }),
+  // Both lists the page is about. `hasPart` would be wrong for the
+  // highlights: its range is CreativeWork and an ItemList is not one, which
+  // the Schema Markup Validator reports as a severe error (GEO audit #10, M2).
+  mainEntity:
+    mergedHighlights.length > 0 ? [upstreamList, highlightList] : upstreamList,
 } satisfies CollectionPage;
 
 const pageFaq = await getPageFaq("/projects/contributions/", locale);
@@ -453,7 +471,10 @@ const faqNode = pageFaq && pageFaqNode(pageFaq, pageUrl, schema["@id"], locale);
           date: formatDate(asOfDate, locale),
           prs: formatNumber(listed.prs, locale),
           issues: formatNumber(listed.issues, locale),
-          repos: formatNumber(summary.contributionTotals.repos, locale),
+          repos: formatNumber(
+            contributionsData.listedRepos ?? summary.contributionTotals.repos,
+            locale,
+          ),
         })}
       </p>
     </header>

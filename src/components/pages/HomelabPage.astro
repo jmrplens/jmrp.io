@@ -41,6 +41,7 @@ import BaseLayout from "@layouts/BaseLayout.astro";
 import { getPageFaq, pageFaqNode } from "@utils/page-faq";
 import type { LanguageTaggedValue } from "@utils/person";
 import { getSiteUrl } from "@utils/site";
+import type { CollectionPage } from "schema-dts";
 
 const locale = (Astro.currentLocale ?? defaultLocale) as Locale;
 const t = useTranslations(locale);
@@ -218,9 +219,9 @@ const serviceStatusTokens: Record<
  * nothing to tell a consumer which language each was written in (GEO audit
  * 2026-08-27, A3). Language-tagged literals make both true at once.
  *
- * Same shape and same reasoning as `localizedValues` in BaseHead.astro. No
- * cast is needed here: `servicesSchema` carries no `satisfies`, so the
- * literals travel as authored.
+ * Same shape and same reasoning as `localizedValues` in BaseHead.astro.
+ * `servicesSchema` is checked with `satisfies CollectionPage`, and schema-dts
+ * accepts these tagged literals where it expects text.
  *
  * The key is read once and the card below renders from that same key, so the
  * visible copy and the graph cannot drift.
@@ -248,7 +249,10 @@ const servicesSchema = {
   name: t("pages.homelab.schemaName"),
   inLanguage: locale,
   isPartOf: { "@id": new URL("#website", getSiteUrl()).href },
-  hasPart: [
+  // The services the page is about. They were in `hasPart`, whose range is
+  // CreativeWork: a Service is not one, and the Schema Markup Validator
+  // reported 8 severe errors per locale (GEO audit #10, M2).
+  mainEntity: [
     // Stable `@id`s so the EN and ES pages describe ONE service each rather
     // than fourteen anonymous nodes for seven services. Anchored to the
     // locale-neutral /homelab/ URL: the listing is per-locale, the service is
@@ -270,7 +274,7 @@ const servicesSchema = {
       provider: defaultProvider,
     })),
   ],
-};
+} satisfies CollectionPage;
 // The page's question-and-answer pairs (GEO audit #8): one source for the
 // visible section, the FAQPage node and the markdown twin. See @utils/page-faq.
 const pageFaq = await getPageFaq("/homelab/", locale);

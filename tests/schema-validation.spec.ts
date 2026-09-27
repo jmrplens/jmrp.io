@@ -1381,7 +1381,13 @@ test.describe("Projects and contributions graphs", () => {
 
       // "Contributed to": one SoftwareSourceCode per ledger project with
       // merged work, each naming the person as a contributor.
-      const upstream = listItems(collection.mainEntity);
+      // mainEntity holds both lists (GEO audit #10, M2: an ItemList in
+      // `hasPart` is outside its CreativeWork range).
+      const entities = [collection.mainEntity].flat() as JsonLdSchema[];
+      const listById = (id: string) =>
+        entities.find((entity) => entity["@id"] === id);
+      expect(collection.hasPart).toBeUndefined();
+      const upstream = listItems(listById(`${pageUrl}#upstream-list`));
       const visibleMerged = await page
         .locator("details[data-project]")
         .evaluateAll((els) =>
@@ -1396,7 +1402,8 @@ test.describe("Projects and contributions graphs", () => {
       );
       for (const item of upstream) {
         expect(item["@type"]).toBe("SoftwareSourceCode");
-        expect(item["@id"]).toBeUndefined();
+        // The repository page is the node's identifier (GEO audit #10).
+        expect(item["@id"]).toBe(item.url);
         expect(refId(item.contributor)).toBe(PERSON_ID);
         expect(item.url).toBe(item.codeRepository);
         expect(["github.com", "gitlab.com"]).toContain(
@@ -1405,7 +1412,7 @@ test.describe("Projects and contributions graphs", () => {
       }
 
       // Highlights: the visible list, name, link and "why" as printed.
-      const highlights = listItems(collection.hasPart);
+      const highlights = listItems(listById(`${pageUrl}#highlights`));
       const visibleHighlights = await page
         .locator("ol.hl > li")
         .evaluateAll((els) =>
@@ -1422,13 +1429,17 @@ test.describe("Projects and contributions graphs", () => {
         highlights.map((h) => ({
           name: h.name,
           url: h.url,
-          why: h.description,
+          why: (h.description as { "@value"?: string })["@value"],
         })),
       ).toEqual(visibleHighlights);
       for (const h of highlights) {
         expect(h["@type"]).toBe("CreativeWork");
         expect(refId(h.author)).toBe(PERSON_ID);
-        expect(h.inLanguage).toBe(lang);
+        // The work is an English PR/MR; the "why" is in the page's language.
+        expect(h.inLanguage).toBe("en");
+        expect((h.description as { "@language"?: string })["@language"]).toBe(
+          lang,
+        );
         expect(h.datePublished).toBeUndefined();
         const upstreamRepo = (h.isPartOf as JsonLdSchema).codeRepository;
         expect(String(h.url).startsWith(`${String(upstreamRepo)}/`)).toBe(true);

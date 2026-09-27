@@ -369,8 +369,13 @@ export async function projectsPageMarkdown(
 
   const upstream = upstreamLines(locale, siteUrl);
 
+  const t = useTranslations(locale);
   return [
     `# ${locale === "es" ? "Proyectos" : "Projects"}`,
+    "",
+    // The one-line summary every other twin opens with, and the only place
+    // this one says its figures are live (GEO audit #10).
+    `> ${t("pages.projects.twinIntro")}`,
     "",
     `Canonical: ${url}`,
     `Language: ${locale}`,
@@ -595,7 +600,10 @@ export async function contributionsPageMarkdown(
       date: formatDate(asOfDate, locale),
       prs: formatNumber(listed.prs, locale),
       issues: formatNumber(listed.issues, locale),
-      repos: formatNumber(summary.contributionTotals.repos, locale),
+      repos: formatNumber(
+        contributionsData.listedRepos ?? summary.contributionTotals.repos,
+        locale,
+      ),
     }),
     "",
     `- ${t("pages.projects.upstream.tileCodeMerged")}: ${listed.codeMerged}`,

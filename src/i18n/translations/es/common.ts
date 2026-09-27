@@ -37,7 +37,7 @@ export const common = {
     noResults: "sin resultados para",
     notFound: "comando no encontrado",
     typeHelp: "escribe help",
-    location: "Valencia, ES (UTC+1)",
+    location: "Valencia, ES (CET/CEST)",
     blocked: "permiso denegado — buen intento",
     usage: "uso",
     nedryDenied: "ACCESO DENEGADO",
@@ -468,7 +468,7 @@ export const common = {
       upstreamStrip:
         "También aporto código y documentación a proyectos open source de otros, como {names}.",
       upstreamLink: "Ver las contribuciones →",
-      availability: "Disponible para proyectos · Valencia (UTC+1)",
+      availability: "Disponible para proyectos · Valencia (CET/CEST)",
       terminalRole: "Ing. Firmware / Software",
       terminalLabel: "Resumen de perfil",
     },
@@ -958,6 +958,8 @@ export const common = {
       docs: "Docs",
       hosted: "Instancia en vivo",
       downloads: "Descargas",
+      twinIntro:
+        "Todos los proyectos de código abierto que mantiene el autor, y sus aportaciones a otros proyectos. Las estrellas, las versiones y las cifras de actividad reciente las sustituye nginx al servir el documento, a partir de la captura fechada abajo; este fichero no se cachea nunca.",
       downloadsNote:
         "Las cifras de descargas suman los artefactos de las releases de GitHub, los pulls de imagen de Docker Hub, las instalaciones de NuGet y las descargas de MATLAB File Exchange. De NuGet solo cuenta el paquete que se instala: cada instalación descarga además un paquete de runtime, y contar ambos la contaría dos veces. Los ficheros de checksum, firma y SBOM no se cuentan: una release los publica junto al binario y cada instalación descarga ambos, así que contarlos sería contar dos veces la misma instalación. Las cifras del File Exchange se leen a mano ({date}) porque MathWorks rechaza las peticiones automatizadas, y un proyecto solo muestra su propia cifra al superar las 1.000 descargas, así que los números por proyecto de abajo no suman el total del sitio.",
       downloadsSourceLead:
