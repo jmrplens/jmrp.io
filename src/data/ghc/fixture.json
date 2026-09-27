@@ -1,26 +1,26 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-09-26T20:35:39.488Z",
-  "asOf": "2026-09-26T13:03:19.304686700",
+  "generatedAt": "2026-09-27T14:50:10.743Z",
+  "asOf": "2026-09-27T13:58:22.255627955",
   "summary": {
     "contributionTotals": {
-      "prMerged": 59,
+      "prMerged": 60,
       "prOpen": 21,
       "prClosed": 19,
-      "issuesOpen": 26,
-      "issuesClosed": 19,
-      "repos": 54,
-      "owners": 48,
-      "reposWithMerge": 21,
-      "lastPrDate": "2026-09-26T00:00:00"
+      "issuesOpen": 25,
+      "issuesClosed": 20,
+      "repos": 55,
+      "owners": 49,
+      "reposWithMerge": 22,
+      "lastPrDate": "2026-09-27T03:55:12"
     },
     "codeVsListingSplit": {
       "codeOrDocs": {
-        "merged": 45,
+        "merged": 46,
         "open": 16,
         "closed": 16,
-        "reposMerged": 15,
-        "medianHoursToMerge": 49.774166666666666
+        "reposMerged": 16,
+        "medianHoursToMerge": 48.919444444444444
       },
       "listing": {
         "merged": 14,
@@ -30,15 +30,15 @@
         "medianHoursToMerge": 8.850694444444445
       }
     },
-    "answersCount": 15,
+    "answersCount": 16,
     "discussionTotals": {
-      "comments": 99,
-      "discussions": 75,
-      "repos": 52
+      "comments": 103,
+      "discussions": 78,
+      "repos": 55
     },
     "byPlatform": {
       "github": {
-        "prs": 59,
+        "prs": 60,
         "issues": 43
       },
       "gitlab": {
@@ -57,7 +57,17 @@
         "es": "Hizo que los códigos TOTP sean de un solo uso en el inicio de sesión, como exige el RFC 6238, y añadió tolerancia de un paso de tiempo a la deriva de reloj, con tests."
       },
       "platform": "github",
-      "redacted": false
+      "numbers": [
+        11448
+      ],
+      "redacted": false,
+      "size": {
+        "prs": 1,
+        "additions": 162,
+        "deletions": 29,
+        "changedFiles": 6
+      },
+      "language": "TypeScript"
     },
     {
       "repo": "NginxProxyManager/nginx-proxy-manager",
@@ -68,18 +78,42 @@
         "es": "Los tokens emitidos antes de un cambio de contraseña ahora se rechazan, así que restablecer la contraseña cierra las sesiones abiertas con la anterior; cubierto por un test de API en Cypress."
       },
       "platform": "github",
-      "redacted": false
+      "numbers": [
+        5836
+      ],
+      "redacted": false,
+      "size": {
+        "prs": 1,
+        "additions": 85,
+        "deletions": 1,
+        "changedFiles": 4
+      },
+      "language": "TypeScript"
     },
     {
       "repo": "modelcontextprotocol/go-sdk",
       "number": 1274,
+      "numbers": [
+        1255,
+        1268,
+        1269,
+        1273,
+        1274
+      ],
       "kind": "pull_request",
       "why": {
         "en": "Five merged fixes to the official MCP Go SDK (#1255, #1268, #1269, #1273, #1274) that bring protocol-version negotiation, cancellation and pre-initialize handling in line with the specification, each with tests.",
         "es": "Cinco correcciones fusionadas en el SDK oficial de MCP para Go (#1255, #1268, #1269, #1273, #1274) que ajustan a la especificación la negociación de versión del protocolo, la cancelación y el tratamiento de llamadas previas a initialize, cada una con tests."
       },
       "platform": "github",
-      "redacted": false
+      "redacted": false,
+      "size": {
+        "prs": 5,
+        "additions": 663,
+        "deletions": 34,
+        "changedFiles": 19
+      },
+      "language": "Go"
     },
     {
       "repo": "gitlab-org/gitlab",
@@ -90,7 +124,17 @@
         "en": "Revoked identities in a GPG key are no longer listed or accepted as verified emails, so a commit signed under a revoked UID stops showing as Verified; covered by specs with new GnuPG fixtures.",
         "es": "Las identidades revocadas de una clave GPG ya no se listan ni se aceptan como correos verificados, así que un commit firmado con un UID revocado deja de mostrarse como Verified; cubierto por specs con fixtures nuevos de GnuPG."
       },
-      "redacted": false
+      "numbers": [
+        255300
+      ],
+      "redacted": false,
+      "size": {
+        "prs": 1,
+        "additions": 797,
+        "deletions": 3,
+        "changedFiles": 11
+      },
+      "language": "Ruby"
     },
     {
       "repo": "henrygd/beszel",
@@ -101,7 +145,17 @@
         "es": "Añadió TRUSTED_PROXY_IPS, una lista de IP/CIDR permitidas para que la cabecera de autenticación de confianza solo se acepte desde el proxy inverso, y la documentó."
       },
       "platform": "github",
-      "redacted": false
+      "numbers": [
+        2327
+      ],
+      "redacted": false,
+      "size": {
+        "prs": 1,
+        "additions": 273,
+        "deletions": 0,
+        "changedFiles": 3
+      },
+      "language": "Go"
     },
     {
       "repo": "acmesh-official/acme.sh",
@@ -112,18 +166,38 @@
         "es": "Corrigió que el modo DNS manual reutilizara el certificado anterior al renovar (y fallara en la primera emisión) consultando el pedido ACME creado en la ejecución actual."
       },
       "platform": "github",
-      "redacted": false
+      "numbers": [
+        7237
+      ],
+      "redacted": false,
+      "size": {
+        "prs": 1,
+        "additions": 3,
+        "deletions": 0,
+        "changedFiles": 1
+      },
+      "language": "Shell"
     },
     {
-      "repo": "sanny32/OpenModScan",
-      "number": 74,
+      "repo": "modelcontextprotocol/rust-sdk",
+      "number": 1300,
       "kind": "pull_request",
       "why": {
-        "en": "Registered the --help and --version options in this Qt/C++ Modbus scanner so the existing handlers run from the command line.",
-        "es": "Registró las opciones --help y --version en este escáner Modbus en Qt/C++ para que los manejadores ya existentes se ejecuten desde la línea de comandos."
+        "en": "Float fields now decode through serde_json::Number, so a build that turns on serde_json's arbitrary_precision (the OpenAI Codex CLI is one) no longer drops tool results, progress notifications and sampling requests that carry a decimal; with tests.",
+        "es": "Los campos decimales ahora se decodifican a través de serde_json::Number, así que un build que activa arbitrary_precision de serde_json (el Codex CLI de OpenAI es uno) ya no pierde resultados de herramientas, notificaciones de progreso ni peticiones de sampling con decimales; con tests."
       },
       "platform": "github",
-      "redacted": false
+      "numbers": [
+        1300
+      ],
+      "redacted": false,
+      "size": {
+        "prs": 1,
+        "additions": 371,
+        "deletions": 9,
+        "changedFiles": 6
+      },
+      "language": "Rust"
     }
   ],
   "contributedTo": [
@@ -133,7 +207,8 @@
       "platform": "github",
       "merged": 1,
       "lastMergedAt": "2026-09-10T13:56:24",
-      "stars": 47712
+      "stars": 47725,
+      "language": "Shell"
     },
     {
       "project": "Trilium Notes",
@@ -141,7 +216,8 @@
       "platform": "github",
       "merged": 2,
       "lastMergedAt": "2026-09-11T19:57:57",
-      "stars": 37997
+      "stars": 38021,
+      "language": "TypeScript"
     },
     {
       "project": "Nginx Proxy Manager",
@@ -149,7 +225,8 @@
       "platform": "github",
       "merged": 1,
       "lastMergedAt": "2026-09-08T21:27:01",
-      "stars": 34240
+      "stars": 34249,
+      "language": "TypeScript"
     },
     {
       "project": "Podman",
@@ -157,7 +234,8 @@
       "platform": "github",
       "merged": 1,
       "lastMergedAt": "2026-09-14T16:45:18",
-      "stars": 32941
+      "stars": 32951,
+      "language": "Go"
     },
     {
       "project": "Beszel",
@@ -165,7 +243,8 @@
       "platform": "github",
       "merged": 2,
       "lastMergedAt": "2026-09-17T17:55:13",
-      "stars": 25763
+      "stars": 25785,
+      "language": "Go"
     },
     {
       "project": "Renovate",
@@ -173,7 +252,8 @@
       "platform": "github",
       "merged": 1,
       "lastMergedAt": "2026-09-12T11:30:04",
-      "stars": 22600
+      "stars": 22606,
+      "language": "TypeScript"
     },
     {
       "project": "al-folio",
@@ -181,7 +261,8 @@
       "platform": "github",
       "merged": 3,
       "lastMergedAt": "2023-07-12T01:53:53",
-      "stars": 16202
+      "stars": 16207,
+      "language": "HTML"
     },
     {
       "project": "GitLab",
@@ -189,7 +270,8 @@
       "platform": "gitlab",
       "merged": 11,
       "lastMergedAt": "2026-09-24T10:51:44.599Z",
-      "stars": 6146
+      "stars": 6146,
+      "language": "Ruby"
     },
     {
       "project": "MCP Go SDK",
@@ -197,7 +279,17 @@
       "platform": "github",
       "merged": 5,
       "lastMergedAt": "2026-09-21T13:26:27",
-      "stars": 5153
+      "stars": 5157,
+      "language": "Go"
+    },
+    {
+      "project": "MCP Rust SDK",
+      "repo": "modelcontextprotocol/rust-sdk",
+      "platform": "github",
+      "merged": 1,
+      "lastMergedAt": "2026-09-27T03:55:12",
+      "stars": 3957,
+      "language": "Rust"
     },
     {
       "project": "OpenModScan",
@@ -205,7 +297,8 @@
       "platform": "github",
       "merged": 1,
       "lastMergedAt": "2026-04-10T18:09:29",
-      "stars": 708
+      "stars": 708,
+      "language": "C++"
     },
     {
       "project": "Portainer MCP",
@@ -213,7 +306,8 @@
       "platform": "github",
       "merged": 1,
       "lastMergedAt": "2026-02-26T01:15:54",
-      "stars": 236
+      "stars": 236,
+      "language": "Go"
     },
     {
       "project": "GitLab Go client",
@@ -221,7 +315,8 @@
       "platform": "gitlab",
       "merged": 15,
       "lastMergedAt": "2026-09-24T18:46:11.887Z",
-      "stars": 106
+      "stars": 107,
+      "language": "Go"
     },
     {
       "project": "YunoHost coturn",
@@ -229,7 +324,8 @@
       "platform": "github",
       "merged": 1,
       "lastMergedAt": "2023-03-26T06:14:38",
-      "stars": 8
+      "stars": 8,
+      "language": "Shell"
     }
   ],
   "acceptedAnswers": [
@@ -267,6 +363,13 @@
       "title": "How to use what kind of geotagged images with maps app?",
       "answerUrl": "https://github.com/opencloud-eu/opencloud/discussions/3587#discussioncomment-18605569",
       "answeredAt": "2026-09-25T20:57:18"
+    },
+    {
+      "fullName": "podman-container-tools/podman",
+      "number": 29817,
+      "title": "How does Podman work with the different firewall providers? I can't access a web server migrated from Docker.",
+      "answerUrl": "https://github.com/podman-container-tools/podman/discussions/29817#discussioncomment-18586958",
+      "answeredAt": "2026-09-24T20:43:58"
     },
     {
       "fullName": "borgbase/vorta",
@@ -352,6 +455,9 @@
           "hoursToMerge": null,
           "comments": 0,
           "title": "Implementation of chart.js",
+          "additions": 812,
+          "deletions": 0,
+          "changedFiles": 6,
           "redacted": false
         },
         {
@@ -364,6 +470,9 @@
           "hoursToMerge": 722.2936111111111,
           "comments": 18,
           "title": "Better SEO, OpenGraph, schema.org and clean generated code",
+          "additions": 899,
+          "deletions": 605,
+          "changedFiles": 31,
           "redacted": false
         },
         {
@@ -376,6 +485,9 @@
           "hoursToMerge": null,
           "comments": 6,
           "title": "Badly placed backslash in responsive_img.html",
+          "additions": 1,
+          "deletions": 1,
+          "changedFiles": 1,
           "redacted": false
         },
         {
@@ -388,6 +500,9 @@
           "hoursToMerge": null,
           "comments": 0,
           "title": "Update publications.md",
+          "additions": 29,
+          "deletions": 3,
+          "changedFiles": 1,
           "redacted": false
         },
         {
@@ -400,6 +515,9 @@
           "hoursToMerge": null,
           "comments": 1,
           "title": "Unnecesary .js",
+          "additions": 0,
+          "deletions": 6,
+          "changedFiles": 1,
           "redacted": false
         },
         {
@@ -412,6 +530,9 @@
           "hoursToMerge": null,
           "comments": 2,
           "title": "jQuery should be load in head",
+          "additions": 2,
+          "deletions": 1,
+          "changedFiles": 2,
           "redacted": false
         },
         {
@@ -424,6 +545,9 @@
           "hoursToMerge": 49.774166666666666,
           "comments": 2,
           "title": "Update deploy.yml",
+          "additions": 1,
+          "deletions": 1,
+          "changedFiles": 1,
           "redacted": false
         }
       ]
@@ -440,6 +564,9 @@
           "hoursToMerge": 1996.6847222222223,
           "comments": 8,
           "title": "CV Restyled",
+          "additions": 350,
+          "deletions": 14,
+          "changedFiles": 7,
           "redacted": false
         }
       ],
@@ -454,6 +581,9 @@
           "hoursToMerge": 7.521388888888889,
           "comments": 0,
           "title": "Minor bug cron_coturn",
+          "additions": 1,
+          "deletions": 1,
+          "changedFiles": 1,
           "redacted": false
         }
       ]
@@ -470,11 +600,31 @@
           "hoursToMerge": null,
           "comments": 1,
           "title": "[Translation] Spanish JSON",
+          "additions": 581,
+          "deletions": 0,
+          "changedFiles": 1,
           "redacted": false
         }
       ]
     },
     "2026": {
+      "MCP Rust SDK": [
+        {
+          "platform": "github",
+          "kind": "pull_request",
+          "state": "merged",
+          "fullName": "modelcontextprotocol/rust-sdk",
+          "number": 1300,
+          "createdAt": "2026-09-26T00:59:27.000Z",
+          "hoursToMerge": 24.929166666666667,
+          "comments": 0,
+          "title": "fix(model): decode float fields through serde_json::Number",
+          "additions": 371,
+          "deletions": 9,
+          "changedFiles": 6,
+          "redacted": false
+        }
+      ],
       "go-selfupdate": [
         {
           "platform": "github",
@@ -486,6 +636,9 @@
           "hoursToMerge": null,
           "comments": 2,
           "title": "fix: replace unmaintained golang.org/x/crypto/openpgp with ProtonMail fork",
+          "additions": 19,
+          "deletions": 8,
+          "changedFiles": 5,
           "redacted": false
         }
       ],
@@ -500,6 +653,9 @@
           "hoursToMerge": null,
           "comments": 0,
           "title": "fix: extract archives with 2 GiB or more of data",
+          "additions": 172,
+          "deletions": 56,
+          "changedFiles": 3,
           "redacted": false
         }
       ],
@@ -514,20 +670,9 @@
           "hoursToMerge": null,
           "comments": 0,
           "title": "Fall back to the feed URL when a feed's own link is relative",
-          "redacted": false
-        }
-      ],
-      "Kong": [
-        {
-          "platform": "github",
-          "kind": "pull_request",
-          "state": "open",
-          "fullName": "Kong/kong",
-          "number": 15019,
-          "createdAt": "2026-09-24T09:52:57.000Z",
-          "hoursToMerge": null,
-          "comments": 1,
-          "title": "fix(dns): do not cache answers with a zero TTL",
+          "additions": 74,
+          "deletions": 18,
+          "changedFiles": 2,
           "redacted": false
         }
       ],
@@ -542,6 +687,9 @@
           "hoursToMerge": null,
           "comments": 0,
           "title": "mcp: choose the interaction pattern from the negotiated protocol version",
+          "additions": 417,
+          "deletions": 10,
+          "changedFiles": 4,
           "redacted": false
         },
         {
@@ -554,6 +702,9 @@
           "hoursToMerge": null,
           "comments": 2,
           "title": "mcp: send no response for a request the peer cancelled",
+          "additions": 439,
+          "deletions": 14,
+          "changedFiles": 9,
           "redacted": false
         },
         {
@@ -566,6 +717,9 @@
           "hoursToMerge": null,
           "comments": 0,
           "title": "mcp: extend the write deadline on every write to a keep-alive stream",
+          "additions": 112,
+          "deletions": 1,
+          "changedFiles": 2,
           "redacted": false
         },
         {
@@ -578,6 +732,9 @@
           "hoursToMerge": 141.85555555555555,
           "comments": 0,
           "title": "mcp: record the negotiated protocol version on every path that records one",
+          "additions": 167,
+          "deletions": 12,
+          "changedFiles": 6,
           "redacted": false
         },
         {
@@ -590,6 +747,9 @@
           "hoursToMerge": 41.03861111111111,
           "comments": 0,
           "title": "mcp: refuse a call on a legacy session before initialize",
+          "additions": 166,
+          "deletions": 4,
+          "changedFiles": 2,
           "redacted": false
         },
         {
@@ -602,6 +762,9 @@
           "hoursToMerge": 22.450555555555557,
           "comments": 0,
           "title": "mcp: add HasParams so middleware can tell whether params are present",
+          "additions": 88,
+          "deletions": 3,
+          "changedFiles": 5,
           "redacted": false
         },
         {
@@ -614,6 +777,9 @@
           "hoursToMerge": 21.519444444444446,
           "comments": 1,
           "title": "mcp: classify the per-request protocol version by membership",
+          "additions": 140,
+          "deletions": 8,
+          "changedFiles": 3,
           "redacted": false
         },
         {
@@ -626,20 +792,9 @@
           "hoursToMerge": 39.86833333333333,
           "comments": 1,
           "title": "mcp: carry a cancelled notification's reason as the request's cancel cause",
-          "redacted": false
-        }
-      ],
-      "MCP Rust SDK": [
-        {
-          "platform": "github",
-          "kind": "pull_request",
-          "state": "open",
-          "fullName": "modelcontextprotocol/rust-sdk",
-          "number": 1300,
-          "createdAt": "2026-09-26T00:59:27.000Z",
-          "hoursToMerge": null,
-          "comments": 0,
-          "title": "fix(model): decode float fields through serde_json::Number",
+          "additions": 102,
+          "deletions": 7,
+          "changedFiles": 3,
           "redacted": false
         }
       ],
@@ -654,6 +809,9 @@
           "hoursToMerge": null,
           "comments": 0,
           "title": "docs(maps): explain where the location data comes from",
+          "additions": 21,
+          "deletions": 0,
+          "changedFiles": 1,
           "redacted": false
         }
       ],
@@ -668,6 +826,43 @@
           "hoursToMerge": null,
           "comments": 0,
           "title": "fix: keep the whole reason phrase in stat errors",
+          "additions": 58,
+          "deletions": 2,
+          "changedFiles": 3,
+          "redacted": false
+        }
+      ],
+      "webpage": [
+        {
+          "platform": "github",
+          "kind": "pull_request",
+          "state": "open",
+          "fullName": "probe-rs/webpage",
+          "number": 301,
+          "createdAt": "2026-09-26T19:49:53.000Z",
+          "hoursToMerge": null,
+          "comments": 0,
+          "title": "Fix the Olimex udev rules: drop the 0x prefix",
+          "additions": 4,
+          "deletions": 4,
+          "changedFiles": 1,
+          "redacted": false
+        }
+      ],
+      "Kong": [
+        {
+          "platform": "github",
+          "kind": "pull_request",
+          "state": "open",
+          "fullName": "Kong/kong",
+          "number": 15019,
+          "createdAt": "2026-09-24T09:52:57.000Z",
+          "hoursToMerge": null,
+          "comments": 1,
+          "title": "fix(dns): do not cache answers with a zero TTL",
+          "additions": 56,
+          "deletions": 2,
+          "changedFiles": 3,
           "redacted": false
         }
       ],
@@ -682,6 +877,9 @@
           "hoursToMerge": 145.45583333333335,
           "comments": 0,
           "title": "docs: document TRUSTED_PROXY_IPS for the trusted auth header",
+          "additions": 9,
+          "deletions": 0,
+          "changedFiles": 1,
           "redacted": false
         },
         {
@@ -694,6 +892,9 @@
           "hoursToMerge": 145.34527777777777,
           "comments": 0,
           "title": "feat(hub): add TRUSTED_PROXY_IPS allowlist for TRUSTED_AUTH_HEADER",
+          "additions": 273,
+          "deletions": 0,
+          "changedFiles": 3,
           "redacted": false
         }
       ],
@@ -708,6 +909,9 @@
           "hoursToMerge": 160.69083333333333,
           "comments": 5,
           "title": "Document rootless bind-mount access through an unmapped parent",
+          "additions": 24,
+          "deletions": 0,
+          "changedFiles": 1,
           "redacted": false
         }
       ],
@@ -722,6 +926,9 @@
           "hoursToMerge": 1.0594444444444444,
           "comments": 3,
           "title": "docs(hostRules): replace the stale matchHost port warning",
+          "additions": 5,
+          "deletions": 4,
+          "changedFiles": 1,
           "redacted": false
         }
       ],
@@ -736,6 +943,9 @@
           "hoursToMerge": 11.985277777777778,
           "comments": 3,
           "title": "TOTP: accept each code only once, and one time step of clock drift",
+          "additions": 162,
+          "deletions": 29,
+          "changedFiles": 6,
           "redacted": false
         },
         {
@@ -748,6 +958,9 @@
           "hoursToMerge": 11.122777777777777,
           "comments": 5,
           "title": "Markdown: register slash commands as completion sources instead of a second autocompletion extension",
+          "additions": 265,
+          "deletions": 202,
+          "changedFiles": 2,
           "redacted": false
         }
       ],
@@ -762,6 +975,9 @@
           "hoursToMerge": 90.17416666666666,
           "comments": 0,
           "title": "Poll the order this run created, not the one the previous cert came from",
+          "additions": 3,
+          "deletions": 0,
+          "changedFiles": 1,
           "redacted": false
         }
       ],
@@ -776,6 +992,9 @@
           "hoursToMerge": 51.531666666666666,
           "comments": 2,
           "title": "Invalidate tokens issued before a password change",
+          "additions": 85,
+          "deletions": 1,
+          "changedFiles": 4,
           "redacted": false
         }
       ],
@@ -790,6 +1009,9 @@
           "hoursToMerge": 48.06472222222222,
           "comments": 1,
           "title": "Wire --version and --help flags to existing display functions",
+          "additions": 51,
+          "deletions": 3,
+          "changedFiles": 6,
           "redacted": false
         }
       ],
@@ -804,6 +1026,9 @@
           "hoursToMerge": 31.94972222222222,
           "comments": 9,
           "title": "feat: add local (non-edge) Docker Compose stack management tools",
+          "additions": 2450,
+          "deletions": 2,
+          "changedFiles": 17,
           "redacted": false
         }
       ],
@@ -818,6 +1043,9 @@
           "hoursToMerge": 1.195098888888889,
           "comments": 7,
           "title": "Sync routes snapshot: add the merge request cancel_auto_merge API route",
+          "additions": 68,
+          "deletions": 38,
+          "changedFiles": 2,
           "redacted": false
         },
         {
@@ -830,6 +1058,9 @@
           "hoursToMerge": null,
           "comments": 19,
           "title": "Expose the instance plan in the metadata API",
+          "additions": 203,
+          "deletions": 3,
+          "changedFiles": 17,
           "redacted": false
         },
         {
@@ -842,6 +1073,9 @@
           "hoursToMerge": null,
           "comments": 44,
           "title": "Document and deprecate cancel_merge_when_pipeline_succeeds",
+          "additions": 82,
+          "deletions": 154,
+          "changedFiles": 5,
           "redacted": false
         },
         {
@@ -854,6 +1088,9 @@
           "hoursToMerge": null,
           "comments": 50,
           "title": "Add cancel_auto_merge merge request API endpoint",
+          "additions": 325,
+          "deletions": 1,
+          "changedFiles": 7,
           "redacted": false
         },
         {
@@ -866,6 +1103,9 @@
           "hoursToMerge": 219.46644527777778,
           "comments": 34,
           "title": "Ignore revoked UIDs when listing the identities of a GPG key",
+          "additions": 797,
+          "deletions": 3,
+          "changedFiles": 11,
           "redacted": false
         },
         {
@@ -878,6 +1118,9 @@
           "hoursToMerge": null,
           "comments": 16,
           "title": "Return the merge request when cancelling an auto-merge",
+          "additions": 40,
+          "deletions": 2,
+          "changedFiles": 2,
           "redacted": false
         },
         {
@@ -890,6 +1133,9 @@
           "hoursToMerge": null,
           "comments": 24,
           "title": "Fix two project group listing response entity annotations",
+          "additions": 25,
+          "deletions": 25,
+          "changedFiles": 2,
           "redacted": false
         },
         {
@@ -902,6 +1148,9 @@
           "hoursToMerge": 97.70576888888888,
           "comments": 16,
           "title": "Fix three job token scope response entity annotations",
+          "additions": 24,
+          "deletions": 6,
+          "changedFiles": 2,
           "redacted": false
         },
         {
@@ -914,6 +1163,9 @@
           "hoursToMerge": 326.3722305555556,
           "comments": 26,
           "title": "Document the snippet clone URLs and the public snippet import fields",
+          "additions": 60,
+          "deletions": 20,
+          "changedFiles": 2,
           "redacted": false
         },
         {
@@ -926,6 +1178,9 @@
           "hoursToMerge": 310.88613194444446,
           "comments": 14,
           "title": "Document conan_package_name and correct the package versions object",
+          "additions": 19,
+          "deletions": 14,
+          "changedFiles": 1,
           "redacted": false
         },
         {
@@ -938,6 +1193,9 @@
           "hoursToMerge": 311.0447491666667,
           "comments": 19,
           "title": "Document the namespace compute minute and storage attributes",
+          "additions": 8,
+          "deletions": 1,
+          "changedFiles": 1,
           "redacted": false
         },
         {
@@ -950,6 +1208,9 @@
           "hoursToMerge": 143.08318277777778,
           "comments": 20,
           "title": "Document the wiki_page field in the events API",
+          "additions": null,
+          "deletions": null,
+          "changedFiles": null,
           "redacted": false
         },
         {
@@ -962,6 +1223,9 @@
           "hoursToMerge": null,
           "comments": 18,
           "title": "Document last_used_at and usage_type in the deploy keys API",
+          "additions": 29,
+          "deletions": 6,
+          "changedFiles": 1,
           "redacted": false
         },
         {
@@ -974,6 +1238,9 @@
           "hoursToMerge": 310.9419883333333,
           "comments": 12,
           "title": "Document the system hook response fields the API sends",
+          "additions": 35,
+          "deletions": 0,
+          "changedFiles": 1,
           "redacted": false
         },
         {
@@ -986,6 +1253,9 @@
           "hoursToMerge": 41.79652138888889,
           "comments": 8,
           "title": "Document public_email and email in the service accounts API",
+          "additions": 18,
+          "deletions": 2,
+          "changedFiles": 1,
           "redacted": false
         },
         {
@@ -998,6 +1268,9 @@
           "hoursToMerge": 114.60309916666667,
           "comments": 14,
           "title": "Document is_receptive in the cluster agents API",
+          "additions": null,
+          "deletions": null,
+          "changedFiles": null,
           "redacted": false
         },
         {
@@ -1010,6 +1283,9 @@
           "hoursToMerge": 26.383521388888887,
           "comments": 11,
           "title": "Document file_extension in the secure files API",
+          "additions": 8,
+          "deletions": 4,
+          "changedFiles": 1,
           "redacted": false
         }
       ],
@@ -1024,6 +1300,9 @@
           "hoursToMerge": 31.09242972222222,
           "comments": 14,
           "title": "feat(snippets): add the four fields the snippet entity sends to Snippet",
+          "additions": 32,
+          "deletions": 6,
+          "changedFiles": 3,
           "redacted": false
         },
         {
@@ -1036,6 +1315,9 @@
           "hoursToMerge": 361.95610166666665,
           "comments": 14,
           "title": "feat(packages): add ConanPackageName, CreatorID and Versions to Package",
+          "additions": 186,
+          "deletions": 0,
+          "changedFiles": 3,
           "redacted": false
         },
         {
@@ -1048,6 +1330,9 @@
           "hoursToMerge": 123.93164361111111,
           "comments": 13,
           "title": "feat(namespaces): add the eight fields the namespace entity sends to Namespace",
+          "additions": 60,
+          "deletions": 29,
+          "changedFiles": 2,
           "redacted": false
         },
         {
@@ -1060,6 +1345,9 @@
           "hoursToMerge": 123.47376638888889,
           "comments": 13,
           "title": "feat(events): add Imported, ImportedFrom and WikiPage to both event structs",
+          "additions": 169,
+          "deletions": 40,
+          "changedFiles": 2,
           "redacted": false
         },
         {
@@ -1072,6 +1360,9 @@
           "hoursToMerge": 32.17534833333333,
           "comments": 11,
           "title": "feat(deploy_keys): add LastUsedAt and UsageType to both deploy key structs",
+          "additions": 13,
+          "deletions": 1,
+          "changedFiles": 2,
           "redacted": false
         },
         {
@@ -1084,6 +1375,9 @@
           "hoursToMerge": null,
           "comments": 17,
           "title": "feat(system_hooks): add seven fields GitLab sends to the Hook struct",
+          "additions": 80,
+          "deletions": 34,
+          "changedFiles": 2,
           "redacted": false
         },
         {
@@ -1096,6 +1390,9 @@
           "hoursToMerge": 11.954209166666667,
           "comments": 9,
           "title": "feat(group_serviceaccounts): add PublicEmail and UnconfirmedEmail to GroupServiceAccount",
+          "additions": 40,
+          "deletions": 4,
+          "changedFiles": 2,
           "redacted": false
         },
         {
@@ -1108,6 +1405,9 @@
           "hoursToMerge": 5.595134444444445,
           "comments": 8,
           "title": "fix(group_scim): correct the GroupSCIMIdentity json tag to extern_uid",
+          "additions": 14,
+          "deletions": 3,
+          "changedFiles": 2,
           "redacted": false
         },
         {
@@ -1120,6 +1420,9 @@
           "hoursToMerge": 15.60422111111111,
           "comments": 11,
           "title": "feat(secure_files): add FileExtension to SecureFile",
+          "additions": 13,
+          "deletions": 4,
+          "changedFiles": 2,
           "redacted": false
         },
         {
@@ -1132,6 +1435,9 @@
           "hoursToMerge": 83.83147694444445,
           "comments": 9,
           "title": "feat(license_templates): add Popular to LicenseTemplate",
+          "additions": 5,
+          "deletions": 0,
+          "changedFiles": 2,
           "redacted": false
         },
         {
@@ -1144,6 +1450,9 @@
           "hoursToMerge": 15.61403138888889,
           "comments": 9,
           "title": "feat(cluster_agents): add IsReceptive to the Agent struct",
+          "additions": 13,
+          "deletions": 4,
+          "changedFiles": 2,
           "redacted": false
         },
         {
@@ -1156,6 +1465,9 @@
           "hoursToMerge": 4.076775277777778,
           "comments": 7,
           "title": "feat(broadcast_messages): add the Color field to BroadcastMessage",
+          "additions": 34,
+          "deletions": 0,
+          "changedFiles": 2,
           "redacted": false
         },
         {
@@ -1168,6 +1480,9 @@
           "hoursToMerge": 107.29709333333334,
           "comments": 15,
           "title": "feat(topics): add OrganizationID to the Topic struct",
+          "additions": 28,
+          "deletions": 2,
+          "changedFiles": 2,
           "redacted": false
         },
         {
@@ -1180,6 +1495,9 @@
           "hoursToMerge": 5.386254444444444,
           "comments": 7,
           "title": "feat(appearance): add SiteName to Appearance and ChangeAppearanceOptions",
+          "additions": 9,
+          "deletions": 2,
+          "changedFiles": 2,
           "redacted": false
         },
         {
@@ -1192,6 +1510,9 @@
           "hoursToMerge": null,
           "comments": 4,
           "title": "fix: correct GroupSCIMIdentity json tag to the extern_uid key GitLab sends",
+          "additions": 14,
+          "deletions": 3,
+          "changedFiles": 2,
           "redacted": false
         },
         {
@@ -1204,6 +1525,9 @@
           "hoursToMerge": null,
           "comments": 4,
           "title": "feat(secure_files): add FileExtension to SecureFile",
+          "additions": 13,
+          "deletions": 4,
+          "changedFiles": 2,
           "redacted": false
         },
         {
@@ -1216,6 +1540,9 @@
           "hoursToMerge": null,
           "comments": 4,
           "title": "feat(license_templates): add Popular to LicenseTemplate",
+          "additions": 5,
+          "deletions": 0,
+          "changedFiles": 2,
           "redacted": false
         },
         {
@@ -1228,6 +1555,9 @@
           "hoursToMerge": null,
           "comments": 4,
           "title": "Add IsReceptive to the cluster agent Agent struct",
+          "additions": 13,
+          "deletions": 4,
+          "changedFiles": 2,
           "redacted": false
         },
         {
@@ -1240,6 +1570,9 @@
           "hoursToMerge": null,
           "comments": 4,
           "title": "feat(broadcast_messages): add the Color field to BroadcastMessage",
+          "additions": 34,
+          "deletions": 0,
+          "changedFiles": 2,
           "redacted": false
         },
         {
@@ -1252,6 +1585,9 @@
           "hoursToMerge": null,
           "comments": 4,
           "title": "feat(topics): add OrganizationID to the Topic struct",
+          "additions": 27,
+          "deletions": 2,
+          "changedFiles": 2,
           "redacted": false
         },
         {
@@ -1264,6 +1600,9 @@
           "hoursToMerge": null,
           "comments": 4,
           "title": "Add SiteName to Appearance and ChangeAppearanceOptions",
+          "additions": 9,
+          "deletions": 2,
+          "changedFiles": 2,
           "redacted": false
         },
         {
@@ -1276,6 +1615,9 @@
           "hoursToMerge": 29.920951666666667,
           "comments": 11,
           "title": "fix(issues): avoid panic unmarshalling an Issue with no id",
+          "additions": 54,
+          "deletions": 1,
+          "changedFiles": 2,
           "redacted": false
         },
         {
@@ -1288,15 +1630,22 @@
           "hoursToMerge": 375.74991666666665,
           "comments": 19,
           "title": "fix(group_boards): return the single updated list from UpdateIssueBoardList",
+          "additions": 48,
+          "deletions": 63,
+          "changedFiles": 4,
           "redacted": false
         }
       ]
     }
   },
   "issuesByProject": {
-    "Kong": {
-      "open": 1,
-      "closed": 0
+    "MCP Rust SDK": {
+      "open": 0,
+      "closed": 1
+    },
+    "MCP Go SDK": {
+      "open": 8,
+      "closed": 5
     },
     "htmlbeautifier": {
       "open": 1,
@@ -1334,11 +1683,7 @@
       "open": 1,
       "closed": 0
     },
-    "MCP Go SDK": {
-      "open": 8,
-      "closed": 5
-    },
-    "MCP Rust SDK": {
+    "Kong": {
       "open": 1,
       "closed": 0
     },
@@ -1496,23 +1841,23 @@
     },
     {
       "platform": "github",
+      "achievement": "galaxy-brain",
+      "name": "Galaxy Brain",
+      "tierNumber": 3,
+      "tierName": "silver",
+      "count": 16,
+      "nextThreshold": 32,
+      "percent": 50,
+      "agrees": true
+    },
+    {
+      "platform": "github",
       "achievement": "pair-extraordinaire",
       "name": "Pair Extraordinaire",
       "tierNumber": 3,
       "tierName": "silver",
       "count": 33,
       "nextThreshold": 48,
-      "percent": 68.8,
-      "agrees": true
-    },
-    {
-      "platform": "github",
-      "achievement": "galaxy-brain",
-      "name": "Galaxy Brain",
-      "tierNumber": 2,
-      "tierName": "bronze",
-      "count": 11,
-      "nextThreshold": 16,
       "percent": 68.8,
       "agrees": true
     },
@@ -1544,19 +1889,9 @@
   "communityContributors": {
     "issues": [
       {
-        "repo": "cs-routeros-bouncer",
-        "issues": 7,
-        "people": 6
-      },
-      {
-        "repo": "gitlab-mcp-server",
-        "issues": 3,
-        "people": 3
-      },
-      {
-        "repo": "TFG-TFM_EPS",
-        "issues": 3,
-        "people": 3
+        "repo": "A-Lab",
+        "issues": 5,
+        "people": 5
       },
       {
         "repo": "phonometry",
@@ -1564,9 +1899,9 @@
         "people": 14
       },
       {
-        "repo": "libgen-mcp",
-        "issues": 1,
-        "people": 1
+        "repo": "TFG-TFM_EPS",
+        "issues": 3,
+        "people": 3
       },
       {
         "repo": "Cloudflare-DNS-Updater",
@@ -1574,12 +1909,22 @@
         "people": 7
       },
       {
-        "repo": "A-Lab",
-        "issues": 5,
-        "people": 5
+        "repo": "gitlab-mcp-server",
+        "issues": 3,
+        "people": 3
+      },
+      {
+        "repo": "cs-routeros-bouncer",
+        "issues": 7,
+        "people": 6
       },
       {
         "repo": "FDTDexamples",
+        "issues": 1,
+        "people": 1
+      },
+      {
+        "repo": "libgen-mcp",
         "issues": 1,
         "people": 1
       }
@@ -1589,6 +1934,21 @@
         "repo": "TFG-TFM_EPS",
         "prs": 3,
         "people": 2
+      },
+      {
+        "repo": "gitlab-mcp-server",
+        "prs": 6,
+        "people": 4
+      },
+      {
+        "repo": "mastodon_official_profiles",
+        "prs": 8,
+        "people": 4
+      },
+      {
+        "repo": "libgen-mcp",
+        "prs": 1,
+        "people": 1
       },
       {
         "repo": "SetFigPaper",
@@ -1601,28 +1961,20 @@
         "people": 2
       },
       {
-        "repo": "mastodon_official_profiles",
-        "prs": 8,
-        "people": 4
-      },
-      {
         "repo": "Cloudflare-DNS-Updater",
         "prs": 3,
         "people": 3
-      },
-      {
-        "repo": "gitlab-mcp-server",
-        "prs": 6,
-        "people": 4
-      },
-      {
-        "repo": "libgen-mcp",
-        "prs": 1,
-        "people": 1
       }
     ]
   },
   "upstreamLandedCommits": [
+    {
+      "fullName": "modelcontextprotocol/rust-sdk",
+      "commits": 1,
+      "days": 1,
+      "firstLandedAt": "2026-09-27T00:00:00",
+      "lastLandedAt": "2026-09-27T00:00:00"
+    },
     {
       "fullName": "wolffcatskyy/awesome-crowdsec",
       "commits": 1,
@@ -1766,8 +2118,8 @@
   "maintenance": [
     {
       "repo": "gitlab-mcp-server",
-      "activeDays12m": 94,
-      "lastOwnerCommitAt": "2026-09-26T13:38:56",
+      "activeDays12m": 96,
+      "lastOwnerCommitAt": "2026-09-27T11:53:36",
       "ci": {
         "repo": "gitlab-mcp-server",
         "jobs": 24,
@@ -1779,7 +2131,7 @@
       },
       "ciPassRate90d": {
         "repo": "gitlab-mcp-server",
-        "ok": 533,
+        "ok": 537,
         "ko": 17,
         "pct": 96.9
       },
@@ -1790,35 +2142,35 @@
           "go",
           "javascript-typescript"
         ],
-        "lastScanAt": "2026-09-26T13:44:57"
+        "lastScanAt": "2026-09-27T11:59:53"
       },
       "hygiene": {
         "repo": "gitlab-mcp-server",
         "policyFiles": [
+          "codeowners",
           "dependabot",
-          "security",
-          "codeowners"
+          "security"
         ],
         "rulesetRules": [
           "pull_request",
           "update",
+          "deletion",
           "non_fast_forward",
-          "required_status_checks",
-          "deletion"
+          "required_status_checks"
         ],
         "hasClassicProtection": false,
         "dependabotEcosystems": [
+          "docker",
+          "github-actions",
           "gomod",
           "docker-compose",
-          "github-actions",
-          "docker",
           "npm"
         ]
       },
       "docsPublished": {
         "fullName": "jmrplens/gitlab-mcp-server",
-        "lastPublishAt": "2026-09-25T21:39:03",
-        "deploysIn90d": 141
+        "lastPublishAt": "2026-09-27T11:55:06",
+        "deploysIn90d": 142
       }
     },
     {
@@ -1829,14 +2181,14 @@
         "repo": "phonometry",
         "jobs": 32,
         "os": [
-          "Linux",
           "macOS",
-          "Windows"
+          "Windows",
+          "Linux"
         ]
       },
       "ciPassRate90d": {
         "repo": "phonometry",
-        "ok": 1193,
+        "ok": 1190,
         "ko": 80,
         "pct": 93.7
       },
@@ -1852,15 +2204,15 @@
       "hygiene": {
         "repo": "phonometry",
         "policyFiles": [
-          "dependabot",
-          "security"
+          "security",
+          "dependabot"
         ],
         "rulesetRules": [],
         "hasClassicProtection": true,
         "dependabotEcosystems": [
-          "npm",
           "github-actions",
-          "pip"
+          "pip",
+          "npm"
         ]
       },
       "docsPublished": {
@@ -1883,8 +2235,8 @@
       "ciPassRate90d": {
         "repo": "cs-routeros-bouncer",
         "ok": 135,
-        "ko": 6,
-        "pct": 95.7
+        "ko": 4,
+        "pct": 97.1
       },
       "codeQl": {
         "repo": "cs-routeros-bouncer",
@@ -1898,17 +2250,17 @@
       "hygiene": {
         "repo": "cs-routeros-bouncer",
         "policyFiles": [
+          "codeowners",
           "security",
-          "dependabot",
-          "codeowners"
+          "dependabot"
         ],
         "rulesetRules": [],
         "hasClassicProtection": true,
         "dependabotEcosystems": [
           "github-actions",
+          "gomod",
           "docker",
           "npm",
-          "gomod",
           "docker-compose"
         ]
       },
@@ -1920,22 +2272,22 @@
     },
     {
       "repo": "mikroscope",
-      "activeDays12m": 8,
-      "lastOwnerCommitAt": "2026-09-25T16:54:30",
+      "activeDays12m": 9,
+      "lastOwnerCommitAt": "2026-09-27T12:16:37",
       "ci": {
         "repo": "mikroscope",
-        "jobs": 31,
+        "jobs": 32,
         "os": [
-          "macOS",
+          "Linux",
           "Windows",
-          "Linux"
+          "macOS"
         ]
       },
       "ciPassRate90d": {
         "repo": "mikroscope",
-        "ok": 182,
+        "ok": 188,
         "ko": 5,
-        "pct": 97.3
+        "pct": 97.4
       },
       "codeQl": {
         "repo": "mikroscope",
@@ -1944,19 +2296,19 @@
           "go",
           "javascript-typescript"
         ],
-        "lastScanAt": "2026-09-25T16:55:45"
+        "lastScanAt": "2026-09-27T12:18:12"
       },
       "hygiene": {
         "repo": "mikroscope",
         "policyFiles": [
-          "security",
-          "dependabot"
+          "dependabot",
+          "security"
         ],
         "rulesetRules": [
-          "pull_request",
+          "non_fast_forward",
           "deletion",
           "required_status_checks",
-          "non_fast_forward"
+          "pull_request"
         ],
         "hasClassicProtection": false,
         "dependabotEcosystems": [
@@ -1967,8 +2319,8 @@
       },
       "docsPublished": {
         "fullName": "jmrplens/mikroscope",
-        "lastPublishAt": "2026-09-25T16:57:45",
-        "deploysIn90d": 58
+        "lastPublishAt": "2026-09-27T12:19:56",
+        "deploysIn90d": 60
       }
     },
     {
@@ -1984,9 +2336,9 @@
       },
       "ciPassRate90d": {
         "repo": "Cloudflare-DNS-Updater",
-        "ok": 116,
-        "ko": 18,
-        "pct": 86.6
+        "ok": 113,
+        "ko": 15,
+        "pct": 88.3
       },
       "codeQl": {
         "repo": "Cloudflare-DNS-Updater",
@@ -1994,7 +2346,7 @@
           "actions",
           "c-cpp"
         ],
-        "lastScanAt": "2026-09-20T09:56:37"
+        "lastScanAt": "2026-09-27T09:58:22"
       },
       "hygiene": {
         "repo": "Cloudflare-DNS-Updater",
@@ -2021,8 +2373,8 @@
         "jobs": 20,
         "os": [
           "Linux",
-          "macOS",
-          "Windows"
+          "Windows",
+          "macOS"
         ]
       },
       "ciPassRate90d": {
@@ -2043,22 +2395,22 @@
       "hygiene": {
         "repo": "libgen-mcp",
         "policyFiles": [
-          "codeowners",
+          "dependabot",
           "security",
-          "dependabot"
+          "codeowners"
         ],
         "rulesetRules": [
-          "non_fast_forward",
-          "required_status_checks",
           "pull_request",
-          "deletion"
+          "required_status_checks",
+          "deletion",
+          "non_fast_forward"
         ],
         "hasClassicProtection": false,
         "dependabotEcosystems": [
-          "docker",
-          "gomod",
           "github-actions",
-          "npm"
+          "docker",
+          "npm",
+          "gomod"
         ]
       },
       "docsPublished": {
@@ -2069,22 +2421,22 @@
     },
     {
       "repo": "ghchronicle",
-      "activeDays12m": 9,
-      "lastOwnerCommitAt": "2026-09-25T13:53:26",
+      "activeDays12m": 10,
+      "lastOwnerCommitAt": "2026-09-27T13:09:30",
       "ci": {
         "repo": "ghchronicle",
         "jobs": 22,
         "os": [
-          "macOS",
           "Windows",
-          "Linux"
+          "Linux",
+          "macOS"
         ]
       },
       "ciPassRate90d": {
         "repo": "ghchronicle",
-        "ok": 185,
+        "ok": 194,
         "ko": 3,
-        "pct": 98.4
+        "pct": 98.5
       },
       "codeQl": {
         "repo": "ghchronicle",
@@ -2093,7 +2445,7 @@
           "go",
           "javascript-typescript"
         ],
-        "lastScanAt": "2026-09-25T13:55:01"
+        "lastScanAt": "2026-09-27T13:10:57"
       },
       "hygiene": {
         "repo": "ghchronicle",
@@ -2102,23 +2454,23 @@
           "dependabot"
         ],
         "rulesetRules": [
-          "deletion",
-          "pull_request",
           "non_fast_forward",
-          "required_status_checks"
+          "required_status_checks",
+          "deletion",
+          "pull_request"
         ],
         "hasClassicProtection": false,
         "dependabotEcosystems": [
-          "npm",
           "gomod",
+          "npm",
           "docker",
           "github-actions"
         ]
       },
       "docsPublished": {
         "fullName": "jmrplens/ghchronicle",
-        "lastPublishAt": "2026-09-25T13:57:37",
-        "deploysIn90d": 60
+        "lastPublishAt": "2026-09-27T13:13:06",
+        "deploysIn90d": 63
       }
     },
     {
@@ -2186,7 +2538,7 @@
     "ghchronicle": {
       "stars": 0,
       "stars30d": 0,
-      "releaseTag": "v2.5.1"
+      "releaseTag": "v2.6.0"
     },
     "TFG-TFM_EPS": {
       "stars": 84,
@@ -2200,7 +2552,7 @@
     }
   },
   "gitlab": {
-    "fetchedAt": "2026-09-26T20:35:39.324Z",
+    "fetchedAt": "2026-09-27T14:50:10.415Z",
     "username": "jmrp",
     "items": [
       {
@@ -2212,7 +2564,10 @@
         "createdAt": "2026-09-24T09:40:02.243Z",
         "hoursToMerge": 1.195098888888889,
         "comments": 7,
-        "title": "Sync routes snapshot: add the merge request cancel_auto_merge API route"
+        "title": "Sync routes snapshot: add the merge request cancel_auto_merge API route",
+        "additions": 68,
+        "deletions": 38,
+        "changedFiles": 2
       },
       {
         "platform": "gitlab",
@@ -2223,7 +2578,10 @@
         "createdAt": "2026-09-22T10:28:44.881Z",
         "hoursToMerge": null,
         "comments": 19,
-        "title": "Expose the instance plan in the metadata API"
+        "title": "Expose the instance plan in the metadata API",
+        "additions": 203,
+        "deletions": 3,
+        "changedFiles": 17
       },
       {
         "platform": "gitlab",
@@ -2234,7 +2592,10 @@
         "createdAt": "2026-09-22T10:27:39.232Z",
         "hoursToMerge": null,
         "comments": 1,
-        "title": "Expose the instance plan in the metadata API, readable by any authenticated user"
+        "title": "Expose the instance plan in the metadata API, readable by any authenticated user",
+        "additions": null,
+        "deletions": null,
+        "changedFiles": null
       },
       {
         "platform": "gitlab",
@@ -2245,7 +2606,10 @@
         "createdAt": "2026-09-15T17:12:21.079Z",
         "hoursToMerge": null,
         "comments": 44,
-        "title": "Document and deprecate cancel_merge_when_pipeline_succeeds"
+        "title": "Document and deprecate cancel_merge_when_pipeline_succeeds",
+        "additions": 82,
+        "deletions": 154,
+        "changedFiles": 5
       },
       {
         "platform": "gitlab",
@@ -2256,7 +2620,10 @@
         "createdAt": "2026-09-15T17:11:06.304Z",
         "hoursToMerge": null,
         "comments": 50,
-        "title": "Add cancel_auto_merge merge request API endpoint"
+        "title": "Add cancel_auto_merge merge request API endpoint",
+        "additions": 325,
+        "deletions": 1,
+        "changedFiles": 7
       },
       {
         "platform": "gitlab",
@@ -2267,7 +2634,10 @@
         "createdAt": "2026-09-14T09:54:58.576Z",
         "hoursToMerge": 219.46644527777778,
         "comments": 34,
-        "title": "Ignore revoked UIDs when listing the identities of a GPG key"
+        "title": "Ignore revoked UIDs when listing the identities of a GPG key",
+        "additions": 797,
+        "deletions": 3,
+        "changedFiles": 11
       },
       {
         "platform": "gitlab",
@@ -2278,7 +2648,10 @@
         "createdAt": "2026-09-13T19:14:47.513Z",
         "hoursToMerge": null,
         "comments": 16,
-        "title": "Return the merge request when cancelling an auto-merge"
+        "title": "Return the merge request when cancelling an auto-merge",
+        "additions": 40,
+        "deletions": 2,
+        "changedFiles": 2
       },
       {
         "platform": "gitlab",
@@ -2289,7 +2662,10 @@
         "createdAt": "2026-09-10T10:17:12.713Z",
         "hoursToMerge": null,
         "comments": 24,
-        "title": "Fix two project group listing response entity annotations"
+        "title": "Fix two project group listing response entity annotations",
+        "additions": 25,
+        "deletions": 25,
+        "changedFiles": 2
       },
       {
         "platform": "gitlab",
@@ -2300,7 +2676,10 @@
         "createdAt": "2026-09-10T10:03:21.750Z",
         "hoursToMerge": 97.70576888888888,
         "comments": 16,
-        "title": "Fix three job token scope response entity annotations"
+        "title": "Fix three job token scope response entity annotations",
+        "additions": 24,
+        "deletions": 6,
+        "changedFiles": 2
       },
       {
         "platform": "gitlab",
@@ -2311,7 +2690,10 @@
         "createdAt": "2026-09-09T16:58:27.138Z",
         "hoursToMerge": 326.3722305555556,
         "comments": 26,
-        "title": "Document the snippet clone URLs and the public snippet import fields"
+        "title": "Document the snippet clone URLs and the public snippet import fields",
+        "additions": 60,
+        "deletions": 20,
+        "changedFiles": 2
       },
       {
         "platform": "gitlab",
@@ -2322,7 +2704,10 @@
         "createdAt": "2026-09-09T16:54:58.908Z",
         "hoursToMerge": 31.09242972222222,
         "comments": 14,
-        "title": "feat(snippets): add the four fields the snippet entity sends to Snippet"
+        "title": "feat(snippets): add the four fields the snippet entity sends to Snippet",
+        "additions": 32,
+        "deletions": 6,
+        "changedFiles": 3
       },
       {
         "platform": "gitlab",
@@ -2333,7 +2718,10 @@
         "createdAt": "2026-09-09T16:50:33.173Z",
         "hoursToMerge": 310.88613194444446,
         "comments": 14,
-        "title": "Document conan_package_name and correct the package versions object"
+        "title": "Document conan_package_name and correct the package versions object",
+        "additions": 19,
+        "deletions": 14,
+        "changedFiles": 1
       },
       {
         "platform": "gitlab",
@@ -2344,7 +2732,10 @@
         "createdAt": "2026-09-09T16:48:49.921Z",
         "hoursToMerge": 361.95610166666665,
         "comments": 14,
-        "title": "feat(packages): add ConanPackageName, CreatorID and Versions to Package"
+        "title": "feat(packages): add ConanPackageName, CreatorID and Versions to Package",
+        "additions": 186,
+        "deletions": 0,
+        "changedFiles": 3
       },
       {
         "platform": "gitlab",
@@ -2355,7 +2746,10 @@
         "createdAt": "2026-09-09T16:41:54.320Z",
         "hoursToMerge": 311.0447491666667,
         "comments": 19,
-        "title": "Document the namespace compute minute and storage attributes"
+        "title": "Document the namespace compute minute and storage attributes",
+        "additions": 8,
+        "deletions": 1,
+        "changedFiles": 1
       },
       {
         "platform": "gitlab",
@@ -2366,7 +2760,10 @@
         "createdAt": "2026-09-09T16:40:38.386Z",
         "hoursToMerge": 123.93164361111111,
         "comments": 13,
-        "title": "feat(namespaces): add the eight fields the namespace entity sends to Namespace"
+        "title": "feat(namespaces): add the eight fields the namespace entity sends to Namespace",
+        "additions": 60,
+        "deletions": 29,
+        "changedFiles": 2
       },
       {
         "platform": "gitlab",
@@ -2377,7 +2774,10 @@
         "createdAt": "2026-09-09T16:36:25.585Z",
         "hoursToMerge": 143.08318277777778,
         "comments": 20,
-        "title": "Document the wiki_page field in the events API"
+        "title": "Document the wiki_page field in the events API",
+        "additions": null,
+        "deletions": null,
+        "changedFiles": null
       },
       {
         "platform": "gitlab",
@@ -2388,7 +2788,10 @@
         "createdAt": "2026-09-09T16:35:13.660Z",
         "hoursToMerge": 123.47376638888889,
         "comments": 13,
-        "title": "feat(events): add Imported, ImportedFrom and WikiPage to both event structs"
+        "title": "feat(events): add Imported, ImportedFrom and WikiPage to both event structs",
+        "additions": 169,
+        "deletions": 40,
+        "changedFiles": 2
       },
       {
         "platform": "gitlab",
@@ -2399,7 +2802,10 @@
         "createdAt": "2026-09-09T16:31:23.779Z",
         "hoursToMerge": null,
         "comments": 18,
-        "title": "Document last_used_at and usage_type in the deploy keys API"
+        "title": "Document last_used_at and usage_type in the deploy keys API",
+        "additions": 29,
+        "deletions": 6,
+        "changedFiles": 1
       },
       {
         "platform": "gitlab",
@@ -2410,7 +2816,10 @@
         "createdAt": "2026-09-09T16:28:04.372Z",
         "hoursToMerge": 32.17534833333333,
         "comments": 11,
-        "title": "feat(deploy_keys): add LastUsedAt and UsageType to both deploy key structs"
+        "title": "feat(deploy_keys): add LastUsedAt and UsageType to both deploy key structs",
+        "additions": 13,
+        "deletions": 1,
+        "changedFiles": 2
       },
       {
         "platform": "gitlab",
@@ -2421,7 +2830,10 @@
         "createdAt": "2026-09-09T16:24:42.649Z",
         "hoursToMerge": 310.9419883333333,
         "comments": 12,
-        "title": "Document the system hook response fields the API sends"
+        "title": "Document the system hook response fields the API sends",
+        "additions": 35,
+        "deletions": 0,
+        "changedFiles": 1
       },
       {
         "platform": "gitlab",
@@ -2432,7 +2844,10 @@
         "createdAt": "2026-09-09T16:19:12.241Z",
         "hoursToMerge": null,
         "comments": 17,
-        "title": "feat(system_hooks): add seven fields GitLab sends to the Hook struct"
+        "title": "feat(system_hooks): add seven fields GitLab sends to the Hook struct",
+        "additions": 80,
+        "deletions": 34,
+        "changedFiles": 2
       },
       {
         "platform": "gitlab",
@@ -2443,7 +2858,10 @@
         "createdAt": "2026-09-09T14:51:41.192Z",
         "hoursToMerge": 41.79652138888889,
         "comments": 8,
-        "title": "Document public_email and email in the service accounts API"
+        "title": "Document public_email and email in the service accounts API",
+        "additions": 18,
+        "deletions": 2,
+        "changedFiles": 1
       },
       {
         "platform": "gitlab",
@@ -2454,7 +2872,10 @@
         "createdAt": "2026-09-09T14:40:05.602Z",
         "hoursToMerge": 114.60309916666667,
         "comments": 14,
-        "title": "Document is_receptive in the cluster agents API"
+        "title": "Document is_receptive in the cluster agents API",
+        "additions": null,
+        "deletions": null,
+        "changedFiles": null
       },
       {
         "platform": "gitlab",
@@ -2465,7 +2886,10 @@
         "createdAt": "2026-09-09T14:35:19.441Z",
         "hoursToMerge": 26.383521388888887,
         "comments": 11,
-        "title": "Document file_extension in the secure files API"
+        "title": "Document file_extension in the secure files API",
+        "additions": 8,
+        "deletions": 4,
+        "changedFiles": 1
       },
       {
         "platform": "gitlab",
@@ -2476,7 +2900,10 @@
         "createdAt": "2026-09-09T14:08:08.290Z",
         "hoursToMerge": null,
         "comments": 9,
-        "title": "Measuring API drift: 897 fields GitLab sends that this library does not model"
+        "title": "Measuring API drift: 897 fields GitLab sends that this library does not model",
+        "additions": null,
+        "deletions": null,
+        "changedFiles": null
       },
       {
         "platform": "gitlab",
@@ -2487,7 +2914,10 @@
         "createdAt": "2026-09-09T13:02:30.379Z",
         "hoursToMerge": 11.954209166666667,
         "comments": 9,
-        "title": "feat(group_serviceaccounts): add PublicEmail and UnconfirmedEmail to GroupServiceAccount"
+        "title": "feat(group_serviceaccounts): add PublicEmail and UnconfirmedEmail to GroupServiceAccount",
+        "additions": 40,
+        "deletions": 4,
+        "changedFiles": 2
       },
       {
         "platform": "gitlab",
@@ -2498,7 +2928,10 @@
         "createdAt": "2026-09-09T08:28:52.989Z",
         "hoursToMerge": 5.595134444444445,
         "comments": 8,
-        "title": "fix(group_scim): correct the GroupSCIMIdentity json tag to extern_uid"
+        "title": "fix(group_scim): correct the GroupSCIMIdentity json tag to extern_uid",
+        "additions": 14,
+        "deletions": 3,
+        "changedFiles": 2
       },
       {
         "platform": "gitlab",
@@ -2509,7 +2942,10 @@
         "createdAt": "2026-09-09T08:28:48.100Z",
         "hoursToMerge": 15.60422111111111,
         "comments": 11,
-        "title": "feat(secure_files): add FileExtension to SecureFile"
+        "title": "feat(secure_files): add FileExtension to SecureFile",
+        "additions": 13,
+        "deletions": 4,
+        "changedFiles": 2
       },
       {
         "platform": "gitlab",
@@ -2520,7 +2956,10 @@
         "createdAt": "2026-09-09T08:28:42.588Z",
         "hoursToMerge": 83.83147694444445,
         "comments": 9,
-        "title": "feat(license_templates): add Popular to LicenseTemplate"
+        "title": "feat(license_templates): add Popular to LicenseTemplate",
+        "additions": 5,
+        "deletions": 0,
+        "changedFiles": 2
       },
       {
         "platform": "gitlab",
@@ -2531,7 +2970,10 @@
         "createdAt": "2026-09-09T08:28:27.289Z",
         "hoursToMerge": 15.61403138888889,
         "comments": 9,
-        "title": "feat(cluster_agents): add IsReceptive to the Agent struct"
+        "title": "feat(cluster_agents): add IsReceptive to the Agent struct",
+        "additions": 13,
+        "deletions": 4,
+        "changedFiles": 2
       },
       {
         "platform": "gitlab",
@@ -2542,7 +2984,10 @@
         "createdAt": "2026-09-09T08:28:22.391Z",
         "hoursToMerge": 4.076775277777778,
         "comments": 7,
-        "title": "feat(broadcast_messages): add the Color field to BroadcastMessage"
+        "title": "feat(broadcast_messages): add the Color field to BroadcastMessage",
+        "additions": 34,
+        "deletions": 0,
+        "changedFiles": 2
       },
       {
         "platform": "gitlab",
@@ -2553,7 +2998,10 @@
         "createdAt": "2026-09-09T08:28:16.931Z",
         "hoursToMerge": 107.29709333333334,
         "comments": 15,
-        "title": "feat(topics): add OrganizationID to the Topic struct"
+        "title": "feat(topics): add OrganizationID to the Topic struct",
+        "additions": 28,
+        "deletions": 2,
+        "changedFiles": 2
       },
       {
         "platform": "gitlab",
@@ -2564,7 +3012,10 @@
         "createdAt": "2026-09-09T08:26:56.959Z",
         "hoursToMerge": 5.386254444444444,
         "comments": 7,
-        "title": "feat(appearance): add SiteName to Appearance and ChangeAppearanceOptions"
+        "title": "feat(appearance): add SiteName to Appearance and ChangeAppearanceOptions",
+        "additions": 9,
+        "deletions": 2,
+        "changedFiles": 2
       },
       {
         "platform": "gitlab",
@@ -2575,7 +3026,10 @@
         "createdAt": "2026-09-09T08:19:26.284Z",
         "hoursToMerge": null,
         "comments": 4,
-        "title": "fix: correct GroupSCIMIdentity json tag to the extern_uid key GitLab sends"
+        "title": "fix: correct GroupSCIMIdentity json tag to the extern_uid key GitLab sends",
+        "additions": 14,
+        "deletions": 3,
+        "changedFiles": 2
       },
       {
         "platform": "gitlab",
@@ -2586,7 +3040,10 @@
         "createdAt": "2026-09-09T08:14:00.679Z",
         "hoursToMerge": null,
         "comments": 4,
-        "title": "feat(secure_files): add FileExtension to SecureFile"
+        "title": "feat(secure_files): add FileExtension to SecureFile",
+        "additions": 13,
+        "deletions": 4,
+        "changedFiles": 2
       },
       {
         "platform": "gitlab",
@@ -2597,7 +3054,10 @@
         "createdAt": "2026-09-09T08:11:50.561Z",
         "hoursToMerge": null,
         "comments": 4,
-        "title": "feat(license_templates): add Popular to LicenseTemplate"
+        "title": "feat(license_templates): add Popular to LicenseTemplate",
+        "additions": 5,
+        "deletions": 0,
+        "changedFiles": 2
       },
       {
         "platform": "gitlab",
@@ -2608,7 +3068,10 @@
         "createdAt": "2026-09-09T08:11:16.481Z",
         "hoursToMerge": null,
         "comments": 4,
-        "title": "Add IsReceptive to the cluster agent Agent struct"
+        "title": "Add IsReceptive to the cluster agent Agent struct",
+        "additions": 13,
+        "deletions": 4,
+        "changedFiles": 2
       },
       {
         "platform": "gitlab",
@@ -2619,7 +3082,10 @@
         "createdAt": "2026-09-09T08:05:09.540Z",
         "hoursToMerge": null,
         "comments": 4,
-        "title": "feat(broadcast_messages): add the Color field to BroadcastMessage"
+        "title": "feat(broadcast_messages): add the Color field to BroadcastMessage",
+        "additions": 34,
+        "deletions": 0,
+        "changedFiles": 2
       },
       {
         "platform": "gitlab",
@@ -2630,7 +3096,10 @@
         "createdAt": "2026-09-09T08:02:34.084Z",
         "hoursToMerge": null,
         "comments": 4,
-        "title": "feat(topics): add OrganizationID to the Topic struct"
+        "title": "feat(topics): add OrganizationID to the Topic struct",
+        "additions": 27,
+        "deletions": 2,
+        "changedFiles": 2
       },
       {
         "platform": "gitlab",
@@ -2641,7 +3110,10 @@
         "createdAt": "2026-09-09T08:01:39.957Z",
         "hoursToMerge": null,
         "comments": 4,
-        "title": "Add SiteName to Appearance and ChangeAppearanceOptions"
+        "title": "Add SiteName to Appearance and ChangeAppearanceOptions",
+        "additions": 9,
+        "deletions": 2,
+        "changedFiles": 2
       },
       {
         "platform": "gitlab",
@@ -2652,7 +3124,10 @@
         "createdAt": "2026-08-24T15:05:33.083Z",
         "hoursToMerge": 29.920951666666667,
         "comments": 11,
-        "title": "fix(issues): avoid panic unmarshalling an Issue with no id"
+        "title": "fix(issues): avoid panic unmarshalling an Issue with no id",
+        "additions": 54,
+        "deletions": 1,
+        "changedFiles": 2
       },
       {
         "platform": "gitlab",
@@ -2663,27 +3138,33 @@
         "createdAt": "2026-08-18T00:05:04.539Z",
         "hoursToMerge": 375.74991666666665,
         "comments": 19,
-        "title": "fix(group_boards): return the single updated list from UpdateIssueBoardList"
+        "title": "fix(group_boards): return the single updated list from UpdateIssueBoardList",
+        "additions": 48,
+        "deletions": 63,
+        "changedFiles": 4
       }
     ],
     "projects": [
       {
         "fullName": "gitlab-org/api/client-go",
         "name": "client-go",
-        "stars": 106,
-        "webUrl": "https://gitlab.com/gitlab-org/api/client-go"
+        "stars": 107,
+        "webUrl": "https://gitlab.com/gitlab-org/api/client-go",
+        "language": "Go"
       },
       {
         "fullName": "gitlab-org/cells/http-router",
         "name": "HTTP Router",
         "stars": 4,
-        "webUrl": "https://gitlab.com/gitlab-org/cells/http-router"
+        "webUrl": "https://gitlab.com/gitlab-org/cells/http-router",
+        "language": "TypeScript"
       },
       {
         "fullName": "gitlab-org/gitlab",
         "name": "GitLab",
         "stars": 6146,
-        "webUrl": "https://gitlab.com/gitlab-org/gitlab"
+        "webUrl": "https://gitlab.com/gitlab-org/gitlab",
+        "language": "Ruby"
       }
     ],
     "achievements": [

@@ -6,38 +6,78 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 
-import { compareVersionTags, pickLatestReleases } from "./queries.mjs";
+import {
+  compareVersionTags,
+  influxTimeToIso,
+  pickLatestReleases,
+} from "./queries.mjs";
 
 describe("pickLatestReleases", () => {
-  it("breaks a same-day tie by the highest version, in either row order", () => {
+  it("takes the latest publication, not the highest tag", () => {
+    // ghchronicle v2.5.0 and v2.5.1 shipped the same day, 2 h apart; the
+    // floored age_days tied them and the old pick could show v2.5.0.
     const rows = [
-      { repo: "ghchronicle", tag: "v2.5.0", ageDays: 1 },
-      { repo: "ghchronicle", tag: "v2.5.1", ageDays: 1 },
-      { repo: "ghchronicle", tag: "v2.4.0", ageDays: 3 },
+      {
+        repo: "ghchronicle",
+        tag: "v2.5.0",
+        publishedAt: "2026-09-25T09:39:01.000Z",
+      },
+      {
+        repo: "ghchronicle",
+        tag: "v2.5.1",
+        publishedAt: "2026-09-25T11:58:52.000Z",
+      },
+      {
+        repo: "ghchronicle",
+        tag: "v2.4.0",
+        publishedAt: "2026-09-21T17:36:36.000Z",
+      },
     ];
-    const expected = [{ repo: "ghchronicle", tag: "v2.5.1", ageDays: 1 }];
-    assert.deepEqual(pickLatestReleases(rows), expected);
-    assert.deepEqual(pickLatestReleases(rows.toReversed()), expected);
+    for (const order of [rows, rows.toReversed()]) {
+      assert.equal(pickLatestReleases(order)[0].tag, "v2.5.1");
+    }
+    const older = [
+      { repo: "a", tag: "v9.0.0", publishedAt: "2026-01-01T00:00:00.000Z" },
+      { repo: "a", tag: "v1.2.0", publishedAt: "2026-02-01T00:00:00.000Z" },
+    ];
+    assert.equal(pickLatestReleases(older)[0].tag, "v1.2.0");
   });
 
-  it("prefers the youngest release over a higher tag published earlier", () => {
+  it("breaks an exact-instant tie by the highest version", () => {
+    const at = "2026-09-14T23:52:11.000Z";
     const rows = [
-      { repo: "a", tag: "v9.0.0", ageDays: 10 },
-      { repo: "a", tag: "v1.2.0", ageDays: 2 },
+      { repo: "a", tag: "v1", publishedAt: at },
+      { repo: "a", tag: "v1.0.0", publishedAt: at },
     ];
-    assert.deepEqual(pickLatestReleases(rows), [
-      { repo: "a", tag: "v1.2.0", ageDays: 2 },
-    ]);
+    assert.equal(pickLatestReleases(rows)[0].tag, "v1.0.0");
+    assert.equal(pickLatestReleases(rows.toReversed())[0].tag, "v1.0.0");
   });
 
   it("returns one row per repo, ordered by repo", () => {
     const rows = [
-      { repo: "b", tag: "v1.0.0", ageDays: 5 },
-      { repo: "a", tag: "v2.0.0", ageDays: 7 },
+      { repo: "b", tag: "v1.0.0", publishedAt: "2026-09-01T00:00:00.000Z" },
+      { repo: "a", tag: "v2.0.0", publishedAt: "2026-08-01T00:00:00.000Z" },
     ];
     assert.deepEqual(
       pickLatestReleases(rows).map((row) => row.repo),
       ["a", "b"],
+    );
+  });
+});
+
+describe("influxTimeToIso", () => {
+  it("reads a zone-less timestamp as UTC, at any precision", () => {
+    assert.equal(
+      influxTimeToIso("2026-09-25T11:58:52"),
+      "2026-09-25T11:58:52.000Z",
+    );
+    assert.equal(
+      influxTimeToIso("2026-09-27T12:59:41.188292945"),
+      "2026-09-27T12:59:41.188Z",
+    );
+    assert.equal(
+      influxTimeToIso("2026-09-25T11:58:52Z"),
+      "2026-09-25T11:58:52.000Z",
     );
   });
 });

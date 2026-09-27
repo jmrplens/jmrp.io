@@ -2,26 +2,16 @@
 /**
  * "Contributions to other projects" block on /projects/ — between the active
  * and archived project groups (PLAN.md 2.1: "unit of a project = a GitHub
- * owner"). Four tiles are LIVE `PRJ_*` SSR tokens; highlights and the
- * "Contributed to" strip are build-time, resolved once by `ProjectsPage.astro`
+ * owner"). Four tiles are LIVE `PRJ_*` SSR tokens; the "Contributed to"
+ * strip is build-time, resolved once by `ProjectsPage.astro`
  * from `contributions.yaml` and `src/data/ghc/projects-contributions.json`.
  */
+import LanguageTag from "@components/projects/LanguageTag.astro";
 import PlatformMark from "@components/projects/PlatformMark.astro";
 import { PRJ } from "@components/projects/ssr-tokens";
 import { defaultLocale, type Locale } from "@i18n/config";
 import { formatCompactStars, formatDate, useTranslations } from "@i18n/utils";
-import { itemRef, type Platform } from "@utils/contribution-links";
-
-/** One curated highlight, already localized and resolved by the caller. */
-export interface UpstreamHighlight {
-  readonly repo: string;
-  readonly number: number;
-  readonly kind: "pull_request" | "issue";
-  readonly platform: Platform;
-  readonly why: string;
-  readonly url: string;
-  readonly stars: number | null;
-}
+import { type Platform } from "@utils/contribution-links";
 
 /** One row of the "Contributed to" strip. */
 export interface ContributedToRow {
@@ -30,10 +20,13 @@ export interface ContributedToRow {
   readonly url: string;
   readonly stars: number | null;
   readonly lastMergedAt: string | null;
+  /** Main language, or null when unknown or hidden. */
+  readonly language: string | null;
+  /** Name printed instead of `project` on narrow screens, if any. */
+  readonly shortName: string | null;
 }
 
 interface Props {
-  readonly highlights: readonly UpstreamHighlight[];
   readonly contributedTo: readonly ContributedToRow[];
   readonly contributedToRemaining: number;
   /** Build-time snapshot date, for the "list as of" footnote. */
@@ -41,13 +34,8 @@ interface Props {
   readonly subpageHref: string;
 }
 
-const {
-  highlights,
-  contributedTo,
-  contributedToRemaining,
-  listAsOf,
-  subpageHref,
-} = Astro.props;
+const { contributedTo, contributedToRemaining, listAsOf, subpageHref } =
+  Astro.props;
 
 const locale = (Astro.currentLocale ?? defaultLocale) as Locale;
 const t = useTranslations(locale);
@@ -107,49 +95,6 @@ const monthYear = (iso: string | null): string | null =>
     })}
   </p>
 
-  {highlights.length > 0 && (
-    <div>
-      <h3 class="upstream__subheading">
-        {t("pages.projects.upstream.highlightsTitle")}
-      </h3>
-      <ol class="upstream__highlights">
-        {highlights.map((highlight) => (
-          <li>
-            <span class="pill pill--ok">
-              <span
-                class="i-mdi:check-circle-outline"
-                aria-hidden="true"
-              />
-              {t("pages.projects.upstream.mergedPill")}
-            </span>
-            <span class="upstream__highlight-title">
-              <PlatformMark platform={highlight.platform} />
-              <a
-                class="external-link"
-                href={highlight.url}
-                target="_blank"
-                rel="external noopener noreferrer"
-                lang="en"
-                aria-label={t("aria.opensNewTab", {
-                  text: `${highlight.repo} ${itemRef(highlight)}`,
-                })}
-                set:text={`${highlight.repo} ${itemRef(highlight)}`}
-              />
-            </span>
-            <p class="upstream__highlight-why">{highlight.why}</p>
-            {highlight.stars !== null && (
-              <p class="upstream__highlight-meta">
-                {formatCompactStars(highlight.stars, locale)}{" "}
-                <span aria-hidden="true">★</span>
-                <span class="sr-only">{t("aria.starsUnit")}</span>
-              </p>
-            )}
-          </li>
-        ))}
-      </ol>
-    </div>
-  )}
-
   {contributedTo.length > 0 && (
     <div>
       <h3 class="upstream__subheading">
@@ -167,10 +112,22 @@ const monthYear = (iso: string | null): string | null =>
                 rel="external noopener noreferrer"
                 lang="en"
                 aria-label={t("aria.opensNewTab", { text: row.project })}
-                set:text={row.project}
-              />
+              >
+                {row.shortName ? (
+                  <>
+                    <span class="upstream__name-full">{row.project}</span>
+                    <span class="upstream__name-short">{row.shortName}</span>
+                  </>
+                ) : (
+                  row.project
+                )}
+              </a>
             </span>
             <span class="upstream__strip-meta">
+              <LanguageTag
+                language={row.language}
+                compact
+              />
               {row.stars !== null && (
                 <>
                   {formatCompactStars(row.stars, locale)}{" "}
@@ -277,22 +234,6 @@ const monthYear = (iso: string | null): string | null =>
     font-size: 1.05rem;
   }
 
-  .upstream__highlights {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-md);
-    padding: 0;
-    margin: 0;
-    list-style: none;
-  }
-
-  .upstream__highlights li {
-    display: grid;
-    grid-template-columns: auto 1fr;
-    gap: 2px var(--space-sm);
-    align-items: baseline;
-  }
-
   .pill {
     display: inline-flex;
     gap: 4px;
@@ -309,44 +250,12 @@ const monthYear = (iso: string | null): string | null =>
     color: var(--color-success, var(--color-accent));
   }
 
-  .upstream__highlight-title {
-    display: inline-flex;
-    flex-wrap: wrap;
-    gap: 6px;
-    align-items: center;
-    font-weight: var(--fw-semibold);
-    color: var(--color-text-heading);
-  }
-
-  .upstream__highlight-title a {
-    color: inherit;
-    text-decoration: none;
-  }
-
-  .upstream__highlight-title a:hover,
-  .upstream__highlight-title a:focus-visible {
-    text-decoration: underline;
-    text-underline-offset: 3px;
-  }
-
-  .upstream__highlight-why {
-    grid-column: 2;
-    margin: 0;
-    font-size: var(--text-sm);
-    color: var(--color-text);
-  }
-
-  .upstream__highlight-meta {
-    grid-column: 2;
-    margin: 0;
-    font-family: var(--font-mono);
-    font-size: var(--text-micro);
-    color: var(--color-text-muted);
-  }
-
   .upstream__strip {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr));
+
+    /* Two columns at most: a row holds the name plus language, stars and
+       month, which a third column is too narrow for. */
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 400px), 1fr));
     gap: 0 var(--space-lg);
     padding: 0;
     margin: 0;
@@ -355,7 +264,9 @@ const monthYear = (iso: string | null): string | null =>
 
   .upstream__strip li {
     display: flex;
-    gap: var(--space-sm);
+    flex-wrap: wrap;
+    gap: 2px var(--space-sm);
+    align-items: baseline;
     justify-content: space-between;
     padding: 7px 0;
     font-size: var(--text-sm);
@@ -380,7 +291,25 @@ const monthYear = (iso: string | null): string | null =>
     align-items: center;
   }
 
+  .upstream__name-short {
+    display: none;
+  }
+
+  @media (width <= 640px) {
+    .upstream__name-full {
+      display: none;
+    }
+
+    .upstream__name-short {
+      display: inline;
+    }
+  }
+
   .upstream__strip-meta {
+    display: inline-flex;
+    gap: 6px;
+    align-items: baseline;
+    margin-inline-start: auto;
     font-family: var(--font-mono);
     font-size: var(--text-micro);
     font-variant-numeric: tabular-nums;
@@ -437,17 +366,6 @@ const monthYear = (iso: string | null): string | null =>
   .btn:hover,
   .btn:focus-visible {
     background: var(--color-bg-subtle);
-  }
-
-  @media (width <= 560px) {
-    .upstream__highlights li {
-      grid-template-columns: 1fr;
-    }
-
-    .upstream__highlights li > * {
-      grid-column: 1;
-      justify-self: start;
-    }
   }
 
   @media (width <= 640px) {

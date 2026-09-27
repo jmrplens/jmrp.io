@@ -1,0 +1,82 @@
+---
+/**
+ * A project's main language as a small bordered tag. The visible name is
+ * prefixed, for assistive technology only, with what it is.
+ */
+import { defaultLocale, type Locale } from "@i18n/config";
+import { useTranslations } from "@i18n/utils";
+
+interface Props {
+  readonly language: string | null | undefined;
+  /** Print a short form (TS, JS) on narrow screens, where a row is tight. */
+  readonly compact?: boolean;
+}
+
+/** Short forms for the long names, used only when `compact` is set. */
+const SHORT: Readonly<Record<string, string>> = {
+  TypeScript: "TS",
+  JavaScript: "JS",
+};
+
+const t = useTranslations((Astro.currentLocale ?? defaultLocale) as Locale);
+const { language, compact = false } = Astro.props;
+const short = compact && language ? SHORT[language] : undefined;
+---
+
+{language && (
+  <span class="lang-tag">
+    <span class="sr-only">{t("aria.mainLanguage")} </span>
+    {short ? (
+      <>
+        <span
+          class="sr-only"
+          lang="en"
+        >
+          {language}
+        </span>
+        <span
+          class="lang-tag__full"
+          aria-hidden="true"
+        >
+          {language}
+        </span>
+        <span
+          class="lang-tag__short"
+          aria-hidden="true"
+        >
+          {short}
+        </span>
+      </>
+    ) : (
+      <span lang="en">{language}</span>
+    )}
+  </span>
+)}
+
+<style>
+  .lang-tag {
+    display: inline-block;
+    padding: 0 6px;
+    font-family: var(--font-mono);
+    font-size: var(--text-micro);
+    line-height: 1.5;
+    color: var(--color-text);
+    white-space: nowrap;
+    border: var(--border-1);
+    border-radius: var(--radius-sm);
+  }
+
+  .lang-tag__short {
+    display: none;
+  }
+
+  @media (width <= 640px) {
+    .lang-tag__full {
+      display: none;
+    }
+
+    .lang-tag__short {
+      display: inline;
+    }
+  }
+</style>

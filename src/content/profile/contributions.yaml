@@ -26,8 +26,8 @@ type: contributions
 #   (`renovatebot/renovate` → "Renovate") or when a listing repo needs a
 #   human label for the "Distribution and listings" section
 #   (`microsoft/winget-pkgs` → "winget").
-# * `featured` is ordered; the UI takes the first 3 for /projects/ and all of
-#   it (up to 7) for the subpage. An entry may set `platform: gitlab` (a
+# * `featured` is ordered; the subpage shows all of it (up to 7); /projects/
+#   shows none (removed 2026-09-27, it repeated the subpage). An entry may set `platform: gitlab` (a
 #   merge request on GitLab.com; `kind: pull_request`, `number` = the iid). Every entry must be MERGED (or, for an
 #   issue, a genuine accepted contribution) and carry no pending-disclosure
 #   security content. `why.en`/`why.es` are one line, written by the owner or
@@ -131,6 +131,22 @@ displayName:
 canonicalRepo:
   Beszel: henrygd/beszel
 
+# Display name → a shorter name the "Contributed to" strip on /projects/
+# prints on narrow screens only, where the full name, language, stars and
+# month do not fit on one line. Desktop and screen readers keep the full name.
+shortName:
+  Nginx Proxy Manager: NPM
+
+# Display name → the language shown for a project on the subpage (its
+# "Contributed to" row, its highlight and the by-language line) when the one
+# GitHub or GitLab detects for the repository does not describe the work
+# contributed; null hides it. Without an entry the detected main language is
+# shown. Portainer MCP was Go when portainer/portainer-mcp#45 landed
+# (cmd/portainer-mcp/mcp.go, internal/mcp/local_stack.go); the repository
+# has since been rewritten and GitHub now calls it Python.
+language:
+  Portainer MCP: Go
+
 # GitLab.com account whose authored merge requests and issues are counted
 # next to the GitHub ones (scripts/gl/). `excludeNamespaces` are the owner's
 # own top-level namespaces: his GitLab repositories are mirrors of GitHub
@@ -167,12 +183,13 @@ featured:
       es: "Los tokens emitidos antes de un cambio de contraseña ahora se rechazan, así que restablecer la contraseña cierra las sesiones abiertas con la anterior; cubierto por un test de API en Cypress."
   - repo: modelcontextprotocol/go-sdk
     number: 1274
+    # The five merged PRs the `why` names; the size line sums them.
+    numbers: [1255, 1268, 1269, 1273, 1274]
     kind: pull_request
     why:
       en: "Five merged fixes to the official MCP Go SDK (#1255, #1268, #1269, #1273, #1274) that bring protocol-version negotiation, cancellation and pre-initialize handling in line with the specification, each with tests."
       es: "Cinco correcciones fusionadas en el SDK oficial de MCP para Go (#1255, #1268, #1269, #1273, #1274) que ajustan a la especificación la negociación de versión del protocolo, la cancelación y el tratamiento de llamadas previas a initialize, cada una con tests."
   # GitLab merge request (`platform: gitlab`, `number` is the MR iid).
-  # Fourth: after the three shown on /projects/, which stay as they were.
   - repo: gitlab-org/gitlab
     number: 255300
     kind: pull_request
@@ -192,11 +209,15 @@ featured:
     why:
       en: "Fixed DNS manual mode reusing the previous certificate on renewal (and failing on first issuance) by polling the ACME order the current run created."
       es: "Corrigió que el modo DNS manual reutilizara el certificado anterior al renovar (y fallara en la primera emisión) consultando el pedido ACME creado en la ejecución actual."
-  - repo: sanny32/OpenModScan
-    number: 74
+  # Silent message loss in the official Rust SDK whenever another crate turns
+  # on serde_json's arbitrary_precision (Cargo feature unification); the
+  # OpenAI Codex CLI is built that way (openai/codex#38979). Fixes
+  # modelcontextprotocol/rust-sdk#1299.
+  - repo: modelcontextprotocol/rust-sdk
+    number: 1300
     kind: pull_request
     why:
-      en: "Registered the --help and --version options in this Qt/C++ Modbus scanner so the existing handlers run from the command line."
-      es: "Registró las opciones --help y --version en este escáner Modbus en Qt/C++ para que los manejadores ya existentes se ejecuten desde la línea de comandos."
+      en: "Float fields now decode through serde_json::Number, so a build that turns on serde_json's arbitrary_precision (the OpenAI Codex CLI is one) no longer drops tool results, progress notifications and sampling requests that carry a decimal; with tests."
+      es: "Los campos decimales ahora se decodifican a través de serde_json::Number, así que un build que activa arbitrary_precision de serde_json (el Codex CLI de OpenAI es uno) ya no pierde resultados de herramientas, notificaciones de progreso ni peticiones de sampling con decimales; con tests."
 
 securityTitleAllow: []

@@ -15,7 +15,7 @@ import { getEntry } from "astro:content";
 
 import { ACTIVE_REPOS } from "../../../scripts/ghc/roster.mjs";
 import { asContributionsDataset } from "../../components/projects/dataset-types";
-import { PRJ } from "../../components/projects/ssr-tokens";
+import { PRJ, type ProjectCardSsr } from "../../components/projects/ssr-tokens";
 
 const contributionsData = asContributionsDataset(rawContributionsData);
 
@@ -309,6 +309,113 @@ function isActiveRepoId(id: string): id is (typeof ACTIVE_REPOS)[number] {
 }
 
 /**
+ * The stars and latest-version rows of one card.
+ *
+ * With live tokens these are the same tokens the card renders. The card
+ * hides a row at serve time with its `*_CLASS` token; markdown has no CSS,
+ * so a row is printed only when the build-time facts say the card shows it
+ * (production audit 2026-09-27, N7): no stars row at 0 stars, no "(+N in
+ * 30 d)" at a zero gain, no version row without a stable release. The edge
+ * case: those facts are as of the build, so a first release or first star
+ * after it reaches the twin with the next rebuild, while the page shows it
+ * at once. Without the facts (an older dataset) the rows are omitted.
+ *
+ * Without live tokens the build-time star count is printed, and omitted
+ * rather than printed as `0`, the rule `whoamiFactLines` already applies to
+ * `repos.public`: a repository the fetch could not reach and one with no
+ * stars are indistinguishable here.
+ *
+ * @param id - The project id.
+ * @param live - The card's live tokens, when this document may print them.
+ * @param buildStars - Build-time star count, if known.
+ * @param t - Translator.
+ * @returns Markdown lines.
+ */
+function cardStarsLines(
+  id: string,
+  live: ProjectCardSsr | undefined,
+  buildStars: number | undefined,
+  t: ReturnType<typeof useTranslations>,
+): Lines {
+  if (!live) {
+    return buildStars
+      ? [`- ${t("pages.projects.card.starsLabel")}: ${buildStars}`]
+      : [];
+  }
+  const facts = contributionsData.cardFacts?.[id];
+  const gain =
+    facts && facts.stars30d > 0
+      ? ` (${t("pages.projects.card.stars30dSuffix", { count: live.stars30d })})`
+      : "";
+  return [
+    ...(facts && facts.stars > 0
+      ? [`- ${t("pages.projects.card.starsLabel")}: ${live.stars}${gain}`]
+      : []),
+    ...(facts?.releaseTag
+      ? [
+          `- ${t("pages.projects.card.releaseLabel")}: ${live.relTag} · ${live.relAge}`,
+        ]
+      : []),
+  ];
+}
+
+/**
+ * The activity and community rows of an active card.
+ *
+ * @param id - The project id.
+ * @param activeDays - Active days in the last 12 months, if known.
+ * @param communityText - The community line, if any.
+ * @param t - Translator.
+ * @returns Markdown lines.
+ */
+function activityLines(
+  id: string,
+  activeDays: number | undefined,
+  communityText: string | null | undefined,
+  t: ReturnType<typeof useTranslations>,
+): Lines {
+  return [
+    ...(isActiveRepoId(id) &&
+    typeof activeDays === "number" &&
+    activeDays > ACTIVITY_MIN_DAYS
+      ? [
+          `- ${t("pages.projects.card.activityLabel")}: ${t("pages.projects.card.activityDaysSuffix", { count: activeDays })}`,
+        ]
+      : []),
+    ...(communityText
+      ? [`- ${t("pages.projects.card.communityLabel")}: ${communityText}`]
+      : []),
+  ];
+}
+
+/**
+ * The optional link rows of a card: the hosted page, the endpoint and other
+ * places the project lives. The hosted page is the localized one, as the
+ * card links it: the Spanish twin used to point at the English mcp.jmrp.io
+ * page (twin audit 2026-09-27, E2).
+ *
+ * @param p - The project.
+ * @param hosted - The localized hosted page, if any.
+ * @param t - Translator.
+ * @returns Markdown lines.
+ */
+function extraLinkLines(
+  p: Project,
+  hosted: string | null | undefined,
+  t: ReturnType<typeof useTranslations>,
+): Lines {
+  return [
+    ...(hosted ? [`- ${t("pages.projects.hosted")}: ${hosted}`] : []),
+    ...(p.endpoint
+      ? [`- ${t("pages.projects.twin.endpoint")}: ${p.endpoint}`]
+      : []),
+    ...(p.sameAs && p.sameAs.length > 0
+      ? [`- ${t("pages.projects.twin.alsoAt")}: ${p.sameAs.join(", ")}`]
+      : []),
+  ];
+}
+
+/**
  * The facts one `/projects/` card prints, as markdown lines: the static meta
  * row (language, license, "Runs on", downloads), the live box of an active
  * card (stars with the 30-day delta, latest version, activity, community),
@@ -331,10 +438,6 @@ function projectCardLines(
   const t = useTranslations(locale);
   const downloads = downloadsOf(p.id);
   const live = ctx.live && isActiveRepoId(p.id) ? PRJ.cards[p.id] : undefined;
-  // Omitted rather than printed as `0`, the rule `whoamiFactLines` already
-  // applies to `repos.public`: a repository the fetch could not reach and
-  // one with no stars are indistinguishable here.
-  const buildStars = ctx.stars.get(p.id);
   const maintenance = contributionsData.maintenance.find(
     (m) => m.repo === p.id,
   );
@@ -344,34 +447,7 @@ function projectCardLines(
     : {};
   const communityText = communityLine(community.issues, community.prs, locale);
   const hosted = hostedHref(p, locale);
-  let starsLine: string[] = [];
-  if (live) {
-    // The same tokens the card renders. The card hides a row at serve time
-    // with its `*_CLASS` token; markdown has no CSS, so a row is printed only
-    // when the build-time facts say the card shows it (production audit
-    // 2026-09-27, N7): no stars row at 0 stars, no "(+N in 30 d)" at a zero
-    // gain, no version row without a stable release. The edge case: those
-    // facts are as of the build, so a first release or first star after it
-    // reaches the twin with the next rebuild, while the page shows it at
-    // once. Without the facts (an older dataset) the rows are omitted.
-    const facts = contributionsData.cardFacts?.[p.id];
-    const gain =
-      facts && facts.stars30d > 0
-        ? ` (${t("pages.projects.card.stars30dSuffix", { count: live.stars30d })})`
-        : "";
-    starsLine = [
-      ...(facts && facts.stars > 0
-        ? [`- ${t("pages.projects.card.starsLabel")}: ${live.stars}${gain}`]
-        : []),
-      ...(facts?.releaseTag
-        ? [
-            `- ${t("pages.projects.card.releaseLabel")}: ${live.relTag} · ${live.relAge}`,
-          ]
-        : []),
-    ];
-  } else if (buildStars) {
-    starsLine = [`- ${t("pages.projects.card.starsLabel")}: ${buildStars}`];
-  }
+  const starsLine = cardStarsLines(p.id, live, ctx.stars.get(p.id), t);
   return [
     `### ${p.name}`,
     "",
@@ -389,28 +465,11 @@ function projectCardLines(
           `- ${t("pages.projects.downloads")}: ${formatNumber(downloads, locale)}`,
         ]),
     ...starsLine,
-    ...(isActiveRepoId(p.id) &&
-    typeof activeDays === "number" &&
-    activeDays > ACTIVITY_MIN_DAYS
-      ? [
-          `- ${t("pages.projects.card.activityLabel")}: ${t("pages.projects.card.activityDaysSuffix", { count: activeDays })}`,
-        ]
-      : []),
-    ...(communityText
-      ? [`- ${t("pages.projects.card.communityLabel")}: ${communityText}`]
-      : []),
+    ...activityLines(p.id, activeDays, communityText, t),
     `- ${t("pages.projects.twin.topics")}: ${p.topics.map(namedTopic).join(", ")}`,
     `- ${t("pages.projects.twin.repository")}: ${p.repo}`,
     `- ${t("pages.projects.twin.documentation")}: ${locale === "es" ? (p.docsEs ?? p.docs) : p.docs}`,
-    // The localized page, as the card links it: the Spanish twin used to
-    // point at the English mcp.jmrp.io page (twin audit 2026-09-27, E2).
-    ...(hosted ? [`- ${t("pages.projects.hosted")}: ${hosted}`] : []),
-    ...(p.endpoint
-      ? [`- ${t("pages.projects.twin.endpoint")}: ${p.endpoint}`]
-      : []),
-    ...(p.sameAs && p.sameAs.length > 0
-      ? [`- ${t("pages.projects.twin.alsoAt")}: ${p.sameAs.join(", ")}`]
-      : []),
+    ...extraLinkLines(p, hosted, t),
     "",
   ];
 }

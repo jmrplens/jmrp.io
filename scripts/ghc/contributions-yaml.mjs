@@ -31,6 +31,9 @@ export const CONTRIBUTIONS_YAML_PATH = "src/content/profile/contributions.yaml";
  *   `pull_request`.
  * @property {'github'|'gitlab'} platform - Where it lives; defaults to
  *   `github`.
+ * @property {number[]} numbers - Every PR/MR the highlight stands for, in
+ *   the same repository (the MCP Go SDK entry covers five); defaults to
+ *   `[number]`. Its size line sums them.
  * @property {{en: string, es: string}} why
  */
 
@@ -62,6 +65,9 @@ export const CONTRIBUTIONS_YAML_PATH = "src/content/profile/contributions.yaml";
  *   (e.g. `pyoctaveband` → `phonometry`).
  * @property {GitlabContributionsSettings | null} gitlab - GitLab.com
  *   account settings, or null when the file declares none.
+ * @property {Record<string, string | null>} language - Display name → the
+ *   language to show instead of the one GitHub or GitLab detects for the
+ *   repository, or null to show none.
  */
 
 /**
@@ -103,6 +109,10 @@ export function loadContributionsConfig(root = process.cwd()) {
     featured: raw.featured.map((entry) => ({
       ...entry,
       platform: entry.platform === "gitlab" ? "gitlab" : "github",
+      numbers:
+        Array.isArray(entry.numbers) && entry.numbers.length > 0
+          ? entry.numbers.map(Number)
+          : [Number(entry.number)],
     })),
     securityTitleAllow: Array.isArray(raw.securityTitleAllow)
       ? raw.securityTitleAllow
@@ -112,7 +122,27 @@ export function loadContributionsConfig(root = process.cwd()) {
         ? raw.listingAliases
         : {},
     gitlab: shapeGitlabSettings(raw.gitlab),
+    language: shapeLanguageOverrides(raw.language),
   };
+}
+
+/**
+ * Shapes the optional `language` map: a string replaces the detected
+ * language, `null` (or an empty string) hides it.
+ *
+ * @param {unknown} raw - The parsed `language` value.
+ * @returns {Record<string, string | null>} The overrides.
+ */
+function shapeLanguageOverrides(raw) {
+  if (!raw || typeof raw !== "object") return {};
+  return Object.fromEntries(
+    Object.entries(/** @type {Record<string, unknown>} */ (raw)).map(
+      ([project, value]) => [
+        project,
+        typeof value === "string" && value.trim() ? value.trim() : null,
+      ],
+    ),
+  );
 }
 
 /**

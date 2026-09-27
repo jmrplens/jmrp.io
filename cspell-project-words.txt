@@ -215,6 +215,7 @@ clmp
 clockseq
 cloudflare
 cloudflareinsights
+cmdline
 cnet
 cnrs
 codacy
@@ -258,6 +259,7 @@ conversor
 cópiala
 copytruncate
 correcciones
+coturn
 cplusplus
 cppreference
 crackeo
@@ -482,6 +484,8 @@ githubassets
 gitlab
 gitleaks
 Glama
+glanceapp
+glpat
 gnupg
 golangci
 goldschlag
@@ -548,6 +552,7 @@ idiomas
 igic
 ignoreGhsas
 ihdr
+iids
 imagequant
 imagesift
 Immich
@@ -632,6 +637,7 @@ keyserver
 keyspace
 kleidos
 kolkata
+kong
 kpii
 Krawczyk
 Krawczyk's
@@ -755,6 +761,7 @@ mismo
 misparses
 misra
 missingok
+mitchell
 mlappinstall
 mobike
 modbus
@@ -852,6 +859,7 @@ omgilibot
 ondrej
 ondřej
 oneshot
+openai
 opencloud
 openpgp
 openpgpkey
@@ -904,6 +912,7 @@ phpinfo
 phpmyadmin
 pickmcp
 picó
+pids
 pizarra
 pkill
 placa
@@ -913,6 +922,7 @@ plex
 pliegue
 pluginutils
 pngquant
+podman
 politècnica
 poolprefix
 portainer
@@ -971,6 +981,7 @@ punkpeye
 pwgen
 pycrowdsec
 pymodbus
+pyoctaveband
 pypi
 pypistats
 pytest
@@ -997,6 +1008,7 @@ recalcula
 recalculado
 recalcular
 recalcularlo
+recasing
 recompila
 recompilaciones
 recompiles
@@ -1118,6 +1130,7 @@ Semrush
 semrushbot
 sendfile
 seqmp
+serde
 serializa
 serialización
 SERP
@@ -1304,6 +1317,7 @@ vulnerab
 wbgetentities
 wbsearchentities
 wcag
+webdav
 webdev
 webfinger
 webmcp
@@ -1336,6 +1350,7 @@ yastatic
 yisou
 youtube
 ytxt
+Yuno
 yuva
 zcvgkwkj
 zenodo
@@ -1343,15 +1358,3 @@ Zenodo
 zeroize
 zgrab
 zurück
-pyoctaveband
-recasing
-coturn
-glanceapp
-glpat
-kong
-mitchell
-podman
-webdav
-Yuno
-cmdline
-pids

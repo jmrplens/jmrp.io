@@ -21,7 +21,6 @@ import MaintenanceTable from "@components/projects/MaintenanceTable.astro";
 import { PRJ } from "@components/projects/ssr-tokens";
 import UpstreamBlock, {
   type ContributedToRow,
-  type UpstreamHighlight,
 } from "@components/projects/UpstreamBlock.astro";
 import FAQ from "@components/ui/FAQ.astro";
 import downloadsData from "@data/downloads.json";
@@ -29,7 +28,7 @@ import rawContributionsData from "@data/ghc/projects-contributions.json";
 import { defaultLocale, type Locale } from "@i18n/config";
 import { formatDate, useTranslatedPath, useTranslations } from "@i18n/utils";
 import BaseLayout from "@layouts/BaseLayout.astro";
-import { itemUrl, platformOf, repoUrl } from "@utils/contribution-links";
+import { platformOf, repoUrl } from "@utils/contribution-links";
 import { compactDownloads, DOWNLOADS_DISPLAY_MIN } from "@utils/downloads";
 import { getPageFaq, pageFaqNode } from "@utils/page-faq";
 import {
@@ -52,7 +51,6 @@ import { getSiteUrl } from "@utils/site";
 import { getEntry } from "astro:content";
 import type { CollectionPage } from "schema-dts";
 
-import { foldProjectName } from "../../../scripts/ghc/contributions-yaml.mjs";
 import { ACTIVE_REPOS } from "../../../scripts/ghc/roster.mjs";
 
 const locale = (Astro.currentLocale ?? defaultLocale) as Locale;
@@ -95,32 +93,10 @@ const contributionsData = asContributionsDataset(rawContributionsData);
 
 // ── Upstream contributions (PLAN.md section 2) ────────────────────────────
 const contributionsEntry = await getEntry("profile", "contributions");
-if (contributionsEntry?.data.type !== "contributions") {
-  throw new Error(
-    "profile/contributions.yaml is missing or has the wrong type",
-  );
-}
-const { displayName } = contributionsEntry.data;
-
-const contributedToMap = new Map(
-  contributionsData.contributedTo.map((row) => [row.project, row]),
-);
-
-const highlights: UpstreamHighlight[] = contributionsData.highlights
-  .slice(0, 3)
-  .map((h) => {
-    const project = foldProjectName(h.repo, displayName);
-    return {
-      repo: h.repo,
-      number: h.number,
-      kind: h.kind,
-      platform: platformOf(h.platform),
-      why: h.why[locale],
-      url: itemUrl({ ...h, fullName: h.repo }),
-      stars: contributedToMap.get(project)?.stars ?? null,
-    };
-  });
-
+const shortNames: Record<string, string> =
+  (contributionsEntry?.data.type === "contributions"
+    ? contributionsEntry.data.shortName
+    : undefined) ?? {};
 const CONTRIBUTED_TO_SHOWN = 6;
 const contributedToShown: ContributedToRow[] = contributionsData.contributedTo
   .slice(0, CONTRIBUTED_TO_SHOWN)
@@ -130,6 +106,8 @@ const contributedToShown: ContributedToRow[] = contributionsData.contributedTo
     url: repoUrl(row.repo, row.platform),
     stars: row.stars,
     lastMergedAt: row.lastMergedAt,
+    language: row.language ?? null,
+    shortName: shortNames[row.project] ?? null,
   }));
 const contributedToRemaining = Math.max(
   0,
@@ -438,7 +416,6 @@ const faqNode =
 
                 {isActiveRepoId(project.id) && (
                   <CardLiveBox
-                    projectName={project.name}
                     ssr={PRJ.cards[project.id]}
                     activeDays12m={
                       maintenanceByRepo.get(project.id)?.activeDays12m
@@ -629,7 +606,6 @@ const faqNode =
         {group.key === "active" && (
           <>
             <UpstreamBlock
-              highlights={highlights}
               contributedTo={contributedToShown}
               contributedToRemaining={contributedToRemaining}
               listAsOf={contributionsAsOf}

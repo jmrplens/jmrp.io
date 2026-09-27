@@ -14,19 +14,20 @@
  *
  * - `ledger`: every code/docs PR or MR (`ledgerByYear`, flattened and
  *   sorted by platform, repository and number): project group, platform,
- *   kind, repository, number, state, title and whether it is redacted.
+ *   kind, repository, number, state, title, whether it is redacted, and the
+ *   diff size a pull/merge request prints (lines added, removed, files).
  * - `listingsByOwnProject` and `issuesByProject`: whole (they are counts).
  * - `acceptedAnswers`: repository and number, in the displayed order.
  * - `achievements`: platform, id, name, tier name and number, and the
  *   progress `count` / `nextThreshold` ONLY when the badge shelf prints
  *   them (GitHub badge, not Galaxy Brain, `agrees`, a next tier exists and
  *   the count is known), mirroring `AchievementShelf.astro`.
- * - `highlights`: the curated entries (repository, number, kind, platform
- *   and both `why` texts).
+ * - `highlights`: the curated entries (repository, number, kind, platform,
+ *   both `why` texts, the summed diff size and the language they print).
  * - `contributedTo`: membership and order, with the star count rounded
  *   EXACTLY as `formatCompactStars` prints it (38012 and 38044 are both
- *   "38k") and the month of the latest merge (the strip shows month and
- *   year).
+ *   "38k"), the main language, and the month of the latest merge (the strip
+ *   shows month and year).
  * - `cardRows`: which live rows each /projects/ card's markdown twin prints
  *   (`cardFacts`: stars above 0, a 30-day gain above 0, a stable release),
  *   as booleans, never the figures themselves: the twin decides those rows
@@ -158,6 +159,7 @@ function projectLedger(ledgerByYear = {}) {
           state: item.state,
           title: item.redacted ? null : (item.title ?? null),
           redacted: Boolean(item.redacted),
+          size: itemSize(item),
         });
       }
     }
@@ -169,6 +171,21 @@ function projectLedger(ledgerByYear = {}) {
       compare(a.number, b.number) ||
       compare(a.kind, b.kind),
   );
+}
+
+/**
+ * A ledger item's diff size as the page prints it, or null for an issue or
+ * an item without one.
+ *
+ * @param {any} item - A ledger item.
+ * @returns {[number | null, number | null, number] | null} Lines added,
+ *   removed, and files touched.
+ */
+function itemSize(item) {
+  if (item.kind !== "pull_request" || typeof item.changedFiles !== "number") {
+    return null;
+  }
+  return [item.additions ?? null, item.deletions ?? null, item.changedFiles];
 }
 
 /**
@@ -200,12 +217,15 @@ export function projectDisplay(dataset) {
       kind: h.kind,
       platform: h.platform ?? "github",
       why: h.why ?? null,
+      size: h.size ?? null,
+      language: h.language ?? null,
     })),
     contributedTo: (dataset.contributedTo ?? []).map((row) => ({
       project: row.project,
       repo: row.repo,
       platform: row.platform,
       stars: compactStars(row.stars),
+      language: row.language ?? null,
       lastMergedMonth: row.lastMergedAt ? row.lastMergedAt.slice(0, 7) : null,
     })),
     acceptedAnswers: (dataset.acceptedAnswers ?? []).map((a) => ({

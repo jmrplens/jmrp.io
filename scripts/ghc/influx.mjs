@@ -68,11 +68,40 @@ export class InfluxQueryError extends Error {
  */
 
 /**
+ * The server's read-only credentials file: `GHC_INFLUX_TOKEN` (the
+ * `jmrp-projects-read` token, db:github:read only), `INFLUX_URL` and
+ * `GITLAB_COM_TOKEN_READ_ONLY`. The two systemd units read it through
+ * `EnvironmentFile=`; a build started by hand reads it here.
+ */
+export const READ_ONLY_ENV_PATH = "/etc/jmrp.io/ghc-read.env";
+
+/**
+ * Loads {@link READ_ONLY_ENV_PATH} into `process.env` when the token is not
+ * already set, so a manual `pnpm build` on the server collects the same
+ * live dataset the scheduled rebuild does instead of falling back to the
+ * fixture. `process.loadEnvFile` never overwrites a variable that is set,
+ * so the shell still wins. A missing or unreadable file (CI, a laptop, a
+ * non-root user) is not an error: the caller falls back as before.
+ *
+ * @param {string} [filePath] - Credentials file.
+ * @param {{loadEnvFile: (path: string) => void}} [proc] - For tests.
+ * @returns {boolean} True when the file was loaded.
+ */
+export function loadReadOnlyEnv(filePath = READ_ONLY_ENV_PATH, proc = process) {
+  if (process.env.GHC_INFLUX_TOKEN || process.env.INFLUX_TOKEN) return false;
+  try {
+    proc.loadEnvFile(filePath);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/**
  * Resolves {@link InfluxConfig} from the environment.
  *
- * `GHC_INFLUX_TOKEN` is the token variable this pipeline uses; for local
- * development, `source /etc/ghchronicle/ghchronicle.env` and export its
- * `INFLUX_TOKEN` under that name (see the module doc of `write-summary.mjs`).
+ * `GHC_INFLUX_TOKEN` is the token variable this pipeline uses, the
+ * read-only one in {@link READ_ONLY_ENV_PATH} (see {@link loadReadOnlyEnv}).
  * `INFLUX_URL` overrides the default host for a non-production dev box.
  *
  * @param {NodeJS.ProcessEnv} [env] - Defaults to `process.env`.
@@ -84,7 +113,7 @@ export function resolveInfluxConfig(env = process.env) {
   if (!token) {
     throw new Error(
       "influx.mjs: no InfluxDB token in the environment. Set GHC_INFLUX_TOKEN " +
-        "(or INFLUX_TOKEN), e.g. by sourcing /etc/ghchronicle/ghchronicle.env.",
+        `(or INFLUX_TOKEN), e.g. from ${READ_ONLY_ENV_PATH}.`,
     );
   }
   return {

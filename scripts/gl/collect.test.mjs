@@ -9,7 +9,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 
-import { collectGitlab } from "./collect.mjs";
+import { collectGitlab, getProjectDetails } from "./collect.mjs";
 
 const SETTINGS = {
   username: "jmrp",
@@ -86,7 +86,39 @@ function fakeClient() {
       }
       return [row(5, 1, "gitlab-org/gitlab", "opened", "issues")];
     },
-    async graphql() {
+    async graphql(query) {
+      requested.push(query);
+      if (query.startsWith("{project(")) {
+        return {
+          project: {
+            languages: [
+              { name: "JavaScript", share: 20 },
+              { name: "Ruby", share: 68 },
+            ],
+            mergeRequests: {
+              nodes: [
+                {
+                  iid: "1",
+                  diffStatsSummary: {
+                    additions: 797,
+                    deletions: 3,
+                    fileCount: 11,
+                  },
+                },
+                // A closed MR whose branch is gone reports no files.
+                {
+                  iid: "4",
+                  diffStatsSummary: {
+                    additions: 0,
+                    deletions: 0,
+                    fileCount: 0,
+                  },
+                },
+              ],
+            },
+          },
+        };
+      }
       return {
         user: {
           userAchievements: {
@@ -143,4 +175,45 @@ test("collectGitlab skips issues and achievements when asked", async () => {
   });
   assert.ok(part.items.every((item) => item.kind === "pull_request"));
   assert.deepEqual(part.achievements, []);
+});
+
+test("collectGitlab adds each MR's diff size and the project's language", async () => {
+  const client = fakeClient();
+  const part = await collectGitlab(client, SETTINGS);
+  const byNumber = Object.fromEntries(
+    part.items.map((item) => [`${item.kind}:${item.number}`, item]),
+  );
+  assert.deepEqual(
+    [
+      byNumber["pull_request:1"].additions,
+      byNumber["pull_request:1"].deletions,
+      byNumber["pull_request:1"].changedFiles,
+    ],
+    [797, 3, 11],
+  );
+  // No files reported reads as unknown, and an issue has no size at all.
+  assert.equal(byNumber["pull_request:4"].changedFiles, null);
+  assert.equal(byNumber["issue:5"].additions, null);
+  assert.equal(part.projects[0].language, "Ruby");
+  // One query for the project, naming only its merge requests.
+  const projectQueries = client.requested.filter((q) =>
+    String(q).startsWith("{project("),
+  );
+  assert.equal(projectQueries.length, 1);
+  assert.match(projectQueries[0], /iids:\["1","4"\]|iids:\["4","1"\]/);
+});
+
+test("collectGitlab skips the per-project details when asked", async () => {
+  const client = fakeClient();
+  const part = await collectGitlab(client, SETTINGS, { withDetails: false });
+  assert.ok(client.requested.every((q) => !String(q).startsWith("{project(")));
+  assert.equal(part.items[0].additions, null);
+  assert.ok(!("language" in part.projects[0]));
+});
+
+test("getProjectDetails refuses a path it cannot quote safely", async () => {
+  await assert.rejects(
+    getProjectDetails(fakeClient(), 'a/b"){x}', [1]),
+    /unsafe GitLab path/,
+  );
 });

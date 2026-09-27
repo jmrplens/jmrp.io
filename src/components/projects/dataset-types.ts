@@ -36,6 +36,24 @@ export interface HighlightItem {
   readonly why: { readonly en: string; readonly es: string };
   /** True when title and link must not be shown. */
   readonly redacted: boolean;
+  /** Every PR/MR number the highlight stands for; absent means `[number]`. */
+  readonly numbers?: readonly number[];
+  /** Summed diff size of those PRs/MRs, or `null`/absent when unknown. */
+  readonly size?: DiffSize | null;
+  /** Main language of the project, or `null`/absent when unknown or hidden. */
+  readonly language?: string | null;
+}
+
+/** Summed diff size of one or more pull/merge requests. */
+export interface DiffSize {
+  /** How many PRs/MRs the sum covers. */
+  readonly prs: number;
+  /** Lines added, or `null` when some covered item has no line count. */
+  readonly additions: number | null;
+  /** Lines removed, or `null` when some covered item has no line count. */
+  readonly deletions: number | null;
+  /** Files touched, summed per item. */
+  readonly changedFiles: number;
 }
 
 /** One row of the "Contributed to" strip. */
@@ -52,6 +70,8 @@ export interface ContributedToItem {
   readonly lastMergedAt: string | null;
   /** Star count, or `null` when it could not be fetched. */
   readonly stars: number | null;
+  /** Main language (detected, or the YAML override); `null`/absent = none. */
+  readonly language?: string | null;
 }
 
 /** One accepted GitHub Discussions answer. */
@@ -90,6 +110,12 @@ export interface LedgerItem {
   readonly title: string | null;
   /** True when title and link must not be shown. */
   readonly redacted: boolean;
+  /** Lines added; pull/merge requests only, absent in older datasets. */
+  readonly additions?: number | null;
+  /** Lines removed; pull/merge requests only, absent in older datasets. */
+  readonly deletions?: number | null;
+  /** Files touched; pull/merge requests only, absent in older datasets. */
+  readonly changedFiles?: number | null;
 }
 
 /** Ledger, grouped by creation year then by folded project name. */
@@ -135,6 +161,7 @@ export interface GitlabPart {
     readonly name: string;
     readonly stars: number | null;
     readonly webUrl: string;
+    readonly language?: string | null;
   }[];
 }
 

@@ -20,7 +20,6 @@ import {
 } from "@utils/project-facts";
 
 interface Props {
-  readonly projectName: string;
   readonly ssr: ProjectCardSsr;
   /** Active days in the last 12 months (build-time), when known. */
   readonly activeDays12m?: number;
@@ -30,8 +29,7 @@ interface Props {
   readonly communityPrs?: { prs: number; people: number };
 }
 
-const { projectName, ssr, activeDays12m, communityIssues, communityPrs } =
-  Astro.props;
+const { ssr, activeDays12m, communityIssues, communityPrs } = Astro.props;
 
 const locale = (Astro.currentLocale ?? defaultLocale) as Locale;
 const t = useTranslations(locale);

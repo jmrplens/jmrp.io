@@ -156,15 +156,20 @@ export function combineSummary(summary, gitlabItems, codeMergeHours) {
  *
  * @param {{items: readonly {kind: string, state: string, fullName: string,
  *   createdAt: string, hoursToMerge: number | null}[],
- *   projects: readonly {fullName: string, stars: number | null}[]}} part - GitLab part.
+ *   projects: readonly {fullName: string, stars: number | null,
+ *   language?: string | null}[]}} part - GitLab part.
  * @param {Record<string, string>} displayName - Folding map.
  * @param {Record<string, string>} [canonicalRepo] - Display name → the
  *   project path that stands for the group, overriding the merge count.
  * @returns {{project: string, repo: string, platform: 'gitlab', merged: number,
- *   lastMergedAt: string | null, stars: number | null}[]} Rows.
+ *   lastMergedAt: string | null, stars: number | null,
+ *   language: string | null}[]} Rows.
  */
 export function gitlabContributedTo(part, displayName, canonicalRepo = {}) {
   const starsByRepo = new Map(part.projects.map((p) => [p.fullName, p.stars]));
+  const languageByRepo = new Map(
+    part.projects.map((p) => [p.fullName, p.language ?? null]),
+  );
   /** @type {Map<string, {merged: number, lastMergedAt: string | null, perRepo: Map<string, number>}>} */
   const groups = new Map();
   for (const item of part.items) {
@@ -202,6 +207,7 @@ export function gitlabContributedTo(part, displayName, canonicalRepo = {}) {
       merged: group.merged,
       lastMergedAt: group.lastMergedAt,
       stars: starsByRepo.get(repo) ?? null,
+      language: languageByRepo.get(repo) ?? null,
     };
   });
 }

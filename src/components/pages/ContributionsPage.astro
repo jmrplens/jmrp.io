@@ -9,6 +9,8 @@
  */
 import AchievementShelf from "@components/projects/AchievementShelf.astro";
 import { asContributionsDataset } from "@components/projects/dataset-types";
+import DiffSize from "@components/projects/DiffSize.astro";
+import LanguageTag from "@components/projects/LanguageTag.astro";
 import PlatformMark from "@components/projects/PlatformMark.astro";
 import FAQ from "@components/ui/FAQ.astro";
 import rawContributionsData from "@data/ghc/projects-contributions.json";
@@ -28,6 +30,7 @@ import {
   platformOf,
   repoUrl,
 } from "@utils/contribution-links";
+import { itemDiffSize, languageCounts } from "@utils/diff-size";
 import { getPageFaq, pageFaqNode } from "@utils/page-faq";
 import type { LanguageTaggedValue } from "@utils/person";
 import {
@@ -91,7 +94,17 @@ const highlights = rawHighlights.slice(0, 7).map((h) => ({
   stars:
     contributedToStarsByProject.get(foldProjectName(h.repo, displayName)) ??
     null,
+  size: h.size ?? null,
+  language: h.language ?? null,
 }));
+
+// Projects with merged code per main language, for the one-line summary.
+const byLanguage = languageCounts(contributedTo);
+
+// Main language of each upstream project, for its JSON-LD node.
+const languageByProject = new Map(
+  contributedTo.map((row) => [row.project, row.language ?? null]),
+);
 
 // Every count above a list is the count OF that list (production audit
 // 2026-09-27, N1); `contributionTotals` also counts what `exclude` hides.
@@ -277,12 +290,15 @@ const personRef = { "@id": new URL("#person", getSiteUrl()).href };
  * @param name - Display name, as the page prints it.
  * @param repo - `owner/repo` or GitLab full path.
  * @param platform - Where the repository lives.
+ * @param language - Its main language, as the page prints it; omitted when
+ *   unknown or hidden.
  * @returns The SoftwareSourceCode node.
  */
 function upstreamNode(
   name: string,
   repo: string,
   platform: string | null | undefined,
+  language?: string | null,
 ) {
   const url = repoUrl(repo, platform);
   return {
@@ -290,6 +306,7 @@ function upstreamNode(
     name,
     url,
     codeRepository: url,
+    ...(language && { programmingLanguage: language }),
   } satisfies SoftwareSourceCode;
 }
 
@@ -306,7 +323,7 @@ const upstreamList = {
     "@type": "ListItem" as const,
     position: index + 1,
     item: {
-      ...upstreamNode(row.project, row.repo, row.platform),
+      ...upstreamNode(row.project, row.repo, row.platform, row.language),
       contributor: personRef,
     } satisfies SoftwareSourceCode,
   })),
@@ -342,6 +359,8 @@ const highlightList = {
         foldProjectName(h.repo, displayName),
         h.repo,
         h.platform,
+        languageByProject.get(foldProjectName(h.repo, displayName)) ??
+          h.language,
       ),
     } satisfies CreativeWork,
   })),
@@ -458,6 +477,21 @@ const faqNode = pageFaq && pageFaqNode(pageFaq, pageUrl, schema["@id"], locale);
       </div>
     </dl>
 
+    {byLanguage.length > 0 && (
+      <p class="contrib-langs">
+        <span class="contrib-langs__lead">
+          {t("pages.projectsContributions.languagesLead")}
+        </span>
+        <span class="contrib-langs__list">
+          {byLanguage.map(([language, count]) => (
+            <span class="contrib-langs__item">
+              <span lang="en">{language}</span> <b>{count}</b>
+            </span>
+          ))}
+        </span>
+      </p>
+    )}
+
     {highlights.length > 0 && (
       <section aria-labelledby="highlights-heading">
         <h2
@@ -487,11 +521,23 @@ const faqNode = pageFaq && pageFaqNode(pageFaq, pageUrl, schema["@id"], locale);
                 />
               </span>
               <p class="hl__why">{h.why}</p>
-              {h.stars !== null && (
+              {(h.stars !== null || h.size !== null || h.language) && (
                 <p class="hl__meta">
-                  {formatCompactStars(h.stars, locale)}{" "}
-                  <span aria-hidden="true">★</span>
-                  <span class="sr-only">{t("aria.starsUnit")}</span>
+                  <LanguageTag language={h.language} />
+                  <DiffSize
+                    size={h.size}
+                    platform={h.platform}
+                  />
+                  {h.size !== null && h.stars !== null && (
+                    <span aria-hidden="true">·</span>
+                  )}
+                  {h.stars !== null && (
+                    <span>
+                      {formatCompactStars(h.stars, locale)}{" "}
+                      <span aria-hidden="true">★</span>
+                      <span class="sr-only">{t("aria.starsUnit")}</span>
+                    </span>
+                  )}
                 </p>
               )}
             </li>
@@ -507,9 +553,8 @@ const faqNode = pageFaq && pageFaqNode(pageFaq, pageUrl, schema["@id"], locale);
       >
         {t("pages.projectsContributions.ledgerHeading")}
       </h2>
-      {projectEntries.map((entry, entryIndex) => (
+      {projectEntries.map((entry) => (
         <details
-          open={entryIndex === 0}
           data-project={entry.project}
           data-merged={entry.merged}
         >
@@ -553,6 +598,16 @@ const faqNode = pageFaq && pageFaqNode(pageFaq, pageUrl, schema["@id"], locale);
                       set:text={itemLabel(entry.items, item)}
                     />
                   </span>
+                )}
+                {itemDiffSize(item) ? (
+                  <span class="items__sz">
+                    <DiffSize
+                      size={itemDiffSize(item)}
+                      platform={item.platform ?? entry.platform}
+                    />
+                  </span>
+                ) : (
+                  <span aria-hidden="true" />
                 )}
                 <span class="items__w">{itemTiming(item)}</span>
               </li>
@@ -921,11 +976,47 @@ const faqNode = pageFaq && pageFaqNode(pageFaq, pageUrl, schema["@id"], locale);
   }
 
   .hl__meta {
+    display: flex;
+    flex-wrap: wrap;
     grid-column: 2;
+    gap: 4px var(--space-sm);
+    align-items: baseline;
     margin: 0;
     font-family: var(--font-mono);
     font-size: var(--text-micro);
     color: var(--color-text-muted);
+  }
+
+  .contrib-langs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-xs) var(--space-sm);
+    align-items: baseline;
+    margin: 0;
+    font-size: var(--text-sm);
+    color: var(--color-text-muted);
+  }
+
+  .contrib-langs__list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .contrib-langs__item {
+    padding: 0 8px;
+    font-family: var(--font-mono);
+    font-size: var(--text-micro);
+    line-height: 1.7;
+    color: var(--color-text);
+    white-space: nowrap;
+    border: var(--border-1);
+    border-radius: var(--radius-sm);
+  }
+
+  .contrib-langs__item b {
+    font-weight: var(--fw-semibold);
+    color: var(--color-text-heading);
   }
 
   details {
@@ -1018,7 +1109,7 @@ const faqNode = pageFaq && pageFaqNode(pageFaq, pageUrl, schema["@id"], locale);
      their titles on the same left edge. */
   .items li {
     display: grid;
-    grid-template-columns: 6.5rem 1fr auto;
+    grid-template-columns: 6.5rem 1fr auto auto;
     gap: var(--space-sm);
     align-items: baseline;
     font-size: var(--text-sm);
@@ -1143,7 +1234,8 @@ const faqNode = pageFaq && pageFaqNode(pageFaq, pageUrl, schema["@id"], locale);
       grid-template-columns: 6.5rem 1fr;
     }
 
-    .items li > .items__w {
+    .items li > .items__w,
+    .items li > .items__sz {
       grid-column: 2;
     }
   }

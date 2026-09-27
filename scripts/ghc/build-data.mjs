@@ -30,7 +30,6 @@ import {
   pickPrimaryRepo,
 } from "./contributions-yaml.mjs";
 import { ensureAchievementBadges } from "./fetch-achievement-badges.mjs";
-import { fetchRepoMeta } from "./github-repo-cache.mjs";
 import { resolveInfluxConfig } from "./influx.mjs";
 import {
   combineSummary,
@@ -59,6 +58,7 @@ import {
   getRepoHygiene,
   getStars,
   getUpstreamLandedCommits,
+  getUpstreamRepoMeta,
   getUpstreamRepos,
 } from "./queries.mjs";
 import {
@@ -241,6 +241,9 @@ function addToLedger(ledgerByYear, project, item, contributions) {
  * @property {number} merged Merged code/docs PRs or MRs.
  * @property {string | null} lastMergedAt ISO timestamp of the latest merge.
  * @property {number | null} stars Star count of `repo`, or null if unknown.
+ * @property {string | null} language Main language of `repo` as GitHub or
+ *   GitLab detects it, or the `contributions.yaml` `language` override;
+ *   null when unknown or hidden.
  */
 
 /**
@@ -275,6 +278,7 @@ export function mergeContributedTo(rows, canonicalRepo = {}) {
       repo: lead.repo,
       platform: lead.platform,
       stars: lead.stars,
+      language: lead.language ?? null,
       merged: existing.merged + row.merged,
       lastMergedAt,
     });
@@ -282,6 +286,91 @@ export function mergeContributedTo(rows, canonicalRepo = {}) {
   return [...byProject.values()].sort(
     (a, b) => (b.stars ?? -1) - (a.stars ?? -1),
   );
+}
+
+/**
+ * Applies the `contributions.yaml` `language` override to one row: a string
+ * replaces the detected language, null hides it, no entry keeps it.
+ *
+ * @template {{project: string, language?: string | null}} T
+ * @param {T} row - A "Contributed to" row.
+ * @param {Record<string, string | null>} overrides - Display name → language.
+ * @returns {T & {language: string | null}} The row.
+ */
+export function applyLanguageOverride(row, overrides) {
+  return Object.hasOwn(overrides, row.project)
+    ? { ...row, language: overrides[row.project] }
+    : { ...row, language: row.language ?? null };
+}
+
+/**
+ * @typedef {object} HighlightSize
+ * @property {number} prs - How many PRs/MRs the sum covers.
+ * @property {number | null} additions - Lines added, summed; null when any
+ *   covered item has no line counts (the file count may still be known).
+ * @property {number | null} deletions - Lines removed, summed; as above.
+ * @property {number} changedFiles - Files touched, summed per item (a file
+ *   touched by two PRs counts twice).
+ */
+
+/**
+ * Sums the diff size of every PR/MR a highlight stands for
+ * (`numbers`, else `number`), from the ledger of its platform. Null when
+ * none of them has a size, so the page prints no size line at all rather
+ * than a zero.
+ *
+ * @param {{repo: string, platform: string, numbers: readonly number[]}} entry - A featured entry.
+ * @param {readonly {platform: string, kind: string, fullName: string, number: number,
+ *   additions?: number | null, deletions?: number | null,
+ *   changedFiles?: number | null}[]} items - Ledger items, both platforms.
+ * @returns {HighlightSize | null} The size.
+ */
+export function highlightSize(entry, items) {
+  const wanted = new Set(entry.numbers);
+  const sized = items.filter(
+    (item) =>
+      item.platform === entry.platform &&
+      item.kind === "pull_request" &&
+      item.fullName === entry.repo &&
+      wanted.has(item.number) &&
+      typeof item.changedFiles === "number",
+  );
+  if (sized.length === 0) return null;
+  const lines = sized.every(
+    (item) =>
+      typeof item.additions === "number" && typeof item.deletions === "number",
+  );
+  return {
+    prs: sized.length,
+    additions: lines
+      ? sized.reduce((sum, item) => sum + (item.additions ?? 0), 0)
+      : null,
+    deletions: lines
+      ? sized.reduce((sum, item) => sum + (item.deletions ?? 0), 0)
+      : null,
+    changedFiles: sized.reduce(
+      (sum, item) => sum + (item.changedFiles ?? 0),
+      0,
+    ),
+  };
+}
+
+/**
+ * The language a highlight shows: its project's, as the "Contributed to"
+ * row carries it (overrides applied), else the override alone.
+ *
+ * @param {{repo: string}} entry - A featured entry.
+ * @param {readonly {project: string, language: string | null}[]} contributedTo - Rows.
+ * @param {import('./contributions-yaml.mjs').ContributionsConfig} contributions - Config.
+ * @returns {string | null} The language.
+ */
+export function highlightLanguage(entry, contributedTo, contributions) {
+  const project = foldProjectName(entry.repo, contributions.displayName);
+  const row = contributedTo.find((r) => r.project === project);
+  if (row) return row.language;
+  return Object.hasOwn(contributions.language, project)
+    ? contributions.language[project]
+    : null;
 }
 
 /**
@@ -414,9 +503,11 @@ export async function collectDataset(
     ).repo;
     foldedCode.set(project, existing);
   }
-  const repoMeta = await fetchRepoMeta(
+  // Upstream stars come from ghchronicle's `gh_upstream_repo` (2.6.0);
+  // a repository it has no row for renders with no star count.
+  const repoMeta = await getUpstreamRepoMeta(
+    config,
     [...foldedCode.values()].map((entry) => entry.primaryRepo),
-    { root },
   );
   const contributedTo = mergeContributedTo(
     [
@@ -427,6 +518,7 @@ export async function collectDataset(
         merged: entry.merged,
         lastMergedAt: entry.lastMergedAt,
         stars: repoMeta[entry.primaryRepo]?.stars ?? null,
+        language: repoMeta[entry.primaryRepo]?.language ?? null,
       })),
       ...gitlabContributedTo(
         gitlab,
@@ -435,7 +527,7 @@ export async function collectDataset(
       ),
     ],
     contributions.canonicalRepo,
-  );
+  ).map((row) => applyLanguageOverride(row, contributions.language));
 
   // Hours to merge of every merged code/docs PR or MR, both platforms, for
   // the combined median.
@@ -466,6 +558,8 @@ export async function collectDataset(
     highlights: contributions.featured.map((entry) => ({
       ...entry,
       redacted: false,
+      size: highlightSize(entry, [...fullLedger, ...gitlab.items]),
+      language: highlightLanguage(entry, contributedTo, contributions),
     })),
     contributedTo,
     acceptedAnswers,

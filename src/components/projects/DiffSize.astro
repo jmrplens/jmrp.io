@@ -1,0 +1,59 @@
+---
+/**
+ * The diff size of a contribution: "+162 −29 · 6 files", or "5 PRs · …"
+ * when it sums several. The signed figures are visual; the same numbers are
+ * spoken in words through visually hidden text, so the meaning never rests
+ * on the green and red alone (WCAG 1.4.1).
+ */
+import type { DiffSize } from "@components/projects/dataset-types";
+import { defaultLocale, type Locale } from "@i18n/config";
+import { platformOf } from "@utils/contribution-links";
+import { diffSizeText } from "@utils/diff-size";
+
+interface Props {
+  readonly size: DiffSize | null | undefined;
+  readonly platform?: string | null;
+}
+
+const locale = (Astro.currentLocale ?? defaultLocale) as Locale;
+const text = diffSizeText(
+  Astro.props.size,
+  platformOf(Astro.props.platform),
+  locale,
+);
+---
+
+{text && (
+  <span class="diff">
+    {text.count && <span>{text.count} · </span>}
+    {text.added && (
+      <>
+        <span aria-hidden="true">
+          <span class="diff__add">{text.added}</span>{" "}
+          <span class="diff__del">{text.removed}</span>
+        </span>
+        <span class="sr-only">{text.spoken}</span>
+        {" · "}
+      </>
+    )}
+    <span>{text.files}</span>
+  </span>
+)}
+
+<style>
+  .diff {
+    font-family: var(--font-mono);
+    font-size: var(--text-micro);
+    font-variant-numeric: tabular-nums;
+    color: var(--color-text-muted);
+    white-space: nowrap;
+  }
+
+  .diff__add {
+    color: var(--color-success);
+  }
+
+  .diff__del {
+    color: var(--color-danger);
+  }
+</style>
