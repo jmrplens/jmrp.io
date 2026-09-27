@@ -595,7 +595,10 @@ export async function contributionsPageMarkdown(
       date: formatDate(asOfDate, locale),
       prs: formatNumber(listed.prs, locale),
       issues: formatNumber(listed.issues, locale),
-      repos: formatNumber(summary.contributionTotals.repos, locale),
+      repos: formatNumber(
+        contributionsData.listedRepos ?? summary.contributionTotals.repos,
+        locale,
+      ),
     }),
     "",
     `- ${t("pages.projects.upstream.tileCodeMerged")}: ${listed.codeMerged}`,

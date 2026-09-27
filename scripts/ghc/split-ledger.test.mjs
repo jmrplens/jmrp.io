@@ -136,3 +136,23 @@ test("a GitLab project named like a GitHub listing repo is still code", () => {
   assert.deepEqual(out.listingsByOwnProject, {});
   assert.equal(out.ledgerByYear["2026"]["winget-pkgs"].length, 1);
 });
+
+test("listedRepos counts the repositories of listed items only", () => {
+  const out = splitLedger(
+    [
+      item({}),
+      item({ fullName: "henrygd/beszel-docs", number: 2 }),
+      item({ kind: "issue", fullName: "acme/tool", state: "open" }),
+      // Excluded: its repository is not listed anywhere.
+      item({ fullName: "ARM-software/MDK-Middleware", number: 131 }),
+      // A closed listing PR is dropped from every list.
+      item({ fullName: "microsoft/winget-pkgs", number: 9, state: "closed" }),
+      item({ fullName: "microsoft/winget-pkgs", number: 10, state: "merged" }),
+      // Same path on GitLab is a different repository.
+      item({ platform: "gitlab", fullName: "acme/tool", number: 3 }),
+    ],
+    contributions,
+    listingSet,
+  );
+  assert.equal(out.listedRepos, 5);
+});

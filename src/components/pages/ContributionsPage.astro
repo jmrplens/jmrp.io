@@ -456,7 +456,10 @@ const faqNode = pageFaq && pageFaqNode(pageFaq, pageUrl, schema["@id"], locale);
           date: formatDate(asOfDate, locale),
           prs: formatNumber(listed.prs, locale),
           issues: formatNumber(listed.issues, locale),
-          repos: formatNumber(summary.contributionTotals.repos, locale),
+          repos: formatNumber(
+            contributionsData.listedRepos ?? summary.contributionTotals.repos,
+            locale,
+          ),
         })}
       </p>
     </header>
