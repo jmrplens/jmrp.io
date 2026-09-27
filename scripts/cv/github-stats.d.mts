@@ -29,3 +29,13 @@ export function formatStats(
   stats: { stars: number; releases: number; downloads: number },
   locale: string,
 ): string[];
+
+/**
+ * The repository root: `JMRP_REPO_ROOT` when set, else the nearest directory
+ * at or above `start` that holds `scripts/download-sources.mjs`.
+ *
+ * @param start - Where to start looking; defaults to the working directory.
+ * @param env - Environment, for the override.
+ * @returns The repository root, or `start` when none is found.
+ */
+export function findRepoRoot(start?: string, env?: NodeJS.ProcessEnv): string;

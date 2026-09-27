@@ -8,22 +8,50 @@
  * @module
  */
 
+import fs from "node:fs";
+import path from "node:path";
 import process from "node:process";
 
 import {
   DOWNLOAD_SOURCES,
   DOWNLOADS_DISPLAY_MIN,
-  fetchDockerHubPulls,
+  fetchProjectDownloads,
   isVerificationAsset,
 } from "../download-sources.mjs";
 import { readDownloadsData } from "../refresh-downloads.mjs";
 
-// The repository root is the working directory, not a path derived from this
-// file's URL: inside the Astro build this module is bundled into a chunk
-// under the output directory, and a root resolved from there found no
-// snapshot, so /cv/ fell back to live figures (~115k) while the PDFs, built
-// by plain Node with the right root, read the snapshot (~116k).
-const ROOT = process.cwd();
+/**
+ * The repository root: `JMRP_REPO_ROOT` when a caller sets it, else the
+ * nearest directory at or above `start` that holds this repository's
+ * `scripts/download-sources.mjs`.
+ *
+ * Neither the file's own URL nor the bare working directory is enough.
+ * Inside the Astro build this module is bundled into a chunk under the output
+ * directory, so a root derived from `import.meta.url` found no snapshot (GEO
+ * audit #9, A1). And `cv_latex/compile_cv.sh` runs the PDF generators from
+ * `cv_latex/`, so a root equal to the working directory found no snapshot
+ * either, and the six PDFs printed live figures while /cv/ printed the
+ * snapshot (GEO audit #10, A1). Walking up from the working directory covers
+ * both.
+ *
+ * @param {string} [start] - Where to start looking.
+ * @param {NodeJS.ProcessEnv} [env] - Environment, for the override.
+ * @returns {string} The repository root, or `start` when none is found.
+ */
+export function findRepoRoot(start = process.cwd(), env = process.env) {
+  if (env.JMRP_REPO_ROOT) return path.resolve(env.JMRP_REPO_ROOT);
+  let dir = path.resolve(start);
+  for (;;) {
+    if (fs.existsSync(path.join(dir, "scripts", "download-sources.mjs"))) {
+      return dir;
+    }
+    const parent = path.dirname(dir);
+    if (parent === dir) return path.resolve(start);
+    dir = parent;
+  }
+}
+
+const ROOT = findRepoRoot();
 
 /**
  * The downloads snapshot the site renders from, read once per process.
@@ -33,9 +61,16 @@ const ROOT = process.cwd();
  * it, so the PDFs and `/cv/` cannot state two different totals for one
  * project (GEO audit #9, A1). Undefined when there is no snapshot (a fresh
  * clone, or the generators run by hand), in which case the live path below
- * is the fallback.
+ * is the fallback. `build:cv` sets `CV_REQUIRE_DOWNLOADS_SNAPSHOT=1`, so a
+ * PDF compile that cannot find it fails instead of printing other figures.
  */
 const snapshot = readDownloadsData(ROOT);
+if (!snapshot && process.env.CV_REQUIRE_DOWNLOADS_SNAPSHOT === "1") {
+  throw new Error(
+    `github-stats.mjs: no downloads snapshot under ${ROOT}; the PDFs would ` +
+      "print figures that /cv/ does not.",
+  );
+}
 
 const API = "https://api.github.com";
 /** @type {Map<string, Promise<{stars:number, releases:number, downloads:number}>>} */
@@ -101,27 +136,6 @@ async function readReleases(response) {
 }
 
 /**
- * Counts the downloads a project collects outside GitHub Releases.
- *
- * A project usually ships through more than one channel — the MCP servers are
- * on Docker Hub as well as in GitHub Releases — and the badge has to state ONE
- * number or it understates the project. The channel map lives in
- * `download-sources.mjs`, shared with the pre-build step that computes the
- * homepage total, so the CV and the homepage cannot report the same project
- * two different ways.
- *
- * @param {string} name - The repository name (the `DOWNLOAD_SOURCES` key).
- * @returns {Promise<number>} Downloads from every non-Releases channel.
- */
-async function fetchOtherChannelDownloads(name) {
-  const channels = DOWNLOAD_SOURCES[name];
-  const pulls = await Promise.all(
-    (channels?.docker ?? []).map(fetchDockerHubPulls),
-  );
-  return pulls.reduce((sum, n) => sum + n, 0) + (channels?.manual?.count ?? 0);
-}
-
-/**
  * Fetches star, release and combined-download counts for a repo (cached).
  * `downloads` covers every distribution channel of the project, not just
  * GitHub Releases.
@@ -146,10 +160,13 @@ export function fetchRepoStats(slug) {
       const { releases, downloads } = await readReleases(relRes);
       const name = slug.split("/", 2)[1] ?? "";
       const snapshotted = snapshot?.projects?.[name]?.total;
-      const combined =
-        typeof snapshotted === "number"
-          ? snapshotted
-          : downloads + (await fetchOtherChannelDownloads(name));
+      // Without a snapshot, the same per-project total the snapshot is made
+      // of (releases + Docker Hub + NuGet + manual), never a partial sum.
+      let combined = downloads;
+      if (typeof snapshotted === "number") combined = snapshotted;
+      else if (DOWNLOAD_SOURCES[name]) {
+        combined = (await fetchProjectDownloads(name)).total;
+      }
 
       return {
         stars: repo.stargazers_count ?? 0,

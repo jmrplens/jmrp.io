@@ -322,6 +322,12 @@ async function runVerify() {
       command: "node scripts/ci/check-public-asset-fidelity.mjs dist",
     },
     {
+      // /cv/ promises the page and the six PDFs never disagree; this reads
+      // the built page and the built PDFs and compares their badges.
+      name: "Lint: CV figures",
+      command: "node scripts/ci/check-cv-figures.mjs dist",
+    },
+    {
       name: "Lint: RSS Feed",
       command: "node scripts/ci/validate-rss.mjs dist",
     },
