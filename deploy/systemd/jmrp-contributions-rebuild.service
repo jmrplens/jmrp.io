@@ -1,0 +1,31 @@
+# Daily conditional rebuild of jmrp.io for the build-time contributions data
+# (/projects/contributions/, the build-time parts of /projects and the home
+# line). scripts/ghc/rebuild-if-changed.mjs collects a fresh dataset with the
+# READ-ONLY token, compares its display projection with the one the live
+# build used (/var/lib/jmrp.io/ghc/rebuild-state.json) and runs `pnpm build`
+# (a full deploy: swap, Cloudflare purge, IndexNow/Bing) only when it
+# changed or the last build is older than 7 days. Collection failures exit 0
+# without building. The repo .env is NOT loaded here: deploy-live.mjs loads
+# it itself, and astro build reads it through Vite.
+#
+# Install (as root):
+#   cp deploy/systemd/jmrp-contributions-rebuild.{service,timer} /etc/systemd/system/
+#   systemctl daemon-reload
+#   systemctl enable --now jmrp-contributions-rebuild.timer
+# Disable:
+#   systemctl disable --now jmrp-contributions-rebuild.timer
+[Unit]
+Description=jmrp.io rebuild when the displayed contributions data changed
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=/var/www/jmrp.io
+EnvironmentFile=/etc/jmrp.io/ghc-read.env
+Environment=HOME=/root
+Environment=COREPACK_ENABLE_DOWNLOAD_PROMPT=0
+Environment=PATH=/root/.nvm/versions/node/v25.2.1/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+ExecStart=/root/.nvm/versions/node/v25.2.1/bin/node scripts/ghc/rebuild-if-changed.mjs
+TimeoutStartSec=30min
+Nice=10

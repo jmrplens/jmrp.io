@@ -17,6 +17,10 @@
  *    and its cache cleared — rolling the whole delivery back on any failure.
  * 2. Purges the Cloudflare cache for the zone.
  * 3. Submits the sitemap URLs to IndexNow and to the Bing Webmaster API.
+ * 4. Records which contributions data the live build used (the display
+ *    projection hash of `src/data/ghc/projects-contributions.json`), so the
+ *    daily `scripts/ghc/rebuild-if-changed.mjs` only rebuilds when that
+ *    data changes. Never fatal.
  *
  * Why a move and not a copy: generated configuration used to be written into
  * the repository working tree (the four maps) and into the served build
@@ -70,6 +74,7 @@ import os from "node:os";
 import path from "node:path";
 import { performance } from "node:perf_hooks";
 
+import { recordBuiltDataset } from "./ghc/rebuild-state.mjs";
 import { stagingCandidates } from "./nginx-staging.mjs";
 
 /**
@@ -1799,10 +1804,30 @@ async function runPublishNotifications() {
 }
 
 /**
+ * Records the display projection of the contributions dataset this build
+ * rendered from, for `scripts/ghc/rebuild-if-changed.mjs`. Never fatal: a
+ * state that is missing or cannot be written only costs one extra
+ * scheduled rebuild.
+ */
+function recordContributionsBuildState() {
+  try {
+    const state = recordBuiltDataset({ root: ROOT });
+    console.log(
+      `deploy-live: recorded contributions projection ${state.projectionHash.slice(0, 12)} for the scheduled rebuild.`,
+    );
+  } catch (error) {
+    console.warn(
+      `deploy-live: could not record the contributions rebuild state (${error instanceof Error ? error.message : String(error)}); the next scheduled check will rebuild.`,
+    );
+  }
+}
+
+/**
  * Entry point: exits immediately (no publish actions run) unless the
  * current checkout is the production root (see {@link isProductionDeployAllowed}),
- * then delivers the staged Nginx artifacts (fatal on failure), then runs the
- * publish notifications (never fatal).
+ * then delivers the staged Nginx artifacts (fatal on failure), then records
+ * the contributions rebuild state and runs the publish notifications (never
+ * fatal).
  *
  * @returns {Promise<void>}
  */
@@ -1832,6 +1857,8 @@ async function main() {
     );
     process.exit(1);
   }
+
+  recordContributionsBuildState();
 
   await runPublishNotifications();
 
