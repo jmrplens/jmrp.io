@@ -1331,6 +1331,32 @@ test.describe("Projects and contributions graphs", () => {
     });
   }
 
+  for (const { prefix } of LOCALES) {
+    test(`every Dataset on ${prefix}/projects/ declares a license`, async ({
+      page,
+    }) => {
+      await page.goto(`${prefix}/projects/`);
+      const jsonLd = await getJsonLd(page);
+      const datasets: Record<string, unknown>[] = [];
+      const visit = (value: unknown): void => {
+        if (Array.isArray(value)) {
+          for (const entry of value) visit(entry);
+        } else if (value && typeof value === "object") {
+          const node = value as Record<string, unknown>;
+          if (node["@type"] === "Dataset") datasets.push(node);
+          for (const child of Object.values(node)) visit(child);
+        }
+      };
+      visit(jsonLd);
+      expect(datasets.length).toBeGreaterThan(0);
+      for (const dataset of datasets) {
+        expect(dataset.license, String(dataset["@id"])).toBe(
+          "https://creativecommons.org/licenses/by/4.0/",
+        );
+      }
+    });
+  }
+
   for (const { prefix, runsOn } of LOCALES) {
     const lang = prefix ? "es" : "en";
 
