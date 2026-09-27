@@ -521,14 +521,14 @@ const faqNode = pageFaq && pageFaqNode(pageFaq, pageUrl, schema["@id"], locale);
                 />
               </span>
               <p class="hl__why">{h.why}</p>
-              {(h.stars !== null || h.size || h.language) && (
+              {(h.stars !== null || h.size !== null || h.language) && (
                 <p class="hl__meta">
                   <LanguageTag language={h.language} />
                   <DiffSize
                     size={h.size}
                     platform={h.platform}
                   />
-                  {h.size && h.stars !== null && (
+                  {h.size !== null && h.stars !== null && (
                     <span aria-hidden="true">·</span>
                   )}
                   {h.stars !== null && (
@@ -553,9 +553,8 @@ const faqNode = pageFaq && pageFaqNode(pageFaq, pageUrl, schema["@id"], locale);
       >
         {t("pages.projectsContributions.ledgerHeading")}
       </h2>
-      {projectEntries.map((entry, entryIndex) => (
+      {projectEntries.map((entry) => (
         <details
-          open={entryIndex === 0}
           data-project={entry.project}
           data-merged={entry.merged}
         >

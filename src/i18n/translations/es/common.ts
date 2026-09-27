@@ -1022,8 +1022,6 @@ export const common = {
         tilePrOpen: "PR y MR de código en revisión",
         tileAnswers: "respuestas aceptadas en GitHub Discussions",
         listingNote: "+ {count} PR de empaquetado y listados fusionadas",
-        highlightsTitle: "Destacadas",
-        mergedPill: "Fusionada",
         openPill: "Abierta",
         contributedToTitle: "He contribuido a",
         andMore: "y {count} proyectos más · lista a fecha de {date}",
@@ -1059,7 +1057,6 @@ export const common = {
       snapshotIntro:
         "Foto a fecha de {date} · {prs} pull requests y merge requests y {issues} issues en {repos} repositorios que no son míos, en GitHub y GitLab.",
       highlightsHeading: "Destacadas",
-      highlightsSubIntro: "Las tres de /projects/ y cuatro más:",
       ledgerHeading: "Código y documentación",
       itemMergedPill: "Fusionada",
       itemOpenPill: "Abierta",

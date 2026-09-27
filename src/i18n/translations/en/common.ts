@@ -1038,8 +1038,6 @@ export const common = {
         tilePrOpen: "code PRs and MRs under review",
         tileAnswers: "accepted answers in GitHub Discussions",
         listingNote: "+ {count} packaging and listing PRs merged",
-        highlightsTitle: "Highlights",
-        mergedPill: "Merged",
         openPill: "Open",
         contributedToTitle: "Contributed to",
         andMore: "and {count} more · list as of {date}",
@@ -1075,7 +1073,6 @@ export const common = {
       snapshotIntro:
         "Snapshot as of {date} · {prs} pull and merge requests and {issues} issues in {repos} repositories that are not mine, on GitHub and GitLab.",
       highlightsHeading: "Highlights",
-      highlightsSubIntro: "The three from /projects/ and four more:",
       ledgerHeading: "Code and documentation",
       itemMergedPill: "Merged",
       itemOpenPill: "Open",

@@ -933,6 +933,12 @@ const contributionsSchema = z.object({
    * when that does not describe the work contributed; `null` hides it.
    */
   language: z.record(z.string(), z.string().min(1).nullable()).default({}),
+  /**
+   * Display name → a shorter name the "Contributed to" strip on /projects/
+   * prints on narrow screens only; desktop and screen readers keep the full
+   * name.
+   */
+  shortName: z.record(z.string(), z.string().min(1)).default({}),
   featured: z.array(ContributionsFeatured).min(1).max(7),
   /**
    * GitLab.com account whose authored merge requests and issues are added to

@@ -192,7 +192,7 @@ function tierLabel(
 
 /**
  * The "Contributions to other projects" section, shared by both twins where
- * their content overlaps (the live-token summary + build-time highlights and
+ * their content overlaps (the live-token summary and the build-time
  * "contributed to" strip) — the same data `UpstreamBlock.astro` renders on
  * the page itself.
  *
@@ -203,13 +203,6 @@ function tierLabel(
 function upstreamLines(locale: "en" | "es", siteUrl: string): Lines {
   const t = useTranslations(locale);
   const prefix = locale === "es" ? "/es" : "";
-
-  const highlightLines = contributionsData.highlights
-    .slice(0, 3)
-    .map(
-      (h) =>
-        `- **${h.repo} ${itemRef(h)}** (${platformName(h.platform, t)}, ${itemUrl({ ...h, fullName: h.repo })}): ${h.why[locale]}`,
-    );
 
   const stripLines = contributionsData.contributedTo
     .slice(0, CONTRIBUTED_TO_SHOWN)
@@ -244,10 +237,6 @@ function upstreamLines(locale: "en" | "es", siteUrl: string): Lines {
     t("pages.projects.upstream.listingNote", {
       count: PRJ.upstream.listingMerged,
     }).replace(/^\+/u, String.raw`\+`),
-    "",
-    `### ${t("pages.projects.upstream.highlightsTitle")}`,
-    "",
-    ...highlightLines,
     "",
     `### ${t("pages.projects.upstream.contributedToTitle")}`,
     "",

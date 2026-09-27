@@ -26,8 +26,8 @@ type: contributions
 #   (`renovatebot/renovate` → "Renovate") or when a listing repo needs a
 #   human label for the "Distribution and listings" section
 #   (`microsoft/winget-pkgs` → "winget").
-# * `featured` is ordered; the UI takes the first 3 for /projects/ and all of
-#   it (up to 7) for the subpage. An entry may set `platform: gitlab` (a
+# * `featured` is ordered; the subpage shows all of it (up to 7); /projects/
+#   shows none (removed 2026-09-27, it repeated the subpage). An entry may set `platform: gitlab` (a
 #   merge request on GitLab.com; `kind: pull_request`, `number` = the iid). Every entry must be MERGED (or, for an
 #   issue, a genuine accepted contribution) and carry no pending-disclosure
 #   security content. `why.en`/`why.es` are one line, written by the owner or
@@ -131,6 +131,12 @@ displayName:
 canonicalRepo:
   Beszel: henrygd/beszel
 
+# Display name → a shorter name the "Contributed to" strip on /projects/
+# prints on narrow screens only, where the full name, language, stars and
+# month do not fit on one line. Desktop and screen readers keep the full name.
+shortName:
+  Nginx Proxy Manager: NPM
+
 # Display name → the language shown for a project on the subpage (its
 # "Contributed to" row, its highlight and the by-language line) when the one
 # GitHub or GitLab detects for the repository does not describe the work
@@ -184,7 +190,6 @@ featured:
       en: "Five merged fixes to the official MCP Go SDK (#1255, #1268, #1269, #1273, #1274) that bring protocol-version negotiation, cancellation and pre-initialize handling in line with the specification, each with tests."
       es: "Cinco correcciones fusionadas en el SDK oficial de MCP para Go (#1255, #1268, #1269, #1273, #1274) que ajustan a la especificación la negociación de versión del protocolo, la cancelación y el tratamiento de llamadas previas a initialize, cada una con tests."
   # GitLab merge request (`platform: gitlab`, `number` is the MR iid).
-  # Fourth: after the three shown on /projects/, which stay as they were.
   - repo: gitlab-org/gitlab
     number: 255300
     kind: pull_request
