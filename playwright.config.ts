@@ -120,7 +120,11 @@ export default defineConfig({
   ],
 
   webServer: {
-    command: `pnpm astro preview --port ${PORT}`,
+    // The project's astro binary directly, not `pnpm astro preview`: pnpm
+    // 12.6.0 changed how it forwards termination signals without a terminal
+    // (pnpm#7374), and behind pnpm the preview server outlived Playwright's
+    // shutdown, so every run hung until the CI job's 30 min timeout.
+    command: `./node_modules/.bin/astro preview --port ${PORT}`,
     url: `http://localhost:${PORT}`,
     reuseExistingServer: !process.env.CI,
     timeout: 120 * 1000,

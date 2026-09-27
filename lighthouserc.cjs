@@ -79,7 +79,9 @@ const getUrls = () => {
 module.exports = {
   ci: {
     collect: {
-      startServerCommand: "pnpm astro preview --port 4321",
+      // Direct binary, not through pnpm: see the webServer note in
+      // playwright.config.ts (pnpm 12.6.0 signal forwarding).
+      startServerCommand: "./node_modules/.bin/astro preview --port 4321",
       startServerReadyPattern: "Local",
       url: getUrls(),
       numberOfRuns: 2,
