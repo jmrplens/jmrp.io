@@ -51,6 +51,17 @@ function num(value, fallback = 0) {
 }
 
 /**
+ * A string cell as a string, or "" when it is null, absent or not a string,
+ * so an unexpected value never stringifies to "[object Object]".
+ *
+ * @param {unknown} value - Raw cell value.
+ * @returns {string} The string value.
+ */
+function str(value) {
+  return typeof value === "string" ? value : "";
+}
+
+/**
  * Coerces a nullable numeric cell to `number | null` — for fields where the
  * plan requires NULL to survive as "no data" rather than collapsing to 0
  * (release-download deltas, stars deltas: `datos.md` idea 19 "negative
@@ -476,7 +487,7 @@ export async function getCommunityPrContributors(config) {
     GROUP BY repo`;
   const rows = await queryInflux(sql, config);
   return rows.map((row) => {
-    const authors = String(row.authors ?? "")
+    const authors = str(row.authors)
       .split(",")
       .filter((a) => a && !KNOWN_BOT_LOGINS.has(a));
     return {
@@ -522,7 +533,7 @@ export async function getAchievements(config) {
     nextThreshold: numOrNull(row.next_threshold),
     percent: numOrNull(row.percent),
     agrees: [1, "1", true].includes(row.agrees),
-    image: row.image ? String(row.image) : null,
+    image: str(row.image) || null,
   }));
 }
 
@@ -962,9 +973,7 @@ export async function getCiMatrix(config, repos = MAINTENANCE_REPOS) {
     GROUP BY j.repo ORDER BY jobs DESC`;
   const rows = await queryInflux(sql, config);
   return rows.map((row) => {
-    const labels = String(row.labels ?? "")
-      .split("|")
-      .filter(Boolean);
+    const labels = str(row.labels).split("|").filter(Boolean);
     const os = [...new Set(labels.map(runnerLabelToOs))];
     return { repo: String(row.repo), jobs: num(row.jobs), os };
   });
@@ -1033,9 +1042,7 @@ export async function getCodeQlCoverage(config, repos = MAINTENANCE_REPOS) {
   const rows = await queryInflux(sql, config);
   return rows.map((row) => ({
     repo: String(row.repo),
-    languages: String(row.langs ?? "")
-      .split(",")
-      .filter(Boolean),
+    languages: str(row.langs).split(",").filter(Boolean),
     lastScanAt: String(row.last_scan),
   }));
 }
@@ -1148,17 +1155,11 @@ export async function getRepoHygiene(config, repos = MAINTENANCE_REPOS) {
   );
   for (const row of policyRows) {
     const entry = byRepo.get(String(row.repo));
-    if (entry)
-      entry.policyFiles = String(row.present ?? "")
-        .split(",")
-        .filter(Boolean);
+    if (entry) entry.policyFiles = str(row.present).split(",").filter(Boolean);
   }
   for (const row of rulesetRows) {
     const entry = byRepo.get(String(row.repo));
-    if (entry)
-      entry.rulesetRules = String(row.rules ?? "")
-        .split(",")
-        .filter(Boolean);
+    if (entry) entry.rulesetRules = str(row.rules).split(",").filter(Boolean);
   }
   for (const row of classicRows) {
     const entry = byRepo.get(String(row.repo));
@@ -1167,7 +1168,7 @@ export async function getRepoHygiene(config, repos = MAINTENANCE_REPOS) {
   for (const row of ecosystemRows) {
     const entry = byRepo.get(String(row.repo));
     if (entry)
-      entry.dependabotEcosystems = String(row.ecosystems ?? "")
+      entry.dependabotEcosystems = str(row.ecosystems)
         .split(",")
         .filter(Boolean);
   }

@@ -123,7 +123,7 @@ export async function getProjectDetails(client, fullPath, iids) {
   const sizes = new Map();
   for (const node of project?.mergeRequests?.nodes ?? []) {
     const stats = node.diffStatsSummary;
-    if (!stats || !stats.fileCount) continue;
+    if (!stats?.fileCount) continue;
     sizes.set(Number(node.iid), {
       additions: Number(stats.additions ?? 0),
       deletions: Number(stats.deletions ?? 0),

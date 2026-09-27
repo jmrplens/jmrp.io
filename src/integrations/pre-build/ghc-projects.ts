@@ -4,6 +4,10 @@ import {
   buildDataset,
   ensureDataset,
 } from "../../../scripts/ghc/build-data.mjs";
+import {
+  loadReadOnlyEnv,
+  READ_ONLY_ENV_PATH,
+} from "../../../scripts/ghc/influx.mjs";
 import { writeProjectsSummary } from "../../../scripts/ghc/write-summary.mjs";
 
 /**
@@ -49,6 +53,11 @@ export async function setupGhcProjectsData(
   logger: AstroIntegrationLogger,
 ): Promise<void> {
   logger.info("Building the /projects contributions dataset...");
+  if (loadReadOnlyEnv()) {
+    logger.info(
+      `  ✓ Read the read-only credentials from ${READ_ONLY_ENV_PATH}.`,
+    );
+  }
   const { fromFixture } = await buildDataset({
     root: process.cwd(),
     log: (line) => logger.info(line),
@@ -78,6 +87,7 @@ export async function setupGhcProjectsData(
 export async function refreshDevProjectsSummary(
   logger: AstroIntegrationLogger,
 ): Promise<void> {
+  loadReadOnlyEnv();
   try {
     const { refreshed } = await writeProjectsSummary({
       root: process.cwd(),

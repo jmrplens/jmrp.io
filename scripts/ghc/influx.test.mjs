@@ -9,9 +9,9 @@
  */
 
 import assert from "node:assert/strict";
-import { mock, test } from "node:test";
+import { describe, it, mock, test } from "node:test";
 
-import { InfluxQueryError, queryInflux } from "./influx.mjs";
+import { InfluxQueryError, loadReadOnlyEnv, queryInflux } from "./influx.mjs";
 
 const CONFIG = { url: "https://influx.invalid", token: "unused-test-token" };
 
@@ -136,4 +136,41 @@ test("queryInflux passes a timeout signal to fetch", async () => {
       assert.deepEqual(await queryInflux("select 1", CONFIG), []);
     },
   );
+});
+
+describe("loadReadOnlyEnv", () => {
+  it("loads the file only while no token is set, and tolerates its absence", () => {
+    const saved = {
+      GHC_INFLUX_TOKEN: process.env.GHC_INFLUX_TOKEN,
+      INFLUX_TOKEN: process.env.INFLUX_TOKEN,
+    };
+    delete process.env.GHC_INFLUX_TOKEN;
+    delete process.env.INFLUX_TOKEN;
+    try {
+      const loaded = [];
+      const proc = {
+        loadEnvFile: (p) => {
+          loaded.push(p);
+        },
+      };
+      assert.equal(loadReadOnlyEnv("/x/ghc-read.env", proc), true);
+      assert.deepEqual(loaded, ["/x/ghc-read.env"]);
+
+      const missing = {
+        loadEnvFile: () => {
+          throw Object.assign(new Error("ENOENT"), { code: "ENOENT" });
+        },
+      };
+      assert.equal(loadReadOnlyEnv("/nope", missing), false);
+
+      process.env.GHC_INFLUX_TOKEN = "set-in-shell";
+      assert.equal(loadReadOnlyEnv("/x/ghc-read.env", proc), false);
+      assert.equal(loaded.length, 1);
+    } finally {
+      for (const [key, value] of Object.entries(saved)) {
+        if (value === undefined) delete process.env[key];
+        else process.env[key] = value;
+      }
+    }
+  });
 });

@@ -69,7 +69,8 @@ function absolutizeLine(line: string, origin: string): string {
  * @returns The document with root-relative link destinations made absolute.
  */
 export function absolutizeRootLinks(markdown: string, siteUrl: string): string {
-  const origin = siteUrl.replace(/\/+$/u, "");
+  let origin = siteUrl;
+  while (origin.endsWith("/")) origin = origin.slice(0, -1);
   let fence: string | null = null;
   return markdown
     .split("\n")
@@ -77,7 +78,7 @@ export function absolutizeRootLinks(markdown: string, siteUrl: string): string {
       const marker = FENCE.exec(line)?.[1];
       if (marker) {
         if (fence === null) fence = marker;
-        else if (marker[0] === fence[0] && marker.length >= fence.length)
+        else if (marker.startsWith(fence[0]) && marker.length >= fence.length)
           fence = null;
         return line;
       }

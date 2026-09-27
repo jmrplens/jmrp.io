@@ -191,6 +191,17 @@ function tierLabel(
 }
 
 /**
+ * A button label without its trailing "→" (and the space before it); the
+ * markdown link needs no arrow.
+ *
+ * @param label - The localized label.
+ * @returns The label, arrow removed.
+ */
+function withoutTrailingArrow(label: string): string {
+  return label.endsWith("→") ? label.slice(0, -1).trimEnd() : label;
+}
+
+/**
  * The "Contributions to other projects" section, shared by both twins where
  * their content overlaps (the live-token summary and the build-time
  * "contributed to" strip) — the same data `UpstreamBlock.astro` renders on
@@ -255,7 +266,7 @@ function upstreamLines(locale: "en" | "es", siteUrl: string): Lines {
     "",
     // The page's button to the subpage, which the twin only named inside an
     // HTML comment (twin audit 2026-09-27, W1).
-    `[${t("pages.projects.upstream.subpageLink").replace(/\s*→$/u, "")}](${subpage})`,
+    `[${withoutTrailingArrow(t("pages.projects.upstream.subpageLink"))}](${subpage})`,
     "",
   ];
 }
