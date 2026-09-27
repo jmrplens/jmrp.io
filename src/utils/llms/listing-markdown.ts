@@ -78,6 +78,12 @@ const WORDS = {
   blueskyFeeds: { en: "Curated Bluesky feeds", es: "Feeds curados en Bluesky" },
   latest: { en: "Latest posts", es: "Últimas entradas" },
   categories: { en: "All categories", es: "Todas las categorías" },
+  // Body field labels, localized like the rest of the body; only the
+  // document header's keys are the shared English schema (`documentHeader`).
+  // The Spanish twins printed `Published:` and `Language:` (production audit
+  // 2026-09-27, N6/N10).
+  published: { en: "Published", es: "Publicado" },
+  language: { en: "Language", es: "Idioma" },
 } as const;
 
 /** `/es` for Spanish, empty for English — the site's own routing rule. */
@@ -403,7 +409,7 @@ export async function generateSeriesMarkdown(
         "",
         `URL: ${siteUrl}${postPath}`,
         `Markdown: ${siteUrl}${markdownTwinPath(postPath)}`,
-        `Published: ${post.data.publishedDate.toISOString().slice(0, 10)}`,
+        `${WORDS.published[locale]}: ${post.data.publishedDate.toISOString().slice(0, 10)}`,
         "",
         // The editorial note: why THIS article sits at THIS position. Keyed by
         // the numeric filename prefix the two locales share.
@@ -475,7 +481,7 @@ export async function generateFeedsMarkdown(
       "",
       feed.description,
       "",
-      `- Language: ${feed.lang}`,
+      `- ${WORDS.language[locale]}: ${feed.lang}`,
       `- URL: https://bsky.app/profile/jmrp.io/feed/${feed.rkey}`,
       `- AT URI: at://${blueskyFeeds.did}/app.bsky.feed.generator/${feed.rkey}`,
       "",

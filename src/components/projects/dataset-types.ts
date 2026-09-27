@@ -310,6 +310,22 @@ export interface ContributionsDataset {
   };
   /** One engineering row per maintained repository. */
   readonly maintenance: readonly MaintenanceItem[];
+  /**
+   * Build-time view of each active card's live rows (stars, 30-day gain,
+   * latest stable release), keyed by repo. Only the markdown twin reads it,
+   * to print the rows the card will show; absent in datasets written before
+   * it existed.
+   */
+  readonly cardFacts?: Readonly<
+    Record<
+      string,
+      {
+        readonly stars: number;
+        readonly stars30d: number;
+        readonly releaseTag: string | null;
+      }
+    >
+  >;
   /** Raw GitLab part, kept so a failed fetch can reuse it. */
   readonly gitlab?: GitlabPart;
 }

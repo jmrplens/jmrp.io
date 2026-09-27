@@ -1,5 +1,6 @@
 import rawContributionsData from "@data/ghc/projects-contributions.json";
-import { formatDate, useTranslations } from "@i18n/utils";
+import { formatDate, formatNumber, useTranslations } from "@i18n/utils";
+import { listedContributionCounts } from "@utils/contribution-counts";
 import {
   itemRef,
   itemUrl,
@@ -223,9 +224,13 @@ function upstreamLines(locale: "en" | "es", siteUrl: string): Lines {
     `- ${t("pages.projects.upstream.tileCodeUpstreams")}: ${PRJ.upstream.codeUpstreams}`,
     `- ${t("pages.projects.upstream.tilePrOpen")}: ${PRJ.upstream.prOpen}`,
     `- ${t("pages.projects.upstream.tileAnswers")}: ${PRJ.upstream.answers}`,
+    // Its own paragraph, the leading "+" escaped: right under a "-" list, a
+    // line starting "+ " opens a second list and a renderer drops the sign
+    // (production audit 2026-09-27, N8).
+    "",
     t("pages.projects.upstream.listingNote", {
       count: PRJ.upstream.listingMerged,
-    }),
+    }).replace(/^\+/u, String.raw`\+`),
     "",
     `### ${t("pages.projects.upstream.highlightsTitle")}`,
     "",
@@ -402,13 +407,12 @@ export async function contributionsPageMarkdown(
   const { summary, ledgerByYear, acceptedAnswers, achievements } =
     contributionsData;
   const asOfDate = new Date(contributionsData.asOf);
-  const totalPrs =
-    summary.contributionTotals.prMerged +
-    summary.contributionTotals.prOpen +
-    summary.contributionTotals.prClosed;
-  const totalIssues =
-    summary.contributionTotals.issuesOpen +
-    summary.contributionTotals.issuesClosed;
+  // The page's counts, derived from the lists they head (N1).
+  const listed = listedContributionCounts({
+    ledgerByYear,
+    issuesByProject: contributionsData.issuesByProject,
+    listingSplit: summary.codeVsListingSplit.listing,
+  });
 
   const contributedToStars = new Map(
     contributionsData.contributedTo.map((row) => [row.project, row.stars]),
@@ -433,9 +437,7 @@ export async function contributionsPageMarkdown(
     if (item.state === "closed") continue;
     byProject.set(project, [...(byProject.get(project) ?? []), item]);
   }
-  const notMerged = allItems.filter(
-    ({ item }) => item.state === "closed",
-  ).length;
+  const notMerged = listed.codeNotMerged;
   const ledgerLines = [
     ...[...byProject]
       .map(([project, items]) => ({
@@ -570,14 +572,14 @@ export async function contributionsPageMarkdown(
     "",
     t("pages.projectsContributions.snapshotIntro", {
       date: formatDate(asOfDate, locale),
-      prs: String(totalPrs),
-      issues: String(totalIssues),
-      repos: String(summary.contributionTotals.repos),
+      prs: formatNumber(listed.prs, locale),
+      issues: formatNumber(listed.issues, locale),
+      repos: formatNumber(summary.contributionTotals.repos, locale),
     }),
     "",
-    `- ${t("pages.projects.upstream.tileCodeMerged")}: ${summary.codeVsListingSplit.codeOrDocs.merged}`,
-    `- ${t("pages.projects.upstream.tileListingMerged")}: ${summary.codeVsListingSplit.listing.merged}`,
-    `- ${t("pages.projects.upstream.tilePrOpen")}: ${summary.codeVsListingSplit.codeOrDocs.open}`,
+    `- ${t("pages.projects.upstream.tileCodeMerged")}: ${listed.codeMerged}`,
+    `- ${t("pages.projects.upstream.tileListingMerged")}: ${listed.listingMerged}`,
+    `- ${t("pages.projects.upstream.tilePrOpen")}: ${listed.codeOpen}`,
     `- ${t("pages.projects.upstream.tileAnswers")}: ${summary.answersCount}`,
     "",
     `## ${t("pages.projectsContributions.highlightsHeading")}`,
@@ -602,9 +604,9 @@ export async function contributionsPageMarkdown(
     }),
     "",
     `## ${t("pages.projectsContributions.issuesHeading", {
-      total: totalIssues,
-      open: summary.contributionTotals.issuesOpen,
-      closed: summary.contributionTotals.issuesClosed,
+      total: listed.issues,
+      open: listed.issuesOpen,
+      closed: listed.issuesClosed,
     })}`,
     "",
     ...issueLines,

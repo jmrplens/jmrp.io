@@ -7,7 +7,9 @@
  * tags, FAQ questions, and HowTo step names (all sourced from frontmatter).
  */
 import downloadsData from "@data/downloads.json";
+import rawContributionsData from "@data/ghc/projects-contributions.json";
 import {
+  formatDate,
   stripLocalePrefix,
   type TranslationKey,
   useTranslations,
@@ -30,6 +32,7 @@ import {
   usesLines,
 } from "@utils/llms/profile-markdown";
 import {
+  CONTRIBUTIONS_DATE,
   CONTRIBUTIONS_URL,
   HOME_SECTIONS,
   PROFILE_SECTIONS,
@@ -315,6 +318,11 @@ async function buildProfileSections(
   locale: "en" | "es" = "en",
 ): Promise<string[]> {
   const localePrefix = locale === "es" ? "/es" : "";
+  // The subpage's own "Snapshot as of" date, from the same dataset (N5).
+  const contributionsDate = formatDate(
+    new Date(rawContributionsData.asOf),
+    locale,
+  );
   const roster = projectRosterLines(
     await getProjects(),
     await getMcpServers(),
@@ -342,7 +350,9 @@ async function buildProfileSections(
           : [
               line
                 .split(CONTRIBUTIONS_URL)
-                .join(`${siteUrl}${localePrefix}/projects/contributions/`),
+                .join(`${siteUrl}${localePrefix}/projects/contributions/`)
+                .split(CONTRIBUTIONS_DATE)
+                .join(contributionsDate),
             ],
       ),
       "",
@@ -1525,9 +1535,15 @@ export function generateToolMarkdown(
  * The publications list as markdown lines.
  *
  * @param groups - Publication groups from the BibTeX source.
+ * @param locale - Locale of the document, for the `Abstract:` label (the
+ *   Spanish twin printed it in English; production audit 2026-09-27, W8).
  * @returns Markdown lines.
  */
-function publicationsLines(groups: PublicationGroup[]): string[] {
+function publicationsLines(
+  groups: PublicationGroup[],
+  locale: "en" | "es",
+): string[] {
+  const abstractLabel = useTranslations(locale)("pages.publications.abstract");
   return groups.flatMap((group) => [
     // H2, not H3 — same fix as `cvToMarkdown`. `# Publications` is the line
     // above, so H3 here left the document with no H2 at all.
@@ -1550,7 +1566,9 @@ function publicationsLines(groups: PublicationGroup[]): string[] {
       return [
         `- ${pub.title}${parenthetical(year ? String(year) : undefined)}${dashed(authors)}${suffixed(venue)}`,
         ...(doi ? [`  DOI: https://doi.org/${doi}`] : []),
-        ...(abstract ? [`  Abstract: ${collapseWhitespace(abstract)}`] : []),
+        ...(abstract
+          ? [`  ${abstractLabel}: ${collapseWhitespace(abstract)}`]
+          : []),
       ].join("\n");
     }),
     "",
@@ -1608,7 +1626,7 @@ export async function generatePublicationsMarkdown(
       locale,
     ),
     "",
-    ...publicationsLines(groups),
+    ...publicationsLines(groups, locale),
     ...pageFaqLines(await getPageFaq("/publications/", locale), locale),
   ].join("\n");
 }
@@ -1690,6 +1708,8 @@ export async function generateHomeMarkdown(
     role: { en: "Role", es: "Perfil" },
     focus: { en: "Focus", es: "Enfoque" },
     base: { en: "Base", es: "Base" },
+    // A body label, localized like the rest of the list (N10).
+    published: { en: "Published", es: "Publicado" },
   } as const;
 
   const sections = HOME_SECTIONS.flatMap((section) => [
@@ -1714,7 +1734,7 @@ export async function generateHomeMarkdown(
       `  Markdown: ${siteUrl}${markdownTwinPath(path)}`,
       // The date the page prints beside each title. Without it this was the
       // one "latest" list on the site carrying no recency at all.
-      `  Published: ${post.data.publishedDate.toISOString().slice(0, 10)}`,
+      `  ${label.published[locale]}: ${post.data.publishedDate.toISOString().slice(0, 10)}`,
     ];
   });
 

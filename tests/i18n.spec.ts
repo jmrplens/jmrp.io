@@ -509,6 +509,42 @@ test.describe("i18n: BreadcrumbList", () => {
 });
 
 // ---------------------------------------------------------------------------
+// Markdown twins: Spanish body labels (production audit 2026-09-27, N6/N10)
+// ---------------------------------------------------------------------------
+
+test.describe("i18n: Spanish markdown twins", () => {
+  // Only the document header keeps English keys (a shared, machine-readable
+  // schema: `documentHeader` in src/utils/llms.ts). Everything after the
+  // first `## ` heading is body, and a body label is localized.
+  const ENGLISH_LABEL =
+    /^\s*(?:- )?(?:Hosted|Published|Updated|Language|Status|License|Stars|Version|Downloads|Topics|Repository|Documentation|Abstract|Live traffic):/m;
+  for (const path of [
+    "/es/index.md",
+    "/es/about/index.md",
+    "/es/feeds/index.md",
+    "/es/projects/index.md",
+    "/es/projects/contributions/index.md",
+    "/es/homelab/index.md",
+    "/es/publications/index.md",
+    "/es/blog/series/nginx-hardening/index.md",
+  ]) {
+    test(`no English body label in ${path}`, async ({ page }) => {
+      const response = await page.request.get(path);
+      expect(response.status(), path).toBe(200);
+      const text = await response.text();
+      const body = text.slice(Math.max(0, text.indexOf("\n## ")));
+      expect(body, path).not.toMatch(ENGLISH_LABEL);
+    });
+  }
+
+  test("percentages use the Spanish decimal comma", async ({ page }) => {
+    const text = await (await page.request.get("/es/projects/index.md")).text();
+    expect(text).toMatch(/\d,\d%/);
+    expect(text).not.toMatch(/\d\.\d%/);
+  });
+});
+
+// ---------------------------------------------------------------------------
 // Manifest per locale
 // ---------------------------------------------------------------------------
 

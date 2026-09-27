@@ -25,16 +25,16 @@
 export const PROJECT_ROSTER = "{{project-roster}}";
 
 /**
- * The snapshot date printed in the static "contributions" sentence below.
- * llms-full.txt is a corpus digest, never live tokens (`PRJ_*` is forbidden
- * here — `check-projects-ssr.mjs`), so this is a HAND-MAINTAINED date: bump
- * it only when the underlying figures at /projects/contributions/ change
- * materially, not on every data refresh. A mechanical pass must not touch
- * this string without also reviewing it (see CLAUDE.md "Dates are computed,
- * not remembered" — this sentence is the one deliberate exception, and
- * `Content-Bump: skip` still applies to the surrounding prose).
+ * Stands for the date of the contributions snapshot inside a
+ * {@link PROFILE_SECTIONS} line; `buildProfileSections` substitutes the
+ * dataset's `asOf`, formatted per locale exactly as the subpage prints it
+ * ("Snapshot as of ..."). It was a hand-maintained constant, and it fell a
+ * day behind the page on the first daily rebuild (production audit
+ * 2026-09-27, N5). llms-full.txt is still a build-time digest, never live
+ * tokens (`PRJ_*` is forbidden here, `check-projects-ssr.mjs`): the date
+ * moves with each rebuild because the dataset does.
  */
-const CONTRIBUTIONS_SNAPSHOT_NOTE_DATE = "2026-09-26";
+export const CONTRIBUTIONS_DATE = "{{contributions-date}}";
 
 /**
  * Stands for the absolute, localized URL of /projects/contributions/ inside
@@ -108,7 +108,7 @@ export const PROFILE_SECTIONS: {
       lines: [
         "Open-source software authored and maintained by the author, each entry listing language, license, source repository and documentation site.",
         PROJECT_ROSTER,
-        `As of ${CONTRIBUTIONS_SNAPSHOT_NOTE_DATE}, the page also names code and documentation the author contributed to projects he does not maintain on GitHub and GitLab: merged pull and merge requests, accepted GitHub Discussions answers, and packaging that lists his own tools in public registries. The full ledger, grouped by project, is at ${CONTRIBUTIONS_URL}.`,
+        `As of ${CONTRIBUTIONS_DATE}, the page also names code and documentation the author contributed to projects he does not maintain on GitHub and GitLab: merged pull and merge requests, accepted GitHub Discussions answers, and packaging that lists his own tools in public registries. The full ledger, grouped by project, is at ${CONTRIBUTIONS_URL}.`,
       ],
     },
     es: {
@@ -116,7 +116,7 @@ export const PROFILE_SECTIONS: {
       lines: [
         "Software de código abierto escrito y mantenido por el autor; cada entrada indica lenguaje, licencia, repositorio de código y sitio de documentación.",
         PROJECT_ROSTER,
-        `A fecha de ${CONTRIBUTIONS_SNAPSHOT_NOTE_DATE}, la página también recoge código y documentación que el autor ha aportado a proyectos que no mantiene en GitHub y GitLab: pull requests y merge requests fusionadas, respuestas aceptadas en GitHub Discussions y empaquetado que lista sus propias herramientas en registros públicos. El libro completo, agrupado por proyecto, está en ${CONTRIBUTIONS_URL}.`,
+        `A fecha de ${CONTRIBUTIONS_DATE}, la página también recoge código y documentación que el autor ha aportado a proyectos que no mantiene en GitHub y GitLab: pull requests y merge requests fusionadas, respuestas aceptadas en GitHub Discussions y empaquetado que lista sus propias herramientas en registros públicos. El libro completo, agrupado por proyecto, está en ${CONTRIBUTIONS_URL}.`,
       ],
     },
   },
@@ -125,13 +125,13 @@ export const PROFILE_SECTIONS: {
     en: {
       title: "Open-source contributions",
       lines: [
-        `A build-time snapshot (${CONTRIBUTIONS_SNAPSHOT_NOTE_DATE}) of the author's work on GitHub and GitLab projects he does not maintain: code and documentation pull and merge requests grouped by project, the issues he reported, pull requests that list his own tools in package managers, registries and curated lists, accepted GitHub Discussions answers, and achievements on GitHub and GitLab. The figures come from the author's own GitHub collector (ghchronicle) and the GitLab API, and each item links to its pull request, merge request or thread. Full page: ${CONTRIBUTIONS_URL}`,
+        `A build-time snapshot (${CONTRIBUTIONS_DATE}) of the author's work on GitHub and GitLab projects he does not maintain: code and documentation pull and merge requests grouped by project, the issues he reported, pull requests that list his own tools in package managers, registries and curated lists, accepted GitHub Discussions answers, and achievements on GitHub and GitLab. The figures come from the author's own GitHub collector (ghchronicle) and the GitLab API, and each item links to its pull request, merge request or thread. Full page: ${CONTRIBUTIONS_URL}`,
       ],
     },
     es: {
       title: "Aportaciones open source",
       lines: [
-        `Instantánea del build (${CONTRIBUTIONS_SNAPSHOT_NOTE_DATE}) del trabajo del autor en proyectos de GitHub y GitLab que no mantiene: pull requests y merge requests de código y documentación agrupadas por proyecto, las issues que ha reportado, pull requests que publican sus propias herramientas en gestores de paquetes, registros y listas curadas, respuestas aceptadas en GitHub Discussions y logros en GitHub y GitLab. Las cifras salen del recolector de GitHub del propio autor (ghchronicle) y de la API de GitLab, y cada elemento enlaza a su pull request, merge request o hilo. Página completa: ${CONTRIBUTIONS_URL}`,
+        `Instantánea del build (${CONTRIBUTIONS_DATE}) del trabajo del autor en proyectos de GitHub y GitLab que no mantiene: pull requests y merge requests de código y documentación agrupadas por proyecto, las issues que ha reportado, pull requests que publican sus propias herramientas en gestores de paquetes, registros y listas curadas, respuestas aceptadas en GitHub Discussions y logros en GitHub y GitLab. Las cifras salen del recolector de GitHub del propio autor (ghchronicle) y de la API de GitLab, y cada elemento enlaza a su pull request, merge request o hilo. Página completa: ${CONTRIBUTIONS_URL}`,
       ],
     },
   },

@@ -54,8 +54,10 @@ import {
   getFreshness,
   getFullLedger,
   getLastOwnerCommit,
+  getLatestRelease,
   getMaintenanceActiveDays,
   getRepoHygiene,
+  getStars,
   getUpstreamLandedCommits,
   getUpstreamRepos,
 } from "./queries.mjs";
@@ -322,6 +324,8 @@ export async function collectDataset(
     ciPassRate,
     codeQl,
     hygiene,
+    cardStars,
+    cardReleases,
   ] = await runWithConcurrency(
     [
       () => getContributionTotals(config),
@@ -342,6 +346,8 @@ export async function collectDataset(
       () => getCiPassRate(config, MAINTENANCE_REPOS),
       () => getCodeQlCoverage(config, MAINTENANCE_REPOS),
       () => getRepoHygiene(config, MAINTENANCE_REPOS),
+      () => getStars(config, ACTIVE_REPOS),
+      () => getLatestRelease(config, ACTIVE_REPOS),
     ],
     QUERY_CONCURRENCY,
   );
@@ -489,10 +495,42 @@ export async function collectDataset(
       docsPublished:
         docsPublished.find((r) => r.fullName === `${OWNER}/${repo}`) ?? null,
     })),
+    cardFacts: shapeCardFacts(ACTIVE_REPOS, cardStars, cardReleases),
     // The raw GitLab.com part, kept whole so a build that cannot reach
     // GitLab.com falls back to exactly this part of the committed fixture.
     gitlab,
   };
+}
+
+/**
+ * The build-time view of each active card's live rows: the same InfluxDB
+ * queries `write-summary.mjs` turns into the `PRJ_*` tokens, read once at
+ * build. The HTML card hides a row with a `*_CLASS` token at serve time; the
+ * markdown twin has no CSS, so it prints a row only when these facts say the
+ * card shows it (production audit 2026-09-27, N7): no stable release means
+ * no version row, zero stars no stars row, a zero 30-day gain no suffix.
+ * Pure.
+ *
+ * @param {readonly string[]} repos - Active roster repos, in roster order.
+ * @param {readonly {repo: string, stars: number, stars30d: number}[]} stars - {@link getStars} rows.
+ * @param {readonly {repo: string, tag: string}[]} releases - {@link getLatestRelease} rows.
+ * @returns {Record<string, {stars: number, stars30d: number, releaseTag: string | null}>}
+ *   Facts per repo; a repo the star query did not return counts as 0 stars.
+ */
+export function shapeCardFacts(repos, stars, releases) {
+  return Object.fromEntries(
+    repos.map((repo) => {
+      const star = stars.find((row) => row.repo === repo);
+      return [
+        repo,
+        {
+          stars: star?.stars ?? 0,
+          stars30d: star?.stars30d ?? 0,
+          releaseTag: releases.find((row) => row.repo === repo)?.tag ?? null,
+        },
+      ];
+    }),
+  );
 }
 
 /**

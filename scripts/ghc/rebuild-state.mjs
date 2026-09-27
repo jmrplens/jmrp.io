@@ -27,6 +27,10 @@
  *   EXACTLY as `formatCompactStars` prints it (38012 and 38044 are both
  *   "38k") and the month of the latest merge (the strip shows month and
  *   year).
+ * - `cardRows`: which live rows each /projects/ card's markdown twin prints
+ *   (`cardFacts`: stars above 0, a 30-day gain above 0, a stable release),
+ *   as booleans, never the figures themselves: the twin decides those rows
+ *   at build time, so a flip has to rebuild it.
  * - `summary`: the figures of the subpage intro and tiles: PRs merged, open
  *   and closed, issues open and closed, repositories, code/docs merged and
  *   open, listing merged, accepted answers.
@@ -211,6 +215,16 @@ export function projectDisplay(dataset) {
     ledger: projectLedger(dataset.ledgerByYear),
     listingsByOwnProject: dataset.listingsByOwnProject ?? {},
     issuesByProject: dataset.issuesByProject ?? {},
+    cardRows: Object.fromEntries(
+      Object.entries(dataset.cardFacts ?? {}).map(([repo, facts]) => [
+        repo,
+        {
+          stars: (facts?.stars ?? 0) > 0,
+          gain: (facts?.stars30d ?? 0) > 0,
+          release: Boolean(facts?.releaseTag),
+        },
+      ]),
+    ),
     achievements: (dataset.achievements ?? []).map((row) => ({
       platform: row.platform ?? "github",
       achievement: row.achievement,

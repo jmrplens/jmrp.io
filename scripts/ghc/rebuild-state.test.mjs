@@ -162,6 +162,10 @@ function makeDataset() {
         ciPassRate90d: { ok: 533, ko: 17, pct: 96.9 },
       },
     ],
+    cardFacts: {
+      ghchronicle: { stars: 0, stars30d: 0, releaseTag: "v2.5.1" },
+      "portainer-mcp": { stars: 3, stars30d: 1, releaseTag: null },
+    },
     gitlab: { fetchedAt: "2026-09-26T20:35:39.324Z", items: [] },
   };
 }
@@ -214,6 +218,10 @@ test("volatile fields do not change the hash", () => {
     },
     (d) => (d.dependabot.total = 97),
     (d) => (d.gitlab.fetchedAt = "2026-09-27T00:00:00Z"),
+    // The twin prints the live tokens; only whether a row shows is built in.
+    (d) => (d.cardFacts["portainer-mcp"].stars = 4),
+    (d) => (d.cardFacts["portainer-mcp"].stars30d = 2),
+    (d) => (d.cardFacts.ghchronicle.releaseTag = "v2.6.0"),
     (d) => (d.acceptedAnswers[0].title = "Edited question"),
     (d) => (d.contributedTo[0].stars = 38_044),
     (d) => (d.contributedTo[0].merged = 2),
@@ -270,6 +278,10 @@ test("displayed changes do change the hash", () => {
     (d) => (d.summary.contributionTotals.prMerged = 60),
     (d) => (d.summary.answersCount = 3),
     (d) => (d.highlights[0].why.en = "New reason"),
+    // A card row appearing or disappearing in the markdown twin (N7).
+    (d) => (d.cardFacts.ghchronicle.stars = 1),
+    (d) => (d.cardFacts["portainer-mcp"].stars30d = 0),
+    (d) => (d.cardFacts["portainer-mcp"].releaseTag = "v0.1.0"),
   ];
   for (const mutate of displayed) {
     assert.notEqual(hashAfter(mutate), BASE, mutate.toString());
