@@ -261,6 +261,25 @@ export function createLastmodResolver(): (
 
   // Static pages, each keyed to whatever file actually holds its content.
   const staticSources: Record<string, string[]> = {
+    // The home's own content, folded with the newest post and tool below.
+    // Dated by those two alone, the page kept 2026-09-22 after #527 replaced
+    // its featured projects and added the contributions line (twin audit
+    // 2026-09-27, W9). The featured list is `featured_projects` in site.yaml,
+    // each card's copy comes from projects.yaml through featured-projects.ts,
+    // the markdown twin is assembled from home-facts.ts, and the hero, bio
+    // and every label are translation strings: same over-reporting tradeoff
+    // as /about/ and /homelab/.
+    "/": [
+      "src/pages/index.astro",
+      "src/pages/es/index.astro",
+      "src/components/pages/HomePage.astro",
+      "src/utils/featured-projects.ts",
+      "src/utils/llms/home-facts.ts",
+      "src/content/site_config/site.yaml",
+      "src/content/profile/projects.yaml",
+      "src/i18n/translations/en/common.ts",
+      "src/i18n/translations/es/common.ts",
+    ],
     // The YAML holds the structured facts; the editorial policy, the bio and
     // every heading are strings in the translation bundles. Keyed to the YAML
     // alone, the page rewrote its own correction policy (this change) without
@@ -351,9 +370,11 @@ export function createLastmodResolver(): (
   return (rawPath, locale) => {
     const path = rawPath === "" ? "/" : rawPath;
 
-    // Home: the newest thing it surfaces. It is a shop window onto the posts,
-    // so it genuinely changes when they do.
-    if (path === "/") return newest(newestPost, newestTool);
+    // Home: the newest thing it surfaces or holds. It is a shop window onto
+    // the posts and tools, so it changes when they do, and it also changes
+    // when its own sources do (the entry in `staticSources` above).
+    if (path === "/")
+      return newest(staticDates.get(path), newestPost, newestTool);
 
     // `[^/]+` also matches the section roots `/blog/series/` and `/blog/tags/`,
     // which are not post slugs — without this guard they resolved to
