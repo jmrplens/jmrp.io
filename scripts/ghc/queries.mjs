@@ -368,6 +368,14 @@ export async function getFullLedger(config) {
  * CORRECTED query from `datos.md` section 3: group by `url` too, so
  * `answer_url` is the one row's own URL.
  *
+ * The accepted answer is `answers = 1`, not the `is_answer` tag: ghchronicle
+ * 2.6.1 stopped writing that tag (a maintainer accepts an answer days after
+ * the comment, so it could not be part of the row's identity) and the
+ * `answers` field, 1 for the accepted answer and 0 otherwise, was always on
+ * every row. Measured 2026-09-28, the InfluxDB table holds one row per
+ * comment and no `is_answer` column at all, so a query naming it is a schema
+ * error, and that cost one build its live dataset.
+ *
  * @param {import('./influx.mjs').InfluxConfig} config - Connection settings.
  * @returns {Promise<{
  *   fullName: string, number: number, title: string,
@@ -379,7 +387,7 @@ export async function getAcceptedAnswers(config) {
       url AS answer_url, max(time) AS answered_at
     FROM gh_discussion_comment
     WHERE time >= now() - INTERVAL '3650 days'
-      AND own = 'false' AND is_answer = 'true' AND answered_by = 'jmrplens'
+      AND own = 'false' AND answers = 1 AND answered_by = 'jmrplens'
       AND coalesce(private, false) = false
     GROUP BY full_name, number, url
     ORDER BY answered_at DESC`;
