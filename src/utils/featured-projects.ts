@@ -25,8 +25,10 @@ import { getProjects } from "@utils/projects";
 
 /** One featured card, already localized. */
 export interface FeaturedProjectCard {
-  /** GitHub repository name, also the card title. */
+  /** GitHub repository name, shown under the title when it differs. */
   readonly id: string;
+  /** Display name from `projects.yaml` (the one /projects/ prints). */
+  readonly name: string;
   /** Repository page the card links to. */
   readonly url: string;
   /** Curated language from `projects.yaml` (the one /projects/ prints). */
@@ -67,6 +69,7 @@ export async function featuredProjectCards(
     return [
       {
         id,
+        name: project?.name ?? id,
         url:
           repo?.html_url ??
           project?.repo ??

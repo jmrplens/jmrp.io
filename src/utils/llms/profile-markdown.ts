@@ -322,7 +322,7 @@ function isActiveRepoId(id: string): id is (typeof ACTIVE_REPOS)[number] {
  *
  * Without live tokens the build-time star count is printed, and omitted
  * rather than printed as `0`, the rule `whoamiFactLines` already applies to
- * `repos.public`: a repository the fetch could not reach and one with no
+ * `repos.own`: a repository the fetch could not reach and one with no
  * stars are indistinguishable here.
  *
  * @param id - The project id.

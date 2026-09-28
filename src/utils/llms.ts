@@ -21,7 +21,6 @@ import {
   featuredProjectCards,
   upstreamSummary,
 } from "@utils/featured-projects";
-import { githubProfile } from "@utils/github-facts";
 import { stripToText } from "@utils/html";
 import { featuredProjectLines, whoamiFactLines } from "@utils/llms/home-facts";
 import { registry } from "@utils/llms/mdx/registry";
@@ -56,6 +55,7 @@ import {
 } from "@utils/publications";
 import { SERIES } from "@utils/series";
 import { buildSameAs } from "@utils/site";
+import { getSiteFacts } from "@utils/site-facts";
 import { getToolsForLocale } from "@utils/tools";
 import type { CollectionEntry } from "astro:content";
 import { getCollection, getEntry } from "astro:content";
@@ -1744,27 +1744,16 @@ export async function generateHomeMarkdown(
   );
   // The build-time line under the cards, same function the page calls.
   const upstream = upstreamSummary(locale);
-  // The rest of the hero's `~/whoami` card. `Status:` and `Role:` were
-  // already published in the header; these five are the same card's other
-  // rows, and they were every entity figure the twin dropped (audit #6, A5):
-  // the download total, the public-repo count and the date of the last post.
-  //
-  // `last.post` is the newest publication date in the corpus, which is how
-  // the page picks it — NOT the last element of the list above, which is
-  // ordered by numeric slug and would diverge the day a post is published
-  // out of order.
-  const lastPostDate = allPosts
-    .map((post) => post.data.publishedDate)
-    .toSorted((a, b) => b.valueOf() - a.valueOf())
-    .at(0);
+  // The rest of the hero's `~/whoami` card, the same accessors the page
+  // uses: focus and base from site.yaml, the download total, and the
+  // public repositories of the author's own (forks left out).
   const whoami = whoamiFactLines({
     focusLabel: label.focus[locale],
     focus: siteData.terminal?.focus,
     baseLabel: label.base[locale],
     base: siteData.terminal?.base,
     downloadsTotal: downloadsData.total,
-    publicRepos: (await githubProfile()).public_repos,
-    lastPostDate: lastPostDate?.toISOString().slice(0, 10),
+    ownRepos: (await getSiteFacts()).ownRepos,
   });
 
   return [

@@ -1,16 +1,17 @@
 ---
 /**
- * NavDrawer — the mobile "terminal" navigation drawer (Lab system).
+ * NavDrawer: the mobile navigation drawer.
  *
- * Zero-JS base (`.term-static`): the `tree -L 1` section list as REAL Astro
- * links + `<details>` command fallbacks — fully usable with no JavaScript.
+ * A plain menu in the site's own style: every section as a real link, with
+ * its sub-sections (Blog → Series, Projects → Contributions) listed under it,
+ * a smaller group of secondary pages, and the language, theme and GitHub
+ * controls in the footer. No JavaScript of its own: it opens and closes
+ * through the `#nav-open` checkbox in Header.astro, whose script adds the
+ * focus trap, scroll lock and Esc handling on top.
  *
- * JS enhancement (`.term-live` + `.term-io`, activated by `html.js-term`): an
- * editable terminal. The static tree is hidden and an input line + live output
- * + dynamic suggestion chips take over. Typing/deleting does nothing; Enter
- * executes and REPLACES the output; ↑/↓ walk the command history. All the data
- * (sections, posts, tools, tags, socials, identity, i18n) is serialized once at
- * build time into a non-executable JSON island; the engine below reads it.
+ * It replaced a simulated terminal (`tree -L 1` plus a typed command line)
+ * that read as a gimmick next to the rest of the site (author's decision,
+ * 2026-09-28).
  */
 import LanguageSwitcher from "@components/layout/LanguageSwitcher.astro";
 import Logo from "@components/layout/Logo.astro";
@@ -22,14 +23,6 @@ import {
   useTranslatedPath,
   useTranslations,
 } from "@i18n/utils";
-import {
-  formatDateDot,
-  getPostsForLocale,
-  getUniqueTags,
-  tagUrlSegment,
-} from "@utils/blog";
-import { safeJsonLd } from "@utils/html";
-import { getToolsForLocale } from "@utils/tools";
 import { getEntry } from "astro:content";
 
 const locale = (Astro.currentLocale ?? defaultLocale) as Locale;
@@ -37,14 +30,14 @@ const t = useTranslations(locale);
 const translatePath = useTranslatedPath(locale);
 
 const cleanPath = stripLocalePrefix(Astro.url.pathname);
-const currentSegment = cleanPath.split("/").find(Boolean) ?? "";
+const withSlash = cleanPath.endsWith("/") ? cleanPath : `${cleanPath}/`;
 
 const siteEntry = await getEntry("site_config", "site");
 const siteData = siteEntry?.data;
 const navItems =
   (siteData && "nav" in siteData ? siteData.nav : undefined) ?? [];
 
-/** Map each nav href to its i18n label key (mirrors Header). */
+/** Each nav href's label key (mirrors Header). */
 const navLabelKeyMap: Record<string, TranslationKey> = {
   "/": "nav.home",
   "/blog/": "nav.blog",
@@ -55,168 +48,76 @@ const navLabelKeyMap: Record<string, TranslationKey> = {
   "/projects/": "nav.projects",
 };
 
-// Section icon per nav segment (UnoCSS mdi classes — kept as literals here so
-// UnoCSS's extractor picks them up for both the static tree and the JS terminal).
+// Icons as literals so UnoCSS's extractor sees every class.
 const navIconMap: Record<string, string> = {
-  "": "i-mdi:home-outline",
-  blog: "i-mdi:note-text-outline",
-  homelab: "i-mdi:server-outline",
-  tools: "i-mdi:wrench-outline",
-  cv: "i-mdi:card-account-details-outline",
-  publications: "i-mdi:book-open-page-variant-outline",
+  "/": "i-mdi:home-outline",
+  "/blog/": "i-mdi:note-text-outline",
+  "/homelab/": "i-mdi:server-outline",
+  "/tools/": "i-mdi:wrench-outline",
+  "/cv/": "i-mdi:card-account-details-outline",
+  "/publications/": "i-mdi:book-open-page-variant-outline",
+  "/projects/": "i-mdi:source-branch",
 };
 
-// `tree -L 1` rows: section path + label, current one flagged.
-const treeRows = navItems.map((item, i) => {
-  const seg = stripLocalePrefix(item.href).split("/").find(Boolean) ?? "";
+/** Sub-sections shown under their parent section. */
+const subItemsMap: Record<string, { href: string; key: TranslationKey }[]> = {
+  "/blog/": [{ href: "/blog/series/", key: "menu.series" }],
+  "/projects/": [
+    { href: "/projects/contributions/", key: "menu.contributions" },
+  ],
+};
+
+/** Whether `href` is the current page, or (for a section) contains it. */
+const isCurrent = (href: string) => withSlash === href;
+const isWithin = (href: string) =>
+  href === "/" ? withSlash === "/" : withSlash.startsWith(href);
+
+const sections = navItems.map((item) => {
   const labelKey = navLabelKeyMap[item.href];
+  const subs = (subItemsMap[item.href] ?? []).map((sub) => ({
+    href: translatePath(sub.href),
+    label: t(sub.key),
+    current: isWithin(sub.href),
+  }));
+  const subCurrent = subs.some((sub) => sub.current);
   return {
     href: translatePath(item.href),
-    seg,
-    path: seg ? `~/${seg}` : "~",
     label: labelKey ? t(labelKey) : item.label,
-    icon: navIconMap[seg] ?? "i-mdi:folder-outline",
-    current: seg === currentSegment,
-    glyph: i === navItems.length - 1 ? "└──" : "├──",
+    icon: navIconMap[item.href] ?? "i-mdi:folder-outline",
+    // The section link is the current page only when no sub-section is.
+    current: subCurrent ? false : isWithin(item.href),
+    ancestor: subCurrent,
+    subs,
   };
 });
 
-// Build-time data.
-const posts = (await getPostsForLocale(locale)).map((e) => e.post);
-const postData = posts.map((p) => ({
-  title: p.data.title,
-  href: translatePath(`/blog/${p.data.slug}/`),
-  date: formatDateDot(p.data.publishedDate),
-  tags: p.data.tags ?? [],
-}));
-const toolData = (await getToolsForLocale(locale)).map((e) => ({
-  title: e.tool.data.title,
-  href: translatePath(`/tools/${e.tool.data.slug}/`),
-  category: e.tool.data.category,
-}));
-const allTags = getUniqueTags(posts).map(({ tag, count }) => ({
-  tag,
-  count,
-  href: translatePath(`/blog/tags/${tagUrlSegment(tag)}/`),
-}));
-
-// Identity / social for whoami · neofetch · social (no current employer).
-const person = siteData && "person" in siteData ? siteData.person : undefined;
+/**
+ * The social profiles worth a tap from a phone: code (GitHub, GitLab), work
+ * (LinkedIn) and the two social networks the author posts on. The rest of
+ * the footer's list (Matrix, Keyoxide, Codeberg) stays in the page footer.
+ */
+const DRAWER_SOCIALS = ["GitHub", "GitLab", "LinkedIn", "Mastodon", "Bluesky"];
 const socialLinks =
   (siteData && "social_links" in siteData
     ? siteData.social_links
     : undefined) ?? [];
-const socialsEntry = await getEntry("site_config", "socials");
-const scholarId =
-  socialsEntry?.data && "scholar_userid" in socialsEntry.data
-    ? socialsEntry.data.scholar_userid
-    : undefined;
-const orcidId =
-  socialsEntry?.data && "orcid_id" in socialsEntry.data
-    ? socialsEntry.data.orcid_id
-    : undefined;
-const social = [
-  ...socialLinks
-    .filter((s) => s.drawer !== false)
-    .map((s) => ({ name: s.name, url: s.url })),
-  ...(orcidId ? [{ name: "ORCID", url: `https://orcid.org/${orcidId}` }] : []),
-  ...(scholarId
-    ? [
-        {
-          name: "Google Scholar",
-          url: `https://scholar.google.com/citations?user=${scholarId}`,
-        },
-      ]
-    : []),
+const socials = DRAWER_SOCIALS.map((name) =>
+  socialLinks.find((link) => link.name === name),
+).filter((link) => link !== undefined);
+
+/** Secondary pages: smaller, in one group at the bottom. */
+const morePages: { href: string; key: TranslationKey }[] = [
+  { href: "/about/", key: "nav.about" },
+  { href: "/uses/", key: "nav.uses" },
+  { href: "/feeds/", key: "menu.feeds" },
+  { href: "/privacy/", key: "nav.privacy" },
+  { href: "/license/", key: "nav.license" },
 ];
-const identity = {
-  handle: "jmrp",
-  name: person?.name ?? "José Manuel Requena Plens",
-  role: person?.jobTitle ?? "R&D Engineer",
-  location: t("terminal.location"),
-  stack: (person?.knowsAbout ?? []).slice(0, 6),
-};
-
-// Serialized payload for the engine (data + the i18n it needs).
-const termData = {
-  sections: treeRows.map((r) => ({
-    seg: r.seg,
-    path: r.path,
-    label: r.label,
-    href: r.href,
-    icon: r.icon,
-    current: r.current,
-  })),
-  posts: postData,
-  tools: toolData,
-  tags: allTags,
-  social,
-  identity,
-  langPaths: { en: cleanPath, es: `/es${cleanPath}` },
-  // Nedry easter-egg assets — static files, fetched on demand only when a
-  // blocked command runs (never shipped inline on every page).
-  nedry: {
-    body: "/nedry/nedry-body.png",
-    head: "/nedry/nedry-head.png",
-    hand: "/nedry/nedry-hand.png",
-    audio: "/nedry/nedry-audio.mp3",
-  },
-  i18n: {
-    youAreHere: t("menu.youAreHere"),
-    nedryDenied: t("terminal.nedryDenied"),
-    nedrySound: t("terminal.nedrySound"),
-    nedryBack: t("terminal.nedryBack"),
-    nedryAria: t("terminal.nedryAria"),
-    nedryMessage: t("pages.notFound.message"),
-    notFound: t("terminal.notFound"),
-    typeHelp: t("terminal.typeHelp"),
-    emptyDir: t("terminal.emptyDir"),
-    noResults: t("terminal.noResults"),
-    blocked: t("terminal.blocked"),
-    usage: t("terminal.usage"),
-    resetHome: t("terminal.resetHome"),
-    // The terminal builds external links in the browser, so the notice has to
-    // travel with the data: `t()` does not exist there.
-    opensNewTab: t("aria.opensNewTab", { text: "{label}" }),
-    groups: {
-      nav: t("terminal.groupNav"),
-      discover: t("terminal.groupDiscover"),
-      identity: t("terminal.groupIdentity"),
-      system: t("terminal.groupSystem"),
-    },
-    labels: {
-      role: t("terminal.labelRole"),
-      base: t("terminal.labelBase"),
-      stack: t("terminal.labelStack"),
-      posts: t("terminal.labelPosts"),
-      tags: t("terminal.labelTags"),
-    },
-    desc: {
-      help: t("terminal.desc.help"),
-      tree: t("terminal.desc.tree"),
-      ls: t("terminal.desc.ls"),
-      cd: t("terminal.desc.cd"),
-      pwd: t("terminal.desc.pwd"),
-      find: t("terminal.desc.find"),
-      recent: t("terminal.desc.recent"),
-      tags: t("terminal.desc.tags"),
-      sitemap: t("terminal.desc.sitemap"),
-      whoami: t("terminal.desc.whoami"),
-      neofetch: t("terminal.desc.neofetch"),
-      social: t("terminal.desc.social"),
-      history: t("terminal.desc.history"),
-      man: t("terminal.desc.man"),
-      open: t("terminal.desc.open"),
-      theme: t("terminal.desc.theme"),
-      lang: t("terminal.desc.lang"),
-      clear: t("terminal.desc.clear"),
-      exit: t("terminal.desc.exit"),
-    },
-  },
-};
-
-const staticTags = allTags.slice(0, 14);
-const staticRecent = postData.slice(0, 6);
+const more = morePages.map((page) => ({
+  href: translatePath(page.href),
+  label: t(page.key),
+  current: isCurrent(page.href),
+}));
 ---
 
 <div
@@ -249,11 +150,9 @@ const staticRecent = postData.slice(0, 6);
     </label>
     {/* JS twin of the close label: a label is not focusable, so once the
          enhancement script's focus trap is active a keyboard user could only
-         close via Esc. The script (Header.astro) swaps the label for this
-         real <button> (focusable, native Enter/Space; clicking it unchecks
-         #nav-open through the same close() flow). Hidden without JS on
-         purpose — there is no trap then, the checkbox stays reachable, and a
-         dead button would be worse than none. */}
+         close via Esc. Header.astro swaps the label for this real <button>.
+         Hidden without JS on purpose: there is no trap then, and a dead
+         button would be worse than none. */}
     <button
       type="button"
       class="drawer__close drawer__close--js"
@@ -267,152 +166,95 @@ const staticRecent = postData.slice(0, 6);
     </button>
   </div>
 
-  {/* --- JS terminal input, kept at the TOP so the on-screen keyboard never
-     covers where you type. Suggestions appear inline only while typing. --- */}
-  <div class="term-io-top">
-    <div class="term-input-line">
-      <span
-        class="term-prompt"
-        aria-hidden="true"
-      >
-        jmrp@home:<span id="term-cwd">~</span>$
-      </span>
-      <input
-        id="term-input"
-        class="term-input"
-        type="text"
-        aria-label={t("terminal.inputLabel")}
-        placeholder={t("terminal.inputPlaceholder")}
-        autocomplete="off"
-        autocapitalize="off"
-        autocorrect="off"
-        spellcheck="false"
-      />
-    </div>
-    <div
-      id="term-suggest"
-      class="term-suggest"
-      hidden
-    ></div>
-  </div>
-
   <div class="drawer__body">
-    {/* --- Zero-JS base: tree + command fallbacks --- */}
-    <div class="term-static">
-      <p class="term-line">
-        <span
-          class="term-line__prompt"
-          aria-hidden="true"
-        >
-          jmrp@home:~$
-        </span>{" "}
-        tree -L 1
-      </p>
-      <ul class="tree">
-        {treeRows.map((row) => (
-          <li>
+    <nav
+      class="menu"
+      aria-label={t("menu.sectionsLabel")}
+    >
+      <ul class="menu__list">
+        {sections.map((section) => (
+          <li class="menu__item">
             <a
-              href={row.href}
-              class="tree__row"
-              aria-current={row.current ? "page" : undefined}
+              href={section.href}
+              class:list={[
+                "menu__link",
+                { "menu__link--ancestor": section.ancestor },
+              ]}
+              aria-current={section.current ? "page" : undefined}
             >
               <span
-                class="tree__glyph"
-                aria-hidden="true"
-              >
-                {row.glyph}
-              </span>
-              <span
-                class={`tree__icon ${row.icon}`}
+                class={`menu__icon ${section.icon}`}
                 aria-hidden="true"
               />
-              <span class="tree__label">{row.label}</span>
-              <span class="tree__path">{row.path}</span>
-              {row.current && (
-                <span class="tree__here">{t("menu.youAreHere")}</span>
-              )}
+              <span class="menu__label">{section.label}</span>
+            </a>
+            {section.subs.length > 0 && (
+              <ul class="menu__sub">
+                {section.subs.map((sub) => (
+                  <li>
+                    <a
+                      href={sub.href}
+                      class="menu__sub-link"
+                      aria-current={sub.current ? "page" : undefined}
+                    >
+                      {sub.label}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </li>
+        ))}
+      </ul>
+    </nav>
+  </div>
+
+  <div class="drawer__bottom">
+    <nav
+      class="more"
+      aria-label={t("menu.moreLabel")}
+    >
+      <p
+        class="more__title"
+        aria-hidden="true"
+      >
+        {t("menu.moreLabel")}
+      </p>
+      <ul class="more__list">
+        {more.map((page) => (
+          <li>
+            <a
+              href={page.href}
+              class="more__link"
+              aria-current={page.current ? "page" : undefined}
+            >
+              {page.label}
             </a>
           </li>
         ))}
       </ul>
-
-      <details class="cmd">
-        <summary class="cmd__summary">
-          <span
-            class="cmd__chevron i-mdi:menu-right"
-            aria-hidden="true"
-          ></span>
-          <span class="cmd__text">cd blog</span>
-          <span class="cmd__hint">{t("menu.recent")}</span>
-        </summary>
-        <ul class="cmd__list">
-          {staticRecent.map((p) => (
-            <li>
-              <a
-                href={p.href}
-                class="cmd__row"
-              >
-                <span class="cmd__path">~/blog</span>
-                <span class="cmd__rowlabel">{p.title}</span>
-                <span class="cmd__marker">{p.date}</span>
-              </a>
-            </li>
-          ))}
-        </ul>
-      </details>
-
-      <details class="cmd">
-        <summary class="cmd__summary">
-          <span
-            class="cmd__chevron i-mdi:menu-right"
-            aria-hidden="true"
-          ></span>
-          <span class="cmd__text">tags</span>
-          <span class="cmd__hint">{t("menu.tags")}</span>
-        </summary>
-        <ul class="cmd__list cmd__list--tags">
-          {staticTags.map((tg) => (
-            <li>
-              <a
-                href={tg.href}
-                class="cmd__tag"
-              >
-                #{tg.tag}
-                <span class="cmd__tag-count">{tg.count}</span>
-              </a>
-            </li>
-          ))}
-        </ul>
-      </details>
-    </div>
-
-    {/* --- JS live output --- */}
-    <div
-      id="term-output"
-      class="term-live"
-      role="region"
-      aria-live="polite"
-      aria-label={t("terminal.outputLabel")}
-    ></div>
-  </div>
-
-  {/* --- Hint at the very bottom: `help` reveals everything --- */}
-  <div class="term-io-bottom">
-    <div class="term-hint">
-      <span>
-        {t("terminal.hintType")}
-        <b>help</b> · <b>↑↓</b>
-        {t("terminal.hintHistory")}
-      </span>
-      <button
-        id="term-reset"
-        class="term-reset"
-        type="button"
-        hidden
-      >
-        {t("terminal.resetHome")}
-      </button>
-    </div>
+    </nav>
+    <ul
+      class="socials"
+      aria-label={t("menu.socialLabel")}
+    >
+      {socials.map((link) => (
+        <li>
+          <a
+            href={link.url}
+            class="socials__link"
+            target="_blank"
+            rel="external noopener noreferrer me"
+            aria-label={t("aria.opensNewTab", { text: link.name })}
+          >
+            <span
+              class={link.icon}
+              aria-hidden="true"
+            />
+          </a>
+        </li>
+      ))}
+    </ul>
   </div>
 
   <div class="drawer__foot">
@@ -426,645 +268,14 @@ const staticRecent = postData.slice(0, 6);
     <div class="drawer__foot-right">
       <LanguageSwitcher />
       <ThemeToggle id="theme-toggle-drawer" />
-      <a
-        href="https://github.com/jmrplens"
-        class="drawer__gh"
-        target="_blank"
-        rel="external noopener noreferrer"
-        aria-label={t("aria.opensNewTab", { text: "GitHub" })}
-      >
-        <span
-          class="i-fa-brands:github"
-          aria-hidden="true"
-        ></span>
-      </a>
     </div>
   </div>
-
-  {/* `is:inline` stated explicitly: Astro already treats a <script> with any
-      attribute as inline, and saying so silences the hint that warns the
-      directive is being applied implicitly. This is a data island, not code —
-      there is nothing here for Astro to process. */}
-  <script
-    is:inline
-    type="application/json"
-    id="nav-term-data"
-    set:html={safeJsonLd(termData)}
-  ></script>
 </div>
-
-<script is:inline>
-  (function () {
-    function initTerm() {
-      const drawer = document.getElementById("nav-drawer");
-      const dataEl = document.getElementById("nav-term-data");
-      if (!drawer || !dataEl || drawer.dataset.termReady) return;
-
-      let D;
-      try {
-        D = JSON.parse(dataEl.textContent);
-      } catch (e) {
-        return;
-      }
-      const output = document.getElementById("term-output");
-      const input = document.getElementById("term-input");
-      const suggest = document.getElementById("term-suggest");
-      const resetBtn = document.getElementById("term-reset");
-      const cwdEl = document.getElementById("term-cwd");
-      const checkbox = document.getElementById("nav-open");
-      if (!output || !input || !suggest) return;
-
-      drawer.dataset.termReady = "1";
-      document.documentElement.classList.add("js-term");
-
-      // Tear down any document-level listeners from a prior page (View
-      // Transitions replace the drawer element but `document` persists).
-      if (window.__navTermAbort) window.__navTermAbort.abort();
-      window.__navTermAbort = new AbortController();
-      const { signal } = window.__navTermAbort;
-
-      const T = D.i18n;
-      const BLOCKED = new Set([
-        "sudo",
-        "rm",
-        "chmod",
-        "chown",
-        "kill",
-        "mkfs",
-        "dd",
-        "reboot",
-        "shutdown",
-        "format",
-        "del",
-        "mv",
-        ":(){",
-      ]);
-      const SUGGEST_POOL = [
-        "help",
-        "ls",
-        "tree",
-        "cd blog",
-        "ls blog",
-        "cd tools",
-        "cd ..",
-        "pwd",
-        "find ",
-        "recent",
-        "tags",
-        "sitemap",
-        "whoami",
-        "neofetch",
-        "social",
-        "history",
-        "theme light",
-        "theme dark",
-        "lang en",
-        "lang es",
-        "open ~/blog",
-        "clear",
-        "exit",
-      ];
-
-      let cwd = "~";
-      let prev = "~";
-      const history = [];
-      let hIdx = 0;
-
-      const sectionBySeg = {};
-      D.sections.forEach((s) => {
-        sectionBySeg[s.seg] = s;
-      });
-
-      // --- DOM helpers ---
-      // No `null` literal anywhere in this script, on purpose: #498 replaced
-      // one and the `<page>/null` requests kept coming (32 in the next 24 h,
-      // all from Meta's crawler), because five more were left. The crawler
-      // mines URL-shaped tokens out of inline JavaScript, and a bare `null`
-      // is one. `undefined` minifies to `void 0`, which is not.
-      function el(tag, cls, text) {
-        const n = document.createElement(tag);
-        if (cls) n.className = cls;
-        if (text !== undefined) n.textContent = text;
-        return n;
-      }
-      function comment(text) {
-        return el("div", "term-comment", text);
-      }
-      function textRow(text) {
-        return el("div", "term-row", text);
-      }
-      function link(href, path, label, marker, glyph, icon) {
-        const a = el("a", "term-link");
-        a.href = href;
-        if (glyph) a.appendChild(el("span", "term-link__glyph", glyph));
-        if (icon) {
-          const ic = el("span", "term-link__icon " + icon);
-          ic.setAttribute("aria-hidden", "true");
-          a.appendChild(ic);
-        }
-        // Name (label) is the primary element; the path reads as a secondary tag.
-        if (label) a.appendChild(el("span", "term-link__label", label));
-        if (path) a.appendChild(el("span", "term-link__path", path));
-        if (marker) a.appendChild(el("span", "term-link__marker", marker));
-        a.addEventListener("click", closeDrawer);
-        return a;
-      }
-      function extLink(href, label) {
-        const a = el("a", "term-link");
-        a.href = href;
-        a.target = "_blank";
-        a.rel = "external noopener noreferrer";
-        // The name is built here rather than left to the text content: the
-        // glyph would otherwise be read out ("north east arrow GitHub"), and
-        // the link would not announce that it leaves the site.
-        a.setAttribute("aria-label", T.opensNewTab.replace("{label}", label));
-        const glyph = el("span", "term-link__glyph", "↗");
-        glyph.setAttribute("aria-hidden", "true");
-        a.appendChild(glyph);
-        a.appendChild(el("span", "term-link__label", label));
-        return a;
-      }
-      function setOutput(nodes) {
-        output.replaceChildren(...nodes);
-        output.scrollTop = 0;
-      }
-      function setCwd(next) {
-        cwd = next;
-        cwdEl.textContent = next;
-      }
-
-      // --- renderers ---
-      function rTree() {
-        const nodes = [comment("tree -L 1")];
-        const box = el("div", "term-tree");
-        D.sections.forEach((s, i) => {
-          const glyph = i === D.sections.length - 1 ? "└──" : "├──";
-          const a = link(s.href, s.path, s.label, "", glyph, s.icon);
-          if (s.current) {
-            a.classList.add("is-current");
-            // "you are here" drops to its own indented line under the row.
-            a.appendChild(el("span", "term-link__here", T.youAreHere));
-          }
-          box.appendChild(a);
-        });
-        nodes.push(box);
-        return nodes;
-      }
-      function rPostList(list, header) {
-        const nodes = [comment(header)];
-        if (list.length === 0) return [comment(T.emptyDir)];
-        list.forEach((p) =>
-          nodes.push(link(p.href, "~/blog", p.title, p.date, "·")),
-        );
-        return nodes;
-      }
-      function rToolList() {
-        const nodes = [comment("~/tools")];
-        D.tools.forEach((tl) =>
-          nodes.push(link(tl.href, "~/tools", tl.title, tl.category, "·")),
-        );
-        return nodes;
-      }
-      function rTags() {
-        const nodes = [comment("tags")];
-        const box = el("div", "term-chips");
-        D.tags.forEach((tg) => {
-          const a = el("a", "term-chip");
-          a.href = tg.href;
-          a.textContent = "#" + tg.tag;
-          a.appendChild(el("span", "term-chip__count", String(tg.count)));
-          a.addEventListener("click", closeDrawer);
-          box.appendChild(a);
-        });
-        nodes.push(box);
-        return nodes;
-      }
-      function rFind(q) {
-        const query = (q || "").toLowerCase().trim();
-        if (!query) return [comment(T.usage + ": find <text>")];
-        const hits = D.posts.filter(
-          (p) =>
-            p.title.toLowerCase().includes(query) ||
-            p.tags.join(" ").toLowerCase().includes(query),
-        );
-        const secHits = D.sections.filter((s) =>
-          s.label.toLowerCase().includes(query),
-        );
-        if (hits.length === 0 && secHits.length === 0)
-          return [comment(T.noResults + ' "' + query + '"')];
-        const nodes = [comment('find "' + query + '"')];
-        secHits.forEach((s) =>
-          nodes.push(link(s.href, s.path, s.label, "", "·")),
-        );
-        hits.forEach((p) =>
-          nodes.push(
-            link(
-              p.href,
-              "~/blog",
-              p.title,
-              p.tags[0] ? "#" + p.tags[0] : p.date,
-              "·",
-            ),
-          ),
-        );
-        return nodes;
-      }
-      function rSitemap() {
-        const nodes = [comment("sitemap")];
-        const box = el("div", "term-tree");
-        D.sections.forEach((s) => {
-          box.appendChild(link(s.href, s.path, s.label, "", "├──"));
-        });
-        D.posts.slice(0, 10).forEach((p) => {
-          box.appendChild(link(p.href, "", p.title, p.date, "   └─"));
-        });
-        nodes.push(box);
-        return nodes;
-      }
-      function rWhoami() {
-        const id = D.identity;
-        const parts = [id.handle, id.role, id.location].concat(id.stack);
-        return [comment("whoami"), textRow(parts.join(" · "))];
-      }
-      function rNeofetch() {
-        const id = D.identity;
-        const rows = [
-          [T.labels.role, id.role],
-          [T.labels.base, id.location],
-          [T.labels.stack, id.stack.join(", ")],
-          [T.labels.posts, String(D.posts.length)],
-          [T.labels.tags, String(D.tags.length)],
-        ];
-        const nodes = [comment(id.handle + "@home")];
-        rows.forEach(([k, v]) => {
-          const row = el("div", "term-kv");
-          row.appendChild(el("span", "term-kv__k", k));
-          row.appendChild(el("span", "term-kv__v", v));
-          nodes.push(row);
-        });
-        return nodes;
-      }
-      function rSocial() {
-        const nodes = [comment("social")];
-        D.social.forEach((s) => nodes.push(extLink(s.url, s.name)));
-        return nodes;
-      }
-      function rHelp() {
-        const groups = [
-          ["nav", ["help", "ls", "tree", "cd", "pwd"]],
-          ["discover", ["find", "recent", "tags", "sitemap"]],
-          ["identity", ["whoami", "neofetch", "social"]],
-          [
-            "system",
-            ["open", "theme", "lang", "history", "man", "clear", "exit"],
-          ],
-        ];
-        const nodes = [];
-        groups.forEach(([g, cmds]) => {
-          nodes.push(el("div", "term-help-group", "// " + T.groups[g]));
-          cmds.forEach((c) => {
-            const row = el("div", "term-help");
-            row.appendChild(el("span", "term-help__cmd", c));
-            row.appendChild(el("span", "term-help__desc", T.desc[c]));
-            nodes.push(row);
-          });
-        });
-        return nodes;
-      }
-      function rMan(arg) {
-        const c = (arg || "").trim();
-        if (!c || !Object.hasOwn(T.desc, c))
-          return [comment(T.usage + ": man <command>")];
-        return [comment("man " + c), textRow(c + " — " + T.desc[c])];
-      }
-      function rHistory() {
-        if (history.length === 0) return [comment(T.emptyDir)];
-        return [comment("history")].concat(
-          history.map((h, i) => textRow(i + 1 + "  " + h)),
-        );
-      }
-      function notFound(c) {
-        const row = el("div", "term-row term-row--error");
-        row.appendChild(el("span", "", T.notFound + ": "));
-        row.appendChild(el("span", "term-cmd", c));
-        row.appendChild(el("span", "", " — " + T.typeHelp));
-        return [row];
-      }
-
-      // --- Nedry easter egg (blocked commands) ---
-      let nedryAudio;
-      function stopNedry() {
-        if (nedryAudio) {
-          try {
-            nedryAudio.pause();
-          } catch (e) {}
-          nedryAudio = undefined;
-        }
-      }
-      function nedry() {
-        stopNedry();
-        const box = el("div", "term-nedry");
-        const head = el("div", "term-nedry__head");
-        head.appendChild(el("span", "term-nedry__denied", T.nedryDenied));
-        head.appendChild(el("span", "term-nedry__sound", "♪ " + T.nedrySound));
-        box.appendChild(head);
-        const stage = el("div", "term-nedry__stage");
-        stage.setAttribute("role", "img");
-        stage.setAttribute("aria-label", T.nedryAria);
-        [
-          ["body", "term-nedry__body"],
-          ["head", "term-nedry__head-img"],
-          ["hand", "term-nedry__hand"],
-        ].forEach(function (pair) {
-          const img = el("img", pair[1]);
-          img.src = D.nedry[pair[0]];
-          img.alt = "";
-          img.loading = "lazy";
-          stage.appendChild(img);
-        });
-        box.appendChild(stage);
-        box.appendChild(el("p", "term-nedry__msg", T.nedryMessage));
-        const back = el("button", "term-nedry__back", "↺ " + T.nedryBack);
-        back.type = "button";
-        back.addEventListener("click", function () {
-          stopNedry();
-          prev = cwd;
-          setCwd("~");
-          setOutput(rTree());
-          resetBtn.hidden = true;
-          input.focus();
-        });
-        box.appendChild(back);
-        setOutput([box]);
-        // The Enter keypress is a user gesture, so playback is allowed.
-        try {
-          nedryAudio = new Audio(D.nedry.audio);
-          nedryAudio.play().catch(function () {});
-        } catch (e) {}
-      }
-
-      // --- navigation helpers ---
-      function resolvePath(arg) {
-        let p = (arg || "").trim().replace(/^~\/?/, "").replace(/^\//, "");
-        if (p === "" || p === "~") return sectionBySeg[""]?.href || "/";
-        const seg = p.split("/")[0];
-        // An empty string, not null: meta-externalagent mines URL-shaped
-        // literals out of this inline script with a regex and requests the
-        // bare token `null` relative to the page (`/blog/null`, `/es/null`),
-        // 19 of 257 origin 404s in 48 h on 2026-09-10. Proven by its also
-        // fetching the Nedry images and the .mp3, which exist nowhere but in
-        // this script. The caller's `if (!href)` treats "" exactly like null.
-        return sectionBySeg[seg]?.href || "";
-      }
-      function navigate(href) {
-        if (href) {
-          closeDrawer();
-          window.location.href = href;
-        }
-      }
-      function setTheme(arg) {
-        const a = (arg || "").trim().toLowerCase();
-        const cur = document.documentElement.dataset.theme || "dark";
-        const next =
-          a === "dark" || a === "light" ? a : cur === "dark" ? "light" : "dark";
-        document.documentElement.dataset.theme = next;
-        try {
-          localStorage.setItem("theme", next);
-        } catch (e) {}
-        window.dispatchEvent(new Event("theme-changed"));
-        return [comment("theme " + next)];
-      }
-      function closeDrawer() {
-        stopNedry();
-        if (checkbox) {
-          checkbox.checked = false;
-          checkbox.dispatchEvent(new Event("change", { bubbles: true }));
-        }
-      }
-
-      // Render the content that matches a given cwd (used by `cd -`).
-      function renderCwd(c) {
-        if (c === "~/blog") return rPostList(D.posts, "~/blog");
-        if (c === "~/tools") return rToolList();
-        if (c.indexOf("~/tags/") === 0) {
-          const tg = c.slice(7);
-          const list = D.posts.filter((p) =>
-            p.tags.map((x) => x.toLowerCase()).includes(tg.toLowerCase()),
-          );
-          return rPostList(list, "#" + tg);
-        }
-        return rTree();
-      }
-
-      // --- command dispatch ---
-      function run(raw) {
-        const cmd = raw.trim();
-        const sp = cmd.indexOf(" ");
-        const c = (sp === -1 ? cmd : cmd.slice(0, sp)).toLowerCase();
-        const arg = sp === -1 ? "" : cmd.slice(sp + 1).trim();
-
-        if (BLOCKED.has(c)) return nedry();
-
-        switch (c) {
-          case "help":
-          case "?":
-            return setOutput(rHelp());
-          case "tree":
-            return setOutput(rTree());
-          case "ls": {
-            const dir = arg || (cwd === "~" ? "" : cwd.replace("~/", ""));
-            if (dir === "blog" || dir === "~/blog")
-              return setOutput(rPostList(D.posts, "~/blog"));
-            if (dir === "tools" || dir === "~/tools")
-              return setOutput(rToolList());
-            if (dir === "tags") return setOutput(rTags());
-            return setOutput(rTree());
-          }
-          case "cd": {
-            const a = arg.replace(/^~\/?/, "").replace(/^\//, "");
-            if (arg === "" || a === "" || a === "~") {
-              prev = cwd;
-              setCwd("~");
-              return setOutput(rTree());
-            }
-            if (arg === "..") {
-              prev = cwd;
-              setCwd("~");
-              return setOutput(rTree());
-            }
-            if (arg === "-") {
-              const p = prev;
-              prev = cwd;
-              setCwd(p);
-              return setOutput(renderCwd(p));
-            }
-            if (a.indexOf("tags/") === 0) {
-              const tg = a.slice(5);
-              const list = D.posts.filter((p) =>
-                p.tags.map((x) => x.toLowerCase()).includes(tg.toLowerCase()),
-              );
-              prev = cwd;
-              setCwd("~/tags/" + tg);
-              return setOutput(rPostList(list, "#" + tg));
-            }
-            const seg = a.split("/")[0];
-            if (!sectionBySeg[seg]) return setOutput(notFound("cd " + arg));
-            prev = cwd;
-            setCwd("~/" + seg);
-            if (seg === "blog") return setOutput(rPostList(D.posts, "~/blog"));
-            if (seg === "tools") return setOutput(rToolList());
-            return navigate(sectionBySeg[seg].href);
-          }
-          case "pwd":
-            return setOutput([
-              textRow("/home/jmrp" + (cwd === "~" ? "" : "/" + cwd.slice(2))),
-            ]);
-          case "find":
-          case "search":
-            return setOutput(rFind(arg));
-          case "recent":
-          case "latest":
-            return setOutput(rPostList(D.posts.slice(0, 8), "// recent"));
-          case "tags":
-            return setOutput(rTags());
-          case "sitemap":
-            return setOutput(rSitemap());
-          case "whoami":
-            return setOutput(rWhoami());
-          case "neofetch":
-            return setOutput(rNeofetch());
-          case "social":
-          case "links":
-            return setOutput(rSocial());
-          case "history":
-            return setOutput(rHistory());
-          case "man":
-            return setOutput(rMan(arg));
-          case "open":
-          case "go": {
-            const href = resolvePath(arg);
-            if (!href) return setOutput(notFound(c + " " + arg));
-            return navigate(href);
-          }
-          case "theme":
-            return setOutput(setTheme(arg));
-          case "lang": {
-            const l = arg.trim().toLowerCase();
-            if (l === "es" || l === "en") return navigate(D.langPaths[l]);
-            return setOutput(notFound("lang " + arg));
-          }
-          case "clear":
-            prev = cwd;
-            setCwd("~");
-            return setOutput(rTree());
-          case "exit":
-          case "q":
-            return closeDrawer();
-          default:
-            return setOutput(notFound(c));
-        }
-      }
-
-      function execute(raw) {
-        const cmd = raw.trim();
-        if (!cmd) return;
-        stopNedry();
-        history.push(cmd);
-        hIdx = history.length;
-        run(cmd);
-        resetBtn.hidden = false;
-        input.value = "";
-        renderSuggest("");
-      }
-
-      // --- suggestions ---
-      function renderSuggest(value) {
-        const v = value.trim().toLowerCase();
-        // Only while typing: no input → no suggestions (just the bottom hint).
-        const matches = v
-          ? SUGGEST_POOL.filter((s) => s.startsWith(v) && s.trim() !== v).slice(
-              0,
-              6,
-            )
-          : [];
-        if (matches.length === 0) {
-          suggest.hidden = true;
-          suggest.replaceChildren();
-          return;
-        }
-        suggest.hidden = false;
-        suggest.replaceChildren(
-          ...matches.map((s) => {
-            const b = el("button", "term-suggest__chip", s.trim());
-            b.type = "button";
-            b.addEventListener("click", () => {
-              if (s.endsWith(" ")) {
-                stopNedry();
-                input.value = s;
-                input.focus();
-                renderSuggest(s);
-              } else {
-                execute(s);
-              }
-            });
-            return b;
-          }),
-        );
-      }
-
-      // --- events ---
-      input.addEventListener("keydown", (e) => {
-        if (e.key === "Enter") {
-          e.preventDefault();
-          execute(input.value);
-        } else if (e.key === "ArrowUp") {
-          e.preventDefault();
-          if (history.length === 0) return;
-          hIdx = Math.max(0, hIdx - 1);
-          input.value = history[hIdx] || "";
-          renderSuggest(input.value);
-        } else if (e.key === "ArrowDown") {
-          e.preventDefault();
-          if (history.length === 0) return;
-          hIdx = Math.min(history.length, hIdx + 1);
-          input.value = hIdx === history.length ? "" : history[hIdx];
-          renderSuggest(input.value);
-        }
-      });
-      input.addEventListener("input", () => renderSuggest(input.value));
-      resetBtn.addEventListener("click", () => {
-        stopNedry();
-        prev = cwd;
-        setCwd("~");
-        setOutput(rTree());
-        resetBtn.hidden = true;
-        input.focus();
-      });
-
-      // Stop any Nedry audio when the drawer closes by ANY path (Esc, scrim,
-      // exit command, link nav) — Header.close() dispatches this on document.
-      document.addEventListener("nav-drawer-close", stopNedry, { signal });
-
-      // Initial view: the tree.
-      setOutput(rTree());
-      renderSuggest("");
-    }
-
-    document.addEventListener("DOMContentLoaded", initTerm);
-    // One-time registration so the after-swap re-init doesn't accumulate.
-    if (!document.documentElement.hasAttribute("data-term-listener-init")) {
-      document.documentElement.setAttribute("data-term-listener-init", "true");
-      document.addEventListener("astro:after-swap", initTerm);
-    }
-    if (document.readyState !== "loading") initTerm();
-  })();
-</script>
 
 <style>
   .nav-drawer {
     /* Local token so the decorative shadow can be re-asserted verbatim in
-       the :focus/:focus-visible override below without duplicating the
-       literal (see that rule for why it must win explicitly). */
+       the :focus/:focus-visible override below. */
     --nd-shadow: -30px 0 60px -30px rgb(0 0 0 / 55%);
 
     position: fixed;
@@ -1085,14 +296,7 @@ const staticRecent = postData.slice(0, 6);
     transition: transform var(--dur-3) var(--ease-out);
   }
 
-  /* Programmatic focus target on open — the dialog itself, no visible ring
-     (aria-modal + role=dialog convey context; it isn't a tabbable control).
-     `#nav-drawer` has [tabindex] and matches the global
-     `:is(a, button, input, select, textarea, summary, [tabindex]):focus-visible`
-     rule in base.css, which ties this selector's specificity (0,2,0) and
-     sets `box-shadow: var(--focus-ring)`. Re-declaring the decorative
-     shadow here explicitly (instead of relying on source-order luck) keeps
-     "no ring on the dialog container" correct regardless of bundling order. */
+  /* The dialog itself takes focus on open; no ring on the container. */
   .nav-drawer:focus,
   .nav-drawer:focus-visible {
     outline: none;
@@ -1135,11 +339,6 @@ const staticRecent = postData.slice(0, 6);
     background: var(--color-surface-2);
   }
 
-  .drawer__close:focus-visible {
-    outline: 2px solid var(--color-accent);
-    outline-offset: 2px;
-  }
-
   .drawer__close > span {
     width: 1.1rem;
     height: 1.1rem;
@@ -1147,627 +346,146 @@ const staticRecent = postData.slice(0, 6);
 
   .drawer__body {
     flex: 1;
-    padding: 12px 14px;
-    overflow-y: auto;
-    font-family: var(--font-mono);
-    font-size: var(--text-sm);
-  }
-
-  /* Static (zero-JS) vs live (JS) swap. */
-  .term-live,
-  .term-io-top,
-  .term-io-bottom {
-    display: none;
-  }
-
-  :global(html.js-term) .term-static {
-    display: none;
-  }
-
-  :global(html.js-term) .term-live {
-    display: block;
-  }
-
-  :global(html.js-term) .term-io-top,
-  :global(html.js-term) .term-io-bottom {
-    display: block;
-  }
-
-  .term-line {
-    margin: 4px 6px 10px;
-    color: var(--color-text);
-  }
-
-  .term-line__prompt {
-    color: var(--teal-text);
-  }
-
-  .tree {
-    padding: 0;
-    margin: 0 0 14px;
-    list-style: none;
-  }
-
-  .tree__row {
-    display: flex;
-    gap: 4px 10px;
-    align-items: center;
-    min-height: 54px;
     padding: 10px 12px;
-    text-decoration: none;
-    border-radius: var(--radius-md);
+    overflow-y: auto;
   }
 
-  .tree__glyph {
-    color: var(--color-meta);
-    white-space: pre;
-  }
-
-  .tree__icon {
-    flex-shrink: 0;
-    width: 20px;
-    height: 20px;
-    color: var(--color-text-muted);
-  }
-
-  /* Inverted emphasis: section NAME primary, mono path secondary. */
-  .tree__label {
-    flex: 1;
-    font-family: var(--font-body);
-    font-size: var(--text-base);
-    font-weight: var(--fw-semibold);
-    color: var(--color-text-heading);
-  }
-
-  .tree__path {
-    font-size: var(--text-label);
-    color: var(--color-text-muted);
-  }
-
-  .tree__row[aria-current="page"] {
-    flex-wrap: wrap;
-    background: var(--accent-dim);
-    box-shadow: inset 3px 0 0 var(--color-accent);
-  }
-
-  .tree__row[aria-current="page"] .tree__label,
-  .tree__row[aria-current="page"] .tree__icon {
-    color: var(--color-accent);
-  }
-
-  .tree__here {
-    flex-basis: 100%;
-    padding-left: 2.6rem;
-    font-size: var(--text-label);
-    color: var(--color-accent);
-  }
-
-  .tree__here::before {
-    content: "↳ ";
-  }
-
-  .tree__row:hover,
-  .tree__row:focus-visible {
-    outline: none;
-    background: var(--color-surface-2);
-    box-shadow: inset 0 0 0 2px var(--accent-line);
-  }
-
-  .tree__row:active {
-    background: var(--accent-dim);
-  }
-
-  /* --- Command fallbacks (zero-JS) --- */
-  .cmd {
-    margin-bottom: 6px;
-    border-top: 1px solid var(--color-hair);
-  }
-
-  .cmd__summary {
-    display: flex;
-    gap: 8px;
-    align-items: center;
-    min-height: 44px;
-    padding: 6px 8px;
-    color: var(--color-text-heading);
-    cursor: pointer;
-    list-style: none;
-  }
-
-  .cmd__summary::-webkit-details-marker {
-    display: none;
-  }
-
-  .cmd__chevron {
-    width: 1em;
-    height: 1em;
-    color: var(--color-accent);
-    transition: transform var(--dur-2) var(--ease-out);
-  }
-
-  .cmd[open] .cmd__chevron {
-    transform: rotate(90deg);
-  }
-
-  .cmd__hint {
-    flex: 1;
-    font-family: var(--font-body);
-    font-size: var(--text-micro);
-    color: var(--color-text-muted);
-  }
-
-  .cmd__summary:focus-visible {
-    outline: none;
-    border-radius: var(--radius-sm);
-    box-shadow: inset 0 0 0 2px var(--accent-line);
-  }
-
-  .cmd__list {
-    padding: 0 0 8px;
+  /* --- Sections --- */
+  .menu__list,
+  .menu__sub,
+  .more__list {
+    padding: 0;
     margin: 0;
     list-style: none;
   }
 
-  .cmd__row {
+  .menu__list {
     display: flex;
-    gap: 8px;
-    align-items: baseline;
+    flex-direction: column;
+  }
+
+  .menu__link {
+    display: flex;
+    gap: 14px;
+    align-items: center;
     min-height: 44px;
-    padding: 6px 8px 6px 24px;
+    padding: 0 12px;
+    font-family: var(--font-display);
+    font-size: 1rem;
+    font-weight: var(--fw-medium);
+    color: var(--color-text);
     text-decoration: none;
     border-radius: var(--radius-md);
+    transition:
+      background var(--dur-2) var(--ease-out),
+      color var(--dur-2) var(--ease-out);
   }
 
-  .cmd__path {
-    color: var(--color-accent);
-    white-space: nowrap;
-  }
-
-  .cmd__rowlabel {
-    flex: 1;
-    font-family: var(--font-body);
-    font-size: var(--text-xs);
-    color: var(--color-text);
-  }
-
-  .cmd__marker {
-    font-size: var(--text-micro);
-    color: var(--color-text-muted);
-    white-space: nowrap;
-  }
-
-  .cmd__row:hover,
-  .cmd__row:focus-visible {
-    outline: none;
+  .menu__link:hover {
+    color: var(--color-text-heading);
     background: var(--color-surface-2);
-    box-shadow: inset 0 0 0 2px var(--accent-line);
   }
 
-  .cmd__list--tags {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
-    padding: 0 8px 10px 24px;
+  .menu__icon {
+    flex: none;
+    width: 1.2rem;
+    height: 1.2rem;
+    color: var(--color-text-muted);
   }
 
-  .cmd__tag {
-    display: inline-flex;
-    gap: 5px;
-    align-items: center;
-    min-height: 34px;
-    padding: 6px 10px;
-    color: var(--color-text);
-    text-decoration: none;
+  /* Current page: amber marker, heading colour, a quiet fill. Not colour
+     alone: aria-current carries it for assistive technology and the
+     marker is a shape. */
+  .menu__link[aria-current="page"] {
+    color: var(--color-text-heading);
     background: var(--color-surface-2);
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-sm);
-  }
-
-  .cmd__tag-count {
-    font-size: var(--text-micro);
-    color: var(--color-text-muted);
-  }
-
-  .cmd__tag:hover,
-  .cmd__tag:focus-visible {
-    color: var(--color-text-heading);
-    outline: none;
-    border-color: var(--accent-line);
-    box-shadow: 0 0 0 3px
-      color-mix(in srgb, var(--color-accent) 30%, transparent);
-  }
-
-  /* --- Live terminal output ---
-     These nodes are created by the engine at runtime, so they lack the scoped
-     data-astro-cid attribute; the rules are made global under `.term-live`. */
-  .term-live :global(.term-comment) {
-    margin: 2px 0 6px;
-    color: var(--color-text-muted);
-  }
-
-  .term-live :global(.term-row) {
-    padding: 2px 0;
-    color: var(--color-text);
-    overflow-wrap: anywhere;
-  }
-
-  .term-live :global(.term-row--error) {
-    color: var(--color-danger);
-  }
-
-  .term-live :global(.term-cmd) {
-    color: var(--color-text-heading);
-  }
-
-  .term-live :global(.term-tree),
-  .term-live :global(.term-chips) {
-    margin-bottom: 10px;
-  }
-
-  .term-live :global(.term-link) {
-    display: flex;
-    gap: 4px 10px;
-    align-items: center;
-    min-height: 54px;
-    padding: 10px 12px;
-    text-decoration: none;
-    border-radius: var(--radius-md);
-  }
-
-  .term-live :global(.term-link__glyph) {
-    color: var(--color-meta);
-    white-space: pre;
-  }
-
-  .term-live :global(.term-link__icon) {
-    flex-shrink: 0;
-    width: 20px;
-    height: 20px;
-    color: var(--color-text-muted);
-  }
-
-  /* Inverted emphasis: the section NAME (label) is primary; the mono path
-     reads as a secondary tag. */
-  .term-live :global(.term-link__label) {
-    flex: 1;
-    font-family: var(--font-body);
-    font-size: var(--text-base);
-    font-weight: var(--fw-semibold);
-    color: var(--color-text-heading);
-  }
-
-  .term-live :global(.term-link__path) {
-    font-size: var(--text-label);
-    color: var(--color-text-muted);
-    white-space: nowrap;
-  }
-
-  .term-live :global(.term-link__marker) {
-    font-size: var(--text-micro);
-    color: var(--color-text-muted);
-    white-space: nowrap;
-  }
-
-  /* Current section: persistent accent-dim fill + left bar (not focus-only).
-     Wrap enabled here so the "you are here" line drops below the row. */
-  .term-live :global(.term-link.is-current) {
-    flex-wrap: wrap;
-    background: var(--accent-dim);
     box-shadow: inset 3px 0 0 var(--color-accent);
   }
 
-  .term-live :global(.term-link.is-current .term-link__label),
-  .term-live :global(.term-link.is-current .term-link__icon) {
+  .menu__link[aria-current="page"] .menu__icon,
+  .menu__link--ancestor .menu__icon {
     color: var(--color-accent);
   }
 
-  /* "you are here" on its own indented line under the current row. */
-  .term-live :global(.term-link__here) {
-    flex-basis: 100%;
-    padding-left: 2.6rem;
-    font-size: var(--text-label);
-    color: var(--color-accent);
+  .menu__link--ancestor {
+    color: var(--color-text-heading);
   }
 
-  .term-live :global(.term-link__here)::before {
-    content: "↳ ";
-  }
-
-  .term-live :global(.term-link:hover),
-  .term-live :global(.term-link:focus-visible) {
-    outline: none;
-    background: var(--color-surface-2);
-    box-shadow: inset 0 0 0 2px var(--accent-line);
-  }
-
-  /* Tap feedback on touch. */
-  .term-live :global(.term-link:active) {
-    background: var(--accent-dim);
-  }
-
-  .term-live :global(.term-chips) {
+  /* Sub-sections: indented under the label, joined by a hairline. */
+  .menu__sub {
     display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
+    flex-direction: column;
+    margin: 0 0 4px calc(12px + 0.6rem - 1px);
+    border-left: 1px solid var(--color-hair);
   }
 
-  .term-live :global(.term-chip) {
-    display: inline-flex;
-    gap: 5px;
+  .menu__sub-link {
+    display: flex;
     align-items: center;
-    min-height: 34px;
-    padding: 6px 10px;
-    color: var(--color-text);
+    min-height: 40px;
+    padding: 0 12px 0 calc(14px + 0.6rem);
+    font-size: var(--text-sm);
+    font-weight: var(--fw-normal);
+    color: var(--color-text-muted);
     text-decoration: none;
+    border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  }
+
+  .menu__sub-link:hover {
+    color: var(--color-text-heading);
     background: var(--color-surface-2);
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-sm);
   }
 
-  .term-live :global(.term-chip__count) {
-    font-size: var(--text-micro);
-    color: var(--color-text-muted);
-  }
-
-  .term-live :global(.term-chip:hover),
-  .term-live :global(.term-chip:focus-visible) {
-    color: var(--color-text-heading);
-    outline: none;
-    border-color: var(--accent-line);
-  }
-
-  .term-live :global(.term-kv) {
-    display: flex;
-    gap: 10px;
-    padding: 2px 0;
-  }
-
-  .term-live :global(.term-kv__k) {
-    width: 4.5rem;
-    color: var(--color-text-muted);
-  }
-
-  .term-live :global(.term-kv__v) {
-    flex: 1;
-    color: var(--color-text-heading);
-    overflow-wrap: anywhere;
-  }
-
-  .term-live :global(.term-help-group) {
-    margin: 10px 0 4px;
-    color: var(--color-accent);
-  }
-
-  .term-live :global(.term-help) {
-    display: flex;
-    gap: 10px;
-    padding: 3px 0;
-  }
-
-  .term-live :global(.term-help__cmd) {
-    width: 5.5rem;
-    color: var(--color-text-heading);
-  }
-
-  .term-live :global(.term-help__desc) {
-    flex: 1;
-    font-family: var(--font-body);
-    font-size: var(--text-xs);
-    color: var(--color-text-muted);
-  }
-
-  /* --- Nedry easter egg (blocked commands) --- */
-  .term-live :global(.term-nedry) {
-    margin: 8px 0;
-    overflow: hidden;
-    background: var(--accent-dim);
-    border: 1px solid var(--accent-line);
-    border-radius: var(--radius-lg);
-  }
-
-  .term-live :global(.term-nedry__head) {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 9px 12px;
-    font-family: var(--font-mono);
-    font-size: var(--text-micro);
-    border-bottom: 1px solid var(--accent-line);
-  }
-
-  .term-live :global(.term-nedry__denied) {
-    color: var(--color-accent);
-    letter-spacing: 0.1em;
-  }
-
-  .term-live :global(.term-nedry__sound) {
-    color: var(--color-text-muted);
-  }
-
-  .term-live :global(.term-nedry__stage) {
-    position: relative;
-    display: block;
-    width: min(74%, 240px);
-    aspect-ratio: 380 / 466;
-    margin: 16px auto 0;
-  }
-
-  .term-live :global(.term-nedry__body),
-  .term-live :global(.term-nedry__head-img),
-  .term-live :global(.term-nedry__hand) {
-    position: absolute;
-  }
-
-  .term-live :global(.term-nedry__body) {
-    inset: 0;
-    width: 100%;
-    height: 100%;
-  }
-
-  .term-live :global(.term-nedry__head-img) {
-    top: 6.5%;
-    left: 31.8%;
-    width: 36.4%;
-  }
-
-  .term-live :global(.term-nedry__hand) {
-    top: 28.7%;
-    left: 60.2%;
-    width: 22.7%;
-    transform-origin: 50% 100%;
-    animation: hand-wave 1s linear infinite;
-  }
-
-  @keyframes hand-wave {
-    0% {
-      transform: rotate(-10deg);
-    }
-
-    50% {
-      transform: rotate(14deg);
-    }
-
-    100% {
-      transform: rotate(-10deg);
-    }
-  }
-
-  .term-live :global(.term-nedry__msg) {
-    margin: 12px 14px 0;
-    font-family: var(--font-body);
-    font-size: var(--text-base);
+  .menu__sub-link[aria-current="page"] {
+    margin-left: -1px;
     font-weight: var(--fw-medium);
     color: var(--color-text-heading);
-    text-align: center;
+    background: var(--color-surface-2);
+    border-left: 3px solid var(--color-accent);
   }
 
-  .term-live :global(.term-nedry__back) {
-    display: block;
-    min-height: 44px;
-    padding: 11px 18px;
-    margin: 12px auto 16px;
-    font-family: var(--font-mono);
-    font-size: var(--text-xs);
-    color: var(--color-on-primary);
-    cursor: pointer;
-    background: var(--color-primary);
-    border: 0;
-    border-radius: var(--radius-md);
-  }
-
-  .term-live :global(.term-nedry__back:hover),
-  .term-live :global(.term-nedry__back:focus-visible) {
-    outline: none;
-    background: var(--accent-hi);
-  }
-
-  /* --- Terminal input (top) --- */
-  .term-io-top {
-    border-bottom: 1px solid var(--color-hair);
-  }
-
-  .term-input-line {
+  /* --- Bottom block: secondary pages and profiles, above the footer --- */
+  .drawer__bottom {
     display: flex;
-    gap: 8px;
-    align-items: center;
-    padding: 12px 18px;
-    font-family: var(--font-mono);
-  }
-
-  .term-prompt {
-    color: var(--teal-text);
-    white-space: pre;
-  }
-
-  .term-input {
-    flex: 1;
-    min-width: 0;
-    padding: 2px 0;
-    font-family: var(--font-mono);
-    font-size: var(--text-md); /* explicit 16px: avoids iOS zoom on focus */
-    color: var(--color-text-heading);
-    caret-color: var(--color-accent);
-    outline: none;
-    background: transparent;
-    border: 0;
-  }
-
-  /* Suggestions: a subtle grey inline list, shown only while typing (the JS
-     toggles the [hidden] attribute when the input is empty / has no match). */
-  .term-suggest {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 2px 16px;
-    padding: 0 18px 10px;
-  }
-
-  .term-suggest[hidden] {
-    display: none;
-  }
-
-  .term-suggest :global(.term-suggest__chip) {
-    min-height: 28px;
-    padding: 3px 0;
-    font-family: var(--font-mono);
-    font-size: var(--text-xs);
-    color: var(--color-text-muted);
-    cursor: pointer;
-    background: none;
-    border: 0;
-  }
-
-  .term-suggest :global(.term-suggest__chip:hover),
-  .term-suggest :global(.term-suggest__chip:focus-visible) {
-    color: var(--color-accent);
-    text-decoration: underline;
-    text-underline-offset: 3px;
-    outline: none;
-  }
-
-  /* --- Hint (bottom) --- */
-  .term-io-bottom {
+    flex-direction: column;
+    gap: 6px;
+    padding: 10px 18px 6px;
     border-top: 1px solid var(--color-hair);
   }
 
-  .term-hint {
-    display: flex;
-    gap: 8px;
-    align-items: center;
-    justify-content: space-between;
-    padding: 8px 18px;
+  .more__title {
+    margin: 0;
     font-family: var(--font-mono);
     font-size: var(--text-micro);
     color: var(--color-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
   }
 
-  .term-hint b {
-    font-weight: var(--fw-medium);
-    color: var(--color-text-heading);
+  .more__list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0 var(--space-md);
   }
 
-  .term-reset {
+  .more__link {
     display: inline-flex;
-    gap: 5px;
     align-items: center;
-    min-height: 32px;
-    padding: 5px 12px;
-    font-family: var(--font-mono);
-    font-size: var(--text-micro);
+    min-height: 36px;
+    font-size: var(--text-sm);
+    font-weight: var(--fw-normal);
+    color: var(--color-text);
+    text-decoration: none;
+  }
+
+  .more__link:hover {
+    color: var(--color-text-heading);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+
+  .more__link[aria-current="page"] {
     color: var(--color-accent);
-    cursor: pointer;
-    background: var(--accent-dim);
-    border: 1px solid var(--accent-line);
-    border-radius: var(--radius-pill);
-  }
-
-  .term-reset[hidden] {
-    display: none;
-  }
-
-  .term-reset:focus-visible {
-    outline: none;
-    box-shadow: 0 0 0 3px
-      color-mix(in srgb, var(--color-accent) 45%, transparent);
   }
 
   /* --- Footer --- */
@@ -1802,7 +520,15 @@ const staticRecent = postData.slice(0, 6);
     align-items: center;
   }
 
-  .drawer__gh {
+  .socials {
+    display: flex;
+    gap: 4px;
+    padding: 0;
+    margin: 0 0 0 -10px;
+    list-style: none;
+  }
+
+  .socials__link {
     display: grid;
     place-items: center;
     width: 44px;
@@ -1811,47 +537,31 @@ const staticRecent = postData.slice(0, 6);
     border-radius: var(--radius-sm);
   }
 
-  .drawer__gh > span {
+  .socials__link > span {
     width: 1.1rem;
     height: 1.1rem;
   }
 
-  .drawer__gh:hover,
-  .drawer__gh:focus-visible {
+  .socials__link:hover,
+  .socials__link:focus-visible {
     color: var(--color-text-heading);
     background: var(--color-surface-2);
   }
 
-  /* Consistent 3px accent focus ring on all drawer controls (WCAG 2.4.11).
-     (Suggestions are grey text and use an underline focus of their own.) */
+  /* Consistent accent focus ring on every drawer control (WCAG 2.4.11). */
   .drawer__close:focus-visible,
-  .drawer__gh:focus-visible,
-  .cmd__tag:focus-visible,
-  .term-live :global(.term-chip:focus-visible),
-  .term-live :global(.term-nedry__back:focus-visible) {
+  .socials__link:focus-visible,
+  .menu__link:focus-visible,
+  .menu__sub-link:focus-visible,
+  .more__link:focus-visible {
     outline: none;
     box-shadow: var(--focus-ring);
   }
 
-  .term-input-line:focus-within {
-    border-radius: var(--radius-sm);
-    box-shadow: var(--focus-ring);
-  }
-
-  /* ≥44px touch targets (project rule). */
-  .cmd__tag,
-  .term-live :global(.term-chip) {
-    min-height: 44px;
-  }
-
   @media (prefers-reduced-motion: reduce) {
     .nav-drawer,
-    .cmd__chevron {
+    .menu__link {
       transition: none;
-    }
-
-    .term-live :global(.term-nedry__hand) {
-      animation: none;
     }
   }
 </style>

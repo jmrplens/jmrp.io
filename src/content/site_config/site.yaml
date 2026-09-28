@@ -178,18 +178,18 @@ shortcuts:
 nav:
   - label: "Home"
     href: "/"
+  - label: "Projects"
+    href: "/projects/"
   - label: "Blog"
     href: "/blog/"
-  - label: "Homelab"
-    href: "/homelab/"
   - label: "Tools"
     href: "/tools/"
+  - label: "Homelab"
+    href: "/homelab/"
   - label: "CV"
     href: "/cv/"
   - label: "Publications"
     href: "/publications/"
-  - label: "Projects"
-    href: "/projects/"
 
 # Localized fallback only — the homepage actually renders
 # `pages.home.heroTitle` / `heroSubtitle` / `heroBio1` / `heroBio2` from the
@@ -211,5 +211,5 @@ featured_projects:
 # Language-neutral technical facts for the homepage hero "whoami" terminal.
 # `role` is localized copy and lives in the i18n layer (pages.home.terminalRole).
 terminal:
-  focus: "Firmware · Acoustics · DevSecOps"
+  focus: "Firmware · Software · QA"
   base: "Valencia, ES"

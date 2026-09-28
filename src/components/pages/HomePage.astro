@@ -16,10 +16,10 @@ import {
   upstreamSummary,
 } from "@utils/featured-projects";
 import { langColors } from "@utils/github";
-import { githubProfile } from "@utils/github-facts";
 import { sanitize } from "@utils/html";
 import { getPageFaq, pageFaqNode } from "@utils/page-faq";
 import { getSiteUrl } from "@utils/site";
+import { getSiteFacts } from "@utils/site-facts";
 import { getEntry } from "astro:content";
 import type { WebPage } from "schema-dts";
 
@@ -42,10 +42,10 @@ const hero = {
 // homepage's markdown twin able to publish THESE figures rather than its own
 // second reading of the same sources, and the cards' summaries come
 // from the data /projects/ renders, so the two pages do not disagree.
-const [postEntries, featuredProjects, ghProfile] = await Promise.all([
+const [postEntries, featuredProjects, siteFacts] = await Promise.all([
   getPostsForLocale(locale),
   featuredProjectCards(siteData.featured_projects ?? [], locale),
-  githubProfile(),
+  getSiteFacts(),
 ]);
 
 // Build-time "N PRs merged into M other projects" line; see its doc comment
@@ -78,21 +78,6 @@ const PROJECT_META: Readonly<
 };
 
 /**
- * Date of the most recent post; drives the terminal `last.post` metric.
- *
- * Deliberately an absolute ISO date rather than a relative "N days ago". The
- * relative form was computed with `Date.now()` at build time, so the HTML
- * shipped a literal "41 days ago" that was true on the day of the build and
- * quietly decayed afterwards — every crawl between deploys read a stale claim.
- * An ISO date is also the natural register for the terminal widget and is
- * machine-readable inside <time datetime>.
- */
-const lastPost = latestPosts.at(0) ?? null;
-const lastPostDate: string | null = lastPost
-  ? new Date(lastPost.data.publishedDate).toISOString().slice(0, 10)
-  : null;
-
-/**
  * Compact human-readable count: 52311 → "52.3k", 980 → "980".
  * Used for the terminal download total (a large cumulative figure).
  */
@@ -101,19 +86,18 @@ function formatCompact(n: number): string {
   return `${(n / 1000).toFixed(1).replace(/\.0$/, "")}k`;
 }
 
-// Terminal "whoami" card — language-neutral technical facts (data, not prose).
-// `focus`/`base` come from site.yaml; the metrics below are all real signals:
-// cumulative downloads (pre-build fetch, src/data/downloads.json), public repo
-// count (GitHub API), and days since the last post (content).
-const whoami = {
-  focus: siteData.terminal?.focus ?? "Firmware · Acoustics · DevSecOps",
+// Hero `~/whoami` terminal: who, what and where, then two figures the author
+// owns outright (both also printed elsewhere, by the same accessors): the
+// download total (src/data/downloads.json, as /projects/ counts it) and the
+// public repositories of his own, forks left out (@utils/site-facts, as
+// /about/ states it). The `last.post` row is gone on purpose: it advertised
+// how long the blog had been quiet (author's decision, 2026-09-28).
+// `focus`/`base` are data in site.yaml.
+const terminal = {
+  focus: siteData.terminal?.focus ?? "Firmware · Software · QA",
   base: siteData.terminal?.base ?? "Valencia, ES",
-  // `0` is the offline fallback's value, not a count: fetchGitHubProfile()
-  // resolves to a stub rather than rejecting, so the old `ghProfile ? …`
-  // guard could never fire and a build without GitHub access shipped a
-  // literal "0" public repos. The twin omits the row in the same case.
-  repos: ghProfile.public_repos > 0 ? String(ghProfile.public_repos) : "—",
   downloads: downloadsData.total > 0 ? formatCompact(downloadsData.total) : "—",
+  ownRepos: siteFacts.ownRepos,
 };
 
 // The canonical author-entity page is /about/ (see AboutPage.astro's
@@ -168,7 +152,13 @@ const faqNode =
             class="hero__status-dot"
             aria-hidden="true"
           ></span>
-          {t("pages.home.availability")}
+          <span class="hero__status-full">{t("pages.home.availability")}</span>
+          <span
+            class="hero__status-short"
+            aria-hidden="true"
+          >
+            {t("pages.home.availabilityShort")}
+          </span>
         </p>
 
         <h1 class="hero__title">{hero.title}</h1>
@@ -197,11 +187,10 @@ const faqNode =
             ></span>
           </a>
           <a
-            href={translatePath("/blog/")}
+            href={translatePath("/projects/")}
             class="btn btn-outline"
-            aria-label={t("pages.home.readBlogAria")}
           >
-            {t("pages.home.readBlog")}
+            {t("pages.home.seeProjects")}
           </a>
         </div>
       </div>
@@ -229,30 +218,19 @@ const faqNode =
             <dt>role</dt>
             <dd>{t("pages.home.terminalRole")}</dd>
             <dt>focus</dt>
-            <dd>{whoami.focus}</dd>
+            <dd>{terminal.focus}</dd>
             <dt>base</dt>
-            <dd>{whoami.base}</dd>
+            <dd>{terminal.base}</dd>
           </dl>
           <div class="terminal__metrics">
             <div class="terminal__metric">
               <span>downloads.total</span>
-              <span class="terminal__num">{whoami.downloads}</span>
+              <span class="terminal__num">{terminal.downloads}</span>
             </div>
             <div class="terminal__metric">
-              <span>repos.public</span>
-              <span class="terminal__num">{whoami.repos}</span>
+              <span>repos.own</span>
+              <span class="terminal__num">{terminal.ownRepos}</span>
             </div>
-            {lastPostDate !== null && (
-              <div class="terminal__metric">
-                <span>last.post</span>
-                <time
-                  class="terminal__num"
-                  datetime={lastPostDate}
-                >
-                  {lastPostDate}
-                </time>
-              </div>
-            )}
           </div>
           <p class="terminal__cmd terminal__cmd--last">
             <span class="terminal__prompt">jmrp@home:~$</span>{" "}
@@ -294,7 +272,7 @@ const faqNode =
              */
             const cardText = [
               meta?.category,
-              card.id,
+              card.name,
               card.summary,
               card.language,
               meta?.tag,
@@ -318,7 +296,10 @@ const faqNode =
                     <span class="proj-card__chip">{meta.category}</span>
                   )}
                 </div>
-                <h3 class="proj-card__title">{card.id}</h3>
+                <h3 class="proj-card__title">{card.name}</h3>
+                {card.name !== card.id && (
+                  <p class="proj-card__slug">{card.id}</p>
+                )}
                 {card.summary && <p class="proj-card__desc">{card.summary}</p>}
                 {(card.language ?? meta?.tag) && (
                   <div class="proj-card__foot">
@@ -437,6 +418,27 @@ const faqNode =
     background: color-mix(in srgb, var(--teal) 8%, var(--color-bg-secondary));
     border: 1px solid color-mix(in srgb, var(--teal) 32%, var(--color-border));
     border-radius: 999px;
+  }
+
+  .hero__status-short {
+    display: none;
+  }
+
+  /* On a phone the short form is shown; the full sentence stays in the
+     accessibility tree, visually hidden, so nothing is lost to a reader. */
+  @media (width <= 640px) {
+    .hero__status-full {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+      white-space: nowrap;
+      clip-path: inset(50%);
+    }
+
+    .hero__status-short {
+      display: inline;
+    }
   }
 
   .hero__status-dot {
@@ -729,10 +731,18 @@ const faqNode =
     letter-spacing: -0.01em;
   }
 
+  .proj-card__slug {
+    margin: -4px 0 var(--space-sm);
+    font-family: var(--font-mono);
+    font-size: var(--text-micro);
+    color: var(--color-text-muted);
+  }
+
   .proj-card__desc {
     flex: 1;
     margin: 0 0 var(--space-md);
     font-size: var(--text-base);
+    font-weight: var(--fw-normal);
     line-height: 1.5;
     color: var(--color-text);
   }
@@ -875,6 +885,21 @@ const faqNode =
     .notes-item {
       grid-template-columns: 1fr;
       gap: var(--space-xs);
+    }
+
+    /* A phone reads the sections as one column: ~86px of empty band
+       between them read as the end of the page. Cut it to ~45px. */
+    .hero {
+      padding-bottom: var(--space-md-lg);
+    }
+
+    .home-section {
+      padding-block: var(--space-md-lg);
+    }
+
+    /* The global h2 top margin would add ~29px back on top of it. */
+    .home-section__head .section-title {
+      margin-top: 0;
     }
   }
 
