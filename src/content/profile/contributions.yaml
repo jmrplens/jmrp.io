@@ -212,12 +212,12 @@ featured:
   # Silent message loss in the official Rust SDK whenever another crate turns
   # on serde_json's arbitrary_precision (Cargo feature unification); the
   # OpenAI Codex CLI is built that way (openai/codex#38979). Fixes
-  # modelcontextprotocol/rust-sdk#1299.
+  # modelcontextprotocol/rust-sdk#1299. Shipped in rmcp-v3.5.0 (2026-09-28).
   - repo: modelcontextprotocol/rust-sdk
     number: 1300
     kind: pull_request
     why:
-      en: "Float fields now decode through serde_json::Number, so a build that turns on serde_json's arbitrary_precision (the OpenAI Codex CLI is one) no longer drops tool results, progress notifications and sampling requests that carry a decimal; with tests."
-      es: "Los campos decimales ahora se decodifican a través de serde_json::Number, así que un build que activa arbitrary_precision de serde_json (el Codex CLI de OpenAI es uno) ya no pierde resultados de herramientas, notificaciones de progreso ni peticiones de sampling con decimales; con tests."
+      en: "Float fields now decode through serde_json::Number, so a build that turns on serde_json's arbitrary_precision (the OpenAI Codex CLI is one) no longer drops tool results, progress notifications and sampling requests that carry a decimal; with tests. Released in rmcp 3.5.0."
+      es: "Los campos decimales ahora se decodifican a través de serde_json::Number, así que un build que activa arbitrary_precision de serde_json (el Codex CLI de OpenAI es uno) ya no pierde resultados de herramientas, notificaciones de progreso ni peticiones de sampling con decimales; con tests. Publicado en rmcp 3.5.0."
 
 securityTitleAllow: []
