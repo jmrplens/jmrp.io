@@ -1088,6 +1088,7 @@ reverberante
 revierte
 rgpd
 rkey
+rmcp
 rmem
 Roadlite
 robótico
