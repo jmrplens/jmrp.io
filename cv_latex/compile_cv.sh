@@ -34,9 +34,16 @@ ATS_FILES=(
 # Reproducible builds: with a fixed timestamp (plus the RNG seed the templates
 # set before \DocumentMetadata) two compilations of unchanged sources are
 # byte-identical, so a rebuild without real changes produces no git diff on
-# the tracked PDFs. Derived from the last commit; falls back to now when git
-# is unavailable (then determinism is simply not guaranteed, which is fine).
-SOURCE_DATE_EPOCH="$(git -C "$SCRIPT_DIR" log -1 --format=%ct 2>/dev/null || date +%s)"
+# the tracked PDFs. Derived from the last commit that touched the CV content
+# (src/content/cv), not the last commit of the repo: with HEAD, every commit,
+# the one that stores the PDFs included, moved the embedded dates, so each
+# deploy produced six "changed" PDFs with identical text and the tracked
+# copies never settled. Falls back to HEAD, then to now, when git cannot
+# answer (then determinism is simply not guaranteed, which is fine).
+SOURCE_DATE_EPOCH="$(git -C "$SCRIPT_DIR" log -1 --format=%ct -- ':/src/content/cv' 2>/dev/null)"
+if [ -z "$SOURCE_DATE_EPOCH" ]; then
+  SOURCE_DATE_EPOCH="$(git -C "$SCRIPT_DIR" log -1 --format=%ct 2>/dev/null || date +%s)"
+fi
 export SOURCE_DATE_EPOCH
 
 cd "$LATEX_DIR" || exit 1
