@@ -420,8 +420,8 @@ export const common = {
       upstreamStrip:
         "También aporto código y documentación a proyectos open source de otros, como {names}.",
       upstreamLink: "Ver las contribuciones →",
-      availability: "Abierto a empleo · Valencia (CET/CEST)",
-      availabilityShort: "Busco empleo",
+      availability: "Buscando empleo · Valencia (CET/CEST)",
+      availabilityShort: "Buscando empleo",
       seeProjects: "Ver proyectos",
       terminalLabel: "Resumen de perfil",
       terminalRole: "Ing. Firmware / Software",
