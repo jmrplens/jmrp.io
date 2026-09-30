@@ -83,7 +83,7 @@ with the same slug.
 - **Data attributes** — Use `data-*` for DOM selection, not `getElementById`
 - **Unique IDs** — Generate with `crypto.getRandomValues()`
 - **CSP compliance** — Scripts use `nonce="NGINX_CSP_NONCE"`
-- **Privacy-first** — All processing happens client-side
+- **Privacy-first**: all processing runs in the browser; a tool may reach the network only when the user presses its button and only for the target it inspects (today `cert-inspector` queries public Certificate Transparency logs and `http-headers-analyzer` fetches through a no-log proxy on this domain), and every surface that summarizes the tools must name those exceptions
 - **WCAG AA** — Tools must be keyboard accessible with proper ARIA
 - **Dark mode** — CSS custom properties for theming
 - **i18n** — Tool-specific strings in `src/i18n/translations/{en,es}/tools.ts`, inject into JS via `data-*` attributes

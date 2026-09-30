@@ -64,13 +64,13 @@ const WORDS = {
     es: "Cada entrada publica su propio gemelo markdown; el cuerpo vive allí, no aquí.",
   },
   toolsIndex: {
-    // The exception is stated here rather than left to the page's own intro,
-    // which claims outright that nothing leaves the browser: two of the tools
-    // do fetch the target they are pointed at, and llms.txt has said so for
-    // months. A twin that repeats only the absolute claim would be the one
-    // surface where the qualification disappears.
-    en: "Every tool below publishes its own markdown twin with its full documentation. All of them run entirely in the browser except the certificate inspector and the HTTP header analyzer, which fetch the target you ask them to inspect.",
-    es: "Cada herramienta publica su propio gemelo markdown con su documentación completa. Todas se ejecutan íntegramente en el navegador salvo el inspector de certificados y el analizador de cabeceras HTTP, que consultan el destino que les indiques.",
+    // The exception used to be stated only here, because the page's own
+    // intro claimed that nothing left the browser. The intro now carries it
+    // (`pages.tools.intro`, printed just above this line, in the same words
+    // as every other surface that summarizes the tools; GEO audit #11, A1),
+    // so repeating it here would only say it twice.
+    en: "Every tool below publishes its own markdown twin with its full documentation.",
+    es: "Cada herramienta publica su propio gemelo markdown con su documentación completa.",
   },
   series: { en: "Series", es: "Series" },
   otherSeries: { en: "Other series", es: "Otras series" },

@@ -173,13 +173,20 @@ export const PROFILE_SECTIONS: {
       ],
     },
   },
+  // Restates src/content/pages/<locale>/privacy.mdx and must move with it.
+  // These lines said for 24 days that the edge worker kept no IP address,
+  // after the page and the worker had changed (GEO audit #11, C1).
+  // scripts/ci/published-claims.test.mjs pins both texts to the same facts
+  // (Cloudflare Web Analytics, IP address recorded), so rewriting the page's
+  // account of the worker fails it until this entry is rewritten too.
   {
     url: "/privacy/",
     en: {
       title: "Privacy",
       lines: [
         "No cookies, no third-party scripts, no advertising network, no cross-site tracking, and no mailing list.",
-        "Measurement is named in full rather than summarized: a self-hosted analytics beacon that strips the query string before reporting, and an edge worker that keeps one aggregate row per request for ninety days with no IP address and no session identifier.",
+        "Measurement is named in full rather than summarized. Page views are counted by Cloudflare Web Analytics, with a script served from this domain that strips the query string and fragment before reporting and sets no cookie.",
+        "An edge worker the author runs at Cloudflare records one row per request with the same fields as the server logs, IP address included, plus what only the edge knows, such as which Cloudflare data centre answered and the bot score Cloudflare gives the request. Cloudflare keeps those rows for about ninety days; every five minutes they are copied into the author's own monitoring database, where they follow the server logs' rule of one year, then deletion.",
         "No advertising, no affiliate links and no sponsored content; the single funding route is a GitHub Sponsors link on the projects page, named on the privacy page as a conflict-of-interest declaration rather than left for the reader to find.",
       ],
     },
@@ -187,7 +194,8 @@ export const PROFILE_SECTIONS: {
       title: "Privacidad",
       lines: [
         "Sin cookies, sin scripts de terceros, sin red publicitaria, sin rastreo entre sitios y sin lista de correo.",
-        "La medición se enuncia entera en vez de resumirse: un beacon de analítica autoalojado que elimina la cadena de consulta antes de informar, y un worker en el borde que guarda una fila agregada por petición durante noventa días, sin dirección IP ni identificador de sesión.",
+        "La medición se enuncia entera en vez de resumirse. Las páginas vistas las cuenta Cloudflare Web Analytics, con un script servido desde este dominio que elimina la cadena de consulta y el fragmento antes de informar y no pone ninguna cookie.",
+        "Un worker que el autor ejecuta en el borde de Cloudflare anota una fila por petición con los mismos campos que los registros del servidor, dirección IP incluida, más lo que solo sabe el borde, como qué centro de datos de Cloudflare respondió o la puntuación de bot que Cloudflare asigna a la petición. Cloudflare conserva esas filas unos noventa días; cada cinco minutos se copian a la base de datos de monitorización del autor, donde siguen la regla de los registros del servidor: un año y después se borran.",
         "Ni publicidad, ni enlaces de afiliado, ni contenido patrocinado; la única vía de financiación es un enlace de GitHub Sponsors en la página de proyectos, nombrado en la página de privacidad como declaración de conflicto de intereses en vez de dejarlo a que el lector lo descubra.",
       ],
     },
@@ -330,12 +338,12 @@ export const SITE_SECTIONS: {
     en: {
       title: "Tools",
       description:
-        "Free browser-based developer tools; all run in the browser except the certificate inspector and HTTP header analyzer, which fetch the target you ask them to inspect",
+        "Free browser-based developer tools; all run in the browser, and two make a request you trigger: the certificate inspector looks the domain up in public Certificate Transparency logs and the HTTP header analyzer fetches the URL through a proxy on this site",
     },
     es: {
       title: "Herramientas",
       description:
-        "Herramientas gratuitas que se ejecutan en el navegador, salvo el inspector de certificados y el analizador de cabeceras HTTP, que consultan el destino que les indiques",
+        "Herramientas gratuitas que se ejecutan en el navegador; dos hacen una petición cuando las usas: el inspector de certificados busca el dominio en registros públicos de Certificate Transparency y el analizador de cabeceras HTTP consulta la URL a través de un proxy de este sitio",
     },
   },
   {
@@ -429,8 +437,8 @@ export const HOME_SECTIONS: {
     path: "/tools/",
     title: { en: "Tools", es: "Herramientas" },
     note: {
-      en: "Listing page. Every tool publishes its own markdown twin with the full documentation, and all of them run client-side.",
-      es: "Página de listado. Cada herramienta publica su propio gemelo markdown con la documentación completa, y todas se ejecutan en el cliente.",
+      en: "Listing page. Every tool publishes its own markdown twin with the full documentation. All of them run in the browser; the certificate inspector also looks the domain up in public Certificate Transparency logs, and the HTTP header analyzer fetches the URL through a proxy on this site.",
+      es: "Página de listado. Cada herramienta publica su propio gemelo markdown con la documentación completa. Todas se ejecutan en el navegador; el inspector de certificados busca además el dominio en registros públicos de Certificate Transparency, y el analizador de cabeceras HTTP consulta la URL a través de un proxy de este sitio.",
     },
   },
   { path: "/projects/", title: { en: "Projects", es: "Proyectos" } },

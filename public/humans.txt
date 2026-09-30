@@ -17,8 +17,10 @@
 /* NOTE */
 
     Statically generated, with client-side JavaScript only where a page
-    genuinely needs it. Analytics are aggregate and cookie-less, and
-    nothing here follows you from site to site.
+    genuinely needs it. No cookies: page views are counted by Cloudflare
+    Web Analytics, and an edge worker keeps a per-request log like the
+    server's, IP address included; /privacy/ lists every field and how
+    long it is kept. Nothing here follows you from site to site.
 
     Two of those policies are written down and machine-readable:
     /.well-known/gpc.json declares that the Global Privacy Control signal

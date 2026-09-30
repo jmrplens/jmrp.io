@@ -12,10 +12,15 @@ import path from "node:path";
 import { describe, it, test } from "node:test";
 
 import {
+  collectedDatasetSource,
   compactStars,
+  DATASET_SOURCE,
+  datasetSource,
   decideRebuild,
+  describeNonLiveBuild,
   displayChangedAt,
   hashProjection,
+  isNonLiveState,
   readState,
   recordBuiltDataset,
   resolveMaxAgeDays,
@@ -29,6 +34,7 @@ function makeDataset() {
     schemaVersion: 1,
     generatedAt: "2026-09-26T20:35:39.488Z",
     asOf: "2026-09-26T13:03:19",
+    source: "live",
     summary: {
       contributionTotals: {
         prMerged: 59,
@@ -223,6 +229,8 @@ test("volatile fields do not change the hash", () => {
     (d) => (d.cardFacts["portainer-mcp"].stars = 4),
     (d) => (d.cardFacts["portainer-mcp"].stars30d = 2),
     (d) => (d.cardFacts.ghchronicle.releaseTag = "v2.6.0"),
+    // Where the data came from is the state's business, not the page's.
+    (d) => (d.source = "fixture"),
     (d) => (d.acceptedAnswers[0].title = "Edited question"),
     (d) => (d.contributedTo[0].stars = 38_044),
     (d) => (d.contributedTo[0].merged = 2),
@@ -350,6 +358,98 @@ test("decideRebuild: missing state rebuilds", () => {
   assert.equal(decideRebuild({ state: {}, current }).reason, "no-state");
 });
 
+describe("a live build that did not render collected data", () => {
+  const current = hashProjection(makeDataset());
+  const now = new Date("2026-09-30T04:30:00Z");
+
+  it("always rebuilds, however fresh, and names the source", () => {
+    for (const source of ["fixture", "gitlab-fixture", "unknown"]) {
+      const decision = decideRebuild({
+        state: { source, builtAt: "2026-09-29T16:30:00Z", asOf: null },
+        current,
+        now,
+      });
+      assert.equal(decision.rebuild, true, source);
+      assert.equal(decision.reason, "not-live", source);
+      assert.equal(decision.source, source);
+      assert.equal(decision.ageDays, 0.5);
+    }
+  });
+
+  it("wins over a projection that happens to match", () => {
+    // Defensive: a non-live state never carries a projection, but if one
+    // did, matching it must not keep the fixture served.
+    const decision = decideRebuild({
+      state: { ...current, source: "fixture", builtAt: now.toISOString() },
+      current,
+      now,
+    });
+    assert.equal(decision.reason, "not-live");
+  });
+
+  it("leaves live and legacy states to the projection comparison", () => {
+    const live = { ...current, builtAt: "2026-09-29T04:30:00Z" };
+    for (const state of [live, { ...live, source: "live" }]) {
+      assert.equal(isNonLiveState(state), false);
+      assert.equal(decideRebuild({ state, current, now }).reason, "unchanged");
+    }
+    assert.equal(isNonLiveState(null), false);
+    assert.equal(isNonLiveState({ source: "fixture" }), true);
+  });
+});
+
+test("datasetSource trusts only the stamps build-data writes", () => {
+  assert.equal(datasetSource({ source: "live" }), DATASET_SOURCE.live);
+  assert.equal(datasetSource({ source: "fixture" }), DATASET_SOURCE.fixture);
+  assert.equal(
+    datasetSource({ source: "gitlab-fixture" }),
+    DATASET_SOURCE.gitlabFixture,
+  );
+  // No stamp, or one nobody writes, fails safe: not live.
+  assert.equal(datasetSource({}), DATASET_SOURCE.unknown);
+  assert.equal(datasetSource({ source: "LIVE" }), DATASET_SOURCE.unknown);
+  assert.equal(datasetSource(null), DATASET_SOURCE.unknown);
+});
+
+test("collectedDatasetSource: only a fully collected dataset is live", () => {
+  // The stamp collectDataset writes, both ways, and what each one means
+  // once it is read back from the dataset and recorded.
+  const live = collectedDatasetSource({ gitlabFromFixture: false });
+  const partial = collectedDatasetSource({ gitlabFromFixture: true });
+  assert.equal(live, DATASET_SOURCE.live);
+  assert.equal(partial, DATASET_SOURCE.gitlabFixture);
+  assert.equal(datasetSource({ source: live }), DATASET_SOURCE.live);
+  assert.equal(
+    datasetSource({ source: partial }),
+    DATASET_SOURCE.gitlabFixture,
+  );
+  assert.equal(isNonLiveState({ source: live }), false);
+  assert.equal(isNonLiveState({ source: partial }), true);
+});
+
+test("describeNonLiveBuild says what was served and what happens next", () => {
+  const lines = describeNonLiveBuild({
+    source: "fixture",
+    builtAt: "2026-09-30T10:00:00.000Z",
+    asOf: "2026-09-27T13:58:22",
+  });
+  const text = lines.join("\n");
+  assert.match(text, /NOT LIVE DATA/);
+  assert.match(text, /committed fixture/);
+  assert.match(text, /as of 2026-09-27T13:58:22/);
+  assert.match(text, /jmrp-contributions-rebuild/);
+  assert.match(text, /pnpm build/);
+  assert.match(
+    describeNonLiveBuild({ source: "gitlab-fixture", builtAt: "x" }).join(" "),
+    /GitLab\.com part of the committed fixture.*an unknown date/,
+  );
+  assert.match(
+    describeNonLiveBuild({ source: "unknown", builtAt: "x" })[0],
+    /no source stamp/,
+  );
+  for (const line of lines) assert.doesNotMatch(line, /\u{2014}/u);
+});
+
 test("env overrides for state path and max age", () => {
   assert.equal(
     resolveStatePath({ GHC_REBUILD_STATE: "/srv/state/x.json" }),
@@ -372,7 +472,47 @@ test("recordBuiltDataset writes a state readState accepts", () => {
     const state = readState(statePath);
     assert.equal(state?.projectionHash, BASE);
     assert.equal(state?.builtAt, now.toISOString());
+    assert.equal(state?.source, "live");
+    assert.equal(isNonLiveState(state), false);
     assert.equal(readState(path.join(dir, "missing.json")), null);
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test("recordBuiltDataset records no projection for a dataset that is not live", () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "rebuild-state-"));
+  try {
+    const statePath = path.join(dir, "state.json");
+    const now = new Date("2026-09-30T17:20:00Z");
+    const cases = [
+      ["fixture", { source: "fixture" }],
+      ["gitlab-fixture", { source: "gitlab-fixture" }],
+      // Written before the stamp existed, or copied by hand.
+      ["unknown", { source: undefined }],
+    ];
+    for (const [expected, patch] of cases) {
+      const datasetPath = path.join(dir, `${expected}.json`);
+      fs.writeFileSync(
+        datasetPath,
+        JSON.stringify({ ...makeDataset(), ...patch }),
+      );
+      const returned = recordBuiltDataset({ datasetPath, statePath, now });
+      const state = readState(statePath);
+      assert.deepEqual(state, returned, expected);
+      assert.deepEqual(state, {
+        source: expected,
+        builtAt: now.toISOString(),
+        asOf: "2026-09-26T13:03:19",
+      });
+      assert.equal(isNonLiveState(state), true);
+      // The next scheduled check rebuilds even though the data matches.
+      assert.equal(
+        decideRebuild({ state, current: hashProjection(makeDataset()), now })
+          .reason,
+        "not-live",
+      );
+    }
   } finally {
     fs.rmSync(dir, { recursive: true, force: true });
   }
@@ -413,5 +553,16 @@ describe("displayChangedAt", () => {
       now.toISOString(),
     );
     assert.equal(displayChangedAt(dataset, null, now), now.toISOString());
+  });
+
+  it("is now after a fixture build: the pages move back to collected data", () => {
+    assert.equal(
+      displayChangedAt(
+        dataset,
+        { source: "fixture", builtAt: "2026-09-27T15:00:00.000Z", asOf: null },
+        now,
+      ),
+      now.toISOString(),
+    );
   });
 });

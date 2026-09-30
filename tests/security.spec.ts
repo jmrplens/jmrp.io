@@ -54,11 +54,6 @@ function validateIntegrity(
     return null;
   }
 
-  // Skip cf-beacon.js - intentionally excluded from SRI in post-build to avoid cache/update issues
-  if (resourceUrl.includes("cf-beacon.js")) {
-    return null;
-  }
-
   if (!integrity) {
     return `${url}: ${type} ${resourceUrl} missing integrity attribute`;
   }

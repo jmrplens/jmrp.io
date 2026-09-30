@@ -44,8 +44,8 @@ const tiles = [
   <dl class="activity-band__tiles">
     {tiles.map((tile) => (
       <div class="activity-band__tile">
-        <dd class="activity-band__value">{tile.value}</dd>
         <dt class="activity-band__label">{tile.label}</dt>
+        <dd class="activity-band__value">{tile.value}</dd>
       </div>
     ))}
   </dl>
@@ -72,6 +72,9 @@ const tiles = [
   }
 
   .activity-band__tile {
+    display: flex;
+    flex-direction: column;
+
     /* A long value (or a raw token when no nginx substitutes it) wraps
        instead of pushing the grid past the viewport. */
     min-inline-size: 0;
@@ -84,7 +87,11 @@ const tiles = [
     border-left: 0;
   }
 
+  /* The DOM is label then value, the order HTML pairs them in (GEO audit
+     #11, C2: with the value first, answer engines paired each label with the
+     next tile's figure). The figure is drawn above its label here instead. */
   .activity-band__value {
+    order: -1;
     min-inline-size: 3ch;
     margin: 0;
     font-family: var(--font-display);

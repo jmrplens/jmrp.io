@@ -45,6 +45,17 @@ exclude = [
     # or in CI. Kept in `sameAs` as an identity statement, excluded here
     # because the checker can never confirm it.
     'https://mcpbeat\.com/.*',
+    # DeepWiki sits behind Vercel's bot challenge: every automated request,
+    # the root page and a browser user-agent included, gets 429 with
+    # `x-vercel-mitigated: challenge` in 0.1 s, while headless Chromium
+    # passes the challenge and loads the wiki (200, checked from this server
+    # on 2026-09-30). A 429 here says nothing about the link.
+    'https://deepwiki\.com/.*',
+    # cppreference answers GitHub's runners with 403 (bot protection) while
+    # the same URLs give 200 from a residential address (checked on
+    # 2026-09-30; its canonical form dropped the `/w/` prefix, which now
+    # redirects here). The links in post 010 are right; CI cannot see them.
+    'https://en\.cppreference\.com/.*',
     'https://gitlab\.torproject\.org/.*',
     'https://www\.abuseipdb\.com/.*',
     # The 404 page legitimately answers 404; it is its own canonical. The
@@ -76,8 +87,15 @@ exclude = [
     # line is gone, along with the `https://`-only spelling that would have
     # failed the same way the handle above did.
     'https?://(?:[a-z0-9-]+\.)*ua\.es/.*',
+    # UPV's home and school pages answer in about 2 s one moment and hang
+    # past 20 s the next (both measured from this server on 2026-09-30). The
+    # English pair was listed long ago; the Spanish pair, linked from the
+    # Spanish CV, stayed unchecked only because an unquoted `dist/**/*.html`
+    # never reached /es/cv/. Quoting the glob (GEO audit #11) brought them in.
     'https://www\.upv\.es/index-en\.html',
     'https://www\.upv\.es/entidades/epsg/en/home/',
+    'https://www\.upv\.es/index-es\.html',
+    'https://www\.upv\.es/entidades/epsg/home/',
     # Same scheme trap as the UPV profiles below: listed as `http://` while
     # the site emits `https://`, so the pattern matched nothing and the handle
     # surfaced as an error the moment handle.net stopped answering CI.

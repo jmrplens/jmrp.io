@@ -4,6 +4,7 @@ import { formatDate, formatNumber, useTranslations } from "@i18n/utils";
 import { getCVData } from "@utils/cv";
 import { DOWNLOADS_DISPLAY_MIN } from "@utils/downloads";
 import { featuredRepos } from "@utils/github-facts";
+import { siteDownloadsTotal } from "@utils/llms/downloads-total";
 import {
   ACTIVITY_MIN_DAYS,
   communityFor,
@@ -86,7 +87,8 @@ function downloadsOf(id: string): number | undefined {
  * deliberately do not (checksums, signatures, SBOMs), which channel is read by
  * hand and when, and why the per-project numbers do not sum to the site-wide
  * total. Numbers without it are the finding it fixed, and the twin published
- * neither.
+ * neither. It also gives that total and the moment it was counted, through
+ * the same `siteDownloadsTotal` the page calls (GEO audit #11, B11).
  *
  * Dropped, exactly as the page drops it, when the hand-read date is missing or
  * unparseable: `downloads.json` is generated and git-ignored, so a build host
@@ -104,10 +106,17 @@ function downloadsMethodologyLines(locale: "en" | "es"): Lines {
   if (!verifiedOn || Number.isNaN(verifiedOn.getTime())) return [];
   const source =
     "https://github.com/jmrplens/jmrp.io/blob/main/scripts/download-sources.mjs";
+  const site = siteDownloadsTotal(downloadsData);
+  const total = site
+    ? ` ${t("pages.projects.downloadsTotal", {
+        total: formatNumber(site.total, locale),
+        date: formatDate(site.countedAt, locale),
+      })}`
+    : "";
   return [
     `${t("pages.projects.downloadsNote", {
       date: formatDate(verifiedOn, locale),
-    })} ${t("pages.projects.downloadsSourceLead")} [download-sources.mjs](${source}).`,
+    })}${total} ${t("pages.projects.downloadsSourceLead")} [download-sources.mjs](${source}).`,
     "",
   ];
 }

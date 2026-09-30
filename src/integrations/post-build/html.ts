@@ -8,12 +8,14 @@ import type { Element } from "domhandler";
 import { glob } from "glob";
 import { minify } from "html-minifier-terser";
 
+import { BEACON_URL_PATH, publishVersionedBeacon } from "./beacon-version.js";
 import {
   ASSET_FILENAME_HASH_LENGTH,
   ASSETS_DIR,
   NGINX_CSP_NONCE_PLACEHOLDER,
   STYLE_CLASS_HASH_LENGTH,
 } from "./constants.js";
+import { removeDeadSvgStyles } from "./svg-styles.js";
 import type { CspData } from "./types.js";
 import { restoreVerbatimTypography } from "./typography.js";
 import {
@@ -173,6 +175,8 @@ export async function processHtmlFiles(
   if (!fs.existsSync(targetDir)) fs.mkdirSync(targetDir, { recursive: true });
 
   hardenBeaconScript(distDir, hashCache, logger);
+  const beaconSrc = publishVersionedBeacon(distDir);
+  if (beaconSrc) logger.info(`  ✓ Beacon published as ${beaconSrc}`);
 
   let modifiedFilesCount = 0;
   let updatedSriTags = 0;
@@ -189,6 +193,7 @@ export async function processHtmlFiles(
           cspData,
           hashCache,
           enableCsp,
+          beaconSrc,
           logger,
         ),
       ),
@@ -280,29 +285,29 @@ function hardenBeaconScript(
  * previous copy for up to 30 days then fetched the new page, whose integrity
  * names the new bytes, and blocked the script. From 2026-09-22 the CSP
  * reporter logged 4 to 38 such `sri` failures a day, real Chrome, Firefox and
- * Safari among the crawlers. A `?v=` derived from the same SHA-512 the
- * integrity carries makes every new beacon a new URL; the bare path still
- * answers, so a crawler rendering an old snapshot gets the file, not a 404.
+ * Safari among the crawlers.
+ *
+ * #537 fixed that with a `?v=`, which the edge Worker then dropped from its
+ * cache key; the version now lives in the path instead (see
+ * `publishVersionedBeacon`). The bare path still answers, so a snapshot taken
+ * before this change still gets a beacon. Only the current versioned name is
+ * in each build: an HTML page cached after this change, served after a later
+ * beacon change whose purge failed, asks for a name the origin no longer has
+ * and loses one analytics report (a 404, never an SRI block).
  *
  * @param {cheerio.CheerioAPI} $ - The parsed page.
- * @param {string} distDir - The build output directory.
- * @param {Map<string, string>} hashCache - Shared file hash cache.
+ * @param {string | null} beaconSrc - URL of the content-addressed copy, or
+ *   `null` when this build has no beacon.
  * @returns {boolean} Whether the page changed.
  */
 function versionBeaconUrl(
   $: cheerio.CheerioAPI,
-  distDir: string,
-  hashCache: Map<string, string>,
+  beaconSrc: string | null,
 ): boolean {
-  const tags = $("script[src='/scripts/cf-beacon.js']");
+  if (!beaconSrc) return false;
+  const tags = $(`script[src='${BEACON_URL_PATH}']`);
   if (tags.length === 0) return false;
-  const beaconPath = path.join(distDir, "scripts", "cf-beacon.js");
-  if (!fs.existsSync(beaconPath)) return false;
-  const integrity = getFileHash(beaconPath, hashCache, "sha512");
-  const version = Buffer.from(integrity.slice("sha512-".length), "base64")
-    .toString("hex")
-    .slice(0, 12);
-  tags.attr("src", `/scripts/cf-beacon.js?v=${version}`);
+  tags.attr("src", beaconSrc);
   return true;
 }
 
@@ -316,6 +321,7 @@ async function processSingleHtmlFile(
   cspData: CspData,
   hashCache: Map<string, string>,
   enableCsp: boolean,
+  beaconSrc: string | null,
   logger: AstroIntegrationLogger,
 ): Promise<{
   modified: boolean;
@@ -334,6 +340,11 @@ async function processSingleHtmlFile(
     isModified = true;
     extractedImages += imgResult.extractedCount;
   }
+
+  // Mermaid's in-SVG <style>, emptied into a `set:html` attribute on the way
+  // through MDX (GEO audit #11, T4). Before the style move below and long
+  // before the nonce pass, which would otherwise stamp a nonce on each one.
+  if (removeDeadSvgStyles($)) isModified = true;
 
   // Fix style locations
   const bodyStyles = $("body style");
@@ -370,7 +381,7 @@ async function processSingleHtmlFile(
   if (processStyles($, enableCsp)) isModified = true;
 
   // Before SRI, so the tag it hashes already carries its final URL.
-  if (versionBeaconUrl($, distDir, hashCache)) isModified = true;
+  if (versionBeaconUrl($, beaconSrc)) isModified = true;
 
   // Process SRI and Nonces
   const sriResult = processScriptsAndLinks(

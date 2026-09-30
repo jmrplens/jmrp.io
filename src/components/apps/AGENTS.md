@@ -10,7 +10,7 @@
 4. **No inline `<script>`** — Only `<script is:inline>` (post-build adds CSP nonce)
 5. **No inline `style="..."`** — Use UnoCSS classes or scoped `<style>`
 6. **Scoped styles** — Each component has its own `<style>` block
-7. **Client-side only** — All computation runs in the browser, no server calls
+7. **Client-side first**: all processing runs in the browser; a tool may reach the network only when the user presses its button and only for the target it inspects (today `cert-inspector` queries public Certificate Transparency logs and `http-headers-analyzer` fetches through a no-log proxy on this domain), and every surface that summarizes the tools must name those exceptions
 
 ## Component Map
 

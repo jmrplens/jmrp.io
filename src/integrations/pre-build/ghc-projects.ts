@@ -65,7 +65,7 @@ export async function setupGhcProjectsData(
   });
   if (fromFixture) {
     logger.warn(
-      "  Using the committed fixture — InfluxDB was unreachable from this host.",
+      "  Using the committed fixture (the dataset could not be collected): deploy-live records this build as NOT live, and the scheduled rebuild replaces it once a collection succeeds.",
     );
   }
 }

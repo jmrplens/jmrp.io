@@ -173,6 +173,7 @@ The second is that neither reading can be re-derived later. The Free plan retain
 One measured detail I did not expect. My origin does send the header this guide tells you to add — `add_header Alt-Svc 'h3=":443"; ma=86400' always;` sits in both TLS server blocks, and a request straight to the origin comes back carrying it. Through Cloudflare, that header is simply not there:
 
 <TerminalOutput title="Alt-Svc at the origin vs. at the edge">
+```text
 # On the origin host itself, bypassing the CDN entirely:
 $ curl -sS -kD- -o /dev/null -H 'Host: jmrp.io' https://127.0.0.1/
 alt-svc: h3=":443"; ma=86400
@@ -181,6 +182,7 @@ server: cloudflare
 (no alt-svc header in the response)
 $ dig +short HTTPS jmrp.io @1.1.1.1
 1 . alpn="h3,h2" ipv4hint=104.21.40.251,172.67.158.146 ech=...
+```
 </TerminalOutput>
 
 QUIC works anyway, as the handshake above already showed, because the advertisement lives somewhere else: the DNS HTTPS record for the domain carries `alpn="h3,h2"`, and browsers that resolve that record learn about HTTP/3 before they open a single connection. This is Cloudflare's behavior across its platform, not a peculiarity of my configuration — the edge terminates the connection and decides for itself what to advertise, and nothing in my Nginx config can change that. The practical lesson is narrow but worth having: if a CDN sits in front of the origin you configured for HTTP/3, the header you are testing for may not be the one your visitors ever see. Check the DNS record too.

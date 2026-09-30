@@ -1,6 +1,7 @@
 /**
  * Guards the scheduled rebuild's safety checks: detecting a running Astro
- * build and the PID lock with stale detection.
+ * build, the PID lock with stale detection, and the alarm for a fixture
+ * build left served by a collector that stays broken.
  *
  * @module
  */
@@ -17,6 +18,7 @@ import {
   findRunningAstroBuilds,
   isAstroBuildCmdline,
   releaseLock,
+  servedFixtureAlarm,
 } from "./rebuild-if-changed.mjs";
 
 test("isAstroBuildCmdline recognizes every way a build is started", () => {
@@ -122,6 +124,50 @@ test("describeDecision names the reason", () => {
       7,
     ),
     /no rebuild state/,
+  );
+  assert.match(
+    describeDecision(
+      {
+        rebuild: true,
+        reason: "not-live",
+        changedSections: [],
+        ageDays: 0.5,
+        source: "fixture",
+      },
+      7,
+    ),
+    /rendered fixture data, not a collection \(last build 0\.5 day\(s\) ago\): rebuild\./,
+  );
+});
+
+test("servedFixtureAlarm fires only while the live build is not live data", () => {
+  // A live (or legacy) state: a failed collection stays a quiet exit 0.
+  assert.equal(servedFixtureAlarm(null), null);
+  assert.equal(
+    servedFixtureAlarm({ projectionHash: "x", builtAt: "2026-09-30T00:00Z" }),
+    null,
+  );
+  assert.equal(
+    servedFixtureAlarm({
+      projectionHash: "x",
+      builtAt: "2026-09-30T00:00Z",
+      source: "live",
+    }),
+    null,
+  );
+  // A fixture build: the run must fail so the unit shows it.
+  const alarm = servedFixtureAlarm({
+    source: "fixture",
+    builtAt: "2026-09-30T17:20:00.000Z",
+    asOf: "2026-09-27T13:58:22",
+  });
+  assert.match(
+    alarm ?? "",
+    /served fixture data \(as of 2026-09-27T13:58:22\) since 2026-09-30T17:20:00\.000Z/,
+  );
+  assert.match(
+    servedFixtureAlarm({ source: "gitlab-fixture", builtAt: "t" }) ?? "",
+    /gitlab-fixture data \(as of an unknown date\)/,
   );
 });
 

@@ -25,6 +25,7 @@ import { stripToText } from "@utils/html";
 import { featuredProjectLines, whoamiFactLines } from "@utils/llms/home-facts";
 import { registry } from "@utils/llms/mdx/registry";
 import { mdxToMarkdown } from "@utils/llms/mdx/render";
+import { parenthetical } from "@utils/llms/parenthetical";
 import {
   aboutLines,
   projectsLines,
@@ -70,12 +71,22 @@ import { getCollection, getEntry } from "astro:content";
 // though this file uses the binding itself.
 export { markdownTwinPath } from "@utils/llms/twin-path";
 
-/** Curated, site-level narrative reused by both files. */
+/**
+ * Curated, site-level narrative reused by both files.
+ *
+ * Positioned as the `#person` node is (public/identity/person.jsonld): a
+ * firmware and software engineer, with acoustics as the background it grew
+ * from. Both strings still said "R&D Engineer specializing in ... Acoustics"
+ * after the site had moved on, and answer engines quoted them verbatim (GEO
+ * audit #11, M1). The employment is stated with its dates and the current
+ * status beside it, because engines filled that gap with an employer that
+ * was no longer current (A2).
+ */
 const DESCRIPTION =
-  "Personal technical blog and portfolio of José Manuel Requena Plens, R&D Engineer specializing in Embedded Systems, Acoustics, and Industrial Software Development.";
+  "Personal technical blog and portfolio of José Manuel Requena Plens, a firmware and software engineer in Valencia, Spain: industrial embedded systems, open-source tooling, and self-hosted infrastructure.";
 
 const ABOUT =
-  "José Manuel Requena Plens (JMRP) is a multidisciplinary engineer working across firmware, embedded systems, and applied research. Background in solar-inverter firmware and industrial control systems, Acoustics research, noise mitigation for the European Space Agency (ESA), and biomedical ultrasound at UPV. Active open source contributor and self-hoster.";
+  "José Manuel Requena Plens (JMRP) is a firmware and software engineer in Valencia, Spain. From April 2023 to May 2026 he was an R&D Software Developer at Power Electronics, writing firmware in C on STM32 and FreeRTOS for solar inverters, with Modbus communications and hardware test automation; before that, acoustics research at the UPV (2019–2023) on rocket launch noise mitigation for the European Space Agency (ESA), acoustic metamaterials and biomedical ultrasound. Since May 2026 he has been looking for firmware, software or QA roles, on-site, remote or hybrid. Active open-source contributor and self-hoster.";
 
 /*
  * The MCP section gets its own H2 rather than a line under `## Sections`
@@ -410,11 +421,6 @@ const CV_LABELS = {
     downloads: "Versiones descargables (PDF)",
   },
 } as const;
-
-/** ` (text)`, or nothing when the value is absent. */
-function parenthetical(value?: string): string {
-  return value ? ` (${value})` : "";
-}
 
 /** `. text.`, or just `.`, for the venue tail of a citation line. */
 function suffixed(value?: string): string {

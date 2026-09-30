@@ -85,7 +85,14 @@ export async function generateRssItem(
       const imgUrl = new URL(opt.src, site).href;
       const thumbUrl = new URL(thumb.src, site).href;
 
-      // RSS 2.0 Enclosure (Used by most modern readers for the main image)
+      // RSS 2.0 Enclosure (Used by most modern readers for the main image).
+      // `length` is required and is the file's size in bytes, which does not
+      // exist yet: Astro writes the optimized cover after every page, this
+      // endpoint included, has rendered. The 0 is a placeholder that the
+      // post-build step `patchRssEnclosureLengths`
+      // (src/integrations/post-build/rss-enclosures.ts) overwrites from the
+      // built file, failing the build if the file is missing;
+      // scripts/ci/validate-rss.mjs rejects any 0 that reaches a built feed.
       customData += `<enclosure url="${escapeXml(imgUrl)}" length="0" type="image/jpeg" />\n`;
 
       // The covers' reuse terms, in the one channel that actually redistributes
@@ -167,6 +174,9 @@ export async function generateRssFeed(
   const year = new Date().getFullYear();
   const pathPrefix = locale === "en" ? "" : `/${locale}`;
   const feedUrl = `${pathPrefix}/rss.xml`;
+  // With the trailing slash: `https://jmrp.io/es` is a 301 to `/es/`, so the
+  // channel's home link must not be the redirect (GEO audit #11, B7).
+  const homeUrl = new URL(`${pathPrefix}/`, site).href;
 
   const posts = await getCollection("posts");
   const publishedPosts = posts.filter(
@@ -199,7 +209,7 @@ export async function generateRssFeed(
   <channel>
     <title>${escapeXml(t("seo.rssFeedTitle"))}</title>
     <description>${escapeXml(t("seo.siteDescription"))}</description>
-    <link>${escapeXml(site + pathPrefix)}</link>
+    <link>${escapeXml(homeUrl)}</link>
     <atom:link href="${escapeXml(new URL(feedUrl, site).href)}" rel="self" type="application/rss+xml" />
     <language>${localeConfig[locale].bcp47.toLowerCase()}</language>
     <copyright>${t("rss.copyright", { year })}</copyright>
@@ -212,7 +222,7 @@ export async function generateRssFeed(
     <image>
       <url>${escapeXml(new URL("/favicon.png", site).href)}</url>
       <title>${escapeXml(t("seo.rssFeedTitle"))}</title>
-      <link>${escapeXml(site + pathPrefix)}</link>
+      <link>${escapeXml(homeUrl)}</link>
       <width>144</width>
       <height>144</height>
     </image>

@@ -17,7 +17,7 @@ and Preact islands for real-time homelab data only. WCAG 2.2 AA,
 4. **No inline `<script>`** — use `<script is:inline>` with `nonce="NGINX_CSP_NONCE"`
 5. **Dark-first theme** — dark mode is default, light is the override
 6. **Bilingual** — all UI text uses `t()` from `useTranslations()`, never hardcoded EN
-7. **Privacy-first tools** — all computation runs client-side, no server calls
+7. **Privacy-first tools**: all processing runs in the browser; a tool may reach the network only when the user presses its button and only for the target it inspects (today `cert-inspector` queries public Certificate Transparency logs and `http-headers-analyzer` fetches through a no-log proxy on this domain), and every surface that summarizes the tools must name those exceptions
 
 ---
 

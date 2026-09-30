@@ -389,12 +389,12 @@ export const common = {
   },
   seo: {
     rssFeedTitle: "JMRP Blog RSS Feed",
-    siteTitle: "José Manuel Requena Plens | R&D Engineer",
+    siteTitle: "José Manuel Requena Plens | Firmware & Software Engineer",
     siteDescription:
-      "Portfolio of José Manuel Requena Plens. Specializing in Embedded Systems, Acoustics, and Industrial Software Development.",
+      "Blog and portfolio of José Manuel Requena Plens, firmware and software engineer in Valencia, Spain: embedded systems, open-source tooling and self-hosting.",
     siteKeywords:
-      "R&D, Embedded Systems, Acoustics, Software Engineer, Portfolio, CV, Metamaterials, Research",
-    jobTitle: "R&D Engineer",
+      "Firmware, Embedded Systems, STM32, FreeRTOS, Modbus, Go, MCP Servers, Test Automation, QA, Network Security, Self-Hosting, Acoustics",
+    jobTitle: "R&D · Firmware & Software Engineer",
   },
   pages: {
     home: {
@@ -402,7 +402,7 @@ export const common = {
       heroSubtitle:
         "Embedded Firmware & Software Engineer. <br>Bridging the gap between <strong>firmware</strong>, software, and applied research.",
       heroBio1:
-        "I'm José Manuel Requena Plens, an R&D engineer based in Valencia, Spain, specializing in embedded firmware (C/C++, STM32/ESP32), industrial software development, and applied acoustics research. My path runs from academic research in acoustics to industrial firmware development, and that breadth is what motivates me the most.",
+        "I'm José Manuel Requena Plens, a firmware and software engineer based in Valencia, Spain, specializing in embedded firmware (C/C++, STM32/ESP32), industrial communications and test automation. My path runs from academic research in acoustics to industrial firmware development, and that breadth is what motivates me the most.",
       heroBio2:
         "I thrive on integrating hardware and software end to end. I'm an active Open Source contributor whose tools are used by developers around the world, and a passionate self-hoster. My homelab serves this site and the <a href='https://mcp.jmrp.io/' target='_blank' rel='external noopener noreferrer' class='external-link' aria-label='public MCP servers (opens in new tab)'>public MCP servers</a> anyone can point an AI client at. <a href='/cv/'>Check out my CV</a> to see the full journey.",
       viewCV: "View CV",
@@ -418,8 +418,8 @@ export const common = {
       upstreamStrip:
         "I also contribute code and documentation to other open-source projects, such as {names}.",
       upstreamLink: "See the contributions →",
-      availability: "Available for projects · Valencia (CET/CEST)",
-      availabilityShort: "Available · Valencia",
+      availability: "Open to work · Valencia (CET/CEST)",
+      availabilityShort: "Open to work",
       seeProjects: "See projects",
       terminalLabel: "Profile summary",
       terminalRole: "Firmware / Software Eng.",
@@ -441,7 +441,7 @@ export const common = {
       aiDisclaimer:
         "Real projects, AI-assisted drafting. I document my actual experiments and code, using AI tools to structure and polish the final write-ups.",
       description:
-        "Technical articles and tutorials on Nginx, MikroTik, networking, security, and DevOps. Practical guides from an R&D engineer's perspective.",
+        "Technical articles and tutorials on embedded firmware, Nginx, MikroTik, networking, security and DevOps, written by a firmware and software engineer.",
       schemaName: "Blog - José Manuel Requena Plens",
       relatedTitle: "Related on this site",
       relatedTools: "Try the tool",
@@ -471,10 +471,10 @@ export const common = {
       copyMarkdown: "Copy as Markdown",
       copyingMarkdown: "Copying…",
       codeExampleTemplate: "{lang} example {index}",
-      authorRole: "R&D Engineer",
+      authorRole: "Firmware & Software Engineer",
       aboutAuthor: "About the author",
       authorBio:
-        "José M. Requena Plens is an R&D engineer working where acoustics, electronics, and firmware meet — writing about embedded systems, security, and self-hosted infrastructure.",
+        "José M. Requena Plens is a firmware and software engineer with a background in acoustics research. He writes about embedded systems, security and self-hosted infrastructure.",
       authorViewCv: "View CV",
       authorAvatarAlt: "Photo of {author}",
       aiDisclosure:
@@ -528,10 +528,10 @@ export const common = {
       title: "CV",
       heading: "Curriculum Vitae",
       description:
-        "CV of José Manuel Requena Plens — R&D Engineer in embedded systems, cloud infrastructure, acoustics, and industrial software.",
+        "CV of José Manuel Requena Plens, firmware and software engineer (C, STM32, FreeRTOS, Modbus, test automation). Open to firmware, software and QA roles.",
       certificateFallback: "Certificate",
       schemaDescription:
-        "R&D Engineer specializing in software development, cloud infrastructure, and security.",
+        "Firmware and software engineer in Valencia, Spain: industrial embedded systems, open-source tooling, and self-hosted infrastructure.",
       levelNone: "None",
       levelElementary: "Elementary",
       levelBasic: "Basic",
@@ -929,6 +929,11 @@ export const common = {
         "Every open-source project the author maintains, and the author's contributions to other projects. Stars, releases and the recent-activity figures are substituted by nginx as this document is served, from the capture timestamped below; this file is never cached.",
       downloadsNote:
         "Download figures combine GitHub release artifacts, Docker Hub image pulls, NuGet installs and MATLAB File Exchange downloads. NuGet counts only the package a reader installs: each install also fetches one runtime package, and counting both would count it twice. Checksum, signature and SBOM files are not counted: a release publishes them next to the binary and every install fetches both, so counting them would report the same install twice. The File Exchange figures are read by hand ({date}) because MathWorks refuses scripted requests, and a project shows its own figure only once it passes 1,000, so the per-project numbers below do not add up to the site-wide total.",
+      // The figure the home card prints as `downloads.total`, defined in a
+      // sentence (GEO audit #11, B11); rendered only when downloads.json
+      // carries a usable total and date (`siteDownloadsTotal`).
+      downloadsTotal:
+        "Counting every project and channel, the site-wide total is {total} downloads as of {date}.",
       downloadsSourceLead:
         "The exact rule, and the full list of channels counted and skipped:",
       topicsLabel: "Topics covered by {project}",
@@ -1039,7 +1044,14 @@ export const common = {
       diffFilesOne: "{count} file",
       diffPrs: "{count} PRs",
       diffMrs: "{count} MRs",
-      diffSpoken: "{additions} lines added and {deletions} removed",
+      // Composed from four pieces so each count takes its own number
+      // agreement: "1 lines added" was read aloud on three rows (GEO audit
+      // #11, B5). See `diffSpoken` in @utils/llms/diff-spoken.
+      diffSpoken: "{added} and {removed}",
+      diffAdded: "{count} lines added",
+      diffAddedOne: "{count} line added",
+      diffRemoved: "{count} removed",
+      diffRemovedOne: "{count} removed",
       languagesLead: "Projects with merged code, by main language:",
       underReview: "under review",
       durationHours: "{count} h",
@@ -1098,16 +1110,19 @@ export const common = {
     tools: {
       title: "Developer Tools",
       description:
-        "Free interactive developer tools for security, encoding, networking, and embedded systems. They run in your browser — privacy first.",
+        "Free developer tools for security, encoding, networking and embedded systems. All run in your browser; two make a network request you trigger.",
+      // The qualification is stated wherever the tools are summarized, in the
+      // same words everywhere (GEO audit #11, A1): two of the seventeen go to
+      // the network when asked to, and this page used to say none did.
       intro:
-        "Browser-based utilities for web security and development. All calculations happen locally—no data is sent to any server.",
+        "Utilities for web security and development. All of them run in your browser; the certificate inspector also looks the domain up in public Certificate Transparency logs, and the HTTP header analyzer fetches the URL through a proxy on this site.",
       aboutTitle: "About These Tools",
       privacyTitle: "Privacy First",
       privacyDesc:
-        "All calculations happen in your browser. Your code never leaves your device.",
+        "What you type is processed on your device. The two exceptions reach the network only when you press their button: the certificate inspector queries public Certificate Transparency logs, and the header analyzer's fetch goes through a proxy on this site that keeps no log.",
       instantTitle: "Instant Results",
       instantDesc:
-        "No server round-trips. Results update as you type with zero latency.",
+        "Results update as you type, computed on the page itself; only the certificate and header lookups wait on the network.",
       openSourceTitle: "Open Source",
       openSourceDesc: "View the source code on {link}. Contributions welcome.",
       categorySecurity: "Security Tools",
@@ -1121,7 +1136,7 @@ export const common = {
       shortEmbedded: "embedded",
       shortMikrotik: "mikrotik",
       statusPrivacy: "privacy-first",
-      statusTelemetry: "0 telemetry",
+      statusTelemetry: "0 cookies",
       filterAll: "all",
       filterLabel: "Filter tools by category",
       categoryLabel: "Category",
@@ -1132,7 +1147,7 @@ export const common = {
       inCategory: "in this category",
       backToTools: "← Back to all tools",
       securityDesc:
-        "Free security tools that run in your browser — CSP policy builder and hash calculator, certificate inspector, HTTP header analyzer, and more.",
+        "Free security tools: a CSP policy builder and hash calculator, a certificate inspector, an HTTP header analyzer, and more.",
       developerDesc:
         "Free online developer utilities — Base64 encoder, regex tester, cron expression builder, Unix timestamp converter, and color contrast checker.",
       networkDesc:
@@ -1148,7 +1163,7 @@ export const common = {
       // category no longer has is a checkable lie. See also
       // docs/BLOG_POST_GUIDE.md's sibling note for tools.
       securityContext:
-        "Use these when you're hardening a site or checking someone else's work: build a Content-Security-Policy and hash its inline scripts, inspect a TLS certificate before trusting it, audit response headers, or reason about password and PIN strength with real numbers. Everything is computed in your browser; the only exception is the header analyzer's optional fetch, which goes through a proxy on this site and is not logged.",
+        "Use these when you're hardening a site or checking someone else's work: build a Content-Security-Policy and hash its inline scripts, inspect a TLS certificate before trusting it, audit response headers, or reason about password and PIN strength with real numbers. Everything is computed in your browser; the two exceptions are lookups you trigger yourself: the certificate inspector queries public Certificate Transparency logs, and the header analyzer's optional fetch goes through a proxy on this site and is not logged.",
       developerContext:
         "The small conversions that interrupt real work: decoding a Base64 blob, testing a regex against sample text, writing a cron expression you can trust, turning a Unix timestamp into a date, or checking a color pair against WCAG. Each one does its job without an account, an upload, or a network request.",
       networkContext:
@@ -1171,7 +1186,7 @@ export const common = {
   rss: {
     continueReading: "Continue reading on jmrp.io →",
     copyright:
-      "© {year} José Manuel Requena Plens. Articles are licensed CC BY 4.0 — https://creativecommons.org/licenses/by/4.0/",
+      "© {year} José Manuel Requena Plens. Articles are licensed CC BY 4.0: https://creativecommons.org/licenses/by/4.0/",
   },
   pwa: {
     shortcutBlog: "Blog",

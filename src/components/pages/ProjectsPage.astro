@@ -26,11 +26,17 @@ import FAQ from "@components/ui/FAQ.astro";
 import downloadsData from "@data/downloads.json";
 import rawContributionsData from "@data/ghc/projects-contributions.json";
 import { defaultLocale, type Locale } from "@i18n/config";
-import { formatDate, useTranslatedPath, useTranslations } from "@i18n/utils";
+import {
+  formatDate,
+  formatNumber,
+  useTranslatedPath,
+  useTranslations,
+} from "@i18n/utils";
 import BaseLayout from "@layouts/BaseLayout.astro";
 import { lastCommitDate } from "@utils/content-date";
 import { platformOf, repoUrl } from "@utils/contribution-links";
 import { compactDownloads, DOWNLOADS_DISPLAY_MIN } from "@utils/downloads";
+import { siteDownloadsTotal } from "@utils/llms/downloads-total";
 import { getPageFaq, pageFaqNode } from "@utils/page-faq";
 import type { LanguageTaggedValue } from "@utils/person";
 import {
@@ -78,6 +84,16 @@ const manualVerifiedOn =
   verifiedOn && !Number.isNaN(verifiedOn.getTime())
     ? formatDate(verifiedOn, locale)
     : null;
+
+// The figure the home card prints as `downloads.total`, given in a sentence
+// with the moment it was counted, through the same reader the twin uses.
+const siteDownloads = siteDownloadsTotal(downloadsData);
+const downloadsTotalSentence = siteDownloads
+  ? `${t("pages.projects.downloadsTotal", {
+      total: formatNumber(siteDownloads.total, locale),
+      date: formatDate(siteDownloads.countedAt, locale),
+    })} `
+  : "";
 
 const projects = await getProjects();
 const aboutEntry = await getEntry("profile", "about");
@@ -374,6 +390,7 @@ const faqNode =
         // prettier-ignore
         <p class="projects-header__note">
             {t("pages.projects.downloadsNote", { date: manualVerifiedOn })}{" "}
+            {downloadsTotalSentence}
             {t("pages.projects.downloadsSourceLead")}{" "}
             <a href="https://github.com/jmrplens/jmrp.io/blob/main/scripts/download-sources.mjs" target="_blank" rel="external noopener noreferrer" class="external-link" aria-label={t("aria.opensNewTab", { text: "download-sources.mjs" })}>download-sources.mjs</a>.
           </p>}

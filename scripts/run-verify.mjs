@@ -4,20 +4,22 @@
  * This script runs the full suite of quality checks for the project.
  * It replaces the long and complex 'verify' script in package.json.
  *
- * Pipeline shape (two phases):
- *   1. Static phase  — Astro Check, ESLint, Prettier, Stylelint, Token sync,
+ * Pipeline shape (five phases):
+ *   1. Static phase: Astro Check, ESLint, Prettier, Stylelint, Token sync,
  *      unit tests, CSpell, JSDoc coverage. These never touch `dist/`, so they
  *      all run concurrently via `Promise.allSettled`, accumulating every
  *      failure. If any of them fail, the whole run stops here (report + exit
- *      1) — the production build never starts.
- *   2. Build phase   — `pnpm run build`, in series. A build failure stops the
+ *      1): the production build never starts.
+ *   2. Build phase: `pnpm run build`, in series. A build failure stops the
  *      run immediately (nothing after it can run without `dist/`).
- *   3. Dist phase    — ATS, HTML5 validation, RSS feed, Lychee. These only
- *      read `dist/`, so they also run concurrently, accumulating failures.
- *   4. Sonar phase   — kept serial and non-blocking, exactly as before:
+ *   3. Dist phase: ATS, HTML5 validation, projects tokens, public assets,
+ *      CV figures, RSS feed, Schema.org ranges, Lychee (external links, and
+ *      internal anchors offline). These only read `dist/`, so they also run
+ *      concurrently, accumulating failures.
+ *   4. Sonar phase: kept serial and non-blocking, exactly as before:
  *      the scanner step only warns on failure, and the issues step is
  *      recorded as a failure but never blocks subsequent steps.
- *   5. E2E phase     — Playwright, in series, always last.
+ *   5. E2E phase: Playwright, in series, always last.
  *
  * The final report lists every failed step gathered across all phases (not
  * just the first one encountered), so a single run surfaces the complete
@@ -331,13 +333,33 @@ async function runVerify() {
       name: "Lint: RSS Feed",
       command: "node scripts/ci/validate-rss.mjs dist",
     },
-    // Schema.org JSON-LD correctness is enforced at build time via schema-dts
-    // types (`satisfies`) on the schema builders, checked by Astro Check
-    // above — the official Google Schema.org TypeScript vocabulary, far more
-    // thorough than the previous hand-rolled output checker.
     {
+      // schema-dts (`satisfies` on the builders, checked by Astro Check
+      // above) types the JSON-LD, but accepts any node with an `@id` as an
+      // IdReference, so a wrong type in a property's range goes through
+      // (GEO audit #11, B10). This checks the built output against the
+      // pinned schema.org vocabulary instead.
+      name: "Lint: Schema.org ranges",
+      command: "node scripts/ci/check-schema-ranges.mjs dist",
+    },
+    {
+      // Both Lychee steps quote their glob so lychee expands it recursively.
+      // The command runs under `sh` (dash here), which has no globstar: an
+      // unquoted `dist/**/*.html` reached only `dist/*/*.html`, 12 of the
+      // 130 pages, so the home page, every post, every tool and every
+      // Spanish subpage went unchecked (GEO audit #11).
       name: "Lint: Broken Links (Lychee)",
-      command: "lychee --config lychee.toml --root-dir dist dist/**/*.html",
+      command: 'lychee --config lychee.toml --root-dir dist "dist/**/*.html"',
+    },
+    {
+      // Every `#fragment` of an internal link must exist on the page it
+      // names (a table of contents entry pointing at a heading that was
+      // renamed or never rendered). Offline, so it reads only `dist/`.
+      // `--index-files index.html` resolves `/about/#x` to the directory's
+      // index.html, without which every such fragment is a false error.
+      name: "Lint: Internal anchors (Lychee, offline)",
+      command:
+        'lychee --config lychee.toml --offline --include-fragments --index-files index.html --root-dir dist "dist/**/*.html"',
     },
   ];
 
