@@ -57,7 +57,14 @@ jobs:
     timeout-minutes: 15
     needs: ci-setup
     steps:
+      # Full history: page dates come from git (`isSubstantive` in
+      # src/utils/post-dates.ts). In the default depth-1 clone a
+      # `[skip-bump]` head leaves no substantive commit in view, so /about/
+      # lost its ProfilePage dateModified and the functional schema test
+      # failed on main after #537. CI now builds the dates production builds.
       - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
       - name: Cache Playwright Browsers
         id: playwright-cache
         uses: actions/cache@v6
