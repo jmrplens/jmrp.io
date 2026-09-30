@@ -8,6 +8,7 @@
 
 import fs from "node:fs";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 
 import Parser from "rss-parser";
 import { parseStringPromise } from "xml2js";
@@ -77,11 +78,17 @@ function validateItemContent(item, idx, results) {
 /**
  * Validates the enclosure of an RSS item.
  *
+ * `length` is required by RSS 2.0 and is the file's size in bytes. The feed
+ * endpoint emits a 0 placeholder that the post-build step
+ * `patchRssEnclosureLengths` replaces with the size of the built file, so a 0
+ * here means that step did not run; it shipped in all 24 enclosures until GEO
+ * audit #11 (B7).
+ *
  * @param item - The RSS item object.
  * @param idx - Index of the item.
  * @param results - Accumulated results object.
  */
-function validateItemEnclosure(item, idx, results) {
+export function validateItemEnclosure(item, idx, results) {
   if (!item.enclosure) {
     results.warnings.push(`Item ${idx}: Missing <enclosure> for cover image`);
     return;
@@ -94,6 +101,13 @@ function validateItemEnclosure(item, idx, results) {
   if (!item.enclosure.type?.startsWith("image/")) {
     results.errors.push(
       `Item ${idx}: Enclosure type '${item.enclosure.type}' is not an image`,
+    );
+  }
+
+  const { length } = item.enclosure;
+  if (!/^\d+$/.test(length ?? "") || Number(length) === 0) {
+    results.errors.push(
+      `Item ${idx}: Enclosure length '${length ?? ""}' is not the file's size in bytes`,
     );
   }
 }
@@ -238,7 +252,7 @@ function parseCliArgs(argv) {
  * @param rssFile - Absolute path to the RSS feed file.
  * @returns {Promise<object>} Validation results for this feed.
  */
-async function validateSingleFeed(rssFile) {
+export async function validateSingleFeed(rssFile) {
   const results = {
     valid: false,
     file: rssFile,
@@ -379,9 +393,15 @@ function writeResults(data, filePath) {
   fs.writeFileSync(filePath, JSON.stringify(data, null, 2));
 }
 
-try {
-  await validateRSS();
-} catch (error) {
-  console.error("❌ Unexpected error:", error);
-  process.exit(1);
+const invokedDirectly =
+  process.argv[1] !== undefined &&
+  path.resolve(process.argv[1]) === fileURLToPath(import.meta.url);
+
+if (invokedDirectly) {
+  try {
+    await validateRSS();
+  } catch (error) {
+    console.error("❌ Unexpected error:", error);
+    process.exit(1);
+  }
 }

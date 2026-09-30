@@ -353,6 +353,11 @@ const highlightList = {
     position: index + 1,
     item: {
       "@type": "CreativeWork",
+      // The PR or MR URL is its stable identity, the same on both locales,
+      // so the EN and ES pages merge into one node carrying both
+      // language-tagged descriptions instead of two blank nodes each
+      // (GEO audit #11, B9).
+      "@id": h.url,
       name: `${h.repo} ${itemRef(h)}`,
       url: h.url,
       // The "why" is written for this page, in its language; the pull or
@@ -481,20 +486,20 @@ const faqNode = pageFaq && pageFaqNode(pageFaq, pageUrl, schema["@id"], locale);
 
     <dl class="contrib-tiles">
       <div class="contrib-tile">
-        <dd>{listed.codeMerged}</dd>
         <dt>{t("pages.projects.upstream.tileCodeMerged")}</dt>
+        <dd>{listed.codeMerged}</dd>
       </div>
       <div class="contrib-tile">
-        <dd>{listed.listingMerged}</dd>
         <dt>{t("pages.projects.upstream.tileListingMerged")}</dt>
+        <dd>{listed.listingMerged}</dd>
       </div>
       <div class="contrib-tile">
-        <dd>{listed.codeOpen}</dd>
         <dt>{t("pages.projects.upstream.tilePrOpen")}</dt>
+        <dd>{listed.codeOpen}</dd>
       </div>
       <div class="contrib-tile">
-        <dd>{summary.answersCount}</dd>
         <dt>{t("pages.projects.upstream.tileAnswers")}</dt>
+        <dd>{summary.answersCount}</dd>
       </div>
     </dl>
 
@@ -896,6 +901,8 @@ const faqNode = pageFaq && pageFaqNode(pageFaq, pageUrl, schema["@id"], locale);
   }
 
   .contrib-tile {
+    display: flex;
+    flex-direction: column;
     padding: var(--space-sm) var(--space-md);
     border-left: 1px solid var(--color-hair);
   }
@@ -918,7 +925,11 @@ const faqNode = pageFaq && pageFaqNode(pageFaq, pageUrl, schema["@id"], locale);
     }
   }
 
+  /* The DOM is label then value, the order HTML pairs them in (GEO audit
+     #11, C2: with the value first, answer engines paired each label with the
+     next tile's figure). The figure is drawn above its label here instead. */
   .contrib-tile dd {
+    order: -1;
     margin: 0;
     font-family: var(--font-display);
     font-size: var(--text-xl);

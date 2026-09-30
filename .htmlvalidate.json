@@ -18,10 +18,7 @@
     "require-sri": [
       "error",
       {
-        "target": "crossorigin",
-        "exclude": [
-          "/scripts/cf-beacon.js"
-        ]
+        "target": "crossorigin"
       }
     ],
     "element-required-content": [

@@ -5,10 +5,12 @@
  * It runs after the build is complete (`astro:build:done` hook) and TRANSFORMS
  * the content of the (not-yet-live) `builds/<color>` output directory: HTML/CSS
  * optimization, CSP artifact generation, image optimization, compression, and
- * permission fixups. One step VERIFIES rather than transforms —
+ * permission fixups. Two steps VERIFY rather than transform:
  * `verifyMarkdownTwins()` throws when the built pages, their markdown twins
- * and the index files disagree — and it lives here precisely because a throw
- * here happens before `deploy-swap.mjs` retargets `dist/`.
+ * and the index files disagree, and `verifyDlPairing()` throws when a
+ * description list pairs a value with the wrong label. They live here
+ * precisely because a throw here happens before `deploy-swap.mjs` retargets
+ * `dist/`.
  *
  * It also GENERATES the six Nginx artifacts — `security_headers.conf`,
  * `security_headers_assets.conf` and the four http-level maps under `maps/` —
@@ -58,6 +60,7 @@ import { generateDocsRedirects } from "./post-build/docs-redirects.js";
 import { processHtmlFiles } from "./post-build/html.js";
 import { optimizeImages } from "./post-build/images.js";
 import { generateMdTwinAlternates } from "./post-build/md-twin-alternates.js";
+import { patchRssEnclosureLengths } from "./post-build/rss-enclosures.js";
 import { generateTagRedirects } from "./post-build/tag-redirects.js";
 import type { CspData } from "./post-build/types.js";
 import { BUILD_STAMP_PREFIX, writeNginxSnippet } from "./post-build/utils.js";
@@ -158,6 +161,14 @@ export default function postBuildIntegration(): AstroIntegration {
           await timed("processHtmlFiles", logger, () =>
             processHtmlFiles(distDir, cspData, enableCsp, logger),
           );
+          // The feeds render before Astro writes the optimized covers, so
+          // their enclosure lengths are placeholders until the files exist.
+          // Before compressAssets, which snapshots rss.xml into .gz/.br, and
+          // before the manifest, so a missing cover fails a build that has
+          // staged nothing deliverable (GEO audit #11, B7).
+          await timed("patchRssEnclosureLengths", logger, () =>
+            patchRssEnclosureLengths(distDir, logger),
+          );
           await timed("finalizeCspConfig", logger, () =>
             finalizeCspConfig(stagedIn, cspData, stamp, logger),
           );
@@ -194,6 +205,15 @@ export default function postBuildIntegration(): AstroIntegration {
           // the other's effects, and a passing build still runs both.
           await timed("verifyMarkdownTwins", logger, () =>
             verifyMarkdownTwins(distDir),
+          );
+          // Same kind of step: every `<dl>` group must be `<dt>` then `<dd>`,
+          // the order HTML pairs a label with its value in. Value-first
+          // tiles made answer engines publish each label with the next
+          // tile's figure (GEO audit #11, C2), and neither html-validate nor
+          // axe reports the order. Before the manifest, so a failing build
+          // stages nothing deliverable.
+          await timed("verifyDlPairing", logger, () =>
+            verifyDlPairing(distDir),
           );
 
           // Fourth Nginx artifact: the markdown-twin alternate map. Derived
@@ -545,38 +565,34 @@ function fixPermissions(distDir: string, logger: AstroIntegrationLogger) {
 }
 
 /**
- * Fails the build when the markdown-twin, announcement and index surfaces
- * disagree.
+ * Runs one of the `scripts/ci` build guards against the build output and
+ * fails the build when it reports a finding.
  *
- * The rules live in `scripts/ci/check-markdown-twins.mjs` rather than here so
- * there is exactly ONE implementation: the same file is runnable by hand
- * against any build directory (`node scripts/ci/check-markdown-twins.mjs
- * builds/green`) and unit-tested on its own (`pnpm test:unit`). A guard whose
- * failure mode nobody can reproduce is the vacuous check this one replaces.
+ * The rules live in the guard script rather than here so there is exactly ONE
+ * implementation: the same file is runnable by hand against any build
+ * directory (`node scripts/ci/check-markdown-twins.mjs builds/green`) and
+ * unit-tested on its own (`pnpm test:unit`). A guard whose failure mode
+ * nobody can reproduce is the vacuous check these replace.
  *
  * `process.execPath` rather than "node": no PATH lookup, and the child runs on
  * the same runtime as the build. `stdio: "inherit"` so the offending PATHS land
- * in the build log, not a count. Exit 1 means drift; any other non-zero status
- * means the guard itself could not run, and saying "drift" there would be a lie
- * about what happened. A child killed by a signal has a null status, so the
- * signal is reported instead — "exit null" names no cause.
+ * in the build log, not a count. Exit 1 means a finding; any other non-zero
+ * status means the guard itself could not run, and reporting a finding there
+ * would be a lie about what happened. A child killed by a signal has a null
+ * status, so the signal is reported instead: "exit null" names no cause.
  *
+ * @param script - The guard's file name under `scripts/ci/`.
  * @param distDir - The directory Astro just built into.
+ * @param finding - The build error for exit 1, naming what the guard found.
  */
-function verifyMarkdownTwins(distDir: string) {
-  const script = path.join(
-    process.cwd(),
-    "scripts/ci/check-markdown-twins.mjs",
+function runBuildGuard(script: string, distDir: string, finding: string) {
+  const result = spawnSync(
+    process.execPath,
+    [path.join(process.cwd(), "scripts/ci", script), distDir],
+    { stdio: "inherit" },
   );
-  const result = spawnSync(process.execPath, [script, distDir], {
-    stdio: "inherit",
-  });
   if (result.error) throw result.error;
-  if (result.status === 1) {
-    throw new Error(
-      "markdown twin / announcement / index drift — see the paths listed above",
-    );
-  }
+  if (result.status === 1) throw new Error(finding);
   if (result.status !== 0) {
     // `status` is null exactly when a signal killed the child (OOM killer,
     // a timeout, an interrupted build). Printing "exit null" there discards
@@ -585,8 +601,36 @@ function verifyMarkdownTwins(distDir: string) {
       ? `signal ${result.signal}`
       : `exit ${result.status}`;
     throw new Error(
-      `check-markdown-twins could not run (${cause}) — this is a` +
-        " guard failure, not a drift report",
+      `${path.basename(script, ".mjs")} could not run (${cause}): this is a` +
+        " guard failure, not a finding about the build",
     );
   }
+}
+
+/**
+ * Fails the build when the markdown-twin, announcement and index surfaces
+ * disagree (`scripts/ci/check-markdown-twins.mjs`).
+ *
+ * @param distDir - The directory Astro just built into.
+ */
+function verifyMarkdownTwins(distDir: string) {
+  runBuildGuard(
+    "check-markdown-twins.mjs",
+    distDir,
+    "markdown twin / announcement / index drift: see the paths listed above",
+  );
+}
+
+/**
+ * Fails the build when a `<dl>` group is not `<dt>` then `<dd>`
+ * (`scripts/ci/check-dl-pairing.mjs`).
+ *
+ * @param distDir - The directory Astro just built into.
+ */
+function verifyDlPairing(distDir: string) {
+  runBuildGuard(
+    "check-dl-pairing.mjs",
+    distDir,
+    "description lists pair a value with the wrong label: see the groups listed above",
+  );
 }

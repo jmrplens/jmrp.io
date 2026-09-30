@@ -84,8 +84,8 @@ const monthYear = (iso: string | null): string | null =>
   <dl class="upstream__tiles">
     {tiles.map((tile) => (
       <div class="upstream__tile">
-        <dd>{tile.value}</dd>
         <dt>{tile.label}</dt>
+        <dd>{tile.value}</dd>
       </div>
     ))}
   </dl>
@@ -196,6 +196,9 @@ const monthYear = (iso: string | null): string | null =>
   }
 
   .upstream__tile {
+    display: flex;
+    flex-direction: column;
+
     /* A long value (or a raw token when no nginx substitutes it) wraps
        instead of pushing the grid past the viewport. */
     min-inline-size: 0;
@@ -208,7 +211,11 @@ const monthYear = (iso: string | null): string | null =>
     border-left: 0;
   }
 
+  /* The DOM is label then value, the order HTML pairs them in (GEO audit
+     #11, C2: with the value first, answer engines paired each label with the
+     next tile's figure). The figure is drawn above its label here instead. */
   .upstream__tile dd {
+    order: -1;
     margin: 0;
     font-family: var(--font-display);
     font-size: var(--text-xl);

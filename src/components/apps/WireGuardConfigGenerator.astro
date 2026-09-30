@@ -748,7 +748,7 @@ const i18n = {
           </div>
           <div
             class="wg-peer-manual-keys"
-            style="display:none"
+            hidden
           >
             <div class="wg-fields-row">
               <div class="wg-field">
@@ -1180,7 +1180,9 @@ const i18n = {
       var uid = uniqueId;
       var ipv4 = getNextIp(vpnSubnetInput.value, index);
       var ipv6 = getNextIpv6(vpnIpv6Input.value, index);
-      var ipv6Display = enableIpv6Check.checked ? "" : ' style="display:none"';
+      // `hidden`, never a style attribute: markup parsed from innerHTML is
+      // subject to the nonce-only CSP, which blocks style="" (style-src-attr).
+      var ipv6Hidden = enableIpv6Check.checked ? "" : " hidden";
       var names = [
         "wg_phone",
         "wg_laptop",
@@ -1269,7 +1271,7 @@ const i18n = {
         '" /></div>';
       html +=
         '<div class="wg-field wg-peer-ipv6-field"' +
-        ipv6Display +
+        ipv6Hidden +
         '><label class="wg-label" for="' +
         uid +
         "-peer" +
@@ -1321,7 +1323,7 @@ const i18n = {
         i18n.optManualKeys +
         "</option></select></div></div>";
       // Manual key fields
-      html += '<div class="wg-peer-manual-keys" style="display:none">';
+      html += '<div class="wg-peer-manual-keys" hidden>';
       html += '<div class="wg-fields-row">';
       html +=
         '<div class="wg-field"><label class="wg-label" for="' +
@@ -1490,8 +1492,7 @@ const i18n = {
       var manualKeys = peerEl.querySelector(".wg-peer-manual-keys");
       if (keygenSelect && manualKeys) {
         keygenSelect.addEventListener("change", function () {
-          manualKeys.style.display =
-            keygenSelect.value === "manual" ? "" : "none";
+          manualKeys.hidden = keygenSelect.value !== "manual";
           generate();
         });
       }
@@ -1535,7 +1536,7 @@ const i18n = {
       peersContainer
         .querySelectorAll(".wg-peer-ipv6-field")
         .forEach(function (f) {
-          f.style.display = ipv6On ? "" : "none";
+          f.hidden = !ipv6On;
         });
 
       // Toggle manual key visibility per peer
@@ -1543,7 +1544,7 @@ const i18n = {
         var keygen = p.querySelector(".wg-peer-keygen");
         var manualKeys = p.querySelector(".wg-peer-manual-keys");
         if (keygen && manualKeys) {
-          manualKeys.style.display = keygen.value === "manual" ? "" : "none";
+          manualKeys.hidden = keygen.value !== "manual";
         }
       });
     }
@@ -2502,6 +2503,12 @@ const i18n = {
     gap: 0.5rem;
     padding-top: 0.375rem;
     border-top: 1px dashed var(--color-border, rgb(200 200 200 / 40%));
+  }
+
+  /* Both set display above, which outranks the UA [hidden] rule. */
+  .wg-card-body :global(.wg-field[hidden]),
+  .wg-card-body :global(.wg-peer-manual-keys[hidden]) {
+    display: none;
   }
 
   /* Output */
