@@ -151,6 +151,7 @@ They are filtered at the **notification** layer rather than in Nginx or the disc
 
 - **`isBotUserAgent(ua)`** — crawler/automation user-agents. The keyword regex matches `bot`/`crawl`/`crawler`/`spider`/`slurp` as a token _suffix_ (`(?![a-z])`), because crawler names end with the keyword (`Googlebot`, `YandexBot`, `bingbot`, `YisouSpider`) and a leading `\b` never matches there. Names like `RobotVacuum` or `Robotics`, where letters follow, are not matched. Also matches an explicit token list (`curl/`, `python-requests`, `GPTBot`, `meta-externalagent`, …) and the bare Chromium template `AppleWebKit/537.36 … Safari/537.36` with no `Chrome/` token. Checked against all 411 distinct user-agents that have ever POSTed to `/csp-report`: 15 matched, all from Yandex, Google, Microsoft, Amazon, Facebook, Chinanet or `curl` — no browser was flagged.
 - **`isCrawlerNetwork(ip)`** — Google and Yandex crawler netblocks, for fetchers that render with a browser user-agent. Google **Cloud** customer ranges (`34/35.x`) are deliberately excluded: those are rented VMs, i.e. exactly where a scanner or attacker would run from.
+- **`isStaleChromeInjectedEval(r, ua)`** — `blocked-uri: eval` with no `source-file`, under a Chrome older than 120 (December 2023). From 2026-09-25 to 09-30 all 27 `eval` reports matched it: `Chrome/118.0.0.0`, 27 different IPs, one page each, line 4 and no file. The site never calls `eval`, and a genuine one from its own code names the file it came from, so a current browser or a report with a `source-file` still pages.
 
 ### Log rotation
 
