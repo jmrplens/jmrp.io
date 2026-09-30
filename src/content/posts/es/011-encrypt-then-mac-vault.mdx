@@ -261,7 +261,7 @@ El **IV** (vector de inicialización) son los 16 bytes aleatorios que siembran e
 
 ## Escribir un registro: cifrar, luego MAC
 
-El camino de escritura es encrypt-then-MAC en el orden literal de su nombre. El texto plano se serializa primero a un registro binario empaquetado (más sobre esto [más adelante](#defensa-en-profundidad-padding-en-tiempo-constante--un-códec-fail-closed)), luego se cifra con AES-256-CBC bajo la sub-clave de _cifrado_, luego se calcula el tag sobre el texto cifrado bajo la sub-clave de _MAC_, y finalmente se escriben las cuatro partes:
+El camino de escritura es encrypt-then-MAC en el orden literal de su nombre. El texto plano se serializa primero a un registro binario empaquetado (más sobre esto [más adelante](#defensa-en-profundidad-padding-en-tiempo-constante--un-códec-con-bloqueo-ante-fallos)), luego se cifra con AES-256-CBC bajo la sub-clave de _cifrado_, luego se calcula el tag sobre el texto cifrado bajo la sub-clave de _MAC_, y finalmente se escriben las cuatro partes:
 
 <Code lang="cpp" title="save() — el camino de escritura encrypt-then-MAC (recortado)">
 ```cpp

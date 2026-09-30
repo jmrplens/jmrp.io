@@ -1,6 +1,6 @@
 ---
 title: "Privacy"
-description: "What this site measures and what it does not: self-hosted analytics, no cookies, no third-party scripts, no ads, no cross-site tracking."
+description: "What this site measures and what it does not: Cloudflare Web Analytics served from this domain, access logs, no cookies, no third-party scripts, no ads."
 kicker: "PRIVACY"
 heading: "What this site knows about you"
 lang: en
@@ -12,7 +12,7 @@ No cookies, no third-party scripts, no ad networks, no cross-site tracking. This
 
 ## Analytics
 
-Page views are counted with Cloudflare Web Analytics. The measurement script is not loaded from Cloudflare: it is downloaded at build time and served from this domain as /scripts/cf-beacon.js. Rendering a page therefore needs no request to a third-party host, and the one third-party request this site makes is the beacon's own report, described next.
+Page views are counted with Cloudflare Web Analytics. The measurement script is not loaded from Cloudflare: it is downloaded at build time and served from this domain under /scripts/, with a file name that carries a hash of its content and changes whenever the file does. Rendering a page therefore needs no request to a third-party host. The one third-party request a page makes on its own is the beacon's report, described next; the only other one is the Certificate Inspector's query to the Certificate Transparency logs, made when you press its button (see The tools, below).
 
 What that script sends, once per page view, is a report to Cloudflare's analytics endpoint: the page address with its query string and fragment stripped out before sending, the referrer, load timings, Core Web Vitals and coarse device signals such as connection type. It sets no cookie, assigns no identifier and builds no profile, so there is nothing that could follow you to another site. Because the query string is removed first, anything you typed into a tool that ended up in the address bar never reaches Cloudflare.
 

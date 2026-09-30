@@ -6,17 +6,17 @@ pages:
     visible: false
     items:
       - question: ¿Qué es jmrp.io?
-        answer: "El sitio personal de José Manuel Requena Plens, ingeniero de firmware y software en Valencia. Reúne su blog técnico sobre firmware, redes, autoalojamiento y seguridad, 17 herramientas que funcionan por completo en el navegador, su CV y publicaciones, y los servidores MCP públicos que sirve su homelab."
+        answer: "El sitio personal de José Manuel Requena Plens, ingeniero de firmware y software en Valencia. Reúne su blog técnico sobre firmware, redes, autoalojamiento y seguridad, 17 herramientas que funcionan en el navegador (el inspector de certificados busca además el dominio en registros públicos de Certificate Transparency, y el analizador de cabeceras HTTP consulta la URL a través de un proxy de este sitio), su CV y publicaciones, y los servidores MCP públicos que sirve su homelab."
       - question: ¿Qué puedo usar aquí sin cuenta?
-        answer: "Todo. Las 17 herramientas (calculadora de hashes, generador de CSP, calculadora de subredes, generadores de configuración de WireGuard y nginx, entre otras) procesan lo que escribes en tu propia máquina, cada artículo se publica en markdown en su propia URL más index.md, y los endpoints MCP de mcp.jmrp.io aceptan cualquier cliente MCP."
+        answer: "Todo. Las 17 herramientas (calculadora de hashes, generador de CSP, calculadora de subredes, generadores de configuración de WireGuard y nginx, entre otras) funcionan en el navegador, y solo el inspector de certificados y el analizador de cabeceras HTTP envían algo fuera: el dominio que el primero busca en registros públicos de Certificate Transparency y la URL que el segundo consulta a través de un proxy de este sitio. Cada artículo se publica en markdown en su propia URL más index.md, y los endpoints MCP de mcp.jmrp.io aceptan cualquier cliente MCP."
 
   - path: /about/
     visible: true
     items:
       - question: ¿Quién es José Manuel Requena Plens?
-        answer: "Ingeniero de firmware y software en Valencia, con base en I+D en acústica: Ingeniería de Telecomunicación, Máster en Ingeniería Acústica y cuatro años de investigación predoctoral en la UPV (2019–2023). Entre 2023 y 2026 desarrolló firmware embebido industrial en C sobre STM32 y FreeRTOS para inversores solares y baterías, y mantiene {ownRepos} repositorios públicos propios en GitHub."
+        answer: "Ingeniero de firmware y software en Valencia, con base en I+D en acústica: Ingeniería de Telecomunicación, Máster en Ingeniería Acústica y cuatro años de investigación predoctoral en la UPV (2019–2023). Entre 2023 y 2026 desarrolló firmware embebido industrial en C sobre STM32 y FreeRTOS para inversores solares y baterías, y mantiene {ownRepos} repositorios públicos propios en GitHub. Desde mayo de 2026 busca su próximo puesto en firmware, software o QA, presencial, remoto o híbrido."
       - question: ¿Qué software mantiene?
-        answer: "Varios servidores Model Context Protocol en Go (entre ellos gitlab-mcp-server, que expone más de 850 acciones de GitLab, y libgen-mcp), phonometry (biblioteca de acústica para Python conforme a normas), cs-routeros-bouncer (bouncer de CrowdSec para MikroTik RouterOS), Cloudflare-DNS-Updater, las 17 herramientas de navegador de este sitio y Kleidos, un gestor de contraseñas hardware en C++ con ocho variantes para dispositivos distintos, cada uno con su pantalla y sus botones, y el origen de la serie de firmware de este blog."
+        answer: "Varios servidores Model Context Protocol en Go (entre ellos gitlab-mcp-server, que expone más de 850 acciones de GitLab, y libgen-mcp), phonometry (biblioteca de acústica para Python conforme a normas), cs-routeros-bouncer (bouncer de CrowdSec para MikroTik RouterOS), Cloudflare-DNS-Updater, las 17 herramientas web de este sitio y Kleidos, un gestor de contraseñas hardware en C++ con ocho variantes para dispositivos distintos, cada uno con su pantalla y sus botones, y el origen de la serie de firmware de este blog."
 
   - path: /projects/
     visible: true
@@ -32,11 +32,11 @@ pages:
     visible: true
     items:
       - question: ¿A qué proyectos de código abierto ha contribuido José Manuel Requena Plens?
-        answer: "A proyectos que no mantiene, en GitHub y GitLab, donde se ha fusionado código o documentación suya: entre ellos GitLab y su cliente oficial de Go, los SDK oficiales de MCP para Go y Rust, Trilium Notes, Nginx Proxy Manager, Beszel, acme.sh, Podman y Renovate. La página lista cada pull request y merge request por proyecto, con su estado y su tamaño."
+        answer: "A proyectos que no mantiene, en GitHub y GitLab, donde se ha fusionado código o documentación suya: entre ellos GitLab y su cliente oficial de Go, los SDK oficiales de MCP para Go y Rust, Trilium Notes, Nginx Proxy Manager, Beszel, acme.sh, Podman y Renovate. La página lista sus pull requests y merge requests de código y documentación, fusionadas y abiertas, por proyecto, cada una con su estado y su tamaño, hasta las diez más recientes por proyecto con un enlace al resto; las que no se fusionaron se cuentan, pero no se listan."
       - question: ¿Qué contribuciones destacan?
         answer: "Correcciones de seguridad aceptadas en el proyecto original: códigos TOTP de un solo uso en Trilium Notes, sesiones cerradas al cambiar la contraseña en Nginx Proxy Manager, identidades GPG revocadas que GitLab deja de aceptar como verificadas y una lista de proxies de confianza en Beszel. También correcciones de protocolo en los SDK oficiales de MCP para Go y Rust."
       - question: ¿De dónde salen estas cifras?
-        answer: "De GitHub y GitLab directamente: la parte de GitHub la recoge ghchronicle, su propio recolector de código abierto, y la de GitLab sale de la API de GitLab. Cada fila enlaza a su pull request o merge request, así que cualquier cifra se puede comprobar en su origen, y los repositorios privados no aparecen nunca."
+        answer: "De GitHub y GitLab directamente: la parte de GitHub la recoge ghchronicle, su propio recolector de código abierto, y la de GitLab sale de la API de GitLab. Cada fila listada, salvo las marcadas como «Detalles no publicados», enlaza a su pull request o merge request, así que las cifras se pueden comprobar en su origen, y los repositorios privados no aparecen nunca."
 
   - path: /cv/
     visible: true
@@ -74,9 +74,9 @@ pages:
     visible: true
     items:
       - question: ¿Este sitio usa cookies o scripts de terceros?
-        answer: "No. Ninguna respuesta pone una cookie, ninguna página carga un script, una fuente, una hoja de estilos ni una imagen de otro dominio, y no hay publicidad ni enlaces de afiliado. La única petición a un tercero que hace una página es el informe del beacon de analítica a Cloudflare, enviado desde un script servido por este dominio y sin la cadena de consulta."
+        answer: "No. Ninguna respuesta pone una cookie, ninguna página carga un script, una fuente, una hoja de estilos ni una imagen de otro dominio, y no hay publicidad ni enlaces de afiliado. La única petición a un tercero que hace una página por su cuenta es el informe del beacon de analítica a Cloudflare, enviado desde un script servido por este dominio y sin la cadena de consulta. Aparte de esa, solo hace otra el inspector de certificados: cuando pulsas su botón, tu navegador pregunta a un registro público de Certificate Transparency (Cert Spotter, o crt.sh si ese falla) por el nombre de host que has escrito."
       - question: ¿Qué registra el servidor cuando visito el sitio?
-        answer: "Un registro de acceso normal: marca de tiempo, dirección IP, línea de petición, código, tamaños y tiempo de respuesta, página de procedencia, user agent, las cabeceras Accept y Accept-Language, la versión de TLS, y el país, la ciudad, el operador de red y las coordenadas aproximadas que una base GeoIP deduce de la dirección. Se conserva un año y solo sirve para seguridad y para saber qué artículos se leen. El worker de Cloudflare registra lo mismo por petición, más lo que solo sabe el borde, durante unos noventa días."
+        answer: "Un registro de acceso normal: marca de tiempo, dirección IP, línea de petición, código, tamaños y tiempo de respuesta, página de procedencia, user agent, las cabeceras Accept y Accept-Language, la versión de TLS, y el país, la ciudad, el operador de red y las coordenadas aproximadas que una base GeoIP deduce de la dirección. Se conserva un año y solo sirve para seguridad y para saber qué artículos se leen. Un worker del autor en el borde de Cloudflare registra los mismos campos por petición, más lo que solo sabe el borde; Cloudflare guarda esas filas unos noventa días, y la copia que el autor vuelca cada cinco minutos a su base de datos de monitorización sigue la misma regla de un año."
       - question: ¿Las herramientas envían lo que escribo a algún sitio?
         answer: "Quince de las diecisiete nunca: calculan en tu máquina. El Inspector de Certificados consulta los registros públicos de Certificate Transparency desde tu navegador, y el Analizador de Cabeceras HTTP de Seguridad envía la URL que indicas a un proxy de este dominio, que no escribe ningún registro."
 

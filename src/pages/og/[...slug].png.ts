@@ -92,11 +92,11 @@ const STATIC_PAGES: Record<string, Record<Locale, OgProps>> = {
   home: {
     en: {
       title: "José M. Requena Plens",
-      subtitle: "R&D Engineer · Embedded Systems & IoT",
+      subtitle: "Firmware & Software Engineer · Embedded systems",
     },
     es: {
       title: "José M. Requena Plens",
-      subtitle: "Ingeniero de I+D · Sistemas embebidos e IoT",
+      subtitle: "Ingeniero de Firmware y Software · Sistemas embebidos",
     },
   },
   blog: {
@@ -116,11 +116,11 @@ const STATIC_PAGES: Record<string, Record<Locale, OgProps>> = {
   cv: {
     en: {
       title: "Curriculum Vitae",
-      subtitle: "José M. Requena Plens · R&D Engineer",
+      subtitle: "José M. Requena Plens · Firmware & Software Engineer",
     },
     es: {
       title: "Currículum",
-      subtitle: "José M. Requena Plens · Ingeniero de I+D",
+      subtitle: "José M. Requena Plens · Ingeniero de Firmware y Software",
     },
   },
   projects: {
@@ -166,11 +166,11 @@ const STATIC_PAGES: Record<string, Record<Locale, OgProps>> = {
   about: {
     en: {
       title: "About",
-      subtitle: "José M. Requena Plens · R&D Engineer",
+      subtitle: "José M. Requena Plens · Firmware & Software Engineer",
     },
     es: {
       title: "Perfil",
-      subtitle: "José M. Requena Plens · Ingeniero de I+D",
+      subtitle: "José M. Requena Plens · Ingeniero de Firmware y Software",
     },
   },
   uses: {
@@ -186,11 +186,13 @@ const STATIC_PAGES: Record<string, Record<Locale, OgProps>> = {
   privacy: {
     en: {
       title: "Privacy",
-      subtitle: "Self-hosted analytics, no cookies, no trackers · jmrp.io",
+      subtitle:
+        "Cloudflare Web Analytics from this domain, no cookies · jmrp.io",
     },
     es: {
       title: "Privacidad",
-      subtitle: "Analítica autoalojada, sin cookies ni rastreadores · jmrp.io",
+      subtitle:
+        "Cloudflare Web Analytics desde este dominio, sin cookies · jmrp.io",
     },
   },
   license: {

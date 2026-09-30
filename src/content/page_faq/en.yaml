@@ -22,17 +22,17 @@ pages:
     visible: false
     items:
       - question: What is jmrp.io?
-        answer: "The personal site of José Manuel Requena Plens, a firmware and software engineer in Valencia, Spain. It holds his technical blog on firmware, networking, self-hosting and security, 17 tools that run entirely in the browser, his CV and publications, and the public MCP servers his homelab serves."
+        answer: "The personal site of José Manuel Requena Plens, a firmware and software engineer in Valencia, Spain. It holds his technical blog on firmware, networking, self-hosting and security, 17 tools that run in the browser (the certificate inspector also looks the domain up in public Certificate Transparency logs, and the HTTP header analyzer fetches the URL through a proxy on this site), his CV and publications, and the public MCP servers his homelab serves."
       - question: What can I use here without an account?
-        answer: "Everything. The 17 tools (hash calculator, CSP builder, subnet calculator, WireGuard and nginx config generators, among others) process your input on your own machine, every post is published as markdown at its own URL plus index.md, and the MCP endpoints at mcp.jmrp.io accept any MCP client."
+        answer: "Everything. The 17 tools (hash calculator, CSP builder, subnet calculator, WireGuard and nginx config generators, among others) run in the browser, and only the certificate inspector and the HTTP header analyzer send anything out: the domain the first looks up in public Certificate Transparency logs, and the URL the second fetches through a proxy on this site. Every post is published as markdown at its own URL plus index.md, and the MCP endpoints at mcp.jmrp.io accept any MCP client."
 
   - path: /about/
     visible: true
     items:
       - question: Who is José Manuel Requena Plens?
-        answer: "A firmware and software engineer based in Valencia, Spain, with an R&D background in acoustics: a degree in Telecommunication Engineering, a Master's in Acoustical Engineering and four years of predoctoral research at the UPV (2019–2023). Between 2023 and 2026 he built industrial embedded firmware in C on STM32 and FreeRTOS for solar inverters and battery storage, and he maintains {ownRepos} public repositories of his own on GitHub."
+        answer: "A firmware and software engineer based in Valencia, Spain, with an R&D background in acoustics: a degree in Telecommunication Engineering, a Master's in Acoustical Engineering and four years of predoctoral research at the UPV (2019–2023). Between 2023 and 2026 he built industrial embedded firmware in C on STM32 and FreeRTOS for solar inverters and battery storage, and he maintains {ownRepos} public repositories of his own on GitHub. Since May 2026 he has been looking for his next role in firmware, software or QA, on-site, remote or hybrid."
       - question: What software does he maintain?
-        answer: "Several Model Context Protocol servers written in Go (among them gitlab-mcp-server, which exposes 850+ GitLab actions, and libgen-mcp), phonometry (a standards-conformant acoustics library for Python), cs-routeros-bouncer (a CrowdSec bouncer for MikroTik RouterOS), Cloudflare-DNS-Updater, the 17 browser-only tools on this site, and Kleidos, a hardware password manager in C++ built in eight variants for different devices, each with its own screen and buttons, and the source of the firmware series on this blog."
+        answer: "Several Model Context Protocol servers written in Go (among them gitlab-mcp-server, which exposes 850+ GitLab actions, and libgen-mcp), phonometry (a standards-conformant acoustics library for Python), cs-routeros-bouncer (a CrowdSec bouncer for MikroTik RouterOS), Cloudflare-DNS-Updater, the 17 web tools on this site, and Kleidos, a hardware password manager in C++ built in eight variants for different devices, each with its own screen and buttons, and the source of the firmware series on this blog."
 
   - path: /projects/
     visible: true
@@ -48,11 +48,11 @@ pages:
     visible: true
     items:
       - question: Which open-source projects has José Manuel Requena Plens contributed to?
-        answer: "Projects he does not maintain, on GitHub and GitLab, where his code or documentation was merged: among them GitLab and its official Go client, the official MCP SDKs for Go and Rust, Trilium Notes, Nginx Proxy Manager, Beszel, acme.sh, Podman and Renovate. The page lists every pull and merge request by project, with its state and size."
+        answer: "Projects he does not maintain, on GitHub and GitLab, where his code or documentation was merged: among them GitLab and its official Go client, the official MCP SDKs for Go and Rust, Trilium Notes, Nginx Proxy Manager, Beszel, acme.sh, Podman and Renovate. The page lists his merged and open code and documentation pull and merge requests by project, each with its state and size, up to the ten most recent per project with a link to the rest; the ones that were not merged are counted but not listed."
       - question: Which of these contributions stand out?
         answer: "Security fixes that landed upstream: single-use TOTP codes in Trilium Notes, sessions ended by a password change in Nginx Proxy Manager, revoked GPG identities no longer accepted as verified in GitLab, and a trusted-proxy allowlist in Beszel. Also protocol fixes in the official MCP SDKs for Go and Rust."
       - question: Where do these figures come from?
-        answer: "From GitHub and GitLab themselves: the GitHub side is collected by ghchronicle, his own open-source collector, and the GitLab side from the GitLab API. Every row links to its pull or merge request, so each figure can be checked at the source, and private repositories never appear."
+        answer: 'From GitHub and GitLab themselves: the GitHub side is collected by ghchronicle, his own open-source collector, and the GitLab side from the GitLab API. Every listed row except those marked "Details withheld" links to its pull or merge request, so the figures can be checked at the source, and private repositories never appear.'
 
   - path: /cv/
     visible: true
@@ -90,9 +90,9 @@ pages:
     visible: true
     items:
       - question: Does this site use cookies or third-party scripts?
-        answer: "No. No response sets a cookie, no page loads a script, font, stylesheet or image from another domain, and there are no ads or affiliate links. The only third-party request a page makes is the analytics beacon's report to Cloudflare, sent from a script served by this domain, with the query string stripped first."
+        answer: "No. No response sets a cookie, no page loads a script, font, stylesheet or image from another domain, and there are no ads or affiliate links. The one third-party request a page makes on its own is the analytics beacon's report to Cloudflare, sent from a script served by this domain, with the query string stripped first. The only other one comes from the certificate inspector: when you press its button, your browser asks a public Certificate Transparency log (Cert Spotter, or crt.sh if that fails) about the hostname you typed."
       - question: What does the server record when I visit?
-        answer: "An ordinary access log: timestamp, IP address, request line, status, sizes and response time, referrer, user agent, the Accept and Accept-Language headers, the TLS version and the country, city, network operator and approximate coordinates a GeoIP database derives from the address. Kept for one year, used only for security and to see which articles are read. Cloudflare's edge worker records the same per request, plus what only the edge knows, for about ninety days."
+        answer: "An ordinary access log: timestamp, IP address, request line, status, sizes and response time, referrer, user agent, the Accept and Accept-Language headers, the TLS version and the country, city, network operator and approximate coordinates a GeoIP database derives from the address. Kept for one year, used only for security and to see which articles are read. A worker the author runs at Cloudflare's edge records the same fields per request, plus what only the edge knows; Cloudflare keeps those rows for about ninety days, and the copy made every five minutes into his own monitoring database follows the same one-year rule."
       - question: Do the tools send what I type anywhere?
         answer: "Fifteen of the seventeen never do: they compute on your machine. The Certificate Inspector queries the public Certificate Transparency logs from your browser, and the HTTP Security Headers Analyzer sends the URL you submit to a proxy on this domain, which writes no log of any kind."
 

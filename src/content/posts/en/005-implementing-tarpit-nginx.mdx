@@ -173,7 +173,7 @@ I'm running option 1 today because it's what I could ship immediately after find
 
 A **[tarpit](https://en.wikipedia.org/wiki/Tarpit_%28networking%29)** (also known as a "tar pit" or "[sticky honeypot](/blog/006-implementing-mikrotik-honeypot/)") is a network security mechanism designed to **slow down attackers** by deliberately responding to their requests at an extremely slow rate. The name comes from the natural phenomenon of tar pits—geological formations where animals become trapped in viscous tar and cannot escape.
 
-In cybersecurity, a tarpit does the same thing digitally: it accepts incoming connections from malicious actors but **drip-feeds data so slowly** that the attacker's tools become stuck, wasting their time and resources while they wait for a response that never fully arrives. For more background, see [Hedgehog Security's excellent overview](https://www.hedgehogsecurity.co.uk/blog/what-are-tarpits).
+In cybersecurity, a tarpit does the same thing digitally: it accepts incoming connections from malicious actors but **drip-feeds data so slowly** that the attacker's tools become stuck, wasting their time and resources while they wait for a response that never fully arrives. For more background, see [Hedgehog Security's excellent overview](https://web.archive.org/web/20250811164646/https://www.hedgehogsecurity.co.uk/blog/what-are-tarpits) (archived copy; the original page is gone).
 
 <Callout type="info" title="The Philosophy">
 Unlike traditional blocking (which immediately rejects requests), a tarpit *pretends* to be cooperative. This wastes the attacker's resources, prevents them from quickly moving to the next target, and can even crash poorly-written scanning tools.

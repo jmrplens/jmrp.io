@@ -86,7 +86,7 @@ export async function fetchGitHubProfile(): Promise<GitHubProfile> {
     const fallback: GitHubProfile = {
       name: "José Manuel Requena Plens",
       login: USERNAME,
-      bio: "R&D Engineer | Embedded Systems & Acoustics | Software Engineer",
+      bio: "Firmware & Software Engineer | Embedded Systems | Valencia, Spain",
       html_url: `https://github.com/${USERNAME}`,
       avatar_url: `https://github.com/${USERNAME}.png`, // Stable redirecting avatar endpoint
       location: "Valencia, Spain",

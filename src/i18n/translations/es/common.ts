@@ -391,12 +391,12 @@ export const common = {
   },
   seo: {
     rssFeedTitle: "RSS del Blog JMRP",
-    siteTitle: "José Manuel Requena Plens | Ingeniero de I+D",
+    siteTitle: "José Manuel Requena Plens | Ingeniero de Firmware y Software",
     siteDescription:
-      "Portfolio de José Manuel Requena Plens. Especializado en Sistemas Embebidos, Acústica y Desarrollo de Software Industrial.",
+      "Blog y portfolio de José Manuel Requena Plens, ingeniero de firmware y software en Valencia: sistemas embebidos, herramientas open source y self-hosting.",
     siteKeywords:
-      "I+D, Sistemas Embebidos, Acústica, Ingeniero de Software, Portfolio, CV, Metamateriales, Investigación",
-    jobTitle: "Ingeniero de I+D",
+      "Firmware, Sistemas Embebidos, STM32, FreeRTOS, Modbus, Go, Servidores MCP, Automatización de Pruebas, QA, Seguridad de Redes, Self-Hosting, Acústica",
+    jobTitle: "I+D · Ingeniero de Firmware y Software",
   },
   pages: {
     home: {
@@ -404,9 +404,9 @@ export const common = {
       heroSubtitle:
         "Ingeniero de Firmware y Software. <br>Tendiendo puentes entre el <strong>firmware</strong>, el software y la I+D.",
       heroBio1:
-        "Soy José Manuel Requena Plens, ingeniero de I+D en Valencia, España, especializado en firmware embebido (C/C++, STM32/ESP32), desarrollo de software industrial e investigación en acústica aplicada. Mi trayectoria va desde la investigación académica en acústica hasta el desarrollo de firmware industrial, y esa amplitud es la que más me motiva.",
+        "Soy José Manuel Requena Plens, ingeniero de firmware y software en Valencia, especializado en firmware embebido (C/C++, STM32/ESP32), comunicaciones industriales y automatización de pruebas. Mi trayectoria va de la investigación académica en acústica al desarrollo de firmware industrial, y esa amplitud es lo que más me motiva.",
       heroBio2:
-        "Disfruto integrando hardware y software de principio a fin. Contribuyo activamente al Open Source —con herramientas usadas por desarrolladores de todo el mundo— y soy un apasionado del self-hosting. Mi homelab sirve este sitio y los <a href='https://mcp.jmrp.io/es/' target='_blank' rel='external noopener noreferrer' class='external-link' aria-label='servidores MCP públicos (se abre en nueva pestaña)'>servidores MCP públicos</a> a los que cualquiera puede conectar un cliente de IA. <a href='/es/cv/'>Consulta mi CV</a> para ver la trayectoria completa.",
+        "Disfruto integrando hardware y software de principio a fin. Contribuyo activamente al Open Source, con herramientas usadas por desarrolladores de todo el mundo, y soy un apasionado del self-hosting. Mi homelab sirve este sitio y los <a href='https://mcp.jmrp.io/es/' target='_blank' rel='external noopener noreferrer' class='external-link' aria-label='servidores MCP públicos (se abre en nueva pestaña)'>servidores MCP públicos</a> a los que cualquiera puede conectar un cliente de IA. <a href='/es/cv/'>Consulta mi CV</a> para ver la trayectoria completa.",
       viewCV: "Ver CV",
       viewCVAria: "Ver CV - mi currículum profesional",
       projects: "Proyectos",
@@ -420,8 +420,8 @@ export const common = {
       upstreamStrip:
         "También aporto código y documentación a proyectos open source de otros, como {names}.",
       upstreamLink: "Ver las contribuciones →",
-      availability: "Disponible para proyectos · Valencia (CET/CEST)",
-      availabilityShort: "Disponible · Valencia",
+      availability: "Abierto a empleo · Valencia (CET/CEST)",
+      availabilityShort: "Busco empleo",
       seeProjects: "Ver proyectos",
       terminalLabel: "Resumen de perfil",
       terminalRole: "Ing. Firmware / Software",
@@ -443,7 +443,7 @@ export const common = {
       aiDisclaimer:
         "Proyectos reales, redacción asistida por IA. Documento mis experimentos y código reales, usando herramientas de IA para estructurar y pulir los textos finales.",
       description:
-        "Artículos técnicos y tutoriales sobre Nginx, MikroTik, redes, seguridad y DevOps. Guías prácticas desde la perspectiva de un ingeniero de I+D.",
+        "Artículos técnicos y tutoriales sobre firmware embebido, Nginx, MikroTik, redes, seguridad y DevOps, escritos por un ingeniero de firmware y software.",
       schemaName: "Blog - José Manuel Requena Plens",
       relatedTitle: "Relacionado en este sitio",
       relatedTools: "Prueba la herramienta",
@@ -465,10 +465,10 @@ export const common = {
       copyMarkdown: "Copiar como Markdown",
       copyingMarkdown: "Copiando…",
       codeExampleTemplate: "Ejemplo {lang} {index}",
-      authorRole: "Ingeniero de I+D",
+      authorRole: "Ingeniero de Firmware y Software",
       aboutAuthor: "Sobre el autor",
       authorBio:
-        "José M. Requena Plens es ingeniero de I+D que trabaja donde se cruzan la acústica, la electrónica y el firmware — escribe sobre sistemas embebidos, seguridad e infraestructura autoalojada.",
+        "José M. Requena Plens es ingeniero de firmware y software, con una etapa previa de investigación en acústica. Escribe sobre sistemas embebidos, seguridad e infraestructura autoalojada.",
       authorViewCv: "Ver CV",
       authorAvatarAlt: "Foto de {author}",
       aiDisclosure:
@@ -522,10 +522,10 @@ export const common = {
       title: "CV",
       heading: "Curriculum Vitae",
       description:
-        "CV de José Manuel Requena Plens — Ingeniero de I+D en sistemas embebidos, infraestructura cloud, acústica y software industrial.",
+        "CV de José Manuel Requena Plens, ingeniero de firmware y software (C, STM32, FreeRTOS, Modbus, testing). Abierto a puestos de firmware, software y QA.",
       certificateFallback: "Certificado",
       schemaDescription:
-        "Ingeniero de I+D especializado en desarrollo de software, infraestructura cloud y seguridad.",
+        "Ingeniero de firmware y software en Valencia: sistemas embebidos industriales, herramientas open source e infraestructura self-hosted.",
       levelNone: "Ninguno",
       levelElementary: "Elemental",
       levelBasic: "Básico",
@@ -916,6 +916,8 @@ export const common = {
         "Todos los proyectos de código abierto que mantiene el autor, y sus aportaciones a otros proyectos. Las estrellas, las versiones y las cifras de actividad reciente las sustituye nginx al servir el documento, a partir de la captura fechada abajo; este fichero no se cachea nunca.",
       downloadsNote:
         "Las cifras de descargas suman los artefactos de las releases de GitHub, los pulls de imagen de Docker Hub, las instalaciones de NuGet y las descargas de MATLAB File Exchange. De NuGet solo cuenta el paquete que se instala: cada instalación descarga además un paquete de runtime, y contar ambos la contaría dos veces. Los ficheros de checksum, firma y SBOM no se cuentan: una release los publica junto al binario y cada instalación descarga ambos, así que contarlos sería contar dos veces la misma instalación. Las cifras del File Exchange se leen a mano ({date}) porque MathWorks rechaza las peticiones automatizadas, y un proyecto solo muestra su propia cifra al superar las 1.000 descargas, así que los números por proyecto de abajo no suman el total del sitio.",
+      downloadsTotal:
+        "Sumando todos los proyectos y canales, el total del sitio es de {total} descargas a fecha de {date}.",
       downloadsSourceLead:
         "La regla exacta, y la lista completa de canales contados y descartados:",
       topicsLabel: "Temas que cubre {project}",
@@ -1024,7 +1026,12 @@ export const common = {
       diffFilesOne: "{count} fichero",
       diffPrs: "{count} PR",
       diffMrs: "{count} MR",
-      diffSpoken: "{additions} líneas añadidas y {deletions} eliminadas",
+      // Four pieces so each count agrees in number; see the English file.
+      diffSpoken: "{added} y {removed}",
+      diffAdded: "{count} líneas añadidas",
+      diffAddedOne: "{count} línea añadida",
+      diffRemoved: "{count} eliminadas",
+      diffRemovedOne: "{count} eliminada",
       languagesLead: "Proyectos con código fusionado, por lenguaje principal:",
       underReview: "en revisión",
       durationHours: "{count} h",
@@ -1084,16 +1091,16 @@ export const common = {
     tools: {
       title: "Herramientas para desarrolladores",
       description:
-        "Herramientas gratuitas para desarrolladores: seguridad, codificación, redes y sistemas embebidos. Se ejecutan en tu navegador — privacidad ante todo.",
+        "Herramientas gratuitas de seguridad, codificación, redes y sistemas embebidos. Se ejecutan en tu navegador; dos hacen una petición de red cuando las usas.",
       intro:
-        "Utilidades en el navegador para seguridad web y desarrollo. Todos los cálculos se realizan localmente — ningún dato se envía a ningún servidor.",
+        "Utilidades para seguridad web y desarrollo. Todas se ejecutan en tu navegador; el inspector de certificados busca además el dominio en registros públicos de Certificate Transparency, y el analizador de cabeceras HTTP consulta la URL a través de un proxy de este sitio.",
       aboutTitle: "Sobre estas herramientas",
       privacyTitle: "Privacidad ante todo",
       privacyDesc:
-        "Todos los cálculos se realizan en tu navegador. Tu código nunca sale de tu dispositivo.",
+        "Lo que escribes se procesa en tu dispositivo. Las dos excepciones solo salen a la red cuando pulsas su botón: el inspector de certificados consulta los registros públicos de Certificate Transparency, y la consulta del analizador de cabeceras pasa por un proxy de este sitio que no guarda registros.",
       instantTitle: "Resultados instantáneos",
       instantDesc:
-        "Sin peticiones al servidor. Los resultados se actualizan mientras escribes, sin latencia.",
+        "Los resultados se actualizan mientras escribes, calculados en la propia página; solo las consultas de certificados y de cabeceras esperan a la red.",
       openSourceTitle: "Open Source",
       openSourceDesc:
         "Consulta el código fuente en {link}. Las contribuciones son bienvenidas.",
@@ -1108,7 +1115,7 @@ export const common = {
       shortEmbedded: "embebido",
       shortMikrotik: "mikrotik",
       statusPrivacy: "privacy-first",
-      statusTelemetry: "0 telemetría",
+      statusTelemetry: "0 cookies",
       filterAll: "todas",
       filterLabel: "Filtrar herramientas por categoría",
       categoryLabel: "Categoría",
@@ -1129,7 +1136,7 @@ export const common = {
       mikrotikDesc:
         "Herramientas gratuitas para MikroTik RouterOS — generador de configuración WireGuard VPN para configuraciones dual-stack. Procesamiento local.",
       securityContext:
-        "Úsalas cuando estés endureciendo un sitio o revisando el trabajo de otro: construye una Content-Security-Policy y calcula los hashes de sus scripts inline, inspecciona un certificado TLS antes de confiar en él, audita cabeceras de respuesta, o razona sobre la fortaleza de contraseñas y PIN con números reales. Todo se calcula en tu navegador; la única excepción es la obtención opcional del analizador de cabeceras, que pasa por un proxy de este sitio y no se registra.",
+        "Úsalas cuando estés endureciendo un sitio o revisando el trabajo de otro: construye una Content-Security-Policy y calcula los hashes de sus scripts inline, inspecciona un certificado TLS antes de confiar en él, audita cabeceras de respuesta, o razona sobre la fortaleza de contraseñas y PIN con números reales. Todo se calcula en tu navegador; las dos excepciones son consultas que lanzas tú: el inspector de certificados busca en los registros públicos de Certificate Transparency, y la consulta opcional del analizador de cabeceras pasa por un proxy de este sitio y no se registra.",
       developerContext:
         "Las pequeñas conversiones que interrumpen el trabajo de verdad: decodificar un blob Base64, probar una regex contra texto de ejemplo, escribir una expresión cron fiable, convertir un timestamp Unix en fecha o comprobar un par de colores contra WCAG. Cada una hace su trabajo sin cuenta, sin subir nada y sin peticiones de red.",
       networkContext:
@@ -1152,7 +1159,7 @@ export const common = {
   rss: {
     continueReading: "Continuar leyendo en jmrp.io →",
     copyright:
-      "© {year} José Manuel Requena Plens. Los artículos se publican bajo CC BY 4.0 — https://creativecommons.org/licenses/by/4.0/",
+      "© {year} José Manuel Requena Plens. Los artículos se publican bajo CC BY 4.0: https://creativecommons.org/licenses/by/4.0/",
   },
   pwa: {
     shortcutBlog: "Blog",

@@ -18,8 +18,8 @@ import { markdownFor } from "@utils/llms/mdx/types";
  *
  * Note what the sentence does NOT claim: that the tool runs client-side. It is
  * true of fifteen of the seventeen, but the certificate inspector and the HTTP
- * header analyzer fetch the target you point them at, and this component has no
- * prop to tell them apart. A blanket "runs in your browser" here would be a
+ * header analyzer make a network request about the target you point them at,
+ * and this component has no prop to tell them apart. A blanket "runs in your browser" here would be a
  * checkable falsehood on two pages; the per-tool `description` already makes
  * the claim where it is actually true.
  */

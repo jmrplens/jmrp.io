@@ -10,7 +10,8 @@
 
 import type { DiffSize } from "@components/projects/dataset-types";
 import type { Locale } from "@i18n/config";
-import { formatNumber, useTranslations } from "@i18n/utils";
+import { formatNumber, pluralize, useTranslations } from "@i18n/utils";
+import { diffSpoken } from "@utils/llms/diff-spoken";
 
 /** The pieces a caller renders. */
 export interface DiffSizeText {
@@ -79,9 +80,10 @@ export function diffSizeText(
   const added = hasLines ? `+${n(size.additions ?? 0)}` : null;
   const removed = hasLines ? `−${n(size.deletions ?? 0)}` : null;
   const spoken = hasLines
-    ? t("pages.projectsContributions.diffSpoken", {
-        additions: n(size.additions ?? 0),
-        deletions: n(size.deletions ?? 0),
+    ? diffSpoken(size.additions ?? 0, size.deletions ?? 0, {
+        text: (key, params) => t(`pages.projectsContributions.${key}`, params),
+        plural: (value, forms) => pluralize(value, forms, locale),
+        format: n,
       })
     : null;
   const files = t(

@@ -1,6 +1,6 @@
 ---
 title: "Privacidad"
-description: "Qué mide este sitio y qué no: analítica autoalojada, sin cookies, sin scripts de terceros, sin publicidad y sin rastreo entre sitios."
+description: "Qué mide este sitio y qué no: Cloudflare Web Analytics servido desde este dominio, registros de acceso, sin cookies, sin scripts de terceros ni publicidad."
 kicker: "PRIVACIDAD"
 heading: "Qué sabe este sitio de ti"
 lang: es
@@ -12,7 +12,7 @@ Sin cookies, sin scripts de terceros, sin redes publicitarias y sin rastreo entr
 
 ## Analítica
 
-Las páginas vistas se cuentan con Cloudflare Web Analytics. El script de medición no se carga desde Cloudflare: se descarga durante la compilación y se sirve desde este mismo dominio como /scripts/cf-beacon.js. Por tanto, mostrar una página no exige ninguna petición a un tercero, y la única petición a un tercero que hace este sitio es el propio informe del beacon, que se describe a continuación.
+Las páginas vistas se cuentan con Cloudflare Web Analytics. El script de medición no se carga desde Cloudflare: se descarga durante la compilación y se sirve desde este mismo dominio, en /scripts/, con un nombre de fichero que lleva un hash de su contenido y cambia cada vez que cambia el fichero. Por tanto, mostrar una página no exige ninguna petición a un tercero. La única que una página hace por su cuenta es el propio informe del beacon, que se describe a continuación; aparte de esa, solo el inspector de certificados consulta los registros de Certificate Transparency, y únicamente cuando pulsas su botón (se explica en «Las herramientas», más abajo).
 
 Lo que ese script envía, una vez por página vista, es un informe al endpoint de analítica de Cloudflare: la dirección de la página con la cadena de consulta y el fragmento eliminados antes del envío, la página de procedencia, tiempos de carga, Core Web Vitals y señales gruesas del dispositivo como el tipo de conexión. No pone ninguna cookie, no asigna ningún identificador y no construye ningún perfil, así que no hay nada que pueda seguirte a otro sitio. Como la cadena de consulta se elimina antes, nada de lo que escribas en una herramienta y acabe en la barra de direcciones llega a Cloudflare.
 
