@@ -16,8 +16,20 @@ import * as cheerio from "cheerio";
 
 import { removeDeadSvgStyles } from "../../src/integrations/post-build/svg-styles.ts";
 
+/** Opening of the diagram, up to where rehype-mermaid puts its `<style>`. */
+const DIAGRAM_OPEN = `<pre class="mermaid"><svg id="mermaid-0" viewBox="0 0 10 10" role="img">`;
+
+/** The dead element rehype-mermaid leaves inside each diagram. */
+const DEAD_STYLE = `<style set:html="#mermaid-0{font-family:arial,sans-serif;fill:#000000;}"></style>`;
+
+/** The rest of the diagram. */
+const DIAGRAM_REST = `<g><rect width="10" height="10" fill="#f5a623"></rect></g></svg></pre>`;
+
 /** The shape rehype-mermaid's SVG reaches the post-build pass in. */
-const DIAGRAM = `<pre class="mermaid"><svg id="mermaid-0" viewBox="0 0 10 10" role="img"><style set:html="#mermaid-0{font-family:arial,sans-serif;fill:#000000;}"></style><g><rect width="10" height="10" fill="#f5a623"></rect></g></svg></pre>`;
+const DIAGRAM = DIAGRAM_OPEN + DEAD_STYLE + DIAGRAM_REST;
+
+/** The same diagram without the dead element: what the step must leave. */
+const DIAGRAM_CLEAN = DIAGRAM_OPEN + DIAGRAM_REST;
 
 /** Runs the step over a document. */
 function run(body) {
@@ -36,7 +48,7 @@ test("removes the empty set:html <style> inside a diagram", () => {
 test("leaves the rest of the diagram byte-identical", () => {
   const { $ } = run(DIAGRAM);
   const expected = cheerio.load(
-    `<html><head></head><body>${DIAGRAM.replace(/<style[^>]*><\/style>/, "")}</body></html>`,
+    `<html><head></head><body>${DIAGRAM_CLEAN}</body></html>`,
   );
   assert.equal($.html(), expected.html());
 });
