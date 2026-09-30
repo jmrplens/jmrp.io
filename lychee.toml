@@ -51,6 +51,11 @@ exclude = [
     # passes the challenge and loads the wiki (200, checked from this server
     # on 2026-09-30). A 429 here says nothing about the link.
     'https://deepwiki\.com/.*',
+    # cppreference answers GitHub's runners with 403 (bot protection) while
+    # the same URLs give 200 from a residential address (checked on
+    # 2026-09-30; its canonical form dropped the `/w/` prefix, which now
+    # redirects here). The links in post 010 are right; CI cannot see them.
+    'https://en\.cppreference\.com/.*',
     'https://gitlab\.torproject\.org/.*',
     'https://www\.abuseipdb\.com/.*',
     # The 404 page legitimately answers 404; it is its own canonical. The
