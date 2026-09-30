@@ -272,6 +272,41 @@ function hardenBeaconScript(
 }
 
 /**
+ * Gives the beacon a URL that changes when its bytes do.
+ *
+ * `/scripts/cf-beacon.js` is served `public, max-age=2592000` under a URL that
+ * never changed, while its bytes do: the pre-build downloads Cloudflare's
+ * current beacon on every build and this pass wraps it. A browser holding the
+ * previous copy for up to 30 days then fetched the new page, whose integrity
+ * names the new bytes, and blocked the script. From 2026-09-22 the CSP
+ * reporter logged 4 to 38 such `sri` failures a day, real Chrome, Firefox and
+ * Safari among the crawlers. A `?v=` derived from the same SHA-512 the
+ * integrity carries makes every new beacon a new URL; the bare path still
+ * answers, so a crawler rendering an old snapshot gets the file, not a 404.
+ *
+ * @param {cheerio.CheerioAPI} $ - The parsed page.
+ * @param {string} distDir - The build output directory.
+ * @param {Map<string, string>} hashCache - Shared file hash cache.
+ * @returns {boolean} Whether the page changed.
+ */
+function versionBeaconUrl(
+  $: cheerio.CheerioAPI,
+  distDir: string,
+  hashCache: Map<string, string>,
+): boolean {
+  const tags = $("script[src='/scripts/cf-beacon.js']");
+  if (tags.length === 0) return false;
+  const beaconPath = path.join(distDir, "scripts", "cf-beacon.js");
+  if (!fs.existsSync(beaconPath)) return false;
+  const integrity = getFileHash(beaconPath, hashCache, "sha512");
+  const version = Buffer.from(integrity.slice("sha512-".length), "base64")
+    .toString("hex")
+    .slice(0, 12);
+  tags.attr("src", `/scripts/cf-beacon.js?v=${version}`);
+  return true;
+}
+
+/**
  * Orchestrates all transformations for a single HTML file.
  */
 async function processSingleHtmlFile(
@@ -333,6 +368,9 @@ async function processSingleHtmlFile(
 
   // Handle styles
   if (processStyles($, enableCsp)) isModified = true;
+
+  // Before SRI, so the tag it hashes already carries its final URL.
+  if (versionBeaconUrl($, distDir, hashCache)) isModified = true;
 
   // Process SRI and Nonces
   const sriResult = processScriptsAndLinks(
