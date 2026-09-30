@@ -153,6 +153,41 @@ test("getNotifySuppressReason: crawlers are suppressed, real clients are not", (
   assert.equal(getNotifySuppressReason(report, browser, "83.49.10.109"), null);
 });
 
+test("getNotifySuppressReason: an injected eval under an outdated Chrome stays quiet", () => {
+  const evalReport = (extra = {}) => ({
+    "csp-report": {
+      "violated-directive": "script-src",
+      "effective-directive": "script-src",
+      "blocked-uri": "eval",
+      "document-uri": "https://jmrp.io/uses/",
+      "line-number": 4,
+      ...extra,
+    },
+  });
+  const chrome = (major) =>
+    `Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/${major}.0.0.0 Safari/537.36`;
+
+  assert.equal(
+    getNotifySuppressReason(evalReport(), chrome(118), "83.49.10.109"),
+    "stale-chrome-eval",
+  );
+  // A current Chrome, or an eval that names its file, still pages.
+  assert.equal(
+    getNotifySuppressReason(evalReport(), chrome(154), "83.49.10.109"),
+    null,
+  );
+  assert.equal(
+    getNotifySuppressReason(
+      evalReport({ "source-file": "https://jmrp.io/_astro/page.js" }),
+      chrome(118),
+      "83.49.10.109",
+    ),
+    null,
+  );
+  // And it is still logged: this tier only decides who gets paged.
+  assert.equal(getDiscardReason(evalReport()), null);
+});
+
 test("getDiscardReason: crawler reports are kept in the log", () => {
   // Crawler classification lives in the notification tier now, so a crawler
   // report must still be written to logs/csp-violations.log.

@@ -386,6 +386,34 @@ export function isBotUserAgent(ua) {
 }
 
 /**
+ * Oldest Chrome major a real visitor plausibly still runs. Chrome updates
+ * itself every four weeks; 120 shipped in December 2023.
+ */
+const MIN_PLAUSIBLE_CHROME_MAJOR = 120;
+
+/**
+ * Detects an `eval` a scraper injected, under a long-outdated Chrome UA.
+ *
+ * From 2026-09-25 to 09-30 the reporter logged 27 `script-src` reports with
+ * `blocked-uri: eval`, no `source-file` and line 4, every one under
+ * `Chrome/118.0.0.0` and from a different IP, one page each across tools,
+ * /uses/ and the series index: one distributed crawler running its own code
+ * in the page. The site never calls `eval`, and a genuine `eval` from its
+ * own code names the file it came from.
+ *
+ * Used by {@link getNotifySuppressReason} only: the reports stay in the log.
+ *
+ * @param {Record<string, unknown>} r - The unwrapped `csp-report` object.
+ * @param {string} ua - The request User-Agent header.
+ * @returns {boolean}
+ */
+export function isStaleChromeInjectedEval(r, ua) {
+  if (r["blocked-uri"] !== "eval" || r["source-file"]) return false;
+  const major = /Chrome\/(\d+)\./.exec(typeof ua === "string" ? ua : "");
+  return major !== null && Number(major[1]) < MIN_PLAUSIBLE_CHROME_MAJOR;
+}
+
+/**
  * Whether a font-src/media-src violation is an injected resource (data: URI or a
  * remote non-jmrp.io origin). The site restricts both directives to 'self'.
  *
@@ -509,6 +537,7 @@ export function getNotifySuppressReason(report, ua, ip) {
 
   if (isBotUserAgent(ua)) return "crawler-ua";
   if (isCrawlerNetwork(ip)) return "crawler-network";
+  if (isStaleChromeInjectedEval(r, ua)) return "stale-chrome-eval";
 
   return null;
 }
