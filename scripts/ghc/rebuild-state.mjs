@@ -46,10 +46,19 @@
  * the latest by the forced weekly one.
  *
  * ── State file ────────────────────────────────────────────────────────
- * `{ projectionHash, sections, builtAt }` at {@link DEFAULT_STATE_PATH}
- * (override with `GHC_REBUILD_STATE`). `sections` holds one hash per
- * projection key, so a dry run can say WHICH part changed without storing
- * the dataset itself.
+ * `{ projectionHash, sections, builtAt, displayChangedAt, source: "live" }`
+ * at {@link DEFAULT_STATE_PATH} (override with `GHC_REBUILD_STATE`).
+ * `sections` holds one hash per projection key, so a dry run can say WHICH
+ * part changed without storing the dataset itself.
+ *
+ * ── Live or fixture ───────────────────────────────────────────────────
+ * `build-data.mjs` stamps every dataset it writes with a `source`
+ * ({@link DATASET_SOURCE}). A build that rendered anything but collected
+ * data (the committed fixture, whole or for its GitLab.com part) records NO
+ * projection, only `{ source, builtAt, asOf }`, and {@link decideRebuild}
+ * reads that as "rebuild as soon as a collection succeeds". Before GEO audit
+ * #11 such a build was recorded like a live one, so a collector that stayed
+ * broken left the fixture served with nothing to say so.
  *
  * @module
  */
@@ -68,6 +77,118 @@ export const DEFAULT_MAX_AGE_DAYS = 7;
 const DATASET_RELATIVE_PATH = "src/data/ghc/projects-contributions.json";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
+
+/**
+ * Where a dataset's data came from: the top-level `source` that
+ * `build-data.mjs` stamps on the file it writes, copied into the state file.
+ *
+ * - `live`: InfluxDB and GitLab.com (when configured) were both collected.
+ * - `fixture`: the collection failed and the committed fixture was copied.
+ * - `gitlab-fixture`: InfluxDB was collected, but the GitLab.com part is the
+ *   committed fixture's.
+ * - `unknown`: the dataset carries no recognized stamp (written before the
+ *   field existed, or copied by hand). Never written to a dataset; it only
+ *   names that case in the state file and the log.
+ *
+ * Only `live` counts as live: a missing stamp fails safe.
+ */
+export const DATASET_SOURCE = Object.freeze({
+  live: "live",
+  fixture: "fixture",
+  gitlabFixture: "gitlab-fixture",
+  unknown: "unknown",
+});
+
+/** The stamps `build-data.mjs` writes. */
+const STAMPED_SOURCES = new Set([
+  DATASET_SOURCE.live,
+  DATASET_SOURCE.fixture,
+  DATASET_SOURCE.gitlabFixture,
+]);
+
+/**
+ * A dataset's {@link DATASET_SOURCE}: its stamp when recognized, else
+ * `unknown`. Pure.
+ *
+ * @param {any} dataset - Parsed dataset.
+ * @returns {string} One of the {@link DATASET_SOURCE} values.
+ */
+export function datasetSource(dataset) {
+  return STAMPED_SOURCES.has(dataset?.source)
+    ? dataset.source
+    : DATASET_SOURCE.unknown;
+}
+
+/**
+ * The stamp for a dataset `collectDataset` assembled (its InfluxDB part is
+ * always collected; a failure there throws before any stamp). A GitLab.com
+ * part taken from the fixture makes the whole dataset not live: the
+ * scheduled rebuild refuses that fallback, so a deploy that recorded it as
+ * live would never be replaced. Pure.
+ *
+ * @param {object} parts - Where each part came from.
+ * @param {boolean} parts.gitlabFromFixture - Whether the GitLab.com part is
+ *   the committed fixture's (`loadGitlabPart`'s `fromFixture`).
+ * @returns {string} {@link DATASET_SOURCE}`.live` or `.gitlabFixture`.
+ */
+export function collectedDatasetSource({ gitlabFromFixture }) {
+  return gitlabFromFixture ? DATASET_SOURCE.gitlabFixture : DATASET_SOURCE.live;
+}
+
+/**
+ * Whether a recorded state says the live build did NOT render collected
+ * data. A state without `source` (written before the field existed) keeps
+ * its old meaning: live. Pure.
+ *
+ * @param {RebuildState | null | undefined} state - Recorded state.
+ * @returns {boolean} True for a fixture, partial-fixture or unknown build.
+ */
+export function isNonLiveState(state) {
+  return (
+    typeof state?.source === "string" && state.source !== DATASET_SOURCE.live
+  );
+}
+
+/**
+ * What each non-live source means, for the warnings below.
+ */
+const NON_LIVE_DESCRIPTIONS = {
+  [DATASET_SOURCE.fixture]:
+    "the committed fixture (the build could not collect the dataset)",
+  [DATASET_SOURCE.gitlabFixture]:
+    "live InfluxDB data with the GitLab.com part of the committed fixture",
+  [DATASET_SOURCE.unknown]:
+    "a dataset with no source stamp (not written by scripts/ghc/build-data.mjs)",
+};
+
+/**
+ * The warning printed when a deploy's contributions dataset is not live, one
+ * line per entry, for `deploy-live.mjs` and `rebuild-if-changed.mjs`. Pure.
+ *
+ * @param {RebuildState} state - A state {@link isNonLiveState} accepts.
+ * @returns {string[]} Lines, without a log prefix.
+ */
+export function describeNonLiveBuild(state) {
+  const what =
+    NON_LIVE_DESCRIPTIONS[state.source] ?? `a dataset marked "${state.source}"`;
+  return [
+    `⚠ NOT LIVE DATA: /projects/contributions/, the /projects build-time blocks and the home line were built from ${what}, as of ${state.asOf ?? "an unknown date"}.`,
+    "⚠ Its projection was NOT recorded as live: the scheduled rebuild (jmrp-contributions-rebuild.timer) rebuilds as soon as a collection succeeds, and exits 1 while it keeps failing.",
+    "⚠ Rebuild by hand once the collection works again: pnpm build. Diagnose: the build log above, journalctl -u jmrp-contributions-rebuild, and `source`/`asOf` in src/data/ghc/projects-contributions.json.",
+  ];
+}
+
+/**
+ * Days between an ISO timestamp and `now`, or null when it does not parse.
+ *
+ * @param {string | undefined} builtAt - ISO timestamp.
+ * @param {Date} now - Current time.
+ * @returns {number | null} Age in days.
+ */
+function ageInDays(builtAt, now) {
+  const builtAtMs = Date.parse(builtAt ?? "");
+  return Number.isNaN(builtAtMs) ? null : (now.getTime() - builtAtMs) / DAY_MS;
+}
 
 /**
  * The state file path: `GHC_REBUILD_STATE` when set and non-empty, else
@@ -308,24 +429,33 @@ export function hashProjection(dataset) {
 
 /**
  * @typedef {object} RebuildState
- * @property {string} projectionHash Hash of the projection the live build used.
+ * @property {string} [projectionHash] Hash of the projection the live build
+ *   used; absent when that build did not render collected data.
  * @property {Record<string, string>} [sections] Per-section hashes.
  * @property {string} builtAt ISO timestamp of that build.
  * @property {string} [displayChangedAt] When the projection last changed, as
  *   the dataset of that build recorded it.
+ * @property {string} [source] The dataset's {@link DATASET_SOURCE}; absent in
+ *   a state written before the field existed, which reads as live.
+ * @property {string | null} [asOf] Freshness of a non-live dataset, for the
+ *   log.
  */
 
 /**
  * @typedef {object} RebuildDecision
  * @property {boolean} rebuild Whether to rebuild.
- * @property {"no-state" | "changed" | "stale" | "unchanged"} reason Why.
+ * @property {"no-state" | "not-live" | "changed" | "stale" | "unchanged"} reason Why.
  * @property {string[]} changedSections Projection keys whose hash differs
  *   (empty when unknown or unchanged).
  * @property {number | null} ageDays Age of the recorded build, if known.
+ * @property {string} [source] The recorded source, for `not-live`.
  */
 
 /**
- * Decides whether the site must be rebuilt. Pure.
+ * Decides whether the site must be rebuilt. Pure. A live build that did not
+ * render collected data ({@link isNonLiveState}) always rebuilds: there is
+ * no projection to compare with, and the fresh collection this is called
+ * with is exactly what that build lacked.
  *
  * @param {object} input - Inputs.
  * @param {RebuildState | null} input.state - Recorded state, or null.
@@ -341,6 +471,15 @@ export function decideRebuild({
   now = new Date(),
   maxAgeDays = DEFAULT_MAX_AGE_DAYS,
 }) {
+  if (isNonLiveState(state)) {
+    return {
+      rebuild: true,
+      reason: "not-live",
+      changedSections: [],
+      ageDays: ageInDays(state?.builtAt, now),
+      source: state?.source,
+    };
+  }
   if (!state || typeof state.projectionHash !== "string") {
     return {
       rebuild: true,
@@ -349,10 +488,7 @@ export function decideRebuild({
       ageDays: null,
     };
   }
-  const builtAtMs = Date.parse(state.builtAt);
-  const ageDays = Number.isNaN(builtAtMs)
-    ? null
-    : (now.getTime() - builtAtMs) / DAY_MS;
+  const ageDays = ageInDays(state.builtAt, now);
   const previous = state.sections ?? {};
   const changedSections = Object.keys(current.sections)
     .filter((key) => previous[key] !== current.sections[key])
@@ -401,7 +537,10 @@ export function writeState(statePath, state) {
  * moment carries over (`displayChangedAt`, or `builtAt` for a state written
  * before the field existed). Otherwise something the pages show is new, and
  * the moment is `now`. The pages' `dateModified` and sitemap `lastmod` fold
- * this in, so a data-only rebuild moves the date and nothing else does. Pure.
+ * this in, so a data-only rebuild moves the date and nothing else does. A
+ * non-live state has no projection, so the first live build after a fixture
+ * one takes `now` too: the pages moved from the fixture to collected data.
+ * Pure.
  *
  * @param {any} dataset - The freshly collected dataset.
  * @param {RebuildState | null} state - The recorded live state, if any.
@@ -418,6 +557,12 @@ export function displayChangedAt(dataset, state, now = new Date()) {
 /**
  * Records the dataset a build just used (the file on disk, not a fresh
  * collection) as the live projection. Called after a successful deploy.
+ *
+ * A dataset whose {@link datasetSource} is not `live` records no projection:
+ * the state says only which source the live build rendered, when, and how
+ * fresh that data was, so the next scheduled check rebuilds instead of
+ * comparing a fresh collection with the fixture's hash. The caller tells the
+ * two apart with {@link isNonLiveState} on the returned state.
  *
  * @param {object} [options] - Options.
  * @param {string} [options.root] - Repository root; defaults to `process.cwd()`.
@@ -436,14 +581,24 @@ export function recordBuiltDataset({
 } = {}) {
   const dataset = JSON.parse(fs.readFileSync(datasetPath, "utf8"));
   const builtAt = now.toISOString();
-  const state = {
-    ...hashProjection(dataset),
-    builtAt,
-    displayChangedAt:
-      typeof dataset.displayChangedAt === "string"
-        ? dataset.displayChangedAt
-        : builtAt,
-  };
+  const source = datasetSource(dataset);
+  /** @type {RebuildState} */
+  const state =
+    source === DATASET_SOURCE.live
+      ? {
+          ...hashProjection(dataset),
+          builtAt,
+          displayChangedAt:
+            typeof dataset.displayChangedAt === "string"
+              ? dataset.displayChangedAt
+              : builtAt,
+          source,
+        }
+      : {
+          source,
+          builtAt,
+          asOf: typeof dataset.asOf === "string" ? dataset.asOf : null,
+        };
   writeState(statePath, state);
   return state;
 }

@@ -14,14 +14,20 @@
  * 1. Collects a fresh dataset into memory with the same `collectDataset`
  *    the build uses (env: `GHC_INFLUX_TOKEN`, `INFLUX_URL`,
  *    `GITLAB_COM_TOKEN_READ_ONLY`). If InfluxDB or GitLab.com fails it logs
- *    and exits 0 WITHOUT building: a build from the fixture would publish
- *    older data than what is live.
+ *    and exits WITHOUT building (0, or 1 when the live build is itself a
+ *    fixture build, see 3): a build from the fixture would publish older
+ *    data than what is live.
  * 2. Hashes its display projection (`rebuild-state.mjs` documents exactly
  *    which fields count) and compares it with the state file written after
  *    the live build (`GHC_REBUILD_STATE`, default
  *    `/var/lib/jmrp.io/ghc/rebuild-state.json`).
- * 3. Rebuilds when the hash differs, when no state exists, or when the
+ * 3. Rebuilds when the hash differs, when no state exists, when the live
+ *    build did not render collected data (the state records a non-`live`
+ *    `source`: the fixture, whole or for its GitLab.com part), or when the
  *    recorded build is older than `GHC_REBUILD_MAX_AGE_DAYS` (default 7).
+ *    While the live build is such a fixture build, a failed collection
+ *    exits 1 instead of 0, so the unit shows failed until the site is back
+ *    on collected data; the same goes for a rebuild that fell back again.
  * 4. Before building: skips if any `astro build` is already running, and
  *    takes an exclusive PID lock file (`GHC_REBUILD_LOCK`, default
  *    `/var/lib/jmrp.io/ghc/rebuild.lock`; a lock whose PID is dead is stale and is
@@ -32,7 +38,8 @@
  * - `--dry-run`: print the decision and which projection sections changed,
  *   never build, never take the lock, never write state.
  * - `--record-state`: record the dataset file on disk as the live one (what
- *   `deploy-live.mjs` does after every deploy) and exit.
+ *   `deploy-live.mjs` does after every deploy) and exit; a dataset that is
+ *   not live is recorded as such and exits 1.
  *
  * @module
  */
@@ -46,7 +53,9 @@ import { resolveInfluxConfig } from "./influx.mjs";
 import { loadGitlabPart } from "./merge-gitlab.mjs";
 import {
   decideRebuild,
+  describeNonLiveBuild,
   hashProjection,
+  isNonLiveState,
   readState,
   recordBuiltDataset,
   resolveMaxAgeDays,
@@ -210,6 +219,9 @@ export function describeDecision(decision, maxAgeDays) {
     case "no-state": {
       return "no rebuild state recorded: rebuild.";
     }
+    case "not-live": {
+      return `the live build rendered ${decision.source ?? "unknown"} data, not a collection (${age}): rebuild.`;
+    }
     case "changed": {
       const which =
         decision.changedSections.length > 0
@@ -224,6 +236,38 @@ export function describeDecision(decision, maxAgeDays) {
       return `unchanged (${age}, max ${maxAgeDays}): nothing to do.`;
     }
   }
+}
+
+/**
+ * The alarm for a run that could not collect a fresh dataset while the live
+ * build did not render collected data either. Such a run used to exit 0
+ * like any other failed collection, leaving the fixture served with only
+ * its "Snapshot as of" date to give it away (GEO audit #11). Null when the
+ * live build is live data: a failed collection then stays a quiet exit 0,
+ * since the site is only as old as the last collection. Pure.
+ *
+ * @param {import('./rebuild-state.mjs').RebuildState | null} state - Recorded state.
+ * @returns {string | null} One line for the journal, or null.
+ */
+export function servedFixtureAlarm(state) {
+  if (!state || !isNonLiveState(state)) return null;
+  return (
+    `⚠ the live build has served ${state.source} data (as of ${state.asOf ?? "an unknown date"}) ` +
+    `since ${state.builtAt ?? "an unknown time"}, and keeps serving it until a collection succeeds.`
+  );
+}
+
+/**
+ * Logs a just-recorded state that is not live data.
+ *
+ * @param {import('./rebuild-state.mjs').RebuildState} state - Recorded state.
+ * @returns {number} The exit code: 1.
+ */
+function failNonLive(state) {
+  for (const line of describeNonLiveBuild(state)) {
+    console.error(`${LOG_PREFIX} ${line}`);
+  }
+  return 1;
 }
 
 /**
@@ -299,8 +343,9 @@ async function main(argv) {
 
   if (argv.includes("--record-state")) {
     const state = recordBuiltDataset({ root, statePath });
+    if (isNonLiveState(state)) return failNonLive(state);
     console.log(
-      `${LOG_PREFIX} recorded ${state.projectionHash.slice(0, 12)} at ${statePath}.`,
+      `${LOG_PREFIX} recorded ${state.projectionHash?.slice(0, 12)} at ${statePath}.`,
     );
     return 0;
   }
@@ -313,7 +358,12 @@ async function main(argv) {
 
   try {
     const dataset = await collectFreshDataset(root);
-    if (!dataset) return 0;
+    if (!dataset) {
+      const alarm = servedFixtureAlarm(readState(statePath));
+      if (!alarm) return 0;
+      console.error(`${LOG_PREFIX} ${alarm}`);
+      return dryRun ? 0 : 1;
+    }
 
     const current = hashProjection(dataset);
     const decision = decideRebuild({
@@ -348,9 +398,12 @@ async function main(argv) {
       return code;
     }
     // deploy-live.mjs records the same thing after the swap; doing it here
-    // too keeps the state right even if that step was skipped.
+    // too keeps the state right even if that step was skipped. A build whose
+    // own collection fell back to the fixture is a failed run: the next run
+    // retries it, and the unit shows failed meanwhile.
     try {
-      recordBuiltDataset({ root, statePath });
+      const state = recordBuiltDataset({ root, statePath });
+      if (isNonLiveState(state)) return failNonLive(state);
     } catch (error) {
       console.warn(
         `${LOG_PREFIX} build succeeded but the state could not be written: ${String(error)}`,

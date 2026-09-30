@@ -15,6 +15,11 @@
  * mirrors `ensureDownloadsData`/`setupDownloads` in
  * `src/integrations/pre-build/downloads.ts`.
  *
+ * Every dataset written here carries a top-level `source` (`DATASET_SOURCE`
+ * in `rebuild-state.mjs`): `live`, `fixture`, or `gitlab-fixture` when only
+ * the GitLab.com part fell back. `deploy-live.mjs` records a projection only
+ * for `live`, so a deploy built from the fixture cannot pass for live data.
+ *
  * @module
  */
 
@@ -62,6 +67,8 @@ import {
   getUpstreamRepos,
 } from "./queries.mjs";
 import {
+  collectedDatasetSource,
+  DATASET_SOURCE,
   displayChangedAt,
   readState,
   resolveStatePath,
@@ -469,7 +476,7 @@ export async function collectDataset(
 
   // GitLab.com: collected live, or the fixture's GitLab part (only that
   // part) when GitLab.com is unreachable. Never throws.
-  const { part: gitlab } = await loadGitlab({
+  const { part: gitlab, fromFixture: gitlabFromFixture } = await loadGitlab({
     root,
     fixturePath: path.join(root, FIXTURE_PATH),
     contributions,
@@ -561,6 +568,9 @@ export async function collectDataset(
     schemaVersion: 1,
     generatedAt: new Date().toISOString(),
     asOf: freshness.asOf,
+    // `gitlab-fixture` when the GitLab.com part fell back: not live either
+    // (GEO audit #11).
+    source: collectedDatasetSource({ gitlabFromFixture }),
     summary: combineSummary(
       {
         contributionTotals,
@@ -648,8 +658,36 @@ export function shapeCardFacts(repos, stars, releases) {
 }
 
 /**
+ * Writes `value` to `outPath` as indented JSON, atomically (temp file +
+ * rename), creating the directory if needed.
+ *
+ * @param {string} outPath - Destination.
+ * @param {unknown} value - JSON-serializable value.
+ */
+function writeJsonAtomically(outPath, value) {
+  fs.mkdirSync(path.dirname(outPath), { recursive: true });
+  const tmpPath = `${outPath}.tmp-${process.pid}`;
+  fs.writeFileSync(tmpPath, `${JSON.stringify(value, null, 2)}\n`);
+  fs.renameSync(tmpPath, outPath);
+}
+
+/**
+ * Copies the committed fixture to `outPath`, stamped `source: "fixture"`.
+ * Stamped rather than copied byte for byte: the fixture is refreshed from a
+ * live dataset, so a verbatim copy could carry that dataset's `live`.
+ *
+ * @param {string} fixturePath - Absolute fixture path.
+ * @param {string} outPath - Absolute destination.
+ */
+function writeFixtureCopy(fixturePath, outPath) {
+  const fixture = JSON.parse(fs.readFileSync(fixturePath, "utf8"));
+  writeJsonAtomically(outPath, { ...fixture, source: DATASET_SOURCE.fixture });
+}
+
+/**
  * Writes {@link DATA_PATH} atomically, falling back to the committed
- * {@link FIXTURE_PATH} on failure.
+ * {@link FIXTURE_PATH} on failure (stamped `source: "fixture"`, see
+ * {@link writeFixtureCopy}).
  *
  * @param {object} options - Options.
  * @param {string} [options.root] - Repository root; defaults to `process.cwd()`.
@@ -682,14 +720,16 @@ export async function buildDataset({
       dataset,
       readState(resolveStatePath()),
     );
-    fs.mkdirSync(path.dirname(outPath), { recursive: true });
-    const tmpPath = `${outPath}.tmp-${process.pid}`;
-    fs.writeFileSync(tmpPath, `${JSON.stringify(dataset, null, 2)}\n`);
-    fs.renameSync(tmpPath, outPath);
+    writeJsonAtomically(outPath, dataset);
     log(
       `  ✓ Wrote ${DATA_PATH} (${dataset.highlights.length} highlights, ` +
         `${dataset.contributedTo.length} upstream projects, as_of ${String(dataset.asOf)})`,
     );
+    if (dataset.source === DATASET_SOURCE.gitlabFixture) {
+      warn(
+        `${DATA_PATH} carries the GitLab.com part of the fixture (source "${DATASET_SOURCE.gitlabFixture}"): deploy-live will not record this build as live data.`,
+      );
+    }
     return { wrote: true, fromFixture: false };
   } catch (error) {
     const message = (
@@ -702,10 +742,9 @@ export async function buildDataset({
       );
       return { wrote: false, fromFixture: false };
     }
-    fs.mkdirSync(path.dirname(outPath), { recursive: true });
-    fs.copyFileSync(fixturePath, outPath);
+    writeFixtureCopy(fixturePath, outPath);
     warn(
-      `Copied the committed fixture to ${DATA_PATH} so the build still renders.`,
+      `Copied the committed fixture to ${DATA_PATH} (source "${DATASET_SOURCE.fixture}") so the build still renders; deploy-live will not record it as live data.`,
     );
     return { wrote: true, fromFixture: true };
   }
@@ -713,9 +752,9 @@ export async function buildDataset({
 
 /**
  * Guarantees {@link DATA_PATH} exists (without touching the network),
- * copying the fixture when it does not. Mirrors `ensureDownloadsData`: every
- * command that resolves modules needs the file to exist because pages
- * import it statically.
+ * copying the fixture (stamped `source: "fixture"`) when it does not.
+ * Mirrors `ensureDownloadsData`: every command that resolves modules needs
+ * the file to exist because pages import it statically.
  *
  * @param {string} [root] - Repository root; defaults to `process.cwd()`.
  * @returns {boolean} Whether the fixture was copied (false when the file
@@ -724,9 +763,7 @@ export async function buildDataset({
 export function ensureDataset(root = process.cwd()) {
   const outPath = path.join(root, DATA_PATH);
   if (fs.existsSync(outPath)) return false;
-  const fixturePath = path.join(root, FIXTURE_PATH);
-  fs.mkdirSync(path.dirname(outPath), { recursive: true });
-  fs.copyFileSync(fixturePath, outPath);
+  writeFixtureCopy(path.join(root, FIXTURE_PATH), outPath);
   return true;
 }
 

@@ -4,9 +4,13 @@
 # READ-ONLY token, compares its display projection with the one the live
 # build used (/var/lib/jmrp.io/ghc/rebuild-state.json) and runs `pnpm build`
 # (a full deploy: swap, Cloudflare purge, IndexNow/Bing) only when it
-# changed or the last build is older than 7 days. Collection failures exit 0
-# without building. The repo .env is NOT loaded here: deploy-live.mjs loads
-# it itself, and astro build reads it through Vite.
+# changed, the last build is older than 7 days, or the live build rendered
+# the committed fixture. Collection failures exit without building: 0 while
+# the live build is live data, 1 while it was built from the fixture
+# (rebuild-state.json records a non-live `source`), so the unit shows failed
+# until the site is back on collected data. The repo .env is NOT loaded
+# here: deploy-live.mjs loads it itself, and astro build reads it through
+# Vite.
 #
 # Install (as root):
 #   cp deploy/systemd/jmrp-contributions-rebuild.{service,timer} /etc/systemd/system/

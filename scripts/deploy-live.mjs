@@ -20,7 +20,12 @@
  * 4. Records which contributions data the live build used (the display
  *    projection hash of `src/data/ghc/projects-contributions.json`), so the
  *    daily `scripts/ghc/rebuild-if-changed.mjs` only rebuilds when that
- *    data changes. Never fatal.
+ *    data changes. A dataset that was not collected live (the committed
+ *    fixture, whole or for its GitLab.com part) records no projection, only
+ *    that fact, so that job rebuilds as soon as a collection succeeds; the
+ *    deploy ends with a loud warning. Never fatal.
+ * 5. Ends with a notice (never fatal) when `build:cv` left CV PDFs under
+ *    `public/pdf/` uncommitted, with the commands that commit them.
  *
  * Why a move and not a copy: generated configuration used to be written into
  * the repository working tree (the four maps) and into the served build
@@ -63,9 +68,17 @@
  *   or a failed reload whose rollback ALSO fails, is fatal — this script
  *   exits with code 1 and the build fails. It does NOT fail silently: the
  *   only case that prints "skipping" is an unset gating variable.
- * - Cloudflare/IndexNow/Bing failures (network blips, API errors) are
- *   logged as warnings and never fail the build — a broken CDN purge or
- *   search-engine ping is not worth blocking a deploy over.
+ * - A failed Cloudflare purge is fatal too, but deferred: every remaining
+ *   publish action still runs, then the script exits 1 naming it. The edge
+ *   can keep serving the previous HTML, and the previous copy of any other
+ *   changed file at an unversioned URL, until its TTL runs out, so it must
+ *   not pass unnoticed (GEO audit #11). The beacon's SRI does not depend on
+ *   the purge: its path is content-addressed
+ *   (`src/integrations/post-build/beacon-version.ts`), so new HTML names a
+ *   new edge cache key. A purge SKIPPED for unset variables is not a failure.
+ * - IndexNow/Bing failures (network blips, API errors) are logged as
+ *   warnings and never fail the build: a search-engine ping is not worth
+ *   blocking a deploy over.
  */
 import { spawnSync } from "node:child_process";
 import crypto from "node:crypto";
@@ -74,7 +87,15 @@ import os from "node:os";
 import path from "node:path";
 import { performance } from "node:perf_hooks";
 
-import { recordBuiltDataset } from "./ghc/rebuild-state.mjs";
+import {
+  detectUncommittedCvPdfs,
+  formatCvPdfNotice,
+} from "./cv-pdf-notice.mjs";
+import {
+  describeNonLiveBuild,
+  isNonLiveState,
+  recordBuiltDataset,
+} from "./ghc/rebuild-state.mjs";
 import { stagingCandidates } from "./nginx-staging.mjs";
 
 /**
@@ -1270,11 +1291,12 @@ function runNginxDeployment() {
 
 /**
  * Purges the entire cache for the configured Cloudflare zone.
- * Skipped when the required credentials are absent. Never throws — network
- * or API errors are logged and swallowed, since a failed CDN purge must not
- * fail the deploy.
+ * Skipped when the required credentials are absent. Never throws: network
+ * or API errors are logged and reported as `"failed"`, which {@link main}
+ * turns into exit code 1 once every other publish action has run (see
+ * "Failure semantics" at the top of this file).
  *
- * @returns {Promise<void>} Resolves when the operation is complete (success, skipped, or failed).
+ * @returns {Promise<"purged" | "skipped" | "failed">} What happened.
  */
 async function purgeCloudflareCache() {
   const token = process.env.PRIVATE_CF_API_TOKEN;
@@ -1291,7 +1313,7 @@ async function purgeCloudflareCache() {
     console.log(
       "deploy-live: skipping Cloudflare cache purge (missing PRIVATE_CF_ZONE_ID and/or PRIVATE_CF_API_TOKEN).",
     );
-    return;
+    return "skipped";
   }
 
   console.log(
@@ -1347,9 +1369,11 @@ async function purgeCloudflareCache() {
     }
 
     console.log("deploy-live: ✓ Cloudflare cache purged successfully.");
+    return "purged";
   } catch (error) {
     console.error("deploy-live: ⚠ Failed to purge Cloudflare cache.");
     console.error(error instanceof Error ? error.message : String(error));
+    return "failed";
   }
 }
 
@@ -1694,15 +1718,6 @@ async function timed(label, fn) {
 }
 
 /**
- * Purges Cloudflare and notifies IndexNow/Bing Webmaster in parallel,
- * sharing a single sitemap URL collection pass. Never throws — every step
- * (including the sitemap collection itself) is individually non-fatal, so a
- * malformed `<loc>` or a sitemap read error can never take down the whole
- * process after the swap/reload have already happened.
- *
- * @returns {Promise<void>}
- */
-/**
  * Reads the built sitemaps and works out which URLs still need announcing.
  *
  * Extracted from `runPublishNotifications` so that function stays under the
@@ -1758,6 +1773,18 @@ function resolveUrlsToAnnounce() {
   }
 }
 
+/**
+ * Purges Cloudflare and notifies IndexNow/Bing Webmaster in parallel,
+ * sharing a single sitemap URL collection pass. Never throws: every step
+ * (including the sitemap collection itself) runs to completion whatever the
+ * others do, so a malformed `<loc>`, a sitemap read error or a failed purge
+ * can never cut the rest short after the swap/reload have already happened.
+ * The purge outcome is returned instead, for {@link main} to fail on once
+ * everything else is done.
+ *
+ * @returns {Promise<{purgeFailed: boolean}>} Whether the purge failed (a
+ *   skipped purge did not).
+ */
 async function runPublishNotifications() {
   // Skip reading/logging the sitemap entirely when neither URL-list consumer
   // is configured (e.g. local/CI builds) — nothing would use it. Cloudflare
@@ -1772,11 +1799,18 @@ async function runPublishNotifications() {
     ? resolveUrlsToAnnounce()
     : { urlList: [], sitemapEntries: new Map(), sitemapComplete: true };
 
-  const [, indexNow, bing] = await Promise.allSettled([
+  const [purge, indexNow, bing] = await Promise.allSettled([
     timed("Cloudflare cache purge", () => purgeCloudflareCache()),
     timed("IndexNow submission", () => submitToIndexNow(urlList)),
     timed("Bing Webmaster submission", () => submitToBingWebmaster(urlList)),
   ]);
+
+  // Strict, like `announced` below: a purge that threw comes back from
+  // `timed()` as undefined, and only an explicit outcome is not a failure.
+  const purgeFailed = !(
+    purge.status === "fulfilled" &&
+    (purge.value === "purged" || purge.value === "skipped")
+  );
 
   // The ledger records what the search APIs have been TOLD, so it must only be
   // written when they were actually told. Both submitters swallow their errors
@@ -1792,8 +1826,8 @@ async function runPublishNotifications() {
     result.status === "fulfilled" && result.value === true;
   const allAnnounced = announced(indexNow) && announced(bing);
 
-  if (sitemapEntries.size === 0) return;
-  if (!sitemapComplete) return;
+  if (sitemapEntries.size === 0) return { purgeFailed };
+  if (!sitemapComplete) return { purgeFailed };
   if (allAnnounced) {
     writeSubmissionLedger(sitemapEntries);
   } else {
@@ -1801,23 +1835,73 @@ async function runPublishNotifications() {
       "deploy-live: a submitter failed; leaving the ledger untouched so the affected URLs are retried on the next deploy.",
     );
   }
+  return { purgeFailed };
 }
 
 /**
  * Records the display projection of the contributions dataset this build
- * rendered from, for `scripts/ghc/rebuild-if-changed.mjs`. Never fatal: a
- * state that is missing or cannot be written only costs one extra
- * scheduled rebuild.
+ * rendered from, for `scripts/ghc/rebuild-if-changed.mjs`. A dataset that
+ * was not collected live is recorded as such, with no projection (see
+ * `recordBuiltDataset`), and returned so {@link main} can end the deploy
+ * with the warning. Never fatal: a state that is missing or cannot be
+ * written only costs one extra scheduled rebuild.
+ *
+ * @returns {import('./ghc/rebuild-state.mjs').RebuildState | null} What was
+ *   recorded, or null when nothing could be.
  */
 function recordContributionsBuildState() {
   try {
     const state = recordBuiltDataset({ root: ROOT });
-    console.log(
-      `deploy-live: recorded contributions projection ${state.projectionHash.slice(0, 12)} for the scheduled rebuild.`,
-    );
+    if (isNonLiveState(state)) {
+      console.error(
+        `deploy-live: ⚠ recorded the contributions dataset as NOT live (source ${state.source}); see the warning at the end of this deploy.`,
+      );
+    } else {
+      console.log(
+        `deploy-live: recorded contributions projection ${state.projectionHash?.slice(0, 12)} for the scheduled rebuild.`,
+      );
+    }
+    return state;
   } catch (error) {
     console.warn(
       `deploy-live: could not record the contributions rebuild state (${error instanceof Error ? error.message : String(error)}); the next scheduled check will rebuild.`,
+    );
+    return null;
+  }
+}
+
+/**
+ * Prints a notice, at the end of a production deploy, for CV PDFs under
+ * `public/pdf/` that git does not have: `build:cv` recompiles them whenever
+ * an embedded figure moves, so `main` would otherwise lag production
+ * silently. Skipped outside a git work tree. Never fatal.
+ *
+ * @returns {void}
+ */
+function reportUncommittedCvPdfs() {
+  try {
+    const pdfs = detectUncommittedCvPdfs((args) =>
+      spawnSync(
+        "git", // NOSONAR
+        args,
+        {
+          cwd: ROOT,
+          encoding: "utf8",
+          // Read-only: no index refresh written back, no lock taken.
+          env: {
+            ...process.env,
+            PATH: DEFAULT_SECURE_PATH,
+            GIT_OPTIONAL_LOCKS: "0",
+          },
+        },
+      ),
+    );
+    if (!pdfs || pdfs.length === 0) return;
+    const lines = formatCvPdfNotice(pdfs, { root: ROOT, date: new Date() });
+    for (const line of lines) console.warn(`deploy-live: ${line}`);
+  } catch (error) {
+    console.warn(
+      `deploy-live: could not check public/pdf/ for uncommitted CV PDFs (${error instanceof Error ? error.message : String(error)}).`,
     );
   }
 }
@@ -1826,8 +1910,10 @@ function recordContributionsBuildState() {
  * Entry point: exits immediately (no publish actions run) unless the
  * current checkout is the production root (see {@link isProductionDeployAllowed}),
  * then delivers the staged Nginx artifacts (fatal on failure), then records
- * the contributions rebuild state and runs the publish notifications (never
- * fatal).
+ * the contributions rebuild state and runs the publish notifications, then
+ * reports, last so nothing scrolls them away: uncommitted CV PDFs (notice),
+ * a contributions dataset that is not live (warning), and a failed
+ * Cloudflare purge (exit 1, after everything else has run).
  *
  * @returns {Promise<void>}
  */
@@ -1858,9 +1944,28 @@ async function main() {
     process.exit(1);
   }
 
-  recordContributionsBuildState();
+  const contributionsState = recordContributionsBuildState();
 
-  await runPublishNotifications();
+  const { purgeFailed } = await runPublishNotifications();
+
+  reportUncommittedCvPdfs();
+
+  if (contributionsState && isNonLiveState(contributionsState)) {
+    for (const line of describeNonLiveBuild(contributionsState)) {
+      console.error(`deploy-live: ${line}`);
+    }
+  }
+
+  if (purgeFailed) {
+    console.error(
+      `deploy-live: FATAL: the Cloudflare cache purge failed (error above). Every other publish action ran and the new build is live at the origin (${elapsed(startedAt)}), but the edge can keep serving the previous HTML, and the previous copy of any other changed file at an unversioned URL, until its TTL runs out.`,
+    );
+    console.error(
+      'deploy-live: purge by hand now: Cloudflare dashboard, jmrp.io, Caching > Configuration > Purge Everything (or POST {"purge_everything":true} to https://api.cloudflare.com/client/v4/zones/$PRIVATE_CF_ZONE_ID/purge_cache).',
+    );
+    process.exitCode = 1;
+    return;
+  }
 
   console.log(`deploy-live: done in ${elapsed(startedAt)}.`);
 }

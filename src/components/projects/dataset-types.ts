@@ -243,6 +243,12 @@ export interface ContributionsDataset {
    * `exclude`); absent in datasets older than GEO audit #10.
    */
   readonly listedRepos?: number;
+  /**
+   * Where the data came from: "live", "fixture" (the committed fixture,
+   * copied whole) or "gitlab-fixture" (live InfluxDB data with the fixture's
+   * GitLab.com part); absent in datasets written before GEO audit #11.
+   */
+  readonly source?: "live" | "fixture" | "gitlab-fixture";
   /** Bumped when the shape changes incompatibly. */
   readonly schemaVersion: number;
   /** ISO time this dataset was written. */

@@ -208,6 +208,16 @@ test("shapeAchievements redacts Pull Shark's raw count but keeps its tier", () =
 // ── buildDataset / ensureDataset: fixture fallback ─────────────────────────
 
 /**
+ * Parses a JSON file.
+ *
+ * @param {string} file - Path.
+ * @returns {any} The parsed value.
+ */
+function readJson(file) {
+  return JSON.parse(fs.readFileSync(file, "utf8"));
+}
+
+/**
  * A temp repo root with a real fixture copied in (from this checkout's
  * `src/data/ghc/fixture.json`) so the fallback path has something real to
  * fall back to.
@@ -256,10 +266,55 @@ test("buildDataset falls back to the committed fixture when the collect step fai
   });
   assert.equal(result.wrote, true);
   assert.equal(result.fromFixture, true);
-  const onDisk = fs.readFileSync(path.join(root, DATA_PATH), "utf8");
-  const fixture = fs.readFileSync(path.join(root, FIXTURE_PATH), "utf8");
-  assert.equal(onDisk, fixture);
+  const onDisk = readJson(path.join(root, DATA_PATH));
+  const fixture = readJson(path.join(root, FIXTURE_PATH));
+  // The fixture's content, stamped so deploy-live cannot record it as live.
+  assert.deepEqual(onDisk, { ...fixture, source: "fixture" });
   assert.ok(warnings.some((line) => line.includes("InfluxDB unreachable")));
+  assert.ok(warnings.some((line) => line.includes('source "fixture"')));
+});
+
+test("buildDataset stamps the fixture even when it was refreshed from a live dataset", async () => {
+  const root = tempRootWithFixture();
+  const fixturePath = path.join(root, FIXTURE_PATH);
+  fs.writeFileSync(
+    fixturePath,
+    JSON.stringify({ ...readJson(fixturePath), source: "live" }),
+  );
+  await buildDataset({
+    root,
+    config: { url: "unused", token: "unused" },
+    collect: async () => {
+      throw new Error("InfluxDB unreachable");
+    },
+    warn: () => {},
+  });
+  assert.equal(readJson(path.join(root, DATA_PATH)).source, "fixture");
+});
+
+test("buildDataset warns when only the GitLab.com part is the fixture's", async () => {
+  const root = tempRootWithFixture();
+  const warnings = [];
+  const result = await buildDataset({
+    root,
+    config: { url: "unused", token: "unused" },
+    collect: async () => ({
+      schemaVersion: 1,
+      source: "gitlab-fixture",
+      highlights: [],
+      contributedTo: [],
+    }),
+    warn: (line) => {
+      warnings.push(line);
+    },
+  });
+  // Written as collected: the stamp comes from collectDataset (the choice
+  // itself is collectedDatasetSource, tested in rebuild-state.test.mjs).
+  assert.equal(result.fromFixture, false);
+  assert.equal(readJson(path.join(root, DATA_PATH)).source, "gitlab-fixture");
+  assert.ok(
+    warnings.some((line) => line.includes("GitLab.com part of the fixture")),
+  );
 });
 
 test("buildDataset leaves DATA_PATH untouched when it fails AND there is no fixture", async () => {
@@ -284,7 +339,7 @@ test("ensureDataset copies the fixture only when DATA_PATH is missing", () => {
 
   assert.equal(fs.existsSync(outPath), false);
   assert.equal(ensureDataset(root), true);
-  assert.equal(fs.existsSync(outPath), true);
+  assert.equal(readJson(outPath).source, "fixture");
 
   fs.writeFileSync(outPath, '{"already":"here"}');
   assert.equal(ensureDataset(root), false);
