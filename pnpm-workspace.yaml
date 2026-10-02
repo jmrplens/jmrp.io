@@ -54,6 +54,13 @@ overrides:
   # satori and its opentype.js pin fflate ^0.7.3; 0.7.5 is the patched 0.7.
   "satori>fflate": "^0.7.5"
   "@shuding/opentype.js>fflate": "^0.7.5"
+  # GHSA-c475-qrg2-pj4r (high): only basic-ftp 6.2.1 is patched, and get-uri
+  # (latest 8.0.1 included) still asks for ^5.3.1. Dev-only chain
+  # (@lhci/cli and lighthouse > proxy-agent > pac-proxy-agent > get-uri).
+  # 6.0.0's one breaking change refuses separate FTP transfer hosts; get-uri
+  # only calls access/lastMod/list/downloadTo, which are unchanged. Drop this
+  # entry once get-uri depends on basic-ftp ^6.2.1.
+  "get-uri>basic-ftp": "^6.2.1"
   "@vercel/fun>@tootallnate/once": "^3.0.1"
   "@vercel/fun>tar": "^7.5.22"
   "@vercel/node>undici": "^6.27.0"
@@ -67,7 +74,6 @@ overrides:
   "cheerio>undici": "^7.24.0"
   "fdir>picomatch": "^4.0.4"
   "flat-cache>flatted": "^3.4.2"
-  "get-uri>basic-ftp": "^5.2.1"
   "mermaid>dompurify": "^3.3.2"
   "micromatch>picomatch": "^2.3.2"
   # Only minimatch@3 pulls the vulnerable brace-expansion 1.x; 9 and 10 are

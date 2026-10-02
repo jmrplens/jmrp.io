@@ -300,7 +300,11 @@ jobs:
           output: lychee-report.md
           fail: true
         env:
-          GITHUB_TOKEN: ${{ secrets.TOKEN_GITHUB }}
+          # Dependabot-triggered runs get no Actions secrets, so TOKEN_GITHUB
+          # is empty there and lychee hit github.com unauthenticated: the
+          # 503s on our own /blob/ links came from those runs. The job token
+          # is read-only but authenticates the requests all the same.
+          GITHUB_TOKEN: ${{ secrets.TOKEN_GITHUB || github.token }}
       # Every `#fragment` of an internal link must exist on the page it names.
       # Offline: reads only dist/. `--index-files index.html` resolves
       # `/about/#x` to the directory's index.html (without it every such
