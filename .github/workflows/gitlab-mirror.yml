@@ -35,7 +35,13 @@ jobs:
   repository:
     name: Mirror repository
     runs-on: ubuntu-latest
-    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
+    # Dependabot pushes run without Actions secrets, so the SSH key is empty
+    # and the job could only fail. Its branches reach GitLab with the next
+    # push by anyone else or the six-hourly scheduled run, which mirrors
+    # every ref.
+    if: >-
+      github.actor != 'dependabot[bot]' &&
+      (github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success')
     steps:
       - name: Configure GitLab SSH key
         env:
