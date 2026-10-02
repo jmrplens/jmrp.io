@@ -90,7 +90,7 @@
     "@types/sanitize-html": "^2.16.1",
     "@types/xml2js": "^0.4.14",
     "@typescript-eslint/eslint-plugin": "^8.70.1",
-    "@typescript-eslint/parser": "^8.70.1",
+    "@typescript-eslint/parser": "^8.71.0",
     "@unocss/eslint-plugin": "^66.10.5",
     "astro-eslint-parser": "^3.2.0",
     "axe-core": "^4.13.0",
