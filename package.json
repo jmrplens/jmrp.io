@@ -128,7 +128,7 @@
     "rss-parser": "^3.13.0",
     "satori": "^0.33.5",
     "schema-dts": "^2.0.0",
-    "sharp": "^0.35.4",
+    "sharp": "^0.35.5",
     "sonar-scanner": "^3.1.0",
     "stylelint": "^17.15.0",
     "stylelint-config-html": "^2.0.0",
