@@ -13,18 +13,39 @@ updates:
       # Astro ships TS 7 support.
       - dependency-name: "typescript"
         update-types: ["version-update:semver-major"]
-    # Optional: Groups updates to reduce noise
+      # mermaid stays on 11: mermaid-isomorphic, the only thing that renders a
+      # diagram here, depends on mermaid ^11, so 12 only installs a second copy
+      # the renderer never uses. Drop once mermaid-isomorphic moves to 12.
+      - dependency-name: "mermaid"
+        update-types: ["version-update:semver-major"]
+      # preact stays on 10: @astrojs/preact (6.0.5) peers on preact ^10.6.5.
+      # Drop once the integration accepts 11.
+      - dependency-name: "preact"
+        update-types: ["version-update:semver-major"]
+    # Each PR runs the whole CI (about 40 jobs), so a week of separate bumps
+    # cost ~400 jobs. Every minor and patch update lands in ONE weekly PR;
+    # majors still arrive one per PR, because they are the ones that break
+    # and need to be bisectable. A dependency joins the first group it
+    # matches, so the Astro group (majors included: Astro and its
+    # integrations move together) has to stay first.
     groups:
       astro-ecosystem:
         patterns:
           - "astro"
           - "@astrojs/*"
-      icons:
+      minor-and-patch:
         patterns:
-          - "@iconify-json/*"
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
 
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
       interval: "weekly"
     open-pull-requests-limit: 5
+    groups:
+      actions:
+        patterns:
+          - "*"
