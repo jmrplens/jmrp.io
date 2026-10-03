@@ -427,18 +427,28 @@ test.describe("Build Output Verification", () => {
 type SriReport = Record<string, unknown>;
 
 /**
- * The first integrity-pinned script of the home page, read from the served
- * HTML so the routes can be set before the page loads it.
+ * The first integrity-pinned script of the home page, read from the DOM of a
+ * throwaway tab so the test's own tab can route it before it loads. The tabs
+ * share no sessionStorage, and routing disables the HTTP cache of the tab it
+ * is set on, so the probe's successful load cannot satisfy the test's.
  */
 async function firstPinnedScript(
-  request: import("@playwright/test").APIRequestContext,
+  context: import("@playwright/test").BrowserContext,
 ): Promise<string> {
-  const html = await (await request.get("/")).text();
-  for (const tag of html.match(/<script\b[^>]*>/g) ?? []) {
-    const src = /\bsrc="([^"]+)"/.exec(tag)?.[1];
-    if (src && /\bintegrity="[^"]+"/.test(tag)) return src;
+  const probe = await context.newPage();
+  try {
+    await probe.goto("/");
+    const src = await probe
+      .locator("script[integrity][src]")
+      .first()
+      .getAttribute("src");
+    if (!src) {
+      throw new Error("The home page has no integrity-pinned <script src>");
+    }
+    return src;
+  } finally {
+    await probe.close();
   }
-  throw new Error("The home page has no integrity-pinned <script src>");
 }
 
 /**
@@ -472,9 +482,9 @@ async function onlyReport(reports: SriReport[]): Promise<SriReport> {
 test.describe("SRI listener: mismatch vs. failed load", () => {
   test("a blocked request is a resource-load, not an SRI failure", async ({
     page,
-    request,
+    context,
   }) => {
-    const src = await firstPinnedScript(request);
+    const src = await firstPinnedScript(context);
     const reports = await captureSriReports(page);
     await page.route(`**${src}`, (route) => route.abort("blockedbyclient"));
 
@@ -489,9 +499,9 @@ test.describe("SRI listener: mismatch vs. failed load", () => {
 
   test("intact bytes behind a failed element load are not an SRI failure", async ({
     page,
-    request,
+    context,
   }) => {
-    const src = await firstPinnedScript(request);
+    const src = await firstPinnedScript(context);
     const reports = await captureSriReports(page);
     // Block only the element's own load; the listener's fetch goes through.
     await page.route(`**${src}`, (route) =>
@@ -510,9 +520,9 @@ test.describe("SRI listener: mismatch vs. failed load", () => {
 
   test("tampered bytes are an SRI mismatch carrying the received digest", async ({
     page,
-    request,
+    context,
   }) => {
-    const src = await firstPinnedScript(request);
+    const src = await firstPinnedScript(context);
     const reports = await captureSriReports(page);
     await page.route(`**${src}`, (route) =>
       route.fulfill({
