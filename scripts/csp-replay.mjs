@@ -200,7 +200,8 @@ printCounts(
 console.log("\nWhy each report was filtered (current policy):");
 printCounts(after.reasons);
 
-// Who exactly got silenced by the new crawler tier — printed so the
+// Who exactly got silenced by the notification tier (crawlers, and failed
+// loads the SRI listener verified were not a mismatch), printed so the
 // classification can be eyeballed instead of trusted.
 const silencedClients = new Map();
 for (const entry of entries) {
@@ -210,7 +211,9 @@ for (const entry of entries) {
   const label = `${reason}  ${entry.ua.slice(0, 70)}`;
   silencedClients.set(label, (silencedClients.get(label) ?? 0) + 1);
 }
-console.log("\nClients silenced by the crawler tier (all must be crawlers):");
+console.log(
+  "\nClients silenced by the notification tier (crawlers or client-side load failures):",
+);
 printCounts(silencedClients);
 
 // Safety assertion: every *kind* of violation seen from a non-crawler client

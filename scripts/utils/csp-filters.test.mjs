@@ -188,6 +188,102 @@ test("getNotifySuppressReason: an injected eval under an outdated Chrome stays q
   assert.equal(getDiscardReason(evalReport()), null);
 });
 
+test("getNotifySuppressReason: only a verified SRI mismatch or an HTTP error pages", () => {
+  const browser =
+    "Mozilla/5.0 (Linux; Android 15; Pixel 9) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Mobile Safari/537.36";
+  const ip = "83.49.10.109";
+  const beacon = "https://jmrp.io/scripts/cf-beacon.b929e98b003b.js";
+  const loadReport = (status, sample) => ({
+    "csp-report": {
+      "violated-directive": "resource-load",
+      "effective-directive": "resource-load",
+      "blocked-uri": beacon,
+      "document-uri": "https://jmrp.io/blog/009-running-tor-bridge/",
+      "status-code": status,
+      "script-sample": sample,
+    },
+  });
+
+  // The request never completed: a blocker or a crawler skipped the file.
+  assert.equal(
+    getNotifySuppressReason(
+      loadReport(0, "Request blocked or failed in the client"),
+      browser,
+      ip,
+    ),
+    "client-load-failure",
+  );
+  // The bytes arrived and matched the pinned hash.
+  assert.equal(
+    getNotifySuppressReason(
+      loadReport(
+        200,
+        "Bytes match the pinned hash; the load failed in the client",
+      ),
+      browser,
+      ip,
+    ),
+    "client-load-failure",
+  );
+  // The server failed to serve it: that is the site's problem.
+  assert.equal(
+    getNotifySuppressReason(loadReport(404, "HTTP 404"), browser, ip),
+    null,
+  );
+  assert.equal(
+    getNotifySuppressReason(loadReport(503, "HTTP 503"), browser, ip),
+    null,
+  );
+
+  // A verified mismatch from a real browser always pages.
+  const mismatch = {
+    "csp-report": {
+      "violated-directive": "sri-integrity",
+      "effective-directive": "sri",
+      "blocked-uri": beacon,
+      "status-code": 200,
+      "script-sample": "SRI mismatch (application/javascript; charset=utf-8)",
+      "sri-expected": "sha512-AAAA",
+      "sri-received": "sha512-BBBB",
+    },
+  };
+  assert.equal(getNotifySuppressReason(mismatch, browser, ip), null);
+
+  // The listener before byte verification: a mismatch and a blocked request
+  // were the same report, so it cannot page anyone.
+  const unverified = {
+    "csp-report": {
+      "violated-directive": "sri-integrity",
+      "effective-directive": "sri",
+      "blocked-uri": beacon,
+      "status-code": 0,
+      "script-sample": "SRI check failed",
+    },
+  };
+  assert.equal(
+    getNotifySuppressReason(unverified, browser, ip),
+    "unverified-sri",
+  );
+
+  // All of them are still written to the log.
+  for (const report of [loadReport(0, ""), mismatch, unverified]) {
+    assert.equal(getDiscardReason(report), null);
+  }
+});
+
+test("getNotificationKey: a load failure and a mismatch of one file page separately", () => {
+  const build = (directive) => ({
+    "csp-report": {
+      "effective-directive": directive,
+      "blocked-uri": "https://jmrp.io/_astro/page.CVHypVBz.js",
+    },
+  });
+  assert.notEqual(
+    getNotificationKey(build("resource-load")),
+    getNotificationKey(build("sri")),
+  );
+});
+
 test("getDiscardReason: crawler reports are kept in the log", () => {
   // Crawler classification lives in the notification tier now, so a crawler
   // report must still be written to logs/csp-violations.log.

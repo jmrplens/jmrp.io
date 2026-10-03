@@ -424,7 +424,7 @@ The CV PDFs share this palette: `scripts/cv/design-template.mjs` and
 | `References`       | `@components/ui/References.astro`       | Auto-collected from content links |
 | `CopyButton`       | `@components/ui/CopyButton.astro`       | Copy-to-clipboard                 |
 | `IconDetector`     | `@components/ui/IconDetector.astro`     | Icon consistency check            |
-| `SRIEventListener` | `@components/ui/SRIEventListener.astro` | SRI integrity for event listeners |
+| `SRIEventListener` | `@components/ui/SRIEventListener.astro` | Reports failed loads of `integrity` resources; re-fetches and hashes to tell a real SRI mismatch from a blocked load |
 | `ThemeToggle`      | `@components/ui/ThemeToggle.astro`      | Theme switcher                    |
 
 ### Diagram & Embedded

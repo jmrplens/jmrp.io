@@ -944,7 +944,7 @@ These components are primarily used internally or for specific purposes:
 
 - **CopyButton** - Copy-to-clipboard button (used by code components)
 - **IconDetector** - Icon rendering helper
-- **SRIEventListener** - Subresource Integrity event handling
+- **SRIEventListener** - Reports failed loads of integrity-pinned resources, verifying the bytes to tell an SRI mismatch from a blocked load
 - **ThemeToggle** - Dark/light mode toggle
 - **DeprecatedNotice** - Legacy component (use StateNotice instead)
 
