@@ -102,3 +102,21 @@ auditConfig:
     # extract-zip has not been published since 2.0.1 (March 2023), so both
     # entries leave together or not at all.
     - GHSA-7pqw-9j4j-h8q3
+    # Two advisories published 2026-09-18 with no patched release: the latest
+    # http-cache-semantics (4.2.0) and braces (3.0.3) are both inside the
+    # vulnerable range. Neither is reachable here. Remove each entry as soon
+    # as a fixed version ships, and reassess if either path below changes.
+    # Reviewed 2026-10-03.
+    #
+    # http-cache-semantics: a shared cache can hand one user's zeroed
+    # Set-Cookie response to another who sends a large max-stale. Astro uses
+    # it only in assets/build/remote.js, the build-time cache of remote
+    # images; there are no users, cookies or shared cache at build time, and
+    # nothing serves the site through Node (nginx serves static files).
+    - GHSA-ch52-4w7c-c8xp
+    # braces: a deeply nested pattern exhausts the stack. Every path is a
+    # glob matcher (micromatch, fast-glob, chokidar...) expanding patterns
+    # written in this repository's own code and config; no runtime service
+    # (csp-reporter, ae-to-influx, traffic-report) depends on it or takes a
+    # pattern from outside.
+    - GHSA-vfj7-8cjw-p6xm
