@@ -34,6 +34,8 @@ import fs from "node:fs";
 import path from "node:path";
 import process from "node:process";
 
+import { runWithConcurrency } from "../utils/concurrency.mjs";
+
 const API = "https://api.github.com";
 const ROOT = process.cwd();
 const CONSUMERS = path.join(ROOT, ".github/identity-consumers.json");
@@ -121,12 +123,12 @@ console.log(
     `rebuild against the canonical #person...\n`,
 );
 
-const results = [];
-for (const consumer of consumers) {
-  // Serially on purpose: a handful of calls, and a credential failure should
-  // show up on the first one rather than on all of them at once.
-  results.push(await dispatchConsumer(consumer, owner));
-}
+// Serially on purpose (a pool of one): a handful of calls, and a credential
+// failure should show up on the first one rather than on all of them at once.
+const results = await runWithConcurrency(
+  consumers.map((consumer) => () => dispatchConsumer(consumer, owner)),
+  1,
+);
 
 const ICON = {
   dispatched: "✓",

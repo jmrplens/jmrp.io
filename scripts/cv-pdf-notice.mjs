@@ -125,9 +125,8 @@ export function detectUncommittedCvPdfs(git) {
   }
   const status = git(GIT_STATUS_ARGS);
   if (status.error || status.status !== 0) {
-    throw new Error(
-      `git status failed (${status.error?.message ?? `exit code ${status.status}`})`,
-    );
+    const reason = status.error?.message ?? `exit code ${status.status}`;
+    throw new Error(`git status failed (${reason})`);
   }
   return findUncommittedCvPdfs(status.stdout ?? "");
 }
@@ -139,9 +138,10 @@ export function detectUncommittedCvPdfs(git) {
  * @returns {string} The word, single-quoted when it needs to be.
  */
 function shellQuote(word) {
-  return /^[\w./-]+$/.test(word)
-    ? word
-    : `'${word.replaceAll("'", String.raw`'\''`)}'`;
+  if (/^[\w./-]+$/.test(word)) return word;
+  // Each `'` closes the quote, writes an escaped `'`, and reopens it.
+  const escaped = word.replaceAll("'", String.raw`'\''`);
+  return `'${escaped}'`;
 }
 
 /**

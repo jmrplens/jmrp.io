@@ -1,8 +1,13 @@
 /**
- * A tiny bounded-concurrency task runner, shared by `build-data.mjs` and
- * `write-summary.mjs`.
+ * A tiny bounded-concurrency task runner. It started in `scripts/ghc/` for
+ * `build-data.mjs` and `write-summary.mjs`, and now also caps the post-build
+ * passes (HTML, PNG, compression) and the GitHub repo fetches in `src/`, which
+ * used to run fixed-size batches where one slow file held up its whole batch.
+ * It is the one place where an `await` inside a loop is the point: each
+ * worker takes the next task only when its current one settles
+ * (`sonar-project.properties` says so for rule S9382).
  *
- * Both scripts used to fire their whole batch of InfluxDB queries through a
+ * The ghc scripts used to fire their whole batch of InfluxDB queries through a
  * single `Promise.all` — ~19 queries at once for `build-data.mjs`'s main
  * batch, 9 more for its per-repo weekly-commits loop, 9 for
  * `write-summary.mjs`'s. Each `queryInflux()` call opens its own TCP

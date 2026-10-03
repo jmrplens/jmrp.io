@@ -126,16 +126,26 @@ export function sequenceProblems(items, singleGroup) {
     if (!pairs.includes("dd")) problems.push("has no <dd>");
   }
   if (pairs[0] === "dd") problems.push("starts with <dd>");
-  let groups = 0;
-  for (let i = 0; i < pairs.length; i++) {
-    if (pairs[i] === "dt" && (i === 0 || pairs[i - 1] === "dd")) groups++;
-    if (pairs[i] === "dt" && pairs.slice(i + 1).every((n) => n === "dt")) {
-      problems.push("has a <dt> with no <dd> after it");
-      break;
-    }
+  // A run ending in <dt> leaves that last term with no description; ending in
+  // <dd> means every <dt> has one after it.
+  if (pairs.at(-1) === "dt") problems.push("has a <dt> with no <dd> after it");
+  if (singleGroup && countGroups(pairs) > 1) {
+    problems.push("holds more than one group");
   }
-  if (singleGroup && groups > 1) problems.push("holds more than one group");
   return problems;
+}
+
+/**
+ * Counts the groups in a run: each `<dt>` that opens the run or follows a
+ * `<dd>` starts a new one.
+ *
+ * @param {string[]} pairs - The run's `dt`/`dd` names, in order.
+ * @returns {number} How many groups the run holds.
+ */
+function countGroups(pairs) {
+  return pairs.filter(
+    (name, i) => name === "dt" && (i === 0 || pairs[i - 1] === "dd"),
+  ).length;
 }
 
 /**

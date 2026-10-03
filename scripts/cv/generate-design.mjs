@@ -378,11 +378,17 @@ const OUTPUT_NAMES = {
  */
 async function writeSet(outDir, options) {
   fs.mkdirSync(outDir, { recursive: true });
-  for (const [locale, filename] of Object.entries(OUTPUT_NAMES)) {
+  const entries = Object.entries(OUTPUT_NAMES);
+  // Both locales are independent, so they are built concurrently and then
+  // written in OUTPUT_NAMES order.
+  const sources = await Promise.all(
+    entries.map(([locale]) => buildDesign(locale, options)),
+  );
+  entries.forEach(([, filename], i) => {
     const outPath = path.join(outDir, filename);
-    fs.writeFileSync(outPath, await buildDesign(locale, options), "utf8");
+    fs.writeFileSync(outPath, sources[i], "utf8");
     console.log(`✓ ${path.relative(REPO_ROOT, outPath)}`);
-  }
+  });
 }
 
 async function main() {

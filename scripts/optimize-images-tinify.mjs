@@ -19,6 +19,8 @@ import path from "node:path";
 
 import tinify from "tinify";
 
+import { runWithConcurrency } from "./utils/concurrency.mjs";
+
 const key = process.env.TINIFY_API_KEY;
 if (!key) {
   console.error(
@@ -40,11 +42,16 @@ if (files.length === 0) {
   process.exit(1);
 }
 
-let failures = 0;
-for (const file of files) {
+/**
+ * Compresses one file through the Tinify API, logging the outcome.
+ *
+ * @param {string} file - Path of the image.
+ * @returns {Promise<boolean>} Whether the file failed.
+ */
+async function compressOne(file) {
   if (!fs.existsSync(file)) {
     console.warn(`skip (not found): ${file}`);
-    continue;
+    return false;
   }
   const before = fs.statSync(file).size;
   try {
@@ -63,13 +70,22 @@ for (const file of files) {
         after / 1024
       ).toFixed(1)} KB (-${pct}%)`,
     );
+    return false;
   } catch (error) {
-    failures++;
     console.error(
       `✗ ${file}: ${error instanceof Error ? error.message : error}`,
     );
+    return true;
   }
 }
+
+// A few files at a time: each is an upload and a download through the API,
+// independent of the others. Each line prints as its file finishes.
+const outcomes = await runWithConcurrency(
+  files.map((file) => () => compressOne(file)),
+  4,
+);
+const failures = outcomes.filter(Boolean).length;
 
 console.log(`Tinify compressions used this month: ${tinify.compressionCount}`);
 if (failures > 0) process.exit(1);

@@ -358,13 +358,12 @@ async function validateRSS() {
 
   console.log(`   Found ${feedFiles.length} RSS feed(s) to validate\n`);
 
-  const allResults = [];
-
-  for (const feedFile of feedFiles) {
-    const results = await validateSingleFeed(feedFile);
-    allResults.push(results);
-    logFeedResults(results, path.relative(distDir, feedFile));
-  }
+  // The feeds are independent, so they are validated concurrently; the
+  // results are still logged in discovery order.
+  const allResults = await Promise.all(feedFiles.map(validateSingleFeed));
+  feedFiles.forEach((feedFile, i) => {
+    logFeedResults(allResults[i], path.relative(distDir, feedFile));
+  });
 
   // Write combined results (array for multiple feeds, single object for one)
   const output = allResults.length === 1 ? allResults[0] : allResults;

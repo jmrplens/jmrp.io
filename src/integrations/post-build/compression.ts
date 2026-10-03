@@ -7,6 +7,8 @@ import zlib from "node:zlib";
 import { type AstroIntegrationLogger } from "astro";
 import { glob } from "glob";
 
+import { runWithConcurrency } from "../../../scripts/utils/concurrency.mjs";
+
 const gzip = promisify(zlib.gzip);
 const brotli = promisify(zlib.brotliCompress);
 
@@ -207,21 +209,20 @@ export async function compressAssets(
   const manifest = await loadManifest(logger);
   let manifestDirty = false;
 
-  // Concurrency limit (Batching)
-  const BATCH_SIZE = 10;
+  // At most this many files in flight; a worker takes the next file as soon
+  // as its current one is written.
+  const CONCURRENCY = 10;
   let compressedCount = 0;
   let cachedHitCount = 0;
 
-  for (let i = 0; i < files.length; i += BATCH_SIZE) {
-    const batch = files.slice(i, i + BATCH_SIZE);
-    const results = await Promise.all(
-      batch.map((file) => compressFile(file, manifest, logger)),
-    );
-    for (const result of results) {
-      if (result.compressed) compressedCount++;
-      if (result.cached) cachedHitCount++;
-      if (result.dirty) manifestDirty = true;
-    }
+  const results = await runWithConcurrency(
+    files.map((file) => () => compressFile(file, manifest, logger)),
+    CONCURRENCY,
+  );
+  for (const result of results) {
+    if (result.compressed) compressedCount++;
+    if (result.cached) cachedHitCount++;
+    if (result.dirty) manifestDirty = true;
   }
 
   if (await pruneStaleEntries(manifest, logger)) manifestDirty = true;

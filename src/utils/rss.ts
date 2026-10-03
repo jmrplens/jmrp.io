@@ -189,10 +189,13 @@ export async function generateRssFeed(
       new Date(a.data.publishedDate).getTime(),
   );
 
-  let itemsXml = "";
-  for (const post of publishedPosts) {
-    itemsXml += await generateRssItem(post, site, locale, pathPrefix);
-  }
+  // Items render independently; joining keeps the date order sorted above.
+  const items = await Promise.all(
+    publishedPosts.map((post) =>
+      generateRssItem(post, site, locale, pathPrefix),
+    ),
+  );
+  const itemsXml = items.join("");
 
   // The channel <image> declares both dimensions because the DEFAULTS are the
   // trap, not the maximums: RSS 2.0 defaults width to 88 and height to 31, so

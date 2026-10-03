@@ -8,6 +8,7 @@ import type { Element } from "domhandler";
 import { glob } from "glob";
 import { minify } from "html-minifier-terser";
 
+import { runWithConcurrency } from "../../../scripts/utils/concurrency.mjs";
 import { BEACON_URL_PATH, publishVersionedBeacon } from "./beacon-version.js";
 import {
   ASSET_FILENAME_HASH_LENGTH,
@@ -131,22 +132,21 @@ function extractDataUri(
 }
 
 /**
- * Number of HTML files processed concurrently per batch in
- * {@link processHtmlFiles}. Each file's transformation is CPU/IO bound
+ * Number of HTML files in flight at once in {@link processHtmlFiles}. Each file's transformation is CPU/IO bound
  * (cheerio parse, hashing, minify) and fully independent of every other
  * file's — the only shared state is the `hashCache` Map and the
  * `cspData.imageDomains` Set, both of which are safe to mutate from
  * concurrently-awaiting single-threaded JS (see the function doc for the
- * ordering analysis). Mirrors the batching pattern used in
- * `compression.ts`.
+ * ordering analysis). The same pool caps `compression.ts` and `images.ts`.
  */
 const HTML_PROCESSING_CONCURRENCY = 8;
 
 /**
  * Performs a consolidated pass over all HTML files in the distribution directory.
  *
- * Files are processed in concurrent batches (see
- * {@link HTML_PROCESSING_CONCURRENCY}). This is safe because:
+ * Files go through a bounded pool (`runWithConcurrency`, see
+ * {@link HTML_PROCESSING_CONCURRENCY}): a worker takes the next file as soon
+ * as its current one is written. This is safe because:
  * - Each file only reads its own content and writes back to its own path.
  * - `hashCache` (file path -> integrity hash) and `cspData.imageDomains`
  *   (a Set of hostnames) are accumulative and idempotent: a concurrent
@@ -154,13 +154,13 @@ const HTML_PROCESSING_CONCURRENCY = 8;
  *   value twice, and Set/Map mutation never interleaves at the byte level
  *   in single-threaded JS.
  * - Data-URI extraction (`findAndExtractDataUris`) is synchronous (uses
- *   `fs.existsSync`/`writeFileSync`, not the promise APIs), so for every
- *   file in a batch, `Promise.all(batch.map(...))` runs each file's fully
- *   synchronous prefix (parsing, image/style/SRI processing, data-URI
- *   writes) back-to-back with no interleaving *before* any of them
- *   suspends at the first `await` (the `minify()` call) — so even the
- *   `fs.existsSync` + `writeFileSync` check-then-write for a duplicate
- *   embedded asset across two files in the same batch cannot race.
+ *   `fs.existsSync`/`writeFileSync`, not the promise APIs), so each file's
+ *   fully synchronous prefix (parsing, image/style/SRI processing, data-URI
+ *   writes) runs to completion, with no other file's code in between,
+ *   before it suspends at its first `await` (the `minify()` call). Whichever
+ *   worker starts a file, that holds — so even the `fs.existsSync` +
+ *   `writeFileSync` check-then-write for a duplicate embedded asset across
+ *   two files in flight at once cannot race.
  */
 export async function processHtmlFiles(
   distDir: string,
@@ -182,27 +182,23 @@ export async function processHtmlFiles(
   let updatedSriTags = 0;
   let extractedImages = 0;
 
-  for (let i = 0; i < htmlFiles.length; i += HTML_PROCESSING_CONCURRENCY) {
-    const batch = htmlFiles.slice(i, i + HTML_PROCESSING_CONCURRENCY);
-    const results = await Promise.all(
-      batch.map((file) =>
-        processSingleHtmlFile(
-          file,
-          distDir,
-          targetDir,
-          cspData,
-          hashCache,
-          enableCsp,
-          beaconSrc,
-          logger,
-        ),
-      ),
-    );
-    for (const result of results) {
-      if (result.modified) modifiedFilesCount++;
-      updatedSriTags += result.updatedSriTags;
-      extractedImages += result.extractedImages;
-    }
+  const ctx: HtmlPassContext = {
+    distDir,
+    targetDir,
+    cspData,
+    hashCache,
+    enableCsp,
+    beaconSrc,
+    logger,
+  };
+  const results = await runWithConcurrency(
+    htmlFiles.map((file) => () => processSingleHtmlFile(file, ctx)),
+    HTML_PROCESSING_CONCURRENCY,
+  );
+  for (const result of results) {
+    if (result.modified) modifiedFilesCount++;
+    updatedSriTags += result.updatedSriTags;
+    extractedImages += result.extractedImages;
   }
 
   logger.info(`  ✓ Updated ${updatedSriTags} tags with SRI.`);
@@ -311,77 +307,75 @@ function versionBeaconUrl(
   return true;
 }
 
+/** What the pass over one HTML file needs besides the file itself. */
+interface HtmlPassContext {
+  distDir: string;
+  targetDir: string;
+  cspData: CspData;
+  hashCache: Map<string, string>;
+  enableCsp: boolean;
+  beaconSrc: string | null;
+  logger: AstroIntegrationLogger;
+}
+
 /**
  * Orchestrates all transformations for a single HTML file.
+ *
+ * Each step reports whether it changed the page; the steps run in order, and
+ * every one of them runs, since each sees the DOM the previous one left.
  */
 async function processSingleHtmlFile(
   file: string,
-  distDir: string,
-  targetDir: string,
-  cspData: CspData,
-  hashCache: Map<string, string>,
-  enableCsp: boolean,
-  beaconSrc: string | null,
-  logger: AstroIntegrationLogger,
+  ctx: HtmlPassContext,
 ): Promise<{
   modified: boolean;
   updatedSriTags: number;
   extractedImages: number;
 }> {
+  const { distDir, targetDir, cspData, hashCache, enableCsp, beaconSrc } = ctx;
+  const { logger } = ctx;
   const content = fs.readFileSync(file, "utf-8");
   const $ = cheerio.load(content);
-  let isModified = false;
-  let updatedSriTags = 0;
-  let extractedImages = 0;
-
   // Image processing
   const imgResult = processImages($, targetDir, logger, file);
-  if (imgResult.modified) {
-    isModified = true;
-    extractedImages += imgResult.extractedCount;
-  }
+  const extractedImages = imgResult.extractedCount;
 
-  // Mermaid's in-SVG <style>, emptied into a `set:html` attribute on the way
-  // through MDX (GEO audit #11, T4). Before the style move below and long
-  // before the nonce pass, which would otherwise stamp a nonce on each one.
-  if (removeDeadSvgStyles($)) isModified = true;
+  // Array elements evaluate left to right, so every step below runs, in this
+  // order, each on the DOM the previous one left.
+  const changed = [
+    imgResult.modified,
 
-  // Fix style locations
-  const bodyStyles = $("body style");
-  if (bodyStyles.length > 0) {
-    let movedCount = 0;
-    bodyStyles.each((_, el) => {
-      const $style = $(el);
-      if ($style.parents("svg, template, noscript").length > 0) return;
-      $("head").append($style.clone());
-      $style.remove();
-      movedCount++;
-    });
-    if (movedCount > 0) isModified = true;
-  }
+    // Mermaid's in-SVG <style>, emptied into a `set:html` attribute on the way
+    // through MDX (GEO audit #11, T4). Before the style move below and long
+    // before the nonce pass, which would otherwise stamp a nonce on each one.
+    removeDeadSvgStyles($),
 
-  // Undo SmartyPants inside every verbatim surface before anything else reads
-  // the DOM — the repaired text must be what gets hashed, minified and shipped.
-  if (restoreVerbatimTypography($)) isModified = true;
+    // Fix style locations
+    moveBodyStylesToHead($),
 
-  // Drop empty <p></p> nodes. MDX emits one wherever a raw-HTML block and a
-  // markdown paragraph meet, which left 158 of them across the 34 tool pages
-  // (GEO audit 2026-08-22, B11) — noise that dilutes the extractable-block
-  // ratio and adds phantom prose margins. Only truly empty paragraphs go:
-  // anything with text or an element child stays.
-  if (removeEmptyParagraphs($)) isModified = true;
+    // Undo SmartyPants inside every verbatim surface before anything else reads
+    // the DOM — the repaired text must be what gets hashed, minified and shipped.
+    restoreVerbatimTypography($),
 
-  // External links out of Astro's viewport prefetch (GEO audit #10): it
-  // observes every <a> on the page and only then finds that a cross-origin URL
-  // cannot be prefetched, so /projects/ with ~200 outbound links spent a ~350 ms
-  // long task (TBT 230 ms on mobile) watching links it can never fetch.
-  if (skipPrefetchOnExternalLinks($)) isModified = true;
+    // Drop empty <p></p> nodes. MDX emits one wherever a raw-HTML block and a
+    // markdown paragraph meet, which left 158 of them across the 34 tool pages
+    // (GEO audit 2026-08-22, B11) — noise that dilutes the extractable-block
+    // ratio and adds phantom prose margins. Only truly empty paragraphs go:
+    // anything with text or an element child stays.
+    removeEmptyParagraphs($),
 
-  // Handle styles
-  if (processStyles($, enableCsp)) isModified = true;
+    // External links out of Astro's viewport prefetch (GEO audit #10): it
+    // observes every <a> on the page and only then finds that a cross-origin URL
+    // cannot be prefetched, so /projects/ with ~200 outbound links spent a ~350 ms
+    // long task (TBT 230 ms on mobile) watching links it can never fetch.
+    skipPrefetchOnExternalLinks($),
 
-  // Before SRI, so the tag it hashes already carries its final URL.
-  if (versionBeaconUrl($, beaconSrc)) isModified = true;
+    // Handle styles
+    processStyles($, enableCsp),
+
+    // Before SRI, so the tag it hashes already carries its final URL.
+    versionBeaconUrl($, beaconSrc),
+  ];
 
   // Process SRI and Nonces
   const sriResult = processScriptsAndLinks(
@@ -391,29 +385,26 @@ async function processSingleHtmlFile(
     hashCache,
     enableCsp,
   );
-  if (sriResult.modified) {
-    isModified = true;
-    updatedSriTags += sriResult.updatedTags;
-  }
+  const updatedSriTags = sriResult.modified ? sriResult.updatedTags : 0;
 
   // Collect domains for CSP
   if (enableCsp) collectImageDomains($, cspData);
 
-  // Integrity for beacon
-  if (processBeacon($, distDir, file, hashCache, logger)) isModified = true;
-
-  // UnoCSS Icon Purge: Remove CSS rules for icons that are not present as classes in the HTML
-  if (purgeUnusedIcons($)) isModified = true;
-
-  // Accessibility: Code blocks (locale-aware labels)
-  if (processCodeBlocks($, file, distDir)) isModified = true;
-
-  // Performance: Block prefetch for binary files
-  if (processLinks($)) isModified = true;
+  changed.push(
+    sriResult.modified,
+    // Integrity for beacon
+    processBeacon($, distDir, file, hashCache, logger),
+    // UnoCSS Icon Purge: Remove CSS rules for icons that are not present as classes in the HTML
+    purgeUnusedIcons($),
+    // Accessibility: Code blocks (locale-aware labels)
+    processCodeBlocks($, file, distDir),
+    // Performance: Block prefetch for binary files
+    processLinks($),
+  );
 
   // Minify HTML
   const rawHtml = $.html();
-  // LOAD-BEARING: no await may run before this point — the synchronous prefix serializes data-URI check-then-write across the batch (see JSDoc above).
+  // LOAD-BEARING: no await may run before this point — the synchronous prefix serializes data-URI check-then-write across the files in flight (see JSDoc above).
   const minifiedHtml = await minify(rawHtml, {
     removeComments: true,
     collapseWhitespace: true,
@@ -432,10 +423,29 @@ async function processSingleHtmlFile(
   });
 
   const $minified = cheerio.load(minifiedHtml);
-  if (collectInlineHashes($minified, enableCsp)) isModified = true;
+  changed.push(collectInlineHashes($minified, enableCsp));
 
   writeHtml(file, $minified.html());
-  return { modified: isModified, updatedSriTags, extractedImages };
+  return { modified: changed.includes(true), updatedSriTags, extractedImages };
+}
+
+/**
+ * Moves every `<style>` in the body to the head, except those an `<svg>`,
+ * `<template>` or `<noscript>` owns.
+ *
+ * @param $ - The page.
+ * @returns Whether any style moved.
+ */
+function moveBodyStylesToHead($: cheerio.CheerioAPI): boolean {
+  let movedCount = 0;
+  $("body style").each((_, el) => {
+    const $style = $(el);
+    if ($style.parents("svg, template, noscript").length > 0) return;
+    $("head").append($style.clone());
+    $style.remove();
+    movedCount++;
+  });
+  return movedCount > 0;
 }
 
 function processImages(

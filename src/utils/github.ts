@@ -1,3 +1,5 @@
+import { runWithConcurrency } from "../../scripts/utils/concurrency.mjs";
+
 /**
  * Represents a simplified GitHub repository object.
  */
@@ -143,44 +145,42 @@ export async function fetchOwnRepoFacts(): Promise<{
 
 /**
  * Fetches specific repositories by name for the configured user.
- * Deduplicates names and batches requests to be respectful of API limits.
+ * Deduplicates names and caps the requests in flight to be respectful of
+ * API limits.
  */
 export async function fetchRepositoriesByName(
   repoNames: string[],
 ): Promise<GitHubRepo[]> {
   const headers = getGitHubHeaders();
   const uniqueNames = [...new Set(repoNames)];
-  const results: GitHubRepo[] = [];
-  const BATCH_SIZE = 5;
+  // At most this many requests in flight at once.
+  const CONCURRENCY = 5;
 
-  for (let i = 0; i < uniqueNames.length; i += BATCH_SIZE) {
-    const batch = uniqueNames.slice(i, i + BATCH_SIZE);
-
-    const batchPromises = batch.map(async (name) => {
-      try {
-        const safeName = encodeURIComponent(name);
-        const res = await fetch(
-          `https://api.github.com/repos/${USERNAME}/${safeName}`,
-          { headers },
-        );
-        if (!res.ok) {
-          console.warn(`Failed to fetch repo ${name}: ${res.status}`);
-          return null;
-        }
-        return (await res.json()) as GitHubRepo;
-      } catch (error) {
-        const errorMessage =
-          error instanceof Error ? error.message : String(error);
-        console.warn(`Error fetching repo ${name}: ${errorMessage}`);
+  const fetchOne = async (name: string): Promise<GitHubRepo | null> => {
+    try {
+      const safeName = encodeURIComponent(name);
+      const res = await fetch(
+        `https://api.github.com/repos/${USERNAME}/${safeName}`,
+        { headers },
+      );
+      if (!res.ok) {
+        console.warn(`Failed to fetch repo ${name}: ${res.status}`);
         return null;
       }
-    });
+      return (await res.json()) as GitHubRepo;
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+      console.warn(`Error fetching repo ${name}: ${errorMessage}`);
+      return null;
+    }
+  };
 
-    const batchResults = await Promise.all(batchPromises);
-    results.push(...batchResults.filter((r): r is GitHubRepo => r != null));
-  }
-
-  return results;
+  const results = await runWithConcurrency(
+    uniqueNames.map((name) => () => fetchOne(name)),
+    CONCURRENCY,
+  );
+  return results.filter((r): r is GitHubRepo => r != null);
 }
 
 /**

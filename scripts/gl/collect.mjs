@@ -13,7 +13,7 @@
  * @module
  */
 
-import { runWithConcurrency } from "../ghc/concurrency.mjs";
+import { runWithConcurrency } from "../utils/concurrency.mjs";
 import {
   isOwnNamespace,
   normalizeAchievement,

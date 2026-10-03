@@ -104,10 +104,12 @@ export function fillEnclosureLengths(
         (_, prefix: string) => `${prefix}${size}"`,
       );
     }
-    return tag.replace(
-      /\s*(\/?)>$/,
-      (_, slash: string) => ` length="${size}"${slash ? " />" : ">"}`,
-    );
+    // Insert before the closing `>` or `/>`, dropping the whitespace ahead
+    // of it. String operations rather than a `\s*(\/?)>$` pattern, which
+    // backtracks quadratically on a long run of whitespace.
+    const selfClosing = tag.endsWith("/>");
+    const head = tag.slice(0, selfClosing ? -2 : -1).trimEnd();
+    return `${head} length="${size}"${selfClosing ? " />" : ">"}`;
   });
   return { xml: patched, count };
 }
@@ -124,21 +126,40 @@ export async function patchRssEnclosureLengths(
   logger: AstroIntegrationLogger,
 ): Promise<void> {
   const feeds = await glob("**/rss.xml", { cwd: distDir, absolute: true });
-  for (const feed of feeds.toSorted((a, b) => a.localeCompare(b))) {
-    const label = path.relative(distDir, feed);
-    const original = await fs.promises.readFile(feed, "utf8");
-    let result: { xml: string; count: number };
-    try {
-      result = fillEnclosureLengths(original, distDir);
-    } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      throw new Error(`${label}: ${message}`, { cause: error });
-    }
-    if (result.xml !== original) {
-      await fs.promises.writeFile(feed, result.xml, "utf8");
-    }
+  const sorted = feeds.toSorted((a, b) => a.localeCompare(b));
+  // The feeds are independent files, so they are patched concurrently; the
+  // log lines still come out in path order.
+  const counts = await Promise.all(
+    sorted.map((feed) => patchFeed(feed, distDir)),
+  );
+  sorted.forEach((feed, i) => {
     logger.info(
-      `  ✓ ${label}: ${result.count} enclosure lengths from the built files`,
+      `  ✓ ${path.relative(distDir, feed)}: ${counts[i]} enclosure lengths from the built files`,
     );
+  });
+}
+
+/**
+ * Patches one feed in place.
+ *
+ * @param feed - Absolute path of the feed.
+ * @param distDir - The build output directory.
+ * @returns How many enclosures the feed carries.
+ * @throws If an enclosure cannot be matched to a built file, naming the feed.
+ */
+async function patchFeed(feed: string, distDir: string): Promise<number> {
+  const original = await fs.promises.readFile(feed, "utf8");
+  let result: { xml: string; count: number };
+  try {
+    result = fillEnclosureLengths(original, distDir);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    throw new Error(`${path.relative(distDir, feed)}: ${message}`, {
+      cause: error,
+    });
   }
+  if (result.xml !== original) {
+    await fs.promises.writeFile(feed, result.xml, "utf8");
+  }
+  return result.count;
 }
