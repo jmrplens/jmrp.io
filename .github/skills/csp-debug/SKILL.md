@@ -26,7 +26,7 @@ This project uses a **nonce-only CSP strategy**:
 | `scripts/deploy-live.mjs` | Moves the staged snippets into `/etc/nginx/snippets/jmrp/`, then `nginx -t` + reload (production root only) |
 | `src/integrations/post-build/html.ts` | Adds SRI integrity hashes, nonce attributes, inline style → class |
 | `src/integrations/vite-plugin-prefetch-nonce.ts` | Patches Astro's `appendSpeculationRules` for CSP nonce compliance |
-| `src/components/ui/SRIEventListener.astro` | SRI integrity for inline event listeners |
+| `src/components/ui/SRIEventListener.astro` | Reports failed loads of `integrity` resources to `/csp-report`: `sri-integrity` only for a verified hash mismatch, `resource-load` otherwise (see `docs/CSP_REPORTER.md`) |
 | `scripts/csp-reporter.mjs` | CSP violation receiver with Telegram notifications |
 | `tests/security.spec.ts` | E2E tests verifying CSP/SRI on all pages |
 

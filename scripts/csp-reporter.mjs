@@ -357,6 +357,15 @@ function processReport(report, ip, ua) {
 }
 
 /**
+ * Telegram headings for the two report kinds the page's SRI listener sends
+ * (`SRIEventListener.astro`); every other directive is a CSP violation.
+ */
+const NOTIFICATION_TITLES = new Map([
+  ["sri", `🔐 <b>SRI Mismatch Detected</b>`],
+  ["resource-load", `📦 <b>Resource Load Failed</b>`],
+]);
+
+/**
  * Sends the violation report to Telegram
  */
 function sendToTelegram(report, ip, ua) {
@@ -382,7 +391,8 @@ function sendToTelegram(report, ip, ua) {
 
   // Build message using HTML mode for better control
   const lines = [
-    `🛡️ <b>CSP Violation Detected</b>`,
+    NOTIFICATION_TITLES.get(r["effective-directive"]) ??
+      `🛡️ <b>CSP Violation Detected</b>`,
     ``,
     `📅 <b>Date:</b> ${date}`,
     `🌐 <b>IP:</b> <code>${escapeHtml(ip)}</code>`,

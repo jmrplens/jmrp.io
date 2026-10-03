@@ -19,6 +19,8 @@ This script is a lightweight Node.js service designed to collect Content Securit
   Logged but not notified:
   - **Crawler user-agents** — Googlebot, YandexBot/YandexRenderResourcesBot, bingbot, YisouSpider, Bytespider, AI crawlers, HTTP libraries, plus the bare Chromium template missing `Chrome/`.
   - **Crawler netblocks** — Google and Yandex crawler ranges, for fetchers that render with a browser user-agent.
+  - **Client-side load failures** — `resource-load` reports from the page's SRI listener with no HTTP error: the resource was blocked or never fetched, or its bytes matched the pinned hash. See [SRI and resource-load reports](#sri-and-resource-load-reports).
+  - **Unverified SRI reports** — `"SRI check failed"` from the listener's earlier version, which could not tell a mismatch from a blocked request.
 
 - **Rate Limiting:** Notifications are deduplicated by _violation signature_ (`effective-directive` + `blocked-uri`), once every 10 minutes. Neither the client IP nor the document URI is part of the key.
 - **Security Hardened:** Implements request body size limits (32KB) to prevent memory exhaustion (DoS) and escapes HTML input.
@@ -176,6 +178,25 @@ pnpm csp:replay path/to/other.log
 ```
 
 Unit tests for the predicates: `pnpm test:unit`.
+
+## SRI and resource-load reports
+
+Besides the browser's own CSP reports, every page posts reports from `src/components/ui/SRIEventListener.astro`, an inline script that listens for `error` events on `<script>` and `<link>` elements carrying `integrity`. That event does not say why the load failed: an integrity mismatch, a request blocked inside the client (content blockers, headless crawlers that skip analytics), a network error and an HTTP error all fire it.
+
+Until 2026-10 the listener reported every one of them as `sri-integrity` with the sample `"SRI check failed"`. On 2026-10-03 that produced five Telegram notifications for `/scripts/cf-beacon.b929e98b003b.js`, and none was an integrity failure: the served bytes matched the pinned hash (the path is content-addressed, so the HTML and the file cannot disagree), and the edge log (`jmrp_edge_requests`) showed that none of the 14 clients reporting that day had requested the file. They fetched the HTML and nothing else. Most came from hosting and proxy networks (HostRoyale, EGIHosting, NTT America, code200, Braveway) with iPhone or Android user-agents, one or two minutes after Bytespider had fetched the same URL.
+
+The listener now fetches the resource once more, through the same HTTP cache, and hashes it with `crypto.subtle`:
+
+| Outcome of the second fetch          | Report                                                          | Notified                   |
+| ------------------------------------ | --------------------------------------------------------------- | -------------------------- |
+| Bytes arrive and differ from the pin | `sri-integrity` / `sri`, with `sri-expected` and `sri-received` | yes                        |
+| Request fails (blocked, offline)     | `resource-load`, `status-code: 0`                               | no (`client-load-failure`) |
+| HTTP 4xx/5xx                         | `resource-load`, `status-code` = the status                     | yes                        |
+| Bytes match the pin                  | `resource-load`, `status-code: 200`                             | no (`client-load-failure`) |
+
+A mismatch report carries the received digest, so it shows which bytes the client got, and its sample names the response `Content-Type` (an HTML error or challenge page served in place of a script shows up there). The listener reports each resource once per session, keyed on the full URL.
+
+Reports from HTML cached before the change (crawler snapshots, tabs left open) still arrive with `"SRI check failed"`. They are logged as `unverified-sri` and never notified.
 
 ## Usage
 

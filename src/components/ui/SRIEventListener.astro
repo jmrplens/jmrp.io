@@ -1,5 +1,6 @@
 ---
-/* SRI Incident Reporter - Captures integrity failures and sends them to /csp-report */
+/* SRI Incident Reporter - Reports failed loads of integrity-pinned resources
+   to /csp-report, telling a genuine SRI mismatch from a load that never ran */
 ---
 
 <script
@@ -8,56 +9,175 @@
 >
   /**
    * SRI Incident Reporter
-   * Captures resource loading errors (like SRI failures) and reports them.
+   *
+   * An `error` event on a <script> or <link> carrying `integrity` does not say
+   * why the load failed: an integrity mismatch, a request blocked inside the
+   * client (content blockers, headless crawlers that skip analytics), a
+   * network error and an HTTP error all fire the same event. Reporting every
+   * one of them as "SRI check failed" paged on loads that never left the
+   * browser: on 2026-10-03 none of the 14 clients that reported the
+   * Cloudflare beacon had requested it from the edge, and the served bytes
+   * matched the pinned hash.
+   *
+   * So the resource is fetched once more, through the same HTTP cache, and
+   * hashed. Only bytes that arrive and differ from the pinned digest are
+   * reported as `sri-integrity`; every other outcome is `resource-load`, with
+   * the HTTP status (0 when the request never completed). The reporter logs
+   * `resource-load` and only notifies it for HTTP errors.
    */
   (function () {
+    // SRI only honours the strongest algorithm present (W3C SRI, "get the
+    // strongest metadata from set"), so order matters.
+    const ALGORITHMS = [
+      ["sha256", "SHA-256"],
+      ["sha384", "SHA-384"],
+      ["sha512", "SHA-512"],
+    ];
+
+    /**
+     * The digests a browser would accept for an `integrity` value.
+     *
+     * @param {string} integrity - The element's integrity attribute.
+     * @returns {{ prefix: string, name: string, values: string[] } | null}
+     */
+    function strongestPins(integrity) {
+      let best = -1;
+      let values = [];
+      for (const token of integrity.trim().split(/\s+/)) {
+        const match = /^(sha256|sha384|sha512)-([\w+/=-]+)/.exec(token);
+        if (!match) continue;
+        const rank = ALGORITHMS.findIndex((entry) => entry[0] === match[1]);
+        // Normalize base64url, which some browsers also accept.
+        const value = match[2].replaceAll("-", "+").replaceAll("_", "/");
+        if (rank > best) {
+          best = rank;
+          values = [value];
+        } else if (rank === best) {
+          values.push(value);
+        }
+      }
+      if (best < 0) return null;
+      return { prefix: ALGORITHMS[best][0], name: ALGORITHMS[best][1], values };
+    }
+
+    /**
+     * Base64 of a digest.
+     *
+     * @param {ArrayBuffer} buffer - The raw digest.
+     * @returns {string}
+     */
+    function toBase64(buffer) {
+      let binary = "";
+      for (const byte of new Uint8Array(buffer)) {
+        binary += String.fromCodePoint(byte);
+      }
+      return btoa(binary);
+    }
+
+    /**
+     * Fetches the resource again and works out why its element failed.
+     *
+     * @param {string} url - The resource URL.
+     * @param {string} integrity - The element's integrity attribute.
+     * @returns {Promise<{ mismatch?: boolean, status: number, sample: string, received?: string }>}
+     */
+    async function diagnose(url, integrity) {
+      let response;
+      try {
+        response = await fetch(url);
+      } catch {
+        return { status: 0, sample: "Request blocked or failed in the client" };
+      }
+      if (!response.ok) {
+        return { status: response.status, sample: "HTTP " + response.status };
+      }
+      const pins = strongestPins(integrity);
+      if (!pins || !globalThis.crypto?.subtle) {
+        return { status: response.status, sample: "Integrity not verifiable" };
+      }
+      const digest = toBase64(
+        await crypto.subtle.digest(pins.name, await response.arrayBuffer()),
+      );
+      if (pins.values.includes(digest)) {
+        return {
+          status: response.status,
+          sample: "Bytes match the pinned hash; the load failed in the client",
+        };
+      }
+      return {
+        mismatch: true,
+        status: response.status,
+        sample:
+          "SRI mismatch (" +
+          (response.headers.get("content-type") || "no content-type") +
+          ")",
+        received: pins.prefix + "-" + digest,
+      };
+    }
+
     window.addEventListener(
       "error",
       function (e) {
         const target = e.target;
         // Only interested in elements with 'integrity' attribute (signed by us)
         if (
-          target &&
-          (target.tagName === "SCRIPT" || target.tagName === "LINK")
+          !target ||
+          (target.tagName !== "SCRIPT" && target.tagName !== "LINK") ||
+          !target.integrity
         ) {
-          if (target.integrity) {
-            const resourceUrl = target.src || target.href;
+          return;
+        }
+        const resourceUrl = target.src || target.href;
+        const integrity = target.integrity;
 
-            // Avoid spam: do not report the same resource more than once per session
-            try {
-              const storageKey =
-                "sri_fail_" + btoa(resourceUrl).substring(0, 16);
-              if (sessionStorage.getItem(storageKey)) return;
-              sessionStorage.setItem(storageKey, "1");
-            } catch (_storageErr) {
-              // Ignore storage errors (e.g. checked mode, quota exceeded) or btoa failures
+        // Avoid spam: do not report the same resource more than once per
+        // session. Keyed on the full URL: a truncated base64 of it was the
+        // same for every resource on the site, so only the first failure of a
+        // session was ever reported.
+        try {
+          const storageKey = "sri_fail_" + resourceUrl;
+          if (sessionStorage.getItem(storageKey)) return;
+          sessionStorage.setItem(storageKey, "1");
+        } catch (_storageErr) {
+          // Ignore storage errors (e.g. disabled storage, quota exceeded)
+        }
+
+        diagnose(resourceUrl, integrity)
+          .catch(function () {
+            return { status: 0, sample: "Integrity not verifiable" };
+          })
+          .then(function (result) {
+            if (result.mismatch) {
+              console.error("[SRI] Integrity validation failed:", resourceUrl);
             }
-
-            console.error("[SRI] Integrity validation failed:", resourceUrl);
 
             // Send report mimicking CSP format for maximum compatibility
             const report = {
-              "csp-report": {
-                "document-uri": window.location.href,
-                referrer: document.referrer,
-                "violated-directive": "sri-integrity",
-                "effective-directive": "sri",
-                "original-policy": "SRI Validation",
-                disposition: "enforce",
-                "blocked-uri": resourceUrl,
-                "status-code": 0,
-                "script-sample": "SRI check failed",
-              },
+              "document-uri": window.location.href,
+              referrer: document.referrer,
+              "violated-directive": result.mismatch
+                ? "sri-integrity"
+                : "resource-load",
+              "effective-directive": result.mismatch ? "sri" : "resource-load",
+              "original-policy": "SRI Validation",
+              disposition: "enforce",
+              "blocked-uri": resourceUrl,
+              "status-code": result.status,
+              "script-sample": result.sample,
             };
+            if (result.mismatch) {
+              report["sri-expected"] = integrity;
+              report["sri-received"] = result.received;
+            }
 
-            fetch("/csp-report", {
+            return fetch("/csp-report", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
-              body: JSON.stringify(report),
+              body: JSON.stringify({ "csp-report": report }),
               keepalive: true, // Ensures the request is sent even if the page is closed
-            }).catch(function () {});
-          }
-        }
+            });
+          })
+          .catch(function () {});
       },
       true,
     ); // 'true' (capture phase) is required to detect resource loading errors

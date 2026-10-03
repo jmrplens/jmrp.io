@@ -15,7 +15,8 @@
  *   browser-internal URIs, the documented `prefetch-src` fallback).
  * - `getNotifySuppressReason()` — written to `logs/csp-violations.log` but kept
  *   off Telegram. Reserved for crawler traffic, whose classification is an
- *   inference and therefore worth keeping the evidence for.
+ *   inference and therefore worth keeping the evidence for, and for resource
+ *   loads the SRI listener verified were not an integrity mismatch.
  *
  * See docs/CSP_REPORTER.md.
  */
@@ -414,6 +415,53 @@ export function isStaleChromeInjectedEval(r, ua) {
 }
 
 /**
+ * Detects a failed load of an integrity-pinned resource that the SRI listener
+ * (`SRIEventListener.astro`) verified was NOT an integrity mismatch: it
+ * fetched the resource again and either the request never completed (status
+ * 0: a content blocker, a crawler skipping analytics, a dropped connection)
+ * or the bytes matched the pinned hash. Neither says anything about the site.
+ *
+ * An HTTP error (status 400 or above) is not matched: the server failed to
+ * serve a resource a page needs, which is worth a notification.
+ *
+ * Used by {@link getNotifySuppressReason} only: the reports stay in the log.
+ *
+ * @param {Record<string, unknown>} r - The unwrapped `csp-report` object.
+ * @returns {boolean}
+ */
+export function isClientSideLoadFailure(r) {
+  const dir = r["effective-directive"] || r["violated-directive"] || "";
+  if (dir !== "resource-load") return false;
+  const status = Number(r["status-code"]);
+  return Number.isNaN(status) || status < 400;
+}
+
+/**
+ * Detects a report from the SRI listener that predates byte verification,
+ * still running in HTML cached before that change shipped (crawler snapshots,
+ * tabs left open). It reported every load error as `sri-integrity` with the sample
+ * "SRI check failed", so a mismatch and a blocked request look identical.
+ * The current listener never sends that sample: it reports a verified
+ * mismatch as "SRI mismatch (…)" and everything else as `resource-load`.
+ *
+ * On 2026-10-03 every such report about the Cloudflare beacon came from a
+ * client that never requested the file, while the served bytes matched the
+ * pinned hash.
+ *
+ * Used by {@link getNotifySuppressReason} only: the reports stay in the log.
+ *
+ * @param {Record<string, unknown>} r - The unwrapped `csp-report` object.
+ * @returns {boolean}
+ */
+export function isUnverifiedSriReport(r) {
+  const dir = r["effective-directive"] || r["violated-directive"] || "";
+  return (
+    (dir === "sri" || dir === "sri-integrity") &&
+    r["script-sample"] === "SRI check failed"
+  );
+}
+
+/**
  * Whether a font-src/media-src violation is an injected resource (data: URI or a
  * remote non-jmrp.io origin). The site restricts both directives to 'self'.
  *
@@ -525,6 +573,12 @@ export function getDiscardReason(report) {
  * real, so they are noise — but they stay in `logs/csp-violations.log` so the
  * evidence survives if that assumption ever needs re-checking.
  *
+ * Failed loads of integrity-pinned resources are the other silent class: the
+ * SRI listener's `resource-load` reports without an HTTP error, and its older
+ * unverified "SRI check failed" reports. All five Cloudflare-beacon
+ * notifications of 2026-10-03 were of the latter kind, from clients that
+ * never requested the file.
+ *
  * @param {Record<string, unknown>} report - The raw report body.
  * @param {string} ua - The request User-Agent header.
  * @param {string} ip - The client IP forwarded by Nginx.
@@ -538,6 +592,8 @@ export function getNotifySuppressReason(report, ua, ip) {
   if (isBotUserAgent(ua)) return "crawler-ua";
   if (isCrawlerNetwork(ip)) return "crawler-network";
   if (isStaleChromeInjectedEval(r, ua)) return "stale-chrome-eval";
+  if (isClientSideLoadFailure(r)) return "client-load-failure";
+  if (isUnverifiedSriReport(r)) return "unverified-sri";
 
   return null;
 }

@@ -9,6 +9,8 @@
  *    part of the build output — see `readHeadersConf()` for where it lives now
  *    and why a missing one fails the suite instead of skipping it.
  * 4. Inline Compliance: Checking that inline styles are converted to classes.
+ * 5. SRI listener: a failed load of a pinned resource is reported as an SRI
+ *    mismatch only when the bytes really differ from the pinned hash.
  *
  * Note: Nonces are placeholders ("nonce-$cspNonce") in static builds,
  * replaced at runtime by Nginx with unique per-request values.
@@ -419,5 +421,125 @@ test.describe("Build Output Verification", () => {
     // behind them: dead overhead on every HTML response.
     expect(content, `Checked ${headersPath}`).not.toContain("__Host-Session");
     expect(content).not.toContain("__Secure-Pref");
+  });
+});
+
+type SriReport = Record<string, unknown>;
+
+/**
+ * The first integrity-pinned script of the home page, read from the DOM of a
+ * throwaway tab so the test's own tab can route it before it loads. The tabs
+ * share no sessionStorage, and routing disables the HTTP cache of the tab it
+ * is set on, so the probe's successful load cannot satisfy the test's.
+ */
+async function firstPinnedScript(
+  context: import("@playwright/test").BrowserContext,
+): Promise<string> {
+  const probe = await context.newPage();
+  try {
+    await probe.goto("/");
+    const src = await probe
+      .locator("script[integrity][src]")
+      .first()
+      .getAttribute("src");
+    if (!src) {
+      throw new Error("The home page has no integrity-pinned <script src>");
+    }
+    return src;
+  } finally {
+    await probe.close();
+  }
+}
+
+/**
+ * Captures what the SRI listener posts to /csp-report.
+ */
+async function captureSriReports(
+  page: import("@playwright/test").Page,
+): Promise<SriReport[]> {
+  const reports: SriReport[] = [];
+  await page.route("**/csp-report", async (route) => {
+    const body = route.request().postDataJSON() as { "csp-report": SriReport };
+    reports.push(body["csp-report"]);
+    await route.fulfill({ status: 204 });
+  });
+  return reports;
+}
+
+/**
+ * Waits for the listener's single report, which follows a second fetch.
+ */
+async function onlyReport(reports: SriReport[]): Promise<SriReport> {
+  await expect.poll(() => reports.length, { timeout: 10_000 }).toBe(1);
+  return reports[0];
+}
+
+// `SRIEventListener.astro` re-fetches a resource whose element fired `error`
+// and hashes it, because the event alone cannot tell an integrity mismatch
+// from a request that never left the browser. On 2026-10-03 every "SRI check
+// failed" report about the Cloudflare beacon came from clients that had not
+// requested the file at all.
+test.describe("SRI listener: mismatch vs. failed load", () => {
+  test("a blocked request is a resource-load, not an SRI failure", async ({
+    page,
+    context,
+  }) => {
+    const src = await firstPinnedScript(context);
+    const reports = await captureSriReports(page);
+    await page.route(`**${src}`, (route) => route.abort("blockedbyclient"));
+
+    await page.goto("/");
+    const report = await onlyReport(reports);
+
+    expect(report["effective-directive"]).toBe("resource-load");
+    expect(report["status-code"]).toBe(0);
+    expect(report["blocked-uri"]).toContain(src);
+    expect(report).not.toHaveProperty("sri-received");
+  });
+
+  test("intact bytes behind a failed element load are not an SRI failure", async ({
+    page,
+    context,
+  }) => {
+    const src = await firstPinnedScript(context);
+    const reports = await captureSriReports(page);
+    // Block only the element's own load; the listener's fetch goes through.
+    await page.route(`**${src}`, (route) =>
+      route.request().resourceType() === "script"
+        ? route.abort("blockedbyclient")
+        : route.continue(),
+    );
+
+    await page.goto("/");
+    const report = await onlyReport(reports);
+
+    expect(report["effective-directive"]).toBe("resource-load");
+    expect(report["status-code"]).toBe(200);
+    expect(report["script-sample"]).toMatch(/match the pinned hash/);
+  });
+
+  test("tampered bytes are an SRI mismatch carrying the received digest", async ({
+    page,
+    context,
+  }) => {
+    const src = await firstPinnedScript(context);
+    const reports = await captureSriReports(page);
+    await page.route(`**${src}`, (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: "text/javascript",
+        body: "/* tampered */",
+      }),
+    );
+
+    await page.goto("/");
+    const report = await onlyReport(reports);
+
+    expect(report["violated-directive"]).toBe("sri-integrity");
+    expect(report["effective-directive"]).toBe("sri");
+    expect(report["status-code"]).toBe(200);
+    expect(report["script-sample"]).toContain("text/javascript");
+    expect(report["sri-received"]).toMatch(/^sha(256|384|512)-/);
+    expect(report["sri-received"]).not.toBe(report["sri-expected"]);
   });
 });
