@@ -2,7 +2,7 @@
  * Guards `queryInflux`'s single retry-on-abort — the fix for queries that
  * time out under concurrent load even after `build-data.mjs`/
  * `write-summary.mjs` cap themselves to a handful in flight (see
- * `scripts/ghc/concurrency.mjs`'s doc comment). A non-abort failure (a real
+ * `scripts/utils/concurrency.mjs`'s doc comment). A non-abort failure (a real
  * HTTP error) must never be retried.
  *
  * @module

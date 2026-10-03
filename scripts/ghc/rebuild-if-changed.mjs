@@ -341,14 +341,8 @@ async function main(argv) {
   const statePath = resolveStatePath();
   const maxAgeDays = resolveMaxAgeDays();
 
-  if (argv.includes("--record-state")) {
-    const state = recordBuiltDataset({ root, statePath });
-    if (isNonLiveState(state)) return failNonLive(state);
-    console.log(
-      `${LOG_PREFIX} recorded ${state.projectionHash?.slice(0, 12)} at ${statePath}.`,
-    );
-    return 0;
-  }
+  if (argv.includes("--record-state"))
+    return recordStateByHand(root, statePath);
 
   const lockPath = process.env.GHC_REBUILD_LOCK || DEFAULT_LOCK_PATH;
   if (!dryRun && !acquireLock(lockPath)) {
@@ -357,63 +351,103 @@ async function main(argv) {
   }
 
   try {
-    const dataset = await collectFreshDataset(root);
-    if (!dataset) {
-      const alarm = servedFixtureAlarm(readState(statePath));
-      if (!alarm) return 0;
-      console.error(`${LOG_PREFIX} ${alarm}`);
-      return dryRun ? 0 : 1;
-    }
-
-    const current = hashProjection(dataset);
-    const decision = decideRebuild({
-      state: readState(statePath),
-      current,
-      maxAgeDays,
-    });
-    console.log(
-      `${LOG_PREFIX} projection ${current.projectionHash.slice(0, 12)}; ${describeDecision(decision, maxAgeDays)}`,
-    );
-
-    const running = findRunningAstroBuilds();
-    if (dryRun) {
-      console.log(
-        `${LOG_PREFIX} dry run: would ${decision.rebuild ? "" : "not "}rebuild` +
-          ` (reason ${decision.reason}; state ${statePath}; running astro builds: ${running.length > 0 ? running.join(", ") : "none"}).`,
-      );
-      return 0;
-    }
-    if (!decision.rebuild) return 0;
-    if (running.length > 0) {
-      console.log(
-        `${LOG_PREFIX} an astro build is already running (pid ${running.join(", ")}); skipping.`,
-      );
-      return 0;
-    }
-
-    console.log(`${LOG_PREFIX} running pnpm build in ${root}...`);
-    const code = runBuild(root);
-    if (code !== 0) {
-      console.error(`${LOG_PREFIX} pnpm build failed with exit code ${code}.`);
-      return code;
-    }
-    // deploy-live.mjs records the same thing after the swap; doing it here
-    // too keeps the state right even if that step was skipped. A build whose
-    // own collection fell back to the fixture is a failed run: the next run
-    // retries it, and the unit shows failed meanwhile.
-    try {
-      const state = recordBuiltDataset({ root, statePath });
-      if (isNonLiveState(state)) return failNonLive(state);
-    } catch (error) {
-      console.warn(
-        `${LOG_PREFIX} build succeeded but the state could not be written: ${String(error)}`,
-      );
-    }
-    console.log(`${LOG_PREFIX} rebuild done.`);
-    return 0;
+    return await decideAndBuild({ dryRun, root, statePath, maxAgeDays });
   } finally {
     if (!dryRun) releaseLock(lockPath);
   }
+}
+
+/**
+ * `--record-state`: records the dataset file on disk as the live build's.
+ *
+ * @param {string} root - Repository root.
+ * @param {string} statePath - Where the state lives.
+ * @returns {number} Process exit code.
+ */
+function recordStateByHand(root, statePath) {
+  const state = recordBuiltDataset({ root, statePath });
+  if (isNonLiveState(state)) return failNonLive(state);
+  console.log(
+    `${LOG_PREFIX} recorded ${state.projectionHash?.slice(0, 12)} at ${statePath}.`,
+  );
+  return 0;
+}
+
+/**
+ * Collects a fresh dataset, decides whether the live build is behind it, and
+ * rebuilds when it is. Runs under the lock (or without it on a dry run).
+ *
+ * @param {{dryRun: boolean, root: string, statePath: string,
+ *   maxAgeDays: number}} options - The run's settings.
+ * @returns {Promise<number>} Process exit code.
+ */
+async function decideAndBuild({ dryRun, root, statePath, maxAgeDays }) {
+  const dataset = await collectFreshDataset(root);
+  if (!dataset) {
+    const alarm = servedFixtureAlarm(readState(statePath));
+    if (!alarm) return 0;
+    console.error(`${LOG_PREFIX} ${alarm}`);
+    return dryRun ? 0 : 1;
+  }
+
+  const current = hashProjection(dataset);
+  const decision = decideRebuild({
+    state: readState(statePath),
+    current,
+    maxAgeDays,
+  });
+  console.log(
+    `${LOG_PREFIX} projection ${current.projectionHash.slice(0, 12)}; ${describeDecision(decision, maxAgeDays)}`,
+  );
+
+  const running = findRunningAstroBuilds();
+  if (dryRun) {
+    const builds = running.length > 0 ? running.join(", ") : "none";
+    const verb = decision.rebuild ? "rebuild" : "not rebuild";
+    console.log(
+      `${LOG_PREFIX} dry run: would ${verb}` +
+        ` (reason ${decision.reason}; state ${statePath}; running astro builds: ${builds}).`,
+    );
+    return 0;
+  }
+  if (!decision.rebuild) return 0;
+  if (running.length > 0) {
+    console.log(
+      `${LOG_PREFIX} an astro build is already running (pid ${running.join(", ")}); skipping.`,
+    );
+    return 0;
+  }
+  return buildAndRecord(root, statePath);
+}
+
+/**
+ * Runs the production build and records what it rendered.
+ *
+ * @param {string} root - Repository root.
+ * @param {string} statePath - Where the state lives.
+ * @returns {number} Process exit code.
+ */
+function buildAndRecord(root, statePath) {
+  console.log(`${LOG_PREFIX} running pnpm build in ${root}...`);
+  const code = runBuild(root);
+  if (code !== 0) {
+    console.error(`${LOG_PREFIX} pnpm build failed with exit code ${code}.`);
+    return code;
+  }
+  // deploy-live.mjs records the same thing after the swap; doing it here
+  // too keeps the state right even if that step was skipped. A build whose
+  // own collection fell back to the fixture is a failed run: the next run
+  // retries it, and the unit shows failed meanwhile.
+  try {
+    const state = recordBuiltDataset({ root, statePath });
+    if (isNonLiveState(state)) return failNonLive(state);
+  } catch (error) {
+    console.warn(
+      `${LOG_PREFIX} build succeeded but the state could not be written: ${String(error)}`,
+    );
+  }
+  console.log(`${LOG_PREFIX} rebuild done.`);
+  return 0;
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {

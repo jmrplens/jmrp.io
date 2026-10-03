@@ -172,7 +172,7 @@ function sleep(ms) {
  *
  * Retries ONCE, after {@link RETRY_DELAY_MS}, when the failure was an abort
  * (the request outran {@link DEFAULT_TIMEOUT_MS}) — see
- * `scripts/ghc/concurrency.mjs`'s doc comment for why a query that would
+ * `scripts/utils/concurrency.mjs`'s doc comment for why a query that would
  * succeed alone can time out under concurrent load even after capping it. A
  * non-abort failure (a real 4xx/5xx, an unparsable body) is never retried;
  * it would just fail again the same way.

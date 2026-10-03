@@ -48,7 +48,7 @@ import path from "node:path";
 import { createGitlabClient } from "../gl/client.mjs";
 import { collectGitlab } from "../gl/collect.mjs";
 import { summarizeGitlab } from "../gl/normalize.mjs";
-import { runWithConcurrency } from "./concurrency.mjs";
+import { runWithConcurrency } from "../utils/concurrency.mjs";
 import {
   foldProjectName,
   loadContributionsConfig,

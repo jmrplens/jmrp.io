@@ -74,6 +74,8 @@ import net from "node:net";
 import path from "node:path";
 import process from "node:process";
 
+import { runWithConcurrency } from "./utils/concurrency.mjs";
+
 try {
   process.loadEnvFile(new URL("../.env", import.meta.url).pathname);
 } catch {
@@ -545,20 +547,53 @@ async function influxWrite(lines, db = DB, precision = "s") {
 /** Replays edge-served rows for [fromS, toS) in one-hour windows. */
 async function backfill(fromS, toS) {
   const HOUR = 3600;
-  let total = 0;
+  const windows = [];
   for (let a = fromS; a < toS; a += HOUR) {
-    const b = Math.min(a + HOUR, toS);
-    const lines = [];
-    for (const site of EDGE_SITES) {
-      lines.push(...(await collectEdgeServed(a, b, site)));
-    }
-    await influxWrite(lines, NGINX_DB, "ns");
-    total += lines.length;
-    console.log(
-      `[ae-influx] backfill ${new Date(a * 1000).toISOString()} → ${new Date(b * 1000).toISOString()}: ${lines.length} edge-served rows`,
-    );
+    windows.push([a, Math.min(a + HOUR, toS)]);
   }
+  // One window at a time: a backfill can span days of hourly windows, and
+  // each is a set of Analytics Engine queries plus an InfluxDB write.
+  const counts = await runWithConcurrency(
+    windows.map(
+      ([a, b]) =>
+        () =>
+          backfillWindow(a, b),
+    ),
+    1,
+  );
+  const total = counts.reduce((sum, n) => sum + n, 0);
   console.log(`[ae-influx] backfill done: ${total} edge-served rows`);
+}
+
+/**
+ * Collects every site's edge-served rows for [a, b) and writes them.
+ *
+ * @param {number} a - Window start, epoch seconds.
+ * @param {number} b - Window end, epoch seconds.
+ * @returns {Promise<number>} How many rows were written.
+ */
+async function backfillWindow(a, b) {
+  const lines = await collectAllEdgeServed(a, b);
+  await influxWrite(lines, NGINX_DB, "ns");
+  console.log(
+    `[ae-influx] backfill ${new Date(a * 1000).toISOString()} → ${new Date(b * 1000).toISOString()}: ${lines.length} edge-served rows`,
+  );
+  return lines.length;
+}
+
+/**
+ * Every edge site's served rows for [fromS, toS), queried concurrently: the
+ * sites are independent datasets.
+ *
+ * @param {number} fromS - Window start, epoch seconds.
+ * @param {number} toS - Window end, epoch seconds.
+ * @returns {Promise<string[]>} Line-protocol rows, in site order.
+ */
+async function collectAllEdgeServed(fromS, toS) {
+  const perSite = await Promise.all(
+    EDGE_SITES.map((site) => collectEdgeServed(fromS, toS, site)),
+  );
+  return perSite.flat();
 }
 
 /** Reads `--name value` from argv. */
@@ -602,10 +637,7 @@ async function main() {
     return;
   }
   const lines = await collectWindow(fromS, toS);
-  const edgeLines = [];
-  for (const site of EDGE_SITES) {
-    edgeLines.push(...(await collectEdgeServed(fromS, toS, site)));
-  }
+  const edgeLines = await collectAllEdgeServed(fromS, toS);
   await influxWrite(lines);
   await influxWrite(edgeLines, NGINX_DB, "ns");
   fs.mkdirSync(STATE_DIR, { recursive: true });

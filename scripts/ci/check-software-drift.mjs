@@ -138,6 +138,31 @@ function stalePersonLines(nodes) {
   return lines;
 }
 
+/**
+ * Fetches every distinct page's JSON-LD graph concurrently.
+ *
+ * @param {string[]} urls - Pages to read; duplicates are fetched once.
+ * @returns {Promise<Map<string, PromiseSettledResult<object[]>>>} Each page's
+ *   outcome, fulfilled or rejected.
+ */
+async function fetchGraphs(urls) {
+  const unique = [...new Set(urls)];
+  const settled = await Promise.allSettled(unique.map((url) => graphOf(url)));
+  return new Map(unique.map((url, i) => [url, settled[i]]));
+}
+
+/**
+ * Unwraps a settled fetch: its value, or its error thrown again, so the
+ * caller's `catch` reports it exactly as a failed `await` would have.
+ *
+ * @param {PromiseSettledResult<object[]>} result - The outcome.
+ * @returns {object[]} The graph's nodes.
+ */
+function settledValue(result) {
+  if (result.status === "rejected") throw result.reason;
+  return result.value;
+}
+
 // The one table the site reads, shared rather than restated: this script
 // compares what each project's own site claims against what jmrp.io claims,
 // and a private copy of the answer is the last place that comparison should
@@ -151,6 +176,15 @@ let unreachable = 0;
 let missingNodes = 0;
 let stalePersons = 0;
 
+// Every site is fetched up front and at once: they are independent, and the
+// report below still walks them in order. A failed fetch stays with its page.
+const graphs = await fetchGraphs([
+  ...projects
+    .filter((project) => !project.docs.startsWith(`${project.repo}#`))
+    .map((project) => project.docs),
+  ...EXTRA_PERSON_PAGES,
+]);
+
 for (const project of projects) {
   // Only projects with their own documentation site can contradict anything;
   // for the rest, projects.yaml is the sole publisher.
@@ -160,7 +194,7 @@ for (const project of projects) {
   let theirs;
   let personLines = [];
   try {
-    const nodes = await graphOf(project.docs);
+    const nodes = settledValue(graphs.get(project.docs));
     theirs = nodes.find(
       (n) =>
         n["@id"] === softwareId && (n["@type"] ?? "").startsWith("Software"),
@@ -293,7 +327,7 @@ for (const project of projects) {
 for (const page of EXTRA_PERSON_PAGES) {
   let lines;
   try {
-    lines = stalePersonLines(await graphOf(page));
+    lines = stalePersonLines(settledValue(graphs.get(page)));
   } catch (error) {
     console.log(`\n⚠ ${page}: could not read it (${error.message})`);
     unreachable++;

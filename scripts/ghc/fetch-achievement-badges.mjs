@@ -150,35 +150,57 @@ export function isGitlabBadgeUrl(url) {
  */
 async function ensureBadgeFiles(plan, { root, force, fetchImpl, log, warn }) {
   const dir = path.join(root, BADGES_DIR);
+  // Each badge is its own file and request, so they are handled
+  // concurrently; the outcome lists keep the plan's order.
+  const buckets = await Promise.all(
+    plan.map((entry) =>
+      ensureBadgeFile(entry, { dir, force, fetchImpl, log, warn }),
+    ),
+  );
   const outcome = { fetched: [], kept: [], failed: [] };
-  for (const { file, url, valid } of plan) {
-    const target = path.join(dir, file);
-    if (!force && fs.existsSync(target)) {
-      outcome.kept.push(file);
-      continue;
-    }
-    if (!valid) {
-      warn(`  Achievement badge ${file}: no usable image URL, skipped.`);
-      outcome.failed.push(file);
-      continue;
-    }
-    try {
-      const png = await downloadBadge(url, fetchImpl);
-      fs.mkdirSync(dir, { recursive: true });
-      const tmp = `${target}.tmp-${process.pid}`;
-      fs.writeFileSync(tmp, png);
-      fs.renameSync(tmp, target);
-      outcome.fetched.push(file);
-      log(`  ✓ Achievement badge ${file} (${png.length} B)`);
-    } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      warn(
-        `  Achievement badge ${file}: download failed (${message}); keeping what is committed.`,
-      );
-      outcome.failed.push(file);
-    }
-  }
+  plan.forEach(({ file }, i) => {
+    outcome[buckets[i]].push(file);
+  });
   return outcome;
+}
+
+/**
+ * Makes sure one planned badge is on disk. Never throws.
+ *
+ * @param {{file: string, url: string, valid: boolean}} entry - The badge.
+ * @param {object} options - What {@link ensureBadgeFiles} passes down.
+ * @param {string} options.dir - Absolute badge directory.
+ * @param {boolean} options.force - Re-download a badge already on disk.
+ * @param {typeof fetch} options.fetchImpl - Injectable `fetch`.
+ * @param {(line: string) => void} options.log - Progress sink.
+ * @param {(line: string) => void} options.warn - Warning sink.
+ * @returns {Promise<"fetched" | "kept" | "failed">} The badge's outcome.
+ */
+async function ensureBadgeFile(
+  { file, url, valid },
+  { dir, force, fetchImpl, log, warn },
+) {
+  const target = path.join(dir, file);
+  if (!force && fs.existsSync(target)) return "kept";
+  if (!valid) {
+    warn(`  Achievement badge ${file}: no usable image URL, skipped.`);
+    return "failed";
+  }
+  try {
+    const png = await downloadBadge(url, fetchImpl);
+    fs.mkdirSync(dir, { recursive: true });
+    const tmp = `${target}.tmp-${process.pid}`;
+    fs.writeFileSync(tmp, png);
+    fs.renameSync(tmp, target);
+    log(`  ✓ Achievement badge ${file} (${png.length} B)`);
+    return "fetched";
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    warn(
+      `  Achievement badge ${file}: download failed (${message}); keeping what is committed.`,
+    );
+    return "failed";
+  }
 }
 
 /**

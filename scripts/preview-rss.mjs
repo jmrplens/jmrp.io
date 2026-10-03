@@ -90,20 +90,30 @@ async function generatePreview() {
     process.exit(1);
   }
 
-  for (const rssFile of availableFeeds) {
-    const outputFile = rssFile.replace(".xml", "-preview.html");
-    const lang = rssFile.includes("/es/") ? "es" : "en";
+  // The feeds are independent, so their previews are written concurrently.
+  await Promise.all(availableFeeds.map(writePreview));
+}
 
-    const parser = new Parser({
-      customFields: {
-        item: ["content:encoded"],
-      },
-    });
+/**
+ * Writes the HTML preview of one feed next to it.
+ *
+ * @param {string} rssFile - Path of the feed.
+ * @returns {Promise<void>} Resolves when the preview is written.
+ */
+async function writePreview(rssFile) {
+  const outputFile = rssFile.replace(".xml", "-preview.html");
+  const lang = rssFile.includes("/es/") ? "es" : "en";
 
-    const xml = fs.readFileSync(rssFile, "utf-8");
-    const feed = await parser.parseString(xml);
+  const parser = new Parser({
+    customFields: {
+      item: ["content:encoded"],
+    },
+  });
 
-    const htmlContent = `
+  const xml = fs.readFileSync(rssFile, "utf-8");
+  const feed = await parser.parseString(xml);
+
+  const htmlContent = `
   <!DOCTYPE html>
   <!-- [html-validate-disable-block no-inline-style, attribute-allowed-values -- RSS content relies on these] -->
   <html lang="${lang}">
@@ -216,9 +226,8 @@ async function generatePreview() {
   </html>
   `;
 
-    fs.writeFileSync(outputFile, htmlContent);
-    console.log(`✅ Preview generated at: ${path.resolve(outputFile)}`);
-  }
+  fs.writeFileSync(outputFile, htmlContent);
+  console.log(`✅ Preview generated at: ${path.resolve(outputFile)}`);
 }
 
 try {

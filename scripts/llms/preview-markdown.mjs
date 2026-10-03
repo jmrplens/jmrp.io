@@ -72,9 +72,8 @@ async function loadModules() {
   };
   walk(path.join(ROOT, "src/components"));
 
-  const modules = {};
-  for (const file of paths) modules[file] = await import(file);
-  return modules;
+  const loaded = await Promise.all(paths.map((file) => import(file)));
+  return Object.fromEntries(paths.map((file, i) => [file, loaded[i]]));
 }
 
 async function main() {

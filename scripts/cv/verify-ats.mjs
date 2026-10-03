@@ -43,6 +43,8 @@ import { fileURLToPath } from "node:url";
 import { analyzeResume } from "@pranavraut033/ats-checker";
 import { PDFParse } from "pdf-parse";
 
+import { runWithConcurrency } from "../utils/concurrency.mjs";
+
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PDF_DIR = path.resolve(__dirname, "..", "..", "public", "pdf");
 
@@ -339,31 +341,39 @@ const DESIGN_MAX_PAGES = 3;
  * @returns {Promise<string[]>} Failure messages, empty when within budget.
  */
 async function checkDesignBudget() {
+  // Each PDF has its own parser, so they are checked concurrently; the
+  // failures keep DESIGN_TARGETS order.
+  const perFile = await Promise.all(DESIGN_TARGETS.map(checkDesignFile));
+  return perFile.flat();
+}
+
+/**
+ * The design-budget problems of one sidebar CV.
+ *
+ * @param {string} file - PDF file name under PDF_DIR.
+ * @returns {Promise<string[]>} Its failures; empty when it passes.
+ */
+async function checkDesignFile(file) {
+  const full = path.join(PDF_DIR, file);
+  if (!fs.existsSync(full)) return [`${file} — file not found`];
   const failures = [];
-  for (const file of DESIGN_TARGETS) {
-    const full = path.join(PDF_DIR, file);
-    if (!fs.existsSync(full)) {
-      failures.push(`${file} — file not found`);
-      continue;
+  const buffer = fs.readFileSync(full);
+  const parser = new PDFParse({ data: new Uint8Array(buffer) });
+  try {
+    const { text, total } = await parser.getText();
+    const pages = total ?? (text.match(/\f/gu)?.length ?? 0) + 1;
+    if (pages > DESIGN_MAX_PAGES) {
+      failures.push(
+        `${file} — ${pages} pages exceeds the ${DESIGN_MAX_PAGES}-page budget (layout regression?)`,
+      );
     }
-    const buffer = fs.readFileSync(full);
-    const parser = new PDFParse({ data: new Uint8Array(buffer) });
-    try {
-      const { text, total } = await parser.getText();
-      const pages = total ?? (text.match(/\f/gu)?.length ?? 0) + 1;
-      if (pages > DESIGN_MAX_PAGES) {
-        failures.push(
-          `${file} — ${pages} pages exceeds the ${DESIGN_MAX_PAGES}-page budget (layout regression?)`,
-        );
-      }
-      if (text.trim().split(/\s+/u).length < 300) {
-        failures.push(`${file} — text layer too small`);
-      }
-    } catch (error) {
-      failures.push(`${file} — extraction error: ${error.message}`);
-    } finally {
-      await parser.destroy();
+    if (text.trim().split(/\s+/u).length < 300) {
+      failures.push(`${file} — text layer too small`);
     }
+  } catch (error) {
+    failures.push(`${file} — extraction error: ${error.message}`);
+  } finally {
+    await parser.destroy();
   }
   return failures;
 }
@@ -439,9 +449,13 @@ async function main() {
     "all sources resolve vendored TrueType",
   );
 
-  for (const target of TARGETS) {
-    failed += await reportPdf(target);
-  }
+  // One PDF at a time (a pool of one): each prints its own block of lines,
+  // and the report reads in TARGETS order.
+  const outcomes = await runWithConcurrency(
+    TARGETS.map((target) => () => reportPdf(target)),
+    1,
+  );
+  failed += outcomes.reduce((sum, n) => sum + n, 0);
 
   if (failed > 0) {
     console.log(`${c.red}ATS check failed for ${failed} file(s).${c.reset}`);

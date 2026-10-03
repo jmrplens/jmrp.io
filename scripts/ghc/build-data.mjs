@@ -26,7 +26,7 @@
 import fs from "node:fs";
 import path from "node:path";
 
-import { runWithConcurrency } from "./concurrency.mjs";
+import { runWithConcurrency } from "../utils/concurrency.mjs";
 import {
   deriveOwnProjects,
   foldProjectName,
@@ -87,7 +87,7 @@ export const DATA_PATH = "src/data/ghc/projects-contributions.json";
 export const FIXTURE_PATH = "src/data/ghc/fixture.json";
 
 /** How many of this module's InfluxDB queries may run at once — see
- * `scripts/ghc/concurrency.mjs`'s doc comment: this collector's ~20-query
+ * `scripts/utils/concurrency.mjs`'s doc comment: this collector's ~20-query
  * main batch (plus a 9-query per-repo follow-up) intermittently aborted
  * under `influx.mjs`'s 20 s timeout when fired all at once. */
 const QUERY_CONCURRENCY = 3;

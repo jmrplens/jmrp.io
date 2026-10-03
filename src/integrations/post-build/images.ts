@@ -6,6 +6,8 @@ import { type AstroIntegrationLogger } from "astro";
 import { glob } from "glob";
 import sharp from "sharp";
 
+import { runWithConcurrency } from "../../../scripts/utils/concurrency.mjs";
+
 /**
  * Directory (relative to the project root / `process.cwd()`) holding the
  * content-addressed cache of already-optimized PNG bytes, keyed by the
@@ -324,19 +326,18 @@ export async function optimizeImages(
     return { optimized: false, saved: 0, cached: false };
   };
 
-  for (let i = 0; i < pngFiles.length; i += CONCURRENCY) {
-    const batch = pngFiles.slice(i, i + CONCURRENCY);
-    const results = await Promise.all(batch.map((f) => processFile(f)));
-
-    for (const res of results) {
-      if (res.cached) cachedHitCount++;
-      if (!res.optimized) {
-        continue;
-      }
-
-      optimizedCount++;
-      totalSaved += res.saved;
+  const results = await runWithConcurrency(
+    pngFiles.map((f) => () => processFile(f)),
+    CONCURRENCY,
+  );
+  for (const res of results) {
+    if (res.cached) cachedHitCount++;
+    if (!res.optimized) {
+      continue;
     }
+
+    optimizedCount++;
+    totalSaved += res.saved;
   }
 
   if (await pruneStaleEntries(manifest, logger)) manifestDirty = true;

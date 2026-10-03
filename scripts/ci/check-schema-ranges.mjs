@@ -268,46 +268,69 @@ function checkNode(node, own, ctx) {
       note(warnings.unknownProperty, `${where}.${key}`, file);
       continue;
     }
-    const { range, domain, supersededBy } = property;
-    if (
-      domain.length > 0 &&
-      own.every((t) => domain.every((d) => !vocabulary.isA(t, d)))
-    )
+    notePropertyWarnings(`${where}.${key}`, own, property, ctx);
+    checked += checkValues(`${where}.${key}`, value, property.range, ctx);
+  }
+  return checked;
+}
+
+/**
+ * Records the warnings a property earns on its own: used outside its domain,
+ * or superseded by another.
+ *
+ * @param {string} label - `Type.property`, as the findings name it.
+ * @param {string[]} own - The node's types.
+ * @param {{domain: string[], supersededBy?: string[]}} property - The
+ *   vocabulary entry.
+ * @param {NodeContext} ctx - Lookups and the findings to add to.
+ */
+function notePropertyWarnings(label, own, property, ctx) {
+  const { vocabulary, warnings, file } = ctx;
+  const { domain, supersededBy } = property;
+  if (
+    domain.length > 0 &&
+    own.every((t) => domain.every((d) => !vocabulary.isA(t, d)))
+  )
+    note(warnings.outsideDomain, `${label} (domain ${domain.join("|")})`, file);
+  if (supersededBy)
+    note(warnings.superseded, `${label} -> ${supersededBy.join("|")}`, file);
+}
+
+/**
+ * Checks a property's node values against its range.
+ *
+ * @param {string} label - `Type.property`, as the findings name it.
+ * @param {unknown} value - The property's value, single or array.
+ * @param {string[]} range - Its `rangeIncludes`; empty checks nothing.
+ * @param {NodeContext} ctx - Lookups and the findings to add to.
+ * @returns {number} How many node values were checked.
+ */
+function checkValues(label, value, range, ctx) {
+  if (range.length === 0) return 0;
+  const { vocabulary, file } = ctx;
+  let checked = 0;
+  for (const item of [value].flat(Infinity)) {
+    const types = valueTypes(item, ctx.pageIds, ctx.siteIds);
+    if (types === null) {
       note(
-        warnings.outsideDomain,
-        `${where}.${key} (domain ${domain.join("|")})`,
+        ctx.warnings.unresolvedReference,
+        `${label} -> ${item["@id"]}`,
         file,
       );
-    if (supersededBy)
-      note(
-        warnings.superseded,
-        `${where}.${key} -> ${supersededBy.join("|")}`,
-        file,
-      );
-    if (range.length === 0) continue;
-    for (const item of [value].flat(Infinity)) {
-      const types = valueTypes(item, ctx.pageIds, ctx.siteIds);
-      if (types === null) {
-        note(
-          warnings.unresolvedReference,
-          `${where}.${key} -> ${item["@id"]}`,
-          file,
-        );
-        continue;
-      }
-      if (types.length === 0) continue;
-      checked++;
-      const fits = types.some(
-        (t) =>
-          vocabulary.isA(t, "Role") || range.some((r) => vocabulary.isA(t, r)),
-      );
-      if (!fits)
-        note(
-          ctx.violations,
-          `${where}.${key} = ${types.join("+")} (expected ${range.join("|")})`,
-          file,
-        );
+      continue;
     }
+    if (types.length === 0) continue;
+    checked++;
+    const fits = types.some(
+      (t) =>
+        vocabulary.isA(t, "Role") || range.some((r) => vocabulary.isA(t, r)),
+    );
+    if (!fits)
+      note(
+        ctx.violations,
+        `${label} = ${types.join("+")} (expected ${range.join("|")})`,
+        file,
+      );
   }
   return checked;
 }
