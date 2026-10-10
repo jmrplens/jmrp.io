@@ -24,8 +24,8 @@ const ALIASES = {
 };
 
 /**
- * The file a module path names, trying the extensionless forms Vite accepts
- * (`x`, `x.ts`, `x/index.ts`) in that order.
+ * The file a module path names, trying the forms without an extension that
+ * Vite accepts (`x`, `x.ts`, `x/index.ts`) in that order.
  *
  * @param {string} base - Absolute path as written, without extension.
  * @returns {string | undefined} The existing file, or undefined.
@@ -36,7 +36,6 @@ function firstFile(base) {
       return candidate;
     }
   }
-  return undefined;
 }
 
 /**
