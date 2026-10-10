@@ -32,7 +32,7 @@ export const series = {
   "nginx-hardening": {
     title: "Hardening Nginx, edge inward",
     description:
-      "Five Nginx guides in reading order: mTLS, CSP, HTTP/3, virtual files and a tarpit: one edge hardened decision by decision.",
+      "Five Nginx guides in reading order: mTLS, CSP, HTTP/3, virtual files and a tarpit, one edge hardened decision by decision.",
     lead: "Five guides that are usually read as separate recipes. Taken in this order they are one project: moving a public Nginx server from it serves TLS to it decides who may open a connection, what their browser may execute, how the bytes travel, how little of the disk is reachable, and what happens to whatever is still hostile.",
     whyTitle: "Why these five belong together",
     why1: "Every one of these articles answers a question that only becomes well-posed once the previous one is settled. Rate limiting a request is a different problem depending on whether you know who sent it. Choosing a Content Security Policy is a different problem depending on whether the pages you serve come from disk or are synthesized. A configuration is not hardened because it accumulated directives; it is hardened because a sequence of decisions was made in an order where each one narrows the next.",
