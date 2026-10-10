@@ -518,6 +518,8 @@ import BarChart from "@components/ui/BarChart.astro";
 | `showPercentage` | `boolean` | No (`true`) |
 | `showValue` | `boolean` | No (`true`) |
 | `valueUnit` | `string` | No |
+| `labelHeader` | `string`: label column of the markdown twin's table (e.g. "Port") | No (`"Item"`) |
+| `valueHeader` | `string`: what the values count, in the twin's table (e.g. "Scan attempts") | No (`"Value"`) |
 | `maxValue` | `number` | No (auto) |
 | `colorScheme` | `string` | No (`"okabe-ito"`) |
 | `ariaLabel` | `string` | No |

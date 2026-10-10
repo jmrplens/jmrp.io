@@ -75,6 +75,17 @@ interface Props {
   ariaLabel?: string;
   /** Caption text below the chart */
   caption?: string;
+  /**
+   * Header of the label column in the table the markdown twin renders
+   * (`BarChart.md.ts`), e.g. "Port". The chart itself names each bar, so
+   * the page does not show it; without it the twin says "Item".
+   */
+  labelHeader?: string;
+  /**
+   * Header of the value column in the markdown twin's table, e.g. "Scan
+   * attempts": what the numbers count. Without it the twin says "Value".
+   */
+  valueHeader?: string;
 }
 
 const {

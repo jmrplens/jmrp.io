@@ -405,7 +405,7 @@ The CV PDFs share this palette: `scripts/cv/design-template.mjs` and
 | Component        | Import                                | Key Props                                                  |
 | ---------------- | ------------------------------------- | ---------------------------------------------------------- |
 | `Mermaid`        | `@components/ui/Mermaid.astro`        | `caption`, `maxWidth`, `maxHeight`, `ariaLabel` (required) |
-| `BarChart`       | `@components/ui/BarChart.astro`       | Chart data                                                 |
+| `BarChart`       | `@components/ui/BarChart.astro`       | `data`, `title`; `labelHeader`/`valueHeader` name the twin table's columns |
 | `BrowserSupport` | `@components/ui/BrowserSupport.astro` | `browsers: BrowserInfo[]`                                  |
 | `Table`          | `@components/ui/Table.astro`          | `title`, `striped`, `highlight`                            |
 | `Timeline`       | `@components/ui/Timeline.astro`       | Timeline events                                            |

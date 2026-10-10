@@ -21,6 +21,11 @@ import { markdownFor } from "@utils/llms/mdx/types";
  *   see the chart ("Bar chart showing distribution of port scan attempts");
  *   that reader now has the numbers themselves.
  *
+ * The first two headers come from `labelHeader` and `valueHeader` when the
+ * chart sets them (what the bars are and what the numbers count, e.g. "Port"
+ * and "Scan attempts"); the generic "Item" and "Value" are only the fallback,
+ * because a table headed "Value" does not say what was measured.
+ *
  * The "% of total" header is the component's own `barChart.ofTotal` wording,
  * copied rather than imported: these modules keep their visible strings local.
  * Numbers stay in plain ASCII rather than the page's locale formatting — a
@@ -49,9 +54,11 @@ export default markdownFor({
     const share =
       ctx.expr<boolean>(node, "showPercentage") !== false && total > 0;
 
+    const labelHeader = ctx.attr(node, "labelHeader") ?? head.item;
+    const valueHeader = ctx.attr(node, "valueHeader") ?? head.value;
     const columns = share
-      ? [head.item, head.value, head.share]
-      : [head.item, head.value];
+      ? [labelHeader, valueHeader, head.share]
+      : [labelHeader, valueHeader];
     const rows = data.map((bar) => {
       const value = `${bar?.value ?? ""}${unit}`;
       if (!share) return [bar?.label, value];

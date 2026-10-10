@@ -863,6 +863,8 @@ To give you an idea of what to expect, here are actual statistics from my home n
 
 <BarChart
   title="Attack Distribution by Port"
+  labelHeader="Port"
+  valueHeader="Scan attempts"
   data={[
     { label: "Telnet (23)", value: 535 },
     { label: "SSH (22)", value: 216 },
@@ -881,6 +883,8 @@ To give you an idea of what to expect, here are actual statistics from my home n
 
 <BarChart
   title="Top Attacking Countries"
+  labelHeader="Country"
+  valueHeader="Blocked IPs"
   data={[
     { label: "United States (US)", value: 484 },
     { label: "Netherlands (NL)", value: 194 },
@@ -900,6 +904,8 @@ To give you an idea of what to expect, here are actual statistics from my home n
 
 <BarChart
   title="Top Attacking Organizations (ASNs)"
+  labelHeader="Organization (ASN)"
+  valueHeader="Attacks"
   data={[
     { label: "DigitalOcean", value: 180 },
     { label: "Google Cloud", value: 108 },

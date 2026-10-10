@@ -864,6 +864,8 @@ Para darte una idea de qué esperar, aquí tienes estadísticas reales de mi red
 
 <BarChart
   title="Distribución de ataques por puerto"
+  labelHeader="Puerto"
+  valueHeader="Intentos de escaneo"
   data={[
     { label: "Telnet (23)", value: 535 },
     { label: "SSH (22)", value: 216 },
@@ -882,6 +884,8 @@ Para darte una idea de qué esperar, aquí tienes estadísticas reales de mi red
 
 <BarChart
   title="Principales países atacantes"
+  labelHeader="País"
+  valueHeader="IPs bloqueadas"
   data={[
     { label: "Estados Unidos (US)", value: 484 },
     { label: "Países Bajos (NL)", value: 194 },
@@ -901,6 +905,8 @@ Para darte una idea de qué esperar, aquí tienes estadísticas reales de mi red
 
 <BarChart
   title="Principales organizaciones atacantes (ASNs)"
+  labelHeader="Organización (ASN)"
+  valueHeader="Ataques"
   data={[
     { label: "DigitalOcean", value: 180 },
     { label: "Google Cloud", value: 108 },
