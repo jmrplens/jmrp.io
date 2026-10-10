@@ -728,26 +728,35 @@ flowchart LR
 
 ### BarChart
 
-CSS-only bar chart visualization.
+CSS-only bar chart visualization. In the markdown twin it becomes a table
+(label, value and share of the total); `labelHeader` and `valueHeader` name its
+first two columns.
 
 ```mdx
-import BarChart from "@/components/ui/BarChart.astro";
+import BarChart from "@components/ui/BarChart.astro";
 
 <BarChart
-  title="Security Score Comparison"
-  items={[
-    { label: "Site A", value: 95, color: "#10b981" },
-    { label: "Site B", value: 72, color: "#f59e0b" },
-    { label: "Site C", value: 45, color: "#ef4444" },
+  title="Attack Distribution by Port"
+  labelHeader="Port"
+  valueHeader="Scan attempts"
+  data={[
+    { label: "Telnet (23)", value: 535 },
+    { label: "SSH (22)", value: 216 },
   ]}
 />
 ```
 
 **Props:**
 
-- `items: { label: string; value: number; color?: string }[]`
+- `data: { label: string; value: number; color?: string }[]`
 - `title?: string` - Chart title
-- `max?: number` - Maximum value (auto-calculated if not provided)
+- `labelHeader?: string` - Label column of the twin's table (default "Item")
+- `valueHeader?: string` - What the values count, in the twin's table (default "Value")
+- `valueUnit?: string` - Unit suffix for values
+- `showPercentage?: boolean` / `showValue?: boolean` - Default `true`
+- `maxValue?: number` - Maximum value (auto-calculated if not provided)
+- `colorScheme?: string` - Palette (`okabe-ito` by default)
+- `caption?: string`, `ariaLabel?: string`
 
 **When to use:** For comparing numerical values, showing progress, or visualizing metrics.
 
