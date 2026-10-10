@@ -12,8 +12,8 @@
  * precisely because a throw here happens before `deploy-swap.mjs` retargets
  * `dist/`.
  *
- * It also GENERATES the six Nginx artifacts — `security_headers.conf`,
- * `security_headers_assets.conf` and the four http-level maps under `maps/` —
+ * It also GENERATES the seven Nginx artifacts (`security_headers.conf`,
+ * `security_headers_assets.conf` and the five http-level maps under `maps/`),
  * but into NEITHER the served tree NOR the git working tree. They are written
  * to a staging directory (`/var/lib/jmrp.io/nginx-staged/` by default,
  * overridable with
@@ -26,8 +26,8 @@
  * nothing and a stray temp file is never delivered.
  *
  * Every generated artifact carries one `# Build-Stamp:` line, identical across
- * the six files and unique to this build. It is what makes
- * `nginx -T | grep -c "Build-Stamp: <id>"` = 6 a proof that the RUNNING config
+ * the seven files and unique to this build. It is what makes
+ * `nginx -T | grep -c "Build-Stamp: <id>"` = 7 a proof that the RUNNING config
  * came from a build rather than from a hand-seeded copy — `nginx -T` dumps
  * comments verbatim and dumps each distinct file exactly once, however many
  * times it is included.
@@ -60,6 +60,7 @@ import { generateDocsRedirects } from "./post-build/docs-redirects.js";
 import { processHtmlFiles } from "./post-build/html.js";
 import { optimizeImages } from "./post-build/images.js";
 import { generateMdTwinAlternates } from "./post-build/md-twin-alternates.js";
+import { generatePdfCaseRedirects } from "./post-build/pdf-case-redirects.js";
 import { patchRssEnclosureLengths } from "./post-build/rss-enclosures.js";
 import { generateTagRedirects } from "./post-build/tag-redirects.js";
 import type { CspData } from "./post-build/types.js";
@@ -74,12 +75,12 @@ const DEFAULT_SECURE_PATH =
   "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin";
 
 /**
- * The six Nginx artifacts this build delivers, as paths relative to the
+ * The seven Nginx artifacts this build delivers, as paths relative to the
  * staging directory — and, one-for-one, to `/etc/nginx/snippets/jmrp/`.
  *
  * This list IS the delivery contract. It is written verbatim into
  * `manifest.json`, and `deploy-live.mjs` moves exactly these files and prunes
- * any `maps/*.conf` at the destination that is not named here: with the four
+ * any `maps/*.conf` at the destination that is not named here: with the five
  * maps behind a single wildcard `include`, an orphan left by a generator that
  * no longer exists would otherwise stay live forever.
  *
@@ -93,6 +94,7 @@ const NGINX_ARTIFACTS = [
   "maps/docs_redirects.conf",
   "maps/tag_redirects.conf",
   "maps/md_twin_alternates.conf",
+  "maps/pdf_case_redirects.conf",
 ] as const;
 
 /**
@@ -121,7 +123,7 @@ export default function postBuildIntegration(): AstroIntegration {
         };
 
         // ONE stamp per build, computed here and handed to every generator, so
-        // the six artifacts are provably one set. `stampId` is the bare value
+        // the seven artifacts are provably one set. `stampId` is the bare value
         // (it goes into the manifest); `stamp` is the ready-to-prepend banner
         // line each generator emits, built from the prefix the generators
         // validate against, so the two halves cannot drift apart.
@@ -185,6 +187,12 @@ export default function postBuildIntegration(): AstroIntegration {
           await timed("generateTagRedirects", logger, () =>
             generateTagRedirects(stagedIn, stamp, logger),
           );
+          // Case variants of the files under /pdf/ (papers, CV) to their real
+          // names. Derived from the built tree, like the blog map, so a new or
+          // renamed file needs no Nginx edit.
+          await timed("generatePdfCaseRedirects", logger, () =>
+            generatePdfCaseRedirects(distDir, stagedIn, stamp, logger),
+          );
           // Verification, not a transform: the built pages, their markdown
           // twins and the three index surfaces must agree. Runs BEFORE the
           // image/compression phase so a drift fails in ~0.2s instead of after
@@ -225,7 +233,7 @@ export default function postBuildIntegration(): AstroIntegration {
           );
 
           // LAST of the Nginx steps, on purpose: the manifest is what makes
-          // the staged set deliverable, so it must not exist until all six
+          // the staged set deliverable, so it must not exist until all seven
           // artifacts do.
           await timed("writeNginxManifest", logger, () =>
             writeNginxManifest(stagedIn, stampId, logger),
@@ -446,9 +454,9 @@ async function prepareNginxStaging(
  * and therefore delivers nothing.
  *
  * @param stagedIn - Absolute path of the staging directory.
- * @param stampId - The bare build stamp shared by all six artifacts.
+ * @param stampId - The bare build stamp shared by all seven artifacts.
  * @param logger - Astro logger instance.
- * @throws If any of the six artifacts is missing or empty.
+ * @throws If any of the seven artifacts is missing or empty.
  */
 async function writeNginxManifest(
   stagedIn: string,
