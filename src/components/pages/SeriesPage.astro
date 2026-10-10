@@ -15,7 +15,7 @@ import { useTranslatedPath, useTranslations } from "@i18n/utils";
 import BaseLayout from "@layouts/BaseLayout.astro";
 import { formatDateDot, getReadingTime } from "@utils/blog";
 import { getPageFaq, pageFaqNode } from "@utils/page-faq";
-import { SERIES, type Series } from "@utils/series";
+import { SERIES, type Series, seriesRepoUrl } from "@utils/series";
 import { getSiteUrl } from "@utils/site";
 import type { CollectionEntry } from "astro:content";
 import type { CollectionPage, ListItem } from "schema-dts";
@@ -64,7 +64,17 @@ const seriesSchema = {
   description: t(key("description")),
   inLanguage: locale,
   isPartOf: { "@id": new URL("#website", getSiteUrl()).href },
-  about: { "@id": new URL("#person", getSiteUrl()).href },
+  // A series about one program says so: `about` is that program's
+  // `#software` node (defined on /projects/ and /tools/), not the author.
+  about: {
+    "@id": series.software ?? new URL("#person", getSiteUrl()).href,
+  },
+  // Surface the hub's title and lead to voice assistants and AI readers, as
+  // the post pages do for theirs.
+  speakable: {
+    "@type": "SpeakableSpecification",
+    cssSelector: [".series-header__title", ".series-header__lead"],
+  },
   mainEntity: {
     "@type": "ItemList",
     numberOfItems: entries.length,
@@ -86,6 +96,29 @@ const seriesSchema = {
 const pageFaq = await getPageFaq(`/blog/series/${series.slug}/`, locale);
 const faqNode =
   pageFaq && pageFaqNode(pageFaq, seriesUrl, seriesSchema["@id"], locale);
+
+// The program a software series documents: where its code and docs live and
+// which project card describes it. Absent for the three hubs about no program.
+const softwareRepo = seriesRepoUrl(series);
+const softwareLinks = softwareRepo
+  ? [
+      {
+        label: t("series.ui.softwareRepo"),
+        href: softwareRepo,
+        external: true,
+      },
+      {
+        label: t("series.ui.softwareDocs"),
+        href: new URL(`/docs/${series.slug}/`, getSiteUrl()).href,
+        external: true,
+      },
+      {
+        label: t("series.ui.softwareProjects"),
+        href: translatePath("/projects/"),
+        external: false,
+      },
+    ]
+  : [];
 
 /** Prose blocks, in reading order. */
 const whyBlocks = ["why1", "why2", "why3"];
@@ -185,6 +218,41 @@ const afterBlocks = ["after1", "after2"];
       </h2>
       <p class="series-prose">{t(key("limits1"))}</p>
     </section>
+
+    {softwareLinks.length > 0 && (
+      <section
+        class="series-section"
+        aria-labelledby="series-software"
+      >
+        <h2
+          class="series-section__title"
+          id="series-software"
+        >
+          {t("series.ui.softwareTitle")}
+        </h2>
+        <p class="series-prose">
+          {t("series.ui.softwareLead", { name: series.slug })}
+        </p>
+        <ul class="series-more">
+          {softwareLinks.map((link) => (
+            <li>
+              {link.external ? (
+                <a
+                  href={link.href}
+                  target="_blank"
+                  rel="external noopener noreferrer"
+                  aria-label={t("aria.opensNewTab", { text: link.label })}
+                >
+                  {link.label}
+                </a>
+              ) : (
+                <a href={link.href}>{link.label}</a>
+              )}
+            </li>
+          ))}
+        </ul>
+      </section>
+    )}
 
     <nav
       class="series-section"

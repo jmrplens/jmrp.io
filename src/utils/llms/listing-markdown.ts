@@ -10,7 +10,12 @@ import {
 } from "@utils/llms";
 import { CATEGORY_ORDER, categoryName } from "@utils/llms/tool-categories";
 import { getPageFaq, pageFaqLines } from "@utils/page-faq";
-import { getSeries, getSeriesPosts, SERIES } from "@utils/series";
+import {
+  getSeries,
+  getSeriesPosts,
+  SERIES,
+  seriesRepoUrl,
+} from "@utils/series";
 
 /**
  * Markdown twins for the LISTING pages: the blog and tools indexes, the tool
@@ -349,6 +354,7 @@ export async function generateSeriesIndexMarkdown(
         "",
       ];
     }),
+    ...pageFaqLines(await getPageFaq("/blog/series/", locale), locale),
   ].join("\n");
 }
 
@@ -427,6 +433,19 @@ export async function generateSeriesMarkdown(
     "",
     t(key("limits1")),
     "",
+    // The page's "The software" block, only for a series about one program.
+    ...(series.software
+      ? [
+          `## ${t("series.ui.softwareTitle")}`,
+          "",
+          t("series.ui.softwareLead", { name: series.slug }),
+          "",
+          `- ${t("series.ui.softwareRepo")}: ${seriesRepoUrl(series)}`,
+          `- ${t("series.ui.softwareDocs")}: ${siteUrl}/docs/${slug}/`,
+          `- ${t("series.ui.softwareProjects")}: ${siteUrl}${prefix}/projects/`,
+          "",
+        ]
+      : []),
     ...pageFaqLines(await getPageFaq(`/blog/series/${slug}/`, locale), locale),
     `## ${WORDS.otherSeries[locale]}`,
     "",

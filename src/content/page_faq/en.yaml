@@ -80,6 +80,12 @@ pages:
       - question: Where can the papers be read?
         answer: "All but one entry on this page carry a DOI on Zenodo, where the full text is archived and openly accessible; the list is also available on Google Scholar and ORCID."
 
+  - path: /blog/series/
+    visible: false
+    items:
+      - question: What are the editorial series on this blog?
+        answer: "Four curated reading paths through articles that were written as a set. Hardening Nginx, edge inward, covers five Nginx guides in reading order: mTLS, CSP, HTTP/3, virtual files and a tarpit. Dual-stack MikroTik, from the ISP to the firewall, covers three RouterOS guides: a dual-stack WireGuard VPN, PPPoE with DHCPv6 prefix delegation, and a honeypot that auto-blocks scanners. Kleidos firmware: three decisions under hard constraints, covers three deep dives from a hardware password manager on ESP32-S3: packed i18n strings, an encrypt-then-MAC vault and device-bound key derivation. gitlab-mcp-server: GitLab's API, held to a running GitLab, covers two deep dives: checking GitLab's API against a booted GitLab, and deriving what a fine-grained token needs for each action. A tag page can only list such articles; each series page says why the cluster exists, in what order to read it and which decision each piece settles."
+
   - path: /uses/
     visible: true
     items:

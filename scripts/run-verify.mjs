@@ -343,6 +343,14 @@ async function runVerify() {
       command: "node scripts/ci/check-schema-ranges.mjs dist",
     },
     {
+      // Needs the network, not dist/ (it reads each project's docs site), but
+      // it lives here because this phase accumulates failures. Exits 1 only
+      // for an undeclared contradiction; an unreadable site exits 0 (GEO
+      // audit #12, M1).
+      name: "Lint: Software drift",
+      command: "node scripts/ci/check-software-drift.mjs",
+    },
+    {
       // Both Lychee steps quote their glob so lychee expands it recursively.
       // The command runs under `sh` (dash here), which has no globstar: an
       // unquoted `dist/**/*.html` reached only `dist/*/*.html`, 12 of the

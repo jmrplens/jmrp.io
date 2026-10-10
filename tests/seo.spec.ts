@@ -122,7 +122,8 @@ test.describe("SEO Per-Page Checks", () => {
       await test.step("Page metadata", async () => {
         const title = await page.title();
         expect(title.length).toBeGreaterThan(0);
-        expect(title.length).toBeLessThan(70);
+        // The site's rule is <= 65 characters (BaseHead truncation).
+        expect(title.length).toBeLessThanOrEqual(65);
 
         const canonical = page.locator('link[rel="canonical"]');
         await expect(canonical).toHaveAttribute("href", /^https?:\/\//);

@@ -1,5 +1,5 @@
 /**
- * Finds the CV PDFs a deploy left uncommitted, for the notice
+ * Finds the files a deploy left uncommitted, for the notice
  * `scripts/deploy-live.mjs` prints at the end of a production deploy.
  *
  * `build:cv` recompiles the six PDFs under `public/pdf/` whenever a figure
@@ -8,6 +8,11 @@
  * lags production by a deploy. The PDFs stay in git (author decision,
  * 2026-09-30), so the deploy says so, with the commands that commit them,
  * instead of leaving it to be spotted in `git status` (GEO audit #11).
+ *
+ * Achievement badges are the second group (GEO audit #12, L4): a live GitLab
+ * collection downloads `src/assets/achievements/<id>.png` at build time
+ * (`scripts/ghc/fetch-achievement-badges.mjs`), and CI, which only has the
+ * fixture, cannot, so a badge that is not committed breaks the next CI build.
  *
  * The git calls are injected, so the parsing and the notice are tested
  * without a repository.
@@ -23,12 +28,19 @@
 /** Where the PDFs live, relative to the repository root. */
 export const PDF_DIR = "public/pdf";
 
+/** Where the achievement badges live, relative to the repository root. */
+export const BADGES_DIR = "src/assets/achievements";
+
 /** A CV PDF directly under {@link PDF_DIR}. */
 const CV_PDF_RE = /^public\/pdf\/CV_[^/]+\.pdf$/;
 
+/** A badge image directly under {@link BADGES_DIR}. */
+const BADGE_RE = /^src\/assets\/achievements\/[^/]+\.png$/;
+
 /**
  * `git status` arguments: NUL-separated porcelain (no path quoting), every
- * untracked file listed on its own, and only {@link PDF_DIR}.
+ * untracked file listed on its own, and only {@link PDF_DIR} and
+ * {@link BADGES_DIR}.
  */
 export const GIT_STATUS_ARGS = Object.freeze([
   "status",
@@ -37,6 +49,7 @@ export const GIT_STATUS_ARGS = Object.freeze([
   "--untracked-files=all",
   "--",
   PDF_DIR,
+  BADGES_DIR,
 ]);
 
 /**
@@ -47,8 +60,9 @@ export const GIT_STATUS_ARGS = Object.freeze([
  */
 
 /**
- * @typedef {object} CvPdfChange
+ * @typedef {object} DeployChange
  * @property {string} path Path relative to the repository root.
+ * @property {"pdf" | "badge"} kind Which group the file belongs to.
  * @property {"untracked" | "deleted" | "renamed" | "added" | "modified"} state
  *   What git sees, in words.
  */
@@ -87,7 +101,7 @@ export function parsePorcelainZ(text) {
  * Names a porcelain status in words. Pure.
  *
  * @param {string} xy - The two status letters.
- * @returns {CvPdfChange["state"]} The state.
+ * @returns {DeployChange["state"]} The state.
  */
 function describeStatus(xy) {
   if (xy === "??") return "untracked";
@@ -98,27 +112,36 @@ function describeStatus(xy) {
 }
 
 /**
- * The CV PDFs in a `git status --porcelain=v1 -z` output, in git's order.
- * Pure.
+ * The CV PDFs and achievement badges in a `git status --porcelain=v1 -z`
+ * output, in git's order. Pure.
  *
  * @param {string} text - Raw output.
- * @returns {CvPdfChange[]} Changed or untracked CV PDFs.
+ * @returns {DeployChange[]} Changed or untracked files of either group.
  */
-export function findUncommittedCvPdfs(text) {
-  return parsePorcelainZ(text)
-    .filter((entry) => CV_PDF_RE.test(entry.path))
-    .map((entry) => ({ path: entry.path, state: describeStatus(entry.xy) }));
+export function findUncommittedDeployFiles(text) {
+  /** @type {DeployChange[]} */
+  const found = [];
+  for (const entry of parsePorcelainZ(text)) {
+    /** @type {DeployChange["kind"] | null} */
+    let kind = null;
+    if (CV_PDF_RE.test(entry.path)) kind = "pdf";
+    else if (BADGE_RE.test(entry.path)) kind = "badge";
+    if (kind) {
+      found.push({ path: entry.path, kind, state: describeStatus(entry.xy) });
+    }
+  }
+  return found;
 }
 
 /**
- * Asks git which CV PDFs are uncommitted.
+ * Asks git which CV PDFs and achievement badges are uncommitted.
  *
  * @param {GitRunner} git - Runs git in the repository root.
- * @returns {CvPdfChange[] | null} The PDFs, or null outside a git work tree
+ * @returns {DeployChange[] | null} The files, or null outside a git work tree
  *   (a deploy from an exported tree has nothing to commit).
  * @throws {Error} When git answers inside a work tree but `status` fails.
  */
-export function detectUncommittedCvPdfs(git) {
+export function detectUncommittedDeployFiles(git) {
   const inside = git(["rev-parse", "--is-inside-work-tree"]);
   if (inside.error || inside.status !== 0 || inside.stdout?.trim() !== "true") {
     return null;
@@ -128,7 +151,7 @@ export function detectUncommittedCvPdfs(git) {
     const reason = status.error?.message ?? `exit code ${status.status}`;
     throw new Error(`git status failed (${reason})`);
   }
-  return findUncommittedCvPdfs(status.stdout ?? "");
+  return findUncommittedDeployFiles(status.stdout ?? "");
 }
 
 /**
@@ -145,28 +168,42 @@ function shellQuote(word) {
 }
 
 /**
- * The notice for uncommitted CV PDFs, one line per entry, with the exact
- * commands that commit them. A `chore` commit, because a CLAUDE.md rule
- * keeps that type from moving any page's date. Pure.
+ * The notice for uncommitted deploy files, one line per entry, with the exact
+ * commands that commit them: one commit covering both groups. A `chore`
+ * commit, because a CLAUDE.md rule keeps that type from moving any page's
+ * date. Pure.
  *
- * @param {readonly CvPdfChange[]} pdfs - Non-empty list from
- *   {@link findUncommittedCvPdfs}.
+ * @param {readonly DeployChange[]} files - Non-empty list from
+ *   {@link findUncommittedDeployFiles}.
  * @param {object} options - Options.
  * @param {string} options.root - Repository root, for `git -C`.
  * @param {Date} options.date - Deploy time; its UTC day names the commit.
  * @returns {string[]} Lines, without a log prefix.
  */
-export function formatCvPdfNotice(pdfs, { root, date }) {
-  const paths = pdfs.map((pdf) => shellQuote(pdf.path)).join(" ");
-  const width = Math.max(...pdfs.map((pdf) => pdf.state.length));
+export function formatDeployNotice(files, { root, date }) {
+  const paths = files.map((file) => shellQuote(file.path)).join(" ");
+  const width = Math.max(...files.map((file) => file.state.length));
   const day = date.toISOString().slice(0, 10);
   const repo = shellQuote(root);
+  const pdfs = files.filter((file) => file.kind === "pdf").length;
+  const badges = files.length - pdfs;
+  const groups = [
+    pdfs > 0 ? `${pdfs} CV PDF(s) under ${PDF_DIR}/` : "",
+    badges > 0 ? `${badges} achievement badge(s) under ${BADGES_DIR}/` : "",
+  ].filter(Boolean);
+  const subject = [
+    pdfs > 0 ? "the CV PDFs" : "",
+    badges > 0 ? "achievement badges" : "",
+  ]
+    .filter(Boolean)
+    .join(" and ");
+  const message = `chore: refresh ${subject} from the ${day} deploy`;
   return [
-    `⚠ NOTICE: ${pdfs.length} CV PDF(s) under ${PDF_DIR}/ are not committed: build:cv rebuilt them for this deploy, so the live site serves files that git does not have yet.`,
-    ...pdfs.map((pdf) => `    ${pdf.state.padEnd(width)}  ${pdf.path}`),
+    `⚠ NOTICE: ${groups.join(" and ")} are not committed: this deploy produced them (build:cv, or the live GitLab badge download), so the live site serves files that git does not have yet.`,
+    ...files.map((file) => `    ${file.state.padEnd(width)}  ${file.path}`),
     "  Commit them so git matches production (a chore commit moves no page date):",
     `    git -C ${repo} add -- ${paths}`,
-    `    git -C ${repo} commit -m "chore(cv): refresh the CV PDFs from the ${day} deploy" -- ${paths}`,
+    `    git -C ${repo} commit -m "${message}" -- ${paths}`,
     "  then push the branch and merge it through a PR as usual. Not fatal: the deploy itself is complete.",
   ];
 }

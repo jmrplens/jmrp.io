@@ -918,7 +918,7 @@ Steps (`pnpm build` = `scripts/deploy-swap.mjs prepare` → `astro build --outDi
    - Purges the Cloudflare cache via API. A failed purge is fatal but deferred: IndexNow/Bing, the contributions state record and the end-of-deploy notices still run, then `deploy-live.mjs` exits 1 and names the failure. Until the edge TTL runs out, the edge can keep serving the previous HTML, and the previous copy of any other changed file at an unversioned URL; purge by hand from the Cloudflare dashboard (Caching > Configuration > Purge Everything). The beacon's SRI does not depend on the purge, because it is published under a content-addressed path. A purge skipped because `PRIVATE_CF_ZONE_ID`/`PRIVATE_CF_API_TOKEN` are unset is not a failure
    - Submits sitemap URLs to IndexNow and the Bing Webmaster API
    - Records the display projection hash of `src/data/ghc/projects-contributions.json` (the dataset this build rendered) in `/var/lib/jmrp.io/ghc/rebuild-state.json`, for the scheduled rebuild below, only when the dataset's `source` is `live`. A dataset built from the committed fixture (`source: "fixture"`, `"gitlab-fixture"` when only the GitLab.com part fell back, or no stamp at all) records `{ source, builtAt, asOf }` with no projection, and the deploy ends with a `NOT LIVE DATA` warning. Non-fatal
-   - Ends with a non-fatal notice when `build:cv` left `public/pdf/CV_*.pdf` modified or untracked (`git status --porcelain`, only inside a git work tree), with the exact `git add`/`git commit` commands (a `chore(cv)` commit, which moves no page date) that bring git in line with production. The PDFs stay in git by author decision (2026-09-30), because CI never compiles LaTeX: commit them after each deploy that prints the notice. The helper is `scripts/cv-pdf-notice.mjs`, deliberately outside `scripts/cv/`, whose `.mjs` files `build-cvs.mjs` hashes as PDF inputs
+   - Ends with a non-fatal notice when `build:cv` left `public/pdf/CV_*.pdf` modified or untracked (`git status --porcelain`, only inside a git work tree), with the exact `git add`/`git commit` commands (a `chore` commit, which moves no page date) that bring git in line with production. The PDFs stay in git by author decision (2026-09-30), because CI never compiles LaTeX: commit them after each deploy that prints the notice. The helper is `scripts/cv-pdf-notice.mjs`, deliberately outside `scripts/cv/`, whose `.mjs` files `build-cvs.mjs` hashes as PDF inputs
 5. CSP Reporter runs as separate service (`scripts/csp-reporter.mjs`)
 
 > **Production-root guard**: This repo is checked out in multiple worktrees (production at `/var/www/jmrp.io`, plus any staging worktree) that would deliver into the same Nginx snippets directory and purge the same Cloudflare zone. `deploy-live.mjs` is a no-op — skipped entirely, before doing any work — unless `process.cwd()` matches the production root (default `/var/www/jmrp.io`, override via `DEPLOY_LIVE_PRODUCTION_ROOT`) or `DEPLOY_LIVE_FORCE=1` is set. Individual actions are further gated on their own env vars being present (Nginx deploy on `POSTBUILD_NGINX_SNIPPETS_DIR`, Cloudflare purge on `PRIVATE_CF_ZONE_ID`/`PRIVATE_CF_API_TOKEN`, IndexNow on `POSTBUILD_INDEXNOW`, Bing on `BING_WEBMASTER_API_KEY`).
@@ -985,6 +985,7 @@ pnpm exec prettier --check .  # Format check (runs at end of build)
    - **Public asset fidelity** — `node scripts/ci/check-public-asset-fidelity.mjs dist` (every `public/` image must reach the build with the same format, dimensions and pixels). On the production host this phase runs after the build has already swapped `dist/`, so treat it as an alarm; the gate is the `image-optimization` CI job.
    - **RSS Feed Validation** — `node scripts/ci/validate-rss.mjs dist`
    - **Schema.org ranges**: `node scripts/ci/check-schema-ranges.mjs dist` (built JSON-LD against the pinned schema.org vocabulary; see the Schema.org validation note)
+   - **Software drift**: `node scripts/ci/check-software-drift.mjs` (needs the network, not `dist/`: each project's docs-site `#software` node against `projects.yaml`). Exit 1 only for an undeclared contradiction; an unreadable site exits 0 so an offline run does not fail. Declared exceptions (matched by project id and property, with reason and date) live in `scripts/ci/software-drift-decision.mjs` and print as "accepted". Also a step of the CI `schema-validation` job (GEO audit #12, M1; it used to exit 0 whatever it found)
    - **Broken Links (Lychee)**: `lychee --config lychee.toml --root-dir dist "dist/**/*.html"`. The glob is quoted so lychee expands it recursively: the command runs under `sh` (dash), which has no globstar, and the unquoted form reached only `dist/*/*.html`, 12 of 130 pages (never the home page, a post, a tool or a Spanish subpage) until GEO audit #11. CI's `sa-lychee` quotes it for the same reason (the action runs `eval lychee ${ARGS}` in bash without globstar)
    - **Internal anchors (Lychee, offline)**: `lychee --config lychee.toml --offline --include-fragments --index-files index.html --root-dir dist "dist/**/*.html"`. Every `#fragment` of an internal link must exist on the page it names; `--index-files index.html` resolves `/about/#x` to the directory's `index.html` (without it: 148 false errors). The same check runs in the CI `sa-lychee` job
 4. **Sonar phase (serial, non-blocking)**:
@@ -1030,6 +1031,17 @@ The final report lists every failed step across all phases (not just the first e
 > subject becomes. Historic passes that predate the trailer are listed by SHA in
 > `MECHANICAL_COMMITS` in that module; the list is closed, and anything new
 > declares itself in its own message.
+>
+> **Translation bundles over-report (known, procedural).** `/`, `/about/`,
+> `/homelab/` and `/projects/contributions/` fold `src/i18n/translations/{en,es}/common.ts`
+> into their date, because their copy lives there, so any substantive commit
+> to those files restamps all four. #562 added 17 keys used only by two post
+> components and moved the dates of eight pages and re-submitted them to
+> IndexNow (GEO audit #12, L3). A PR whose only change to `common.ts` is keys
+> that no page component of those four consumes (post components, tools, UI
+> widgets) must carry `Content-Bump: skip` in the squash box, or use a
+> `docs`/`chore`-typed subject. Per-namespace dating was weighed and left out:
+> it needs a per-page namespace list that would itself drift.
 >
 > **The rule is site-wide, not just for posts.** Tool, category, home and
 > static pages are dated by `lastCommitDate` in `src/utils/content-date.ts`,

@@ -7,9 +7,9 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 
 import {
-  detectUncommittedCvPdfs,
-  findUncommittedCvPdfs,
-  formatCvPdfNotice,
+  detectUncommittedDeployFiles,
+  findUncommittedDeployFiles,
+  formatDeployNotice,
   GIT_STATUS_ARGS,
   parsePorcelainZ,
 } from "./cv-pdf-notice.mjs";
@@ -38,8 +38,8 @@ test("finds the six PDFs a deploy leaves modified, in git's order", () => {
   // deploy.
   const text = porcelain(PDFS.map((file) => ` M ${file}`));
   assert.deepEqual(
-    findUncommittedCvPdfs(text),
-    PDFS.map((file) => ({ path: file, state: "modified" })),
+    findUncommittedDeployFiles(text),
+    PDFS.map((file) => ({ path: file, kind: "pdf", state: "modified" })),
   );
 });
 
@@ -54,13 +54,13 @@ test("names untracked, staged, deleted and renamed PDFs", () => {
     "public/pdf/CV_From.pdf",
     "MM public/pdf/CV_Both.pdf",
   ]);
-  assert.deepEqual(findUncommittedCvPdfs(text), [
-    { path: "public/pdf/CV_New.pdf", state: "untracked" },
-    { path: "public/pdf/CV_Staged.pdf", state: "modified" },
-    { path: "public/pdf/CV_Added.pdf", state: "added" },
-    { path: "public/pdf/CV_Gone.pdf", state: "deleted" },
-    { path: "public/pdf/CV_To.pdf", state: "renamed" },
-    { path: "public/pdf/CV_Both.pdf", state: "modified" },
+  assert.deepEqual(findUncommittedDeployFiles(text), [
+    { path: "public/pdf/CV_New.pdf", kind: "pdf", state: "untracked" },
+    { path: "public/pdf/CV_Staged.pdf", kind: "pdf", state: "modified" },
+    { path: "public/pdf/CV_Added.pdf", kind: "pdf", state: "added" },
+    { path: "public/pdf/CV_Gone.pdf", kind: "pdf", state: "deleted" },
+    { path: "public/pdf/CV_To.pdf", kind: "pdf", state: "renamed" },
+    { path: "public/pdf/CV_Both.pdf", kind: "pdf", state: "modified" },
   ]);
 });
 
@@ -72,8 +72,8 @@ test("ignores anything that is not a CV PDF directly under public/pdf", () => {
     " M src/content/cv/main.yaml",
     "?? public/pdf/CV_draft.pdf.bak",
   ]);
-  assert.deepEqual(findUncommittedCvPdfs(text), []);
-  assert.deepEqual(findUncommittedCvPdfs(""), []);
+  assert.deepEqual(findUncommittedDeployFiles(text), []);
+  assert.deepEqual(findUncommittedDeployFiles(""), []);
 });
 
 test("parsePorcelainZ keeps paths with spaces whole and skips rename origins", () => {
@@ -88,9 +88,9 @@ test("parsePorcelainZ keeps paths with spaces whole and skips rename origins", (
   );
 });
 
-test("detectUncommittedCvPdfs asks git only inside a work tree", () => {
+test("detectUncommittedDeployFiles asks git only inside a work tree", () => {
   const calls = [];
-  const outside = detectUncommittedCvPdfs((args) => {
+  const outside = detectUncommittedDeployFiles((args) => {
     calls.push(args);
     return { status: 128, stdout: "", stderr: "fatal: not a git repository" };
   });
@@ -99,7 +99,7 @@ test("detectUncommittedCvPdfs asks git only inside a work tree", () => {
 
   // git missing altogether: spawnSync reports an error, not a status.
   assert.equal(
-    detectUncommittedCvPdfs(() => ({
+    detectUncommittedDeployFiles(() => ({
       status: null,
       stdout: null,
       error: new Error("spawnSync git ENOENT"),
@@ -107,19 +107,19 @@ test("detectUncommittedCvPdfs asks git only inside a work tree", () => {
     null,
   );
 
-  const inside = detectUncommittedCvPdfs((args) =>
+  const inside = detectUncommittedDeployFiles((args) =>
     args[0] === "rev-parse"
       ? { status: 0, stdout: "true\n" }
       : { status: 0, stdout: porcelain([` M ${PDFS[0]}`]) },
   );
-  assert.deepEqual(inside, [{ path: PDFS[0], state: "modified" }]);
+  assert.deepEqual(inside, [{ path: PDFS[0], kind: "pdf", state: "modified" }]);
 });
 
-test("detectUncommittedCvPdfs runs the documented status and throws when it fails", () => {
+test("detectUncommittedDeployFiles runs the documented status and throws when it fails", () => {
   const calls = [];
   assert.throws(
     () =>
-      detectUncommittedCvPdfs((args) => {
+      detectUncommittedDeployFiles((args) => {
         calls.push(args);
         return args[0] === "rev-parse"
           ? { status: 0, stdout: "true\n" }
@@ -135,14 +135,15 @@ test("detectUncommittedCvPdfs runs the documented status and throws when it fail
     "--untracked-files=all",
     "--",
     "public/pdf",
+    "src/assets/achievements",
   ]);
 });
 
-test("formatCvPdfNotice lists the files and the exact commit commands", () => {
-  const lines = formatCvPdfNotice(
+test("formatDeployNotice lists the files and the exact commit commands", () => {
+  const lines = formatDeployNotice(
     [
-      { path: PDFS[0], state: "modified" },
-      { path: "public/pdf/CV_New.pdf", state: "untracked" },
+      { path: PDFS[0], kind: "pdf", state: "modified" },
+      { path: "public/pdf/CV_New.pdf", kind: "pdf", state: "untracked" },
     ],
     { root: "/var/www/jmrp.io", date: new Date("2026-09-30T17:20:00Z") },
   );
@@ -156,21 +157,84 @@ test("formatCvPdfNotice lists the files and the exact commit commands", () => {
   );
   assert.ok(
     lines.includes(
-      `    git -C /var/www/jmrp.io commit -m "chore(cv): refresh the CV PDFs from the 2026-09-30 deploy" -- ${PDFS[0]} public/pdf/CV_New.pdf`,
+      `    git -C /var/www/jmrp.io commit -m "chore: refresh the CV PDFs from the 2026-09-30 deploy" -- ${PDFS[0]} public/pdf/CV_New.pdf`,
     ),
   );
   for (const line of lines) assert.doesNotMatch(line, /\u{2014}/u);
 });
 
-test("formatCvPdfNotice quotes what a shell would split", () => {
-  const lines = formatCvPdfNotice(
-    [{ path: "public/pdf/CV_It's mine.pdf", state: "untracked" }],
+test("formatDeployNotice quotes what a shell would split", () => {
+  const lines = formatDeployNotice(
+    [{ path: "public/pdf/CV_It's mine.pdf", kind: "pdf", state: "untracked" }],
     { root: "/srv/my site", date: new Date("2026-09-30T00:00:00Z") },
   );
   assert.ok(
     lines.some((line) =>
       line.startsWith(
         String.raw`    git -C '/srv/my site' add -- 'public/pdf/CV_It'\''s mine.pdf'`,
+      ),
+    ),
+  );
+});
+
+test("badges are found, other assets are not (GEO audit #12, L4)", () => {
+  const text = porcelain([
+    "?? src/assets/achievements/gitlab-level-4-contributor.png",
+    " M src/assets/achievements/nested/x.png",
+    " M src/assets/achievements/README.md",
+    " M src/assets/other.png",
+  ]);
+  assert.deepEqual(findUncommittedDeployFiles(text), [
+    {
+      path: "src/assets/achievements/gitlab-level-4-contributor.png",
+      kind: "badge",
+      state: "untracked",
+    },
+  ]);
+});
+
+test("one notice and one commit cover both groups", () => {
+  const lines = formatDeployNotice(
+    [
+      { path: PDFS[0], kind: "pdf", state: "modified" },
+      {
+        path: "src/assets/achievements/gitlab-level-4-contributor.png",
+        kind: "badge",
+        state: "untracked",
+      },
+    ],
+    { root: "/var/www/jmrp.io", date: new Date("2026-10-10T08:00:00Z") },
+  );
+  assert.match(
+    lines[0],
+    /1 CV PDF\(s\) under public\/pdf\/ and 1 achievement badge\(s\) under src\/assets\/achievements\//,
+  );
+  assert.ok(
+    lines.some((line) =>
+      line.includes(
+        'commit -m "chore: refresh the CV PDFs and achievement badges from the 2026-10-10 deploy"',
+      ),
+    ),
+  );
+  assert.equal(lines.filter((line) => line.includes(" commit -m ")).length, 1);
+});
+
+test("a badges-only deploy names only the badges", () => {
+  const lines = formatDeployNotice(
+    [
+      {
+        path: "src/assets/achievements/a.png",
+        kind: "badge",
+        state: "modified",
+      },
+    ],
+    { root: "/r", date: new Date("2026-10-10T08:00:00Z") },
+  );
+  assert.doesNotMatch(lines[0], /CV PDF/);
+  assert.ok(
+    lines.some((l) =>
+      l.includes(
+        '"chore: refresh achievement badges from the 2026-10-10 deploy"',
       ),
     ),
   );

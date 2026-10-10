@@ -498,6 +498,13 @@ jobs:
         run: |
           set -e -o pipefail
           node scripts/ci/check-schema-ranges.mjs dist 2>&1 | tee -a schema-validation.log
+      # Network, not dist: the five project docs sites against projects.yaml.
+      # An undeclared contradiction fails; an unreadable site does not, so an
+      # outage elsewhere cannot turn this red (GEO audit #12, M1).
+      - name: Check projects.yaml against the projects' own sites
+        run: |
+          set -e -o pipefail
+          node scripts/ci/check-software-drift.mjs 2>&1 | tee -a schema-validation.log
       - name: Upload Schema log
         if: always()
         uses: actions/upload-artifact@v7

@@ -16,6 +16,13 @@ export interface Series {
    * shared by the EN and ES versions of the same article.
    */
   posts: string[];
+  /**
+   * `@id` of the software entity the series is about (the `#software` node
+   * `/projects/` and `/tools/` already publish). Set only for a series that
+   * documents one program: its hub then says `about` that program rather than
+   * the author, and its posts `mention` it.
+   */
+  software?: string;
 }
 
 /** The curated series. Order within `posts` is the reading order, not the date. */
@@ -23,7 +30,11 @@ export const SERIES: Series[] = [
   { slug: "nginx-hardening", posts: ["001", "003", "004", "002", "005"] },
   { slug: "mikrotik-dual-stack", posts: ["007", "008", "006"] },
   { slug: "kleidos-firmware", posts: ["010", "011", "012"] },
-  { slug: "gitlab-mcp-server", posts: ["013", "014"] },
+  {
+    slug: "gitlab-mcp-server",
+    posts: ["013", "014"],
+    software: "https://github.com/jmrplens/gitlab-mcp-server#software",
+  },
 ];
 
 /**
@@ -34,6 +45,27 @@ export const SERIES: Series[] = [
  */
 export function getSeries(slug: string): Series | undefined {
   return SERIES.find((series) => series.slug === slug);
+}
+
+/**
+ * The repository URL behind a series' `software` @id (the `#software` fragment
+ * stripped), which is also how `projects.yaml` spells the project's `repo`.
+ *
+ * @param series - The series definition.
+ * @returns The repository URL, or `undefined` for a series about no program.
+ */
+export function seriesRepoUrl(series: Series): string | undefined {
+  return series.software?.replace(/#software$/u, "");
+}
+
+/**
+ * The series about a given repository, so a project card can point at it.
+ *
+ * @param repo - The repository URL as `projects.yaml` spells it.
+ * @returns The series whose `software` is that repository, if any.
+ */
+export function getSeriesForRepo(repo: string): Series | undefined {
+  return SERIES.find((series) => seriesRepoUrl(series) === repo);
 }
 
 /**

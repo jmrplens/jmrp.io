@@ -11,6 +11,8 @@ import {
   communityLine,
 } from "@utils/project-facts";
 import { getProjects, hostedHref, type Project } from "@utils/projects";
+import { getSeriesForRepo } from "@utils/series";
+import { getSiteUrl } from "@utils/site";
 import { fillSiteFacts, getSiteFacts } from "@utils/site-facts";
 import { getEntry } from "astro:content";
 
@@ -479,8 +481,25 @@ function projectCardLines(
     `- ${t("pages.projects.twin.repository")}: ${p.repo}`,
     `- ${t("pages.projects.twin.documentation")}: ${locale === "es" ? (p.docsEs ?? p.docs) : p.docs}`,
     ...extraLinkLines(p, hosted, t),
+    ...seriesLines(p, locale),
     "",
   ];
+}
+
+/**
+ * The card's "Read the series" link, for a project a series is about.
+ *
+ * @param p - The project.
+ * @param locale - Which locale.
+ * @returns One list line, or nothing.
+ */
+function seriesLines(p: Project, locale: "en" | "es"): Lines {
+  const series = getSeriesForRepo(p.repo);
+  if (!series) return [];
+  const t = useTranslations(locale);
+  const path = `${locale === "es" ? "/es" : ""}/blog/series/${series.slug}/`;
+  const href = new URL(path, getSiteUrl()).href;
+  return [`- ${t("series.ui.readSeries")}: ${href}`];
 }
 
 /**

@@ -20,6 +20,13 @@ export const series = {
     indexLead:
       "Some articles here were written as a set. A tag page can only list them; these hubs say why the cluster exists, in what order to read it, and which decision each piece settles.",
     indexListLabel: "Editorial series",
+    softwareTitle: "The software",
+    softwareLead:
+      "The series documents one program, {name}. Its source, documentation and project card:",
+    softwareRepo: "Repository",
+    softwareDocs: "Documentation",
+    softwareProjects: "On the projects page",
+    readSeries: "Read the series",
   },
 
   "nginx-hardening": {

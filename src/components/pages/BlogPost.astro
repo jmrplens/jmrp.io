@@ -109,6 +109,7 @@ const relatedContent = await getRelatedContent(postNumber, locale);
 // camouflage for a Tor bridge, which is not what the Nginx-hardening series is
 // about, and filing it there to avoid an orphan would misdescribe both.
 const seriesInfo = getSeriesForPost(postNumber);
+const seriesSoftware = seriesInfo?.series.software;
 const seriesUrl = seriesInfo
   ? new URL(
       translatePath(`/blog/series/${seriesInfo.series.slug}/`),
@@ -471,14 +472,20 @@ const articleNode = {
         ),
         "@id": wikidataEntityUri(post.data.topics[0].wikidata),
       },
-      ...(post.data.topics.length > 1 && {
-        mentions: post.data.topics.slice(1).map((topic) => ({
-          "@type": "Thing",
-          name: wikidataLabel(topic.wikidata, topic.name),
-          "@id": wikidataEntityUri(topic.wikidata),
-        })),
-      }),
     }),
+  // A post in a series about one program mentions that program's `#software`
+  // node (defined on /projects/ and /tools/), ahead of the Wikidata topics.
+  // Built apart from `about` so it exists even for a post with no topics.
+  ...((seriesSoftware || (post.data.topics?.length ?? 0) > 1) && {
+    mentions: [
+      ...(seriesSoftware ? [{ "@id": seriesSoftware }] : []),
+      ...(post.data.topics ?? []).slice(1).map((topic) => ({
+        "@type": "Thing",
+        name: wikidataLabel(topic.wikidata, topic.name),
+        "@id": wikidataEntityUri(topic.wikidata),
+      })),
+    ],
+  }),
   ...translationLink,
   // Surface the lead/summary to voice assistants and AI readers.
   speakable: {

@@ -16,22 +16,24 @@ type: projects
 #   reinforcing it. Re-verified against the live @id nodes on 2026-09-03 for
 #   all five projects that have a docs site. Matching: phonometry,
 #   cs-routeros-bouncer, Cloudflare-DNS-Updater. Two still read differently,
-#   for different reasons. gitlab-mcp-server ("850+ actions — 1,000+ depending
-#   on edition and deployment" here vs "1000+ tools" there) is NOT
-#   drift: the author confirmed on 2026-09-03 that the two counts measure
-#   different GitLab tiers, so both are true and this entry is a deliberate,
-#   accepted exception to the verbatim rule. libgen-mcp said "search and
+#   for different reasons. gitlab-mcp-server (here "more than 850 operations
+#   on Free or self-managed, over 1,000 on Ultimate"; its docs say "868 on
+#   Free/CE, up to 1094 on GitLab.com Ultimate") is NOT drift: the counts
+#   measure different GitLab tiers and each carries its edition, so both are
+#   true and this entry is a deliberate, accepted exception to the verbatim
+#   rule. libgen-mcp said "search and
 #   download ... from Library Genesis" here while its docs site, README, npm
 #   and GitHub description all said "federated search, citation and reading
 #   ... across the Library Genesis catalog and open-access sources"; this copy
 #   was the stale side and follows them since 2026-09-11.
-#   Nothing enforces this rule: it drifted unnoticed from 2026-07-28 to
-#   2026-09-03, when phonometry's figures had moved 550/58/367 → 613/60/378,
-#   and again by 2026-09-11 (995/77/408, the figures its docs publish from
-#   4.0.0rc1 on), and again by 2026-09-17 (1261/87/461) and by 2026-09-25
-#   (1447/97/477). The checker
-#   `node scripts/ci/check-software-drift.mjs` is what reports it each time;
-#   nothing prevents it, so read that report rather than trusting this copy.
+#   This rule drifted unnoticed from 2026-07-28 to 2026-09-03, when
+#   phonometry's figures had moved 550/58/367 → 613/60/378, and again by
+#   2026-09-11 (995/77/408, the figures its docs publish from 4.0.0rc1 on),
+#   by 2026-09-17 (1261/87/461), by 2026-09-25 (1447/97/477) and by
+#   2026-10-10 (1893/111/523). The checker
+#   `node scripts/ci/check-software-drift.mjs` now exits 1 on a contradiction
+#   and runs in `pnpm verify` and in CI, so a stale copy fails the build
+#   instead of waiting for the next audit; read its report when it does.
 #   Projects without a docs site use the repo/CV copy.
 # * `summary.es` is display-only. JSON-LD always emits `summary.en`, on both
 #   locales, because the software entity is language-neutral and its
@@ -153,8 +155,8 @@ projects:
       - { name: Go, wikidata: Q37227 }
       - { name: DevOps, wikidata: Q3025536 }
     summary:
-      en: Model Context Protocol server that exposes more than 1,000 GitLab operations as AI-accessible tools.
-      es: Servidor Model Context Protocol que expone más de 1.000 operaciones de GitLab como herramientas accesibles para asistentes de IA.
+      en: Model Context Protocol server that exposes more than 850 GitLab operations as AI-accessible tools on a Free or self-managed instance, and over 1,000 on Ultimate.
+      es: Servidor Model Context Protocol que expone más de 850 operaciones de GitLab como herramientas accesibles para asistentes de IA en una instancia Free o autoalojada, y más de 1.000 en Ultimate.
 
   - id: phonometry
     name: phonometry
@@ -182,13 +184,13 @@ projects:
       - { name: Octave band, wikidata: Q2270252 }
       - { name: Python, wikidata: Q28865 }
     summary:
-      en: "Acoustic measurement, analysis and prediction for Python: sound level metrology, psychoacoustics, room and building acoustics, materials, vibration, environmental and transport noise, underwater acoustics, electroacoustics and wave simulation, with 1447 CI-enforced conformance checks across 97 domains and 477 standards."
-      es: "Medición, análisis y predicción acústica para Python: metrología de niveles sonoros, psicoacústica, acústica de salas y edificación, materiales, vibración, ruido ambiental y de transporte, acústica subacuática, electroacústica y simulación de ondas, con 1447 comprobaciones de conformidad en CI sobre 97 dominios y 477 normas."
+      en: "Acoustic measurement, analysis and prediction for Python: sound level metrology, psychoacoustics, room and building acoustics, materials, vibration, environmental and transport noise, underwater acoustics, electroacoustics and wave simulation, with 1893 CI-enforced conformance checks across 111 domains and 523 standards."
+      es: "Medición, análisis y predicción acústica para Python: metrología de niveles sonoros, psicoacústica, acústica de salas y edificación, materiales, vibración, ruido ambiental y de transporte, acústica subacuática, electroacústica y simulación de ondas, con 1893 comprobaciones de conformidad en CI sobre 111 dominios y 523 normas."
     # Homepage card only (too long above for a card). Keep its figures in step
     # with `summary` when those change.
     cardSummary:
-      en: "Acoustic measurement, analysis and prediction for Python, with 1447 CI-enforced conformance checks across 97 domains and 477 standards."
-      es: "Medición, análisis y predicción acústica para Python, con 1447 comprobaciones de conformidad en CI sobre 97 dominios y 477 normas."
+      en: "Acoustic measurement, analysis and prediction for Python, with 1893 CI-enforced conformance checks across 111 domains and 523 standards."
+      es: "Medición, análisis y predicción acústica para Python, con 1893 comprobaciones de conformidad en CI sobre 111 dominios y 523 normas."
 
   - id: cs-routeros-bouncer
     name: cs-routeros-bouncer

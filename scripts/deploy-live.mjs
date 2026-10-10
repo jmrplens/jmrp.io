@@ -88,8 +88,8 @@ import path from "node:path";
 import { performance } from "node:perf_hooks";
 
 import {
-  detectUncommittedCvPdfs,
-  formatCvPdfNotice,
+  detectUncommittedDeployFiles,
+  formatDeployNotice,
 } from "./cv-pdf-notice.mjs";
 import {
   describeNonLiveBuild,
@@ -1872,15 +1872,16 @@ function recordContributionsBuildState() {
 
 /**
  * Prints a notice, at the end of a production deploy, for CV PDFs under
- * `public/pdf/` that git does not have: `build:cv` recompiles them whenever
+ * `public/pdf/` and achievement badges under `src/assets/achievements/` that
+ * git does not have: `build:cv` recompiles them whenever
  * an embedded figure moves, so `main` would otherwise lag production
  * silently. Skipped outside a git work tree. Never fatal.
  *
  * @returns {void}
  */
-function reportUncommittedCvPdfs() {
+function reportUncommittedDeployFiles() {
   try {
-    const pdfs = detectUncommittedCvPdfs((args) =>
+    const files = detectUncommittedDeployFiles((args) =>
       spawnSync(
         "git", // NOSONAR
         args,
@@ -1896,8 +1897,8 @@ function reportUncommittedCvPdfs() {
         },
       ),
     );
-    if (!pdfs || pdfs.length === 0) return;
-    const lines = formatCvPdfNotice(pdfs, { root: ROOT, date: new Date() });
+    if (!files || files.length === 0) return;
+    const lines = formatDeployNotice(files, { root: ROOT, date: new Date() });
     for (const line of lines) console.warn(`deploy-live: ${line}`);
   } catch (error) {
     console.warn(
@@ -1948,7 +1949,7 @@ async function main() {
 
   const { purgeFailed } = await runPublishNotifications();
 
-  reportUncommittedCvPdfs();
+  reportUncommittedDeployFiles();
 
   if (contributionsState && isNonLiveState(contributionsState)) {
     for (const line of describeNonLiveBuild(contributionsState)) {
