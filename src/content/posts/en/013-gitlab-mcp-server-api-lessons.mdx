@@ -1,0 +1,498 @@
+---
+title: "What building a GitLab MCP server taught me about GitLab's API"
+slug: "013-gitlab-mcp-server-api-lessons"
+publishedDate: 2026-10-10
+description: "Building and checking an MCP server against GitLab found a 401 that meant 403 and writes answered as successes that saved nothing; each went upstream."
+lead: "Between a review of its register of upstream defects on 5 October 2026 and 9 October, gitlab-mcp-server sent 23 merge requests to GitLab, client-go and Orbit; at 04:48 UTC on 10 October, 15 had merged."
+coverImage: "../../../assets/images/blog/gitlab-api-referee.webp"
+author: "José Manuel Requena Plens"
+authorEmail: "mail@jmrp.io"
+draft: false
+tags: ["GitLab", "API", "Testing", "MCP"]
+articleType: "TechArticle"
+proficiencyLevel: "Intermediate"
+topics:
+  - name: "GitLab"
+    wikidata: "Q16639197"
+  - name: "REST"
+    wikidata: "Q749568"
+  - name: "GraphQL"
+    wikidata: "Q25104949"
+  - name: "OpenAPI"
+    wikidata: "Q18393146"
+  - name: "Model Context Protocol"
+    wikidata: "Q133436854"
+  - name: "HTTP status code"
+    wikidata: "Q110861089"
+faq:
+  - question: "Why does the GitLab REST API answer 401 Unauthorized to a token that works?"
+    answer: "Some GitLab endpoints refuse an authenticated user who lacks a permission with 401 and the same body GitLab returns for a token that does not exist: merging, approving, mirrors and access token reads among them. To tell the cases apart, call GET /api/v4/user with the same token. A 200 means the token is valid and the request was refused for another reason; a 403 there also means a valid token, one that cannot read your user account. GitLab documents this in the REST API troubleshooting page since gitlab-org/gitlab!260774, merged on 9 October 2026; no status code changed, because GitLab's API style guide treats changing one as a breaking change."
+  - question: "Can I generate a GitLab client from GitLab's OpenAPI document?"
+    answer: "Only with care. GitLab generates the document from each Grape route's desc block, which Grape uses for documentation and never checks against what the handler presents. Where the two differ, the document is wrong: the merge request context commit list was described with ten fewer keys than it sends until gitlab-org/gitlab!260487, and the approvals endpoints are still described with 4 keys while every Enterprise Edition build sends 24 (gitlab-org/gitlab!261004, in review on 9 October 2026, makes the entity and the document say 24). Check what you generate against a running instance."
+  - question: "How do you check client code against a real GitLab without calling GitLab from unit tests?"
+    answer: "Record the instance once and check against the record offline. gitlab-mcp-server boots a released gitlab-ee image, asks the loaded application for every entity, field, condition and route, and commits the answer; it also pins the GraphQL schema GitLab.com serves and validates every GraphQL request its tools' unit tests make against it. Unit tests stay offline, and a Docker end-to-end run against a real CE or EE instance covers what a record cannot."
+  - question: "Why parse insufficient_scope from the body of a GitLab 403 instead of the WWW-Authenticate header?"
+    answer: "Because GitLab does not send the header. Its 403 for a token that lacks a scope carries insufficient_scope and the scope list in the JSON body only, although RFC 6750 asks for a WWW-Authenticate challenge; GitLab's own source has a FIXME saying so. A parser of the header would pass a hand-written fake and never fire against a real GitLab. gitlab-org/gitlab!260668, in review on 9 October 2026, adds the challenge."
+  - question: "Why does client-go fail to list GitLab commits with trailers?"
+    answer: "GitLab sends a commit's extended_trailers as a map from each trailer to the list of its values, and client-go declares the field as a map of strings, as it still does in v3.17.0, its newest release as of 9 October 2026. As soon as one commit on a page carries a trailer, the whole ListCommits page fails to decode. gitlab-org/api/client-go!3082, in review on 9 October 2026, adds a field of the right type and deprecates the old one."
+  - question: "What happens to a workaround once GitLab fixes the bug?"
+    answer: "Each audit finding that is GitLab's and not the server's is answered by a declaration with a category and a reason, and a declaration that stops matching anything fails the build. When the record is re-taken from a GitLab release that carries the fix, the declarations for the old defect match nothing, the build fails, and they are deleted. A workaround no audit sees, such as a hint for a misleading status, fails nothing and is revisited by hand. A client-go fix retires its workaround, such as a field read from the captured response, when the server moves to the client-go release that carries it."
+---
+
+import TLDRSummary from "@components/ui/TLDRSummary.astro";
+import Callout from "@components/ui/Callout.astro";
+import Table from "@components/ui/Table.astro";
+import Code from "@components/ui/Code.astro";
+import BeforeAfter from "@components/ui/BeforeAfter.astro";
+import HttpExchange from "@components/ui/HttpExchange.astro";
+import ForkJoin from "@components/ui/ForkJoin.astro";
+
+On a licensed test GitLab, my MCP server tried to approve a merge request with the token of the person who had opened it. The instance had "Prevent approval by merge request creator" turned on, so GitLab refused, and it refused with `401 Unauthorized` and the exact body it returns for a token that does not exist. The server did what the status code table says and told its user that the GitLab token might be invalid or expired. The token was fine. The table it followed gave a 401 one meaning: "The user isn't authenticated."
+
+That server is [gitlab-mcp-server](https://github.com/jmrplens/gitlab-mcp-server), which exposes GitLab's REST and GraphQL APIs as tools for clients over the Model Context Protocol. To do it, it has to know what every GitLab operation accepts and returns, and there are three places to learn that from. This post is about what happened when I stopped taking two of them at their word and made the third, a running GitLab, the referee.
+
+<TLDRSummary title="TL;DR: what a booted GitLab told me about its API">
+
+- GitLab's API has **three descriptions**: the documentation and the OpenAPI documents generated from each route's `desc` block, client-go's structs, and what an instance actually answers. They disagree more often than you would expect.
+- gitlab-mcp-server maps **872 (Free) to 1,098 (GitLab.com Ultimate)** GitLab operations in its 3.2.0 catalog, so it checks itself against a record taken from **a booted GitLab 19.4.1**, an inventory of the requests its unit tests send, the GraphQL schema GitLab.com serves, an audit that joins them, and a Docker end-to-end run.
+- What building and checking the server found in GitLab and its Go SDK: a permission refusal answered **401**, writes answered **200 and 204** that saved nothing, a route documented with the **wrong response entity**, a missing `WWW-Authenticate` challenge, and **SDK types** that cannot decode what GitLab sends.
+- Every such finding goes into a **public register** with its evidence and the workaround it costs. Between a review of the register on 5 October 2026 and 9 October, **23 merge requests** recorded in it went upstream, to gitlab-org/gitlab (20), client-go (2) and the Orbit knowledge graph (1). At 04:48 UTC on 10 October, **15 had merged**, 13 of them within two days of being opened.
+
+</TLDRSummary>
+
+## Three descriptions of one API
+
+The server maps GitLab's API one operation at a time, and each action carries two obligations: send a request GitLab accepts, and publish what GitLab returns. There are three places to learn both from:
+
+1. **The documentation**, and the OpenAPI documents GitLab generates from the `desc` block of each Grape route.
+2. **client-go**, GitLab's Go SDK, whose structs and option types the server is built on.
+3. **A running GitLab.**
+
+The first two describe the third. People write them, and they drift. In June 2026 a user asked in [gitlab-org/api/client-go#2269](https://gitlab.com/gitlab-org/api/client-go/-/issues/2269) whether drift between the API and the client could be detected more deterministically. A maintainer replied that moving to structs generated from the OpenAPI document had been discussed, but that, at least back then, the schema was not comprehensive, and that they knew no great way to detect drift on something like GraphQL. In September I put a number on it in [gitlab-org/api/client-go#2300](https://gitlab.com/gitlab-org/api/client-go/-/work_items/2300): 897 fields GitLab sends that the library does not model.
+
+None of that is anyone's failure. A description nobody checks against the thing it describes drifts, and the only way to check is to ask the thing.
+
+## Making GitLab the referee
+
+I ended up with five checks. Each sees something the others cannot, and the first three each have a blind spot worth stating, because the first of them hid one of the bugs below.
+
+### A record taken from a booted GitLab
+
+`cmd/gen_api_live` boots a released `gitlab-ee` image, runs a Ruby script inside it through `gitlab-rails runner`, and asks the loaded application what its REST API is: every Grape entity with its fields and the condition each is sent under, every route with its parameters and the entity its `desc` names, and the licensed feature table. The answer is committed as [`gitlab-api-live.json`](https://github.com/jmrplens/gitlab-mcp-server/blob/main/docs/development/gitlab-api-live.json) and every audit reads it offline, so no audit of the REST API has to boot a GitLab, in CI or anywhere else. Taking the record needs no license, because a license gates features when a request is served, not when a class loads. The current one comes from GitLab 19.4.1-ee on 4 October 2026 and holds **596 entities with 7,412 fields** and **2,152 routes**.
+
+Booting beats parsing. The two records it replaced read text, the generated OpenAPI document and a scan of the Grape source, and measured against GitLab 19.3.1 the instance had 1,935 fields the scan never saw. `GeoSiteStatus` builds its field list by iterating a constant made from two method calls, so the source says, in effect, "expose the loop variable": the scan found 26 fields, the instance reports 606.
+
+**Blind spot:** a route's response entity comes from its own `desc` annotation, because that is all a route says about itself before a request is served. When the annotation is wrong, the record is wrong with it (the context commit story below).
+
+### An inventory of the requests the tests send
+
+Almost every unit test builds its GitLab client with one helper that wraps the mock server in a recorder: method, templated path (`/projects/:project_id/issues/:issue_id/notes`), query parameter names, JSON body keys, and for GraphQL the operation and its variables. Merged across the suite, [`request-inventory.json`](https://github.com/jmrplens/gitlab-mcp-server/blob/main/docs/development/request-inventory.json) holds **1,633 rows** from 178 packages (committed on 8 October). It exists because no earlier audit looked at the request a handler builds, and the package comment of the audit rule that now reads it says what that cost (all nine were GraphQL requests, which the next check catches):
+
+<Callout type="note" title="The audit's package comment">
+
+"That is how nine registered tools shipped while being unable to work: a perfect input struct, a perfect output struct, a registered action, complete enums, and a request GitLab refuses."
+
+</Callout>
+
+Read beside client-go's option structs, the inventory found **nine optional parameters that client-go writes into every request body** because their struct tags lack `omitempty`, such as `"package_name_pattern": null` on every update of a package protection rule. All nine are fixed in [gitlab-org/api/client-go!3063](https://gitlab.com/gitlab-org/api/client-go/-/merge_requests/3063), in review on 9 October.
+
+**Blind spot:** a row is the union of what one package sent to one endpoint, never which names went together, and nothing on the wire names the action.
+
+### The GraphQL schema GitLab.com serves
+
+`cmd/gen_graphql_schema` introspects GitLab.com and commits the schema, **4,475 types** from 19.5.0-pre, taken on 27 September 2026, and the same test helper validates every GraphQL request a tool's unit test sends against it, document and variables. It even walks enum values itself, because the validator library accepted `"critical"` for `VulnerabilitySeverity` and GitLab does not. Before the pin, a green GraphQL test only proved that the code agreed with its own fixture: the nine broken tools above were four sending a document the schema refuses and five a value GitLab does not have. On 9 October none of the server's 39 documents is refused, nor any of the 36 client-go documents it can judge.
+
+**Blind spot:** query cost, since the check enforces no depth or complexity limit; deprecations, which the pinned schema does not carry; and fields a self-managed release lacks, since GitLab.com runs a pre-release. A weekly CI job boots the latest self-managed image and validates the server's own documents against it, which covers the last of the three for the newest release.
+
+### An audit that joins them, and its declarations
+
+`cmd/audit_1to1` holds the server to the SDK and the API rule by rule, the request each handler builds included. Its run of 9 October compared **240 output types** with what the record says their endpoints send, and found **2,066 fields GitLab sends that the server does not publish**, **1,414** of which client-go does not model either. None is left as noise: a finding that is not the server's bug is answered in a declaration table with a category and a reason, and **a declaration that stops matching anything fails the run**. That rule is what retires a declaration once a GitLab release carries the fix, as the section on the register shows.
+
+### A Docker end-to-end run
+
+Under all of that, `test/e2e/gitlab/` drives the real server binary against an ephemeral GitLab CE or a licensed EE, from 223 test files as of 9 October. The unit checks catch a request that cannot work; only a real instance catches a response the server misreads. The 401 at the top of this post came from here.
+
+## What building and checking the server found
+
+Each of these has a row in the register and a merge request to GitLab or client-go. States are as read on 10 October 2026 at 04:48 UTC.
+
+### A 401 that meant 403
+
+This is the exchange from the opening, written out as HTTP from the error line the [gitlab-mcp-server register entry for this 401](https://github.com/jmrplens/gitlab-mcp-server/blob/main/docs/development/upstream-bugs.md#a-permission-refusal-is-answered-401-rather-than-403) keeps from the licensed end-to-end run, `POST /api/v4/projects/109/merge_requests/1/approve: 401 {message: 401 Unauthorized}`:
+
+<HttpExchange
+  method="POST"
+  path="/api/v4/projects/109/merge_requests/1/approve"
+  requestHeaders={[
+    { name: "PRIVATE-TOKEN", value: "<a valid token of the merge request's author>" },
+  ]}
+  responses={[
+    {
+      label: "Licensed GitLab EE, Prevent approval by merge request creator on",
+      status: 401,
+      body: '{"message":"401 Unauthorized"}',
+      note: "The server then said: authentication failed: GITLAB_TOKEN may be invalid or expired.",
+      tone: "bad",
+    },
+  ]}
+  caption="GitLab refuses the author's approval with the status and body it uses for a token that does not exist."
+/>
+
+When I read GitLab's source afterwards, I found thirty places written to refuse with a 401 a user who is already authenticated, all but one through `unauthorized!`, from merging and approving to mirrors, access tokens and SAML group links. Anyone can reproduce the pattern with read-only requests against gitlab.com and a token that is not a Maintainer of gitlab-org/gitlab. Every 401 below carries the same body, `{"message":"401 Unauthorized"}`, and every path is under `/api/v4`:
+
+<Table title="Same body, two meanings (re-measured 9 October)">
+  <thead>
+    <tr>
+      <th scope="col">Status</th>
+      <th scope="col">Token</th>
+      <th scope="col">Request</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>`401`</td>
+      <td>nonexistent</td>
+      <td>`GET /user`</td>
+    </tr>
+    <tr>
+      <td>`401`</td>
+      <td>mine</td>
+      <td>`GET /projects/278964/remote_mirrors`</td>
+    </tr>
+    <tr>
+      <td>`401`</td>
+      <td>mine</td>
+      <td>`GET /projects/278964/access_tokens`</td>
+    </tr>
+    <tr>
+      <td>`200`</td>
+      <td>mine</td>
+      <td>`GET /user`</td>
+    </tr>
+  </tbody>
+</Table>
+
+<Callout type="tip" title="Is it the token or the permission?">
+
+Call `GET /api/v4/user` with the same token. A `200` means the token is valid and the request was refused for another reason. A `403` also means a valid token, one that cannot read your user account, such as a fine-grained token without User: Read. Only a `401` there means the token itself is invalid.
+
+</Callout>
+
+Changing the status code was not an option, since GitLab's API style guide counts changing any status code other than `500` as a breaking change. A related GitLab issue, [gitlab-org/gitlab#624056](https://gitlab.com/gitlab-org/gitlab/-/issues/624056) ("Agree a consistent 401 and 403 error shape"), asks for one 401 and 403 error shape across GitLab's modular feature APIs, such as Orbit and Artifact Registry, and an older report of one of the thirty sites is [gitlab-org/gitlab#383531](https://gitlab.com/gitlab-org/gitlab/-/issues/383531) from 2022. So [gitlab-org/gitlab!260774](https://gitlab.com/gitlab-org/gitlab/-/merge_requests/260774) documents the behavior instead. It merged on 9 October and is already on the [REST API troubleshooting page](https://docs.gitlab.com/api/rest/troubleshooting/#status-code-401), with a new "Status code 401" section that lists the three cases and the `GET /user` check. The status table's row now says it too:
+
+<BeforeAfter beforeLabel="Before gitlab-org/gitlab!260774" afterLabel="After">
+<div slot="before">
+
+`401 Unauthorized`: The user isn't authenticated. A valid user token is necessary.
+
+</div>
+<div slot="after">
+
+`401 Unauthorized`: The user isn't authenticated. A valid user token is necessary. **Some endpoints also return this status code when the user is authenticated but doesn't have permission for the request. For more information, see status code 401.**
+
+</div>
+</BeforeAfter>
+
+The server now blames the token only when GitLab does: when the body carries the RFC 6750 code `invalid_token`, or when the 401 came from the GraphQL endpoint, which answers 401 only from its authentication checks. Before its HTTP pool drops a credential over an ambiguous 401, it asks `GET /api/v4/user` once. That workaround stays until GitLab answers 403 at those thirty sites, and no change proposing that is in review.
+
+### Writes answered as successes
+
+**A board name GitLab cannot save.** `Board` validates a changed name at 255 characters, and nothing else checks it. A longer or empty name on `PUT /projects/:id/boards/:board_id` answered `200 OK` with the board as it was, every other attribute of the request dropped along with the name. On `POST` it answered `201 Created` with a board whose `id` was `null`, and nothing had been created.
+
+<HttpExchange
+  method="PUT"
+  path="/api/v4/projects/:id/boards/:board_id"
+  requestBody={'{"name": "<256 characters>", "hide_backlog_list": true}'}
+  requestBodyLang="plaintext"
+  responses={[
+    {
+      label: "Before gitlab-org/gitlab!260458",
+      status: 200,
+      note: "The board as stored. Neither the name nor hide_backlog_list was saved.",
+      tone: "bad",
+    },
+    {
+      label: "After",
+      status: 400,
+      body: '{"message":{"name":["is too long (maximum is 255 characters)"]}}',
+      tone: "good",
+    },
+  ]}
+  caption="A name GitLab cannot save: 200 with nothing saved, 400 after the fix."
+/>
+
+The update's cause was one line. The `board` helper was not memoized, so each call loaded a fresh record, and both the validity check and the response read the stored board, valid because its name had not changed. The create helper presented the service's payload whatever the service said.
+
+<Code lang="diff" title="lib/api/boards_responses.rb, gitlab-org/gitlab!260458">
+```diff
+-  board_parent.boards.find(params[:board_id])
++  @board ||= board_parent.boards.find(params[:board_id])
+```
+</Code>
+
+[gitlab-org/gitlab!260458](https://gitlab.com/gitlab-org/gitlab/-/merge_requests/260458) memoizes the helper, answers a failed write in both helpers with `render_validation_error!`, and states the limit on the API pages. The reviewer accepted the changed status as a bug fix, since only a request that was never saved gets the new answer. It merged on 9 October and is live on GitLab.com. I took no workaround, because a length check of my own would copy a validation the pages did not state.
+
+**A delete that deletes nothing, and a refusal that looks like an outage.** Managing external status checks takes the Maintainer role. A Developer's delete answered `204 No Content` and the check was still there; a Developer's create answered `500` with `{"message":["Not allowed"]}`, which a client retries or reports as an outage.
+
+<HttpExchange
+  method="DELETE"
+  path="/api/v4/projects/:id/external_status_checks/:check_id"
+  requestHeaders={[{ name: "PRIVATE-TOKEN", value: "<a Developer's token>" }]}
+  responses={[
+    {
+      label: "Before gitlab-org/gitlab!260486",
+      status: 204,
+      note: "The check is still there.",
+      tone: "bad",
+    },
+    {
+      label: "After",
+      status: 403,
+      body: '{"message":"403 Forbidden"}',
+      tone: "good",
+    },
+  ]}
+  caption="A Developer's delete: 204 with the check still there, 403 after the fix."
+/>
+
+<HttpExchange
+  method="POST"
+  path="/api/v4/projects/:id/external_status_checks"
+  requestHeaders={[{ name: "PRIVATE-TOKEN", value: "<a Developer's token>" }]}
+  responses={[
+    {
+      label: "Before gitlab-org/gitlab!260486",
+      status: 500,
+      body: '{"message":["Not allowed"]}',
+      tone: "bad",
+    },
+    {
+      label: "After",
+      status: 403,
+      body: '{"message":"403 Forbidden"}',
+      tone: "good",
+    },
+  ]}
+  caption="A Developer's create: 500 'Not allowed', 403 after the fix."
+/>
+
+Both had the same root: a refusal from the service that never reached the response. `destroy_conditionally!` sets the status to 204 before it yields and discards what the block returns, and the create service's refusal carried no HTTP status, so Grape answered its `nil` status with 500. GitLab's own spec only drove an owner, who may manage the checks, and a non-member, whom the route answers 404 before the service runs, so no test of GitLab's reached the service's refusal. [gitlab-org/gitlab!260486](https://gitlab.com/gitlab-org/gitlab/-/merge_requests/260486) checks the role with `authorize!` before calling the service, as the merge request routes of the same file already did, and renders the service's error inside the delete block, so a failed destroy is now a 422 rather than a 204:
+
+<Code lang="diff" title="ee/lib/api/status_checks.rb, gitlab-org/gitlab!260486 (excerpt)">
+```diff
+ post do
++  authorize! :create_external_status_check, user_project
+ ...
+-    destroy_conditionally!(service.external_status_check) do
+-      service.execute
++    external_status_check = service.external_status_check
++    authorize! :delete_external_status_check, external_status_check
++
++    destroy_conditionally!(external_status_check) do
++      response = service.execute
++
++      render_api_error!(response.payload[:errors], response.http_status) if response.error?
+     end
+```
+</Code>
+
+It merged on 9 October, in milestone 19.6. Until a release carries it, the server reads a 500 carrying "Not allowed" as the role refusal it is, and the delete action's usage asks the caller to confirm a deletion with the list action, because nothing on the wire tells that 204 apart from a real one.
+
+### The route says one entity and sends another
+
+`GET /projects/:id/merge_requests/:merge_request_iid/context_commits` declared `success Entities::Commit` and presented `Entities::CommitWithLink` with `type: :full`, which adds ten keys: `author`, `author_gravatar_url`, `commit_url`, `commit_path`, `description_html`, `title_html`, `signature_html`, `prev_commit_id`, `next_commit_id` and `pipeline_status_path`. Grape uses the `desc` block for documentation only, so the docs page, both OpenAPI documents and anything generated from them described a response without those ten keys, and no test of GitLab's could notice.
+
+The booted record could not see it either, since it takes the entity from the same annotation. I found it by reading the handler instead of the annotation, while I surfaced the context commit keys for the server. The server publishes four of them from the captured response, and because the record says the route never sends them, each of the four carries a declaration in the audit.
+
+<Code lang="diff" title="The context commit route's desc block, gitlab-org/gitlab!260487">
+```diff
+       desc 'List all context commits for a merge request' do
+         detail 'Lists all context commits for a specified merge request.'
+-        success Entities::Commit
++        success Entities::CommitWithLink
+         is_array true
+```
+</Code>
+
+[gitlab-org/gitlab!260487](https://gitlab.com/gitlab-org/gitlab/-/merge_requests/260487) changes that line, regenerates both OpenAPI documents, adds an example request and a complete example response to the [merge request context commits API page](https://docs.gitlab.com/api/merge_request_context_commits/), and adds a request spec that holds the response's keys to the documented entity's exposures, so the two cannot drift apart again. Against `master` without the annotation change, that spec fails on exactly the ten keys:
+
+<Code lang="ruby" title="The request spec added by gitlab-org/gitlab!260487">
+```ruby
+it 'returns the attributes of the entity the endpoint documents' do
+  route = described_class.routes.find do |r|
+    r.request_method == 'GET' && r.path.include?('/merge_requests/:merge_request_iid/context_commits')
+  end
+  documented_keys = route.options[:entity].root_exposures.map { |exposure| exposure.key.to_s }
+
+  get api("/projects/#{project.id}/merge_requests/#{merge_request.iid}/context_commits", user)
+
+  expect(response).to have_gitlab_http_status(:ok)
+  expect(json_response.first.keys).to match_array(documented_keys)
+end
+```
+</Code>
+
+It merged on 9 October. Two earlier fixes of the same kind merged in September: [gitlab-org/gitlab!254698](https://gitlab.com/gitlab-org/gitlab/-/merge_requests/254698) for three job token scope endpoints, and [gitlab-org/gitlab!254699](https://gitlab.com/gitlab-org/gitlab/-/merge_requests/254699) for two project group listings.
+
+The approvals endpoints are the same class with a twist. The merge request approvals `GET` and the approve and unapprove `POST`s declare a four-key entity. Community Edition sends those four. Every Enterprise Edition build sends 24, licensed or not, GitLab.com included, because the EE module overrides the presenting helper with no license check. The server itself once trusted the four-key description: in September a Community Edition instance answered those four keys and GitLab's generated OpenAPI document agreed, so the server cut its output to four. The record taken from an EE image could not correct that, since it reads the same annotation. When I read the same GET on GitLab.com on 5 October, it answered all 24, and the server now reads the other 20 from the captured response.
+
+[gitlab-org/gitlab!259766](https://gitlab.com/gitlab-org/gitlab/-/merge_requests/259766), merged on 9 October, documents both editions on the page. [gitlab-org/gitlab!261004](https://gitlab.com/gitlab-org/gitlab/-/merge_requests/261004), in review, makes the entity and the generated OpenAPI document say 24, as a reviewer asked.
+
+### A challenge that was never sent
+
+When a token lacks the scope an endpoint needs, GitLab answers `403` with `insufficient_scope` in the JSON body and no `WWW-Authenticate` header. [RFC 6750, section 3](https://www.rfc-editor.org/rfc/rfc6750#section-3) asks for the challenge, and the MCP authorization flow reads it to learn which scope to request next. GitLab's source says as much in `lib/api/api_guard.rb`:
+
+<Code lang="ruby" title="lib/api/api_guard.rb">
+```ruby
+# FIXME: ForbiddenError (inherited from Bearer::Forbidden of Rack::Oauth2)
+# does not include WWW-Authenticate header, which breaks the standard.
+```
+</Code>
+
+This one surfaced while I implemented insufficient-scope detection for the server's OAuth mode, and it is the clearest case for making GitLab the referee. The obvious implementation, parsing `error="insufficient_scope"` out of the challenge, would have compiled, passed a hand-written fake that emitted the header, and never once fired against a real GitLab. The server reads the body instead.
+
+<HttpExchange
+  method="GET"
+  path="/api/v4/namespaces"
+  requestHeaders={[{ name: "Authorization", value: "Bearer <token with read_user only>" }]}
+  responses={[
+    {
+      label: "Without gitlab-org/gitlab!260668",
+      status: 403,
+      body: '{"error":"insufficient_scope","error_description":"The request requires higher privileges than provided by the access token.","scope":"api read_api"}',
+      note: "No WWW-Authenticate header.",
+      tone: "bad",
+    },
+    {
+      label: "With gitlab-org/gitlab!260668 (in review)",
+      status: 403,
+      headers: [
+        {
+          name: "WWW-Authenticate",
+          value: 'Bearer realm="Protected by OAuth 2.0", error="insufficient_scope", error_description="The request requires higher privileges than provided by the access token.", scope="api read_api"',
+        },
+      ],
+      body: '{"error":"insufficient_scope","error_description":"The request requires higher privileges than provided by the access token.","scope":"api read_api"}',
+      tone: "good",
+    },
+  ]}
+  caption="The insufficient_scope refusal, without and with the RFC 6750 challenge (the body as rack-oauth2 writes it, with the scope list gitlab-org/gitlab!260668 records for this request)."
+/>
+
+[gitlab-org/gitlab!260668](https://gitlab.com/gitlab-org/gitlab/-/merge_requests/260668) writes the challenge from the same parameters as the body, so the two cannot disagree, and after review it names only the scopes that can authorize the request. Every other 403 is unchanged, the fine-grained token one included. It is in review. The server needs nothing from it: this one is a contribution, not a fix I was waiting for.
+
+### The SDK half: client-go
+
+Some of what the checks find is in the SDK rather than in GitLab. Two examples.
+
+**A whole page fails.** GitLab sends a commit's `extended_trailers` as a map from each trailer to the list of its values, and client-go declares `ExtendedTrailers map[string]string`, as it still does in v3.17.0, its newest release as of 9 October 2026. So `ListCommits` with `trailers=true` fails as a whole as soon as one commit on the page carries a trailer:
+
+<Code lang="json" title="extended_trailers as GitLab sends it (shape only)">
+```json
+"extended_trailers": {
+  "Approved-by": ["<name> <email>", "<name> <email>"],
+  "Cc": ["<name> <email>", "<name> <email>"]
+}
+```
+</Code>
+
+<Code lang="text" title="ListCommits with trailers=true">
+```text
+client-go v3.15.0 to v3.17.0, ExtendedTrailers map[string]string:
+  json: cannot unmarshal array into Go struct field .1.extended_trailers.Cc of type string
+client-go!3082, ExtendedTrailerValues map[string][]string:
+  the page decodes
+```
+</Code>
+
+That error is the one [gitlab-org/api/client-go!3082](https://gitlab.com/gitlab-org/api/client-go/-/merge_requests/3082) records for its test page, whose second commit carries two `Cc:` trailers. The merge request adds `ExtendedTrailerValues map[string][]string` on the `extended_trailers` key and deprecates the old field, so no caller stops compiling. Until it ships, the server passes over client-go's decode error and reads the commits from the response it already received.
+
+**A field that never decodes.** `ImportStatus` tags its timestamp `create_at` while GitLab sends `created_at`, so it has never been filled. [gitlab-org/api/client-go!3085](https://gitlab.com/gitlab-org/api/client-go/-/merge_requests/3085) fixes it and adds fields GitLab sends and accepts that nine other structs miss, such as `last_commit` on tree entries and `raw` on pipeline variables. Both are in review.
+
+When the server needs a field client-go does not model, it reads it from the response it already has rather than making a request of its own ([ADR-0021](https://github.com/jmrplens/gitlab-mcp-server/blob/main/docs/development/adr/adr-0021-captured-response-for-fields-the-sdk-does-not-model.md)); 84 non-test files did this on 9 October. Each gap read that way is recorded in the register with the handler that carries it, and the workaround stays until the server moves to a client-go release that models the field.
+
+## From finding to merge request
+
+The [gitlab-mcp-server upstream register](https://github.com/jmrplens/gitlab-mcp-server/blob/main/docs/development/upstream-bugs.md) is one Markdown file in the repository: "Defects and missing capabilities found in projects this server depends on, kept here so they are contributed back rather than only worked around." Each entry records what the defect is and where, how it was found, the workaround it costs, and the merge request with its state. It is permanent: an entry is never deleted, and when a fix lands it is marked merged with the release that carries it.
+
+Writing a finding down that way, with its evidence and what it costs a client, is most of the work of a merge request already. For a GitLab fix, the loop closes like this:
+
+<ForkJoin
+  ariaLabel="A failed check, or GitLab's source contradicting what the server assumed, becomes a register entry. The entry forks into two lanes: in the server, a workaround and a declaration that explains it; upstream, a merge request to GitLab that merges and is released. The lanes join when the record is re-taken from that release: the declaration matches nothing, the build fails, and the declaration is deleted while the entry stays, marked merged."
+  beforeLabel="Found"
+  before={[
+    { name: "A check fails, or GitLab's source says otherwise", note: "booted record, request inventory, GraphQL schema, audit, end-to-end run, or reading GitLab's source" },
+    { name: "Register entry", note: "symptom, evidence, cost to a client, fix" },
+  ]}
+  branches={[
+    [
+      { name: "Workaround", note: "captured response, hint or usage note" },
+      { name: "Declaration, where an audit sees it", note: "category and reason; must keep matching" },
+    ],
+    [
+      { name: "Merge request", note: "gitlab-org/gitlab" },
+      { name: "Merged" },
+      { name: "Released" },
+    ],
+  ]}
+  after={[
+    { name: "Record re-taken", note: "from the GitLab release that carries the fix" },
+    { name: "Declaration matches nothing", note: "the build fails" },
+    { name: "Declaration deleted", note: "entry marked merged, kept for good" },
+  ]}
+  afterLabel="Retired"
+  caption="When a GitLab defect costs the server a workaround, the finding runs in two lanes: worked around in the server, fixed upstream. Re-taking the record from the GitLab release that carries the fix leaves the declarations matching nothing, and the build fails until they are deleted; a workaround the record cannot see, such as a hint, is revisited by hand."
+/>
+
+The context commit fix is the next one through. When `cmd/gen_api_live` is run against a release that carries gitlab-org/gitlab!260487, the record will hold that route under `CommitWithLink`, the four declarations will match nothing, the stale-declaration check will fail, and they will be deleted along with the explanation they carried. The six keys the server leaves out will then be reported as keys GitLab sends that the server does not publish, and each will need a declaration of its own, while the four it publishes stay read from the captured response until client-go models them.
+
+The loop has run before. gitlab-org/gitlab!254698, the job token scope fix above, shipped in GitLab 19.4.0, and when the record moved from 19.3.1-ee to 19.4.1-ee, the stale-declaration check failed on the declaration that had answered its findings until it was removed. On the client-go side the loop closes when the server moves to a release that carries the fix, not through the record: register row 34 lists fourteen client-go merge requests that add fields GitLab sends unconditionally. They grew out of the measurement in client-go#2300, all fourteen were merged and released between client-go v3.1.0 and v3.15.0 (9 to 28 September 2026), and each one retired a workaround in the server.
+
+## In numbers
+
+As read on 10 October 2026 at 04:48 UTC, for the merge requests the register records as opened between its review of 5 October and 9 October:
+
+<Table title="Merge requests opened between the 5 October review and 9 October">
+  <thead>
+    <tr>
+      <th scope="col">Figure</th>
+      <th scope="col">Value</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Opened in the period</td>
+      <td>23: gitlab-org/gitlab 20, client-go 2, Orbit knowledge graph 1</td>
+    </tr>
+    <tr>
+      <td>Merged</td>
+      <td>15: gitlab-org/gitlab 14, Orbit knowledge graph 1</td>
+    </tr>
+    <tr>
+      <td>Merged within two days of being opened</td>
+      <td>13 of the 15</td>
+    </tr>
+    <tr>
+      <td>In review</td>
+      <td>8: gitlab-org/gitlab 6, client-go 2</td>
+    </tr>
+  </tbody>
+</Table>
+
+The register itself, as it stood on the morning of 9 October, held 102 entries across eight upstream projects (client-go 46, gitlab-org/gitlab 31, one of them shared with client-go, the MCP Go SDK 17 and five smaller ones), and 86 of them had a fix in review or merged, 81 of those mine.
+
+One merge request outside the stories above is worth a line: [gitlab-org/gitlab!260459](https://gitlab.com/gitlab-org/gitlab/-/merge_requests/260459), in review, would make GitLab refuse an unknown filter value on a pipeline's security findings. An unknown severity answers 500, and a filter made only of unknown report types matches no scan, so an empty page that means "you misspelled the filter" reads as "no vulnerabilities". The register lists the rest.
+
+## Closing
+
+These checks were built to keep one server honest, and most of what they caught was not the server's to fix. Writing each finding down with its evidence and its workaround is what made it cheap to send upstream, and the speed of the answer was GitLab's. My thanks to GitLab's reviewers and technical writers, who took every one of them seriously.
+
+The booted record also carries what each REST route and GraphQL element demands of a fine-grained personal access token, and eight of the 23 merge requests counted above came out of that work. [GitLab fine-grained personal access tokens, one action at a time](/blog/014-gitlab-fine-grained-tokens-per-action/) is the next post: it covers that work and ends with how to create a token for the server.
+
+<Callout type="keypoint" title="The method, if you build on GitLab's API">
+
+Make a booted instance the referee, record what your tests send, keep a register, and file each finding upstream with its symptom, its evidence, what it costs a client and a fix.
+
+</Callout>
+
+The server's documentation is at [jmrp.io/docs/gitlab-mcp-server](https://jmrp.io/docs/gitlab-mcp-server/), its [gitlab-mcp-server upstream contributions](https://jmrp.io/docs/gitlab-mcp-server/about/) are listed on the About page, and the register is on [GitHub](https://github.com/jmrplens/gitlab-mcp-server/blob/main/docs/development/upstream-bugs.md).

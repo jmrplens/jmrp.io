@@ -37,6 +37,9 @@ amazonbot
 blockedbyclient
 braveway
 hostroyale
+omitempty
+unapprove
+unmarshal
 ámbar
 amicro
 ancel
@@ -99,6 +102,7 @@ autofirmado
 autogenera
 autogeneradas
 autogenere
+autogestionada
 autorenew
 autosar
 autotest
@@ -727,6 +731,8 @@ medkit
 mehome
 mejora
 membrana
+memoiza
+memoizado
 menlo
 menos
 Meshtastic

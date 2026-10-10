@@ -7,8 +7,8 @@ interface FJNode {
 }
 
 const LABEL = {
-  en: { splits: "splits into", joins: "joins into" },
-  es: { splits: "se divide en", joins: "confluye en" },
+  en: { splits: "splits into", parallel: "in parallel", joins: "joins into" },
+  es: { splits: "se divide en", parallel: "en paralelo", joins: "confluye en" },
 } as const;
 
 /**
@@ -25,7 +25,7 @@ const LABEL = {
 export default markdownFor({
   tag: "ForkJoin",
   toMarkdown(node, ctx) {
-    const branches = ctx.expr<FJNode[]>(node, "branches");
+    const branches = ctx.expr<(FJNode | FJNode[])[]>(node, "branches");
     if (!Array.isArray(branches) || branches.length === 0)
       return ctx.body(node);
 
@@ -58,7 +58,18 @@ export default markdownFor({
       const phase = beforeLabel ? `${beforeLabel}: ` : "";
       lines.push(`- ${phase}${flow(before)}`);
     }
-    lines.push(`- ${label.splits}: ${branches.map(one).join(" + ")}`);
+    /**
+     * Renders one branch: a node, or a chain in parentheses.
+     *
+     * @param branch - The node or the chain.
+     * @returns The rendered branch.
+     */
+    const lane = (branch: FJNode | FJNode[]): string =>
+      Array.isArray(branch) ? `(${flow(branch)})` : one(branch);
+    // With no `before` chain nothing splits: the branches are independent
+    // inputs that only join.
+    const middle = before.length > 0 ? label.splits : label.parallel;
+    lines.push(`- ${middle}: ${branches.map(lane).join(" + ")}`);
     if (after.length > 0) {
       const phase = afterLabel ? ` (${afterLabel})` : "";
       lines.push(`- ${label.joins}${phase}: ${flow(after)}`);

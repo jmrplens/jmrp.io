@@ -23,6 +23,7 @@ export const SERIES: Series[] = [
   { slug: "nginx-hardening", posts: ["001", "003", "004", "002", "005"] },
   { slug: "mikrotik-dual-stack", posts: ["007", "008", "006"] },
   { slug: "kleidos-firmware", posts: ["010", "011", "012"] },
+  { slug: "gitlab-mcp-server", posts: ["013", "014"] },
 ];
 
 /**

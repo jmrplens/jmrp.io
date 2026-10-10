@@ -449,9 +449,11 @@ Zero-JS, theme-aware, responsive SVG/CSS diagrams for systems/embedded/C++/netwo
 | `CallStack`       | `@components/ui/CallStack.astro`        | `frames[] {name,detail?}` — call frames + growth                |
 | `Matrix`          | `@components/ui/Matrix.astro`           | `rows`, `cols`, `cells[][]`, `highlight?` — labelled 2-D grid   |
 | `Pipeline`        | `@components/ui/Pipeline.astro`         | `stages[] {name,note?,via?}` — numbered stages + data-flow      |
-| `ForkJoin`        | `@components/ui/ForkJoin.astro`         | `before?[]`, `branches[]`, `after?[]` — fork→join data-flow     |
+| `ForkJoin`        | `@components/ui/ForkJoin.astro`         | `before?[]`, `branches[]`, `after?[]` — fork→join data-flow; a branch may be a chain (lane)     |
 | `ThemeImage`      | `@components/ui/ThemeImage.astro`       | `src` or `srcLight`+`srcDark`, `alt` — light/dark image swap    |
 | `FileDownload`    | `@components/ui/FileDownload.astro`     | `href`, `filename`, `size?` — download card                     |
+| `HttpExchange`    | `@components/ui/HttpExchange.astro`     | `method`, `path`, `responses[] {label?,status,statusText?,headers?,body?,bodyLang?,note?,tone?,verdict?}`, `requestHeaders?`, `requestBody?`, `title?`, `caption?`: one request, its answers side by side |
+| `SelectionTree`   | `@components/ui/SelectionTree.astro`    | `root {name,type?,state?,note?,spine?,children?}`, `title?`, `operation?`, `verdict?`, `verdictTone?`, `caption?`: tree with per-node state and a heavier spine path |
 
 ### Barrel Exports
 

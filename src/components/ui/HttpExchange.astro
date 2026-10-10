@@ -1,0 +1,503 @@
+---
+/**
+ * HttpExchange: one HTTP request and the answers it got, side by side.
+ *
+ * Built for API posts where the point is the status line: the same request
+ * answered `200` before a fix and `400` after it, or answered `401` where the
+ * documentation promises `403`. The request is drawn once; each response is a
+ * card with its own label (for example "GitLab 19.4" and "After the fix"), a
+ * status pill coloured by its class, optional headers, an optional body and a
+ * one-line note (a long JSON body is laid out over several lines). `tone`
+ * marks a response as the wrong answer (`bad`) or the
+ * corrected one (`good`) with an icon and screen-reader text, never by colour
+ * alone. `verdict` replaces that screen-reader text when the comparison is not
+ * a fix. Zero-JS; long header values wrap instead of scrolling, and the path
+ * breaks only after a slash.
+ *
+ * @example
+ * <HttpExchange
+ *   method="PUT"
+ *   path="/api/v4/projects/:id/boards/:board_id"
+ *   requestBody='{"name": "<256 characters>"}'
+ *   responses={[
+ *     { label: "Before", status: 200, note: "Nothing was saved", tone: "bad" },
+ *     { label: "After", status: 400, body: '{"message":"..."}', tone: "good" },
+ *   ]}
+ * />
+ */
+import { defaultLocale, type Locale } from "@i18n/config";
+import { useTranslations } from "@i18n/utils";
+import { escapeHtml } from "@utils/html";
+import { highlightCode } from "@utils/shiki";
+
+interface Header {
+  /** Header name, e.g. `WWW-Authenticate`. */
+  name: string;
+  /** Header value, shown as written. */
+  value: string;
+}
+
+interface HttpResponse {
+  /** Short label above the status, e.g. "Before" or "GitLab 19.4.1". */
+  label?: string;
+  /** HTTP status code. */
+  status: number;
+  /** Reason phrase; defaults to the standard one for common codes. */
+  statusText?: string;
+  /** Response headers worth showing (not all of them). */
+  headers?: Header[];
+  /** Response body, as sent. */
+  body?: string;
+  /** Highlighting language for the body; defaults to json when it parses. */
+  bodyLang?: string;
+  /** One-line note under the response, e.g. "nothing was saved". */
+  note?: string;
+  /** `bad` for the wrong answer, `good` for the corrected one. */
+  tone?: "bad" | "good" | "neutral";
+  /**
+   * Screen-reader text for the tone icon, when the default ("Wrong answer" /
+   * "Corrected answer") does not fit, e.g. two releases or two tokens
+   * compared rather than a fix.
+   */
+  verdict?: string;
+}
+
+interface Props {
+  /** Optional title above the exchange. */
+  title?: string;
+  /** Request method, e.g. `GET`. */
+  method: string;
+  /** Request path (or full URL). */
+  path: string;
+  /** Request headers worth showing. */
+  requestHeaders?: Header[];
+  /** Request body, as sent. */
+  requestBody?: string;
+  /** Highlighting language for the request body; json when it parses. */
+  requestBodyLang?: string;
+  /** One or more answers to the same request. */
+  responses: HttpResponse[];
+  /** Caption below the figure. */
+  caption?: string;
+}
+
+const {
+  title,
+  method,
+  path,
+  requestHeaders = [],
+  requestBody,
+  requestBodyLang,
+  responses,
+  caption,
+} = Astro.props;
+
+const locale = (Astro.currentLocale ?? defaultLocale) as Locale;
+const t = useTranslations(locale);
+
+const REASONS: Record<number, string> = {
+  200: "OK",
+  201: "Created",
+  202: "Accepted",
+  204: "No Content",
+  301: "Moved Permanently",
+  302: "Found",
+  304: "Not Modified",
+  400: "Bad Request",
+  401: "Unauthorized",
+  403: "Forbidden",
+  404: "Not Found",
+  409: "Conflict",
+  422: "Unprocessable Entity",
+  429: "Too Many Requests",
+  500: "Internal Server Error",
+  502: "Bad Gateway",
+  503: "Service Unavailable",
+};
+
+/**
+ * Picks the highlighting language of a body: the one given, else json when
+ * the text parses as JSON, else plain text.
+ *
+ * @param body - The body text.
+ * @param lang - An explicit language, if the caller gave one.
+ * @returns The Shiki language name.
+ */
+function bodyLanguage(body: string, lang?: string): string {
+  if (lang) return lang;
+  try {
+    JSON.parse(body);
+    return "json";
+  } catch {
+    return "plaintext";
+  }
+}
+
+/**
+ * Lays a long JSON body out over several lines, so a narrow screen wraps it at
+ * the structure rather than inside a word. A short body stays as GitLab sends
+ * it, on one line.
+ *
+ * @param body - The body text.
+ * @param lang - The language it will be highlighted as.
+ * @returns The text to highlight.
+ */
+function layOut(body: string, lang: string): string {
+  if (lang !== "json" || body.length <= 56) return body;
+  try {
+    return JSON.stringify(JSON.parse(body), undefined, 2);
+  } catch {
+    return body;
+  }
+}
+
+/**
+ * Highlights a body after laying it out.
+ *
+ * @param body - The body text.
+ * @param explicit - The language the caller gave, if any.
+ * @returns The highlighted HTML.
+ */
+async function renderBody(body: string, explicit?: string): Promise<string> {
+  const lang = bodyLanguage(body, explicit);
+  return highlightCode(layOut(body, lang), lang as "json");
+}
+
+const requestBodyHtml = requestBody
+  ? await renderBody(requestBody, requestBodyLang)
+  : "";
+
+const cards = await Promise.all(
+  responses.map(async (response) => {
+    const statusClass = `${Math.floor(response.status / 100)}xx`;
+    const tone = response.tone ?? "neutral";
+    return {
+      ...response,
+      tone,
+      statusClass,
+      reason: response.statusText ?? REASONS[response.status] ?? "",
+      bodyHtml: response.body
+        ? await renderBody(response.body, response.bodyLang)
+        : "",
+    };
+  }),
+);
+
+const columns = Math.min(Math.max(cards.length, 1), 2);
+
+// The path with a <wbr> after each slash, so a narrow screen breaks it only
+// there and never inside a segment. Built as a string: JSX around the
+// segments would put whitespace between them. <wbr> adds nothing to copied
+// text.
+const pathHtml = path
+  .split(/(?<=\/)/)
+  .map((segment) => escapeHtml(segment))
+  .join("<wbr>");
+---
+
+<figure class="hx">
+  {title && <figcaption class="hx__title">{title}</figcaption>}
+
+  <div
+    class="hx__req"
+    aria-label={t("components.httpExchange.request")}
+    role="group"
+  >
+    <p class="hx__line">
+      <span class="hx__method">{method}</span>
+      <code
+        class="hx__path"
+        set:html={pathHtml}
+      />
+    </p>
+    {requestHeaders.length > 0 && (
+      <ul class="hx__headers">
+        {requestHeaders.map((header) => (
+          <li>
+            <span class="hx__header-name">{header.name}:</span>{" "}
+            <span class="hx__header-value">{header.value}</span>
+          </li>
+        ))}
+      </ul>
+    )}
+    {requestBodyHtml && (
+      <div
+        class="hx__body"
+        set:html={requestBodyHtml}
+      />
+    )}
+  </div>
+
+  <ol class:list={["hx__responses", columns === 2 && "hx__responses--two"]}>
+    {cards.map((card) => (
+      <li class:list={["hx__res", `hx__res--${card.tone}`]}>
+        <p class="hx__status-line">
+          {card.label && <span class="hx__label">{card.label}</span>}
+          <span class:list={["hx__status", `hx__status--${card.statusClass}`]}>
+            <span class="sr-only">{t("components.httpExchange.status")} </span>
+            {card.status} {card.reason}
+          </span>
+          {card.tone === "bad" && (
+            <span class="hx__verdict hx__verdict--bad">
+              <span
+                class="i-tabler:circle-x"
+                aria-hidden="true"
+              />
+              <span class="sr-only">
+                {card.verdict ?? t("components.httpExchange.bad")}
+              </span>
+            </span>
+          )}
+          {card.tone === "good" && (
+            <span class="hx__verdict hx__verdict--good">
+              <span
+                class="i-tabler:circle-check"
+                aria-hidden="true"
+              />
+              <span class="sr-only">
+                {card.verdict ?? t("components.httpExchange.good")}
+              </span>
+            </span>
+          )}
+        </p>
+        {card.headers && card.headers.length > 0 && (
+          <ul class="hx__headers">
+            {card.headers.map((header) => (
+              <li>
+                <span class="hx__header-name">{header.name}:</span>{" "}
+                <span class="hx__header-value">{header.value}</span>
+              </li>
+            ))}
+          </ul>
+        )}
+        {card.bodyHtml && (
+          <div
+            class="hx__body"
+            set:html={card.bodyHtml}
+          />
+        )}
+        {card.note && <p class="hx__note">{card.note}</p>}
+      </li>
+    ))}
+  </ol>
+
+  {/* A figure takes one figcaption: the title when there is one, else the
+      caption. */}
+  {caption &&
+    (title ? (
+      <p class="hx__caption">{caption}</p>
+    ) : (
+      <figcaption class="hx__caption">{caption}</figcaption>
+    ))}
+</figure>
+
+<style>
+  .hx {
+    margin: 1.5rem 0;
+  }
+
+  .hx__title {
+    margin-bottom: 0.75rem;
+    font-size: var(--text-md);
+    font-weight: var(--fw-semibold, 600);
+    color: var(--color-text-heading);
+  }
+
+  .hx__req {
+    padding: 0.75rem 0.9rem;
+    background: var(--color-surface-2);
+    border: var(--border-1);
+    border-radius: var(--radius-md, 8px);
+  }
+
+  .hx__line,
+  .hx__status-line {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem 0.55rem;
+    align-items: baseline;
+    margin: 0;
+  }
+
+  .hx__method {
+    padding: 0.05rem 0.45rem;
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    font-weight: var(--fw-bold, 700);
+    color: var(--color-on-primary);
+    letter-spacing: 0.04em;
+    background: var(--color-primary);
+    border-radius: var(--radius-sm, 4px);
+  }
+
+  .hx__path {
+    min-width: 0;
+    padding: 0;
+    font-family: var(--font-mono);
+    font-size: var(--text-sm);
+    color: var(--color-text-heading);
+    overflow-wrap: break-word;
+    background: none;
+  }
+
+  .hx__headers {
+    padding: 0;
+    margin: 0.5rem 0 0;
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    line-height: 1.5;
+    list-style: none;
+  }
+
+  /* Hanging indent: the first line starts flush with the method pill (this
+     also overrides the 0.25rem padding of .prose li) and a long value wraps
+     under itself, not under the header name. */
+  .hx__headers li {
+    padding: 0 0 0 1.25rem;
+    margin: 0;
+    text-indent: -1.25rem;
+    overflow-wrap: anywhere;
+  }
+
+  .hx__header-name {
+    font-weight: var(--fw-semibold, 600);
+    color: var(--color-text-heading);
+  }
+
+  .hx__header-value {
+    color: var(--color-text);
+  }
+
+  .hx__body {
+    margin-top: 0.5rem;
+  }
+
+  .hx__body :global(pre) {
+    padding: 0;
+    margin: 0;
+    font-size: var(--text-xs);
+    line-height: 1.5;
+    overflow-wrap: anywhere;
+    white-space: pre-wrap;
+    background: transparent !important;
+  }
+
+  .hx__body :global(code) {
+    white-space: inherit;
+  }
+
+  /* A wrapped body line hangs under its own start instead of restarting at
+     column 0, where it would read as a new top-level line. */
+  .hx__body :global(.line) {
+    display: inline-block;
+    padding-left: 4ch;
+    text-indent: -4ch;
+  }
+
+  .hx__responses {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+    padding: 0;
+    margin: 0.75rem 0 0;
+    list-style: none;
+  }
+
+  @media (width >= 720px) {
+    .hx__responses--two {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  .hx__res {
+    min-width: 0;
+    padding: 0.75rem 0.9rem;
+    margin: 0;
+    background: var(--color-bg-secondary);
+    border: var(--border-1);
+    border-left-width: 3px;
+    border-radius: var(--radius-md, 8px);
+  }
+
+  .hx__res--bad {
+    border-left-color: var(--dg-danger-line);
+  }
+
+  .hx__res--good {
+    border-left-color: var(--dg-success-line);
+  }
+
+  .hx__label {
+    flex-basis: 100%;
+    font-family: var(--font-mono);
+    font-size: var(--text-2xs);
+    font-weight: var(--fw-medium, 500);
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+  }
+
+  .hx__status {
+    padding: 0.05rem 0.5rem;
+    font-family: var(--font-mono);
+    font-size: var(--text-sm);
+    font-weight: var(--fw-bold, 700);
+    border: 1px solid;
+    border-radius: var(--radius-sm, 4px);
+  }
+
+  .hx__status--2xx {
+    color: var(--dg-success-text);
+    background: var(--dg-success-fill);
+    border-color: var(--dg-success-line);
+  }
+
+  .hx__status--3xx {
+    color: var(--dg-info-text);
+    background: var(--dg-info-fill);
+    border-color: var(--dg-info-line);
+  }
+
+  .hx__status--4xx {
+    color: var(--dg-warning-text);
+    background: var(--dg-warning-fill);
+    border-color: var(--dg-warning-line);
+  }
+
+  .hx__status--5xx {
+    color: var(--dg-danger-text);
+    background: var(--dg-danger-fill);
+    border-color: var(--dg-danger-line);
+  }
+
+  .hx__verdict {
+    display: inline-flex;
+    align-items: center;
+    font-size: 1.1rem;
+  }
+
+  .hx__verdict--bad {
+    color: var(--dg-danger-text);
+  }
+
+  .hx__verdict--good {
+    color: var(--dg-success-text);
+  }
+
+  /* Commentary on the answer, not part of it: after the body, muted italic
+     (5.49:1 dark, 5.84:1 light on the card). */
+  .hx__note {
+    margin: 0.5rem 0 0;
+    font-size: var(--text-sm);
+    font-style: italic;
+    color: var(--color-text-muted);
+  }
+
+  .hx__caption {
+    margin-top: 0.75rem;
+    font-size: var(--text-xs);
+    font-style: italic;
+    color: var(--color-text-muted);
+    text-align: center;
+  }
+</style>

@@ -8,7 +8,7 @@ import { getCollection } from "astro:content";
  * Tag-derived relations were rejected: 20 of 28 tags hold exactly one post,
  * so tag overlap carries almost no signal. These pairs encode the actual
  * editorial clusters (Nginx TLS stack, CrowdSec-backed defence, MikroTik
- * dual-stack, Kleidos firmware trilogy).
+ * dual-stack, Kleidos firmware trilogy, the gitlab-mcp-server pair).
  */
 export const RELATED: Record<string, { posts: string[]; tools: string[] }> = {
   "001": { posts: ["003", "004"], tools: ["cert-inspector"] },
@@ -26,6 +26,8 @@ export const RELATED: Record<string, { posts: string[]; tools: string[] }> = {
   "010": { posts: ["011", "012"], tools: ["string-pool-packer"] },
   "011": { posts: ["012", "010"], tools: ["etm-envelope-visualizer"] },
   "012": { posts: ["011", "010"], tools: ["pin-brute-force-calculator"] },
+  "013": { posts: ["014"], tools: [] },
+  "014": { posts: ["013"], tools: [] },
 };
 
 /** A resolved related item, ready to render as a link. */

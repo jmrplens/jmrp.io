@@ -124,13 +124,28 @@ const indexSchema = {
     color: var(--color-text);
   }
 
+  /* Explicit steps rather than auto-fit: with four series, auto-fit left the
+     fourth card alone on a second row between about 1000 and 1135 px. Two
+     columns from 600 px, four from 1280 px. Revisit if a fifth series lands. */
   .series-index__list {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    grid-template-columns: 1fr;
     gap: var(--space-md);
     padding: 0;
     margin: 0;
     list-style: none;
+  }
+
+  @media (width >= 600px) {
+    .series-index__list {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  @media (width >= 1280px) {
+    .series-index__list {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
   }
 
   .series-card {

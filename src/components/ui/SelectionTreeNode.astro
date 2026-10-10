@@ -1,0 +1,222 @@
+---
+/**
+ * SelectionTreeNode: one position of a {@link SelectionTree}, rendered as a
+ * list item that recurses into its children through `Astro.self`. Internal to
+ * SelectionTree; not meant to be used from MDX on its own.
+ */
+import { defaultLocale, type Locale } from "@i18n/config";
+import { useTranslations } from "@i18n/utils";
+
+export interface TreeNode {
+  /** Field name as selected, e.g. `namespace` or `issueLinks { nodes }`. */
+  name: string;
+  /** GraphQL type of the position, e.g. `Namespace`. */
+  type?: string;
+  /** What GitLab does with this position for a fine-grained token. */
+  state?: "ok" | "null" | "empty" | "conditional" | "unreached";
+  /** Short note, e.g. "Vulnerability: Read at project". */
+  note?: string;
+  /** On the answer spine. */
+  spine?: boolean;
+  /** Child positions. */
+  children?: TreeNode[];
+}
+
+interface Props {
+  /** The position to render. */
+  node: TreeNode;
+  /** True for a root position (drawn without a connector). */
+  root?: boolean;
+}
+
+const { node, root = false } = Astro.props;
+
+const locale = (Astro.currentLocale ?? defaultLocale) as Locale;
+const t = useTranslations(locale);
+
+const ICONS = {
+  ok: "i-tabler:circle-check",
+  null: "i-tabler:circle-x",
+  empty: "i-tabler:circle-dashed",
+  conditional: "i-tabler:alert-circle",
+  unreached: "i-tabler:circle-minus",
+} as const;
+
+const children = node.children ?? [];
+---
+
+<li
+  class:list={[
+    "st-item",
+    root && "st-item--root",
+    node.spine && "st-item--spine",
+    node.state && `st-item--${node.state}`,
+  ]}
+>
+  <span class="st-node">
+    <code class="st-name">{node.name}</code>
+    {node.type && <span class="st-type">{node.type}</span>}
+    {node.state && (
+      <span class:list={["st-badge", `st-badge--${node.state}`]}>
+        <span
+          class={ICONS[node.state]}
+          aria-hidden="true"
+        />
+        {t(`components.selectionTree.states.${node.state}`)}
+      </span>
+    )}
+    {node.spine && (
+      <span class="sr-only">({t("components.selectionTree.spine")})</span>
+    )}
+    {node.note && <span class="st-note">{node.note}</span>}
+  </span>
+  {children.length > 0 && (
+    <ul class="st-children">
+      {children.map((child) => (
+        <Astro.self node={child} />
+      ))}
+    </ul>
+  )}
+</li>
+
+<style>
+  .st-children {
+    padding: 0;
+    margin: 0 0 0 0.55rem;
+    list-style: none;
+  }
+
+  .st-item {
+    --st-line: var(--color-text-muted);
+    --st-spine: var(--color-accent);
+
+    position: relative;
+    padding: 0.25rem 0 0.25rem 1.35rem;
+    margin: 0;
+  }
+
+  /* Elbow connector: a vertical run from the parent, then a short horizontal
+     arm into the node. The last child's run stops at its own arm. */
+  .st-item::before {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    content: "";
+    border-left: 1.5px solid var(--st-line);
+  }
+
+  .st-item:last-child::before {
+    bottom: auto;
+    height: 1.05rem;
+  }
+
+  .st-item::after {
+    position: absolute;
+    top: 1.05rem;
+    left: 0;
+    width: 1rem;
+    content: "";
+    border-top: 1.5px solid var(--st-line);
+  }
+
+  .st-item--root {
+    padding-left: 0;
+  }
+
+  .st-item--root::before,
+  .st-item--root::after {
+    display: none;
+  }
+
+  .st-item--spine::after {
+    border-top: 3px solid var(--st-spine);
+  }
+
+  .st-item--spine::before {
+    border-left: 3px solid var(--st-spine);
+  }
+
+  /* Only the run that leads to a spine child is drawn heavy: a spine item that
+     is not the last child keeps the light run below its own arm. */
+  .st-item--spine:not(:last-child)::before {
+    bottom: auto;
+    height: 1.05rem;
+  }
+
+  .st-node {
+    display: inline-flex;
+    flex-wrap: wrap;
+    gap: 0.2rem 0.45rem;
+    align-items: baseline;
+  }
+
+  .st-name {
+    padding: 0.05rem 0.35rem;
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    font-weight: var(--fw-semibold, 600);
+    color: var(--color-text-heading);
+    background: var(--color-surface-2);
+    border: var(--border-1);
+    border-radius: var(--radius-sm, 4px);
+  }
+
+  .st-item--spine > .st-node > .st-name {
+    border: 2px solid var(--st-spine);
+  }
+
+  /* An unreached position is marked by shape, not by dimming: opacity would
+     drop its type text below 4.5:1, and the badge already says it in words. */
+  .st-item--unreached > .st-node > .st-name {
+    border-style: dashed;
+  }
+
+  .st-type {
+    font-family: var(--font-mono);
+    font-size: var(--text-micro);
+    color: var(--color-text-muted);
+  }
+
+  .st-badge {
+    display: inline-flex;
+    gap: 0.25rem;
+    align-items: center;
+    padding: 0 0.4rem;
+    font-size: var(--text-micro);
+    font-weight: var(--fw-medium, 500);
+    border: 1px solid;
+    border-radius: var(--radius-pill, 999px);
+  }
+
+  .st-badge--ok {
+    color: var(--dg-success-text);
+    background: var(--dg-success-fill);
+    border-color: var(--dg-success-line);
+  }
+
+  .st-badge--null {
+    color: var(--dg-danger-text);
+    background: var(--dg-danger-fill);
+    border-color: var(--dg-danger-line);
+  }
+
+  .st-badge--empty,
+  .st-badge--conditional {
+    color: var(--dg-warning-text);
+    background: var(--dg-warning-fill);
+    border-color: var(--dg-warning-line);
+  }
+
+  .st-badge--unreached {
+    color: var(--dg-neutral-text);
+    background: var(--dg-neutral-fill);
+    border-color: var(--dg-neutral-line);
+  }
+
+  .st-note {
+    flex-basis: 100%;
+    font-size: var(--text-xs);
+    color: var(--color-text);
+  }
+</style>

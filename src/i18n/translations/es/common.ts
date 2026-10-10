@@ -300,6 +300,23 @@ export const common = {
       ariaWithTitle: "Pipeline: {title}. {count} etapas.",
       ariaWithoutTitle: "Pipeline con {count} etapas",
     },
+    httpExchange: {
+      request: "Petición",
+      status: "Estado",
+      bad: "Respuesta errónea",
+      good: "Respuesta corregida",
+    },
+    selectionTree: {
+      legend: "Leyenda",
+      spine: "En la columna de la respuesta",
+      states: {
+        ok: "declarado",
+        null: "no declara nada",
+        empty: "se sirve vacío",
+        conditional: "necesita otro permiso",
+        unreached: "no se alcanza",
+      },
+    },
     forkJoin: {
       ariaWithTitle: "Diagrama de flujo fork-join: {title}",
       ariaWithoutTitle: "Diagrama de flujo fork-join",

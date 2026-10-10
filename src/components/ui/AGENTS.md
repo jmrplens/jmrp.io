@@ -274,6 +274,53 @@ import APIEndpoint from "@components/ui/APIEndpoint.astro";
 | `description` | `string` | No |
 | `auth` | `boolean` | No |
 
+#### HttpExchange
+
+```mdx
+import HttpExchange from "@components/ui/HttpExchange.astro";
+<HttpExchange
+  method="PUT"
+  path="/api/v4/projects/:id/boards/:board_id"
+  requestBody='{"name": "<256 characters>"}'
+  responses={[
+    { label: "Before", status: 200, note: "Nothing was saved.", tone: "bad" },
+    { label: "After", status: 400, body: '{"message":"..."}', tone: "good" },
+  ]}
+/>
+```
+
+| Prop | Type | Required |
+|------|------|----------|
+| `method` / `path` | `string` | **Yes** |
+| `responses` | `Array<{ label?; status; statusText?; headers?; body?; bodyLang?; note?; tone?: "bad" \| "good" \| "neutral"; verdict? }>` | **Yes** |
+| `requestHeaders` | `Array<{ name; value }>` | No |
+| `requestBody` / `requestBodyLang` | `string` | No |
+| `title` / `caption` | `string` | No |
+
+One request and the answers it got (before/after a fix, or two editions side by side). The status pill is coloured by class; `tone` adds an icon and screen-reader text, never colour alone. The default text is "Wrong answer" / "Corrected answer"; set `verdict` to replace it when the cards compare two releases or two tokens rather than a fix. JSON bodies are highlighted, and long ones laid out over several lines. For an endpoint reference card use `APIEndpoint`.
+
+#### SelectionTree
+
+```mdx
+import SelectionTree from "@components/ui/SelectionTree.astro";
+<SelectionTree
+  title="group.epic_get"
+  operation="query namespace"
+  root={{ name: "namespace", type: "Namespace", state: "null", spine: true,
+          children: [{ name: "workItem", type: "WorkItem", state: "unreached", spine: true }] }}
+  verdict="The whole answer is null."
+  verdictTone="bad"
+/>
+```
+
+| Prop | Type | Required |
+|------|------|----------|
+| `root` | `TreeNode \| TreeNode[]` (`{ name; type?; state?: "ok" \| "null" \| "empty" \| "conditional" \| "unreached"; note?; spine?; children? }`) | **Yes** |
+| `title` / `operation` / `verdict` / `caption` | `string` | No |
+| `verdictTone` | `"bad" \| "warn" \| "good"` | No (default `"warn"`) |
+
+A GraphQL selection (or any tree) as nested lists, with a state badge per position and one path drawn heavier (`spine`). Built to show why one undeclared type empties a field off the spine but nulls the whole answer on it.
+
 #### KeyValue
 
 ```mdx
@@ -875,12 +922,12 @@ import ForkJoin from "@components/ui/ForkJoin.astro";
 
 | Prop | Type | Required |
 |------|------|----------|
-| `branches` | `Array<{ name; note?; color? }>` | **Yes** |
+| `branches` | `Array<{ name; note?; color? } \| Array<{ name; note?; color? }>>` | **Yes** |
 | `before` / `after` | `Array<{ name; note?; color? }>` | No |
 | `beforeLabel` / `afterLabel` | `string` | No |
 | `title` / `caption` / `ariaLabel` | `string` | No |
 
-Fork → join data-flow: a linear chain splits into parallel `branches` then merges into another chain. Best with 2–3 branches. Linear sequence → `Pipeline`; arbitrary graph → `Mermaid`.
+Fork → join data-flow: a linear chain splits into parallel `branches` then merges into another chain. A branch given as an array is a lane of several steps (drawn top to bottom with arrows); `before` may be omitted when the branches are independent inputs that join. Best with 2–3 branches. Linear sequence → `Pipeline`; arbitrary graph → `Mermaid`.
 
 #### ThemeImage
 
