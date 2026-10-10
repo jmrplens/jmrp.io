@@ -488,13 +488,13 @@ test.describe("SEO & Metadata Checks", () => {
     const esPosts =
       content.match(/]\(https:\/\/jmrp\.io\/es\/blog\/\d{3}-[a-z0-9-]+\/\)/g) ??
       [];
-    expect(esPosts).toHaveLength(12);
+    expect(esPosts).toHaveLength(14);
 
     const esMarkdown =
       content.match(
         /]\(https:\/\/jmrp\.io\/es\/blog\/\d{3}-[a-z0-9-]+\/index\.md\)/g,
       ) ?? [];
-    expect(esMarkdown).toHaveLength(12);
+    expect(esMarkdown).toHaveLength(14);
   });
 
   test("llms.txt indexes the tool category twins", async ({ page }) => {

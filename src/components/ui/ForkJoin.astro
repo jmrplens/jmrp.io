@@ -9,8 +9,10 @@
  * kOffsets, then the accessor reads both". Zero-JS, theme-aware SVG connectors.
  *
  * `before` / `after` are optional linear chains; `branches` is the parallel
- * middle. Optional `beforeLabel` / `afterLabel` tag the two phases (e.g.
- * build-time vs runtime). Best with 2–3 branches.
+ * middle. A branch is one node, or an array of nodes for a lane that is a
+ * chain of its own (drawn top to bottom with arrows, its tail line running
+ * down to the join). Optional `beforeLabel` / `afterLabel` tag the two phases
+ * (e.g. build-time vs runtime). Best with 2–3 branches.
  *
  * @example
  * <ForkJoin
@@ -39,8 +41,11 @@ interface Props {
   title?: string;
   /** Linear chain before the fork (top, e.g. source → generator). */
   before?: FJNode[];
-  /** Parallel artifacts: the fork targets and the join sources. */
-  branches: FJNode[];
+  /**
+   * Parallel artifacts: the fork targets and the join sources. An array in
+   * place of a node makes that branch a chain (a lane of several steps).
+   */
+  branches: (FJNode | FJNode[])[];
   /** Linear chain after the join (bottom, e.g. accessor → render). */
   after?: FJNode[];
   /** Optional phase tag for the top region (e.g. "Build time"). */
@@ -77,13 +82,21 @@ const centers = branches.map((_, i) =>
 // kPool/kOffsets pair); an explicit `color` overrides. `accent` colours the
 // fill/border; `accentText` is the AA-safe variant used for the name text
 // (teal-as-text needs the darker --teal-text on light tints to clear 4.5:1).
-const branchesR = branches.map((b, i) => {
+// When any branch is a chain, every lane is drawn as one (its last step's tail
+// line runs down to the join), so a single-step lane is not stretched to the
+// height of the longest chain.
+const anyChain = branches.some((b) => Array.isArray(b) && b.length > 1);
+const lanes = branches.map((branch, i) => {
   const isTeal = i % 2 !== 0;
+  const chain = Array.isArray(branch) ? branch : [branch];
   return {
-    ...b,
-    accent: b.color ?? (isTeal ? "var(--teal)" : "var(--color-accent)"),
-    accentText:
-      b.color ?? (isTeal ? "var(--teal-text)" : "var(--color-accent)"),
+    chained: anyChain,
+    nodes: chain.map((b) => ({
+      ...b,
+      accent: b.color ?? (isTeal ? "var(--teal)" : "var(--color-accent)"),
+      accentText:
+        b.color ?? (isTeal ? "var(--teal-text)" : "var(--color-accent)"),
+    })),
   };
 });
 
@@ -144,13 +157,40 @@ const summary =
     class={`fj__branches${before.length > 0 ? " fj__branches--forked" : ""}`}
     style={`--fj-cols:${Math.max(n, 1)}`}
   >
-    {branchesR.map((node) => (
-      <div
-        class="fj__node fj__node--branch"
-        style={`--fj-accent:${node.accent};--fj-accent-text:${node.accentText}`}
-      >
-        <span class="fj__name">{node.name}</span>
-        {node.note && <span class="fj__note">{node.note}</span>}
+    {lanes.map((lane) => (
+      <div class:list={["fj__lane", lane.chained && "fj__lane--chain"]}>
+        {lane.nodes.map((node, j) => (
+          <>
+            {j > 0 && (
+              <svg
+                class="fj__link fj__link--lane"
+                viewBox="0 0 16 28"
+                aria-hidden="true"
+              >
+                <line
+                  x1="8"
+                  y1="0"
+                  x2="8"
+                  y2="20"
+                />
+                <polygon points="8,27 4,19 12,19" />
+              </svg>
+            )}
+            <div
+              class="fj__node fj__node--branch"
+              style={`--fj-accent:${node.accent};--fj-accent-text:${node.accentText}`}
+            >
+              <span class="fj__name">{node.name}</span>
+              {node.note && <span class="fj__note">{node.note}</span>}
+            </div>
+          </>
+        ))}
+        {lane.chained && (
+          <span
+            class="fj__tail"
+            aria-hidden="true"
+          />
+        )}
       </div>
     ))}
   </div>
@@ -201,6 +241,10 @@ const summary =
   .fj {
     --fj-accent: var(--color-accent);
     --fj-line: var(--color-text-muted);
+
+    /* Column gap between lanes, shared with the fork/join SVG so its curve
+       ends land on the lane centers (see .fj__edge). */
+    --fj-gap: 0.9rem;
 
     display: flex;
     flex-direction: column;
@@ -286,15 +330,51 @@ const summary =
   .fj__branches {
     display: grid;
     grid-template-columns: repeat(var(--fj-cols, 2), 1fr);
-    gap: 0.9rem;
+    gap: var(--fj-gap);
     align-self: stretch;
     width: 100%;
   }
 
+  /* A lane is one grid column. A single-node lane grows its node to the row
+     height (as when branches were bare nodes); a chain stacks its steps with
+     arrows and runs a tail line from its last step down to the join, so a
+     shorter chain still meets the curve. */
+  .fj__lane {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    min-width: 0;
+  }
+
+  .fj__lane:not(.fj__lane--chain) > .fj__node--branch {
+    flex: 1;
+  }
+
+  .fj__link--lane {
+    align-self: center;
+  }
+
+  /* Drawn as a 1.5px fill, not a border (a 1.5px border renders as 1px), so
+     it matches the 1.5px strokes of the curves it meets. */
+  .fj__tail {
+    flex: 1;
+    align-self: center;
+    width: 1.5px;
+    min-height: 0.5rem;
+    background: var(--fj-line);
+  }
+
+  /* The curves end at (i + 0.5) / n of the SVG's width, but a lane center
+     sits at (i + 0.5) / n of the branches' width plus the gaps' share. An SVG
+     one gap wider than the figure, pulled out by half a gap on each side,
+     makes the two coincide for any lane count. `max-width: none` lifts the
+     global svg cap (max-width: 100%) that would clamp it back. */
   .fj__edge {
-    align-self: stretch;
-    width: 100%;
+    align-self: center;
+    width: calc(100% + var(--fj-gap));
+    max-width: none;
     height: 2.6rem;
+    margin-inline: calc(var(--fj-gap) / -2);
   }
 
   .fj__edge path {
@@ -322,7 +402,7 @@ const summary =
 
   /* Arrowheads where a curved connector meets a box. Slim filled triangle that
      sits flush at the box's top edge so the curve flows into it. */
-  .fj__branches--forked .fj__node--branch::before,
+  .fj__branches--forked .fj__lane > .fj__node--branch:first-child::before,
   .fj__node--target::before {
     position: absolute;
     top: -8px;
@@ -345,10 +425,11 @@ const summary =
   }
 
   @media (width <= 520px) {
-    /* Keep the branches side by side, but tighten the inner padding and shrink
-       the note so the labels fit the narrow columns without breaking mid-token. */
-    .fj__branches {
-      gap: 0.4rem;
+    /* Keep the branches side by side, but tighten the gap and the inner
+       padding and shrink the note so the labels fit the narrow columns without
+       breaking mid-token. */
+    .fj {
+      --fj-gap: 0.4rem;
     }
 
     .fj__node {

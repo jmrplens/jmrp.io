@@ -37,7 +37,7 @@ export default markdownFor({
       "note") as keyof (typeof LABEL)["en"];
     const label = LABEL[ctx.locale][type] ?? LABEL[ctx.locale].note;
     const title = ctx.attr(node, "title");
-    const heading = title ? `**${label} — ${title}**` : `**${label}**`;
+    const heading = title ? `**${label}: ${title}**` : `**${label}**`;
     return `${heading}\n\n${ctx.body(node)}`;
   },
 });

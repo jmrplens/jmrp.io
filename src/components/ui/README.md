@@ -51,6 +51,8 @@ This directory contains all the reusable UI components for the jmrp.io blog/webs
 | [Matrix](#matrix)                   | Labelled 2-D grid              | Lookup tables, bitmaps, matrices           |
 | [Pipeline](#pipeline)               | Numbered stages + data-flow    | Build/CPU pipelines, data flow             |
 | [ForkJoin](#forkjoin)               | Fork → join data-flow          | Producer → parallel artifacts → consumer   |
+| [HttpExchange](#httpexchange)       | Request + answers, side by side | API before/after, status-code stories     |
+| [SelectionTree](#selectiontree)     | Tree with per-node state + spine | GraphQL selections, authorization paths  |
 | [ThemeImage](#themeimage)           | Light/dark responsive image    | Per-theme diagrams/screenshots             |
 | [FileDownload](#filedownload)       | Download card                  | Offering a file/asset                      |
 
@@ -1290,9 +1292,57 @@ import ForkJoin from "@components/ui/ForkJoin.astro";
 />
 ```
 
-**Props:** `branches[]` (`{ name, note?, color? }`, required), `before?[]`, `after?[]`, `beforeLabel?`, `afterLabel?`, `title?`, `caption?`, `ariaLabel?`.
+**Props:** `branches[]` (`{ name, note?, color? }`, or an array of them for a lane of several steps; required), `before?[]`, `after?[]`, `beforeLabel?`, `afterLabel?`, `title?`, `caption?`, `ariaLabel?`. With a chained lane, every lane runs a tail line down to the join so lanes of different length still meet it; with `before` omitted, the branches are independent inputs that only join.
 
 **When to use:** Producer → artifacts → consumer flows where one step forks into parallel outputs that a later step joins (e.g. a generator emitting two tables read together). Best with 2–3 branches. For a linear sequence use `Pipeline`; for arbitrary graphs use `Mermaid`.
+
+### HttpExchange
+
+One HTTP request drawn once, and each answer to it as a card: label, status pill (coloured by class), optional headers, body (JSON highlighted, long JSON laid out over several lines) and a one-line note after the response. `tone: "bad" | "good"` marks the wrong and the corrected answer with an icon and screen-reader text. Long header values wrap instead of scrolling. Zero-JS.
+
+```mdx
+import HttpExchange from "@components/ui/HttpExchange.astro";
+
+<HttpExchange
+  method="DELETE"
+  path="/api/v4/projects/:id/external_status_checks/:check_id"
+  requestHeaders={[{ name: "PRIVATE-TOKEN", value: "<a Developer's token>" }]}
+  responses={[
+    { label: "Before the fix", status: 204, note: "The check is still there.", tone: "bad" },
+    { label: "After", status: 403, body: '{"message":"403 Forbidden"}', tone: "good" },
+  ]}
+/>
+```
+
+**Props:** `method`, `path`, `responses[]` (`{ label?, status, statusText?, headers?[], body?, bodyLang?, note?, tone?, verdict? }`, required; `verdict` replaces the tone icon's screen-reader text, "Wrong answer" / "Corrected answer", when the comparison is not a fix), `requestHeaders?[]` (`{ name, value }`), `requestBody?`, `requestBodyLang?`, `title?`, `caption?`.
+
+**When to use:** API posts whose point is what came back: the same request before and after a fix, a status code that means something other than the documented one, two editions answering differently. For an endpoint reference card use `APIEndpoint`.
+
+### SelectionTree
+
+A tree rendered as nested lists (so a screen reader reads it as one), with a state badge per node (`ok`, `null`, `empty`, `conditional`, `unreached`, worded through i18n), an optional type and note, and one path, the **answer spine**, drawn heavier. A verdict line closes it. Zero-JS; recursion lives in the internal `SelectionTreeNode`.
+
+```mdx
+import SelectionTree from "@components/ui/SelectionTree.astro";
+
+<SelectionTree
+  title="vulnerability.get"
+  operation="query vulnerability"
+  root={{
+    name: "vulnerability", type: "Vulnerability", state: "ok", spine: true,
+    children: [
+      { name: "issueLinks { nodes }", type: "VulnerabilityIssueLink", state: "empty", note: "Always." },
+      { name: "dismissedBy", type: "UserCore", state: "conditional", note: "Empty without User: Read." },
+    ],
+  }}
+  verdict="Served, with parts that can be empty."
+  verdictTone="warn"
+/>
+```
+
+**Props:** `root` (`TreeNode` or `TreeNode[]`, required), `title?`, `operation?`, `verdict?`, `verdictTone?` (`"bad" | "warn" | "good"`), `caption?`.
+
+**When to use:** to show how one position decides an answer: GraphQL authorization, a field that nulls its parent, a path through a config tree. For a flat list of layers use `LayerStack`; for arbitrary graphs use `Mermaid`.
 
 ### ThemeImage
 

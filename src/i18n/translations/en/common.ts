@@ -299,6 +299,23 @@ export const common = {
       ariaWithTitle: "Pipeline: {title}. {count} stages.",
       ariaWithoutTitle: "Pipeline with {count} stages",
     },
+    httpExchange: {
+      request: "Request",
+      status: "Status",
+      bad: "Wrong answer",
+      good: "Corrected answer",
+    },
+    selectionTree: {
+      legend: "Legend",
+      spine: "On the answer spine",
+      states: {
+        ok: "declared",
+        null: "declares nothing",
+        empty: "served empty",
+        conditional: "needs another permission",
+        unreached: "not reached",
+      },
+    },
     forkJoin: {
       ariaWithTitle: "Fork-join data-flow diagram: {title}",
       ariaWithoutTitle: "Fork-join data-flow diagram",

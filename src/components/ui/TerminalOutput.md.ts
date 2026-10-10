@@ -34,7 +34,7 @@ const OUTPUT = { en: "Output", es: "Salida" } as const;
 /**
  * Titles that already say "output" — 46 of the 200 in the corpus, in either
  * language regardless of the file's locale ("Base64 Output", "Salida Base64").
- * Prefixing those would read "Output — Nginx version output".
+ * Prefixing those would read "Output: Nginx version output".
  */
 const SAYS_OUTPUT = /output|salida/iu;
 
@@ -74,7 +74,7 @@ export default markdownFor({
 
     const title = ctx.attr(node, "title") ?? ctx.attr(node, "ariaLabel");
     let label: string = OUTPUT[ctx.locale];
-    if (title) label = SAYS_OUTPUT.test(title) ? title : `${label} — ${title}`;
+    if (title) label = SAYS_OUTPUT.test(title) ? title : `${label}: ${title}`;
     return `**${label}**\n\n${block}`;
   },
 });
