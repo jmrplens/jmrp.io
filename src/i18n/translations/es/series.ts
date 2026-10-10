@@ -32,7 +32,7 @@ export const series = {
   "nginx-hardening": {
     title: "Endurecer Nginx, desde el borde hacia dentro",
     description:
-      "Cinco guías de Nginx en orden de lectura: mTLS, CSP, HTTP/3, ficheros virtuales y un tarpit: un borde endurecido decisión a decisión.",
+      "Cinco guías de Nginx en orden de lectura: mTLS, CSP, HTTP/3, ficheros virtuales y un tarpit, un borde endurecido decisión a decisión.",
     lead: "Cinco guías que suelen leerse como recetas sueltas. En este orden son un solo proyecto: llevar un Nginx público desde sirve TLS hasta decide quién puede abrir una conexión, qué puede ejecutar su navegador, cómo viajan los bytes, qué parte del disco es alcanzable y qué ocurre con lo que sigue siendo hostil.",
     whyTitle: "Por qué estas cinco van juntas",
     why1: "Cada uno de estos artículos responde a una pregunta que solo queda bien planteada cuando la anterior está resuelta. Limitar la tasa de una petición es un problema distinto según sepas o no quién la envía. Elegir una Content Security Policy es un problema distinto según las páginas que sirves salgan de disco o se sinteticen. Una configuración no está endurecida porque acumule directivas: lo está porque se tomó una secuencia de decisiones en un orden en el que cada una acota a la siguiente.",
