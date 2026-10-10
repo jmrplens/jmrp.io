@@ -11,8 +11,8 @@
  *    `/var/lib/jmrp.io/nginx-staged/` — outside the repo and outside `dist/`
  *    (generated during the Astro `astro:build:done` hook, see
  *    `src/integrations/post-build.ts`): the two security-header snippets and
- *    the four http-level redirect/alternate maps. They are MOVED — not
- *    copied — into `$POSTBUILD_NGINX_SNIPPETS_DIR`, map snippets this build
+ *    the five http-level redirect/alternate maps. They are MOVED (not
+ *    copied) into `$POSTBUILD_NGINX_SNIPPETS_DIR`, map snippets this build
  *    did not produce are pruned, then the config is tested, Nginx reloaded
  *    and its cache cleared — rolling the whole delivery back on any failure.
  * 2. Purges the Cloudflare cache for the zone.
