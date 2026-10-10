@@ -11,11 +11,14 @@
  * one entity. Exactly the failure that hit the Person node twice before it was
  * centralized.
  *
- * ── Why it is NOT a gate ─────────────────────────────────────────────────
- * Deliberately absent from `pnpm verify` and from CI. It reads five external
- * sites, so a redesign, an outage or a rate limit elsewhere would turn into a
- * red build here — a failure mode with nothing to do with this repository's
- * correctness. Run it when you want to know, not on every commit.
+ * ── Gate semantics (GEO audit #12, M1) ──────────────────────────────────
+ * It used to exit 0 whatever it found, so a contradiction could not stop
+ * anything and the rule it enforces drifted unnoticed more than once. Now an
+ * undeclared contradiction exits 1. A site that cannot be read (outage, rate
+ * limit) still exits 0: that says nothing about drift, and an offline CI must
+ * not go red because of someone else's server. Declared exceptions live in
+ * `software-drift-decision.mjs` and print as "accepted". Wired into
+ * `pnpm verify` (phase 3) and the CI `schema-validation` job.
  *
  * ── Direction of truth ───────────────────────────────────────────────────
  * Unlike the Person entity, where jmrp.io is authoritative, the project's own
@@ -33,6 +36,12 @@ import process from "node:process";
 import { fileURLToPath } from "node:url";
 
 import { load as loadYaml } from "js-yaml";
+
+import {
+  ACCEPTED_DIVERGENCES,
+  classifyDivergences,
+  exitCodeFor,
+} from "./software-drift-decision.mjs";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
 
@@ -172,6 +181,7 @@ const LICENSE_URLS = JSON.parse(
 );
 
 let contradictions = 0;
+let acceptedCount = 0;
 let unreachable = 0;
 let missingNodes = 0;
 let stalePersons = 0;
@@ -246,11 +256,15 @@ for (const project of projects) {
       ? tagged("en")
       : theirs[p];
 
-  const diffs = CONTRADICTABLE.filter(
+  const allDiffs = CONTRADICTABLE.filter(
     (p) =>
       theirValue(p) !== undefined &&
       ours[p] !== undefined &&
       JSON.stringify(theirValue(p)) !== JSON.stringify(ours[p]),
+  );
+  const { contradicting: diffs, accepted: acceptedDiffs } = classifyDivergences(
+    project.id,
+    allDiffs,
   );
   const esDrift =
     tagged("es") !== undefined && tagged("es") !== project.summary.es;
@@ -290,6 +304,7 @@ for (const project of projects) {
 
   if (
     diffs.length === 0 &&
+    acceptedDiffs.length === 0 &&
     missing.length === 0 &&
     personLines.length === 0 &&
     !esDrift
@@ -298,7 +313,9 @@ for (const project of projects) {
     continue;
   }
 
-  console.log(`\n✗ ${project.id}`);
+  console.log(
+    `\n${diffs.length === 0 && personLines.length === 0 && !esDrift && missing.length === 0 ? "~" : "✗"} ${project.id}`,
+  );
   if (personLines.length > 0) {
     // mikroscope spliced the canonical node without being in the consumer
     // roster, so a change to the canonical never reached it until its author's
@@ -310,6 +327,15 @@ for (const project of projects) {
   for (const p of diffs) {
     contradictions++;
     console.log(`   ${p} CONTRADICTS`);
+    console.log(`     their site : ${JSON.stringify(theirValue(p))}`);
+    console.log(`     projects.yaml: ${JSON.stringify(ours[p])}`);
+  }
+  for (const p of acceptedDiffs) {
+    acceptedCount++;
+    const rule = ACCEPTED_DIVERGENCES[project.id];
+    console.log(
+      `   ${p} differs, accepted (${rule.reason}; decided ${rule.decided})`,
+    );
     console.log(`     their site : ${JSON.stringify(theirValue(p))}`);
     console.log(`     projects.yaml: ${JSON.stringify(ours[p])}`);
   }
@@ -344,7 +370,7 @@ for (const page of EXTRA_PERSON_PAGES) {
 // whereas a healthy site with no `#software` node means projects.yaml is now the
 // sole publisher for that entity — a standing fact, not a transient failure.
 console.log(
-  `\n${contradictions} contradiction(s), ` +
+  `\n${contradictions} contradiction(s), ${acceptedCount} accepted, ` +
     `${unreachable} site(s) unreadable, ` +
     `${missingNodes} readable site(s) with no #software node, ` +
     `${stalePersons} site(s) serving a stale #person.`,
@@ -355,5 +381,5 @@ if (contradictions > 0) {
       "site is normally the authoritative side — update projects.yaml to match.",
   );
 }
-// Always exits 0: this is a report, not a gate. Read it.
-process.exit(0);
+// Exit 1 only for an undeclared contradiction; unreadable sites stay 0.
+process.exit(exitCodeFor({ contradictions }));

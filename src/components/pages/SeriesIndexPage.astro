@@ -10,6 +10,7 @@ import { defaultLocale, type Locale } from "@i18n/config";
 import type { TranslationKey } from "@i18n/utils";
 import { useTranslatedPath, useTranslations } from "@i18n/utils";
 import BaseLayout from "@layouts/BaseLayout.astro";
+import { getPageFaq, pageFaqNode } from "@utils/page-faq";
 import { getSiteUrl } from "@utils/site";
 import type { CollectionPage, ListItem } from "schema-dts";
 
@@ -42,6 +43,11 @@ const indexSchema = {
   inLanguage: locale,
   isPartOf: { "@id": new URL("#website", getSiteUrl()).href },
   about: { "@id": new URL("#person", getSiteUrl()).href },
+  // Voice assistants and AI readers get the page's title and lead.
+  speakable: {
+    "@type": "SpeakableSpecification",
+    cssSelector: [".series-index__title", ".series-index__lead"],
+  },
   mainEntity: {
     "@type": "ItemList",
     numberOfItems: items.length,
@@ -53,12 +59,18 @@ const indexSchema = {
     })),
   },
 } satisfies CollectionPage;
+
+// The page's question-and-answer pair (GEO audit #12): graph and twin only,
+// from `page_faq`; the page renders without it when no entry exists.
+const pageFaq = await getPageFaq("/blog/series/", locale);
+const faqNode =
+  pageFaq && pageFaqNode(pageFaq, pageUrl, indexSchema["@id"], locale);
 ---
 
 <BaseLayout
   title={t("series.ui.indexTitle")}
   description={t("series.ui.indexDescription")}
-  schema={indexSchema}
+  schema={faqNode ? [indexSchema, faqNode] : indexSchema}
 >
   <div class="series-index container">
     <header class="series-index__header">

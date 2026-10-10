@@ -64,6 +64,12 @@ pages:
       - question: ¿Dónde se pueden leer los artículos?
         answer: "Todas las entradas de esta página menos una llevan un DOI en Zenodo, donde el texto completo está archivado en abierto; la lista también está en Google Scholar y ORCID."
 
+  - path: /blog/series/
+    visible: false
+    items:
+      - question: ¿Qué series editoriales hay en este blog?
+        answer: "Cuatro itinerarios de lectura por artículos que se escribieron como conjunto. Endurecer Nginx, desde el borde hacia dentro, reúne cinco guías de Nginx en orden de lectura: mTLS, CSP, HTTP/3, ficheros virtuales y un tarpit. MikroTik dual-stack, del ISP al cortafuegos, reúne tres guías de RouterOS: una VPN WireGuard dual-stack, PPPoE con delegación de prefijo DHCPv6 y un honeypot que bloquea escáneres solo. Firmware de Kleidos: tres decisiones bajo restricciones duras, reúne tres análisis de un gestor de contraseñas hardware sobre ESP32-S3: cadenas i18n empaquetadas, bóveda encrypt-then-MAC y claves ligadas al dispositivo. gitlab-mcp-server: la API de GitLab ante un GitLab real, reúne dos análisis: contrastar la API de GitLab con un GitLab arrancado y deducir qué necesita un token de grano fino para cada acción. Una página de etiqueta solo puede listar esos artículos; cada página de serie explica por qué existe el grupo, en qué orden leerlo y qué decisión resuelve cada pieza."
+
   - path: /uses/
     visible: true
     items:

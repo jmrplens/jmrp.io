@@ -55,6 +55,7 @@ import {
   type Project,
   softwareId,
 } from "@utils/projects";
+import { getSeriesForRepo } from "@utils/series";
 import { getSiteUrl } from "@utils/site";
 import { getEntry } from "astro:content";
 import type { CollectionPage, Text } from "schema-dts";
@@ -536,6 +537,19 @@ const faqNode =
                         aria-hidden="true"
                       />
                       {t("pages.projects.hosted")}
+                    </a>
+                  )}
+                  {getSeriesForRepo(project.repo) && (
+                    <a
+                      href={translatePath(
+                        `/blog/series/${getSeriesForRepo(project.repo)?.slug}/`,
+                      )}
+                    >
+                      <span
+                        class="i-mdi:bookshelf"
+                        aria-hidden="true"
+                      />
+                      {t("series.ui.readSeries")}
                     </a>
                   )}
                   {hasHiddenListings(project) && (

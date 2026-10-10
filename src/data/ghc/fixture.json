@@ -1874,16 +1874,16 @@
     },
     {
       "platform": "gitlab",
-      "achievement": "gitlab-level-3-contributor",
-      "name": "Level 3 Contributor",
+      "achievement": "gitlab-level-4-contributor",
+      "name": "Level 4 Contributor",
       "tierNumber": 1,
       "tierName": "default",
       "count": null,
       "nextThreshold": 0,
       "percent": 0,
       "agrees": false,
-      "description": "Wider community member who has earned 2,500 to 7,499 points contributing to GitLab.",
-      "awardedAt": "2026-09-14T20:11:50Z"
+      "description": "Wider community member who has earned 7,500 to 37,499 points contributing to GitLab.",
+      "awardedAt": "2026-10-09T20:07:11Z"
     }
   ],
   "communityContributors": {
@@ -3170,11 +3170,11 @@
     "achievements": [
       {
         "platform": "gitlab",
-        "achievement": "gitlab-level-3-contributor",
-        "name": "Level 3 Contributor",
-        "description": "Wider community member who has earned 2,500 to 7,499 points contributing to GitLab.",
+        "achievement": "gitlab-level-4-contributor",
+        "name": "Level 4 Contributor",
+        "description": "Wider community member who has earned 7,500 to 37,499 points contributing to GitLab.",
         "namespace": "gitlab-org/achievements",
-        "awardedAt": "2026-09-14T20:11:50Z"
+        "awardedAt": "2026-10-09T20:07:11Z"
       }
     ]
   }

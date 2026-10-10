@@ -263,22 +263,13 @@ const faqNode =
             const meta = PROJECT_META[card.id];
             /*
              * The whole card is the link, so its accessible name is its own
-             * text. `aria-label` REPLACES that name instead of extending it,
-             * so the notice is appended to the FULL visible text, in DOM
-             * order — the same rule the prose pipeline applies in
-             * scripts/rehype-external-links-announced.mjs. Labelling the
-             * card with just its title would drop the description from the
-             * accessible name while it stays on screen.
+             * visible text. No `aria-label`: it REPLACES the name, and any
+             * label that omits part of what is on screen (here the repo slug
+             * shown when it differs from the name) fails WCAG 2.5.3 Label in
+             * Name. A visually hidden span at the end extends the name
+             * instead: visible text in DOM order, then the new-tab notice.
              */
-            const cardText = [
-              meta?.category,
-              card.name,
-              card.summary,
-              card.language,
-              meta?.tag,
-            ]
-              .filter(Boolean)
-              .join(" ");
+            const newTabNotice = t("aria.opensNewTab", { text: "" }).trim();
             const langColor =
               (card.language && langColors[card.language]) ??
               (card.githubLanguage && langColors[card.githubLanguage]) ??
@@ -289,7 +280,6 @@ const faqNode =
                 href={card.url}
                 target="_blank"
                 rel="external noopener noreferrer"
-                aria-label={t("aria.opensNewTab", { text: cardText })}
               >
                 <div class="proj-card__top">
                   {meta?.category && (
@@ -318,6 +308,7 @@ const faqNode =
                     )}
                   </div>
                 )}
+                <span class="sr-only">{newTabNotice}</span>
               </a>
             );
           })}

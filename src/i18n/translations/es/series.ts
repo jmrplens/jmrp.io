@@ -20,6 +20,13 @@ export const series = {
     indexLead:
       "Algunos artículos de aquí se escribieron como conjunto. Una página de etiqueta solo puede listarlos; estas páginas pilar explican por qué existe el grupo, en qué orden leerlo y qué decisión resuelve cada pieza.",
     indexListLabel: "Series editoriales",
+    softwareTitle: "El software",
+    softwareLead:
+      "La serie documenta un único programa, {name}. Su código, su documentación y su ficha:",
+    softwareRepo: "Repositorio",
+    softwareDocs: "Documentación",
+    softwareProjects: "En la página de proyectos",
+    readSeries: "Leer la serie",
   },
 
   "nginx-hardening": {
