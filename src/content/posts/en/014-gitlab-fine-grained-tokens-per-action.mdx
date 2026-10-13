@@ -175,9 +175,9 @@ The clearest case is an epic. GitLab declares `WorkItem` at the project boundary
   caption="Abridged. The end-to-end suite asserts both answers and the rename against GitLab 19.4.1, and it passed on 5 October 2026."
 />
 
-A group's epic list does the same with `nodes: []`. Another GitLab user reported exactly that in [gitlab-org/gitlab#630483](https://gitlab.com/gitlab-org/gitlab/-/issues/630483) in September, noting that the failure is silent and easy to misread as no matching epics. The same pattern shows up on `namespace(fullPath:)`, which answers `null`, and on a project's branch rules, which come back without their items.
+A group's epic list does the same with `nodes: []`. Another GitLab user reported exactly that in [gitlab-org/gitlab#630483](https://gitlab.com/gitlab-org/gitlab/-/issues/630483) in September, noting that the failure is silent and easy to misread as no matching epics. GitLab closed it on 12 October with [gitlab-org/gitlab!259765](https://gitlab.com/gitlab-org/gitlab/-/merge_requests/259765), which declares the group boundary for `WorkItem` from 19.6; fields whose types are still undeclared, such as `workItemType`, keep coming back `null`. The same pattern shows up on `namespace(fullPath:)`, which answers `null`, and on a project's branch rules, which come back without their items.
 
-This is not a handful of types. GitLab keeps its own list of what still has no declaration, `config/authz/graphql/authorization_todo.txt`: **862 types and 61 mutations at GitLab 19.4.1**, and 859 and 42 on `master` on 9 October 2026. GitLab is working through it, and its planning issue [gitlab-org/gitlab#631631](https://gitlab.com/gitlab-org/gitlab/-/issues/631631) describes the same behavior from its side: an object type without the directive "resolves to nil for granular tokens, nulling query data or erroring mutations."
+This is not a handful of types. GitLab keeps its own list of what still has no declaration, `config/authz/graphql/authorization_todo.txt`: **862 types and 61 mutations at GitLab 19.4.1**, and 859 and 42 on `master` on 13 October 2026. GitLab is working through it, and its planning issue [gitlab-org/gitlab#631631](https://gitlab.com/gitlab-org/gitlab/-/issues/631631) describes the same behavior from its side: an object type without the directive "resolves to nil for granular tokens, nulling query data or erroring mutations."
 
 <Callout type="warning" title="Why the difference matters">
 
@@ -319,7 +319,7 @@ The join finds all 58 among the GraphQL actions, and each is out of reach for on
   caption="34: a type on the answer's path declares nothing, so the answer is null or an emptied list. 20: the write commits and its answer is null. 3: the mutation declares nothing and GitLab refuses it. 1: group.epic_create writes an object GitLab never resolves to the boundary it declares."
 />
 
-By area they are 15 epic actions, 12 work item actions (with their saved views and types), 12 achievements, 3 custom emoji, 2 CI catalog, 2 target branch rules, 1 branch rules and 11 security actions. Another 10 actions are served with parts that may be empty (vulnerability reads and writes, Terraform state, two epic note updates). On `master` on 9 October, 54 of the 58 are still blocked by a type or mutation on GitLab's pending list; the three custom emoji actions are not, since `CustomEmoji` has left it, and `group.epic_create` waits on [gitlab-org/gitlab!259765](https://gitlab.com/gitlab-org/gitlab/-/merge_requests/259765).
+By area they are 15 epic actions, 12 work item actions (with their saved views and types), 12 achievements, 3 custom emoji, 2 CI catalog, 2 target branch rules, 1 branch rules and 11 security actions. Another 10 actions are served with parts that may be empty (vulnerability reads and writes, Terraform state, two epic note updates). On `master` on 13 October, 55 of the 58 are still blocked by a type or mutation on GitLab's pending list; the three custom emoji actions are not, since `CustomEmoji` has left it. `group.epic_create`, whose group boundary gitlab-org/gitlab!259765 declared on 11 October, still loses its answer through `WorkItemType` and `WorkItemFeatures`, both still on the list.
 
 ## What a client is told
 
@@ -378,7 +378,7 @@ The same derived requests answer the classic question too. GitLab's rule is `rea
 
 The server reads a token's grant with two requests, because client-go does not model the grant and on 19.4 `GET /personal_access_tokens/self` does not present it: it asks the self endpoint what the token is, then `GET /personal_access_tokens/:id` for the grant, on GitLab.com as well. That gap, and a few around it, became the merge requests below: eight I opened in gitlab-org/gitlab from 5 to 8 October 2026, and one in client-go, open since 27 September:
 
-<Table title="Merge requests about fine-grained tokens, as read on 10 October 2026 at 04:48 UTC">
+<Table title="Merge requests about fine-grained tokens, as read on 13 October 2026 at 10:53 UTC">
   <thead>
     <tr>
       <th scope="col">Merge request</th>
@@ -419,7 +419,7 @@ The server reads a token's grant with two requests, because client-go does not m
     </tr>
     <tr>
       <td>[gitlab-org/gitlab!259765](https://gitlab.com/gitlab-org/gitlab/-/merge_requests/259765)</td>
-      <td>In review</td>
+      <td>Merged 11 October</td>
       <td>`WorkItem` declares the group boundary beside the project one, so a token granted Work Item: Read on a group can read its epics</td>
     </tr>
     <tr>
@@ -435,9 +435,9 @@ The server reads a token's grant with two requests, because client-go does not m
   </tbody>
 </Table>
 
-The first of them answers the question this post opened with: from GitLab 19.5, and on GitLab.com since 7 October, a fine-grained token can read its own grant from the self endpoint. What is still open is the administrator route, group work items, the validation check, client-go's structs, and the GraphQL declarations themselves, which are GitLab's own pending list and the reason the 58 exist.
+The first of them answers the question this post opened with: from GitLab 19.5, and on GitLab.com since 7 October, a fine-grained token can read its own grant from the self endpoint. What is still open is the administrator route, the validation check, client-go's structs, and the GraphQL declarations themselves, which are GitLab's own pending list and the reason the 58 exist.
 
-My thanks to the GitLab reviewers who took these on and merged five of them within days.
+My thanks to the GitLab reviewers who took these on and merged six of them within a week.
 
 ## Create a token for gitlab-mcp-server
 
@@ -525,7 +525,7 @@ Set `GITLAB_URL` and `GITLAB_TOKEN` for stdio, or send the token per request in 
 
 <Callout type="note" title="Creating the token through the API">
 
-`POST /api/v4/user/personal_access_tokens` takes `granular_scopes` in place of `scopes`, each scope an `{access, permissions, project_ids or group_ids}` object, and everything must go in the one request. Permissions are given by GitLab's identifier (`read_project` for Project: Read). Send the request with a classic token carrying `api`, or with a fine-grained token granted Personal Access Token: Create, which cannot grant more than it holds itself. GitLab's API page does not list `granular_scopes` as a request attribute for this route yet; [gitlab-org/gitlab!260958](https://gitlab.com/gitlab-org/gitlab/-/merge_requests/260958), in review and approved on 9 October 2026, documents it. From GitLab 19.5, on GitLab.com since 9 October 2026, the create response includes the new token's `granular_scopes` (see [gitlab-org/gitlab!260276](https://gitlab.com/gitlab-org/gitlab/-/merge_requests/260276)). To check a token's grant later, use `GET /personal_access_tokens/self` on 19.5 and `GET /personal_access_tokens/:id` on 19.4.
+`POST /api/v4/user/personal_access_tokens` takes `granular_scopes` in place of `scopes`, each scope an `{access, permissions, project_ids or group_ids}` object, and everything must go in the one request. Permissions are given by GitLab's identifier (`read_project` for Project: Read). Send the request with a classic token carrying `api`, or with a fine-grained token granted Personal Access Token: Create, which cannot grant more than it holds itself. GitLab's API page does not list `granular_scopes` as a request attribute for this route yet; [gitlab-org/gitlab!260958](https://gitlab.com/gitlab-org/gitlab/-/merge_requests/260958), in review on 13 October 2026, documents it. From GitLab 19.5, on GitLab.com since 9 October 2026, the create response includes the new token's `granular_scopes` (see [gitlab-org/gitlab!260276](https://gitlab.com/gitlab-org/gitlab/-/merge_requests/260276)). To check a token's grant later, use `GET /personal_access_tokens/self` on 19.5 and `GET /personal_access_tokens/:id` on 19.4.
 
 </Callout>
 
