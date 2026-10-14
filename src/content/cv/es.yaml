@@ -645,7 +645,7 @@ sections:
           - { label: En vivo, url: "https://mcp.jmrp.io/es/#gitlab" }
           - {
               label: Documentación,
-              url: https://jmrplens.github.io/gitlab-mcp-server/es/,
+              url: https://docs.jmrp.io/gitlab-mcp-server/es/,
             }
       - name: phonometry
         tech: Python · DSP · Acústica
@@ -660,10 +660,7 @@ sections:
         links:
           - { label: GitHub, url: https://github.com/jmrplens/phonometry }
           - { label: PyPI, url: https://pypi.org/project/phonometry/ }
-          - {
-              label: Documentación,
-              url: https://jmrplens.github.io/phonometry/es/,
-            }
+          - { label: Documentación, url: https://docs.jmrp.io/phonometry/es/ }
       - name: cs-routeros-bouncer
         tech: Go · Firewall · MikroTik · WAF
         icon: logos:go
@@ -684,7 +681,7 @@ sections:
             }
           - {
               label: Documentación,
-              url: https://jmrplens.github.io/cs-routeros-bouncer/,
+              url: https://docs.jmrp.io/cs-routeros-bouncer/,
             }
       - name: Cloudflare-DNS-Updater
         tech: Bash · DevOps

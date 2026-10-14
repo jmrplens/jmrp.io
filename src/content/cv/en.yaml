@@ -643,7 +643,7 @@ sections:
               url: https://cursor.directory/plugins/gitlab-mcp-server,
             }
           - { label: Live, url: "https://mcp.jmrp.io/#gitlab" }
-          - { label: Docs, url: https://jmrplens.github.io/gitlab-mcp-server/ }
+          - { label: Docs, url: https://docs.jmrp.io/gitlab-mcp-server/ }
       - name: phonometry
         tech: Python · DSP · Acoustics
         icon: logos:python
@@ -658,7 +658,7 @@ sections:
         links:
           - { label: GitHub, url: https://github.com/jmrplens/phonometry }
           - { label: PyPI, url: https://pypi.org/project/phonometry/ }
-          - { label: Docs, url: https://jmrplens.github.io/phonometry/ }
+          - { label: Docs, url: https://docs.jmrp.io/phonometry/ }
       - name: cs-routeros-bouncer
         tech: Go · Firewall · MikroTik · WAF
         icon: logos:go
@@ -677,10 +677,7 @@ sections:
               label: CrowdSec Hub,
               url: https://app.crowdsec.net/hub/author/jmrplens/remediation-components/cs-routeros-bouncer,
             }
-          - {
-              label: Docs,
-              url: https://jmrplens.github.io/cs-routeros-bouncer/,
-            }
+          - { label: Docs, url: https://docs.jmrp.io/cs-routeros-bouncer/ }
       - name: Cloudflare-DNS-Updater
         tech: Bash · DevOps
         icon: logos:bash-icon

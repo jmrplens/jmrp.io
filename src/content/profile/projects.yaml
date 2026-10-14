@@ -70,10 +70,10 @@ projects:
     language: Go
     license: MIT
     repo: https://github.com/jmrplens/gitlab-mcp-server
-    docs: https://jmrplens.github.io/gitlab-mcp-server/
+    docs: https://docs.jmrp.io/gitlab-mcp-server/
     kicker: MCP server · AI tooling
     operatingSystem: Linux, macOS, Windows
-    docsEs: https://jmrplens.github.io/gitlab-mcp-server/es/
+    docsEs: https://docs.jmrp.io/gitlab-mcp-server/es/
     hosted: https://mcp.jmrp.io/servers/gitlab/
     hostedEs: https://mcp.jmrp.io/es/servers/gitlab/
     endpoint: https://mcp.jmrp.io/gitlab
@@ -167,10 +167,10 @@ projects:
     language: Python
     license: MIT
     repo: https://github.com/jmrplens/phonometry
-    docs: https://jmrplens.github.io/phonometry/
+    docs: https://docs.jmrp.io/phonometry/
     kicker: Acoustics · DSP
     operatingSystem: Linux, macOS, Windows
-    docsEs: https://jmrplens.github.io/phonometry/es/
+    docsEs: https://docs.jmrp.io/phonometry/es/
     listings:
       - label: PyPI
         url: https://pypi.org/project/phonometry/
@@ -200,7 +200,7 @@ projects:
     language: Go
     license: MIT
     repo: https://github.com/jmrplens/cs-routeros-bouncer
-    docs: https://jmrplens.github.io/cs-routeros-bouncer/
+    docs: https://docs.jmrp.io/cs-routeros-bouncer/
     kicker: Security · networking
     operatingSystem: Linux, macOS, Windows, FreeBSD
     listings:
@@ -236,10 +236,10 @@ projects:
     language: Go
     license: MIT
     repo: https://github.com/jmrplens/mikroscope
-    docs: https://jmrplens.github.io/mikroscope/
+    docs: https://docs.jmrp.io/mikroscope/
     kicker: Telemetry · MikroTik RouterOS
     operatingSystem: Linux, macOS, Windows
-    docsEs: https://jmrplens.github.io/mikroscope/es/
+    docsEs: https://docs.jmrp.io/mikroscope/es/
     # Both registries carry the same agent image. ghcr goes first because it
     # is the pull the docs name, and the authored order is the rendered one.
     # No `sameAs` for either: a listing URL is folded into the software
@@ -277,7 +277,7 @@ projects:
     language: Bash
     license: MIT
     repo: https://github.com/jmrplens/Cloudflare-DNS-Updater
-    docs: https://jmrplens.github.io/Cloudflare-DNS-Updater/
+    docs: https://docs.jmrp.io/Cloudflare-DNS-Updater/
     kicker: Networking · DDNS
     operatingSystem: Linux, macOS, BSD
     topics:
@@ -298,7 +298,7 @@ projects:
     language: Go
     license: MIT
     repo: https://github.com/jmrplens/libgen-mcp
-    docs: https://jmrplens.github.io/libgen-mcp/
+    docs: https://docs.jmrp.io/libgen-mcp/
     kicker: MCP server · AI tooling
     operatingSystem: Linux, macOS, Windows
     hosted: https://mcp.jmrp.io/servers/libgen/
@@ -381,10 +381,10 @@ projects:
     language: Go
     license: MIT
     repo: https://github.com/jmrplens/ghchronicle
-    docs: https://jmrplens.github.io/ghchronicle/
+    docs: https://docs.jmrp.io/ghchronicle/
     kicker: Collector · GitHub observability
     operatingSystem: Linux, macOS, Windows
-    docsEs: https://jmrplens.github.io/ghchronicle/es/
+    docsEs: https://docs.jmrp.io/ghchronicle/es/
     listings:
       - label: GitHub Container Registry
         url: https://github.com/jmrplens/ghchronicle/pkgs/container/ghchronicle
@@ -478,7 +478,7 @@ projects:
     language: Python
     license: AGPL-3.0
     repo: https://github.com/jmrplens/mastodon_official_profiles
-    docs: https://jmrplens.github.io/mastodon_official_profiles/
+    docs: https://github.com/jmrplens/mastodon_official_profiles#readme
     topics:
       - { name: Mastodon, wikidata: Q27986619 }
       - { name: Fediverse, wikidata: Q30325419 }

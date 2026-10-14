@@ -301,7 +301,7 @@ Dos acciones del servidor muestran los dos desenlaces:
 
 Una escritura puede perder su respuesta del mismo modo. `custom_emoji.create` envía una mutación que declara Custom Emoji: Create en el grupo, pero su payload selecciona `CustomEmoji`, que no declaraba nada en 19.4.1. Así que el emoji se crea y la respuesta es `null`: la página de referencia dice "la escritura se confirma y su respuesta se pierde". GitLab ha declarado desde entonces `CustomEmoji` en [gitlab-org/gitlab!260586](https://gitlab.com/gitlab-org/gitlab/-/merge_requests/260586) para 19.5, un merge request de otro contribuidor, fusionado el 8 de octubre de 2026, lo que ilustra bien que la tabla se mueve con las releases de GitLab.
 
-Lo que el recorrido no puede leer se declara a mano con una categoría y un motivo, y una declaración que no responde a nada es en sí misma un hallazgo. El resultado es una tabla compilada en el servidor (`table_gen.go`), generada y comprobada en CI contra la instantánea, más una página de [referencia de permisos de grano fino de gitlab-mcp-server](https://jmrp.io/docs/gitlab-mcp-server/es/reference/fine-grained-permissions/) que tiene una fila por acción: lo que necesita con las palabras de GitLab, en qué ámbito y qué partes pueden servirse vacías.
+Lo que el recorrido no puede leer se declara a mano con una categoría y un motivo, y una declaración que no responde a nada es en sí misma un hallazgo. El resultado es una tabla compilada en el servidor (`table_gen.go`), generada y comprobada en CI contra la instantánea, más una página de [referencia de permisos de grano fino de gitlab-mcp-server](https://docs.jmrp.io/gitlab-mcp-server/es/reference/fine-grained-permissions/) que tiene una fila por acción: lo que necesita con las palabras de GitLab, en qué ámbito y qué partes pueden servirse vacías.
 
 ### 58 acciones fuera del alcance de todo token de grano fino en GitLab 19.4.1
 
@@ -446,11 +446,11 @@ Mi agradecimiento a los revisores de GitLab que se hicieron cargo de ellos y fus
 
 ## Crear un token para gitlab-mcp-server
 
-Este es el camino corto; la [guía de tokens de grano fino de gitlab-mcp-server](https://jmrp.io/docs/gitlab-mcp-server/es/operations/fine-grained-tokens/) tiene todos los detalles.
+Este es el camino corto; la [guía de tokens de grano fino de gitlab-mcp-server](https://docs.jmrp.io/gitlab-mcp-server/es/operations/fine-grained-tokens/) tiene todos los detalles.
 
 ### 1. Decide qué debe hacer el cliente
 
-Busca las acciones en la [referencia de permisos de grano fino](https://jmrp.io/docs/gitlab-mcp-server/es/reference/fine-grained-permissions/) o en la [referencia de herramientas de gitlab-mcp-server](https://jmrp.io/docs/gitlab-mcp-server/es/reference/tools/) y mira la línea "Token de grano fino" de la entrada de cada acción, que nombra lo que necesita: para `branch.create`, "Branch: Create en proyecto".
+Busca las acciones en la [referencia de permisos de grano fino](https://docs.jmrp.io/gitlab-mcp-server/es/reference/fine-grained-permissions/) o en la [referencia de herramientas de gitlab-mcp-server](https://docs.jmrp.io/gitlab-mcp-server/es/reference/tools/) y mira la línea "Token de grano fino" de la entrada de cada acción, que nombra lo que necesita: para `branch.create`, "Branch: Create en proyecto".
 
 ### 2. Genera un token de grano fino en GitLab
 

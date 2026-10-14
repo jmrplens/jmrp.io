@@ -296,7 +296,7 @@ Two of the server's actions show both outcomes:
 
 A write can lose its answer the same way. `custom_emoji.create` sends a mutation that declares Custom Emoji: Create at the group, but its payload selects `CustomEmoji`, which declared nothing at 19.4.1. So the emoji is created and the answer is `null`: the reference page says "the write commits and its answer is lost". GitLab has since declared `CustomEmoji` in [gitlab-org/gitlab!260586](https://gitlab.com/gitlab-org/gitlab/-/merge_requests/260586), another contributor's merge request for 19.5, merged on 8 October 2026, which is a good illustration that the table moves with GitLab's releases.
 
-What the walk cannot read is declared by hand with a category and a reason, and a declaration that answers nothing is itself a finding. The output is a table compiled into the server (`table_gen.go`), generated and checked in CI against the record, plus a [gitlab-mcp-server fine-grained permissions reference](https://jmrp.io/docs/gitlab-mcp-server/reference/fine-grained-permissions/) page with one row per action: what it needs in GitLab's words, at which boundary, and which parts may be served empty.
+What the walk cannot read is declared by hand with a category and a reason, and a declaration that answers nothing is itself a finding. The output is a table compiled into the server (`table_gen.go`), generated and checked in CI against the record, plus a [gitlab-mcp-server fine-grained permissions reference](https://docs.jmrp.io/gitlab-mcp-server/reference/fine-grained-permissions/) page with one row per action: what it needs in GitLab's words, at which boundary, and which parts may be served empty.
 
 ### 58 actions out of reach of every fine-grained token at GitLab 19.4.1
 
@@ -441,11 +441,11 @@ My thanks to the GitLab reviewers who took these on and merged six of them withi
 
 ## Create a token for gitlab-mcp-server
 
-The [gitlab-mcp-server fine-grained tokens guide](https://jmrp.io/docs/gitlab-mcp-server/operations/fine-grained-tokens/) has every detail; this is the short path.
+The [gitlab-mcp-server fine-grained tokens guide](https://docs.jmrp.io/gitlab-mcp-server/operations/fine-grained-tokens/) has every detail; this is the short path.
 
 ### 1. Decide what the client should do
 
-Look the actions up on the [fine-grained permissions reference](https://jmrp.io/docs/gitlab-mcp-server/reference/fine-grained-permissions/), or on the action's entry in the [gitlab-mcp-server tool reference](https://jmrp.io/docs/gitlab-mcp-server/reference/tools/), whose "Fine-grained token" line names what it needs: for `branch.create`, "Branch: Create at project".
+Look the actions up on the [fine-grained permissions reference](https://docs.jmrp.io/gitlab-mcp-server/reference/fine-grained-permissions/), or on the action's entry in the [gitlab-mcp-server tool reference](https://docs.jmrp.io/gitlab-mcp-server/reference/tools/), whose "Fine-grained token" line names what it needs: for `branch.create`, "Branch: Create at project".
 
 ### 2. Generate a fine-grained token in GitLab
 
