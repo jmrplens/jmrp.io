@@ -331,7 +331,7 @@
       "license": "AGPL-3.0",
       "licenseUrl": "https://www.gnu.org/licenses/agpl-3.0.html",
       "repo": "https://github.com/jmrplens/mastodon_official_profiles",
-      "docs": "https://docs.jmrp.io/mastodon_official_profiles/",
+      "docs": "https://github.com/jmrplens/mastodon_official_profiles#readme",
       "description": "List of official profiles on Mastodon.",
       "descriptionEs": "Lista de perfiles oficiales en Mastodon.",
       "keywords": [

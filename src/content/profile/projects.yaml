@@ -478,7 +478,7 @@ projects:
     language: Python
     license: AGPL-3.0
     repo: https://github.com/jmrplens/mastodon_official_profiles
-    docs: https://docs.jmrp.io/mastodon_official_profiles/
+    docs: https://github.com/jmrplens/mastodon_official_profiles#readme
     topics:
       - { name: Mastodon, wikidata: Q27986619 }
       - { name: Fediverse, wikidata: Q30325419 }
