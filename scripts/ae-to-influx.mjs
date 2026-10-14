@@ -95,6 +95,16 @@ const NGINX_DB = "nginx";
 const EDGE_SITES = [
   { dataset: "jmrp_edge_requests", site: "jmrp", host: "jmrp.io" },
   { dataset: "mcp_edge_requests", site: "mcp", host: "mcp.jmrp.io" },
+  // docs.jmrp.io (since 2026-10-14) is GitHub Pages behind a pass-through
+  // logging worker (plan/docs-edge-worker): no nginx ever sees it, so EVERY
+  // request is ingested, not only the edge-only verdicts. Its cache column
+  // carries Cloudflare's raw cf-cache-status (HIT, MISS, DYNAMIC...).
+  {
+    dataset: "docs_edge_requests",
+    site: "docs",
+    host: "docs.jmrp.io",
+    ingestAll: true,
+  },
 ];
 /** Cache verdicts the origin never saw: the request ended at the edge. */
 const EDGE_ONLY_VERDICTS = [
@@ -478,9 +488,13 @@ function edgeRow(r, site) {
  * @returns {Promise<string[]>} Line-protocol lines for database `nginx`.
  */
 async function collectEdgeServed(fromS, toS, site = EDGE_SITES[0]) {
-  const verdicts = EDGE_ONLY_VERDICTS.map((v) => `'${v}'`).join(", ");
+  // A site whose origin keeps no log (ingestAll) contributes every request;
+  // the others only what the origin never saw, so nothing is counted twice.
+  const verdictFilter = site.ingestAll
+    ? ""
+    : ` AND blob12 IN (${EDGE_ONLY_VERDICTS.map((v) => `'${v}'`).join(", ")})`;
   const rows = await aeQuery(
-    `SELECT toUnixTimestamp(timestamp) AS ts, index1 AS c, blob1 AS p, blob2 AS ua, blob3 AS cc, blob4 AS a, blob5 AS ref, blob6 AS colo, blob7 AS city, blob8 AS asn_org, blob9 AS proto, blob10 AS tls, blob11 AS st, blob12 AS cache, blob13 AS accept, blob14 AS method, blob15 AS ua_full, blob16 AS ip, blob17 AS lang, blob18 AS referer_full, blob19 AS qs, blob20 AS misc, double1 AS lat, double2 AS lon, double3 AS asn, double4 AS rtt, double5 AS contentLength, double6 AS age, double7 AS edge_ms, double9 AS tms, _sample_interval AS n FROM ${site.dataset} WHERE timestamp >= toDateTime(${fromS}) AND timestamp < toDateTime(${toS}) AND blob11 != '' AND blob12 IN (${verdicts})`,
+    `SELECT toUnixTimestamp(timestamp) AS ts, index1 AS c, blob1 AS p, blob2 AS ua, blob3 AS cc, blob4 AS a, blob5 AS ref, blob6 AS colo, blob7 AS city, blob8 AS asn_org, blob9 AS proto, blob10 AS tls, blob11 AS st, blob12 AS cache, blob13 AS accept, blob14 AS method, blob15 AS ua_full, blob16 AS ip, blob17 AS lang, blob18 AS referer_full, blob19 AS qs, blob20 AS misc, double1 AS lat, double2 AS lon, double3 AS asn, double4 AS rtt, double5 AS contentLength, double6 AS age, double7 AS edge_ms, double9 AS tms, _sample_interval AS n FROM ${site.dataset} WHERE timestamp >= toDateTime(${fromS}) AND timestamp < toDateTime(${toS}) AND blob11 != ''${verdictFilter}`,
   );
   const key = (r) =>
     [
