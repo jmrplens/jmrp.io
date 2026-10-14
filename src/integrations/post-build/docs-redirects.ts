@@ -19,6 +19,14 @@ import { assertNginxSafe, buildStampLine, writeNginxSnippet } from "./utils.js";
  * entity resolution feeds on — mentions, not link equity, which follows the
  * redirect to its destination), and the visitor still lands on the docs.
  *
+ * Since 2026-10-14 the docs themselves are served from `docs.jmrp.io`: it is
+ * the custom domain of the GitHub Pages user site, so every project site
+ * answers at `docs.jmrp.io/<repo>/` and GitHub 301s the old github.io URLs
+ * there. The canonical domain is now in the served URL itself, so the repo
+ * `homepage` fields point at it directly and these redirects stay only as
+ * stable aliases for the `/docs/` links already published (posts, fiches,
+ * citations). Retiring them would break those links for no gain.
+ *
  * Derived from `projects.yaml` on every build, same pattern as
  * `blog_redirects.conf`: adding a project needs no nginx edit. Staged for
  * delivery rather than written into dist/ or into the repo — see
@@ -228,10 +236,10 @@ ${buildStampLine(stamp)}
 # derived from src/content/profile/projects.yaml.
 #
 # Stable documentation URLs under the canonical domain: /docs/<project-id>
-# 301s to the project's real docs site. Repo \`homepage\` fields point here so
-# the canonical domain travels with every project fiche while the visitor
-# still lands on the docs. If a docs site ever moves, edit projects.yaml and
-# rebuild — one place, all consumers.
+# 301s to the project's real docs site, served from docs.jmrp.io since
+# 2026-10-14. Repo \`homepage\` fields now point at docs.jmrp.io directly; these
+# stay as stable aliases for the /docs/ links already published. If a docs
+# site ever moves, edit projects.yaml and rebuild: one place, all consumers.
 #
 # Included at http level; consumed by the server block as:
 #     if (${MAP_VARIABLE}) { return 301 ${MAP_VARIABLE}; }

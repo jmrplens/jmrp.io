@@ -733,8 +733,9 @@ const ProjectEntry = z.object({
   /** Spanish documentation, when the project publishes a translated site. */
   docsEs: z.url().optional(),
   /**
-   * Two fields that exist for the documentation hub on jmrplens.github.io,
-   * which consumes this list at build time the way the five project sites
+   * Two fields that exist for the documentation hub (repo
+   * `jmrplens.github.io`, served at docs.jmrp.io), which consumes this list
+   * at build time the way the five project sites
    * consume `#person`. They live here rather than there so that adding a
    * project stays one edit in one repository.
    *

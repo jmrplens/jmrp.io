@@ -7,13 +7,14 @@
  * everywhere else.
  *
  * ── Why this exists ──────────────────────────────────────────────────────
- * The documentation hub on jmrplens.github.io kept its own copy of the same
- * projects in `src/data/site.ts`, and the copy drifted exactly as copies do:
- * two projects shipped and were listed here but not there, so their pages were
- * missing from that host's sitemap and llms.txt until someone noticed. This is
- * the same fix the `#person` entity already has, for the same reason: publish
- * one artifact, have the consumer fetch it at build time, and let a failed
- * fetch fail the build rather than ship a stale list.
+ * The documentation hub (repo jmrplens.github.io, served at docs.jmrp.io) kept
+ * its own copy of the same projects in `src/data/site.ts`, and the copy
+ * drifted exactly as copies do: two projects shipped and were listed here but
+ * not there, so their pages were missing from that host's sitemap and
+ * llms.txt until someone noticed. This is the same fix the `#person` entity
+ * already has, for the same reason: publish one artifact, have the consumer
+ * fetch it at build time, and let a failed fetch fail the build rather than
+ * ship a stale list.
  *
  * ── Why a committed file, and why not JSON-LD ────────────────────────────
  * Committed for the same reason `person.jsonld` is: consumer builds run on CI
