@@ -4,7 +4,7 @@ slug: "014-gitlab-fine-grained-tokens-per-action"
 lang: "es"
 publishedDate: 2026-10-10
 description: "Un token de grano fino de GitLab lleva una concesión, no scopes: fuera de ella, REST rechaza y GraphQL responde null. Deduzco qué necesita cada acción."
-lead: "La lista de scopes de un token de grano fino de GitLab solo dice \"granular\", así que gitlab-mcp-server deduce qué necesita cada una de sus 1.098 acciones a partir de lo que declara GitLab 19.4.1, y encuentra 58 que ninguna concesión alcanza."
+lead: "La lista de scopes de un token de grano fino de GitLab solo dice \"granular\", así que gitlab-mcp-server deduce qué necesita cada una de sus 1.098 acciones a partir de lo que declara GitLab 19.4.1, y encuentra 58 que ninguna concesión alcanza (19.5.0 y 55 en main desde el 17 de octubre)."
 coverImage: "../../../assets/images/blog/gitlab-fine-grained-tokens.webp"
 author: "José Manuel Requena Plens"
 authorEmail: "mail@jmrp.io"
@@ -31,20 +31,20 @@ faq:
   - question: "¿Puedo añadir un permiso a un token de grano fino de GitLab que ya existe?"
     answer: "No. GitLab fija la concesión de un token de grano fino al crearlo: ninguna ruta, mutación ni página de ajustes la edita, y rotar el token copia la misma concesión en el nuevo. Un permiso que falta significa siempre crear un token nuevo que lo conceda."
   - question: "¿Por qué una consulta GraphQL de GitLab devuelve null o una lista vacía a un token de grano fino?"
-    answer: "Porque GitLab deniega el acceso a un token de grano fino en todo tipo GraphQL que su concesión no alcanza, y en todo tipo que no declara ni un permiso de grano fino ni un motivo para saltarse la comprobación, algo que ninguna concesión puede arreglar; GraphQL devuelve un objeto denegado como null y lo quita de una lista, sin ningún error que mencione el token. En GitLab 19.4.1, la propia lista de pendientes de GitLab nombra 862 tipos y 61 mutaciones sin declaración. Una llamada REST fuera de la concesión, en cambio, es un 403 que nombra el permiso que falta. En un proyecto o grupo público, GitLab concede además a un token de grano fino todos los permisos que tiene allí un visitante anónimo."
+    answer: "Porque GitLab deniega el acceso a un token de grano fino en todo tipo GraphQL que su concesión no alcanza, y en todo tipo que no declara ni un permiso de grano fino ni un motivo para saltarse la comprobación, algo que ninguna concesión puede arreglar; GraphQL devuelve un objeto denegado como null y lo quita de una lista, sin ningún error que mencione el token. En GitLab 19.4.1, la propia lista de pendientes de GitLab nombra 862 tipos y 61 mutaciones sin declaración. Una llamada REST fuera de la concesión, en cambio, es un 403 que nombra el permiso que falta. En un proyecto o grupo público, GitLab concede además a un token de grano fino todos los permisos que tiene allí un visitante anónimo, siempre que una regla de política los habilite (la lista de jobs de un pipeline todavía no: gitlab-org/gitlab#627693)."
   - question: "¿Qué acciones de GitLab quedan fuera del alcance de todo token de grano fino?"
     answer: "En GitLab 19.4.1, 58 de las 1.098 acciones de gitlab-mcp-server, todas por GraphQL: épicas, work items y sus vistas guardadas, logros, emojis personalizados, reglas de rama, reglas de rama de destino, el catálogo de CI y once acciones de seguridad. En 34 un tipo en el camino de la respuesta no declara nada, en 20 la escritura se confirma y la respuesta es null, 3 mutaciones no declaran nada y se rechazan, y una escribe un objeto que GitLab nunca resuelve al ámbito que declara. La salida es un token clásico (uno que ya exista, en una instancia que ya no deja crearlos), donde el grupo no rechace los tokens clásicos."
   - question: "¿Qué necesita un token de grano fino para que gitlab-mcp-server arranque?"
     answer: "User: Read, Namespace: Read y Personal Access Token: Read en el ámbito del usuario, y Metadata: Read en el de la instancia, además de lo que necesite el trabajo. De ellos, solo User: Read es obligatorio, y solo en modo HTTP: allí se rechaza con 403 un token que no lo tenga. Sin Personal Access Token: Read o Metadata: Read el servidor arranca igualmente y sirve el token, retiene solo lo que ningún token de grano fino alcanza y deja que GitLab juzgue el resto."
   - question: "¿Funciona gitlab-mcp-server con un token de acceso personal de grano fino de GitLab?"
-    answer: "Sí. Desde la release 3.2.0 de gitlab-mcp-server, publicada el 9 de octubre de 2026, el servidor lee un token de grano fino como autoridad desconocida y no como de solo lectura, en stdio y en modo HTTP. Cuando puede leer la concesión y la instancia ejecuta GitLab 19.4, cada sesión ve solo las acciones que la concesión alcanza. Una llamada fuera de ella se responde antes de enviar nada a GitLab, con el permiso que necesita en las palabras de la página de creación de tokens; una lectura que GitLab serviría en un proyecto o grupo público se deja pasar. En GitLab.com (19.5.0-pre) el listado sigue la concesión como la declara GitLab 19.4.1, y toda llamada fuera de las 58 acciones que ningún token de grano fino alcanza va a GitLab, que la juzga."
+    answer: "Sí. Desde la release 3.2.0 de gitlab-mcp-server, publicada el 9 de octubre de 2026, el servidor lee un token de grano fino como autoridad desconocida y no como de solo lectura, en stdio y en modo HTTP. Cuando puede leer la concesión y la instancia ejecuta GitLab 19.4, cada sesión ve solo las acciones que la concesión alcanza. Una llamada fuera de ella se responde antes de enviar nada a GitLab, con el permiso que necesita en las palabras de la página de creación de tokens; una lectura que GitLab serviría en un proyecto o grupo público se deja pasar. En GitLab 19.5, publicada el 15 de octubre de 2026, y en GitLab.com, que el 17 de octubre informaba de 19.6.0-pre, la 3.2.0 no evalúa la concesión: retiene las 58 acciones que ningún token de grano fino alcanza en 19.4.1 y envía toda otra llamada a GitLab, que la juzga."
   - question: "¿Qué hacían gitlab-mcp-server 3.0.0 y 3.1.0 con un token de grano fino?"
     answer: "A un token de grano fino con Personal Access Token: Read concedido no se le servía ninguna escritura, porque esas releases leían su único scope, granular, como uno que no puede escribir. El modo HTTP con OAuth rechazaba en la puerta a todo token de grano fino. Ambas cosas terminaron en la 3.2.0, publicada el 9 de octubre de 2026, que lee el token como autoridad desconocida."
 howto:
   name: "Crear un token de acceso personal de grano fino de GitLab para gitlab-mcp-server"
   totalTime: "PT10M"
   tools:
-    - "GitLab 19.4 o GitLab.com"
+    - "GitLab 19.4 o posterior, o GitLab.com"
     - "gitlab-mcp-server 3.2.0 o posterior"
   steps:
     - name: "Decide qué debe hacer el cliente"
@@ -82,8 +82,8 @@ Eso es un problema para cualquier cliente de la API, y uno serio para [gitlab-mc
 - Un **token de acceso personal de grano fino** de GitLab (disponible de forma general desde 19.2) lleva una **concesión** de permisos con nombre, cada uno en un ámbito, no scopes. Su lista de scopes es solo **`granular`**, y **la concesión no se puede cambiar después de crear el token**.
 - GitLab juzga cada petición contra la concesión, pero sus dos API responden de forma distinta: **REST rechaza con un `403` que nombra el permiso que falta**, mientras que **GraphQL responde `null` o una lista vaciada, sin ningún error sobre el token**, allí donde la concesión no alcanza un tipo, y siempre donde un tipo no declara ni un permiso de grano fino ni un motivo para saltarse la comprobación. En 19.4.1, la propia lista de pendientes de GitLab recoge **862 tipos y 61 mutaciones sin declaración**.
 - gitlab-mcp-server deduce **qué necesita cada una de sus 1.098 acciones** cruzando las peticiones que envían sus handlers con los permisos que **declara GitLab 19.4.1** para cada ruta, tipo y mutación, tomados de una instancia arrancada. Una respuesta GraphQL se juzga a lo largo de la **columna de la respuesta**: una sola posición en ella que no declare nada, o que la concesión no cubra, deja toda la respuesta a null o vacía.
-- **58 acciones** quedan fuera del alcance de todo token de grano fino en 19.4.1, y otras 10 se sirven con partes que pueden venir vacías. El servidor retiene las 58 **antes** de que una petición llegue a GitLab y dice por qué, y añade una nota a una respuesta que GitLab puede haber dejado vacía en parte. Cuando puede leer la concesión y la instancia ejecuta 19.4, también responde a una llamada fuera de ella nombrando el permiso que falta con las palabras del propio GitLab.
-- El trabajo dio lugar a **seis merge requests a GitLab sobre `granular_scopes`, cinco de ellos fusionados a 9 de octubre de 2026**: en GitLab.com un token de grano fino ya puede leer su propia concesión desde `GET /personal_access_tokens/self`, y crear o rotar tu propio token devuelve la concesión nueva.
+- **58 acciones** quedan fuera del alcance de todo token de grano fino en 19.4.1, y otras 10 se sirven con partes que pueden venir vacías. El servidor retiene las 58 **antes** de que una petición llegue a GitLab y dice por qué, y añade una nota a una respuesta que GitLab puede haber dejado vacía en parte. En la 3.2.0, cuando puede leer la concesión y la instancia ejecuta 19.4, también responde a una llamada fuera de ella nombrando el permiso que falta con las palabras del propio GitLab.
+- El trabajo dio lugar a **seis merge requests a GitLab sobre `granular_scopes`, todos fusionados a 13 de octubre de 2026**: desde GitLab 19.5, publicada el 15 de octubre, un token de grano fino puede leer su propia concesión desde `GET /personal_access_tokens/self`, y crear o rotar tu propio token devuelve la concesión nueva.
 
 </TLDRSummary>
 
@@ -145,13 +145,13 @@ Por REST, una llamada fuera de la concesión es explícita. Toma un token con Pr
   caption="El cuerpo tal como lo construye GitLab 19.4.1; la suite end-to-end comprueba el código y el nombre del permiso contra una instancia en marcha."
 />
 
-La declaración de la ruta dice lo mismo de antemano: `GET /projects/:id/repository/branches` declara `read_branch` en el ámbito del proyecto, y `POST` en la misma ruta declara `create_branch`. El permiso se nombra por su etiqueta visible y no por el identificador con el que se crea un token, pero un cliente puede al menos decirle a su usuario qué conceder. En un proyecto público con repositorio público, la lista de ramas se sirve sin Branch: Read, porque GitLab concede a un token de grano fino todos los permisos que tiene allí un visitante anónimo.
+La declaración de la ruta dice lo mismo de antemano: `GET /projects/:id/repository/branches` declara `read_branch` en el ámbito del proyecto, y `POST` en la misma ruta declara `create_branch`. El permiso se nombra por su etiqueta visible y no por el identificador con el que se crea un token, pero un cliente puede al menos decirle a su usuario qué conceder, aunque para algunos permisos GitLab nombra una etiqueta obsoleta que la página de creación ya no ofrece, como Webhook: Test ([gitlab-org/gitlab#633316](https://gitlab.com/gitlab-org/gitlab/-/issues/633316), con el arreglo en revisión en [gitlab-org/gitlab!261671](https://gitlab.com/gitlab-org/gitlab/-/merge_requests/261671)). En un proyecto público con repositorio público, la lista de ramas se sirve sin Branch: Read, porque GitLab concede a un token de grano fino todos los permisos que tiene allí un visitante anónimo, siempre que una regla de política habilite el permiso: la lista de jobs de un pipeline se sigue rechazando ([gitlab-org/gitlab#627693](https://gitlab.com/gitlab-org/gitlab/-/issues/627693), con el arreglo en revisión en [gitlab-org/gitlab!261569](https://gitlab.com/gitlab-org/gitlab/-/merge_requests/261569)).
 
 GraphQL calla. GitLab deniega el acceso a un token de grano fino en todo tipo GraphQL que no declara ninguna directiva de grano fino; lo dice un comentario de `granular_scope_authorization.rb`, según el cual, sin directivas, los tokens de grano fino se quedan sin acceso mientras los clásicos siguen con su autorización de siempre: "if no gPAT directives are defined, granular tokens deny access while legacy tokens fall through to their existing authorization" (el código de GitLab llama a un token de grano fino granular PAT, o gPAT). Un objeto denegado se devuelve como `null`, y una lista lo omite, sin ningún error. Donde el campo no puede ser null, el `null` se propaga al padre más cercano que sí puede serlo, y el único error es el genérico de GraphQL, "Cannot return null for non-nullable field", que no dice nada del token.
 
 Las mutaciones son la excepción, y nunca callan: una que declara un permiso que la concesión no tiene se responde con el campo a `null` y, en `errors`, la misma frase que da REST, y una que no declara nada, con el error genérico de GitLab "The resource that you are attempting to access does not exist or you don't have permission to perform this action". Los casos silenciosos son los tipos.
 
-El caso más claro es una épica. GitLab declara `WorkItem` solo en el ámbito del proyecto, y una épica es un work item de un grupo, así que para ella no se resuelve ningún ámbito. Un token con Work Item: Read y Work Item: Update concedidos en el grupo lee la épica como `null`, mientras que un token clásico la lee:
+El caso más claro era una épica, hasta GitLab 19.4. GitLab declaraba `WorkItem` solo en el ámbito del proyecto, y una épica es un work item de un grupo, así que para ella no se resolvía ningún ámbito. Un token con Work Item: Read y Work Item: Update concedidos en el grupo leía la épica como `null`, mientras que un token clásico la leía:
 
 <HttpExchange
   method="POST"
@@ -176,9 +176,9 @@ El caso más claro es una épica. GitLab declara `WorkItem` solo en el ámbito d
   caption="Abreviado. La suite end-to-end comprueba las dos respuestas y el cambio de nombre contra GitLab 19.4.1, y pasó el 5 de octubre de 2026."
 />
 
-La lista de épicas de un grupo hace lo mismo con `nodes: []`. Otro usuario de GitLab informó exactamente de eso en [gitlab-org/gitlab#630483](https://gitlab.com/gitlab-org/gitlab/-/issues/630483) en septiembre, y señaló que el fallo es silencioso y fácil de tomar por una búsqueda sin épicas que coincidan. GitLab lo cerró el 12 de octubre con [gitlab-org/gitlab!259765](https://gitlab.com/gitlab-org/gitlab/-/merge_requests/259765), que declara el ámbito del grupo para `WorkItem` a partir de 19.6; los campos cuyos tipos siguen sin declarar, como `workItemType`, siguen volviendo como `null`. El mismo patrón aparece en `namespace(fullPath:)`, que responde `null`, y en las reglas de rama de un proyecto, que vuelven sin sus elementos.
+La lista de épicas de un grupo hacía lo mismo con `nodes: []`. Otro usuario de GitLab informó exactamente de eso en [gitlab-org/gitlab#630483](https://gitlab.com/gitlab-org/gitlab/-/issues/630483) en septiembre, y señaló que el fallo es silencioso y fácil de tomar por una búsqueda sin épicas que coincidan. GitLab lo cerró el 12 de octubre con [gitlab-org/gitlab!259765](https://gitlab.com/gitlab-org/gitlab/-/merge_requests/259765), que declara el ámbito del grupo para `WorkItem` y llegó con GitLab 19.5.0, aunque su hito diga 19.6. Desde 19.5.0, y en GitLab.com desde el 12 de octubre, el mismo token lee la épica y su cambio de nombre se responde con ella, lo que la suite end-to-end de `main` comprueba contra 19.5.0; los campos cuyos tipos siguen sin declarar, como `workItemType`, siguen volviendo como `null`. El mismo patrón aparece en `namespace(fullPath:)`, que responde `null`, y en las reglas de rama de un proyecto, que vuelven sin sus elementos.
 
-No es cosa de un puñado de tipos. GitLab mantiene su propia lista de lo que todavía no tiene declaración, `config/authz/graphql/authorization_todo.txt`: **862 tipos y 61 mutaciones en GitLab 19.4.1**, y 859 y 42 en `master` el 13 de octubre de 2026. GitLab la va despachando, y su issue de planificación [gitlab-org/gitlab#631631](https://gitlab.com/gitlab-org/gitlab/-/issues/631631) describe el mismo comportamiento desde su lado: un tipo de objeto sin la directiva se resuelve a nil para los tokens de grano fino, lo que anula los datos de la consulta o hace fallar las mutaciones ("resolves to nil for granular tokens, nulling query data or erroring mutations").
+No es cosa de un puñado de tipos. GitLab mantiene su propia lista de lo que todavía no tiene declaración, `config/authz/graphql/authorization_todo.txt`: **862 tipos y 61 mutaciones en GitLab 19.4.1**, 859 y 42 en 19.5.0, y 818 y 42 en `master` el 17 de octubre de 2026. GitLab la va despachando, y su issue para los tipos GraphQL que alcanzan sus propias herramientas MCP, [gitlab-org/gitlab#631631](https://gitlab.com/gitlab-org/gitlab/-/issues/631631), describe el mismo comportamiento desde su lado: un tipo de objeto sin la directiva se resuelve a nil para los tokens de grano fino, lo que anula los datos de la consulta o hace fallar las mutaciones ("resolves to nil for granular tokens, nulling query data or erroring mutations").
 
 <Callout type="warning" title="Por qué importa la diferencia">
 
@@ -299,7 +299,7 @@ Dos acciones del servidor muestran los dos desenlaces:
   caption="Abreviado: la acción selecciona 21 posiciones; el árbol muestra tres de las 11 partes que pueden venir vacías."
 />
 
-Una escritura puede perder su respuesta del mismo modo. `custom_emoji.create` envía una mutación que declara Custom Emoji: Create en el grupo, pero su payload selecciona `CustomEmoji`, que no declaraba nada en 19.4.1. Así que el emoji se crea y la respuesta es `null`: la página de referencia dice "la escritura se confirma y su respuesta se pierde". GitLab ha declarado desde entonces `CustomEmoji` en [gitlab-org/gitlab!260586](https://gitlab.com/gitlab-org/gitlab/-/merge_requests/260586) para 19.5, un merge request de otro contribuidor, fusionado el 8 de octubre de 2026, lo que ilustra bien que la tabla se mueve con las releases de GitLab.
+Una escritura puede perder su respuesta del mismo modo. `custom_emoji.create` envía una mutación que declara Custom Emoji: Create en el grupo, pero su payload selecciona `CustomEmoji`, que no declaraba nada en 19.4.1. Así que el emoji se crea y la respuesta es `null`: la página de referencia de la 3.2.0 decía "la escritura se confirma y su respuesta se pierde". GitLab ha declarado desde entonces `CustomEmoji` en [gitlab-org/gitlab!260586](https://gitlab.com/gitlab-org/gitlab/-/merge_requests/260586) para 19.5, un merge request de otro contribuidor, fusionado el 8 de octubre de 2026, lo que ilustra bien que la tabla se mueve con las releases de GitLab. Tomada de nuevo de 19.5.0 en `main`, la página de referencia pide ahora para ella Custom Emoji: Create y Custom Emoji: Read en el grupo.
 
 Lo que el recorrido no puede leer se declara a mano con una categoría y un motivo, y una declaración que no responde a nada es en sí misma un hallazgo. El resultado es una tabla compilada en el servidor (`table_gen.go`), generada y comprobada en CI contra la instantánea, más una página de [referencia de permisos de grano fino de gitlab-mcp-server](https://docs.jmrp.io/gitlab-mcp-server/es/reference/fine-grained-permissions/) que tiene una fila por acción: lo que necesita con las palabras de GitLab, en qué ámbito y qué partes pueden servirse vacías.
 
@@ -324,13 +324,13 @@ El cruce encuentra las 58 entre las acciones GraphQL, y cada una queda fuera de 
   caption="34: un tipo en el camino de la respuesta no declara nada, así que la respuesta es null o una lista vaciada. 20: la escritura se confirma y su respuesta es null. 3: la mutación no declara nada y GitLab la rechaza. 1: group.epic_create escribe un objeto que GitLab nunca resuelve al ámbito que declara."
 />
 
-Por áreas son 15 acciones de épicas, 12 de work items (con sus vistas guardadas y sus tipos), 12 de logros, 3 de emojis personalizados, 2 del catálogo de CI, 2 de reglas de rama de destino, 1 de reglas de rama y 11 de seguridad. Otras 10 acciones se sirven con partes que pueden venir vacías (lecturas y escrituras de vulnerabilidades, estado de Terraform, dos actualizaciones de notas de épicas). En `master` el 13 de octubre, 55 de las 58 siguen bloqueadas por un tipo o una mutación de la lista de pendientes de GitLab; las tres de emojis personalizados ya no, porque `CustomEmoji` ha salido de ella. `group.epic_create`, cuyo ámbito de grupo declaró gitlab-org/gitlab!259765 el 11 de octubre, sigue perdiendo su respuesta por `WorkItemType` y `WorkItemFeatures`, que siguen en la lista.
+Por áreas son 15 acciones de épicas, 12 de work items (con sus vistas guardadas y sus tipos), 12 de logros, 3 de emojis personalizados, 2 del catálogo de CI, 2 de reglas de rama de destino, 1 de reglas de rama y 11 de seguridad. Otras 10 acciones se sirven con partes que pueden venir vacías (lecturas y escrituras de vulnerabilidades, estado de Terraform, dos actualizaciones de notas de épicas). En `master` el 17 de octubre, 55 de las 58 siguen bloqueadas por un tipo o una mutación de la lista de pendientes de GitLab; las tres de emojis personalizados ya no, porque `CustomEmoji` ha salido de ella. `group.epic_create`, cuyo ámbito de grupo declaró gitlab-org/gitlab!259765 el 11 de octubre, sigue perdiendo su respuesta por `WorkItemType` y `WorkItemFeatures`, que siguen en la lista. La tabla que la rama `main` del servidor volvió a tomar de GitLab 19.5.0 el 17 de octubre coincide: retiene 55, sin las tres de emojis personalizados: 33 por un tipo sin declarar, 19 escrituras que pierden la respuesta, ahora con `group.epic_create` entre ellas por `WorkItemType`, y 3 mutaciones rechazadas, y sirve 11 con partes que pueden venir vacías, con `admin.terraform_state_delete` como nueva.
 
 ## Lo que se le dice a un cliente
 
 El servidor averigua el tipo del token con `GET /personal_access_tokens/self`. Una lista de scopes que es exactamente `["granular"]` se lee como **autoridad desconocida**, nunca como de solo lectura, así que un token de grano fino no se reduce como un token `read_api`.
 
-Después se aplica una de dos fases. El servidor recurre a la fase A cuando se da cualquiera de estos casos: el token no puede leer su propia concesión (sin Personal Access Token: Read), no hay una versión legible (sin Metadata: Read), la instancia ejecuta una release distinta de 19.4 (la versión previa del minor siguiente, `19.5.0-pre`, de la que informa GitLab.com, es la única excepción, más abajo), la concesión nombra un permiso que la tabla no conoce, o la concesión supera 1 MiB o 1.000 scopes o contiene un scope que el servidor no puede leer sin adivinar. Si GitLab no responde a la primera lectura de la concesión o de la versión, la sesión también empieza en fase A, hasta que una revalidación las lee.
+Después se aplica una de dos fases. El servidor recurre a la fase A cuando se da cualquiera de estos casos: el token no puede leer su propia concesión (sin Personal Access Token: Read), no hay una versión legible (sin Metadata: Read), la instancia ejecuta una release distinta de 19.4 (la versión previa del minor siguiente, `19.5.0-pre`, es la única excepción, más abajo), la concesión nombra un permiso que la tabla no conoce, o la concesión supera 1 MiB o 1.000 scopes o contiene un scope que el servidor no puede leer sin adivinar. Si GitLab no responde a la primera lectura de la concesión o de la versión, la sesión también empieza en fase A, hasta que una revalidación las lee.
 
 <Table title="Qué ve una sesión de grano fino">
   <thead>
@@ -344,7 +344,7 @@ Después se aplica una de dos fases. El servidor recurre a la fase A cuando se d
     <tr>
       <th scope="row">Cuándo</th>
       <td>Cualquiera de los casos de arriba</td>
-      <td>Se leyó la concesión y la instancia ejecuta 19.4</td>
+      <td>Se leyó la concesión y la instancia ejecuta 19.4 (3.2.0; 19.5 en `main`)</td>
     </tr>
     <tr>
       <th scope="row">Listado</th>
@@ -359,7 +359,7 @@ Después se aplica una de dos fases. El servidor recurre a la fase A cuando se d
   </tbody>
 </Table>
 
-GitLab.com informa de `19.5.0-pre`, el minor siguiente al de la instantánea, así que a una sesión allí se le muestra lo que su concesión alcanza en 19.4.1, y toda llamada fuera de las 58 acciones que se retienen a todo token de grano fino va a GitLab, que tiene la última palabra sobre cualquier cosa que cambiara en ese hito. La concesión se vuelve a leer en cada revalidación, cada 15 minutos por defecto, y una relectura fallida conserva la respuesta anterior. Para quien ofrezca el modo HTTP a un equipo: la concesión nunca es una clave de caché. Es un valor que crea quien llama, así que un mismo servidor sirve credenciales clásicas y de grano fino y reduce el catálogo en cada petición.
+Con `19.5.0-pre`, de la que GitLab.com informaba mientras se desarrollaba 19.5, a una sesión se le muestra lo que su concesión alcanza en 19.4.1, y toda llamada fuera de las 58 acciones que se retienen a todo token de grano fino va a GitLab, que tiene la última palabra sobre cualquier cosa que cambiara en ese hito. GitLab 19.5 se publicó el 15 de octubre de 2026, y el 17 de octubre GitLab.com informaba de `19.6.0-pre`, así que la 3.2.0 sirve a ambos en fase A. Una release cuya tabla recoja 19.5 trae la fase B a 19.5 y devuelve el listado a GitLab.com; la rama `main` del servidor volvió a tomar su tabla de 19.5.0 el 17 de octubre, y ese día ninguna release la llevaba. La concesión se vuelve a leer en cada revalidación, cada 15 minutos por defecto, y una relectura fallida conserva la respuesta anterior. Para quien ofrezca el modo HTTP a un equipo: la concesión nunca es una clave de caché. Es un valor que crea quien llama, así que un mismo servidor sirve credenciales clásicas y de grano fino y reduce el catálogo en cada petición.
 
 En la fase B, cuando la concesión no alcanza una acción, la respuesta nombra el permiso con las palabras de la página de creación de tokens de GitLab:
 
@@ -367,7 +367,7 @@ En la fase B, cuando la concesión no alcanza una acción, la respuesta nombra e
 
 Cuando ningún token de grano fino puede alcanzarla en esa release, la respuesta dice por qué y señala la salida:
 
-<TerminalOutput title="custom_emoji.list, fuera del alcance de todo token de grano fino en 19.4.1">{'action "custom_emoji.list" exists but is not available to a fine-grained personal access token: GitLab 19.4.1 declares no fine-grained permission on the GraphQL type CustomEmoji this action reads, and removes the items from such a list. Use a classic personal access token with read_api for reads or api for writes (an existing one, on an instance that no longer lets you create them), where the group does not refuse classic tokens.'}</TerminalOutput>
+<TerminalOutput title="custom_emoji.list en la 3.2.0, fuera del alcance de todo token de grano fino en 19.4.1">{'action "custom_emoji.list" exists but is not available to a fine-grained personal access token: GitLab 19.4.1 declares no fine-grained permission on the GraphQL type CustomEmoji this action reads, and removes the items from such a list. Use a classic personal access token with read_api for reads or api for writes (an existing one, on an instance that no longer lets you create them), where the group does not refuse classic tokens.'}</TerminalOutput>
 
 Las dos terminan con una frase más, que le dice al cliente que no concluya que la funcionalidad falta, porque la acción existe y solo la credencial no puede ejecutarla. En la superficie predeterminada, donde el cliente llama a `gitlab_execute_action`, cada texto lleva delante `gitlab_execute_action:`. La salida del token clásico se matiza para las dos formas de exigencia, porque en una instancia que exige tokens de grano fino puede que un cliente no consiga crear un token clásico, y en un grupo que los exige puede que el token clásico no funcione. Una respuesta servida que GitLab puede dejar vacía en parte lleva una nota que nombra la parte vacía como una selección GraphQL, `vulnerability { issueLinks { nodes } }` por ejemplo, y avisa de que vacío ahí no significa que no haya nada: "Empty there does not mean there is nothing".
 
@@ -383,7 +383,7 @@ Las mismas peticiones deducidas responden también a la pregunta clásica. La re
 
 El servidor lee la concesión de un token con dos peticiones, porque client-go no modela la concesión y en 19.4 `GET /personal_access_tokens/self` no la devuelve: pregunta al endpoint self qué es el token, y después pide la concesión a `GET /personal_access_tokens/:id`, también en GitLab.com. Ese hueco, y algunos a su alrededor, se convirtieron en los merge requests de abajo: ocho que abrí en gitlab-org/gitlab del 5 al 8 de octubre de 2026, y uno en client-go, abierto desde el 27 de septiembre:
 
-<Table title="Merge requests sobre tokens de grano fino, leídos el 13 de octubre de 2026 a las 10:53 UTC">
+<Table title="Merge requests sobre tokens de grano fino, leídos el 17 de octubre de 2026 a las 13:06 UTC">
   <thead>
     <tr>
       <th scope="col">Merge request</th>
@@ -394,42 +394,42 @@ El servidor lee la concesión de un token con dos peticiones, porque client-go n
   <tbody>
     <tr>
       <td>[gitlab-org/gitlab!259764](https://gitlab.com/gitlab-org/gitlab/-/merge_requests/259764)</td>
-      <td>Fusionado el 7 de octubre, ya en GitLab.com</td>
+      <td>Fusionado el 7 de octubre, en GitLab 19.5</td>
       <td>`GET /personal_access_tokens/self` devuelve los `granular_scopes` del propio token, como ya hacían las rutas de obtener por ID, listar y rotar</td>
     </tr>
     <tr>
       <td>[gitlab-org/gitlab!260276](https://gitlab.com/gitlab-org/gitlab/-/merge_requests/260276)</td>
-      <td>Fusionado el 8 de octubre, ya en GitLab.com</td>
+      <td>Fusionado el 8 de octubre, en GitLab 19.5</td>
       <td>Crear tu propio token, rotar el tuyo y rotar el token de un usuario enterprise en GitLab.com devuelven los `granular_scopes` del token nuevo</td>
     </tr>
     <tr>
       <td>[gitlab-org/gitlab!260277](https://gitlab.com/gitlab-org/gitlab/-/merge_requests/260277)</td>
-      <td>Fusionado el 8 de octubre, ya en GitLab.com</td>
+      <td>Fusionado el 8 de octubre, en GitLab 19.5</td>
       <td>Las rutas de tokens de suplantación (listar, obtener, crear) devuelven `granular_scopes`</td>
     </tr>
     <tr>
       <td>[gitlab-org/gitlab!260929](https://gitlab.com/gitlab-org/gitlab/-/merge_requests/260929)</td>
-      <td>Fusionado el 9 de octubre</td>
+      <td>Fusionado el 9 de octubre, en GitLab 19.5</td>
       <td>Rotar el token de una cuenta de servicio de grupo o de proyecto devuelve `granular_scopes`</td>
     </tr>
     <tr>
       <td>[gitlab-org/gitlab!260930](https://gitlab.com/gitlab-org/gitlab/-/merge_requests/260930)</td>
-      <td>Fusionado el 9 de octubre</td>
+      <td>Fusionado el 9 de octubre, en GitLab 19.5</td>
       <td>Documentación: las líneas de historial que añadieron gitlab-org/gitlab!260276 y gitlab-org/gitlab!260277 dicen ahora 19.5, no 19.6</td>
     </tr>
     <tr>
       <td>[gitlab-org/gitlab!260958](https://gitlab.com/gitlab-org/gitlab/-/merge_requests/260958)</td>
-      <td>En revisión</td>
+      <td>Fusionado el 13 de octubre, en GitLab.com, no en 19.5</td>
       <td>Un administrador puede crear un token de grano fino para un usuario, y la página User tokens API de GitLab documenta `granular_scopes` como atributo de la petición en las tres rutas de creación</td>
     </tr>
     <tr>
       <td>[gitlab-org/gitlab!259765](https://gitlab.com/gitlab-org/gitlab/-/merge_requests/259765)</td>
-      <td>Fusionado el 11 de octubre</td>
+      <td>Fusionado el 11 de octubre, en GitLab 19.5</td>
       <td>`WorkItem` declara el ámbito del grupo junto al del proyecto, así que un token con Work Item: Read concedido en un grupo puede leer sus épicas</td>
     </tr>
     <tr>
       <td>[gitlab-org/gitlab!260959](https://gitlab.com/gitlab-org/gitlab/-/merge_requests/260959)</td>
-      <td>En revisión</td>
+      <td>Fusionado el 15 de octubre, en GitLab.com, no en 19.5</td>
       <td>La tarea de validación de permisos de GitLab, `gitlab:permissions:validate`, se saltaba todo tipo llamado `*Payload`, `*Connection` o `*Edge`, así que tres tipos escritos a mano con esos nombres nunca se comprobaban; el merge request distingue los tipos generados por su clase</td>
     </tr>
     <tr>
@@ -440,13 +440,13 @@ El servidor lee la concesión de un token con dos peticiones, porque client-go n
   </tbody>
 </Table>
 
-El primero responde a la pregunta con la que empezaba este artículo: desde GitLab 19.5, y en GitLab.com desde el 7 de octubre, un token de grano fino puede leer su propia concesión desde el endpoint self. Siguen abiertos la ruta de administrador, la comprobación de validación, los structs de client-go y las declaraciones GraphQL en sí, que son la propia lista de pendientes de GitLab y la razón de que existan las 58.
+El primero responde a la pregunta con la que empezaba este artículo: desde GitLab 19.5, publicada el 15 de octubre, y en GitLab.com desde el 7 de octubre, un token de grano fino puede leer su propia concesión desde el endpoint self. La ruta de administrador y la comprobación de validación ya están en GitLab.com, pero no en 19.5.0. Siguen abiertos los structs de client-go y las declaraciones GraphQL en sí, que son la propia lista de pendientes de GitLab y la razón de que existan las 58; las declaraciones del propio GitLab para `Namespace` y los tipos hijos del work item están en revisión en [gitlab-org/gitlab!261599](https://gitlab.com/gitlab-org/gitlab/-/merge_requests/261599), para 19.6. Siguen el mismo hilo merge requests posteriores: [gitlab-org/gitlab!261673](https://gitlab.com/gitlab-org/gitlab/-/merge_requests/261673), fusionado el 17 de octubre, devuelve `granular_scopes` al listar los tokens de una cuenta de servicio, y ese mismo día abrí dos más: [gitlab-org/gitlab!263024](https://gitlab.com/gitlab-org/gitlab/-/merge_requests/263024) pasa de 19.5 a 19.6 la línea de historial que añadió gitlab-org/gitlab!260958, porque no entró en el corte de 19.5, y [gitlab-org/gitlab!263025](https://gitlab.com/gitlab-org/gitlab/-/merge_requests/263025) devuelve `granular_scopes` en el inventario de credenciales de un grupo.
 
-Mi agradecimiento a los revisores de GitLab que se hicieron cargo de ellos y fusionaron seis en menos de una semana.
+Mi agradecimiento a los revisores de GitLab que se hicieron cargo de ellos y fusionaron los ocho, cada uno en menos de una semana desde que lo abrí.
 
 ## Crear un token para gitlab-mcp-server
 
-Este es el camino corto; la [guía de tokens de grano fino de gitlab-mcp-server](https://docs.jmrp.io/gitlab-mcp-server/es/operations/fine-grained-tokens/) tiene todos los detalles.
+Este es el camino corto; la [guía de tokens de grano fino de gitlab-mcp-server](https://docs.jmrp.io/gitlab-mcp-server/es/operations/fine-grained-tokens/) tiene todos los detalles. La guía y la referencia se publican desde `main`, que desde el 17 de octubre recoge GitLab 19.5.0, con 55 acciones fuera de alcance; la 3.2.0 solo juzga una concesión en 19.4, así que en 19.5 y en GitLab.com funciona en fase A.
 
 ### 1. Decide qué debe hacer el cliente
 
@@ -530,7 +530,7 @@ Define `GITLAB_URL` y `GITLAB_TOKEN` para stdio, o envía el token en cada petic
 
 <Callout type="note" title="Crear el token por la API">
 
-`POST /api/v4/user/personal_access_tokens` acepta `granular_scopes` en lugar de `scopes`, cada scope un objeto `{access, permissions, project_ids or group_ids}`, y todo tiene que ir en una sola petición. Los permisos se dan por el identificador de GitLab (`read_project` para Project: Read). Envía la petición con un token clásico que lleve `api`, o con un token de grano fino con Personal Access Token: Create concedido, que no puede conceder más de lo que tiene él mismo. La página de la API de GitLab todavía no lista `granular_scopes` como atributo de la petición para esta ruta; [gitlab-org/gitlab!260958](https://gitlab.com/gitlab-org/gitlab/-/merge_requests/260958), aprobado de nuevo el 13 de octubre de 2026 tras un rebase y todavía sin fusionar, lo documenta. Desde GitLab 19.5, y en GitLab.com desde el 9 de octubre de 2026, la respuesta de creación incluye los `granular_scopes` del token nuevo (consulta [gitlab-org/gitlab!260276](https://gitlab.com/gitlab-org/gitlab/-/merge_requests/260276)). Para comprobar más tarde la concesión de un token, usa `GET /personal_access_tokens/self` en 19.5 y `GET /personal_access_tokens/:id` en 19.4.
+`POST /api/v4/user/personal_access_tokens` acepta `granular_scopes` en lugar de `scopes`, cada scope un objeto `{access, permissions, project_ids or group_ids}`, y todo tiene que ir en una sola petición. Los permisos se dan por el identificador de GitLab (`read_project` para Project: Read). Envía la petición con un token clásico que lleve `api`, o con un token de grano fino con Personal Access Token: Create concedido, que no puede conceder más de lo que tiene él mismo. La página User tokens API de GitLab lista `granular_scopes` como atributo de la petición para esta ruta desde que [gitlab-org/gitlab!260958](https://gitlab.com/gitlab-org/gitlab/-/merge_requests/260958) se fusionó el 13 de octubre de 2026. Desde GitLab 19.5, y en GitLab.com desde el 9 de octubre de 2026, la respuesta de creación incluye los `granular_scopes` del token nuevo (consulta [gitlab-org/gitlab!260276](https://gitlab.com/gitlab-org/gitlab/-/merge_requests/260276)). Para comprobar más tarde la concesión de un token, usa `GET /personal_access_tokens/self` en 19.5 y `GET /personal_access_tokens/:id` en 19.4.
 
 </Callout>
 
