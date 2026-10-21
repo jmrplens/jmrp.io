@@ -4,7 +4,7 @@
  * Shared helper functions for HTML manipulation and safety across scripts.
  */
 
-import he from "he";
+import * as he from "he";
 
 /**
  * Escapes HTML special characters to prevent XSS.

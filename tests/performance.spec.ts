@@ -427,7 +427,11 @@ test.describe("Resource Loading", () => {
         style?.includes("height");
 
       // Check if the image uses CSS classes that set dimensions
-      const computedStyles = await img.evaluate((el) => {
+      const {
+        width: computedWidth,
+        height: computedHeight,
+        aspectRatio: computedAspectRatio,
+      } = await img.evaluate((el) => {
         const style = getComputedStyle(el);
         return {
           width: style.getPropertyValue("width"),
@@ -435,11 +439,6 @@ test.describe("Resource Loading", () => {
           aspectRatio: style.getPropertyValue("aspect-ratio"),
         };
       });
-      const {
-        width: computedWidth,
-        height: computedHeight,
-        aspectRatio: computedAspectRatio,
-      } = computedStyles;
 
       // Responsive images (width:100%, height:auto) are valid if they have
       // width/height HTML attributes - browser calculates aspect ratio from those

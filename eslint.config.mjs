@@ -93,6 +93,28 @@ export default [
       "unicorn/prefer-combined-guards": "off",
       "unicorn/prefer-continue": "off",
       "unicorn/prefer-logical-operator-over-ternary": "off",
+      // v77/v78 (2026-10). The asterisk rule would strip the ` * ` gutter from
+      // every multiline JSDoc block (1784 stylistic hits). no-unnecessary-
+      // parameters would make pure helpers read module-level values only
+      // because today's callers agree (csp-replay `entries`, seo.spec
+      // `validTypes`). prefer-default-parameters now also flags `x || y`, and
+      // a default parameter covers only `undefined`, so the rewrite changes
+      // behavior (`line || "\u{A0}"` keeps empty terminal lines visible); its
+      // option keeps the pre-v77 reassignment check. The flat-map rule now
+      // unwraps `[x]` beside a `return []`, which sonarjs/function-return-type
+      // then rejects; the symmetric filter-map idiom stays. markdownFor only
+      // builds a descriptor, so its default export is no side effect.
+      "unicorn/no-asterisk-prefix-in-documentation-comments": "off",
+      "unicorn/no-unnecessary-parameters": "off",
+      "unicorn/no-unnecessary-array-flat-map": "off",
+      "unicorn/prefer-default-parameters": [
+        "error",
+        { checkFallbackExpressions: false },
+      ],
+      "unicorn/no-top-level-side-effects": [
+        "error",
+        { allow: { "@utils/llms/mdx/types": ["markdownFor"] } },
+      ],
       // Buffer.from(x, "base64") is standard Node and is the right type for the
       // crypto/fs (Buffer) flows in post-build; the Uint8Array.fromBase64 form
       // is adopted where it's a clean swap (scripts/preview-rss.mjs).
@@ -305,6 +327,14 @@ export default [
     },
     rules: {
       "@typescript-eslint/triple-slash-reference": "off",
+    },
+  },
+  // A tool config's default export is evaluated by that tool; nothing imports
+  // it for its side effects, which is what no-top-level-side-effects guards.
+  {
+    files: ["*.config.{mjs,ts}"],
+    rules: {
+      "unicorn/no-top-level-side-effects": "off",
     },
   },
 

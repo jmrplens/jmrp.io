@@ -1039,7 +1039,7 @@ function postRevisionLines(
   // a revision that never happened.
   const derived = postDateModified(post.id, post.data)?.slice(0, 10);
   const revised =
-    derived !== undefined && derived !== published ? derived : undefined;
+    derived === undefined || derived === published ? undefined : derived;
   return revised ? [`Updated: ${revised}`] : [];
 }
 
