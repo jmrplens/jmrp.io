@@ -9,7 +9,7 @@ cache_exclude_status = ["429", "500..=599"]
 no_progress = true
 
 # Status codes that count as a VALID link. lychee's default is
-# `100..=103, 200..=299`; 408 is the only addition.
+# `100..=103, 200..=299`; 408 and 429 are the additions.
 #
 # Why: the Zenodo DOIs linked from /publications/ intermittently answer 408
 # Request Timeout to GitHub runners — two consecutive red runs on 2026-08-24 over
@@ -20,7 +20,17 @@ no_progress = true
 # a dead link: a real 404 or 410 still fails the check. Preferred over excluding
 # `doi.org` from the sweep (the treatment acusticox.com gets below), because
 # excluding it would leave 15 real links unchecked forever.
-accept = ["100..=103", "200..=299", "408"]
+#
+# 429 for the same reason: "Too Many Requests" says the host is throttling the
+# runner, not that the link is dead. GitLab.com rate-limits GitHub's shared
+# runner IPs, and /projects/contributions/ links dozens of its merge requests,
+# so the check failed on a PR that only touched PDFs: one 429 on 2026-10-17,
+# eight on the rerun, every link fine from a browser. lychee 0.24 can only set
+# concurrency, request interval and headers per host (a per-host `accept` exists
+# only on its unreleased main), so the code is accepted globally. A dead link
+# still answers 404 or 410 and still fails; `cache_exclude_status` above keeps a
+# 429 out of the cache, so the link is checked again on the next run.
+accept = ["100..=103", "200..=299", "408", "429"]
 
 # Exclude specific domains/URLs (Timeouts prevent checking)
 exclude = [
