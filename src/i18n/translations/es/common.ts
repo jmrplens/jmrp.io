@@ -50,7 +50,7 @@ export const common = {
     language: "Idioma",
     english: "English",
     spanish: "Español",
-    switchLanguage: "Cambiar a {lang}",
+    switchLanguage: "{code}: cambiar a {lang}",
     copyright: "© {year} {author}",
   },
   aria: {
@@ -188,6 +188,7 @@ export const common = {
       commandAria: "Comando de terminal: {command}",
       noCommand: "Terminal: sin comando",
       copyCommand: "Copiar comando: {command}",
+      copyCommands: "Copiar comandos: {command}",
       outputTitle: "Salida del terminal: {title}",
       outputFallback: "Salida del terminal",
       scrollableOutput: "Salida de terminal desplazable para {title}",

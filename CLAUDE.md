@@ -1,7 +1,7 @@
 # CLAUDE.md - AI Context for jmrp.io
 
 > **Purpose**: Comprehensive context for Claude, Copilot, Gemini, and other AI agents working on this codebase.
-> **Last verified**: September 2026 (Astro 7.3.5, Vite 8.3 / Rolldown, UnoCSS 66.10.5, pnpm 12.8)
+> **Last verified**: October 2026 (Astro 7.4.2, Vite 8.3 / Rolldown, UnoCSS 66.11.0, pnpm 12.14)
 
 ## Project Overview
 
@@ -30,14 +30,14 @@
 
 | Layer           | Technology               | Version        |
 | --------------- | ------------------------ | -------------- |
-| Framework       | Astro                    | 7.3.5          |
-| Bundler         | Vite (Rolldown)          | ^8.3.0         |
-| Content         | MDX                      | 8.0.2          |
-| Styling         | UnoCSS (presetWind4)     | ^66.10.5       |
-| Islands         | Preact                   | ^10.29.8       |
+| Framework       | Astro                    | 7.4.2          |
+| Bundler         | Vite (Rolldown)          | ^8.3.5         |
+| Content         | MDX                      | 8.1.1          |
+| Styling         | UnoCSS (presetWind4)     | ^66.11.0       |
+| Islands         | Preact                   | ^11.0.1        |
 | Diagrams        | Mermaid + mermaid-isomorphic | ^11.17.2 / ^3.1.0 |
 | Syntax          | Shiki                    | ^4.5.0         |
-| Testing         | Playwright + Axe-core    | ^1.63.0 / ^4.13.0 |
+| Testing         | Playwright + Axe-core    | ^1.64.1 / ^4.14.0 |
 | Icons           | Iconify (12 collections) | @iconify-json/* |
 | Package Manager | pnpm                     | >=12           |
 | Node            | Required                 | >=24.0.0 (LTS) |

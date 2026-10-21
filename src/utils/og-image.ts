@@ -277,6 +277,11 @@ function buildLayout(
     position: "relative",
     background: OG_BG,
     borderBottom: `3px solid ${OG_TEAL}`,
+    // From satori 0.42 this root is sized content-box: without this it is
+    // 633px tall, the teal bar falls below the 630px canvas and the content
+    // column moves 3px down (bisected 2026-10-21; 0.41 drew the bar). Older
+    // releases already behaved as border-box, so this changes nothing there.
+    boxSizing: "border-box",
   };
 
   // ── Post cover: full-bleed background with a directional scrim ─────────────

@@ -430,7 +430,7 @@ export const tools = {
     noSuggestionsNeeded: "Colors already meet AAA requirements!",
     applySuggestion: "Apply suggestion",
     shareLink: "Share Link",
-    copyShareLink: "Copy shareable link",
+    copyShareLink: "Copy share link",
     invalidColor: "Invalid color value",
     foregroundLabel: "Foreground (Text)",
     fgHexAriaLabel: "Foreground color hex value",
@@ -1009,7 +1009,7 @@ export const tools = {
     // Output section
     frame: "Frame",
     copyFrameSpaces: "Copy frame with spaces",
-    copyFrameNoSpaces: "Copy frame without spaces",
+    copyFrameNoSpaces: "Copy frame, no spaces",
     copyCArray: "Copy as C array",
     copyPython: "Copy as Python bytes",
     noSpaces: "No spaces",

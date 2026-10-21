@@ -161,7 +161,7 @@ function main(argv) {
   }
   const raw = fs.readFileSync(path.resolve(file));
   const graph = JSON.parse(raw.toString("utf8"))["@graph"];
-  if (!Array.isArray(graph)) throw new Error(`${file} has no @graph`);
+  if (!Array.isArray(graph)) throw new TypeError(`${file} has no @graph`);
   const vocabulary = compactVocabulary(graph);
   for (const required of ["Thing", "CreativeWork", "hasPart"]) {
     if (!(required in vocabulary.classes || required in vocabulary.properties))

@@ -50,7 +50,7 @@ export const common = {
     language: "Language",
     english: "English",
     spanish: "Español",
-    switchLanguage: "Switch to {lang}",
+    switchLanguage: "{code}: switch to {lang}",
     copyright: "© {year} {author}",
   },
   aria: {
@@ -188,6 +188,7 @@ export const common = {
       commandAria: "Terminal command: {command}",
       noCommand: "Terminal: no command",
       copyCommand: "Copy command: {command}",
+      copyCommands: "Copy commands: {command}",
       outputTitle: "Terminal Output: {title}",
       outputFallback: "Terminal Output",
       scrollableOutput: "Scrollable terminal output for {title}",
