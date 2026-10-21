@@ -49,7 +49,10 @@ const pathFor = (loc: Locale): string =>
         href={pathFor(loc)}
         hreflang={loc}
         lang={loc}
-        aria-label={t("ui.switchLanguage", { lang: localeConfig[loc].label })}
+        aria-label={t("ui.switchLanguage", {
+          code,
+          lang: localeConfig[loc].label,
+        })}
         data-astro-prefetch
       >
         {code}
