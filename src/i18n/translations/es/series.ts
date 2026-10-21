@@ -23,6 +23,9 @@ export const series = {
     softwareTitle: "El software",
     softwareLead:
       "La serie documenta un único programa, {name}. Su código, su documentación y su ficha:",
+    // Para un programa aún en desarrollo, cuyo repositorio no es público.
+    softwareLeadUnreleased:
+      "La serie documenta un único programa, {name}, cuyo código aún no es público. Su documentación y su ficha:",
     softwareRepo: "Repositorio",
     softwareDocs: "Documentación",
     softwareProjects: "En la página de proyectos",

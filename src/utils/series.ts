@@ -17,12 +17,19 @@ export interface Series {
    */
   posts: string[];
   /**
-   * `@id` of the software entity the series is about (the `#software` node
-   * `/projects/` and `/tools/` already publish). Set only for a series that
-   * documents one program: its hub then says `about` that program rather than
-   * the author, and its posts `mention` it.
+   * `id` in `projects.yaml` of the program the series documents. Set only for
+   * a series about one program: its hub then says `about` that program's
+   * `#software` node rather than the author, its posts `mention` it, and the
+   * project's card on /projects/ links back to the series.
+   *
+   * A project id rather than a hand-written `@id`, so the series and the
+   * project's own node take their `@id` from the same rule
+   * (`seriesSoftwareId` in `@utils/projects`, through
+   * `scripts/utils/software-id.mjs`), which also covers a project with no
+   * public repository. Resolved there because this module must stay free of
+   * `astro:content`: the sitemap integration imports it from the Astro config.
    */
-  software?: string;
+  project?: string;
 }
 
 /** The curated series. Order within `posts` is the reading order, not the date. */
@@ -33,7 +40,7 @@ export const SERIES: Series[] = [
   {
     slug: "gitlab-mcp-server",
     posts: ["013", "014"],
-    software: "https://github.com/jmrplens/gitlab-mcp-server#software",
+    project: "gitlab-mcp-server",
   },
 ];
 
@@ -48,24 +55,17 @@ export function getSeries(slug: string): Series | undefined {
 }
 
 /**
- * The repository URL behind a series' `software` @id (the `#software` fragment
- * stripped), which is also how `projects.yaml` spells the project's `repo`.
+ * The series about a given project, so its card can point at it.
  *
- * @param series - The series definition.
- * @returns The repository URL, or `undefined` for a series about no program.
- */
-export function seriesRepoUrl(series: Series): string | undefined {
-  return series.software?.replace(/#software$/u, "");
-}
-
-/**
- * The series about a given repository, so a project card can point at it.
+ * Matched by project id, not by repository URL: a project still in
+ * development has no public repository to match on, and the id is what the
+ * series names anyway.
  *
- * @param repo - The repository URL as `projects.yaml` spells it.
- * @returns The series whose `software` is that repository, if any.
+ * @param projectId - The project's `id` in `projects.yaml`.
+ * @returns The series that documents that project, if any.
  */
-export function getSeriesForRepo(repo: string): Series | undefined {
-  return SERIES.find((series) => seriesRepoUrl(series) === repo);
+export function getSeriesForProject(projectId: string): Series | undefined {
+  return SERIES.find((series) => series.project === projectId);
 }
 
 /**

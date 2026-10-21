@@ -135,7 +135,9 @@ function mcpBullet(server: McpServer, locale: "en" | "es"): string {
     new URL(server.endpoint).pathname.split("/").findLast(Boolean) ?? server.id;
   const prose = MCP_PROSE[server.id]?.[locale] ?? server.summary[locale];
   const source = locale === "es" ? "Código" : "Source";
-  return `- [${label}](${server.endpoint}): ${prose} ${source}: [${server.id}](${server.repo}).`;
+  // Every hosted server is released today, so `repo` is there; the fallback
+  // only keeps a future one in development from printing "undefined".
+  return `- [${label}](${server.endpoint}): ${prose} ${source}: [${server.id}](${server.repo ?? server.docs}).`;
 }
 
 /**

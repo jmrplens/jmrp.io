@@ -906,19 +906,24 @@ export const common = {
     projects: {
       title: "Proyectos",
       description:
-        "Proyectos open source de José Manuel Requena Plens: servidores MCP, herramientas de acústica y seguridad de red, con código, docs y licencia.",
+        "Proyectos open source de José Manuel Requena Plens: servidores MCP, herramientas de acústica y seguridad de red, con docs y, si ya es público, código.",
       schemaDescription:
-        "Índice curado del software open source escrito y mantenido por José Manuel Requena Plens, con lenguaje, licencia, repositorio de código y documentación de cada proyecto.",
+        "Índice curado del software open source escrito y mantenido por José Manuel Requena Plens, con lenguaje y documentación de cada proyecto, y licencia y repositorio de código de cada uno ya publicado.",
       datasetName: "Proyectos públicos de José Manuel Requena Plens (JSON)",
       datasetDescription:
-        "La misma lista de proyectos de esta página en un único documento JSON: nombre, estado, licencia, repositorio, documentación y listados de terceros de cada proyecto, generado desde la misma fuente.",
+        "La misma lista de proyectos de esta página en un único documento JSON: nombre, estado y documentación de cada proyecto, más licencia, repositorio y listados de terceros cuando los tiene, generado desde la misma fuente.",
       kicker: "PROYECTOS",
       heading: "Lo que construyo, y dónde vive.",
       intro:
-        "Los proyectos open source que escribo y mantengo: servidores MCP y herramientas para desarrolladores en Go, librerías de acústica y procesado de señal, y scripts de seguridad de red e infraestructura. Cada entrada enlaza a su código y a su documentación, y los servidores MCP alojados enlazan además a una instancia en marcha que puedes llamar.",
+        "Los proyectos open source que escribo y mantengo: servidores MCP y herramientas para desarrolladores en Go, librerías de acústica y procesado de señal, y scripts de seguridad de red e infraestructura. Cada entrada enlaza a su documentación y, cuando su código ya es público, también a él; los servidores MCP alojados enlazan además a una instancia en marcha que puedes llamar.",
       activeHeading: "// EN MANTENIMIENTO",
       activeIntro:
         "En desarrollo activo. Tienen releases, seguimiento de issues y documentación.",
+      upcomingHeading: "// EN DESARROLLO",
+      upcomingIntro:
+        "Aún sin publicar: todavía sin código público ni release. Cada uno enlaza a su documentación, que ya es pública.",
+      statusUpcoming: "En desarrollo",
+      docsCta: "Leer la documentación",
       archivedHeading: "// ARCHIVADOS",
       archivedIntro:
         "Ya sin mantenimiento, públicos y en solo lectura. Sobre todo trabajo de investigación e instrumentación de la etapa de acústica.",
@@ -954,6 +959,7 @@ export const common = {
         status: "Estado",
         statusActive: "activo",
         statusArchived: "archivado",
+        statusUpcoming: "en desarrollo",
         topics: "Temas",
         repository: "Repositorio",
         documentation: "Documentación",

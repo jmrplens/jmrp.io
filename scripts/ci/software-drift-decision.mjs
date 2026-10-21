@@ -58,3 +58,34 @@ export function classifyDivergences(
 export function exitCodeFor({ contradictions }) {
   return contradictions > 0 ? 1 : 0;
 }
+
+/**
+ * Why a project is left out of the comparison, or `null` when it is compared.
+ * Pure.
+ *
+ * Two kinds are skipped:
+ * - A project whose `docs` is its own repository's README anchor has no
+ *   separate site to contradict anything, so it is skipped silently, as it
+ *   always was (`quiet: true`).
+ * - A project with no public repository (`status: upcoming`) is skipped with
+ *   a line saying so. The comparison is built around the repository: `url`
+ *   and `codeRepository` both are the repo in projects.yaml, and the sameAs
+ *   check starts from it. A site that already publishes a node for such a
+ *   project stays unchecked until its repository is public.
+ *
+ * @param {{ id: string, status?: string, repo?: string, docs: string }} project
+ *   The project as authored in projects.yaml.
+ * @returns {{ quiet: boolean, reason: string } | null} The skip, or `null`.
+ */
+export function driftSkip(project) {
+  if (!project.repo) {
+    return {
+      quiet: false,
+      reason: `no public repository${project.status ? ` (status: ${project.status})` : ""}, not compared`,
+    };
+  }
+  if (project.docs.startsWith(`${project.repo}#`)) {
+    return { quiet: true, reason: "documentation is the repository README" };
+  }
+  return null;
+}

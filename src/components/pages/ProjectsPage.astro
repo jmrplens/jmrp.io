@@ -55,7 +55,7 @@ import {
   type Project,
   softwareId,
 } from "@utils/projects";
-import { getSeriesForRepo } from "@utils/series";
+import { getSeriesForProject } from "@utils/series";
 import { getSiteUrl } from "@utils/site";
 import { getEntry } from "astro:content";
 import type { CollectionPage, Text } from "schema-dts";
@@ -105,6 +105,7 @@ const sponsorUrl =
     ? aboutEntry.data.person.sponsorUrl
     : undefined;
 const active = projects.filter((p) => p.status === "active");
+const upcoming = projects.filter((p) => p.status === "upcoming");
 const archived = projects.filter((p) => p.status === "archived");
 
 const translatePath = useTranslatedPath(locale);
@@ -193,6 +194,15 @@ const downloadsOf = (project: Project): string | null => {
 /** Localized documentation URL — falls back to the English docs entry point. */
 const docsHref = (project: Project) =>
   locale === "es" && project.docsEs ? project.docsEs : project.docs;
+
+/**
+ * Accessible name of a card link that opens in a new tab: its visible text,
+ * then the project it belongs to, so the many "Docs" and "Source" links on the
+ * page are told apart. The visible text comes first, which keeps WCAG 2.5.3
+ * Label in Name; a comma separates the two.
+ */
+const cardLinkName = (text: string, project: Project): string =>
+  t("aria.opensNewTab", { text: `${text}, ${project.name}` });
 
 /*
  * ── Listings popover ──────────────────────────────────────────────────────
@@ -345,6 +355,8 @@ const schema = [
   ...apiAliasNodes,
 ];
 
+// A group with no projects renders nothing: the "In development" heading
+// would otherwise sit over an empty grid whenever nothing is in development.
 const groups = [
   {
     key: "active",
@@ -353,12 +365,26 @@ const groups = [
     items: active,
   },
   {
+    key: "upcoming",
+    heading: t("pages.projects.upcomingHeading"),
+    intro: t("pages.projects.upcomingIntro"),
+    items: upcoming,
+  },
+  {
     key: "archived",
     heading: t("pages.projects.archivedHeading"),
     intro: t("pages.projects.archivedIntro"),
     items: archived,
   },
-];
+].filter((group) => group.items.length > 0);
+
+// The upstream block and the maintenance table follow the author's current
+// work: the maintained projects and, when there are any, the ones in
+// development, so the page reads own work, then work on other projects, then
+// the archive. The twin (`projectsPageMarkdown`) keeps the same order.
+const currentWorkEnd = groups.findLast(
+  (group) => group.key !== "archived",
+)?.key;
 // The page's question-and-answer pairs (GEO audit #8): one source for the
 // visible section, the FAQPage node and the markdown twin. See @utils/page-faq.
 const pageFaq = await getPageFaq("/projects/", locale);
@@ -413,13 +439,49 @@ const faqNode =
           </h2>
           <p class="projects-group__intro">{group.intro}</p>
 
-          <ul class="projects-grid">
+          <ul
+            class:list={[
+              "projects-grid",
+              { "projects-grid--upcoming": group.key === "upcoming" },
+            ]}
+          >
             {group.items.map((project) => (
-              <li class="proj-card">
-                <h3 class="proj-card__name">{project.name}</h3>
-                {project.name !== project.id && (
-                  <p class="proj-card__repo-name">{project.id}</p>
+              <li
+                class:list={[
+                  "proj-card",
+                  { "proj-card--upcoming": project.status === "upcoming" },
+                ]}
+              >
+                {project.status === "upcoming" ? (
+                  <div class="proj-card__head">
+                    <h3 class="proj-card__name">{project.name}</h3>
+                    {/*
+                     * The status in words, beside the name: the dot repeats
+                     * it, it does not carry it (WCAG 1.4.1).
+                     */}
+                    <p class="chip proj-card__status">
+                      <span
+                        class="proj-card__status-dot"
+                        aria-hidden="true"
+                      />
+                      {t("pages.projects.statusUpcoming")}
+                    </p>
+                  </div>
+                ) : (
+                  <h3 class="proj-card__name">{project.name}</h3>
                 )}
+                {/*
+                 * An upcoming project's repository is private, so its name is
+                 * not a handle anyone can use; the card shows its editorial
+                 * kicker in that slot instead.
+                 */}
+                {project.status === "upcoming"
+                  ? project.kicker && (
+                      <p class="proj-card__kicker">{project.kicker}</p>
+                    )
+                  : project.name !== project.id && (
+                      <p class="proj-card__repo-name">{project.id}</p>
+                    )}
                 <p class="proj-card__summary">{project.summary[locale]}</p>
 
                 <dl class="proj-card__meta">
@@ -427,28 +489,28 @@ const faqNode =
                     <dt>{t("pages.projects.language")}</dt>
                     <dd>{project.language}</dd>
                   </div>
-                  <div class="proj-card__meta-pair">
-                    <dt>{t("pages.projects.license")}</dt>
-                    <dd>
-                      <a
-                        href={licenseUrl(project.license)}
-                        target="_blank"
-                        rel="external noopener noreferrer"
-                        aria-label={t("aria.opensNewTab", {
-                          text: `${project.license} — ${project.name}`,
-                        })}
-                      >
-                        {project.license}
-                      </a>
-                    </dd>
-                  </div>
+                  {project.license && (
+                    <div class="proj-card__meta-pair">
+                      <dt>{t("pages.projects.license")}</dt>
+                      <dd>
+                        <a
+                          href={licenseUrl(project.license)}
+                          target="_blank"
+                          rel="external noopener noreferrer"
+                          aria-label={cardLinkName(project.license, project)}
+                        >
+                          {project.license}
+                        </a>
+                      </dd>
+                    </div>
+                  )}
                   {project.operatingSystem && (
                     <div class="proj-card__meta-pair">
                       <dt>{t("pages.projects.runsOn")}</dt>
                       <dd>{project.operatingSystem}</dd>
                     </div>
                   )}
-                  {downloadsOf(project) && (
+                  {project.status !== "upcoming" && downloadsOf(project) && (
                     <div class="proj-card__meta-pair">
                       <dt>{t("pages.projects.downloads")}</dt>
                       <dd>{downloadsOf(project)}</dd>
@@ -456,7 +518,7 @@ const faqNode =
                   )}
                 </dl>
 
-                {isActiveRepoId(project.id) && (
+                {project.status === "active" && isActiveRepoId(project.id) && (
                   <CardLiveBox
                     ssr={PRJ.cards[project.id]}
                     activeDays12m={
@@ -479,42 +541,68 @@ const faqNode =
                 </ul>
 
                 <p class="proj-card__links">
-                  <a
-                    href={project.repo}
-                    target="_blank"
-                    rel="external noopener noreferrer"
-                    aria-label={t("aria.opensNewTab", {
-                      text: `${t("pages.projects.repo")} — ${project.name}`,
-                    })}
-                  >
-                    <span
-                      class="i-fa-brands:github"
-                      aria-hidden="true"
-                    />
-                    {t("pages.projects.repo")}
-                  </a>
-                  <a
-                    href={docsHref(project)}
-                    target="_blank"
-                    rel="external noopener noreferrer"
-                    aria-label={t("aria.opensNewTab", {
-                      text: `${t("pages.projects.docs")} — ${project.name}`,
-                    })}
-                  >
-                    <span
-                      class="i-mdi:book-open-variant"
-                      aria-hidden="true"
-                    />
-                    {t("pages.projects.docs")}
-                  </a>
+                  {project.repo && (
+                    <a
+                      href={project.repo}
+                      target="_blank"
+                      rel="external noopener noreferrer"
+                      aria-label={cardLinkName(
+                        t("pages.projects.repo"),
+                        project,
+                      )}
+                    >
+                      <span
+                        class="i-fa-brands:github"
+                        aria-hidden="true"
+                      />
+                      {t("pages.projects.repo")}
+                    </a>
+                  )}
+                  {/*
+                   * For a project in development the documentation is the
+                   * one public place it has, so the link is the card's main
+                   * action rather than one link among several.
+                   */}
+                  {project.status === "upcoming" ? (
+                    <a
+                      href={docsHref(project)}
+                      class="proj-card__cta"
+                      target="_blank"
+                      rel="external noopener noreferrer"
+                      aria-label={cardLinkName(
+                        t("pages.projects.docsCta"),
+                        project,
+                      )}
+                    >
+                      <span
+                        class="i-mdi:book-open-variant"
+                        aria-hidden="true"
+                      />
+                      {t("pages.projects.docsCta")}
+                    </a>
+                  ) : (
+                    <a
+                      href={docsHref(project)}
+                      target="_blank"
+                      rel="external noopener noreferrer"
+                      aria-label={cardLinkName(
+                        t("pages.projects.docs"),
+                        project,
+                      )}
+                    >
+                      <span
+                        class="i-mdi:book-open-variant"
+                        aria-hidden="true"
+                      />
+                      {t("pages.projects.docs")}
+                    </a>
+                  )}
                   {(project.listings ?? []).map((listing) => (
                     <a
                       href={listing.url}
                       target="_blank"
                       rel="external noopener noreferrer"
-                      aria-label={t("aria.opensNewTab", {
-                        text: `${listing.label} — ${project.name}`,
-                      })}
+                      aria-label={cardLinkName(listing.label, project)}
                     >
                       <span
                         class={`i-${listing.icon}`}
@@ -528,9 +616,10 @@ const faqNode =
                       href={hostedHref(project, locale)}
                       target="_blank"
                       rel="external noopener noreferrer"
-                      aria-label={t("aria.opensNewTab", {
-                        text: `${t("pages.projects.hosted")} — ${project.name}`,
-                      })}
+                      aria-label={cardLinkName(
+                        t("pages.projects.hosted"),
+                        project,
+                      )}
                     >
                       <span
                         class="i-mdi:api"
@@ -539,10 +628,10 @@ const faqNode =
                       {t("pages.projects.hosted")}
                     </a>
                   )}
-                  {getSeriesForRepo(project.repo) && (
+                  {getSeriesForProject(project.id) && (
                     <a
                       href={translatePath(
-                        `/blog/series/${getSeriesForRepo(project.repo)?.slug}/`,
+                        `/blog/series/${getSeriesForProject(project.id)?.slug}/`,
                       )}
                     >
                       <span
@@ -658,7 +747,7 @@ const faqNode =
             ))}
           </ul>
         </section>
-        {group.key === "active" && (
+        {group.key === currentWorkEnd && (
           <>
             <UpstreamBlock
               contributedTo={contributedToShown}
@@ -808,6 +897,73 @@ const faqNode =
     font-size: var(--text-micro);
     color: var(--color-text-muted);
     overflow-wrap: anywhere;
+  }
+
+  /* ── In development ───────────────────────────────────────────────────────
+     Same card, three differences: a dashed edge (not built yet), the status
+     in words beside the name, and the documentation as the card's main action
+     because it is the one public thing the project has. */
+  .projects-grid--upcoming {
+    /* auto-fill keeps the empty tracks, so a lone card keeps the width of the
+       cards above it instead of stretching across the whole row. */
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr));
+  }
+
+  .proj-card--upcoming {
+    border-style: dashed;
+  }
+
+  .proj-card__head {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-xs) var(--space-sm);
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .proj-card__status {
+    margin: 0;
+    color: var(--color-accent);
+    white-space: nowrap;
+  }
+
+  .proj-card__status-dot {
+    flex: none;
+    width: 7px;
+    height: 7px;
+    background: currentcolor;
+    border-radius: var(--radius-full);
+  }
+
+  .proj-card__kicker {
+    margin: 2px 0 0;
+    font-family: var(--font-mono);
+    font-size: var(--text-micro);
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  .proj-card--upcoming .proj-card__links {
+    align-items: center;
+  }
+
+  .proj-card__links .proj-card__cta {
+    min-height: 2.25rem;
+    padding: var(--space-xs) var(--space-md);
+    font-weight: var(--fw-medium);
+    border: 1px solid var(--color-accent);
+    border-radius: var(--radius-sm);
+  }
+
+  .proj-card__links .proj-card__cta:hover,
+  .proj-card__links .proj-card__cta:focus-visible {
+    text-decoration: none;
+    background: color-mix(
+      in srgb,
+      var(--color-accent) var(--a-12),
+      transparent
+    );
   }
 
   .proj-card__summary {

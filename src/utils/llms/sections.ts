@@ -106,7 +106,7 @@ export const PROFILE_SECTIONS: {
     en: {
       title: "Projects",
       lines: [
-        "Open-source software authored and maintained by the author, each entry listing language, license, source repository and documentation site.",
+        "Open-source software authored and maintained by the author, each entry listing language and documentation site, plus license and source repository once released.",
         PROJECT_ROSTER,
         `As of ${CONTRIBUTIONS_DATE}, the page also names code and documentation the author contributed to projects he does not maintain on GitHub and GitLab: merged pull and merge requests, accepted GitHub Discussions answers, and packaging that lists his own tools in public registries. The full ledger, grouped by project, is at ${CONTRIBUTIONS_URL}.`,
       ],
@@ -114,7 +114,7 @@ export const PROFILE_SECTIONS: {
     es: {
       title: "Proyectos",
       lines: [
-        "Software de código abierto escrito y mantenido por el autor; cada entrada indica lenguaje, licencia, repositorio de código y sitio de documentación.",
+        "Software de código abierto escrito y mantenido por el autor; cada entrada indica lenguaje y sitio de documentación y, una vez publicado, licencia y repositorio de código.",
         PROJECT_ROSTER,
         `A fecha de ${CONTRIBUTIONS_DATE}, la página también recoge código y documentación que el autor ha aportado a proyectos que no mantiene en GitHub y GitLab: pull requests y merge requests fusionadas, respuestas aceptadas en GitHub Discussions y empaquetado que lista sus propias herramientas en registros públicos. El libro completo, agrupado por proyecto, está en ${CONTRIBUTIONS_URL}.`,
       ],

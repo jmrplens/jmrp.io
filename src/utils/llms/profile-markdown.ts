@@ -10,8 +10,13 @@ import {
   communityFor,
   communityLine,
 } from "@utils/project-facts";
-import { getProjects, hostedHref, type Project } from "@utils/projects";
-import { getSeriesForRepo } from "@utils/series";
+import {
+  getProjects,
+  hostedHref,
+  type Project,
+  type ProjectStatus,
+} from "@utils/projects";
+import { getSeriesForProject } from "@utils/series";
 import { getSiteUrl } from "@utils/site";
 import { fillSiteFacts, getSiteFacts } from "@utils/site-facts";
 import { getEntry } from "astro:content";
@@ -465,8 +470,10 @@ function projectCardLines(
     p.summary[locale],
     "",
     `- ${t("pages.projects.language")}: ${p.language}`,
-    `- ${t("pages.projects.license")}: ${p.license}`,
-    `- ${t("pages.projects.twin.status")}: ${t(p.status === "active" ? "pages.projects.twin.statusActive" : "pages.projects.twin.statusArchived")}`,
+    // No license line for a project in development that has not stated one:
+    // the card prints none, and the twin says what the card says.
+    ...(p.license ? [`- ${t("pages.projects.license")}: ${p.license}`] : []),
+    `- ${t("pages.projects.twin.status")}: ${t(STATUS_LABEL[p.status])}`,
     ...(p.operatingSystem
       ? [`- ${t("pages.projects.runsOn")}: ${p.operatingSystem}`]
       : []),
@@ -478,7 +485,7 @@ function projectCardLines(
     ...starsLine,
     ...activityLines(p.id, activeDays, communityText, t),
     `- ${t("pages.projects.twin.topics")}: ${p.topics.map(namedTopic).join(", ")}`,
-    `- ${t("pages.projects.twin.repository")}: ${p.repo}`,
+    ...(p.repo ? [`- ${t("pages.projects.twin.repository")}: ${p.repo}`] : []),
     `- ${t("pages.projects.twin.documentation")}: ${locale === "es" ? (p.docsEs ?? p.docs) : p.docs}`,
     ...extraLinkLines(p, hosted, t),
     ...seriesLines(p, locale),
@@ -494,7 +501,7 @@ function projectCardLines(
  * @returns One list line, or nothing.
  */
 function seriesLines(p: Project, locale: "en" | "es"): Lines {
-  const series = getSeriesForRepo(p.repo);
+  const series = getSeriesForProject(p.id);
   if (!series) return [];
   const t = useTranslations(locale);
   const path = `${locale === "es" ? "/es" : ""}/blog/series/${series.slug}/`;
@@ -502,9 +509,33 @@ function seriesLines(p: Project, locale: "en" | "es"): Lines {
   return [`- ${t("series.ui.readSeries")}: ${href}`];
 }
 
+/** The twin's word for each status, the one the card's group implies. */
+const STATUS_LABEL = {
+  active: "pages.projects.twin.statusActive",
+  upcoming: "pages.projects.twin.statusUpcoming",
+  archived: "pages.projects.twin.statusArchived",
+} as const satisfies Record<ProjectStatus, string>;
+
+/** Each group's heading and intro keys, as /projects/ renders them. */
+const GROUP_COPY = {
+  active: {
+    heading: "pages.projects.activeHeading",
+    intro: "pages.projects.activeIntro",
+  },
+  upcoming: {
+    heading: "pages.projects.upcomingHeading",
+    intro: "pages.projects.upcomingIntro",
+  },
+  archived: {
+    heading: "pages.projects.archivedHeading",
+    intro: "pages.projects.archivedIntro",
+  },
+} as const satisfies Record<ProjectStatus, { heading: string; intro: string }>;
+
 /**
- * One of the page's two project groups (maintained, archived): its heading,
- * its intro and every card, in `projects.yaml` order.
+ * One of the page's project groups (maintained, in development, archived):
+ * its heading, its intro and every card, in `projects.yaml` order. A group
+ * with no projects renders nothing, as on the page.
  *
  * @param status - Which group.
  * @param locale - Which locale.
@@ -513,7 +544,7 @@ function seriesLines(p: Project, locale: "en" | "es"): Lines {
  * @returns Markdown lines.
  */
 export async function projectGroupLines(
-  status: "active" | "archived",
+  status: ProjectStatus,
   locale: "en" | "es",
   options: { live: boolean },
 ): Promise<Lines> {
@@ -522,23 +553,19 @@ export async function projectGroupLines(
   if (projects.length === 0) return [];
   // Keyed by `name`, which for these repositories is the `id` asked for;
   // `project.name` is the display name and can differ ("Cloudflare DNS
-  // Updater" vs `Cloudflare-DNS-Updater`).
+  // Updater" vs `Cloudflare-DNS-Updater`). Never asked for a project in
+  // development: its repository is private, the card shows no stars, and a
+  // token that can read private repositories would answer anyway.
   const stars = new Map(
-    (await featuredRepos(projects.map((p) => p.id))).map((repo) => [
-      repo.name,
-      repo.stargazers_count,
-    ]),
+    status === "upcoming"
+      ? []
+      : (await featuredRepos(projects.map((p) => p.id))).map((repo) => [
+          repo.name,
+          repo.stargazers_count,
+        ]),
   );
-  const heading = t(
-    status === "active"
-      ? "pages.projects.activeHeading"
-      : "pages.projects.archivedHeading",
-  ).replace(/^\/\/\s*/u, "");
-  const intro = t(
-    status === "active"
-      ? "pages.projects.activeIntro"
-      : "pages.projects.archivedIntro",
-  );
+  const heading = t(GROUP_COPY[status].heading).replace(/^\/\/\s*/u, "");
+  const intro = t(GROUP_COPY[status].intro);
   return [
     `## ${heading}`,
     "",
@@ -584,6 +611,7 @@ export async function projectsLines(
   return [
     ...downloadsMethodologyLines(locale),
     ...(await projectGroupLines("active", locale, { live: false })),
+    ...(await projectGroupLines("upcoming", locale, { live: false })),
     ...(await projectGroupLines("archived", locale, { live: false })),
   ];
 }

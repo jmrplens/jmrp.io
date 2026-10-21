@@ -715,23 +715,62 @@ const ProjectTopic = z.object({
  * publishes for the same `#software` @id.
  */
 const ProjectEntry = z.object({
-  /** GitHub repo name; also derives the `#software` @id. */
+  /**
+   * GitHub repo name (private repositories included); also derives the
+   * `#software` @id, through the one rule in `scripts/utils/software-id.mjs`.
+   */
   id: z.string(),
   /** Canonical entity name (may differ from the repo name). */
   name: z.string(),
-  status: z.enum(["active", "archived"]),
+  /**
+   * Where the project is in its life, which decides the group it renders in
+   * on /projects/ and what its card, its JSON-LD node and its entry in
+   * `public/identity/projects.json` may claim:
+   *
+   * - `active`: maintained and released.
+   * - `upcoming`: in development, with public documentation and a repository
+   *   that is still private. Its card has no repository link, no stars and
+   *   no downloads; its node has no `codeRepository`, takes its `url` and its
+   *   @id from `docs`, and carries `creativeWorkStatus: "In development"`.
+   * - `archived`: no longer maintained, kept public and read-only.
+   */
+  status: z.enum(["active", "archived", "upcoming"]),
   schemaType: z.enum(["SoftwareApplication", "SoftwareSourceCode"]),
   /** SoftwareApplication only — omitted for SoftwareSourceCode nodes. */
   applicationCategory: z.string().optional(),
   applicationSubCategory: z.string().optional(),
   language: z.string(),
-  /** SPDX-style identifier; mapped to a license URL in `@utils/projects`. */
-  license: z.string(),
-  repo: z.url(),
+  /**
+   * SPDX-style identifier; mapped to a license URL in `@utils/projects`.
+   * Required for `active` and `archived`. Optional only for `upcoming`: a
+   * project that has not published its code may not have stated its terms
+   * yet, and an absent license is better than an invented one.
+   */
+  license: z.string().optional(),
+  /**
+   * Public repository URL. Required for `active` and `archived`; absent for
+   * `upcoming` while the repository is private (a link to it would be a 404
+   * for every reader).
+   */
+  repo: z.url().optional(),
   /** Documentation entry point (a docs site, or the repo README anchor). */
   docs: z.url(),
   /** Spanish documentation, when the project publishes a translated site. */
   docsEs: z.url().optional(),
+  /**
+   * The project site's sitemap, as a path relative to `docs`, for the
+   * documentation hub's robots.txt. Absent means `sitemap-index.xml`, the
+   * file every Starlight site publishes; set it only for a site that
+   * publishes something else (a hand-built site with a plain `sitemap.xml`).
+   * Exported in `public/identity/projects.json` only when set.
+   */
+  sitemap: z
+    .string()
+    .regex(
+      /^(?!\/)(?![a-z][a-z\d+.-]*:)[\w./-]+\.xml$/iu,
+      "a relative path to an .xml file, e.g. sitemap.xml",
+    )
+    .optional(),
   /**
    * Two fields that exist for the documentation hub (repo
    * `jmrplens.github.io`, served at docs.jmrp.io), which consumes this list
@@ -838,7 +877,25 @@ const ProjectEntry = z.object({
 
 const projectsSchema = z.object({
   type: z.literal("projects"),
-  projects: z.array(ProjectEntry).min(1),
+  projects: z
+    .array(
+      ProjectEntry.superRefine((project, ctx) => {
+        // Only a project in development may lack a public repository or a
+        // license: every other status renders both, in the card, the JSON-LD
+        // node and projects.json, and an empty one would publish "undefined".
+        if (project.status === "upcoming") return;
+        for (const field of ["repo", "license"] as const) {
+          if (project[field] === undefined) {
+            ctx.addIssue({
+              code: "custom",
+              path: [field],
+              message: `${project.id}: \`${field}\` is required for status "${project.status}"; only "upcoming" projects may omit it`,
+            });
+          }
+        }
+      }),
+    )
+    .min(1),
 });
 
 /**

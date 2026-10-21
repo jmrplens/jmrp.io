@@ -75,6 +75,8 @@ import { fileURLToPath } from "node:url";
 
 import { load as loadYaml } from "js-yaml";
 
+import { softwareId } from "../utils/software-id.mjs";
+
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
 const OUTPUT = join(ROOT, "public", "identity", "person.jsonld");
 
@@ -237,8 +239,11 @@ function buildIdentityDocument() {
   );
 
   const owns = [
+    // The same rule BaseHead.astro and the project nodes use (one module,
+    // `scripts/utils/software-id.mjs`), so a project with no public
+    // repository is owned under its documentation `@id` here too.
     ...projects.projects.map((project) => ({
-      "@id": `https://github.com/jmrplens/${project.id}#software`,
+      "@id": softwareId(project),
     })),
     // Same entries and rationale as BaseHead.astro (the drift guards keep
     // them in lockstep): the deployed MCP endpoints, whose canonical nodes

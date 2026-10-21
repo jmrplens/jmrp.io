@@ -15,7 +15,8 @@ import { useTranslatedPath, useTranslations } from "@i18n/utils";
 import BaseLayout from "@layouts/BaseLayout.astro";
 import { formatDateDot, getReadingTime } from "@utils/blog";
 import { getPageFaq, pageFaqNode } from "@utils/page-faq";
-import { SERIES, type Series, seriesRepoUrl } from "@utils/series";
+import { getSeriesProject, softwareId } from "@utils/projects";
+import { SERIES, type Series } from "@utils/series";
 import { getSiteUrl } from "@utils/site";
 import type { CollectionEntry } from "astro:content";
 import type { CollectionPage, ListItem } from "schema-dts";
@@ -51,6 +52,10 @@ const entries = posts.map((post, index) => ({
 
 const otherSeries = SERIES.filter((s) => s.slug !== series.slug);
 
+// The program this series documents, if it documents one; its `#software` @id
+// comes from the same rule as the project's own node on /projects/.
+const seriesProject = await getSeriesProject(series);
+
 const seriesUrl = new URL(
   translatePath(`/blog/series/${series.slug}/`),
   getSiteUrl(),
@@ -67,7 +72,9 @@ const seriesSchema = {
   // A series about one program says so: `about` is that program's
   // `#software` node (defined on /projects/ and /tools/), not the author.
   about: {
-    "@id": series.software ?? new URL("#person", getSiteUrl()).href,
+    "@id": seriesProject
+      ? softwareId(seriesProject)
+      : new URL("#person", getSiteUrl()).href,
   },
   // Surface the hub's title and lead to voice assistants and AI readers, as
   // the post pages do for theirs.
@@ -98,18 +105,23 @@ const faqNode =
   pageFaq && pageFaqNode(pageFaq, seriesUrl, seriesSchema["@id"], locale);
 
 // The program a software series documents: where its code and docs live and
-// which project card describes it. Absent for the three hubs about no program.
-const softwareRepo = seriesRepoUrl(series);
-const softwareLinks = softwareRepo
+// which project card describes it. Absent for the hubs about no program. A
+// program still in development has no public repository, so it gets no
+// repository link and a lead that says why.
+const softwareLinks = seriesProject
   ? [
-      {
-        label: t("series.ui.softwareRepo"),
-        href: softwareRepo,
-        external: true,
-      },
+      ...(seriesProject.repo
+        ? [
+            {
+              label: t("series.ui.softwareRepo"),
+              href: seriesProject.repo,
+              external: true,
+            },
+          ]
+        : []),
       {
         label: t("series.ui.softwareDocs"),
-        href: new URL(`/docs/${series.slug}/`, getSiteUrl()).href,
+        href: new URL(`/docs/${seriesProject.id}/`, getSiteUrl()).href,
         external: true,
       },
       {
@@ -231,7 +243,11 @@ const afterBlocks = ["after1", "after2"];
           {t("series.ui.softwareTitle")}
         </h2>
         <p class="series-prose">
-          {t("series.ui.softwareLead", { name: series.slug })}
+          {seriesProject?.repo
+            ? t("series.ui.softwareLead", { name: seriesProject.id })
+            : t("series.ui.softwareLeadUnreleased", {
+                name: seriesProject?.name ?? series.slug,
+              })}
         </p>
         <ul class="series-more">
           {softwareLinks.map((link) => (

@@ -10,6 +10,14 @@ type: projects
 # * `id` is the GitHub repo name. `softwareId` is derived as
 #   `https://github.com/jmrplens/<id>#software` — the SAME @id the project's
 #   own documentation site publishes, so both documents describe ONE node.
+#   A project without a public repository derives it from its docs instead
+#   (`<docs>#software`); the one rule lives in `scripts/utils/software-id.mjs`.
+# * `status` is `active`, `upcoming` or `archived`. `upcoming` is a project in
+#   development whose documentation is public and whose repository is not: it
+#   renders in its own "In development" group, and it is the only status that
+#   may omit `repo` and `license`. The schema refuses either missing anywhere
+#   else. `sitemap` names the docs site's sitemap when it is not the default
+#   `sitemap-index.xml` (the documentation hub reads it from projects.json).
 # * `name` and `summary.en` MUST match, verbatim, the `name`/`description`
 #   the project's own site publishes for that @id. Divergent values on a
 #   shared @id contradict each other and weaken the entity instead of

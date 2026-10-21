@@ -384,10 +384,12 @@ export async function projectsPageMarkdown(
     `Live: ${PRJ.asOf}`,
     "",
     // The page's own order: note, activity band, maintained projects, the
-    // upstream block, the maintenance table, archived projects, support.
+    // ones in development (when there are any), the upstream block, the
+    // maintenance table, archived projects, support.
     ...projectsMethodologyLines(locale),
     ...activityBandLines(locale),
     ...(await projectGroupLines("active", locale, { live: true })),
+    ...(await projectGroupLines("upcoming", locale, { live: true })),
     ...upstream,
     ...(await maintenanceLines(locale)),
     ...(await projectGroupLines("archived", locale, { live: true })),
