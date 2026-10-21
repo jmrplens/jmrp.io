@@ -477,6 +477,7 @@ projects:
     status: upcoming
     schemaType: SoftwareSourceCode
     language: C++
+    license: GPL-3.0-or-later
     docs: https://docs.jmrp.io/kleidos/
     kicker: Hardware · password manager
     docsEs: https://docs.jmrp.io/kleidos/es/

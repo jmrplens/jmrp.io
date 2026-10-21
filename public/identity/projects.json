@@ -305,6 +305,8 @@
       "schemaType": "SoftwareSourceCode",
       "kicker": "Hardware · password manager",
       "language": "C++",
+      "license": "GPL-3.0-or-later",
+      "licenseUrl": "https://www.gnu.org/licenses/gpl-3.0.html",
       "docs": "https://docs.jmrp.io/kleidos/",
       "docsEs": "https://docs.jmrp.io/kleidos/es/",
       "sitemap": "sitemap.xml",
