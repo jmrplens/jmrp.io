@@ -937,7 +937,7 @@ export const common = {
       // Projects with public documentation whose code is not released yet.
       upcomingHeading: "// IN DEVELOPMENT",
       upcomingIntro:
-        "Not released yet: no public source and no release so far. Each one links to its documentation, which is already public.",
+        "Not released yet and without public source. Each one links to its documentation, which is already public.",
       // The card's status label, beside the project name.
       statusUpcoming: "In development",
       // The main link of an in-development card, to its documentation.

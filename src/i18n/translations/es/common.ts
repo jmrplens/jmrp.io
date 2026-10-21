@@ -921,7 +921,7 @@ export const common = {
         "En desarrollo activo. Tienen releases, seguimiento de issues y documentación.",
       upcomingHeading: "// EN DESARROLLO",
       upcomingIntro:
-        "Aún sin publicar: todavía sin código público ni release. Cada uno enlaza a su documentación, que ya es pública.",
+        "Aún sin publicar y sin código público. Cada uno enlaza a su documentación, que ya es pública.",
       statusUpcoming: "En desarrollo",
       docsCta: "Leer la documentación",
       archivedHeading: "// ARCHIVADOS",
