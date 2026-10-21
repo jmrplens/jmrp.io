@@ -22,6 +22,7 @@
  * YAML requires `name`/`summary.en` to match those sites verbatim.
  */
 import licenseUrls from "@data/license-urls.json";
+import type { Series } from "@utils/series";
 import { getSiteUrl } from "@utils/site";
 import { wikidataEntityUri, wikidataLabel } from "@utils/wikidata";
 import { getEntry } from "astro:content";
@@ -31,6 +32,7 @@ import type {
   Thing,
 } from "schema-dts";
 
+import { softwareId as softwareIdRule } from "../../scripts/utils/software-id.mjs";
 import { CANONICAL_ALUMNI_OF } from "./person";
 
 /** A Wikidata-grounded subject of a project. */
@@ -39,21 +41,30 @@ export interface ProjectTopic {
   wikidata: string;
 }
 
+/** Lifecycle of a project; see `status` in the content schema. */
+export type ProjectStatus = "active" | "upcoming" | "archived";
+
 /** One project as authored in `projects.yaml`. */
 export interface Project {
   id: string;
   name: string;
-  status: "active" | "archived";
+  status: ProjectStatus;
   schemaType: "SoftwareApplication" | "SoftwareSourceCode";
   applicationCategory?: string;
   applicationSubCategory?: string;
+  /** Short editorial label ("Security · networking"). */
+  kicker?: string;
   /** Platforms the software runs on; rendered on the card as "Runs on". */
   operatingSystem?: string;
   language: string;
-  license: string;
-  repo: string;
+  /** Absent only for an `upcoming` project (the schema enforces it). */
+  license?: string;
+  /** Absent only for an `upcoming` project, whose repository is private. */
+  repo?: string;
   docs: string;
   docsEs?: string;
+  /** Docs-site sitemap path relative to `docs`, when not `sitemap-index.xml`. */
+  sitemap?: string;
   /** Page documenting a public running instance (see the schema for why it stays out of JSON-LD). */
   hosted?: string;
   hostedEs?: string;
@@ -83,16 +94,59 @@ export const licenseUrl = (license: string): string =>
   (licenseUrls as Record<string, string>)[license] ?? license;
 
 /**
- * The @id every project's software entity is published under — the GitHub
- * repository URL plus a `#software` fragment. This is NOT a fetchable link;
- * it is the shared identifier that lets jmrp.io and each project's own docs
- * site describe the same node.
+ * The @id every project's software entity is published under: the GitHub
+ * repository URL plus a `#software` fragment, or, for a project whose
+ * repository is not public yet, its documentation URL plus the same fragment.
+ * This is NOT a fetchable link; it is the shared identifier that lets jmrp.io
+ * and each project's own docs site describe the same node.
+ *
+ * The rule itself lives in `scripts/utils/software-id.mjs`, the one module the
+ * Node scripts that emit the same @ids (`build-identity.mjs`,
+ * `check-software-drift.mjs`) can import too; see it for why each form.
  *
  * @param project - The project (or its repo name).
  * @returns The canonical `#software` @id.
  */
 export const softwareId = (project: Project | string): string =>
-  `https://github.com/jmrplens/${typeof project === "string" ? project : project.id}#software`;
+  softwareIdRule(project);
+
+/**
+ * The project a series documents, resolved from its `project` id.
+ *
+ * Lives here rather than in `@utils/series`, which must stay free of
+ * `astro:content` because the sitemap integration imports it from the Astro
+ * config, where that module does not exist.
+ *
+ * @param series - The series definition.
+ * @returns The project, or `undefined` for a series about no single program.
+ * @throws When the series names a project `projects.yaml` does not have: a
+ *   typo there would silently drop the series' `about` and card links.
+ */
+export async function getSeriesProject(
+  series: Pick<Series, "slug" | "project">,
+): Promise<Project | undefined> {
+  if (!series.project) return undefined;
+  const project = (await getProjects()).find((p) => p.id === series.project);
+  if (!project)
+    throw new Error(
+      `Series "${series.slug}" names project "${series.project}", which projects.yaml does not list`,
+    );
+  return project;
+}
+
+/**
+ * The `#software` @id a series is about, through the same {@link softwareId}
+ * rule the project's own node uses, so the two cannot name different nodes.
+ *
+ * @param series - The series definition.
+ * @returns The @id, or `undefined` for a series about no single program.
+ */
+export async function seriesSoftwareId(
+  series: Pick<Series, "slug" | "project">,
+): Promise<string | undefined> {
+  const project = await getSeriesProject(series);
+  return project && softwareId(project);
+}
 
 /**
  * Localized page for a project's public running instance, or `undefined` when
@@ -228,27 +282,44 @@ export function buildProjectSchema(project: Project): Record<string, unknown> {
   // just `url` with a fragment — not a distinct page worth aliasing.
   // A listing is a `sameAs` that also gets rendered, so they are folded in here
   // rather than authored twice — one URL, one place to change it.
+  // A project with no public repository has its docs as `url` itself, so
+  // repeating them as an alias would state the same URL twice.
+  const docsIsAlias =
+    project.repo !== undefined && !project.docs.startsWith(`${project.repo}#`);
   const aliases = [
-    ...(project.docs.startsWith(`${project.repo}#`) ? [] : [project.docs]),
+    ...(docsIsAlias ? [project.docs] : []),
     ...(project.listings ?? []).map((l) => l.url),
     ...registryAlias(project.registryId),
     ...(project.sameAs ?? []),
   ];
 
+  // Released software is free to use and says so twice (`isAccessibleForFree`
+  // here, a zero-price `Offer` on SoftwareApplication). A project in
+  // development has nothing to download yet, so neither claim is true of it.
+  const released = project.status !== "upcoming";
+
   const shared = {
     "@id": softwareId(project),
     name: project.name,
     description: project.summary.en,
-    url: project.repo,
-    codeRepository: project.repo,
+    // A project whose repository is still private is reachable only through
+    // its documentation, so that is its `url`, and it states no
+    // `codeRepository` at all rather than one nobody can open.
+    url: project.repo ?? project.docs,
+    ...(project.repo && { codeRepository: project.repo }),
     programmingLanguage: project.language,
-    license: licenseUrl(project.license),
-    isAccessibleForFree: true,
+    ...(project.license && { license: licenseUrl(project.license) }),
+    ...(released && { isAccessibleForFree: true }),
     // `archived` lived only in projects.json and the twin; the graph said
     // nothing, so a reader of the node could not tell a maintained project
     // from one frozen years ago. creativeWorkStatus is schema.org's lifecycle
-    // property on every CreativeWork, SoftwareApplication included.
+    // property on every CreativeWork, SoftwareApplication included (Text in
+    // the pinned vocabulary). An upcoming project states its status the same
+    // way, in the words its card shows.
     ...(project.status === "archived" && { creativeWorkStatus: "Archived" }),
+    ...(project.status === "upcoming" && {
+      creativeWorkStatus: "In development",
+    }),
     author: personRef,
     creator: personRef,
     maintainer: personRef,
@@ -287,6 +358,12 @@ export function buildProjectSchema(project: Project): Record<string, unknown> {
         ...(project.operatingSystem && {
           operatingSystem: project.operatingSystem,
         }),
-        offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
+        ...(released && {
+          offers: {
+            "@type": "Offer" as const,
+            price: "0",
+            priceCurrency: "USD",
+          },
+        }),
       } satisfies SoftwareApplication);
 }

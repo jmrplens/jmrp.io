@@ -37,9 +37,11 @@ import { fileURLToPath } from "node:url";
 
 import { load as loadYaml } from "js-yaml";
 
+import { softwareId as softwareIdOf } from "../utils/software-id.mjs";
 import {
   ACCEPTED_DIVERGENCES,
   classifyDivergences,
+  driftSkip,
   exitCodeFor,
 } from "./software-drift-decision.mjs";
 
@@ -190,17 +192,22 @@ let stalePersons = 0;
 // report below still walks them in order. A failed fetch stays with its page.
 const graphs = await fetchGraphs([
   ...projects
-    .filter((project) => !project.docs.startsWith(`${project.repo}#`))
+    .filter((project) => driftSkip(project) === null)
     .map((project) => project.docs),
   ...EXTRA_PERSON_PAGES,
 ]);
 
 for (const project of projects) {
   // Only projects with their own documentation site can contradict anything;
-  // for the rest, projects.yaml is the sole publisher.
-  if (project.docs.startsWith(`${project.repo}#`)) continue;
+  // for the rest, projects.yaml is the sole publisher. A project in
+  // development is named, so nobody reads its absence as a pass.
+  const skip = driftSkip(project);
+  if (skip) {
+    if (!skip.quiet) console.log(`- ${project.id}: skipped, ${skip.reason}`);
+    continue;
+  }
 
-  const softwareId = `https://github.com/jmrplens/${project.id}#software`;
+  const softwareId = softwareIdOf(project);
   let theirs;
   let personLines = [];
   try {

@@ -27,6 +27,7 @@ import { formatDateDot, getReadingTime, tagUrlSegment } from "@utils/blog";
 import { CC_BY_4_0, licensePageUrl } from "@utils/license";
 import { llmsPostShardPath } from "@utils/llms";
 import { postDateModified } from "@utils/post-dates";
+import { seriesSoftwareId } from "@utils/projects";
 import { getRelatedContent } from "@utils/related";
 import { getSeriesForPost } from "@utils/series";
 import { getSiteUrl } from "@utils/site";
@@ -109,7 +110,9 @@ const relatedContent = await getRelatedContent(postNumber, locale);
 // camouflage for a Tor bridge, which is not what the Nginx-hardening series is
 // about, and filing it there to avoid an orphan would misdescribe both.
 const seriesInfo = getSeriesForPost(postNumber);
-const seriesSoftware = seriesInfo?.series.software;
+const seriesSoftware = seriesInfo
+  ? await seriesSoftwareId(seriesInfo.series)
+  : undefined;
 const seriesUrl = seriesInfo
   ? new URL(
       translatePath(`/blog/series/${seriesInfo.series.slug}/`),

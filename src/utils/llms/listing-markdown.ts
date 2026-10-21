@@ -10,12 +10,8 @@ import {
 } from "@utils/llms";
 import { CATEGORY_ORDER, categoryName } from "@utils/llms/tool-categories";
 import { getPageFaq, pageFaqLines } from "@utils/page-faq";
-import {
-  getSeries,
-  getSeriesPosts,
-  SERIES,
-  seriesRepoUrl,
-} from "@utils/series";
+import { getSeriesProject } from "@utils/projects";
+import { getSeries, getSeriesPosts, SERIES } from "@utils/series";
 
 /**
  * Markdown twins for the LISTING pages: the blog and tools indexes, the tool
@@ -385,6 +381,7 @@ export async function generateSeriesMarkdown(
   const key = (suffix: string) => `series.${slug}.${suffix}` as TranslationKey;
   const prefix = prefixOf(locale);
   const posts = getSeriesPosts(series, await getPostsByLocale(locale));
+  const project = await getSeriesProject(series);
   const path = `${prefix}/blog/series/${slug}/`;
   return [
     ...header(siteUrl, locale, path, t(key("title")), [
@@ -433,15 +430,20 @@ export async function generateSeriesMarkdown(
     "",
     t(key("limits1")),
     "",
-    // The page's "The software" block, only for a series about one program.
-    ...(series.software
+    // The page's "The software" block, only for a series about one program,
+    // with the same links: no repository line while the code is private.
+    ...(project
       ? [
           `## ${t("series.ui.softwareTitle")}`,
           "",
-          t("series.ui.softwareLead", { name: series.slug }),
+          project.repo
+            ? t("series.ui.softwareLead", { name: project.id })
+            : t("series.ui.softwareLeadUnreleased", { name: project.name }),
           "",
-          `- ${t("series.ui.softwareRepo")}: ${seriesRepoUrl(series)}`,
-          `- ${t("series.ui.softwareDocs")}: ${siteUrl}/docs/${slug}/`,
+          ...(project.repo
+            ? [`- ${t("series.ui.softwareRepo")}: ${project.repo}`]
+            : []),
+          `- ${t("series.ui.softwareDocs")}: ${siteUrl}/docs/${project.id}/`,
           `- ${t("series.ui.softwareProjects")}: ${siteUrl}${prefix}/projects/`,
           "",
         ]
