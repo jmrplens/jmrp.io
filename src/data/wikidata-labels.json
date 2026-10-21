@@ -1,5 +1,6 @@
 {
   "Q570": "loudspeaker",
+  "Q2407": "C++",
   "Q5310": "LaTeX",
   "Q8789": "cryptography",
   "Q8803": "Transmission Control Protocol",
@@ -54,9 +55,11 @@
   "Q1192309": "reverse proxy",
   "Q1266946": "thesis",
   "Q1268848": "dynamic DNS",
+  "Q1281199": "password manager",
   "Q1417308": "finite-difference time-domain method",
   "Q1509541": "web application security",
   "Q1535269": "IEEE 802.1Q",
+  "Q1638779": "Bluetooth Low Energy",
   "Q1656447": "Tarpit",
   "Q1669397": "HMAC",
   "Q1749235": "nonce",

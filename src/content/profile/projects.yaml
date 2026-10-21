@@ -453,6 +453,46 @@ projects:
       en: "MCP server for Portainer: 1:1 coverage of the Portainer REST API across dynamic, meta and individual tool surfaces."
       es: "Servidor MCP para Portainer: cobertura 1:1 de la API REST de Portainer en superficies de herramientas dinámicas, meta e individuales."
 
+  # ── In development ─────────────────────────────────────────────────────
+  # Documented in public, repository still private while the first release
+  # is prepared. Between the active and archived entries on purpose: the
+  # /projects/ ItemList follows this file's order, and the page renders
+  # this group between those two.
+  #
+  # Kleidos: `name` and `summary.en` are verbatim the `#software` node its
+  # own site publishes at the same @id, read 2026-10-21:
+  #   https://docs.jmrp.io/kleidos/#software
+  # `schemaType` is that node's @type, and `summary.es` is the Spanish
+  # description it carries.
+  #
+  # No `repo`: it is private. No `license` for now, although its site states
+  # GPL-3.0-or-later for the firmware; restating it here before the first
+  # release is the author's call. No `operatingSystem`: the site names where
+  # it runs (ESP32-S3 and ESP32 boards from M5Stack and LilyGO), but the
+  # property belongs to SoftwareApplication, and the card shows "Runs on"
+  # only where the node states it. Its site publishes `sitemap.xml`, not the
+  # Starlight `sitemap-index.xml`.
+  - id: kleidos
+    name: Kleidos
+    status: upcoming
+    schemaType: SoftwareSourceCode
+    language: C++
+    license: GPL-3.0-or-later
+    docs: https://docs.jmrp.io/kleidos/
+    kicker: Hardware · password manager
+    docsEs: https://docs.jmrp.io/kleidos/es/
+    sitemap: sitemap.xml
+    topics:
+      - { name: Password manager, wikidata: Q1281199 }
+      - { name: ESP32, wikidata: Q27921668 }
+      - { name: Bluetooth Low Energy, wikidata: Q1638779 }
+      - { name: Advanced Encryption Standard, wikidata: Q190746 }
+      - { name: Firmware, wikidata: Q104851 }
+      - { name: C++, wikidata: Q2407 }
+    summary:
+      en: Kleidos keeps your passwords encrypted on a small device and types them over Bluetooth, after you unlock it on the device itself. No app, no cloud. Coming soon.
+      es: Kleidos guarda tus contraseñas cifradas en un dispositivo pequeño y las escribe por Bluetooth, después de que lo desbloquees en el propio dispositivo. Sin app y sin nube. Próximamente.
+
   # ── Archived ───────────────────────────────────────────────────────────
   # No longer maintained, kept public and read-only. They stay in the graph
   # because they are genuinely this person's work and carry real usage
