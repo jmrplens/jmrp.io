@@ -37,26 +37,48 @@
   "url": "https://jmrp.io/",
   "mainEntityOfPage": "https://jmrp.io/about/",
   "publishingPrinciples": "https://jmrp.io/about/#editorial",
-  "potentialAction": {
-    "@type": "DonateAction",
-    "name": [
-      {
-        "@value": "Sponsor this work on GitHub",
-        "@language": "en"
+  "potentialAction": [
+    {
+      "@type": "DonateAction",
+      "name": [
+        {
+          "@value": "Sponsor on GitHub",
+          "@language": "en"
+        },
+        {
+          "@value": "Patrocinar en GitHub",
+          "@language": "es"
+        }
+      ],
+      "recipient": {
+        "@id": "https://jmrp.io/#person"
       },
-      {
-        "@value": "Patrocina este trabajo en GitHub",
-        "@language": "es"
+      "target": {
+        "@type": "EntryPoint",
+        "urlTemplate": "https://github.com/sponsors/jmrplens"
       }
-    ],
-    "recipient": {
-      "@id": "https://jmrp.io/#person"
     },
-    "target": {
-      "@type": "EntryPoint",
-      "urlTemplate": "https://github.com/sponsors/jmrplens"
+    {
+      "@type": "DonateAction",
+      "name": [
+        {
+          "@value": "Support on Ko-fi",
+          "@language": "en"
+        },
+        {
+          "@value": "Apoyar en Ko-fi",
+          "@language": "es"
+        }
+      ],
+      "recipient": {
+        "@id": "https://jmrp.io/#person"
+      },
+      "target": {
+        "@type": "EntryPoint",
+        "urlTemplate": "https://ko-fi.com/jmrplens"
+      }
     }
-  },
+  ],
   "image": {
     "@type": "ImageObject",
     "url": "https://jmrp.io/identity/avatar.png",

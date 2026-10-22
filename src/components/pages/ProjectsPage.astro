@@ -100,10 +100,8 @@ const projects = await getProjects();
 const aboutEntry = await getEntry("profile", "about");
 // `profile` is a discriminated union, so the entry has to be narrowed
 // before `person` exists on it — same guard as BaseHead.astro.
-const sponsorUrl =
-  aboutEntry?.data.type === "about"
-    ? aboutEntry.data.person.sponsorUrl
-    : undefined;
+const funding =
+  aboutEntry?.data.type === "about" ? aboutEntry.data.person.funding : [];
 const active = projects.filter((p) => p.status === "active");
 const upcoming = projects.filter((p) => p.status === "upcoming");
 const archived = projects.filter((p) => p.status === "archived");
@@ -765,13 +763,14 @@ const faqNode =
     ))}
 
     {/*
-     * The one funding route this site has, stated where the work it funds is
-     * listed. It existed only as a `DonateAction` in the structured data of
-     * all 129 pages: machines were told there was a way to support the work
-     * and readers were told nothing, while the privacy page said nothing on
-     * the site is monetized. A visible link is what makes both true.
+     * The funding routes this site has, stated where the work they fund is
+     * listed. The first existed only as a `DonateAction` in the structured
+     * data of every page: machines were told there was a way to support the
+     * work and readers were told nothing, while the privacy page said nothing
+     * on the site is monetized. A visible link per action is what makes both
+     * true.
      */}
-    {sponsorUrl && (
+    {funding.length > 0 && (
       <section class="projects-support">
         <h2 class="projects-support__title">
           {t("pages.projects.supportHeading")}
@@ -780,20 +779,22 @@ const faqNode =
           {t("pages.projects.supportIntro")}
         </p>
         <p class="projects-support__links">
-          <a
-            href={sponsorUrl}
-            target="_blank"
-            rel="external noopener noreferrer"
-            aria-label={t("aria.opensNewTab", {
-              text: t("pages.projects.supportLink"),
-            })}
-          >
-            <span
-              class="i-mdi:heart-outline"
-              aria-hidden="true"
-            />
-            {t("pages.projects.supportLink")}
-          </a>
+          {funding.map((route) => (
+            <a
+              href={route.url}
+              target="_blank"
+              rel="external noopener noreferrer"
+              aria-label={t("aria.opensNewTab", {
+                text: route.label[locale],
+              })}
+            >
+              <span
+                class="i-mdi:heart-outline"
+                aria-hidden="true"
+              />
+              {route.label[locale]}
+            </a>
+          ))}
         </p>
       </section>
     )}

@@ -329,7 +329,7 @@ async function maintenanceLines(locale: "en" | "es"): Promise<Lines> {
 }
 
 /**
- * The page's support section, when the author publishes a sponsor link.
+ * The page's support section, when the author publishes a funding link.
  *
  * @param locale - Target locale.
  * @returns Markdown lines.
@@ -337,15 +337,14 @@ async function maintenanceLines(locale: "en" | "es"): Promise<Lines> {
 async function supportLines(locale: "en" | "es"): Promise<Lines> {
   const t = useTranslations(locale);
   const about = await getEntry("profile", "about");
-  const sponsorUrl =
-    about?.data.type === "about" ? about.data.person.sponsorUrl : undefined;
-  if (!sponsorUrl) return [];
+  const funding = about?.data.type === "about" ? about.data.person.funding : [];
+  if (funding.length === 0) return [];
   return [
     `## ${t("pages.projects.supportHeading")}`,
     "",
     t("pages.projects.supportIntro"),
     "",
-    `- ${t("pages.projects.supportLink")}: ${sponsorUrl}`,
+    ...funding.map((route) => `- ${route.label[locale]}: ${route.url}`),
     "",
   ];
 }

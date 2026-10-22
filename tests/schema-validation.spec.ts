@@ -510,8 +510,17 @@ test.describe("ProfilePage schema on homepage", () => {
     // Networks the site owner has deliberately opted out of. They exist, but he
     // does not want them referenced anywhere on the site — an audit tool
     // suggesting "add the profiles we found" is not grounds to publish them.
-    const OPTED_OUT = ["x.com", "twitter.com", "ko-fi.com"];
-    for (const host of OPTED_OUT) {
+    //
+    // Funding pages are not identities either: they are `DonateAction`s under
+    // `potentialAction` (see `funding` in content.config.ts), so an audit
+    // suggesting them as `sameAs` profiles is just as wrong.
+    const NOT_IN_SAME_AS = [
+      "x.com",
+      "twitter.com",
+      "github.com/sponsors",
+      "ko-fi.com",
+    ];
+    for (const host of NOT_IN_SAME_AS) {
       expect((person.sameAs as string[]).some((u) => u.includes(host))).toBe(
         false,
       );

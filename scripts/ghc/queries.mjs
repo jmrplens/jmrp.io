@@ -1109,8 +1109,8 @@ export async function getDependabotFixed(config, repos = MAINTENANCE_REPOS) {
 /**
  * Repository hygiene checklist: policy files present, branch protection
  * (classic + rulesets merged), one row per MAINTENANCE roster repo (idea
- * 26). FUNDING file presence is deliberately never queried (owner rule:
- * never surface Ko-fi/funding links).
+ * 26). FUNDING file presence is deliberately not queried: a funding file
+ * says nothing about how a repository is maintained.
  *
  * @param {import('./influx.mjs').InfluxConfig} config - Connection settings.
  * @param {readonly string[]} [repos] - Repos to query; defaults to
