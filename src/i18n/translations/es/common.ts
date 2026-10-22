@@ -953,8 +953,7 @@ export const common = {
       listingsOnCard: "visible en la tarjeta",
       supportHeading: "Apoyo",
       supportIntro:
-        "Estos proyectos se mantienen en mi tiempo libre, sobre hardware que funciona en casa. Si alguno te ahorra una tarde, puedes patrocinar el trabajo en GitHub. En cualquier caso, aquí no hay nada tras un muro de pago, y nada te rastrea.",
-      supportLink: "Patrocinar en GitHub",
+        "Estos proyectos se mantienen en mi tiempo libre, sobre hardware que funciona en casa. Si alguno te ahorra una tarde, puedes apoyar el trabajo en GitHub Sponsors o en Ko-fi. En cualquier caso, aquí no hay nada tras un muro de pago, y nada te rastrea.",
       // ── Field labels of the markdown twin (/projects/index.md) ──────────
       twin: {
         status: "Estado",
