@@ -290,7 +290,11 @@ export function isSubstantive(
   if (subject.toLowerCase().includes("[skip-bump]")) return false;
   if (MECHANICAL_COMMITS.has(sha)) return false;
 
-  const conventional = /^\s*([a-z]+)(?:\([^)]*\))?(!)?:/i.exec(subject);
+  // A type may carry digits (`i18n`, `a11y`). `[a-z]+` used to stop at the
+  // first one, so `i18n(...)` fell to the "no recognizable type" branch below
+  // and every i18n commit moved page dates (#587 restamped /about/ and
+  // /homelab/ on 2026-10-22).
+  const conventional = /^\s*([a-z][a-z0-9]*)(?:\([^)]*\))?(!)?:/i.exec(subject);
   // No recognizable type: assume real work — see the module docblock.
   if (!conventional) return true;
   // A breaking marker outranks its own type.
