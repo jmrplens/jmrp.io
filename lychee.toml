@@ -66,6 +66,13 @@ exclude = [
     # 2026-09-30; its canonical form dropped the `/w/` prefix, which now
     # redirects here). The links in post 010 are right; CI cannot see them.
     'https://en\.cppreference\.com/.*',
+    # Mozilla's blog answers 403 from Cloudflare to everything automated
+    # since 2026-10-21: a GitHub runner, this server with a browser
+    # user-agent, headless Chromium, and four check-host nodes on two
+    # continents, the blog's home page included. Readers are not affected
+    # as far as can be told; the checker never will be. Post 003 cites the
+    # 2009 announcement of CSP there.
+    'https://blog\.mozilla\.org/.*',
     'https://gitlab\.torproject\.org/.*',
     'https://www\.abuseipdb\.com/.*',
     # The 404 page legitimately answers 404; it is its own canonical. The
