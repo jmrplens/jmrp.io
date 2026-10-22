@@ -433,26 +433,6 @@ projects:
       en: LaTeX template for Bachelor's and Master's theses at the University of Alicante (EPS), with an automated CI build pipeline.
       es: Plantilla LaTeX para Trabajos Fin de Grado y Fin de Máster en la Universidad de Alicante (EPS), con pipeline de compilación automatizado en CI.
 
-  - id: portainer-mcp
-    name: portainer-mcp
-    status: active
-    schemaType: SoftwareApplication
-    applicationCategory: DeveloperApplication
-    applicationSubCategory: Container Management
-    language: Go
-    license: MIT
-    repo: https://github.com/jmrplens/portainer-mcp
-    docs: https://github.com/jmrplens/portainer-mcp#readme
-    topics:
-      - { name: Model Context Protocol, wikidata: Q133436854 }
-      - { name: Portainer, wikidata: Q64825554 }
-      - { name: Docker, wikidata: Q15206305 }
-      - { name: REST, wikidata: Q749568 }
-      - { name: Go, wikidata: Q37227 }
-    summary:
-      en: "MCP server for Portainer: 1:1 coverage of the Portainer REST API across dynamic, meta and individual tool surfaces."
-      es: "Servidor MCP para Portainer: cobertura 1:1 de la API REST de Portainer en superficies de herramientas dinámicas, meta e individuales."
-
   # ── In development ─────────────────────────────────────────────────────
   # Documented in public, repository still private while the first release
   # is prepared. Between the active and archived entries on purpose: the

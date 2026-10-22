@@ -274,31 +274,6 @@
       ]
     },
     {
-      "id": "portainer-mcp",
-      "name": "portainer-mcp",
-      "status": "active",
-      "schemaType": "SoftwareApplication",
-      "applicationCategory": "DeveloperApplication",
-      "applicationSubCategory": "Container Management",
-      "language": "Go",
-      "license": "MIT",
-      "licenseUrl": "https://opensource.org/licenses/MIT",
-      "repo": "https://github.com/jmrplens/portainer-mcp",
-      "docs": "https://github.com/jmrplens/portainer-mcp#readme",
-      "description": "MCP server for Portainer: 1:1 coverage of the Portainer REST API across dynamic, meta and individual tool surfaces.",
-      "descriptionEs": "Servidor MCP para Portainer: cobertura 1:1 de la API REST de Portainer en superficies de herramientas dinámicas, meta e individuales.",
-      "keywords": [
-        "Model Context Protocol",
-        "Portainer",
-        "Docker",
-        "REST",
-        "Go"
-      ],
-      "sameAs": [
-        "https://github.com/jmrplens/portainer-mcp"
-      ]
-    },
-    {
       "id": "kleidos",
       "name": "Kleidos",
       "status": "upcoming",

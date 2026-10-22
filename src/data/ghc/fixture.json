@@ -2472,36 +2472,6 @@
         "lastPublishAt": "2026-09-27T13:13:06",
         "deploysIn90d": 63
       }
-    },
-    {
-      "repo": "portainer-mcp",
-      "activeDays12m": 18,
-      "lastOwnerCommitAt": "2026-08-29T11:53:52",
-      "ci": {
-        "repo": "portainer-mcp",
-        "jobs": 14,
-        "os": [
-          "Linux"
-        ]
-      },
-      "ciPassRate90d": {
-        "repo": "portainer-mcp",
-        "ok": 36,
-        "ko": 2,
-        "pct": 94.7
-      },
-      "codeQl": null,
-      "hygiene": {
-        "repo": "portainer-mcp",
-        "policyFiles": [
-          "security",
-          "codeowners"
-        ],
-        "rulesetRules": [],
-        "hasClassicProtection": false,
-        "dependabotEcosystems": []
-      },
-      "docsPublished": null
     }
   ],
   "cardFacts": {
@@ -2544,11 +2514,6 @@
       "stars": 84,
       "stars30d": 0,
       "releaseTag": "v2.2.2"
-    },
-    "portainer-mcp": {
-      "stars": 0,
-      "stars30d": 0,
-      "releaseTag": null
     }
   },
   "gitlab": {
