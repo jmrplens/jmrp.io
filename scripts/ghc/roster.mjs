@@ -32,7 +32,6 @@ export const ACTIVE_REPOS = /** @type {const} */ ([
   "libgen-mcp",
   "ghchronicle",
   "TFG-TFM_EPS",
-  "portainer-mcp",
 ]);
 
 /**

@@ -82,16 +82,16 @@ function fixtureRaw() {
       streakEnd: "2026-09-26T00:00:00",
     },
     freshness: { asOf: "2026-09-26T12:33:19.304679889", perFamily: [] },
-    // Only 8 of the 9 active repos have a star row: one repo (portainer-mcp)
-    // is deliberately absent to exercise the "missing" branch.
-    stars: ACTIVE_REPOS.filter((repo) => repo !== "portainer-mcp").map(
+    // Every active repo but one has a star row: TFG-TFM_EPS is deliberately
+    // absent to exercise the "missing" branch.
+    stars: ACTIVE_REPOS.filter((repo) => repo !== "TFG-TFM_EPS").map(
       (repo, i) => ({
         repo,
         stars: 10 + i,
         stars30d: repo === "Cloudflare-DNS-Updater" ? 0 : i + 1,
       }),
     ),
-    releases: ACTIVE_REPOS.filter((repo) => repo !== "portainer-mcp").map(
+    releases: ACTIVE_REPOS.filter((repo) => repo !== "TFG-TFM_EPS").map(
       (repo) => ({
         repo,
         tag: "v1.0.0",
@@ -141,11 +141,11 @@ test("buildSummaryTokens emits 6 keys per active repo, none undefined", () => {
 
 test("buildSummaryTokens: a repo with no star row gets null values and a hide class", () => {
   const tokens = buildSummaryTokens(fixtureRaw());
-  assert.equal(tokens.PRJ_PORTAINER_MCP_STARS, null);
-  assert.equal(tokens.PRJ_PORTAINER_MCP_STARS_30D, null);
-  assert.equal(tokens.PRJ_PORTAINER_MCP_STARS_30D_CLASS, "prj-hide");
-  assert.equal(tokens.PRJ_PORTAINER_MCP_REL_TAG, null);
-  assert.equal(tokens.PRJ_PORTAINER_MCP_REL_CLASS, "prj-hide");
+  assert.equal(tokens.PRJ_TFG_TFM_EPS_STARS, null);
+  assert.equal(tokens.PRJ_TFG_TFM_EPS_STARS_30D, null);
+  assert.equal(tokens.PRJ_TFG_TFM_EPS_STARS_30D_CLASS, "prj-hide");
+  assert.equal(tokens.PRJ_TFG_TFM_EPS_REL_TAG, null);
+  assert.equal(tokens.PRJ_TFG_TFM_EPS_REL_CLASS, "prj-hide");
 });
 
 test("buildSummaryTokens: a zero 30-day star delta is hidden, not shown as +0", () => {
@@ -246,7 +246,7 @@ test("writeProjectsSummary writes a fully-null summary when there is no previous
   assert.equal(result.refreshed, false);
   const onDisk = JSON.parse(fs.readFileSync(outPath, "utf8"));
   assert.equal(onDisk.tokens.PRJ_CODE_MERGED, null);
-  assert.equal(onDisk.tokens.PRJ_PORTAINER_MCP_STARS_30D_CLASS, "prj-hide");
+  assert.equal(onDisk.tokens.PRJ_TFG_TFM_EPS_STARS_30D_CLASS, "prj-hide");
 });
 
 test("writeProjectsSummary never leaves a .tmp file behind on success", async () => {
