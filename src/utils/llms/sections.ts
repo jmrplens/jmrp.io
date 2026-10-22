@@ -187,7 +187,7 @@ export const PROFILE_SECTIONS: {
         "No cookies, no third-party scripts, no advertising network, no cross-site tracking, and no mailing list.",
         "Measurement is named in full rather than summarized. Page views are counted by Cloudflare Web Analytics, with a script served from this domain that strips the query string and fragment before reporting and sets no cookie.",
         "An edge worker the author runs at Cloudflare records one row per request with the same fields as the server logs, IP address included, plus what only the edge knows, such as which Cloudflare data centre answered and the bot score Cloudflare gives the request. Cloudflare keeps those rows for about ninety days; every five minutes they are copied into the author's own monitoring database, where they follow the server logs' rule of one year, then deletion. The project documentation at docs.jmrp.io, hosted by GitHub Pages, is recorded the same way by a second worker, and loads no analytics script.",
-        "No advertising, no affiliate links and no sponsored content; the single funding route is a GitHub Sponsors link on the projects page, named on the privacy page as a conflict-of-interest declaration rather than left for the reader to find.",
+        "No advertising, no affiliate links and no sponsored content; the only funding routes are two donation links on the projects page, GitHub Sponsors and Ko-fi, named on the privacy page as a conflict-of-interest declaration rather than left for the reader to find.",
       ],
     },
     es: {
@@ -196,7 +196,7 @@ export const PROFILE_SECTIONS: {
         "Sin cookies, sin scripts de terceros, sin red publicitaria, sin rastreo entre sitios y sin lista de correo.",
         "La medición se enuncia entera en vez de resumirse. Las páginas vistas las cuenta Cloudflare Web Analytics, con un script servido desde este dominio que elimina la cadena de consulta y el fragmento antes de informar y no pone ninguna cookie.",
         "Un worker que el autor ejecuta en el borde de Cloudflare anota una fila por petición con los mismos campos que los registros del servidor, dirección IP incluida, más lo que solo sabe el borde, como qué centro de datos de Cloudflare respondió o la puntuación de bot que Cloudflare asigna a la petición. Cloudflare conserva esas filas unos noventa días; cada cinco minutos se copian a la base de datos de monitorización del autor, donde siguen la regla de los registros del servidor: un año y después se borran. La documentación de los proyectos en docs.jmrp.io, alojada en GitHub Pages, la registra igual un segundo worker, y no carga ningún script de analítica.",
-        "Ni publicidad, ni enlaces de afiliado, ni contenido patrocinado; la única vía de financiación es un enlace de GitHub Sponsors en la página de proyectos, nombrado en la página de privacidad como declaración de conflicto de intereses en vez de dejarlo a que el lector lo descubra.",
+        "Ni publicidad, ni enlaces de afiliado, ni contenido patrocinado; las únicas vías de financiación son dos enlaces de donación en la página de proyectos, GitHub Sponsors y Ko-fi, nombrados en la página de privacidad como declaración de conflicto de intereses en vez de dejarlos a que el lector los descubra.",
       ],
     },
   },

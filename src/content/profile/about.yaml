@@ -26,18 +26,27 @@ person:
   # must not be "simplified" to match this one.
   email: mail@jmrp.io
 
-  # Funding page → `potentialAction` as a DonateAction. Not a `sameAs`: the
-  # GitHub account is already asserted there, and this is a place to act, not
-  # an identity to resolve.
+  # Funding pages → `potentialAction`, one DonateAction each, and the links
+  # of the support section on /projects/, in this order. Not `sameAs`
+  # entries: these are places to act, not identities to resolve.
   #
-  # `sponsorLabel` is that action's `name`, emitted as language-tagged literals
-  # like jobTitle/description above. It shipped as an untagged English sentence
-  # until 2026-09-02 — the only authored prose in a document that six external
-  # sites splice in beside Spanish copy.
-  sponsorUrl: https://github.com/sponsors/jmrplens
-  sponsorLabel:
-    en: Sponsor this work on GitHub
-    es: Patrocina este trabajo en GitHub
+  # `label` is the action's `name`, emitted as language-tagged literals like
+  # jobTitle/description above, and the visible text of the link. The first
+  # one shipped as an untagged English sentence until 2026-09-02, the only
+  # authored prose in a document that six external sites splice in beside
+  # Spanish copy.
+  #
+  # Ko-fi added 2026-10-22 at the author's request, reversing the August
+  # decision to keep it off the site.
+  funding:
+    - url: https://github.com/sponsors/jmrplens
+      label:
+        en: Sponsor on GitHub
+        es: Patrocinar en GitHub
+    - url: https://ko-fi.com/jmrplens
+      label:
+        en: Support on Ko-fi
+        es: Apoyar en Ko-fi
 
   # The profession, deliberately NOT `worksFor`. schema.org's `worksFor` reads
   # as present tense, and the last employment ended — asserting it here would

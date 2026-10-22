@@ -291,12 +291,13 @@ function buildIdentityDocument() {
     // this node in inherit the signal too.
     // KEEP-IN-SYNC: src/components/layout/BaseHead.astro.
     publishingPrinciples: `${SITE_URL}/about/#editorial`,
-    // Where to fund the work, as an action rather than as an identity.
+    // Where to fund the work (GitHub Sponsors and Ko-fi today), one action per
+    // page rather than identities.
     //
-    // This is NOT in `sameAs` on purpose: that list lets a consumer resolve
-    // two URLs to one entity, and github.com/jmrplens is already there with a
-    // signed ownership proof. A second URL on the same host proves nothing
-    // new, and a funding page is not an identity anyway. `DonateAction` is the
+    // These are NOT in `sameAs` on purpose: that list lets a consumer resolve
+    // two URLs to one entity, and a funding page is not an identity. For the
+    // GitHub one it would not even add evidence: github.com/jmrplens is
+    // already there with a signed ownership proof. `DonateAction` is the
     // property schema.org has for "you can donate here".
     //
     // `recipient` names who receives the donation, and it is not optional
@@ -315,16 +316,16 @@ function buildIdentityDocument() {
     // carries it — exactly like `image.creator` below, which has shipped in
     // this shape all along.
     // KEEP-IN-SYNC: src/components/layout/BaseHead.astro.
-    ...(about.person.sponsorUrl && {
-      potentialAction: {
+    ...(about.person.funding?.length > 0 && {
+      potentialAction: about.person.funding.map((route) => ({
         "@type": "DonateAction",
-        name: localizedValues(about.person.sponsorLabel),
+        name: localizedValues(route.label),
         recipient: { "@id": PERSON_ID },
         target: {
           "@type": "EntryPoint",
-          urlTemplate: about.person.sponsorUrl,
+          urlTemplate: route.url,
         },
-      },
+      })),
     }),
     image: {
       "@type": "ImageObject",

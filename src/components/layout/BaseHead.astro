@@ -236,24 +236,27 @@ const personDescription = aboutData?.person.description
   : t("pages.cv.schemaDescription");
 
 /**
- * The funding action, hoisted out of the schema literal on purpose.
+ * The funding actions, one per funding page, hoisted out of the schema
+ * literal on purpose.
  *
- * Inside the object it would sit behind a conditional spread, and a conditional
- * spread drops the literal's freshness — `satisfies WebSite` below then checks
- * nothing inside it, so a misspelt property or a malformed `@id` reference
- * would compile. Declared here with its own `satisfies`, the shape is checked.
+ * Inside the object they would sit behind a conditional spread, and a
+ * conditional spread drops the literal's freshness — `satisfies WebSite` below
+ * then checks nothing inside it, so a misspelt property or a malformed `@id`
+ * reference would compile. Built here with their own `satisfies`, the shape is
+ * checked.
  */
-const sponsorAction = aboutData?.person.sponsorUrl
-  ? ({
+const donateActions = (aboutData?.person.funding ?? []).map(
+  (route) =>
+    ({
       "@type": "DonateAction",
-      name: localizedValues(aboutData.person.sponsorLabel),
+      name: localizedValues(route.label),
       recipient: { "@id": new URL("#person", getSiteUrl()).href },
       target: {
         "@type": "EntryPoint",
-        urlTemplate: aboutData.person.sponsorUrl,
+        urlTemplate: route.url,
       },
-    } satisfies DonateAction)
-  : undefined;
+    }) satisfies DonateAction,
+);
 
 /**
  * The open-source software this Person authors, as bare `@id` references to
@@ -352,13 +355,13 @@ const websiteSchema = {
     // the graph — the disclosure line on every AuthorCard already links there.
     // KEEP-IN-SYNC: scripts/ci/build-identity.mjs.
     publishingPrinciples: new URL("/about/#editorial", getSiteUrl()).href,
-    // Funding page as an ACTION, not as an identity. It is deliberately absent
-    // from `sameAs`: that list exists so a consumer can resolve two URLs to one
-    // entity, and github.com/jmrplens is already in it carrying a signed
-    // ownership proof, so a second URL on the same host adds nothing. See the
-    // longer note in build-identity.mjs, including why `recipient` is named.
+    // Funding pages as ACTIONS, not as identities. They are deliberately
+    // absent from `sameAs`: that list exists so a consumer can resolve two
+    // URLs to one entity, and a funding page is somewhere to act, not an
+    // identity. See the longer note in build-identity.mjs, including why
+    // `recipient` is named.
     // KEEP-IN-SYNC: scripts/ci/build-identity.mjs.
-    ...(sponsorAction && { potentialAction: sponsorAction }),
+    ...(donateActions.length > 0 && { potentialAction: donateActions }),
     image: {
       "@type": "ImageObject",
       url: new URL(CANONICAL_PERSON_IMAGE.path, getSiteUrl()).href,
