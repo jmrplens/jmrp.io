@@ -16,7 +16,7 @@
  *   docs site already uses for its own node.
  * - A project without one (`status: upcoming`, its repository still private):
  *   its documentation URL plus `#software`, e.g.
- *   `https://docs.jmrp.io/kleidos/#software`. The documentation is the only
+ *   `https://kleidos.dev/#software`. The documentation is the only
  *   public home such a project has, and it is the `@id` that documentation
  *   site publishes for itself. A GitHub URL would name a repository nobody
  *   can open, and would assert an identifier no other document uses.
