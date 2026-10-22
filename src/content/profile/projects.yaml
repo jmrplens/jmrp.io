@@ -461,13 +461,14 @@ projects:
   #
   # Kleidos: `name` and `summary.en` are verbatim the `#software` node its
   # own site publishes at the same @id, read 2026-10-21:
-  #   https://docs.jmrp.io/kleidos/#software
+  #   https://kleidos.dev/#software
   # `schemaType` is that node's @type, and `summary.es` is the Spanish
-  # description it carries.
+  # description it carries. The site moved from docs.jmrp.io/kleidos/ to its
+  # own domain on 2026-10-22; GitHub 301s every old path to kleidos.dev.
   #
-  # No `repo`: it is private. No `license` for now, although its site states
-  # GPL-3.0-or-later for the firmware; restating it here before the first
-  # release is the author's call. No `operatingSystem`: the site names where
+  # No `repo`: it is private. `license` is the GPL-3.0-or-later its site
+  # states for the firmware, although GitHub does not detect it in the
+  # private repository. No `operatingSystem`: the site names where
   # it runs (ESP32-S3 and ESP32 boards from M5Stack and LilyGO), but the
   # property belongs to SoftwareApplication, and the card shows "Runs on"
   # only where the node states it. Its site publishes `sitemap.xml`, not the
@@ -478,9 +479,9 @@ projects:
     schemaType: SoftwareSourceCode
     language: C++
     license: GPL-3.0-or-later
-    docs: https://docs.jmrp.io/kleidos/
+    docs: https://kleidos.dev/
     kicker: Hardware · password manager
-    docsEs: https://docs.jmrp.io/kleidos/es/
+    docsEs: https://kleidos.dev/es/
     sitemap: sitemap.xml
     topics:
       - { name: Password manager, wikidata: Q1281199 }
