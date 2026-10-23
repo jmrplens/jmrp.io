@@ -920,29 +920,29 @@ export const common = {
     projects: {
       title: "Projects",
       // The page's summaries promise only what every card carries: a project
-      // in development has documentation but no public source or license yet.
+      // in development has its own site but no public source yet.
       description:
-        "Open-source projects by José Manuel Requena Plens: MCP servers, acoustics tooling and network security, each with its docs and, once public, its source.",
+        "Open-source projects by José Manuel Requena Plens: MCP servers, acoustics tooling and network security, each with docs or a site and, once public, source.",
       schemaDescription:
-        "Curated index of the open-source software authored and maintained by José Manuel Requena Plens, with language and documentation for each project, and license and source repository for each one already released.",
+        "Curated index of the open-source software authored and maintained by José Manuel Requena Plens, with language and documentation or project site for each project, and license and source repository for each one already released.",
       datasetName: "Public projects of José Manuel Requena Plens (JSON)",
       datasetDescription:
-        "The same project list as this page as one JSON document: name, status and documentation for each project, plus license, repository and third-party listings where it has them, generated from the same source.",
+        "The same project list as this page as one JSON document: name, status and documentation or project site for each project, plus license, repository and third-party listings where it has them, generated from the same source.",
       kicker: "PROJECTS",
       heading: "What I build, and where it lives.",
       intro:
-        "The open-source projects I author and maintain: MCP servers and developer tooling in Go, acoustics and signal-processing libraries, network security and infrastructure scripts. Every entry links to its documentation and, once its code is public, to its source; the hosted MCP servers also link to a running instance you can call.",
+        "The open-source projects I author and maintain: MCP servers and developer tooling in Go, acoustics and signal-processing libraries, network security and infrastructure scripts. Every entry links to its documentation, or to its own site while it is in development, and, once its code is public, to its source; the hosted MCP servers also link to a running instance you can call.",
       activeHeading: "// MAINTAINED",
       activeIntro:
         "Actively developed. These get releases, issue triage and documentation.",
-      // Projects with public documentation whose code is not released yet.
+      // Projects with a public site whose code is not released yet.
       upcomingHeading: "// IN DEVELOPMENT",
       upcomingIntro:
-        "Not released yet and without public source. Each one links to its documentation, which is already public.",
+        "Not released yet and without public source. Each one links to its own site, which is already public.",
       // The card's status label, beside the project name.
       statusUpcoming: "In development",
-      // The main link of an in-development card, to its documentation.
-      docsCta: "Read the documentation",
+      // The main link of an in-development card, to the project's own site.
+      docsCta: "Visit the project site",
       archivedHeading: "// ARCHIVED",
       archivedIntro:
         "No longer maintained, kept public and read-only. Mostly research and instrumentation work from the acoustics years.",
@@ -986,6 +986,8 @@ export const common = {
         topics: "Topics",
         repository: "Repository",
         documentation: "Documentation",
+        // The link of a project in development, which has a site and no docs.
+        site: "Project site",
         endpoint: "Endpoint",
         alsoAt: "Also at",
       },
