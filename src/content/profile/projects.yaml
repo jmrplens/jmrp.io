@@ -434,10 +434,12 @@ projects:
       es: Plantilla LaTeX para Trabajos Fin de Grado y Fin de Máster en la Universidad de Alicante (EPS), con pipeline de compilación automatizado en CI.
 
   # ── In development ─────────────────────────────────────────────────────
-  # Documented in public, repository still private while the first release
-  # is prepared. Between the active and archived entries on purpose: the
-  # /projects/ ItemList follows this file's order, and the page renders
-  # this group between those two.
+  # Public through the project's own site, repository still private while
+  # the first release is prepared. The page renders this group first,
+  # before the maintained projects, and its ItemList follows the page, so
+  # this block's place in the file does not decide the order. `docs` holds
+  # that site while the project has no documentation: the card and the
+  # markdown twins call it the project site because of the status.
   #
   # Kleidos: `name` and `summary.en` are verbatim the `#software` node its
   # own site publishes at the same @id, read 2026-10-21:
