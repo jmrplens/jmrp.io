@@ -486,7 +486,8 @@ function projectCardLines(
     ...activityLines(p.id, activeDays, communityText, t),
     `- ${t("pages.projects.twin.topics")}: ${p.topics.map(namedTopic).join(", ")}`,
     ...(p.repo ? [`- ${t("pages.projects.twin.repository")}: ${p.repo}`] : []),
-    `- ${t("pages.projects.twin.documentation")}: ${locale === "es" ? (p.docsEs ?? p.docs) : p.docs}`,
+    // A project in development links its own site, not documentation.
+    `- ${t(p.status === "upcoming" ? "pages.projects.twin.site" : "pages.projects.twin.documentation")}: ${locale === "es" ? (p.docsEs ?? p.docs) : p.docs}`,
     ...extraLinkLines(p, hosted, t),
     ...seriesLines(p, locale),
     "",
@@ -610,8 +611,9 @@ export async function projectsLines(
 ): Promise<Lines> {
   return [
     ...downloadsMethodologyLines(locale),
-    ...(await projectGroupLines("active", locale, { live: false })),
+    // The page's order: in development first, then maintained, then archived.
     ...(await projectGroupLines("upcoming", locale, { live: false })),
+    ...(await projectGroupLines("active", locale, { live: false })),
     ...(await projectGroupLines("archived", locale, { live: false })),
   ];
 }

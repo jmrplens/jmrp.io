@@ -382,13 +382,13 @@ export async function projectsPageMarkdown(
     `License: ${new URL(locale === "es" ? "/es/license/" : "/license/", url).href}`,
     `Live: ${PRJ.asOf}`,
     "",
-    // The page's own order: note, activity band, maintained projects, the
-    // ones in development (when there are any), the upstream block, the
+    // The page's own order: note, activity band, the projects in development
+    // (when there are any), maintained projects, the upstream block, the
     // maintenance table, archived projects, support.
     ...projectsMethodologyLines(locale),
     ...activityBandLines(locale),
-    ...(await projectGroupLines("active", locale, { live: true })),
     ...(await projectGroupLines("upcoming", locale, { live: true })),
+    ...(await projectGroupLines("active", locale, { live: true })),
     ...upstream,
     ...(await maintenanceLines(locale)),
     ...(await projectGroupLines("archived", locale, { live: true })),

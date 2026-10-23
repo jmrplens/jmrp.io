@@ -105,6 +105,11 @@ const funding =
 const active = projects.filter((p) => p.status === "active");
 const upcoming = projects.filter((p) => p.status === "upcoming");
 const archived = projects.filter((p) => p.status === "archived");
+// The order the page shows them in: what is in development first, so the
+// first card a reader meets is the newest work, then the maintained projects,
+// then the archive. The ItemList below follows it, rather than the order of
+// projects.yaml, so the graph and the page list the projects the same way.
+const pageOrder = [...upcoming, ...active, ...archived];
 
 const translatePath = useTranslatedPath(locale);
 const contributionsData = asContributionsDataset(rawContributionsData);
@@ -322,9 +327,9 @@ const projectsPageSchema = {
     "@type": "ItemList",
     "@id": `${pageUrl}#project-list`,
     name: t("pages.projects.title"),
-    numberOfItems: projects.length,
+    numberOfItems: pageOrder.length,
     itemListOrder: "https://schema.org/ItemListUnordered",
-    itemListElement: projects.map((project, index) => ({
+    itemListElement: pageOrder.map((project, index) => ({
       "@type": "ListItem" as const,
       position: index + 1,
       item: { "@id": softwareId(project) },
@@ -357,16 +362,16 @@ const schema = [
 // would otherwise sit over an empty grid whenever nothing is in development.
 const groups = [
   {
-    key: "active",
-    heading: t("pages.projects.activeHeading"),
-    intro: t("pages.projects.activeIntro"),
-    items: active,
-  },
-  {
     key: "upcoming",
     heading: t("pages.projects.upcomingHeading"),
     intro: t("pages.projects.upcomingIntro"),
     items: upcoming,
+  },
+  {
+    key: "active",
+    heading: t("pages.projects.activeHeading"),
+    intro: t("pages.projects.activeIntro"),
+    items: active,
   },
   {
     key: "archived",
@@ -377,8 +382,8 @@ const groups = [
 ].filter((group) => group.items.length > 0);
 
 // The upstream block and the maintenance table follow the author's current
-// work: the maintained projects and, when there are any, the ones in
-// development, so the page reads own work, then work on other projects, then
+// work: the ones in development, when there are any, and the maintained
+// projects, so the page reads own work, then work on other projects, then
 // the archive. The twin (`projectsPageMarkdown`) keeps the same order.
 const currentWorkEnd = groups.findLast(
   (group) => group.key !== "archived",
@@ -557,9 +562,10 @@ const faqNode =
                     </a>
                   )}
                   {/*
-                   * For a project in development the documentation is the
-                   * one public place it has, so the link is the card's main
-                   * action rather than one link among several.
+                   * For a project in development its own site is the one
+                   * public place it has, so the link is the card's main
+                   * action rather than one link among several, and it names
+                   * the site, not documentation the project may not have.
                    */}
                   {project.status === "upcoming" ? (
                     <a
@@ -573,7 +579,7 @@ const faqNode =
                       )}
                     >
                       <span
-                        class="i-mdi:book-open-variant"
+                        class="i-mdi:web"
                         aria-hidden="true"
                       />
                       {t("pages.projects.docsCta")}
