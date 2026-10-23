@@ -42,6 +42,9 @@ ignoreRegExpList:
   - /sha256-[A-Za-z0-9+/=]+/g
   - /sha384-[A-Za-z0-9+/=]+/g
   - /sha512-[A-Za-z0-9+/=]+/g
+  # GitHub advisory ids (GHSA-mrhx-c7xc-m3w5): three random four-letter groups,
+  # flagged as words whenever a group happens to carry no digit.
+  - /GHSA(-[a-z0-9]{4}){3}/gi
 
 # Files and directories to skip entirely
 ignorePaths:
