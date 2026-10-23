@@ -38,6 +38,9 @@ overrides:
   "fast-uri@>=3.0.0 <3.1.5": ">=3.1.5"
   "undici@>=6.0.0 <6.28.0": "^6.28.0"
   "source-map-js@>=1.0.0 <1.2.2": ">=1.2.2"
+  # GHSA-mrhx-c7xc-m3w5 (2026-10-23): every zod 4 below 4.6.6 moves to the
+  # fix within the same major; the zod 3 copies are covered in auditConfig.
+  "zod@>=4.0.0 <4.6.6": "^4.6.6"
   "eslint": "^10.13.0"
   "vite": "^8.3.5"
   "@astrojs/markdown-remark>smol-toml": "^1.8.0"
@@ -116,3 +119,15 @@ auditConfig:
     # (csp-reporter, ae-to-influx, traffic-report) depends on it or takes a
     # pattern from outside.
     - GHSA-vfj7-8cjw-p6xm
+    # zod: oversized constrained collections exhaust memory while validating.
+    # Fixed only in 4.6.6; the override above lifts every zod 4 copy. What is
+    # left are zod 3 copies with no patched 3.x release: 3.22.4, pinned
+    # exactly by @vercel/backends, @vercel/express, @vercel/hono and
+    # @vercel/python-analysis inside the vercel CLI (their latest releases,
+    # 22.0.1 and 0.15.2, still pin it), which CI runs only to deploy its own
+    # dashboard; and 3.25.76 under chromium-bidi, through puppeteer-core in
+    # lighthouse and @lhci/cli, the audit tools. Both validate their own
+    # config and CLI input; nothing the site runs or ships depends on them.
+    # Remove when those packages move to zod 4.6.6 or later. Reviewed
+    # 2026-10-23.
+    - GHSA-mrhx-c7xc-m3w5
