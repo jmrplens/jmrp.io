@@ -21,7 +21,7 @@
 | `CertInspector` | 1731 | security | `cert-inspector` |
 | `ColorContrastChecker` | 1863 | developer | `color-contrast-checker` |
 | `CronBuilder` | 1566 | developer | `cron-builder` |
-| `CSPBuilder` | 2212 | security | `csp-builder` |
+| `CSPBuilder` | 2301 | security | `csp-builder` |
 | `EnvelopeVisualizer` | 2047 | security | `etm-envelope-visualizer` |
 | `HashCalculator` | 576 | security | `hash-calculator` |
 | `HTTPHeadersAnalyzer` | 1963 | security | `http-headers-analyzer` |
@@ -30,9 +30,9 @@
 | `PasswordGenerator` | 1808 | security | `password-generator` |
 | `RegexFlavorTable` | 115 | developer | — *(internal helper embedded in `RegexTester`, not registered in `componentMap`)* |
 | `RegexTester` | 1355 | developer | `regex-tester` |
-| `StringPoolPacker` | 1419 | embedded | `string-pool-packer` |
+| `StringPoolPacker` | 1444 | embedded | `string-pool-packer` |
 | `SubnetCalculator` | 2327 | network | `subnet-calculator` |
-| `TimestampConverter` | 1259 | developer | `timestamp-converter` |
+| `TimestampConverter` | 1369 | developer | `timestamp-converter` |
 | `WireGuardConfigGenerator` | 2368 | network | `wireguard-config-generator` |
 
 ## Registration

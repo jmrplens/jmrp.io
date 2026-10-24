@@ -341,6 +341,7 @@ const groupedDirectives = categories.map((cat) => ({
 
 /** Translations passed to the inline script via define:vars. */
 const i18n = {
+  removeValue: t("tools.cspBuilder.removeValue"),
   copy: t("tools.shared.copy"),
   copied: t("tools.shared.copied"),
   noDirectivesSelected: t("tools.cspBuilder.noDirectivesSelected"),
@@ -777,6 +778,17 @@ const i18n = {
     const container = document.querySelector(`[data-csp-id="${uniqueId}"]`);
     if (!container) return;
 
+    // Astro scopes this component's CSS by an attribute on every element it
+    // renders; nodes created here need the same attribute or no rule matches.
+    const scope = Array.from(container.attributes)
+      .map((a) => a.name)
+      .find((name) => name.startsWith("data-astro-cid-"));
+    const make = (tag) => {
+      const el = document.createElement(tag);
+      if (scope) el.setAttribute(scope, "");
+      return el;
+    };
+
     const checkboxes = container.querySelectorAll(".csp-checkbox");
     const output = document.getElementById(`${uniqueId}-output`);
     const rating = document.getElementById(`${uniqueId}-rating`);
@@ -954,9 +966,9 @@ const i18n = {
       warnings.hidden = false;
       warningsList.textContent = "";
       warns.forEach((w) => {
-        const li = document.createElement("li");
+        const li = make("li");
         li.className = `csp-warning-item csp-warning-${w.type}`;
-        const icon = document.createElement("span");
+        const icon = make("span");
         icon.className = `i-mdi:${w.type === "warning" ? "alert" : "information"}-outline`;
         li.appendChild(icon);
         li.appendChild(document.createTextNode(` ${w.text}`));
@@ -1173,20 +1185,26 @@ const i18n = {
 
       const values = customValues[directive] || [];
       values.forEach((value) => {
-        const span = document.createElement("span");
+        const span = make("span");
         span.className = "csp-custom-tag";
 
-        const code = document.createElement("code");
+        const code = make("code");
         code.textContent = value;
         span.appendChild(code);
 
-        const button = document.createElement("button");
+        const button = make("button");
         button.type = "button";
         button.className = "csp-remove-tag";
         button.dataset.directive = directive;
         button.dataset.value = value;
+        button.setAttribute(
+          "aria-label",
+          i18n.removeValue
+            .replace("{value}", value)
+            .replace("{directive}", directive),
+        );
 
-        const icon = document.createElement("span");
+        const icon = make("span");
         icon.className = "i-mdi:close";
         button.appendChild(icon);
 

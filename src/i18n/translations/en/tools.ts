@@ -1319,6 +1319,7 @@ export const tools = {
     addDomainPlaceholder: "Add domain (e.g., cdn.example.com)",
     addDomainAriaLabel: "Add domain",
     addDomainToDirective: "Add domain to {directive}",
+    removeValue: "Remove {value} from {directive}",
     // Preview section
     generatedPolicy: "Generated Policy",
     formatLabel: "Format:",
