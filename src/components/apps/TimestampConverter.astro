@@ -449,6 +449,21 @@ const i18n = {
     var container = document.querySelector('[data-ts-id="' + uniqueId + '"]');
     if (!container) return;
 
+    /* Astro scopes this component's CSS by an attribute on every element it
+       renders; nodes created here need the same attribute or no rule matches. */
+    var scope = Array.prototype.map
+      .call(container.attributes, function (a) {
+        return a.name;
+      })
+      .filter(function (name) {
+        return name.indexOf("data-astro-cid-") === 0;
+      })[0];
+    function make(tag) {
+      var el = document.createElement(tag);
+      if (scope) el.setAttribute(scope, "");
+      return el;
+    }
+
     /* ── Element references ── */
     var currentEl = document.getElementById(uniqueId + "-current");
     var tsInput = document.getElementById(uniqueId + "-ts-input");
@@ -522,8 +537,8 @@ const i18n = {
 
     /* Build timezone table rows */
     tzList.forEach(function (item) {
-      var tr = document.createElement("tr");
-      var tdCity = document.createElement("td");
+      var tr = make("tr");
+      var tdCity = make("td");
       if (item.tz === "local") {
         var cityName = localTz.split("/").pop().replace(/_/g, " ");
         tdCity.textContent = item.label + " (" + cityName + ")";
@@ -531,10 +546,10 @@ const i18n = {
       } else {
         tdCity.textContent = item.label;
       }
-      var tdTime = document.createElement("td");
+      var tdTime = make("td");
       tdTime.className = "ts-tz-time";
       tdTime.textContent = "\u2014";
-      var tdZone = document.createElement("td");
+      var tdZone = make("td");
       tdZone.className = "ts-tz-zone";
       tdZone.textContent = "\u2014";
       tr.appendChild(tdCity);

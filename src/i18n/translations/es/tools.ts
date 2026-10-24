@@ -1347,6 +1347,7 @@ export const tools = {
     addDomainPlaceholder: "Añadir dominio (ej., cdn.ejemplo.com)",
     addDomainAriaLabel: "Añadir dominio",
     addDomainToDirective: "Añadir dominio a {directive}",
+    removeValue: "Quitar {value} de {directive}",
     // Sección de vista previa
     generatedPolicy: "Política generada",
     formatLabel: "Formato:",

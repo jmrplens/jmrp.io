@@ -386,7 +386,14 @@ const i18n = {
       <div class="spp-breakdown-head">
         {t("tools.stringPoolPacker.breakdownTitle")}
       </div>
-      <div class="spp-table-wrap">
+      {/* eslint-disable astro/jsx-a11y/no-noninteractive-tabindex -- scrollable region requires keyboard access (axe scrollable-region-focusable) */}
+      <div
+        class="spp-table-wrap"
+        role="region"
+        tabindex="0"
+        aria-label={t("tools.stringPoolPacker.breakdownTitle")}
+      >
+        {/* eslint-enable astro/jsx-a11y/no-noninteractive-tabindex */}
         <table class="spp-table">
           <thead>
             <tr>
@@ -423,6 +430,16 @@ const i18n = {
   // cspell:ignore ajustes réglages einstellungen impostazioni
   const root = document.querySelector(`[data-spp-id="${uniqueId}"]`);
   if (root) {
+    // Astro scopes this component's CSS by an attribute on every element it
+    // renders; nodes created here need the same attribute or no rule matches.
+    const scope = Array.from(root.attributes)
+      .map((a) => a.name)
+      .find((name) => name.startsWith("data-astro-cid-"));
+    const make = (tag) => {
+      const el = document.createElement(tag);
+      if (scope) el.setAttribute(scope, "");
+      return el;
+    };
     const linesInput = root.querySelector("[data-spp-lines]");
     const csvInput = root.querySelector("[data-spp-csv]");
     const tbody = root.querySelector("[data-tbody]");
@@ -625,26 +642,26 @@ const i18n = {
       const frag = document.createDocumentFragment();
       for (const s of rows) {
         const st = packed.status.get(s);
-        const tr = document.createElement("tr");
+        const tr = make("tr");
 
-        const tdStr = document.createElement("td");
-        const code = document.createElement("code");
+        const tdStr = make("td");
+        const code = make("code");
         code.textContent = s === "" ? "∅" : s;
         tdStr.appendChild(code);
 
-        const tdOcc = document.createElement("td");
+        const tdOcc = make("td");
         tdOcc.textContent = i18n.occurrences.replace("{n}", fmt(counts.get(s)));
 
-        const tdOff = document.createElement("td");
+        const tdOff = make("td");
         tdOff.className = "spp-num";
         tdOff.textContent = "@" + fmt(packed.offsetOf.get(s));
 
-        const tdBytes = document.createElement("td");
+        const tdBytes = make("td");
         tdBytes.className = "spp-num";
         tdBytes.textContent = st.tail ? "0" : fmt(byteLen(s) + 1);
 
-        const tdStatus = document.createElement("td");
-        const badge = document.createElement("span");
+        const tdStatus = make("td");
+        const badge = make("span");
         if (st.tail) {
           badge.className = "spp-badge spp-badge--tail";
           badge.textContent = st.into
@@ -660,8 +677,8 @@ const i18n = {
         frag.appendChild(tr);
       }
       if (ordered.length > MAX_ROWS) {
-        const tr = document.createElement("tr");
-        const td = document.createElement("td");
+        const tr = make("tr");
+        const td = make("td");
         td.colSpan = 5;
         td.className = "spp-truncated";
         td.textContent = i18n.truncated
@@ -671,8 +688,8 @@ const i18n = {
         frag.appendChild(tr);
       }
       if (rows.length === 0) {
-        const tr = document.createElement("tr");
-        const td = document.createElement("td");
+        const tr = make("tr");
+        const td = make("td");
         td.colSpan = 5;
         td.className = "spp-truncated";
         td.textContent = i18n.emptyState;
@@ -736,13 +753,13 @@ const i18n = {
       lookupId.textContent = "";
       lookupLang.textContent = "";
       csvState.rows.forEach((r, i) => {
-        const o = document.createElement("option");
+        const o = make("option");
         o.value = String(i);
         o.textContent = r.id;
         lookupId.appendChild(o);
       });
       csvState.langs.forEach((lang, i) => {
-        const o = document.createElement("option");
+        const o = make("option");
         o.value = String(i);
         o.textContent = lang.toUpperCase();
         lookupLang.appendChild(o);
@@ -767,7 +784,7 @@ const i18n = {
       const off = csvState.packed.offsetOf.get(value);
       const st = csvState.packed.status.get(value);
       lookupOut.textContent = "";
-      const code = document.createElement("code");
+      const code = make("code");
       code.textContent = i18n.lookupResolved
         .replace("{lang}", String(li))
         .replace("{id}", String(ri))
@@ -775,7 +792,7 @@ const i18n = {
         .replace("{val}", value === "" ? "∅" : value);
       lookupOut.appendChild(code);
       if (st && st.tail && st.into) {
-        const note = document.createElement("span");
+        const note = make("span");
         note.className = "spp-lookup-note";
         note.textContent = i18n.lookupTail.replace("{s}", st.into);
         lookupOut.appendChild(note);
@@ -1333,6 +1350,11 @@ const i18n = {
     overflow: auto;
     border: var(--border-1);
     border-radius: var(--radius-sm);
+  }
+
+  .spp-table-wrap:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
   }
 
   .spp-table {
