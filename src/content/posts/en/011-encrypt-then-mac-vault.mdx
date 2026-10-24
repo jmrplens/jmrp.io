@@ -37,11 +37,11 @@ faq:
   - question: "How does the format stop a rolled-back or relocated vault file?"
     answer: "The HMAC authenticates a context prefix — ver ‖ recordType ‖ slotId ‖ generation — so a file moved to another slot, retyped, or replaced with an older generation fails the tag, even against an attacker with raw flash access and no PIN."
   - question: "Does encrypt-then-MAC need separate keys?"
-    answer: "Yes. Encryption and authentication use independent keys derived from the PIN. Reusing a single key for both the cipher and the MAC weakens the construction and should be avoided."
+    answer: "Yes. Encryption and authentication use independent keys, each derived from the vault key under its own label; the PIN unlocks that vault key rather than producing the record keys directly. Reusing a single key for both the cipher and the MAC weakens the construction and should be avoided."
   - question: "Why AES-256-CBC plus HMAC instead of AES-GCM?"
-    answer: "Backend uniformity, not cryptographic preference — for a greenfield protocol GCM or ChaCha20-Poly1305 would be the obvious pick. Given the same key, IV and plaintext — as in the fixed test vectors — the same code must produce byte-identical output on the host build against the legacy Mbed TLS API and on the device against Mbed TLS 4.0's PSA Crypto API. (Real writes use a fresh random IV, so their ciphertexts differ by design.) CBC, HMAC and a constant-time compare are deterministic on both; GCM's nonce-management rules across two backends are a sharper footgun. Encrypt-then-MAC is the generically secure composition, and it is what IPsec in its standard configuration and KDBX 4 use too."
+    answer: "Not a cryptographic preference: for a greenfield protocol GCM or ChaCha20-Poly1305 would be the obvious pick. CBC with HMAC has no catastrophic failure mode if an IV ever repeats (a repeated IV leaks that two records share their first blocks, not a key), AES and SHA-256 are both hardware-accelerated on the ESP32, and the hard part of the format, freshness, is a state problem that associated data would not solve. An earlier reason, byte-identical output from two Mbed TLS backends on host and device, no longer applies: the host tests now link the same Mbed TLS 4 and TF-PSA-Crypto as the firmware. Encrypt-then-MAC is the generically secure composition, and it is what IPsec in its standard configuration and KDBX 4 use too."
   - question: "How does the vault list credentials without decrypting them all?"
-    answer: "A single encrypted index.bin, in the same [ver][iv][hmacTag][cipher] envelope, caches only the non-secret metadata a list view needs — id, name, username, brand and a couple of flags. Passwords, URLs, notes and TOTP secrets are never in it, so listing the vault costs one decryption regardless of how many credentials it holds, and no secret is exposed in RAM to render a list."
+    answer: "The list index is a set of encrypted segments, one per 32 credential slots, in the same [ver][iv][hmacTag][cipher] envelope. They cache only the non-secret metadata a list view needs: id, name, username, brand, the domain taken from the URL, group, order, modification time and two flags. Passwords, full URLs, notes and TOTP secrets are never in them, so listing the vault costs one decryption per 32 slots rather than one per credential, and no secret is exposed in RAM to render a list."
 ---
 
 import Callout from "@components/ui/Callout.astro";
@@ -68,13 +68,14 @@ This post is about the file format I use in **a hardware password manager I'm bu
 - Every vault file is an **encrypt-then-MAC** envelope: `[ver][iv][hmacTag][cipher]`. The tag authenticates a **context prefix** — `ver ‖ recordType ‖ slotId ‖ generation` — ahead of the IV and ciphertext.
 - On read, the tag is recomputed and compared **in constant time _before_ any decryption** — verify-before-decrypt.
 - Binding slot, type, and a freshness counter makes a **relocated, retyped, or rolled-back** file fail the MAC — even against an attacker with raw flash access but no PIN.
-- The freshness counters live in `meta.bin`, which is **itself authenticated**; mutations are crash-safe (stage → commit → promote).
+- The freshness counters live in `meta.bin`, which is **itself authenticated**; mutations are crash-safe (append → prove → commit → index), with the `meta.bin` rename as the one commit point.
+- The PIN unlocks a **random vault key** wrapped inside `meta.bin`, so a PIN change rewraps one value instead of re-encrypting every record. The price: a PIN change no longer revokes a key someone already captured.
 - Encryption and authentication use **separate keys**; every reject path produces **no plaintext** and wipes its scratch.
 </TLDRSummary>
 
 <Collapsible title="Quick glossary (if crypto isn't your background)">
 - **Plaintext · ciphertext**: the readable data (your password) and its scrambled, unreadable form once encrypted.
-- **Encrypt · key**: scramble data with a _key_ (a secret) so only someone holding the key can reverse it. Here the key comes from your PIN.
+- **Encrypt · key**: scramble data with a _key_ (a secret) so only someone holding the key can reverse it. Here your PIN unlocks the key.
 - **Block cipher (AES) · padding**: AES encrypts in fixed 16-byte chunks; _padding_ is the filler bytes that top up the last chunk.
 - **MAC · HMAC · tag**: a tamper-evident seal. HMAC uses a key to compute a _tag_ (a short fingerprint); change a single byte and the tag stops matching.
 - **IV** (initialization vector): random bytes, a fresh one per write, so encrypting the same data twice gives different results.
@@ -224,7 +225,7 @@ Put the two orderings side by side and the doom is obvious. The composition isn'
 
 ## The envelope: 49 bytes of header before the AES-256-CBC ciphertext
 
-Every encrypted file in the vault — each credential, each TOTP secret, the listing index — is one self-contained **envelope**. Picture a postal envelope: the outside carries, in the clear, just enough to handle and verify it (the version, the IV, and the tag that acts as the seal), and the encrypted letter rides inside. They all share the same fixed prefix:
+Every encrypted record in the vault (each credential, each TOTP secret, each segment of the listing index) is one self-contained **envelope**. Picture a postal envelope: the outside carries, in the clear, just enough to handle and verify it (the version, the IV, and the tag that acts as the seal), and the encrypted letter rides inside. They all share the same fixed prefix:
 
 <ByteFrame
   title="Vault file envelope"
@@ -238,48 +239,44 @@ Every encrypted file in the vault — each credential, each TOTP secret, the lis
   ]}
 />
 
-The on-disk layout above is the whole file — but the tag authenticates a little *more* than the file holds. Ahead of the IV and ciphertext, the firmware prepends a 7-byte **authenticated context prefix** and [HMACs](https://datatracker.ietf.org/doc/html/rfc2104) the lot (over [SHA-256](https://csrc.nist.gov/pubs/fips/180-4/upd1/final)) with the file's MAC sub-key:
+The layout above is the whole envelope, but the tag authenticates a little *more* than the envelope holds. Ahead of the IV and ciphertext, the firmware prepends an 8-byte **authenticated context prefix** and [HMACs](https://datatracker.ietf.org/doc/html/rfc2104) the lot (over [SHA-256](https://csrc.nist.gov/pubs/fips/180-4/upd1/final)) with the record MAC sub-key:
 
 <Code lang="cpp" title="vault_envelope.h — the authenticated message">
 ```cpp
-// authPrefix = ver(1) ‖ recordType(1) ‖ slotId(1) ‖ generation(4, LE)
+// authPrefix = ver(1) ‖ recordType(1) ‖ slotId(2, LE) ‖ generation(4, LE)
 // authMsg    = authPrefix ‖ iv ‖ cipher
-std::array<uint8_t, kEnvelopeContextSize + kIvSize + MaxCipher> message{};
-size_t n = writeEnvelopeContext(message.data(), type, slot, generation); // 7 B
-std::memcpy(message.data() + n, iv, kIvSize);        n += kIvSize;
-std::memcpy(message.data() + n, cipher, cipherLen);  n += cipherLen;
+std::array<uint8_t, kEnvelopeContextSize> ctxBuf{};
+writeEnvelopeContext(ctxBuf.data(), context);                // 8 B
 
-VaultCrypto::hmacSha256(macKey, macKeyLen, message.data(), n, tagOut.data());
-VaultCrypto::secureWipe(message.data(), message.size());
+// The three parts feed one multipart HMAC: no concatenation buffer exists.
+VaultCrypto::hmacSha256Parts(macKey, macKeyLen, ctxBuf.data(), ctxBuf.size(),
+                             iv, kIvSize, cipher, cipherLen, tagOut.data());
 ```
 </Code>
 
-That context prefix is **never written to the file** — the on-disk version byte stays `0x01` and the layout doesn't change a single byte. `recordType` and `slotId` come from *where the file lives* (which path, which slot); `generation` comes from the authenticated `meta.bin`. So the tag proves that *this exact ciphertext, in this exact slot, of this exact type, at this exact revision* belongs here, untouched — not just that someone who knew the key produced some ciphertext. Why those three extra fields earn their keep is [its own section](#what-the-tag-really-binds-slot-type-and-freshness); first, the basics of writing and reading one.
+That context prefix is **not part of the envelope**: the version byte stays `0x01` and the envelope layout doesn't change a single byte. `recordType` and `slotId` come from *where the record lives*; `generation` comes from the authenticated `meta.bin`. Credentials and TOTP entries are stored as entries of an append-only record log, a few segment files of 32 slots each, and every entry header repeats its type, slot and generation in the clear so a scan can find entries without a key. Nothing believes those clear copies: the tag, recomputed with the generation `meta.bin` holds, decides. So the tag proves that *this exact ciphertext, in this exact slot, of this exact type, at this exact revision* belongs here, untouched — not just that someone who knew the key produced some ciphertext. Why those three extra fields earn their keep is [its own section](#what-the-tag-really-binds-slot-type-and-freshness); first, the basics of writing and reading one.
 
 The **IV** (initialization vector) is the 16 random bytes that seed CBC's chaining for the first block; without it, two records with the same first block would decrypt to the same plaintext, leaking equality. The vault draws a fresh IV from the ESP32 hardware RNG on *every* write, so saving the same password twice produces two completely different ciphertexts — an attacker reading flash can't even tell that two slots hold the same value. The IV isn't secret (it's stored in the clear, right there in the envelope), but it must be unpredictable and unique per write, and authenticating it under the tag stops anyone from quietly substituting one.
 
 ## Writing a record: encrypt, then MAC
 
-The write path is encrypt-then-MAC in the literal order of its name. The plaintext is first serialized to a packed binary record (more on that [later](#defense-in-depth-constant-time-padding--a-fail-closed-codec)), then encrypted with AES-256-CBC under the *encryption* sub-key, then the tag is computed over the ciphertext under the *MAC* sub-key, and finally the four parts are written out:
+The write path is encrypt-then-MAC in the literal order of its name. The plaintext is first serialized to a packed binary record, always exactly 4,096 bytes (more on that [later](#defense-in-depth-constant-time-padding--a-fail-closed-codec)), then encrypted with AES-256-CBC under the *encryption* sub-key, then the tag is computed over the ciphertext under the *MAC* sub-key, and finally the finished envelope is appended to the record log:
 
 <Code lang="cpp" title="save() — the encrypt-then-MAC write path (trimmed)">
 ```cpp
-// Encrypt-then-MAC: encrypt the record, then authenticate the ciphertext.
-VaultCrypto::encrypt(keys.enc.data(), plainBuf.data(), plainLen,
-                     iv.data(), cipherBuf.data(), &cipherLen);
-computeTag(keys, id, generation, iv.data(), cipherBuf.data(), cipherLen, tag);
+// Encrypt-then-MAC, assembled in place as [ver][iv][hmacTag][cipher].
+env[kCredVerOffset] = kCredFormatVersion;
+bool ok = VaultCrypto::encrypt(keys.enc.data(), plainBuf, plainLen,
+                               iv, cipher, &cipherLen);
+VaultCrypto::secureWipe(plainBuf, plainLen);
+if (ok) ok = computeTag(keys, id, generation, iv, cipher, cipherLen, tagBuf);
+std::memcpy(tag, tagBuf.data(), kCredHmacTagSize);
+VaultCrypto::secureWipe(tagBuf.data(), tagBuf.size());
 
-// Persist [ver][iv][hmacTag][cipher].
-const uint8_t ver = kCredFormatVersion;
-f.write(&ver, kCredVerSize);
-f.write(iv.data(), kIvSize);
-f.write(tag.data(), kCredHmacTagSize);
-f.write(cipherBuf.data(), cipherLen);
-
-// Every transient buffer is wiped before this function returns.
-VaultCrypto::secureWipe(cipherBuf.data(), cipherBuf.size());
-VaultCrypto::secureWipe(iv.data(), iv.size());
-VaultCrypto::secureWipe(tag.data(), tag.size());
+// Persist: append the envelope as one record-log entry under its generation.
+RecordStore::writeEnvelope(LogEntryType::Credential, id, generation,
+                           env, len, offset);
+VaultCrypto::secureWipe(env, kCredMaxFileSize);   // the envelope buffer too
 ```
 </Code>
 
@@ -297,35 +294,35 @@ This is the section the whole format exists for. When the vault loads a credenti
 Check the seal before opening the envelope. If the tag doesn't match, the file is rejected **without decrypting a single byte** — so the attacker never gets the device to "react" to their tampered bytes, which is exactly what fed the padding oracle.
 </Callout>
 
-<Code lang="cpp" title="load() — verify-before-decrypt, fail-closed (trimmed)">
+<Code lang="cpp" title="decodeEnvelopeStatus(): verify-before-decrypt, fail-closed (trimmed)">
 ```cpp
 // Fail-closed: wipe the caller's record up front, so EVERY reject path
 // (bad size, version, MAC, decrypt, or decode) leaves no residue behind.
 out.wipe();
 
 // 1. Structural checks: plausible size, ciphertext is a whole number of blocks.
-if (fileSize < kCredMinFileSize || fileSize > kCredMaxFileSize) return false;
-const size_t cipherLen = fileSize - kCredHeaderSize;
-if ((cipherLen % kAesBlockSize) != 0)                           return false;
+if (len < kCredMinFileSize || len > kCredMaxFileSize) return RecordLoad::Rejected;
+const size_t cipherLen = len - kCredHeaderSize;
+if ((cipherLen % kAesBlockSize) != 0)                 return RecordLoad::Rejected;
 
-// 2. Read [ver][iv][storedTag][cipher]; reject an unknown format version.
-//    ... (reads omitted) ...
-if (ver != kCredFormatVersion)                                  return false;
+// 2. The envelope is [ver][iv][storedTag][cipher]; reject an unknown version.
+if (env[kCredVerOffset] != kCredFormatVersion)        return RecordLoad::Rejected;
 
 // 3. Verify-before-decrypt: recompute the tag and compare in CONSTANT TIME.
-computeTag(keys, id, generation, iv.data(), cipherBuf.data(), cipherLen, expectedTag);
-if (!VaultCrypto::constantTimeEqual(expectedTag.data(), storedTag.data(),
+if (!computeTag(keys, id, generation, iv, cipher, cipherLen, expectedTag))
+    return RecordLoad::Unreadable;  // could not compute: says nothing about flash
+if (!VaultCrypto::constantTimeEqual(expectedTag.data(), storedTag,
                                     kCredHmacTagSize)) {
     // MAC mismatch → tampered or corrupt. Wipe scratch, produce no plaintext.
-    return false;
+    return RecordLoad::Rejected;
 }
 
-// 4. Tag verified — only now is it safe to decrypt.
-VaultCrypto::decrypt(keys.enc.data(), iv.data(), cipherBuf.data(),
-                     cipherLen, plainBuf.data(), &plainLen);
+// 4. Tag verified: only now is it safe to decrypt.
+VaultCrypto::decrypt(keys.enc.data(), iv, cipher, cipherLen, plainBuf, &plainLen);
 
 // 5. Decode the packed plaintext with a strict, fail-closed codec.
-return decodeCredential(plainBuf.data(), plainLen, out);
+return decodeCredential(plainBuf, plainLen, out) ? RecordLoad::Ok
+                                                 : RecordLoad::Rejected;
 ```
 </Code>
 
@@ -351,7 +348,7 @@ The vault doesn't hand-write that loop — it calls Mbed TLS's [`mbedtls_ct_memc
 
 ### Second: fail-closed by design
 
-Second, **fail-closed**. The record is wiped *before* anything is read, so there is no code path — not a bad size, not a bad version, not a MAC mismatch, not a decrypt failure, not a malformed record — that can leave a partially-populated credential in the caller's buffer. The function either returns `true` with a complete record or `false` with nothing.
+Second, **fail-closed**. The record is wiped *before* anything is read, so there is no code path — not a bad size, not a bad version, not a MAC mismatch, not a decrypt failure, not a malformed record — that can leave a partially-populated credential in the caller's buffer. The function either returns `Ok` with a complete record or a refusal with nothing. It even keeps two refusals apart: `Rejected` means the stored bytes were read and refused, `Unreadable` means the check itself could not run (a busy buffer, a crypto resource failure), which says nothing about what is on flash.
 
 <Gauntlet
   caption="Every reject path produces no plaintext — the read returns a complete credential or nothing at all."
@@ -382,7 +379,7 @@ A tag over `ver ‖ iv ‖ cipher` proves the ciphertext is genuine — but it s
   </thead>
   <tbody>
     <tr>
-      <td>**Cross-slot substitution** — copy `cred_05.bin` over `cred_03.bin`</td>
+      <td>**Cross-slot substitution** — copy `cred_05.bin` over `cred_03.bin` (each record was its own file then)</td>
       <td>Both sealed with the same key, so the relocated file verified and served slot 5's secret as slot 3 — one site's password typed into another's form</td>
     </tr>
     <tr>
@@ -398,21 +395,22 @@ A tag over `ver ‖ iv ‖ cipher` proves the ciphertext is genuine — but it s
 
 ### Binding the missing context into the tag
 
-The fix binds the missing context *into the tag itself*. This is exactly the role of [associated data](https://datatracker.ietf.org/doc/html/rfc5116#section-2.1) in an AEAD scheme — context that must be **authenticated but not encrypted** — except here it's folded directly into the encrypt-then-MAC tag rather than passed to a single-pass cipher. The 7-byte prefix is centralized in one place, so every record module — and the re-key path — computes it bit-identically:
+The fix binds the missing context *into the tag itself*. This is exactly the role of [associated data](https://datatracker.ietf.org/doc/html/rfc5116#section-2.1) in an AEAD scheme — context that must be **authenticated but not encrypted** — except here it's folded directly into the encrypt-then-MAC tag rather than passed to a single-pass cipher. The 8-byte prefix is centralized in one place, so every record module (and the key-rotation path) computes it bit-identically. `slotId` is a little-endian `uint16`, so every slot on the largest-capacity board gets its own authenticated value:
 
 <Code lang="cpp" title="vault_envelope.h — writeEnvelopeContext (one centralized prefix)">
 ```cpp
-// ver(1) ‖ recordType(1) ‖ slotId(1) ‖ generation(4, little-endian)
-inline size_t writeEnvelopeContext(uint8_t* out, EnvelopeRecordType type,
-                                   uint8_t slot, uint32_t generation) {
-    out[0] = kEnvelopeVersion;            // 0x01 — unchanged on disk
-    out[1] = static_cast<uint8_t>(type);  // Credential / Totp / Index
-    out[2] = slot;                        // the slot this file belongs to
-    out[3] =  generation        & 0xFF;   // per-slot freshness counter,
-    out[4] = (generation >> 8)  & 0xFF;   //   little-endian
-    out[5] = (generation >> 16) & 0xFF;
-    out[6] = (generation >> 24) & 0xFF;
-    return kEnvelopeContextSize;          // 7
+// ver(1) ‖ recordType(1) ‖ slotId(2, LE) ‖ generation(4, LE)
+inline size_t writeEnvelopeContext(uint8_t* out,
+                                   const EnvelopeContext& context) noexcept {
+    out[0] = kEnvelopeVersion;                   // 0x01, unchanged on disk
+    out[1] = std::to_underlying(context.type);   // Credential / Totp / ...
+    out[2] =  context.slot       & 0xFF;         // the slot this record is,
+    out[3] = (context.slot >> 8) & 0xFF;         //   little-endian u16
+    out[4] =  context.generation        & 0xFF;  // per-slot freshness counter,
+    out[5] = (context.generation >> 8)  & 0xFF;  //   little-endian u32
+    out[6] = (context.generation >> 16) & 0xFF;
+    out[7] = (context.generation >> 24) & 0xFF;
+    return kEnvelopeContextSize;                 // 8
 }
 ```
 </Code>
@@ -430,7 +428,7 @@ So a relocated file carries the wrong `slotId`, a retyped file the wrong `record
   rows={[
     {
       label: "recordType",
-      note: "Credential / Totp / Index",
+      note: "Credential / Totp / index segment",
       cells: ["no", "yes", "no"],
     },
     {
@@ -450,64 +448,95 @@ So a relocated file carries the wrong `slotId`, a retyped file the wrong `record
 
 Every check so far has leaned on something already being trustworthy — the keys, the freshness counters. That trust has to bottom out somewhere: in a **root of trust**, the one piece you don't get to question, because if it were forged everything built on top would inherit the lie. Here that piece is `meta.bin`.
 
-The `generation` counters have to live somewhere, and that somewhere has to be tamper-evident — otherwise an attacker would simply lower a counter to make a stale file look current. They live in `meta.bin`: the small header the device reads first, holding the salts, the PIN verifier, and a **per-slot generation table** — all sealed under its own HMAC tag.
+The `generation` counters have to live somewhere, and that somewhere has to be tamper-evident: otherwise an attacker would simply lower a counter to make a stale file look current. They live in `meta.bin`, the small record the device reads first, and it is **two authenticated halves with a tag each**.
+
+The reason for two halves is that the PIN does not produce the record keys directly. PBKDF2 turns it into a **key-encryption key** (KEK), and the KEK unwraps a random 32-byte **vault key** that every record is keyed to. The first half holds what the secret alone has to open: the KDF salt and work factor, the PIN verifier, the wrapped vault key, and a tag under a KEK-derived key. Only an operation that holds the secret may replace it.
 
 <ByteFrame
-  title="meta.bin — authenticated metadata (formatVer 0x02)"
-  ariaLabel="A byte-layout of meta.bin: a 2-byte magic 'KV', a 1-byte format version 0x02, a 16-byte KDF salt, a 32-byte PIN verifier, a 16-byte HMAC salt, a variable-length per-slot generation table of one uint32 per slot, and a trailing 32-byte HMAC tag computed over every byte before it."
-  caption="Unlike index.bin, meta.bin is never rebuilt from the record files — it is the root of trust. The trailing tag authenticates every preceding byte, including the generation table."
+  title="meta.bin, KEK half: 154 fixed bytes (formatVer 0x01)"
+  ariaLabel="A byte layout of the first half of meta.bin, 154 bytes: a 2-byte magic 'KV', a 1-byte format version 0x01, a 16-byte KDF salt, a 4-byte PBKDF2 iteration count, 3 bytes of unlock parameters (PIN length, secret kind and key-file factor), a 32-byte PIN verifier, a 16-byte vault-key check, a 16-byte wrap IV, the 32-byte wrapped vault key, and a 32-byte wrap tag computed over the 122 bytes before it."
+  caption="The vault key is two AES blocks, so it is wrapped with no padding at all. vkCheck is a 16-byte HMAC that names the vault key: a no-padding unwrap always yields 32 plausible bytes, and this tag says they are the right ones."
   fields={[
-    { label: "magic", bytes: 2, note: '"KV"' },
-    { label: "ver", bytes: 1, note: "0x02" },
-    { label: "kdfSalt", bytes: 16 },
-    { label: "pinVerifier", bytes: 32, note: "HMAC" },
+    { label: "hdr", bytes: 3, note: 'magic "KV" · formatVer 0x01' },
+    { label: "kdf", bytes: 20, note: "kdfSalt 16 B · kdfIterations u32 LE" },
+    { label: "params", bytes: 3, note: "pinLength · secretKind · keyfileFactor" },
+    { label: "pinVerifier", bytes: 32, note: "HMAC(KEK)" },
+    { label: "vkCheck", bytes: 16, note: "HMAC(VK), truncated" },
+    { label: "wrapIv", bytes: 16 },
+    { label: "wrapCipher", bytes: 32, note: "the vault key, AES-256-CBC" },
+    { label: "wrapTag", bytes: 32, note: "HMAC over bytes 0-121" },
+  ]}
+/>
+
+The second half is what any unlocked session may rewrite, which is what lets an ordinary save bump a generation counter without asking for the PIN again: the HMAC salt, the state of a key rotation, and a **per-slot generation table** for credentials and for TOTP entries, sealed by a tag under a key derived from the vault key.
+
+<ByteFrame
+  title="meta.bin, VK half: from byte 154, scales with capacity"
+  ariaLabel="A byte layout of the second half of meta.bin, with offsets counted from byte 154 of the file: a 16-byte HMAC salt, a 67-byte rotation state, a variable skip bitmap with one bit per rotation step, a variable table of one uint32 generation per credential slot, a variable table of one uint32 generation per TOTP slot, and a trailing 32-byte meta tag."
+  caption="Offsets count from the start of this half. meta.bin is never rebuilt from the record files: it is the root of trust. metaTag covers everything from wrapTag on, so it also commits to the KEK half and the two halves cannot be spliced apart."
+  fields={[
     { label: "hmacSalt", bytes: 16 },
-    { label: "genTable", bytes: 28, variable: true, note: "u32 / slot" },
+    { label: "rotation", bytes: 67, note: "key-rotation state" },
+    { label: "rotSkip", bytes: 10, variable: true, note: "1 bit / rotation step" },
+    { label: "credGen", bytes: 40, variable: true, note: "u32 / credential slot" },
+    { label: "totpGen", bytes: 20, variable: true, note: "u32 / TOTP slot" },
     { label: "metaTag", bytes: 32, note: "HMAC, last" },
   ]}
 />
 
-Because the metadata is authenticated, the unlock sequence becomes a careful ladder: nothing in the file is trusted until the tag checks out, and a wrong PIN derives a different master key — so the metadata tag and the PIN verifier both miss at once.
+There are two tags because there are two writers. One tag under a PIN-derived key would make every save re-run PBKDF2 (about 1.55 s on an ESP32-S3); one tag under a vault-key-derived key would mean unwrapping the vault key before anything was authenticated, a decrypt-before-verify on the wrap. So each half is sealed by a key its legitimate writer holds.
+
+The unlock sequence becomes a careful ladder: nothing in the file is trusted until a tag checks out, and a wrong PIN derives a different KEK, so the wrap tag and the PIN verifier both miss at once.
 
 <Pipeline
   title="Unlock: trust nothing until the tag verifies"
-  caption="A wrong PIN derives a different master key, so the meta tag and the PIN verifier both mismatch — unlock fails closed before the generation table or salts are ever trusted."
-  ariaLabel="A six-stage fail-closed unlock pipeline. One: parse meta.bin's magic, version, and length, trusting nothing yet. Two: derive the master key with PBKDF2 from the PIN and the KDF salt. Three: derive the MAC sub-key using the HMAC salt. Four: verify the metadata tag in constant time — the gate — before trusting anything. Five: check the PIN verifier, the second gate. Six: the vault is unlocked and the generation table is now trusted."
+  caption="A wrong PIN derives a different KEK, so the wrap tag and the PIN verifier both mismatch: unlock fails closed before the vault key is unwrapped or the generation table is trusted."
+  ariaLabel="A six-stage fail-closed unlock pipeline. One: parse meta.bin's magic, version, length and work-factor range, trusting nothing yet. Two: derive the key-encryption key with PBKDF2 from the PIN, the KDF salt and the stored iteration count. Three: verify the wrap tag over the first half in constant time, the first gate. Four: compare the PIN verifier in constant time, the second gate. Five: unwrap the vault key and check it against vkCheck. Six: derive the session keys from the vault key and verify the meta tag before the generation table is trusted."
   stages={[
-    { name: "parse meta.bin", note: "magic · ver · length" },
-    { name: "PBKDF2", note: "PIN + kdfSalt", via: "no trust yet" },
-    { name: "derive macKey", note: "+ hmacSalt" },
-    { name: "verify metaTag", note: "constant-time", via: "gate" },
-    { name: "check pinVerifier", note: "unlock gate", via: "ok" },
-    { name: "unlocked", note: "table trusted" },
+    { name: "parse meta.bin", note: "magic · ver · KDF range" },
+    { name: "PBKDF2 → KEK", note: "PIN + kdfSalt", via: "no trust yet" },
+    { name: "verify wrapTag", note: "constant-time", via: "gate" },
+    { name: "check pinVerifier", note: "constant-time", via: "gate" },
+    { name: "unwrap VK", note: "check vkCheck", via: "ok" },
+    { name: "verify metaTag", note: "table trusted", via: "gate" },
   ]}
 />
 
-An old or format-mismatched `meta.bin` — say a `formatVer 0x01` from an earlier version — simply fails to authenticate, and the vault is re-provisioned. There is no migration and no dual-read: one on-flash format, ever. (The device isn't in production, so there's no real data to migrate.)
+Step two has to run before anything is authenticated, so the stored work factor reaches PBKDF2 unverified. The parse range-checks it, so a tampered record can neither stall the device past its watchdog nor talk it into a weak derivation, and editing it cannot forge anything: the verifier only reproduces at the count the vault was provisioned with.
+
+The format byte does not move during development. It stays `0x01` while the layout changes, because before release the only deployment path is to erase the flash and re-provision, so a device only ever meets the current layout. Parsing is strict on that byte, so a foreign or older record fails closed and the vault is re-provisioned. There is no migration and no dual-read. (The device isn't in production, so there's no real data to migrate.)
+
+### What a PIN change costs
+
+Wrapping the vault key is what makes a PIN change cheap. It rewrites the 154-byte first half inside one atomic `meta.bin` write, and every record on flash stays exactly as it was. Without the wrap, a PIN change re-encrypts the whole vault, needs roughly twice the vault's space free, and so cannot complete on a nearly full device.
+
+It has a price, and the project lists it first among its accepted risks. The vault key never changes unless you run the explicit *Re-encrypt vault* action, so **a PIN change no longer revokes a key**. A retired PIN plus any copy of `meta.bin` taken before the change unwraps the same vault key, and with it every credential written afterwards. That needs read access only, no flash write; on the hardened builds the wrap is device-bound, so it also needs the original chip. The same old `meta.bin`, written back with raw flash access, makes the retired PIN open the current vault and brings back the work factor it was derived with.
+
+The remedy is that separate re-encrypt action: it walks every record under a new vault key, one committed step at a time so a power cut resumes it, and it is the one to use when a PIN may have leaked. It is the split LUKS and VeraCrypt make too: the passphrase wraps a volume key, and re-keying the volume is a separate, slower operation you choose.
 
 ## How do you make anti-rollback crash-safe?
 
-Selective rollback is a [replay attack](https://datatracker.ietf.org/doc/html/rfc4949) — the attacker re-presents an authentic-but-stale file — and the standard defense is a *freshness value*: a monotonic counter the verifier expects to only ever increase, so a replayed older record fails the check. But a freshness counter is only as good as its update story. Every mutation — add, edit, **or delete** — bumps the slot's `generation`, and the record is rewritten under the new value. That creates a torn-write hazard: lose power *between* writing the record (under generation N+1) and writing `meta.bin` (which records N+1), and the two disagree. Resolve that wrong and you either brick a valid slot or quietly re-open the rollback you just closed.
+Selective rollback is a [replay attack](https://datatracker.ietf.org/doc/html/rfc4949) — the attacker re-presents an authentic-but-stale file — and the standard defense is a *freshness value*: a monotonic counter the verifier expects to only ever increase, so a replayed older record fails the check. But a freshness counter is only as good as its update story. Every mutation — add, edit, **or delete** — bumps the slot's `generation`, and the record is written again under the new value. That creates a torn-write hazard: lose power *between* writing the record (under generation N+1) and writing `meta.bin` (which records N+1), and the two disagree. Resolve that wrong and you either brick a valid slot or quietly re-open the rollback you just closed.
 
 The fix is to pick one single, indivisible moment that "counts" — like the signature on a contract: before the pen lifts nothing is binding, after it everything is. The firmware makes the **`meta.bin` swap that moment** — written to a temp file, then [atomically renamed](https://pubs.opengroup.org/onlinepubs/9699919799/functions/rename.html) into place, so a reader always sees the old `meta.bin` or the new one, never a torn half-write — and recovers deterministically around it:
 
 <Pipeline
   title="Crash-safe mutation — the meta swap is the commit point"
-  caption="The meta.bin rename is the one linearization point. On reboot, recovery recomputes the staged record's tag at the current generation: it either verifies (finish the promote) or it doesn't (discard the orphan, keep the old value)."
-  ariaLabel="A four-stage crash-safe mutation pipeline. STAGE: write the new record to a staging path under generation N plus 1, with a small marker naming the type and slot. COMMIT: bump the generation in meta.bin and persist it atomically by a temp-file rename — the rename is the commit point. PROMOTE: rename the staged record onto its canonical path. CLEANUP: remove the marker."
+  caption="The meta.bin rename is the one linearization point. An entry appended under a generation meta.bin never reached is garbage the scan skips; an index row written after the commit is a cache the log can rebuild."
+  ariaLabel="A four-stage crash-safe mutation pipeline. APPEND: write the new record as an entry at the end of its record-log segment, under generation N plus 1. PROVE: read the entry back at its offset and verify its tag. COMMIT: bump the generation in meta.bin and persist it atomically by a temp-file rename; the rename is the commit point. INDEX: write the entry's offset into the list-index segment."
   stages={[
-    { name: "STAGE", note: "record → staging, gen N+1" },
+    { name: "APPEND", note: "entry → log segment, gen N+1" },
+    { name: "PROVE", note: "re-read, verify the tag" },
     { name: "COMMIT", note: "meta.bin rename", via: "commit point" },
-    { name: "PROMOTE", note: "staged → canonical", via: "after commit" },
-    { name: "CLEANUP", note: "remove marker" },
+    { name: "INDEX", note: "row offset", via: "after commit" },
   ]}
 />
 
-On the next boot, `recoverPendingMutation` recomputes the staged record's tag at the *current* `meta.gen[type][slot]`. If it verifies, the commit happened (the crash landed after the rename) → finish the promote. If it doesn't, the commit never happened → discard the orphan and keep the canonical record under the old generation. No window bricks a slot or silently re-opens rollback, and each crash window has its own native test. Because a `delete` bumps the generation too, a deleted entry can't be resurrected by replaying its old file.
+An append that closed is on flash, but whether it is *live* is decided by `meta.bin` alone: a slot's live entry is the one whose generation matches the authenticated table. Lose power before the commit and the new entry carries a generation `meta.bin` never reached, so it is garbage and the slot keeps its previous record. Lose power after the commit and before the index write, and the index row is stale; the segment's own tag check catches that and the row is rebuilt from the log. Each time `meta.bin` is authenticated, the store also re-appends the committed entry on top of any orphan, so presence, counts and the compaction agree with what readers trust. Compaction copies one segment's live entries into a `.tmp` twin and renames it over the segment, so a segment is never absent. No window bricks a slot or silently re-opens rollback, and those interruptions have their own native tests. A `delete` appends a tombstone and bumps the generation in the same commit, so a deleted entry can't be resurrected by replaying its old bytes.
 
 ## The honest boundary: open vs `_secure`
 
-Binding `generation` closes *selective* rollback — reverting one record while the rest of the vault moves on. It does **not**, on the open (developer-flashable) builds, close a *full snapshot* rollback: revert the entire vault — `meta.bin` and every record together — to an earlier, internally consistent state, and the counters revert with it, so nothing looks out of place. Catching that needs anti-rollback state living *outside* the rewritable flash, which is exactly what the hardened `_secure` builds add.
+Binding `generation` closes *selective* rollback — reverting one record while the rest of the vault moves on. It does **not** close a *full snapshot* rollback: revert the entire vault (`meta.bin` and every record together) to an earlier, internally consistent state, and the counters revert with it, so nothing looks out of place. On the open (developer-flashable) builds nothing detects it. The hardened `_secure` builds raise the bar without closing it: Flash Encryption and Secure Boot v2 stop an attacker from forging a new, older-looking state, but someone with physical access can still write back an encrypted image they captured from the same device earlier. True monotonic anti-rollback needs a hardware monotonic counter, and the chip's one-time eFuse bits are no place for state that changes this often.
 
 <Table title="Which rollback each build catches">
   <thead>
@@ -526,45 +555,66 @@ Binding `generation` closes *selective* rollback — reverting one record while 
     <tr>
       <td>**Full snapshot** — `meta.bin` + every record reverted together</td>
       <td>**Not** closed — the whole set is self-consistent</td>
-      <td>**Closed** — Secure Boot + Flash Encryption + NVS anti-rollback</td>
+      <td>**Raised, not closed**: forging an older state needs the flash keys, but an image captured from the same device can still be written back</td>
     </tr>
   </tbody>
 </Table>
 
-I'd rather state that boundary plainly than oversell it. The generation counter is **defense-in-depth for the non-secure builds** against the far more practical selective attack; the whole-vault time-warp is a hardware problem, solved in hardware on the builds that opt into burning eFuses.
+I'd rather state that boundary plainly than oversell it. The generation counter is **defense in depth** against the far more practical selective attack; the whole-vault time-warp stays a documented residual risk on every build, bounded on the hardened ones by flash encryption and physical access. The wrapped vault key gave it teeth, too: as [the cost of a PIN change](#what-a-pin-change-costs) shows, writing back nothing but an older `meta.bin` brings back a retired PIN.
 
 ## Does encrypt-then-MAC need separate keys?
 
-Yes. The security argument for encrypt-then-MAC assumes the encryption key and the authentication key are *independent*; reusing one key for both jobs voids the guarantee and invites cross-protocol mischief, so the vault derives one sub-key to encrypt and another to MAC from the same PIN-derived master key, each under its own domain-separation label.
+Yes. The security argument for encrypt-then-MAC assumes the encryption key and the authentication key are *independent*; reusing one key for both jobs voids the guarantee and invites cross-protocol mischief, so the vault derives one sub-key to encrypt and another to MAC from the same vault key, each under its own domain-separation label. The PIN-derived KEK gets the same treatment for its own jobs.
 
 It is the same instinct that says your house key, car key and mailbox key should be three different keys, and it follows the long-standing [key-separation guidance](https://csrc.nist.gov/pubs/sp/800/57/pt1/r5/final) — [NIST SP 800-57 Part 1](https://nvlpubs.nist.gov/nistpubs/SpecialPublications/NIST.SP.800-57pt1r5.pdf) puts it plainly: "a single key should be used for only one purpose":
 
 <Code lang="cpp" title="vault_keys — distinct labels per purpose">
 ```cpp
-// One PBKDF2-derived master key fans out into three single-purpose sub-keys.
-//   encKey      = HMAC(masterKey, "vault-enc")              -> AES-256-CBC key
-//   macKey      = HMAC(masterKey, "vault-mac" || hmacSalt)  -> file HMAC key
-//   pinVerifier = HMAC(masterKey, "vault-pin")              -> unlock check
-VaultCrypto::hmacSha256(masterKey.data(), masterKey.size(),
-                        kEncKeyLabel, kEncLabelLen, out.enc.data());
-deriveMacKey(masterKey, hmacSalt, out.mac);  // label || per-vault hmacSalt
+// The PIN-derived KEK opens the vault; the random vault key (VK) keys the records.
+//   pinVerifier = HMAC(KEK, "kleidos-pin")              -> unlock check
+//   wrapEnc     = HMAC(KEK, "kleidos-wrap-enc")         -> unwraps the VK
+//   wrapMac     = HMAC(KEK, "kleidos-wrap-mac")         -> tags meta.bin's KEK half
+//   encKey      = HMAC(VK,  "kleidos-enc")              -> AES-256-CBC key
+//   macKey      = HMAC(VK,  "kleidos-mac" || hmacSalt)  -> record HMAC key
+//   metaMac     = HMAC(VK,  "kleidos-meta-mac")         -> tags meta.bin's VK half
+bool ok = deriveLabeled(vaultKey, kEncKeyLabel, out.enc.data(), out.enc.size());
+ok = ok && deriveMacKey(vaultKey, hmacSalt, out.mac);  // label || hmacSalt
+ok = ok && deriveLabeled(vaultKey, kMetaMacKeyLabel,
+                         out.metaMac.data(), out.metaMac.size());
 ```
 </Code>
 
 <ForkJoin
-  caption="One master key, three single-purpose sub-keys — each derived with a distinct HMAC label so no key ever does two jobs."
-  ariaLabel="One PBKDF2-derived master key fans out via HMAC into three single-purpose sub-keys: an encryption key from the label vault-enc, a MAC key from the label vault-mac concatenated with a per-vault salt, and a PIN verifier from the label vault-pin."
-  before={[{ name: "masterKey", note: "PBKDF2-derived" }]}
+  caption="The PIN-derived key-encryption key does three jobs, each under its own label: prove the PIN, authenticate the first half of meta.bin, and unwrap the vault key."
+  ariaLabel="The PIN, with the KDF salt and the stored iteration count, goes through PBKDF2-SHA256 into the key-encryption key, KEK. The KEK fans out via HMAC into three single-purpose values: the PIN verifier from the label kleidos-pin, the wrap MAC key from kleidos-wrap-mac, and the wrap encryption key from kleidos-wrap-enc, which unwraps the vault key stored in meta.bin."
+  before={[
+    { name: "PIN", note: "+ kdfSalt, kdfIterations" },
+    { name: "KEK", note: "PBKDF2-SHA256" },
+  ]}
   branches={[
-    { name: "encKey", note: 'HMAC(·, "vault-enc")' },
-    { name: "macKey", note: 'HMAC(·, "vault-mac" ‖ salt)' },
-    { name: "pinVerifier", note: 'HMAC(·, "vault-pin")' },
+    { name: "pinVerifier", note: 'HMAC(·, "kleidos-pin")' },
+    { name: "wrapMac", note: 'HMAC(·, "kleidos-wrap-mac")' },
+    [
+      { name: "wrapEnc", note: 'HMAC(·, "kleidos-wrap-enc")' },
+      { name: "VK", note: "unwrapped from wrapCipher" },
+    ],
+  ]}
+/>
+
+<ForkJoin
+  caption="The vault key fans out into the keys the records actually use, each with a distinct HMAC label so no key ever does two jobs."
+  ariaLabel="The vault key, VK, 32 random bytes, fans out via HMAC into three single-purpose sub-keys: an encryption key from the label kleidos-enc, a record MAC key from the label kleidos-mac concatenated with a per-vault salt, and the meta MAC key from the label kleidos-meta-mac."
+  before={[{ name: "VK", note: "32 random bytes" }]}
+  branches={[
+    { name: "encKey", note: 'HMAC(·, "kleidos-enc")' },
+    { name: "macKey", note: 'HMAC(·, "kleidos-mac" ‖ salt)' },
+    { name: "metaMac", note: 'HMAC(·, "kleidos-meta-mac")' },
   ]}
 />
 
 ### How do you check a PIN without storing it?
 
-The third sub-key, the PIN verifier, is how the device checks the PIN without storing it: unlock derives the master key from the entered PIN, computes the verifier, and compares it — again in constant time — against the stored value. A wrong PIN simply produces a different verifier, with no hint about *how* wrong it was. (The verifier sits in the `meta.bin` header alongside the salts; the PIN itself is never written anywhere.)
+The PIN verifier is how the device checks the PIN without storing it: unlock derives the KEK from the entered PIN, computes the verifier, and compares it, again in constant time, against the stored value, once the wrap tag has already verified. A wrong PIN simply produces a different verifier, with no hint about *how* wrong it was. (The verifier sits in the first half of `meta.bin`, beside the salt; the PIN itself is never written anywhere.)
 
 The point of the split is that each key can do *exactly one thing*. If the same key both encrypted files and authenticated them, a clever attacker could try to make ciphertext and tags interact — and the clean security proof for encrypt-then-MAC, which assumes the two keys are independent, would simply no longer apply. Keeping them separate means a compromise or misuse of one capability can't borrow another:
 
@@ -583,17 +633,17 @@ The point of the split is that each key can do *exactly one thing*. If the same 
   rows={[
     {
       label: "encKey",
-      note: 'HMAC(master, "vault-enc")',
+      note: 'HMAC(VK, "kleidos-enc")',
       cells: ["yes", "no", "no"],
     },
     {
       label: "macKey",
-      note: 'HMAC(master, "vault-mac" ‖ salt)',
+      note: 'HMAC(VK, "kleidos-mac" ‖ salt)',
       cells: ["no", "yes", "no"],
     },
     {
       label: "pinVerifier",
-      note: 'HMAC(master, "vault-pin")',
+      note: 'HMAC(KEK, "kleidos-pin")',
       cells: ["no", "no", "yes"],
     },
   ]}
@@ -601,24 +651,26 @@ The point of the split is that each key can do *exactly one thing*. If the same 
 
 ## Defense in depth: constant-time padding + a fail-closed codec
 
-Because the MAC is verified first, a tampered file never reaches the decryption code, which means the classic padding oracle is *unreachable* by construction. The padding check below is therefore **defense in depth**, not the primary defense — belt and suspenders for the case where authenticated-but-corrupt data still needs to be rejected cleanly. It validates [PKCS#7 padding](https://datatracker.ietf.org/doc/html/rfc5652#section-6.3) in constant time and reports a single unified failure, so it leaks nothing through logs or timing regardless:
+Because the MAC is verified first, a tampered file never reaches the decryption code, which means the classic padding oracle is *unreachable* by construction. The padding check below is therefore **defense in depth**, not the primary defense — belt and suspenders for the case where authenticated-but-corrupt data still needs to be rejected cleanly.
+
+The vault applies and checks [PKCS#7 padding](https://datatracker.ietf.org/doc/html/rfc5652#section-6.3) itself. AES runs through PSA with `PSA_ALG_CBC_NO_PADDING`: the firmware pads the plaintext before encrypting, and after decrypting (so only once the MAC has passed) it validates the padding in constant time and reports a single unified failure, so it leaks nothing through logs or timing regardless. The library's own CBC-PKCS7 mode is never used, which is also why [CVE-2025-59438](https://mbed-tls.readthedocs.io/en/latest/security-advisories/mbedtls-security-advisory-2025-10-invalid-padding-error/), a padding-error timing leak in that mode, does not apply to the vault. (The 32-byte vault key is wrapped with no padding at all: it is exactly two blocks.)
 
 <Code lang="cpp" title="Constant-time PKCS#7 padding check, unified failure">
 ```cpp
 // The last byte claims the pad length; fold every check into one mask.
-uint8_t padByte    = plainOut[cipherLen - 1];
-uint8_t padInvalid = 0;
-padInvalid |= (padByte == 0);                  // pad length 0 is illegal
-padInvalid |= (padByte > kAesBlockSize);       // pad length > block is illegal
+const uint8_t padByte    = plainOut[cipherLen - 1];
+uint8_t       padInvalid = 0;
+padInvalid |= static_cast<uint8_t>(padByte == 0);             // length 0: illegal
+padInvalid |= static_cast<uint8_t>(padByte > kAesBlockSize);  // > a block: illegal
 for (size_t i = 0; i < kAesBlockSize; i++) {
-    uint8_t mask = (i < padByte) ? 0xFF : 0x00;     // examine the whole block
-    padInvalid |= (plainOut[cipherLen - 1 - i] ^ padByte) & mask;
+    const uint8_t mask = (i < padByte) ? 0xFF : 0x00;         // examine the whole block
+    padInvalid |= static_cast<uint8_t>((plainOut[cipherLen - 1 - i] ^ padByte) & mask);
 }
-if (padInvalid != 0) {           // one message for corruption AND bad padding
-    LOG_ERROR(kTag, "Decryption failed");
+if (padInvalid != 0) {   // the caller logs ONE message for corruption AND bad padding
     mbedtls_platform_zeroize(plainOut, cipherLen);
     return false;
 }
+*plainLen = cipherLen - padByte;
 ```
 </Code>
 
@@ -650,7 +702,9 @@ The EtM tag already proves the plaintext is genuine before the codec runs, so th
 
 A fair question. The modern default for authenticated encryption is an [AEAD](https://en.wikipedia.org/wiki/Authenticated_encryption) construction like [AES-GCM](https://csrc.nist.gov/pubs/sp/800/38/d/final), which fuses encryption and authentication into one primitive and is harder to assemble incorrectly. If I were starting a greenfield protocol, GCM (or ChaCha20-Poly1305) would be the obvious pick.
 
-The vault uses encrypt-then-MAC with AES-256-CBC and HMAC-SHA256 for a specific, boring reason: **backend uniformity**. The same code has to produce byte-identical output in two very different environments — a host build (where the unit tests run, against the legacy Mbed TLS API) and the device (where Mbed TLS 4.0's PSA Crypto API is the only public path). CBC, HMAC, and a hand-verified compare are trivially available and deterministic across both; leaning on GCM's nonce-management rules across two backends adds a sharper footgun than the one I'm avoiding. Encrypt-then-MAC is the [generically secure composition](https://eprint.iacr.org/2000/025), so building AEAD out of CBC+HMAC this way is sound — it's how IPsec (in its standard configuration) and KDBX 4 do it too.
+The vault uses encrypt-then-MAC with AES-256-CBC and HMAC-SHA256 for reasons that are about this device, not about the primitives. CBC with HMAC has **no catastrophic failure mode if an IV ever repeats**: a repeated IV leaks that two records share their first blocks, not a key, while a repeated GCM nonce gives away the authentication key. AES and SHA-256 are both **hardware-accelerated** on the ESP32. And the hard part of this format, freshness, is a state problem that associated data would not solve: an AEAD would carry the same `type ‖ slot ‖ generation` in its associated data, with a riskier primitive underneath. Encrypt-then-MAC is the [generically secure composition](https://eprint.iacr.org/2000/025), so building AEAD out of CBC+HMAC this way is sound; it's how IPsec (in its standard configuration) and KDBX 4 do it too.
+
+There used to be a third reason, byte-identical output from a host build whose unit tests ran against the legacy Mbed TLS API and a device where Mbed TLS 4.0's PSA Crypto API is the only public path. That one is gone: the host tests now link the same Mbed TLS 4 and TF-PSA-Crypto as the firmware (ESP-IDF 6.0.3 ships Mbed TLS 4.1.1 with TF-PSA-Crypto 1.1.0), so there is a single PSA backend and nothing left to keep in step.
 
 <BeforeAfter beforeLabel="AES-GCM (AEAD)" afterLabel="AES-CBC + HMAC (EtM)">
 <div slot="before">
@@ -662,7 +716,7 @@ The vault uses encrypt-then-MAC with AES-256-CBC and HMAC-SHA256 for a specific,
   items={[
     { kind: "pro", text: "Modern default; misuse-resistant if nonces are unique" },
     { kind: "warn", text: "Nonce reuse is catastrophic (key recovery)" },
-    { kind: "warn", text: "Backend and nonce rules must match exactly across host and device" },
+    { kind: "warn", text: "Nonce uniqueness has to survive every write, reset and restore" },
   ]}
 />
 
@@ -674,7 +728,8 @@ The vault uses encrypt-then-MAC with AES-256-CBC and HMAC-SHA256 for a specific,
 <IconList
   ariaLabel="AES-CBC plus HMAC trade-offs"
   items={[
-    { kind: "pro", text: "Byte-identical on legacy Mbed TLS (host) and PSA (device)" },
+    { kind: "pro", text: "A repeated IV leaks equality, not a key" },
+    { kind: "pro", text: "AES and SHA-256 both hardware-accelerated on the ESP32" },
     { kind: "pro", text: "EtM is provably the safe composition" },
     { kind: "pro", text: "A fresh random IV per write, authenticated by the tag" },
   ]}
@@ -683,16 +738,16 @@ The vault uses encrypt-then-MAC with AES-256-CBC and HMAC-SHA256 for a specific,
 </div>
 </BeforeAfter>
 
-One honest footnote on the implementation: PSA's transition guide suggests `psa_mac_verify` over "compute a tag, then `mbedtls_ct_memcmp`." The vault deliberately keeps the compute-and-compare form because it runs identically on both backends — and the comparison is still constant-time. It's a trade of one PSA convenience for backend uniformity, made with eyes open.
+One footnote on the implementation: PSA's transition guide suggests `psa_mac_verify` over "compute a tag, then `mbedtls_ct_memcmp`." The record path still computes and compares, with one tag function shared by the write and the read; the encrypted export streams its chunks through `psa_mac_verify`. Both comparisons are constant-time.
 
 ## How does the vault list credentials without decrypting them all?
 
-A single encrypted `index.bin`, in the exact same `[ver][iv][hmacTag][cipher]` envelope, caches only the *non-secret* metadata a list view needs: id, name, username, brand, and a couple of flags — never the password, URL, notes, or TOTP secret. Listing therefore costs one read and one decrypt, flat, however many credentials the vault holds.
+The list index is a set of encrypted segments, `idx_NN.bin`, one per 32 credential slots, each in the exact same `[ver][iv][hmacTag][cipher]` envelope. They cache only the *non-secret* metadata a list view needs: id, name, username, brand, the domain taken from the URL, group, order, modification time and two flags (favorite, has 2FA). Never the password, the full URL, notes, or TOTP secret. Listing therefore costs one read and one decrypt per 32 slots, not one per credential.
 
-That falls out of treating every file as an independent envelope. Decrypting every credential just to draw a list would be slow and would needlessly expose every secret in RAM; the index sidesteps both.
+That falls out of treating every artifact as an independent envelope. Decrypting every credential just to draw a list would be slow and would needlessly expose every secret in RAM; the index sidesteps both. Each segment binds its own number as `slotId` and, as `generation`, the sum of the credential counters of the slots it caches, so an older copy of a segment fails its tag like any rolled-back record. Splitting it also keeps the working set fixed: a single index file needed RAM in proportion to the credential count, which a board without PSRAM ran out of long before its nominal capacity.
 
-<Callout type="info" title="One read, one decrypt">
-Showing the credential list is **one file read plus one decrypt**, regardless of how many credentials exist. The heavy per-credential decrypt happens only when you actually open one. The index is just a cache: if it's missing or its MAC doesn't verify, it's rebuilt from the authenticated per-credential files, which are always the source of truth.
+<Callout type="info" title="One decrypt per segment">
+Showing the credential list costs **one read plus one decrypt per 32 slots**, instead of one per credential. The heavy per-credential decrypt happens only when you actually open one. The index is just a cache: if a segment is missing or its MAC doesn't verify, it's rebuilt from the authenticated credential records in its slot range, which are always the source of truth.
 </Callout>
 
 ## Fail closed, by construction
@@ -702,7 +757,7 @@ The cipher isn't what makes this vault trustworthy at rest — the *order of ope
 <SecurityRating
   rating="A"
   title="Encrypt-then-MAC, context-bound, verify-before-decrypt, fail-closed"
-  description="Binding slot, type, and a freshness counter into the tag — and authenticating the metadata that holds those counters — removes the padding-oracle class and defeats relocation, type-confusion, and selective rollback before any decryption. The residual gaps are by design: full-snapshot rollback (closed only on _secure builds) and the low entropy of a short PIN (the next post)."
+  description="Binding slot, type, and a freshness counter into the tag — and authenticating the metadata that holds those counters — removes the padding-oracle class and defeats relocation, type-confusion, and selective rollback before any decryption. The residual gaps are documented: full-snapshot rollback (raised but not closed on _secure builds), a PIN change that rewraps the vault key instead of revoking it, and the low entropy of a short PIN (the next post)."
 />
 
-There's one thing this format doesn't solve, though. All of it protects the *file* — but the encryption key still ultimately comes from a short PIN, and a short PIN has very little entropy. *On* the device that's fine: a brute-force guard locks out and eventually wipes the vault after a handful of wrong PINs, so online guessing dies quickly. The problem is *offline*. If someone desolders the flash and copies the ciphertext, the lockout never runs — they can derive keys from PIN guesses on a GPU, with no device in the loop to stop them — and a 4-digit keyspace falls in a fraction of a second. (Production flash encryption raises that bar, but the file format shouldn't have to depend on it.) Closing that gap needs a different trick: one that mixes a secret only the original chip can produce into the key, so the exfiltrated ciphertext is useless on any other hardware. That's the [next post](/blog/012-device-bound-key-derivation/).
+There's one thing this format doesn't solve, though. All of it protects the *file* — but the key that unlocks the vault still ultimately comes from a short PIN, and a short PIN has very little entropy. *On* the device that's fine: a brute-force guard locks out and eventually wipes the vault after a handful of wrong PINs, so online guessing dies quickly. The problem is *offline*. If someone desolders the flash and copies the ciphertext, the lockout never runs — they can derive keys from PIN guesses on a GPU, with no device in the loop to stop them — and a 4-digit keyspace falls in a fraction of a second. (Production flash encryption raises that bar, but the file format shouldn't have to depend on it.) Closing that gap needs a different trick: one that mixes a secret only the original chip can produce into the key, so the exfiltrated ciphertext is useless on any other hardware. That's the [next post](/blog/012-device-bound-key-derivation/).

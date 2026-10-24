@@ -23,11 +23,11 @@ faq:
   - question: "¿Cómo impide el formato un fichero de bóveda revertido o reubicado?"
     answer: "El HMAC autentica un prefijo de contexto — ver ‖ recordType ‖ slotId ‖ generation — así que un fichero movido a otro slot, retipado o sustituido por una revisión más antigua falla el tag, incluso frente a un atacante con acceso en bruto a la flash y sin PIN."
   - question: "¿Necesita encrypt-then-MAC claves separadas?"
-    answer: "Sí. El cifrado y la autenticación usan claves independientes derivadas del PIN. Reutilizar una sola clave para el cifrador y para el MAC debilita la construcción y debe evitarse."
+    answer: "Sí. El cifrado y la autenticación usan claves independientes, cada una derivada de la clave de bóveda con su propia etiqueta; el PIN desbloquea esa clave de bóveda en vez de producir directamente las claves de los registros. Reutilizar una sola clave para el cifrador y para el MAC debilita la construcción y debe evitarse."
   - question: "¿Por qué AES-256-CBC más HMAC en lugar de AES-GCM?"
-    answer: "Por uniformidad de backend, no por preferencia criptográfica: en un protocolo nuevo GCM o ChaCha20-Poly1305 serían la elección obvia. Con la misma clave, IV y texto plano — como en los vectores de prueba fijos — el mismo código debe producir una salida byte a byte idéntica en la compilación de host contra la API antigua de Mbed TLS y en el dispositivo contra la API PSA Crypto de Mbed TLS 4.0. (Las escrituras reales usan un IV aleatorio nuevo, así que sus textos cifrados difieren por diseño.) CBC, HMAC y una comparación en tiempo constante son deterministas en ambos; las reglas de gestión de nonces de GCM entre dos backends son un riesgo mayor. Encrypt-then-MAC es la composición genéricamente segura, y es lo que usan también IPsec en su configuración estándar y KDBX 4."
+    answer: "No por preferencia criptográfica: en un protocolo nuevo GCM o ChaCha20-Poly1305 serían la elección obvia. CBC con HMAC no tiene un modo de fallo catastrófico si un IV llega a repetirse (un IV repetido revela que dos registros comparten sus primeros bloques, no una clave), AES y SHA-256 tienen aceleración hardware en el ESP32, y lo difícil del formato, la frescura, es un problema de estado que los datos asociados no resolverían. Un motivo anterior, una salida byte a byte idéntica desde dos backends de Mbed TLS en host y dispositivo, ya no aplica: los tests de host enlazan ahora el mismo Mbed TLS 4 y TF-PSA-Crypto que el firmware. Encrypt-then-MAC es la composición genéricamente segura, y es lo que usan también IPsec en su configuración estándar y KDBX 4."
   - question: "¿Cómo lista la bóveda las credenciales sin descifrarlas todas?"
-    answer: "Un único index.bin cifrado, en el mismo sobre [ver][iv][hmacTag][cipher], guarda solo los metadatos no secretos que necesita una vista de lista: id, nombre, usuario, marca y un par de flags. Nunca contiene contraseñas, URLs, notas ni secretos TOTP, así que listar la bóveda cuesta un solo descifrado con independencia de cuántas credenciales haya, y no expone ningún secreto en RAM solo para pintar una lista."
+    answer: "El índice de la lista es un conjunto de segmentos cifrados, uno por cada 32 slots de credencial, en el mismo sobre [ver][iv][hmacTag][cipher]. Guardan solo los metadatos no secretos que necesita una vista de lista: id, nombre, usuario, marca, el dominio sacado de la URL, grupo, orden, fecha de modificación y dos flags. Nunca contienen contraseñas, URLs completas, notas ni secretos TOTP, así que listar la bóveda cuesta un descifrado por cada 32 slots en lugar de uno por credencial, y no expone ningún secreto en RAM solo para pintar una lista."
 topics:
   - name: "Authenticated encryption"
     wikidata: "Q15263584"
@@ -69,13 +69,14 @@ Este artículo trata del formato de fichero que uso en **un gestor de contraseñ
 - Cada fichero de la bóveda es un sobre **encrypt-then-MAC**: `[ver][iv][hmacTag][cipher]`. El tag autentica un **prefijo de contexto** — `ver ‖ recordType ‖ slotId ‖ generation` — por delante del IV y del texto cifrado.
 - Al leer, el tag se recalcula y compara **en tiempo constante _antes_ de cualquier descifrado** — verificar antes de descifrar.
 - Vincular slot, tipo y un contador de frescura hace que un fichero **reubicado, retipado o revertido (rollback)** falle el MAC — incluso frente a un atacante con acceso en bruto a la flash pero sin PIN.
-- Los contadores de frescura viven en `meta.bin`, que está **autenticado a su vez**; las mutaciones son resistentes a cortes de corriente (stage → commit → promote).
+- Los contadores de frescura viven en `meta.bin`, que está **autenticado a su vez**; las mutaciones son resistentes a cortes de corriente (append → prove → commit → index), con el renombrado de `meta.bin` como único punto de commit.
+- El PIN desbloquea una **clave de bóveda aleatoria** envuelta dentro de `meta.bin`, así que cambiar el PIN reenvuelve un solo valor en vez de recifrar todos los registros. El precio: cambiar el PIN ya no revoca una clave que alguien haya capturado.
 - El cifrado y la autenticación usan **claves separadas**; cada camino de rechazo no produce **ningún texto plano** y borra su scratch.
 </TLDRSummary>
 
 <Collapsible title="Glosario rápido (si no vienes de cripto)">
 - **Texto plano · texto cifrado**: el dato legible (tu contraseña) y su versión revuelta e ilegible una vez cifrada.
-- **Cifrar · clave**: revolver un dato con una _clave_ (un secreto), de forma que solo quien tenga la clave pueda recuperar el original. Aquí la clave nace de tu PIN.
+- **Cifrar · clave**: revolver un dato con una _clave_ (un secreto), de forma que solo quien tenga la clave pueda recuperar el original. Aquí es tu PIN el que desbloquea la clave.
 - **Cifrador de bloque (AES) · padding**: AES cifra en trozos fijos de 16 bytes; el _padding_ son los bytes de relleno que completan el último trozo.
 - **MAC · HMAC · tag**: un sello a prueba de manipulación. El HMAC calcula, con una clave, un _tag_ (una huella corta); si alguien cambia un solo byte, el tag deja de cuadrar.
 - **IV** (vector de inicialización): bytes aleatorios, uno nuevo por escritura, que hacen que cifrar dos veces el mismo dato dé resultados distintos.
@@ -225,7 +226,7 @@ Pon los dos órdenes uno al lado del otro y la perdición es evidente. La compos
 
 ## El sobre: 49 bytes de cabecera antes del texto cifrado AES-256-CBC
 
-Cada fichero cifrado de la bóveda —cada credencial, cada secreto TOTP, el índice de listado— es un **sobre** autocontenido. La imagen es la de un sobre de correo: por fuera lleva en claro solo lo justo para manejarlo y verificarlo (la versión, el IV y el tag que hace de sello), y dentro viaja la carta cifrada. Todos siguen el mismo prefijo fijo:
+Cada registro cifrado de la bóveda (cada credencial, cada secreto TOTP, cada segmento del índice de listado) es un **sobre** autocontenido. La imagen es la de un sobre de correo: por fuera lleva en claro solo lo justo para manejarlo y verificarlo (la versión, el IV y el tag que hace de sello), y dentro viaja la carta cifrada. Todos siguen el mismo prefijo fijo:
 
 <ByteFrame
   title="El sobre del fichero de bóveda"
@@ -239,48 +240,44 @@ Cada fichero cifrado de la bóveda —cada credencial, cada secreto TOTP, el ín
   ]}
 />
 
-La disposición en disco de arriba es el fichero entero — pero el tag autentica un poco _más_ de lo que el fichero contiene. Por delante del IV y del texto cifrado, el firmware antepone un **prefijo de contexto autenticado** de 7 bytes y aplica [HMAC](https://datatracker.ietf.org/doc/html/rfc2104) al conjunto (sobre [SHA-256](https://csrc.nist.gov/pubs/fips/180-4/upd1/final)) con la sub-clave de MAC del fichero:
+La disposición de arriba es el sobre entero, pero el tag autentica un poco _más_ de lo que el sobre contiene. Por delante del IV y del texto cifrado, el firmware antepone un **prefijo de contexto autenticado** de 8 bytes y aplica [HMAC](https://datatracker.ietf.org/doc/html/rfc2104) al conjunto (sobre [SHA-256](https://csrc.nist.gov/pubs/fips/180-4/upd1/final)) con la sub-clave de MAC de los registros:
 
 <Code lang="cpp" title="vault_envelope.h — el mensaje autenticado">
 ```cpp
-// authPrefix = ver(1) ‖ recordType(1) ‖ slotId(1) ‖ generation(4, LE)
+// authPrefix = ver(1) ‖ recordType(1) ‖ slotId(2, LE) ‖ generation(4, LE)
 // authMsg    = authPrefix ‖ iv ‖ cipher
-std::array<uint8_t, kEnvelopeContextSize + kIvSize + MaxCipher> message{};
-size_t n = writeEnvelopeContext(message.data(), type, slot, generation); // 7 B
-std::memcpy(message.data() + n, iv, kIvSize);        n += kIvSize;
-std::memcpy(message.data() + n, cipher, cipherLen);  n += cipherLen;
+std::array<uint8_t, kEnvelopeContextSize> ctxBuf{};
+writeEnvelopeContext(ctxBuf.data(), context);                // 8 B
 
-VaultCrypto::hmacSha256(macKey, macKeyLen, message.data(), n, tagOut.data());
-VaultCrypto::secureWipe(message.data(), message.size());
+// The three parts feed one multipart HMAC: no concatenation buffer exists.
+VaultCrypto::hmacSha256Parts(macKey, macKeyLen, ctxBuf.data(), ctxBuf.size(),
+                             iv, kIvSize, cipher, cipherLen, tagOut.data());
 ```
 </Code>
 
-Ese prefijo de contexto **nunca se escribe en el fichero** — el byte de versión en disco se queda en `0x01` y la disposición no cambia ni un solo byte. `recordType` y `slotId` vienen de _dónde vive el fichero_ (qué ruta, qué slot); `generation` viene del `meta.bin` autenticado. Así que el tag demuestra que _este texto cifrado exacto, en este slot exacto, de este tipo exacto, en esta revisión exacta_ pertenece aquí, intacto — no solo que alguien que conocía la clave produjo algún texto cifrado. Por qué esos tres campos extra se ganan su sitio tiene [su propia sección](#qué-vincula-realmente-el-tag-slot-tipo-y-frescura); primero, lo básico de escribir y leer uno.
+Ese prefijo de contexto **no forma parte del sobre**: el byte de versión se queda en `0x01` y la disposición del sobre no cambia ni un solo byte. `recordType` y `slotId` vienen de _dónde vive el registro_; `generation` viene del `meta.bin` autenticado. Las credenciales y las entradas TOTP se guardan como entradas de un registro de solo-añadir (un _record log_ repartido en unos pocos ficheros de segmento de 32 slots cada uno), y la cabecera de cada entrada repite en claro su tipo, su slot y su generación para que un recorrido pueda encontrar entradas sin clave. Nadie se cree esas copias en claro: decide el tag, recalculado con la generación que guarda `meta.bin`. Así que el tag demuestra que _este texto cifrado exacto, en este slot exacto, de este tipo exacto, en esta revisión exacta_ pertenece aquí, intacto — no solo que alguien que conocía la clave produjo algún texto cifrado. Por qué esos tres campos extra se ganan su sitio tiene [su propia sección](#qué-vincula-realmente-el-tag-slot-tipo-y-frescura); primero, lo básico de escribir y leer uno.
 
 El **IV** (vector de inicialización) son los 16 bytes aleatorios que siembran el encadenamiento de CBC para el primer bloque; sin él, dos registros con el mismo primer bloque descifrarían al mismo texto plano, filtrando su igualdad. La bóveda saca un IV nuevo del RNG hardware del ESP32 en _cada_ escritura, así que guardar la misma contraseña dos veces produce dos textos cifrados completamente distintos — un atacante que lea la flash no puede ni siquiera saber que dos slots contienen el mismo valor. El IV no es secreto (se almacena en claro, ahí mismo en el sobre), pero debe ser impredecible y único por escritura, y autenticarlo bajo el tag impide que nadie lo sustituya sigilosamente.
 
 ## Escribir un registro: cifrar, luego MAC
 
-El camino de escritura es encrypt-then-MAC en el orden literal de su nombre. El texto plano se serializa primero a un registro binario empaquetado (más sobre esto [más adelante](#defensa-en-profundidad-padding-en-tiempo-constante--un-códec-con-bloqueo-ante-fallos)), luego se cifra con AES-256-CBC bajo la sub-clave de _cifrado_, luego se calcula el tag sobre el texto cifrado bajo la sub-clave de _MAC_, y finalmente se escriben las cuatro partes:
+El camino de escritura es encrypt-then-MAC en el orden literal de su nombre. El texto plano se serializa primero a un registro binario empaquetado, siempre de 4.096 bytes exactos (más sobre esto [más adelante](#defensa-en-profundidad-padding-en-tiempo-constante--un-códec-con-bloqueo-ante-fallos)), luego se cifra con AES-256-CBC bajo la sub-clave de _cifrado_, luego se calcula el tag sobre el texto cifrado bajo la sub-clave de _MAC_, y finalmente el sobre terminado se añade al record log:
 
 <Code lang="cpp" title="save() — el camino de escritura encrypt-then-MAC (recortado)">
 ```cpp
-// Encrypt-then-MAC: encrypt the record, then authenticate the ciphertext.
-VaultCrypto::encrypt(keys.enc.data(), plainBuf.data(), plainLen,
-                     iv.data(), cipherBuf.data(), &cipherLen);
-computeTag(keys, id, generation, iv.data(), cipherBuf.data(), cipherLen, tag);
+// Encrypt-then-MAC, assembled in place as [ver][iv][hmacTag][cipher].
+env[kCredVerOffset] = kCredFormatVersion;
+bool ok = VaultCrypto::encrypt(keys.enc.data(), plainBuf, plainLen,
+                               iv, cipher, &cipherLen);
+VaultCrypto::secureWipe(plainBuf, plainLen);
+if (ok) ok = computeTag(keys, id, generation, iv, cipher, cipherLen, tagBuf);
+std::memcpy(tag, tagBuf.data(), kCredHmacTagSize);
+VaultCrypto::secureWipe(tagBuf.data(), tagBuf.size());
 
-// Persist [ver][iv][hmacTag][cipher].
-const uint8_t ver = kCredFormatVersion;
-f.write(&ver, kCredVerSize);
-f.write(iv.data(), kIvSize);
-f.write(tag.data(), kCredHmacTagSize);
-f.write(cipherBuf.data(), cipherLen);
-
-// Every transient buffer is wiped before this function returns.
-VaultCrypto::secureWipe(cipherBuf.data(), cipherBuf.size());
-VaultCrypto::secureWipe(iv.data(), iv.size());
-VaultCrypto::secureWipe(tag.data(), tag.size());
+// Persist: append the envelope as one record-log entry under its generation.
+RecordStore::writeEnvelope(LogEntryType::Credential, id, generation,
+                           env, len, offset);
+VaultCrypto::secureWipe(env, kCredMaxFileSize);   // the envelope buffer too
 ```
 </Code>
 
@@ -298,35 +295,35 @@ Esta es la sección por la que existe todo el formato. Cuando la bóveda carga u
 Comprobar el sello antes de abrir el sobre. Si el tag no cuadra, el fichero se rechaza **sin descifrar ni un solo byte** — así el atacante nunca consigue que el dispositivo "reaccione" a sus bytes manipulados, que era justo lo que alimentaba el oráculo de padding.
 </Callout>
 
-<Code lang="cpp" title="load() — verificar-antes-de-descifrar, con bloqueo ante fallos (recortado)">
+<Code lang="cpp" title="decodeEnvelopeStatus(): verificar-antes-de-descifrar, con bloqueo ante fallos (recortado)">
 ```cpp
 // Fail-closed: wipe the caller's record up front, so EVERY reject path
 // (bad size, version, MAC, decrypt, or decode) leaves no residue behind.
 out.wipe();
 
 // 1. Structural checks: plausible size, ciphertext is a whole number of blocks.
-if (fileSize < kCredMinFileSize || fileSize > kCredMaxFileSize) return false;
-const size_t cipherLen = fileSize - kCredHeaderSize;
-if ((cipherLen % kAesBlockSize) != 0)                           return false;
+if (len < kCredMinFileSize || len > kCredMaxFileSize) return RecordLoad::Rejected;
+const size_t cipherLen = len - kCredHeaderSize;
+if ((cipherLen % kAesBlockSize) != 0)                 return RecordLoad::Rejected;
 
-// 2. Read [ver][iv][storedTag][cipher]; reject an unknown format version.
-//    ... (reads omitted) ...
-if (ver != kCredFormatVersion)                                  return false;
+// 2. The envelope is [ver][iv][storedTag][cipher]; reject an unknown version.
+if (env[kCredVerOffset] != kCredFormatVersion)        return RecordLoad::Rejected;
 
 // 3. Verify-before-decrypt: recompute the tag and compare in CONSTANT TIME.
-computeTag(keys, id, generation, iv.data(), cipherBuf.data(), cipherLen, expectedTag);
-if (!VaultCrypto::constantTimeEqual(expectedTag.data(), storedTag.data(),
+if (!computeTag(keys, id, generation, iv, cipher, cipherLen, expectedTag))
+    return RecordLoad::Unreadable;  // could not compute: says nothing about flash
+if (!VaultCrypto::constantTimeEqual(expectedTag.data(), storedTag,
                                     kCredHmacTagSize)) {
     // MAC mismatch → tampered or corrupt. Wipe scratch, produce no plaintext.
-    return false;
+    return RecordLoad::Rejected;
 }
 
-// 4. Tag verified — only now is it safe to decrypt.
-VaultCrypto::decrypt(keys.enc.data(), iv.data(), cipherBuf.data(),
-                     cipherLen, plainBuf.data(), &plainLen);
+// 4. Tag verified: only now is it safe to decrypt.
+VaultCrypto::decrypt(keys.enc.data(), iv, cipher, cipherLen, plainBuf, &plainLen);
 
 // 5. Decode the packed plaintext with a strict, fail-closed codec.
-return decodeCredential(plainBuf.data(), plainLen, out);
+return decodeCredential(plainBuf, plainLen, out) ? RecordLoad::Ok
+                                                 : RecordLoad::Rejected;
 ```
 </Code>
 
@@ -352,7 +349,7 @@ La bóveda no escribe ese bucle a mano: llama a [`mbedtls_ct_memcmp`](https://mb
 
 ### Segundo: bloqueo ante fallos por diseño
 
-Segundo, **bloqueo ante fallos** (_fail-closed_). El registro se borra _antes_ de leer nada, así que no hay ningún camino de código — ni un tamaño incorrecto, ni una versión incorrecta, ni un MAC que no coincide, ni un fallo de descifrado, ni un registro malformado — que pueda dejar una credencial parcialmente poblada en el buffer del llamante. La función o bien retorna `true` con un registro completo, o `false` sin nada.
+Segundo, **bloqueo ante fallos** (_fail-closed_). El registro se borra _antes_ de leer nada, así que no hay ningún camino de código — ni un tamaño incorrecto, ni una versión incorrecta, ni un MAC que no coincide, ni un fallo de descifrado, ni un registro malformado — que pueda dejar una credencial parcialmente poblada en el buffer del llamante. La función o bien retorna `Ok` con un registro completo, o una negativa sin nada. Incluso distingue dos negativas: `Rejected` significa que los bytes guardados se leyeron y se rechazaron, `Unreadable` que la comprobación ni siquiera pudo ejecutarse (un buffer ocupado, un fallo de recursos criptográficos), lo que no dice nada de lo que hay en la flash.
 
 <Gauntlet
   caption="Cada camino de rechazo no produce texto plano — la lectura devuelve una credencial completa o nada en absoluto."
@@ -383,7 +380,7 @@ Un tag sobre `ver ‖ iv ‖ cipher` demuestra que el texto cifrado es genuino �
   </thead>
   <tbody>
     <tr>
-      <td>**Sustitución entre slots** — copiar `cred_05.bin` sobre `cred_03.bin`</td>
+      <td>**Sustitución entre slots** — copiar `cred_05.bin` sobre `cred_03.bin` (entonces cada registro era un fichero)</td>
       <td>Ambos sellados con la misma clave, así que el fichero reubicado verificaba y servía el secreto del slot 5 como si fuera el slot 3 — la contraseña de un sitio tecleada en el formulario de otro</td>
     </tr>
     <tr>
@@ -399,21 +396,22 @@ Un tag sobre `ver ‖ iv ‖ cipher` demuestra que el texto cifrado es genuino �
 
 ### Vincular el contexto que falta al propio tag
 
-El arreglo vincula el contexto que falta _al propio tag_. Este es exactamente el papel de los [datos asociados](https://datatracker.ietf.org/doc/html/rfc5116#section-2.1) en un esquema AEAD — contexto que debe estar **autenticado pero no cifrado** — salvo que aquí se pliega directamente en el tag de encrypt-then-MAC en lugar de pasarse a un cifrador de una sola pasada. El prefijo de 7 bytes está centralizado en un único sitio, así que cada módulo de registro — y el camino de re-cifrado de claves — lo calcula bit a bit idéntico:
+El arreglo vincula el contexto que falta _al propio tag_. Este es exactamente el papel de los [datos asociados](https://datatracker.ietf.org/doc/html/rfc5116#section-2.1) en un esquema AEAD — contexto que debe estar **autenticado pero no cifrado** — salvo que aquí se pliega directamente en el tag de encrypt-then-MAC en lugar de pasarse a un cifrador de una sola pasada. El prefijo de 8 bytes está centralizado en un único sitio, así que cada módulo de registro (y el camino de rotación de claves) lo calcula bit a bit idéntico. `slotId` es un `uint16` little-endian, así que cada slot de la placa de mayor capacidad tiene su propio valor autenticado:
 
 <Code lang="cpp" title="vault_envelope.h — writeEnvelopeContext (un prefijo centralizado)">
 ```cpp
-// ver(1) ‖ recordType(1) ‖ slotId(1) ‖ generation(4, little-endian)
-inline size_t writeEnvelopeContext(uint8_t* out, EnvelopeRecordType type,
-                                   uint8_t slot, uint32_t generation) {
-    out[0] = kEnvelopeVersion;            // 0x01 — unchanged on disk
-    out[1] = static_cast<uint8_t>(type);  // Credential / Totp / Index
-    out[2] = slot;                        // the slot this file belongs to
-    out[3] =  generation        & 0xFF;   // per-slot freshness counter,
-    out[4] = (generation >> 8)  & 0xFF;   //   little-endian
-    out[5] = (generation >> 16) & 0xFF;
-    out[6] = (generation >> 24) & 0xFF;
-    return kEnvelopeContextSize;          // 7
+// ver(1) ‖ recordType(1) ‖ slotId(2, LE) ‖ generation(4, LE)
+inline size_t writeEnvelopeContext(uint8_t* out,
+                                   const EnvelopeContext& context) noexcept {
+    out[0] = kEnvelopeVersion;                   // 0x01, unchanged on disk
+    out[1] = std::to_underlying(context.type);   // Credential / Totp / ...
+    out[2] =  context.slot       & 0xFF;         // the slot this record is,
+    out[3] = (context.slot >> 8) & 0xFF;         //   little-endian u16
+    out[4] =  context.generation        & 0xFF;  // per-slot freshness counter,
+    out[5] = (context.generation >> 8)  & 0xFF;  //   little-endian u32
+    out[6] = (context.generation >> 16) & 0xFF;
+    out[7] = (context.generation >> 24) & 0xFF;
+    return kEnvelopeContextSize;                 // 8
 }
 ```
 </Code>
@@ -431,7 +429,7 @@ Así, un fichero reubicado lleva el `slotId` equivocado, un fichero retipado el 
   rows={[
     {
       label: "recordType",
-      note: "Credential / Totp / Index",
+      note: "Credential / Totp / segmento de índice",
       cells: ["no", "yes", "no"],
     },
     {
@@ -451,64 +449,95 @@ Así, un fichero reubicado lleva el `slotId` equivocado, un fichero retipado el 
 
 Cada comprobación hasta aquí se ha apoyado en que algo ya era de fiar: las claves, los contadores de frescura. Esa confianza tiene que tocar fondo en algún sitio: en una **raíz de confianza**, la única pieza que no te toca cuestionar, porque si estuviera falseada todo lo construido encima heredaría la mentira. Aquí esa pieza es `meta.bin`.
 
-Los contadores de `generation` tienen que vivir en algún sitio, y ese sitio tiene que ser a prueba de manipulación — de lo contrario un atacante simplemente bajaría un contador para hacer que un fichero obsoleto pareciera actual. Viven en `meta.bin`: la pequeña cabecera que el dispositivo lee primero, que contiene los salts, el verificador de PIN y una **tabla de generation por slot** — todo sellado bajo su propio tag HMAC.
+Los contadores de `generation` tienen que vivir en algún sitio, y ese sitio tiene que ser a prueba de manipulación: de lo contrario un atacante simplemente bajaría un contador para hacer que un fichero obsoleto pareciera actual. Viven en `meta.bin`, el pequeño registro que el dispositivo lee primero, y son **dos mitades autenticadas, cada una con su tag**.
+
+Hay dos mitades porque el PIN no produce directamente las claves de los registros. PBKDF2 lo convierte en una **clave de cifrado de clave** (KEK, _key-encryption key_), y la KEK desenvuelve una **clave de bóveda** aleatoria de 32 bytes, que es a la que están ligados todos los registros. La primera mitad guarda lo que tiene que abrir el secreto por sí solo: el salt y el factor de trabajo de la KDF, el verificador de PIN, la clave de bóveda envuelta y un tag bajo una clave derivada de la KEK. Solo una operación que tenga el secreto puede reemplazarla.
 
 <ByteFrame
-  title="meta.bin — metadatos autenticados (formatVer 0x02)"
-  ariaLabel="Una disposición de bytes de meta.bin: un magic de 2 bytes 'KV', una versión de formato de 1 byte 0x02, un salt de KDF de 16 bytes, un verificador de PIN de 32 bytes, un salt de HMAC de 16 bytes, una tabla de generation por slot de longitud variable de un uint32 por slot, y un tag HMAC final de 32 bytes calculado sobre todos los bytes anteriores."
-  caption="A diferencia de index.bin, meta.bin nunca se reconstruye a partir de los ficheros de registro — es la raíz de confianza. El tag final autentica cada byte que lo precede, incluida la tabla de generation."
+  title="meta.bin, mitad KEK: 154 bytes fijos (formatVer 0x01)"
+  ariaLabel="Una disposición de bytes de la primera mitad de meta.bin, 154 bytes: un magic de 2 bytes 'KV', una versión de formato de 1 byte 0x01, un salt de KDF de 16 bytes, un recuento de iteraciones de PBKDF2 de 4 bytes, 3 bytes de parámetros de desbloqueo (longitud del PIN, tipo de secreto y factor de fichero de clave), un verificador de PIN de 32 bytes, una comprobación de la clave de bóveda de 16 bytes, un IV de envoltorio de 16 bytes, la clave de bóveda envuelta de 32 bytes y un tag de envoltorio de 32 bytes calculado sobre los 122 bytes anteriores."
+  caption="La clave de bóveda son dos bloques AES, así que se envuelve sin ningún relleno. vkCheck es un HMAC de 16 bytes que da nombre a la clave de bóveda: un desenvuelto sin relleno siempre produce 32 bytes plausibles, y este tag dice que son los correctos."
   fields={[
-    { label: "magic", bytes: 2, note: '"KV"' },
-    { label: "ver", bytes: 1, note: "0x02" },
-    { label: "kdfSalt", bytes: 16 },
-    { label: "pinVerifier", bytes: 32, note: "HMAC" },
+    { label: "hdr", bytes: 3, note: 'magic "KV" · formatVer 0x01' },
+    { label: "kdf", bytes: 20, note: "kdfSalt 16 B · kdfIterations u32 LE" },
+    { label: "params", bytes: 3, note: "pinLength · secretKind · keyfileFactor" },
+    { label: "pinVerifier", bytes: 32, note: "HMAC(KEK)" },
+    { label: "vkCheck", bytes: 16, note: "HMAC(VK), truncado" },
+    { label: "wrapIv", bytes: 16 },
+    { label: "wrapCipher", bytes: 32, note: "la clave de bóveda, AES-256-CBC" },
+    { label: "wrapTag", bytes: 32, note: "HMAC de los bytes 0-121" },
+  ]}
+/>
+
+La segunda mitad es la que puede reescribir cualquier sesión desbloqueada, y eso es lo que permite que un guardado normal incremente un contador de generation sin volver a pedir el PIN: el salt de HMAC, el estado de una rotación de claves y una **tabla de generation por slot** para credenciales y para entradas TOTP, sellado por un tag bajo una clave derivada de la clave de bóveda.
+
+<ByteFrame
+  title="meta.bin, mitad VK: desde el byte 154, crece con la capacidad"
+  ariaLabel="Una disposición de bytes de la segunda mitad de meta.bin, con desplazamientos contados desde el byte 154 del fichero: un salt de HMAC de 16 bytes, un estado de rotación de 67 bytes, un mapa de bits variable con un bit por paso de rotación, una tabla variable de un uint32 de generation por slot de credencial, una tabla variable de un uint32 de generation por slot TOTP, y un tag meta final de 32 bytes."
+  caption="Los desplazamientos cuentan desde el inicio de esta mitad. meta.bin nunca se reconstruye a partir de los ficheros de registro: es la raíz de confianza. metaTag cubre todo desde wrapTag en adelante, así que también se compromete con la mitad KEK y las dos mitades no se pueden separar y recombinar."
+  fields={[
     { label: "hmacSalt", bytes: 16 },
-    { label: "genTable", bytes: 28, variable: true, note: "u32 / slot" },
+    { label: "rotation", bytes: 67, note: "estado de rotación de claves" },
+    { label: "rotSkip", bytes: 10, variable: true, note: "1 bit / paso de rotación" },
+    { label: "credGen", bytes: 40, variable: true, note: "u32 / slot de credencial" },
+    { label: "totpGen", bytes: 20, variable: true, note: "u32 / slot TOTP" },
     { label: "metaTag", bytes: 32, note: "HMAC, último" },
   ]}
 />
 
-Como los metadatos están autenticados, la secuencia de desbloqueo se convierte en una escalera cuidadosa: nada del fichero se confía hasta que el tag verifica, y un PIN equivocado deriva una clave maestra distinta — así que el tag de los metadatos y el verificador de PIN fallan ambos a la vez.
+Hay dos tags porque hay dos escritores. Un solo tag bajo una clave derivada del PIN obligaría a repetir PBKDF2 en cada guardado (unos 1,55 s en un ESP32-S3); un solo tag bajo una clave derivada de la clave de bóveda obligaría a desenvolver esa clave antes de haber autenticado nada, un descifrar-antes-de-verificar en el envoltorio. Así que cada mitad la sella una clave que tiene su escritor legítimo.
+
+La secuencia de desbloqueo se convierte en una escalera cuidadosa: nada del fichero se confía hasta que un tag verifica, y un PIN equivocado deriva una KEK distinta, así que el tag de envoltorio y el verificador de PIN fallan ambos a la vez.
 
 <Pipeline
   title="Desbloqueo: no confíes en nada hasta que el tag verifique"
-  caption="Un PIN equivocado deriva una clave maestra distinta, así que el tag de meta y el verificador de PIN no coinciden ninguno de los dos — el desbloqueo se bloquea ante el fallo antes de que se confíe siquiera en la tabla de generation o en los salts."
-  ariaLabel="Una secuencia de desbloqueo con bloqueo ante fallos de seis etapas. Uno: parsear el magic, la versión y la longitud de meta.bin, sin confiar todavía en nada. Dos: derivar la clave maestra con PBKDF2 a partir del PIN y el salt de KDF. Tres: derivar la sub-clave de MAC usando el salt de HMAC. Cuatro: verificar el tag de los metadatos en tiempo constante — la puerta — antes de confiar en nada. Cinco: comprobar el verificador de PIN, la segunda puerta. Seis: la bóveda está desbloqueada y la tabla de generation ya es de confianza."
+  caption="Un PIN equivocado deriva una KEK distinta, así que el tag de envoltorio y el verificador de PIN no coinciden ninguno de los dos: el desbloqueo se bloquea ante el fallo antes de desenvolver la clave de bóveda o de confiar en la tabla de generation."
+  ariaLabel="Una secuencia de desbloqueo con bloqueo ante fallos de seis etapas. Uno: parsear el magic, la versión, la longitud y el rango del factor de trabajo de meta.bin, sin confiar todavía en nada. Dos: derivar la clave de cifrado de clave con PBKDF2 a partir del PIN, el salt de KDF y el recuento de iteraciones guardado. Tres: verificar en tiempo constante el tag de envoltorio sobre la primera mitad, la primera puerta. Cuatro: comparar en tiempo constante el verificador de PIN, la segunda puerta. Cinco: desenvolver la clave de bóveda y comprobarla contra vkCheck. Seis: derivar las claves de sesión a partir de la clave de bóveda y verificar el tag meta antes de confiar en la tabla de generation."
   stages={[
-    { name: "parse meta.bin", note: "magic · ver · longitud" },
-    { name: "PBKDF2", note: "PIN + kdfSalt", via: "sin confianza aún" },
-    { name: "derive macKey", note: "+ hmacSalt" },
-    { name: "verify metaTag", note: "tiempo constante", via: "puerta" },
-    { name: "check pinVerifier", note: "puerta de desbloqueo", via: "ok" },
-    { name: "unlocked", note: "tabla de confianza" },
+    { name: "parse meta.bin", note: "magic · ver · rango KDF" },
+    { name: "PBKDF2 → KEK", note: "PIN + kdfSalt", via: "sin confianza aún" },
+    { name: "verify wrapTag", note: "tiempo constante", via: "puerta" },
+    { name: "check pinVerifier", note: "tiempo constante", via: "puerta" },
+    { name: "unwrap VK", note: "comprueba vkCheck", via: "ok" },
+    { name: "verify metaTag", note: "tabla de confianza", via: "puerta" },
   ]}
 />
 
-Un `meta.bin` antiguo o con formato desajustado — pongamos un `formatVer 0x01` de una versión anterior — simplemente no se autentica, y la bóveda se re-aprovisiona. No hay migración ni doble lectura: un solo formato en flash, siempre. (El dispositivo no está en producción, así que no hay datos reales que migrar.)
+El paso dos tiene que ejecutarse antes de que haya nada autenticado, así que el factor de trabajo guardado llega a PBKDF2 sin verificar. El parseo comprueba su rango, de modo que un registro manipulado no puede ni bloquear el dispositivo más allá de su watchdog ni convencerlo de una derivación débil, y editarlo no permite falsificar nada: el verificador solo se reproduce con el recuento con el que se aprovisionó la bóveda.
+
+El byte de formato no se mueve durante el desarrollo. Se queda en `0x01` mientras la disposición cambia, porque antes del lanzamiento el único camino de despliegue es borrar la flash y volver a aprovisionar, así que un dispositivo solo conoce la disposición actual. El parseo es estricto con ese byte, de modo que un registro ajeno o antiguo se bloquea ante el fallo y la bóveda se re-aprovisiona. No hay migración ni doble lectura. (El dispositivo no está en producción, así que no hay datos reales que migrar.)
+
+### Lo que cuesta cambiar el PIN
+
+Envolver la clave de bóveda es lo que abarata el cambio de PIN. Reescribe la primera mitad, de 154 bytes, dentro de una única escritura atómica de `meta.bin`, y todos los registros de la flash se quedan exactamente como estaban. Sin el envoltorio, cambiar el PIN recifra la bóveda entera, necesita libre más o menos el doble de lo que ocupa la bóveda y, por tanto, no puede completarse en un dispositivo casi lleno.
+
+Tiene un precio, y el proyecto lo pone el primero de su lista de riesgos aceptados. La clave de bóveda no cambia nunca salvo que ejecutes la acción explícita de _Recifrar la bóveda_, así que **cambiar el PIN ya no revoca una clave**. Un PIN retirado más cualquier copia de `meta.bin` tomada antes del cambio desenvuelve la misma clave de bóveda, y con ella cada credencial escrita después. Eso solo necesita acceso de lectura, sin escribir en la flash; en los builds endurecidos el envoltorio está ligado al dispositivo, así que además hace falta el chip original. Ese mismo `meta.bin` antiguo, reescrito con acceso en bruto a la flash, hace que el PIN retirado abra la bóveda actual y recupera el factor de trabajo con el que se derivó.
+
+El remedio es esa acción separada de recifrado: recorre todos los registros con una clave de bóveda nueva, un paso confirmado cada vez para que un corte de corriente la deje reanudable, y es la que hay que usar cuando un PIN puede haberse filtrado. Es la misma división que hacen LUKS y VeraCrypt: la frase de paso envuelve una clave de volumen, y recifrar el volumen es una operación aparte, más lenta, que eliges tú.
 
 ## ¿Cómo se hace el anti-rollback resistente a cortes de corriente?
 
-El rollback selectivo es un [ataque de repetición](https://datatracker.ietf.org/doc/html/rfc4949) — el atacante re-presenta un fichero auténtico-pero-obsoleto — y la defensa estándar es un _valor de frescura_: un contador monótono que el verificador espera que solo aumente, de modo que un registro antiguo repetido falle la comprobación. Pero un contador de frescura solo vale tanto como su historia de actualización. Cada mutación — añadir, editar **o borrar** — incrementa el `generation` del slot, y el registro se reescribe bajo el nuevo valor. Eso crea un riesgo de escritura partida (_torn write_): pierde corriente _entre_ escribir el registro (bajo generation N+1) y escribir `meta.bin` (que registra N+1), y los dos discrepan. Resuelve eso mal y o bien dejas inservible un slot válido o bien reabres en silencio el rollback que acabas de cerrar.
+El rollback selectivo es un [ataque de repetición](https://datatracker.ietf.org/doc/html/rfc4949) — el atacante re-presenta un fichero auténtico-pero-obsoleto — y la defensa estándar es un _valor de frescura_: un contador monótono que el verificador espera que solo aumente, de modo que un registro antiguo repetido falle la comprobación. Pero un contador de frescura solo vale tanto como su historia de actualización. Cada mutación — añadir, editar **o borrar** — incrementa el `generation` del slot, y el registro se vuelve a escribir bajo el nuevo valor. Eso crea un riesgo de escritura partida (_torn write_): pierde corriente _entre_ escribir el registro (bajo generation N+1) y escribir `meta.bin` (que registra N+1), y los dos discrepan. Resuelve eso mal y o bien dejas inservible un slot válido o bien reabres en silencio el rollback que acabas de cerrar.
 
 La solución es elegir un único instante indivisible que "cuente" — como la firma de un contrato: antes de que el bolígrafo se levante nada es vinculante, después lo es todo. El firmware hace que el **intercambio de `meta.bin` sea ese instante** — se escribe en un fichero temporal y luego se [renombra atómicamente](https://pubs.opengroup.org/onlinepubs/9699919799/functions/rename.html) a su sitio, así que un lector siempre ve el `meta.bin` antiguo o el nuevo, nunca una escritura partida a medias — y se recupera de forma determinista en torno a él:
 
 <Pipeline
   title="Mutación resistente a cortes — el intercambio de meta es el punto de commit"
-  caption="El renombrado de meta.bin es el único punto de linealización. Al reiniciar, la recuperación recalcula el tag del registro en staging a la generation actual: o bien verifica (termina el promote) o no (descarta el huérfano, conserva el valor antiguo)."
-  ariaLabel="Una secuencia de mutación resistente a cortes de cuatro etapas. STAGE: escribe el nuevo registro en una ruta de staging bajo generation N más 1, con un pequeño marcador que nombra el tipo y el slot. COMMIT: incrementa la generation en meta.bin y persístela atómicamente mediante un renombrado de fichero temporal — el renombrado es el punto de commit. PROMOTE: renombra el registro en staging a su ruta canónica. CLEANUP: elimina el marcador."
+  caption="El renombrado de meta.bin es el único punto de linealización. Una entrada añadida bajo una generation que meta.bin nunca llegó a registrar es basura que el recorrido se salta; una fila del índice escrita tras el commit es una caché que el log puede reconstruir."
+  ariaLabel="Una secuencia de mutación resistente a cortes de cuatro etapas. APPEND: escribe el nuevo registro como una entrada al final de su segmento del record log, bajo generation N más 1. PROVE: vuelve a leer la entrada en su desplazamiento y verifica su tag. COMMIT: incrementa la generation en meta.bin y persístela atómicamente mediante un renombrado de fichero temporal; el renombrado es el punto de commit. INDEX: escribe el desplazamiento de la entrada en el segmento del índice de la lista."
   stages={[
-    { name: "STAGE", note: "registro → staging, gen N+1" },
+    { name: "APPEND", note: "entrada → segmento del log, gen N+1" },
+    { name: "PROVE", note: "relee y verifica el tag" },
     { name: "COMMIT", note: "renombrado de meta.bin", via: "punto de commit" },
-    { name: "PROMOTE", note: "staging → canónico", via: "tras el commit" },
-    { name: "CLEANUP", note: "elimina el marcador" },
+    { name: "INDEX", note: "desplazamiento de la fila", via: "tras el commit" },
   ]}
 />
 
-En el siguiente arranque, `recoverPendingMutation` recalcula el tag del registro en staging a la `meta.gen[type][slot]` _actual_. Si verifica, el commit ocurrió (el corte cayó después del renombrado) → termina el promote. Si no, el commit nunca ocurrió → descarta el huérfano y conserva el registro canónico bajo la generation antigua. Ninguna ventana deja inservible un slot ni reabre en silencio el rollback, y cada ventana de corte tiene su propio test nativo. Como un `delete` también incrementa la generation, una entrada borrada no puede resucitarse repitiendo su fichero antiguo.
+Un append que se cerró está en la flash, pero si está _vivo_ lo decide solo `meta.bin`: la entrada viva de un slot es la que tiene la generation que marca la tabla autenticada. Si se va la corriente antes del commit, la entrada nueva lleva una generation que `meta.bin` nunca llegó a registrar, así que es basura y el slot conserva su registro anterior. Si se va después del commit y antes de escribir el índice, la fila del índice queda obsoleta; la comprobación del tag del propio segmento lo detecta y la fila se reconstruye a partir del log. Cada vez que `meta.bin` se autentica, el almacén además vuelve a añadir la entrada confirmada encima de cualquier huérfana, para que la presencia, los recuentos y la compactación coincidan con lo que creen los lectores. La compactación copia las entradas vivas de un segmento a un gemelo `.tmp` y lo renombra sobre el segmento, así que un segmento nunca falta. Ninguna ventana deja inservible un slot ni reabre en silencio el rollback, y esas interrupciones tienen sus propios tests nativos. Un `delete` añade una lápida (_tombstone_) e incrementa la generation en el mismo commit, así que una entrada borrada no puede resucitarse repitiendo sus bytes antiguos.
 
 ## El límite honesto: open vs `_secure`
 
-Vincular `generation` cierra el rollback _selectivo_ — revertir un registro mientras el resto de la bóveda avanza. **No** cierra, en los builds open (flasheables por desarrolladores), un rollback de _instantánea completa_: revierte la bóveda entera — `meta.bin` y cada registro juntos — a un estado anterior internamente consistente, y los contadores revierten con él, así que nada parece fuera de lugar. Atrapar eso necesita estado anti-rollback que viva _fuera_ de la flash reescribible, que es exactamente lo que añaden los builds endurecidos `_secure`.
+Vincular `generation` cierra el rollback _selectivo_ — revertir un registro mientras el resto de la bóveda avanza. **No** cierra un rollback de _instantánea completa_: revierte la bóveda entera (`meta.bin` y cada registro juntos) a un estado anterior internamente consistente, y los contadores revierten con él, así que nada parece fuera de lugar. En los builds open (flasheables por desarrolladores) nada lo detecta. Los builds endurecidos `_secure` suben el listón sin cerrarlo: Flash Encryption y Secure Boot v2 impiden que un atacante falsifique un estado nuevo con aspecto de antiguo, pero alguien con acceso físico todavía puede volver a escribir una imagen cifrada que capturó antes del mismo dispositivo. Un anti-rollback monótono de verdad necesita un contador monótono en hardware, y los bits eFuse de un solo uso del chip no son sitio para un estado que cambia tan a menudo.
 
 <Table title="Qué rollback atrapa cada build">
   <thead>
@@ -527,45 +556,66 @@ Vincular `generation` cierra el rollback _selectivo_ — revertir un registro mi
     <tr>
       <td>**Instantánea completa** — `meta.bin` + cada registro revertidos juntos</td>
       <td>**No** cerrado — todo el conjunto es autoconsistente</td>
-      <td>**Cerrado** — Secure Boot + Flash Encryption + anti-rollback de NVS</td>
+      <td>**Más difícil, no cerrado**: falsificar un estado antiguo exige las claves de la flash, pero una imagen capturada del mismo dispositivo todavía puede volver a escribirse</td>
     </tr>
   </tbody>
 </Table>
 
-Prefiero enunciar ese límite con claridad antes que sobrevenderlo. El contador de generation es **defensa en profundidad para los builds no seguros** frente al ataque selectivo, mucho más práctico; el salto temporal de toda la bóveda es un problema de hardware, resuelto en hardware en los builds que optan por quemar eFuses.
+Prefiero enunciar ese límite con claridad antes que sobrevenderlo. El contador de generation es **defensa en profundidad** frente al ataque selectivo, mucho más práctico; el salto temporal de toda la bóveda sigue siendo un riesgo residual documentado en todos los builds, acotado en los endurecidos por el cifrado de la flash y por el acceso físico. Además, la clave de bóveda envuelta le dio dientes: como muestra [lo que cuesta cambiar el PIN](#lo-que-cuesta-cambiar-el-pin), reescribir solo un `meta.bin` antiguo devuelve la vida a un PIN retirado.
 
 ## ¿Necesita encrypt-then-MAC claves separadas?
 
-Sí. El argumento de seguridad de encrypt-then-MAC asume que la clave de cifrado y la de autenticación son _independientes_; reutilizar una sola clave para ambos trabajos anula la garantía e invita a travesuras entre protocolos, así que la bóveda deriva una sub-clave para cifrar y otra para el MAC a partir de la misma clave maestra que sale del PIN, cada una bajo su propia etiqueta de separación de dominio.
+Sí. El argumento de seguridad de encrypt-then-MAC asume que la clave de cifrado y la de autenticación son _independientes_; reutilizar una sola clave para ambos trabajos anula la garantía e invita a travesuras entre protocolos, así que la bóveda deriva una sub-clave para cifrar y otra para el MAC a partir de la misma clave de bóveda, cada una bajo su propia etiqueta de separación de dominio. La KEK que sale del PIN recibe el mismo trato para sus propios trabajos.
 
 Es el mismo instinto que dice que la llave de casa, la del coche y la del buzón deberían ser tres llaves distintas, y sigue la [guía de separación de claves](https://csrc.nist.gov/pubs/sp/800/57/pt1/r5/final) de toda la vida — el [NIST SP 800-57 Part 1](https://nvlpubs.nist.gov/nistpubs/SpecialPublications/NIST.SP.800-57pt1r5.pdf) lo dice sin rodeos: "una clave debería usarse para un solo propósito":
 
 <Code lang="cpp" title="vault_keys — etiquetas distintas por propósito">
 ```cpp
-// One PBKDF2-derived master key fans out into three single-purpose sub-keys.
-//   encKey      = HMAC(masterKey, "vault-enc")              -> AES-256-CBC key
-//   macKey      = HMAC(masterKey, "vault-mac" || hmacSalt)  -> file HMAC key
-//   pinVerifier = HMAC(masterKey, "vault-pin")              -> unlock check
-VaultCrypto::hmacSha256(masterKey.data(), masterKey.size(),
-                        kEncKeyLabel, kEncLabelLen, out.enc.data());
-deriveMacKey(masterKey, hmacSalt, out.mac);  // label || per-vault hmacSalt
+// The PIN-derived KEK opens the vault; the random vault key (VK) keys the records.
+//   pinVerifier = HMAC(KEK, "kleidos-pin")              -> unlock check
+//   wrapEnc     = HMAC(KEK, "kleidos-wrap-enc")         -> unwraps the VK
+//   wrapMac     = HMAC(KEK, "kleidos-wrap-mac")         -> tags meta.bin's KEK half
+//   encKey      = HMAC(VK,  "kleidos-enc")              -> AES-256-CBC key
+//   macKey      = HMAC(VK,  "kleidos-mac" || hmacSalt)  -> record HMAC key
+//   metaMac     = HMAC(VK,  "kleidos-meta-mac")         -> tags meta.bin's VK half
+bool ok = deriveLabeled(vaultKey, kEncKeyLabel, out.enc.data(), out.enc.size());
+ok = ok && deriveMacKey(vaultKey, hmacSalt, out.mac);  // label || hmacSalt
+ok = ok && deriveLabeled(vaultKey, kMetaMacKeyLabel,
+                         out.metaMac.data(), out.metaMac.size());
 ```
 </Code>
 
 <ForkJoin
-  caption="Una clave maestra, tres sub-claves de un solo propósito — cada una derivada con una etiqueta HMAC distinta para que ninguna clave haga nunca dos trabajos."
-  ariaLabel="Una clave maestra derivada por PBKDF2 se ramifica vía HMAC en tres sub-claves de un solo propósito: una clave de cifrado a partir de la etiqueta vault-enc, una clave de MAC a partir de la etiqueta vault-mac concatenada con un salt por bóveda, y un verificador de PIN a partir de la etiqueta vault-pin."
-  before={[{ name: "masterKey", note: "derivada por PBKDF2" }]}
+  caption="La clave de cifrado de clave, derivada del PIN, hace tres trabajos, cada uno con su propia etiqueta: probar el PIN, autenticar la primera mitad de meta.bin y desenvolver la clave de bóveda."
+  ariaLabel="El PIN, con el salt de KDF y el recuento de iteraciones guardado, pasa por PBKDF2-SHA256 y da la clave de cifrado de clave, KEK. La KEK se ramifica vía HMAC en tres valores de un solo propósito: el verificador de PIN a partir de la etiqueta kleidos-pin, la clave MAC del envoltorio a partir de kleidos-wrap-mac y la clave de cifrado del envoltorio a partir de kleidos-wrap-enc, que desenvuelve la clave de bóveda guardada en meta.bin."
+  before={[
+    { name: "PIN", note: "+ kdfSalt, kdfIterations" },
+    { name: "KEK", note: "PBKDF2-SHA256" },
+  ]}
   branches={[
-    { name: "encKey", note: 'HMAC(·, "vault-enc")' },
-    { name: "macKey", note: 'HMAC(·, "vault-mac" ‖ salt)' },
-    { name: "pinVerifier", note: 'HMAC(·, "vault-pin")' },
+    { name: "pinVerifier", note: 'HMAC(·, "kleidos-pin")' },
+    { name: "wrapMac", note: 'HMAC(·, "kleidos-wrap-mac")' },
+    [
+      { name: "wrapEnc", note: 'HMAC(·, "kleidos-wrap-enc")' },
+      { name: "VK", note: "desenvuelta de wrapCipher" },
+    ],
+  ]}
+/>
+
+<ForkJoin
+  caption="La clave de bóveda se ramifica en las claves que usan de verdad los registros, cada una con una etiqueta HMAC distinta para que ninguna clave haga nunca dos trabajos."
+  ariaLabel="La clave de bóveda, VK, 32 bytes aleatorios, se ramifica vía HMAC en tres sub-claves de un solo propósito: una clave de cifrado a partir de la etiqueta kleidos-enc, una clave MAC de registros a partir de la etiqueta kleidos-mac concatenada con un salt por bóveda, y la clave MAC de meta a partir de la etiqueta kleidos-meta-mac."
+  before={[{ name: "VK", note: "32 bytes aleatorios" }]}
+  branches={[
+    { name: "encKey", note: 'HMAC(·, "kleidos-enc")' },
+    { name: "macKey", note: 'HMAC(·, "kleidos-mac" ‖ salt)' },
+    { name: "metaMac", note: 'HMAC(·, "kleidos-meta-mac")' },
   ]}
 />
 
 ### ¿Cómo se comprueba un PIN sin almacenarlo?
 
-La tercera sub-clave, el verificador de PIN, es cómo el dispositivo comprueba el PIN sin almacenarlo: el desbloqueo deriva la clave maestra del PIN introducido, calcula el verificador, y lo compara — de nuevo en tiempo constante — con el valor almacenado. Un PIN equivocado simplemente produce un verificador distinto, sin ninguna pista sobre _cuán_ equivocado estaba. (El verificador está en la cabecera de `meta.bin` junto a los salts; el PIN en sí nunca se escribe en ninguna parte.)
+El verificador de PIN es cómo el dispositivo comprueba el PIN sin almacenarlo: el desbloqueo deriva la KEK del PIN introducido, calcula el verificador y lo compara, de nuevo en tiempo constante, con el valor almacenado, cuando el tag de envoltorio ya ha verificado. Un PIN equivocado simplemente produce un verificador distinto, sin ninguna pista sobre _cuán_ equivocado estaba. (El verificador está en la primera mitad de `meta.bin`, junto al salt; el PIN en sí nunca se escribe en ninguna parte.)
 
 El sentido de la separación es que cada clave puede hacer _exactamente una cosa_. Si la misma clave cifrara los ficheros y los autenticara, un atacante astuto podría intentar que el texto cifrado y los tags interactuaran — y la prueba de seguridad limpia de encrypt-then-MAC, que asume que las dos claves son independientes, simplemente dejaría de aplicar. Mantenerlas separadas implica que un compromiso o un mal uso de una capacidad no puede tomar prestada otra:
 
@@ -584,17 +634,17 @@ El sentido de la separación es que cada clave puede hacer _exactamente una cosa
   rows={[
     {
       label: "encKey",
-      note: 'HMAC(master, "vault-enc")',
+      note: 'HMAC(VK, "kleidos-enc")',
       cells: ["yes", "no", "no"],
     },
     {
       label: "macKey",
-      note: 'HMAC(master, "vault-mac" ‖ salt)',
+      note: 'HMAC(VK, "kleidos-mac" ‖ salt)',
       cells: ["no", "yes", "no"],
     },
     {
       label: "pinVerifier",
-      note: 'HMAC(master, "vault-pin")',
+      note: 'HMAC(KEK, "kleidos-pin")',
       cells: ["no", "no", "yes"],
     },
   ]}
@@ -602,24 +652,26 @@ El sentido de la separación es que cada clave puede hacer _exactamente una cosa
 
 ## Defensa en profundidad: padding en tiempo constante + un códec con bloqueo ante fallos
 
-Como el MAC se verifica primero, un fichero manipulado nunca alcanza el código de descifrado, lo que significa que el clásico oráculo de padding es _inalcanzable_ por construcción. La comprobación de padding de abajo es, por tanto, **defensa en profundidad**, no la defensa principal — un cinturón además de los tirantes para el caso en que datos autenticados-pero-corruptos aún necesiten rechazarse limpiamente. Valida el [padding PKCS#7](https://datatracker.ietf.org/doc/html/rfc5652#section-6.3) en tiempo constante e informa de un único fallo unificado, así que no filtra nada a través de logs ni del tiempo, pase lo que pase:
+Como el MAC se verifica primero, un fichero manipulado nunca alcanza el código de descifrado, lo que significa que el clásico oráculo de padding es _inalcanzable_ por construcción. La comprobación de padding de abajo es, por tanto, **defensa en profundidad**, no la defensa principal — un cinturón además de los tirantes para el caso en que datos autenticados-pero-corruptos aún necesiten rechazarse limpiamente.
+
+La bóveda aplica y comprueba el [padding PKCS#7](https://datatracker.ietf.org/doc/html/rfc5652#section-6.3) por su cuenta. AES corre a través de PSA con `PSA_ALG_CBC_NO_PADDING`: el firmware rellena el texto plano antes de cifrar y, tras descifrar (es decir, solo cuando el MAC ya ha pasado), valida el padding en tiempo constante e informa de un único fallo unificado, así que no filtra nada a través de logs ni del tiempo, pase lo que pase. El modo CBC-PKCS7 de la propia biblioteca no se usa nunca, y por eso tampoco aplica a la bóveda [CVE-2025-59438](https://mbed-tls.readthedocs.io/en/latest/security-advisories/mbedtls-security-advisory-2025-10-invalid-padding-error/), una fuga de tiempo en los errores de padding de ese modo. (La clave de bóveda de 32 bytes se envuelve sin ningún relleno: son exactamente dos bloques.)
 
 <Code lang="cpp" title="Comprobación de padding PKCS#7 en tiempo constante, fallo unificado">
 ```cpp
 // The last byte claims the pad length; fold every check into one mask.
-uint8_t padByte    = plainOut[cipherLen - 1];
-uint8_t padInvalid = 0;
-padInvalid |= (padByte == 0);                  // pad length 0 is illegal
-padInvalid |= (padByte > kAesBlockSize);       // pad length > block is illegal
+const uint8_t padByte    = plainOut[cipherLen - 1];
+uint8_t       padInvalid = 0;
+padInvalid |= static_cast<uint8_t>(padByte == 0);             // length 0: illegal
+padInvalid |= static_cast<uint8_t>(padByte > kAesBlockSize);  // > a block: illegal
 for (size_t i = 0; i < kAesBlockSize; i++) {
-    uint8_t mask = (i < padByte) ? 0xFF : 0x00;     // examine the whole block
-    padInvalid |= (plainOut[cipherLen - 1 - i] ^ padByte) & mask;
+    const uint8_t mask = (i < padByte) ? 0xFF : 0x00;         // examine the whole block
+    padInvalid |= static_cast<uint8_t>((plainOut[cipherLen - 1 - i] ^ padByte) & mask);
 }
-if (padInvalid != 0) {           // one message for corruption AND bad padding
-    LOG_ERROR(kTag, "Decryption failed");
+if (padInvalid != 0) {   // the caller logs ONE message for corruption AND bad padding
     mbedtls_platform_zeroize(plainOut, cipherLen);
     return false;
 }
+*plainLen = cipherLen - padByte;
 ```
 </Code>
 
@@ -651,7 +703,9 @@ El tag EtM ya demuestra que el texto plano es genuino antes de que el códec se 
 
 Una pregunta justa. El estándar moderno por defecto para el cifrado autenticado es una construcción [AEAD](https://en.wikipedia.org/wiki/Authenticated_encryption) como [AES-GCM](https://csrc.nist.gov/pubs/sp/800/38/d/final), que funde cifrado y autenticación en una sola primitiva y es más difícil de ensamblar mal. Si arrancara un protocolo desde cero, GCM (o ChaCha20-Poly1305) sería la elección obvia.
 
-La bóveda usa encrypt-then-MAC con AES-256-CBC y HMAC-SHA256 por una razón concreta y aburrida: **uniformidad de backend**. El mismo código tiene que producir una salida byte a byte idéntica en dos entornos muy distintos — un build de host (donde corren los tests unitarios, contra la API legacy de Mbed TLS) y el dispositivo (donde la API PSA Crypto de Mbed TLS 4.0 es el único camino público). CBC, HMAC y una comparación verificada a mano están disponibles de forma trivial y son deterministas en ambos; apoyarse en las reglas de gestión de nonce de GCM a través de dos backends añade un riesgo más afilado que el que estoy evitando. Encrypt-then-MAC es la [composición genéricamente segura](https://eprint.iacr.org/2000/025), así que construir AEAD a partir de CBC+HMAC de este modo es sólido — es como lo hacen IPsec (en su configuración estándar) y KDBX 4 también.
+La bóveda usa encrypt-then-MAC con AES-256-CBC y HMAC-SHA256 por razones que tienen que ver con este dispositivo, no con las primitivas. CBC con HMAC **no tiene un modo de fallo catastrófico si un IV llega a repetirse**: un IV repetido revela que dos registros comparten sus primeros bloques, no una clave, mientras que un nonce de GCM repetido entrega la clave de autenticación. AES y SHA-256 tienen **aceleración hardware** en el ESP32. Y lo difícil de este formato, la frescura, es un problema de estado que los datos asociados no resolverían: un AEAD llevaría el mismo `type ‖ slot ‖ generation` en sus datos asociados, con una primitiva más arriesgada debajo. Encrypt-then-MAC es la [composición genéricamente segura](https://eprint.iacr.org/2000/025), así que construir AEAD a partir de CBC+HMAC de este modo es sólido; es como lo hacen IPsec (en su configuración estándar) y KDBX 4 también.
+
+Hubo una tercera razón: una salida byte a byte idéntica entre un build de host cuyos tests unitarios corrían contra la API legacy de Mbed TLS y un dispositivo donde la API PSA Crypto de Mbed TLS 4.0 es el único camino público. Esa ya no existe: los tests de host enlazan ahora el mismo Mbed TLS 4 y TF-PSA-Crypto que el firmware (ESP-IDF 6.0.3 trae Mbed TLS 4.1.1 con TF-PSA-Crypto 1.1.0), así que hay un único backend PSA y nada que mantener a la par.
 
 <BeforeAfter beforeLabel="AES-GCM (AEAD)" afterLabel="AES-CBC + HMAC (EtM)">
 <div slot="before">
@@ -663,7 +717,7 @@ La bóveda usa encrypt-then-MAC con AES-256-CBC y HMAC-SHA256 por una razón con
   items={[
     { kind: "pro", text: "Estándar moderno por defecto; resistente al mal uso si los nonces son únicos" },
     { kind: "warn", text: "La reutilización de nonce es catastrófica (recuperación de clave)" },
-    { kind: "warn", text: "Las reglas de backend y de nonce deben coincidir exactamente entre host y dispositivo" },
+    { kind: "warn", text: "La unicidad del nonce tiene que sobrevivir a cada escritura, reinicio y restauración" },
   ]}
 />
 
@@ -675,7 +729,8 @@ La bóveda usa encrypt-then-MAC con AES-256-CBC y HMAC-SHA256 por una razón con
 <IconList
   ariaLabel="Compromisos de AES-CBC más HMAC"
   items={[
-    { kind: "pro", text: "Byte a byte idéntico en Mbed TLS legacy (host) y PSA (dispositivo)" },
+    { kind: "pro", text: "Un IV repetido revela igualdad, no una clave" },
+    { kind: "pro", text: "AES y SHA-256 con aceleración hardware en el ESP32" },
     { kind: "pro", text: "EtM es demostrablemente la composición segura" },
     { kind: "pro", text: "Un IV aleatorio nuevo por escritura, autenticado por el tag" },
   ]}
@@ -684,16 +739,16 @@ La bóveda usa encrypt-then-MAC con AES-256-CBC y HMAC-SHA256 por una razón con
 </div>
 </BeforeAfter>
 
-Una nota al pie honesta sobre la implementación: la guía de transición de PSA sugiere `psa_mac_verify` antes que "calcula un tag, luego `mbedtls_ct_memcmp`". La bóveda mantiene deliberadamente la forma de calcular-y-comparar porque corre idéntica en ambos backends — y la comparación sigue siendo en tiempo constante. Es un cambio de una comodidad de PSA por uniformidad de backend, hecho con los ojos abiertos.
+Una nota al pie sobre la implementación: la guía de transición de PSA sugiere `psa_mac_verify` antes que "calcula un tag, luego `mbedtls_ct_memcmp`". El camino de los registros sigue calculando y comparando, con una sola función de tag compartida por la escritura y la lectura; la exportación cifrada pasa sus bloques por `psa_mac_verify`. Las dos comparaciones son en tiempo constante.
 
 ## ¿Cómo lista la bóveda las credenciales sin descifrarlas todas?
 
-Un único `index.bin` cifrado, en exactamente el mismo sobre `[ver][iv][hmacTag][cipher]`, cachea solo los metadatos _no secretos_ que necesita una vista de lista: id, nombre, usuario, marca y un par de flags — nunca la contraseña, la URL, las notas ni el secreto TOTP. Listar cuesta por tanto una lectura y un descifrado, fijos, por muchas credenciales que guarde la bóveda.
+El índice de la lista es un conjunto de segmentos cifrados, `idx_NN.bin`, uno por cada 32 slots de credencial, cada uno en exactamente el mismo sobre `[ver][iv][hmacTag][cipher]`. Cachean solo los metadatos _no secretos_ que necesita una vista de lista: id, nombre, usuario, marca, el dominio sacado de la URL, grupo, orden, fecha de modificación y dos flags (favorito, tiene 2FA). Nunca la contraseña, la URL completa, las notas ni el secreto TOTP. Listar cuesta por tanto una lectura y un descifrado por cada 32 slots, no uno por credencial.
 
-Eso sale de tratar cada fichero como un sobre independiente. Descifrar cada credencial solo para pintar una lista sería lento y expondría innecesariamente cada secreto en RAM; el índice se ahorra las dos cosas.
+Eso sale de tratar cada artefacto como un sobre independiente. Descifrar cada credencial solo para pintar una lista sería lento y expondría innecesariamente cada secreto en RAM; el índice se ahorra las dos cosas. Cada segmento vincula su propio número como `slotId` y, como `generation`, la suma de los contadores de credencial de los slots que cachea, así que una copia antigua de un segmento falla su tag como cualquier registro revertido. Partirlo también mantiene fijo el conjunto de trabajo: un único fichero de índice necesitaba RAM en proporción al número de credenciales, y una placa sin PSRAM se quedaba sin ella mucho antes de su capacidad nominal.
 
-<Callout type="info" title="Una lectura, un descifrado">
-Mostrar la lista de credenciales es **una lectura de fichero más un descifrado**, sin importar cuántas credenciales existan. El descifrado pesado por credencial solo ocurre cuando abres una de verdad. El índice es solo una caché: si falta o su MAC no verifica, se reconstruye a partir de los ficheros por credencial autenticados, que son siempre la fuente de verdad.
+<Callout type="info" title="Un descifrado por segmento">
+Mostrar la lista de credenciales cuesta **una lectura más un descifrado por cada 32 slots**, en vez de uno por credencial. El descifrado pesado por credencial solo ocurre cuando abres una de verdad. El índice es solo una caché: si falta un segmento o su MAC no verifica, se reconstruye a partir de los registros de credencial autenticados de su rango de slots, que son siempre la fuente de verdad.
 </Callout>
 
 ## Bloqueo ante fallos, por construcción
@@ -703,7 +758,7 @@ No es el cifrador lo que hace esta bóveda digna de confianza en reposo — es e
 <SecurityRating
   rating="A"
   title="Encrypt-then-MAC, vinculado al contexto, verificar antes de descifrar, con bloqueo ante fallos"
-  description="Vincular slot, tipo y un contador de frescura en el tag — y autenticar los metadatos que contienen esos contadores — elimina la clase del oráculo de padding y derrota la reubicación, la confusión de tipos y el rollback selectivo antes de cualquier descifrado. Los huecos residuales son por diseño: el rollback de instantánea completa (cerrado solo en los builds _secure) y la baja entropía de un PIN corto (el próximo artículo)."
+  description="Vincular slot, tipo y un contador de frescura en el tag — y autenticar los metadatos que contienen esos contadores — elimina la clase del oráculo de padding y derrota la reubicación, la confusión de tipos y el rollback selectivo antes de cualquier descifrado. Los huecos residuales están documentados: el rollback de instantánea completa (más difícil pero no cerrado en los builds _secure), un cambio de PIN que reenvuelve la clave de bóveda en vez de revocarla, y la baja entropía de un PIN corto (el próximo artículo)."
 />
 
-Hay una cosa que este formato no resuelve, sin embargo. Todo él protege el _fichero_ — pero la clave de cifrado al final viene de un PIN corto, y un PIN corto tiene muy poca entropía. _En_ el dispositivo eso está bien: una protección contra fuerza bruta bloquea y acaba borrando la bóveda tras un puñado de PINs equivocados, así que el adivinado online muere rápido. El problema es el _offline_. Si alguien desuelda la flash y copia el texto cifrado, el bloqueo nunca se ejecuta — pueden derivar claves a partir de PINs adivinados en una GPU, sin ningún dispositivo en el bucle que los detenga — y un espacio de claves de 4 dígitos cae en una fracción de segundo. (La flash encryption de producción sube ese listón, pero el formato de fichero no debería tener que depender de ella.) Cerrar ese hueco necesita un truco distinto: uno que mezcle en la clave un secreto que solo el chip original pueda producir, de modo que el texto cifrado exfiltrado sea inútil en cualquier otro hardware. Ese es el [próximo artículo](/es/blog/012-device-bound-key-derivation/).
+Hay una cosa que este formato no resuelve, sin embargo. Todo él protege el _fichero_ — pero la clave que desbloquea la bóveda al final viene de un PIN corto, y un PIN corto tiene muy poca entropía. _En_ el dispositivo eso está bien: una protección contra fuerza bruta bloquea y acaba borrando la bóveda tras un puñado de PINs equivocados, así que el adivinado online muere rápido. El problema es el _offline_. Si alguien desuelda la flash y copia el texto cifrado, el bloqueo nunca se ejecuta — pueden derivar claves a partir de PINs adivinados en una GPU, sin ningún dispositivo en el bucle que los detenga — y un espacio de claves de 4 dígitos cae en una fracción de segundo. (La flash encryption de producción sube ese listón, pero el formato de fichero no debería tener que depender de ella.) Cerrar ese hueco necesita un truco distinto: uno que mezcle en la clave un secreto que solo el chip original pueda producir, de modo que el texto cifrado exfiltrado sea inútil en cualquier otro hardware. Ese es el [próximo artículo](/es/blog/012-device-bound-key-derivation/).

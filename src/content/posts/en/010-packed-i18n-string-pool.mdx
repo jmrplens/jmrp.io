@@ -61,7 +61,7 @@ import StructPacking from "@components/ui/StructPacking.astro";
 import LayerStack from "@components/ui/LayerStack.astro";
 import ForkJoin from "@components/ui/ForkJoin.astro";
 
-I ship UI text in five languages on a microcontroller with two buttons and a tiny screen. Five languages, 273 string IDs, and a 32-bit chip where every byte of flash is accounted for. The textbook way to store that is a two-dimensional table of `const char*` pointers — and the first time I looked at the map file, it bothered me that a big chunk of those bytes were spent on **addressing**, not on a single character of actual text.
+I ship UI text in five languages on a microcontroller with two buttons and a tiny screen. Five languages, 273 string IDs when I measured this (844 now), and a 32-bit chip where every byte of flash is accounted for. The textbook way to store that is a two-dimensional table of `const char*` pointers — and the first time I looked at the map file, it bothered me that a big chunk of those bytes were spent on **addressing**, not on a single character of actual text.
 
 So I wrote a generator to out-pack the linker. Then I learned the linker was already doing most of what I'd reinvented — and discovered the one thing it genuinely _can't_ do, which turned out to be the win worth keeping. This is that story: a packed, tail-merged string pool with `uint16_t` offsets, what it actually saved, and an honest accounting of where the savings really come from.
 
@@ -361,9 +361,9 @@ for s in uniq:
 
 Sorting longest-first is what makes tail-merging fall out for free: by the time a short string is considered, any longer string that _ends_ with it has already been placed, so `find()` locates the shared tail. This is the same shape as a decades-old format — GNU gettext's compiled `.mo` files store translations as exactly this kind of offset table into a contiguous string block ([the gettext .mo format](https://www.gnu.org/software/gettext/manual/html_node/MO-Files.html)).
 
-On the current table — which has grown to 273 string IDs and counting — the effect is concrete:
+On the table as I measured it, 273 string IDs, the effect is concrete:
 
-<Table title="Today's table: 5 × 273 = 1,365 cells">
+<Table title="The measured table: 5 × 273 = 1,365 cells">
   <thead>
     <tr>
       <th scope="col">Stage</th>
@@ -413,7 +413,7 @@ Want to try it on your own data? The [string-pool packer](/tools/string-pool-pac
 
 ## How much firmware did packing actually save?
 
-Packing shrank the net firmware by **2,224 B** at the shipped `-Os`, with no API and no call-site changes. That is less than the flat −2,730 B the index halving contributes, because pooling forfeits about 500 B of cross-module linker dedup. Here are the numbers from the live `sticks3` build (5 languages, 273 IDs), packed against the naïve pointer table:
+Packing shrank the net firmware by **2,224 B** at the shipped `-Os`, with no API and no call-site changes. That is less than the flat −2,730 B the index halving contributes, because pooling forfeits about 500 B of cross-module linker dedup. Here are the numbers from the `sticks3` build I measured (5 languages, 273 IDs), packed against the naïve pointer table:
 
 <DeltaCompare
   title="Packed vs the naïve pointer table (-Os)"
@@ -430,7 +430,7 @@ Packing shrank the net firmware by **2,224 B** at the shipped `-Os`, with no API
 The index halving is the clean, structural win — a flat **−2,730 B (−50%)** that, as we'll see, doesn't move with the optimization level. But notice the firmware delta (−2,224 B) is _smaller_ than the data delta (−3,012 B), and there's an honest reason:
 
 <Callout type="warning" title="The blob isn't where the win comes from">
-Putting every string into one private pool **forfeits the linker's cross-module deduplication**: 70 of the pool's strings (`"OK"`, `"FAIL"`, `"Done"`…) also live standalone elsewhere in the firmware — LVGL labels, log tokens — and no longer merge with the pool's copy. That costs **500 B** back. And at `-Os` the linker's own literal dedup squeezes the _naïve_ blob to within **282 B** of our pool — so the blob is **not** where the win is. The net firmware saving rides on the **table halving plus the erased relocations**, not on the packed text being dramatically smaller than what `-fmerge-constants` plus the linker produce on their own.
+Putting every string into one private pool **forfeits the linker's cross-module deduplication**: 70 of the pool's strings (`"OK"`, `"FAIL"`, `"Done"`…) also live standalone elsewhere in the firmware (UI labels and log tokens; when I measured this the labels were LVGL's, a library the whole fleet has since retired in favor of its own UI code) and no longer merge with the pool's copy. That costs **500 B** back. And at `-Os` the linker's own literal dedup squeezes the _naïve_ blob to within **282 B** of our pool — so the blob is **not** where the win is. The net firmware saving rides on the **table halving plus the erased relocations**, not on the packed text being dramatically smaller than what `-fmerge-constants` plus the linker produce on their own.
 </Callout>
 
 Because the ESP32's flash `.rodata` is memory-mapped (execute-in-place), the firmware reads the pool with ordinary loads — `kPool.data() + offset` is a plain pointer dereference, with none of the `pgm_read_*` dance that classic AVR `PROGMEM` needs.
@@ -465,7 +465,7 @@ table saved   = (4 − w) × N bytes  ← (a hand-packed uint24 would make w = 3
 relocations   = N eliminated       ← one per pointer cell
 ```
 
-The table-saved and relocation numbers are therefore **computed, not assumed** — you can read them straight off `ids × langs`. The _only_ estimated input is which offset width `w` applies, because that depends on the pool size; past today's measured point (273 IDs → 13,531 B, ≈ 50 B/ID) the pool size is extrapolated linearly. Projecting out (`w` shown per row):
+The table-saved and relocation numbers are therefore **computed, not assumed** — you can read them straight off `ids × langs`. The _only_ estimated input is which offset width `w` applies, because that depends on the pool size; past the measured point (273 IDs → 13,531 B, ≈ 50 B/ID) the pool size is extrapolated linearly. Projecting out (`w` shown per row):
 
 <Table title="Projected savings as the table grows (× 5 languages)">
   <thead>
@@ -479,7 +479,7 @@ The table-saved and relocation numbers are therefore **computed, not assumed** �
     </tr>
   </thead>
   <tbody>
-    <tr><td>273 (today)</td><td>1,365</td><td>5,460 B</td><td>2,730 B (`uint16`)</td><td data-status="success">2,730 B</td><td>1,365</td></tr>
+    <tr><td>273 (measured)</td><td>1,365</td><td>5,460 B</td><td>2,730 B (`uint16`)</td><td data-status="success">2,730 B</td><td>1,365</td></tr>
     <tr><td>500</td><td>2,500</td><td>10,000 B</td><td>5,000 B (`uint16`)</td><td data-status="success">5,000 B</td><td>2,500</td></tr>
     <tr><td>1,000</td><td>5,000</td><td>20,000 B</td><td>10,000 B (`uint16`)</td><td data-status="success">10,000 B</td><td>5,000</td></tr>
     <tr><td>2,000</td><td>10,000</td><td>40,000 B</td><td>40,000 B (`uint32`)†</td><td>0 B</td><td>10,000</td></tr>
@@ -488,6 +488,8 @@ The table-saved and relocation numbers are therefore **computed, not assumed** �
 </Table>
 
 <small>† Past roughly **1,300 IDs** the pool outgrows 64 KiB, so a `uint16` offset can no longer reach the far end and the `static_assert(kPool.size() <= UINT16_MAX)` fires. The generator's minimal fix is a `uint32` offset — which **ties the 32-bit pointer on width, so the table edge vanishes** and only the eliminated relocations and the tail-merged blob keep paying. (Packing 3-byte `uint24` offsets would recover a 1-byte-per-cell edge — they address 16 MB — but the generator doesn't emit them today.)</small>
+
+The real table has since tested that projection. At 844 IDs the pool is 53,603 B, about 63.5 B per ID, because the strings grew longer on average than the linear guess assumed. It still fits `uint16` offsets, but at that density the 64 KiB edge arrives near 1,030 IDs rather than 1,300.
 
 So the honest scaling answer has two halves. **The relocation elimination scales without limit** — one per cell, always — 50,000 of them gone at 10,000 IDs. The **table −50% has a ceiling**: it holds only while the pool fits a 16-bit offset (≲ 1,300 IDs at this text profile), and past that a plain `uint32` offset matches the pointer width, so the index saving flattens to zero and the value shifts entirely to position-independence (relocations, delta-OTA friendliness) and the tail-merged blob. That 64 KiB pool is exactly the boundary the `static_assert` exists to force you to reconsider — not a place the technique stops helping, but the place its _shape_ has to change.
 
@@ -617,7 +619,7 @@ The packing loop above is the heart of it, but the full generator is worth readi
   description="PlatformIO pre-build i18n codegen"
 />
 
-<Collapsible title="The complete gen_i18n.py">
+<Collapsible title="The gen_i18n.py these measurements used">
 
 <FileContent filename="scripts/gen_i18n.py" language="python">
 ```python
@@ -625,8 +627,8 @@ The packing loop above is the heart of it, but the full generator is worth readi
 # Kleidos — i18n codegen.
 #
 # Reads i18n/strings.csv and emits:
-#   src/i18n/Strings_gen.h   (StringId enum + gen::string accessor decl)
-#   src/i18n/Strings_gen.cpp (packed, tail-merged string pool + offset table)
+#   src/i18n/strings_gen.h   (StringId enum + gen::string accessor decl)
+#   src/i18n/strings_gen.cpp (packed, tail-merged string pool + offset table)
 #
 # Hooked from platformio.ini as `extra_scripts = pre:scripts/gen_i18n.py`.
 # Stays a no-op when the generated files are already up-to-date.
@@ -643,8 +645,8 @@ except NameError:
     SCRIPT_DIR = Path(os.environ.get("PROJECT_DIR", os.getcwd())) / "scripts"
 ROOT = SCRIPT_DIR.parent
 CSV_PATH = ROOT / "i18n" / "strings.csv"
-HDR_PATH = ROOT / "src" / "i18n" / "Strings_gen.h"
-CPP_PATH = ROOT / "src" / "i18n" / "Strings_gen.cpp"
+HDR_PATH = ROOT / "src" / "i18n" / "strings_gen.h"
+CPP_PATH = ROOT / "src" / "i18n" / "strings_gen.cpp"
 
 LANGS = ["en", "es", "fr", "de", "it"]
 
@@ -767,7 +769,7 @@ def render_cpp(rows):
 
     lines = []
     lines.append("// AUTO-GENERATED by scripts/gen_i18n.py — DO NOT EDIT MANUALLY.")
-    lines.append('#include "Strings_gen.h"')
+    lines.append('#include "strings_gen.h"')
     lines.append("")
     lines.append("#include <array>")
     lines.append("#include <cstdint>")

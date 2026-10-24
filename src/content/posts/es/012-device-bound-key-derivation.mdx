@@ -8,7 +8,7 @@ lastVerified:
   versions:
     - ESP-IDF 6.0.2
 description: "Por qué las iteraciones de PBKDF2 no protegen un PIN de 4 dígitos en un MCU, y cómo un secreto del dispositivo más HKDF frenan la fuerza bruta offline."
-lead: "Una RTX 5090 barre los 10.000 PIN de cuatro dígitos en bastante menos de un milisegundo offline, así que la defensa es un secreto eFuse por chip mezclado con HKDF, no más iteraciones."
+lead: "Una RTX 5090 barre los 10.000 PIN de cuatro dígitos en una fracción de segundo offline, incluso con el número de iteraciones de producción, así que la defensa es un secreto por chip mezclado con HKDF, no más iteraciones."
 coverImage: "../../../assets/images/blog/device-bound-keys.webp"
 author: "José Manuel Requena Plens"
 authorEmail: "mail@jmrp.io"
@@ -18,9 +18,9 @@ faq:
   - question: "¿Cómo puede ser seguro un PIN de 4 dígitos en un gestor de contraseñas hardware?"
     answer: "Un PIN de 4 dígitos solo es seguro porque dos defensas complementarias acotan dónde puede adivinar un atacante. Una protección contra fuerza bruta online permite unos diez intentos antes de borrar la bóveda, y la derivación de clave vinculada al dispositivo mezcla un secreto por-chip en la clave para que un barrido offline por GPU del espacio de 10.000 PINs no pueda reproducirse fuera del chip original."
   - question: "¿Por qué un número alto de iteraciones de PBKDF2 no protege un PIN en un microcontrolador?"
-    answer: "El número de iteraciones debe ser lo bastante bajo como para que el desbloqueo del usuario legítimo sea llevadero — unos 2 segundos, lo que significa 35.000 iteraciones en el ESP32-S3 y 25.000 en el ESP32 clásico. Las 600.000 recomendadas por OWASP empujarían un solo desbloqueo a unos 32 segundos en el S3 y 47 en el ESP32 clásico, mientras una GPU sigue barriendo los 10.000 PINs en menos de un milisegundo."
+    answer: "El número de iteraciones debe ser lo bastante bajo como para que el desbloqueo del usuario legítimo sea llevadero, unos 2 segundos, lo que significa 175.000 iteraciones en el ESP32-S3 y 40.000 en el ESP32 clásico. Las 600.000 recomendadas por OWASP empujarían un solo desbloqueo a unos 5 segundos en el S3 y 24 en el ESP32 clásico, mientras una sola GPU sigue barriendo los 10.000 PINs en medio segundo con ese recuento."
   - question: "¿Qué es la vinculación al dispositivo en la derivación de clave?"
-    answer: "La vinculación al dispositivo mezcla un deviceSecret por-chip de 32 bytes en la clave maestra tras PBKDF2, usando HKDF. El verificador almacenado en flash solo se reproduce entonces en el chip original, así que un atacante que vuelque la flash sigue sin poder recalcular la clave sin el secreto — convirtiendo un ataque offline de fuerza bruta de lineal a categóricamente imposible."
+    answer: "La vinculación al dispositivo mezcla un deviceSecret por-chip de 32 bytes en la clave que produce PBKDF2, usando HKDF. El verificador almacenado en flash solo se reproduce entonces en el chip original, así que un atacante que vuelque la flash sigue sin poder recalcular la clave sin el secreto — convirtiendo un ataque offline de fuerza bruta de lineal a categóricamente imposible."
   - question: "¿De dónde sale el secreto del dispositivo por-chip en el ESP32?"
     answer: "Tiene dos backends elegidos en tiempo de compilación. En el ESP32-S3 es un eFuse-HMAC: el periférico HMAC computa un tag usando una clave en eFuse protegida contra lectura que nunca sale del silicio. En el ESP32 clásico, que no tiene periférico HMAC, es un pepper aleatorio de 32 bytes almacenado en NVS cifrado — más débil, pero aun así frena un volcado de flash ingenuo."
   - question: "¿Por qué usar HKDF en lugar de un HMAC hecho a mano para mezclar el secreto del dispositivo?"
@@ -62,8 +62,10 @@ Un PIN de cuatro dígitos tiene diez mil valores posibles. No es una errata ni u
 
 Entonces, ¿cómo es eso seguro? La respuesta honesta es que en un microcontrolador normalmente _no lo es_, y el arreglo habitual — subir el número de iteraciones de derivación de clave hasta que la fuerza bruta "tarde demasiado" — falla en silencio en este tipo de silicio. Este artículo va sobre el arreglo que sí funciona: vincular la clave al chip físico para que cada intento offline necesite un secreto que el atacante no puede extraer, mientras una pequeña protección en el dispositivo se encarga de los intentos que alguien hace a mano.
 
+El "vale" del título es una afirmación sobre los builds endurecidos (`_secure`). Un build abierto, flasheable por desarrolladores, solo tiene el bloqueo en el dispositivo, que no hace nada contra una copia de la flash, y en el ESP32-S3 la ruta endurecida sigue esperando un paso de aprovisionamiento que queme su clave eFuse: mientras no exista, un build endurecido del S3 no puede ni crear una bóveda ([detalles más abajo](#una-nota-a-pie-que-te-debo-la-clave-del-esp32-s3-aún-no-está-aprovisionada)).
+
 <TLDRSummary title="TL;DR — Por qué un PIN de 4 dígitos sobrevive a un volcado de flash">
-- Un PIN de 4 dígitos son **10⁴ = 10.000** combinaciones. Una RTX 5090 ejecuta PBKDF2-HMAC-SHA256 a **~11,16 MH/s**, así que barre cada PIN offline en **bastante menos de un milisegundo**.
+- Un PIN de 4 dígitos son **10⁴ = 10.000** combinaciones. Una RTX 5090 ejecuta PBKDF2-HMAC-SHA256 a **~11,16 MH/s** con 999 iteraciones; escalado a las 175.000 que usa el ESP32-S3, siguen siendo unos **63.700 intentos por segundo**, así que barre cada PIN offline en **unos 0,16 s**.
 - El número de iteraciones de PBKDF2 **no te salva en un MCU**: el conteo se dimensiona para un desbloqueo de ~2 segundos en el dispositivo, y sea cual sea el conteo que haga eso llevadero, una GPU lo hace muchísimo más rápido.
 - Las dos amenazas son distintas. El adivinado **online** (alguien con el dispositivo en la mano) está acotado por una protección de **lockout / borrado-tras-10**. El adivinado **offline** (alguien que volcó la flash) necesita una defensa diferente.
 - Esa defensa es la **vinculación al dispositivo**: tras PBKDF2, se mezcla un `deviceSecret` por-chip con **HKDF** (RFC 5869). En el ESP32-S3 el secreto es un **eFuse-HMAC** que la CPU no puede leer; en el ESP32 clásico es un **pepper en NVS**.
@@ -84,26 +86,26 @@ Entonces, ¿cómo es eso seguro? La respuesta honesta es que en un microcontrola
 
 ---
 
-## Un PIN de 4 dígitos son 13,3 bits: 10.000 combinaciones que una RTX 5090 barre en menos de un milisegundo
+## Un PIN de 4 dígitos son 13,3 bits: 10.000 combinaciones que una RTX 5090 barre en una fracción de segundo
 
 Seamos directos con el espacio de claves. Cuatro dígitos decimales son 10<sup>4</sup>, exactamente diez mil valores: aproximadamente **13,3 bits** de _entropía_ (la jerga para "cuánto cuesta adivinarlo") si cada PIN fuera igual de probable — y no lo son, porque los humanos eligen `1234`, `0000` y su año de nacimiento mucho más a menudo de lo que sugeriría el azar. Un PIN de 4 dígitos es, en el fondo, un candado de bici de 10.000 posiciones: de sobra contra alguien que prueba a mano, ridículo ante una máquina que las recorre todas en un suspiro. No hay KDF ingenioso, ni cifrador, ni cantidad de salt que añada entropía a un secreto tan pequeño. El secreto es el secreto.
 
 La razón de que un PIN tan corto sea siquiera defendible es que _adivinarlo cuesta algo_, y el coste depende por completo de **dónde** se le permite adivinar al atacante.
 
 <KeyspaceThreat
-  ariaLabel="Un PIN de 4 dígitos tiene 10.000 combinaciones posibles. Una sola RTX 5090 ejecuta PBKDF2-HMAC-SHA256 a 11,16 millones de intentos por segundo, agotando los 10.000 PINs en bastante menos de un milisegundo. El veredicto es que, offline, el PIN no aporta protección por sí solo."
+  ariaLabel="Un PIN de 4 dígitos tiene 10.000 combinaciones posibles. Una sola RTX 5090 ejecuta PBKDF2-HMAC-SHA256 a 11,16 millones de intentos por segundo con 999 iteraciones, que escalado a las 175.000 iteraciones del ESP32-S3 son unos 63.700 intentos por segundo, agotando los 10.000 PINs en unos 0,16 segundos. El veredicto es que, offline, el PIN no aporta protección por sí solo."
   title="Un PIN de 4 dígitos frente a una GPU, offline"
   secretLabel="Espacio de claves del PIN de 4 dígitos"
   keyspace={10000}
   keyspaceNote="10⁴ = 10.000 combinaciones — unos 13,3 bits"
-  throughputLabel="1× RTX 5090, PBKDF2-HMAC-SHA256"
-  throughput={11160000}
-  throughputNote="≈ 11,16 MH/s, hashcat modo 10900"
-  verdict="Cada PIN probado en bastante menos de 1 ms — offline, el PIN no protege nada por sí solo."
+  throughputLabel="1× RTX 5090, PBKDF2-HMAC-SHA256 con 175.000 iteraciones"
+  throughput={63700}
+  throughputNote="11,16 MH/s con las 999 iteraciones de hashcat (modo 10900), escalado linealmente"
+  verdict="Cada PIN probado en unos 0,16 s: offline, el PIN no protege nada por sí solo."
   verdictTone="bad"
 />
 
-Esa cifra de `11,16 MH/s` no es hipotética. Sale directamente de un [benchmark publicado de hashcat para la RTX 5090](https://gist.github.com/Chick3nman/09bac0775e6393468c2925c1e1363d5c), donde PBKDF2-HMAC-SHA256 (hashcat modo 10900) corre a unos **11.157 kH/s** en una sola tarjeta — y SHA-256 en crudo a unos **28,35 GH/s** (modo 1400). A once millones de intentos por segundo, diez mil PINs son `10000 / 11_160_000 ≈ 0,0009` segundos. El PIN, tratado como un secreto atacable offline, ya está perdido.
+Esa cifra de `11,16 MH/s` no es hipotética. Sale directamente de un [benchmark publicado de hashcat para la RTX 5090](https://gist.github.com/Chick3nman/09bac0775e6393468c2925c1e1363d5c), donde PBKDF2-HMAC-SHA256 (hashcat modo 10900) corre a unos **11.157 kH/s** en una sola tarjeta — y SHA-256 en crudo a unos **28,35 GH/s** (modo 1400). Esa cifra de PBKDF2 se mide con el recuento del benchmark de hashcat, 999 iteraciones, y el coste de un intento crece linealmente con el recuento, así que con las 175.000 iteraciones que usa el ESP32-S3 la misma tarjeta hace `11_157_000 × 999 / 175_000 ≈ 63_700` intentos por segundo. Diez mil PINs son `10000 / 63_700 ≈ 0,16` segundos; con las 40.000 del ESP32 clásico, unos 0,04 segundos. El PIN, tratado como un secreto atacable offline, ya está perdido.
 
 La diferencia entre **online** y **offline** lo es todo aquí. _Online_ es el ladrón plantado en tu puerta probando llaves: puedes cerrarle de un portazo tras unos pocos intentos. _Offline_ es el ladrón que se ha llevado una copia de la cerradura a su taller, donde lima llaves sin que nadie le vigile y con todo el tiempo del mundo. Así que lo único que hace viable un PIN corto es asegurarse de que el atacante **no pueda pasar a offline** — y acotar lo rápido que puede adivinar **online**.
 
@@ -132,7 +134,7 @@ La diferencia entre **online** y **offline** lo es todo aquí. _Online_ es el la
       kind: "offline",
       title: "Atacante offline",
       subtitle: "Volcó la flash, usa una GPU",
-      rate: "11,16 MH/s — los 10⁴ PINs en < 1 ms",
+      rate: "≈ 63.700 PINs/s con 175k iteraciones: los 10⁴ en ≈ 0,16 s",
       can: [
         "Leer el texto cifrado y el salt del KDF",
         "Ejecutar intentos ilimitados de PBKDF2 en una GPU",
@@ -186,25 +188,25 @@ La protección contra fuerza bruta solo acota los intentos **en el dispositivo**
 
 La respuesta de manual a "mi secreto tiene poca entropía" es un [KDF basado en contraseña](https://datatracker.ietf.org/doc/html/rfc8018#section-5.2) con un factor de trabajo alto. PBKDF2 ([RFC 8018](https://datatracker.ietf.org/doc/html/rfc8018#section-5.2), el PKCS#5 actual; [NIST SP 800-132](https://csrc.nist.gov/pubs/sp/800/132/final) para la derivación de clave basada en contraseña) te deja elegir un número de iteraciones, y la [OWASP Password Storage Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html) recomienda **600.000 iteraciones** de PBKDF2-HMAC-SHA256. Haz cada intento lo bastante caro y hasta un espacio de claves pequeño se vuelve molesto de barrer. Esa es la teoría.
 
-Se rompe en un microcontrolador por una razón física sencilla: **el factor de trabajo ralentiza al dispositivo legítimo mucho más de lo que ralentiza al atacante.** El número de iteraciones tiene que ser lo bastante bajo como para que el desbloqueo del _usuario_ sea llevadero, y en este silicio ese techo es bajo. Mis builds de producción usan **35.000 iteraciones en el ESP32-S3 y 25.000 en el ESP32 clásico**, cada uno dimensionado para un desbloqueo de unos **2 segundos**. Las 600.000 recomendadas por OWASP empujarían un solo desbloqueo a unos **32 segundos** en el S3 — y unos **47 segundos** en el ESP32 clásico. Nadie va a esperar medio minuto para abrir su gestor de contraseñas, así que ese conteo es físicamente inutilizable como UX, no solo incómodo.
+Se rompe en un microcontrolador por una razón física sencilla: **el factor de trabajo ralentiza al dispositivo legítimo mucho más de lo que ralentiza al atacante.** El número de iteraciones tiene que ser lo bastante bajo como para que el desbloqueo del _usuario_ sea llevadero, y en este silicio ese techo es bajo. Mis builds de producción usan **175.000 iteraciones en el ESP32-S3 y 40.000 en el ESP32 clásico**, cada uno dimensionado para un desbloqueo de unos **2 segundos** (medido: unos 1,55 s de derivación de clave en el S3 y 1,6 s en el chip clásico, ambos a 240 MHz). El S3 se permite el recuento mayor porque su derivación maneja directamente el periférico SHA, a unos 8,8 µs por iteración; el ESP32 clásico ejecuta un SHA-256 software propio a unos 39,4 µs. Las 600.000 recomendadas por OWASP empujarían un solo desbloqueo a unos **5 segundos** en el S3 y unos **24 segundos** en el ESP32 clásico. Cinco segundos es mucha espera en un dispositivo que desbloqueas muchas veces al día, y casi medio minuto en el chip clásico es inutilizable, no solo incómodo.
 
 ### Lo que de verdad le cuesta al usuario subir las iteraciones
 
 <DeltaCompare
   title="Lo que de verdad le cuesta al usuario subir las iteraciones"
   unit=" s"
-  caption="Cada fila es un solo desbloqueo con el conteo de producción frente a las 600.000 de OWASP — más o menos un salto de 16× en el S3. El usuario lo paga entero; el atacante apenas lo nota."
-  ariaLabel="Dos filas comparando un desbloqueo con el conteo de iteraciones de producción frente a las 600.000 recomendadas por OWASP. En el ESP32-S3, 35.000 iteraciones tardan unos 2 segundos y 600.000 tardan unos 32 segundos. En el ESP32 clásico, 25.000 tardan unos 2 segundos y 600.000 tardan unos 47 segundos. Ambas cifras de 600.000 son inutilizables, y una GPU sigue barriendo los 10.000 PINs en menos de un milisegundo de todos modos."
+  caption="Cada fila es un solo desbloqueo con el conteo de producción (175.000 en el S3, 40.000 en el ESP32 clásico) frente a las 600.000 de OWASP, que son 3,4 veces las iteraciones en el S3 y 15 en el ESP32 clásico. El usuario lo paga entero; el atacante apenas lo nota."
+  ariaLabel="Dos filas comparando un desbloqueo con el conteo de iteraciones de producción frente a las 600.000 recomendadas por OWASP. En el ESP32-S3, 175.000 iteraciones tardan unos 2 segundos y 600.000 tardan unos 5,3 segundos. En el ESP32 clásico, 40.000 tardan unos 2 segundos y 600.000 tardan unos 24 segundos. Una GPU sigue barriendo los 10.000 PINs en medio segundo incluso con 600.000."
   rows={[
-    { label: "ESP32-S3", before: 2, after: 32, lowerIsBetter: true },
-    { label: "ESP32 clásico", before: 2, after: 47, lowerIsBetter: true },
+    { label: "ESP32-S3", before: 2, after: 5.3, lowerIsBetter: true },
+    { label: "ESP32 clásico", before: 2, after: 24, lowerIsBetter: true },
   ]}
 />
 
-El gráfico muestra el único mando que te da el número de iteraciones: _hacer esperar más al usuario_. Subir el S3 de 35.000 a 600.000 convierte un desbloqueo de 2 segundos en uno de 32 (el ESP32 clásico sale peor parado, unos 47 segundos). Mientras tanto, el lado del atacante en el balance apenas se mueve — incluso a 600.000 iteraciones, una sola RTX 5090 muele PBKDF2-HMAC-SHA256 a cientos de miles de intentos por segundo, y un espacio de 10.000 claves se despeja igual en una fracción de segundo. El MCU hace _una_ derivación en dos segundos; la GPU hace cientos de miles en paralelo. Estás compitiendo contra un velocista mientras los lastres en los tobillos te los pones tú.
+El gráfico muestra el único mando que te da el número de iteraciones: _hacer esperar más al usuario_. Subir el S3 de 175.000 a 600.000 convierte un desbloqueo de 2 segundos en uno de 5 (el ESP32 clásico sale mucho peor parado, unos 24 segundos). Mientras tanto, el lado del atacante en el balance apenas se mueve: escalada a 600.000 iteraciones, una sola RTX 5090 sigue moliendo unos 18.600 intentos por segundo, y un espacio de 10.000 claves se despeja en medio segundo. El MCU hace _una_ derivación en un segundo y medio; con el mismo recuento, la GPU hace decenas de miles cada segundo. Estás compitiendo contra un velocista mientras los lastres en los tobillos te los pones tú.
 
 <Callout type="warning" title="El factor de trabajo es una carrera perdida aquí">
-El número de iteraciones compra tiempo real contra una contraseña de _alta entropía_ atacada offline. Contra un PIN de 4 dígitos no compra casi nada, porque el espacio de claves es tan pequeño que incluso un coste caro por intento, multiplicado por diez mil, sigue siendo trivial en una GPU. El número de iteraciones en este dispositivo se fija para la latencia de desbloqueo, **no** como la defensa anti-fuerza-bruta — y es una constante de tiempo de compilación incrustada en el firmware, no almacenada en los metadatos de la bóveda, donde un atacante que lea la flash podría verla o degradarla.
+El número de iteraciones compra tiempo real contra una contraseña de _alta entropía_ atacada offline. Contra un PIN de 4 dígitos no compra casi nada, porque el espacio de claves es tan pequeño que incluso un coste caro por intento, multiplicado por diez mil, sigue siendo trivial en una GPU. El número de iteraciones en este dispositivo se fija para la latencia de desbloqueo, **no** como la defensa anti-fuerza-bruta. El build decide cuántas recibe una bóveda nueva, y cada bóveda guarda el recuento con el que se creó en su `meta.bin` autenticado, así que subir el recuento del build nunca deja fuera a una bóveda existente. El recuento no es secreto (no más que el salt): editarlo rompe el tag del registro, y el parseo lo acota antes de que PBKDF2 llegue a ejecutarse.
 </Callout>
 
 ---
@@ -212,6 +214,8 @@ El número de iteraciones compra tiempo real contra una contraseña de _alta ent
 ## ¿Qué es la vinculación al dispositivo en la derivación de clave?
 
 La vinculación al dispositivo mezcla un `deviceSecret` de 32 bytes por chip en la clave maestra después de PBKDF2, usando HKDF. El verificador almacenado en flash solo se reproduce entonces en el chip original, así que un atacante que vuelque esa flash sigue sin poder recalcular la clave para ningún intento de PIN.
+
+En la bóveda de hoy esa salida de PBKDF2 es la _clave de cifrado de clave_ que desenvuelve la clave de bóveda ([el artículo anterior](/es/blog/011-encrypt-then-mac-vault/#la-raíz-de-confianza-autenticar-metabin) cuenta el envoltorio); el código de vinculación la llama clave maestra, y este artículo también.
 
 El razonamiento es simple: si no puedes hacer cada intento offline lo bastante lento, haz que cada intento offline **necesite algo que el atacante no tiene**. Después de que PBKDF2 produce la clave maestra a partir del PIN y el salt, mezclo un `deviceSecret` de 32 bytes que solo el chip original puede producir. El verificador almacenado en flash se deriva entonces de esa clave maestra _vinculada_. Un atacante que vuelca la flash tiene el texto cifrado y el salt, pero recalcular la clave para cualquier intento de PIN exige ahora el secreto por-chip. En el ESP32-S3 ese secreto nunca aparece en la flash que copió: vive en un eFuse de solo lectura y el periférico HMAC lo usa sin exponerlo. En el ESP32 clásico, que no tiene ese periférico, el respaldo es un pepper guardado en NVS cifrada: sigue costándole trabajo al atacante, pero está en el chip y no fuera de su alcance, así que la garantía es más débil.
 
@@ -221,34 +225,40 @@ Es como pedir, además del PIN, un ingrediente que solo existe en _este_ chip co
 
 <Pipeline
   title="Dónde encaja la vinculación en la cadena del KDF"
-  caption="provision() y unlock() ejecutan esta misma cadena; el paso de vinculación es idéntico en ambas, así que el verificador solo se reproduce en el mismo chip."
+  caption="Crear la bóveda y desbloquearla ejecutan esta misma cadena; el paso de vinculación es idéntico en ambas, así que el verificador solo se reproduce en el mismo chip."
   ariaLabel="La cadena de derivación de clave, de izquierda a derecha: el PIN alimenta PBKDF2-SHA256 con el kdfSalt para producir la clave maestra; bindMasterKey mezcla el secreto del dispositivo mediante HKDF para producir la clave maestra vinculada; la clave vinculada deriva el verificador del PIN que se compara, en tiempo constante, contra el valor almacenado en flash."
   stages={[
     { name: "PIN + kdfSalt", note: "secreto de usuario + 16 bytes aleatorios" },
-    { name: "PBKDF2-SHA256", note: "35k iters (Tier 1)", via: "password" },
+    { name: "PBKDF2-SHA256", note: "175k iters en S3 (Tier 1)", via: "password" },
     { name: "clave maestra", note: "32 bytes", via: "derive" },
     { name: "bindMasterKey()", note: "HKDF + deviceSecret (Tier 2)", via: "master" },
     { name: "pinVerifier", note: "HMAC, comparación en tiempo constante", via: "bound key" },
   ]}
 />
 
-En el firmware esto es una sola llamada, insertada tanto en la ruta de aprovisionamiento como en la de desbloqueo para que nunca puedan divergir:
+En el firmware esto es una sola función, llamada tanto por la ruta que crea la bóveda como por la que la desbloquea, para que nunca puedan divergir:
 
-<Code lang="cpp" title="vault_meta.cpp — unlock() replica provision() exactamente">
+<Code lang="cpp" title="vault_meta.cpp: deriveKek(), compartida por la creación y el desbloqueo">
 ```cpp
-// Tier 1: stretch the PIN into a master key.
-VaultCrypto::deriveKey(pin, pinLen, meta.kdfSalt.data(), meta.kdfSalt.size(),
-                       masterKey.data(), masterKey.size(), iterations);
-
-// Tier 2: bind the master key to THIS device (a no-op on open builds).
-// Must mirror provision() exactly so the verifier reproduces on the same chip.
-crypto::bindMasterKey(meta.kdfSalt.data(), meta.kdfSalt.size(),
-                               masterKey.data(), masterKey.size());
-
-// Derive the verifier from the (now bound) master key and compare constant-time.
-VaultKeys::derivePinVerifier(masterKey, candidate);
-const bool match = VaultCrypto::constantTimeEqual(
-    candidate.data(), meta.pinVerifier.data(), kPinVerifierSize);
+bool deriveKek(const char* bytes, size_t len, const std::array<uint8_t, kKdfSaltSize>& salt,
+               uint32_t iterations, std::array<uint8_t, kMasterKeySize>& kekOut) {
+    // Tier 1: stretch the secret, at the count THIS vault recorded.
+    if (!VaultCrypto::deriveKey(bytes, len, salt.data(), salt.size(),
+                                kekOut.data(), kekOut.size(), iterations)) {
+        VaultCrypto::secureWipe(kekOut.data(), kekOut.size());
+        return false;
+    }
+    // Tier 2: bind it to THIS device (a no-op on open builds). Identical in the
+    // mint and in the unlock, or the verifier never reproduces.
+    if (!kleidos::crypto::bindMasterKey(salt.data(), salt.size(),
+                                        kekOut.data(), kekOut.size())) {
+        VaultCrypto::secureWipe(kekOut.data(), kekOut.size());
+        return false;
+    }
+    return true;
+}
+// The unlock then derives the PIN verifier from the bound key and compares it,
+// in constant time, against the one stored in meta.bin.
 ```
 </Code>
 
@@ -333,7 +343,7 @@ ESP-IDF 6.x maneja el periférico HMAC a través de la interfaz de clave opaca d
 ```cpp
 // Message = domain label || vaultSalt, so the secret is specific to this
 // use and per-vault.
-std::memcpy(message.data(), kEFuseLabel, kLabelLen);     // "vault-device-secret-v1"
+std::memcpy(message.data(), kEFuseLabel, kLabelLen);     // "kleidos-device-secret-v1"
 std::memcpy(message.data() + kLabelLen, vaultSalt, vaultSaltLen);
 
 // Import a REFERENCE to the eFuse key block — never the key bytes.
@@ -397,7 +407,7 @@ La construcción es la canónica de dos pasos:
 
 <MergeFlow
   caption="HKDF vincula la clave en dos pasos: extraer un PRK con clave del secreto del dispositivo, luego expandirlo bajo una etiqueta versionada hasta la clave maestra vinculada."
-  ariaLabel="La vinculación HKDF mostrada como dos etapas de fusión. Etapa uno, HKDF-Extract combina el secreto del dispositivo como salt con la clave maestra de PBKDF2 como material de clave de entrada para producir una clave pseudoaleatoria, PRK. Etapa dos, HKDF-Expand combina ese PRK con la cadena info vault-device-bind-v1 para producir la clave maestra vinculada de 32 bytes."
+  ariaLabel="La vinculación HKDF mostrada como dos etapas de fusión. Etapa uno, HKDF-Extract combina el secreto del dispositivo como salt con la clave maestra de PBKDF2 como material de clave de entrada para producir una clave pseudoaleatoria, PRK. Etapa dos, HKDF-Expand combina ese PRK con la cadena info kleidos-device-bind-v1 para producir la clave maestra vinculada de 32 bytes."
   stages={[
     {
       op: "HKDF-Extract",
@@ -411,18 +421,18 @@ La construcción es la canónica de dos pasos:
       op: "HKDF-Expand",
       inputs: [
         { name: "PRK", role: "del extract" },
-        { name: '"vault-device-bind-v1"', role: "info" },
+        { name: '"kleidos-device-bind-v1"', role: "info" },
       ],
       out: { name: "clave maestra vinculada", note: "32 bytes" },
     },
   ]}
 />
 
-El salt es el secreto del dispositivo y el material de clave de entrada es la clave maestra de PBKDF2, así que `PRK = HKDF-Extract(salt = deviceSecret, IKM = master)` y luego `boundMaster = HKDF-Expand(PRK, info = "vault-device-bind-v1", L = 32)`. La cadena `info` versionada es separación de dominio: si alguna vez cambio la construcción de la vinculación, un `info` distinto hace que las claves nuevas sean demostrablemente distintas de las viejas.
+El salt es el secreto del dispositivo y el material de clave de entrada es la clave maestra de PBKDF2, así que `PRK = HKDF-Extract(salt = deviceSecret, IKM = master)` y luego `boundMaster = HKDF-Expand(PRK, info = "kleidos-device-bind-v1", L = 32)`. La cadena `info` versionada es separación de dominio: si alguna vez cambio la construcción de la vinculación, un `info` distinto hace que las claves nuevas sean demostrablemente distintas de las viejas.
 
-### Un único primitivo HMAC, idéntico byte a byte en ambos backends
+### Un único primitivo HMAC, idéntico byte a byte en host y dispositivo
 
-Aquí va el detalle de ingeniería del que estoy más orgulloso. Mi HKDF está construido sobre el propio `VaultCrypto::hmacSha256` del firmware, no sobre el módulo HKDF de una librería — y eso es una característica, no reinvención. El dispositivo corre PSA Crypto sobre mbedTLS 4.0; los tests nativos en el host corren un mbedTLS legacy. Lo crucial: **mbedTLS 4.0 eliminó el módulo legacy `mbedtls_hkdf`** (se espera que manejes `psa_key_derivation_*` con `PSA_ALG_HKDF` en su lugar), así que un HKDF portable que llame al módulo viejo simplemente no compilará en el dispositivo, y uno que llame solo a la ruta PSA no correrá en el host. Al construir HKDF sobre un único primitivo HMAC que existe en ambos backends, obtengo **salida byte a byte idéntica en todas partes** y esquivo por completo el cambio de API de 3.6 a 4.0.
+Aquí va el detalle de ingeniería del que estoy más orgulloso. Mi HKDF está construido sobre el propio `VaultCrypto::hmacSha256` del firmware, no sobre el módulo HKDF de una librería — y eso es una característica, no reinvención. **Mbed TLS 4.0 eliminó el módulo legacy `mbedtls_hkdf`** (se espera que manejes `psa_key_derivation_*` con `PSA_ALG_HKDF` en su lugar), y cuando se escribió esto los tests nativos del host aún corrían un Mbed TLS legacy, así que ningún HKDF de librería habría compilado en los dos sitios. Construir HKDF sobre un único primitivo HMAC esquivó por completo el cambio de API de 3.6 a 4.0. Desde entonces los tests del host usan el mismo Mbed TLS 4 y TF-PSA-Crypto que el dispositivo, así que ese HMAC es ahora un único backend PSA compartido por ambos, y la salida es **idéntica byte a byte en todas partes** por construcción.
 
 <Code lang="cpp" title="device_secret.cpp — hkdfSha256() construido sobre un único primitivo HMAC">
 ```cpp
@@ -458,9 +468,9 @@ static constexpr std::array<uint8_t, 42> kRfcOkm = {
 
 static void test_hkdf_rfc5869_case1_matches_known_answer() {
     std::array<uint8_t, 42> okm{};
-    const bool ok = hkdfSha256(kRfcSalt.data(), kRfcSalt.size(),
-                               kRfcIkm.data(), kRfcIkm.size(),
-                               kRfcInfo.data(), kRfcInfo.size(),
+    const bool ok = hkdfSha256({kRfcSalt.data(), kRfcSalt.size()},
+                               {kRfcIkm.data(), kRfcIkm.size()},
+                               {kRfcInfo.data(), kRfcInfo.size()},
                                okm.data(), okm.size());
     TEST_ASSERT_TRUE(ok);
     TEST_ASSERT_EQUAL_MEMORY(kRfcOkm.data(), okm.data(), okm.size());   // exact bytes
@@ -482,25 +492,27 @@ La vinculación al dispositivo no es gratis, y fingir lo contrario sería su pro
 
 <CheckList title="Compromisos que estás aceptando">
 <li data-check="warning">**Un chip muerto o borrado es irrecuperable — por diseño.** La bóveda está vinculada a _este_ silicio. Si el chip falla o se dispara el borrado, la clave no puede reconstruirse en ningún otro sitio. La recuperación es la ruta de exportación/copia de seguridad que dejaste preparada de antemano, **no** custodia de claves.</li>
-<li data-check="warning">**El quemado del eFuse es de una sola vez e irreversible.** Aprovisionar el backend `EFuseHmac` quema un bloque de clave eFuse con propósito `HMAC_UP`, que consume ese bloque de forma permanente. Es una decisión del propietario tomada a conciencia en el primer arranque endurecido, no algo que un build flag deba hacer a tus espaldas.</li>
+<li data-check="warning">**El quemado del eFuse es de una sola vez e irreversible.** Aprovisionar el backend `EFuseHmac` quema un bloque de clave eFuse con propósito `HMAC_UP`, que consume ese bloque de forma permanente. Tiene que ser una decisión del propietario tomada a conciencia, no algo que un build flag haga a tus espaldas, y todavía no lo hace ningún paso (ver la nota de abajo).</li>
 <li data-check="cross">**Los builds abiertos no vinculan en absoluto.** Los builds de desarrollo resuelven al backend `None`, así que el paso de vinculación es un no-op byte a byte y el firmware sigue siendo reflasheable sin quemar eFuse. Cómodo para trastear con el dispositivo; también significa que un build abierto ofrece cero protección offline.</li>
 <li data-check="check">**La ruta del pepper es totalmente testeable hoy** — generar, persistir, recargar y la mezcla HKDF corren todos bajo el harness nativo del host contra el vector de la RFC.</li>
 </CheckList>
 
-<Callout type="important" title="Una nota a pie que te debo">
-Mi validación en el dispositivo de la ruta **eFuse-HMAC** sigue pendiente de una placa de desarrollo sacrificable — quemar un bloque eFuse es irreversible, así que quiero una placa que esté dispuesto a sacrificar antes de hacerlo de verdad. Para ser claro sobre lo que eso significa: el periférico HMAC, el propósito de clave `HMAC_UP` y la ruta de clave opaca de PSA son todos **tecnología ESP-IDF estándar y documentada** — la misma maquinaria que ESP-IDF usa para la derivación de claves de cifrado de NVS basada en HMAC. Nada de ello es especulativo. Lo que está pendiente es _mi_ pasada de hardware, no la existencia de la característica.
+### Una nota a pie que te debo: la clave del ESP32-S3 aún no está aprovisionada
+
+<Callout type="important" title="Bloqueado antes de validar">
+La ruta **eFuse-HMAC** está bloqueada un paso antes de cualquier validación en hardware: nada aprovisiona todavía su clave. Ningún paso de la checklist, script ni rutina del firmware quema el bloque de clave `HMAC_UP` que lee el backend, así que en un ESP32-S3 endurecido PSA rechaza la importación de la clave, la derivación falla y crear una bóveda se bloquea ante el fallo (el onboarding lo presenta como un PIN que no coincide). Mientras no exista ese paso de aprovisionamiento, un build endurecido del S3 **no puede crear una bóveda**. La ruta del pepper del ESP32 clásico no necesita aprovisionamiento, así que allí la vinculación funciona desde la primera bóveda. Para ser claro sobre el resto: el periférico HMAC, el propósito de clave `HMAC_UP` y la ruta de clave opaca de PSA son todos **tecnología ESP-IDF estándar y documentada**, la misma maquinaria que ESP-IDF usa para la derivación de claves de cifrado de NVS basada en HMAC. Lo que falta es el paso de quemado, y la decisión de darlo, no la característica.
 </Callout>
 
 ---
 
 ## Cierre: un PIN corto, dos defensas complementarias
 
-Da un paso atrás y el diseño es una división del trabajo limpia. Un PIN de 4 dígitos no tiene nada que hacer contra una GPU offline y es perfectamente válido contra alguien que teclea en un teclado — así que defiendo cada carril con el control que de verdad le encaja. El adivinado **online** se topa con la protección contra fuerza bruta: un puñado de intentos, lockouts que escalan y un borrado de la bóveda al décimo. El adivinado **offline** se topa con la vinculación al dispositivo: un secreto por-chip, sellado en el periférico HMAC en el S3 o guardado en NVS cifrado en el ESP32 clásico, mezclado en la clave con HKDF para que la clave maestra vinculada solo se reproduzca jamás en el silicio original.
+Da un paso atrás y el diseño es una división del trabajo limpia. Un PIN de 4 dígitos no tiene nada que hacer contra una GPU offline y es perfectamente válido contra alguien que teclea en un teclado — así que defiendo cada carril con el control que de verdad le encaja. El adivinado **online** se topa con la protección contra fuerza bruta: un puñado de intentos, lockouts que escalan y un borrado de la bóveda al décimo. El adivinado **offline** se topa con la vinculación al dispositivo: un secreto por-chip, sellado en el periférico HMAC en el S3 o guardado en NVS cifrado en el ESP32 clásico, mezclado en la clave con HKDF para que la clave maestra vinculada solo se reproduzca jamás en el silicio original. Los dos carriles tienen que estar presentes: eso es un build endurecido y, en el S3, una clave eFuse aprovisionada.
 
 Ninguna defensa por sí sola basta. El lockout no significa nada si el atacante puede adivinar fuera del dispositivo; la vinculación no significa nada contra alguien que simplemente sigue tecleando PINs. Juntas, una flash volcada es solo texto cifrado y un salt para una clave que el atacante no puede recalcular, y un dispositivo robado está a diez intentos de quedar borrado. Así es como diez mil combinaciones se vuelven genuinamente suficientes.
 
 <SecurityRating
   rating="A"
   title="PIN de 4 dígitos, vinculado al dispositivo"
-  description="Una protección contra fuerza bruta online (lockout que escala, borrado-tras-10) acota el adivinado en el dispositivo, mientras que la vinculación al dispositivo por eFuse-HMAC o pepper en NVS vía HKDF hace inviable un barrido offline por GPU del espacio de 10.000 claves del PIN. La salvedad honesta: la bóveda está atada al chip, así que un dispositivo muerto es irrecuperable por diseño — la recuperación es vía exportación/copia de seguridad, no custodia."
+  description="Una protección contra fuerza bruta online (lockout que escala, borrado-tras-10) acota el adivinado en el dispositivo, mientras que la vinculación al dispositivo por eFuse-HMAC o pepper en NVS vía HKDF hace inviable un barrido offline por GPU del espacio de 10.000 claves del PIN. Las salvedades honestas: solo se cumple en builds endurecidos (un build abierto solo tiene el bloqueo, y un ESP32-S3 endurecido aún necesita su clave eFuse aprovisionada), y la bóveda está atada al chip, así que un dispositivo muerto es irrecuperable por diseño — la recuperación es vía exportación/copia de seguridad, no custodia."
 />
