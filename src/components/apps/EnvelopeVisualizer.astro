@@ -1513,8 +1513,10 @@ const vkRows = [
 
   .ev-pfx-byte--changed {
     color: #fff;
-    background: var(--color-danger);
-    border-color: var(--color-danger);
+
+    /* Darkened fill: white on the plain danger hue is 3.3:1 in the dark theme. */
+    background: color-mix(in srgb, var(--color-danger) 72%, #000);
+    border-color: color-mix(in srgb, var(--color-danger) 72%, #000);
   }
 
   .ev-keys {
@@ -1738,8 +1740,10 @@ const vkRows = [
 
   .ev-byte--flipped {
     color: #fff;
-    background: var(--color-danger);
-    border-color: var(--color-danger);
+
+    /* Darkened fill: white on the plain danger hue is 3.3:1 in the dark theme. */
+    background: color-mix(in srgb, var(--color-danger) 72%, #000);
+    border-color: color-mix(in srgb, var(--color-danger) 72%, #000);
   }
 
   .ev-attacks-title {
@@ -1870,6 +1874,17 @@ const vkRows = [
 
   :root[data-theme="dark"] .ev-verdict--fail {
     color: var(--color-danger);
+  }
+
+  /* Light theme: danger on the pale danger-dim fill is 4.29:1; darken it. */
+  @media (prefers-color-scheme: light) {
+    :root:not([data-theme="dark"]) .ev-verdict--fail {
+      color: color-mix(in srgb, var(--color-danger) 85%, #000);
+    }
+  }
+
+  :root[data-theme="light"] .ev-verdict--fail {
+    color: color-mix(in srgb, var(--color-danger) 85%, #000);
   }
 
   :root[data-theme="dark"] .ev-verdict--leak {

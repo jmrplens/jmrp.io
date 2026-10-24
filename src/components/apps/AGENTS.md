@@ -22,7 +22,7 @@
 | `ColorContrastChecker` | 1863 | developer | `color-contrast-checker` |
 | `CronBuilder` | 1566 | developer | `cron-builder` |
 | `CSPBuilder` | 2212 | security | `csp-builder` |
-| `EnvelopeVisualizer` | 2032 | security | `etm-envelope-visualizer` |
+| `EnvelopeVisualizer` | 2047 | security | `etm-envelope-visualizer` |
 | `HashCalculator` | 576 | security | `hash-calculator` |
 | `HTTPHeadersAnalyzer` | 1963 | security | `http-headers-analyzer` |
 | `ModbusFrameBuilder` | 2741 | embedded | `modbus-frame-builder` |
