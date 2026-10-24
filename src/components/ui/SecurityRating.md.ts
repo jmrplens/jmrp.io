@@ -39,11 +39,10 @@ const TEXT = {
   },
 } as const;
 
-type Grade = keyof (typeof TEXT)["en"]["grade"];
-
 export default markdownFor({
   tag: "SecurityRating",
   toMarkdown(node, ctx) {
+    type Grade = keyof (typeof TEXT)["en"]["grade"];
     const words = TEXT[ctx.locale];
     const rating = ctx.attr(node, "rating") ?? "";
     const grade = rating in words.grade ? words.grade[rating as Grade] : "";

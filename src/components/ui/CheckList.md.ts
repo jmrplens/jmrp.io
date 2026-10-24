@@ -24,8 +24,6 @@ const MARKER = {
   es: { cross: "No", warning: "Advertencia", optional: "Opcional" },
 } as const;
 
-type MarkedState = keyof (typeof MARKER)["en"];
-
 /** mdast types that sit inside a paragraph rather than beside it. */
 const PHRASING = new Set([
   "text",
@@ -105,6 +103,7 @@ export default markdownFor({
     if (list.length === 0) return ctx.body(node);
 
     const bullets = list.map((item) => {
+      type MarkedState = keyof (typeof MARKER)["en"];
       const state = ctx.attr(item, "data-check");
       const label =
         state && state in MARKER.en

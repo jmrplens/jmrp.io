@@ -405,5 +405,4 @@ async function main() {
   }
 }
 
-// eslint-disable-next-line unicorn/no-top-level-side-effects -- CLI entry point
 await main();

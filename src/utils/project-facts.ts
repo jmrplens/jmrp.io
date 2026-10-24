@@ -163,9 +163,6 @@ export function dependabotSentence(
   );
 }
 
-/** Keys of the card's pluralized counters. */
-type CountKey = "issueCount" | "prCount" | "peopleCount";
-
 /**
  * A card's "Community" line ("3 issues from 3 people · 6 PRs from 4
  * people"), or `null` when neither side met the display threshold.
@@ -181,6 +178,8 @@ export function communityLine(
   locale: Locale,
 ): string | null {
   const t = useTranslations(locale);
+  /** Keys of the card's pluralized counters. */
+  type CountKey = "issueCount" | "prCount" | "peopleCount";
   const countOf = (key: CountKey, count: number): string =>
     pluralize(
       count,

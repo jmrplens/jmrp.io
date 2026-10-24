@@ -41,6 +41,11 @@ overrides:
   # GHSA-mrhx-c7xc-m3w5 (2026-10-23): every zod 4 below 4.6.6 moves to the
   # fix within the same major; the zod 3 copies are covered in auditConfig.
   "zod@>=4.0.0 <4.6.6": "^4.6.6"
+  # @opentelemetry/api 1.10.0 is newer than @opentelemetry/core 2.12 accepts
+  # (peer `>=1.0.0 <1.10.0`); both come from @sentry/node inside lighthouse,
+  # which asks for api ^1.9.1. Drop once core accepts 1.10 or sentry moves to
+  # core 3. Added 2026-10-24.
+  "@opentelemetry/api": "~1.9.1"
   "eslint": "^10.13.0"
   "vite": "^8.3.5"
   "@astrojs/markdown-remark>smol-toml": "^1.8.0"
