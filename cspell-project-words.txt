@@ -36,8 +36,16 @@ alshedivat
 amazonbot
 blockedbyclient
 braveway
+flasheable
 hostroyale
+LUKS
 omitempty
+PSRAM
+reanudable
+recifra
+recifrado
+recifrar
+reenvuelve
 unapprove
 unmarshal
 ámbar
