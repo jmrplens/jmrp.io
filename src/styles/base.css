@@ -358,14 +358,16 @@ h4 {
 
 /* ===== Ajustes móviles globales ============================================ */
 @media (width <= 900px) {
+  /* Same specificity as the tokens.css :root and the html rule above, and
+     later in the cascade: these win by order, no !important needed. */
   :root {
-    --space-md: 0.75rem !important;
-    --space-lg: 1.25rem !important;
-    --space-xl: 2.5rem !important;
+    --space-md: 0.75rem;
+    --space-lg: 1.25rem;
+    --space-xl: 2.5rem;
   }
 
   html {
-    font-size: 90% !important;
+    font-size: 90%;
   }
 
   h1 {
