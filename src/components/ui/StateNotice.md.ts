@@ -74,11 +74,10 @@ const TEXT = {
   },
 } as const;
 
-type NoticeType = keyof (typeof TEXT)["en"]["label"];
-
 export default markdownFor({
   tag: "StateNotice",
   toMarkdown(node, ctx) {
+    type NoticeType = keyof (typeof TEXT)["en"]["label"];
     const words = TEXT[ctx.locale];
     const raw = ctx.attr(node, "type") ?? "deprecated";
     const type: NoticeType =
