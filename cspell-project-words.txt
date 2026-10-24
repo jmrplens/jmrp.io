@@ -43,8 +43,11 @@ omitempty
 PSRAM
 reanudable
 recifra
+recifrada
 recifrado
 recifrar
+recifras
+reenvolver
 reenvuelve
 unapprove
 unmarshal
@@ -1330,6 +1333,7 @@ vlan
 vlsm
 volcarla
 volcarlo
+voltearlo
 volver
 vulnerab
 wbgetentities

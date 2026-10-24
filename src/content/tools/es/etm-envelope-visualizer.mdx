@@ -10,10 +10,11 @@ updatedDate: 2026-06-23
 tags: ["security", "cryptography", "encrypt-then-mac", "aes", "hmac", "firmware"]
 features:
   - "Sellado de sobre AES-256-CBC + HMAC-SHA256 en vivo"
-  - "Derivación de subclaves encKey y macKey separadas"
-  - "Tag ligado al contexto: ver‖recordType‖slotId‖generation"
+  - "La jerarquía de claves del firmware: KEK por PBKDF2, clave de bóveda envuelta y subclaves encKey y macKey separadas"
+  - "Tag ligado al contexto: ver‖recordType‖slotId‖generation, un prefijo de 8 bytes"
   - "Siete ataques reales: voltear, falsificar, truncar, reubicar, cambiar tipo, revertir"
-  - "Encrypt-then-MAC vs descifrar-primero, con ataque de oráculo de padding en vivo"
+  - "Cambio de PIN frente a recifrado, con la prueba de la frase retirada"
+  - "Encrypt-then-MAC vs descifrar-primero, con ataque de oráculo de padding en vivo sobre todos los bloques"
   - "Web Crypto API, nada sale de tu navegador"
 lang: "es"
 faq:
@@ -22,7 +23,9 @@ faq:
   - question: "¿Por qué verificar el MAC antes de descifrar?"
     answer: "Comprobar el tag primero hace que un fichero manipulado nunca llegue al descifrado AES-CBC, lo que cierra los ataques de oráculo de padding. Si el tag no coincide, la lectura se bloquea ante el fallo y no se produce texto plano."
   - question: "¿Por qué usar claves distintas para el cifrado y el MAC?"
-    answer: "Reutilizar una misma clave para AES y HMAC es inseguro, así que la frase de paso deriva una clave maestra que se abre en subclaves encKey y macKey distintas. La clave de cifrado y la de MAC nunca son el mismo valor."
+    answer: "Reutilizar una misma clave para AES y HMAC es inseguro. La frase de paso solo desbloquea una clave de bóveda aleatoria, y la clave de bóveda se abre en subclaves encKey y macKey distintas con etiquetas HMAC diferentes, así que la clave de cifrado y la de MAC nunca son el mismo valor."
+  - question: "¿Por qué cambiar la frase de paso no vuelve a cifrar el sobre?"
+    answer: "La frase deriva una clave de cifrado de clave que envuelve una clave de bóveda aleatoria, y los registros están ligados a la clave de bóveda. Cambiar la frase reenvuelve ese único valor, lo que lo abarata, pero una frase retirada más una copia antigua de meta.bin siguen desenvolviendo la misma clave de bóveda. Solo recifrar con una clave de bóveda nueva la revoca."
   - question: "¿Qué ocurre cuando altero un byte del sobre?"
     answer: "Alterar cualquier byte cambia los datos que cubre el HMAC, así que el tag recalculado deja de coincidir con el tag almacenado. La lectura se bloquea ante el fallo: no se descifra nada y no se devuelve texto plano."
   - question: "¿Se envía mi secreto o frase de paso a algún sitio?"
@@ -41,12 +44,14 @@ import ToolInfo from "@components/ui/ToolInfo.astro";
 
 <h2>Sobre esta herramienta</h2>
 <p>
-  Cada fichero de la bóveda es un sobre <strong>encrypt-then-MAC</strong>:{" "}
+  Cada registro de la bóveda es un sobre <strong>encrypt-then-MAC</strong>:{" "}
   <code>[ver][iv][hmacTag][cipher]</code>. Esta herramienta construye uno de
-  verdad en tu navegador — deriva subclaves <code>encKey</code> y{" "}
-  <code>macKey</code> distintas, cifra el secreto con{" "}
-  <strong>AES-256-CBC</strong> y autentica juntos el byte de versión, el IV y el
-  texto cifrado con <strong>HMAC-SHA256</strong>.
+  verdad en tu navegador, con la jerarquía de claves del firmware: PBKDF2
+  convierte la frase en una clave de cifrado de clave, que desenvuelve una clave
+  de bóveda aleatoria, de la que salen subclaves <code>encKey</code> y{" "}
+  <code>macKey</code> distintas. Cifra el secreto con{" "}
+  <strong>AES-256-CBC</strong> y autentica juntos el contexto, el IV y el texto
+  cifrado con <strong>HMAC-SHA256</strong>.
 </p>
 <p>
   Es la compañera interactiva del artículo{" "}
@@ -75,18 +80,33 @@ import ToolInfo from "@components/ui/ToolInfo.astro";
   <li>
     Cambia el camino de lectura a <strong>descifrar-primero</strong> y pulsa{" "}
     <strong>Lanzar el ataque de oráculo de padding</strong>: un ataque de
-    Vaudenay real recupera el último bloque del texto plano <em>byte a byte</em>{" "}
-    usando solo la señal de padding válido/inválido — sin la clave. Vuelve a
+    Vaudenay real recupera todos los bloques del texto plano{" "}
+    <em>byte a byte</em> usando solo la señal de padding válido/inválido, bloque
+    tras bloque, y cuenta las consultas que necesitó. Sin la clave. Vuelve a
     encrypt-then-MAC y el mismo atacante enmudece.
+  </li>
+  <li>
+    En <strong>Cambio de PIN frente a recifrado</strong>, cambia la frase: el
+    sobre no se mueve y sigue verificando. Luego abre la bóveda con la{" "}
+    <strong>frase retirada y el meta.bin viejo</strong>, y comprueba que
+    funciona, hasta que <strong>recifras la bóveda</strong> con una clave de
+    bóveda nueva.
   </li>
 </ol>
 
 <h3>¿Qué muestra?</h3>
 <ul>
   <li>
-    <strong>Separación de claves</strong> — una frase de paso se convierte en una
-    clave maestra que se abre en subclaves <code>encKey</code> y{" "}
+    <strong>Jerarquía de claves</strong>: la frase se convierte en una clave de
+    cifrado de clave (KEK) que la prueba y desenvuelve una clave de bóveda
+    aleatoria; la clave de bóveda se abre en subclaves <code>encKey</code> y{" "}
     <code>macKey</code> distintas.
+  </li>
+  <li>
+    <strong>Lo que cuesta un cambio de PIN</strong>: reenvuelve la clave de bóveda
+    en vez de recifrar los registros, así que es barato, y una frase retirada con
+    un <code>meta.bin</code> viejo sigue abriendo la bóveda. Lo que revoca es el
+    recifrado.
   </li>
   <li>
     <strong>Ligado al contexto</strong> — el tag cubre{" "}
@@ -113,13 +133,17 @@ import ToolInfo from "@components/ui/ToolInfo.astro";
 
 <h3>La construcción, en fórmulas</h3>
 <p>Sellado (camino de escritura):</p>
-<pre><code>{`encKey = HMAC(master, "vault-enc")
-macKey = HMAC(master, "vault-mac")
+<pre><code>{`KEK    = PBKDF2-SHA256(passphrase, kdfSalt, 175000)
+VK     = 32 bytes aleatorios, guardados en meta.bin, envueltos con la KEK:
+         AES-256-CBC(HMAC(KEK, "kleidos-wrap-enc"), wrapIv, VK)
+encKey = HMAC(VK, "kleidos-enc")
+macKey = HMAC(VK, "kleidos-mac" ‖ hmacSalt)
 C      = AES-256-CBC-Encrypt(encKey, IV, PKCS7(P))
 tag    = HMAC-SHA256(macKey, ver ‖ recordType ‖ slotId ‖ generation ‖ IV ‖ C)
 file   = [ver] [IV] [tag] [C]`}</code></pre>
 <p>Lectura bajo encrypt-then-MAC (verificar y luego descifrar):</p>
-<pre><code>{`tag' = HMAC-SHA256(macKey, context ‖ IV ‖ C)
+<pre><code>{`if ver != 0x01 or len(C) % 16 != 0: reject      // primero, la estructura
+tag' = HMAC-SHA256(macKey, context ‖ IV ‖ C)
 if not constant_time_equal(tag', tag): reject   // bloqueo ante fallos, sin texto plano
 P    = unpad(AES-256-CBC-Decrypt(encKey, IV, C))`}</code></pre>
 <p>Por qué el orden lo es todo — el trabajo al que se enfrenta un atacante:</p>

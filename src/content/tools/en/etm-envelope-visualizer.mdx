@@ -10,10 +10,11 @@ updatedDate: 2026-06-23
 tags: ["security", "cryptography", "encrypt-then-mac", "aes", "hmac", "firmware"]
 features:
   - "Live AES-256-CBC + HMAC-SHA256 envelope sealing"
-  - "Separate encKey and macKey sub-key derivation"
-  - "Context-bound tag: ver‖recordType‖slotId‖generation"
+  - "The firmware's key hierarchy: a PBKDF2 KEK, a wrapped vault key and separate encKey and macKey sub-keys"
+  - "Context-bound tag: ver‖recordType‖slotId‖generation, an 8-byte prefix"
   - "Seven real attacks: flip, forge, truncate, relocate, retype, roll back"
-  - "Encrypt-then-MAC vs decrypt-first, with a live padding-oracle attack"
+  - "PIN change vs re-encryption, with the retired-passphrase check"
+  - "Encrypt-then-MAC vs decrypt-first, with a live padding-oracle attack on every block"
   - "Web Crypto API, nothing leaves your browser"
 faq:
   - question: "What does \"encrypt-then-MAC\" mean?"
@@ -21,7 +22,9 @@ faq:
   - question: "Why verify the MAC before decrypting?"
     answer: "Checking the tag first means a tampered file never reaches the AES-CBC decrypt path, which closes off padding-oracle attacks. If the tag does not match, the read fails closed and no plaintext is produced."
   - question: "Why use separate keys for encryption and the MAC?"
-    answer: "Reusing one key for both AES and HMAC is unsafe, so the passphrase derives a master key that fans out into distinct encKey and macKey sub-keys. The encryption key and the MAC key are never the same value."
+    answer: "Reusing one key for both AES and HMAC is unsafe. The passphrase only unlocks a random vault key, and the vault key fans out into distinct encKey and macKey sub-keys under different HMAC labels, so the encryption key and the MAC key are never the same value."
+  - question: "Why doesn't changing the passphrase re-encrypt the envelope?"
+    answer: "The passphrase derives a key-encryption key that wraps a random vault key, and the records are keyed to the vault key. Changing the passphrase rewraps that one value, which makes it cheap, but a retired passphrase plus an old copy of meta.bin still unwraps the same vault key. Only re-encrypting under a new vault key revokes it."
   - question: "What happens when I flip a byte in the envelope?"
     answer: "Flipping any byte changes the data the HMAC covers, so the recomputed tag no longer matches the stored tag. The read fails closed — no decryption runs and no plaintext is returned."
   - question: "Is my secret or passphrase sent anywhere?"
@@ -40,12 +43,13 @@ import ToolInfo from "@components/ui/ToolInfo.astro";
 
 <h2>About This Tool</h2>
 <p>
-  Every file in the vault is an <strong>encrypt-then-MAC</strong> envelope:{" "}
+  Every record in the vault is an <strong>encrypt-then-MAC</strong> envelope:{" "}
   <code>[ver][iv][hmacTag][cipher]</code>. This tool builds one for real in your
-  browser — it derives separate <code>encKey</code> and <code>macKey</code>{" "}
-  sub-keys, encrypts the secret with <strong>AES-256-CBC</strong>, and
-  authenticates the version byte, IV, and ciphertext together with{" "}
-  <strong>HMAC-SHA256</strong>.
+  browser, with the firmware's key hierarchy: PBKDF2 turns the passphrase into a
+  key-encryption key, which unwraps a random vault key, which yields separate{" "}
+  <code>encKey</code> and <code>macKey</code> sub-keys. It encrypts the secret
+  with <strong>AES-256-CBC</strong> and authenticates the context, IV, and
+  ciphertext together with <strong>HMAC-SHA256</strong>.
 </p>
 <p>
   It is the interactive companion to the article{" "}
@@ -72,17 +76,31 @@ import ToolInfo from "@components/ui/ToolInfo.astro";
   <li>
     Flip the read path to <strong>decrypt-first</strong> and press{" "}
     <strong>Run the padding-oracle attack</strong>: a real Vaudenay attack
-    recovers the last plaintext block <em>byte-by-byte</em> using only the
-    padding-valid/invalid signal — no key. Switch back to encrypt-then-MAC and
+    recovers every plaintext block <em>byte-by-byte</em> using only the
+    padding-valid/invalid signal, block after block, and counts the queries it
+    took. No key. Switch back to encrypt-then-MAC and
     the same attacker goes silent.
+  </li>
+  <li>
+    In <strong>PIN change vs re-encryption</strong>, change the passphrase: the
+    envelope does not move and still verifies. Then open the vault with the{" "}
+    <strong>retired passphrase and the old meta.bin</strong>, and see that it
+    works, until you <strong>re-encrypt the vault</strong> under a new vault key.
   </li>
 </ol>
 
 <h3>What does it show?</h3>
 <ul>
   <li>
-    <strong>Key separation</strong> — one passphrase becomes a master key, which
-    fans out into distinct <code>encKey</code> and <code>macKey</code> sub-keys.
+    <strong>Key hierarchy</strong>: the passphrase becomes a key-encryption key
+    (KEK) that proves it and unwraps a random vault key; the vault key fans out
+    into distinct <code>encKey</code> and <code>macKey</code> sub-keys.
+  </li>
+  <li>
+    <strong>What a PIN change costs</strong>: it rewraps the vault key instead of
+    re-encrypting the records, so it is cheap, and a retired passphrase with an
+    old <code>meta.bin</code> still opens the vault. Re-encryption is what
+    revokes.
   </li>
   <li>
     <strong>Context binding</strong> — the tag covers{" "}
@@ -107,13 +125,17 @@ import ToolInfo from "@components/ui/ToolInfo.astro";
 
 <h3>The construction, in formulas</h3>
 <p>Sealing (write path):</p>
-<pre><code>{`encKey = HMAC(master, "vault-enc")
-macKey = HMAC(master, "vault-mac")
+<pre><code>{`KEK    = PBKDF2-SHA256(passphrase, kdfSalt, 175000)
+VK     = 32 random bytes, kept in meta.bin wrapped under the KEK:
+         AES-256-CBC(HMAC(KEK, "kleidos-wrap-enc"), wrapIv, VK)
+encKey = HMAC(VK, "kleidos-enc")
+macKey = HMAC(VK, "kleidos-mac" ‖ hmacSalt)
 C      = AES-256-CBC-Encrypt(encKey, IV, PKCS7(P))
 tag    = HMAC-SHA256(macKey, ver ‖ recordType ‖ slotId ‖ generation ‖ IV ‖ C)
 file   = [ver] [IV] [tag] [C]`}</code></pre>
 <p>Reading under encrypt-then-MAC (verify, then decrypt):</p>
-<pre><code>{`tag' = HMAC-SHA256(macKey, context ‖ IV ‖ C)
+<pre><code>{`if ver != 0x01 or len(C) % 16 != 0: reject      // structure first
+tag' = HMAC-SHA256(macKey, context ‖ IV ‖ C)
 if not constant_time_equal(tag', tag): reject   // fail closed, no plaintext
 P    = unpad(AES-256-CBC-Decrypt(encKey, IV, C))`}</code></pre>
 <p>Why the order is the whole game — the work an attacker faces:</p>

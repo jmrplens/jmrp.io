@@ -1358,25 +1358,33 @@ export const tools = {
   },
   etmEnvelope: {
     secretLabel: "Secret to store",
-    passphraseLabel: "Passphrase (key)",
+    passphraseLabel: "Passphrase (unlocks the vault)",
+    passphraseNote:
+      "Editing it creates a fresh vault (new vault key, new salts). To see a PIN change instead, use the section further down.",
     secretExample: "my super-secret password",
     passphraseExample: "correct horse battery staple",
     keyDerivationNote:
-      "Two sub-keys are derived from one master key (SHA-256 of the passphrase) with distinct HMAC labels — so the encryption key and the MAC key are never the same.",
+      "PBKDF2-SHA256 (175,000 iterations, the ESP32-S3 count) turns the passphrase into a key-encryption key (KEK). The KEK proves the passphrase and unwraps a random 32-byte vault key (VK) kept in meta.bin. The record keys come from the VK, each under its own HMAC label, so the encryption key and the MAC key are never the same.",
+    keyGroupKek: "Opened by the passphrase (meta.bin, KEK half)",
+    keyGroupVk: "From the vault key (VK)",
+    keyDeriving: "deriving…",
     encKeyLabel: "encKey",
     macKeyLabel: "macKey",
     contextHeading: "Authenticated context (bound into the tag, not stored)",
     contextNote:
-      "The tag also covers ver ‖ recordType ‖ slotId ‖ generation. These bytes are never written to the file — they come from where it lives and from meta.bin — so relocating, retyping, or rolling back a file breaks the MAC. Changing one here re-seals the envelope.",
+      "The tag also covers ver ‖ recordType ‖ slotId ‖ generation. These 8 bytes are not part of the envelope: they come from where the record lives and from meta.bin, so relocating, retyping, or rolling back a record breaks the MAC. Changing one here re-seals the envelope.",
     fieldType: "recordType",
-    fieldSlot: "slotId (0–255)",
+    fieldSlot: "slotId (0–65535)",
     fieldGen: "generation",
-    typeCredential: "Credential",
-    typeTotp: "Totp",
-    typeIndex: "Index",
+    typeCredential: "Credential (0x01)",
+    typeTotp: "Totp (0x02)",
+    typeIndex: "Index segment (0x06)",
+    prefixLabel: "authPrefix the read recomputes (8 B, not stored):",
     envelopeHeading: "Sealed envelope",
     tamperHint:
       "Click any byte to flip it — or use an attack below — then watch the read-path verdict.",
+    lengthNote:
+      "Here the ciphertext tracks the secret's length, rounded up to 16 bytes. The firmware pads every credential to a fixed 4,096-byte record first, so all credential ciphertexts have the same length.",
     restore: "Restore",
     fieldVer: "ver · 1 B",
     fieldIv: "iv · 16 B",
@@ -1400,6 +1408,7 @@ export const tools = {
     modeDecryptFirstNote:
       "Decryption runs on attacker bytes before the MAC is consulted — this is where a padding oracle lives.",
     emptyState: "Enter a secret above to seal it into an envelope.",
+    emptyPass: "Enter a passphrase to create the vault.",
     okVerdict: "Tag verified — safe to decrypt.",
     failTitle: "Read fails closed.",
     pristine: "The envelope is pristine — tamper with it to see the MAC react.",
@@ -1419,27 +1428,51 @@ export const tools = {
       "The tag binds recordType, so reading the file as another type fails the MAC.",
     reasonRollback:
       "The tag binds the per-slot generation; meta.bin has moved on, so a stale file fails.",
+    reasonVersion:
+      "Unknown format version: the read rejects the envelope before it even computes the tag.",
     decryptFirstLeakTitle: "Decryption ran on attacker bytes.",
     decryptFirstLeakNote:
       "It threw a padding error — and that pass/fail signal is the padding oracle. The MAC was never reached in time.",
     decryptFirstOkNote:
-      "the cipher already produced output; only now is the MAC checked (mac {mac}) — too late.",
+      "the cipher already produced output, and only now is the MAC checked (mac {mac}): too late.",
     decryptedLabel: "decrypted",
     byteTitle: "Click to flip this byte",
+    byteAria: "{field} byte {index}: {hex}. Activate to flip it.",
     insecureContext:
       "This live demo needs a secure context — open it over HTTPS or on localhost to run the in-browser cryptography.",
+    rekeyHeading: "PIN change vs re-encryption",
+    rekeyNote:
+      "Changing the passphrase rewraps the vault key under a new KEK: one half of meta.bin changes and the records stay as they are. That makes a PIN change cheap, and it is also why a PIN change does not revoke a key someone already captured.",
+    newPassLabel: "New passphrase",
+    newPassExample: "tr0ub4dor&3",
+    btnChangePass: "Change the passphrase (rewrap)",
+    btnRotate: "Re-encrypt the vault (new vault key)",
+    btnTryRetired: "Open with the retired passphrase + old meta.bin",
+    rekeyIdle:
+      "Change the passphrase, keeping a copy of the old meta.bin, then try to open the vault with the retired passphrase.",
+    rekeyChanged:
+      "Passphrase changed: new kdfSalt, new KEK, new wrap. The vault key, encKey, macKey and the envelope above are untouched, and it still verifies.",
+    rekeyRotated:
+      "Vault re-encrypted under a new vault key: the envelope was sealed again with a new IV, ciphertext and tag.",
+    retiredOpened:
+      "Opened. The retired passphrase re-derives the old KEK, the old half's tag and verifier check out, the wrap opens, and vkCheck names the current vault key. The envelope decrypts to “{plain}”. A PIN change does not revoke a captured key.",
+    retiredRevoked:
+      "The retired passphrase still opens the old meta.bin, but it wraps the previous vault key, and the current envelope's tag does not verify under it. Re-encryption is what revokes.",
+    needNewPass: "Type a new passphrase that differs from the current one.",
     oracleHeading: "Padding-oracle attacker",
     oracleIntro:
-      "In decrypt-first mode the device leaks one bit per query — padding valid or not. That is enough to recover plaintext without the key. Switch to encrypt-then-MAC and the same attacker goes silent.",
+      "In decrypt-first mode the device leaks one bit per query: padding valid or not. That is enough to recover every plaintext block without the key. Switch to encrypt-then-MAC and the same attacker goes silent.",
     oracleRun: "Run the padding-oracle attack",
     oracleRunning:
-      "Querying the oracle, recovering the last block byte-by-byte…",
+      "Querying the oracle: block {block} of {total}, byte by byte…",
     oracleBlocked:
       "Blocked: encrypt-then-MAC verifies the tag first, so the decrypt step is never reached — the oracle never answers.",
-    oracleRecoveredLabel: "Recovered last block:",
+    oracleRecoveredLabel: "Recovered plaintext:",
     oracleDone:
-      "Last block recovered with only the padding-valid/invalid signal — no key needed.",
+      "All {bytes} bytes recovered (padding included) in {queries} oracle queries, using only the padding-valid/invalid signal. No key needed.",
     oracleNeedBlock: "Need at least one ciphertext block to attack.",
+    oraclePaddingNote:
+      "Why the oracle exists here: the browser's AES-CBC adds and checks PKCS#7 padding itself, and a bad pad throws. The firmware pads in its own code over AES-CBC without padding, and checks the padding in constant time only after the MAC has passed.",
     malleabilityHeading: "CBC malleability — the attacker's lever",
     malleabilityNote:
       "In CBC, flipping a byte of the IV flips the matching plaintext byte of block 0 by the exact same amount — a controlled change. (Encrypt-then-MAC means you never get to use it.)",
