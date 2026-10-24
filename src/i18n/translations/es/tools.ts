@@ -1386,25 +1386,33 @@ export const tools = {
   },
   etmEnvelope: {
     secretLabel: "Secreto a guardar",
-    passphraseLabel: "Frase de paso (clave)",
+    passphraseLabel: "Frase de paso (desbloquea la bóveda)",
+    passphraseNote:
+      "Editarla crea una bóveda nueva (clave de bóveda y salts nuevos). Para ver un cambio de PIN, usa la sección de más abajo.",
     secretExample: "mi contraseña super secreta",
     passphraseExample: "caballo correcto batería grapa",
     keyDerivationNote:
-      "De una clave maestra (SHA-256 de la frase) se derivan dos subclaves con etiquetas HMAC distintas — así la clave de cifrado y la de MAC nunca son la misma.",
+      "PBKDF2-SHA256 (175.000 iteraciones, el recuento del ESP32-S3) convierte la frase en una clave de cifrado de clave (KEK). La KEK prueba la frase y desenvuelve una clave de bóveda (VK) aleatoria de 32 bytes guardada en meta.bin. Las claves de los registros salen de la VK, cada una con su propia etiqueta HMAC, así que la clave de cifrado y la de MAC nunca son la misma.",
+    keyGroupKek: "Las abre la frase (meta.bin, mitad KEK)",
+    keyGroupVk: "Salen de la clave de bóveda (VK)",
+    keyDeriving: "derivando…",
     encKeyLabel: "encKey",
     macKeyLabel: "macKey",
     contextHeading: "Contexto autenticado (ligado al tag, no se almacena)",
     contextNote:
-      "El tag también cubre ver ‖ recordType ‖ slotId ‖ generation. Esos bytes nunca se escriben en el fichero — vienen de dónde vive y de meta.bin — así que reubicar, cambiar de tipo o revertir un fichero rompe el MAC. Cambiar uno aquí vuelve a sellar el sobre.",
+      "El tag también cubre ver ‖ recordType ‖ slotId ‖ generation. Esos 8 bytes no forman parte del sobre: vienen de dónde vive el registro y de meta.bin, así que reubicar, cambiar de tipo o revertir un registro rompe el MAC. Cambiar uno aquí vuelve a sellar el sobre.",
     fieldType: "recordType",
-    fieldSlot: "slotId (0–255)",
+    fieldSlot: "slotId (0–65535)",
     fieldGen: "generation",
-    typeCredential: "Credencial",
-    typeTotp: "Totp",
-    typeIndex: "Índice",
+    typeCredential: "Credencial (0x01)",
+    typeTotp: "Totp (0x02)",
+    typeIndex: "Segmento de índice (0x06)",
+    prefixLabel: "authPrefix que recalcula la lectura (8 B, no se guarda):",
     envelopeHeading: "Sobre sellado",
     tamperHint:
       "Pulsa cualquier byte para alterarlo — o usa un ataque de abajo — y observa el veredicto de la lectura.",
+    lengthNote:
+      "Aquí el texto cifrado sigue la longitud del secreto, redondeada a 16 bytes. El firmware rellena antes cada credencial hasta un registro fijo de 4.096 bytes, así que todos los cifrados de credencial miden lo mismo.",
     restore: "Restaurar",
     fieldVer: "ver · 1 B",
     fieldIv: "iv · 16 B",
@@ -1428,6 +1436,7 @@ export const tools = {
     modeDecryptFirstNote:
       "El descifrado corre sobre los bytes del atacante antes de consultar el MAC — ahí vive un oráculo de padding.",
     emptyState: "Escribe un secreto arriba para sellarlo en un sobre.",
+    emptyPass: "Escribe una frase de paso para crear la bóveda.",
     okVerdict: "Tag verificado — seguro descifrar.",
     failTitle: "La lectura se bloquea ante el fallo.",
     pristine:
@@ -1448,27 +1457,51 @@ export const tools = {
       "El tag liga el recordType, así que leer el fichero como otro tipo hace fallar el MAC.",
     reasonRollback:
       "El tag liga la generación por slot; meta.bin ha avanzado, así que un fichero obsoleto falla.",
+    reasonVersion:
+      "Versión de formato desconocida: la lectura rechaza el sobre antes incluso de calcular el tag.",
     decryptFirstLeakTitle: "El descifrado corrió sobre bytes del atacante.",
     decryptFirstLeakNote:
       "Lanzó un error de padding — y esa señal de éxito/fallo es el oráculo de padding. El MAC nunca se alcanzó a tiempo.",
     decryptFirstOkNote:
-      "el cifrado ya produjo salida; solo ahora se comprueba el MAC (mac {mac}) — demasiado tarde.",
+      "el cifrado ya produjo salida, y solo ahora se comprueba el MAC (mac {mac}): demasiado tarde.",
     decryptedLabel: "descifrado",
     byteTitle: "Pulsa para alterar este byte",
+    byteAria: "{field}, byte {index}: {hex}. Actívalo para voltearlo.",
     insecureContext:
       "Esta demo en vivo necesita un contexto seguro — ábrela por HTTPS o en localhost para ejecutar la criptografía en el navegador.",
+    rekeyHeading: "Cambio de PIN frente a recifrado",
+    rekeyNote:
+      "Cambiar la frase reenvuelve la clave de bóveda bajo una KEK nueva: cambia una mitad de meta.bin y los registros se quedan como están. Eso abarata el cambio de PIN, y también es la razón de que cambiar el PIN no revoque una clave que alguien ya haya capturado.",
+    newPassLabel: "Frase nueva",
+    newPassExample: "tr0ub4dor&3",
+    btnChangePass: "Cambiar la frase (reenvolver)",
+    btnRotate: "Recifrar la bóveda (clave de bóveda nueva)",
+    btnTryRetired: "Abrir con la frase retirada + el meta.bin viejo",
+    rekeyIdle:
+      "Cambia la frase, guardando una copia del meta.bin viejo, y luego intenta abrir la bóveda con la frase retirada.",
+    rekeyChanged:
+      "Frase cambiada: kdfSalt nuevo, KEK nueva, envoltorio nuevo. La clave de bóveda, encKey, macKey y el sobre de arriba no se han tocado, y sigue verificando.",
+    rekeyRotated:
+      "Bóveda recifrada bajo una clave de bóveda nueva: el sobre se ha vuelto a sellar con IV, cifrado y tag nuevos.",
+    retiredOpened:
+      "Abierta. La frase retirada vuelve a derivar la KEK vieja, el tag y el verificador de la mitad vieja cuadran, el envoltorio se abre y vkCheck nombra la clave de bóveda actual. El sobre se descifra como “{plain}”. Cambiar el PIN no revoca una clave capturada.",
+    retiredRevoked:
+      "La frase retirada todavía abre el meta.bin viejo, pero este envuelve la clave de bóveda anterior, y el tag del sobre actual no verifica con ella. Lo que revoca es el recifrado.",
+    needNewPass: "Escribe una frase nueva distinta de la actual.",
     oracleHeading: "Atacante de oráculo de padding",
     oracleIntro:
-      "En modo descifrar-primero el dispositivo filtra un bit por consulta — padding válido o no. Eso basta para recuperar el texto plano sin la clave. Cambia a encrypt-then-MAC y el mismo atacante enmudece.",
+      "En modo descifrar-primero el dispositivo filtra un bit por consulta: padding válido o no. Eso basta para recuperar todos los bloques del texto plano sin la clave. Cambia a encrypt-then-MAC y el mismo atacante enmudece.",
     oracleRun: "Lanzar el ataque de oráculo de padding",
     oracleRunning:
-      "Consultando al oráculo, recuperando el último bloque byte a byte…",
+      "Consultando al oráculo: bloque {block} de {total}, byte a byte…",
     oracleBlocked:
       "Bloqueado: encrypt-then-MAC verifica el tag primero, así que nunca se llega al descifrado — el oráculo no responde.",
-    oracleRecoveredLabel: "Último bloque recuperado:",
+    oracleRecoveredLabel: "Texto plano recuperado:",
     oracleDone:
-      "Último bloque recuperado solo con la señal de padding válido/inválido — sin la clave.",
+      "Recuperados los {bytes} bytes (relleno incluido) en {queries} consultas al oráculo, solo con la señal de padding válido/inválido. Sin la clave.",
     oracleNeedBlock: "Hace falta al menos un bloque de cifrado para atacar.",
+    oraclePaddingNote:
+      "Por qué existe aquí el oráculo: el AES-CBC del navegador añade y comprueba el relleno PKCS#7 por su cuenta, y un relleno malo lanza un error. El firmware rellena con su propio código sobre AES-CBC sin relleno, y comprueba el relleno en tiempo constante solo después de que el MAC haya pasado.",
     malleabilityHeading: "Maleabilidad CBC — la palanca del atacante",
     malleabilityNote:
       "En CBC, voltear un byte del IV voltea el byte correspondiente del texto plano del bloque 0 en la misma cantidad exacta — un cambio controlado. (Con encrypt-then-MAC nunca llegas a usarlo.)",

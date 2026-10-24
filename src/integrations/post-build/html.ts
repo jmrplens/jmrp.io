@@ -832,11 +832,31 @@ function skipPrefetchOnExternalLinks($: cheerio.CheerioAPI): boolean {
 }
 
 /**
+ * Whether an empty paragraph is a hook a script fills at runtime rather than
+ * an MDX artifact: a live region (`role`, `aria-live`), an `id`, or a `data-*`
+ * attribute of its own. Astro's scoping `data-astro-cid-*` does not count.
+ *
+ * @param el - The paragraph element.
+ * @returns `true` when the paragraph must survive even though it is empty.
+ */
+function isRuntimeHook(el: Element): boolean {
+  return Object.keys(el.attribs).some(
+    (name) =>
+      name === "id" ||
+      name === "role" ||
+      name === "aria-live" ||
+      (name.startsWith("data-") && !name.startsWith("data-astro-")),
+  );
+}
+
+/**
  * Removes paragraphs with no content at all.
  *
  * MDX produces an empty `<p></p>` at raw-HTML/markdown boundaries; see the
  * call site for the measured impact. A paragraph survives if it has any
- * non-whitespace text or any element child.
+ * non-whitespace text or any element child, or if it is a runtime hook
+ * (`isRuntimeHook`): the envelope visualizer's two status lines were removed
+ * here, so its script failed on a null element and every seal read "Error".
  *
  * @param $ - Cheerio API for the page.
  * @returns `true` when at least one empty paragraph was removed.
@@ -845,6 +865,7 @@ function removeEmptyParagraphs($: cheerio.CheerioAPI): boolean {
   let modified = false;
   $("p").each((_, el) => {
     const $el = $(el);
+    if (isRuntimeHook(el)) return;
     if ($el.children().length === 0 && $el.text().trim() === "") {
       $el.remove();
       modified = true;

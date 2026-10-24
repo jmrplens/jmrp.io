@@ -553,3 +553,77 @@ test.describe("HTTP Headers Analyzer", () => {
     );
   });
 });
+
+// ─── Encrypt-then-MAC Envelope Visualizer ────────────────────────────
+
+test.describe("Encrypt-then-MAC Envelope Visualizer", () => {
+  // PBKDF2 runs at the firmware's 175,000 iterations in the page, so a seal
+  // can take a moment on a loaded runner.
+  const SEAL_TIMEOUT = 20_000;
+
+  test.beforeEach(async ({ page }) => {
+    await blockCloudflare(page);
+    await page.goto("/tools/etm-envelope-visualizer/");
+  });
+
+  test("seals the example secret and verifies it", async ({ page }) => {
+    const errors = trackConsoleErrors(page);
+    const root = page.locator("[data-ev-id]");
+    await expect(root.locator("[data-ev-verdict]")).toHaveClass(
+      /ev-verdict--ok/,
+      { timeout: SEAL_TIMEOUT },
+    );
+    // 8-byte authenticated prefix: ver 01, type 01, slot 3 as u16 LE, gen 1 as u32 LE.
+    await expect(root.locator("[data-ev-prefix]")).toHaveText(
+      "0101030001000000",
+    );
+    expect(errors).toEqual([]);
+  });
+
+  test("rejects an unknown version byte before the MAC", async ({ page }) => {
+    const root = page.locator("[data-ev-id]");
+    const verdict = root.locator("[data-ev-verdict]");
+    await expect(verdict).toHaveClass(/ev-verdict--ok/, {
+      timeout: SEAL_TIMEOUT,
+    });
+    await root.locator('[data-ev-bytes="ver"] .ev-byte').first().click();
+    await expect(verdict).toHaveClass(/ev-verdict--fail/);
+  });
+
+  test("a passphrase change rewraps without touching the envelope", async ({
+    page,
+  }) => {
+    const root = page.locator("[data-ev-id]");
+    const verdict = root.locator("[data-ev-verdict]");
+    const status = root.locator("[data-ev-rekey-status]");
+    const cipher = root.locator('[data-ev-bytes="cipher"]');
+    await expect(verdict).toHaveClass(/ev-verdict--ok/, {
+      timeout: SEAL_TIMEOUT,
+    });
+    const sealed = (await cipher.textContent()) ?? "";
+
+    await root.locator("[data-ev-change-pass]").click();
+    await expect(status).toHaveClass(/ev-rekey-status--ok/, {
+      timeout: SEAL_TIMEOUT,
+    });
+    await expect(cipher).toHaveText(sealed);
+    await expect(verdict).toHaveClass(/ev-verdict--ok/);
+
+    // The retired passphrase plus the old meta.bin still opens the vault…
+    await root.locator("[data-ev-retired]").click();
+    await expect(status).toHaveClass(/ev-rekey-status--warn/, {
+      timeout: SEAL_TIMEOUT,
+    });
+
+    // …until the vault is re-encrypted under a new vault key.
+    await root.locator("[data-ev-reencrypt]").click();
+    await expect(status).toHaveClass(/ev-rekey-status--ok/, {
+      timeout: SEAL_TIMEOUT,
+    });
+    await expect(cipher).not.toHaveText(sealed);
+    await root.locator("[data-ev-retired]").click();
+    await expect(status).toHaveClass(/ev-rekey-status--ok/, {
+      timeout: SEAL_TIMEOUT,
+    });
+  });
+});
