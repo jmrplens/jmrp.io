@@ -490,9 +490,8 @@ function edgeRow(r, site) {
 async function collectEdgeServed(fromS, toS, site = EDGE_SITES[0]) {
   // A site whose origin keeps no log (ingestAll) contributes every request;
   // the others only what the origin never saw, so nothing is counted twice.
-  const verdictFilter = site.ingestAll
-    ? ""
-    : ` AND blob12 IN (${EDGE_ONLY_VERDICTS.map((v) => `'${v}'`).join(", ")})`;
+  const verdicts = EDGE_ONLY_VERDICTS.map((v) => "'" + v + "'").join(", ");
+  const verdictFilter = site.ingestAll ? "" : ` AND blob12 IN (${verdicts})`;
   const rows = await aeQuery(
     `SELECT toUnixTimestamp(timestamp) AS ts, index1 AS c, blob1 AS p, blob2 AS ua, blob3 AS cc, blob4 AS a, blob5 AS ref, blob6 AS colo, blob7 AS city, blob8 AS asn_org, blob9 AS proto, blob10 AS tls, blob11 AS st, blob12 AS cache, blob13 AS accept, blob14 AS method, blob15 AS ua_full, blob16 AS ip, blob17 AS lang, blob18 AS referer_full, blob19 AS qs, blob20 AS misc, double1 AS lat, double2 AS lon, double3 AS asn, double4 AS rtt, double5 AS contentLength, double6 AS age, double7 AS edge_ms, double9 AS tms, _sample_interval AS n FROM ${site.dataset} WHERE timestamp >= toDateTime(${fromS}) AND timestamp < toDateTime(${toS}) AND blob11 != ''${verdictFilter}`,
   );

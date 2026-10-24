@@ -79,9 +79,10 @@ export function exitCodeFor({ contradictions }) {
  */
 export function driftSkip(project) {
   if (!project.repo) {
+    const status = project.status ? ` (status: ${project.status})` : "";
     return {
       quiet: false,
-      reason: `no public repository${project.status ? ` (status: ${project.status})` : ""}, not compared`,
+      reason: `no public repository${status}, not compared`,
     };
   }
   if (project.docs.startsWith(`${project.repo}#`)) {
