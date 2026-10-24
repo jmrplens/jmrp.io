@@ -8,7 +8,7 @@ lastVerified:
   versions:
     - ESP-IDF 6.0.3
     - Mbed TLS 4.1.1
-    - TF-PSA-Crypto 1.1.0
+    - TF-PSA-Crypto 1.1.1
 description: "Cómo un gestor de contraseñas hardware autentica cada fichero antes de descifrar: Encrypt-then-MAC, verificación antes de descifrar y bloqueo ante fallos."
 lead: "El tag se verifica antes de descifrar un solo byte, así que un fichero reubicado, retipado o revertido falla el MAC — incluso para quien tenga la flash en crudo pero no el PIN."
 coverImage: "../../../assets/images/blog/etm-vault.webp"
@@ -706,7 +706,7 @@ Una pregunta justa. El estándar moderno por defecto para el cifrado autenticado
 
 La bóveda usa encrypt-then-MAC con AES-256-CBC y HMAC-SHA256 por razones que tienen que ver con este dispositivo, no con las primitivas. CBC con HMAC **no tiene un modo de fallo catastrófico si un IV llega a repetirse**: un IV repetido revela que dos registros comparten sus primeros bloques, no una clave, mientras que un nonce de GCM repetido entrega la clave de autenticación. AES y SHA-256 tienen **aceleración hardware** en el ESP32. Y lo difícil de este formato, la frescura, es un problema de estado que los datos asociados no resolverían: un AEAD llevaría el mismo `type ‖ slot ‖ generation` en sus datos asociados, con una primitiva más arriesgada debajo. Encrypt-then-MAC es la [composición genéricamente segura](https://eprint.iacr.org/2000/025), así que construir AEAD a partir de CBC+HMAC de este modo es sólido; es como lo hacen IPsec (en su configuración estándar) y KDBX 4 también.
 
-Hubo una tercera razón: una salida byte a byte idéntica entre un build de host cuyos tests unitarios corrían contra la API legacy de Mbed TLS y un dispositivo donde la API PSA Crypto de Mbed TLS 4.0 es el único camino público. Esa ya no existe: los tests de host enlazan ahora el mismo Mbed TLS 4 y TF-PSA-Crypto que el firmware (ESP-IDF 6.0.3 trae Mbed TLS 4.1.1 con TF-PSA-Crypto 1.1.0), así que hay un único backend PSA y nada que mantener a la par.
+Hubo una tercera razón: una salida byte a byte idéntica entre un build de host cuyos tests unitarios corrían contra la API legacy de Mbed TLS y un dispositivo donde la API PSA Crypto de Mbed TLS 4.0 es el único camino público. Esa ya no existe: los tests de host enlazan ahora el mismo Mbed TLS 4 y TF-PSA-Crypto que el firmware (ESP-IDF 6.0.3 trae Mbed TLS 4.1.1 con TF-PSA-Crypto 1.1.1), así que hay un único backend PSA y nada que mantener a la par.
 
 <BeforeAfter beforeLabel="AES-GCM (AEAD)" afterLabel="AES-CBC + HMAC (EtM)">
 <div slot="before">

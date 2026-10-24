@@ -7,7 +7,7 @@ lastVerified:
   versions:
     - ESP-IDF 6.0.3
     - Mbed TLS 4.1.1
-    - TF-PSA-Crypto 1.1.0
+    - TF-PSA-Crypto 1.1.1
 description: "How a hardware password manager authenticates every vault file before it decrypts: encrypt-then-MAC, verify-before-decrypt, and fail-closed reads."
 lead: "The tag is verified before a single byte is decrypted, so a relocated, retyped or rolled-back vault file fails the MAC — even for an attacker holding the raw flash but not the PIN."
 coverImage: "../../../assets/images/blog/etm-vault.webp"
@@ -705,7 +705,7 @@ A fair question. The modern default for authenticated encryption is an [AEAD](ht
 
 The vault uses encrypt-then-MAC with AES-256-CBC and HMAC-SHA256 for reasons that are about this device, not about the primitives. CBC with HMAC has **no catastrophic failure mode if an IV ever repeats**: a repeated IV leaks that two records share their first blocks, not a key, while a repeated GCM nonce gives away the authentication key. AES and SHA-256 are both **hardware-accelerated** on the ESP32. And the hard part of this format, freshness, is a state problem that associated data would not solve: an AEAD would carry the same `type ‖ slot ‖ generation` in its associated data, with a riskier primitive underneath. Encrypt-then-MAC is the [generically secure composition](https://eprint.iacr.org/2000/025), so building AEAD out of CBC+HMAC this way is sound; it's how IPsec (in its standard configuration) and KDBX 4 do it too.
 
-There used to be a third reason, byte-identical output from a host build whose unit tests ran against the legacy Mbed TLS API and a device where Mbed TLS 4.0's PSA Crypto API is the only public path. That one is gone: the host tests now link the same Mbed TLS 4 and TF-PSA-Crypto as the firmware (ESP-IDF 6.0.3 ships Mbed TLS 4.1.1 with TF-PSA-Crypto 1.1.0), so there is a single PSA backend and nothing left to keep in step.
+There used to be a third reason, byte-identical output from a host build whose unit tests ran against the legacy Mbed TLS API and a device where Mbed TLS 4.0's PSA Crypto API is the only public path. That one is gone: the host tests now link the same Mbed TLS 4 and TF-PSA-Crypto as the firmware (ESP-IDF 6.0.3 ships Mbed TLS 4.1.1 with TF-PSA-Crypto 1.1.1), so there is a single PSA backend and nothing left to keep in step.
 
 <BeforeAfter beforeLabel="AES-GCM (AEAD)" afterLabel="AES-CBC + HMAC (EtM)">
 <div slot="before">
