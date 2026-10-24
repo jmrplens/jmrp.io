@@ -433,7 +433,7 @@ The salt is the device secret and the input key material is the PBKDF2 master, s
 
 ### One HMAC primitive, byte-identical on host and device
 
-Here's the engineering beat I'm proudest of. My HKDF is built on the firmware's own `VaultCrypto::hmacSha256`, not on a library's HKDF module — and that's a feature, not reinvention. **Mbed TLS 4.0 removed the legacy `mbedtls_hkdf` module** (you're expected to drive `psa_key_derivation_*` with `PSA_ALG_HKDF` instead), and when this was written the native host tests still ran a legacy Mbed TLS, so neither library HKDF would have built in both places. Building HKDF on one HMAC primitive sidestepped the 3.6→4.0 API churn entirely. The host tests have since moved to the same Mbed TLS 4 and TF-PSA-Crypto as the device, so that HMAC is now one PSA backend shared by both, and the output is **byte-identical everywhere** by construction.
+Here's the engineering beat I'm proudest of. My HKDF is built on the firmware's own `VaultCrypto::hmacSha256`, not on a library's HKDF module — and that's a feature, not reinvention. **Mbed TLS 4.0 removed the legacy `mbedtls_hkdf` module** (you're expected to drive `psa_key_derivation_*` with `PSA_ALG_HKDF` instead), and when this was written the native host tests still ran a legacy Mbed TLS, so neither library HKDF would have built in both places. Building HKDF on one HMAC primitive sidestepped the 3.6→4.0 API churn entirely. The host tests have since moved to Mbed TLS 4 and TF-PSA-Crypto too, a patch release behind the device, so that HMAC is now one PSA backend on both sides, and the output is **byte-identical everywhere**.
 
 <Code lang="cpp" title="device_secret.cpp — hkdfSha256() built on one HMAC primitive">
 ```cpp
