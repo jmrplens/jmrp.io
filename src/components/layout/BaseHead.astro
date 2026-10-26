@@ -30,6 +30,8 @@ import {
   CANONICAL_ALUMNI_OF,
   CANONICAL_CREDENTIALS,
   CANONICAL_PERSON_IMAGE,
+  PERSON_ID,
+  WEBSITE_ID,
 } from "@utils/person";
 import {
   getMcpServers,
@@ -250,7 +252,7 @@ const donateActions = (aboutData?.person.funding ?? []).map(
     ({
       "@type": "DonateAction",
       name: localizedValues(route.label),
-      recipient: { "@id": new URL("#person", getSiteUrl()).href },
+      recipient: { "@id": PERSON_ID },
       target: {
         "@type": "EntryPoint",
         urlTemplate: route.url,
@@ -303,7 +305,7 @@ const personKnowsAbout = siteData.person?.knowsAbout?.map((topic) => {
 // 1. WebSite Schema (Global)
 const websiteSchema = {
   "@type": "WebSite",
-  "@id": new URL("#website", getSiteUrl()).href,
+  "@id": WEBSITE_ID,
   url: siteRoot,
   name: siteData.author,
   // One `@id` is emitted from both locales, so a plain `t()` string meant the
@@ -330,10 +332,10 @@ const websiteSchema = {
   // hanging off it may vary with the page that happened to render it — the same
   // rule the canonical `#person` node states for `/license/#portrait`.
   usageInfo: licensePageUrl("en"),
-  copyrightHolder: { "@id": new URL("#person", getSiteUrl()).href },
+  copyrightHolder: { "@id": PERSON_ID },
   publisher: {
     "@type": "Person",
-    "@id": new URL("#person", getSiteUrl()).href,
+    "@id": PERSON_ID,
     name: siteData.author,
     ...(siteData.person?.alternateName && {
       alternateName: siteData.person.alternateName,
@@ -376,12 +378,12 @@ const websiteSchema = {
       // publish on a node six other sites splice in verbatim.
       // KEEP-IN-SYNC: scripts/ci/build-identity.mjs.
       contentUrl: new URL(CANONICAL_PERSON_IMAGE.path, getSiteUrl()).href,
-      creator: { "@id": new URL("#person", getSiteUrl()).href },
+      creator: { "@id": PERSON_ID },
       creditText: siteData.author,
       // The person who owns the portrait's rights, next to the person who is
       // credited for it; the two are the same here, and a reader that checks
       // `copyrightHolder` before reusing an image found nothing (GEO audit #9).
-      copyrightHolder: { "@id": new URL("#person", getSiteUrl()).href },
+      copyrightHolder: { "@id": PERSON_ID },
       copyrightNotice: `© ${siteData.author}`,
       // The two license fields Search Console reports as missing once a node
       // carries creator/creditText/copyrightNotice: `license` states the terms,
@@ -616,7 +618,7 @@ const mcpApiNodes = (await getMcpServers()).map((server) => ({
   name: new URL(server.endpoint).pathname.split("/").findLast(Boolean),
   url: server.endpoint,
   documentation: new URL(`/docs/${server.id}`, getSiteUrl()).href,
-  provider: { "@id": new URL("#person", getSiteUrl()).href },
+  provider: { "@id": PERSON_ID },
 }));
 
 // 4. Merge Logic
@@ -668,7 +670,7 @@ if (resolvedModified) {
   // skipping `#website`, which repeats the site URL and would swallow the date
   // on the home page. Nodes that already declare `dateModified` (posts, tools,
   // the ProfilePages) are left alone.
-  const websiteId = new URL("#website", getSiteUrl()).href;
+  const websiteId = WEBSITE_ID;
   for (const node of schemaGraph) {
     const candidate = node as unknown as Record<string, unknown>;
     if (

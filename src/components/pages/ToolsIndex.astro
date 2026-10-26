@@ -7,6 +7,7 @@
 import { defaultLocale, type Locale } from "@i18n/config";
 import { useTranslatedPath, useTranslations } from "@i18n/utils";
 import BaseLayout from "@layouts/BaseLayout.astro";
+import { WEBSITE_ID } from "@utils/person";
 import { getSiteUrl } from "@utils/site";
 import { getToolsForLocale } from "@utils/tools";
 import type { CollectionEntry } from "astro:content";
@@ -84,7 +85,7 @@ const toolsSchema = {
   name: t("pages.tools.title"),
   description: t("pages.tools.description"),
   inLanguage: locale,
-  isPartOf: { "@id": new URL("#website", getSiteUrl()).href },
+  isPartOf: { "@id": WEBSITE_ID },
   hasPart: allTools.map((tool) => {
     const toolUrl = new URL(
       translatePath(`/tools/${tool.data.slug}/`),

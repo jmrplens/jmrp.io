@@ -20,6 +20,7 @@ import BaseLayout from "@layouts/BaseLayout.astro";
 import { lastCommitDate } from "@utils/content-date";
 import { licensePageUrl } from "@utils/license";
 import { getPageFaq, pageFaqNode } from "@utils/page-faq";
+import { PERSON_ID, WEBSITE_ID } from "@utils/person";
 import { getSiteUrl } from "@utils/site";
 import { getEntry, render } from "astro:content";
 import type { WebPage } from "schema-dts";
@@ -65,8 +66,8 @@ const documentSchema = {
   name: entry.data.title,
   description: entry.data.description,
   inLanguage: locale,
-  isPartOf: { "@id": new URL("#website", getSiteUrl()).href },
-  publisher: { "@id": new URL("#person", getSiteUrl()).href },
+  isPartOf: { "@id": WEBSITE_ID },
+  publisher: { "@id": PERSON_ID },
   // Deliberately `usageInfo` and not `license`. This component renders BOTH
   // prose documents — the license page and the privacy policy — and `/license/`
   // grants CC BY to "articles, and the documentation written for the tools",
@@ -76,7 +77,7 @@ const documentSchema = {
   // claim the maintained page does not (GEO audit 2026-09-02, M4).
   // `copyrightHolder` is true either way: ownership is not a grant.
   usageInfo: licensePageUrl(locale),
-  copyrightHolder: { "@id": new URL("#person", getSiteUrl()).href },
+  copyrightHolder: { "@id": PERSON_ID },
   ...(documentModified && { dateModified: documentModified }),
 } satisfies WebPage;
 // The page's question-and-answer pairs (GEO audit #8): one source for the

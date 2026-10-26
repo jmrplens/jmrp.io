@@ -31,6 +31,26 @@ export interface LanguageTaggedValue {
 }
 
 /**
+ * The `@id` of the site's Person entity. It is a name, not a location: the
+ * eight sites in `.github/identity-consumers.json`, mcp.jmrp.io and kleidos.dev
+ * all restate this exact string, and every page here points at it.
+ *
+ * Hard-coded on purpose, never derived from `PUBLIC_SITE_URL`. If the site
+ * moves to another domain, its URLs change but the entity must not: built from
+ * the site URL, the `@id` would follow the move silently, splitting one person
+ * into two for every consumer still holding the old string. After a move,
+ * `https://jmrp.io/` keeps answering with a 301, so the IRI stays
+ * dereferenceable. `scripts/ci/build-identity.mjs` repeats the literal.
+ */
+export const PERSON_ID = "https://jmrp.io/#person";
+
+/**
+ * The `@id` of the site's WebSite entity: a name, pinned for the same reason
+ * as {@link PERSON_ID}.
+ */
+export const WEBSITE_ID = "https://jmrp.io/#website";
+
+/**
  * The canonical avatar for the `#person` entity: 460x460 PNG, served from this
  * origin at a fixed path.
  *

@@ -18,7 +18,7 @@ import { pageLastmod } from "@src/integrations/sitemap-post-dates";
 import type { SiteConfig } from "@src/types";
 import { externalLinkProps } from "@utils/links";
 import { getPageFaq, pageFaqNode } from "@utils/page-faq";
-import { CANONICAL_ALUMNI_OF } from "@utils/person";
+import { CANONICAL_ALUMNI_OF, PERSON_ID, WEBSITE_ID } from "@utils/person";
 import { getProjects, hostedHref } from "@utils/projects";
 import { getSiteUrl } from "@utils/site";
 import { fillSiteFacts, getSiteFacts } from "@utils/site-facts";
@@ -130,7 +130,7 @@ const personSchema = {
   "@id": new URL("#profile", new URL(Astro.url.pathname, getSiteUrl())).href,
   name: t("pages.about.title"),
   url: new URL(Astro.url.pathname, getSiteUrl()).href,
-  isPartOf: { "@id": new URL("#website", getSiteUrl()).href },
+  isPartOf: { "@id": WEBSITE_ID },
   ...(locale === "es"
     ? { translationOfWork: { "@id": profileAltUrl } }
     : { workTranslation: { "@id": profileAltUrl } }),
@@ -151,7 +151,7 @@ const personSchema = {
   },
   mainEntity: {
     "@type": "Person",
-    "@id": new URL("#person", getSiteUrl()).href,
+    "@id": PERSON_ID,
     alumniOf: CANONICAL_ALUMNI_OF,
   },
 } satisfies ProfilePage;

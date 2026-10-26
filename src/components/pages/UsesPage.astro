@@ -12,6 +12,7 @@ import { useTranslatedPath, useTranslations } from "@i18n/utils";
 import BaseLayout from "@layouts/BaseLayout.astro";
 import { externalLinkProps } from "@utils/links";
 import { getPageFaq, pageFaqNode } from "@utils/page-faq";
+import { PERSON_ID, WEBSITE_ID } from "@utils/person";
 import { getSiteUrl } from "@utils/site";
 import { getEntry } from "astro:content";
 import type { CollectionPage } from "schema-dts";
@@ -49,8 +50,8 @@ const usesSchema = {
   name: t("pages.uses.title"),
   description: t("pages.uses.description"),
   inLanguage: locale,
-  isPartOf: { "@id": new URL("#website", getSiteUrl()).href },
-  about: { "@id": new URL("#person", getSiteUrl()).href },
+  isPartOf: { "@id": WEBSITE_ID },
+  about: { "@id": PERSON_ID },
   // The page declared itself a CollectionPage and collected nothing (GEO audit
   // 2026-08-22, B4) — while rendering ~29 named products and tools, exactly
   // what "what does X use?" queries retrieve. One ListItem per entry.

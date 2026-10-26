@@ -10,6 +10,7 @@ import { type TranslationKey, useTranslations } from "@i18n/utils";
 import BaseLayout from "@layouts/BaseLayout.astro";
 import { stripHtml } from "@utils/html";
 import { getPageFaq, pageFaqNode } from "@utils/page-faq";
+import { PERSON_ID, WEBSITE_ID } from "@utils/person";
 import {
   getPublicationKind,
   getPublications,
@@ -139,7 +140,7 @@ const collectionSchema = {
   description: t("pages.publications.schemaDescription"),
   url: collectionUrl,
   inLanguage: locale,
-  isPartOf: { "@id": new URL("#website", getSiteUrl()).href },
+  isPartOf: { "@id": WEBSITE_ID },
   // The framing prose only — the paper list itself is a citation grid that
   // reads badly aloud, but "what is this research record and when was it
   // produced" is a genuine spoken-answer target.
@@ -242,7 +243,7 @@ const collectionSchema = {
                 // "Requena-Plens"/"Requena Plens" (not a bare "Requena") so a
                 // co-author is never mis-attributed.
                 if (/requena[\s-]?plens/i.test(a.family)) {
-                  return { "@id": new URL("#person", getSiteUrl()).href };
+                  return { "@id": PERSON_ID };
                 }
                 return {
                   "@type": "Person" as const,

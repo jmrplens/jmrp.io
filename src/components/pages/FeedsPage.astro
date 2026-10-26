@@ -33,6 +33,7 @@ const siteUrl = getSiteUrl();
 // existed to publish "the feeds" and only knew about the two RSS ones; these
 // eight are feeds in the same sense, just on another protocol.
 import blueskyFeeds from "@data/bluesky-feeds.json";
+import { PERSON_ID, WEBSITE_ID } from "@utils/person";
 
 const blueskyProfile = "https://bsky.app/profile/jmrp.io";
 const feedEn = new URL("/rss.xml", siteUrl).href;
@@ -73,8 +74,8 @@ const feedsSchema = {
   name: t("pages.feeds.title"),
   description: t("pages.feeds.description"),
   inLanguage: locale,
-  isPartOf: { "@id": new URL("#website", siteUrl).href },
-  publisher: { "@id": new URL("#person", siteUrl).href },
+  isPartOf: { "@id": WEBSITE_ID },
+  publisher: { "@id": PERSON_ID },
   // The page's whole purpose is to publish these feeds, and its graph did not
   // name a single one (GEO audit 2026-08-22, B1): two RSS DataFeeds plus the
   // eight Bluesky feed generators. Bluesky entries carry both the human page
@@ -94,7 +95,7 @@ const feedsSchema = {
           url: feed.url,
           encodingFormat: "application/rss+xml",
           inLanguage: feed.lang,
-          provider: { "@id": new URL("#person", siteUrl).href },
+          provider: { "@id": PERSON_ID },
         },
       })),
       ...blueskyFeeds.feeds.map((feed, index) => ({
@@ -107,7 +108,7 @@ const feedsSchema = {
           url: `${blueskyProfile}/feed/${feed.rkey}`,
           identifier: `at://${blueskyFeeds.did}/app.bsky.feed.generator/${feed.rkey}`,
           inLanguage: feed.lang,
-          provider: { "@id": new URL("#person", siteUrl).href },
+          provider: { "@id": PERSON_ID },
         },
       })),
     ],

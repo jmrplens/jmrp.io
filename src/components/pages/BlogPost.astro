@@ -26,6 +26,7 @@ import type { SiteConfig } from "@src/types";
 import { formatDateDot, getReadingTime, tagUrlSegment } from "@utils/blog";
 import { CC_BY_4_0, licensePageUrl } from "@utils/license";
 import { llmsPostShardPath } from "@utils/llms";
+import { PERSON_ID, WEBSITE_ID } from "@utils/person";
 import { postDateModified } from "@utils/post-dates";
 import { seriesSoftwareId } from "@utils/projects";
 import { getRelatedContent } from "@utils/related";
@@ -338,7 +339,7 @@ const wordCount = bodyWithoutCode
   .split(/\s+/)
   .filter(Boolean).length;
 
-const personRef = { "@id": new URL("#person", getSiteUrl()).href };
+const personRef = { "@id": PERSON_ID };
 
 // Primary article node. `articleType` (frontmatter) selects BlogPosting vs the
 // more specific, AI-recognized TechArticle for engineering guides.
@@ -504,12 +505,9 @@ const articleNode = {
   // (`SeriesPage.astro`); pointing at a `#series` node that does not exist
   // would be a dangling reference dressed up as a relation.
   isPartOf: seriesUrl
-    ? [
-        { "@id": new URL("#website", getSiteUrl()).href },
-        { "@id": `${seriesUrl}#collection` },
-      ]
+    ? [{ "@id": WEBSITE_ID }, { "@id": `${seriesUrl}#collection` }]
     : {
-        "@id": new URL("#website", getSiteUrl()).href,
+        "@id": WEBSITE_ID,
       },
   // The sources this post is anchored to. Every post already renders 16–25
   // curated references (RFCs, W3C specs, IACR and Google Research papers) in
