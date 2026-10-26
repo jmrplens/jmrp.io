@@ -35,7 +35,8 @@ const siteUrl = getSiteUrl();
 import blueskyFeeds from "@data/bluesky-feeds.json";
 import { PERSON_ID, WEBSITE_ID } from "@utils/person";
 
-const blueskyProfile = "https://bsky.app/profile/jmrp.io";
+// By DID, so profile and feed links survive a handle change.
+const blueskyProfile = `https://bsky.app/profile/${blueskyFeeds.did}`;
 const feedEn = new URL("/rss.xml", siteUrl).href;
 const feedEs = new URL("/es/rss.xml", siteUrl).href;
 

@@ -141,7 +141,7 @@ export async function homelabServices(t: Translate): Promise<HomelabService[]> {
       title: "AT Protocol",
       icon: "simple-icons:bluesky",
       descriptionKey: "pages.homelab.pdsDescription",
-      url: "https://bsky.app/profile/jmrp.io",
+      url: "https://bsky.app/profile/did:plc:jder4wkjnwh6mzhrx4n5ebti",
       linkText: t("pages.homelab.pdsLink"),
       statsType: "pds",
       probed: true,

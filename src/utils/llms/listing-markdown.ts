@@ -503,7 +503,7 @@ export async function generateFeedsMarkdown(
       feed.description,
       "",
       `- ${WORDS.language[locale]}: ${feed.lang}`,
-      `- URL: https://bsky.app/profile/jmrp.io/feed/${feed.rkey}`,
+      `- URL: https://bsky.app/profile/${blueskyFeeds.did}/feed/${feed.rkey}`,
       `- AT URI: at://${blueskyFeeds.did}/app.bsky.feed.generator/${feed.rkey}`,
       "",
     ]),
