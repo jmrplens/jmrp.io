@@ -1,5 +1,11 @@
 import { visit } from "unist-util-visit";
 
+import { resolveSiteUrl } from "./utils/site-url.mjs";
+
+/** This site's URL: links to its host count as internal. */
+const SITE_URL = resolveSiteUrl();
+const SITE_HOST = new URL(SITE_URL).hostname;
+
 /**
  * Extracts all text content from a HAST node recursively.
  *
@@ -20,12 +26,12 @@ function toText(node) {
  * @returns {string} A descriptive string (e.g., "Read more (on /blog)") to clarify the link's purpose.
  */
 function getDestinationLabel(href, text) {
-  if (!URL.canParse(href, "https://jmrp.io")) {
+  if (!URL.canParse(href, SITE_URL)) {
     return `${text} (${href})`;
   }
 
-  const url = new URL(href, "https://jmrp.io");
-  const isLocal = url.hostname === "jmrp.io" || url.hostname === "";
+  const url = new URL(href, SITE_URL);
+  const isLocal = url.hostname === SITE_HOST || url.hostname === "";
 
   if (isLocal) {
     return `${text} (on ${url.pathname})`;

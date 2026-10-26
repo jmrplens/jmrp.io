@@ -41,6 +41,8 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
+import { resolveSiteUrl } from "../utils/site-url.mjs";
+
 /**
  * The only origin whose URLs describe THIS build.
  *
@@ -50,8 +52,11 @@ import { fileURLToPath } from "node:url";
  * Those are citations, not claims about this build, and mcp.jmrp.io publishes
  * markdown twins of its own — matching on pathname alone would let an external
  * `…/index.md` either fail this build or vouch for a local twin that is absent.
+ *
+ * Derived from the same source as Astro's `site` (`scripts/utils/site-url.mjs`),
+ * so the guard checks whatever domain the build was made for.
  */
-export const SITE_ORIGIN = "https://jmrp.io";
+export const SITE_ORIGIN = new URL(resolveSiteUrl()).origin;
 
 /**
  * What each kind of page owes the four surfaces.
