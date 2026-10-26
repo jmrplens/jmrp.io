@@ -14,6 +14,7 @@ import { ViteImageOptimizer } from "vite-plugin-image-optimizer";
 import { rehypeExternalLinksAnnounced } from "./scripts/rehype-external-links-announced.mjs";
 import { rehypeLinkDisambiguator } from "./scripts/rehype-link-disambiguator.mjs";
 import { remarkMermaidBypass } from "./scripts/remark-mermaid-bypass.mjs";
+import { resolveSiteUrl } from "./scripts/utils/site-url.mjs";
 import postBuildIntegration from "./src/integrations/post-build.ts";
 import preBuildIntegration from "./src/integrations/pre-build.ts";
 import { createLastmodResolver } from "./src/integrations/sitemap-post-dates.ts";
@@ -243,8 +244,10 @@ export default defineConfig({
     },
   },
 
-  // The site URL, used for SEO and sitemap generation
-  site: process.env.PUBLIC_SITE_URL || "https://jmrp.io",
+  // The site URL, used for SEO and sitemap generation. Resolved by
+  // scripts/utils/site-url.mjs so a value in .env reaches it (the config is
+  // evaluated before Astro loads .env, so process.env alone missed it).
+  site: resolveSiteUrl(),
 
   // Internationalization (i18n) configuration
   i18n: i18nConfig,

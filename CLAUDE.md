@@ -841,7 +841,7 @@ pnpm exec sonar-scanner
 
 | Variable                        | Context  | Purpose                              |
 | ------------------------------- | -------- | ------------------------------------ |
-| `PUBLIC_SITE_URL`               | Public   | Canonical site URL                   |
+| `PUBLIC_SITE_URL` | Public | Canonical site URL (default `https://jmrp.io`). Resolved ONLY by `scripts/utils/site-url.mjs` (shell > `.env` > default), which feeds `astro.config` `site`, the markdown-twin guard and the link disambiguator |
 | `PUBLIC_CF_BEACON_TOKEN`        | Public   | Cloudflare Analytics token           |
 | `PRIVATE_CF_API_TOKEN`          | Secret   | Cloudflare API for cache purge       |
 | `PRIVATE_CF_EMAIL`              | Secret   | Cloudflare email                     |
