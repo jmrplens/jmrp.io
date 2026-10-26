@@ -82,7 +82,9 @@ person:
     # AT Protocol professional profile: its content is signed in his own PDS
     # (id.sifa.profile.*), and the page links GitHub, LinkedIn, jmrp.io and the
     # Keyoxide key that signs security.txt.
-    - "https://sifa.id/p/jmrp.io"
+    # By DID, not handle: the URL survives a handle change (sifa.id redirects
+    # it to the current handle).
+    - "https://sifa.id/p/did:plc:jder4wkjnwh6mzhrx4n5ebti"
     # Stack Exchange NETWORK profile — the account that groups the per-site
     # ones. Both forms are kept on purpose: the network id survives site
     # migrations, the Stack Overflow one is where the actual answers are.
@@ -95,10 +97,10 @@ person:
     - "https://stackoverflow.com/users/5960262/jmrplens"
     # AT Protocol forge, published under the same handle as the Bluesky
     # profile above. Ownership is not asserted here but PROVEN by the
-    # protocol: tangled.org/jmrp.io resolves to did:plc:jder4wkjnwh6mzhrx4n5ebti,
-    # the very DID that bsky.app/profile/jmrp.io resolves to (checked
-    # 2026-08-27), so both are the same account seen through two apps.
-    - "https://tangled.org/jmrp.io"
+    # protocol: the handle jmrp.io resolves to did:plc:jder4wkjnwh6mzhrx4n5ebti on both
+    # apps (checked 2026-08-27), so both are the same account. Linked by
+    # DID so the URL survives a handle change (checked 2026-10-26).
+    - "https://tangled.org/did:plc:jder4wkjnwh6mzhrx4n5ebti"
   # Expertise topics emitted as the canonical Person `knowsAbout`, site-wide, by
   # BaseHead.astro. Merged from the former site-config list + about.yaml's
   # embedded-firmware specifics so a single list covers the whole entity —
@@ -146,7 +148,7 @@ social_links:
     icon: "i-fa-brands:mastodon"
     rel: "me noopener noreferrer"
   - name: "Bluesky"
-    url: "https://bsky.app/profile/jmrp.io"
+    url: "https://bsky.app/profile/did:plc:jder4wkjnwh6mzhrx4n5ebti"
     icon: "i-simple-icons:bluesky"
     rel: "me noopener noreferrer"
   - name: "Matrix"

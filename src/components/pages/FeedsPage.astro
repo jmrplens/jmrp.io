@@ -34,7 +34,8 @@ const siteUrl = getSiteUrl();
 // eight are feeds in the same sense, just on another protocol.
 import blueskyFeeds from "@data/bluesky-feeds.json";
 
-const blueskyProfile = "https://bsky.app/profile/jmrp.io";
+// By DID, so profile and feed links survive a handle change.
+const blueskyProfile = `https://bsky.app/profile/${blueskyFeeds.did}`;
 const feedEn = new URL("/rss.xml", siteUrl).href;
 const feedEs = new URL("/es/rss.xml", siteUrl).href;
 

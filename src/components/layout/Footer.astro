@@ -101,9 +101,10 @@ if (socials.mastodon_username) {
   });
 }
 
-if (socials.bluesky_handle) {
+if (socials.bluesky_did ?? socials.bluesky_handle) {
   socialLinks.push({
-    url: `https://bsky.app/profile/${socials.bluesky_handle}`,
+    // By DID when known: bsky.app resolves it whatever the current handle is.
+    url: `https://bsky.app/profile/${socials.bluesky_did ?? socials.bluesky_handle}`,
     icon_name: "simple-icons:bluesky",
     label: "Bluesky",
     rel: "me noopener noreferrer",

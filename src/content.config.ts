@@ -271,6 +271,7 @@ const site_config = defineCollection({
       linkedin_username: z.string().optional(),
       mastodon_username: z.string().optional(),
       bluesky_handle: z.string().optional(),
+      bluesky_did: z.string().optional(),
       scholar_userid: z.string().optional(),
       orcid_id: z.string().optional(),
       matrix_id: z.string().optional(),

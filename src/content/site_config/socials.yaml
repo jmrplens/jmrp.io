@@ -3,7 +3,8 @@ github_username: jmrplens
 gitlab_username: jmrp # gitlab.com/jmrp, the same handle person.jsonld lists under sameAs
 linkedin_username: jmrplens # your LinkedIn user name
 mastodon_username: mstdn.jmrp.io/@jmrplens # your mastodon instance+username in the format instance.tld/@username
-bluesky_handle: jmrp.io # self-hosted AT Protocol PDS handle (→ https://bsky.app/profile/<handle>)
+bluesky_handle: jmrp.io # self-hosted AT Protocol PDS handle (display only)
+bluesky_did: did:plc:jder4wkjnwh6mzhrx4n5ebti # permanent account id: links use it, so they survive a handle change
 scholar_userid: 9b0kPaUAAAAJ # your Google Scholar ID
 orcid_id: 0000-0003-1250-6212 # ORCID iD
 matrix_id: "@jmrplens:matrix.jmrp.io"
