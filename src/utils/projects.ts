@@ -22,8 +22,8 @@
  * YAML requires `name`/`summary.en` to match those sites verbatim.
  */
 import licenseUrls from "@data/license-urls.json";
+import { PERSON_ID } from "@utils/person";
 import type { Series } from "@utils/series";
-import { getSiteUrl } from "@utils/site";
 import { wikidataEntityUri, wikidataLabel } from "@utils/wikidata";
 import { getEntry } from "astro:content";
 import type {
@@ -274,7 +274,7 @@ function registryAlias(registryId: string | undefined): string[] {
  * @returns A `SoftwareApplication` or `SoftwareSourceCode` node.
  */
 export function buildProjectSchema(project: Project): Record<string, unknown> {
-  const personRef = { "@id": new URL("#person", getSiteUrl()).href };
+  const personRef = { "@id": PERSON_ID };
   const [about, ...mentions] = project.topics;
 
   // The docs URL is an identity alias only when it is a separate site.

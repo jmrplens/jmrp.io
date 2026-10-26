@@ -12,6 +12,7 @@ import { defaultLocale, type Locale } from "@i18n/config";
 import { useTranslatedPath, useTranslations } from "@i18n/utils";
 import BaseLayout from "@layouts/BaseLayout.astro";
 import { getPostsForLocale } from "@utils/blog";
+import { WEBSITE_ID } from "@utils/person";
 import { getSiteUrl } from "@utils/site";
 import { getImage } from "astro:assets";
 import type { CollectionPage, ListItem } from "schema-dts";
@@ -57,7 +58,7 @@ const schema = {
   description: t("pages.blog.description"),
   url: baseUrl,
   inLanguage: locale,
-  isPartOf: { "@id": new URL("#website", getSiteUrl()).href },
+  isPartOf: { "@id": WEBSITE_ID },
   mainEntity: {
     "@type": "ItemList",
     numberOfItems: posts.length,

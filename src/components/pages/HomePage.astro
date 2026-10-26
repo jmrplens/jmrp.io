@@ -18,6 +18,7 @@ import {
 import { langColors } from "@utils/github";
 import { sanitize } from "@utils/html";
 import { getPageFaq, pageFaqNode } from "@utils/page-faq";
+import { PERSON_ID, WEBSITE_ID } from "@utils/person";
 import { getSiteUrl } from "@utils/site";
 import { getSiteFacts } from "@utils/site-facts";
 import { getEntry } from "astro:content";
@@ -112,8 +113,8 @@ const homeSchema = {
   name: t("seo.siteTitle"),
   description: t("seo.siteDescription"),
   inLanguage: locale,
-  isPartOf: { "@id": new URL("#website", getSiteUrl()).href },
-  about: { "@id": new URL("#person", getSiteUrl()).href },
+  isPartOf: { "@id": WEBSITE_ID },
+  about: { "@id": PERSON_ID },
   // Marks the hero identity block as the citable/answer-target summary for
   // "who is José Manuel Requena Plens?" queries — same speakable pattern the
   // blog posts use for their header + TL;DR.

@@ -21,6 +21,7 @@ import {
 import BaseLayout from "@layouts/BaseLayout.astro";
 import { pageLastmod } from "@src/integrations/sitemap-post-dates";
 import { CC_BY_4_0, licensePageUrl, MIT_LICENSE } from "@utils/license";
+import { PERSON_ID, WEBSITE_ID } from "@utils/person";
 import { getSiteUrl } from "@utils/site";
 import type { CollectionEntry } from "astro:content";
 import type { FAQPage, SoftwareApplication, WebPage } from "schema-dts";
@@ -138,8 +139,8 @@ const baseToolSchema = {
     url: toolUrl,
   },
   isAccessibleForFree: true,
-  author: { "@id": new URL("#person", getSiteUrl()).href },
-  creator: { "@id": new URL("#person", getSiteUrl()).href },
+  author: { "@id": PERSON_ID },
+  creator: { "@id": PERSON_ID },
   // This node IS the tool, and the tool is code: "/license/" says the source of
   // this site and of the interactive tools it hosts is public and MIT-licensed.
   // The 34 `#software` nodes said nothing, so the one page on the site that
@@ -148,7 +149,7 @@ const baseToolSchema = {
   // is the `#webpage` node below, not the application.
   license: MIT_LICENSE,
   usageInfo: licensePageUrl(locale, "code"),
-  copyrightHolder: { "@id": new URL("#person", getSiteUrl()).href },
+  copyrightHolder: { "@id": PERSON_ID },
   inLanguage: locale,
   ...toolTranslationLink,
   ...(features && features.length > 0 && { featureList: features }),
@@ -192,7 +193,7 @@ const toolWebPage = {
   name: title,
   description,
   inLanguage: locale,
-  isPartOf: { "@id": new URL("#website", getSiteUrl()).href },
+  isPartOf: { "@id": WEBSITE_ID },
   mainEntity: { "@id": `${toolUrl}#software` },
   // The documentation, as distinct from the application it documents:
   // "/license/" puts "the documentation written for the tools on this site"
@@ -208,7 +209,7 @@ const toolWebPage = {
   // tool documentation its license.
   license: CC_BY_4_0,
   usageInfo: licensePageUrl(locale, "writing"),
-  copyrightHolder: { "@id": new URL("#person", getSiteUrl()).href },
+  copyrightHolder: { "@id": PERSON_ID },
   speakable: {
     "@type": "SpeakableSpecification",
     cssSelector: [".header-content h1", ".subtitle"],

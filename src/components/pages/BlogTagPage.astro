@@ -15,6 +15,7 @@ import {
   useTranslations,
 } from "@i18n/utils";
 import BaseLayout from "@layouts/BaseLayout.astro";
+import { WEBSITE_ID } from "@utils/person";
 import { getSiteUrl } from "@utils/site";
 import type { CollectionEntry } from "astro:content";
 import type { CollectionPage, ListItem } from "schema-dts";
@@ -69,7 +70,7 @@ const schema = {
   }),
   url: new URL(Astro.url.pathname, getSiteUrl()).href,
   inLanguage: locale,
-  isPartOf: { "@id": new URL("#website", getSiteUrl()).href },
+  isPartOf: { "@id": WEBSITE_ID },
   mainEntity: {
     "@type": "ItemList",
     numberOfItems: posts.length,

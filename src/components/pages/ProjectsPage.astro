@@ -39,6 +39,7 @@ import { compactDownloads, DOWNLOADS_DISPLAY_MIN } from "@utils/downloads";
 import { siteDownloadsTotal } from "@utils/llms/downloads-total";
 import { getPageFaq, pageFaqNode } from "@utils/page-faq";
 import type { LanguageTaggedValue } from "@utils/person";
+import { PERSON_ID, WEBSITE_ID } from "@utils/person";
 import {
   COMMUNITY_MIN_PEOPLE,
   dependabotSentence as dependabotSentenceFor,
@@ -284,8 +285,8 @@ const projectsPageSchema = {
   description: t("pages.projects.schemaDescription"),
   url: pageUrl,
   inLanguage: locale,
-  isPartOf: { "@id": new URL("#website", getSiteUrl()).href },
-  about: { "@id": new URL("#person", getSiteUrl()).href },
+  isPartOf: { "@id": WEBSITE_ID },
+  about: { "@id": PERSON_ID },
   // The same list as a machine-readable document. `/identity/projects.json` is
   // generated from projects.yaml by `scripts/ci/build-projects.mjs` and read by
   // the hub at build time, but nothing on the site named it: not the graph, not
@@ -307,7 +308,7 @@ const projectsPageSchema = {
       inLanguage: "en",
       url: new URL("/projects/", getSiteUrl()).href,
       ...(datasetModified && { dateModified: datasetModified }),
-      creator: { "@id": new URL("#person", getSiteUrl()).href },
+      creator: { "@id": PERSON_ID },
       // The site's data files are CC BY 4.0, stated on /license/ ("Data").
       // Google's Dataset rich results report a Dataset without it.
       license: "https://creativecommons.org/licenses/by/4.0/",

@@ -11,6 +11,7 @@ import type { TranslationKey } from "@i18n/utils";
 import { useTranslatedPath, useTranslations } from "@i18n/utils";
 import BaseLayout from "@layouts/BaseLayout.astro";
 import { getPageFaq, pageFaqNode } from "@utils/page-faq";
+import { PERSON_ID, WEBSITE_ID } from "@utils/person";
 import { getSiteUrl } from "@utils/site";
 import type { CollectionPage, ListItem } from "schema-dts";
 
@@ -41,8 +42,8 @@ const indexSchema = {
   name: t("series.ui.indexTitle"),
   description: t("series.ui.indexDescription"),
   inLanguage: locale,
-  isPartOf: { "@id": new URL("#website", getSiteUrl()).href },
-  about: { "@id": new URL("#person", getSiteUrl()).href },
+  isPartOf: { "@id": WEBSITE_ID },
+  about: { "@id": PERSON_ID },
   // Voice assistants and AI readers get the page's title and lead.
   speakable: {
     "@type": "SpeakableSpecification",

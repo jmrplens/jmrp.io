@@ -40,6 +40,7 @@ import {
 import BaseLayout from "@layouts/BaseLayout.astro";
 import { getPageFaq, pageFaqNode } from "@utils/page-faq";
 import type { LanguageTaggedValue } from "@utils/person";
+import { PERSON_ID, WEBSITE_ID } from "@utils/person";
 import { getSiteUrl } from "@utils/site";
 import type { CollectionPage } from "schema-dts";
 
@@ -174,7 +175,7 @@ interface Provider {
 // José node used site-wide (not a disconnected duplicate Person).
 const defaultProvider: Provider = {
   "@type": "Person",
-  "@id": new URL("#person", getSiteUrl()).href,
+  "@id": PERSON_ID,
   name: "José Manuel Requena Plens",
 };
 
@@ -248,7 +249,7 @@ const servicesSchema = {
   url: new URL(Astro.url.pathname, getSiteUrl()).href,
   name: t("pages.homelab.schemaName"),
   inLanguage: locale,
-  isPartOf: { "@id": new URL("#website", getSiteUrl()).href },
+  isPartOf: { "@id": WEBSITE_ID },
   // The services the page is about. They were in `hasPart`, whose range is
   // CreativeWork: a Service is not one, and the Schema Markup Validator
   // reported 8 severe errors per locale (GEO audit #10, M2).

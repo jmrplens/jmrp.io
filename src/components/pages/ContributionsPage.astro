@@ -33,6 +33,7 @@ import {
 import { itemDiffSize, languageCounts } from "@utils/diff-size";
 import { getPageFaq, pageFaqNode } from "@utils/page-faq";
 import type { LanguageTaggedValue } from "@utils/person";
+import { PERSON_ID, WEBSITE_ID } from "@utils/person";
 import {
   formatMergeDuration,
   githubSearchUrl as githubSearchUrlFor,
@@ -280,7 +281,7 @@ const issuesByProject = new Map(
 
 const answersAnchor = "answers";
 
-const personRef = { "@id": new URL("#person", getSiteUrl()).href };
+const personRef = { "@id": PERSON_ID };
 
 /**
  * An upstream project as JSON-LD, identified by its repository page: the
@@ -437,7 +438,7 @@ const schema = {
   description: t("pages.projectsContributions.schemaDescription"),
   url: pageUrl,
   inLanguage: locale,
-  isPartOf: { "@id": new URL("#website", getSiteUrl()).href },
+  isPartOf: { "@id": WEBSITE_ID },
   about: personRef,
   // The BreadcrumbList BaseHead emits for this very page.
   breadcrumb: { "@id": `${pageUrl}#breadcrumb` },

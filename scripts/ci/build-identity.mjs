@@ -81,7 +81,9 @@ const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
 const OUTPUT = join(ROOT, "public", "identity", "person.jsonld");
 
 const SITE_URL = "https://jmrp.io";
-const PERSON_ID = `${SITE_URL}/#person`;
+// A name, not a location: kept literal so that changing SITE_URL in a domain
+// move does not move the entity. Mirrors PERSON_ID in src/utils/person.ts.
+const PERSON_ID = "https://jmrp.io/#person";
 
 /**
  * Mirrors `CANONICAL_PERSON_IMAGE` in `src/utils/person.ts`. Kept in sync by

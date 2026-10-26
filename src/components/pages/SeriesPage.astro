@@ -15,6 +15,7 @@ import { useTranslatedPath, useTranslations } from "@i18n/utils";
 import BaseLayout from "@layouts/BaseLayout.astro";
 import { formatDateDot, getReadingTime } from "@utils/blog";
 import { getPageFaq, pageFaqNode } from "@utils/page-faq";
+import { PERSON_ID, WEBSITE_ID } from "@utils/person";
 import { getSeriesProject, softwareId } from "@utils/projects";
 import { SERIES, type Series } from "@utils/series";
 import { getSiteUrl } from "@utils/site";
@@ -68,13 +69,11 @@ const seriesSchema = {
   name: t(key("title")),
   description: t(key("description")),
   inLanguage: locale,
-  isPartOf: { "@id": new URL("#website", getSiteUrl()).href },
+  isPartOf: { "@id": WEBSITE_ID },
   // A series about one program says so: `about` is that program's
   // `#software` node (defined on /projects/ and /tools/), not the author.
   about: {
-    "@id": seriesProject
-      ? softwareId(seriesProject)
-      : new URL("#person", getSiteUrl()).href,
+    "@id": seriesProject ? softwareId(seriesProject) : PERSON_ID,
   },
   // Surface the hub's title and lead to voice assistants and AI readers, as
   // the post pages do for theirs.

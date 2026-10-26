@@ -9,6 +9,7 @@ import { defaultLocale, type Locale } from "@i18n/config";
 import { pluralize, useTranslatedPath, useTranslations } from "@i18n/utils";
 import BaseLayout from "@layouts/BaseLayout.astro";
 import { getPageFaq, pageFaqNode } from "@utils/page-faq";
+import { WEBSITE_ID } from "@utils/person";
 import { getSiteUrl } from "@utils/site";
 import { getToolsForLocale } from "@utils/tools";
 import type { CollectionEntry } from "astro:content";
@@ -95,7 +96,7 @@ const schema = {
   description: meta.description,
   url: new URL(Astro.url.pathname, getSiteUrl()).href,
   inLanguage: locale,
-  isPartOf: { "@id": new URL("#website", getSiteUrl()).href },
+  isPartOf: { "@id": WEBSITE_ID },
   mainEntity: {
     "@type": "ItemList",
     numberOfItems: tools.length,

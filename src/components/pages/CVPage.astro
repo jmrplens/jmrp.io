@@ -22,7 +22,7 @@ import { markdownToHtml } from "@utils/cv-markdown";
 import { stripToText } from "@utils/html";
 import { getPageFaq, pageFaqNode } from "@utils/page-faq";
 import type { LanguageTaggedValue } from "@utils/person";
-import { CANONICAL_ALUMNI_OF } from "@utils/person";
+import { CANONICAL_ALUMNI_OF, PERSON_ID, WEBSITE_ID } from "@utils/person";
 import { getAbsoluteUrl, getSiteUrl } from "@utils/site";
 import type { Person, Text, WebPage } from "schema-dts";
 
@@ -148,8 +148,8 @@ const cvWebPage = {
   description: t("pages.cv.description"),
   url: new URL(Astro.url.pathname, getSiteUrl()).href,
   inLanguage: locale,
-  isPartOf: { "@id": new URL("#website", getSiteUrl()).href },
-  mainEntity: { "@id": new URL("#person", getSiteUrl()).href },
+  isPartOf: { "@id": WEBSITE_ID },
+  mainEntity: { "@id": PERSON_ID },
   // Every blog post declares a speakable region; the CV — the page an
   // assistant is most likely to be asked to read out about this person — had
   // none. Points at the identity line only: the section grids below are
@@ -270,7 +270,7 @@ const cvWorksFor =
 
 const cvPersonFacts = {
   "@type": "Person",
-  "@id": new URL("#person", getSiteUrl()).href,
+  "@id": PERSON_ID,
   alumniOf: CANONICAL_ALUMNI_OF,
   ...(cvWorksFor.length > 0 && { worksFor: cvWorksFor }),
   // Both lists are emitted from the EN and ES sources at once, with
