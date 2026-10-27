@@ -45,7 +45,6 @@ person:
     # reads), NOT against keys.openpgp.org: that keyserver still holds an older
     # upload carrying a seventh, now-dead keybase.io proof that the current key
     # no longer declares.
-    - "https://codeberg.org/jmrplens"
     - "https://gitlab.com/jmrp"
     # Package registries where the software in `owns` is published, tying the
     # identity to the artifacts rather than only to their source repos.
@@ -159,13 +158,6 @@ social_links:
     url: "https://keyoxide.org/0A993B268654DBBA52B7E8D3FCF653391E2C91FC"
     icon: "i-mdi:key"
     rel: "me noopener noreferrer"
-  # Codeberg reciprocates rel="me" on the profile's website link, which is what
-  # makes the head entry verifiable; the account itself sees little use, so it
-  # stays out of the drawer. person.jsonld lists it in this same position.
-  - name: "Codeberg"
-    url: "https://codeberg.org/jmrplens"
-    icon: "i-simple-icons:codeberg"
-    drawer: false
 
 shortcuts:
   - name: "Blog"
