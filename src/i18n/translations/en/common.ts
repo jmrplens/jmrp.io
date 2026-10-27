@@ -668,7 +668,7 @@ export const common = {
       matrixLink: "Chat on Matrix",
       pdsName: "AT Protocol PDS",
       pdsDescription:
-        "My self-hosted Personal Data Server on the AT Protocol network — the identity and data behind @jmrp.io on Bluesky.",
+        "My self-hosted Personal Data Server on the AT Protocol network — the identity and data behind @jmrp.eu on Bluesky.",
       pdsLink: "View on Bluesky",
       mcpName: "MCP Servers",
       mcpDescription:

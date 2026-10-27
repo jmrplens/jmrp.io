@@ -116,4 +116,4 @@ pages:
       - question: How do I subscribe to this blog?
         answer: "Paste https://jmrp.io/rss.xml (English) or https://jmrp.io/es/rss.xml (Spanish) into any RSS reader such as Feedbin, Miniflux, NetNewsWire or Thunderbird. No account is needed and nothing is tracked."
       - question: What are the Bluesky feeds listed here?
-        answer: "Eight curated feeds about open source, programming and homelab, one per language, run from the @jmrp.io account: automated curation with human review, and any Bluesky account can follow them."
+        answer: "Eight curated feeds about open source, programming and homelab, one per language, run from the @jmrp.eu account: automated curation with human review, and any Bluesky account can follow them."
