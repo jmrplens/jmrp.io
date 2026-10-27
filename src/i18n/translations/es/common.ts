@@ -654,7 +654,7 @@ export const common = {
       matrixLink: "Chatear en Matrix",
       pdsName: "PDS AT Protocol",
       pdsDescription:
-        "Mi Personal Data Server autoalojado en la red AT Protocol — la identidad y los datos tras @jmrp.io en Bluesky.",
+        "Mi Personal Data Server autoalojado en la red AT Protocol — la identidad y los datos tras @jmrp.eu en Bluesky.",
       pdsLink: "Ver en Bluesky",
       mcpName: "Servidores MCP",
       mcpDescription:

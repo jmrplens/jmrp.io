@@ -145,7 +145,7 @@ export async function homelabServices(t: Translate): Promise<HomelabService[]> {
       linkText: t("pages.homelab.pdsLink"),
       statsType: "pds",
       probed: true,
-      userInfo: "@jmrp.io",
+      userInfo: "@jmrp.eu",
     },
     {
       id: "mcp",

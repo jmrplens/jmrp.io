@@ -100,4 +100,4 @@ pages:
       - question: ¿Cómo me suscribo a este blog?
         answer: "Pega https://jmrp.io/rss.xml (inglés) o https://jmrp.io/es/rss.xml (español) en cualquier lector RSS, como Feedbin, Miniflux, NetNewsWire o Thunderbird. No hace falta cuenta y no se rastrea nada."
       - question: ¿Qué son los feeds de Bluesky de esta página?
-        answer: "Ocho feeds curados sobre código abierto, programación y homelab, uno por idioma, gestionados desde la cuenta @jmrp.io: curación automática con revisión humana, y cualquier cuenta de Bluesky puede seguirlos."
+        answer: "Ocho feeds curados sobre código abierto, programación y homelab, uno por idioma, gestionados desde la cuenta @jmrp.eu: curación automática con revisión humana, y cualquier cuenta de Bluesky puede seguirlos."

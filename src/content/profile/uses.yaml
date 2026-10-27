@@ -78,7 +78,7 @@ en:
           detail: Fediverse instance
           href: /homelab/
         - name: AT Protocol
-          detail: PDS · @jmrp.io
+          detail: PDS · @jmrp.eu
           href: /homelab/
         - name: Matrix
           detail: Synapse homeserver
@@ -179,7 +179,7 @@ es:
           detail: instancia Fediverse
           href: /homelab/
         - name: AT Protocol
-          detail: PDS · @jmrp.io
+          detail: PDS · @jmrp.eu
           href: /homelab/
         - name: Matrix
           detail: homeserver Synapse
