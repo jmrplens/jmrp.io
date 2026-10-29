@@ -705,11 +705,11 @@ HTTP/3 es el mapeo de la semántica HTTP sobre el transporte QUIC. Reemplaza el 
   </tbody>
 </Table>
 
-### ¿Quién usa HTTP/3 hoy?
+### ¿Quién usa HTTP/3 hoy y qué mejora frente a HTTP/2?
 
-La adopción de HTTP/3 es significativa y sigue creciendo: según W3Techs, la usaba el 36,6% de todos los sitios web el 1 de enero de 2026 y el 41,1% el 29 de octubre de 2026. Las otras tres filas son mejoras frente a HTTP/2, cada una medida en el escenario que indica su fila:
+La adopción de HTTP/3 es significativa y sigue creciendo: según W3Techs, la usaba el 36,6 % de todos los sitios web el 1 de enero de 2026 y el 41,1 % el 29 de octubre de 2026. Las otras tres filas son mejoras frente a HTTP/2, cada una medida en el escenario que indica su fila, y una mejora en un escenario no se traslada a todos los demás: el mismo artículo de Cloudflare que da el primer byte más rápido también cronometró la carga de una página real, su propio blog, y la midió de media entre un 1 y un 4 % más lenta con HTTP/3 que con HTTP/2.
 
-<Table title="Estadísticas de adopción de HTTP/3">
+<Table title="Adopción de HTTP/3 y mejoras medidas frente a HTTP/2">
   <thead>
     <tr>
       <th scope="col">Métrica</th>
@@ -719,7 +719,7 @@ La adopción de HTTP/3 es significativa y sigue creciendo: según W3Techs, la us
   </thead>
   <tbody>
     <tr>
-      <td><strong>Sitios web usando HTTP/3</strong></td>
+      <td><strong>Sitios web que usan HTTP/3</strong></td>
       <td>41,1%</td>
       <td><a href="https://w3techs.com/technologies/details/ce-http3" target="_blank" rel="external noopener noreferrer" class="external-link" aria-label="W3Techs (octubre de 2026) (se abre en nueva pestaña)">W3Techs (octubre de 2026)</a></td>
     </tr>
@@ -734,7 +734,7 @@ La adopción de HTTP/3 es significativa y sigue creciendo: según W3Techs, la us
       <td><a href="https://blog.cloudflare.com/http-3-vs-http-2/" target="_blank" rel="external noopener noreferrer" class="external-link" aria-label="Cloudflare Benchmarks (2020) (se abre en nueva pestaña)">Cloudflare Benchmarks (2020)</a></td>
     </tr>
     <tr>
-      <td><strong>Mejora en el LCP de un sitio web (usuarios reales)</strong></td>
+      <td><strong>Mejora en el Largest Contentful Paint (LCP) de un sitio web (usuarios reales)</strong></td>
       <td>13,8%</td>
       <td><a href="https://web.archive.org/web/20260927011218/https://www.debugbear.com/blog/http3-vs-http2-performance" target="_blank" rel="external noopener noreferrer" class="external-link" aria-label="DebugBear (se abre en nueva pestaña)">DebugBear</a> (copia archivada)</td>
     </tr>

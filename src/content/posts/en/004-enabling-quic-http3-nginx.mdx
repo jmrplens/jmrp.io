@@ -704,11 +704,11 @@ HTTP/3 is the mapping of HTTP semantics onto QUIC transport. It replaces HTTP/2'
   </tbody>
 </Table>
 
-### Who uses HTTP/3 today?
+### Who uses HTTP/3 today, and what does it gain over HTTP/2?
 
-HTTP/3 adoption is significant and still growing: W3Techs counted it on 36.6% of all websites on 1 January 2026 and on 41.1% on 29 October 2026. The other three rows are gains over HTTP/2, each measured in the setting its row names:
+HTTP/3 adoption is significant and still growing: W3Techs counted it on 36.6% of all websites on 1 January 2026 and on 41.1% on 29 October 2026. The other three rows are gains over HTTP/2, each measured in the setting its row names, and a gain in one setting does not carry over to every other: the same Cloudflare article that reports the faster first byte also timed the loading of a real page, its own blog, and found HTTP/3 about 1 to 4% slower than HTTP/2 on average.
 
-<Table title="HTTP/3 Adoption Statistics">
+<Table title="HTTP/3 Adoption and Measured Gains over HTTP/2">
   <thead>
     <tr>
       <th scope="col">Metric</th>
@@ -733,7 +733,7 @@ HTTP/3 adoption is significant and still growing: W3Techs counted it on 36.6% of
       <td><a href="https://blog.cloudflare.com/http-3-vs-http-2/" target="_blank" rel="external noopener noreferrer" class="external-link" aria-label="Cloudflare Benchmarks (2020) (opens in new tab)">Cloudflare Benchmarks (2020)</a></td>
     </tr>
     <tr>
-      <td><strong>LCP improvement on one website (real users)</strong></td>
+      <td><strong>Largest Contentful Paint (LCP) improvement on one website (real users)</strong></td>
       <td>13.8%</td>
       <td><a href="https://web.archive.org/web/20260927011218/https://www.debugbear.com/blog/http3-vs-http2-performance" target="_blank" rel="external noopener noreferrer" class="external-link" aria-label="DebugBear (opens in new tab)">DebugBear</a> (archived copy)</td>
     </tr>
