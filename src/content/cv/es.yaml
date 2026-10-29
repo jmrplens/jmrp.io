@@ -655,7 +655,8 @@ sections:
           sonoros, psicoacústica, acústica de salas, edificación, ambiental y
           subacuática, vibración, electroacústica y simulación de ondas — cada
           método implementado desde la norma, con 1893 comprobaciones de
-          conformidad en CI sobre 111 dominios y 523 normas. Antes PyOctaveBand.
+          conformidad en CI sobre 111 dominios, frente a 227 designaciones
+          normativas y 125 fuentes publicadas adicionales. Antes PyOctaveBand.
         metrics: [PyPI]
         links:
           - { label: GitHub, url: https://github.com/jmrplens/phonometry }
