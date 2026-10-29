@@ -654,6 +654,24 @@ const aboutSchema = z.object({
      */
     occupation: LocalizedString.optional(),
     /**
+     * Earlier professions, each emitted after `occupation` as a `Role` that
+     * wraps `hasOccupation` with the years it covers. The Role is what lets a
+     * past profession carry dates: `Occupation` has no `startDate` or
+     * `endDate` of its own. Years only, the precision /about/ states them in.
+     */
+    pastOccupations: z
+      .array(
+        z.object({
+          name: LocalizedString,
+          description: LocalizedString,
+          startDate: z.string().regex(/^\d{4}$/),
+          endDate: z.string().regex(/^\d{4}$/),
+          /** The city, emitted as `occupationLocation`. */
+          locality: z.string(),
+        }),
+      )
+      .default([]),
+    /**
      * Languages emitted as `knowsLanguage`. `code` is a BCP-47 tag. schema.org
      * has no proficiency property, so fluency is expressed by order only,
      * never invented as a field.

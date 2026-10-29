@@ -142,19 +142,53 @@
       }
     }
   ],
-  "hasOccupation": {
-    "@type": "Occupation",
-    "name": [
-      {
-        "@value": "Firmware & Software Engineer",
-        "@language": "en"
-      },
-      {
-        "@value": "Ingeniero de Firmware y Software",
-        "@language": "es"
+  "hasOccupation": [
+    {
+      "@type": "Occupation",
+      "name": [
+        {
+          "@value": "Firmware & Software Engineer",
+          "@language": "en"
+        },
+        {
+          "@value": "Ingeniero de Firmware y Software",
+          "@language": "es"
+        }
+      ]
+    },
+    {
+      "@type": "Role",
+      "startDate": "2019",
+      "endDate": "2023",
+      "hasOccupation": {
+        "@type": "Occupation",
+        "name": [
+          {
+            "@value": "Acoustics researcher",
+            "@language": "en"
+          },
+          {
+            "@value": "Investigador en acústica",
+            "@language": "es"
+          }
+        ],
+        "description": [
+          {
+            "@value": "Predoctoral research at the Universitat Politècnica de València on ultrasound and acoustic metamaterials.",
+            "@language": "en"
+          },
+          {
+            "@value": "Investigación predoctoral en la Universitat Politècnica de València sobre ultrasonidos y metamateriales acústicos.",
+            "@language": "es"
+          }
+        ],
+        "occupationLocation": {
+          "@type": "City",
+          "name": "Valencia"
+        }
       }
-    ]
-  },
+    }
+  ],
   "knowsLanguage": [
     {
       "@type": "Language",

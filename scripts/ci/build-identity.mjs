@@ -24,7 +24,7 @@
  *
  * ── Language ─────────────────────────────────────────────────────────────
  * Bilingual, via JSON-LD language-tagged values on `jobTitle`, `description`
- * and `hasOccupation.name`:
+ * and the `name` and `description` of every `hasOccupation`:
  *
  *   "jobTitle": [
  *     { "@value": "R&D · Firmware & Software Engineer",     "@language": "en" },
@@ -257,6 +257,32 @@ function buildIdentityDocument() {
       .map((project) => ({ "@id": `${project.endpoint}#api` })),
   ];
 
+  // The current profession, then each earlier one as a `Role` wrapping
+  // `hasOccupation` with its years: `Occupation` has no dates of its own, and
+  // the Role is how schema.org dates a value of any property. Mirrors the
+  // same list in BaseHead.astro; the schema-validation spec compares them.
+  const occupations = [
+    ...(about.person.occupation
+      ? [
+          {
+            "@type": "Occupation",
+            name: localizedValues(about.person.occupation),
+          },
+        ]
+      : []),
+    ...(about.person.pastOccupations ?? []).map((past) => ({
+      "@type": "Role",
+      startDate: past.startDate,
+      endDate: past.endDate,
+      hasOccupation: {
+        "@type": "Occupation",
+        name: localizedValues(past.name),
+        description: localizedValues(past.description),
+        occupationLocation: { "@type": "City", name: past.locality },
+      },
+    })),
+  ];
+
   const sameAs = [
     ...new Set([
       ...(site.social_links?.map((l) => l.url) ?? []),
@@ -381,12 +407,7 @@ function buildIdentityDocument() {
     },
     alumniOf: ALUMNI_OF,
     hasCredential: CREDENTIALS,
-    ...(about.person.occupation && {
-      hasOccupation: {
-        "@type": "Occupation",
-        name: localizedValues(about.person.occupation),
-      },
-    }),
+    ...(occupations.length > 0 && { hasOccupation: occupations }),
     ...(about.person.knowsLanguage && {
       knowsLanguage: about.person.knowsLanguage.map((language) => ({
         "@type": "Language",

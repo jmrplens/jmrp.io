@@ -57,6 +57,23 @@ person:
     en: Firmware & Software Engineer
     es: Ingeniero de Firmware y Software
 
+  # Earlier professions, each emitted after `occupation` as a `Role` wrapping
+  # `hasOccupation` with its years. The period and the subject are the ones
+  # the lead and the education list below state (2019–2023 at the UPV,
+  # ultrasound and acoustic metamaterials). A dated Role and not `worksFor`,
+  # for the reason `occupation` is not `worksFor` either: it says what he did,
+  # and names no employer as if it were current.
+  pastOccupations:
+    - name:
+        en: Acoustics researcher
+        es: Investigador en acústica
+      description:
+        en: Predoctoral research at the Universitat Politècnica de València on ultrasound and acoustic metamaterials.
+        es: Investigación predoctoral en la Universitat Politècnica de València sobre ultrasonidos y metamateriales acústicos.
+      startDate: "2019"
+      endDate: "2023"
+      locality: Valencia
+
   # Languages, as BCP-47 tags. schema.org defines no standard proficiency
   # property on Language, so "native" is deliberately not encoded rather than
   # invented — Spanish is listed first, which is the only ordering signal the

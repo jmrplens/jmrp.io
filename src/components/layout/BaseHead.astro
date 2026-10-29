@@ -49,6 +49,8 @@ import type {
   BreadcrumbList,
   DonateAction,
   ListItem,
+  Occupation,
+  Role,
   SiteNavigationElement,
   Text,
   WebSite,
@@ -261,6 +263,38 @@ const donateActions = (aboutData?.person.funding ?? []).map(
 );
 
 /**
+ * The professions, hoisted for the same reason as `donateActions`: the
+ * current one, then each earlier one as a `Role` wrapping `hasOccupation`
+ * with its years. `Occupation` has no dates of its own, and the Role is how
+ * schema.org dates the value of any property. Mirrors the same list in
+ * `scripts/ci/build-identity.mjs`; the schema-validation spec compares them.
+ */
+const personOccupations = [
+  ...(aboutData?.person.occupation
+    ? [
+        {
+          "@type": "Occupation",
+          name: localizedValues(aboutData.person.occupation),
+        } satisfies Occupation,
+      ]
+    : []),
+  ...(aboutData?.person.pastOccupations ?? []).map(
+    (past) =>
+      ({
+        "@type": "Role",
+        startDate: past.startDate,
+        endDate: past.endDate,
+        hasOccupation: {
+          "@type": "Occupation",
+          name: localizedValues(past.name),
+          description: localizedValues(past.description),
+          occupationLocation: { "@type": "City", name: past.locality },
+        },
+      }) satisfies Role<Occupation, "hasOccupation">,
+  ),
+];
+
+/**
  * The open-source software this Person authors, as bare `@id` references to
  * the `#software` nodes fully described on /projects/ (and, for most of them,
  * on the project's own documentation site, which publishes the SAME @id with
@@ -428,15 +462,10 @@ const websiteSchema = {
     // documentation sites that splice /identity/person.jsonld in verbatim.
     alumniOf: CANONICAL_ALUMNI_OF,
     hasCredential: CANONICAL_CREDENTIALS,
-    // The profession, not the employer: `worksFor` reads as present tense and
-    // the last role has ended, so asserting it would publish a stale employer
-    // here and to every project site that splices this node in.
-    ...(aboutData?.person.occupation && {
-      hasOccupation: {
-        "@type": "Occupation" as const,
-        name: localizedValues(aboutData.person.occupation),
-      },
-    }),
+    // The professions, not the employer: `worksFor` reads as present tense
+    // and the last role has ended, so asserting it would publish a stale
+    // employer here and to every project site that splices this node in.
+    ...(personOccupations.length > 0 && { hasOccupation: personOccupations }),
     ...(aboutData?.person.knowsLanguage && {
       knowsLanguage: aboutData.person.knowsLanguage.map((language) => ({
         "@type": "Language" as const,
