@@ -89,10 +89,22 @@ const SAFE_FULL_PATH = /^[\w.-]+(?:\/[\w.-]+)+$/;
  */
 
 /**
- * One GraphQL query per project: its main language and the diff size of
- * the owner's merge requests there, the same three numbers the GitHub side
- * carries (`additions`, `deletions`, `changed_files`). `diffStatsSummary` is
- * GitLab's own count, so no diff is downloaded.
+ * Merge requests named per details query. GitLab answers at most 100 nodes
+ * per connection, and an `iids` list longer than that pushes the query past
+ * its complexity limit (250 for an authenticated request): with 105 iids in
+ * gitlab-org/gitlab it measured 464, the query failed, and from 2026-10-29
+ * every collection fell back to the fixture for the whole GitLab.com part.
+ * 100 iids measured within the limit.
+ */
+const MR_IIDS_PER_QUERY = 100;
+
+/**
+ * The GraphQL queries for one project: its main language and the diff size
+ * of the owner's merge requests there, the same three numbers the GitHub
+ * side carries (`additions`, `deletions`, `changed_files`).
+ * `diffStatsSummary` is GitLab's own count, so no diff is downloaded. One
+ * query up to {@link MR_IIDS_PER_QUERY} merge requests, one more per batch
+ * beyond that; only the first asks for the languages.
  *
  * @param {import('./client.mjs').GitlabClient} client - API client.
  * @param {string} fullPath - Project full path.
@@ -103,25 +115,41 @@ export async function getProjectDetails(client, fullPath, iids) {
   if (!SAFE_FULL_PATH.test(fullPath)) {
     throw new Error(`refusing to query unsafe GitLab path: ${fullPath}`);
   }
-  const iidList = iids.map((iid) => `"${Number(iid)}"`).join(",");
-  const mrs =
-    iids.length > 0
-      ? `mergeRequests(iids:[${iidList}],first:100){nodes{iid diffStatsSummary{additions deletions fileCount}}}`
-      : "";
-  const data = await client.graphql(
-    `{project(fullPath:"${fullPath}"){languages{name share} ${mrs}}}`,
+  const batches = [];
+  for (let start = 0; start < iids.length; start += MR_IIDS_PER_QUERY) {
+    batches.push(iids.slice(start, start + MR_IIDS_PER_QUERY));
+  }
+  if (batches.length === 0) batches.push([]);
+
+  const responses = await runWithConcurrency(
+    batches.map((batch, index) => () => {
+      const iidList = batch.map((iid) => `"${Number(iid)}"`).join(",");
+      const mrs =
+        batch.length > 0
+          ? `mergeRequests(iids:[${iidList}],first:${MR_IIDS_PER_QUERY}){nodes{iid diffStatsSummary{additions deletions fileCount}}}`
+          : "";
+      const languages = index === 0 ? "languages{name share} " : "";
+      return client.graphql(
+        `{project(fullPath:"${fullPath}"){${languages}${mrs}}}`,
+      );
+    }),
+    CONCURRENCY,
   );
-  const project =
-    /** @type {{languages?: {name?: string, share?: number}[],
-     *   mergeRequests?: {nodes?: {iid?: string, diffStatsSummary?:
-     *   {additions?: number, deletions?: number, fileCount?: number} | null}[]}} | null} */ (
-      data.project
-    );
-  const top = (project?.languages ?? []).toSorted(
+  const projects = responses.map(
+    (data) =>
+      /** @type {{languages?: {name?: string, share?: number}[],
+       *   mergeRequests?: {nodes?: {iid?: string, diffStatsSummary?:
+       *   {additions?: number, deletions?: number, fileCount?: number} | null}[]}} | null} */ (
+        data.project
+      ),
+  );
+  const top = (projects[0]?.languages ?? []).toSorted(
     (a, b) => (b.share ?? 0) - (a.share ?? 0),
   )[0];
   const sizes = new Map();
-  for (const node of project?.mergeRequests?.nodes ?? []) {
+  for (const node of projects.flatMap(
+    (project) => project?.mergeRequests?.nodes ?? [],
+  )) {
     const stats = node.diffStatsSummary;
     if (!stats?.fileCount) continue;
     sizes.set(Number(node.iid), {

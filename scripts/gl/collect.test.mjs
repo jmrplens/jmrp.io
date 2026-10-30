@@ -217,3 +217,65 @@ test("getProjectDetails refuses a path it cannot quote safely", async () => {
     /unsafe GitLab path/,
   );
 });
+
+test("getProjectDetails names at most 100 merge requests per query", async () => {
+  // GitLab refuses an `iids` list longer than 100 as too complex (105 iids
+  // measured 464 against a limit of 250), which took the whole GitLab.com
+  // part down to the fixture.
+  const queries = [];
+  const client = {
+    async graphql(query) {
+      queries.push(query);
+      const iids = (/iids:\[([^\]]*)\]/.exec(query)?.[1] ?? "")
+        .split(",")
+        .filter(Boolean)
+        .map((iid) => iid.replaceAll('"', ""));
+      return {
+        project: {
+          ...(query.includes("languages") && {
+            languages: [{ name: "Ruby", share: 68 }],
+          }),
+          mergeRequests: {
+            nodes: iids.map((iid) => ({
+              iid,
+              diffStatsSummary: {
+                additions: Number(iid),
+                deletions: 0,
+                fileCount: 1,
+              },
+            })),
+          },
+        },
+      };
+    },
+  };
+  const iids = Array.from({ length: 205 }, (_, index) => index + 1);
+  const details = await getProjectDetails(client, "gitlab-org/gitlab", iids);
+
+  const counts = queries.map(
+    (query) => (/iids:\[([^\]]*)\]/.exec(query)?.[1] ?? "").split(",").length,
+  );
+  assert.deepEqual(counts, [100, 100, 5]);
+  assert.deepEqual(
+    queries.map((query) => query.includes("languages")),
+    [true, false, false],
+  );
+  assert.equal(details.language, "Ruby");
+  assert.equal(details.sizes.size, 205);
+  assert.equal(details.sizes.get(205)?.additions, 205);
+});
+
+test("getProjectDetails keeps one query for a project with no merge requests", async () => {
+  const queries = [];
+  const client = {
+    async graphql(query) {
+      queries.push(query);
+      return { project: { languages: [{ name: "Go", share: 90 }] } };
+    },
+  };
+  const details = await getProjectDetails(client, "acme/tool", []);
+  assert.equal(queries.length, 1);
+  assert.doesNotMatch(queries[0], /mergeRequests/);
+  assert.equal(details.language, "Go");
+  assert.equal(details.sizes.size, 0);
+});
