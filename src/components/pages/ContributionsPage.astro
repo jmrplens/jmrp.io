@@ -52,6 +52,10 @@ import type {
 } from "schema-dts";
 
 import { foldProjectName } from "../../../scripts/ghc/contributions-yaml.mjs";
+import {
+  ledgerProjects,
+  rowPrefix,
+} from "../../../scripts/ghc/ledger-view.mjs";
 import { OWNER as GITHUB_OWNER } from "../../../scripts/ghc/roster.mjs";
 
 const locale = (Astro.currentLocale ?? defaultLocale) as Locale;
@@ -85,7 +89,7 @@ const contributedToStarsByProject = new Map(
   contributedTo.map((row) => [row.project, row.stars]),
 );
 
-const highlights = rawHighlights.slice(0, 7).map((h) => ({
+const highlights = rawHighlights.slice(0, 8).map((h) => ({
   repo: h.repo,
   number: h.number,
   kind: h.kind,
@@ -127,8 +131,9 @@ function countLabel(
 
 /**
  * A ledger row's visible label: "#N title" (GitLab merge requests: "!N
- * title"), prefixed with the repo name only when the project group spans
- * more than one repository.
+ * title"), prefixed with the repo name only for a row outside the repo that
+ * holds most of the entry (`rowPrefix`): GitLab's entry names the one
+ * http-router row, not its 104 gitlab-org/gitlab ones.
  */
 function itemLabel(
   items: readonly { fullName: string }[],
@@ -140,9 +145,7 @@ function itemLabel(
     platform?: string;
   },
 ): string {
-  const multiRepo = new Set(items.map((it) => it.fullName)).size > 1;
-  const prefix = multiRepo ? `${item.fullName.split("/").at(-1) ?? ""} ` : "";
-  return `${prefix}${itemRef(item)} ${item.title ?? ""}`.trim();
+  return `${rowPrefix(items, item)}${itemRef(item)} ${item.title ?? ""}`.trim();
 }
 
 /**
@@ -163,7 +166,6 @@ function githubSearchUrl(items: readonly { fullName: string }[]): string {
 }
 
 // ── Code and documentation ledger: one box per project, no years ──────────
-const years = Object.keys(ledgerByYear).sort((a, b) => Number(b) - Number(a));
 const MAX_ITEMS_PER_PROJECT = LEDGER_MAX_ITEMS;
 
 /** Duration between two points, in hours, as a short localized string. */
@@ -216,37 +218,17 @@ interface LedgerProject {
   platform: "github" | "gitlab";
 }
 
-// One box per project across every year. Closed-unmerged PRs are a single
-// count, never rows; a project left with no rows disappears.
-const allLedgerItems = years.flatMap((year) =>
-  Object.entries(ledgerByYear[year]).flatMap(([project, items]) =>
-    items.map((item) => ({ project, item })),
-  ),
-);
-const itemsByProject = new Map<string, LedgerProject["items"][number][]>();
-for (const { project, item } of allLedgerItems) {
-  if (item.state === "closed") continue;
-  const list = itemsByProject.get(project) ?? [];
-  list.push(item);
-  itemsByProject.set(project, list);
-}
-const projectEntries: LedgerProject[] = [...itemsByProject]
-  .map(([project, items]) => ({
-    project,
-    items: items.sort(
-      (a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt),
-    ),
-    merged: items.filter((it) => it.state === "merged").length,
-    open: items.filter((it) => it.state === "open").length,
-    platform: platformOf(items[0]?.platform),
-  }))
-  // Projects with merged work first, then open-only ones; each group by
-  // most recent activity, so an old project cannot outrank this month's.
-  .sort(
-    (a, b) =>
-      Number(b.merged > 0) - Number(a.merged > 0) ||
-      Date.parse(b.items[0].createdAt) - Date.parse(a.items[0].createdAt),
-  );
+// One box per project across every year, most merged work first and merged
+// rows first inside each (scripts/ghc/ledger-view.mjs, shared with the
+// twin). Closed-unmerged PRs are a single count, never rows; a project left
+// with no rows disappears.
+const projectEntries: LedgerProject[] = ledgerProjects(
+  ledgerByYear,
+  contributedTo,
+).map((entry) => ({
+  ...entry,
+  platform: platformOf(entry.items[0]?.platform),
+}));
 const notMergedCount = listed.codeNotMerged;
 
 // ── Distribution and listings, grouped by MY project, then by target ─────
@@ -338,9 +320,10 @@ const upstreamList = {
 // declined PR is not part of the upstream code), and no dates, because the
 // page shows none.
 const mergedKeys = new Set(
-  allLedgerItems
-    .filter(({ item }) => item.state === "merged")
-    .map(({ item }) => itemUrl(item)),
+  projectEntries
+    .flatMap((entry) => entry.items)
+    .filter((item) => item.state === "merged")
+    .map((item) => itemUrl(item)),
 );
 const mergedHighlights = highlights.filter((h) => mergedKeys.has(h.url));
 const highlightList = {
@@ -575,6 +558,11 @@ const faqNode = pageFaq && pageFaqNode(pageFaq, pageUrl, schema["@id"], locale);
       >
         {t("pages.projectsContributions.ledgerHeading")}
       </h2>
+      <p class="contrib-intro">
+        {t("pages.projectsContributions.ledgerIntro", {
+          max: MAX_ITEMS_PER_PROJECT,
+        })}
+      </p>
       {projectEntries.map((entry) => (
         <details
           data-project={entry.project}
@@ -631,7 +619,7 @@ const faqNode = pageFaq && pageFaqNode(pageFaq, pageUrl, schema["@id"], locale);
           {entry.items.length > MAX_ITEMS_PER_PROJECT &&
             entry.platform === "gitlab" && (
               <p class="items__more">
-                {t("pages.projectsContributions.shownNewest", {
+                {t("pages.projectsContributions.shownMergedFirst", {
                   shown: MAX_ITEMS_PER_PROJECT,
                 })}{" "}
                 <a
@@ -653,7 +641,7 @@ const faqNode = pageFaq && pageFaqNode(pageFaq, pageUrl, schema["@id"], locale);
           {entry.items.length > MAX_ITEMS_PER_PROJECT &&
             entry.platform === "github" && (
               <p class="items__more">
-                {t("pages.projectsContributions.shownNewest", {
+                {t("pages.projectsContributions.shownMergedFirst", {
                   shown: MAX_ITEMS_PER_PROJECT,
                 })}{" "}
                 <a
@@ -1250,13 +1238,25 @@ const faqNode = pageFaq && pageFaqNode(pageFaq, pageUrl, schema["@id"], locale);
       justify-self: start;
     }
 
-    .items li {
-      grid-template-columns: 6.5rem 1fr;
+    /* The ledger's rows (not the flat issues list): the pill sits inline
+       before the title, and size and timing follow on the next line, so a
+       row stops spending a line on each of them (median 122 px to about
+       70 at 390 px). */
+    .items:not(.items--flat) li {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 2px var(--space-sm);
+      align-items: baseline;
     }
 
-    .items li > .items__w,
-    .items li > .items__sz {
-      grid-column: 2;
+    .items:not(.items--flat) li > .pill {
+      flex: none;
+      inline-size: auto;
+    }
+
+    .items:not(.items--flat) li > :nth-child(2) {
+      flex: 1 1 0;
+      min-inline-size: 55%;
     }
   }
 

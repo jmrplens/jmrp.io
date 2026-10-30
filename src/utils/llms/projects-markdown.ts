@@ -22,6 +22,7 @@ import { getProjects } from "@utils/projects";
 import { getEntry } from "astro:content";
 
 import { foldProjectName } from "../../../scripts/ghc/contributions-yaml.mjs";
+import { ledgerProjects } from "../../../scripts/ghc/ledger-view.mjs";
 import { OWNER as GITHUB_OWNER } from "../../../scripts/ghc/roster.mjs";
 import { selectUpstreamStrip } from "../../../scripts/ghc/upstream-strip.mjs";
 import { asContributionsDataset } from "../../components/projects/dataset-types";
@@ -113,7 +114,7 @@ function ledgerItemLabel(
 }
 
 /**
- * The "Showing the 10 most recent." note with the link to the full listing,
+ * The "Showing 10, merged first." note with the link to the full listing,
  * exactly as the page prints it under a truncated project.
  *
  * @param project - The folded project name.
@@ -126,7 +127,7 @@ function truncationNote(
   items: readonly { fullName: string; platform?: string }[],
   t: ReturnType<typeof useTranslations>,
 ): string {
-  const shown = t("pages.projectsContributions.shownNewest", {
+  const shown = t("pages.projectsContributions.shownMergedFirst", {
     shown: LEDGER_MAX_ITEMS,
   });
   if (platformOf(items[0]?.platform) === "gitlab") {
@@ -460,35 +461,12 @@ export async function contributionsPageMarkdown(
   });
 
   // One entry per project across every year, like the page itself.
-  const allItems = Object.values(ledgerByYear).flatMap((projects) =>
-    Object.entries(projects).flatMap(([project, items]) =>
-      items.map((item) => ({ project, item })),
-    ),
-  );
-  const byProject = new Map<string, (typeof allItems)[number]["item"][]>();
-  for (const { project, item } of allItems) {
-    if (item.state === "closed") continue;
-    byProject.set(project, [...(byProject.get(project) ?? []), item]);
-  }
   const notMerged = listed.codeNotMerged;
   const ledgerLines = [
-    ...[...byProject]
-      .map(([project, items]) => ({
-        project,
-        items: items.toSorted(
-          (a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt),
-        ),
-        merged: items.filter((it) => it.state === "merged").length,
-        open: items.filter((it) => it.state === "open").length,
-      }))
-      // Projects with merged work first, then open-only ones; each group by
-      // most recent activity, so an old project cannot outrank this month's.
-      .sort(
-        (a, b) =>
-          Number(b.merged > 0) - Number(a.merged > 0) ||
-          Date.parse(b.items[0].createdAt) - Date.parse(a.items[0].createdAt),
-      )
-      .flatMap(({ project, items, merged, open }) => [
+    // The page's order and rows (scripts/ghc/ledger-view.mjs): most merged
+    // work first, merged rows first inside each entry.
+    ...ledgerProjects(ledgerByYear, contributionsData.contributedTo).flatMap(
+      ({ project, items, merged, open }) => [
         // Only the non-zero counts, joined as the page's summary joins them.
         `- **${project}** (${platformName(items[0]?.platform, t)}): ${[
           merged > 0 ? countLabel("summaryMerged", merged, t) : "",
@@ -505,7 +483,8 @@ export async function contributionsPageMarkdown(
         ...(items.length > LEDGER_MAX_ITEMS
           ? [`  - ${truncationNote(project, items, t)}`]
           : []),
-      ]),
+      ],
+    ),
     ...(notMerged > 0
       ? [
           "",
@@ -631,6 +610,8 @@ export async function contributionsPageMarkdown(
     ...highlightLines,
     "",
     `## ${t("pages.projectsContributions.ledgerHeading")}`,
+    "",
+    t("pages.projectsContributions.ledgerIntro", { max: LEDGER_MAX_ITEMS }),
     "",
     ...ledgerLines,
     `## ${t("pages.projectsContributions.distributionHeading")}`,

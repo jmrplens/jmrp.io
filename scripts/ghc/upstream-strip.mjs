@@ -42,7 +42,7 @@ const OWNER_ALIAS = Object.freeze({
  * @param {string | null | undefined} value - The timestamp.
  * @returns {number} Milliseconds since the epoch, or NaN.
  */
-function instant(value) {
+export function instant(value) {
   if (typeof value !== "string" || value === "") return Number.NaN;
   const zoned = /(?:Z|[+-]\d{2}:?\d{2})$/i.test(value) ? value : `${value}Z`;
   return Date.parse(zoned);

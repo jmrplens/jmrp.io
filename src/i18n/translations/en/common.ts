@@ -1100,7 +1100,9 @@ export const common = {
       seeAllOnGitlab: "All my merge requests to {repo} on GitLab",
       platformGithub: "GitHub",
       platformGitlab: "GitLab",
-      shownNewest: "Showing the {shown} most recent.",
+      shownMergedFirst: "Showing {shown}, merged first.",
+      ledgerIntro:
+        "One entry per project, most merged changes first. Each lists up to {max} changes: merged ones first, then open ones, newest first within each.",
       notMergedHeading: "Not merged ({count}), counted only",
       distributionHeading: "Distribution and listings",
       distributionIntro:

@@ -247,7 +247,7 @@ export function communityFor(
 }
 
 /**
- * Items a ledger entry lists before it says "showing the N most recent" and
+ * Items a ledger entry lists before it says "showing N, merged first" and
  * links to the full listing.
  */
 export const LEDGER_MAX_ITEMS = 10;
@@ -283,7 +283,7 @@ export function formatMergeDuration(hours: number, locale: Locale): string {
 
 /**
  * The GitLab listing of the owner's merge requests to the project a ledger
- * entry mostly targets, for the "showing the N most recent" note.
+ * entry mostly targets, for the "showing N, merged first" note.
  *
  * @param items - The entry's items.
  * @param username - The GitLab username.
@@ -309,7 +309,7 @@ export function gitlabListing(
 
 /**
  * A GitHub search for every pull request the owner opened in the entry's
- * repositories, for the "showing the N most recent" note.
+ * repositories, for the "showing N, merged first" note.
  *
  * @param items - The entry's items.
  * @param owner - The GitHub login.
