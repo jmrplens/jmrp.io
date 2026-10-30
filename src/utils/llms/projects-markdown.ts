@@ -494,7 +494,8 @@ export async function contributionsPageMarkdown(
   // The page's order: the author's lead first, then the rest.
   const answersSplit = splitAnswers(acceptedAnswers, answersLead, () => {});
   const answerLines = [...answersSplit.lead, ...answersSplit.rest].map(
-    (a) => `- ${a.fullName} #${a.number}: [${a.title}](${a.answerUrl})`,
+    (a) =>
+      `- ${foldProjectName(a.fullName, displayName)}: [${a.title}](${a.answerUrl})`,
   );
 
   // The page's shelf, line by line: tier and multiplier ("x4") for GitHub,
