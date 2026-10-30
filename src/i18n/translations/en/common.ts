@@ -1029,6 +1029,8 @@ export const common = {
         tileAnswers: "accepted answers in GitHub Discussions",
         listingNote: "+ {count} packaging and listing PRs merged",
         contributedToTitle: "Contributed to",
+        contributedToRule:
+          "Projects with a merge in the last 12 months, most merged changes first, at most two per owner.",
         andMore: "and {count} more · list as of {date}",
         liveLabel:
           "Live from GitHub via ghchronicle and from GitLab · updated {time}",

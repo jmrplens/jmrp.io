@@ -1,10 +1,12 @@
 ---
 /**
- * "Contributions to other projects" block on /projects/ — between the active
- * and archived project groups (PLAN.md 2.1: "unit of a project = a GitHub
- * owner"). Four tiles are LIVE `PRJ_*` SSR tokens; the "Contributed to"
- * strip is build-time, resolved once by `ProjectsPage.astro`
- * from `contributions.yaml` and `src/data/ghc/projects-contributions.json`.
+ * "Contributions to other projects" block on /projects/, between the
+ * maintained projects and how they are maintained. A project is a
+ * repository, folded with its siblings through `displayName`. Four tiles are
+ * LIVE `PRJ_*` SSR tokens; the "Contributed to" strip is build-time, selected
+ * by `ProjectsPage.astro` with scripts/ghc/upstream-strip.mjs from
+ * `src/data/ghc/projects-contributions.json`, under a line that states the
+ * selection rule.
  */
 import LanguageTag from "@components/projects/LanguageTag.astro";
 import PlatformMark from "@components/projects/PlatformMark.astro";
@@ -100,6 +102,9 @@ const monthYear = (iso: string | null): string | null =>
       <h3 class="upstream__subheading">
         {t("pages.projects.upstream.contributedToTitle")}
       </h3>
+      <p class="upstream__strip-rule">
+        {t("pages.projects.upstream.contributedToRule")}
+      </p>
       <ol class="upstream__strip">
         {contributedTo.map((row) => (
           <li>
@@ -231,6 +236,12 @@ const monthYear = (iso: string | null): string | null =>
   .upstream__subheading {
     margin: var(--space-lg) 0 var(--space-sm);
     font-size: 1.05rem;
+  }
+
+  .upstream__strip-rule {
+    margin: calc(-1 * var(--space-xs)) 0 var(--space-sm);
+    font-size: var(--text-xs);
+    color: var(--color-text-muted);
   }
 
   .upstream__strip {

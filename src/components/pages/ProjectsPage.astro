@@ -62,6 +62,7 @@ import { getEntry } from "astro:content";
 import type { CollectionPage, Text } from "schema-dts";
 
 import { ACTIVE_REPOS } from "../../../scripts/ghc/roster.mjs";
+import { selectUpstreamStrip } from "../../../scripts/ghc/upstream-strip.mjs";
 
 const locale = (Astro.currentLocale ?? defaultLocale) as Locale;
 const t = useTranslations(locale);
@@ -121,21 +122,23 @@ const shortNames: Record<string, string> =
   (contributionsEntry?.data.type === "contributions"
     ? contributionsEntry.data.shortName
     : undefined) ?? {};
-const CONTRIBUTED_TO_SHOWN = 6;
-const contributedToShown: ContributedToRow[] = contributionsData.contributedTo
-  .slice(0, CONTRIBUTED_TO_SHOWN)
-  .map((row) => ({
-    project: row.project,
-    platform: platformOf(row.platform),
-    url: repoUrl(row.repo, row.platform),
-    stars: row.stars,
-    lastMergedAt: row.lastMergedAt,
-    language: row.language ?? null,
-    shortName: shortNames[row.project] ?? null,
-  }));
+// The projects with merged work in the last 12 months, most merged first, two
+// per owner (scripts/ghc/upstream-strip.mjs); the block prints that rule.
+const contributedToShown: ContributedToRow[] = selectUpstreamStrip(
+  contributionsData.contributedTo,
+  contributionsData.asOf,
+).map((row) => ({
+  project: row.project,
+  platform: platformOf(row.platform),
+  url: repoUrl(row.repo, row.platform),
+  stars: row.stars,
+  lastMergedAt: row.lastMergedAt,
+  language: row.language ?? null,
+  shortName: shortNames[row.project] ?? null,
+}));
 const contributedToRemaining = Math.max(
   0,
-  contributionsData.contributedTo.length - CONTRIBUTED_TO_SHOWN,
+  contributionsData.contributedTo.length - contributedToShown.length,
 );
 const contributionsAsOf = new Date(contributionsData.asOf);
 

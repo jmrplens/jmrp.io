@@ -23,6 +23,7 @@ import { getEntry } from "astro:content";
 
 import { foldProjectName } from "../../../scripts/ghc/contributions-yaml.mjs";
 import { OWNER as GITHUB_OWNER } from "../../../scripts/ghc/roster.mjs";
+import { selectUpstreamStrip } from "../../../scripts/ghc/upstream-strip.mjs";
 import { asContributionsDataset } from "../../components/projects/dataset-types";
 import { PRJ } from "../../components/projects/ssr-tokens";
 import { alternateTwinUrl, documentHeader } from "../llms";
@@ -34,7 +35,6 @@ import {
 const contributionsData = asContributionsDataset(rawContributionsData);
 
 /** Upstream projects the /projects/ strip shows, as `ProjectsPage.astro`. */
-const CONTRIBUTED_TO_SHOWN = 6;
 
 /**
  * Markdown twins for /projects/ (live `PRJ_*` tokens, like the homelab twin)
@@ -215,20 +215,24 @@ function upstreamLines(locale: "en" | "es", siteUrl: string): Lines {
   const t = useTranslations(locale);
   const prefix = locale === "es" ? "/es" : "";
 
-  const stripLines = contributionsData.contributedTo
-    .slice(0, CONTRIBUTED_TO_SHOWN)
-    .map((row) => {
-      const notes = [row.language, row.stars === null ? null : `${row.stars}★`]
-        .filter(Boolean)
-        .join(", ");
-      const meta = notes ? ` (${notes})` : "";
-      return `- ${row.project}${meta}: ${repoUrl(row.repo, row.platform)}`;
-    });
+  // The page's rule (scripts/ghc/upstream-strip.mjs), printed under the
+  // heading in both.
+  const strip = selectUpstreamStrip(
+    contributionsData.contributedTo,
+    contributionsData.asOf,
+  );
+  const stripLines = strip.map((row) => {
+    const notes = [row.language, row.stars === null ? null : `${row.stars}★`]
+      .filter(Boolean)
+      .join(", ");
+    const meta = notes ? ` (${notes})` : "";
+    return `- ${row.project}${meta}: ${repoUrl(row.repo, row.platform)}`;
+  });
   // The page's "and 7 more · list as of <date>" line under the strip: without
   // it the twin read as if six projects were the whole list.
   const remaining = Math.max(
     0,
-    contributionsData.contributedTo.length - CONTRIBUTED_TO_SHOWN,
+    contributionsData.contributedTo.length - strip.length,
   );
   const subpage = `${siteUrl}${prefix}/projects/contributions/`;
 
@@ -250,6 +254,8 @@ function upstreamLines(locale: "en" | "es", siteUrl: string): Lines {
     }).replace(/^\+/u, String.raw`\+`),
     "",
     `### ${t("pages.projects.upstream.contributedToTitle")}`,
+    "",
+    t("pages.projects.upstream.contributedToRule"),
     "",
     ...stripLines,
     ...(remaining > 0

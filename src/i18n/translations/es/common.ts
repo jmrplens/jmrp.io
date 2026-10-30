@@ -1005,6 +1005,8 @@ export const common = {
         tileAnswers: "respuestas aceptadas en GitHub Discussions",
         listingNote: "+ {count} PR de empaquetado y listados fusionadas",
         contributedToTitle: "He contribuido a",
+        contributedToRule:
+          "Proyectos con alguna fusión en los últimos 12 meses, primero los de más cambios fusionados, dos por propietario como máximo.",
         andMore: "y {count} proyectos más · lista a fecha de {date}",
         liveLabel:
           "En vivo desde GitHub vía ghchronicle y desde GitLab · actualizado {time}",

@@ -233,7 +233,8 @@ test("volatile fields do not change the hash", () => {
     (d) => (d.source = "fixture"),
     (d) => (d.acceptedAnswers[0].title = "Edited question"),
     (d) => (d.contributedTo[0].stars = 38_044),
-    (d) => (d.contributedTo[0].merged = 2),
+    // More merges for the strip's leader: the order it prints stays.
+    (d) => (d.contributedTo[1].merged = 3),
     // Galaxy Brain prints the accepted-answers count, not its own count.
     (d) => (d.achievements[1].count = 12),
     (d) => (d.achievements[0].percent = 70),
@@ -282,6 +283,11 @@ test("displayed changes do change the hash", () => {
       d.contributedTo = d.contributedTo.toReversed();
     },
     (d) => (d.contributedTo[0].lastMergedAt = "2026-10-01T00:00:00"),
+    // The strip ranks by merges: a tie (2 and 2) goes to the starrier acme.sh.
+    (d) => (d.contributedTo[0].merged = 2),
+    // asOf is not projected, but a project leaving the strip's 12-month
+    // window is: acme.sh's last merge is 2026-09-10.
+    (d) => (d.asOf = "2027-09-11T00:00:00"),
     (d) => (d.issuesByProject.Kong.closed = 1),
     (d) => (d.listingsByOwnProject.phonometry["conda-forge"].merged = 1),
     (d) => (d.summary.contributionTotals.prMerged = 60),
