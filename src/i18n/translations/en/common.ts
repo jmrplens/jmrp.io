@@ -1016,7 +1016,10 @@ export const common = {
         peopleCountOne: "{count} person",
         peopleCount: "{count} people",
       },
-      // ── "Contributions to other projects" block ─────────────────────────
+      upstreamPointerLead: "Further down:",
+      upstreamPointerLink:
+        // ── "Contributions to other projects" block ─────────────────────────
+        "code and documentation I wrote for projects I do not maintain",
       upstream: {
         kicker: "UPSTREAM",
         heading: "Contributions to other projects",
@@ -1029,6 +1032,8 @@ export const common = {
         tileAnswers: "accepted answers in GitHub Discussions",
         listingNote: "+ {count} packaging and listing PRs merged",
         contributedToTitle: "Contributed to",
+        contributedToRule:
+          "Projects with a merge in the last 12 months, most merged changes first, at most two per owner.",
         andMore: "and {count} more · list as of {date}",
         liveLabel:
           "Live from GitHub via ghchronicle and from GitLab · updated {time}",
@@ -1098,13 +1103,16 @@ export const common = {
       seeAllOnGitlab: "All my merge requests to {repo} on GitLab",
       platformGithub: "GitHub",
       platformGitlab: "GitLab",
-      shownNewest: "Showing the {shown} most recent.",
+      shownMergedFirst: "Showing {shown}, merged first.",
+      gitlabLevel4Meaning:
+        "7,500 to 37,499 points earned contributing to GitLab",
+      gitlabPointsLink: "Points on GitLab's contributor platform",
+      ledgerIntro:
+        "One entry per project, most merged changes first. Each lists up to {max} changes: merged ones first, then open ones, newest first within each.",
       notMergedHeading: "Not merged ({count}), counted only",
       distributionHeading: "Distribution and listings",
       distributionIntro:
         "Where my own projects are published: package managers, registries and curated lists.",
-      distributionColProject: "Project",
-      distributionColWhere: "Published in",
       listingKind: {
         packages: "package manager",
         registry: "registry",
@@ -1116,6 +1124,7 @@ export const common = {
       answersFooter:
         "{accepted} accepted out of {discussions} discussions I took part in, across {repos} repositories. Each one links to the accepted reply; who accepted it is never published.",
       issuesHeading: "Issues reported ({total}: {open} open, {closed} closed)",
+      issuesPerProject: "By project ({count})",
       achievementsHeading: "Achievements on GitHub and GitLab",
       achievementsHiddenNote:
         "Only these GitHub achievements are shown. Hidden by design: Quickdraw, YOLO, Arctic Code Vault Contributor and Public Sponsor.",

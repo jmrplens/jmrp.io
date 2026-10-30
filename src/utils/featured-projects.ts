@@ -23,6 +23,8 @@ import { useTranslations } from "@i18n/utils";
 import { featuredRepos } from "@utils/github-facts";
 import { getProjects } from "@utils/projects";
 
+import { selectUpstreamStrip } from "../../scripts/ghc/upstream-strip.mjs";
+
 /** One featured card, already localized. */
 export interface FeaturedProjectCard {
   /** GitHub repository name, shown under the title when it differs. */
@@ -89,15 +91,20 @@ export async function featuredProjectCards(
  * BUILD-TIME on purpose, from the same dataset /projects/contributions/
  * renders (`src/data/ghc/projects-contributions.json`): the homepage is
  * served from the edge cache, and a live `PRJ_*` token would send every
- * request back to nginx. The names are the three most-starred projects with
- * merged code or docs, the order the dataset already carries.
+ * request back to nginx. The names follow the /projects strip's rule
+ * (scripts/ghc/upstream-strip.mjs), three of them and one per owner: the
+ * projects with the most merged work in the last 12 months.
  *
  * @param locale - Which language to write it in.
  * @returns The sentence, or `null` when no project has merged work.
  */
 export function upstreamSummary(locale: Locale): string | null {
   const t = useTranslations(locale);
-  const rows = asContributionsDataset(rawContributionsData).contributedTo;
+  const dataset = asContributionsDataset(rawContributionsData);
+  const rows = selectUpstreamStrip(dataset.contributedTo, dataset.asOf, {
+    size: 3,
+    perOwner: 1,
+  });
   if (rows.length === 0) return null;
   // No counts on the homepage: it is edge-cached and rebuilt rarely, so a
   // number would age in plain sight. The names are the evidence, and the
@@ -106,6 +113,6 @@ export function upstreamSummary(locale: Locale): string | null {
     names: new Intl.ListFormat(locale, {
       style: "long",
       type: "conjunction",
-    }).format(rows.slice(0, 3).map((row) => row.project)),
+    }).format(rows.map((row) => row.project)),
   });
 }

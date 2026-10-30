@@ -17,7 +17,12 @@ import type {
   MaintenanceItem,
 } from "@components/projects/dataset-types";
 import type { Locale } from "@i18n/config";
-import { formatNumber, pluralize, useTranslations } from "@i18n/utils";
+import {
+  formatNumber,
+  pluralize,
+  type TranslationKey,
+  useTranslations,
+} from "@i18n/utils";
 
 import { repoUrl } from "./contribution-links";
 
@@ -247,7 +252,45 @@ export function communityFor(
 }
 
 /**
- * Items a ledger entry lists before it says "showing the N most recent" and
+ * What a GitLab contributor level means, in GitLab's own terms (the
+ * achievement's description: "has earned 7,500 to 37,499 points contributing
+ * to GitLab"), by achievement id. An id with no entry prints no line; the
+ * dataset's English description is never shown untranslated.
+ */
+const GITLAB_LEVEL_MEANING: Readonly<Record<string, TranslationKey>> = {
+  "gitlab-level-4-contributor":
+    "pages.projectsContributions.gitlabLevel4Meaning",
+};
+
+/**
+ * The line under a GitLab award, or `null` when the level has no entry.
+ *
+ * @param achievement - The achievement id.
+ * @param locale - Which locale.
+ * @returns The localized meaning, or `null`.
+ */
+export function gitlabAwardMeaning(
+  achievement: string,
+  locale: Locale,
+): string | null {
+  const key = GITLAB_LEVEL_MEANING[achievement];
+  return key ? useTranslations(locale)(key) : null;
+}
+
+/**
+ * The account's public points page on GitLab's contributor platform, which
+ * shows the level and the points ledger without signing in (gitlab.com's
+ * own profile does not show the award signed out).
+ *
+ * @param username - The GitLab username.
+ * @returns The URL.
+ */
+export function gitlabPointsUrl(username: string): string {
+  return `https://contributors.gitlab.com/users/${encodeURIComponent(username)}`;
+}
+
+/**
+ * Items a ledger entry lists before it says "showing N, merged first" and
  * links to the full listing.
  */
 export const LEDGER_MAX_ITEMS = 10;
@@ -283,7 +326,7 @@ export function formatMergeDuration(hours: number, locale: Locale): string {
 
 /**
  * The GitLab listing of the owner's merge requests to the project a ledger
- * entry mostly targets, for the "showing the N most recent" note.
+ * entry mostly targets, for the "showing N, merged first" note.
  *
  * @param items - The entry's items.
  * @param username - The GitLab username.
@@ -309,7 +352,7 @@ export function gitlabListing(
 
 /**
  * A GitHub search for every pull request the owner opened in the entry's
- * repositories, for the "showing the N most recent" note.
+ * repositories, for the "showing N, merged first" note.
  *
  * @param items - The entry's items.
  * @param owner - The GitHub login.

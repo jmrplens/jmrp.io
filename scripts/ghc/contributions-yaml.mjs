@@ -184,9 +184,11 @@ export function itemKey(item) {
  * Folds a repo's `owner/repo` full name into its display "project" name via
  * `displayName`, falling back to the bare repo name (the part after the
  * `/`; for a nested GitLab path, the last segment) when no override is
- * configured, never the full `owner/repo`. This is
- * the folding the owner decided on (PLAN.md 8.2 #3): a "project" is a GitHub
- * owner, with this file able to override the label per repo; the bare-repo
+ * configured, never the full `owner/repo`. A "project" is a repository,
+ * folded with its siblings when they map to the same display name (the
+ * wording PLAN.md 8.2 #3 recorded, "a GitHub owner", was never what this
+ * code did; corrected 2026-10-30), with this file able to override the
+ * label per repo; the bare-repo
  * default (2026-09-26 fix) already reads right for most upstreams
  * (`acmesh-official/acme.sh` → `"acme.sh"`) — only a repo whose display name
  * needs recasing or expanding past its own repo name

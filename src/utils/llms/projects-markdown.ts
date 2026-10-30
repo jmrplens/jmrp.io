@@ -13,7 +13,9 @@ import {
   dependabotSentence,
   formatMergeDuration,
   githubSearchUrl,
+  gitlabAwardMeaning,
   gitlabListing,
+  gitlabPointsUrl,
   LEDGER_MAX_ITEMS,
   maintenanceCells,
   maintenanceRows,
@@ -22,7 +24,10 @@ import { getProjects } from "@utils/projects";
 import { getEntry } from "astro:content";
 
 import { foldProjectName } from "../../../scripts/ghc/contributions-yaml.mjs";
+import { ledgerProjects } from "../../../scripts/ghc/ledger-view.mjs";
 import { OWNER as GITHUB_OWNER } from "../../../scripts/ghc/roster.mjs";
+import { selectUpstreamStrip } from "../../../scripts/ghc/upstream-strip.mjs";
+import { splitAnswers } from "../../components/projects/answers-lead";
 import { asContributionsDataset } from "../../components/projects/dataset-types";
 import { PRJ } from "../../components/projects/ssr-tokens";
 import { alternateTwinUrl, documentHeader } from "../llms";
@@ -34,7 +39,6 @@ import {
 const contributionsData = asContributionsDataset(rawContributionsData);
 
 /** Upstream projects the /projects/ strip shows, as `ProjectsPage.astro`. */
-const CONTRIBUTED_TO_SHOWN = 6;
 
 /**
  * Markdown twins for /projects/ (live `PRJ_*` tokens, like the homelab twin)
@@ -113,7 +117,7 @@ function ledgerItemLabel(
 }
 
 /**
- * The "Showing the 10 most recent." note with the link to the full listing,
+ * The "Showing 10, merged first." note with the link to the full listing,
  * exactly as the page prints it under a truncated project.
  *
  * @param project - The folded project name.
@@ -126,7 +130,7 @@ function truncationNote(
   items: readonly { fullName: string; platform?: string }[],
   t: ReturnType<typeof useTranslations>,
 ): string {
-  const shown = t("pages.projectsContributions.shownNewest", {
+  const shown = t("pages.projectsContributions.shownMergedFirst", {
     shown: LEDGER_MAX_ITEMS,
   });
   if (platformOf(items[0]?.platform) === "gitlab") {
@@ -215,20 +219,24 @@ function upstreamLines(locale: "en" | "es", siteUrl: string): Lines {
   const t = useTranslations(locale);
   const prefix = locale === "es" ? "/es" : "";
 
-  const stripLines = contributionsData.contributedTo
-    .slice(0, CONTRIBUTED_TO_SHOWN)
-    .map((row) => {
-      const notes = [row.language, row.stars === null ? null : `${row.stars}★`]
-        .filter(Boolean)
-        .join(", ");
-      const meta = notes ? ` (${notes})` : "";
-      return `- ${row.project}${meta}: ${repoUrl(row.repo, row.platform)}`;
-    });
+  // The page's rule (scripts/ghc/upstream-strip.mjs), printed under the
+  // heading in both.
+  const strip = selectUpstreamStrip(
+    contributionsData.contributedTo,
+    contributionsData.asOf,
+  );
+  const stripLines = strip.map((row) => {
+    const notes = [row.language, row.stars === null ? null : `${row.stars}★`]
+      .filter(Boolean)
+      .join(", ");
+    const meta = notes ? ` (${notes})` : "";
+    return `- ${row.project}${meta}: ${repoUrl(row.repo, row.platform)}`;
+  });
   // The page's "and 7 more · list as of <date>" line under the strip: without
   // it the twin read as if six projects were the whole list.
   const remaining = Math.max(
     0,
-    contributionsData.contributedTo.length - CONTRIBUTED_TO_SHOWN,
+    contributionsData.contributedTo.length - strip.length,
   );
   const subpage = `${siteUrl}${prefix}/projects/contributions/`;
 
@@ -250,6 +258,8 @@ function upstreamLines(locale: "en" | "es", siteUrl: string): Lines {
     }).replace(/^\+/u, String.raw`\+`),
     "",
     `### ${t("pages.projects.upstream.contributedToTitle")}`,
+    "",
+    t("pages.projects.upstream.contributedToRule"),
     "",
     ...stripLines,
     ...(remaining > 0
@@ -421,7 +431,7 @@ export async function contributionsPageMarkdown(
       "profile/contributions.yaml is missing or has the wrong type",
     );
   }
-  const { displayName } = contributionsEntry.data;
+  const { displayName, answersLead } = contributionsEntry.data;
 
   const { summary, ledgerByYear, acceptedAnswers, achievements } =
     contributionsData;
@@ -454,35 +464,12 @@ export async function contributionsPageMarkdown(
   });
 
   // One entry per project across every year, like the page itself.
-  const allItems = Object.values(ledgerByYear).flatMap((projects) =>
-    Object.entries(projects).flatMap(([project, items]) =>
-      items.map((item) => ({ project, item })),
-    ),
-  );
-  const byProject = new Map<string, (typeof allItems)[number]["item"][]>();
-  for (const { project, item } of allItems) {
-    if (item.state === "closed") continue;
-    byProject.set(project, [...(byProject.get(project) ?? []), item]);
-  }
   const notMerged = listed.codeNotMerged;
   const ledgerLines = [
-    ...[...byProject]
-      .map(([project, items]) => ({
-        project,
-        items: items.toSorted(
-          (a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt),
-        ),
-        merged: items.filter((it) => it.state === "merged").length,
-        open: items.filter((it) => it.state === "open").length,
-      }))
-      // Projects with merged work first, then open-only ones; each group by
-      // most recent activity, so an old project cannot outrank this month's.
-      .sort(
-        (a, b) =>
-          Number(b.merged > 0) - Number(a.merged > 0) ||
-          Date.parse(b.items[0].createdAt) - Date.parse(a.items[0].createdAt),
-      )
-      .flatMap(({ project, items, merged, open }) => [
+    // The page's order and rows (scripts/ghc/ledger-view.mjs): most merged
+    // work first, merged rows first inside each entry.
+    ...ledgerProjects(ledgerByYear, contributionsData.contributedTo).flatMap(
+      ({ project, items, merged, open }) => [
         // Only the non-zero counts, joined as the page's summary joins them.
         `- **${project}** (${platformName(items[0]?.platform, t)}): ${[
           merged > 0 ? countLabel("summaryMerged", merged, t) : "",
@@ -499,7 +486,8 @@ export async function contributionsPageMarkdown(
         ...(items.length > LEDGER_MAX_ITEMS
           ? [`  - ${truncationNote(project, items, t)}`]
           : []),
-      ]),
+      ],
+    ),
     ...(notMerged > 0
       ? [
           "",
@@ -538,7 +526,9 @@ export async function contributionsPageMarkdown(
       return `- **${own}**: ${parts.join(", ")}`;
     });
 
-  const answerLines = acceptedAnswers.map(
+  // The page's order: the author's lead first, then the rest.
+  const answersSplit = splitAnswers(acceptedAnswers, answersLead, () => {});
+  const answerLines = [...answersSplit.lead, ...answersSplit.rest].map(
     (a) => `- ${a.fullName} #${a.number}: [${a.title}](${a.answerUrl})`,
   );
 
@@ -569,8 +559,17 @@ export async function contributionsPageMarkdown(
           date: formatDate(new Date(a.awardedAt), locale),
         })
       : null;
-    return awarded
-      ? `- **${a.name}** (GitLab): ${awarded}`
+    // What the level means and where its points are public, as the page
+    // prints them under the award.
+    const meaning = gitlabAwardMeaning(a.achievement, locale);
+    const details = [
+      awarded,
+      meaning
+        ? `${meaning} ([${t("pages.projectsContributions.gitlabPointsLink")}](${gitlabPointsUrl(contributionsData.gitlab?.username ?? "jmrp")}))`
+        : null,
+    ].filter(Boolean);
+    return details.length > 0
+      ? `- **${a.name}** (GitLab): ${details.join("; ")}`
       : `- **${a.name}** (GitLab)`;
   });
   const hasGithubAchievements = achievements.some(
@@ -625,6 +624,8 @@ export async function contributionsPageMarkdown(
     ...highlightLines,
     "",
     `## ${t("pages.projectsContributions.ledgerHeading")}`,
+    "",
+    t("pages.projectsContributions.ledgerIntro", { max: LEDGER_MAX_ITEMS }),
     "",
     ...ledgerLines,
     `## ${t("pages.projectsContributions.distributionHeading")}`,

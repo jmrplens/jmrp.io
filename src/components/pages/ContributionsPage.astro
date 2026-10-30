@@ -8,6 +8,7 @@
  * InfluxDB is unreachable).
  */
 import AchievementShelf from "@components/projects/AchievementShelf.astro";
+import { splitAnswers } from "@components/projects/answers-lead";
 import { asContributionsDataset } from "@components/projects/dataset-types";
 import DiffSize from "@components/projects/DiffSize.astro";
 import LanguageTag from "@components/projects/LanguageTag.astro";
@@ -38,6 +39,7 @@ import {
   formatMergeDuration,
   githubSearchUrl as githubSearchUrlFor,
   gitlabListing as gitlabListingFor,
+  gitlabPointsUrl,
   LEDGER_MAX_ITEMS,
 } from "@utils/project-facts";
 import { getSiteUrl } from "@utils/site";
@@ -52,6 +54,10 @@ import type {
 } from "schema-dts";
 
 import { foldProjectName } from "../../../scripts/ghc/contributions-yaml.mjs";
+import {
+  ledgerProjects,
+  rowPrefix,
+} from "../../../scripts/ghc/ledger-view.mjs";
 import { OWNER as GITHUB_OWNER } from "../../../scripts/ghc/roster.mjs";
 
 const locale = (Astro.currentLocale ?? defaultLocale) as Locale;
@@ -66,7 +72,7 @@ if (contributionsEntry?.data.type !== "contributions") {
     "profile/contributions.yaml is missing or has the wrong type",
   );
 }
-const { displayName } = contributionsEntry.data;
+const { displayName, answersLead: answersLeadRefs } = contributionsEntry.data;
 
 const contributionsData = asContributionsDataset(rawContributionsData);
 const {
@@ -79,13 +85,16 @@ const {
 } = contributionsData;
 
 const asOfDate = new Date(contributionsData.asOf);
+// The author's lead answers first, with their question's title; the rest in
+// the dataset's order (src/components/projects/answers-lead.ts).
+const answersSplit = splitAnswers(acceptedAnswers, answersLeadRefs);
 const gitlabUsername = contributionsData.gitlab?.username ?? "jmrp";
 
 const contributedToStarsByProject = new Map(
   contributedTo.map((row) => [row.project, row.stars]),
 );
 
-const highlights = rawHighlights.slice(0, 7).map((h) => ({
+const highlights = rawHighlights.slice(0, 8).map((h) => ({
   repo: h.repo,
   number: h.number,
   kind: h.kind,
@@ -127,8 +136,9 @@ function countLabel(
 
 /**
  * A ledger row's visible label: "#N title" (GitLab merge requests: "!N
- * title"), prefixed with the repo name only when the project group spans
- * more than one repository.
+ * title"), prefixed with the repo name only for a row outside the repo that
+ * holds most of the entry (`rowPrefix`): GitLab's entry names the one
+ * http-router row, not its 104 gitlab-org/gitlab ones.
  */
 function itemLabel(
   items: readonly { fullName: string }[],
@@ -140,9 +150,7 @@ function itemLabel(
     platform?: string;
   },
 ): string {
-  const multiRepo = new Set(items.map((it) => it.fullName)).size > 1;
-  const prefix = multiRepo ? `${item.fullName.split("/").at(-1) ?? ""} ` : "";
-  return `${prefix}${itemRef(item)} ${item.title ?? ""}`.trim();
+  return `${rowPrefix(items, item)}${itemRef(item)} ${item.title ?? ""}`.trim();
 }
 
 /**
@@ -163,7 +171,6 @@ function githubSearchUrl(items: readonly { fullName: string }[]): string {
 }
 
 // ── Code and documentation ledger: one box per project, no years ──────────
-const years = Object.keys(ledgerByYear).sort((a, b) => Number(b) - Number(a));
 const MAX_ITEMS_PER_PROJECT = LEDGER_MAX_ITEMS;
 
 /** Duration between two points, in hours, as a short localized string. */
@@ -216,37 +223,17 @@ interface LedgerProject {
   platform: "github" | "gitlab";
 }
 
-// One box per project across every year. Closed-unmerged PRs are a single
-// count, never rows; a project left with no rows disappears.
-const allLedgerItems = years.flatMap((year) =>
-  Object.entries(ledgerByYear[year]).flatMap(([project, items]) =>
-    items.map((item) => ({ project, item })),
-  ),
-);
-const itemsByProject = new Map<string, LedgerProject["items"][number][]>();
-for (const { project, item } of allLedgerItems) {
-  if (item.state === "closed") continue;
-  const list = itemsByProject.get(project) ?? [];
-  list.push(item);
-  itemsByProject.set(project, list);
-}
-const projectEntries: LedgerProject[] = [...itemsByProject]
-  .map(([project, items]) => ({
-    project,
-    items: items.sort(
-      (a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt),
-    ),
-    merged: items.filter((it) => it.state === "merged").length,
-    open: items.filter((it) => it.state === "open").length,
-    platform: platformOf(items[0]?.platform),
-  }))
-  // Projects with merged work first, then open-only ones; each group by
-  // most recent activity, so an old project cannot outrank this month's.
-  .sort(
-    (a, b) =>
-      Number(b.merged > 0) - Number(a.merged > 0) ||
-      Date.parse(b.items[0].createdAt) - Date.parse(a.items[0].createdAt),
-  );
+// One box per project across every year, most merged work first and merged
+// rows first inside each (scripts/ghc/ledger-view.mjs, shared with the
+// twin). Closed-unmerged PRs are a single count, never rows; a project left
+// with no rows disappears.
+const projectEntries: LedgerProject[] = ledgerProjects(
+  ledgerByYear,
+  contributedTo,
+).map((entry) => ({
+  ...entry,
+  platform: platformOf(entry.items[0]?.platform),
+}));
 const notMergedCount = listed.codeNotMerged;
 
 // ── Distribution and listings, grouped by MY project, then by target ─────
@@ -338,9 +325,10 @@ const upstreamList = {
 // declined PR is not part of the upstream code), and no dates, because the
 // page shows none.
 const mergedKeys = new Set(
-  allLedgerItems
-    .filter(({ item }) => item.state === "merged")
-    .map(({ item }) => itemUrl(item)),
+  projectEntries
+    .flatMap((entry) => entry.items)
+    .filter((item) => item.state === "merged")
+    .map((item) => itemUrl(item)),
 );
 const mergedHighlights = highlights.filter((h) => mergedKeys.has(h.url));
 const highlightList = {
@@ -575,6 +563,11 @@ const faqNode = pageFaq && pageFaqNode(pageFaq, pageUrl, schema["@id"], locale);
       >
         {t("pages.projectsContributions.ledgerHeading")}
       </h2>
+      <p class="contrib-intro">
+        {t("pages.projectsContributions.ledgerIntro", {
+          max: MAX_ITEMS_PER_PROJECT,
+        })}
+      </p>
       {projectEntries.map((entry) => (
         <details
           data-project={entry.project}
@@ -631,7 +624,7 @@ const faqNode = pageFaq && pageFaqNode(pageFaq, pageUrl, schema["@id"], locale);
           {entry.items.length > MAX_ITEMS_PER_PROJECT &&
             entry.platform === "gitlab" && (
               <p class="items__more">
-                {t("pages.projectsContributions.shownNewest", {
+                {t("pages.projectsContributions.shownMergedFirst", {
                   shown: MAX_ITEMS_PER_PROJECT,
                 })}{" "}
                 <a
@@ -653,7 +646,7 @@ const faqNode = pageFaq && pageFaqNode(pageFaq, pageUrl, schema["@id"], locale);
           {entry.items.length > MAX_ITEMS_PER_PROJECT &&
             entry.platform === "github" && (
               <p class="items__more">
-                {t("pages.projectsContributions.shownNewest", {
+                {t("pages.projectsContributions.shownMergedFirst", {
                   shown: MAX_ITEMS_PER_PROJECT,
                 })}{" "}
                 <a
@@ -696,68 +689,63 @@ const faqNode = pageFaq && pageFaqNode(pageFaq, pageUrl, schema["@id"], locale);
         <p class="contrib-intro">
           {t("pages.projectsContributions.distributionIntro")}
         </p>
-        {/* Two columns that wrap: the table fits at any width, so it needs
-            no scroll region (and a region named like its section would be a
-            duplicate landmark). */}
+        {/* One column: each own project is a full-width header row over its
+            targets, so a target's name and repo get the whole width (two
+            columns left 179 px of 351 at 390 px and broke repo names). It
+            fits at any width, so it needs no scroll region (and a region
+            named like its section would be a duplicate landmark). */}
         <div class="table-wrap">
           <table class="listings">
-            <thead>
-              <tr>
-                <th scope="col">
-                  {t("pages.projectsContributions.distributionColProject")}
-                </th>
-                <th scope="col">
-                  {t("pages.projectsContributions.distributionColWhere")}
-                </th>
-              </tr>
-            </thead>
             {listingsByOwn.map(({ own, targets }) => (
               <tbody>
-                {targets.map((target, i) => (
+                <tr>
+                  <th
+                    scope="rowgroup"
+                    class="listings__own"
+                  >
+                    {own}
+                  </th>
+                </tr>
+                {targets.map((target) => (
                   <tr>
-                    {i === 0 && (
-                      <th
-                        scope="rowgroup"
-                        rowspan={targets.length}
-                        class="listings__own"
-                      >
-                        {own}
-                      </th>
-                    )}
                     <td>
-                      <span class="listings__name">
-                        {target.name}
-                        <span class="listings__kind">
-                          {t(
-                            `pages.projectsContributions.listingKind.${listingKind(target.fullName)}`,
+                      <div class="listings__row">
+                        <span class="listings__name">
+                          {target.name}
+                          <span class="listings__kind">
+                            {t(
+                              `pages.projectsContributions.listingKind.${listingKind(target.fullName)}`,
+                            )}
+                          </span>
+                        </span>
+                        <a
+                          class="external-link listings__repo"
+                          href={target.url}
+                          target="_blank"
+                          rel="external noopener noreferrer"
+                          aria-label={t("aria.opensNewTab", {
+                            text: `${target.fullName}, ${own}`,
+                          })}
+                          set:text={target.fullName}
+                        />
+                        <span class="listings__states">
+                          {target.merged > 0 && (
+                            <span class="pill pill--ok">
+                              {target.merged > 1
+                                ? t("pages.projectsContributions.mergedTimes", {
+                                    count: target.merged,
+                                  })
+                                : t(
+                                    "pages.projectsContributions.itemMergedPill",
+                                  )}
+                            </span>
+                          )}
+                          {target.open > 0 && (
+                            <span class="pill pill--open">
+                              {t("pages.projectsContributions.underReviewPill")}
+                            </span>
                           )}
                         </span>
-                      </span>
-                      <a
-                        class="external-link listings__repo"
-                        href={target.url}
-                        target="_blank"
-                        rel="external noopener noreferrer"
-                        aria-label={t("aria.opensNewTab", {
-                          text: `${target.fullName}, ${own}`,
-                        })}
-                        set:text={target.fullName}
-                      />
-                      <div class="listings__states">
-                        {target.merged > 0 && (
-                          <span class="pill pill--ok">
-                            {target.merged > 1
-                              ? t("pages.projectsContributions.mergedTimes", {
-                                  count: target.merged,
-                                })
-                              : t("pages.projectsContributions.itemMergedPill")}
-                          </span>
-                        )}
-                        {target.open > 0 && (
-                          <span class="pill pill--open">
-                            {t("pages.projectsContributions.underReviewPill")}
-                          </span>
-                        )}
                       </div>
                     </td>
                   </tr>
@@ -781,12 +769,24 @@ const faqNode = pageFaq && pageFaqNode(pageFaq, pageUrl, schema["@id"], locale);
           count: acceptedAnswers.length,
         })}
       </h2>
+      {/* One list, so a screen reader announces every answer: the author's
+          lead first with its question's title, then the rest as chips. */}
       <ul class="answers">
-        {acceptedAnswers.map((a) => (
-          <li>
+        {[...answersSplit.lead, ...answersSplit.rest].map((a) => (
+          <li
+            class={answersSplit.lead.includes(a) ? "answers__lead" : undefined}
+          >
             {/* One line on purpose, as the highlights' anchor above. */}
             {/* prettier-ignore */}
             <a class="external-link" href={a.answerUrl} target="_blank" rel="external noopener noreferrer" aria-label={t("aria.opensNewTab", { text: `${a.fullName} #${a.number}: ${a.title}` })}><span lang="en">{`${a.fullName} #${a.number}`}</span></a>
+            {answersSplit.lead.includes(a) && (
+              <span
+                class="answers__title"
+                lang="en"
+              >
+                {a.title}
+              </span>
+            )}
           </li>
         ))}
       </ul>
@@ -799,41 +799,59 @@ const faqNode = pageFaq && pageFaqNode(pageFaq, pageUrl, schema["@id"], locale);
       </p>
     </section>
 
-    <details>
-      <summary>
-        <b>
-          {t("pages.projectsContributions.issuesHeading", {
-            total: listed.issues,
-            open: listed.issuesOpen,
-            closed: listed.issuesClosed,
-          })}
-        </b>
-        <span
-          class="ledger-toggle"
-          aria-hidden="true"
-        >
-          <span class="i-mdi:plus ledger-toggle__icon ledger-toggle__icon--closed" />
-          <span class="i-mdi:minus ledger-toggle__icon ledger-toggle__icon--open" />
-        </span>
-      </summary>
-      <ul class="items items--flat">
-        {[...issuesByProject].map(([project, counts]) => (
-          <li>
-            <span lang="en">{project}</span>
-            <span class="items__w">
-              {counts.open > 0 && countLabel("summaryOpen", counts.open)}
-              {counts.open > 0 && counts.closed > 0 && " · "}
-              {counts.closed > 0 && countLabel("summaryClosed", counts.closed)}
-            </span>
-          </li>
-        ))}
-      </ul>
-    </details>
+    {/* A section with its h2, like every other list on the page: as a bare
+        <details> it was missing from the page's outline, while the twin
+        already had "## Issues reported". */}
+    <section
+      id="issues"
+      aria-labelledby="issues-heading"
+    >
+      <h2
+        id="issues-heading"
+        class="contrib-h2"
+      >
+        {t("pages.projectsContributions.issuesHeading", {
+          total: listed.issues,
+          open: listed.issuesOpen,
+          closed: listed.issuesClosed,
+        })}
+      </h2>
+      <details>
+        <summary>
+          <b>
+            {t("pages.projectsContributions.issuesPerProject", {
+              count: issuesByProject.size,
+            })}
+          </b>
+          <span
+            class="ledger-toggle"
+            aria-hidden="true"
+          >
+            <span class="i-mdi:plus ledger-toggle__icon ledger-toggle__icon--closed" />
+            <span class="i-mdi:minus ledger-toggle__icon ledger-toggle__icon--open" />
+          </span>
+        </summary>
+        <ul class="items items--flat">
+          {[...issuesByProject].map(([project, counts]) => (
+            <li>
+              <span lang="en">{project}</span>
+              <span class="items__w">
+                {counts.open > 0 && countLabel("summaryOpen", counts.open)}
+                {counts.open > 0 && counts.closed > 0 && " · "}
+                {counts.closed > 0 &&
+                  countLabel("summaryClosed", counts.closed)}
+              </span>
+            </li>
+          ))}
+        </ul>
+      </details>
+    </section>
 
     <AchievementShelf
       achievements={achievements}
       acceptedAnswersCount={summary.answersCount}
       answersAnchor={answersAnchor}
+      gitlabPointsUrl={gitlabPointsUrl(gitlabUsername)}
     />
 
     {pageFaq?.visible && <FAQ items={pageFaq.items} />}
@@ -1179,31 +1197,26 @@ const faqNode = pageFaq && pageFaqNode(pageFaq, pageUrl, schema["@id"], locale);
     border-bottom: 1px solid var(--color-hair);
   }
 
-  .listings thead th {
-    font-family: var(--font-mono);
-    font-size: var(--text-micro);
-    font-weight: var(--fw-medium);
-    color: var(--color-text-muted);
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-    background: var(--color-bg-subtle);
-  }
-
   .listings tbody:last-child tr:last-child > * {
     border-bottom: 0;
   }
 
-  .listings thead th:first-child,
   .listings__own {
-    inline-size: 12rem;
-  }
-
-  .listings__own {
+    padding-block: 6px;
     font-family: var(--font-mono);
     font-size: var(--text-xs);
     font-weight: var(--fw-medium);
     color: var(--color-text-heading);
-    border-inline-end: 1px solid var(--color-hair);
+    background: var(--color-bg-subtle);
+  }
+
+  /* Flex inside the cell, never on the td, so the table keeps its
+     semantics: name, kind, repo and states wrap as one line. */
+  .listings__row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px var(--space-sm);
+    align-items: baseline;
   }
 
   .listings__name {
@@ -1225,13 +1238,13 @@ const faqNode = pageFaq && pageFaqNode(pageFaq, pageUrl, schema["@id"], locale);
     font-family: var(--font-mono);
     font-size: var(--text-micro);
     color: var(--color-text-muted);
+    overflow-wrap: anywhere;
   }
 
   .listings__states {
-    display: flex;
+    display: inline-flex;
     flex-wrap: wrap;
     gap: var(--space-xs);
-    margin-top: var(--space-xs);
   }
 
   .items li > .pill {
@@ -1250,13 +1263,25 @@ const faqNode = pageFaq && pageFaqNode(pageFaq, pageUrl, schema["@id"], locale);
       justify-self: start;
     }
 
-    .items li {
-      grid-template-columns: 6.5rem 1fr;
+    /* The ledger's rows (not the flat issues list): the pill sits inline
+       before the title, and size and timing follow on the next line, so a
+       row stops spending a line on each of them (median 122 px to about
+       70 at 390 px). */
+    .items:not(.items--flat) li {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 2px var(--space-sm);
+      align-items: baseline;
     }
 
-    .items li > .items__w,
-    .items li > .items__sz {
-      grid-column: 2;
+    .items:not(.items--flat) li > .pill {
+      flex: none;
+      inline-size: auto;
+    }
+
+    .items:not(.items--flat) li > :nth-child(2) {
+      flex: 1 1 0;
+      min-inline-size: 55%;
     }
   }
 
@@ -1291,6 +1316,27 @@ const faqNode = pageFaq && pageFaqNode(pageFaq, pageUrl, schema["@id"], locale);
     padding: 0;
     margin: 0;
     list-style: none;
+  }
+
+  .answers li.answers__lead {
+    display: flex;
+    flex-basis: 100%;
+    flex-direction: column;
+    gap: 4px;
+    align-items: flex-start;
+  }
+
+  @media (width >= 48rem) {
+    .answers li.answers__lead {
+      flex-basis: calc(50% - var(--space-sm));
+    }
+  }
+
+  .answers__title {
+    font-size: var(--text-sm);
+    line-height: 1.45;
+    color: var(--color-text);
+    overflow-wrap: anywhere;
   }
 
   .answers li a {

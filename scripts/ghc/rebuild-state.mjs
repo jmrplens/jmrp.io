@@ -28,6 +28,10 @@
  *   EXACTLY as `formatCompactStars` prints it (38012 and 38044 are both
  *   "38k"), the main language, and the month of the latest merge (the strip
  *   shows month and year).
+ * - `upstreamStrip`: the projects the /projects strip and the homepage line
+ *   name, in order (scripts/ghc/upstream-strip.mjs). It depends on `asOf`,
+ *   which is not projected, so a project leaving the strip's 12-month window
+ *   changes the hash on the day it happens.
  * - `cardRows`: which live rows each /projects/ card's markdown twin prints
  *   (`cardFacts`: stars above 0, a 30-day gain above 0, a stable release),
  *   as booleans, never the figures themselves: the twin decides those rows
@@ -66,6 +70,8 @@
 import crypto from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
+
+import { selectUpstreamStrip } from "./upstream-strip.mjs";
 
 /** Default location of the rebuild state file on the production host. */
 export const DEFAULT_STATE_PATH = "/var/lib/jmrp.io/ghc/rebuild-state.json";
@@ -341,6 +347,10 @@ export function projectDisplay(dataset) {
       size: h.size ?? null,
       language: h.language ?? null,
     })),
+    upstreamStrip: selectUpstreamStrip(
+      dataset.contributedTo ?? [],
+      dataset.asOf,
+    ).map((row) => row.project),
     contributedTo: (dataset.contributedTo ?? []).map((row) => ({
       project: row.project,
       repo: row.repo,

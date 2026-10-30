@@ -992,6 +992,9 @@ export const common = {
         peopleCountOne: "{count} persona",
         peopleCount: "{count} personas",
       },
+      upstreamPointerLead: "Más abajo:",
+      upstreamPointerLink:
+        "código y documentación que he escrito para proyectos que no mantengo",
       // ── Bloque «Aportaciones a otros proyectos» ───────────────────────────
       upstream: {
         kicker: "UPSTREAM",
@@ -1005,6 +1008,8 @@ export const common = {
         tileAnswers: "respuestas aceptadas en GitHub Discussions",
         listingNote: "+ {count} PR de empaquetado y listados fusionadas",
         contributedToTitle: "He contribuido a",
+        contributedToRule:
+          "Proyectos con alguna fusión en los últimos 12 meses, primero los de más cambios fusionados, dos por propietario como máximo.",
         andMore: "y {count} proyectos más · lista a fecha de {date}",
         liveLabel:
           "En vivo desde GitHub vía ghchronicle y desde GitLab · actualizado {time}",
@@ -1072,13 +1077,16 @@ export const common = {
       seeAllOnGitlab: "Todas mis merge requests a {repo} en GitLab",
       platformGithub: "GitHub",
       platformGitlab: "GitLab",
-      shownNewest: "Se muestran las {shown} más recientes.",
+      shownMergedFirst: "Se muestran {shown}, primero las fusionadas.",
+      gitlabLevel4Meaning:
+        "Entre 7.500 y 37.499 puntos ganados contribuyendo a GitLab",
+      gitlabPointsLink: "Puntos en la plataforma de colaboradores de GitLab",
+      ledgerIntro:
+        "Una entrada por proyecto, primero las que tienen más cambios fusionados. Cada una lista hasta {max} cambios: primero los fusionados y luego los abiertos, de más reciente a más antiguo en cada grupo.",
       notMergedHeading: "No fusionadas ({count}), solo se cuentan",
       distributionHeading: "Distribución y listados",
       distributionIntro:
         "Dónde se publican mis propios proyectos: gestores de paquetes, registros y listas curadas.",
-      distributionColProject: "Proyecto",
-      distributionColWhere: "Publicado en",
       listingKind: {
         packages: "gestor de paquetes",
         registry: "registro",
@@ -1091,6 +1099,7 @@ export const common = {
         "{accepted} aceptadas de {discussions} discusiones en las que participé, en {repos} repositorios. Cada una enlaza a la respuesta aceptada; no se publica quién la aceptó.",
       issuesHeading:
         "Issues reportadas ({total}: {open} abiertas, {closed} cerradas)",
+      issuesPerProject: "Por proyecto ({count})",
       achievementsHeading: "Logros en GitHub y GitLab",
       achievementsHiddenNote:
         "De GitHub solo se muestran estos. Ocultos a propósito: Quickdraw, YOLO, Arctic Code Vault Contributor y Public Sponsor.",

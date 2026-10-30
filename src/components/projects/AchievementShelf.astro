@@ -29,6 +29,7 @@
  */
 import { defaultLocale, type Locale } from "@i18n/config";
 import { formatDate, useTranslations } from "@i18n/utils";
+import { gitlabAwardMeaning } from "@utils/project-facts";
 import type { ImageMetadata } from "astro";
 import { Picture } from "astro:assets";
 
@@ -54,9 +55,12 @@ interface Props {
   readonly acceptedAnswersCount: number;
   /** Anchor id of the accepted-answers section, for Galaxy Brain's link. */
   readonly answersAnchor: string;
+  /** The account's points page on GitLab's contributor platform. */
+  readonly gitlabPointsUrl: string;
 }
 
-const { achievements, acceptedAnswersCount, answersAnchor } = Astro.props;
+const { achievements, acceptedAnswersCount, answersAnchor, gitlabPointsUrl } =
+  Astro.props;
 const locale = (Astro.currentLocale ?? defaultLocale) as Locale;
 const t = useTranslations(locale);
 
@@ -196,39 +200,59 @@ const INITIALS: Record<string, string> = {
               </span>
               <b class="ach__name">{a.name}</b>
               <span class="ach__tier">{tierLine(a)}</span>
-              {a.achievement === "galaxy-brain" ? (
-                <span class="ach__extra">
-                  <a href={`#${answersAnchor}`}>
-                    {t("pages.projectsContributions.answersHeading", {
-                      count: acceptedAnswersCount,
-                    })}
-                  </a>
-                </span>
-              ) : (
-                a.agrees &&
-                a.nextThreshold > 0 &&
-                a.count !== null && (
-                  <>
-                    <span class="ach__extra">
-                      {t("pages.projectsContributions.achievementProgress", {
-                        value: a.count,
-                        max: a.nextThreshold,
-                        label: t(
-                          "pages.projectsContributions.achievementEstimated",
-                        ),
+              {a.platform === "gitlab" &&
+                gitlabAwardMeaning(a.achievement, locale) && (
+                  <span class="ach__extra">
+                    {gitlabAwardMeaning(a.achievement, locale)}
+                    <br />
+                    <a
+                      class="external-link"
+                      href={gitlabPointsUrl}
+                      target="_blank"
+                      rel="external noopener noreferrer"
+                      aria-label={t("aria.opensNewTab", {
+                        text: t("pages.projectsContributions.gitlabPointsLink"),
                       })}
-                    </span>
-                    <meter
-                      min="0"
-                      max={a.nextThreshold}
-                      value={a.count}
-                      low={0}
-                      optimum={a.nextThreshold}
-                      aria-label={`${a.count} / ${a.nextThreshold} (${t("pages.projectsContributions.achievementEstimated")})`}
+                      set:text={t(
+                        "pages.projectsContributions.gitlabPointsLink",
+                      )}
                     />
-                  </>
-                )
-              )}
+                  </span>
+                )}
+              {a.platform !== "gitlab" &&
+                (a.achievement === "galaxy-brain" ? (
+                  <span class="ach__extra">
+                    <a href={`#${answersAnchor}`}>
+                      {t("pages.projectsContributions.answersHeading", {
+                        count: acceptedAnswersCount,
+                      })}
+                    </a>
+                  </span>
+                ) : (
+                  a.agrees &&
+                  a.nextThreshold > 0 &&
+                  a.count !== null && (
+                    <>
+                      <span class="ach__extra">
+                        {t("pages.projectsContributions.achievementProgress", {
+                          value: a.count,
+                          max: a.nextThreshold,
+                          label: t(
+                            "pages.projectsContributions.achievementEstimated",
+                          ),
+                        })}
+                      </span>
+                      <meter
+                        min="0"
+                        max={a.nextThreshold}
+                        value={a.count}
+                        low={0}
+                        optimum={a.nextThreshold}
+                        aria-label={`${a.count} / ${a.nextThreshold} (${t("pages.projectsContributions.achievementEstimated")})`}
+                      />
+                    </>
+                  )
+                ))}
             </li>
           );
         })}

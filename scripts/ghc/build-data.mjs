@@ -498,8 +498,10 @@ export async function collectDataset(
   const { ledgerByYear, issuesByProject, listingsByOwnProject, listedRepos } =
     splitLedger([...fullLedger, ...gitlab.items], contributions, listingSet);
 
-  // ── "Contributed to" strip: folded projects with merged code/docs, ranked
-  // by star count (fetched live from GitHub, cached) ──
+  // ── `contributedTo`: folded projects with merged code/docs, ordered by
+  // star count (fetched live from GitHub, cached). The subpage's ItemList
+  // keeps this order; the /projects strip and the home line pick their rows
+  // with scripts/ghc/upstream-strip.mjs (merged work in the last year) ──
   /** @type {Map<string, {project: string, merged: number, lastMergedAt: string,
    *   primaryRepo: string, perRepo: {repo: string, merged: number}[]}>} */
   const foldedCode = new Map();

@@ -62,6 +62,7 @@ import { getEntry } from "astro:content";
 import type { CollectionPage, Text } from "schema-dts";
 
 import { ACTIVE_REPOS } from "../../../scripts/ghc/roster.mjs";
+import { selectUpstreamStrip } from "../../../scripts/ghc/upstream-strip.mjs";
 
 const locale = (Astro.currentLocale ?? defaultLocale) as Locale;
 const t = useTranslations(locale);
@@ -121,21 +122,23 @@ const shortNames: Record<string, string> =
   (contributionsEntry?.data.type === "contributions"
     ? contributionsEntry.data.shortName
     : undefined) ?? {};
-const CONTRIBUTED_TO_SHOWN = 6;
-const contributedToShown: ContributedToRow[] = contributionsData.contributedTo
-  .slice(0, CONTRIBUTED_TO_SHOWN)
-  .map((row) => ({
-    project: row.project,
-    platform: platformOf(row.platform),
-    url: repoUrl(row.repo, row.platform),
-    stars: row.stars,
-    lastMergedAt: row.lastMergedAt,
-    language: row.language ?? null,
-    shortName: shortNames[row.project] ?? null,
-  }));
+// The projects with merged work in the last 12 months, most merged first, two
+// per owner (scripts/ghc/upstream-strip.mjs); the block prints that rule.
+const contributedToShown: ContributedToRow[] = selectUpstreamStrip(
+  contributionsData.contributedTo,
+  contributionsData.asOf,
+).map((row) => ({
+  project: row.project,
+  platform: platformOf(row.platform),
+  url: repoUrl(row.repo, row.platform),
+  stars: row.stars,
+  lastMergedAt: row.lastMergedAt,
+  language: row.language ?? null,
+  shortName: shortNames[row.project] ?? null,
+}));
 const contributedToRemaining = Math.max(
   0,
-  contributionsData.contributedTo.length - CONTRIBUTED_TO_SHOWN,
+  contributionsData.contributedTo.length - contributedToShown.length,
 );
 const contributionsAsOf = new Date(contributionsData.asOf);
 
@@ -384,8 +387,11 @@ const groups = [
 
 // The upstream block and the maintenance table follow the author's current
 // work: the ones in development, when there are any, and the maintained
-// projects, so the page reads own work, then work on other projects, then
-// the archive. The twin (`projectsPageMarkdown`) keeps the same order.
+// projects, so the page reads own work, then contributions to other
+// projects, then how the own projects are maintained, then the archive. A
+// line under the header points to the upstream block, since nothing in the
+// first screen says it is here. The twin (`projectsPageMarkdown`) keeps the
+// same order.
 const currentWorkEnd = groups.findLast(
   (group) => group.key !== "archived",
 )?.key;
@@ -408,6 +414,10 @@ const faqNode =
         {t("pages.projects.heading")}
       </h1>
       <p class="projects-header__intro">{t("pages.projects.intro")}</p>
+      {/* Outside the intro, so the speakable text is unchanged. One line on
+          purpose: a reflowed anchor keeps a space inside the link. */}
+      {/* prettier-ignore */}
+      <p class="projects-header__pointer">{t("pages.projects.upstreamPointerLead")} <a href="#upstream">{t("pages.projects.upstreamPointerLink")}</a>.</p>
       {manualVerifiedOn &&
         // The note's markup is pinned. Inside this expression Prettier
         // formats with JSX rules, where `singleAttributePerLine` breaks any
@@ -839,6 +849,14 @@ const faqNode =
     font-size: var(--text-md);
     line-height: 1.6;
     color: var(--color-text);
+  }
+
+  .projects-header__pointer {
+    max-width: 80ch;
+    margin: var(--space-sm) 0 0;
+    font-size: var(--text-sm);
+    line-height: 1.6;
+    color: var(--color-meta);
   }
 
   .projects-header__note {
