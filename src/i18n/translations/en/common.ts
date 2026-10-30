@@ -1016,7 +1016,10 @@ export const common = {
         peopleCountOne: "{count} person",
         peopleCount: "{count} people",
       },
-      // ── "Contributions to other projects" block ─────────────────────────
+      upstreamPointerLead: "Further down:",
+      upstreamPointerLink:
+        // ── "Contributions to other projects" block ─────────────────────────
+        "code and documentation I wrote for projects I do not maintain",
       upstream: {
         kicker: "UPSTREAM",
         heading: "Contributions to other projects",
@@ -1110,8 +1113,6 @@ export const common = {
       distributionHeading: "Distribution and listings",
       distributionIntro:
         "Where my own projects are published: package managers, registries and curated lists.",
-      distributionColProject: "Project",
-      distributionColWhere: "Published in",
       listingKind: {
         packages: "package manager",
         registry: "registry",
@@ -1123,6 +1124,7 @@ export const common = {
       answersFooter:
         "{accepted} accepted out of {discussions} discussions I took part in, across {repos} repositories. Each one links to the accepted reply; who accepted it is never published.",
       issuesHeading: "Issues reported ({total}: {open} open, {closed} closed)",
+      issuesPerProject: "By project ({count})",
       achievementsHeading: "Achievements on GitHub and GitLab",
       achievementsHiddenNote:
         "Only these GitHub achievements are shown. Hidden by design: Quickdraw, YOLO, Arctic Code Vault Contributor and Public Sponsor.",

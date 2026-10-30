@@ -689,68 +689,63 @@ const faqNode = pageFaq && pageFaqNode(pageFaq, pageUrl, schema["@id"], locale);
         <p class="contrib-intro">
           {t("pages.projectsContributions.distributionIntro")}
         </p>
-        {/* Two columns that wrap: the table fits at any width, so it needs
-            no scroll region (and a region named like its section would be a
-            duplicate landmark). */}
+        {/* One column: each own project is a full-width header row over its
+            targets, so a target's name and repo get the whole width (two
+            columns left 179 px of 351 at 390 px and broke repo names). It
+            fits at any width, so it needs no scroll region (and a region
+            named like its section would be a duplicate landmark). */}
         <div class="table-wrap">
           <table class="listings">
-            <thead>
-              <tr>
-                <th scope="col">
-                  {t("pages.projectsContributions.distributionColProject")}
-                </th>
-                <th scope="col">
-                  {t("pages.projectsContributions.distributionColWhere")}
-                </th>
-              </tr>
-            </thead>
             {listingsByOwn.map(({ own, targets }) => (
               <tbody>
-                {targets.map((target, i) => (
+                <tr>
+                  <th
+                    scope="rowgroup"
+                    class="listings__own"
+                  >
+                    {own}
+                  </th>
+                </tr>
+                {targets.map((target) => (
                   <tr>
-                    {i === 0 && (
-                      <th
-                        scope="rowgroup"
-                        rowspan={targets.length}
-                        class="listings__own"
-                      >
-                        {own}
-                      </th>
-                    )}
                     <td>
-                      <span class="listings__name">
-                        {target.name}
-                        <span class="listings__kind">
-                          {t(
-                            `pages.projectsContributions.listingKind.${listingKind(target.fullName)}`,
+                      <div class="listings__row">
+                        <span class="listings__name">
+                          {target.name}
+                          <span class="listings__kind">
+                            {t(
+                              `pages.projectsContributions.listingKind.${listingKind(target.fullName)}`,
+                            )}
+                          </span>
+                        </span>
+                        <a
+                          class="external-link listings__repo"
+                          href={target.url}
+                          target="_blank"
+                          rel="external noopener noreferrer"
+                          aria-label={t("aria.opensNewTab", {
+                            text: `${target.fullName}, ${own}`,
+                          })}
+                          set:text={target.fullName}
+                        />
+                        <span class="listings__states">
+                          {target.merged > 0 && (
+                            <span class="pill pill--ok">
+                              {target.merged > 1
+                                ? t("pages.projectsContributions.mergedTimes", {
+                                    count: target.merged,
+                                  })
+                                : t(
+                                    "pages.projectsContributions.itemMergedPill",
+                                  )}
+                            </span>
+                          )}
+                          {target.open > 0 && (
+                            <span class="pill pill--open">
+                              {t("pages.projectsContributions.underReviewPill")}
+                            </span>
                           )}
                         </span>
-                      </span>
-                      <a
-                        class="external-link listings__repo"
-                        href={target.url}
-                        target="_blank"
-                        rel="external noopener noreferrer"
-                        aria-label={t("aria.opensNewTab", {
-                          text: `${target.fullName}, ${own}`,
-                        })}
-                        set:text={target.fullName}
-                      />
-                      <div class="listings__states">
-                        {target.merged > 0 && (
-                          <span class="pill pill--ok">
-                            {target.merged > 1
-                              ? t("pages.projectsContributions.mergedTimes", {
-                                  count: target.merged,
-                                })
-                              : t("pages.projectsContributions.itemMergedPill")}
-                          </span>
-                        )}
-                        {target.open > 0 && (
-                          <span class="pill pill--open">
-                            {t("pages.projectsContributions.underReviewPill")}
-                          </span>
-                        )}
                       </div>
                     </td>
                   </tr>
@@ -804,36 +799,53 @@ const faqNode = pageFaq && pageFaqNode(pageFaq, pageUrl, schema["@id"], locale);
       </p>
     </section>
 
-    <details>
-      <summary>
-        <b>
-          {t("pages.projectsContributions.issuesHeading", {
-            total: listed.issues,
-            open: listed.issuesOpen,
-            closed: listed.issuesClosed,
-          })}
-        </b>
-        <span
-          class="ledger-toggle"
-          aria-hidden="true"
-        >
-          <span class="i-mdi:plus ledger-toggle__icon ledger-toggle__icon--closed" />
-          <span class="i-mdi:minus ledger-toggle__icon ledger-toggle__icon--open" />
-        </span>
-      </summary>
-      <ul class="items items--flat">
-        {[...issuesByProject].map(([project, counts]) => (
-          <li>
-            <span lang="en">{project}</span>
-            <span class="items__w">
-              {counts.open > 0 && countLabel("summaryOpen", counts.open)}
-              {counts.open > 0 && counts.closed > 0 && " · "}
-              {counts.closed > 0 && countLabel("summaryClosed", counts.closed)}
-            </span>
-          </li>
-        ))}
-      </ul>
-    </details>
+    {/* A section with its h2, like every other list on the page: as a bare
+        <details> it was missing from the page's outline, while the twin
+        already had "## Issues reported". */}
+    <section
+      id="issues"
+      aria-labelledby="issues-heading"
+    >
+      <h2
+        id="issues-heading"
+        class="contrib-h2"
+      >
+        {t("pages.projectsContributions.issuesHeading", {
+          total: listed.issues,
+          open: listed.issuesOpen,
+          closed: listed.issuesClosed,
+        })}
+      </h2>
+      <details>
+        <summary>
+          <b>
+            {t("pages.projectsContributions.issuesPerProject", {
+              count: issuesByProject.size,
+            })}
+          </b>
+          <span
+            class="ledger-toggle"
+            aria-hidden="true"
+          >
+            <span class="i-mdi:plus ledger-toggle__icon ledger-toggle__icon--closed" />
+            <span class="i-mdi:minus ledger-toggle__icon ledger-toggle__icon--open" />
+          </span>
+        </summary>
+        <ul class="items items--flat">
+          {[...issuesByProject].map(([project, counts]) => (
+            <li>
+              <span lang="en">{project}</span>
+              <span class="items__w">
+                {counts.open > 0 && countLabel("summaryOpen", counts.open)}
+                {counts.open > 0 && counts.closed > 0 && " · "}
+                {counts.closed > 0 &&
+                  countLabel("summaryClosed", counts.closed)}
+              </span>
+            </li>
+          ))}
+        </ul>
+      </details>
+    </section>
 
     <AchievementShelf
       achievements={achievements}
@@ -1185,31 +1197,26 @@ const faqNode = pageFaq && pageFaqNode(pageFaq, pageUrl, schema["@id"], locale);
     border-bottom: 1px solid var(--color-hair);
   }
 
-  .listings thead th {
-    font-family: var(--font-mono);
-    font-size: var(--text-micro);
-    font-weight: var(--fw-medium);
-    color: var(--color-text-muted);
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-    background: var(--color-bg-subtle);
-  }
-
   .listings tbody:last-child tr:last-child > * {
     border-bottom: 0;
   }
 
-  .listings thead th:first-child,
   .listings__own {
-    inline-size: 12rem;
-  }
-
-  .listings__own {
+    padding-block: 6px;
     font-family: var(--font-mono);
     font-size: var(--text-xs);
     font-weight: var(--fw-medium);
     color: var(--color-text-heading);
-    border-inline-end: 1px solid var(--color-hair);
+    background: var(--color-bg-subtle);
+  }
+
+  /* Flex inside the cell, never on the td, so the table keeps its
+     semantics: name, kind, repo and states wrap as one line. */
+  .listings__row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px var(--space-sm);
+    align-items: baseline;
   }
 
   .listings__name {
@@ -1231,13 +1238,13 @@ const faqNode = pageFaq && pageFaqNode(pageFaq, pageUrl, schema["@id"], locale);
     font-family: var(--font-mono);
     font-size: var(--text-micro);
     color: var(--color-text-muted);
+    overflow-wrap: anywhere;
   }
 
   .listings__states {
-    display: flex;
+    display: inline-flex;
     flex-wrap: wrap;
     gap: var(--space-xs);
-    margin-top: var(--space-xs);
   }
 
   .items li > .pill {

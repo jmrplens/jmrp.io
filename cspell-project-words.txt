@@ -68,6 +68,7 @@ apca
 Apertura
 apikey
 apipa
+apisix
 aplicable
 aplus
 apng
@@ -80,6 +81,8 @@ aquel
 aquí
 arduino
 área
+argo
+argoproj
 arrs
 arsc
 artesano
@@ -738,6 +741,7 @@ mcpservers
 mcpso
 mcptoplist
 mcpvault
+MCUboot
 mdnwebdocs
 mdxjs
 medkit
@@ -1117,6 +1121,7 @@ rmem
 Roadlite
 robótico
 rodata
+rotarlo
 rowhead
 rowlabel
 rownote
