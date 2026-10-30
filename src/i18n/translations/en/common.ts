@@ -50,7 +50,7 @@ export const common = {
     language: "Language",
     english: "English",
     spanish: "Español",
-    switchLanguage: "{code}: switch to {lang}",
+    switchLanguageTo: "switch to",
     copyright: "© {year} {author}",
   },
   aria: {

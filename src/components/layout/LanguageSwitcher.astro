@@ -44,19 +44,15 @@ const pathFor = (loc: Locale): string =>
         {code}
       </span>
     ) : (
-      <a
-        class="lang-seg"
-        href={pathFor(loc)}
-        hreflang={loc}
-        lang={loc}
-        aria-label={t("ui.switchLanguage", {
-          code,
-          lang: localeConfig[loc].label,
-        })}
-        data-astro-prefetch
-      >
-        {code}
-      </a>
+      // The name is the link's own text, not an aria-label: it carries two
+      // languages (the page's "switch to" and the other language's own
+      // name), and only text can mark the second.
+      // `lang` sat on the whole anchor until 2026-10-30, which voiced the
+      // page-language half in the other language (WCAG 3.1.2). The visible
+      // code stays first in the name (WCAG 2.5.3). One line on purpose, so
+      // no reflowed whitespace lands inside the link.
+      // prettier-ignore
+      <a class="lang-seg" href={pathFor(loc)} hreflang={loc} data-astro-prefetch>{code}<span class="sr-only">{`: ${t("ui.switchLanguageTo")} `}<span lang={loc}>{localeConfig[loc].label}</span></span></a>
     );
   })}
 </div>
