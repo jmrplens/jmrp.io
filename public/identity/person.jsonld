@@ -144,17 +144,31 @@
   ],
   "hasOccupation": [
     {
-      "@type": "Occupation",
-      "name": [
-        {
-          "@value": "Firmware & Software Engineer",
-          "@language": "en"
-        },
-        {
-          "@value": "Ingeniero de Firmware y Software",
-          "@language": "es"
-        }
-      ]
+      "@type": "Role",
+      "startDate": "2023",
+      "hasOccupation": {
+        "@type": "Occupation",
+        "name": [
+          {
+            "@value": "Firmware & Software Engineer",
+            "@language": "en"
+          },
+          {
+            "@value": "Ingeniero de Firmware y Software",
+            "@language": "es"
+          }
+        ],
+        "description": [
+          {
+            "@value": "Industrial embedded firmware in C on STM32 and FreeRTOS, and developer tooling in Go.",
+            "@language": "en"
+          },
+          {
+            "@value": "Firmware embebido industrial en C sobre STM32 y FreeRTOS, y herramientas de desarrollo en Go.",
+            "@language": "es"
+          }
+        ]
+      }
     },
     {
       "@type": "Role",
@@ -182,10 +196,68 @@
             "@language": "es"
           }
         ],
-        "occupationLocation": {
-          "@type": "City",
-          "name": "Valencia"
-        }
+        "occupationLocation": [
+          {
+            "@type": "City",
+            "name": "Valencia",
+            "address": {
+              "@type": "PostalAddress",
+              "addressLocality": "Valencia",
+              "addressRegion": "Valencian Community",
+              "addressCountry": "ES"
+            }
+          },
+          {
+            "@type": "City",
+            "name": "Gandia",
+            "address": {
+              "@type": "PostalAddress",
+              "addressLocality": "Gandia",
+              "addressRegion": "Valencian Community",
+              "addressCountry": "ES"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "@type": "Role",
+      "startDate": "2011",
+      "endDate": "2018",
+      "hasOccupation": {
+        "@type": "Occupation",
+        "name": [
+          {
+            "@value": "Sound technician",
+            "@language": "en"
+          },
+          {
+            "@value": "Técnico de sonido",
+            "@language": "es"
+          }
+        ],
+        "description": [
+          {
+            "@value": "Sound for events and permanent installations: installing and tuning the equipment, and front-of-house (FOH) operation.",
+            "@language": "en"
+          },
+          {
+            "@value": "Sonido para eventos e instalaciones permanentes: instalación y ajuste de los equipos, y técnico de FOH.",
+            "@language": "es"
+          }
+        ],
+        "occupationLocation": [
+          {
+            "@type": "City",
+            "name": "Cox",
+            "address": {
+              "@type": "PostalAddress",
+              "addressLocality": "Cox",
+              "addressRegion": "Valencian Community",
+              "addressCountry": "ES"
+            }
+          }
+        ]
       }
     }
   ],

@@ -257,31 +257,33 @@ function buildIdentityDocument() {
       .map((project) => ({ "@id": `${project.endpoint}#api` })),
   ];
 
-  // The current profession, then each earlier one as a `Role` wrapping
-  // `hasOccupation` with its years: `Occupation` has no dates of its own, and
-  // the Role is how schema.org dates a value of any property. Mirrors the
-  // same list in BaseHead.astro; the schema-validation spec compares them.
-  const occupations = [
-    ...(about.person.occupation
-      ? [
-          {
-            "@type": "Occupation",
-            name: localizedValues(about.person.occupation),
+  // The professions, newest first, each a `Role` wrapping `hasOccupation`
+  // with its years: `Occupation` has no dates of its own, and schema.org says
+  // to date past professions with a Role. The current one has no endDate.
+  // Mirrors the same list in BaseHead.astro; the schema-validation spec
+  // compares them.
+  const occupations = (about.person.occupations ?? []).map((occupation) => ({
+    "@type": "Role",
+    startDate: occupation.startDate,
+    ...(occupation.endDate && { endDate: occupation.endDate }),
+    hasOccupation: {
+      "@type": "Occupation",
+      name: localizedValues(occupation.name),
+      description: localizedValues(occupation.description),
+      ...(occupation.locations?.length > 0 && {
+        occupationLocation: occupation.locations.map((location) => ({
+          "@type": "City",
+          name: location.locality,
+          address: {
+            "@type": "PostalAddress",
+            addressLocality: location.locality,
+            addressRegion: location.region,
+            addressCountry: location.country,
           },
-        ]
-      : []),
-    ...(about.person.pastOccupations ?? []).map((past) => ({
-      "@type": "Role",
-      startDate: past.startDate,
-      endDate: past.endDate,
-      hasOccupation: {
-        "@type": "Occupation",
-        name: localizedValues(past.name),
-        description: localizedValues(past.description),
-        occupationLocation: { "@type": "City", name: past.locality },
-      },
-    })),
-  ];
+        })),
+      }),
+    },
+  }));
 
   const sameAs = [
     ...new Set([

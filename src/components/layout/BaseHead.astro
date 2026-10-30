@@ -202,7 +202,7 @@ const orcidId = /orcid\.org\/([\dX-]+)/i.exec(orcidUrl ?? "")?.[1];
 // `jobTitle`/`description` are sourced from the richest, most current copy
 // (profile/about.yaml) with a non-localized fallback in site.yaml. Page
 // builders (Home/About/CV/GitHub) must reference `{"@id": "#person"}` or add
-// ADDITIVE properties only (alumniOf, hasOccupation, hasCredential) — they
+// ADDITIVE properties only (alumniOf, worksFor, hasCredential) — they
 // must never redefine name/jobTitle/description/image/knowsAbout locally.
 /**
  * Turns an `{ en, es }` pair into JSON-LD language-tagged values.
@@ -263,36 +263,37 @@ const donateActions = (aboutData?.person.funding ?? []).map(
 );
 
 /**
- * The professions, hoisted for the same reason as `donateActions`: the
- * current one, then each earlier one as a `Role` wrapping `hasOccupation`
- * with its years. `Occupation` has no dates of its own, and the Role is how
- * schema.org dates the value of any property. Mirrors the same list in
+ * The professions, hoisted for the same reason as `donateActions`: newest
+ * first, each a `Role` wrapping `hasOccupation` with its years. `Occupation`
+ * has no dates of its own, and schema.org says to date past professions with
+ * a Role; the current one has no `endDate`. Mirrors the same list in
  * `scripts/ci/build-identity.mjs`; the schema-validation spec compares them.
  */
-const personOccupations = [
-  ...(aboutData?.person.occupation
-    ? [
-        {
-          "@type": "Occupation",
-          name: localizedValues(aboutData.person.occupation),
-        } satisfies Occupation,
-      ]
-    : []),
-  ...(aboutData?.person.pastOccupations ?? []).map(
-    (past) =>
-      ({
-        "@type": "Role",
-        startDate: past.startDate,
-        endDate: past.endDate,
-        hasOccupation: {
-          "@type": "Occupation",
-          name: localizedValues(past.name),
-          description: localizedValues(past.description),
-          occupationLocation: { "@type": "City", name: past.locality },
-        },
-      }) satisfies Role<Occupation, "hasOccupation">,
-  ),
-];
+const personOccupations = (aboutData?.person.occupations ?? []).map(
+  (occupation) =>
+    ({
+      "@type": "Role",
+      startDate: occupation.startDate,
+      ...(occupation.endDate && { endDate: occupation.endDate }),
+      hasOccupation: {
+        "@type": "Occupation",
+        name: localizedValues(occupation.name),
+        description: localizedValues(occupation.description),
+        ...(occupation.locations.length > 0 && {
+          occupationLocation: occupation.locations.map((location) => ({
+            "@type": "City" as const,
+            name: location.locality,
+            address: {
+              "@type": "PostalAddress" as const,
+              addressLocality: location.locality,
+              addressRegion: location.region,
+              addressCountry: location.country,
+            },
+          })),
+        }),
+      },
+    }) satisfies Role<Occupation, "hasOccupation">,
+);
 
 /**
  * The open-source software this Person authors, as bare `@id` references to

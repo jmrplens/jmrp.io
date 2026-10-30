@@ -242,6 +242,14 @@ const experienceEs = cvEs.sections.find((s) => s.kind === "experience");
  * abbreviation travels as `alternateName`, which is how "UPV" stays a
  * resolvable alias for "Universitat Politècnica de València".
  *
+ * Each position also carries the CV's summary of it as the Role's
+ * `description`. Until 2026-10-30 those summaries rode on a parallel
+ * `hasOccupation` list here, one `Occupation` per position (the student
+ * association included), so the merged node held two occupation lists of
+ * different grain. The professions are now the canonical node's dated
+ * `hasOccupation` (profile/about.yaml); positions are employments, and live
+ * here only.
+ *
  * Nothing here is invented — every field comes from the CV.
  */
 const cvWorksFor =
@@ -252,10 +260,19 @@ const cvWorksFor =
         const org = job.org?.[0];
         const orgEs = jobEs?.org?.[0];
         if (!org) return [];
+        const summaryEn = job.summary
+          ? stripToText(markdownToHtml(job.summary))
+          : undefined;
+        const summaryEs = jobEs?.summary
+          ? stripToText(markdownToHtml(jobEs.summary))
+          : undefined;
         return [
           {
             "@type": "OrganizationRole" as const,
             roleName: bilingual(job.role, jobEs?.role ?? job.role),
+            ...(summaryEn && {
+              description: bilingual(summaryEn, summaryEs ?? summaryEn),
+            }),
             ...dates,
             worksFor: {
               "@type": "Organization" as const,
@@ -273,31 +290,11 @@ const cvPersonFacts = {
   "@id": PERSON_ID,
   alumniOf: CANONICAL_ALUMNI_OF,
   ...(cvWorksFor.length > 0 && { worksFor: cvWorksFor }),
-  // Both lists are emitted from the EN and ES sources at once, with
-  // language-tagged literals, so /cv/ and /es/cv/ ship byte-identical values.
-  // They hang off the shared `#person` @id: emitting each page's own language
-  // gave the merged node 16 occupations and 48 credentials — one set per
-  // locale — for a person who has 8 and 24 (GEO audit 2026-08-22, M1). Same
-  // treatment `worksFor` above already gets.
-  hasOccupation:
-    experienceEn?.kind === "experience" && experienceEs?.kind === "experience"
-      ? experienceEn.items.map((job, index) => {
-          const jobEs = experienceEs.items[index];
-          const summaryEn = job.summary
-            ? stripToText(markdownToHtml(job.summary))
-            : undefined;
-          const summaryEs = jobEs?.summary
-            ? stripToText(markdownToHtml(jobEs.summary))
-            : undefined;
-          return {
-            "@type": "Occupation" as const,
-            name: bilingual(job.role, jobEs?.role ?? job.role),
-            ...(summaryEn && {
-              description: bilingual(summaryEn, summaryEs ?? summaryEn),
-            }),
-          };
-        })
-      : [],
+  // Emitted from the EN and ES sources at once, with language-tagged
+  // literals, so /cv/ and /es/cv/ ship byte-identical values. It hangs off
+  // the shared `#person` @id: emitting each page's own language gave the
+  // merged node 48 credentials, one set per locale, for a person who has 24
+  // (GEO audit 2026-08-22, M1). Same treatment `worksFor` above already gets.
   hasCredential:
     certificatesEn?.kind === "certificates" &&
     certificatesEs?.kind === "certificates"

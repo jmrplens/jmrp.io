@@ -185,6 +185,34 @@ test.describe("Canonical identity document", () => {
     expect(website?.publisher).toEqual(document);
   });
 
+  test("dates every profession with a Role, newest first", async ({ page }) => {
+    const response = await page.request.get("/identity/person.jsonld");
+    const { hasOccupation } = (await response.json()) as {
+      hasOccupation?: Record<string, unknown>[];
+    };
+
+    // schema.org: "For past professions, use Role for expressing dates".
+    // Only the current profession, first, may be open-ended.
+    expect(Array.isArray(hasOccupation)).toBe(true);
+    const roles = hasOccupation ?? [];
+    expect(roles.length).toBeGreaterThan(1);
+    roles.forEach((role, index) => {
+      expect(role["@type"]).toBe("Role");
+      expect(role.startDate).toMatch(/^\d{4}$/);
+      if (index > 0) {
+        expect(role.endDate).toMatch(/^\d{4}$/);
+        expect(
+          String(role.startDate) <= String(roles[index - 1].startDate),
+        ).toBe(true);
+      }
+      const occupation = role.hasOccupation as Record<string, unknown>;
+      expect(occupation["@type"]).toBe("Occupation");
+      expect(isNonEmptyText(occupation.name)).toBe(true);
+      expect(isNonEmptyText(occupation.description)).toBe(true);
+    });
+    expect(roles[0].endDate).toBeUndefined();
+  });
+
   test("advertises a reachable, non-fingerprinted avatar", async ({ page }) => {
     await blockCloudflare(page);
     const response = await page.request.get("/identity/person.jsonld");
@@ -576,7 +604,7 @@ test.describe("Person schema on CV page", () => {
       expect(mainEntity["@id"]).toContain("#person");
     }
 
-    // The additive top-level Person node only carries occupation/education/
+    // The additive top-level Person node only carries employment/education/
     // credential facts — findInGraph only matches top-level @graph entries,
     // so this resolves to the CV-specific node, not the nested WebSite publisher.
     const additivePerson = findInGraph(jsonLd, "Person");
@@ -589,10 +617,23 @@ test.describe("Person schema on CV page", () => {
     expect(Array.isArray(additivePerson.alumniOf)).toBe(true);
     expect((additivePerson.alumniOf as unknown[]).length).toBeGreaterThan(0);
 
-    expect(Array.isArray(additivePerson.hasOccupation)).toBe(true);
-    expect((additivePerson.hasOccupation as unknown[]).length).toBeGreaterThan(
-      0,
-    );
+    // Positions are employments: each an OrganizationRole naming the role,
+    // the organization and the CV's summary of the position.
+    expect(Array.isArray(additivePerson.worksFor)).toBe(true);
+    const roles = additivePerson.worksFor as Record<string, unknown>[];
+    expect(roles.length).toBeGreaterThan(0);
+    for (const role of roles) {
+      expect(role["@type"]).toBe("OrganizationRole");
+      expect(isNonEmptyText(role.roleName)).toBe(true);
+      expect((role.worksFor as Record<string, unknown>)["@type"]).toBe(
+        "Organization",
+      );
+    }
+    expect(roles.some((role) => isNonEmptyText(role.description))).toBe(true);
+
+    // Professions are the canonical node's dated `hasOccupation`; a second,
+    // per-position occupation list here would merge into the same @id.
+    expect(additivePerson.hasOccupation).toBeUndefined();
 
     expect(Array.isArray(additivePerson.hasCredential)).toBe(true);
     expect((additivePerson.hasCredential as unknown[]).length).toBeGreaterThan(
