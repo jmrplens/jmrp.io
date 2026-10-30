@@ -1023,12 +1023,11 @@ export const common = {
         intro:
           "Code and documentation I wrote for projects I do not maintain, plus the packaging that puts my own tools in public registries.",
         tileCodeMerged: "code & docs PRs and MRs merged",
-        tileCodeUpstreams: "upstream projects",
+        tileCodeUpstreams: "projects with merged code or docs",
         tileListingMerged: "listing PRs merged",
         tilePrOpen: "code PRs and MRs under review",
         tileAnswers: "accepted answers in GitHub Discussions",
         listingNote: "+ {count} packaging and listing PRs merged",
-        openPill: "Open",
         contributedToTitle: "Contributed to",
         andMore: "and {count} more · list as of {date}",
         liveLabel:
@@ -1048,7 +1047,9 @@ export const common = {
         passRatePending: "not yet computed",
         noData: "no data",
         dependabotSentence:
-          "{fixed} Dependabot alerts fixed across {repos} maintained repositories, median about {days} days to fix. None open today.",
+          "{fixed} Dependabot alerts fixed across {repos} maintained repositories, median about {duration} to fix. None open today.",
+        dependabotDaysOne: "{count} day",
+        dependabotDays: "{count} days",
       },
     },
     projectsContributions: {
@@ -1113,7 +1114,7 @@ export const common = {
       underReviewPill: "Under review",
       answersHeading: "Accepted answers in GitHub Discussions ({count})",
       answersFooter:
-        "{accepted} accepted out of {discussions} discussions answered in {repos} repositories. Each one links to its thread; who accepted it is never published.",
+        "{accepted} accepted out of {discussions} discussions I took part in, across {repos} repositories. Each one links to the accepted reply; who accepted it is never published.",
       issuesHeading: "Issues reported ({total}: {open} open, {closed} closed)",
       achievementsHeading: "Achievements on GitHub and GitLab",
       achievementsHiddenNote:

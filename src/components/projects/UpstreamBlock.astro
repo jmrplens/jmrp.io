@@ -105,23 +105,15 @@ const monthYear = (iso: string | null): string | null =>
           <li>
             <span class="upstream__strip-name">
               <PlatformMark platform={row.platform} />
-              <a
-                class="external-link"
-                href={row.url}
-                target="_blank"
-                rel="external noopener noreferrer"
-                lang="en"
-                aria-label={t("aria.opensNewTab", { text: row.project })}
-              >
-                {row.shortName ? (
-                  <>
-                    <span class="upstream__name-full">{row.project}</span>
-                    <span class="upstream__name-short">{row.shortName}</span>
-                  </>
-                ) : (
-                  row.project
-                )}
-              </a>
+              {/* lang="en" on the visible name, never on the anchor: the
+                  aria-label carries the new-tab notice in the page's
+                  language, and an anchor-level lang would voice it in
+                  English on /es/ (WCAG 3.1.2). One line on purpose: Astro
+                  keeps the whitespace a reflowed child leaves inside the
+                  anchor, which sat beside the ↗ (global.css adds its own
+                  no-break space). */}
+              {/* prettier-ignore */}
+              <a class="external-link" href={row.url} target="_blank" rel="external noopener noreferrer" aria-label={t("aria.opensNewTab", { text: row.project })}>{row.shortName ? (<><span class="upstream__name-full" lang="en">{row.project}</span><span class="upstream__name-short" lang="en">{row.shortName}</span></>) : (<span lang="en">{row.project}</span>)}</a>
             </span>
             <span class="upstream__strip-meta">
               <LanguageTag
@@ -239,22 +231,6 @@ const monthYear = (iso: string | null): string | null =>
   .upstream__subheading {
     margin: var(--space-lg) 0 var(--space-sm);
     font-size: 1.05rem;
-  }
-
-  .pill {
-    display: inline-flex;
-    gap: 4px;
-    align-items: center;
-    padding: 1px 8px;
-    font-family: var(--font-mono);
-    font-size: var(--text-micro);
-    white-space: nowrap;
-    border: 1px solid currentcolor;
-    border-radius: var(--radius-pill);
-  }
-
-  .pill--ok {
-    color: var(--color-success, var(--color-accent));
   }
 
   .upstream__strip {

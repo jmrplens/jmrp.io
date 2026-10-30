@@ -121,6 +121,19 @@ displayName:
   gitlab-org/gitlab: GitLab
   gitlab-org/cells/http-router: GitLab
   gitlab-org/api/client-go: GitLab Go client
+  # Bare names that named something else (2026-10-30). Each comes from the
+  # project's own GitLab name, description or README:
+  # - charts/gitlab is "GitLab Chart", the "Cloud Native GitLab Helm Chart";
+  #   bare, it read "gitlab" next to the "GitLab" application.
+  # - charts/openbao is a "Helm chart to deploy OpenBao for GitLab", not
+  #   OpenBao itself.
+  # - components/ruby is "a collection of components to build, lint, test and
+  #   deploy Ruby projects"; bare, the JSON-LD named the language.
+  # - ci-cd/docker-machine is "a fork of Docker Machine maintained by GitLab".
+  gitlab-org/charts/gitlab: GitLab Helm chart
+  gitlab-org/cloud-native/charts/openbao: GitLab OpenBao chart
+  components/ruby: Ruby CI/CD components
+  gitlab-org/ci-cd/docker-machine: Docker Machine (GitLab fork)
 
 # Display name → the repository that stands for a folded project: its link,
 # its star count and its JSON-LD `codeRepository`. Without an entry the repo
@@ -183,12 +196,13 @@ featured:
       es: "Los tokens emitidos antes de un cambio de contraseña ahora se rechazan, así que restablecer la contraseña cierra las sesiones abiertas con la anterior; cubierto por un test de API en Cypress."
   - repo: modelcontextprotocol/go-sdk
     number: 1274
-    # The five merged PRs the `why` names; the size line sums them.
-    numbers: [1255, 1268, 1269, 1273, 1274]
+    # The seven merged PRs the `why` names; the size line sums them. #1267
+    # and #1360 merged after the entry was written (2026-10-20 and -10).
+    numbers: [1255, 1267, 1268, 1269, 1273, 1274, 1360]
     kind: pull_request
     why:
-      en: "Five merged changes to the official MCP Go SDK (#1255, #1268, #1269, #1273, #1274): four bring protocol-version negotiation, cancellation and pre-initialize handling in line with the specification, and one adds HasParams so middleware can tell whether a request carries params; each with tests."
-      es: "Cinco cambios fusionados en el SDK oficial de MCP para Go (#1255, #1268, #1269, #1273, #1274): cuatro ajustan a la especificación la negociación de versión del protocolo, la cancelación y el tratamiento de llamadas previas a initialize, y uno añade HasParams para que el middleware sepa si una petición lleva parámetros; cada uno con tests."
+      en: "Seven merged changes to the official MCP Go SDK (#1255, #1267, #1268, #1269, #1273, #1274, #1360): five bring protocol-version negotiation, cancellation and pre-initialize handling in line with the specification, one fixes a race in which a session's second subscriptions/listen stopped receiving notifications, and one adds HasParams so middleware can tell whether a request carries params; each with tests."
+      es: "Siete cambios fusionados en el SDK oficial de MCP para Go (#1255, #1267, #1268, #1269, #1273, #1274, #1360): cinco ajustan a la especificación la negociación de versión del protocolo, la cancelación y el tratamiento de llamadas previas a initialize, uno corrige una carrera por la que un segundo subscriptions/listen de la misma sesión dejaba de recibir notificaciones, y uno añade HasParams para que el middleware sepa si una petición lleva parámetros; cada uno con tests."
   # GitLab merge request (`platform: gitlab`, `number` is the MR iid).
   - repo: gitlab-org/gitlab
     number: 255300
