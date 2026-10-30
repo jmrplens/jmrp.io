@@ -24,7 +24,7 @@
  *
  * ── Language ─────────────────────────────────────────────────────────────
  * Bilingual, via JSON-LD language-tagged values on `jobTitle`, `description`
- * and `hasOccupation.name`:
+ * and the `name` and `description` of every `hasOccupation`:
  *
  *   "jobTitle": [
  *     { "@value": "R&D · Firmware & Software Engineer",     "@language": "en" },
@@ -257,6 +257,35 @@ function buildIdentityDocument() {
       .map((project) => ({ "@id": `${project.endpoint}#api` })),
   ];
 
+  // The professions, newest first, each a `Role` wrapping `hasOccupation`
+  // with its years: `Occupation` has no dates of its own, and schema.org says
+  // to date past professions with a Role. Only a current one, first, may
+  // have no endDate.
+  // Mirrors the same list in BaseHead.astro; the schema-validation spec
+  // compares them.
+  const occupations = (about.person.occupations ?? []).map((occupation) => ({
+    "@type": "Role",
+    startDate: occupation.startDate,
+    ...(occupation.endDate && { endDate: occupation.endDate }),
+    hasOccupation: {
+      "@type": "Occupation",
+      name: localizedValues(occupation.name),
+      description: localizedValues(occupation.description),
+      ...(occupation.locations?.length > 0 && {
+        occupationLocation: occupation.locations.map((location) => ({
+          "@type": "City",
+          name: location.locality,
+          address: {
+            "@type": "PostalAddress",
+            addressLocality: location.locality,
+            addressRegion: location.region,
+            addressCountry: location.country,
+          },
+        })),
+      }),
+    },
+  }));
+
   const sameAs = [
     ...new Set([
       ...(site.social_links?.map((l) => l.url) ?? []),
@@ -381,12 +410,7 @@ function buildIdentityDocument() {
     },
     alumniOf: ALUMNI_OF,
     hasCredential: CREDENTIALS,
-    ...(about.person.occupation && {
-      hasOccupation: {
-        "@type": "Occupation",
-        name: localizedValues(about.person.occupation),
-      },
-    }),
+    ...(occupations.length > 0 && { hasOccupation: occupations }),
     ...(about.person.knowsLanguage && {
       knowsLanguage: about.person.knowsLanguage.map((language) => ({
         "@type": "Language",

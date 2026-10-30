@@ -142,19 +142,138 @@
       }
     }
   ],
-  "hasOccupation": {
-    "@type": "Occupation",
-    "name": [
-      {
-        "@value": "Firmware & Software Engineer",
-        "@language": "en"
-      },
-      {
-        "@value": "Ingeniero de Firmware y Software",
-        "@language": "es"
+  "hasOccupation": [
+    {
+      "@type": "Role",
+      "startDate": "2023",
+      "endDate": "2026",
+      "hasOccupation": {
+        "@type": "Occupation",
+        "name": [
+          {
+            "@value": "Firmware & Software Engineer",
+            "@language": "en"
+          },
+          {
+            "@value": "Ingeniero de Firmware y Software",
+            "@language": "es"
+          }
+        ],
+        "description": [
+          {
+            "@value": "Industrial embedded firmware in C on STM32 and FreeRTOS for solar inverters and battery storage.",
+            "@language": "en"
+          },
+          {
+            "@value": "Firmware embebido industrial en C sobre STM32 y FreeRTOS para inversores solares y almacenamiento en baterías.",
+            "@language": "es"
+          }
+        ],
+        "occupationLocation": [
+          {
+            "@type": "City",
+            "name": "Llíria",
+            "address": {
+              "@type": "PostalAddress",
+              "addressLocality": "Llíria",
+              "addressRegion": "Valencian Community",
+              "addressCountry": "ES"
+            }
+          }
+        ]
       }
-    ]
-  },
+    },
+    {
+      "@type": "Role",
+      "startDate": "2019",
+      "endDate": "2023",
+      "hasOccupation": {
+        "@type": "Occupation",
+        "name": [
+          {
+            "@value": "Acoustics researcher",
+            "@language": "en"
+          },
+          {
+            "@value": "Investigador en acústica",
+            "@language": "es"
+          }
+        ],
+        "description": [
+          {
+            "@value": "Predoctoral research at the Universitat Politècnica de València on ultrasound and acoustic metamaterials.",
+            "@language": "en"
+          },
+          {
+            "@value": "Investigación predoctoral en la Universitat Politècnica de València sobre ultrasonidos y metamateriales acústicos.",
+            "@language": "es"
+          }
+        ],
+        "occupationLocation": [
+          {
+            "@type": "City",
+            "name": "Valencia",
+            "address": {
+              "@type": "PostalAddress",
+              "addressLocality": "Valencia",
+              "addressRegion": "Valencian Community",
+              "addressCountry": "ES"
+            }
+          },
+          {
+            "@type": "City",
+            "name": "Gandia",
+            "address": {
+              "@type": "PostalAddress",
+              "addressLocality": "Gandia",
+              "addressRegion": "Valencian Community",
+              "addressCountry": "ES"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "@type": "Role",
+      "startDate": "2011",
+      "endDate": "2018",
+      "hasOccupation": {
+        "@type": "Occupation",
+        "name": [
+          {
+            "@value": "Sound technician",
+            "@language": "en"
+          },
+          {
+            "@value": "Técnico de sonido",
+            "@language": "es"
+          }
+        ],
+        "description": [
+          {
+            "@value": "Sound for events and permanent installations: installing and tuning the equipment, and front-of-house (FOH) operation.",
+            "@language": "en"
+          },
+          {
+            "@value": "Sonido para eventos e instalaciones permanentes: instalación y ajuste de los equipos, y técnico de FOH.",
+            "@language": "es"
+          }
+        ],
+        "occupationLocation": [
+          {
+            "@type": "City",
+            "name": "Cox",
+            "address": {
+              "@type": "PostalAddress",
+              "addressLocality": "Cox",
+              "addressRegion": "Valencian Community",
+              "addressCountry": "ES"
+            }
+          }
+        ]
+      }
+    }
+  ],
   "knowsLanguage": [
     {
       "@type": "Language",

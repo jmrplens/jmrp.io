@@ -48,14 +48,56 @@ person:
         en: Support on Ko-fi
         es: Apoyar en Ko-fi
 
-  # The profession, deliberately NOT `worksFor`. schema.org's `worksFor` reads
-  # as present tense, and the last employment ended — asserting it here would
-  # publish a stale employer to this site AND to the six project documentation
-  # sites that splice this entity in verbatim. `hasOccupation` states what he
-  # does without claiming who currently pays for it.
-  occupation:
-    en: Firmware & Software Engineer
-    es: Ingeniero de Firmware y Software
+  # The professions, newest first, each emitted as a `Role` wrapping
+  # `hasOccupation` with its years (schema.org: "For past professions, use
+  # Role for expressing dates"). Every entry is closed: the last employment
+  # ended in May 2026, and an open-ended Role would read as a profession
+  # held right now (author's call). Only the first entry may ever omit
+  # `endDate`, for a current one. Deliberately NOT `worksFor`: it reads as
+  # present tense, so asserting it would publish a stale employer to this site
+  # AND to every project site that splices this entity in verbatim. These say
+  # what he did; the employers live on /cv/. `jobTitle` above stays the
+  # profile's headline.
+  #
+  # Every period and subject is one the CV or /about/ states: the industrial
+  # firmware of 2023–2026 (/about/'s third paragraph; the CV places it in
+  # Llíria), the 2019–2023 predoctoral research at the UPV on ultrasound and
+  # acoustic metamaterials (its lead and education list; the CV places it in
+  # Valencia and Gandia), and the CV's sound technician years (Jun 2011 – Feb
+  # 2018, Cox). The CV's dental laboratory job (2005–2009) is left out by the
+  # author's choice; /cv/ still lists it as an employment.
+  occupations:
+    - name:
+        en: Firmware & Software Engineer
+        es: Ingeniero de Firmware y Software
+      description:
+        en: Industrial embedded firmware in C on STM32 and FreeRTOS for solar inverters and battery storage.
+        es: Firmware embebido industrial en C sobre STM32 y FreeRTOS para inversores solares y almacenamiento en baterías.
+      startDate: "2023"
+      endDate: "2026"
+      locations:
+        - { locality: Llíria, region: Valencian Community, country: ES }
+    - name:
+        en: Acoustics researcher
+        es: Investigador en acústica
+      description:
+        en: Predoctoral research at the Universitat Politècnica de València on ultrasound and acoustic metamaterials.
+        es: Investigación predoctoral en la Universitat Politècnica de València sobre ultrasonidos y metamateriales acústicos.
+      startDate: "2019"
+      endDate: "2023"
+      locations:
+        - { locality: Valencia, region: Valencian Community, country: ES }
+        - { locality: Gandia, region: Valencian Community, country: ES }
+    - name:
+        en: Sound technician
+        es: Técnico de sonido
+      description:
+        en: "Sound for events and permanent installations: installing and tuning the equipment, and front-of-house (FOH) operation."
+        es: "Sonido para eventos e instalaciones permanentes: instalación y ajuste de los equipos, y técnico de FOH."
+      startDate: "2011"
+      endDate: "2018"
+      locations:
+        - { locality: Cox, region: Valencian Community, country: ES }
 
   # Languages, as BCP-47 tags. schema.org defines no standard proficiency
   # property on Language, so "native" is deliberately not encoded rather than

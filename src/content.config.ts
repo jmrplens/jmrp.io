@@ -648,11 +648,51 @@ const aboutSchema = z.object({
       )
       .default([]),
     /**
-     * The profession, emitted as `hasOccupation`. Deliberately separate from
-     * `worksFor` (site.yaml), which reads as present tense — the canonical
-     * entity must not claim a current employer it no longer has.
+     * The professions, newest first, emitted as `hasOccupation`: one `Role`
+     * per entry, wrapping the `Occupation` with the years it covers.
+     * `Occupation` has no dates of its own, and schema.org's definition of
+     * `hasOccupation` says to date past professions with a Role. The first
+     * entry is the most recent profession, and the only one that may omit
+     * `endDate` (for a profession held now).
+     * Deliberately not `worksFor`, which reads as present tense: the canonical
+     * entity names no employer, current or past (/cv/ adds the employers as
+     * dated `OrganizationRole` nodes). Years only, the precision /about/
+     * states them in.
      */
-    occupation: LocalizedString.optional(),
+    occupations: z
+      .array(
+        z.object({
+          name: LocalizedString,
+          description: LocalizedString,
+          startDate: z.string().regex(/^\d{4}$/),
+          endDate: z
+            .string()
+            .regex(/^\d{4}$/)
+            .optional(),
+          /** The cities, emitted as `occupationLocation`. */
+          locations: z
+            .array(
+              z.object({
+                locality: z.string(),
+                region: z.string(),
+                country: z.string(),
+              }),
+            )
+            .default([]),
+        }),
+      )
+      .default([])
+      .refine(
+        (list) =>
+          list.every(
+            (entry, index) =>
+              (index === 0 || entry.endDate !== undefined) &&
+              (entry.endDate === undefined ||
+                entry.startDate <= entry.endDate) &&
+              (index === 0 || entry.startDate <= list[index - 1].startDate),
+          ),
+        "occupations: newest first, startDate <= endDate, and only the first may omit endDate",
+      ),
     /**
      * Languages emitted as `knowsLanguage`. `code` is a BCP-47 tag. schema.org
      * has no proficiency property, so fluency is expressed by order only,

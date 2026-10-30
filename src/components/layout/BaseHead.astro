@@ -49,6 +49,8 @@ import type {
   BreadcrumbList,
   DonateAction,
   ListItem,
+  Occupation,
+  Role,
   SiteNavigationElement,
   Text,
   WebSite,
@@ -200,7 +202,7 @@ const orcidId = /orcid\.org\/([\dX-]+)/i.exec(orcidUrl ?? "")?.[1];
 // `jobTitle`/`description` are sourced from the richest, most current copy
 // (profile/about.yaml) with a non-localized fallback in site.yaml. Page
 // builders (Home/About/CV/GitHub) must reference `{"@id": "#person"}` or add
-// ADDITIVE properties only (alumniOf, hasOccupation, hasCredential) — they
+// ADDITIVE properties only (alumniOf, worksFor, hasCredential) — they
 // must never redefine name/jobTitle/description/image/knowsAbout locally.
 /**
  * Turns an `{ en, es }` pair into JSON-LD language-tagged values.
@@ -258,6 +260,39 @@ const donateActions = (aboutData?.person.funding ?? []).map(
         urlTemplate: route.url,
       },
     }) satisfies DonateAction,
+);
+
+/**
+ * The professions, hoisted for the same reason as `donateActions`: newest
+ * first, each a `Role` wrapping `hasOccupation` with its years. `Occupation`
+ * has no dates of its own, and schema.org says to date past professions with
+ * a Role; only a current one, first, may have no `endDate`. Mirrors the same list in
+ * `scripts/ci/build-identity.mjs`; the schema-validation spec compares them.
+ */
+const personOccupations = (aboutData?.person.occupations ?? []).map(
+  (occupation) =>
+    ({
+      "@type": "Role",
+      startDate: occupation.startDate,
+      ...(occupation.endDate && { endDate: occupation.endDate }),
+      hasOccupation: {
+        "@type": "Occupation",
+        name: localizedValues(occupation.name),
+        description: localizedValues(occupation.description),
+        ...(occupation.locations.length > 0 && {
+          occupationLocation: occupation.locations.map((location) => ({
+            "@type": "City" as const,
+            name: location.locality,
+            address: {
+              "@type": "PostalAddress" as const,
+              addressLocality: location.locality,
+              addressRegion: location.region,
+              addressCountry: location.country,
+            },
+          })),
+        }),
+      },
+    }) satisfies Role<Occupation, "hasOccupation">,
 );
 
 /**
@@ -428,15 +463,10 @@ const websiteSchema = {
     // documentation sites that splice /identity/person.jsonld in verbatim.
     alumniOf: CANONICAL_ALUMNI_OF,
     hasCredential: CANONICAL_CREDENTIALS,
-    // The profession, not the employer: `worksFor` reads as present tense and
-    // the last role has ended, so asserting it would publish a stale employer
-    // here and to every project site that splices this node in.
-    ...(aboutData?.person.occupation && {
-      hasOccupation: {
-        "@type": "Occupation" as const,
-        name: localizedValues(aboutData.person.occupation),
-      },
-    }),
+    // The professions, not the employer: `worksFor` reads as present tense
+    // and the last role has ended, so asserting it would publish a stale
+    // employer here and to every project site that splices this node in.
+    ...(personOccupations.length > 0 && { hasOccupation: personOccupations }),
     ...(aboutData?.person.knowsLanguage && {
       knowsLanguage: aboutData.person.knowsLanguage.map((language) => ({
         "@type": "Language" as const,
