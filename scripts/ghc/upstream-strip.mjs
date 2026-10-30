@@ -43,7 +43,7 @@ const OWNER_ALIAS = Object.freeze({
  * @returns {number} Milliseconds since the epoch, or NaN.
  */
 export function instant(value) {
-  if (typeof value !== "string" || value === "") return Number.NaN;
+  if (typeof value !== "string" || value === "") return NaN;
   const zoned = /(?:Z|[+-]\d{2}:?\d{2})$/i.test(value) ? value : `${value}Z`;
   return Date.parse(zoned);
 }
@@ -56,7 +56,7 @@ export function instant(value) {
  * @returns {string} The owner.
  */
 export function stripOwner(repo) {
-  const owner = repo.split("/")[0] ?? repo;
+  const owner = repo.split("/", 1)[0] ?? repo;
   return OWNER_ALIAS[owner] ?? owner;
 }
 

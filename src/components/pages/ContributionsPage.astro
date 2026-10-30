@@ -8,6 +8,7 @@
  * InfluxDB is unreachable).
  */
 import AchievementShelf from "@components/projects/AchievementShelf.astro";
+import { splitAnswers } from "@components/projects/answers-lead";
 import { asContributionsDataset } from "@components/projects/dataset-types";
 import DiffSize from "@components/projects/DiffSize.astro";
 import LanguageTag from "@components/projects/LanguageTag.astro";
@@ -38,6 +39,7 @@ import {
   formatMergeDuration,
   githubSearchUrl as githubSearchUrlFor,
   gitlabListing as gitlabListingFor,
+  gitlabPointsUrl,
   LEDGER_MAX_ITEMS,
 } from "@utils/project-facts";
 import { getSiteUrl } from "@utils/site";
@@ -70,7 +72,7 @@ if (contributionsEntry?.data.type !== "contributions") {
     "profile/contributions.yaml is missing or has the wrong type",
   );
 }
-const { displayName } = contributionsEntry.data;
+const { displayName, answersLead: answersLeadRefs } = contributionsEntry.data;
 
 const contributionsData = asContributionsDataset(rawContributionsData);
 const {
@@ -83,6 +85,9 @@ const {
 } = contributionsData;
 
 const asOfDate = new Date(contributionsData.asOf);
+// The author's lead answers first, with their question's title; the rest in
+// the dataset's order (src/components/projects/answers-lead.ts).
+const answersSplit = splitAnswers(acceptedAnswers, answersLeadRefs);
 const gitlabUsername = contributionsData.gitlab?.username ?? "jmrp";
 
 const contributedToStarsByProject = new Map(
@@ -769,12 +774,24 @@ const faqNode = pageFaq && pageFaqNode(pageFaq, pageUrl, schema["@id"], locale);
           count: acceptedAnswers.length,
         })}
       </h2>
+      {/* One list, so a screen reader announces every answer: the author's
+          lead first with its question's title, then the rest as chips. */}
       <ul class="answers">
-        {acceptedAnswers.map((a) => (
-          <li>
+        {[...answersSplit.lead, ...answersSplit.rest].map((a) => (
+          <li
+            class={answersSplit.lead.includes(a) ? "answers__lead" : undefined}
+          >
             {/* One line on purpose, as the highlights' anchor above. */}
             {/* prettier-ignore */}
             <a class="external-link" href={a.answerUrl} target="_blank" rel="external noopener noreferrer" aria-label={t("aria.opensNewTab", { text: `${a.fullName} #${a.number}: ${a.title}` })}><span lang="en">{`${a.fullName} #${a.number}`}</span></a>
+            {answersSplit.lead.includes(a) && (
+              <span
+                class="answers__title"
+                lang="en"
+              >
+                {a.title}
+              </span>
+            )}
           </li>
         ))}
       </ul>
@@ -822,6 +839,7 @@ const faqNode = pageFaq && pageFaqNode(pageFaq, pageUrl, schema["@id"], locale);
       achievements={achievements}
       acceptedAnswersCount={summary.answersCount}
       answersAnchor={answersAnchor}
+      gitlabPointsUrl={gitlabPointsUrl(gitlabUsername)}
     />
 
     {pageFaq?.visible && <FAQ items={pageFaq.items} />}
@@ -1291,6 +1309,27 @@ const faqNode = pageFaq && pageFaqNode(pageFaq, pageUrl, schema["@id"], locale);
     padding: 0;
     margin: 0;
     list-style: none;
+  }
+
+  .answers li.answers__lead {
+    display: flex;
+    flex-basis: 100%;
+    flex-direction: column;
+    gap: 4px;
+    align-items: flex-start;
+  }
+
+  @media (width >= 48rem) {
+    .answers li.answers__lead {
+      flex-basis: calc(50% - var(--space-sm));
+    }
+  }
+
+  .answers__title {
+    font-size: var(--text-sm);
+    line-height: 1.45;
+    color: var(--color-text);
+    overflow-wrap: anywhere;
   }
 
   .answers li a {

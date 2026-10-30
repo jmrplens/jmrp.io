@@ -202,6 +202,20 @@ listingAliases:
 # "#1234", and a plain (unquoted) YAML scalar treats a `#` preceded by
 # whitespace as a comment marker — even mid-string, even inside a folded
 # multi-line value. Quoting avoids that trap entirely.
+# Accepted answers that lead the list, with their question's title beside
+# them (at most six, in this order); the others stay chips, newest first.
+# Picked for the engineering they show: firmware and embedded (Zephyr's
+# MCUboot CRC, MicroPython's USB CDC, probe-rs), containers (Podman's bind
+# mounts) and infrastructure (Argo CD's TLS floor, APISIX memory growth).
+# An entry that stops matching an accepted answer is dropped with a warning.
+answersLead:
+  - { repo: zephyrproject-rtos/zephyr, number: 118754 }
+  - { repo: micropython/micropython, number: 19632 }
+  - { repo: probe-rs/probe-rs, number: 4347 }
+  - { repo: podman-container-tools/podman, number: 29443 }
+  - { repo: argoproj/argo-cd, number: 30191 }
+  - { repo: apache/apisix, number: 13999 }
+
 featured:
   - repo: TriliumNext/Trilium
     number: 11448

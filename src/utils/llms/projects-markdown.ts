@@ -13,7 +13,9 @@ import {
   dependabotSentence,
   formatMergeDuration,
   githubSearchUrl,
+  gitlabAwardMeaning,
   gitlabListing,
+  gitlabPointsUrl,
   LEDGER_MAX_ITEMS,
   maintenanceCells,
   maintenanceRows,
@@ -25,6 +27,7 @@ import { foldProjectName } from "../../../scripts/ghc/contributions-yaml.mjs";
 import { ledgerProjects } from "../../../scripts/ghc/ledger-view.mjs";
 import { OWNER as GITHUB_OWNER } from "../../../scripts/ghc/roster.mjs";
 import { selectUpstreamStrip } from "../../../scripts/ghc/upstream-strip.mjs";
+import { splitAnswers } from "../../components/projects/answers-lead";
 import { asContributionsDataset } from "../../components/projects/dataset-types";
 import { PRJ } from "../../components/projects/ssr-tokens";
 import { alternateTwinUrl, documentHeader } from "../llms";
@@ -428,7 +431,7 @@ export async function contributionsPageMarkdown(
       "profile/contributions.yaml is missing or has the wrong type",
     );
   }
-  const { displayName } = contributionsEntry.data;
+  const { displayName, answersLead } = contributionsEntry.data;
 
   const { summary, ledgerByYear, acceptedAnswers, achievements } =
     contributionsData;
@@ -523,7 +526,9 @@ export async function contributionsPageMarkdown(
       return `- **${own}**: ${parts.join(", ")}`;
     });
 
-  const answerLines = acceptedAnswers.map(
+  // The page's order: the author's lead first, then the rest.
+  const answersSplit = splitAnswers(acceptedAnswers, answersLead, () => {});
+  const answerLines = [...answersSplit.lead, ...answersSplit.rest].map(
     (a) => `- ${a.fullName} #${a.number}: [${a.title}](${a.answerUrl})`,
   );
 
@@ -554,8 +559,17 @@ export async function contributionsPageMarkdown(
           date: formatDate(new Date(a.awardedAt), locale),
         })
       : null;
-    return awarded
-      ? `- **${a.name}** (GitLab): ${awarded}`
+    // What the level means and where its points are public, as the page
+    // prints them under the award.
+    const meaning = gitlabAwardMeaning(a.achievement, locale);
+    const details = [
+      awarded,
+      meaning
+        ? `${meaning} ([${t("pages.projectsContributions.gitlabPointsLink")}](${gitlabPointsUrl(contributionsData.gitlab?.username ?? "jmrp")}))`
+        : null,
+    ].filter(Boolean);
+    return details.length > 0
+      ? `- **${a.name}** (GitLab): ${details.join("; ")}`
       : `- **${a.name}** (GitLab)`;
   });
   const hasGithubAchievements = achievements.some(

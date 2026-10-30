@@ -1047,6 +1047,16 @@ const contributionsSchema = z.object({
   shortName: z.record(z.string(), z.string().min(1)).default({}),
   featured: z.array(ContributionsFeatured).min(1).max(8),
   /**
+   * Accepted answers that lead the list on /projects/contributions/, in this
+   * order, with their question's title beside them; the rest stay chips.
+   * At most six, picked by the author. An entry matching no accepted answer
+   * is dropped with a warning (src/components/projects/answers-lead.ts).
+   */
+  answersLead: z
+    .array(z.object({ repo: z.string(), number: z.number().int() }))
+    .max(6)
+    .default([]),
+  /**
    * GitLab.com account whose authored merge requests and issues are added to
    * the GitHub ones. `excludeNamespaces` are the owner's own top-level
    * namespaces (mirrors of his GitHub repositories), never counted as

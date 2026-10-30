@@ -1101,6 +1101,9 @@ export const common = {
       platformGithub: "GitHub",
       platformGitlab: "GitLab",
       shownMergedFirst: "Showing {shown}, merged first.",
+      gitlabLevel4Meaning:
+        "7,500 to 37,499 points earned contributing to GitLab",
+      gitlabPointsLink: "Points on GitLab's contributor platform",
       ledgerIntro:
         "One entry per project, most merged changes first. Each lists up to {max} changes: merged ones first, then open ones, newest first within each.",
       notMergedHeading: "Not merged ({count}), counted only",

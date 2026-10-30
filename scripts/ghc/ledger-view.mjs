@@ -56,7 +56,7 @@ export function ledgerProjects(ledgerByYear, contributedTo) {
     }
   }
   const position = new Map(contributedTo.map((row, i) => [row.project, i]));
-  const at = (project) => position.get(project) ?? Number.POSITIVE_INFINITY;
+  const at = (project) => position.get(project) ?? Infinity;
   return [...byProject]
     .map(([project, items]) => {
       const merged = items
