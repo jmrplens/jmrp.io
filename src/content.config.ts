@@ -1017,10 +1017,11 @@ const contributionsSchema = z.object({
    * "Beszel") and for giving an org-scoped series a readable name
    * (`modelcontextprotocol/go-sdk` → "MCP Go SDK"). A repo absent from this
    * map displays under its bare repo name (`acmesh-official/acme.sh` →
-   * "acme.sh"), without the owner. This is also how
-   * `PRJ_CODE_UPSTREAMS` (owner decision: "unit of a project" = a GitHub
-   * owner, with optional YAML folding — PLAN.md 8.2 #3) counts distinct
-   * PROJECTS rather than distinct repos.
+   * "acme.sh"), without the owner, and is also renamed here when that
+   * segment is generic or names something else (`gitlab-org/cli` → "GitLab
+   * CLI (glab)"). A project is a repository plus the siblings folded into
+   * it; this is also how `PRJ_CODE_UPSTREAMS` counts distinct PROJECTS
+   * rather than distinct repos.
    */
   displayName: z.record(z.string(), z.string()).default({}),
   /**
@@ -1044,7 +1045,7 @@ const contributionsSchema = z.object({
    * name.
    */
   shortName: z.record(z.string(), z.string().min(1)).default({}),
-  featured: z.array(ContributionsFeatured).min(1).max(7),
+  featured: z.array(ContributionsFeatured).min(1).max(8),
   /**
    * GitLab.com account whose authored merge requests and issues are added to
    * the GitHub ones. `excludeNamespaces` are the owner's own top-level

@@ -493,6 +493,7 @@ genpsk
 geoipupdate
 geolocalización
 gescoform
+getarcaneapp
 getcwd
 ghchronicle
 ghfeed
@@ -502,6 +503,7 @@ githubassets
 gitlab
 gitleaks
 Glama
+glab
 glanceapp
 glpat
 gnupg
@@ -884,6 +886,7 @@ openbao
 opencloud
 openpgp
 openpgpkey
+opentofu
 optimisation
 optimised
 optimizador
@@ -1378,6 +1381,7 @@ yuva
 zcvgkwkj
 zenodo
 Zenodo
+zephyrproject
 zeroize
 zgrab
 zurück

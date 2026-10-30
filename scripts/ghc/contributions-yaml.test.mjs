@@ -148,7 +148,7 @@ test("deriveOwnProjects returns an empty list when the title names no roster pro
 test("the real repository contributions.yaml loads and folds beszel + beszel-docs to the same name", () => {
   const root = path.resolve(import.meta.dirname, "../..");
   const config = loadContributionsConfig(root);
-  assert.ok(config.featured.length > 0 && config.featured.length <= 7);
+  assert.ok(config.featured.length > 0 && config.featured.length <= 8);
   assert.equal(
     foldProjectName("henrygd/beszel", config.displayName),
     foldProjectName("henrygd/beszel-docs", config.displayName),

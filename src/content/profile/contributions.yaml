@@ -16,17 +16,19 @@ type: contributions
 #   which must keep matching GitHub's own public search results exactly.
 #   Each one is documented below with why it is here; add a new entry only
 #   with the same kind of verification.
-# * `displayName` folds sibling repos of one upstream project (a code repo +
-#   its docs repo) or names an org-scoped series, per the owner's decision
-#   that a "project" is a GitHub owner with optional folding (PLAN.md 8.2
-#   #3). A repo NOT listed here displays under its own bare repo name (the
-#   part after the `/`, e.g. `acmesh-official/acme.sh` → "acme.sh") — never
-#   the full `owner/repo` (fixed 2026-09-26, review round #1). Only add an
-#   entry when the bare repo name itself needs recasing/expanding
-#   (`renovatebot/renovate` → "Renovate") or when a listing repo needs a
-#   human label for the "Distribution and listings" section
-#   (`microsoft/winget-pkgs` → "winget").
-# * `featured` is ordered; the subpage shows all of it (up to 7); /projects/
+# * `displayName` names a project. A project is a repository, shown under
+#   its last path segment (`acmesh-official/acme.sh` → "acme.sh"), never the
+#   full `owner/repo` (fixed 2026-09-26, review round #1), and folded with
+#   its siblings when they map to the same name (a code repo and its docs
+#   repo). This replaces the "a project is a GitHub owner" wording PLAN.md
+#   8.2 #3 recorded, which the code never did (2026-10-30 review). Add an
+#   entry when that segment is generic (cli, toolkit, webpage), names
+#   another product or language (opentofu, ruby, openbao, docker-machine),
+#   differs from another box only by case (gitlab), needs recasing
+#   (`renovatebot/renovate` → "Renovate"), or is a listing repo that needs a
+#   human label for "Distribution and listings" (`microsoft/winget-pkgs` →
+#   "winget"). Quote the project's own name or description as the source.
+# * `featured` is ordered; the subpage shows all of it (up to 8); /projects/
 #   shows none (removed 2026-09-27, it repeated the subpage). An entry may set `platform: gitlab` (a
 #   merge request on GitLab.com; `kind: pull_request`, `number` = the iid). Every entry must be MERGED (or, for an
 #   issue, a genuine accepted contribution) and carry no pending-disclosure
@@ -134,6 +136,25 @@ displayName:
   gitlab-org/cloud-native/charts/openbao: GitLab OpenBao chart
   components/ruby: Ruby CI/CD components
   gitlab-org/ci-cd/docker-machine: Docker Machine (GitLab fork)
+  # Generic or lowercase segments (2026-10-30), each from the project's own
+  # name or description: glab is GitLab's CLI ("A GitLab CLI tool"); the
+  # "OpenTofu CI/CD component"; "A toolkit ... for the development process
+  # of components"; the "AWS Fargate driver for Custom Executor" of GitLab
+  # Runner; "AI skill definitions for GitLab projects"; "the probe.rs
+  # webpage"; Arcane, "Modern Docker Management"; "The Go programming
+  # language"; the Zephyr Project's RTOS; and Arcane's official Android
+  # and mobile apps, as their own descriptions call them.
+  gitlab-org/cli: GitLab CLI (glab)
+  components/opentofu: OpenTofu CI/CD component
+  components/toolkit: CI/CD components toolkit
+  gitlab-org/ci-cd/custom-executor-drivers/fargate: GitLab Runner Fargate driver
+  gitlab-org/ai/skills: GitLab AI skills
+  probe-rs/webpage: probe.rs website
+  getarcaneapp/arcane: Arcane
+  golang/go: Go
+  zephyrproject-rtos/zephyr: Zephyr RTOS
+  getarcaneapp/android: Arcane Android app
+  getarcaneapp/mobile: Arcane mobile app
 
 # Display name → the repository that stands for a folded project: its link,
 # its star count and its JSON-LD `codeRepository`. Without an entry the repo
@@ -211,6 +232,17 @@ featured:
     why:
       en: "Revoked identities in a GPG key are no longer listed or accepted as verified emails, so a commit signed under a revoked UID stops showing as Verified; covered by specs with new GnuPG fixtures."
       es: "Las identidades revocadas de una clave GPG ya no se listan ni se aceptan como correos verificados, así que un commit firmado con un UID revocado deja de mostrarse como Verified; cubierto por specs con fixtures nuevos de GnuPG."
+  # Six merged MRs of a longer series (five labelled type::bug, one
+  # type::feature; none a security fix), all with specs. !260277 is left out:
+  # it has no size data. The size line sums the six.
+  - repo: gitlab-org/gitlab
+    number: 261813
+    numbers: [259764, 260276, 260929, 260958, 260668, 261813]
+    kind: pull_request
+    platform: gitlab
+    why:
+      en: "Six merged changes from a longer series on how GitLab's REST API reports what an access token may do (!259764, !260276, !260929, !260958, !260668, !261813): a fine-grained token now comes back with its granular scopes when it is read, created or rotated, an administrator can create one for another user, and a refused token gets the RFC 6750 WWW-Authenticate challenge with the scopes that would be accepted, also on the MCP endpoints; each with specs."
+      es: "Seis cambios fusionados, de una serie más larga, sobre cómo la API REST de GitLab informa de lo que puede hacer un token de acceso (!259764, !260276, !260929, !260958, !260668, !261813): un token de grano fino ahora se devuelve con sus granular_scopes al consultarlo, crearlo o rotarlo, un administrador puede crear uno para otro usuario y un token rechazado recibe el desafío WWW-Authenticate del RFC 6750 con los scopes que se aceptarían, también en los endpoints de MCP; cada uno con specs."
   - repo: henrygd/beszel
     number: 2327
     kind: pull_request
