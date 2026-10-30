@@ -236,7 +236,6 @@ export const GLOBAL_SUMMARY_TOKENS = Object.freeze({
     raw.codeVsListingSplit.codeOrDocs.merged + (gitlab?.merged ?? 0),
   PRJ_CODE_UPSTREAMS: (raw, gitlab) =>
     new Set([...raw.codeUpstreamProjects, ...(gitlab?.projects ?? [])]).size,
-  PRJ_LISTING_MERGED: (raw) => raw.codeVsListingSplit.listing.merged,
   // CODE PRs only (excludes contributions.yaml listingRepos): the owner
   // decided the open-review tile must not blend packaging/listing PRs into
   // the "under review" figure. `contributionTotals.prOpen` (all kinds) is

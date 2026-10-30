@@ -43,7 +43,6 @@ test("kindForToken: flat counters and per-card *_STARS default to int", () => {
   for (const token of [
     "PRJ_CODE_MERGED",
     "PRJ_CODE_UPSTREAMS",
-    "PRJ_LISTING_MERGED",
     "PRJ_PR_OPEN",
     "PRJ_ANSWERS",
     "PRJ_RELEASES_90D",

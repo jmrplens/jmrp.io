@@ -176,15 +176,14 @@ export function splitLedger(fullLedger, contributions, listingSet) {
   const repos = new Set();
   for (const item of fullLedger) {
     if (excludeSet.has(itemKey(item))) continue;
-    // A closed listing PR is dropped from every list below, so its
-    // repository is not one the page lists work in.
-    const droppedListing =
+    // Listing and packaging PRs are not listed on the subpage (its
+    // "Distribution and listings" section went on 2026-10-30), so their
+    // repositories are not ones the page lists work in.
+    const listing =
       item.kind !== "issue" &&
       item.platform !== "gitlab" &&
-      listingSet.has(item.fullName) &&
-      item.state === "closed";
-    if (!droppedListing)
-      repos.add(`${item.platform ?? "github"}:${item.fullName}`);
+      listingSet.has(item.fullName);
+    if (!listing) repos.add(`${item.platform ?? "github"}:${item.fullName}`);
     const project = foldProjectName(item.fullName, contributions.displayName);
     if (item.kind === "issue") {
       countIssue(views.issuesByProject, project, item);

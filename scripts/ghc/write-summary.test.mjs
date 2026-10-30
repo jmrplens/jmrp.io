@@ -105,7 +105,7 @@ test("buildSummaryTokens emits every global token", () => {
   const tokens = buildSummaryTokens(fixtureRaw());
   assert.equal(tokens.PRJ_CODE_MERGED, 19);
   assert.equal(tokens.PRJ_CODE_UPSTREAMS, 11);
-  assert.equal(tokens.PRJ_LISTING_MERGED, 14);
+  assert.equal(tokens.PRJ_LISTING_MERGED, undefined);
   // Code-only (codeVsListingSplit.codeOrDocs.open), not the raw 15 that
   // includes listingRepos PRs — see write-summary.mjs's PRJ_PR_OPEN comment.
   assert.equal(tokens.PRJ_PR_OPEN, 10);
@@ -284,8 +284,6 @@ test("buildSummaryTokens sums the GitLab half into the code figures", () => {
   assert.equal(tokens.PRJ_CODE_MERGED, 19 + 26);
   assert.equal(tokens.PRJ_PR_OPEN, 10 + 6);
   assert.equal(tokens.PRJ_CODE_UPSTREAMS, 11 + 2);
-  // Listing PRs are a GitHub-only classification.
-  assert.equal(tokens.PRJ_LISTING_MERGED, 14);
 });
 
 test("writeProjectsSummary persists the GitLab half beside the tokens", async () => {

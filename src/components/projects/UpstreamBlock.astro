@@ -91,12 +91,6 @@ const monthYear = (iso: string | null): string | null =>
       </div>
     ))}
   </dl>
-  <p class="upstream__listing-note">
-    {t("pages.projects.upstream.listingNote", {
-      count: PRJ.upstream.listingMerged,
-    })}
-  </p>
-
   {contributedTo.length > 0 && (
     <div>
       <h3 class="upstream__subheading">
@@ -228,12 +222,6 @@ const monthYear = (iso: string | null): string | null =>
   .upstream__tile dt {
     margin: 2px 0 0;
     font-size: var(--text-xs);
-    color: var(--color-text-muted);
-  }
-
-  .upstream__listing-note {
-    margin: var(--space-sm) 0 0;
-    font-size: var(--text-sm);
     color: var(--color-text-muted);
   }
 

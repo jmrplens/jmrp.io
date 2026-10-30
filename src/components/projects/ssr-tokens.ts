@@ -105,8 +105,6 @@ export const PRJ = {
      * merged code/docs PR.
      */
     codeUpstreams: "PRJ_CODE_UPSTREAMS",
-    /** Merged packaging/listing PRs (winget, awesome lists, registries). */
-    listingMerged: "PRJ_LISTING_MERGED",
     /** PRs currently open/under review, any classification. */
     prOpen: "PRJ_PR_OPEN",
     /** Accepted answers in GitHub Discussions on repos the account owns. */

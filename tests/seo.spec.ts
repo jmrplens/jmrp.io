@@ -872,12 +872,4 @@ test.describe("Markdown twins: production audit 2026-09-27", () => {
     expect(full).toContain(`A build-time snapshot (${date})`);
     expect(full).toContain(`As of ${date}, the page also names`);
   });
-
-  test("projects: the listing note keeps its plus sign (N8)", async ({
-    page,
-  }) => {
-    const text = await (await page.request.get("/projects/index.md")).text();
-    expect(text).toMatch(/^\\\+ PRJ_\w+ packaging and listing PRs merged$/m);
-    expect(text).not.toMatch(/^\+ /m);
-  });
 });

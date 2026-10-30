@@ -1000,13 +1000,11 @@ export const common = {
         kicker: "UPSTREAM",
         heading: "Aportaciones a otros proyectos",
         intro:
-          "Código y documentación que he escrito para proyectos que no mantengo, junto con el empaquetado que lleva mis herramientas a registros públicos.",
+          "Código y documentación que he escrito para proyectos que no mantengo.",
         tileCodeMerged: "PR y MR de código y docs fusionadas",
         tileCodeUpstreams: "proyectos con código o docs fusionados",
-        tileListingMerged: "PR de listados fusionadas",
         tilePrOpen: "PR y MR de código en revisión",
         tileAnswers: "respuestas aceptadas en GitHub Discussions",
-        listingNote: "+ {count} PR de empaquetado y listados fusionadas",
         contributedToTitle: "He contribuido a",
         contributedToRule:
           "Proyectos con alguna fusión en los últimos 12 meses, primero los de más cambios fusionados, dos por propietario como máximo.",
@@ -1038,7 +1036,7 @@ export const common = {
       description:
         "Código y documentación de José Manuel Requena Plens fusionados en proyectos de GitHub y GitLab que no mantiene, con respuestas aceptadas y logros.",
       schemaDescription:
-        "Foto de código, documentación y empaquetado aportados a proyectos open source de terceros en GitHub y GitLab, más respuestas aceptadas en GitHub Discussions, generada en build desde ghchronicle y la API de GitLab.",
+        "Foto de código y documentación aportados a proyectos open source de terceros en GitHub y GitLab, más respuestas aceptadas en GitHub Discussions, generada en build desde ghchronicle y la API de GitLab.",
       kicker: "// PROYECTOS",
       backToProjects: "← Proyectos",
       heading: "Aportaciones open source",
@@ -1084,16 +1082,6 @@ export const common = {
       ledgerIntro:
         "Una entrada por proyecto, primero las que tienen más cambios fusionados. Cada una lista hasta {max} cambios: primero los fusionados y luego los abiertos, de más reciente a más antiguo en cada grupo.",
       notMergedHeading: "No fusionadas ({count}), solo se cuentan",
-      distributionHeading: "Distribución y listados",
-      distributionIntro:
-        "Dónde se publican mis propios proyectos: gestores de paquetes, registros y listas curadas.",
-      listingKind: {
-        packages: "gestor de paquetes",
-        registry: "registro",
-        list: "lista curada",
-      },
-      mergedTimes: "{count} fusionadas",
-      underReviewPill: "En revisión",
       answersHeading: "Respuestas aceptadas en GitHub Discussions ({count})",
       answersFooter:
         "{accepted} aceptadas de {discussions} discusiones en las que participé, en {repos} repositorios. Cada una enlaza a la respuesta aceptada; no se publica quién la aceptó.",
