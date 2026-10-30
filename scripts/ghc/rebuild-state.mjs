@@ -16,7 +16,7 @@
  *   sorted by platform, repository and number): project group, platform,
  *   kind, repository, number, state, title, whether it is redacted, and the
  *   diff size a pull/merge request prints (lines added, removed, files).
- * - `listingsByOwnProject` and `issuesByProject`: whole (they are counts).
+ * - `issuesByProject`: whole (they are counts).
  * - `acceptedAnswers`: repository and number, in the displayed order.
  * - `achievements`: platform, id, name, tier name and number, and the
  *   progress `count` / `nextThreshold` ONLY when the badge shelf prints
@@ -38,7 +38,9 @@
  *   at build time, so a flip has to rebuild it.
  * - `summary`: the figures of the subpage intro and tiles: PRs merged, open
  *   and closed, issues open and closed, repositories, code/docs merged and
- *   open, listing merged, accepted answers.
+ *   open, accepted answers. Listing and packaging PRs are not displayed
+ *   since 2026-10-30, so neither `listingsByOwnProject` nor the listing
+ *   split is projected.
  *
  * Deliberately EXCLUDED, because they are volatile or stale-tolerant:
  * `generatedAt`, `asOf`, every `comments` count, `hoursToMerge` and the
@@ -335,7 +337,6 @@ export function projectDisplay(dataset) {
       repos: totals.repos ?? null,
       codeOrDocsMerged: split.codeOrDocs?.merged ?? null,
       codeOrDocsOpen: split.codeOrDocs?.open ?? null,
-      listingMerged: split.listing?.merged ?? null,
       answersCount: dataset.summary?.answersCount ?? null,
     },
     highlights: (dataset.highlights ?? []).map((h) => ({
@@ -364,7 +365,6 @@ export function projectDisplay(dataset) {
       number: a.number,
     })),
     ledger: projectLedger(dataset.ledgerByYear),
-    listingsByOwnProject: dataset.listingsByOwnProject ?? {},
     issuesByProject: dataset.issuesByProject ?? {},
     cardRows: Object.fromEntries(
       Object.entries(dataset.cardFacts ?? {}).map(([repo, facts]) => [

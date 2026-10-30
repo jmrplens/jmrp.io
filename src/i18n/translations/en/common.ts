@@ -1023,14 +1023,11 @@ export const common = {
       upstream: {
         kicker: "UPSTREAM",
         heading: "Contributions to other projects",
-        intro:
-          "Code and documentation I wrote for projects I do not maintain, plus the packaging that puts my own tools in public registries.",
+        intro: "Code and documentation I wrote for projects I do not maintain.",
         tileCodeMerged: "code & docs PRs and MRs merged",
         tileCodeUpstreams: "projects with merged code or docs",
-        tileListingMerged: "listing PRs merged",
         tilePrOpen: "code PRs and MRs under review",
         tileAnswers: "accepted answers in GitHub Discussions",
-        listingNote: "+ {count} packaging and listing PRs merged",
         contributedToTitle: "Contributed to",
         contributedToRule:
           "Projects with a merge in the last 12 months, most merged changes first, at most two per owner.",
@@ -1062,7 +1059,7 @@ export const common = {
       description:
         "Code and docs that José Manuel Requena Plens has merged into GitHub and GitLab projects he does not maintain, plus accepted answers and achievements.",
       schemaDescription:
-        "Snapshot of code, documentation and packaging contributed to third-party open-source projects on GitHub and GitLab, plus accepted answers in GitHub Discussions, generated at build time from ghchronicle and the GitLab API.",
+        "Snapshot of code and documentation contributed to third-party open-source projects on GitHub and GitLab, plus accepted answers in GitHub Discussions, generated at build time from ghchronicle and the GitLab API.",
       kicker: "// PROJECTS",
       backToProjects: "← Projects",
       heading: "Open-source contributions",
@@ -1110,16 +1107,6 @@ export const common = {
       ledgerIntro:
         "One entry per project, most merged changes first. Each lists up to {max} changes: merged ones first, then open ones, newest first within each.",
       notMergedHeading: "Not merged ({count}), counted only",
-      distributionHeading: "Distribution and listings",
-      distributionIntro:
-        "Where my own projects are published: package managers, registries and curated lists.",
-      listingKind: {
-        packages: "package manager",
-        registry: "registry",
-        list: "curated list",
-      },
-      mergedTimes: "{count} merged",
-      underReviewPill: "Under review",
       answersHeading: "Accepted answers in GitHub Discussions ({count})",
       answersFooter:
         "{accepted} accepted out of {discussions} discussions I took part in, across {repos} repositories. Each one links to the accepted reply; who accepted it is never published.",

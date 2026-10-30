@@ -249,13 +249,6 @@ function upstreamLines(locale: "en" | "es", siteUrl: string): Lines {
     `- ${t("pages.projects.upstream.tileCodeUpstreams")}: ${PRJ.upstream.codeUpstreams}`,
     `- ${t("pages.projects.upstream.tilePrOpen")}: ${PRJ.upstream.prOpen}`,
     `- ${t("pages.projects.upstream.tileAnswers")}: ${PRJ.upstream.answers}`,
-    // Its own paragraph, the leading "+" escaped: right under a "-" list, a
-    // line starting "+ " opens a second list and a renderer drops the sign
-    // (production audit 2026-09-27, N8).
-    "",
-    t("pages.projects.upstream.listingNote", {
-      count: PRJ.upstream.listingMerged,
-    }).replace(/^\+/u, String.raw`\+`),
     "",
     `### ${t("pages.projects.upstream.contributedToTitle")}`,
     "",
@@ -440,7 +433,6 @@ export async function contributionsPageMarkdown(
   const listed = listedContributionCounts({
     ledgerByYear,
     issuesByProject: contributionsData.issuesByProject,
-    listingSplit: summary.codeVsListingSplit.listing,
   });
 
   const byLanguage = languageCounts(contributionsData.contributedTo);
@@ -498,33 +490,6 @@ export async function contributionsPageMarkdown(
       : []),
     "",
   ];
-
-  const listingLines = Object.entries(contributionsData.listingsByOwnProject)
-    .filter(([own]) => own !== "other")
-    .map(([own, targets]) => {
-      const parts = Object.entries(targets).map(([name, row]) => {
-        const link = `[${name}](https://github.com/${row.fullName})`;
-        // Every state the page's pills show: a target can have merged work
-        // AND a PR under review, and the twin used to drop the second
-        // (twin audit 2026-09-27, W5). The merged count uses the page's own
-        // plural key instead of "×8 (merged)" beside a singular noun (W6).
-        const states = [
-          ...(row.merged > 1
-            ? [
-                t("pages.projectsContributions.mergedTimes", {
-                  count: row.merged,
-                }),
-              ]
-            : []),
-          ...(row.merged === 1 ? [stateLabel("merged", t)] : []),
-          ...(row.open > 0
-            ? [t("pages.projectsContributions.underReview")]
-            : []),
-        ];
-        return `${link} (${states.join(", ")})`;
-      });
-      return `- **${own}**: ${parts.join(", ")}`;
-    });
 
   // The page's order: the author's lead first, then the rest.
   const answersSplit = splitAnswers(acceptedAnswers, answersLead, () => {});
@@ -607,7 +572,6 @@ export async function contributionsPageMarkdown(
     }),
     "",
     `- ${t("pages.projects.upstream.tileCodeMerged")}: ${listed.codeMerged}`,
-    `- ${t("pages.projects.upstream.tileListingMerged")}: ${listed.listingMerged}`,
     `- ${t("pages.projects.upstream.tilePrOpen")}: ${listed.codeOpen}`,
     `- ${t("pages.projects.upstream.tileAnswers")}: ${summary.answersCount}`,
     "",
@@ -628,10 +592,6 @@ export async function contributionsPageMarkdown(
     t("pages.projectsContributions.ledgerIntro", { max: LEDGER_MAX_ITEMS }),
     "",
     ...ledgerLines,
-    `## ${t("pages.projectsContributions.distributionHeading")}`,
-    "",
-    ...listingLines,
-    "",
     `## ${t("pages.projectsContributions.answersHeading", { count: acceptedAnswers.length })}`,
     "",
     ...answerLines,

@@ -233,6 +233,9 @@ test("volatile fields do not change the hash", () => {
     (d) => (d.source = "fixture"),
     (d) => (d.acceptedAnswers[0].title = "Edited question"),
     (d) => (d.contributedTo[0].stars = 38_044),
+    // Listing and packaging PRs are not displayed any more.
+    (d) => (d.listingsByOwnProject.phonometry["conda-forge"].merged = 1),
+    (d) => (d.summary.codeVsListingSplit.listing.merged = 15),
     // More merges for the strip's leader: the order it prints stays.
     (d) => (d.contributedTo[1].merged = 3),
     // Galaxy Brain prints the accepted-answers count, not its own count.
@@ -289,7 +292,6 @@ test("displayed changes do change the hash", () => {
     // window is: acme.sh's last merge is 2026-09-10.
     (d) => (d.asOf = "2027-09-11T00:00:00"),
     (d) => (d.issuesByProject.Kong.closed = 1),
-    (d) => (d.listingsByOwnProject.phonometry["conda-forge"].merged = 1),
     (d) => (d.summary.contributionTotals.prMerged = 60),
     (d) => (d.summary.answersCount = 3),
     (d) => (d.highlights[0].why.en = "New reason"),

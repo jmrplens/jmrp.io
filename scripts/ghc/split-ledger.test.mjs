@@ -145,7 +145,7 @@ test("listedRepos counts the repositories of listed items only", () => {
       item({ kind: "issue", fullName: "acme/tool", state: "open" }),
       // Excluded: its repository is not listed anywhere.
       item({ fullName: "ARM-software/MDK-Middleware", number: 131 }),
-      // A closed listing PR is dropped from every list.
+      // Listing PRs, of any state, are not listed on the subpage.
       item({ fullName: "microsoft/winget-pkgs", number: 9, state: "closed" }),
       item({ fullName: "microsoft/winget-pkgs", number: 10, state: "merged" }),
       // Same path on GitLab is a different repository.
@@ -154,5 +154,5 @@ test("listedRepos counts the repositories of listed items only", () => {
     contributions,
     listingSet,
   );
-  assert.equal(out.listedRepos, 5);
+  assert.equal(out.listedRepos, 4);
 });
