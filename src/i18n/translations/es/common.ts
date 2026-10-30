@@ -999,12 +999,11 @@ export const common = {
         intro:
           "Código y documentación que he escrito para proyectos que no mantengo, junto con el empaquetado que lleva mis herramientas a registros públicos.",
         tileCodeMerged: "PR y MR de código y docs fusionadas",
-        tileCodeUpstreams: "proyectos con código fusionado",
+        tileCodeUpstreams: "proyectos con código o docs fusionados",
         tileListingMerged: "PR de listados fusionadas",
         tilePrOpen: "PR y MR de código en revisión",
         tileAnswers: "respuestas aceptadas en GitHub Discussions",
         listingNote: "+ {count} PR de empaquetado y listados fusionadas",
-        openPill: "Abierta",
         contributedToTitle: "He contribuido a",
         andMore: "y {count} proyectos más · lista a fecha de {date}",
         liveLabel:
@@ -1024,7 +1023,9 @@ export const common = {
         passRatePending: "por calcular",
         noData: "sin datos",
         dependabotSentence:
-          "{fixed} alertas de Dependabot corregidas en {repos} repositorios mantenidos, mediana de unos {days} días hasta el arreglo. Ninguna abierta hoy.",
+          "{fixed} alertas de Dependabot corregidas en {repos} repositorios mantenidos, mediana aproximada de {duration} hasta el arreglo. Ninguna abierta hoy.",
+        dependabotDaysOne: "{count} día",
+        dependabotDays: "{count} días",
       },
     },
     projectsContributions: {
@@ -1087,7 +1088,7 @@ export const common = {
       underReviewPill: "En revisión",
       answersHeading: "Respuestas aceptadas en GitHub Discussions ({count})",
       answersFooter:
-        "{accepted} aceptadas de {discussions} discusiones respondidas en {repos} repositorios. Cada una enlaza a su hilo; no se publica quién aceptó cada respuesta.",
+        "{accepted} aceptadas de {discussions} discusiones en las que participé, en {repos} repositorios. Cada una enlaza a la respuesta aceptada; no se publica quién la aceptó.",
       issuesHeading:
         "Issues reportadas ({total}: {open} abiertas, {closed} cerradas)",
       achievementsHeading: "Logros en GitHub y GitLab",

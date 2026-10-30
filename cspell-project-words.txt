@@ -880,6 +880,7 @@ ondrej
 ondřej
 oneshot
 openai
+openbao
 opencloud
 openpgp
 openpgpkey

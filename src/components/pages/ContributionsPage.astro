@@ -535,17 +535,12 @@ const faqNode = pageFaq && pageFaqNode(pageFaq, pageUrl, schema["@id"], locale);
               </span>
               <span class="hl__title">
                 <PlatformMark platform={h.platform} />
-                <a
-                  class="external-link"
-                  href={h.url}
-                  target="_blank"
-                  rel="external noopener noreferrer"
-                  lang="en"
-                  aria-label={t("aria.opensNewTab", {
-                    text: `${h.repo} ${itemRef(h)}`,
-                  })}
-                  set:text={`${h.repo} ${itemRef(h)}`}
-                />
+                {/* One line on purpose: Astro keeps the whitespace a reflowed
+                    child leaves inside the anchor, which would sit beside the
+                    ↗ (global.css adds its own no-break space). The lang="en"
+                    span keeps the aria-label in the page's language. */}
+                {/* prettier-ignore */}
+                <a class="external-link" href={h.url} target="_blank" rel="external noopener noreferrer" aria-label={t("aria.opensNewTab", { text: `${h.repo} ${itemRef(h)}` })}><span lang="en">{`${h.repo} ${itemRef(h)}`}</span></a>
               </span>
               <p class="hl__why">{h.why}</p>
               {(h.stars !== null || h.size !== null || h.language) && (
@@ -587,7 +582,8 @@ const faqNode = pageFaq && pageFaqNode(pageFaq, pageUrl, schema["@id"], locale);
         >
           <summary>
             <b class="ledger-name">
-              {entry.project}
+              {/* bdi, not span: `summary span` sets the mono count style. */}
+              <bdi lang="en">{entry.project}</bdi>
               <PlatformMark platform={entry.platform} />
             </b>
             <span>
@@ -613,17 +609,9 @@ const faqNode = pageFaq && pageFaqNode(pageFaq, pageUrl, schema["@id"], locale);
                   <span>{t("pages.projectsContributions.itemRedacted")}</span>
                 ) : (
                   <span class="items__t">
-                    <a
-                      class="external-link"
-                      href={itemUrl(item)}
-                      target="_blank"
-                      rel="external noopener noreferrer"
-                      lang="en"
-                      aria-label={t("aria.opensNewTab", {
-                        text: `${item.fullName} ${itemRef(item)}: ${item.title}`,
-                      })}
-                      set:text={itemLabel(entry.items, item)}
-                    />
+                    {/* One line on purpose, as the highlights' anchor above. */}
+                    {/* prettier-ignore */}
+                    <a class="external-link" href={itemUrl(item)} target="_blank" rel="external noopener noreferrer" aria-label={t("aria.opensNewTab", { text: `${item.fullName} ${itemRef(item)}: ${item.title}` })}><span lang="en">{itemLabel(entry.items, item)}</span></a>
                   </span>
                 )}
                 {itemDiffSize(item) ? (
@@ -796,17 +784,9 @@ const faqNode = pageFaq && pageFaqNode(pageFaq, pageUrl, schema["@id"], locale);
       <ul class="answers">
         {acceptedAnswers.map((a) => (
           <li>
-            <a
-              class="external-link"
-              href={a.answerUrl}
-              target="_blank"
-              rel="external noopener noreferrer"
-              lang="en"
-              aria-label={t("aria.opensNewTab", {
-                text: `${a.fullName} #${a.number}: ${a.title}`,
-              })}
-              set:text={`${a.fullName} #${a.number}`}
-            />
+            {/* One line on purpose, as the highlights' anchor above. */}
+            {/* prettier-ignore */}
+            <a class="external-link" href={a.answerUrl} target="_blank" rel="external noopener noreferrer" aria-label={t("aria.opensNewTab", { text: `${a.fullName} #${a.number}: ${a.title}` })}><span lang="en">{`${a.fullName} #${a.number}`}</span></a>
           </li>
         ))}
       </ul>
@@ -839,7 +819,7 @@ const faqNode = pageFaq && pageFaqNode(pageFaq, pageUrl, schema["@id"], locale);
       <ul class="items items--flat">
         {[...issuesByProject].map(([project, counts]) => (
           <li>
-            <span>{project}</span>
+            <span lang="en">{project}</span>
             <span class="items__w">
               {counts.open > 0 && countLabel("summaryOpen", counts.open)}
               {counts.open > 0 && counts.closed > 0 && " · "}
@@ -1112,6 +1092,13 @@ const faqNode = pageFaq && pageFaqNode(pageFaq, pageUrl, schema["@id"], locale);
     display: inline-flex;
     gap: 6px;
     align-items: center;
+  }
+
+  /* A link to a section (the achievements shelf links #answers) lands on the
+     section's own top, which only headings keep clear of the sticky header
+     (base.css); without this the h2 sat under it. */
+  section[id] {
+    scroll-margin-top: calc(var(--header-height) + 1rem);
   }
 
   .items__t {

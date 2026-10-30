@@ -153,14 +153,22 @@ export function dependabotSentence(
   locale: Locale,
 ): string | null {
   if (dependabot.total <= 0) return null;
-  return useTranslations(locale)(
-    "pages.projects.maintenance.dependabotSentence",
-    {
-      fixed: dependabot.total,
-      repos: dependabot.perRepo.length,
-      days: Math.round(dependabot.medianDays ?? 0),
-    },
-  );
+  const t = useTranslations(locale);
+  // The median rounds to a whole day, often 1: "1 days" was printed until
+  // 2026-10-30, so the unit goes through the plural rules.
+  const days = Math.round(dependabot.medianDays ?? 0);
+  return t("pages.projects.maintenance.dependabotSentence", {
+    fixed: dependabot.total,
+    repos: dependabot.perRepo.length,
+    duration: pluralize(
+      days,
+      {
+        one: t("pages.projects.maintenance.dependabotDaysOne", { count: days }),
+        other: t("pages.projects.maintenance.dependabotDays", { count: days }),
+      },
+      locale,
+    ),
+  });
 }
 
 /**
