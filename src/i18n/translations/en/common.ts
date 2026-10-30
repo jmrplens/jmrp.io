@@ -1108,6 +1108,7 @@ export const common = {
         "One entry per project, most merged changes first. Each lists up to {max} changes: merged ones first, then open ones, newest first within each.",
       notMergedHeading: "Not merged ({count}), counted only",
       answersHeading: "Accepted answers in GitHub Discussions ({count})",
+      answersMore: "Show the other {count}",
       answersFooter:
         "{accepted} accepted out of {discussions} discussions I took part in, across {repos} repositories. Each one links to the accepted reply; who accepted it is never published.",
       issuesHeading: "Issues reported ({total}: {open} open, {closed} closed)",

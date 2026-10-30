@@ -1083,6 +1083,7 @@ export const common = {
         "Una entrada por proyecto, primero las que tienen más cambios fusionados. Cada una lista hasta {max} cambios: primero los fusionados y luego los abiertos, de más reciente a más antiguo en cada grupo.",
       notMergedHeading: "No fusionadas ({count}), solo se cuentan",
       answersHeading: "Respuestas aceptadas en GitHub Discussions ({count})",
+      answersMore: "Ver las otras {count}",
       answersFooter:
         "{accepted} aceptadas de {discussions} discusiones en las que participé, en {repos} repositorios. Cada una enlaza a la respuesta aceptada; no se publica quién la aceptó.",
       issuesHeading:

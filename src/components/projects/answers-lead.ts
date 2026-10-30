@@ -1,8 +1,9 @@
 /**
  * Which accepted answers lead the list on /projects/contributions/ and its
  * markdown twin. The author picks up to six (`answersLead` in
- * contributions.yaml); they come first, in that order, with their question's
- * title beside them. The rest keep the dataset's order (newest first).
+ * contributions.yaml); they come first, in that order, and are the ones the
+ * page keeps in view. The rest keep the dataset's order (newest first), behind
+ * a disclosure on the page and listed after the lead in the twin.
  *
  * The lead is a reference into data the author does not control: a
  * maintainer can un-accept an answer. An entry that matches no accepted

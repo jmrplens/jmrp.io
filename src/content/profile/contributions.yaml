@@ -101,9 +101,10 @@ displayName:
   renovatebot/renovate: Renovate
   TriliumNext/Trilium: Trilium Notes
   NginxProxyManager/nginx-proxy-manager: Nginx Proxy Manager
-  # Listing-repo labels for the "Distribution and listings" section (review
-  # round #1, item 13) — the `awesome-*` repos read fine under their own bare
-  # repo name and need no entry here.
+  # Listing-repo labels (review round #1, item 13). The subpage stopped
+  # listing these PRs on 2026-10-30; the names still label them in the
+  # dataset. The `awesome-*` repos read fine under their own bare repo name
+  # and need no entry here.
   microsoft/winget-pkgs: winget
   docker/mcp-registry: Docker MCP Registry
   crowdsecurity/hub: CrowdSec Hub
@@ -155,6 +156,28 @@ displayName:
   zephyrproject-rtos/zephyr: Zephyr RTOS
   getarcaneapp/android: Arcane Android app
   getarcaneapp/mobile: Arcane mobile app
+  # Each accepted answer names its project under the question (2026-10-30),
+  # so the repositories answered in need the name a reader knows, taken from
+  # the project's own README or description: "Build Awesome (Eleventy)",
+  # Siteimprove's Alfa, Apache APISIX and Apache Ozone, Argo CD, Vorta,
+  # Forward Email, Pangolin, Backrest, Feishin, PotatoMesh, MicroPython and
+  # Starship. lemker/unifi-os-server is a community image that runs UniFi OS
+  # Server in Docker, not Ubiquiti's own release. probe-rs, SafeLine and
+  # docker-transmission-openvpn already read right bare.
+  11ty/buildawesome: Build Awesome (Eleventy)
+  Siteimprove/alfa: Alfa
+  apache/apisix: Apache APISIX
+  apache/ozone: Apache Ozone
+  argoproj/argo-cd: Argo CD
+  borgbase/vorta: Vorta
+  forwardemail/forwardemail.net: Forward Email
+  fosrl/pangolin: Pangolin
+  garethgeorge/backrest: Backrest
+  jeffvli/feishin: Feishin
+  l5yth/potato-mesh: PotatoMesh
+  lemker/unifi-os-server: UniFi OS Server (Docker)
+  micropython/micropython: MicroPython
+  starship/starship: Starship
 
 # Display name → the repository that stands for a folded project: its link,
 # its star count and its JSON-LD `codeRepository`. Without an entry the repo
@@ -202,8 +225,8 @@ listingAliases:
 # "#1234", and a plain (unquoted) YAML scalar treats a `#` preceded by
 # whitespace as a comment marker — even mid-string, even inside a folded
 # multi-line value. Quoting avoids that trap entirely.
-# Accepted answers that lead the list, with their question's title beside
-# them (at most six, in this order); the others stay chips, newest first.
+# Accepted answers the subpage keeps in view (at most six, in this order);
+# the others, newest first, sit behind a "Show the other N" disclosure.
 # Picked for the engineering they show: firmware and embedded (Zephyr's
 # MCUboot CRC, MicroPython's USB CDC, probe-rs), containers (Podman's bind
 # mounts) and infrastructure (Argo CD's TLS floor, APISIX memory growth).

@@ -85,9 +85,13 @@ const {
 } = contributionsData;
 
 const asOfDate = new Date(contributionsData.asOf);
-// The author's lead answers first, with their question's title; the rest in
-// the dataset's order (src/components/projects/answers-lead.ts).
+// The author's lead answers in view, the rest (newest first) behind a
+// disclosure (src/components/projects/answers-lead.ts). With no lead, all of
+// them are in view.
 const answersSplit = splitAnswers(acceptedAnswers, answersLeadRefs);
+const answersShown =
+  answersSplit.lead.length > 0 ? answersSplit.lead : answersSplit.rest;
+const answersMore = answersSplit.lead.length > 0 ? answersSplit.rest : [];
 const gitlabUsername = contributionsData.gitlab?.username ?? "jmrp";
 
 const contributedToStarsByProject = new Map(
@@ -662,27 +666,47 @@ const faqNode = pageFaq && pageFaqNode(pageFaq, pageUrl, schema["@id"], locale);
           count: acceptedAnswers.length,
         })}
       </h2>
-      {/* One list, so a screen reader announces every answer: the author's
-          lead first with its question's title, then the rest as chips. */}
+      {/* The question is the link and the project sits under it: the
+          repository path and discussion number told a reader nothing. */}
       <ul class="answers">
-        {[...answersSplit.lead, ...answersSplit.rest].map((a) => (
-          <li
-            class={answersSplit.lead.includes(a) ? "answers__lead" : undefined}
-          >
+        {answersShown.map((a) => (
+          <li>
             {/* One line on purpose, as the highlights' anchor above. */}
             {/* prettier-ignore */}
-            <a class="external-link" href={a.answerUrl} target="_blank" rel="external noopener noreferrer" aria-label={t("aria.opensNewTab", { text: `${a.fullName} #${a.number}: ${a.title}` })}><span lang="en">{`${a.fullName} #${a.number}`}</span></a>
-            {answersSplit.lead.includes(a) && (
-              <span
-                class="answers__title"
-                lang="en"
-              >
-                {a.title}
-              </span>
-            )}
+            <a class="external-link answers__q" href={a.answerUrl} target="_blank" rel="external noopener noreferrer" aria-label={t("aria.opensNewTab", { text: a.title })}><span lang="en">{a.title}</span></a>
+            <span class="answers__project">
+              {foldProjectName(a.fullName, displayName)}
+            </span>
           </li>
         ))}
       </ul>
+      {answersMore.length > 0 && (
+        <details class="answers-more">
+          <summary>
+            <span
+              class="ledger-toggle"
+              aria-hidden="true"
+            >
+              <span class="i-mdi:plus ledger-toggle__icon ledger-toggle__icon--closed" />
+              <span class="i-mdi:minus ledger-toggle__icon ledger-toggle__icon--open" />
+            </span>
+            {t("pages.projectsContributions.answersMore", {
+              count: answersMore.length,
+            })}
+          </summary>
+          <ul class="answers answers--more">
+            {answersMore.map((a) => (
+              <li>
+                {/* prettier-ignore */}
+                <a class="external-link answers__q" href={a.answerUrl} target="_blank" rel="external noopener noreferrer" aria-label={t("aria.opensNewTab", { text: a.title })}><span lang="en">{a.title}</span></a>
+                <span class="answers__project">
+                  {foldProjectName(a.fullName, displayName)}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </details>
+      )}
       <p class="contrib-footnote">
         {t("pages.projectsContributions.answersFooter", {
           accepted: summary.answersCount,
@@ -1121,50 +1145,79 @@ const faqNode = pageFaq && pageFaqNode(pageFaq, pageUrl, schema["@id"], locale);
   }
 
   .answers {
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--space-sm);
+    display: grid;
+    gap: var(--space-md);
+    max-width: var(--max-width-prose);
     padding: 0;
     margin: 0;
     list-style: none;
   }
 
-  .answers li.answers__lead {
-    display: flex;
-    flex-basis: 100%;
-    flex-direction: column;
-    gap: 4px;
-    align-items: flex-start;
+  .answers li {
+    display: grid;
+    gap: 2px;
   }
 
-  @media (width >= 48rem) {
-    .answers li.answers__lead {
-      flex-basis: calc(50% - var(--space-sm));
-    }
-  }
-
-  .answers__title {
-    font-size: var(--text-sm);
+  .answers__q {
+    font-size: var(--text-md);
+    font-weight: var(--fw-medium);
     line-height: 1.45;
-    color: var(--color-text);
+    color: var(--color-text-heading);
+    text-wrap: pretty;
     overflow-wrap: anywhere;
-  }
-
-  .answers li a {
-    display: inline-block;
-    padding: 3px 9px;
-    font-family: var(--font-mono);
-    font-size: var(--text-xs);
-    color: var(--color-text);
     text-decoration: none;
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-sm);
   }
 
-  .answers li a:hover,
-  .answers li a:focus-visible {
+  .answers__q:hover,
+  .answers__q:focus-visible {
     color: var(--color-accent);
-    border-color: var(--color-accent);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+
+  .answers__project {
+    font-size: var(--text-sm);
+    color: var(--color-text-muted);
+  }
+
+  /* The rest of the answers: a quiet disclosure, not one of the page's
+     bordered boxes, so the lead keeps the eye. */
+  .answers-more {
+    margin-top: var(--space-md);
+    background: none;
+    border: 0;
+  }
+
+  .answers-more > summary {
+    gap: 6px;
+    align-items: center;
+    padding: 4px 0;
+    font-size: var(--text-sm);
+    color: var(--color-accent);
+  }
+
+  .answers-more > summary:hover {
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+
+  .answers-more .ledger-toggle {
+    order: -1;
+    margin-inline-start: 0;
+  }
+
+  .answers-more .ledger-toggle__icon {
+    color: var(--color-accent);
+  }
+
+  .answers--more {
+    gap: 0.75rem;
+    margin-top: var(--space-sm);
+  }
+
+  .answers--more .answers__q {
+    font-size: var(--text-base);
+    font-weight: var(--fw-normal);
   }
 
   .contrib-footnote {

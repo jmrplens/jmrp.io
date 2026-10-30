@@ -169,10 +169,12 @@ bloque
 bloqueantes
 bluesky
 Bluesky
+borgbase
 brea
 brettel
 brotlied
 bsky
+buildawesome
 bypassable
 bytearray
 bytespider
@@ -463,6 +465,8 @@ fediverse
 fediverso
 Feedbin
 feedly
+Feishin
+feishin
 fflate
 fiarlo
 filtro
@@ -478,6 +482,7 @@ fmerge
 focusables
 fondo
 footgun
+fosrl
 fossabot
 fouc
 Fragmento
@@ -625,6 +630,7 @@ iseconds
 janim
 jblink
 jcur
+jeffvli
 jeigiejeif
 Jellyfin
 jenaro
@@ -675,6 +681,7 @@ LAPI's
 ldaps
 leakspeed
 lekies
+lemker
 lenval
 lexicográficamente
 leyendo
@@ -891,6 +898,7 @@ opencloud
 openpgp
 openpgpkey
 opentofu
+openvpn
 optimisation
 optimised
 optimizador
@@ -1182,6 +1190,7 @@ sigstore
 silverlight
 simplifícalo
 sistemas
+Siteimprove
 sitemapindex
 slaac
 smallstep
@@ -1286,6 +1295,7 @@ truenas
 ttfb
 uaaaaj
 uart
+Ubiquiti
 ulnp
 ultrasónica
 ultrasónico
@@ -1300,6 +1310,7 @@ undeferred
 undercounts
 unforgeable
 unhashed
+unifi
 universitat
 université
 unminified
@@ -1344,6 +1355,8 @@ volcarla
 volcarlo
 voltearlo
 volver
+Vorta
+vorta
 vulnerab
 wbgetentities
 wbsearchentities
