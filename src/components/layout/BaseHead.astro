@@ -266,7 +266,7 @@ const donateActions = (aboutData?.person.funding ?? []).map(
  * The professions, hoisted for the same reason as `donateActions`: newest
  * first, each a `Role` wrapping `hasOccupation` with its years. `Occupation`
  * has no dates of its own, and schema.org says to date past professions with
- * a Role; the current one has no `endDate`. Mirrors the same list in
+ * a Role; only a current one, first, may have no `endDate`. Mirrors the same list in
  * `scripts/ci/build-identity.mjs`; the schema-validation spec compares them.
  */
 const personOccupations = (aboutData?.person.occupations ?? []).map(

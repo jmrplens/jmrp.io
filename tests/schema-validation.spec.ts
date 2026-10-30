@@ -192,7 +192,7 @@ test.describe("Canonical identity document", () => {
     };
 
     // schema.org: "For past professions, use Role for expressing dates".
-    // Only the current profession, first, may be open-ended.
+    // Only a current profession, first, may be open-ended.
     expect(Array.isArray(hasOccupation)).toBe(true);
     const roles = hasOccupation ?? [];
     expect(roles.length).toBeGreaterThan(1);
@@ -210,7 +210,6 @@ test.describe("Canonical identity document", () => {
       expect(isNonEmptyText(occupation.name)).toBe(true);
       expect(isNonEmptyText(occupation.description)).toBe(true);
     });
-    expect(roles[0].endDate).toBeUndefined();
   });
 
   test("advertises a reachable, non-fingerprinted avatar", async ({ page }) => {

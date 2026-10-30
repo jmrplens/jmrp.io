@@ -259,7 +259,8 @@ function buildIdentityDocument() {
 
   // The professions, newest first, each a `Role` wrapping `hasOccupation`
   // with its years: `Occupation` has no dates of its own, and schema.org says
-  // to date past professions with a Role. The current one has no endDate.
+  // to date past professions with a Role. Only a current one, first, may
+  // have no endDate.
   // Mirrors the same list in BaseHead.astro; the schema-validation spec
   // compares them.
   const occupations = (about.person.occupations ?? []).map((occupation) => ({

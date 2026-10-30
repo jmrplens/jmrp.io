@@ -224,7 +224,7 @@ describe("positioning (M1)", () => {
   for (const locale of /** @type {const} */ (["en", "es"])) {
     const common = locale === "en" ? en : es;
     const { jobTitle } = about.person;
-    // The current profession: the first entry, the only open-ended one.
+    // The profile's profession: the first, most recent entry.
     const occupation = about.person.occupations[0].name;
 
     it(`${locale}: the fallback title and the author card follow the profile`, () => {

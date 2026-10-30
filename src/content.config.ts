@@ -652,7 +652,8 @@ const aboutSchema = z.object({
      * per entry, wrapping the `Occupation` with the years it covers.
      * `Occupation` has no dates of its own, and schema.org's definition of
      * `hasOccupation` says to date past professions with a Role. The first
-     * entry is the current profession, the only one without `endDate`.
+     * entry is the most recent profession, and the only one that may omit
+     * `endDate` (for a profession held now).
      * Deliberately not `worksFor`, which reads as present tense: the canonical
      * entity names no employer, current or past (/cv/ adds the employers as
      * dated `OrganizationRole` nodes). Years only, the precision /about/

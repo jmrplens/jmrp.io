@@ -146,6 +146,7 @@
     {
       "@type": "Role",
       "startDate": "2023",
+      "endDate": "2026",
       "hasOccupation": {
         "@type": "Occupation",
         "name": [
@@ -160,12 +161,24 @@
         ],
         "description": [
           {
-            "@value": "Industrial embedded firmware in C on STM32 and FreeRTOS, and developer tooling in Go.",
+            "@value": "Industrial embedded firmware in C on STM32 and FreeRTOS for solar inverters and battery storage.",
             "@language": "en"
           },
           {
-            "@value": "Firmware embebido industrial en C sobre STM32 y FreeRTOS, y herramientas de desarrollo en Go.",
+            "@value": "Firmware embebido industrial en C sobre STM32 y FreeRTOS para inversores solares y almacenamiento en baterías.",
             "@language": "es"
+          }
+        ],
+        "occupationLocation": [
+          {
+            "@type": "City",
+            "name": "Llíria",
+            "address": {
+              "@type": "PostalAddress",
+              "addressLocality": "Llíria",
+              "addressRegion": "Valencian Community",
+              "addressCountry": "ES"
+            }
           }
         ]
       }
