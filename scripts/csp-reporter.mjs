@@ -377,13 +377,19 @@ function sendToTelegram(report, ip, ua) {
   let sample = (r["script-sample"] || "N/A").replaceAll("\n", " ").trim();
   if (sample.length > 100) sample = sample.slice(0, 97) + "...";
 
-  // Safely handle document-uri
+  // Safely handle document-uri. A report from jmrp.io shows the path alone;
+  // one from another host (docs.jmrp.io, whose Transform Rules point its
+  // report-uri here) keeps the host, so the two cannot be mistaken.
   const rawDocUri = r["document-uri"] || "";
   const escapedDocUri = escapeHtml(rawDocUri || "about:blank");
   let docPath = rawDocUri || "N/A";
   try {
     if (rawDocUri) {
-      docPath = new URL(rawDocUri).pathname || rawDocUri;
+      const doc = new URL(rawDocUri);
+      docPath =
+        doc.host === "jmrp.io"
+          ? doc.pathname || rawDocUri
+          : `${doc.host}${doc.pathname}`;
     }
   } catch {
     docPath = rawDocUri || "N/A";
