@@ -7,7 +7,7 @@ bluesky_handle: jmrp.eu # self-hosted AT Protocol PDS handle (display only)
 bluesky_did: did:plc:jder4wkjnwh6mzhrx4n5ebti # permanent account id: links use it, so they survive a handle change
 scholar_userid: 9b0kPaUAAAAJ # your Google Scholar ID
 orcid_id: 0000-0003-1250-6212 # ORCID iD
-matrix_id: "@jmrplens:matrix.jmrp.io"
+matrix_id: "@jmrplens:jmrp.eu"
 
 custom_social:
   - icon_name: mdi:key

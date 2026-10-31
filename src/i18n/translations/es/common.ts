@@ -650,7 +650,7 @@ export const common = {
       mastodonLink: "Visitar mstdn.jmrp.io",
       matrixName: "Servidor Matrix",
       matrixDescription:
-        "Comunicación segura y descentralizada. Mi servidor: matrix.jmrp.io",
+        "Comunicación segura y descentralizada. Mi servidor: matrix.jmrp.eu",
       matrixLink: "Chatear en Matrix",
       pdsName: "PDS AT Protocol",
       pdsDescription:
