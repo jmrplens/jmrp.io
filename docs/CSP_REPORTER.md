@@ -80,6 +80,18 @@ Then, update your `Content-Security-Policy` header to include the `report-uri`:
 add_header Content-Security-Policy "..."; report-uri /csp-report;" always;
 ```
 
+### 4. Reports from docs.jmrp.io
+
+The documentation sites under `docs.jmrp.io` (GitHub Pages behind Cloudflare) get their `Content-Security-Policy` from the zone's response header Transform Rules, not from Nginx, and since 2026-10-31 that policy ends in `report-uri https://jmrp.io/csp-report`. Their violations reach this same service and the same Telegram chat; the message shows `docs.jmrp.io/<site>/<page>` where a jmrp.io report shows the path alone.
+
+They use `report-uri` only, with no `report-to`:
+
+- A `report-uri` report is a plain POST that a browser sends to another origin without a CORS preflight.
+- A Reporting API report to another origin is preceded by an `OPTIONS` preflight, which `/csp-report` answers with 404.
+- Chrome uses `report-uri` whenever the policy has no `report-to`, so every browser reports.
+
+The filters apply unchanged. One difference matters: the docs policy allows `font-src 'self' data:`, and the filter that discards remote fonts as injected also discards a remote font a docs site really tried to load. A stylesheet from a font host, the usual way such a font arrives, is still notified as a `style-src-elem` violation. The rules themselves are described in `plan/docs-edge-worker/README.md` on the server.
+
 ## False-Positive Filters
 
 The filter predicates live in `scripts/utils/csp-filters.mjs`. They are applied in two tiers:
