@@ -152,7 +152,7 @@ social_links:
     icon: "i-simple-icons:bluesky"
     rel: "me noopener noreferrer"
   - name: "Matrix"
-    url: "https://matrix.to/#/@jmrplens:matrix.jmrp.io"
+    url: "https://matrix.to/#/@jmrplens:jmrp.eu"
     icon: "i-simple-icons:matrix"
   - name: "Keyoxide"
     url: "https://keyoxide.org/0A993B268654DBBA52B7E8D3FCF653391E2C91FC"

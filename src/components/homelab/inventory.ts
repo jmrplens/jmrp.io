@@ -129,11 +129,11 @@ export async function homelabServices(t: Translate): Promise<HomelabService[]> {
       title: "Matrix",
       icon: "simple-icons:matrix",
       descriptionKey: "pages.homelab.matrixDescription",
-      url: "https://matrix.to/#/@jmrplens:matrix.jmrp.io",
+      url: "https://matrix.to/#/@jmrplens:jmrp.eu",
       linkText: t("pages.homelab.matrixLink"),
       statsType: "matrix",
       probed: true,
-      userInfo: "@jmrplens:matrix.jmrp.io",
+      userInfo: "@jmrplens:jmrp.eu",
     },
     {
       id: "pds",
