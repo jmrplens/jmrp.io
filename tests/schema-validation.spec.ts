@@ -610,8 +610,10 @@ test.describe("Person schema on CV page", () => {
     expect(isNonEmptyStr(additivePerson["@id"])).toBe(true);
     expect(additivePerson["@id"]).toContain("#person");
 
-    expect(Array.isArray(additivePerson.alumniOf)).toBe(true);
-    expect((additivePerson.alumniOf as unknown[]).length).toBeGreaterThan(0);
+    // The studies are dated Roles on the canonical node only. A Role carries
+    // no `@id`, so a copy here would add a second set of blank nodes to the
+    // same person instead of merging with the first.
+    expect(additivePerson.alumniOf).toBeUndefined();
 
     // Positions are employments: each an OrganizationRole naming the role,
     // the organization and the CV's summary of the position. A university the
@@ -621,8 +623,11 @@ test.describe("Person schema on CV page", () => {
     expect(Array.isArray(additivePerson.worksFor)).toBe(true);
     const roles = additivePerson.worksFor as Record<string, unknown>[];
     expect(roles.length).toBeGreaterThan(0);
+    const canonicalStudies = ((
+      findInGraph(jsonLd, "WebSite")?.publisher as JsonLdSchema | undefined
+    )?.alumniOf ?? []) as Record<string, unknown>[];
     const schoolIds = new Set(
-      (additivePerson.alumniOf as Record<string, unknown>[]).map(
+      canonicalStudies.map(
         (study) => (study.alumniOf as Record<string, unknown>)["@id"],
       ),
     );

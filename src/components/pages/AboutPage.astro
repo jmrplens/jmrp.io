@@ -18,7 +18,7 @@ import { pageLastmod } from "@src/integrations/sitemap-post-dates";
 import type { SiteConfig } from "@src/types";
 import { externalLinkProps } from "@utils/links";
 import { getPageFaq, pageFaqNode } from "@utils/page-faq";
-import { educationProperties, PERSON_ID, WEBSITE_ID } from "@utils/person";
+import { PERSON_ID, WEBSITE_ID } from "@utils/person";
 import { getProjects, hostedHref } from "@utils/projects";
 import { getSiteUrl } from "@utils/site";
 import { fillSiteFacts, getSiteFacts } from "@utils/site-facts";
@@ -106,10 +106,13 @@ const contactLinks = [
 
 // /about/ is the canonical author-entity page: THE ProfilePage for the site
 // (home and cv only reference #person by @id — see HomePage.astro/CVPage.astro).
-// `mainEntity` only ADDS to the canonical #person node (alumniOf) — it must
+// `mainEntity` names the canonical #person node and adds nothing: it must
 // NOT redefine name/jobTitle/description/image/sameAs/knowsAbout, which are
-// now defined once in BaseHead.astro (sourced from this very file's
-// `person.jobTitle`/`person.description`, so there is no divergence).
+// defined once in BaseHead.astro (sourced from this very file's
+// `person.jobTitle`/`person.description`, so there is no divergence). It
+// restated `alumniOf` until the studies became dated Roles (#635): a Role
+// carries no `@id`, so a second copy added five more blank nodes to the same
+// person instead of merging with the canonical ones.
 // Same date as the sitemap's <lastmod> and the markdown twin: the page's copy
 // lives in the YAML, this component and the two translation bundles, and
 // dating the ProfilePage from the YAML alone published 2026-09-02 here while
@@ -152,8 +155,6 @@ const personSchema = {
   mainEntity: {
     "@type": "Person",
     "@id": PERSON_ID,
-    // The same dated Roles the canonical node in BaseHead carries.
-    alumniOf: educationProperties(about.person.education).alumniOf,
   },
 } satisfies ProfilePage;
 // The page's question-and-answer pairs (GEO audit #8): one source for the

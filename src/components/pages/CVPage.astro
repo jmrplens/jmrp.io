@@ -22,12 +22,7 @@ import { markdownToHtml } from "@utils/cv-markdown";
 import { stripToText } from "@utils/html";
 import { getPageFaq, pageFaqNode } from "@utils/page-faq";
 import type { LanguageTaggedValue } from "@utils/person";
-import {
-  educationProperties,
-  PERSON_ID,
-  SCHOOLS,
-  WEBSITE_ID,
-} from "@utils/person";
+import { PERSON_ID, SCHOOLS, WEBSITE_ID } from "@utils/person";
 import { getAbsoluteUrl, getSiteUrl } from "@utils/site";
 import { getEntry } from "astro:content";
 import type { Person, Text, WebPage } from "schema-dts";
@@ -347,8 +342,9 @@ const cvWorksFor =
 const cvPersonFacts = {
   "@type": "Person",
   "@id": PERSON_ID,
-  // The same dated Roles the canonical node in BaseHead carries.
-  alumniOf: educationProperties(aboutPerson.education).alumniOf,
+  // No `alumniOf`: the studies are dated Roles on the canonical node in
+  // BaseHead, and a Role has no `@id`, so restating them here would add a
+  // second set of blank nodes to the same person rather than merge.
   ...(cvWorksFor.length > 0 && { worksFor: cvWorksFor }),
   // Emitted from the EN and ES sources at once, with language-tagged
   // literals, so /cv/ and /es/cv/ ship byte-identical values. It hangs off
