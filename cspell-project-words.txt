@@ -348,7 +348,7 @@ descárgalos
 Descífralo
 desconexión
 deseleccionar
-# Design re-audit — ES comment terms in .astro/.css (en-scoped) + token abbrevs
+# Design re-audit: ES comment terms in .astro/.css (en-scoped) + token abbrevs
 desincronizando
 desolder
 desolders
@@ -665,6 +665,7 @@ keypoint
 keyserver
 keyspace
 kleidos
+koffi
 kolkata
 kong
 kpii
@@ -966,7 +967,7 @@ portarlos
 postbuild
 poveda
 pppoe
-# PR #388 — ES comment terms (perf/UX session) + feed readers + misc
+# PR #388: ES comment terms (perf/UX session) + feed readers + misc
 pranavraut
 precarga
 precargado
