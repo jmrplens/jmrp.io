@@ -20,6 +20,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 import {
+  documentLabel,
   getDiscardReason,
   getNotificationKey,
   getNotifySuppressReason,
@@ -162,7 +163,7 @@ const server = http.createServer((req, res) => {
       try {
         const parsed = JSON.parse(body);
         // The Reporting API (report-to, added 2026-08-22 alongside the legacy
-        // report-uri — see csp.ts B24) sends {type, url, body} envelopes with
+        // report-uri; see csp.ts B24) sends {type, url, body} envelopes with
         // camelCase keys, unlike the legacy single {"csp-report": {…}} object
         // with kebab-case. Normalize every accepted shape to the legacy one so
         // the downstream consumers (filters, dedup, Telegram) keep working
@@ -243,7 +244,7 @@ function reportingApiToLegacy(entry) {
  *
  * Three shapes reach this endpoint in production: the legacy single
  * `{"csp-report": {…}}` object, the spec's ARRAY of Reporting API envelopes,
- * and — this is the one that used to slip through — a BARE envelope object.
+ * and (the one that used to slip through) a BARE envelope object.
  * That last case was returned as-is, so every kebab-case field read downstream
  * came back `undefined`: 10 genuine violations were logged with an empty body
  * between 2026-08-22 (when `report-to` was added) and the fix.
@@ -377,23 +378,12 @@ function sendToTelegram(report, ip, ua) {
   let sample = (r["script-sample"] || "N/A").replaceAll("\n", " ").trim();
   if (sample.length > 100) sample = sample.slice(0, 97) + "...";
 
-  // Safely handle document-uri. A report from jmrp.io shows the path alone;
-  // one from another host (docs.jmrp.io, whose Transform Rules point its
-  // report-uri here) keeps the host, so the two cannot be mistaken.
+  // A report from jmrp.io shows the path alone; one from another site whose
+  // policy reports here (docs.jmrp.io, kleidos.dev) keeps the host, so the
+  // two cannot be mistaken.
   const rawDocUri = r["document-uri"] || "";
   const escapedDocUri = escapeHtml(rawDocUri || "about:blank");
-  let docPath = rawDocUri || "N/A";
-  try {
-    if (rawDocUri) {
-      const doc = new URL(rawDocUri);
-      docPath =
-        doc.host === "jmrp.io"
-          ? doc.pathname || rawDocUri
-          : `${doc.host}${doc.pathname}`;
-    }
-  } catch {
-    docPath = rawDocUri || "N/A";
-  }
+  const docPath = documentLabel(rawDocUri);
 
   // Build message using HTML mode for better control
   const lines = [

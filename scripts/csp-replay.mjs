@@ -7,7 +7,7 @@
  *
  * The log is the reporter's own forensic record (one JSON object per line:
  * `{ timestamp, ip, ua, report }`), so a replay is an exact rehearsal of
- * `processReport()` against real production traffic — no synthetic fixtures.
+ * `processReport()` against real production traffic, with no synthetic fixtures.
  *
  * Usage:
  *   node scripts/csp-replay.mjs [path/to/csp-violations.log]
@@ -20,6 +20,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 import {
+  documentLabel,
   getDiscardReason,
   getNotificationKey,
   getNotifySuppressReason,
@@ -63,18 +64,13 @@ function violation(entry) {
  * Human-readable signature of a violation, used for the notification breakdown.
  *
  * @param {Record<string, any>} r - The violation body.
- * @returns {string} `directive | blocked-uri | document path`.
+ * @returns {string} `directive | blocked-uri | page`, the page named as the
+ *   notification names it (host included for any site but jmrp.io).
  */
 function signature(r) {
   const directive = r["effective-directive"] || r["violated-directive"] || "?";
   const blocked = r["blocked-uri"] || "inline/eval";
-  let path = r["document-uri"] || "";
-  try {
-    path = new URL(path).pathname;
-  } catch {
-    /* keep the raw value */
-  }
-  return `${directive} | ${blocked} | ${path}`;
+  return `${directive} | ${blocked} | ${documentLabel(r["document-uri"])}`;
 }
 
 /**
@@ -232,7 +228,7 @@ const lost = [...nonCrawlerKinds.difference(notifiedKinds)];
 
 console.log(
   `\nNon-crawler violation kinds in the log: ${nonCrawlerKinds.size}` +
-    ` — still notified: ${notifiedKinds.size}`,
+    `, still notified: ${notifiedKinds.size}`,
 );
 if (lost.length === 0) {
   console.log("PASS: no non-crawler violation kind was silenced.");
