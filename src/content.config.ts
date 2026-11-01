@@ -33,7 +33,7 @@ const posts = defineCollection({
        * truth. `dateModified` is computed in `@utils/post-dates` as
        * max(publishedDate, updatedDate, lastVerified.date, last substantive
        * commit touching the file), so forgetting this field no longer breaks
-       * the promise made at /about/#editorial — it did, on 21 of the 25 post
+       * the promise made at /about/#editorial. It did, on 21 of the 25 post
        * files commit 205d494 edited. Set it only to claim a date git cannot
        * know (e.g. a revision landing in a commit marked `Content-Bump: skip`).
        */
@@ -49,7 +49,7 @@ const posts = defineCollection({
        *
        * These two used to be the same string: the meta description was
        * rendered as the lead paragraph. They pull in opposite directions.
-       * `description` is written for the SERP — under 155 characters,
+       * `description` is written for the SERP: under 155 characters,
        * descriptive, listing what the article covers. The lead is inside
        * `speakable`, so it is an explicit extraction target for voice
        * assistants and AI answers, and a description-style topic label
@@ -82,7 +82,7 @@ const posts = defineCollection({
        * Canonical topics for JSON-LD `about`/`mentions`, linked to Wikidata.
        * The first entry becomes `about` (primary topic); the rest `mentions`.
        * `wikidata` is the bare Q-id (e.g. "Q1133706"); verify it resolves to the
-       * intended entity — a wrong Q-id is worse than none.
+       * intended entity; a wrong Q-id is worse than none.
        */
       topics: z
         .array(
@@ -96,7 +96,7 @@ const posts = defineCollection({
         .optional(),
       /**
        * FAQ pairs. Rendered as a visible accessible FAQ section AND emitted as
-       * FAQPage JSON-LD — single source of truth. Only add genuine Q&A.
+       * FAQPage JSON-LD (single source of truth). Only add genuine Q&A.
        */
       faq: z
         .array(
@@ -130,7 +130,7 @@ const posts = defineCollection({
        * When the instructions were last re-tested, and against what versions.
        * Distinct from `updatedDate`, which also covers typo/prose fixes with
        * no re-verification behind them. Only set this when a re-test actually
-       * happened — an invented date turns a trust signal into a checkable lie.
+       * happened: an invented date turns a trust signal into a checkable lie.
        *
        * It is a term of the computed `dateModified`, because a re-verification
        * IS a change to what the page claims, even when no prose moved. Post 011
@@ -138,7 +138,7 @@ const posts = defineCollection({
        * the instructions had been re-tested on 2026-08-22.
        *
        * The markdown twin emits it as `Instructions re-tested:`, which is the
-       * byline's wording too: next to `Updated:` — when the text last changed —
+       * byline's wording too: next to `Updated:` (when the text last changed),
        * a label like "last verified" reads as a rival claim about the same act
        * rather than as a different fact.
        */
@@ -360,7 +360,7 @@ const CVBasics = z.object({
   links: z.array(CVLink),
   /**
    * Job-search target role categories shown as chips in the CV sidebar.
-   * These are NOT claimed positions — they describe the roles the author
+   * These are NOT claimed positions: they describe the roles the author
    * is actively targeting (e.g. ["Firmware", "Software", "QA"]).
    */
   objetivo: z.array(z.string()).optional(),
@@ -557,14 +557,14 @@ const tools = defineCollection({
     // No `appComponent`/`appProps` here: since the per-tool CSS split
     // (2026-08-22) the MDX imports its own app and passes its own props, so a
     // frontmatter copy of that name could only ever drift out of sync. The one
-    // consumer left — sitemap-post-dates.ts, which folds the app component's
-    // git date into the tool's <lastmod> — reads the MDX import statement
+    // consumer left (sitemap-post-dates.ts, which folds the app component's
+    // git date into the tool's <lastmod>) reads the MDX import statement
     // itself, which is the single source of truth.
     publishedDate: z.coerce.date().optional(),
     updatedDate: z.coerce.date().optional(),
     /**
      * FAQ pairs for the tool. Rendered as a visible accessible FAQ section AND
-     * emitted as FAQPage JSON-LD — single source of truth. Only genuine Q&A.
+     * emitted as FAQPage JSON-LD (single source of truth). Only genuine Q&A.
      */
     faq: z
       .array(
@@ -826,7 +826,7 @@ const usesSchema = z.object({
  * the `wbgetentities` API (label AND description read before adoption), so a
  * search engine that has never seen the project can still place it in a field
  * it does know. The first topic becomes schema.org `about`, the rest
- * `mentions` — the same split blog posts use.
+ * `mentions` (the same split blog posts use).
  */
 const ProjectTopic = z.object({
   name: z.string(),
@@ -836,7 +836,7 @@ const ProjectTopic = z.object({
 /**
  * One open-source project shown on /projects/ and emitted as a JSON-LD node
  * authored by the canonical `#person`. See the header comment in
- * `src/content/profile/projects.yaml` for the editing rules — in particular,
+ * `src/content/profile/projects.yaml` for the editing rules; in particular,
  * `name`/`summary.en` must not contradict what the project's own docs site
  * publishes for the same `#software` @id.
  */
@@ -862,7 +862,7 @@ const ProjectEntry = z.object({
    */
   status: z.enum(["active", "archived", "upcoming"]),
   schemaType: z.enum(["SoftwareApplication", "SoftwareSourceCode"]),
-  /** SoftwareApplication only — omitted for SoftwareSourceCode nodes. */
+  /** SoftwareApplication only; omitted for SoftwareSourceCode nodes. */
   applicationCategory: z.string().optional(),
   applicationSubCategory: z.string().optional(),
   language: z.string(),
@@ -934,15 +934,15 @@ const ProjectEntry = z.object({
    * servers on mcp.jmrp.io). Presence of this field is what marks a project
    * as part of the self-hosted MCP fleet: BaseHead's `owns` and
    * `scripts/ci/build-identity.mjs` derive the `<endpoint>#api` @ids from it,
-   * the /homelab/ MCP card lists it, and llms.txt's MCP section iterates it —
-   * one YAML edit is all a new server needs. Unlike `hosted`, this URL is for
+   * the /homelab/ MCP card lists it, and llms.txt's MCP section iterates it.
+   * One YAML edit is all a new server needs. Unlike `hosted`, this URL is for
    * MACHINES (`POST` transport; a browser `GET` answers 405 by design).
    */
   endpoint: z.url().optional(),
   /**
    * Name under which the server is published in the official MCP Registry
-   * (`io.github.<owner>/<repo>`). The registry is API-only — it has no page to
-   * link — so this is emitted as a JSON-LD `identifier`, not as `sameAs`: it
+   * (`io.github.<owner>/<repo>`). The registry is API-only (it has no page to
+   * link), so this is emitted as a JSON-LD `identifier`, not as `sameAs`: it
    * identifies the software in a namespace, which is exactly what a
    * PropertyValue identifier is for.
    */
@@ -951,7 +951,7 @@ const ProjectEntry = z.object({
     .regex(/^[a-z0-9.-]+\/[\w.-]+$/, "MCP Registry name, e.g. io.github.me/srv")
     .optional(),
   /**
-   * The third-party listings worth navigating to — the package indexes, hubs
+   * The third-party listings worth navigating to: the package indexes, hubs
    * or catalogues where a reader can find the project published (npm, PyPI,
    * the CrowdSec Hub, an MCP directory). Unlike `sameAs`, these are RENDERED
    * as card links: a listing is where the software is distributed and
@@ -961,7 +961,7 @@ const ProjectEntry = z.object({
    * answers "how do I install it", a directory answers "who else has seen
    * it", and neither substitutes for the other. Capped at three because the
    * card's link row already carries the repo, the docs and, for the MCP
-   * servers, a hosted instance — five links is where it stops being a row and
+   * servers, a hosted instance: five links is where it stops being a row and
    * starts being a list. Order is authored, and it is the order rendered.
    *
    * Every URL here is folded into the JSON-LD `sameAs` array automatically
@@ -999,6 +999,23 @@ const ProjectEntry = z.object({
    * the project's own docs site, so it carries no `#software` contract.
    */
   cardSummary: LocalizedString.optional(),
+  /**
+   * More of what the project's own site states on the shared `#software`
+   * node, restated so both publishers say the same: the other names it goes
+   * by, the one line that tells it apart from other things with its name, and
+   * its keywords. Each is emitted only when present, and copied verbatim from
+   * that site like `name` and `summary`.
+   */
+  alternateName: z.array(z.string()).min(1).optional(),
+  disambiguatingDescription: LocalizedString.optional(),
+  keywords: LocalizedString.optional(),
+  /**
+   * The project's own site states `programmingLanguage` as a ComputerLanguage
+   * node rather than the bare name, so jmrp.io writes it the same way and
+   * the merged node holds one value instead of the same language twice in
+   * two forms.
+   */
+  languageNode: z.boolean().optional(),
 });
 
 const projectsSchema = z.object({
@@ -1049,7 +1066,7 @@ const ContributionsFeatured = z.object({
    * sums them. Defaults to `[number]`.
    */
   numbers: z.array(z.number().int().positive()).min(1).optional(),
-  /** One-line "why this matters" — never a restatement of the PR title. */
+  /** One-line "why this matters", never a restatement of the PR title. */
   why: LocalizedString,
 });
 
@@ -1058,7 +1075,7 @@ const ContributionsFeatured = z.object({
  * /projects/ and the /projects/contributions/ subpage. Read by
  * `scripts/ghc/build-data.mjs` (build-time lists) and
  * `scripts/ghc/write-summary.mjs` (the live "projects" fold, for
- * `PRJ_CODE_UPSTREAMS`) — see `plan/projects-ghchronicle/PLAN.md` section
+ * `PRJ_CODE_UPSTREAMS`). See `plan/projects-ghchronicle/PLAN.md` section
  * 7.6. Never consumed by a page directly: both scripts read this collection
  * via `getCollection("profile")` and re-shape it into their own JSON output.
  */
@@ -1068,19 +1085,19 @@ const contributionsSchema = z.object({
    * `owner/repo` full names classified as packaging/distribution rather than
    * code or docs (winget manifest bumps, awesome-list entries, registry
    * listings for the account's OWN projects). Drives the
-   * "code & docs" vs. "packaging & listings" split — `datos.md` idea 1.
+   * "code & docs" vs. "packaging & listings" split (`datos.md` idea 1).
    */
   listingRepos: z
     .array(z.string().regex(/^[\w.-]+\/[\w.-]+$/, "owner/repo"))
     .min(1),
   /**
    * `owner/repo#number` identifiers whose TITLE and URL must never render in
-   * the build-time ledger or subpage — a false security claim
+   * the build-time ledger or subpage: a false security claim
    * (ARM-software/MDK-Middleware#131), a declined report
    * (openobserve/openobserve#14252), or an account-admin request that is not
    * a contribution (pypi/support#12078). The live SUMMARY counts (which must
    * match GitHub's own public search results) are computed straight from
-   * ghchronicle and are NOT affected by this list — only the detailed,
+   * ghchronicle and are NOT affected by this list; only the detailed,
    * per-item listing is.
    */
   exclude: z
@@ -1152,7 +1169,7 @@ const contributionsSchema = z.object({
    * Title-matching regex source strings (JS `RegExp`, case-insensitive):
    * titles that would otherwise be hidden by the default
    * `/security|CVE|vulnerab/i` filter but are explicitly cleared to show
-   * (merged, released, no pending disclosure). Empty by default — nothing is
+   * (merged, released, no pending disclosure). Empty by default: nothing is
    * allow-listed until reviewed. See PLAN.md 8.2 #10.
    */
   securityTitleAllow: z.array(z.string()).default([]),
@@ -1178,13 +1195,13 @@ const profile = defineCollection({
  * `/privacy/` is the first: 32 translation keys holding paragraphs, which is
  * the wrong shape for prose in two ways. Editing a policy meant editing a
  * string table, and the page's `dateModified` had to be derived from the whole
- * `common.ts` bundle — so an unrelated UI translation restamped the privacy
+ * `common.ts` bundle, so an unrelated UI translation restamped the privacy
  * policy as modified, an over-trigger the component's own comment documented.
  * As MDX the copy is a document, the date comes from the document, and the
  * markdown twin falls out of the same converter every post already uses.
  *
  * Pages whose content is STRUCTURED (projects, uses, about) deliberately stay
- * in YAML: their fields feed JSON-LD — schemaType, sameAs, Wikidata Q-ids —
+ * in YAML: their fields feed JSON-LD (schemaType, sameAs, Wikidata Q-ids),
  * and prose cannot carry a Q-id.
  */
 const pages = defineCollection({

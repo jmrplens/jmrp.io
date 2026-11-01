@@ -1,6 +1,6 @@
 ---
 /**
- * Editorial series hub ("// SERIES") — a curated cluster of posts with original
+ * Editorial series hub ("// SERIES"), a curated cluster of posts with original
  * framing: why the cluster exists, in what order to read it, and what decision
  * each member settles.
  *
@@ -16,7 +16,12 @@ import BaseLayout from "@layouts/BaseLayout.astro";
 import { formatDateDot, getReadingTime } from "@utils/blog";
 import { getPageFaq, pageFaqNode } from "@utils/page-faq";
 import { PERSON_ID, WEBSITE_ID } from "@utils/person";
-import { getSeriesProject, softwareId } from "@utils/projects";
+import {
+  getSeriesProject,
+  projectSiteHref,
+  softwareId,
+  splitAtSiteName,
+} from "@utils/projects";
 import { SERIES, type Series } from "@utils/series";
 import { getSiteUrl } from "@utils/site";
 import type { CollectionEntry } from "astro:content";
@@ -56,6 +61,12 @@ const otherSeries = SERIES.filter((s) => s.slug !== series.slug);
 // The program this series documents, if it documents one; its `#software` @id
 // comes from the same rule as the project's own node on /projects/.
 const seriesProject = await getSeriesProject(series);
+
+// The program's own site in this locale. The copy names it in prose
+// ("kleidos.dev", "kleidos.dev/es/"), and that name becomes a link to it.
+const projectSite = seriesProject && projectSiteHref(seriesProject, locale);
+const siteMention = (text: string) =>
+  projectSite ? splitAtSiteName(text, projectSite) : undefined;
 
 const seriesUrl = new URL(
   translatePath(`/blog/series/${series.slug}/`),
@@ -120,7 +131,7 @@ const softwareLinks = seriesProject
         : []),
       {
         label: t("series.ui.softwareDocs"),
-        href: new URL(`/docs/${seriesProject.id}/`, getSiteUrl()).href,
+        href: projectSite ?? seriesProject.docs,
         external: true,
       },
       {
@@ -161,9 +172,29 @@ const afterBlocks = ["after1", "after2"];
       >
         {t(key("whyTitle"))}
       </h2>
-      {whyBlocks.map((block) => (
-        <p class="series-prose">{t(key(block))}</p>
-      ))}
+      {whyBlocks.map((block) => {
+        const mention = siteMention(t(key(block)));
+        return (
+          <p class="series-prose">
+            {mention ? (
+              <>
+                {mention.before}
+                <a
+                  href={projectSite}
+                  target="_blank"
+                  rel="external noopener noreferrer"
+                  aria-label={t("aria.opensNewTab", { text: mention.name })}
+                >
+                  {mention.name}
+                </a>
+                {mention.after}
+              </>
+            ) : (
+              t(key(block))
+            )}
+          </p>
+        );
+      })}
     </section>
 
     <section
@@ -212,9 +243,29 @@ const afterBlocks = ["after1", "after2"];
       >
         {t(key("afterTitle"))}
       </h2>
-      {afterBlocks.map((block) => (
-        <p class="series-prose">{t(key(block))}</p>
-      ))}
+      {afterBlocks.map((block) => {
+        const mention = siteMention(t(key(block)));
+        return (
+          <p class="series-prose">
+            {mention ? (
+              <>
+                {mention.before}
+                <a
+                  href={projectSite}
+                  target="_blank"
+                  rel="external noopener noreferrer"
+                  aria-label={t("aria.opensNewTab", { text: mention.name })}
+                >
+                  {mention.name}
+                </a>
+                {mention.after}
+              </>
+            ) : (
+              t(key(block))
+            )}
+          </p>
+        );
+      })}
     </section>
 
     <section

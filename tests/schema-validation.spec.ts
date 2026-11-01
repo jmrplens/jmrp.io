@@ -108,7 +108,7 @@ function isValidUrl(value: unknown): value is string {
  * Check a Text-valued property that may carry one value per language.
  *
  * The canonical `#person` node has ONE `@id`, so properties like `jobTitle`
- * cannot change with the page locale — they are JSON-LD language-tagged
+ * cannot change with the page locale; they are JSON-LD language-tagged
  * literals (`[{ "@value": …, "@language": "en" }, …]`) rather than a bare
  * string, which is what the site emitted before and what left the same entity
  * holding two contradictory job titles depending on which page was crawled.
@@ -158,7 +158,7 @@ test.describe("Canonical identity document", () => {
    * that restate the same `@id`.
    *
    * It is produced by `scripts/ci/build-identity.mjs`, which re-implements the
-   * assembly that also lives in `BaseHead.astro` — a .astro component cannot be
+   * assembly that also lives in `BaseHead.astro`: a .astro component cannot be
    * imported from a plain Node script. `--check` in that script only proves the
    * file matches its YAML sources; it cannot prove the script and the component
    * agree. This test closes that gap: if the two ever diverge, whichever is
@@ -264,7 +264,7 @@ test.describe("Common schemas on representative pages", () => {
       expect(isNonEmptyStr(website.name)).toBe(true);
       // Same reasoning as the canonical #person node: #website has ONE `@id`,
       // so a bare per-locale string made the EN and ES pages assert two
-      // contradictory descriptions — and two contradictory languages — for
+      // contradictory descriptions (and two contradictory languages) for
       // one entity. The description is now a language-tagged literal and
       // `inLanguage` declares both languages, because the site genuinely is
       // both. See `localizedValues` in BaseHead.astro.
@@ -321,7 +321,7 @@ test.describe("Common schemas on representative pages", () => {
       // Regression guard: Spanish pages once emitted translated nav labels
       // pointing at English URLs, so the schema contradicted the rendered
       // <nav> on every /es/ page. Asserting the locale prefix here is what
-      // makes that specific bug impossible to reintroduce silently — the
+      // makes that specific bug impossible to reintroduce silently: the
       // generic "is a URL" checks above all passed while it was broken.
       if (url.startsWith("/es")) {
         for (const nav of navItems) {
@@ -535,7 +535,7 @@ test.describe("ProfilePage schema on homepage", () => {
     expect(identifiers[0].propertyID).toBe("ORCID");
 
     // Networks the site owner has deliberately opted out of. They exist, but he
-    // does not want them referenced anywhere on the site — an audit tool
+    // does not want them referenced anywhere on the site; an audit tool
     // suggesting "add the profiles we found" is not grounds to publish them.
     //
     // GitHub Sponsors is a funding route, a `DonateAction` under
@@ -565,7 +565,7 @@ test.describe("ProfilePage schema on homepage", () => {
     expect(isIsoDate(profile.dateModified)).toBe(true);
 
     // mainEntity is a typed reference to the same canonical #person node
-    // used as the WebSite publisher — it must resolve to the exact same @id.
+    // used as the WebSite publisher; it must resolve to the exact same @id.
     const ref = profile.mainEntity as JsonLdSchema;
     expect(ref["@type"]).toBe("Person");
     expect(isNonEmptyStr(ref["@id"])).toBe(true);
@@ -588,7 +588,7 @@ test.describe("Person schema on CV page", () => {
     await page.goto("/cv");
     const jsonLd = await getJsonLd(page);
 
-    // /cv/ is not the canonical ProfilePage (that's /about/) — it emits a
+    // /cv/ is not the canonical ProfilePage (that's /about/); it emits a
     // plain WebPage plus a SEPARATE, additive Person node.
     expect(findInGraph(jsonLd, "ProfilePage")).toBeNull();
 
@@ -601,7 +601,7 @@ test.describe("Person schema on CV page", () => {
     }
 
     // The additive top-level Person node only carries employment/education/
-    // credential facts — findInGraph only matches top-level @graph entries,
+    // credential facts; findInGraph only matches top-level @graph entries,
     // so this resolves to the CV-specific node, not the nested WebSite publisher.
     const additivePerson = findInGraph(jsonLd, "Person");
     expect(additivePerson).not.toBeNull();
@@ -659,7 +659,7 @@ test.describe("Person schema on CV page", () => {
     );
 
     // The additive node must NOT redefine identity fields owned by the
-    // canonical #person — otherwise two divergent copies of the same @id
+    // canonical #person; otherwise two divergent copies of the same @id
     // would coexist in the graph.
     expect(additivePerson.name).toBeUndefined();
     expect(additivePerson.jobTitle).toBeUndefined();
@@ -668,7 +668,7 @@ test.describe("Person schema on CV page", () => {
     expect(additivePerson.sameAs).toBeUndefined();
 
     // The canonical, fully-populated #person lives once, nested as the
-    // WebSite publisher — it carries the identity fields the additive
+    // WebSite publisher; it carries the identity fields the additive
     // node deliberately omits.
     const website = findInGraph(jsonLd, "WebSite");
     expect(website).not.toBeNull();
@@ -832,12 +832,12 @@ test.describe("URL correctness in schemas", () => {
       "memberOf",
       "identifier", // ORCID PropertyValue.url points to orcid.org by design
       // Person.owns references the projects' `#software` entities, whose
-      // canonical @id is the GitHub repo URL — the SAME identifier each
+      // canonical @id is the GitHub repo URL, the SAME identifier each
       // project's own docs site publishes. Off-domain by design.
       "owns",
     ]);
 
-    // Wikidata's canonical entity concept URI (http, not https, by design —
+    // Wikidata's canonical entity concept URI (http, not https, by design:
     // the standard Linked Data identifier). The Person's `knowsAbout` emits
     // these as `@id` values (see BaseHead.astro `KNOWS_ABOUT_WIKIDATA`); it is
     // a legitimate, deliberate exception to the site's https-only own-domain
@@ -874,7 +874,7 @@ test.describe("URL correctness in schemas", () => {
 
     for (const schema of graph) {
       // MCP endpoint stubs are dual-typed ["WebAPI","SoftwareApplication"]
-      // references whose canonical @id/url live on mcp.jmrp.io by design —
+      // references whose canonical @id/url live on mcp.jmrp.io by design:
       // the subdomain hosts those entities' own fiches.
       if (matchesType(schema["@type"], "WebAPI")) continue;
       collectSiteUrls(schema);
@@ -971,7 +971,7 @@ test.describe("Locale-scoped entity @ids", () => {
    * Every entity a page DEFINES must be identified under that page's own
    * canonical URL.
    *
-   * This invariant has been broken twice by the same mistake — building a URL
+   * This invariant has been broken twice by the same mistake: building a URL
    * from a hardcoded `/blog/…` or `/tools/…` literal in a component that
    * serves both locales, so the Spanish page publishes the English `@id`. Each
    * time, two documents collapsed into a single entity carrying two names, two
@@ -980,11 +980,11 @@ test.describe("Locale-scoped entity @ids", () => {
    * Spanish page rather than sampling.
    *
    * It reads `dist/` instead of driving a browser: 71 navigations blow the
-   * per-test timeout, and nothing here needs a rendered page — the graph is
-   * server-emitted.
+   * per-test timeout, and nothing here needs a rendered page (the graph is
+   * server-emitted).
    *
    * A node is a DEFINITION when it carries `@type`; a bare `{"@id": …}` is a
-   * reference and may legitimately point elsewhere — that is exactly how
+   * reference and may legitimately point elsewhere. That is exactly how
    * `workTranslation` links the two locales. Fragment `@id`s name entities
    * scoped to the current document, so their base must be the canonical.
    * `#person` and `#website` are the deliberate exceptions: one identity and
@@ -1032,7 +1032,7 @@ test.describe("Locale-scoped entity @ids", () => {
       const canonical = canonicalOf(html);
       // Anchored to <script>: a <link rel="alternate" type="application/ld+json">
       // also matches the bare media type, and would capture from there to the
-      // next </script> — i.e. markup, not the graph.
+      // next </script>, i.e. markup, not the graph.
       const raw =
         /<script\b[^>]*application\/ld\+json[^>]*>([\s\S]*?)<\/script>/.exec(
           html,
@@ -1068,7 +1068,7 @@ test.describe("Locale-scoped entity @ids", () => {
    * ToolCategoryPage, whose ListItem URLs were built without translatePath(),
    * pairing a Spanish `name` with an English `url` on 17 entries across the
    * five ES category pages. The per-page guard on the sample list above would
-   * never have caught it — no category page is in that list — so this walks
+   * never have caught it (no category page is in that list), so this walks
    * every built Spanish page instead.
    */
   test("every Spanish page keeps its ListItem URLs under /es/", () => {
@@ -1110,7 +1110,7 @@ test.describe("Locale-scoped entity @ids", () => {
             if (typeof candidate !== "string") continue;
 
             // Parse first and compare the hostname, rather than
-            // `startsWith("https://jmrp.io")` — that prefix also matches
+            // `startsWith("https://jmrp.io")`: that prefix also matches
             // `https://jmrp.io.example.com/…` (CodeQL
             // js/incomplete-url-substring-sanitization). Same idiom as
             // `isOrcidUrl` in BaseHead.astro.
@@ -1125,7 +1125,7 @@ test.describe("Locale-scoped entity @ids", () => {
             const { pathname } = parsed;
             // The site root is a legitimate breadcrumb ancestor, and
             // /publications/ is the deliberately locale-neutral identifier
-            // for the one paper with no DOI — both locales must mint the
+            // for the one paper with no DOI: both locales must mint the
             // same id there or the work splits into two entities.
             if (pathname === "/" || pathname.startsWith("/publications/")) {
               continue;
@@ -1152,11 +1152,11 @@ test.describe("Locale-scoped entity @ids", () => {
 });
 
 /**
- * Reference extraction — what the bibliography and `citation` publish.
+ * Reference extraction: what the bibliography and `citation` publish.
  *
  * Both surfaces are built from one list in BlogPost.astro, collected from the
  * raw MDX body with a regex, so markdown syntax can leak into a published URL
- * or a published name — and a regex change can silently DROP a reference
+ * or a published name, and a regex change can silently DROP a reference
  * instead. All three happened or were risked, and neither the type checker nor
  * Lychee could see any of them: the broken URL kept a valid Wikipedia *path*
  * and only corrupted the fragment, which link checkers do not resolve; a name
@@ -1183,7 +1183,7 @@ test.describe("Post references", () => {
    * Raw markdown that must never reach a published citation name.
    *
    * Deliberately only the PAIRED forms that `stripEmphasis` in BlogPost.astro
-   * actually removes. A lone `**` or `__` is not a defect — CommonMark renders
+   * actually removes. A lone `**` or `__` is not a defect: CommonMark renders
    * an unpaired delimiter literally, so "The C** standard" is the correct
    * published name and flagging it would turn CI red on content the component
    * cannot clean.
@@ -1322,7 +1322,7 @@ test.describe("Post references", () => {
     ).toEqual([]);
     expect(
       badNames,
-      `citation.name carrying raw markdown emphasis — if the link text in the MDX has an UNPAIRED delimiter, fix the MDX; otherwise stripEmphasis in BlogPost.astro missed a form:\n${badNames.join("\n")}`,
+      `citation.name carrying raw markdown emphasis. If the link text in the MDX has an UNPAIRED delimiter, fix the MDX; otherwise stripEmphasis in BlogPost.astro missed a form:\n${badNames.join("\n")}`,
     ).toEqual([]);
     expect(
       orphanCitations,
@@ -1355,6 +1355,9 @@ test.describe("Projects and contributions graphs", () => {
   ] as const;
 
   /** A top-level graph node by exact `@id`. */
+  /** The `#software` @id kleidos.dev and /projects/ share. */
+  const KLEIDOS_ID = "https://kleidos.dev/#software";
+
   function nodeById(jsonLd: JsonLdDocument, id: string): JsonLdSchema | null {
     return (jsonLd["@graph"] ?? []).find((node) => node["@id"] === id) ?? null;
   }
@@ -1608,6 +1611,52 @@ test.describe("Projects and contributions graphs", () => {
           platforms === undefined ? null : [platforms].flat().join(", "),
           card.name,
         ).toBe(card.runsOn);
+      }
+    });
+
+    test(`Kleidos and its series posts point at each other (${lang})`, async ({
+      page,
+    }) => {
+      // kleidos.dev publishes the same @id and lists the six posts as
+      // `subjectOf`; jmrp.io states the same node and each post is `about`
+      // it, so the two graphs close (plan/kleidos/jmrp-io-tasks.md).
+      await blockCloudflare(page);
+      await page.goto(`${prefix}/projects/`);
+      const node = nodeById(await getJsonLd(page), KLEIDOS_ID);
+      expect(node).not.toBeNull();
+      if (!node) return;
+
+      // The same two language-tagged literals on both locales: the shared
+      // node must not fork per page.
+      const languages = (
+        [node.description].flat() as Record<string, unknown>[]
+      ).map((literal) => literal["@language"]);
+      expect(languages).toEqual(["en", "es"]);
+      expect(node.programmingLanguage).toEqual({
+        "@type": "ComputerLanguage",
+        name: "C++",
+      });
+
+      const articles = [node.subjectOf].flat() as JsonLdSchema[];
+      expect(articles.map((article) => article.inLanguage)).toEqual([
+        "en",
+        "es",
+        "en",
+        "es",
+        "en",
+        "es",
+      ]);
+      for (const article of articles) {
+        const url = new URL(String(article.url));
+        expect(article["@id"]).toBe(`${url.href}#article`);
+        await page.goto(url.pathname);
+        const post = nodeById(await getJsonLd(page), String(article["@id"]));
+        expect(post, url.pathname).not.toBeNull();
+        expect(post?.headline).toBe(article.headline);
+        expect([post?.about].flat().map(refId)).toContain(KLEIDOS_ID);
+        expect([post?.mentions ?? []].flat().map(refId)).not.toContain(
+          KLEIDOS_ID,
+        );
       }
     });
   }

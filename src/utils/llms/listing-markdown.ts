@@ -10,7 +10,11 @@ import {
 } from "@utils/llms";
 import { CATEGORY_ORDER, categoryName } from "@utils/llms/tool-categories";
 import { getPageFaq, pageFaqLines } from "@utils/page-faq";
-import { getSeriesProject } from "@utils/projects";
+import {
+  getSeriesProject,
+  projectSiteHref,
+  splitAtSiteName,
+} from "@utils/projects";
 import { getSeries, getSeriesPosts, SERIES } from "@utils/series";
 
 /**
@@ -20,8 +24,8 @@ import { getSeries, getSeriesPosts, SERIES } from "@utils/series";
  * ── Why listings get a twin at all ────────────────────────────────────────
  * The twins that existed covered every leaf document and not one of the pages
  * that say how the leaves relate. A series hub is the densest editorial prose
- * on this site — it states why a cluster exists, in what order to read it and
- * what it deliberately omits — which is the exact shape of answer a model
+ * on this site (it states why a cluster exists, in what order to read it and
+ * what it deliberately omits), which is the exact shape of answer a model
  * needs for "where do I start with X", and the exact thing a tag page cannot
  * give. Tag pages stay excluded on purpose: they are `noindex` listings with
  * no prose of their own.
@@ -40,16 +44,17 @@ import { getSeries, getSeriesPosts, SERIES } from "@utils/series";
  * `getToolsForLocale`, which fall back to the English entry when a
  * translation is missing. The twin ROUTES filter strictly, so a fallback here
  * would have the Spanish index linking `/es/tools/<slug>/index.md` files that
- * were never generated — a dead link no checker would catch, since Lychee
+ * were never generated: a dead link no checker would catch, since Lychee
  * only walks `dist/**\/*.html`.
  *
  * @module
  */
-// cspell:locale es,en — the WORDS table below carries the Spanish half of the
-// chrome these documents are written in, exactly like `CHROME` in
-// `@utils/llms` (which gets the same treatment from an override in
-// cspell.config.yaml). Declared in the file rather than in the config so the
-// prose and the permission to spell-check it stay together.
+// cspell:locale es,en
+// The WORDS table below carries the Spanish half of the chrome these
+// documents are written in, exactly like `CHROME` in `@utils/llms` (which
+// gets the same treatment from an override in cspell.config.yaml). Declared
+// in the file rather than in the config so the prose and the permission to
+// spell-check it stay together.
 
 /**
  * The prose this module writes around the content, per locale.
@@ -87,7 +92,7 @@ const WORDS = {
   language: { en: "Language", es: "Idioma" },
 } as const;
 
-/** `/es` for Spanish, empty for English — the site's own routing rule. */
+/** `/es` for Spanish, empty for English: the site's own routing rule. */
 function prefixOf(locale: Locale): string {
   return locale === "es" ? "/es" : "";
 }
@@ -107,7 +112,7 @@ async function newestFirst(locale: Locale) {
   );
 }
 
-/** `- [title](page): description ([markdown](twin))` — the index line shape. */
+/** `- [title](page): description ([markdown](twin))`: the index line shape. */
 function indexLine(
   title: string,
   page: string,
@@ -276,7 +281,7 @@ export async function generateToolCategoryMarkdown(
       t(`pages.toolsCategory.${category}Desc` as TranslationKey),
     ]),
     "",
-    // The category's own narrative — the copy that says what these tools are
+    // The category's own narrative: the copy that says what these tools are
     // FOR, which is the part a listing of names cannot carry.
     t(`pages.toolsCategory.${category}Context` as TranslationKey),
     "",
@@ -355,7 +360,7 @@ export async function generateSeriesIndexMarkdown(
 }
 
 /**
- * One editorial series hub as markdown — the whole argument, not a listing.
+ * One editorial series hub as markdown: the whole argument, not a listing.
  *
  * This is the densest page in the set: around a thousand words of curated
  * itinerary per hub, stating why the cluster exists, what each member settles,
@@ -376,13 +381,21 @@ export async function generateSeriesMarkdown(
   const series = getSeries(slug);
   if (!series) throw new Error(`Unknown series: ${slug}`);
   const t = useTranslations(locale);
-  // The slug is only known at runtime, so the key is assembled — the same
-  // pattern SeriesPage.astro uses for `series.<slug>.*`.
+  // The slug is only known at runtime, so the key is assembled (the same
+  // pattern SeriesPage.astro uses for `series.<slug>.*`).
   const key = (suffix: string) => `series.${slug}.${suffix}` as TranslationKey;
   const prefix = prefixOf(locale);
   const posts = getSeriesPosts(series, await getPostsByLocale(locale));
   const project = await getSeriesProject(series);
   const path = `${prefix}/blog/series/${slug}/`;
+  // Where the page links the program's site in its prose, the twin does too.
+  const site = project && projectSiteHref(project, locale);
+  const siteLinked = (text: string) => {
+    const mention = site && splitAtSiteName(text, site);
+    return mention
+      ? `${mention.before}[${mention.name}](${site})${mention.after}`
+      : text;
+  };
   return [
     ...header(siteUrl, locale, path, t(key("title")), [
       "",
@@ -395,11 +408,11 @@ export async function generateSeriesMarkdown(
     "",
     `## ${t(key("whyTitle"))}`,
     "",
-    t(key("why1")),
+    siteLinked(t(key("why1"))),
     "",
-    t(key("why2")),
+    siteLinked(t(key("why2"))),
     "",
-    t(key("why3")),
+    siteLinked(t(key("why3"))),
     "",
     `## ${t(key("orderTitle"))}`,
     "",
@@ -422,9 +435,9 @@ export async function generateSeriesMarkdown(
     }),
     `## ${t(key("afterTitle"))}`,
     "",
-    t(key("after1")),
+    siteLinked(t(key("after1"))),
     "",
-    t(key("after2")),
+    siteLinked(t(key("after2"))),
     "",
     `## ${t(key("limitsTitle"))}`,
     "",
@@ -443,7 +456,7 @@ export async function generateSeriesMarkdown(
           ...(project.repo
             ? [`- ${t("series.ui.softwareRepo")}: ${project.repo}`]
             : []),
-          `- ${t("series.ui.softwareDocs")}: ${siteUrl}/docs/${project.id}/`,
+          `- ${t("series.ui.softwareDocs")}: ${projectSiteHref(project, locale)}`,
           `- ${t("series.ui.softwareProjects")}: ${siteUrl}${prefix}/projects/`,
           "",
         ]
