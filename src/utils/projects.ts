@@ -6,7 +6,7 @@
  * to the canonical `https://jmrp.io/#person` entity.
  *
  * ── Why the graph is shaped this way ─────────────────────────────────────
- * schema.org has no forward property for "works this Person made" — the
+ * schema.org has no forward property for "works this Person made": the
  * vocabulary only defines the reverse edge (`CreativeWork.author/creator/
  * maintainer` → Person). So the authoritative link lives on the software
  * nodes, which each carry all three, and the Person carries `owns` with bare
@@ -18,14 +18,19 @@
  *
  * Five of these projects already publish their own `#software` node from their
  * documentation site, using this exact @id and `author: { @id: #person }`.
- * Emitting a matching node here is a merge, not a duplicate — which is why the
+ * Emitting a matching node here is a merge, not a duplicate, which is why the
  * YAML requires `name`/`summary.en` to match those sites verbatim.
  */
 import licenseUrls from "@data/license-urls.json";
-import { PERSON_ID } from "@utils/person";
-import type { Series } from "@utils/series";
+import { localizedValues, PERSON_ID } from "@utils/person";
+import {
+  getSeriesForProject,
+  getSeriesPosts,
+  type Series,
+} from "@utils/series";
+import { getSiteUrl } from "@utils/site";
 import { wikidataEntityUri, wikidataLabel } from "@utils/wikidata";
-import { getEntry } from "astro:content";
+import { getCollection, getEntry } from "astro:content";
 import type {
   SoftwareApplication,
   SoftwareSourceCode,
@@ -81,6 +86,22 @@ export interface Project {
   summary: { en: string; es: string };
   /** Shorter homepage-card copy; see the schema in content.config.ts. */
   cardSummary?: { en: string; es: string };
+  /** Further names its own site gives it; see the schema. */
+  alternateName?: string[];
+  /** The one line that tells it apart; see the schema. */
+  disambiguatingDescription?: { en: string; es: string };
+  keywords?: { en: string; es: string };
+  /** State `programmingLanguage` as a ComputerLanguage node; see the schema. */
+  languageNode?: boolean;
+}
+
+/** A post about a project, as the project's `subjectOf` names it. */
+export interface ProjectArticle {
+  "@type": "BlogPosting" | "TechArticle";
+  "@id": string;
+  url: string;
+  headline: string;
+  inLanguage: "en" | "es";
 }
 
 /**
@@ -152,8 +173,8 @@ export async function seriesSoftwareId(
  * Localized page for a project's public running instance, or `undefined` when
  * it has none.
  *
- * Lives here rather than in a page because two surfaces render the same link —
- * /projects/ and the featured cards on /about/ — and a second copy of the
+ * Lives here rather than in a page because two surfaces render the same link
+ * (/projects/ and the featured cards on /about/), and a second copy of the
  * `hostedEs` fallback is exactly the shape that drifts between locales.
  * Returns the PAGE, never the raw endpoint: the MCP endpoints answer 405 to
  * the GET a browser sends (see the `hosted` field docs in content.config.ts).
@@ -167,6 +188,44 @@ export const hostedHref = (
   locale: string,
 ): string | undefined =>
   locale === "es" && project.hostedEs ? project.hostedEs : project.hosted;
+
+/**
+ * The project's own site in a locale: `docsEs` on a Spanish page when the
+ * project has one, `docs` otherwise. The series hub links it straight, not
+ * through the /docs/<id>/ alias, which answers 301 (it stays for links
+ * already published).
+ *
+ * @param project - The project as authored in `projects.yaml`.
+ * @param locale - Current locale.
+ * @returns The site URL.
+ */
+export const projectSiteHref = (project: Project, locale: string): string =>
+  locale === "es" && project.docsEs ? project.docsEs : project.docs;
+
+/**
+ * Splits prose at the first place it names a site the way copy writes it,
+ * host plus any path below the root ("kleidos.dev", "kleidos.dev/es/"), so
+ * the page and its markdown twin can make that name a link to the site.
+ *
+ * @param text - The prose.
+ * @param href - The site URL.
+ * @returns The text around the name and the name, or `undefined` when the
+ *   prose does not name the site.
+ */
+export function splitAtSiteName(
+  text: string,
+  href: string,
+): { before: string; name: string; after: string } | undefined {
+  const url = new URL(href);
+  const name = url.host + (url.pathname === "/" ? "" : url.pathname);
+  const at = text.indexOf(name);
+  if (at === -1) return undefined;
+  return {
+    before: text.slice(0, at),
+    name,
+    after: text.slice(at + name.length),
+  };
+}
 
 /** Reads and validates the projects document from the content collection. */
 export async function getProjects(): Promise<Project[]> {
@@ -183,7 +242,7 @@ export type McpServer = Project & { endpoint: string };
 /**
  * The self-hosted MCP fleet, in YAML order: every project that declares a
  * callable `endpoint`. Single source for BaseHead's `owns` @ids, the
- * /homelab/ MCP card and llms.txt — a new server only edits `projects.yaml`
+ * /homelab/ MCP card and llms.txt; a new server only edits `projects.yaml`
  * (`scripts/ci/build-identity.mjs` reads the same field from the raw YAML).
  */
 export async function getMcpServers(): Promise<McpServer[]> {
@@ -195,7 +254,7 @@ export async function getMcpServers(): Promise<McpServer[]> {
 /**
  * The @id of a deployed MCP endpoint's `[WebAPI, SoftwareApplication]` node,
  * canonically published by mcp.jmrp.io (which points back to `#person` via
- * `provider`/`author`). NOT a fetchable link — the shared identifier both
+ * `provider`/`author`). NOT a fetchable link: the shared identifier both
  * sites describe the same node under.
  *
  * @param server - The fleet member (or its raw endpoint URL).
@@ -206,7 +265,7 @@ export const mcpApiId = (server: McpServer | string): string =>
 
 /**
  * Wikidata's canonical entity concept URI uses a plain, non-secure scheme by
- * design — it is the standard Linked Data identifier, not a fetchable link.
+ * design: it is the standard Linked Data identifier, not a fetchable link.
  * Mirrors the treatment of `knowsAbout` in BaseHead.astro.
  *
  * @param topic - The topic to express as a schema.org Thing.
@@ -252,15 +311,15 @@ const topicThing = (topic: ProjectTopic): Thing | { "@id": string } => {
  * The MCP servers' entry in the official registry, as a resolvable URL.
  *
  * `registryId` was authored for the publishing pipeline and never reached the
- * graph, so the registry the protocol itself considers canonical — and the one
- * every derived directory (Glama, mcp.so, PulseMCP) reads from — was the one
+ * graph, so the registry the protocol itself considers canonical, and the one
+ * every derived directory (Glama, mcp.so, PulseMCP) reads from, was the one
  * alias the servers did not declare.
  *
  * `/versions` is the per-server resource: the registry has no `/v0/servers/
  * {name}` path (that 404s) and no human-facing page per server, and the search
  * endpoint is a query, not a permalink. This one returns the server's whole
- * version history in a single response — verified against both servers, 57 and
- * 22 entries, with no pagination to walk.
+ * version history in a single response (verified against both servers, 57 and
+ * 22 entries, with no pagination to walk).
  *
  * @param registryId - The `io.github.owner/name` id, when the project has one.
  * @returns A one-element array with the URL, or empty when it has no id.
@@ -273,28 +332,75 @@ function registryAlias(registryId: string | undefined): string[] {
 }
 
 /**
+ * The posts of the series that documents a project, in both languages, for
+ * the project node's `subjectOf`: the inverse of the `about` each of those
+ * posts states, so the project and its articles point at each other.
+ * kleidos.dev lists the same six on its own node for the same @id. Series
+ * order, the English post before its Spanish translation; each names the @id
+ * and URL of the post's own article node, and its headline and type.
+ *
+ * @param project - The project.
+ * @returns The articles, or an empty list when no series documents it.
+ */
+export async function projectArticles(
+  project: Project,
+): Promise<ProjectArticle[]> {
+  const series = getSeriesForProject(project.id);
+  if (!series) return [];
+  const posts = await getCollection("posts", ({ data }) => !data.draft);
+  const byLocale = (["en", "es"] as const).map((lang) =>
+    getSeriesPosts(
+      series,
+      posts.filter((post) => post.data.lang === lang),
+    ).map((post) => {
+      const url = new URL(
+        `${lang === "es" ? "/es" : ""}/blog/${post.data.slug}/`,
+        getSiteUrl(),
+      ).href;
+      return {
+        "@type": post.data.articleType,
+        "@id": `${url}#article`,
+        url,
+        headline: post.data.title,
+        inLanguage: lang,
+      } satisfies ProjectArticle;
+    }),
+  );
+  const [en, es] = byLocale;
+  return en.flatMap((article, index) =>
+    es[index] ? [article, es[index]] : [article],
+  );
+}
+
+/**
  * Builds the JSON-LD node for one project.
  *
- * `description` is always the English summary, on both locales: the software
- * entity is language-neutral and shares its @id with the project's own site,
- * so a per-locale description would fork the node's canonical value.
+ * `description` is the summary as two language-tagged literals, the same
+ * pair on both locales: the software entity is language-neutral and shares
+ * its @id with the project's own site, so a per-locale description would
+ * fork the node's canonical value. `disambiguatingDescription` and
+ * `keywords`, when the project has them, take the same form.
  *
  * The return type is the structural `Record` that `BaseLayout`'s `schema` prop
  * takes; Schema.org correctness is still enforced by the `satisfies` clauses
  * below, which is where schema-dts does its checking.
  *
  * @param project - The project to describe.
+ * @param articles - The posts about it (see {@link projectArticles}).
  * @returns A `SoftwareApplication` or `SoftwareSourceCode` node.
  */
-export function buildProjectSchema(project: Project): Record<string, unknown> {
+export function buildProjectSchema(
+  project: Project,
+  articles: readonly ProjectArticle[] = [],
+): Record<string, unknown> {
   const personRef = { "@id": PERSON_ID };
   const [about, ...mentions] = project.topics;
 
   // The docs URL is an identity alias only when it is a separate site.
   // Projects without one point `docs` at the repo README anchor, which is
-  // just `url` with a fragment — not a distinct page worth aliasing.
+  // just `url` with a fragment, not a distinct page worth aliasing.
   // A listing is a `sameAs` that also gets rendered, so they are folded in here
-  // rather than authored twice — one URL, one place to change it.
+  // rather than authored twice: one URL, one place to change it.
   // A project with no public repository has its docs as `url` itself, so
   // repeating them as an alias would state the same URL twice.
   const docsIsAlias =
@@ -314,13 +420,22 @@ export function buildProjectSchema(project: Project): Record<string, unknown> {
   const shared = {
     "@id": softwareId(project),
     name: project.name,
-    description: project.summary.en,
+    ...(project.alternateName && { alternateName: project.alternateName }),
+    description: localizedValues(project.summary),
+    ...(project.disambiguatingDescription && {
+      disambiguatingDescription: localizedValues(
+        project.disambiguatingDescription,
+      ),
+    }),
+    ...(project.keywords && { keywords: localizedValues(project.keywords) }),
     // A project whose repository is still private is reachable only through
     // its documentation, so that is its `url`, and it states no
     // `codeRepository` at all rather than one nobody can open.
     url: project.repo ?? project.docs,
     ...(project.repo && { codeRepository: project.repo }),
-    programmingLanguage: project.language,
+    programmingLanguage: project.languageNode
+      ? { "@type": "ComputerLanguage" as const, name: project.language }
+      : project.language,
     ...(project.license && { license: licenseUrl(project.license) }),
     ...(released && { isAccessibleForFree: true }),
     // `archived` lived only in projects.json and the twin; the graph said
@@ -338,9 +453,10 @@ export function buildProjectSchema(project: Project): Record<string, unknown> {
     maintainer: personRef,
     about: topicThing(about),
     ...(mentions.length > 0 && { mentions: mentions.map(topicThing) }),
+    ...(articles.length > 0 && { subjectOf: [...articles] }),
     ...(aliases.length > 0 && { sameAs: aliases }),
     // The MCP Registry publishes no page for a server, so its name cannot be a
-    // `sameAs` URL — it is an identifier in a namespace, and PropertyValue is
+    // `sameAs` URL: it is an identifier in a namespace, and PropertyValue is
     // how schema.org states one.
     ...(project.registryId && {
       identifier: {

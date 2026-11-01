@@ -48,9 +48,12 @@ type: projects
 #   and runs in `pnpm verify` and in CI, so a stale copy fails the build
 #   instead of waiting for the next audit; read its report when it does.
 #   Projects without a docs site use the repo/CV copy.
-# * `summary.es` is display-only. JSON-LD always emits `summary.en`, on both
-#   locales, because the software entity is language-neutral and its
-#   canonical description must not fork per page.
+# * JSON-LD states `summary` as two language-tagged literals, English and
+#   Spanish, the same pair on both locales: the software entity is
+#   language-neutral and its description must not fork per page. Until
+#   2026-11-01 only `summary.en` reached the graph. Where the project's own
+#   site publishes a Spanish literal, `summary.es` must match it verbatim
+#   too, and the drift checker counts a difference as a contradiction.
 # * `hosted`/`hostedEs` point at the PAGE documenting a public running
 #   instance, not at the endpoint itself: the MCP endpoints answer 405 to a
 #   browser's GET. Card link only, never JSON-LD: the running instance is a
@@ -446,12 +449,16 @@ projects:
   # that site while the project has no documentation: the card and the
   # markdown twins call it the project site because of the status.
   #
-  # Kleidos: `name` and `summary.en` are verbatim the `#software` node its
-  # own site publishes at the same @id, read 2026-10-21:
+  # Kleidos: `name`, `summary`, `alternateName`, `disambiguatingDescription`
+  # and `keywords` are verbatim the `#software` node its own site publishes
+  # at the same @id, read 2026-11-01 after its GEO audit:
   #   https://kleidos.dev/#software
-  # `schemaType` is that node's @type, and `summary.es` is the Spanish
-  # description it carries. The site moved from docs.jmrp.io/kleidos/ to its
-  # own domain on 2026-10-22; GitHub 301s every old path to kleidos.dev.
+  # That node states the language as a ComputerLanguage node, which
+  # `languageNode` copies. It also lists the kleidos-firmware posts as
+  # `subjectOf`, which /projects/ derives from the series (`series.ts`).
+  # `schemaType` is that node's @type. The site moved from
+  # docs.jmrp.io/kleidos/ to its own domain on 2026-10-22; GitHub 301s every
+  # old path to kleidos.dev.
   #
   # No `repo`: it is private. `license` is the GPL-3.0-or-later its site
   # states for the firmware, although GitHub does not detect it in the
@@ -478,8 +485,18 @@ projects:
       - { name: Firmware, wikidata: Q104851 }
       - { name: C++, wikidata: Q2407 }
     summary:
-      en: Kleidos keeps your passwords encrypted on a small device and types them over Bluetooth, after you unlock it on the device itself. No app, no cloud. Coming soon.
-      es: Kleidos guarda tus contraseñas cifradas en un dispositivo pequeño y las escribe por Bluetooth, después de que lo desbloquees en el propio dispositivo. Sin app y sin nube. Próximamente.
+      en: Passwords kept encrypted on a device you hold, typed over Bluetooth once you unlock it on the device itself. No app, no cloud. Coming soon.
+      es: Contraseñas cifradas en un dispositivo que llevas encima y escritas por Bluetooth al desbloquearlo en el propio dispositivo. Sin app ni nube. Próximamente.
+    alternateName:
+      - Kleidos firmware
+      - Kleidos password manager
+    disambiguatingDescription:
+      en: Hardware password manager firmware for nine M5Stack and LilyGO ESP32 boards, by José M. Requena Plens.
+      es: Firmware de gestor de contraseñas por hardware para nueve placas ESP32 de M5Stack y LilyGO, escrito por José M. Requena Plens.
+    keywords:
+      en: hardware password manager, ESP32, ESP32-S3, Bluetooth LE HID keyboard, AES-256-CBC, HMAC-SHA256, PBKDF2, TOTP, GPL-3.0-or-later firmware, M5Stack, LilyGO T-Deck, no cloud
+      es: gestor de contraseñas hardware, ESP32, ESP32-S3, teclado HID por Bluetooth LE, AES-256-CBC, HMAC-SHA256, PBKDF2, TOTP, firmware GPL-3.0-or-later, M5Stack, LilyGO T-Deck, sin nube
+    languageNode: true
 
   # ── Archived ───────────────────────────────────────────────────────────
   # No longer maintained, kept public and read-only. They stay in the graph

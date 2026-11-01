@@ -1,6 +1,6 @@
 ---
 /**
- * Projects page ("// /PROJECTS") — the curated, human-readable index of the
+ * Projects page ("// /PROJECTS"): the curated, human-readable index of the
  * open-source software behind the `#person` entity.
  *
  * Every fact rendered here is also emitted as JSON-LD (a `CollectionPage` +
@@ -11,8 +11,8 @@
  * `@utils/projects`.
  *
  * The list is hand-curated rather than mirrored from the GitHub API: only
- * projects with their own documentation, real usage, or both — no experiments,
- * forks or scratch repos.
+ * projects with their own documentation, real usage, or both (no experiments,
+ * forks or scratch repos).
  */
 import ActivityBand from "@components/projects/ActivityBand.astro";
 import CardLiveBox from "@components/projects/CardLiveBox.astro";
@@ -54,6 +54,7 @@ import {
   licenseUrl,
   mcpApiId,
   type Project,
+  projectArticles,
   softwareId,
 } from "@utils/projects";
 import { getSeriesForProject } from "@utils/series";
@@ -73,7 +74,7 @@ const t = useTranslations(locale);
 //
 // The value is checked, not trusted: downloads.json is generated and
 // git-ignored, so a build host holds whatever its last successful refresh left
-// behind — a copy predating this field carries none — and the field itself
+// behind (a copy predating this field carries none), and the field itself
 // comes from a hand-edited constant. `Intl.DateTimeFormat.format` throws
 // `RangeError: Invalid time value` on an invalid Date, so a missing or
 // malformed value would fail the whole build over one parenthetical; without a
@@ -101,7 +102,7 @@ const downloadsTotalSentence = siteDownloads
 const projects = await getProjects();
 const aboutEntry = await getEntry("profile", "about");
 // `profile` is a discriminated union, so the entry has to be narrowed
-// before `person` exists on it — same guard as BaseHead.astro.
+// before `person` exists on it (same guard as BaseHead.astro).
 const funding =
   aboutEntry?.data.type === "about" ? aboutEntry.data.person.funding : [];
 const active = projects.filter((p) => p.status === "active");
@@ -183,7 +184,7 @@ const pageUrl = new URL(Astro.url.pathname, getSiteUrl()).href;
  * Combined download count of a project, or `null` when it should not be shown.
  *
  * The figure covers every channel the project ships through (GitHub Releases,
- * Docker Hub…), summed at pre-build into `src/data/downloads.json` — the same
+ * Docker Hub…), summed at pre-build into `src/data/downloads.json`, the same
  * document behind the homepage total, so the card and the terminal cannot
  * disagree. A project under `DOWNLOADS_DISPLAY_MIN` renders no figure at all:
  * a small number next to a project reads as a verdict on it, while the
@@ -198,7 +199,7 @@ const downloadsOf = (project: Project): string | null => {
     : null;
 };
 
-/** Localized documentation URL — falls back to the English docs entry point. */
+/** Localized documentation URL (falls back to the English docs entry point). */
 const docsHref = (project: Project) =>
   locale === "es" && project.docsEs ? project.docsEs : project.docs;
 
@@ -322,7 +323,7 @@ const projectsPageSchema = {
         contentUrl: new URL("/identity/projects.json", getSiteUrl()).href,
       },
     },
-    // The full contributions ledger, as its own CollectionPage — the node
+    // The full contributions ledger, as its own CollectionPage. The node
     // itself is defined once, in ContributionsPage.astro, at the same @id;
     // this is a reference, not a duplicate definition.
     { "@id": `${contributionsPageUrl}#contributions` },
@@ -356,11 +357,14 @@ const apiAliasNodes = projects
     "@id": mcpApiId(project.endpoint as string),
     sameAs: project.endpointSameAs,
   }));
-const schema = [
-  projectsPageSchema,
-  ...projects.map(buildProjectSchema),
-  ...apiAliasNodes,
-];
+// Each node lists the posts about its project (`subjectOf`), which only a
+// project with a series has.
+const projectNodes = await Promise.all(
+  projects.map(async (project) =>
+    buildProjectSchema(project, await projectArticles(project)),
+  ),
+);
+const schema = [projectsPageSchema, ...projectNodes, ...apiAliasNodes];
 
 // A group with no projects renders nothing: the "In development" heading
 // would otherwise sit over an empty grid whenever nothing is in development.
@@ -423,7 +427,7 @@ const faqNode =
         // formats with JSX rules, where `singleAttributePerLine` breaks any
         // element carrying two or more attributes and moves its children onto
         // their own lines. Astro keeps that whitespace where JSX would strip
-        // it, so a reflowed anchor renders "download-sources.mjs ." — a space
+        // it, so a reflowed anchor renders "download-sources.mjs .": a space
         // inside the link and another before the sentence's period. Spreading
         // the attributes instead is not the way out: `spreadAttributes` also
         // appends this component's scoped class to `class`, which the literal
@@ -1088,17 +1092,17 @@ const faqNode =
 
      Three placements, in order of increasing capability:
 
-     1. Base — any engine with `popover` (Chrome 114+, Safari 17+, Firefox
-        125+): the UA's own `inset: 0; margin: auto` centring, capped in size.
+     1. Base: any engine with `popover` (Chrome 114+, Safari 17+, Firefox
+        125+), the UA's own `inset: 0; margin: auto` centring, capped in size.
         This IS the fallback for engines without anchor positioning, which
         today means Firefox and Safari: the popup opens centred instead of
         anchored, and everything else about it is unchanged.
-     2. Narrow viewports — a bottom sheet, at any capability. An anchored
+     2. Narrow viewports: a bottom sheet, at any capability. An anchored
         bubble hanging off a 28px chip has nowhere to go on a 360px screen, and
         a dialog floating mid-screen loses the connection to the card that was
         just tapped; a sheet rising from the bottom edge is the phone idiom and
         can be full-width, which is what a column of hostnames needs.
-     3. Wide viewports WITH anchor positioning — anchored under the trigger and
+     3. Wide viewports WITH anchor positioning: anchored under the trigger and
         scaled out of its top-left corner, so it visibly grows from the button.
 
      `--pop-from` is the closed-state transform, redefined per placement, so
@@ -1150,7 +1154,7 @@ const faqNode =
 
     /* One step up the documented elevation scale from the card it belongs to
        (bg < secondary < surface-2), which is how this design system says
-       "above" — it has no shadow tokens. */
+       "above"; it has no shadow tokens. */
     background: var(--color-surface-2);
     border: 1px solid var(--color-border);
     border-radius: var(--radius-md);

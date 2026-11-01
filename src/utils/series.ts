@@ -1,7 +1,7 @@
 import type { CollectionEntry } from "astro:content";
 
 /**
- * Editorial series — hand-curated topic hubs.
+ * Editorial series: hand-curated topic hubs.
  *
  * These exist because tag pages are listings, not arguments: they cannot
  * explain why three posts belong together or in what order to read them.
@@ -9,7 +9,7 @@ import type { CollectionEntry } from "astro:content";
  * piece decides) and links the member articles as an ordered `ItemList`.
  */
 export interface Series {
-  /** URL segment and i18n key suffix — copy lives under `series.<slug>.*`. */
+  /** URL segment and i18n key suffix; copy lives under `series.<slug>.*`. */
   slug: string;
   /**
    * Member posts in reading order, identified by the numeric filename prefix
@@ -19,7 +19,8 @@ export interface Series {
   /**
    * `id` in `projects.yaml` of the program the series documents. Set only for
    * a series about one program: its hub then says `about` that program's
-   * `#software` node rather than the author, its posts `mention` it, and the
+   * `#software` node rather than the author, its posts are `about` it too
+   * (and the project's node lists them as `subjectOf`), and the
    * project's card on /projects/ links back to the series.
    *
    * A project id rather than a hand-written `@id`, so the series and the

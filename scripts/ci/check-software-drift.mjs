@@ -6,7 +6,7 @@
  * ── Why this exists ──────────────────────────────────────────────────────
  * /projects/ restates `name`, `description` and `license` for every project.
  * For the five with their own docs site, those values describe a node under a
- * SHARED `@id` (`https://github.com/jmrplens/<repo>#software`) — so a divergent
+ * SHARED `@id` (`https://github.com/jmrplens/<repo>#software`), so a divergent
  * value is not extra detail, it is two documents contradicting each other about
  * one entity. Exactly the failure that hit the Person node twice before it was
  * centralized.
@@ -67,7 +67,7 @@ const CONTRADICTABLE = [
 async function graphOf(url) {
   const response = await fetch(url, { signal: AbortSignal.timeout(20_000) });
   // Without this, a 404 or 5xx page parses as ordinary HTML with no JSON-LD in
-  // it, and a dead site would be reported as "publishes no #software node" —
+  // it, and a dead site would be reported as "publishes no #software node",
   // indistinguishable from a healthy site that simply never published one.
   if (!response.ok) throw new Error(`HTTP ${response.status}`);
   const html = await response.text();
@@ -231,7 +231,7 @@ for (const project of projects) {
     // site used to, in which case projects.yaml became the sole publisher
     // without anyone deciding that.
     console.log(
-      `\n⚠ ${project.id}: ${project.docs} publishes no ${softwareId} node — ` +
+      `\n⚠ ${project.id}: ${project.docs} publishes no ${softwareId} node: ` +
         `projects.yaml is the only source for it`,
     );
     missingNodes++;
@@ -241,6 +241,10 @@ for (const project of projects) {
   const ours = {
     name: project.name,
     description: project.summary.en,
+    // The graph has stated `summary.es` too since 2026-11-01, as the Spanish
+    // literal of `description`, so a bilingual site that says something else
+    // in Spanish contradicts it the way a different English text would.
+    "description@es": project.summary.es,
     license: LICENSE_URLS[project.license] ?? project.license,
     programmingLanguage: project.language,
     applicationCategory: project.applicationCategory,
@@ -249,21 +253,24 @@ for (const project of projects) {
   };
 
   // A bilingual site states `description` as language-tagged literals. The
-  // English one is what `summary.en` must match; comparing the whole array
-  // against a string reported mikroscope and ghchronicle as contradicting
-  // while their English text was identical. The Spanish literal is checked
-  // against `summary.es` further down, as a note: that copy is display-only.
+  // English one is what `summary.en` must match and the Spanish one what
+  // `summary.es` must match; comparing the whole array against a string
+  // reported mikroscope and ghchronicle as contradicting while their English
+  // text was identical. An English-only site has no Spanish literal to
+  // contradict.
   const theirDescriptions = [theirs.description ?? []].flat();
   const tagged = (lang) =>
     theirDescriptions.find((literal) => literal?.["@language"] === lang)?.[
       "@value"
     ];
-  const theirValue = (p) =>
-    p === "description" && tagged("en") !== undefined
+  const theirValue = (p) => {
+    if (p === "description@es") return tagged("es");
+    return p === "description" && tagged("en") !== undefined
       ? tagged("en")
       : theirs[p];
+  };
 
-  const allDiffs = CONTRADICTABLE.filter(
+  const allDiffs = [...CONTRADICTABLE, "description@es"].filter(
     (p) =>
       theirValue(p) !== undefined &&
       ours[p] !== undefined &&
@@ -273,11 +280,9 @@ for (const project of projects) {
     project.id,
     allDiffs,
   );
-  const esDrift =
-    tagged("es") !== undefined && tagged("es") !== project.summary.es;
 
   // `sameAs` is multi-valued and merges, so a shorter list here is a missed
-  // opportunity rather than a contradiction — reported separately.
+  // opportunity rather than a contradiction (reported separately).
   // Ours is everything the built node states about the same thing: the docs,
   // the repository (`url`/`codeRepository`), the rendered `listings` that
   // `buildProjectSchema` folds into `sameAs` on its own, and `sameAs` itself.
@@ -313,15 +318,14 @@ for (const project of projects) {
     diffs.length === 0 &&
     acceptedDiffs.length === 0 &&
     missing.length === 0 &&
-    personLines.length === 0 &&
-    !esDrift
+    personLines.length === 0
   ) {
     console.log(`✓ ${project.id}`);
     continue;
   }
 
   console.log(
-    `\n${diffs.length === 0 && personLines.length === 0 && !esDrift && missing.length === 0 ? "~" : "✗"} ${project.id}`,
+    `\n${diffs.length === 0 && personLines.length === 0 && missing.length === 0 ? "~" : "✗"} ${project.id}`,
   );
   if (personLines.length > 0) {
     // mikroscope spliced the canonical node without being in the consumer
@@ -345,11 +349,6 @@ for (const project of projects) {
     );
     console.log(`     their site : ${JSON.stringify(theirValue(p))}`);
     console.log(`     projects.yaml: ${JSON.stringify(ours[p])}`);
-  }
-  if (esDrift) {
-    console.log(`   summary.es differs (display-only, not counted)`);
-    console.log(`     their site : ${JSON.stringify(tagged("es"))}`);
-    console.log(`     projects.yaml: ${JSON.stringify(project.summary.es)}`);
   }
   if (missing.length > 0) {
     console.log(`   sameAs entries their site has and projects.yaml lacks:`);
@@ -375,7 +374,7 @@ for (const page of EXTRA_PERSON_PAGES) {
 // Three distinct outcomes, deliberately not collapsed into one number: a site
 // that would not respond says nothing about drift and may be fixed by rerunning,
 // whereas a healthy site with no `#software` node means projects.yaml is now the
-// sole publisher for that entity — a standing fact, not a transient failure.
+// sole publisher for that entity: a standing fact, not a transient failure.
 console.log(
   `\n${contradictions} contradiction(s), ${acceptedCount} accepted, ` +
     `${unreachable} site(s) unreadable, ` +
@@ -385,7 +384,7 @@ console.log(
 if (contradictions > 0) {
   console.log(
     "Contradictions share an @id, so they weaken the entity. The project's own\n" +
-      "site is normally the authoritative side — update projects.yaml to match.",
+      "site is normally the authoritative side. Update projects.yaml to match.",
   );
 }
 // Exit 1 only for an undeclared contradiction; unreadable sites stay 0.

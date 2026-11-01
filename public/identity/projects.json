@@ -285,8 +285,8 @@
       "docs": "https://kleidos.dev/",
       "docsEs": "https://kleidos.dev/es/",
       "sitemap": "sitemap.xml",
-      "description": "Kleidos keeps your passwords encrypted on a small device and types them over Bluetooth, after you unlock it on the device itself. No app, no cloud. Coming soon.",
-      "descriptionEs": "Kleidos guarda tus contraseñas cifradas en un dispositivo pequeño y las escribe por Bluetooth, después de que lo desbloquees en el propio dispositivo. Sin app y sin nube. Próximamente.",
+      "description": "Passwords kept encrypted on a device you hold, typed over Bluetooth once you unlock it on the device itself. No app, no cloud. Coming soon.",
+      "descriptionEs": "Contraseñas cifradas en un dispositivo que llevas encima y escritas por Bluetooth al desbloquearlo en el propio dispositivo. Sin app ni nube. Próximamente.",
       "keywords": [
         "Password manager",
         "ESP32",
