@@ -1,8 +1,17 @@
-import { wikidataEntityUri } from "@utils/wikidata";
 import type {
   EducationalOccupationalCredential,
   EducationalOrganization,
+  Organization,
+  OrganizationRole,
+  Text,
 } from "schema-dts";
+
+import {
+  educationProperties as buildEducationProperties,
+  localizedValues as tagLanguages,
+  membershipRoles as buildMembershipRoles,
+  SCHOOLS as SCHOOL_NODES,
+} from "../../scripts/utils/person-schema.mjs";
 
 /**
  * A JSON-LD language-tagged literal: `{ "@value": …, "@language": … }`.
@@ -78,65 +87,92 @@ export const CANONICAL_PERSON_IMAGE = {
 } as const;
 
 /**
- * Canonical alma-mater list for the site's `#person` entity, shared by every
- * page that adds `alumniOf` (AboutPage, CVPage) so knowledge-graph builders
- * resolve ONE canonical entity per school regardless of which page emits it —
- * previously /about/ and /cv/ used divergent labels ("UPV · i3M / UMIL" vs
- * "Polytechnic University of Valencia") for the same institution.
+ * Turns an `{ en, es }` pair into JSON-LD language-tagged values; the rule
+ * and its reasons live in `scripts/utils/person-schema.mjs`, which
+ * `scripts/ci/build-identity.mjs` imports too. The single cast to `Text` is
+ * the one documented on {@link LanguageTaggedValue}.
  *
- * José holds a degree from the University of Alicante and a Master's from the
- * Universitat Politècnica de València. The predoctoral doctorate at the UPV was
- * NOT completed, so it does not add a third institution — the list is exactly
- * the two universities he is an alumnus of, each carrying a Wikidata `sameAs`.
- *
- * Each school is IDENTIFIED by its Wikidata entity URI, the same convention
- * `knowsAbout` uses — not left as an anonymous node carrying only a `sameAs`
- * to the wiki ARTICLE. Two consequences: the document stopped publishing two
- * different Wikidata URI conventions for the same vocabulary, and the schools
- * emitted from /about/ and /cv/ collapse onto one node each instead of
- * accumulating four alma maters for a person who has two (GEO audit
- * 2026-08-27, M6). The `sameAs` stays: the article page is a real, additional
- * representation of the entity, and dropping it would be a subtractive change
- * to a document six external sites splice in verbatim.
+ * @param pair - Object with `en` and `es` strings.
+ * @returns The two values, typed as the `Text` schema-dts expects.
  */
-export const CANONICAL_ALUMNI_OF: EducationalOrganization[] = [
-  {
-    "@type": "EducationalOrganization",
-    "@id": wikidataEntityUri("Q2037040"),
-    name: "University of Alicante",
-    sameAs: "https://www.wikidata.org/wiki/Q2037040",
-  },
-  {
-    "@type": "EducationalOrganization",
-    "@id": wikidataEntityUri("Q2003976"),
-    name: "Universitat Politècnica de València",
-    sameAs: "https://www.wikidata.org/wiki/Q2003976",
-  },
-];
+export const localizedValues = (pair: { en: string; es: string }) =>
+  tagLanguages(pair) satisfies LanguageTaggedValue[] as unknown as Text;
 
 /**
- * Canonical degree list for the `#person` entity: the two degrees on the
- * public ORCID record (0000-0003-1250-6212), each recognized by the matching
- * `CANONICAL_ALUMNI_OF` institution so knowledge-graph builders resolve the
- * school to one entity whichever property they walk in from.
- *
- * These ship in the canonical `#person` node itself (BaseHead and
- * `scripts/ci/build-identity.mjs`, which downstream project sites splice in
- * verbatim), unlike the page-scoped additive facts on /cv/: a degree is a
- * stable biographical claim, not a page concern. Mirror any change here in
- * `build-identity.mjs` — the schema-validation spec fails if the two drift.
+ * The schools the `#person` studied at, keyed as `education[].school` in
+ * `profile/about.yaml` (and the CV's `school`/`partOf`) refers to them.
+ * Defined, with its reasons, in `scripts/utils/person-schema.mjs`; checked
+ * here against schema-dts.
  */
-export const CANONICAL_CREDENTIALS: EducationalOccupationalCredential[] = [
-  {
-    "@type": "EducationalOccupationalCredential",
-    name: "Telecommunications Engineer in Sound and Image",
-    credentialCategory: "degree",
-    recognizedBy: CANONICAL_ALUMNI_OF[0],
-  },
-  {
-    "@type": "EducationalOccupationalCredential",
-    name: "MSc in Acoustics Engineering",
-    credentialCategory: "degree",
-    recognizedBy: CANONICAL_ALUMNI_OF[1],
-  },
-];
+export const SCHOOLS = SCHOOL_NODES satisfies Record<
+  string,
+  EducationalOrganization
+>;
+
+/** The `@id`s of the schools that have one (the two universities). */
+export const SCHOOL_IDS: ReadonlySet<string> = new Set(
+  Object.values(SCHOOLS).flatMap((school) =>
+    "@id" in school ? [school["@id"]] : [],
+  ),
+);
+
+/** One `education` entry of `profile/about.yaml`, as the schema parses it. */
+export interface EducationEntry {
+  school: string;
+  name: { en: string; es: string };
+  startDate?: string;
+  endDate: string;
+  credential?: {
+    name?: { en: string; es: string };
+    category: string;
+    eqfLevel: number;
+  };
+}
+
+/** One `memberships` entry of `profile/about.yaml`. */
+export interface MembershipEntry {
+  organization: {
+    name: string;
+    alternateName?: string;
+    url?: string;
+    description?: { en: string; es: string };
+  };
+  roleName: { en: string; es: string };
+  startDate: string;
+  endDate?: string;
+}
+
+/**
+ * The studies as the `#person`'s `alumniOf` (one dated Role each) and
+ * `hasCredential` (the finished ones), built by the shared rule in
+ * `scripts/utils/person-schema.mjs`. Used by BaseHead (the canonical node)
+ * and by the pages that restate the `#person` (AboutPage, CVPage), so all of
+ * them emit the same value as `/identity/person.jsonld`.
+ *
+ * @param education - `person.education` from `profile/about.yaml`.
+ * @returns The two properties, ready to spread into the Person node.
+ */
+export function educationProperties(education: readonly EducationEntry[]) {
+  const { alumniOf, hasCredential } = buildEducationProperties(education);
+  return {
+    alumniOf: alumniOf as OrganizationRole<
+      EducationalOrganization,
+      "alumniOf"
+    >[],
+    hasCredential: hasCredential as EducationalOccupationalCredential[],
+  };
+}
+
+/**
+ * The memberships as the `#person`'s `memberOf`, one dated Role each, built
+ * by the shared rule in `scripts/utils/person-schema.mjs`.
+ *
+ * @param memberships - `person.memberships` from `profile/about.yaml`.
+ * @returns The `memberOf` list (empty when there is none).
+ */
+export function membershipRoles(memberships: readonly MembershipEntry[]) {
+  return buildMembershipRoles(memberships) as OrganizationRole<
+    Organization,
+    "memberOf"
+  >[];
+}

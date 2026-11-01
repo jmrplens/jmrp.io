@@ -538,15 +538,12 @@ test.describe("ProfilePage schema on homepage", () => {
     // does not want them referenced anywhere on the site — an audit tool
     // suggesting "add the profiles we found" is not grounds to publish them.
     //
-    // Funding pages are not identities either: they are `DonateAction`s under
-    // `potentialAction` (see `funding` in content.config.ts), so an audit
-    // suggesting them as `sameAs` profiles is just as wrong.
-    const NOT_IN_SAME_AS = [
-      "x.com",
-      "twitter.com",
-      "github.com/sponsors",
-      "ko-fi.com",
-    ];
+    // GitHub Sponsors is a funding route, a `DonateAction` under
+    // `potentialAction` (see `funding` in content.config.ts), and a feature of
+    // the github.com/jmrplens profile `sameAs` already has, so it does not
+    // belong in `sameAs`. Ko-fi is both: a DonateAction, and his profile there
+    // (in site.yaml `sameAs` since 2026-11-01).
+    const NOT_IN_SAME_AS = ["x.com", "twitter.com", "github.com/sponsors"];
     for (const host of NOT_IN_SAME_AS) {
       expect((person.sameAs as string[]).some((u) => u.includes(host))).toBe(
         false,
@@ -613,21 +610,43 @@ test.describe("Person schema on CV page", () => {
     expect(isNonEmptyStr(additivePerson["@id"])).toBe(true);
     expect(additivePerson["@id"]).toContain("#person");
 
-    expect(Array.isArray(additivePerson.alumniOf)).toBe(true);
-    expect((additivePerson.alumniOf as unknown[]).length).toBeGreaterThan(0);
+    // The studies are dated Roles on the canonical node only. A Role carries
+    // no `@id`, so a copy here would add a second set of blank nodes to the
+    // same person instead of merging with the first.
+    expect(additivePerson.alumniOf).toBeUndefined();
 
     // Positions are employments: each an OrganizationRole naming the role,
-    // the organization and the CV's summary of the position.
+    // the organization and the CV's summary of the position. A university the
+    // #person studied at is referenced by the same @id its `alumniOf` role
+    // uses, not restated under another name; any other employer is
+    // described here.
     expect(Array.isArray(additivePerson.worksFor)).toBe(true);
     const roles = additivePerson.worksFor as Record<string, unknown>[];
     expect(roles.length).toBeGreaterThan(0);
+    const canonicalStudies = ((
+      findInGraph(jsonLd, "WebSite")?.publisher as JsonLdSchema | undefined
+    )?.alumniOf ?? []) as Record<string, unknown>[];
+    const schoolIds = new Set(
+      canonicalStudies.map(
+        (study) => (study.alumniOf as Record<string, unknown>)["@id"],
+      ),
+    );
+    let schoolReferences = 0;
     for (const role of roles) {
       expect(role["@type"]).toBe("OrganizationRole");
       expect(isNonEmptyText(role.roleName)).toBe(true);
-      expect((role.worksFor as Record<string, unknown>)["@type"]).toBe(
-        "Organization",
-      );
+      const employer = role.worksFor as Record<string, unknown>;
+      if (Object.keys(employer).length === 1) {
+        expect(schoolIds.has(employer["@id"])).toBe(true);
+        schoolReferences += 1;
+      } else {
+        expect(["Organization", "EducationalOrganization"]).toContain(
+          employer["@type"],
+        );
+        expect(isNonEmptyText(employer.name)).toBe(true);
+      }
     }
+    expect(schoolReferences).toBeGreaterThan(0);
     expect(roles.some((role) => isNonEmptyText(role.description))).toBe(true);
 
     // Professions are the canonical node's dated `hasOccupation`; a second,
@@ -1578,13 +1597,17 @@ test.describe("Projects and contributions graphs", () => {
         cards.map((card) => card.name),
       );
 
-      // operatingSystem is emitted exactly where the card shows "Runs on".
+      // operatingSystem is emitted exactly where the card shows "Runs on":
+      // the same platforms, as a list in the graph when there are several.
       const withOs = cards.filter((card) => card.runsOn !== null);
       expect(withOs.length).toBeGreaterThan(0);
       for (const [index, card] of cards.entries()) {
-        expect(software[index]?.operatingSystem ?? null, card.name).toBe(
-          card.runsOn,
-        );
+        const platforms = software[index]?.operatingSystem as
+          string | string[] | undefined;
+        expect(
+          platforms === undefined ? null : [platforms].flat().join(", "),
+          card.name,
+        ).toBe(card.runsOn);
       }
     });
   }

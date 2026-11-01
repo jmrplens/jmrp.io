@@ -33,7 +33,7 @@ import type {
 } from "schema-dts";
 
 import { softwareId as softwareIdRule } from "../../scripts/utils/software-id.mjs";
-import { CANONICAL_ALUMNI_OF } from "./person";
+import { SCHOOL_IDS } from "./person";
 
 /** A Wikidata-grounded subject of a project. */
 export interface ProjectTopic {
@@ -212,10 +212,23 @@ export const mcpApiId = (server: McpServer | string): string =>
  * @param topic - The topic to express as a schema.org Thing.
  * @returns A `Thing` node identified by its Wikidata entity URI.
  */
+/**
+ * The platforms of a comma-joined `operatingSystem` value: a list when there
+ * are several, the single name otherwise.
+ *
+ * @param value - "Linux, macOS, Windows".
+ * @returns ["Linux", "macOS", "Windows"].
+ */
+const operatingSystems = (value: string): string | string[] => {
+  const names = value
+    .split(",")
+    .map((name) => name.trim())
+    .filter((name) => name !== "");
+  return names.length > 1 ? names : (names[0] ?? value);
+};
+
 /** The `@id`s the canonical Person node already types as universities. */
-const ALUMNI_IDS = new Set(
-  CANONICAL_ALUMNI_OF.map((org) => (org as { "@id"?: string })["@id"]),
-);
+const ALUMNI_IDS = SCHOOL_IDS;
 
 const topicThing = (topic: ProjectTopic): Thing | { "@id": string } => {
   const id = wikidataEntityUri(topic.wikidata);
@@ -352,11 +365,14 @@ export function buildProjectSchema(project: Project): Record<string, unknown> {
         ...(project.applicationSubCategory && {
           applicationSubCategory: project.applicationSubCategory,
         }),
-        // The same value the documentation hub emits for this @id, and the
-        // one the card shows as "Runs on" (not the CI matrix, which is the
-        // maintenance table's "CI on" column and usually narrower).
+        // The platforms the card shows as "Runs on" (not the CI matrix, which
+        // is the maintenance table's "CI on" column and usually narrower).
+        // projects.yaml writes them as one comma-joined string; the graph
+        // states each one, as a list when there is more than one. The docs
+        // sites and public/identity/projects.json keep the string, and the
+        // merged values agree.
         ...(project.operatingSystem && {
-          operatingSystem: project.operatingSystem,
+          operatingSystem: operatingSystems(project.operatingSystem),
         }),
         ...(released && {
           offers: {

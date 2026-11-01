@@ -3,6 +3,8 @@
   "@type": "Person",
   "@id": "https://jmrp.io/#person",
   "name": "José Manuel Requena Plens",
+  "givenName": "José Manuel",
+  "familyName": "Requena Plens",
   "alternateName": [
     "jmrplens",
     "José M. Requena-Plens",
@@ -106,40 +108,244 @@
   },
   "alumniOf": [
     {
-      "@type": "EducationalOrganization",
-      "@id": "http://www.wikidata.org/entity/Q2037040",
-      "name": "University of Alicante",
-      "sameAs": "https://www.wikidata.org/wiki/Q2037040"
+      "@type": "OrganizationRole",
+      "alumniOf": {
+        "@type": "EducationalOrganization",
+        "@id": "http://www.wikidata.org/entity/Q2003976",
+        "name": "Universitat Politècnica de València",
+        "alternateName": "UPV",
+        "url": "https://www.upv.es/",
+        "sameAs": "https://www.wikidata.org/wiki/Q2003976"
+      },
+      "roleName": [
+        {
+          "@value": "PhD program in Health and Wellness Technologies (discontinued)",
+          "@language": "en"
+        },
+        {
+          "@value": "Estudios de doctorado en Tecnologías para la Salud y el Bienestar (no finalizados)",
+          "@language": "es"
+        }
+      ],
+      "startDate": "2019",
+      "endDate": "2023"
     },
     {
-      "@type": "EducationalOrganization",
-      "@id": "http://www.wikidata.org/entity/Q2003976",
-      "name": "Universitat Politècnica de València",
-      "sameAs": "https://www.wikidata.org/wiki/Q2003976"
+      "@type": "OrganizationRole",
+      "alumniOf": {
+        "@type": "EducationalOrganization",
+        "@id": "http://www.wikidata.org/entity/Q2003976",
+        "name": "Universitat Politècnica de València",
+        "alternateName": "UPV",
+        "url": "https://www.upv.es/",
+        "sameAs": "https://www.wikidata.org/wiki/Q2003976"
+      },
+      "roleName": [
+        {
+          "@value": "Master's Degree in Acoustical Engineering",
+          "@language": "en"
+        },
+        {
+          "@value": "Máster en Ingeniería Acústica",
+          "@language": "es"
+        }
+      ],
+      "endDate": "2019"
+    },
+    {
+      "@type": "OrganizationRole",
+      "alumniOf": {
+        "@type": "EducationalOrganization",
+        "@id": "http://www.wikidata.org/entity/Q2037040",
+        "name": "University of Alicante",
+        "alternateName": "UA",
+        "url": "https://www.ua.es/",
+        "sameAs": "https://www.wikidata.org/wiki/Q2037040"
+      },
+      "roleName": [
+        {
+          "@value": "Degree in Telecommunication Engineering in Sound and Image",
+          "@language": "en"
+        },
+        {
+          "@value": "Grado en Ingeniería de Telecomunicación en Sonido e Imagen",
+          "@language": "es"
+        }
+      ],
+      "endDate": "2018"
+    },
+    {
+      "@type": "OrganizationRole",
+      "alumniOf": {
+        "@type": "EducationalOrganization",
+        "name": "IES Luis García Berlanga",
+        "url": "https://ies-berlanga.info/index.php/es/"
+      },
+      "roleName": [
+        {
+          "@value": "Superior Sound Technician (Higher Vocational Degree)",
+          "@language": "en"
+        },
+        {
+          "@value": "Técnico Superior de Sonido (Ciclo Formativo de Grado Superior)",
+          "@language": "es"
+        }
+      ],
+      "endDate": "2011"
+    },
+    {
+      "@type": "OrganizationRole",
+      "alumniOf": {
+        "@type": "EducationalOrganization",
+        "name": "IES Salesianos (San José Artesano)",
+        "url": "https://elche.salesianos.edu/colegio/san-jose-artesano/"
+      },
+      "roleName": [
+        {
+          "@value": "Electronics Technician (Intermediate Vocational Degree)",
+          "@language": "en"
+        },
+        {
+          "@value": "Técnico en Electrónica (Ciclo Formativo de Grado Medio)",
+          "@language": "es"
+        }
+      ],
+      "endDate": "2009"
     }
   ],
   "hasCredential": [
     {
       "@type": "EducationalOccupationalCredential",
-      "name": "Telecommunications Engineer in Sound and Image",
+      "name": [
+        {
+          "@value": "MSc in Acoustics Engineering",
+          "@language": "en"
+        },
+        {
+          "@value": "Máster en Ingeniería Acústica",
+          "@language": "es"
+        }
+      ],
       "credentialCategory": "degree",
+      "educationalLevel": {
+        "@type": "DefinedTerm",
+        "name": "EQF level 7",
+        "termCode": "7",
+        "inDefinedTermSet": "https://europass.europa.eu/en/description-eight-eqf-levels"
+      },
+      "dateCreated": "2019",
+      "recognizedBy": {
+        "@type": "EducationalOrganization",
+        "@id": "http://www.wikidata.org/entity/Q2003976",
+        "name": "Universitat Politècnica de València",
+        "alternateName": "UPV",
+        "url": "https://www.upv.es/",
+        "sameAs": "https://www.wikidata.org/wiki/Q2003976"
+      }
+    },
+    {
+      "@type": "EducationalOccupationalCredential",
+      "name": [
+        {
+          "@value": "Telecommunications Engineer in Sound and Image",
+          "@language": "en"
+        },
+        {
+          "@value": "Ingeniero de Telecomunicación en Sonido e Imagen",
+          "@language": "es"
+        }
+      ],
+      "credentialCategory": "degree",
+      "educationalLevel": {
+        "@type": "DefinedTerm",
+        "name": "EQF level 6",
+        "termCode": "6",
+        "inDefinedTermSet": "https://europass.europa.eu/en/description-eight-eqf-levels"
+      },
+      "dateCreated": "2018",
       "recognizedBy": {
         "@type": "EducationalOrganization",
         "@id": "http://www.wikidata.org/entity/Q2037040",
         "name": "University of Alicante",
+        "alternateName": "UA",
+        "url": "https://www.ua.es/",
         "sameAs": "https://www.wikidata.org/wiki/Q2037040"
       }
     },
     {
       "@type": "EducationalOccupationalCredential",
-      "name": "MSc in Acoustics Engineering",
-      "credentialCategory": "degree",
-      "recognizedBy": {
-        "@type": "EducationalOrganization",
-        "@id": "http://www.wikidata.org/entity/Q2003976",
-        "name": "Universitat Politècnica de València",
-        "sameAs": "https://www.wikidata.org/wiki/Q2003976"
-      }
+      "name": [
+        {
+          "@value": "Superior Sound Technician (Higher Vocational Degree)",
+          "@language": "en"
+        },
+        {
+          "@value": "Técnico Superior de Sonido (Ciclo Formativo de Grado Superior)",
+          "@language": "es"
+        }
+      ],
+      "credentialCategory": "vocational degree",
+      "educationalLevel": {
+        "@type": "DefinedTerm",
+        "name": "EQF level 5",
+        "termCode": "5",
+        "inDefinedTermSet": "https://europass.europa.eu/en/description-eight-eqf-levels"
+      },
+      "dateCreated": "2011"
+    },
+    {
+      "@type": "EducationalOccupationalCredential",
+      "name": [
+        {
+          "@value": "Electronics Technician (Intermediate Vocational Degree)",
+          "@language": "en"
+        },
+        {
+          "@value": "Técnico en Electrónica (Ciclo Formativo de Grado Medio)",
+          "@language": "es"
+        }
+      ],
+      "credentialCategory": "vocational degree",
+      "educationalLevel": {
+        "@type": "DefinedTerm",
+        "name": "EQF level 4",
+        "termCode": "4",
+        "inDefinedTermSet": "https://europass.europa.eu/en/description-eight-eqf-levels"
+      },
+      "dateCreated": "2009"
+    }
+  ],
+  "memberOf": [
+    {
+      "@type": "OrganizationRole",
+      "memberOf": {
+        "@type": "Organization",
+        "name": "AmicroTech",
+        "alternateName": "AµTech",
+        "url": "https://www.linkedin.com/company/a-µtech/",
+        "description": [
+          {
+            "@value": "Association based at the Higher Polytechnic School of the University of Alicante. Promotes project-oriented microcontroller programming knowledge.",
+            "@language": "en"
+          },
+          {
+            "@value": "Asociación con sede en la Escuela Politécnica Superior de la Universidad de Alicante. Promueve el conocimiento de programación de microcontroladores orientada a proyectos.",
+            "@language": "es"
+          }
+        ]
+      },
+      "roleName": [
+        {
+          "@value": "Founder and Vocal Member",
+          "@language": "en"
+        },
+        {
+          "@value": "Fundador y Vocal",
+          "@language": "es"
+        }
+      ],
+      "startDate": "2016",
+      "endDate": "2018"
     }
   ],
   "hasOccupation": [
@@ -313,8 +519,28 @@
     },
     {
       "@type": "Thing",
+      "name": "ARM Cortex-M",
+      "@id": "http://www.wikidata.org/entity/Q296760"
+    },
+    {
+      "@type": "Thing",
       "name": "FreeRTOS",
       "@id": "http://www.wikidata.org/entity/Q1186761"
+    },
+    {
+      "@type": "Thing",
+      "name": "ESP32",
+      "@id": "http://www.wikidata.org/entity/Q27921668"
+    },
+    {
+      "@type": "Thing",
+      "name": "ESP-IDF",
+      "@id": "http://www.wikidata.org/entity/Q131611294"
+    },
+    {
+      "@type": "Thing",
+      "name": "PlatformIO",
+      "@id": "http://www.wikidata.org/entity/Q107383860"
     },
     {
       "@type": "Thing",
@@ -325,6 +551,16 @@
       "@type": "Thing",
       "name": "cryptography",
       "@id": "http://www.wikidata.org/entity/Q8789"
+    },
+    {
+      "@type": "Thing",
+      "name": "Transport Layer Security",
+      "@id": "http://www.wikidata.org/entity/Q206494"
+    },
+    {
+      "@type": "Thing",
+      "name": "public-key infrastructure",
+      "@id": "http://www.wikidata.org/entity/Q658476"
     },
     {
       "@type": "Thing",
@@ -363,8 +599,73 @@
     },
     {
       "@type": "Thing",
+      "name": "MATLAB",
+      "@id": "http://www.wikidata.org/entity/Q169478"
+    },
+    {
+      "@type": "Thing",
+      "name": "COMSOL Multiphysics",
+      "@id": "http://www.wikidata.org/entity/Q1024008"
+    },
+    {
+      "@type": "Thing",
+      "name": "C",
+      "@id": "http://www.wikidata.org/entity/Q15777"
+    },
+    {
+      "@type": "Thing",
+      "name": "C++",
+      "@id": "http://www.wikidata.org/entity/Q2407"
+    },
+    {
+      "@type": "Thing",
       "name": "Go",
       "@id": "http://www.wikidata.org/entity/Q37227"
+    },
+    {
+      "@type": "Thing",
+      "name": "Python",
+      "@id": "http://www.wikidata.org/entity/Q28865"
+    },
+    {
+      "@type": "Thing",
+      "name": "TypeScript",
+      "@id": "http://www.wikidata.org/entity/Q978185"
+    },
+    {
+      "@type": "Thing",
+      "name": "GNU Bash",
+      "@id": "http://www.wikidata.org/entity/Q189248"
+    },
+    {
+      "@type": "Thing",
+      "name": "LaTeX",
+      "@id": "http://www.wikidata.org/entity/Q5310"
+    },
+    {
+      "@type": "Thing",
+      "name": "Linux",
+      "@id": "http://www.wikidata.org/entity/Q388"
+    },
+    {
+      "@type": "Thing",
+      "name": "macOS",
+      "@id": "http://www.wikidata.org/entity/Q14116"
+    },
+    {
+      "@type": "Thing",
+      "name": "iOS",
+      "@id": "http://www.wikidata.org/entity/Q48493"
+    },
+    {
+      "@type": "Thing",
+      "name": "Docker",
+      "@id": "http://www.wikidata.org/entity/Q15206305"
+    },
+    {
+      "@type": "Thing",
+      "name": "Git",
+      "@id": "http://www.wikidata.org/entity/Q186055"
     },
     {
       "@type": "Thing",
@@ -385,11 +686,6 @@
       "@type": "Thing",
       "name": "software testing",
       "@id": "http://www.wikidata.org/entity/Q188522"
-    },
-    {
-      "@type": "Thing",
-      "name": "ESP32",
-      "@id": "http://www.wikidata.org/entity/Q27921668"
     }
   ],
   "owns": [
@@ -466,6 +762,18 @@
       "propertyID": "ORCID",
       "value": "0000-0003-1250-6212",
       "url": "https://orcid.org/0000-0003-1250-6212"
+    },
+    {
+      "@type": "PropertyValue",
+      "propertyID": "OpenPGP fingerprint",
+      "value": "0A993B268654DBBA52B7E8D3FCF653391E2C91FC",
+      "url": "https://keyoxide.org/0A993B268654DBBA52B7E8D3FCF653391E2C91FC"
+    },
+    {
+      "@type": "PropertyValue",
+      "propertyID": "DID",
+      "value": "did:plc:jder4wkjnwh6mzhrx4n5ebti",
+      "url": "https://plc.directory/did:plc:jder4wkjnwh6mzhrx4n5ebti"
     }
   ],
   "sameAs": [
@@ -491,6 +799,7 @@
     "https://stackexchange.com/users/7889616/jmrplens",
     "https://dsp.stackexchange.com/users/51783/jmrplens",
     "https://stackoverflow.com/users/5960262/jmrplens",
-    "https://tangled.org/did:plc:jder4wkjnwh6mzhrx4n5ebti"
+    "https://tangled.org/did:plc:jder4wkjnwh6mzhrx4n5ebti",
+    "https://ko-fi.com/jmrplens"
   ]
 }

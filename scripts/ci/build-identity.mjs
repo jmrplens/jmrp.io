@@ -75,6 +75,11 @@ import { fileURLToPath } from "node:url";
 
 import { load as loadYaml } from "js-yaml";
 
+import {
+  educationProperties,
+  localizedValues,
+  membershipRoles,
+} from "../utils/person-schema.mjs";
 import { softwareId } from "../utils/software-id.mjs";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
@@ -108,45 +113,6 @@ const IMAGE = {
 const wikidataEntityUri = (qid) => `http://www.wikidata.org/entity/${qid}`;
 
 /**
- * Mirrors `CANONICAL_ALUMNI_OF` and `CANONICAL_CREDENTIALS` in
- * `src/utils/person.ts` (a .astro/.ts module cannot be imported here). Kept
- * in sync by the schema-validation spec, which compares this document against
- * the node BaseHead renders.
- */
-const ALUMNI_OF = [
-  {
-    "@type": "EducationalOrganization",
-    // Identified by the Wikidata entity URI, the same convention `knowsAbout`
-    // uses below — not an anonymous node carrying only a `sameAs` to the wiki
-    // ARTICLE. Mirrors `CANONICAL_ALUMNI_OF` in src/utils/person.ts.
-    "@id": wikidataEntityUri("Q2037040"),
-    name: "University of Alicante",
-    sameAs: "https://www.wikidata.org/wiki/Q2037040",
-  },
-  {
-    "@type": "EducationalOrganization",
-    "@id": wikidataEntityUri("Q2003976"),
-    name: "Universitat Politècnica de València",
-    sameAs: "https://www.wikidata.org/wiki/Q2003976",
-  },
-];
-
-const CREDENTIALS = [
-  {
-    "@type": "EducationalOccupationalCredential",
-    name: "Telecommunications Engineer in Sound and Image",
-    credentialCategory: "degree",
-    recognizedBy: ALUMNI_OF[0],
-  },
-  {
-    "@type": "EducationalOccupationalCredential",
-    name: "MSc in Acoustics Engineering",
-    credentialCategory: "degree",
-    recognizedBy: ALUMNI_OF[1],
-  },
-];
-
-/**
  * Whether a URL points at ORCID, matched on the parsed hostname.
  *
  * A substring test (`url.includes("orcid.org")`) would also accept
@@ -176,24 +142,6 @@ const isOrcidUrl = (value) => {
  */
 const readYaml = (relativePath) =>
   loadYaml(readFileSync(join(ROOT, relativePath), "utf8"));
-
-/**
- * Turns an `{ en, es }` YAML pair into JSON-LD language-tagged values.
- *
- * English first so a consumer that ignores language tags and naively takes the
- * first entry still gets the same string this document published when it was
- * English-only — the shape changes, the default answer does not.
- *
- * Mirrors `localizedValues` in BaseHead.astro. The schema-validation spec
- * compares the two outputs, so a change here that is not mirrored fails CI.
- *
- * @param pair - Object with `en` and `es` strings.
- * @returns Array of language-tagged value objects.
- */
-const localizedValues = (pair) => [
-  { "@value": pair.en, "@language": "en" },
-  { "@value": pair.es, "@language": "es" },
-];
 
 /**
  * Builds the canonical Person node.
@@ -286,6 +234,8 @@ function buildIdentityDocument() {
     },
   }));
 
+  const memberships = membershipRoles(about.person.memberships ?? []);
+
   const sameAs = [
     ...new Set([
       ...(site.social_links?.map((l) => l.url) ?? []),
@@ -298,6 +248,8 @@ function buildIdentityDocument() {
     "@type": "Person",
     "@id": PERSON_ID,
     name: site.author,
+    ...(about.person.givenName && { givenName: about.person.givenName }),
+    ...(about.person.familyName && { familyName: about.person.familyName }),
     ...(site.person?.alternateName && {
       alternateName: site.person.alternateName,
     }),
@@ -325,11 +277,13 @@ function buildIdentityDocument() {
     // Where to fund the work (GitHub Sponsors and Ko-fi today), one action per
     // page rather than identities.
     //
-    // These are NOT in `sameAs` on purpose: that list lets a consumer resolve
-    // two URLs to one entity, and a funding page is not an identity. For the
-    // GitHub one it would not even add evidence: github.com/jmrplens is
-    // already there with a signed ownership proof. `DonateAction` is the
-    // property schema.org has for "you can donate here".
+    // As funding routes these are actions, not identities: `sameAs` lets a
+    // consumer resolve two URLs to one entity. GitHub Sponsors stays out of
+    // it, since it would not even add evidence: github.com/jmrplens is already
+    // there with a signed ownership proof. The Ko-fi page is a profile of its
+    // own (his name, links back to jmrp.io), so site.yaml lists it in
+    // `sameAs` too. `DonateAction` is the property schema.org has for "you
+    // can donate here".
     //
     // `recipient` names who receives the donation, and it is not optional
     // politeness. schema.org defines `potentialAction` as "an idealized action
@@ -408,8 +362,8 @@ function buildIdentityDocument() {
         unitCode: "E37",
       },
     },
-    alumniOf: ALUMNI_OF,
-    hasCredential: CREDENTIALS,
+    ...educationProperties(about.person.education ?? []),
+    ...(memberships.length > 0 && { memberOf: memberships }),
     ...(occupations.length > 0 && { hasOccupation: occupations }),
     ...(about.person.knowsLanguage && {
       knowsLanguage: about.person.knowsLanguage.map((language) => ({
@@ -442,6 +396,13 @@ function buildIdentityDocument() {
           value: orcidId,
           url: orcidUrl,
         },
+        // The rest from profile/about.yaml, after ORCID. Mirrors BaseHead.
+        ...(about.person.identifiers ?? []).map((identifier) => ({
+          "@type": "PropertyValue",
+          propertyID: identifier.propertyID,
+          value: identifier.value,
+          ...(identifier.url && { url: identifier.url }),
+        })),
       ],
     }),
     sameAs,
