@@ -322,6 +322,13 @@ const CVOrg = z.object({
   name: z.string(),
   short: z.string().optional(),
   url: safeUrl.optional(),
+  /**
+   * The key of SCHOOLS (src/utils/person.ts) this organization IS, so /cv/'s
+   * JSON-LD names the same entity the canonical `#person` studied at.
+   */
+  school: z.string().optional(),
+  /** The key of SCHOOLS this organization is a unit of (a faculty, a campus). */
+  partOf: z.string().optional(),
 });
 
 /**
@@ -693,6 +700,78 @@ const aboutSchema = z.object({
           ),
         "occupations: newest first, startDate <= endDate, and only the first may omit endDate",
       ),
+    /**
+     * The studies, newest first, emitted as dated `alumniOf` Roles; a finished
+     * one (with `credential`) is also a `hasCredential`. `school` is a key of
+     * SCHOOLS in src/utils/person.ts, checked when the node is built.
+     */
+    education: z
+      .array(
+        z.object({
+          school: z.string(),
+          name: LocalizedString,
+          startDate: z
+            .string()
+            .regex(/^\d{4}$/)
+            .optional(),
+          endDate: z.string().regex(/^\d{4}$/),
+          credential: z
+            .object({
+              /** Defaults to the study's own name. */
+              name: LocalizedString.optional(),
+              category: z.string(),
+              /** European Qualifications Framework level, 1 to 8. */
+              eqfLevel: z.number().int().min(1).max(8),
+            })
+            .optional(),
+        }),
+      )
+      .default([])
+      .refine(
+        (list) =>
+          list.every(
+            (entry, index) =>
+              (entry.startDate === undefined ||
+                entry.startDate <= entry.endDate) &&
+              (index === 0 || entry.endDate <= list[index - 1].endDate),
+          ),
+        "education: newest first and startDate <= endDate",
+      ),
+    /** Organizations he belonged to, emitted as dated `memberOf` Roles. */
+    memberships: z
+      .array(
+        z.object({
+          organization: z.object({
+            name: z.string(),
+            alternateName: z.string().optional(),
+            url: z.url().optional(),
+            description: LocalizedString.optional(),
+          }),
+          roleName: LocalizedString,
+          startDate: z.string().regex(/^\d{4}$/),
+          endDate: z
+            .string()
+            .regex(/^\d{4}$/)
+            .optional(),
+        }),
+      )
+      .default([]),
+    /** The parts of `name`, emitted as `givenName` and `familyName`. */
+    givenName: z.string().optional(),
+    familyName: z.string().optional(),
+    /**
+     * Identifiers besides ORCID (derived from site.yaml `sameAs`), emitted
+     * after it in `identifier` as `PropertyValue` nodes.
+     */
+    identifiers: z
+      .array(
+        z.object({
+          propertyID: z.string(),
+          value: z.string(),
+          url: z.url().optional(),
+        }),
+      )
+      .default([]),
     /**
      * Languages emitted as `knowsLanguage`. `code` is a BCP-47 tag. schema.org
      * has no proficiency property, so fluency is expressed by order only,

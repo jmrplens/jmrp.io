@@ -25,11 +25,11 @@ import type { SiteConfig } from "@src/types";
 import { safeJsonLd } from "@utils/html";
 import { licensePageUrl } from "@utils/license";
 import { markdownTwinHref } from "@utils/llms/twin-routes";
-import type { LanguageTaggedValue } from "@utils/person";
 import {
-  CANONICAL_ALUMNI_OF,
-  CANONICAL_CREDENTIALS,
   CANONICAL_PERSON_IMAGE,
+  educationProperties,
+  localizedValues,
+  membershipRoles,
   PERSON_ID,
   WEBSITE_ID,
 } from "@utils/person";
@@ -52,7 +52,6 @@ import type {
   Occupation,
   Role,
   SiteNavigationElement,
-  Text,
   WebSite,
 } from "schema-dts";
 
@@ -204,34 +203,8 @@ const orcidId = /orcid\.org\/([\dX-]+)/i.exec(orcidUrl ?? "")?.[1];
 // builders (Home/About/CV/GitHub) must reference `{"@id": "#person"}` or add
 // ADDITIVE properties only (alumniOf, worksFor, hasCredential) — they
 // must never redefine name/jobTitle/description/image/knowsAbout locally.
-/**
- * Turns an `{ en, es }` pair into JSON-LD language-tagged values.
- *
- * The canonical `#person` node is locale-neutral: it carries ONE `@id`, so it
- * must not change its `jobTitle` depending on which page a consumer crawled.
- * It used to do exactly that — emitting an untagged string picked by `locale`,
- * which left the same entity holding two contradictory titles across the site.
- * Tagged values let both be true at once.
- *
- * English first so a consumer that ignores language tags and takes the first
- * entry still reads what this node published before it went bilingual.
- *
- * Mirrors `localizedValues` in `scripts/ci/build-identity.mjs`; the
- * schema-validation spec deep-compares the two, so drift fails CI.
- */
-// `schema-dts` models every Text-valued property as a bare `string`, so it
-// rejects language-tagged literals even though they are core JSON-LD 1.1
-// (§4.2.4) and plain RDF. `Multilingual<Text>` is the named widening for
-// exactly that gap; the single cast lives here rather than at each call site,
-// so the three per-language properties below stay ordinarily typed.
-const localizedValues = (pair: { en: string; es: string }) =>
-  [
-    { "@value": pair.en, "@language": "en" },
-    { "@value": pair.es, "@language": "es" },
-    // `satisfies` first, so the literal is still checked against the shape it
-    // claims to be; the cast then narrows it to what schema-dts will accept.
-  ] satisfies LanguageTaggedValue[] as unknown as Text;
-
+// `localizedValues` (from @utils/person) turns an `{ en, es }` pair into the
+// language-tagged literals this locale-neutral node needs; see its doc.
 const personJobTitle = aboutData?.person.jobTitle
   ? localizedValues(aboutData.person.jobTitle)
   : (siteData.person?.jobTitle ?? siteData.jobTitle ?? t("seo.jobTitle"));
@@ -307,6 +280,9 @@ const personOccupations = (aboutData?.person.occupations ?? []).map(
  * Emitted site-wide and reference-only: every page connects the identity to
  * the body of work without repeating the project descriptions.
  */
+/** The memberships, each a dated `memberOf` Role; see `membershipRoles`. */
+const personMemberships = membershipRoles(aboutData?.person.memberships ?? []);
+
 const personProjects = [
   ...(await getProjects()).map((project) => ({
     "@id": softwareId(project),
@@ -372,6 +348,12 @@ const websiteSchema = {
     "@type": "Person",
     "@id": PERSON_ID,
     name: siteData.author,
+    ...(aboutData?.person.givenName && {
+      givenName: aboutData.person.givenName,
+    }),
+    ...(aboutData?.person.familyName && {
+      familyName: aboutData.person.familyName,
+    }),
     ...(siteData.person?.alternateName && {
       alternateName: siteData.person.alternateName,
     }),
@@ -461,8 +443,9 @@ const websiteSchema = {
     // fact like /cv/'s certificates): a degree is a stable biographical claim
     // every consumer of this entity should receive, including the project
     // documentation sites that splice /identity/person.jsonld in verbatim.
-    alumniOf: CANONICAL_ALUMNI_OF,
-    hasCredential: CANONICAL_CREDENTIALS,
+    // Each study is a dated `alumniOf` Role; see `educationProperties`.
+    ...educationProperties(aboutData?.person.education ?? []),
+    ...(personMemberships.length > 0 && { memberOf: personMemberships }),
     // The professions, not the employer: `worksFor` reads as present tense
     // and the last role has ended, so asserting it would publish a stale
     // employer here and to every project site that splices this node in.
@@ -501,6 +484,14 @@ const websiteSchema = {
           value: orcidId,
           url: orcidUrl,
         },
+        // The rest from profile/about.yaml (an OpenPGP fingerprint, an AT
+        // Protocol DID), after ORCID so the first entry stays what it was.
+        ...(aboutData?.person.identifiers ?? []).map((identifier) => ({
+          "@type": "PropertyValue" as const,
+          propertyID: identifier.propertyID,
+          value: identifier.value,
+          ...(identifier.url && { url: identifier.url }),
+        })),
       ],
     }),
     sameAs: buildSameAs(siteData.social_links, siteData.person?.sameAs),

@@ -99,6 +99,99 @@ person:
       locations:
         - { locality: Cox, region: Valencian Community, country: ES }
 
+  # The studies, newest first, each emitted as an `alumniOf` Role with its
+  # years, the same way the professions above are dated. A finished one is
+  # also a `hasCredential`; the doctorate was not completed, says so, and adds
+  # a role at the UPV but no credential and no third university. `school` is a
+  # key of SCHOOLS in src/utils/person.ts (mirrored in
+  # scripts/ci/build-identity.mjs). Every entry and year is the CV's
+  # (src/content/cv/{en,es}.yaml, Education). `eqfLevel` is the European
+  # Qualifications Framework level Spain assigns to each official title:
+  # Grado 6, Máster 7, Técnico Superior 5, Técnico 4. The two degree names
+  # under `credential` are the ones on the public ORCID record.
+  education:
+    - school: upv
+      name:
+        en: PhD program in Health and Wellness Technologies (discontinued)
+        es: Estudios de doctorado en Tecnologías para la Salud y el Bienestar (no finalizados)
+      startDate: "2019"
+      endDate: "2023"
+    - school: upv
+      name:
+        en: Master's Degree in Acoustical Engineering
+        es: Máster en Ingeniería Acústica
+      endDate: "2019"
+      credential:
+        name:
+          en: MSc in Acoustics Engineering
+          es: Máster en Ingeniería Acústica
+        category: degree
+        eqfLevel: 7
+    - school: ua
+      name:
+        en: Degree in Telecommunication Engineering in Sound and Image
+        es: Grado en Ingeniería de Telecomunicación en Sonido e Imagen
+      endDate: "2018"
+      credential:
+        name:
+          en: Telecommunications Engineer in Sound and Image
+          es: Ingeniero de Telecomunicación en Sonido e Imagen
+        category: degree
+        eqfLevel: 6
+    - school: ies-berlanga
+      name:
+        en: Superior Sound Technician (Higher Vocational Degree)
+        es: Técnico Superior de Sonido (Ciclo Formativo de Grado Superior)
+      endDate: "2011"
+      credential:
+        category: vocational degree
+        eqfLevel: 5
+    - school: salesianos-elche
+      name:
+        en: Electronics Technician (Intermediate Vocational Degree)
+        es: Técnico en Electrónica (Ciclo Formativo de Grado Medio)
+      endDate: "2009"
+      credential:
+        category: vocational degree
+        eqfLevel: 4
+
+  # Memberships, each emitted as a dated `memberOf` Role. AmicroTech is the
+  # student association he co-founded at the University of Alicante (the CV's
+  # "Founder and Vocal Member", Sep 2016 to Jul 2018); /cv/ lists it among the
+  # experience, but it was a membership, not an employment.
+  memberships:
+    - organization:
+        name: AmicroTech
+        alternateName: AµTech
+        url: https://www.linkedin.com/company/a-µtech/
+        description:
+          en: Association based at the Higher Polytechnic School of the University of Alicante. Promotes project-oriented microcontroller programming knowledge.
+          es: Asociación con sede en la Escuela Politécnica Superior de la Universidad de Alicante. Promueve el conocimiento de programación de microcontroladores orientada a proyectos.
+      roleName:
+        en: Founder and Vocal Member
+        es: Fundador y Vocal
+      startDate: "2016"
+      endDate: "2018"
+
+  # The two parts of `name`, emitted as `givenName` and `familyName`: two given
+  # names and the Spanish two-surname family name, which a consumer cannot
+  # split reliably on its own (the co-author nodes on /publications/ already
+  # carry both parts).
+  givenName: José Manuel
+  familyName: Requena Plens
+
+  # Identifiers besides ORCID (which BaseHead derives from `sameAs`), both
+  # already public: the OpenPGP key that signs /.well-known/security.txt
+  # (Keyoxide is in social_links) and the AT Protocol DID behind the Bluesky,
+  # Sifa and Tangled profiles in sameAs. `url` resolves each one.
+  identifiers:
+    - propertyID: OpenPGP fingerprint
+      value: 0A993B268654DBBA52B7E8D3FCF653391E2C91FC
+      url: https://keyoxide.org/0A993B268654DBBA52B7E8D3FCF653391E2C91FC
+    - propertyID: DID
+      value: did:plc:jder4wkjnwh6mzhrx4n5ebti
+      url: https://plc.directory/did:plc:jder4wkjnwh6mzhrx4n5ebti
+
   # Languages, as BCP-47 tags. schema.org defines no standard proficiency
   # property on Language, so "native" is deliberately not encoded rather than
   # invented — Spanish is listed first, which is the only ordering signal the

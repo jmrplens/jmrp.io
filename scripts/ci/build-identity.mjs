@@ -108,43 +108,117 @@ const IMAGE = {
 const wikidataEntityUri = (qid) => `http://www.wikidata.org/entity/${qid}`;
 
 /**
- * Mirrors `CANONICAL_ALUMNI_OF` and `CANONICAL_CREDENTIALS` in
- * `src/utils/person.ts` (a .astro/.ts module cannot be imported here). Kept
- * in sync by the schema-validation spec, which compares this document against
- * the node BaseHead renders.
+ * The schools, keyed as `education[].school` in profile/about.yaml refers to
+ * them. Mirrors `SCHOOLS` in src/utils/person.ts (a .astro/.ts module cannot
+ * be imported here); the schema-validation spec compares this document
+ * against the node BaseHead renders, so drift fails CI.
  */
-const ALUMNI_OF = [
-  {
+const SCHOOLS = {
+  ua: {
     "@type": "EducationalOrganization",
     // Identified by the Wikidata entity URI, the same convention `knowsAbout`
-    // uses below — not an anonymous node carrying only a `sameAs` to the wiki
-    // ARTICLE. Mirrors `CANONICAL_ALUMNI_OF` in src/utils/person.ts.
+    // uses below, not an anonymous node carrying only a `sameAs` to the wiki
+    // ARTICLE. Mirrors `SCHOOLS` in src/utils/person.ts.
     "@id": wikidataEntityUri("Q2037040"),
     name: "University of Alicante",
+    alternateName: "UA",
+    url: "https://www.ua.es/",
     sameAs: "https://www.wikidata.org/wiki/Q2037040",
   },
-  {
+  upv: {
     "@type": "EducationalOrganization",
     "@id": wikidataEntityUri("Q2003976"),
     name: "Universitat Politècnica de València",
+    alternateName: "UPV",
+    url: "https://www.upv.es/",
     sameAs: "https://www.wikidata.org/wiki/Q2003976",
   },
-];
+  "ies-berlanga": {
+    "@type": "EducationalOrganization",
+    name: "IES Luis García Berlanga",
+    url: "https://ies-berlanga.info/index.php/es/",
+  },
+  "salesianos-elche": {
+    "@type": "EducationalOrganization",
+    name: "IES Salesianos (San José Artesano)",
+    url: "https://elche.salesianos.edu/colegio/san-jose-artesano/",
+  },
+};
 
-const CREDENTIALS = [
-  {
-    "@type": "EducationalOccupationalCredential",
-    name: "Telecommunications Engineer in Sound and Image",
-    credentialCategory: "degree",
-    recognizedBy: ALUMNI_OF[0],
-  },
-  {
-    "@type": "EducationalOccupationalCredential",
-    name: "MSc in Acoustics Engineering",
-    credentialCategory: "degree",
-    recognizedBy: ALUMNI_OF[1],
-  },
-];
+/** The European Qualifications Framework levels page. Mirrors person.ts. */
+const EQF_LEVELS = "https://europass.europa.eu/en/description-eight-eqf-levels";
+
+/**
+ * The studies as `alumniOf` (one dated Role each) and `hasCredential` (the
+ * finished ones). Mirrors `educationProperties` in src/utils/person.ts, where
+ * the reasoning lives.
+ *
+ * @param education - `person.education` from profile/about.yaml.
+ * @returns `{ alumniOf, hasCredential }`.
+ */
+const educationProperties = (education) => {
+  const school = (key) => {
+    if (!(key in SCHOOLS)) {
+      throw new Error(
+        `profile/about.yaml education: unknown school "${key}"; add it to SCHOOLS in src/utils/person.ts and here`,
+      );
+    }
+    return SCHOOLS[key];
+  };
+  const alumniOf = education.map((entry) => ({
+    "@type": "OrganizationRole",
+    alumniOf: school(entry.school),
+    roleName: localizedValues(entry.name),
+    ...(entry.startDate && { startDate: entry.startDate }),
+    endDate: entry.endDate,
+  }));
+  const hasCredential = education.flatMap((entry) => {
+    if (!entry.credential) return [];
+    const where = school(entry.school);
+    return [
+      {
+        "@type": "EducationalOccupationalCredential",
+        name: localizedValues(entry.credential.name ?? entry.name),
+        credentialCategory: entry.credential.category,
+        educationalLevel: {
+          "@type": "DefinedTerm",
+          name: `EQF level ${entry.credential.eqfLevel}`,
+          termCode: String(entry.credential.eqfLevel),
+          inDefinedTermSet: EQF_LEVELS,
+        },
+        dateCreated: entry.endDate,
+        ...("@id" in where && { recognizedBy: where }),
+      },
+    ];
+  });
+  return { alumniOf, hasCredential };
+};
+
+/**
+ * The memberships as `memberOf` Roles. Mirrors `membershipRoles` in
+ * src/utils/person.ts.
+ *
+ * @param memberships - `person.memberships` from profile/about.yaml.
+ * @returns The `memberOf` list.
+ */
+const membershipRoles = (memberships) =>
+  memberships.map((entry) => ({
+    "@type": "OrganizationRole",
+    memberOf: {
+      "@type": "Organization",
+      name: entry.organization.name,
+      ...(entry.organization.alternateName && {
+        alternateName: entry.organization.alternateName,
+      }),
+      ...(entry.organization.url && { url: entry.organization.url }),
+      ...(entry.organization.description && {
+        description: localizedValues(entry.organization.description),
+      }),
+    },
+    roleName: localizedValues(entry.roleName),
+    startDate: entry.startDate,
+    ...(entry.endDate && { endDate: entry.endDate }),
+  }));
 
 /**
  * Whether a URL points at ORCID, matched on the parsed hostname.
@@ -286,6 +360,8 @@ function buildIdentityDocument() {
     },
   }));
 
+  const memberships = membershipRoles(about.person.memberships ?? []);
+
   const sameAs = [
     ...new Set([
       ...(site.social_links?.map((l) => l.url) ?? []),
@@ -298,6 +374,8 @@ function buildIdentityDocument() {
     "@type": "Person",
     "@id": PERSON_ID,
     name: site.author,
+    ...(about.person.givenName && { givenName: about.person.givenName }),
+    ...(about.person.familyName && { familyName: about.person.familyName }),
     ...(site.person?.alternateName && {
       alternateName: site.person.alternateName,
     }),
@@ -408,8 +486,8 @@ function buildIdentityDocument() {
         unitCode: "E37",
       },
     },
-    alumniOf: ALUMNI_OF,
-    hasCredential: CREDENTIALS,
+    ...educationProperties(about.person.education ?? []),
+    ...(memberships.length > 0 && { memberOf: memberships }),
     ...(occupations.length > 0 && { hasOccupation: occupations }),
     ...(about.person.knowsLanguage && {
       knowsLanguage: about.person.knowsLanguage.map((language) => ({
@@ -442,6 +520,13 @@ function buildIdentityDocument() {
           value: orcidId,
           url: orcidUrl,
         },
+        // The rest from profile/about.yaml, after ORCID. Mirrors BaseHead.
+        ...(about.person.identifiers ?? []).map((identifier) => ({
+          "@type": "PropertyValue",
+          propertyID: identifier.propertyID,
+          value: identifier.value,
+          ...(identifier.url && { url: identifier.url }),
+        })),
       ],
     }),
     sameAs,

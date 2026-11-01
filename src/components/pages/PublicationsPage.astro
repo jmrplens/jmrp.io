@@ -10,7 +10,7 @@ import { type TranslationKey, useTranslations } from "@i18n/utils";
 import BaseLayout from "@layouts/BaseLayout.astro";
 import { stripHtml } from "@utils/html";
 import { getPageFaq, pageFaqNode } from "@utils/page-faq";
-import { PERSON_ID, WEBSITE_ID } from "@utils/person";
+import { localizedValues, PERSON_ID, SCHOOLS, WEBSITE_ID } from "@utils/person";
 import {
   getPublicationKind,
   getPublications,
@@ -129,6 +129,89 @@ const siteOrigin = new URL(getSiteUrl()).origin;
 /** True when an already-absolute URL points somewhere other than this site. */
 const isOffSite = (url: string): boolean => new URL(url).origin !== siteOrigin;
 
+/** Media type of a file the BibTeX points at, by extension. */
+// cspell:ignore openxmlformats officedocument presentationml Diapositivas Póster
+const MEDIA_TYPES: Record<string, string> = {
+  pdf: "application/pdf",
+  pptx: "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+};
+
+/**
+ * A file of the work (its PDF, its slides, its poster) as a `MediaObject`, or
+ * undefined for anything that is not a file of a known type (a handle URL in
+ * `pdf` is a landing page, already in `sameAs`). The name is language-tagged:
+ * the work's node is the same on /publications/ and /es/publications/.
+ *
+ * @param path - The BibTeX value: a site path or an absolute URL.
+ * @param name - The file's role, in both languages.
+ * @returns The MediaObject, or undefined.
+ */
+const mediaObject = (path: unknown, name?: { en: string; es: string }) => {
+  if (typeof path !== "string") return;
+  const extension = path.split(".").pop()?.toLowerCase() ?? "";
+  const encodingFormat = MEDIA_TYPES[extension];
+  if (!encodingFormat) return;
+  return {
+    "@type": "MediaObject" as const,
+    ...(name && { name: localizedValues(name) }),
+    contentUrl: toAbsoluteUrl(path),
+    encodingFormat,
+  };
+};
+
+/**
+ * The page range of a CSL `page` value ("1392-1400") as `pagination`,
+ * `pageStart` and `pageEnd`.
+ *
+ * @param page - The CSL `page` field.
+ * @returns The properties to spread (none without a range).
+ */
+const pageRange = (page: unknown) => {
+  if (typeof page !== "string" || page.trim() === "") return {};
+  const [start, end] = page.split(/[-–]/).map((part) => part.trim());
+  return {
+    pagination: page,
+    ...(start && { pageStart: start }),
+    ...(end && { pageEnd: end }),
+  };
+};
+
+// The studies, so a thesis can name the degree it was written for.
+const aboutEntry = await getEntry("profile", "about");
+const education =
+  aboutEntry?.data.type === "about" ? aboutEntry.data.person.education : [];
+
+/**
+ * What a thesis was written for: the study, among those in profile/about.yaml,
+ * that was finished in the year the thesis was issued, and the university
+ * that awarded it. Only an unambiguous match counts (today 2018 is the UA
+ * degree and 2019 the UPV master, which is what the two hosted files, named
+ * TFG and TFM, say too); anything else adds nothing rather than guess.
+ *
+ * @param year - The thesis's year.
+ * @returns `inSupportOf` and `sourceOrganization`, or nothing.
+ */
+const thesisContext = (year: string | undefined) => {
+  const matches = education.filter(
+    (entry) => entry.credential && entry.endDate === year,
+  );
+  if (matches.length !== 1) return {};
+  const [entry] = matches;
+  const school = SCHOOLS[entry.school as keyof typeof SCHOOLS];
+  return {
+    inSupportOf: localizedValues(entry.credential?.name ?? entry.name),
+    ...(school &&
+      "@id" in school && { sourceOrganization: { "@id": school["@id"] } }),
+  };
+};
+
+/** A CSL name: a person (given + family) or an organization (literal). */
+interface CslName {
+  given?: string;
+  family?: string;
+  literal?: string;
+}
+
 // `@context` omitted: merged into the page-level @graph (BaseLayout) which
 // already declares the context.
 const collectionUrl = new URL(Astro.url.pathname, getSiteUrl()).href;
@@ -190,7 +273,9 @@ const collectionSchema = {
               },
             ]
           : []),
-        ...(isbn
+        // An ISBN identifies the book, so a conference paper's goes on its
+        // proceedings (`isPartOf.isbn`, below) rather than on the paper.
+        ...(isbn && pub.type !== "paper-conference"
           ? [
               {
                 "@type": "PropertyValue" as const,
@@ -200,12 +285,21 @@ const collectionSchema = {
             ]
           : []),
       ];
+      // CSL `thesis` only: the page groups reports with theses, but a report
+      // is not schema.org's Thesis.
+      const isThesis = pub.type === "thesis";
+      const year = pub.issued?.["date-parts"]?.[0]?.[0];
+      const pdfMedia = mediaObject(pdfPath);
+      const associatedMedia = [
+        mediaObject(pub.slides, { en: "Slides", es: "Diapositivas" }),
+        mediaObject(pub.poster, { en: "Poster", es: "Póster" }),
+      ].filter((media) => media !== undefined);
 
       return {
         "@type": "ListItem",
         position: index + 1,
         item: {
-          "@type": "ScholarlyArticle",
+          "@type": isThesis ? "Thesis" : "ScholarlyArticle",
           // The DOI is the paper's identity, so it is the `@id`.
           //
           // This used to be `${collectionUrl}#pub-${id}`, derived from the URL
@@ -279,18 +373,56 @@ const collectionSchema = {
               // but they are not venue-less: BibTeX `school` arrives as the CSL
               // publisher, and dropping it left two entries with no institution
               // attached at all. `publisher` is the correct edge for the
-              // awarding university.
+              // awarding university; a thesis also names the degree it was
+              // written for and links that university's entity.
               return {
                 publisher: { "@type": "CollegeOrUniversity", name: venue },
+                ...(isThesis && thesisContext(year ? String(year) : undefined)),
               };
             }
+            if (isJournal) {
+              return { isPartOf: { "@type": "Periodical", name: venue } };
+            }
+            // Conference proceedings are a book: they carry the ISBN, and the
+            // societies BibTeX lists as `editor` (the Spanish and Portuguese
+            // acoustical societies, the DLR) published them. schema.org's `editor` is a
+            // Person, so an organization there is the proceedings'
+            // `publisher`; a named person would stay an `editor`.
+            const names = (pub.editor as CslName[] | undefined) ?? [];
+            const editors = names.filter((name) => name.given && name.family);
+            const publishers = [
+              ...(typeof pub.publisher === "string"
+                ? [stripTrailingPunctuation(pub.publisher).trim()]
+                : []),
+              ...names
+                .filter((name) => !(name.given && name.family))
+                .map((name) => name.literal ?? name.family ?? ""),
+            ].filter((name) => name !== "");
             return {
               isPartOf: {
-                "@type": isJournal ? "Periodical" : "CreativeWork",
+                "@type": "Book",
                 name: venue,
+                ...(isbn && { isbn }),
+                ...(publishers.length > 0 && {
+                  publisher: publishers.map((name) => ({
+                    "@type": "Organization" as const,
+                    name,
+                  })),
+                }),
+                ...(editors.length > 0 && {
+                  editor: editors.map((name) => ({
+                    "@type": "Person" as const,
+                    givenName: name.given,
+                    familyName: name.family,
+                    name: `${name.given} ${name.family}`,
+                  })),
+                }),
               },
             };
           })(),
+          ...(!isThesis && pageRange(pub.page)),
+          ...(pdfMedia && { encoding: pdfMedia }),
+          ...(associatedMedia.length > 0 && { associatedMedia }),
           abstract:
             typeof pub.abstract === "string"
               ? stripHtml(pub.abstract)

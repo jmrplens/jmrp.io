@@ -22,8 +22,14 @@ import { markdownToHtml } from "@utils/cv-markdown";
 import { stripToText } from "@utils/html";
 import { getPageFaq, pageFaqNode } from "@utils/page-faq";
 import type { LanguageTaggedValue } from "@utils/person";
-import { CANONICAL_ALUMNI_OF, PERSON_ID, WEBSITE_ID } from "@utils/person";
+import {
+  educationProperties,
+  PERSON_ID,
+  SCHOOLS,
+  WEBSITE_ID,
+} from "@utils/person";
 import { getAbsoluteUrl, getSiteUrl } from "@utils/site";
+import { getEntry } from "astro:content";
 import type { Person, Text, WebPage } from "schema-dts";
 
 const locale = (Astro.currentLocale ?? defaultLocale) as Locale;
@@ -252,6 +258,48 @@ const experienceEs = cvEs.sections.find((s) => s.kind === "experience");
  *
  * Nothing here is invented — every field comes from the CV.
  */
+const aboutEntry = await getEntry("profile", "about");
+if (aboutEntry?.data.type !== "about") {
+  throw new Error("profile/about.yaml is missing or has the wrong type");
+}
+const aboutPerson = aboutEntry.data.person;
+// The CV lists the student association among the experience, but it was a
+// membership: the canonical node states it as `memberOf` (profile/about.yaml
+// `memberships`), so it is not restated here as an employment.
+const membershipNames = new Set(
+  aboutPerson.memberships.map((entry) => entry.organization.name),
+);
+
+/**
+ * The `@id` of the SCHOOLS entry an organization is (`school`) or belongs to
+ * (`partOf`), when that entry has one. A university the canonical node already
+ * describes is then referenced, not restated as an `Organization` of its own:
+ * the same school under two types and two names is what the shared `@id` is
+ * there to prevent.
+ *
+ * @param key - A SCHOOLS key from the CV's `org` entry.
+ * @returns The `@id`, or undefined.
+ */
+const schoolId = (key: string | undefined): string | undefined => {
+  if (!key) return undefined;
+  if (!(key in SCHOOLS)) {
+    throw new Error(
+      `cv: unknown school "${key}"; add it to SCHOOLS in src/utils/person.ts`,
+    );
+  }
+  const school = SCHOOLS[key as keyof typeof SCHOOLS];
+  return "@id" in school ? school["@id"] : undefined;
+};
+
+/** The schools by the short name a certificate's issuer is written with. */
+const schoolIdByShortName = new Map<string, string>(
+  Object.values(SCHOOLS).flatMap((school) =>
+    "@id" in school && "alternateName" in school
+      ? [[school.alternateName, school["@id"]] as const]
+      : [],
+  ),
+);
+
 const cvWorksFor =
   experienceEn?.kind === "experience" && experienceEs?.kind === "experience"
     ? experienceEn.items.flatMap((job, index) => {
@@ -259,7 +307,7 @@ const cvWorksFor =
         const dates = parsePeriod(job.period);
         const org = job.org?.[0];
         const orgEs = jobEs?.org?.[0];
-        if (!org) return [];
+        if (!org || membershipNames.has(org.name)) return [];
         const summaryEn = job.summary
           ? stripToText(markdownToHtml(job.summary))
           : undefined;
@@ -274,12 +322,23 @@ const cvWorksFor =
               description: bilingual(summaryEn, summaryEs ?? summaryEn),
             }),
             ...dates,
-            worksFor: {
-              "@type": "Organization" as const,
-              name: bilingual(org.name, orgEs?.name ?? org.name),
-              ...(org.short && { alternateName: org.short }),
-              ...(org.url && { url: org.url }),
-            },
+            worksFor: schoolId(org.school)
+              ? { "@id": schoolId(org.school) as string }
+              : {
+                  "@type": schoolId(org.partOf)
+                    ? ("EducationalOrganization" as const)
+                    : ("Organization" as const),
+                  name: bilingual(org.name, orgEs?.name ?? org.name),
+                  // A unit's short name is its parent's ("UPV" on the Gandia
+                  // campus), so only a standalone organization carries one.
+                  ...(org.short && !org.partOf && { alternateName: org.short }),
+                  ...(org.url && { url: org.url }),
+                  ...(schoolId(org.partOf) && {
+                    parentOrganization: {
+                      "@id": schoolId(org.partOf) as string,
+                    },
+                  }),
+                },
           },
         ];
       })
@@ -288,7 +347,8 @@ const cvWorksFor =
 const cvPersonFacts = {
   "@type": "Person",
   "@id": PERSON_ID,
-  alumniOf: CANONICAL_ALUMNI_OF,
+  // The same dated Roles the canonical node in BaseHead carries.
+  alumniOf: educationProperties(aboutPerson.education).alumniOf,
   ...(cvWorksFor.length > 0 && { worksFor: cvWorksFor }),
   // Emitted from the EN and ES sources at once, with language-tagged
   // literals, so /cv/ and /es/cv/ ship byte-identical values. It hangs off
@@ -302,19 +362,32 @@ const cvPersonFacts = {
           const groupEs = certificatesEs.groups[groupIndex];
           return group.items.map((cert, itemIndex) => {
             const certEs = groupEs?.items[itemIndex];
+            const issuer = cert.school
+              ? schoolIdByShortName.get(cert.school)
+              : undefined;
             return {
               "@type": "EducationalOccupationalCredential" as const,
               name: bilingual(cert.name, certEs?.name ?? cert.name),
-              credentialCategory: bilingual(
-                group.category,
-                groupEs?.category ?? group.category,
-              ),
-              // The awarding body is a proper noun — never translated, so it
-              // needs no language tag.
-              recognizedBy: {
-                "@type": "Organization" as const,
-                name: cert.school,
+              // The kind of credential, which is what the property is for;
+              // the CV's group (its subject) goes in `about`. Until
+              // 2026-11-01 the group name stood in `credentialCategory`.
+              credentialCategory: "certificate",
+              about: {
+                "@type": "Thing" as const,
+                name: bilingual(
+                  group.category,
+                  groupEs?.category ?? group.category,
+                ),
               },
+              // The awarding body is a proper noun, never translated, so it
+              // needs no language tag. A university the canonical node
+              // already describes is referenced by its `@id`.
+              recognizedBy: issuer
+                ? { "@id": issuer }
+                : {
+                    "@type": "Organization" as const,
+                    name: cert.school,
+                  },
               ...(cert.url && { url: getAbsoluteUrl(cert.url) }),
             };
           });

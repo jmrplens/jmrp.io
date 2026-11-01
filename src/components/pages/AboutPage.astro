@@ -18,7 +18,7 @@ import { pageLastmod } from "@src/integrations/sitemap-post-dates";
 import type { SiteConfig } from "@src/types";
 import { externalLinkProps } from "@utils/links";
 import { getPageFaq, pageFaqNode } from "@utils/page-faq";
-import { CANONICAL_ALUMNI_OF, PERSON_ID, WEBSITE_ID } from "@utils/person";
+import { educationProperties, PERSON_ID, WEBSITE_ID } from "@utils/person";
 import { getProjects, hostedHref } from "@utils/projects";
 import { getSiteUrl } from "@utils/site";
 import { fillSiteFacts, getSiteFacts } from "@utils/site-facts";
@@ -152,7 +152,8 @@ const personSchema = {
   mainEntity: {
     "@type": "Person",
     "@id": PERSON_ID,
-    alumniOf: CANONICAL_ALUMNI_OF,
+    // The same dated Roles the canonical node in BaseHead carries.
+    alumniOf: educationProperties(about.person.education).alumniOf,
   },
 } satisfies ProfilePage;
 // The page's question-and-answer pairs (GEO audit #8): one source for the

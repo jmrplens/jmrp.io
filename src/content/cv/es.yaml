@@ -153,6 +153,7 @@ sections:
               name: Universitat Politècnica de València,
               short: UPV,
               url: https://www.upv.es/index-es.html,
+              school: upv,
             }
           - {
               name: Consejo Superior de Investigaciones Científicas,
@@ -189,6 +190,7 @@ sections:
               name: Universitat Politècnica de València,
               short: UPV,
               url: https://www.upv.es/index-es.html,
+              school: upv,
             }
           - {
               name: Consejo Superior de Investigaciones Científicas,
@@ -251,6 +253,7 @@ sections:
               name: Escuela Politécnica Superior de Gandía,
               short: UPV,
               url: https://www.upv.es/entidades/epsg/home/,
+              partOf: upv,
             }
           - {
               name: Agencia Espacial Europea,
@@ -330,6 +333,7 @@ sections:
               name: Universidad de Alicante,
               short: UA,
               url: https://www.ua.es/es/index.html,
+              school: ua,
             }
         department:
           name: Dep. de Física, Ingeniería de Sistemas y Teoría de la Señal
@@ -372,6 +376,7 @@ sections:
             name: Universidad de Alicante,
             short: UA,
             url: https://www.ua.es/es/index.html,
+            school: ua,
           }
         location: Alicante, España
         period: Sep 2016 - Jul 2018
@@ -714,6 +719,7 @@ sections:
               name: Universitat Politècnica de València,
               short: UPV,
               url: https://www.upv.es/index-es.html,
+              school: upv,
             }
         department:
           {
@@ -762,12 +768,14 @@ sections:
               name: Universitat Politècnica de València,
               short: UPV,
               url: https://www.upv.es/index-es.html,
+              school: upv,
             }
         department:
           {
             name: Escuela Politécnica Superior de Gandía,
             short: EPSG,
             url: https://www.upv.es/entidades/epsg/home/,
+            partOf: upv,
           }
         location: Gandía, España
         period: 2019
@@ -801,6 +809,7 @@ sections:
               name: Universidad de Alicante,
               short: UA,
               url: https://www.ua.es/es/index.html,
+              school: ua,
             }
         department:
           {
