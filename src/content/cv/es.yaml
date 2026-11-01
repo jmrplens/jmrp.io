@@ -135,17 +135,17 @@ sections:
             Implementé y mantuve comunicaciones industriales en C con capas de
             abstracción de hardware (HAL): Modbus RTU/TCP, UART, I2C y SPI.
           - >-
-            Automaticé la suite de pruebas: ~50–80 tests unitarios por módulo
+            Automaticé la suite de pruebas: ~50 a 80 tests unitarios por módulo
             (Ceedling, miles en total) con 100% de cobertura de líneas y ramas
             mediante mocks/fakes de la librería estándar, más cientos de pruebas de
-            integración sobre hardware real (pytest) — rendimiento TCP/FTP y
-            seguridad FTP —; todo en CI.
+            integración sobre hardware real (pytest) de rendimiento TCP/FTP y
+            seguridad FTP, todo en CI.
           - >-
             Revisé los merge requests de un equipo de 12 personas, detectando bugs y
             proponiendo mejoras antes de la integración.
         ats:
           normal: true
-          org: Power Electronics S.L. — Solar + Storage
+          org: Power Electronics S.L. (Solar + Storage)
 
       - role: Investigador predoctoral
         org:
@@ -213,7 +213,7 @@ sections:
           - Simulación de los difusores acústicos y validación de resultados (MATLAB y COMSOL).
           - >-
             Diseñé e imprimí en 3D (resina) guías de ondas de tubo con rendijas
-            calculadas numéricamente (tubos de 2–3 cm, rendijas ~0,5 mm) que
+            calculadas numéricamente (tubos de 2 a 3 cm, rendijas ~0,5 mm) que
             aumentaron ~15× la directividad y el alcance ultrasónico en aire,
             validado experimentalmente.
           - Resultados experimentales validados frente a los obtenidos en simulación.
@@ -280,7 +280,7 @@ sections:
         bullets:
           - >-
             Diseñé la geometría óptima del metamaterial acústico, logrando absorción
-            casi total (α ≈ 1) en 200–500 Hz con un diseño sub-longitud de onda
+            casi total (α ≈ 1) en 200 a 500 Hz con un diseño sub-longitud de onda
             (ratio λ/espesor ≈ 16,5 frente a ~2 convencional), validado con
             prototipos reales en laboratorio.
           - Simulación de un entorno real para validar el rendimiento del diseño (MATLAB, COMSOL y Python).
@@ -311,7 +311,7 @@ sections:
                 rockets](/pdf/paper-resources/Conferences/Tecniacustica/plensTEC2020.pdf).
         ats:
           normal: true
-          org: UPV · Agencia Espacial Europea (ESA) — IGIC
+          org: UPV · Agencia Espacial Europea (ESA) · IGIC
           bullets:
             - >-
               Diseñé y validé experimentalmente un metamaterial de mitigación de
@@ -653,9 +653,10 @@ sections:
         description: >-
           Biblioteca de acústica conforme a normas: metrología de niveles
           sonoros, psicoacústica, acústica de salas, edificación, ambiental y
-          subacuática, vibración, electroacústica y simulación de ondas — cada
-          método implementado desde la norma, con 1893 comprobaciones de
-          conformidad en CI sobre 111 dominios y 523 normas. Antes PyOctaveBand.
+          subacuática, vibración, electroacústica y simulación de ondas, cada
+          método implementado desde la norma, con 1897 comprobaciones de
+          conformidad en CI sobre 111 dominios, frente a 227 designaciones
+          normativas y 125 fuentes publicadas adicionales. Antes PyOctaveBand.
         metrics: [PyPI]
         links:
           - { label: GitHub, url: https://github.com/jmrplens/phonometry }
@@ -722,7 +723,7 @@ sections:
             url: https://i3m.csic.upv.es/,
           }
         location: Valencia, España
-        period: 2019–2023
+        period: 2019 - 2023
         summary: >-
           Antes de finalizar el doctorado, redirigí mi carrera hacia el desarrollo
           de software industrial, aplicando mi base en análisis de datos,
@@ -830,7 +831,7 @@ sections:
           normal: true
           org: Universidad de Alicante (EPS)
           summary: "Dos especializaciones: Ingeniería Acústica y Tecnología Audiovisual."
-      - degree: Ciclo Formativo de Grado Superior — Técnico Superior de Sonido
+      - degree: Técnico Superior de Sonido (Ciclo Formativo de Grado Superior)
         org:
           - {
               name: IES Luis García Berlanga,
@@ -841,7 +842,7 @@ sections:
         documents:
           - { label: Diploma (Sonido), url: /pdf/degree/CFGS_Sonido.pdf }
         ats: { normal: true, org: IES Luis García Berlanga }
-      - degree: Ciclo Formativo de Grado Medio — Técnico en Electrónica
+      - degree: Técnico en Electrónica (Ciclo Formativo de Grado Medio)
         org:
           - {
               name: IES Salesianos (San José Artesano),
