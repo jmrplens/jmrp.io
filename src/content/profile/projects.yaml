@@ -38,9 +38,12 @@ type: projects
 #   phonometry's figures had moved 550/58/367 → 613/60/378, and again by
 #   2026-09-11 (995/77/408, the figures its docs publish from 4.0.0rc1 on),
 #   by 2026-09-17 (1261/87/461), by 2026-09-25 (1447/97/477) and by
-#   2026-10-10 (1893/111/523) and by 2026-11-01 (1897 checks across 111
-#   domains, now against 227 normative designations and 125 further
-#   published sources). The checker
+#   2026-10-10 (1893/111/523). On 2026-10-29 phonometry stopped calling
+#   its 523 citation groups "standards" and publishes 227 normative
+#   designations and 125 further published sources instead
+#   (`counts.designations` and `counts.sources` in its
+#   docs/conformance.json), and by 2026-11-01 it ran 1897 checks across
+#   111 domains; this copy follows. The checker
 #   `node scripts/ci/check-software-drift.mjs` now exits 1 on a contradiction
 #   and runs in `pnpm verify` and in CI, so a stale copy fails the build
 #   instead of waiting for the next audit; read its report when it does.
