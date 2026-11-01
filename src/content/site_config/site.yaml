@@ -101,6 +101,13 @@ person:
     # the same account. Linked by DID so the URL survives a handle change
     # (checked 2026-10-26).
     - "https://tangled.org/did:plc:jder4wkjnwh6mzhrx4n5ebti"
+    # Ko-fi profile. It is also a funding route (a DonateAction from
+    # about.yaml `funding`), but unlike GitHub Sponsors, which is a feature of
+    # the github.com/jmrplens account already listed, it is an account and a
+    # page of its own: titled with his full name and linking back to jmrp.io,
+    # GitHub, Mastodon and LinkedIn (checked 2026-11-01). That makes it an
+    # identity page, which is what `sameAs` lists.
+    - "https://ko-fi.com/jmrplens"
   # Expertise topics emitted as the canonical Person `knowsAbout`, site-wide, by
   # BaseHead.astro. Merged from the former site-config list + about.yaml's
   # embedded-firmware specifics so a single list covers the whole entity —

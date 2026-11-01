@@ -374,11 +374,11 @@ const websiteSchema = {
     // the graph — the disclosure line on every AuthorCard already links there.
     // KEEP-IN-SYNC: scripts/ci/build-identity.mjs.
     publishingPrinciples: new URL("/about/#editorial", getSiteUrl()).href,
-    // Funding pages as ACTIONS, not as identities. They are deliberately
-    // absent from `sameAs`: that list exists so a consumer can resolve two
-    // URLs to one entity, and a funding page is somewhere to act, not an
-    // identity. See the longer note in build-identity.mjs, including why
-    // `recipient` is named.
+    // Funding pages as ACTIONS. As a funding route a page is somewhere to
+    // act, not an identity; the Ko-fi page is also his profile there, so
+    // site.yaml lists it in `sameAs` as well, while GitHub Sponsors (a
+    // feature of the github.com/jmrplens account) stays out. See the longer
+    // note in build-identity.mjs, including why `recipient` is named.
     // KEEP-IN-SYNC: scripts/ci/build-identity.mjs.
     ...(donateActions.length > 0 && { potentialAction: donateActions }),
     image: {

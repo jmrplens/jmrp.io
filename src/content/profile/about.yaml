@@ -27,8 +27,10 @@ person:
   email: mail@jmrp.io
 
   # Funding pages → `potentialAction`, one DonateAction each, and the links
-  # of the support section on /projects/, in this order. Not `sameAs`
-  # entries: these are places to act, not identities to resolve.
+  # of the support section on /projects/, in this order. As funding routes
+  # they are places to act, not identities to resolve. The Ko-fi page is also
+  # his profile there, so site.yaml lists it in `sameAs` too; GitHub Sponsors
+  # is a feature of the GitHub account `sameAs` already has.
   #
   # `label` is the action's `name`, emitted as language-tagged literals like
   # jobTitle/description above, and the visible text of the link. The first

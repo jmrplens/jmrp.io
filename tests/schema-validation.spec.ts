@@ -538,15 +538,12 @@ test.describe("ProfilePage schema on homepage", () => {
     // does not want them referenced anywhere on the site — an audit tool
     // suggesting "add the profiles we found" is not grounds to publish them.
     //
-    // Funding pages are not identities either: they are `DonateAction`s under
-    // `potentialAction` (see `funding` in content.config.ts), so an audit
-    // suggesting them as `sameAs` profiles is just as wrong.
-    const NOT_IN_SAME_AS = [
-      "x.com",
-      "twitter.com",
-      "github.com/sponsors",
-      "ko-fi.com",
-    ];
+    // GitHub Sponsors is a funding route, a `DonateAction` under
+    // `potentialAction` (see `funding` in content.config.ts), and a feature of
+    // the github.com/jmrplens profile `sameAs` already has, so it does not
+    // belong in `sameAs`. Ko-fi is both: a DonateAction, and his profile there
+    // (in site.yaml `sameAs` since 2026-11-01).
+    const NOT_IN_SAME_AS = ["x.com", "twitter.com", "github.com/sponsors"];
     for (const host of NOT_IN_SAME_AS) {
       expect((person.sameAs as string[]).some((u) => u.includes(host))).toBe(
         false,

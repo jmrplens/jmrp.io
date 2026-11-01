@@ -403,11 +403,13 @@ function buildIdentityDocument() {
     // Where to fund the work (GitHub Sponsors and Ko-fi today), one action per
     // page rather than identities.
     //
-    // These are NOT in `sameAs` on purpose: that list lets a consumer resolve
-    // two URLs to one entity, and a funding page is not an identity. For the
-    // GitHub one it would not even add evidence: github.com/jmrplens is
-    // already there with a signed ownership proof. `DonateAction` is the
-    // property schema.org has for "you can donate here".
+    // As funding routes these are actions, not identities: `sameAs` lets a
+    // consumer resolve two URLs to one entity. GitHub Sponsors stays out of
+    // it, since it would not even add evidence: github.com/jmrplens is already
+    // there with a signed ownership proof. The Ko-fi page is a profile of its
+    // own (his name, links back to jmrp.io), so site.yaml lists it in
+    // `sameAs` too. `DonateAction` is the property schema.org has for "you
+    // can donate here".
     //
     // `recipient` names who receives the donation, and it is not optional
     // politeness. schema.org defines `potentialAction` as "an idealized action
