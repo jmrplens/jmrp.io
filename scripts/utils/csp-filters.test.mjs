@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 
 import {
+  documentLabel,
   getDiscardReason,
   getNotificationKey,
   getNotifySuppressReason,
@@ -58,11 +59,11 @@ test("isBotUserAgent: suffix regex avoids false positives on words merely contai
   // must not match. None of these strings contains a SPECIFIC_BOT_UA_TOKENS
   // entry or trips the Chrome-less AppleWebKit/537.36 heuristic either.
   const nonBotUserAgents = [
-    // "robot" — vacuum/appliance UA that happens to mention the device kind.
+    // "robot": vacuum/appliance UA that happens to mention the device kind.
     "Mozilla/5.0 (compatible; RobotVacuum/3.2; +https://example.com/robotvacuum)",
-    // "automotive" — real in-car infotainment browser UA (Chrome/ present).
+    // "automotive": real in-car infotainment browser UA (Chrome/ present).
     "Mozilla/5.0 (Linux; automotive; InfotainmentOS 4.0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36",
-    // "Robotics" — capitalized, embeds "bot" with no boundary before it.
+    // "Robotics": capitalized, embeds "bot" with no boundary before it.
     "Mozilla/5.0 (compatible; RoboticsControlPanel/2.1; +https://example.com/robotics)",
   ];
   for (const ua of nonBotUserAgents) {
@@ -112,8 +113,8 @@ test("isCrawlerNetwork: Google/Yandex crawler ranges vs everything else", () => 
   const userIps = [
     "83.49.10.109", // Spanish residential ISP (real visitor)
     "79.116.156.140",
-    "167.71.96.241", // DigitalOcean — a scanner, but NOT a crawler we trust
-    "34.72.10.1", // Google *Cloud* customer VM — deliberately excluded
+    "167.71.96.241", // DigitalOcean: a scanner, but NOT a crawler we trust
+    "34.72.10.1", // Google *Cloud* customer VM, deliberately excluded
     "35.184.0.1",
     "2806:103e:19:a0d7:e808:225f:d15b:d429", // Mexican residential IPv6
     "not-an-ip",
@@ -357,4 +358,113 @@ test("isInjectedThirdPartyResource: translator hosts", () => {
       `expected translator host to be detected: ${host}`,
     );
   }
+});
+
+/**
+ * Builds a wrapped legacy report the way `report-uri` delivers it.
+ *
+ * @param {string} directive - The effective directive.
+ * @param {string} blocked - The blocked-uri.
+ * @param {string} [documentUri] - The page that sent the report.
+ * @returns {Record<string, unknown>}
+ */
+function wrapped(directive, blocked, documentUri) {
+  return {
+    "csp-report": {
+      "effective-directive": directive,
+      "blocked-uri": blocked,
+      ...(documentUri && { "document-uri": documentUri }),
+    },
+  };
+}
+
+test("getDiscardReason: a font or video of the reporting site is notified", () => {
+  // kleidos.dev reports here with font-src 'self' and media-src 'self': its
+  // own resources failing to load are real, not injected.
+  const own = [
+    wrapped(
+      "font-src",
+      "https://kleidos.dev/_astro/inter.woff2",
+      "https://kleidos.dev/guide/",
+    ),
+    wrapped(
+      "media-src",
+      "https://kleidos.dev/demo.mp4",
+      "https://kleidos.dev/",
+    ),
+    wrapped(
+      "media-src",
+      "https://cdn.kleidos.dev/demo.webm",
+      "https://www.kleidos.dev/",
+    ),
+    wrapped(
+      "font-src",
+      "https://docs.jmrp.io/_astro/font.woff2",
+      "https://docs.jmrp.io/libgen-mcp/",
+    ),
+    // jmrp.io stays own on every report, whatever the page.
+    wrapped(
+      "font-src",
+      "https://jmrp.io/fonts/x.woff2",
+      "https://kleidos.dev/",
+    ),
+    wrapped("font-src", "https://cdn.jmrp.io/x.woff2", "https://jmrp.io/blog/"),
+  ];
+  for (const report of own) {
+    assert.equal(
+      getDiscardReason(report),
+      null,
+      `expected own resource to be kept: ${JSON.stringify(report)}`,
+    );
+  }
+});
+
+test("getDiscardReason: a font or video from another site is still discarded", () => {
+  const injected = [
+    wrapped(
+      "font-src",
+      "https://fonts.example.net/x.woff2",
+      "https://kleidos.dev/guide/",
+    ),
+    wrapped(
+      "media-src",
+      "https://cdn.example.org/ad.mp4",
+      "https://kleidos.dev/",
+    ),
+    wrapped(
+      "font-src",
+      "https://fonts.example.net/x.woff2",
+      "https://jmrp.io/",
+    ),
+    wrapped(
+      "font-src",
+      "https://kleidos.dev.example.net/x.woff2",
+      "https://kleidos.dev/",
+    ),
+    wrapped("font-src", "data", "https://kleidos.dev/"),
+    // No document-uri: only jmrp.io can be recognized as own.
+    wrapped("font-src", "https://kleidos.dev/x.woff2"),
+  ];
+  for (const report of injected) {
+    assert.equal(
+      getDiscardReason(report),
+      "injected-resource",
+      `expected injected resource: ${JSON.stringify(report)}`,
+    );
+  }
+});
+
+test("documentLabel: the path for jmrp.io, host and path elsewhere", () => {
+  assert.equal(documentLabel("https://jmrp.io/blog/x/?q=1"), "/blog/x/");
+  assert.equal(
+    documentLabel("https://kleidos.dev/guide/"),
+    "kleidos.dev/guide/",
+  );
+  assert.equal(
+    documentLabel("https://docs.jmrp.io/libgen-mcp/"),
+    "docs.jmrp.io/libgen-mcp/",
+  );
+  assert.equal(documentLabel(""), "N/A");
+  assert.equal(documentLabel(42), "N/A");
+  assert.equal(documentLabel("not a url"), "not a url");
 });

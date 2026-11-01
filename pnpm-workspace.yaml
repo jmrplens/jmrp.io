@@ -14,13 +14,21 @@ allowBuilds:
   puppeteer: true
   sharp: true
   sonar-scanner: true
+  # koffi (via vercel > @vercel/cli-auth) ships its native binaries in the
+  # package (lib/native) and loads without its install script, which would
+  # only rebuild them. Denied explicitly so pnpm 12 does not fail the install.
+  koffi: false
 
 # Migrated from package.json#pnpm (pnpm 11 no longer reads that field).
 overrides:
   "form-data": ">=4.0.0"
   "qs": ">=6.14.2"
   "tmp": ">=0.2.5"
-  "glob": "^13.0.6"
+  # A floor, not a pin: every glob older than 13.0.6 moves to it, while the
+  # direct dependency follows its own range (14 since 2026-11-01). Pinning
+  # all copies would push glob 14's matching changes onto @vercel/nft and
+  # @sentry/bundler-plugins, which were written against 13.
+  "glob@<13.0.6": "^13.0.6"
   "rimraf": ">=6.1.2"
   "uuid": ">=9.0.0"
   "whatwg-encoding": ">=3.1.1"
@@ -46,7 +54,7 @@ overrides:
   # which asks for api ^1.9.1. Drop once core accepts 1.10 or sentry moves to
   # core 3. Added 2026-10-24.
   "@opentelemetry/api": "~1.9.1"
-  "eslint": "^10.13.0"
+  "eslint": "^10.14.0"
   "vite": "^8.3.5"
   "@astrojs/markdown-remark>smol-toml": "^1.8.0"
   "@astrojs/yaml2ts>yaml": "^2.8.3"
@@ -55,6 +63,10 @@ overrides:
   "@rollup/pluginutils@^5>picomatch": "^4.0.4"
   "@vercel/backends>srvx": "^0.11.13"
   "@vercel/blob>undici": "^6.28.0"
+  # vercel 65.9 moved the CLI into @vercel/cli-support, which pins the same
+  # undici 5.29.0 and smol-toml 1.5.2 the vercel> entries below lift.
+  "@vercel/cli-support>smol-toml": "^1.9.1"
+  "@vercel/cli-support>undici": "^6.29.1"
   # vercel 59.25 pulls @vercel/container, whose tar (7.5.11) and smol-toml
   # (1.5.2) carry the same advisories the sibling overrides above already
   # floor for the other @vercel packages.

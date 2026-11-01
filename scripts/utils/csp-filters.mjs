@@ -10,10 +10,10 @@
  * violation matching one of these predicates is actionable. They are filtered
  * at two different depths:
  *
- * - `getDiscardReason()` — dropped outright, never logged. Reserved for reports
+ * - `getDiscardReason()`: dropped outright, never logged. Reserved for reports
  *   that cannot describe the site's own behavior at all (extension protocols,
  *   browser-internal URIs, the documented `prefetch-src` fallback).
- * - `getNotifySuppressReason()` — written to `logs/csp-violations.log` but kept
+ * - `getNotifySuppressReason()`: written to `logs/csp-violations.log` but kept
  *   off Telegram. Reserved for crawler traffic, whose classification is an
  *   inference and therefore worth keeping the evidence for, and for resource
  *   loads the SRI listener verified were not an integrity mismatch.
@@ -21,7 +21,10 @@
  * See docs/CSP_REPORTER.md.
  */
 
-/** Matches jmrp.io and any of its subdomains (e.g. cdn.jmrp.io). */
+import { isIP } from "node:net";
+
+/** Matches jmrp.io and any of its subdomains (e.g. cdn.jmrp.io): the
+ *  reporter's own site, which counts as own on every report. */
 const OWN_ORIGIN = /(^|\.)jmrp\.io$/i;
 
 /** Browser/extension origins the site never references but that are injected
@@ -45,7 +48,7 @@ const AV_EXTENSION_HOSTS =
  *
  * Crawler names put the keyword at the *end* of a token ("Googlebot",
  * "YandexBot", "YisouSpider", "bingbot"), so the keyword is preceded by a
- * letter and a leading `\b` never matches — the previous `\b(bot|…)\b` regex
+ * letter and a leading `\b` never matches; the previous `\b(bot|…)\b` regex
  * silently let every one of those through. Evidence: over 49 days of the
  * production log, 167 reports came from `YandexBot`/`YandexRenderResourcesBot`
  * and were all classified as real traffic.
@@ -73,7 +76,7 @@ const GENERIC_BOT_UA_REGEX = new RegExp(
 /**
  * Specific bot/tool user-agent identifiers matched with plain `String.includes`.
  * Needed for names that embed a generic keyword without a word boundary
- * before it (e.g. "GPTBot", "AhrefsBot", "ByteSpider" — the "B"/"S" is
+ * before it (e.g. "GPTBot", "AhrefsBot", "ByteSpider": the "B"/"S" is
  * preceded by a letter, not a boundary, so the generic regex above can't see
  * it) as well as identifiers that aren't generic keywords at all.
  */
@@ -122,7 +125,7 @@ const SPECIFIC_BOT_UA_TOKENS = [
  * {@link isBotUserAgent} cannot see them. In the production log, 60 of the 490
  * surviving reports (12%) were `script-src-elem` `'inline'` violations sent
  * from 21 distinct addresses in 64.233.172.0/24, 74.125.209-210.0/24 and
- * 66.249.88.0/24 — all Google — under two obviously synthetic UAs: a frozen
+ * 66.249.88.0/24, all Google, under two obviously synthetic UAs: a frozen
  * `Chrome/121` on `X11; Linux x86_64` (Google's rendering service) and
  * `Android 4.3; SM-N900T` (the Google Web Light transcoder). One further
  * report arrived from Yandex's 2a02:6b8::/29 carrying an iPhone UA.
@@ -141,7 +144,7 @@ const SPECIFIC_BOT_UA_TOKENS = [
  * (verified 2026-07).
  */
 const CRAWLER_NETWORKS = [
-  // Google — Googlebot, Google Web Light, rich-results/inspection fetchers.
+  // Google: Googlebot, Google Web Light, rich-results/inspection fetchers.
   "66.249.64.0/19",
   "64.233.160.0/19",
   "74.125.0.0/16",
@@ -149,7 +152,7 @@ const CRAWLER_NETWORKS = [
   "209.85.128.0/17",
   "216.239.32.0/19",
   "2001:4860:4801::/40",
-  // Yandex — YandexBot and the render-resources fetchers.
+  // Yandex: YandexBot and the render-resources fetchers.
   "5.45.192.0/18",
   "5.255.192.0/18",
   "37.9.64.0/18",
@@ -249,6 +252,41 @@ function hostOf(uri) {
   } catch {
     return "";
   }
+}
+
+/**
+ * The site a hostname belongs to, approximated as its last two labels
+ * (docs.jmrp.io and jmrp.io give jmrp.io, www.kleidos.dev gives kleidos.dev).
+ * IP literals are their own site.
+ *
+ * Every site whose policy reports here sits on a two-label domain. Under a
+ * public suffix with more labels (co.uk, github.io) the approximation counts
+ * more hosts as own, which costs a notification, never a silent drop.
+ *
+ * @param {string} host - A hostname, as `URL.hostname` returns it.
+ * @returns {string}
+ */
+function siteOf(host) {
+  const name = host.toLowerCase();
+  if (isIP(name) || name.startsWith("[")) return name;
+  return name.split(".").slice(-2).join(".");
+}
+
+/**
+ * Whether a blocked host belongs to the site the report came from: jmrp.io or
+ * one of its subdomains, or a host on the same site as the report's own
+ * `document-uri`. Other sites point their `report-uri` here too (docs.jmrp.io,
+ * kleidos.dev), so the document is what says whose resource it was.
+ *
+ * @param {string} host - The blocked resource's hostname.
+ * @param {unknown} documentUri - The report's `document-uri`.
+ * @returns {boolean}
+ */
+function isOwnHost(host, documentUri) {
+  if (OWN_ORIGIN.test(host)) return true;
+  const documentHost =
+    typeof documentUri === "string" ? hostOf(documentUri) : "";
+  return Boolean(documentHost) && siteOf(host) === siteOf(documentHost);
 }
 
 /**
@@ -462,25 +500,29 @@ export function isUnverifiedSriReport(r) {
 }
 
 /**
- * Whether a font-src/media-src violation is an injected resource (data: URI or a
- * remote non-jmrp.io origin). The site restricts both directives to 'self'.
+ * Whether a font-src/media-src violation is an injected resource: a data: URI,
+ * or a remote origin on neither jmrp.io nor the reporting page's own site
+ * (see {@link isOwnHost}). Every site reporting here restricts both
+ * directives to 'self' (docs.jmrp.io also allows data: fonts).
  *
  * @param {string} dir - The effective/violated directive
  * @param {string} blocked - The blocked-uri value
+ * @param {unknown} documentUri - The report's document-uri
  * @returns {boolean}
  */
-function isInjectedFontOrMedia(dir, blocked) {
+function isInjectedFontOrMedia(dir, blocked, documentUri) {
   if (dir !== "font-src" && dir !== "media-src") return false;
   if (blocked === "data" || blocked.startsWith("data:")) return true;
   if (!/^https?:/i.test(blocked)) return false;
   const host = hostOf(blocked);
-  return Boolean(host) && !OWN_ORIGIN.test(host);
+  return Boolean(host) && !isOwnHost(host, documentUri);
 }
 
 /**
  * Detects third-party resources injected by extensions or the browser's built-in
- * translator. The site's CSP restricts font-src and media-src to 'self', so any
- * data: URI or remote (non-jmrp.io) font/media is necessarily injected. Also
+ * translator. Every reporting site restricts font-src and media-src to 'self',
+ * so a data: URI or a remote font/media from another site is necessarily
+ * injected; one from the reporting page's own site is a real failure. Also
  * matches known translator/extension origins (Google/Yandex translate, etc.).
  *
  * @param {Record<string, unknown>} r - The csp-report object
@@ -491,9 +533,9 @@ export function isInjectedThirdPartyResource(r) {
   const blocked = typeof r["blocked-uri"] === "string" ? r["blocked-uri"] : "";
   const source = typeof r["source-file"] === "string" ? r["source-file"] : "";
 
-  if (isInjectedFontOrMedia(dir, blocked)) return true;
+  if (isInjectedFontOrMedia(dir, blocked, r["document-uri"])) return true;
 
-  // connect-src to a data: URI — the site never opens data: connections.
+  // connect-src to a data: URI: the site never opens data: connections.
   if (
     dir === "connect-src" &&
     (blocked === "data" || blocked.startsWith("data:"))
@@ -514,9 +556,14 @@ export function isInjectedThirdPartyResource(r) {
  * Detects injected inline styles. The site emits styles only via nonce'd <style>
  * elements or utility classes (enforced by the build pipeline and
  * security.spec.ts), so any style-src-elem/attr 'inline' violation is injected by
- * an extension (translators, dark-mode, antivirus, …).
+ * an extension (translators, dark-mode, antivirus, …). The other reporting
+ * sites hold the same invariant without this repository enforcing it:
+ * docs.jmrp.io allows 'unsafe-inline' styles, and kleidos.dev
+ * (`style-src 'self'`) served no inline style on any of its 16 pages on
+ * 2026-11-01. An inline style added there later would be dropped here, so
+ * its guard belongs in that site's build.
  *
- * NOTE: inline *script* violations are deliberately NOT filtered — an inline-script
+ * NOTE: inline *script* violations are deliberately NOT filtered: an inline-script
  * violation may indicate a real XSS and must always be surfaced.
  *
  * @param {Record<string, unknown>} r - The csp-report object
@@ -536,11 +583,12 @@ export function isInjectedInlineStyle(r) {
  * Runs the *discard* filter chain: reports matching it are dropped outright and
  * never reach the log file or Telegram.
  *
- * Only categories that cannot describe the site's own behavior live here — a
+ * Only categories that cannot describe the site's own behavior live here: a
  * violation whose source is an extension protocol, a browser-internal URI or
- * the documented `prefetch-src` fallback carries no information about jmrp.io.
+ * the documented `prefetch-src` fallback carries no information about the
+ * reporting site.
  * Everything else (including crawlers) is logged and merely filtered at the
- * notification layer — see {@link getNotifySuppressReason}.
+ * notification layer (see {@link getNotifySuppressReason}).
  *
  * @param {Record<string, unknown>} report - The raw report body (may or may not
  *   be wrapped in a "csp-report" key).
@@ -570,7 +618,7 @@ export function getDiscardReason(report) {
  * inline-script violations from Google's rendering netblocks (per-request nonce
  * vs. independently cached HTML). Neither is reproducible in a browser, and
  * both would also have to surface in `pnpm verify` / `security.spec.ts` to be
- * real, so they are noise — but they stay in `logs/csp-violations.log` so the
+ * real, so they are noise, but they stay in `logs/csp-violations.log` so the
  * evidence survives if that assumption ever needs re-checking.
  *
  * Failed loads of integrity-pinned resources are the other silent class: the
@@ -599,8 +647,31 @@ export function getNotifySuppressReason(report, ua, ip) {
 }
 
 /**
+ * How a report's page is named in a notification or a replay breakdown: the
+ * path alone for jmrp.io, host and path for any other site that reports here
+ * (docs.jmrp.io, kleidos.dev), so a page on one cannot pass for the same path
+ * on another. An unparsable value is returned as it came, an empty one as
+ * "N/A".
+ *
+ * @param {unknown} documentUri - The report's `document-uri`.
+ * @returns {string}
+ */
+export function documentLabel(documentUri) {
+  const raw = typeof documentUri === "string" ? documentUri : "";
+  if (!raw) return "N/A";
+  try {
+    const doc = new URL(raw);
+    return doc.host === "jmrp.io"
+      ? doc.pathname || raw
+      : `${doc.host}${doc.pathname}`;
+  } catch {
+    return raw;
+  }
+}
+
+/**
  * Rate-limit key for Telegram notifications: the violation signature, i.e.
- * *what* broke — the directive plus the blocked resource.
+ * *what* broke: the directive plus the blocked resource.
  *
  * Deliberately excludes both the client IP and the document URI. Keying on the
  * IP meant one crawler fleet rotating through 21 addresses produced 21 messages
