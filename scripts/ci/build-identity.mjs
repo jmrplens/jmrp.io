@@ -75,6 +75,11 @@ import { fileURLToPath } from "node:url";
 
 import { load as loadYaml } from "js-yaml";
 
+import {
+  educationProperties,
+  localizedValues,
+  membershipRoles,
+} from "../utils/person-schema.mjs";
 import { softwareId } from "../utils/software-id.mjs";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
@@ -108,119 +113,6 @@ const IMAGE = {
 const wikidataEntityUri = (qid) => `http://www.wikidata.org/entity/${qid}`;
 
 /**
- * The schools, keyed as `education[].school` in profile/about.yaml refers to
- * them. Mirrors `SCHOOLS` in src/utils/person.ts (a .astro/.ts module cannot
- * be imported here); the schema-validation spec compares this document
- * against the node BaseHead renders, so drift fails CI.
- */
-const SCHOOLS = {
-  ua: {
-    "@type": "EducationalOrganization",
-    // Identified by the Wikidata entity URI, the same convention `knowsAbout`
-    // uses below, not an anonymous node carrying only a `sameAs` to the wiki
-    // ARTICLE. Mirrors `SCHOOLS` in src/utils/person.ts.
-    "@id": wikidataEntityUri("Q2037040"),
-    name: "University of Alicante",
-    alternateName: "UA",
-    url: "https://www.ua.es/",
-    sameAs: "https://www.wikidata.org/wiki/Q2037040",
-  },
-  upv: {
-    "@type": "EducationalOrganization",
-    "@id": wikidataEntityUri("Q2003976"),
-    name: "Universitat Politècnica de València",
-    alternateName: "UPV",
-    url: "https://www.upv.es/",
-    sameAs: "https://www.wikidata.org/wiki/Q2003976",
-  },
-  "ies-berlanga": {
-    "@type": "EducationalOrganization",
-    name: "IES Luis García Berlanga",
-    url: "https://ies-berlanga.info/index.php/es/",
-  },
-  "salesianos-elche": {
-    "@type": "EducationalOrganization",
-    name: "IES Salesianos (San José Artesano)",
-    url: "https://elche.salesianos.edu/colegio/san-jose-artesano/",
-  },
-};
-
-/** The European Qualifications Framework levels page. Mirrors person.ts. */
-const EQF_LEVELS = "https://europass.europa.eu/en/description-eight-eqf-levels";
-
-/**
- * The studies as `alumniOf` (one dated Role each) and `hasCredential` (the
- * finished ones). Mirrors `educationProperties` in src/utils/person.ts, where
- * the reasoning lives.
- *
- * @param education - `person.education` from profile/about.yaml.
- * @returns `{ alumniOf, hasCredential }`.
- */
-const educationProperties = (education) => {
-  const school = (key) => {
-    if (!(key in SCHOOLS)) {
-      throw new Error(
-        `profile/about.yaml education: unknown school "${key}"; add it to SCHOOLS in src/utils/person.ts and here`,
-      );
-    }
-    return SCHOOLS[key];
-  };
-  const alumniOf = education.map((entry) => ({
-    "@type": "OrganizationRole",
-    alumniOf: school(entry.school),
-    roleName: localizedValues(entry.name),
-    ...(entry.startDate && { startDate: entry.startDate }),
-    endDate: entry.endDate,
-  }));
-  const hasCredential = education.flatMap((entry) => {
-    if (!entry.credential) return [];
-    const where = school(entry.school);
-    return [
-      {
-        "@type": "EducationalOccupationalCredential",
-        name: localizedValues(entry.credential.name ?? entry.name),
-        credentialCategory: entry.credential.category,
-        educationalLevel: {
-          "@type": "DefinedTerm",
-          name: `EQF level ${entry.credential.eqfLevel}`,
-          termCode: String(entry.credential.eqfLevel),
-          inDefinedTermSet: EQF_LEVELS,
-        },
-        dateCreated: entry.endDate,
-        ...("@id" in where && { recognizedBy: where }),
-      },
-    ];
-  });
-  return { alumniOf, hasCredential };
-};
-
-/**
- * The memberships as `memberOf` Roles. Mirrors `membershipRoles` in
- * src/utils/person.ts.
- *
- * @param memberships - `person.memberships` from profile/about.yaml.
- * @returns The `memberOf` list.
- */
-const membershipRoles = (memberships) =>
-  memberships.map((entry) => ({
-    "@type": "OrganizationRole",
-    memberOf: {
-      "@type": "Organization",
-      name: entry.organization.name,
-      ...(entry.organization.alternateName && {
-        alternateName: entry.organization.alternateName,
-      }),
-      ...(entry.organization.url && { url: entry.organization.url }),
-      ...(entry.organization.description && {
-        description: localizedValues(entry.organization.description),
-      }),
-    },
-    roleName: localizedValues(entry.roleName),
-    startDate: entry.startDate,
-    ...(entry.endDate && { endDate: entry.endDate }),
-  }));
-
-/**
  * Whether a URL points at ORCID, matched on the parsed hostname.
  *
  * A substring test (`url.includes("orcid.org")`) would also accept
@@ -250,24 +142,6 @@ const isOrcidUrl = (value) => {
  */
 const readYaml = (relativePath) =>
   loadYaml(readFileSync(join(ROOT, relativePath), "utf8"));
-
-/**
- * Turns an `{ en, es }` YAML pair into JSON-LD language-tagged values.
- *
- * English first so a consumer that ignores language tags and naively takes the
- * first entry still gets the same string this document published when it was
- * English-only — the shape changes, the default answer does not.
- *
- * Mirrors `localizedValues` in BaseHead.astro. The schema-validation spec
- * compares the two outputs, so a change here that is not mirrored fails CI.
- *
- * @param pair - Object with `en` and `es` strings.
- * @returns Array of language-tagged value objects.
- */
-const localizedValues = (pair) => [
-  { "@value": pair.en, "@language": "en" },
-  { "@value": pair.es, "@language": "es" },
-];
 
 /**
  * Builds the canonical Person node.
