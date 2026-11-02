@@ -63,7 +63,7 @@ test("a released project keeps every field, in the published order", () => {
     "keywords",
     "sameAs",
   ]);
-  assert.equal(record.licenseUrl, "https://opensource.org/licenses/MIT");
+  assert.equal(record.licenseUrl, "https://opensource.org/license/MIT");
   assert.deepEqual(record.sameAs, [
     "https://github.com/jmrplens/example",
     "https://www.npmjs.com/package/example",

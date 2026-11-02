@@ -183,10 +183,6 @@ projects:
     applicationSubCategory: Scientific/Engineering
     language: Python
     license: MIT
-    # Its site moved to the URL OSI now serves (/license/MIT; the /licenses/
-    # form in license-urls.json answers 301 to it) on 2026-11-02; the other
-    # MIT sites still state the old one, so the table keeps it for them.
-    licenseUrl: https://opensource.org/license/MIT
     repo: https://github.com/jmrplens/phonometry
     docs: https://docs.jmrp.io/phonometry/
     kicker: Acoustics · DSP
