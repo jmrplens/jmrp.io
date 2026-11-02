@@ -878,7 +878,9 @@ const ProjectEntry = z.object({
    * The license URL the project's own site states, when it is not the one
    * `src/data/license-urls.json` maps `license` to. The shared `#software`
    * node must carry one license value, so the site's form wins for that
-   * project; the table stays the default for the rest.
+   * project; the table stays the default for the rest. No project sets it
+   * since 2026-11-02, when every site moved to OSI's /license/<id> form
+   * (phonometry first, which is what this field was added for).
    */
   licenseUrl: z.url().optional(),
   /**
