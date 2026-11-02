@@ -875,6 +875,13 @@ const ProjectEntry = z.object({
    */
   license: z.string().optional(),
   /**
+   * The license URL the project's own site states, when it is not the one
+   * `src/data/license-urls.json` maps `license` to. The shared `#software`
+   * node must carry one license value, so the site's form wins for that
+   * project; the table stays the default for the rest.
+   */
+  licenseUrl: z.url().optional(),
+  /**
    * Public repository URL. Required for `active` and `archived`; absent for
    * `upcoming` while the repository is private (a link to it would be a 404
    * for every reader).
