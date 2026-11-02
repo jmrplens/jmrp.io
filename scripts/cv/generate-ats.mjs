@@ -112,11 +112,21 @@ function orgMarkdown(o) {
   return o.url ? `[${o.name}](${o.url})` : o.name;
 }
 
-/** Builds the LaTeX org line: orgs joined by ·, then a comma and the department. */
+/**
+ * Builds the LaTeX org line: orgs joined by ·, then an em dash (U+2014) and
+ * the department.
+ *
+ * An em dash on purpose, as in the extended profile's project headings (see
+ * projectMacro). Measured with Affinda's resume parser on 2026-11-02, same
+ * content, only the separators changed: with a comma, a middle dot or a bar
+ * here the extended CVs lose the PhD as an education entry (English) or split
+ * it in two (Spanish), and Affinda itself rewrites this separator to an em
+ * dash in its output. Re-measure before changing it.
+ */
 function orgLineLatex(item) {
   const orgs = (item.org ?? []).map(orgMarkdown).join(" · ");
   const full = item.department
-    ? `${orgs}, ${orgMarkdown(item.department)}`
+    ? `${orgs} \u{2014} ${orgMarkdown(item.department)}`
     : orgs;
   return markdownToLatex(full);
 }
@@ -250,6 +260,20 @@ function fmtMetric(metric, locale) {
   return `${escapeLatex(count)} ${count === "1" ? one : many}`;
 }
 
+/**
+ * The project-heading macro per profile, chosen by measurement, not taste.
+ * Affinda's resume parser (2026-11-02, same content, only the separators
+ * changed) read every education entry of the concise CVs with the stack in
+ * parentheses, and lost the English one's last entry with an em dash
+ * (U+2014). The extended CVs went the other way: the last project heading
+ * sits right before Education, and only the em dash there (with the one in
+ * the org line, see orgLineLatex) kept the PhD as an education entry in both
+ * languages; parentheses dropped it in English and split it in Spanish.
+ * Re-measure both profiles before changing either.
+ */
+const projectMacro = (profile) =>
+  profile === "extended" ? "cvprojectdash" : "cvproject";
+
 /** Renders a projects section body. */
 function renderProjects(items, profile, statsBySlug, locale) {
   return items
@@ -264,7 +288,7 @@ function renderProjects(items, profile, statsBySlug, locale) {
       const metrics = [...auto, ...(p.metrics ?? [])]
         .map((m) => fmtMetric(m, locale))
         .join(String.raw` \divider `);
-      let out = `\\cvproject{${name}}{${escapeLatex(p.tech ?? "")}}{${metrics}}\n`;
+      let out = `\\${projectMacro(profile)}{${name}}{${escapeLatex(p.tech ?? "")}}{${metrics}}\n`;
       // The concise profile takes the condensed description when the YAML
       // gives one (`ats.summary`), as it does for experience summaries.
       const description =

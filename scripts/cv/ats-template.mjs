@@ -164,10 +164,19 @@ export function documentPreamble({
 % Proyecto: {nombre}{stack}{métricas}. Métricas en su propia línea a la
 % izquierda (no \hfill a la derecha) para que la extracción ATS vea una sola columna.
 % Sin métricas no hay línea: antes quedaba un renglón vacío bajo el título.
-\newcommand{\cvproject}[3]{%
-  \textbf{#1} \textcolor{muted}{\small(#2)}\par
-  \if\relax\detokenize{#3}\relax\else{\small\textcolor{accent}{#3}}\par\fi
+% \cvproject pone la pila entre paréntesis (perfil conciso); \cvprojectdash la
+% separa con raya (perfil extendido). La diferencia es medida, no estética: ver
+% projectMacro en generate-ats.mjs.
+\newcommand{\cvprojectline}[2]{%
+  #1\par
+  \if\relax\detokenize{#2}\relax\else{\small\textcolor{accent}{#2}}\par\fi
   \vspace{1pt}
+}
+\newcommand{\cvproject}[3]{%
+  \cvprojectline{\textbf{#1} \textcolor{muted}{\small(#2)}}{#3}%
+}
+\newcommand{\cvprojectdash}[3]{%
+  \cvprojectline{\textbf{#1}\,\textcolor{muted}{\small\textemdash{} #2}}{#3}%
 }
 % Skill: {categoría}{items}
 \newcommand{\cvskill}[2]{\textbf{#1:} #2\par\vspace{2pt}}
