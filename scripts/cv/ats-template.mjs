@@ -37,8 +37,12 @@ export function documentPreamble({
   pdfKeywords,
   lineSpread = 1.02,
 }) {
+  // es-nolists keeps the standard bullet (U+2022) in Spanish lists. Without
+  // it babel-spanish draws a small square that has no character in the text
+  // layer, so a parser saw no boundary between items: Affinda read the 14
+  // publications of the extended Spanish CV as one (2026-11-02; 15 with it).
   const babelOptions =
-    babelLang === "spanish" ? "spanish,es-noindentfirst" : babelLang;
+    babelLang === "spanish" ? "spanish,es-noindentfirst,es-nolists" : babelLang;
   return String.raw`% =====================================================================
 %  CV de José Manuel Requena Plens, versión ATS
 %  GENERADO automáticamente desde src/content/cv/{es,en}.yaml.

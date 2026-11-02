@@ -131,10 +131,15 @@ function orgLineLatex(item) {
   return markdownToLatex(full);
 }
 
-/** Renders an `itemize` from an array of inline-markdown bullet strings. */
-function renderItemize(items) {
+/**
+ * Renders an `itemize` from an array of inline-markdown bullet strings, or of
+ * ready LaTeX strings with `{ latex: true }`.
+ */
+function renderItemize(items, { latex = false } = {}) {
   if (!items || items.length === 0) return "";
-  const bullets = items.map((it) => String.raw`  \item ${markdownToLatex(it)}`);
+  const bullets = items.map(
+    (it) => String.raw`  \item ${latex ? it : markdownToLatex(it)}`,
+  );
   return `\\begin{itemize}\n${bullets.join("\n")}\n\\end{itemize}\n`;
 }
 
@@ -179,12 +184,9 @@ function renderEducation(item, profile) {
     for (const note of item.notes ?? [])
       out += `${markdownToLatex(note)}\\par\n`;
     out += renderItemize(item.bullets);
-    if (item.documents?.length) {
-      const links = item.documents
-        .map((d) => markdownToLatex(`[${d.label}](${d.url})`))
-        .join(String.raw` \divider `);
-      out += `{\\footnotesize ${links}}\\par\n`;
-    }
+    // No line of `documents` links (diploma, academic record) here: Affinda
+    // took each "Diploma" label for a degree and invented education entries
+    // (2026-11-02). The /cv page still links them.
   } else {
     const summary = item.ats?.summary ?? item.summary;
     if (summary)
@@ -301,23 +303,25 @@ function renderProjects(items, profile, statsBySlug, locale) {
     .join("\n");
 }
 
-/** Renders a certificates section body (grouped, extended only). */
+/**
+ * Renders a certificates section body (grouped, extended only), one
+ * certificate per list item rather than a run-on paragraph, so each has its
+ * own boundary in the text layer.
+ */
 function renderCertificates(groups) {
   return groups
     .map((group) => {
-      const items = group.items
-        .map((c) => {
-          const name = c.url
-            ? markdownToLatex(`[${c.name}](${c.url})`)
-            : escapeLatex(c.name);
-          const meta = [c.school, c.hours]
-            .filter(Boolean)
-            .map((v) => escapeLatex(v))
-            .join(", ");
-          return meta ? `${name} (${meta})` : name;
-        })
-        .join(String.raw` \divider `);
-      return `\\cvsubhead{${escapeLatex(group.category)}}\n${items}\\par\\vspace{4pt}`;
+      const items = group.items.map((c) => {
+        const name = c.url
+          ? markdownToLatex(`[${c.name}](${c.url})`)
+          : escapeLatex(c.name);
+        const meta = [c.school, c.hours]
+          .filter(Boolean)
+          .map((v) => escapeLatex(v))
+          .join(", ");
+        return meta ? `${name} (${meta})` : name;
+      });
+      return `\\cvsubhead{${escapeLatex(group.category)}}\n${renderItemize(items, { latex: true })}\\vspace{2pt}`;
     })
     .join("\n");
 }
