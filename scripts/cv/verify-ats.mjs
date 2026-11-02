@@ -2,7 +2,7 @@
  * ATS compatibility check for the generated CV PDFs.
  *
  * Runs as part of `pnpm verify`. Extracts text from each generated ATS PDF with
- * `pdf-parse` (pure JS — works in CI without Python/poppler) and asserts the
+ * `pdf-parse` (pure JS, so it works in CI without Python/poppler) and asserts the
  * deterministic properties a real Applicant Tracking System relies on:
  *   - a real text layer (selectable text, not an image),
  *   - the candidate name on the first line,
@@ -18,7 +18,7 @@
  * every check above it. Inter's system build is OTF/CFF at 2048 units per em,
  * so the embedded font carries its own FontMatrix of 1/2048 instead of the
  * 1/1000 that CFF almost always uses. Poppler, MuPDF, pypdf and the pdf-parse
- * used here all honour it and extract the text perfectly — this file reported
+ * used here all honour it and extract the text perfectly; this file reported
  * "19/20 keywords, score 84" the whole time. Affinda's commercial resume
  * parser does not: it scales advances by the 1000 it assumes, drifts behind
  * the real glyph positions, and emits the drift as spaces. It read
@@ -26,7 +26,7 @@
  * of 76, and extracted ZERO work-experience entries from the concise EN CV.
  *
  * So there is no output-level assertion that can catch this locally: the local
- * text layer is correct. The check has to pin the cause instead — the sources
+ * text layer is correct. The check has to pin the cause instead: the sources
  * must resolve Inter from the vendored TrueType files, never from whatever
  * OTF the machine happens to have installed.
  *
@@ -203,7 +203,7 @@ function checkPdf(text, profile, locale) {
     );
   }
 
-  // ats-checker composite score — only meaningful for the English CVs.
+  // ats-checker composite score, only meaningful for the English CVs.
   const { score } = analyzeResume({
     resumeText: text,
     jobDescription: TARGET_JD,
@@ -252,7 +252,7 @@ function outlineFormat(file) {
 /**
  * Verifies one `\setmainfont`/`\newfontfamily` declaration.
  *
- * A family must be pinned to a vendored file — `Path` plus `Extension` — or
+ * A family must be pinned to a vendored file (`Path` plus `Extension`) or
  * LaTeX resolves it from the system font database, which is what silently
  * changed the shipped typeface once already. Each pinned face must also exist
  * on disk and carry glyf outlines: CFF is what made ATS parsers read the PDF
@@ -268,7 +268,7 @@ function checkFontFamily(texName, family, options) {
   const ext = /Extension\s*=\s*([^,\]\n]+)/u.exec(options)?.[1]?.trim();
   if (!dir || !ext) {
     return [
-      `${texName} — ${family} is not pinned to a vendored file ` +
+      `${texName}: ${family} is not pinned to a vendored file ` +
         `(no Path/Extension); it would resolve from the system font database`,
     ];
   }
@@ -276,13 +276,13 @@ function checkFontFamily(texName, family, options) {
   for (const [, suffix] of options.matchAll(/=\s*\*(-\w+)/gu)) {
     const resolved = path.resolve(GEN_DIR, dir, `${family}${suffix}${ext}`);
     if (!fs.existsSync(resolved)) {
-      failures.push(`${texName} — missing font file ${family}${suffix}${ext}`);
+      failures.push(`${texName}: missing font file ${family}${suffix}${ext}`);
       continue;
     }
     const format = outlineFormat(resolved);
     if (format !== "glyf") {
       failures.push(
-        `${texName} — ${family}${suffix}${ext} is ${format}, not glyf-flavoured TrueType`,
+        `${texName}: ${family}${suffix}${ext} is ${format}, not glyf-flavoured TrueType`,
       );
     }
   }
@@ -299,7 +299,7 @@ function checkFontPinning() {
   for (const { file } of TARGETS) {
     const tex = path.join(GEN_DIR, file.replace(/\.pdf$/u, ".tex"));
     if (!fs.existsSync(tex)) {
-      failures.push(`${path.basename(tex)} — generated source not found`);
+      failures.push(`${path.basename(tex)}: generated source not found`);
       continue;
     }
     const source = fs.readFileSync(tex, "utf8");
@@ -309,7 +309,7 @@ function checkFontPinning() {
       ),
     ];
     if (blocks.length === 0) {
-      failures.push(`${path.basename(tex)} — no font declarations found`);
+      failures.push(`${path.basename(tex)}: no font declarations found`);
       continue;
     }
     for (const [, family, options] of blocks) {
@@ -343,35 +343,63 @@ const DESIGN_MAX_PAGES = 3;
 async function checkDesignBudget() {
   // Each PDF has its own parser, so they are checked concurrently; the
   // failures keep DESIGN_TARGETS order.
-  const perFile = await Promise.all(DESIGN_TARGETS.map(checkDesignFile));
+  const perFile = await Promise.all(
+    DESIGN_TARGETS.map((file) => checkPageBudget(file, DESIGN_MAX_PAGES)),
+  );
+  return perFile.flat();
+}
+
+/** The concise ATS PDFs and the page budget they must not exceed. */
+const NORMAL_ATS_TARGETS = [
+  "CV_RequenaPlensJoseManuel_ENG_ATS.pdf",
+  "CV_RequenaPlensJoseManuel_SPA_ATS.pdf",
+];
+const NORMAL_ATS_MAX_PAGES = 2;
+
+/**
+ * Keeps the concise ATS CVs, the ones sent to portals and recruiters, at two
+ * pages. Both reached three on 2026-11-01 while every check stayed green, and
+ * it was noticed by eye: content added to the YAML lengthens them a line at a
+ * time. Trim the `ats` overrides in the YAML when this fails; do not raise
+ * the budget.
+ *
+ * @returns {Promise<string[]>} Failure messages, empty when within budget.
+ */
+async function checkNormalAtsBudget() {
+  const perFile = await Promise.all(
+    NORMAL_ATS_TARGETS.map((file) =>
+      checkPageBudget(file, NORMAL_ATS_MAX_PAGES),
+    ),
+  );
   return perFile.flat();
 }
 
 /**
- * The design-budget problems of one sidebar CV.
+ * The page-budget problems of one CV.
  *
  * @param {string} file - PDF file name under PDF_DIR.
+ * @param {number} maxPages - The most pages it may have.
  * @returns {Promise<string[]>} Its failures; empty when it passes.
  */
-async function checkDesignFile(file) {
+async function checkPageBudget(file, maxPages) {
   const full = path.join(PDF_DIR, file);
-  if (!fs.existsSync(full)) return [`${file} — file not found`];
+  if (!fs.existsSync(full)) return [`${file}: file not found`];
   const failures = [];
   const buffer = fs.readFileSync(full);
   const parser = new PDFParse({ data: new Uint8Array(buffer) });
   try {
     const { text, total } = await parser.getText();
     const pages = total ?? (text.match(/\f/gu)?.length ?? 0) + 1;
-    if (pages > DESIGN_MAX_PAGES) {
+    if (pages > maxPages) {
       failures.push(
-        `${file} — ${pages} pages exceeds the ${DESIGN_MAX_PAGES}-page budget (layout regression?)`,
+        `${file}: ${pages} pages exceeds the ${maxPages}-page budget (layout regression?)`,
       );
     }
     if (text.trim().split(/\s+/u).length < 300) {
-      failures.push(`${file} — text layer too small`);
+      failures.push(`${file}: text layer too small`);
     }
   } catch (error) {
-    failures.push(`${file} — extraction error: ${error.message}`);
+    failures.push(`${file}: extraction error: ${error.message}`);
   } finally {
     await parser.destroy();
   }
@@ -406,7 +434,7 @@ function reportGroup(label, failures, okNote) {
  */
 async function reportPdf({ file, profile, locale }) {
   if (!fs.existsSync(path.join(PDF_DIR, file))) {
-    console.log(`  ${c.red}✗${c.reset} ${file} — file not found`);
+    console.log(`  ${c.red}✗${c.reset} ${file}: file not found`);
     return 1;
   }
   let result;
@@ -414,7 +442,7 @@ async function reportPdf({ file, profile, locale }) {
     result = checkPdf(await extractText(file), profile, locale);
   } catch (error) {
     console.log(
-      `  ${c.red}✗${c.reset} ${file} — extraction error: ${error.message}`,
+      `  ${c.red}✗${c.reset} ${file}: extraction error: ${error.message}`,
     );
     return 1;
   }
@@ -442,6 +470,11 @@ async function main() {
     "design budget",
     await checkDesignBudget(),
     `both sidebar CVs within ${DESIGN_MAX_PAGES} pages`,
+  );
+  failed += reportGroup(
+    "concise ATS budget",
+    await checkNormalAtsBudget(),
+    `both concise ATS CVs within ${NORMAL_ATS_MAX_PAGES} pages`,
   );
   failed += reportGroup(
     "font pinning",

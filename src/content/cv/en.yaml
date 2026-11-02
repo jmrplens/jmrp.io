@@ -143,6 +143,27 @@ sections:
         ats:
           normal: true
           org: Power Electronics S.L. (Solar + Storage)
+          bullets:
+            - Reduced RTOS task stack usage by 30% to 50% on STM32 microcontrollers.
+            - >-
+              Optimized Modbus TCP request handling, cutting CPU usage under load
+              (40,000 req/s) from 80% to 17% with no dropped responses.
+            - >-
+              Redesigned embedded file-system access, cutting access times by over
+              50%.
+            - >-
+              Implemented a scheduled purge (daily/monthly) that safely clears
+              thousands of files, preventing storage exhaustion under continuous
+              operation.
+            - >-
+              Built and maintained industrial communications in C with hardware
+              abstraction layers (HAL): Modbus RTU/TCP, UART, I2C and SPI.
+            - >-
+              Automated the test suite: 50 to 80 unit tests per module (Ceedling,
+              mocks/fakes, thousands in total) reaching 100% line and branch
+              coverage, plus hundreds of on-hardware integration tests (pytest) for
+              TCP/FTP performance and FTP security, all in CI.
+            - Reviewed merge requests across a 12-person team, catching bugs before integration.
 
       - role: Predoctoral researcher
         org:
@@ -240,8 +261,8 @@ sections:
               the footprint of conventional diffusers, validated with MATLAB and
               COMSOL simulations.
             - >-
-              Manufactured and characterized prototypes; published results at
-              international conferences (Euronoise, Tecniacústica).
+              Manufactured and characterized prototypes; results published at
+              Euronoise and Tecniacústica.
             - >-
               Supervised a Master's thesis in Acoustic Engineering (UPV), from
               research design to defense.
@@ -649,6 +670,22 @@ sections:
             }
           - { label: Live, url: "https://mcp.jmrp.io/#gitlab" }
           - { label: Docs, url: https://docs.jmrp.io/gitlab-mcp-server/ }
+      - name: Kleidos
+        tech: C++ · ESP-IDF · Embedded security
+        icon: logos:c-plusplus
+        description: >-
+          Hardware password manager firmware for nine M5Stack and LilyGO ESP32
+          boards: credentials stay encrypted on the device (AES-256-CBC with
+          HMAC-SHA256, PBKDF2) and are typed over Bluetooth LE as a HID
+          keyboard after an on-device unlock, with no app and no cloud.
+        ats:
+          summary: >-
+            Password manager firmware for nine M5Stack and LilyGO ESP32 boards:
+            credentials encrypted on the device (AES-256-CBC, HMAC-SHA256,
+            PBKDF2) and typed over Bluetooth LE as a HID keyboard.
+        metrics: [In development]
+        links:
+          - { label: Site, url: https://kleidos.dev/ }
       - name: phonometry
         tech: Python · DSP · Acoustics
         icon: logos:python
@@ -660,6 +697,12 @@ sections:
           conformance checks across 111 domains, against 227 normative
           designations and 125 further published sources. Formerly
           PyOctaveBand.
+        ats:
+          summary: >-
+            Standards-conformant acoustics library: sound level metrology,
+            psychoacoustics, room, building and environmental acoustics and
+            vibration, with 1897 CI-enforced conformance checks across 111
+            domains.
         metrics: [PyPI]
         links:
           - { label: GitHub, url: https://github.com/jmrplens/phonometry }
@@ -672,6 +715,11 @@ sections:
           CrowdSec bouncer for MikroTik RouterOS: feeds the collaborative IPS/WAF
           CrowdSec decisions into the RouterOS firewall (address lists) through its
           API, blocking malicious IPs in real time.
+        ats:
+          summary: >-
+            CrowdSec bouncer for MikroTik RouterOS: feeds the collaborative IPS/WAF
+            CrowdSec decisions into the RouterOS firewall (address lists) through
+            its API, blocking malicious IPs in real time.
         metrics:
           - On the CrowdSec Hub
         links:
@@ -684,17 +732,6 @@ sections:
               url: https://app.crowdsec.net/hub/author/jmrplens/remediation-components/cs-routeros-bouncer,
             }
           - { label: Docs, url: https://docs.jmrp.io/cs-routeros-bouncer/ }
-      - name: Cloudflare-DNS-Updater
-        tech: Bash · DevOps
-        icon: logos:bash-icon
-        description: >-
-          Dynamic DNS client for Cloudflare (IPv4/IPv6) written in Bash, with a bats
-          test suite and coverage reporting.
-        links:
-          - {
-              label: GitHub,
-              url: https://github.com/jmrplens/Cloudflare-DNS-Updater,
-            }
       - name: TFG-TFM_EPS
         tech: LaTeX · Academic template
         icon: vscode-icons:file-type-tex
@@ -754,8 +791,7 @@ sections:
           org: Polytechnic University of Valencia (i3M / UMIL)
           summary: >-
             Research on acoustic metamaterials for medical imaging and ultrasound
-            beam control (programme not completed; redirected to industrial software
-            development).
+            beam control.
       - degree: Master's Degree in Acoustical Engineering
         org:
           - {

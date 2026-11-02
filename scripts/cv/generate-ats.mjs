@@ -7,11 +7,10 @@
  * Reads the single source of truth (`src/content/cv/{es,en}.yaml`) and emits the
  * ATS LaTeX (`cv_latex/generated/CV_..._{SPA,ENG}_ATS{,_EXT}.tex`) for two
  * profiles:
- *   - `normal`   — concise (recruiter/portal-friendly), pruned via the YAML
- *                  `ats` hints.
- *   - `extended` — exhaustive: every job, all skills, all certificates, full
- *                  education, plus a complete Publications section from
- *                  `papers.bib`.
+ *   - `normal`: concise (recruiter/portal-friendly), pruned via the YAML
+ *     `ats` hints, within two pages (verify-ats.mjs holds it there).
+ *   - `extended`: exhaustive, with every job, all skills, all certificates,
+ *     full education, plus a complete Publications section from `papers.bib`.
  *
  * Usage:
  *   node scripts/cv/generate-ats.mjs            # generate all 4 files
@@ -24,7 +23,7 @@
  * the website too, so it cannot hold the number either.
  *
  * Instead `CV_PHONE` in `.env` (git-ignored) drives a SECOND, private set of
- * PDFs written to `cv_private/` — same filenames, whole directory ignored —
+ * PDFs written to `cv_private/` (same filenames, whole directory ignored)
  * that is what gets uploaded to a job portal by hand. The public set is
  * byte-for-byte what it was before and never carries the number. Both come
  * from one build, so they cannot drift apart.
@@ -56,7 +55,7 @@ const REPO_ROOT = path.resolve(__dirname, "..", "..");
 
 // `.env` is not loaded for us: this runs as a plain Node process from
 // compile_cv.sh, not through Astro's env plugin. `loadEnvFile` never overwrites
-// an already-set variable, so the precedence is shell > .env — exporting
+// an already-set variable, so the precedence is shell > .env: exporting
 // CV_PHONE= (empty) is how a checkout opts out of the private build.
 try {
   process.loadEnvFile(path.join(REPO_ROOT, ".env"));
@@ -113,11 +112,11 @@ function orgMarkdown(o) {
   return o.url ? `[${o.name}](${o.url})` : o.name;
 }
 
-/** Builds the LaTeX org line: orgs joined by ·, then — department. */
+/** Builds the LaTeX org line: orgs joined by ·, then a comma and the department. */
 function orgLineLatex(item) {
   const orgs = (item.org ?? []).map(orgMarkdown).join(" · ");
   const full = item.department
-    ? `${orgs} — ${orgMarkdown(item.department)}`
+    ? `${orgs}, ${orgMarkdown(item.department)}`
     : orgs;
   return markdownToLatex(full);
 }
@@ -207,10 +206,10 @@ function renderSkills(groups, profile) {
  * The ORCID is a bare `0000-0003-1250-6212` in the YAML, and on the web that is
  * fine: it sits behind an ORCID icon with its own `ariaLabel`. Stripped of that
  * context in a PDF's contact row it is sixteen digits and three hyphens, and a
- * resume parser reads it as a PHONE NUMBER — measured: `phoneNumbers` came back
- * as `["0000-0003-1250-6212"]`. An "ORCID " prefix fixed the English parse but
+ * resume parser reads it as a PHONE NUMBER (measured: `phoneNumbers` came back
+ * as `["0000-0003-1250-6212"]`). An "ORCID " prefix fixed the English parse but
  * NOT the Spanish one (same raw text, different language model), so the label
- * is the URL host form instead — `orcid.org/0000-…` — which no phone heuristic
+ * is the URL host form instead (`orcid.org/0000-…`), which no phone heuristic
  * matches and which is how every other link in the row already reads
  * (github.com/…, linkedin.com/…). The YAML label is left alone so the CV page
  * keeps rendering exactly what it renders today.
@@ -266,8 +265,12 @@ function renderProjects(items, profile, statsBySlug, locale) {
         .map((m) => fmtMetric(m, locale))
         .join(String.raw` \divider `);
       let out = `\\cvproject{${name}}{${escapeLatex(p.tech ?? "")}}{${metrics}}\n`;
-      if (p.description) {
-        out += `${markdownToLatex(p.description)}\\par\\vspace{4pt}\n`;
+      // The concise profile takes the condensed description when the YAML
+      // gives one (`ats.summary`), as it does for experience summaries.
+      const description =
+        (profile === "normal" && p.ats?.summary) || p.description;
+      if (description) {
+        out += `${markdownToLatex(description)}\\par\\vspace{4pt}\n`;
       }
       return out;
     })
@@ -417,11 +420,12 @@ export async function buildDocument(locale, profile, options = {}) {
   let doc = documentPreamble({
     babelLang: meta.babelLang,
     docLang: meta.docLang,
-    pdfTitle: `${basics.name} — ${
+    pdfTitle: `${basics.name} | ${
       profile === "extended" ? meta.cvFullLabel : meta.cvLabel
     } (${basics.headline})`,
     pdfSubject: meta.pdfSubject,
     pdfKeywords: meta.pdfKeywords,
+    lineSpread: profile === "normal" ? 1 : 1.02,
   });
 
   const contactParts = [

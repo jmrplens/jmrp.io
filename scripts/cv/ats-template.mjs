@@ -24,6 +24,9 @@ import { escapeLatex, escapeLatexUrl } from "./inline-markdown.mjs";
  * @param {string} opts.pdfTitle - PDF title metadata.
  * @param {string} opts.pdfSubject - PDF subject metadata.
  * @param {string} opts.pdfKeywords - PDF keywords metadata.
+ * @param {number} [opts.lineSpread] - `\linespread` factor. The concise
+ *   profile uses LaTeX's own 1.0 to stay within two pages; the extended one
+ *   keeps the slightly looser 1.02.
  * @returns {string} The preamble LaTeX.
  */
 export function documentPreamble({
@@ -32,16 +35,17 @@ export function documentPreamble({
   pdfTitle,
   pdfSubject,
   pdfKeywords,
+  lineSpread = 1.02,
 }) {
   const babelOptions =
     babelLang === "spanish" ? "spanish,es-noindentfirst" : babelLang;
   return String.raw`% =====================================================================
-%  CV — José Manuel Requena Plens — Versión ATS
+%  CV de José Manuel Requena Plens, versión ATS
 %  GENERADO automáticamente desde src/content/cv/{es,en}.yaml.
 %  NO editar a mano: los cambios se sobrescriben. Editar el YAML + el generador
 %  (scripts/cv/generate-ats.mjs). Motor: LuaLaTeX + fontspec.
 % =====================================================================
-% Fixed RNG seed BEFORE \DocumentMetadata — tagpdf's user-namespace UUID is
+% Fixed RNG seed BEFORE \DocumentMetadata: tagpdf's user-namespace UUID is
 % drawn with \int_rand at load time; with SOURCE_DATE_EPOCH (compile_cv.sh)
 % this makes rebuilds byte-identical, so an unchanged CV produces no git diff.
 \ExplSyntaxOn \sys_gset_rand_seed:n {20260826} \ExplSyntaxOff
@@ -69,7 +73,7 @@ export function documentPreamble({
 
 % ---- Color (un solo acento = morado de jmrp.io) ----
 \usepackage{xcolor}
-% Site light palette — KEEP-IN-SYNC: light-tokens in src/styles/tokens.css
+% Site light palette. KEEP-IN-SYNC: light-tokens in src/styles/tokens.css
 % (the redesign's amber brand; the old purple B509AC predates it). The page
 % stays white: these are the print-safe ATS documents.
 \definecolor{accent}{HTML}{8F5300}     % --color-accent (amber, AA on light)
@@ -137,7 +141,7 @@ export function documentPreamble({
 \usepackage{fontawesome5}
 
 % ---- Interlineado ----
-\linespread{1.02}
+\linespread{${lineSpread}}
 \setlength{\parindent}{0pt}
 
 % =====================================================================
@@ -159,9 +163,10 @@ export function documentPreamble({
 }
 % Proyecto: {nombre}{stack}{métricas}. Métricas en su propia línea a la
 % izquierda (no \hfill a la derecha) para que la extracción ATS vea una sola columna.
+% Sin métricas no hay línea: antes quedaba un renglón vacío bajo el título.
 \newcommand{\cvproject}[3]{%
-  \textbf{#1}\,\textcolor{muted}{\small— #2}\par
-  {\small\textcolor{accent}{#3}}\par
+  \textbf{#1} \textcolor{muted}{\small(#2)}\par
+  \if\relax\detokenize{#3}\relax\else{\small\textcolor{accent}{#3}}\par\fi
   \vspace{1pt}
 }
 % Skill: {categoría}{items}

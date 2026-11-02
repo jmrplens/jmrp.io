@@ -334,6 +334,7 @@ const CVOrg = z.object({
 /**
  * ATS-generator hints (ignored by the website). Control the concise ("normal")
  * ATS profile: whether the item/section appears, and condensed org/summary/bullets.
+ * On a project, `summary` stands in for its `description`.
  */
 const CVAts = z.object({
   normal: z.boolean().optional(),
