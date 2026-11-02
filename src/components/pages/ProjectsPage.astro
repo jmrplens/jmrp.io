@@ -51,10 +51,10 @@ import {
   buildProjectSchema,
   getProjects,
   hostedHref,
-  licenseUrl,
   mcpApiId,
   type Project,
   projectArticles,
+  projectLicenseUrl,
   softwareId,
 } from "@utils/projects";
 import { getSeriesForProject } from "@utils/series";
@@ -512,7 +512,7 @@ const faqNode =
                       <dt>{t("pages.projects.license")}</dt>
                       <dd>
                         <a
-                          href={licenseUrl(project.license)}
+                          href={projectLicenseUrl(project)}
                           target="_blank"
                           rel="external noopener noreferrer"
                           aria-label={cardLinkName(project.license, project)}

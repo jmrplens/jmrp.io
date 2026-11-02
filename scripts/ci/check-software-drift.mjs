@@ -245,7 +245,8 @@ for (const project of projects) {
     // literal of `description`, so a bilingual site that says something else
     // in Spanish contradicts it the way a different English text would.
     "description@es": project.summary.es,
-    license: LICENSE_URLS[project.license] ?? project.license,
+    license:
+      project.licenseUrl ?? LICENSE_URLS[project.license] ?? project.license,
     programmingLanguage: project.language,
     applicationCategory: project.applicationCategory,
     codeRepository: project.repo,

@@ -103,7 +103,7 @@ export function toRecords(raw) {
     language: p.language,
     ...(p.license && {
       license: p.license,
-      licenseUrl: LICENSE_URLS[p.license] ?? p.license,
+      licenseUrl: p.licenseUrl ?? LICENSE_URLS[p.license] ?? p.license,
     }),
     ...(p.operatingSystem && { operatingSystem: p.operatingSystem }),
     ...(p.repo && { repo: p.repo }),

@@ -64,6 +64,8 @@ export interface Project {
   language: string;
   /** Absent only for an `upcoming` project (the schema enforces it). */
   license?: string;
+  /** The license URL its own site states, when not the table's; see the schema. */
+  licenseUrl?: string;
   /** Absent only for an `upcoming` project, whose repository is private. */
   repo?: string;
   docs: string;
@@ -113,6 +115,17 @@ export interface ProjectArticle {
 /** Resolves an SPDX id to its canonical license URL (identity if unknown). */
 export const licenseUrl = (license: string): string =>
   (licenseUrls as Record<string, string>)[license] ?? license;
+
+/**
+ * A project's license URL: the one its own site states (`licenseUrl` in
+ * projects.yaml) when it differs from the table, the table's otherwise.
+ *
+ * @param project - The project, which must have a `license`.
+ * @returns The license URL.
+ */
+export const projectLicenseUrl = (
+  project: Pick<Project, "license" | "licenseUrl">,
+): string => project.licenseUrl ?? licenseUrl(project.license ?? "");
 
 /**
  * The @id every project's software entity is published under: the GitHub
@@ -436,7 +449,7 @@ export function buildProjectSchema(
     programmingLanguage: project.languageNode
       ? { "@type": "ComputerLanguage" as const, name: project.language }
       : project.language,
-    ...(project.license && { license: licenseUrl(project.license) }),
+    ...(project.license && { license: projectLicenseUrl(project) }),
     ...(released && { isAccessibleForFree: true }),
     // `archived` lived only in projects.json and the twin; the graph said
     // nothing, so a reader of the node could not tell a maintained project
