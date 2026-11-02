@@ -46,7 +46,6 @@
         "https://deps.dev/go/github.com%2Fjmrplens%2Fgitlab-mcp-server%2Fv2",
         "https://libraries.io/go/github.com%2Fjmrplens%2Fgitlab-mcp-server",
         "https://github.com/jmrplens/gitlab-mcp-server/pkgs/container/gitlab-mcp-server",
-        "https://smithery.ai/servers/jmrp/gitlab-mcp-server",
         "https://mcpmarket.com/server/gitlab-32",
         "https://enterprisedna.co/directories/mcp/jmrplens-gitlab-mcp-server",
         "https://mcpbeat.com/mcp-servers/jmrplens/gitlab-mcp-server/",
@@ -210,7 +209,6 @@
         "https://mcptoplist.com/server/io.github.jmrplens%2Flibgen-mcp",
         "https://hub.docker.com/r/jmrplens/libgen-mcp",
         "https://pkg.go.dev/github.com/jmrplens/libgen-mcp/v2",
-        "https://smithery.ai/servers/jmrp/libgen-mcp",
         "https://github.com/jmrplens/libgen-mcp/pkgs/container/libgen-mcp",
         "https://deepwiki.com/jmrplens/libgen-mcp",
         "https://mcpbeat.com/mcp-servers/jmrplens/libgen-mcp/"

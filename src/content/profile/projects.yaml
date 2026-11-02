@@ -139,7 +139,8 @@ projects:
       - https://deps.dev/go/github.com%2Fjmrplens%2Fgitlab-mcp-server%2Fv2
       - https://libraries.io/go/github.com%2Fjmrplens%2Fgitlab-mcp-server
       - https://github.com/jmrplens/gitlab-mcp-server/pkgs/container/gitlab-mcp-server
-      - https://smithery.ai/servers/jmrp/gitlab-mcp-server
+      # Smithery dropped both servers by 2026-11-02 (its listing pages answer
+      # 404 and a search finds neither), so neither is an alias any more.
       - https://mcpmarket.com/server/gitlab-32
       - https://enterprisedna.co/directories/mcp/jmrplens-gitlab-mcp-server
       # MCPBeat lists both servers. Its pages answer 200 to ordinary clients
@@ -358,9 +359,6 @@ projects:
       # The module moved to /v2: the path without it stops at v1.7.3, so its
       # page describes a release `go install` no longer picks.
       - https://pkg.go.dev/github.com/jmrplens/libgen-mcp/v2
-      # Same URL form as the GitLab server's Smithery alias, and the one
-      # libgen's README badge and its own site link.
-      - https://smithery.ai/servers/jmrp/libgen-mcp
       # Two more its site lists.
       - https://github.com/jmrplens/libgen-mcp/pkgs/container/libgen-mcp
       - https://deepwiki.com/jmrplens/libgen-mcp
