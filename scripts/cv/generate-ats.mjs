@@ -7,11 +7,10 @@
  * Reads the single source of truth (`src/content/cv/{es,en}.yaml`) and emits the
  * ATS LaTeX (`cv_latex/generated/CV_..._{SPA,ENG}_ATS{,_EXT}.tex`) for two
  * profiles:
- *   - `normal`   — concise (recruiter/portal-friendly), pruned via the YAML
- *                  `ats` hints.
- *   - `extended` — exhaustive: every job, all skills, all certificates, full
- *                  education, plus a complete Publications section from
- *                  `papers.bib`.
+ *   - `normal`: concise (recruiter/portal-friendly), pruned via the YAML
+ *     `ats` hints, within two pages (verify-ats.mjs holds it there).
+ *   - `extended`: exhaustive, with every job, all skills, all certificates,
+ *     full education, plus a complete Publications section from `papers.bib`.
  *
  * Usage:
  *   node scripts/cv/generate-ats.mjs            # generate all 4 files
@@ -24,7 +23,7 @@
  * the website too, so it cannot hold the number either.
  *
  * Instead `CV_PHONE` in `.env` (git-ignored) drives a SECOND, private set of
- * PDFs written to `cv_private/` — same filenames, whole directory ignored —
+ * PDFs written to `cv_private/` (same filenames, whole directory ignored)
  * that is what gets uploaded to a job portal by hand. The public set is
  * byte-for-byte what it was before and never carries the number. Both come
  * from one build, so they cannot drift apart.
@@ -56,7 +55,7 @@ const REPO_ROOT = path.resolve(__dirname, "..", "..");
 
 // `.env` is not loaded for us: this runs as a plain Node process from
 // compile_cv.sh, not through Astro's env plugin. `loadEnvFile` never overwrites
-// an already-set variable, so the precedence is shell > .env — exporting
+// an already-set variable, so the precedence is shell > .env: exporting
 // CV_PHONE= (empty) is how a checkout opts out of the private build.
 try {
   process.loadEnvFile(path.join(REPO_ROOT, ".env"));
@@ -113,19 +112,34 @@ function orgMarkdown(o) {
   return o.url ? `[${o.name}](${o.url})` : o.name;
 }
 
-/** Builds the LaTeX org line: orgs joined by ·, then — department. */
+/**
+ * Builds the LaTeX org line: orgs joined by ·, then an em dash (U+2014) and
+ * the department.
+ *
+ * An em dash on purpose, as in the extended profile's project headings (see
+ * projectMacro). Measured with Affinda's resume parser on 2026-11-02, same
+ * content, only the separators changed: with a comma, a middle dot or a bar
+ * here the extended CVs lose the PhD as an education entry (English) or split
+ * it in two (Spanish), and Affinda itself rewrites this separator to an em
+ * dash in its output. Re-measure before changing it.
+ */
 function orgLineLatex(item) {
   const orgs = (item.org ?? []).map(orgMarkdown).join(" · ");
   const full = item.department
-    ? `${orgs} — ${orgMarkdown(item.department)}`
+    ? `${orgs} \u{2014} ${orgMarkdown(item.department)}`
     : orgs;
   return markdownToLatex(full);
 }
 
-/** Renders an `itemize` from an array of inline-markdown bullet strings. */
-function renderItemize(items) {
+/**
+ * Renders an `itemize` from an array of inline-markdown bullet strings, or of
+ * ready LaTeX strings with `{ latex: true }`.
+ */
+function renderItemize(items, { latex = false } = {}) {
   if (!items || items.length === 0) return "";
-  const bullets = items.map((it) => String.raw`  \item ${markdownToLatex(it)}`);
+  const bullets = items.map(
+    (it) => String.raw`  \item ${latex ? it : markdownToLatex(it)}`,
+  );
   return `\\begin{itemize}\n${bullets.join("\n")}\n\\end{itemize}\n`;
 }
 
@@ -170,12 +184,9 @@ function renderEducation(item, profile) {
     for (const note of item.notes ?? [])
       out += `${markdownToLatex(note)}\\par\n`;
     out += renderItemize(item.bullets);
-    if (item.documents?.length) {
-      const links = item.documents
-        .map((d) => markdownToLatex(`[${d.label}](${d.url})`))
-        .join(String.raw` \divider `);
-      out += `{\\footnotesize ${links}}\\par\n`;
-    }
+    // No line of `documents` links (diploma, academic record) here: Affinda
+    // took each "Diploma" label for a degree and invented education entries
+    // (2026-11-02). The /cv page still links them.
   } else {
     const summary = item.ats?.summary ?? item.summary;
     if (summary)
@@ -207,10 +218,10 @@ function renderSkills(groups, profile) {
  * The ORCID is a bare `0000-0003-1250-6212` in the YAML, and on the web that is
  * fine: it sits behind an ORCID icon with its own `ariaLabel`. Stripped of that
  * context in a PDF's contact row it is sixteen digits and three hyphens, and a
- * resume parser reads it as a PHONE NUMBER — measured: `phoneNumbers` came back
- * as `["0000-0003-1250-6212"]`. An "ORCID " prefix fixed the English parse but
+ * resume parser reads it as a PHONE NUMBER (measured: `phoneNumbers` came back
+ * as `["0000-0003-1250-6212"]`). An "ORCID " prefix fixed the English parse but
  * NOT the Spanish one (same raw text, different language model), so the label
- * is the URL host form instead — `orcid.org/0000-…` — which no phone heuristic
+ * is the URL host form instead (`orcid.org/0000-…`), which no phone heuristic
  * matches and which is how every other link in the row already reads
  * (github.com/…, linkedin.com/…). The YAML label is left alone so the CV page
  * keeps rendering exactly what it renders today.
@@ -251,6 +262,20 @@ function fmtMetric(metric, locale) {
   return `${escapeLatex(count)} ${count === "1" ? one : many}`;
 }
 
+/**
+ * The project-heading macro per profile, chosen by measurement, not taste.
+ * Affinda's resume parser (2026-11-02, same content, only the separators
+ * changed) read every education entry of the concise CVs with the stack in
+ * parentheses, and lost the English one's last entry with an em dash
+ * (U+2014). The extended CVs went the other way: the last project heading
+ * sits right before Education, and only the em dash there (with the one in
+ * the org line, see orgLineLatex) kept the PhD as an education entry in both
+ * languages; parentheses dropped it in English and split it in Spanish.
+ * Re-measure both profiles before changing either.
+ */
+const projectMacro = (profile) =>
+  profile === "extended" ? "cvprojectdash" : "cvproject";
+
 /** Renders a projects section body. */
 function renderProjects(items, profile, statsBySlug, locale) {
   return items
@@ -265,32 +290,38 @@ function renderProjects(items, profile, statsBySlug, locale) {
       const metrics = [...auto, ...(p.metrics ?? [])]
         .map((m) => fmtMetric(m, locale))
         .join(String.raw` \divider `);
-      let out = `\\cvproject{${name}}{${escapeLatex(p.tech ?? "")}}{${metrics}}\n`;
-      if (p.description) {
-        out += `${markdownToLatex(p.description)}\\par\\vspace{4pt}\n`;
+      let out = `\\${projectMacro(profile)}{${name}}{${escapeLatex(p.tech ?? "")}}{${metrics}}\n`;
+      // The concise profile takes the condensed description when the YAML
+      // gives one (`ats.summary`), as it does for experience summaries.
+      const description =
+        (profile === "normal" && p.ats?.summary) || p.description;
+      if (description) {
+        out += `${markdownToLatex(description)}\\par\\vspace{4pt}\n`;
       }
       return out;
     })
     .join("\n");
 }
 
-/** Renders a certificates section body (grouped, extended only). */
+/**
+ * Renders a certificates section body (grouped, extended only), one
+ * certificate per list item rather than a run-on paragraph, so each has its
+ * own boundary in the text layer.
+ */
 function renderCertificates(groups) {
   return groups
     .map((group) => {
-      const items = group.items
-        .map((c) => {
-          const name = c.url
-            ? markdownToLatex(`[${c.name}](${c.url})`)
-            : escapeLatex(c.name);
-          const meta = [c.school, c.hours]
-            .filter(Boolean)
-            .map((v) => escapeLatex(v))
-            .join(", ");
-          return meta ? `${name} (${meta})` : name;
-        })
-        .join(String.raw` \divider `);
-      return `\\cvsubhead{${escapeLatex(group.category)}}\n${items}\\par\\vspace{4pt}`;
+      const items = group.items.map((c) => {
+        const name = c.url
+          ? markdownToLatex(`[${c.name}](${c.url})`)
+          : escapeLatex(c.name);
+        const meta = [c.school, c.hours]
+          .filter(Boolean)
+          .map((v) => escapeLatex(v))
+          .join(", ");
+        return meta ? `${name} (${meta})` : name;
+      });
+      return `\\cvsubhead{${escapeLatex(group.category)}}\n${renderItemize(items, { latex: true })}\\vspace{2pt}`;
     })
     .join("\n");
 }
@@ -417,11 +448,12 @@ export async function buildDocument(locale, profile, options = {}) {
   let doc = documentPreamble({
     babelLang: meta.babelLang,
     docLang: meta.docLang,
-    pdfTitle: `${basics.name} — ${
+    pdfTitle: `${basics.name} | ${
       profile === "extended" ? meta.cvFullLabel : meta.cvLabel
     } (${basics.headline})`,
     pdfSubject: meta.pdfSubject,
     pdfKeywords: meta.pdfKeywords,
+    lineSpread: profile === "normal" ? 1 : 1.02,
   });
 
   const contactParts = [
