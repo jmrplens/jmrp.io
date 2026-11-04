@@ -2,7 +2,7 @@
 title: "Dominando QUIC y HTTP/3 con Nginx: La Guía Completa"
 slug: "004-enabling-quic-http3-nginx"
 lang: "es"
-description: "Inmersión profunda en QUIC y HTTP/3 — arquitectura técnica, seguridad y configuración paso a paso de Nginx para despliegue en producción."
+description: "Inmersión profunda en QUIC y HTTP/3: arquitectura técnica, seguridad y configuración paso a paso de Nginx para despliegue en producción."
 lead: "QUIC hace que cada stream sea independiente en la capa de transporte, así que un paquete perdido solo detiene el suyo y no todos, como pasa en HTTP/2 sobre TCP. Nginx necesita 1.25.0+ y el UDP/443 abierto, o cae a HTTP/2 sin avisar."
 author: "José Manuel Requena Plens"
 authorEmail: "mail@jmrp.io"
@@ -23,7 +23,7 @@ faq:
   - question: "¿Cómo resuelve QUIC el head-of-line blocking de TCP?"
     answer: "TCP ve todo como un único flujo ordenado de bytes, así que un solo paquete perdido bloquea todos los streams multiplexados de HTTP/2 hasta su retransmisión. QUIC implementa streams en la capa de transporte, dando entrega independiente a cada stream, por lo que un paquete perdido solo afecta a su propio stream."
   - question: "¿Por qué mi navegador sigue mostrando HTTP/2 en la primera visita?"
-    answer: "Ver HTTP/2 en la primera visita es lo esperado: un navegador que nunca ha conectado con el origen no tiene forma de saber que habla HTTP/3, así que abre primero una conexión TCP. Durante esa petición descubre HTTP/3 —por la cabecera de respuesta Alt-Svc o por un registro DNS HTTPS que anuncia alpn=h3— y cambia a HTTP/3 en las peticiones siguientes o tras recargar."
+    answer: "Ver HTTP/2 en la primera visita es lo esperado: un navegador que nunca ha conectado con el origen no tiene forma de saber que habla HTTP/3, así que abre primero una conexión TCP. Durante esa petición descubre HTTP/3, por la cabecera de respuesta Alt-Svc o por un registro DNS HTTPS que anuncia alpn=h3, y cambia a HTTP/3 en las peticiones siguientes o tras recargar."
   - question: "¿Por qué es crítico el flag reuseport para QUIC en Nginx?"
     answer: "UDP no tiene conexión, así que sin reuseport todos los paquetes QUIC los maneja un único worker de Nginx, creando un cuello de botella. La función reuseport del kernel distribuye los paquetes entre los workers, pero debe aparecer en exactamente una directiva listen por dirección:puerto a nivel global o Nginx no arrancará."
   - question: "¿Cómo verifico que HTTP/3 funciona?"
@@ -81,11 +81,11 @@ import Code from "@components/ui/Code.astro";
 import TLDRSummary from "@components/ui/TLDRSummary.astro";
 
 
-La web ha dependido de **TCP** durante más de cuatro décadas. Pero las aplicaciones modernas —con sus exigencias de interactividad en tiempo real, conectividad móvil y cargas de página instantáneas— han expuesto las limitaciones fundamentales de TCP. Llegan **QUIC** y **HTTP/3**: una reinvención completa del transporte web que abandona TCP en favor de UDP para ofrecer un internet más rápido, seguro y resiliente.
+La web ha dependido de **TCP** durante más de cuatro décadas. Pero las aplicaciones modernas, con sus exigencias de interactividad en tiempo real, conectividad móvil y cargas de página instantáneas, han expuesto las limitaciones fundamentales de TCP. Llegan **QUIC** y **HTTP/3**: una reinvención completa del transporte web que abandona TCP en favor de UDP para ofrecer un internet más rápido, seguro y resiliente.
 
 En esta guía completa, exploraremos la historia y la arquitectura de QUIC, entenderemos por qué resuelve problemas que TCP no puede, y recorreremos una configuración completa de Nginx lista para producción.
 
-<TLDRSummary title="TL;DR — QUIC y HTTP/3 en Nginx">
+<TLDRSummary title="TL;DR: QUIC y HTTP/3 en Nginx">
   - **QUIC funciona sobre UDP, no TCP**: HTTP/3 mapea la semántica HTTP sobre QUIC, que se construye sobre UDP y exige TLS 1.3.
   - **Resuelve el HOL blocking**: los streams de QUIC son independientes en la capa de transporte, así que un paquete perdido solo bloquea su propio stream, no todos los streams multiplexados como en HTTP/2 sobre TCP.
   - **Handshakes más rápidos y migración de conexión**: handshake combinado de transporte+criptografía (1-RTT, o 0-RTT al reanudar) más Connection IDs que sobreviven a los cambios de red (Wi-Fi → datos móviles).
@@ -98,17 +98,17 @@ En esta guía completa, exploraremos la historia y la arquitectura de QUIC, ente
 
 ## Cómo lo ejecuto en mi propia infraestructura
 
-jmrp.io sirve HTTP/3 en sí mismo: los dos server blocks en producción llevan `listen 443 quic;` junto a los listeners TCP habituales, de modo que el sitio acepta conexiones QUIC y TLS-sobre-TCP en paralelo, según lo que soporte realmente el cliente — y lo que haya entre el cliente y el servidor.
+jmrp.io sirve HTTP/3 en sí mismo: los dos server blocks en producción llevan `listen 443 quic;` junto a los listeners TCP habituales, de modo que el sitio acepta conexiones QUIC y TLS-sobre-TCP en paralelo, según lo que soporte realmente el cliente y lo que haya entre el cliente y el servidor.
 
-No me fié de la palabra de la cabecera `Alt-Svc`. Ejecutar `curl --http3` directamente contra el sitio en vivo devuelve `HTTP/3 200`: un handshake QUIC completado, no una inferencia sacada de una cabecera de respuesta que un servidor mal configurado podría seguir enviando mientras cae en silencio a HTTP/2 por debajo. Esa distinción importa — muchas listas de comprobación de "HTTP/3 activado" se quedan en la cabecera y nunca confirman que el protocolo se negoció de verdad. Es un detalle pequeño de verificar, y también es la única forma de saber que un despliegue QUIC es real y no aspiracional: la cabecera no cuesta nada añadir, pero solo un handshake desde el lado del cliente demuestra que UDP/443 está realmente abierto y negociando de extremo a extremo.
+No me fié de la palabra de la cabecera `Alt-Svc`. Ejecutar `curl --http3` directamente contra el sitio en vivo devuelve `HTTP/3 200`: un handshake QUIC completado, no una inferencia sacada de una cabecera de respuesta que un servidor mal configurado podría seguir enviando mientras cae en silencio a HTTP/2 por debajo. Esa distinción importa: muchas listas de comprobación de "HTTP/3 activado" se quedan en la cabecera y nunca confirman que el protocolo se negoció de verdad. Es un detalle pequeño de verificar, y también es la única forma de saber que un despliegue QUIC es real y no aspiracional: la cabecera no cuesta nada añadir, pero solo un handshake desde el lado del cliente demuestra que UDP/443 está realmente abierto y negociando de extremo a extremo.
 
-Servir HTTP/3 y que se use son dos preguntas distintas, y solo la segunda necesita datos. jmrp.io está detrás de Cloudflare, que termina la conexión del cliente, así que el protocolo que negocia de verdad un visitante aparece en la analítica de zona de Cloudflare y no en mi propio log de acceso. En ocho días —del 19 al 27 de agosto de 2026, filtrando por el host `jmrp.io` para que el resto de la zona no lo tape— **HTTP/3 se llevó el 33,5 % de las peticiones que negociaron HTTP/2 o HTTP/3**: 11.208 de 33.411.
+Servir HTTP/3 y que se use son dos preguntas distintas, y solo la segunda necesita datos. jmrp.io está detrás de Cloudflare, que termina la conexión del cliente, así que el protocolo que negocia de verdad un visitante aparece en la analítica de zona de Cloudflare y no en mi propio log de acceso. En ocho días (del 19 al 27 de agosto de 2026, filtrando por el host `jmrp.io` para que el resto de la zona no lo tape), **HTTP/3 se llevó el 33,5 % de las peticiones que negociaron HTTP/2 o HTTP/3**: 11.208 de 33.411.
 
 Ese denominador pide dos frases de defensa, porque la versión honesta de esta medición va sobre todo de lo que hay que tirar. Excluí HTTP/1.1 por completo, y la exclusión no es cosmética: los navegadores actuales acuerdan h2 por ALPN contra Cloudflare, así que una petición que dice ser un navegador y aun así llega por HTTP/1.1 es casi siempre un scraper con el user-agent falseado. Y había unos cuantos: un cubo de «Chrome de escritorio» salía con un 45,8 % de HTTP/1.1, que es algo que Chrome de escritorio no hace. Quitar HTTP/1.1 elimina las falsificaciones evidentes, pero no garantiza que el resto esté limpio: el plan Free no expone puntuación de bot, y la dimensión del navegador se deduce del propio user-agent, de modo que no queda ningún campo independiente por el que filtrar. Por eso tampoco hay aquí una tabla de adopción por navegador: no voy a publicar porcentajes por familia construidos sobre un denominador que no puedo auditar. La ventana son ocho consultas encadenadas de 24 horas, el rango más largo que devuelve ese plan, con lo que arrastra ocho costuras de dos minutos: unos 16 minutos ausentes en total.
 
-Dos cosas sobre esa cifra. La primera es que es una instantánea de esa ventana, no una propiedad estable del sitio. La misma consulta sobre los siete días UTC completos del 26 de agosto al 1 de septiembre de 2026 da un **20,1 %** —10.508 de 52.341— y oscila de un día a otro:
+Dos cosas sobre esa cifra. La primera es que es una instantánea de esa ventana, no una propiedad estable del sitio. La misma consulta sobre los siete días UTC completos del 26 de agosto al 1 de septiembre de 2026 da un **20,1 %** (10.508 de 52.341) y oscila de un día a otro:
 
-<Table title="Cuota de HTTP/3 por día — host jmrp.io, del 26 de agosto al 1 de septiembre de 2026">
+<Table title="Cuota de HTTP/3 por día: host jmrp.io, del 26 de agosto al 1 de septiembre de 2026">
   <thead>
     <tr>
       <th scope="col">Día (UTC)</th>
@@ -169,9 +169,9 @@ Dos cosas sobre esa cifra. La primera es que es una instantánea de esa ventana,
   </tbody>
 </Table>
 
-La segunda es que ninguna de las dos lecturas se puede recalcular después. El plan Free retiene `httpRequestsAdaptiveGroups` ocho días en ventana deslizante y rechaza cualquier consulta más antigua con `cannot request data older than 1w1d`, así que ambas cifras son observaciones fechadas que la propia fuente no volverá a servir. La tabla está aquí por eso, y publica los dos recuentos y no solo el porcentaje diario, porque los porcentajes por sí solos no bastarían: el día con más tráfico casi duplica al más tranquilo, así que las siete cuotas redondeadas no permiten reconstruir el 20,1 % ponderado —su media sin ponderar es del 20,4 %—. Con cada numerador y cada denominador en la página, el total es aritmética que cualquiera puede comprobar.
+La segunda es que ninguna de las dos lecturas se puede recalcular después. El plan Free retiene `httpRequestsAdaptiveGroups` ocho días en ventana deslizante y rechaza cualquier consulta más antigua con `cannot request data older than 1w1d`, así que ambas cifras son observaciones fechadas que la propia fuente no volverá a servir. La tabla está aquí por eso, y publica los dos recuentos y no solo el porcentaje diario, porque los porcentajes por sí solos no bastarían: el día con más tráfico casi duplica al más tranquilo, así que las siete cuotas redondeadas no permiten reconstruir el 20,1 % ponderado (su media sin ponderar es del 20,4 %). Con cada numerador y cada denominador en la página, el total es aritmética que cualquiera puede comprobar.
 
-Un detalle medido que no esperaba. Mi origen sí envía la cabecera que esta guía te dice que añadas —`add_header Alt-Svc 'h3=":443"; ma=86400' always;` está en los dos server blocks TLS, y una petición directa al origen vuelve con ella—. A través de Cloudflare, esa cabecera sencillamente no está:
+Un detalle medido que no esperaba. Mi origen sí envía la cabecera que esta guía te dice que añadas: `add_header Alt-Svc 'h3=":443"; ma=86400' always;` está en los dos server blocks TLS, y una petición directa al origen vuelve con ella. A través de Cloudflare, esa cabecera sencillamente no está:
 
 <TerminalOutput title="Alt-Svc en el origen frente al edge">
 ```text
@@ -186,7 +186,7 @@ $ dig +short HTTPS jmrp.io @1.1.1.1
 ```
 </TerminalOutput>
 
-QUIC funciona igualmente, como ya demostraba el handshake de antes, porque el anuncio vive en otro sitio: el registro DNS HTTPS del dominio lleva `alpn="h3,h2"`, y los navegadores que resuelven ese registro se enteran de HTTP/3 antes de abrir una sola conexión. Esto es comportamiento de Cloudflare en toda su plataforma, no una particularidad de mi configuración — el edge termina la conexión y decide por su cuenta qué anuncia, y nada de mi configuración de Nginx puede cambiarlo. La lección práctica es estrecha pero vale: si tienes un CDN delante del origen que configuraste para HTTP/3, la cabecera que estás comprobando puede no ser la que ven tus visitantes. Mira también el registro DNS.
+QUIC funciona igualmente, como ya demostraba el handshake de antes, porque el anuncio vive en otro sitio: el registro DNS HTTPS del dominio lleva `alpn="h3,h2"`, y los navegadores que resuelven ese registro se enteran de HTTP/3 antes de abrir una sola conexión. Cloudflare no hace esto en todas partes: su propio blog responde con `alt-svc`, y también otra zona mía servida por este mismo Nginx, así que la causa parece propia de esta zona, y no la he encontrado. Lo que se sostiene en cualquier caso es que el edge termina la conexión y decide por su cuenta qué anuncia, y nada de mi configuración de Nginx puede cambiarlo. La lección práctica es estrecha pero vale: si tienes un CDN delante del origen que configuraste para HTTP/3, la cabecera que estás comprobando puede no ser la que ven tus visitantes. Mira también el registro DNS.
 
 ---
 
@@ -290,7 +290,7 @@ La especificación completa de QUIC abarca múltiples RFCs:
 
 ## ¿Por qué QUIC? Entendiendo las limitaciones de TCP
 
-Para apreciar QUIC, debemos entender por qué TCP —la columna vertebral de internet desde 1974— tiene dificultades con las demandas modernas de la web.
+Para apreciar QUIC, debemos entender por qué TCP, la columna vertebral de internet desde 1974, tiene dificultades con las demandas modernas de la web.
 
 ### ¿Qué es el head-of-line (HOL) blocking?
 
@@ -332,7 +332,7 @@ sequenceDiagram
 <Callout type="keypoint" title="HOL Blocking en TCP" icon="mdi:lightbulb">
   **La idea clave**
   
-  HTTP/2 multiplexa varios streams sobre una **única conexión TCP**. Pero TCP ve todo como un único flujo ordenado de bytes — no conoce los streams de HTTP. Cuando se pierde el paquete 2 del Stream A, TCP bloquea **todos** los datos hasta que ese paquete sea retransmitido.
+  HTTP/2 multiplexa varios streams sobre una **única conexión TCP**. Pero TCP ve todo como un único flujo ordenado de bytes; no conoce los streams de HTTP. Cuando se pierde el paquete 2 del Stream A, TCP bloquea **todos** los datos hasta que ese paquete sea retransmitido.
   
   QUIC implementa streams **en la capa de transporte**, de modo que cada stream tiene entrega independiente. Los paquetes perdidos solo afectan a su propio stream.
 </Callout>
@@ -374,7 +374,7 @@ Establecer una conexión TCP segura requiere **múltiples viajes de ida y vuelta
 
 ### El problema de la migración de conexión
 
-Las conexiones TCP se identifican por una 4-tupla: `(IP origen, puerto origen, IP destino, puerto destino)`. Cuando cambias de Wi-Fi a datos móviles, tu IP cambia — y tu conexión TCP se rompe.
+Las conexiones TCP se identifican por una 4-tupla: `(IP origen, puerto origen, IP destino, puerto destino)`. Cuando cambias de Wi-Fi a datos móviles, tu IP cambia, y tu conexión TCP se rompe.
 
 <Callout type="success" title="Connection IDs de QUIC" icon="mdi:cellphone-wireless">
   **La solución de QUIC: Connection IDs**
@@ -552,7 +552,7 @@ sequenceDiagram
 
 ## Arquitectura de seguridad
 
-La seguridad de QUIC no es opcional —está integrada en el protocolo desde su diseño.
+La seguridad de QUIC no es opcional: está integrada en el protocolo desde su diseño.
 
 ### Cuatro niveles de cifrado
 
@@ -777,7 +777,7 @@ configure arguments: ... --with-http_v3_module ...
 <Collapsible summary="Cómo instalar Nginx con soporte HTTP/3">
 
 <Callout type="warning" title="El repositorio Nginx de Ondřej Surý ya no existe" icon="mdi:alert-circle">
-  Las guías escritas antes de 2026 —incluidas versiones anteriores de esta— te
+  Las guías escritas antes de 2026, incluidas versiones anteriores de esta, te
   mandan a `https://packages.sury.org/nginx/README.txt` en Debian y a
   `ppa:ondrej/nginx-mainline` en Ubuntu. Los dos canales se han retirado: a 27 de
   agosto de 2026 la ruta `/nginx/` de ese host devuelve **404** mientras sus
@@ -823,7 +823,7 @@ configure arguments: ... --with-http_v3_module ...
     Solo hace falta si quieres un módulo que los paquetes no traen. Nginx compila
     HTTP/3 contra cualquier biblioteca SSL que exponga una API QUIC: OpenSSL 3.5+,
     BoringSSL o LibreSSL 3.6+. En una distribución actual basta con el OpenSSL del
-    sistema — el propio paquete oficial de Debian 13 está compilado contra OpenSSL
+    sistema: el propio paquete oficial de Debian 13 está compilado contra OpenSSL
     3.5.6.
 
     ```bash
@@ -901,7 +901,7 @@ server {
 <Callout type="info" title="Por qué reuseport es crítico" icon="mdi:information">
   **¿Por qué `reuseport`?**
   
-  UDP no tiene conexión — sin `reuseport`, todos los paquetes QUIC serían manejados por un único worker de Nginx, creando un cuello de botella. La función `reuseport` del kernel distribuye los paquetes entrantes entre todos los workers.
+  UDP no tiene conexión: sin `reuseport`, todos los paquetes QUIC serían manejados por un único worker de Nginx, creando un cuello de botella. La función `reuseport` del kernel distribuye los paquetes entrantes entre todos los workers.
   
   **⚠️ Importante:** El flag `reuseport` debe aparecer en **exactamente una** directiva `listen` por dirección:puerto a nivel global. Si tienes múltiples server blocks escuchando en el puerto 443 QUIC, solo el primero debe tener `reuseport`. Usarlo varias veces hará que Nginx falle al iniciar con errores de "address already in use".
 </Callout>

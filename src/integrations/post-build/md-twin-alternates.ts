@@ -15,7 +15,7 @@ import { assertNginxSafe, buildStampLine, writeNginxSnippet } from "./utils.js";
  * header adds is a channel that does not require parsing the body: a client can
  * discover the twin from a HEAD request. Exactly the same argument, and the
  * same expected audience, as the `rel="describedby"` links this site already
- * serves — see the comment on that `add_header` in the vhost.
+ * serves; see the comment on that `add_header` in the vhost.
  *
  * It is derived from the build output rather than from a per-page prop, which
  * is the property the audit actually cared about: the head tag was opt-in and
@@ -39,7 +39,7 @@ const SITE_URL = process.env.PUBLIC_SITE_URL || "https://jmrp.io";
  *
  * A twin is always `<page>/index.md`, so the page it belongs to is the
  * containing directory with a trailing slash. `index.md.br` / `index.md.gz`
- * are produced by the compression step and must not be matched — the name test
+ * are produced by the compression step and must not be matched: the name test
  * is exact for that reason.
  *
  * @param distDir - Build output directory.
@@ -85,8 +85,8 @@ function collectTwinPages(distDir: string, base = ""): string[] {
  *    and removes the trap for whoever later adds this variable to a log format
  *    or a lua hook.
  * 3. **The value is DOUBLE-quoted with escaped inner quotes, and is a fragment
- *    with a leading `", "`.** Double-quoted so that `assertNginxSafe` — whose
- *    character class is `["\;\r\n]` — is exactly the right guard for the
+ *    with a leading `", "`.** Double-quoted so that `assertNginxSafe`, whose
+ *    character class is `["\;\r\n]`, is exactly the right guard for the
  *    quoting context, as it is for the three sibling generators. The fragment
  *    is appended inside the existing `add_header Link` of the HTML locations:
  *    a second `add_header Link` would emit two `Link` headers under this box's
@@ -114,8 +114,8 @@ export async function generateMdTwinAlternates(
   // Page paths come from directory names on disk, but they are interpolated
   // into quoted Nginx map entries in a file the live vhost `include`s at http
   // level: one stray quote or semicolon is a config the whole server refuses to
-  // start with. The values below are double-quoted precisely so this guard —
-  // shared with blog-redirects / docs-redirects / tag-redirects — covers them.
+  // start with. The values below are double-quoted precisely so this guard,
+  // shared with blog-redirects / docs-redirects / tag-redirects, covers them.
   assertNginxSafe([SITE_URL, ...pages], "markdown twin page paths");
 
   const entries = pages
@@ -129,10 +129,10 @@ export async function generateMdTwinAlternates(
   // in a template literal only `${` starts a substitution, so a bare `$` needs
   // no escape and `\$` would be flagged as an unnecessary one. If you ever
   // write an Nginx variable that is immediately followed by `{`, that one DOES
-  // need `\${` — otherwise the build would try to interpolate it. The four
+  // need `\${`; otherwise the build would try to interpolate it. The four
   // real `${…}` substitutions below are the build stamp, the twin count, the
   // map variable name and the entry list.
-  const content = `# GENERATED FILE — DO NOT EDIT.
+  const content = `# GENERATED FILE: DO NOT EDIT.
 ${buildStampLine(stamp)}
 # Written by src/integrations/post-build/md-twin-alternates.ts on every build.
 #
@@ -142,11 +142,12 @@ ${buildStampLine(stamp)}
 #
 # THIS IS A SECOND CHANNEL, NOT THE ONLY ONE. Every twinned page also carries
 # <link rel="alternate" type="text/markdown"> in its head and is listed in
-# llms.txt, and 92 of 96 twins are additionally reachable by the edge Worker's
-# Accept: text/markdown negotiation. What this header adds is HEAD-request
-# visibility, and a channel derived from the build output instead of from a
-# per-page prop — which is what the audit's finding was actually about: the head
-# tag was opt-in and 20 of 96 twinned pages silently never passed it.
+# llms.txt, and the pages the edge Worker handles also answer its
+# Accept: text/markdown negotiation; the pages routed around the Worker do not.
+# What this header adds is HEAD-request visibility, and a channel derived from
+# the build output instead of from a per-page prop, which is what the audit's
+# finding was actually about: the head tag was opt-in and 20 of 96 twinned pages
+# silently never passed it.
 # (GEO audit 2026-09-02, A2; the head tag and llms.txt are fixed separately.)
 #
 # The map holds ONLY pages whose twin the build actually wrote, so a page with
@@ -163,7 +164,7 @@ ${buildStampLine(stamp)}
 # THE KEYS ARE THE index.html FORM, NOT THE DIRECTORY FORM, AND THAT IS NOT A
 # TYPO. A request for /blog/series/ is resolved by \`try_files $uri $uri/\`, the
 # index module issues an INTERNAL redirect to /blog/series/index.html, and
-# locations are re-matched — so by the time the header filter evaluates
+# locations are re-matched, so by the time the header filter evaluates
 # \`add_header\`, $uri is the index.html form. Verified on this server:
 # \`curl https://jmrp.io/es/404/\` answers 200 with NO Link, NO Cache-Control and
 # NO Content-Language, because it is served from \`location = /es/404/index.html\`
@@ -179,7 +180,7 @@ ${buildStampLine(stamp)}
 # caches the pre-redirect miss and the header comes out EMPTY at the header
 # filter, silently. Do not remove it to save a hash lookup.
 #
-# The value is a FRAGMENT with a leading ", " — appended inside the existing
+# The value is a FRAGMENT with a leading ", ", appended inside the existing
 # \`add_header Link\` of the two HTML locations, so there is exactly one Link
 # header per response and the security-header snippet is untouched. When a page
 # has no twin the value is empty and the header keeps its base value. Same
@@ -209,8 +210,8 @@ ${entries}
   // out of staging into the snippets directory the vhost includes, after
   // the swap; until it does, Nginx keeps the previously delivered copy.
   // The include there is a wildcard over the whole maps/ directory, so a
-  // file that has not been delivered yet costs the twin announcements — this
-  // map sets a Link header, it redirects nothing — where an exact include of
+  // file that has not been delivered yet costs the twin announcements (this
+  // map sets a Link header, it redirects nothing), where an exact include of
   // a missing path would instead refuse to start every vhost on the box.
   const outPath = path.join(stagingDir, "maps", "md_twin_alternates.conf");
   await writeNginxSnippet(outPath, content);

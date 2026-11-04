@@ -12,16 +12,16 @@
 - **WCAG 2.2 AA/AAA accessibility** compliance (axe-core tested)
 - **100/100 PageSpeed scores** on all metrics
 - **Content Security Policy (CSP)** with nonce-only strategy
-- **Optimal CLS** — no layout shifts, proper sizing for all elements
+- **Optimal CLS**: no layout shifts, proper sizing for all elements
 
 ### Core Principles
 
-1. **WCAG 2.2 AA compliance** (AAA when possible) — All components must pass axe-core
-2. **Zero-JS client-side** — No JavaScript unless absolutely necessary (islands pattern)
-3. **Updated packages** — Use latest versions including beta/alpha
-4. **Optimal CLS** — No layout shifts, proper sizing for all elements
-5. **No duplicate resources** — UnoCSS deduplicates icons globally
-6. **Dark-first theme** — Default is dark mode, light mode is the override
+1. **WCAG 2.2 AA compliance** (AAA when possible): all components must pass axe-core
+2. **Zero-JS client-side**: No JavaScript unless absolutely necessary (islands pattern)
+3. **Updated packages**: Use latest versions including beta/alpha
+4. **Optimal CLS**: No layout shifts, proper sizing for all elements
+5. **No duplicate resources**: UnoCSS deduplicates icons globally
+6. **Dark-first theme**: Default is dark mode, light mode is the override
 7. **Privacy-first tools**: interactive tools compute in the browser. A tool may reach the network only when the user presses its button and only for the target it inspects (today two do: `cert-inspector` queries public Certificate Transparency logs, `http-headers-analyzer` fetches through a no-log proxy on this domain), and every surface that summarizes the tools names those exceptions
 
 ---
@@ -63,7 +63,7 @@
 │   │   ├── apps/               # Interactive tools (vanilla JS, no Preact)
 │   │   ├── ui/                 # 53 reusable UI components
 │   │   ├── layout/             # BaseHead, Header, Footer, ToC
-│   │   ├── homelab/            # Preact components, SSR-only (metrics injected by nginx — see ssr-tokens.ts)
+│   │   ├── homelab/            # Preact components, SSR-only (metrics injected by nginx, see ssr-tokens.ts)
 │   │   ├── blog/               # PostCard, PostGrid, TagCloud
 │   │   ├── cv/                 # CV-specific components
 │   │   └── publications/       # PublicationItem
@@ -88,11 +88,11 @@
 
 ## Content Collections
 
-### `posts` — Blog Posts (MDX)
+### `posts`: Blog Posts (MDX)
 
 ```yaml
 title: string # Required
-slug: string # Required — must start with the NNN- numeric prefix
+slug: string # Required; must start with the NNN- numeric prefix
 publishedDate: Date # Required (YYYY-MM-DD)
 updatedDate: Date # Optional (else dateModified falls back to publishedDate)
 description: string # Optional (≤ 155 chars for SEO)
@@ -106,24 +106,24 @@ articleType: "BlogPosting" | "TechArticle" # Default: BlogPosting (use TechArtic
 proficiencyLevel: "Beginner" | "Intermediate" | "Expert" # Optional (TechArticle)
 topics: { name: string; wikidata: string }[] # Wikidata Q-ids → about (first) + mentions (rest), max 6
 faq: { question: string; answer: string }[] # → FAQ section + FAQPage JSON-LD
-howto: # Optional — step-by-step guides → HowTo JSON-LD
+howto: # Optional: step-by-step guides → HowTo JSON-LD
   { name, totalTime?, tools?[], supplies?[], steps[{ name, text, anchor? }] }
 ```
 
 File naming: `001-post-slug.mdx`. Files starting with `_` are excluded.
 
-> **GEO baseline (every post):** includes a `<TLDRSummary>` near the top — after a
+> **GEO baseline (every post):** includes a `<TLDRSummary>` near the top, after a
 > short intro paragraph (the "entradilla"), before the first `##` (the TL;DR
 > answer-target, rendered as `<h2>`; consistent format: cover → intro → TL;DR →
 > body); sets `articleType: "TechArticle"` for guides; carries verified
 > `topics` Q-ids and a genuine `faq`. The **FAQ section, the JSON-LD (TechArticle/
 > FAQPage/HowTo + `about`/`mentions`), the author bio card (`AuthorCard`), and the
-> References list are emitted automatically by `BlogPost.astro`** from the frontmatter —
+> References list are emitted automatically by `BlogPost.astro`** from the frontmatter;
 > never hand-add `<FAQ>`/`<AuthorCard>`/schema in MDX. Spanish posts carry their own
 > translated `faq` and the SAME `topics` Q-ids. Verify Q-ids via the Wikidata
 > `wbsearchentities` API before use.
 
-### `tools` — Interactive Tools (MDX)
+### `tools`: Interactive Tools (MDX)
 
 ```yaml
 title: string # Required
@@ -148,7 +148,7 @@ updatedDate: Date # Optional
 > **When adding/removing/renaming a tool**: the category pages narrate what each
 > category's CURRENT tools do. Update `<cat>Desc` AND `<cat>Context` under
 > `pages.toolsCategory` in `src/i18n/translations/{en,es}/common.ts` (both
-> locales) — a context that names a tool the category no longer has is a
+> locales): a context that names a tool the category no longer has is a
 > checkable lie. The tool's own `description` should say where it runs
 > ("Runs client-side" when nothing leaves the browser; it is the claim AI
 > answer engines select on). A tool that makes a request says what it
@@ -161,13 +161,13 @@ updatedDate: Date # Optional
 > "All 17 run client-side" is false, and GEO audit #11 (A1) caught it on
 > five surfaces; `scripts/ci/published-claims.test.mjs` now fails on it.
 
-### `site_config` — Discriminated Union
+### `site_config`: Discriminated Union
 
 **`type: "site"` (site.yaml)**: `title`, `description`, `author`, `url`, `keywords`, `fediverse_creator`, `locale`, `name`, `jobTitle`, `social[]`, `person`, `social_links[]`, `theme_color`, `background_color`, `twitter_creator`, `logo_text`, `nav[]`, `hero { title, subtitle, bio[] }`, `featured_projects[]`, `shortcuts[]`.
 
 **`type: "socials"` (socials.yaml)**: `github_username`, `gitlab_username`, `linkedin_username`, `mastodon_username`, `scholar_userid`, `matrix_id`, `work_url`, `custom_social[]`.
 
-### `cv` — Resume Data (YAML)
+### `cv`: Resume Data (YAML)
 
 Array of sections with discriminated union by `type`:
 
@@ -176,7 +176,7 @@ Array of sections with discriminated union by `type`:
 - **`list_groups`**: Skill groups with categories, icons, and levels
 - **`certificate_list`**: Certificate groups with school, time, links
 
-### `publications_data` — Academic Papers
+### `publications_data`: Academic Papers
 
 - `papers.bib`: BibTeX entries parsed via `citation-js`
 - `coauthors.yaml`: Map of co-author surnames → name variants + profile URLs
@@ -203,7 +203,7 @@ Auto-generates `SoftwareApplication` JSON-LD. Slots: `default` (tool component),
 
 Located in `src/components/apps/`. Each is **Astro-only** using `<script is:inline>` with DOM manipulation via `data-*` attributes. IDs generated with `crypto.getRandomValues()`. Examples: `CSPBuilder.astro` (2213 lines), `HashCalculator.astro` (577 lines).
 
-> **Important**: Tools do NOT use Preact. The `src/components/homelab/` components are Preact but render **SSR-only** (no `client:*` directives, zero JS shipped): every metric is an `HLM_*` placeholder token that **nginx replaces at serve time** with a fresh, locale-formatted value (stale-while-revalidate, ~60 s). The token registry is `src/components/homelab/ssr-tokens.ts`; its mirror — data sources, formatting, and the substitution filter — lives OUTSIDE the repo in `/etc/nginx/lua/homelab_ssr_metrics.lua`. Keep both in sync when adding/removing a metric; an out-of-sync token degrades to "—". In `astro preview`/E2E the raw `HLM_*` tokens are visible on `/homelab/` — expected, only nginx substitutes them.
+> **Important**: Tools do NOT use Preact. The `src/components/homelab/` components are Preact but render **SSR-only** (no `client:*` directives, zero JS shipped): every metric is an `HLM_*` placeholder token that **nginx replaces at serve time** with a fresh, locale-formatted value (stale-while-revalidate, ~60 s). The token registry is `src/components/homelab/ssr-tokens.ts`; its mirror (data sources, formatting, and the substitution filter) lives OUTSIDE the repo in `/etc/nginx/lua/homelab_ssr_metrics.lua`. Keep both in sync when adding/removing a metric; an out-of-sync token degrades to "—". In `astro preview`/E2E the raw `HLM_*` tokens are visible on `/homelab/`, which is expected: only nginx substitutes them.
 
 ---
 
@@ -218,7 +218,7 @@ interface Props {
   type?: string; // "website" | "article" | "profile"
   schema?: Record<string, unknown> | Record<string, unknown>[];
   image?: string;
-  noIndex?: boolean; // Default: false — outputs <meta name="robots" content="noindex, follow">
+  noIndex?: boolean; // Default: false; outputs <meta name="robots" content="noindex, follow">
   publishDate?: Date;
   modifiedDate?: Date;
   authors?: string[];
@@ -272,12 +272,12 @@ interface Props {
 
 Generates `@graph` array with automatic schemas:
 
-1. **WebSite** — `@id: #website`, publisher as Person with `sameAs` social links
-2. **SiteNavigationElement** — One item per nav entry in site config
-3. **BreadcrumbList** — Auto-generated from `Astro.url.pathname`
-4. **Page-specific** — Merged from `schema` prop (BlogPosting, SoftwareApplication, ProfilePage, etc.)
+1. **WebSite**: `@id: #website`, publisher as Person with `sameAs` social links
+2. **SiteNavigationElement**: One item per nav entry in site config
+3. **BreadcrumbList**: Auto-generated from `Astro.url.pathname`
+4. **Page-specific**: Merged from `schema` prop (BlogPosting, SoftwareApplication, ProfilePage, etc.)
 
-All JSON-LD wrapped in `safeJsonLd()` — escapes `<`, `>`, `&`, `\u2028`, `\u2029` to prevent XSS.
+All JSON-LD wrapped in `safeJsonLd()`, which escapes `<`, `>`, `&`, `\u2028`, `\u2029` to prevent XSS.
 
 ---
 
@@ -292,7 +292,7 @@ All JSON-LD wrapped in `safeJsonLd()` — escapes `<`, `>`, `&`, `\u2028`, `\u20
 
 ### Design Tokens (CSS Custom Properties)
 
-**Theme (Dark-first)** — source of truth: `src/styles/tokens.css` (the redesign's
+**Theme (Dark-first)**. Source of truth: `src/styles/tokens.css` (the redesign's
 amber brand; an older purple palette lingered in docs until 2026-08). The full
 file also carries intent aliases (`--color-meta`, `--accent-dim`), state
 palettes and the `--dg-*` diagram ramps; below are just the core tokens:
@@ -312,7 +312,7 @@ palettes and the `--dg-*` diagram ramps; below are just the core tokens:
 --color-border: #26262c;
 --color-bg-header: rgb(10 10 11 / 72%);
 
-/* Light (override) — KEEP-IN-SYNC: light-tokens */
+/* Light (override). KEEP-IN-SYNC: light-tokens */
 --color-bg: #fafaf7;
 --color-bg-secondary: #fff;
 --color-bg-subtle: rgb(0 0 0 / 5%);
@@ -352,8 +352,8 @@ The CV PDFs share this palette: `scripts/cv/design-template.mjs` and
 
 | Component     | Import                             | Key Props                                                          |
 | ------------- | ---------------------------------- | ------------------------------------------------------------------ |
-| `TLDRSummary` | `@components/ui/TLDRSummary.astro` | Slot content (TL;DR answer-target — near the top of every post, after the intro) |
-| `FAQ`         | `@components/ui/FAQ.astro`         | `items: {question,answer}[]`, `open?` — usually wired from the `faq` frontmatter (renders FAQ + FAQPage JSON-LD), not imported in MDX |
+| `TLDRSummary` | `@components/ui/TLDRSummary.astro` | Slot content (TL;DR answer-target: near the top of every post, after the intro) |
+| `FAQ`         | `@components/ui/FAQ.astro`         | `items: {question,answer}[]`, `open?`: usually wired from the `faq` frontmatter (renders FAQ + FAQPage JSON-LD), not imported in MDX |
 | `Callout`     | `@components/ui/Callout.astro`     | `type: "info"\|"warning"\|"error"\|"success"\|"tip"\|"note"\|"keypoint"\|"important"`, `title?` |
 | `Collapsible` | `@components/ui/Collapsible.astro` | `title`, `open?`                                                   |
 
@@ -394,7 +394,7 @@ The CV PDFs share this palette: `scripts/cv/design-template.mjs` and
 | Component         | Import                                                                                                      | Key Props                                       |
 | ----------------- | ----------------------------------------------------------------------------------------------------------- | ----------------------------------------------- |
 | `Code`            | `@components/ui/Code.astro`                                                                                 | `lang`, `title`, `showLineNumbers`, `highlight` |
-| `CodeBlock`       | `@components/ui/CodeBlock.astro`                                                                            | `lang` — bare highlight, no chrome (for TabPanel) |
+| `CodeBlock`       | `@components/ui/CodeBlock.astro`                                                                            | `lang`: bare highlight, no chrome (for TabPanel) |
 | `FileContent`     | `@components/ui/FileContent.astro`                                                                          | `filename`, `language`, `collapsible`           |
 | `TerminalCommand` | `@components/ui/TerminalCommand.astro`                                                                      | `title`, `prompt`                               |
 | `TerminalOutput`  | `@components/ui/TerminalOutput.astro`                                                                       | Output display                                  |
@@ -433,25 +433,25 @@ Zero-JS, theme-aware, responsive SVG/CSS diagrams for systems/embedded/C++/netwo
 
 | Component         | Import                                  | Key Props                                                        |
 | ----------------- | --------------------------------------- | --------------------------------------------------------------- |
-| `MemoryMap`       | `@components/ui/MemoryMap.astro`        | `bars[]`, `scale: "shared"\|"fill"` — memory region bars        |
-| `StructPacking`   | `@components/ui/StructPacking.astro`    | `members[]`, `arch: "32-bit"\|"64-bit"` — padding + `sizeof`    |
-| `RegisterMap`     | `@components/ui/RegisterMap.astro`      | `fields[] {name,bits}`, `width` — register bit-fields           |
-| `ByteFrame`       | `@components/ui/ByteFrame.astro`        | `fields[] {label,bytes,variable?}` — single-row byte layout     |
-| `PacketDiagram`   | `@components/ui/PacketDiagram.astro`    | `fields[] {name,bits}`, `bitsPerRow` — RFC multi-row header     |
-| `SubnetSplit`     | `@components/ui/SubnetSplit.astro`      | `ip`, `prefix` — IP network/host split + facts                  |
-| `BitwiseOp`       | `@components/ui/BitwiseOp.astro`        | `a`, `op`, `b?`, `width` — bitwise op bit-by-bit                 |
-| `NumberBases`     | `@components/ui/NumberBases.astro`      | `value`, `bits` — hex/dec/oct/bin                               |
-| `FloatLayout`     | `@components/ui/FloatLayout.astro`      | `value`, `precision` — IEEE 754 bit layout                      |
-| `TimingDiagram`   | `@components/ui/TimingDiagram.astro`    | `signals[] {name,wave,data?}` — WaveDrom-subset SVG waveforms   |
-| `EncodingDiagram` | `@components/ui/EncodingDiagram.astro`  | `rows[] {label,bytes[]}` — token → bytes (UTF-8/base64)         |
-| `DeltaCompare`    | `@components/ui/DeltaCompare.astro`     | `rows[] {label,before,after}`, `unit` — before/after metrics    |
-| `LayerStack`      | `@components/ui/LayerStack.astro`       | `layers[] {name,note?}` — stacked HW/SW layers                  |
-| `CallStack`       | `@components/ui/CallStack.astro`        | `frames[] {name,detail?}` — call frames + growth                |
-| `Matrix`          | `@components/ui/Matrix.astro`           | `rows`, `cols`, `cells[][]`, `highlight?` — labelled 2-D grid   |
-| `Pipeline`        | `@components/ui/Pipeline.astro`         | `stages[] {name,note?,via?}` — numbered stages + data-flow      |
-| `ForkJoin`        | `@components/ui/ForkJoin.astro`         | `before?[]`, `branches[]`, `after?[]` — fork→join data-flow; a branch may be a chain (lane)     |
-| `ThemeImage`      | `@components/ui/ThemeImage.astro`       | `src` or `srcLight`+`srcDark`, `alt` — light/dark image swap    |
-| `FileDownload`    | `@components/ui/FileDownload.astro`     | `href`, `filename`, `size?` — download card                     |
+| `MemoryMap`       | `@components/ui/MemoryMap.astro`        | `bars[]`, `scale: "shared"\|"fill"`: memory region bars        |
+| `StructPacking`   | `@components/ui/StructPacking.astro`    | `members[]`, `arch: "32-bit"\|"64-bit"`: padding + `sizeof`    |
+| `RegisterMap`     | `@components/ui/RegisterMap.astro`      | `fields[] {name,bits}`, `width`: register bit-fields           |
+| `ByteFrame`       | `@components/ui/ByteFrame.astro`        | `fields[] {label,bytes,variable?}`: single-row byte layout     |
+| `PacketDiagram`   | `@components/ui/PacketDiagram.astro`    | `fields[] {name,bits}`, `bitsPerRow`: RFC multi-row header     |
+| `SubnetSplit`     | `@components/ui/SubnetSplit.astro`      | `ip`, `prefix`: IP network/host split + facts                  |
+| `BitwiseOp`       | `@components/ui/BitwiseOp.astro`        | `a`, `op`, `b?`, `width`: bitwise op bit-by-bit                 |
+| `NumberBases`     | `@components/ui/NumberBases.astro`      | `value`, `bits`: hex/dec/oct/bin                               |
+| `FloatLayout`     | `@components/ui/FloatLayout.astro`      | `value`, `precision`: IEEE 754 bit layout                      |
+| `TimingDiagram`   | `@components/ui/TimingDiagram.astro`    | `signals[] {name,wave,data?}`: WaveDrom-subset SVG waveforms   |
+| `EncodingDiagram` | `@components/ui/EncodingDiagram.astro`  | `rows[] {label,bytes[]}`: token → bytes (UTF-8/base64)         |
+| `DeltaCompare`    | `@components/ui/DeltaCompare.astro`     | `rows[] {label,before,after}`, `unit`: before/after metrics    |
+| `LayerStack`      | `@components/ui/LayerStack.astro`       | `layers[] {name,note?}`: stacked HW/SW layers                  |
+| `CallStack`       | `@components/ui/CallStack.astro`        | `frames[] {name,detail?}`: call frames + growth                |
+| `Matrix`          | `@components/ui/Matrix.astro`           | `rows`, `cols`, `cells[][]`, `highlight?`: labelled 2-D grid   |
+| `Pipeline`        | `@components/ui/Pipeline.astro`         | `stages[] {name,note?,via?}`: numbered stages + data-flow      |
+| `ForkJoin`        | `@components/ui/ForkJoin.astro`         | `before?[]`, `branches[]`, `after?[]`: fork→join data-flow; a branch may be a chain (lane)     |
+| `ThemeImage`      | `@components/ui/ThemeImage.astro`       | `src` or `srcLight`+`srcDark`, `alt`: light/dark image swap    |
+| `FileDownload`    | `@components/ui/FileDownload.astro`     | `href`, `filename`, `size?`: download card                     |
 | `HttpExchange`    | `@components/ui/HttpExchange.astro`     | `method`, `path`, `responses[] {label?,status,statusText?,headers?,body?,bodyLang?,note?,tone?,verdict?}`, `requestHeaders?`, `requestBody?`, `title?`, `caption?`: one request, its answers side by side |
 | `SelectionTree`   | `@components/ui/SelectionTree.astro`    | `root {name,type?,state?,note?,spine?,children?}`, `title?`, `operation?`, `verdict?`, `verdictTone?`, `caption?`: tree with per-node state and a heavier spine path |
 
@@ -540,13 +540,13 @@ pnpm build
 #                       # (or CV_BUILD_FORCE=1) recompiles and refreshes the embedded GitHub stats
 #   && DIST_DIR=$(node scripts/deploy-swap.mjs prepare)   # picks builds/blue or builds/green (whichever is inactive), empties it
 #   && astro build --outDir $DIST_DIR                      # Astro builds straight into that dir; post-build hooks run here
-#   && node scripts/deploy-swap.mjs swap $DIST_DIR          # atomically retargets the `dist` symlink (ln -sfn + mv -T / rename(2))
+#   && node scripts/deploy-swap.mjs swap $DIST_DIR          # unchanged files take the live build's mtime, then atomically retargets the `dist` symlink (ln -sfn + mv -T / rename(2))
 #   && node scripts/deploy-live.mjs                         # publish actions AFTER the swap (see Deployment below)
 ```
 
-`dist` is a symlink to `builds/blue` or `builds/green` (never a real directory once bootstrapped) — Nginx always resolves it to a fully-built tree, so there's no window where `dist/` is empty or half-written. `scripts/deploy-swap.mjs` also auto-migrates a legacy real `dist/` directory into `builds/<color>` the first time it runs.
+`dist` is a symlink to `builds/blue` or `builds/green` (never a real directory once bootstrapped): Nginx always resolves it to a fully-built tree, so there's no window where `dist/` is empty or half-written. `scripts/deploy-swap.mjs` also auto-migrates a legacy real `dist/` directory into `builds/<color>` the first time it runs.
 
-> ⚠️ No lock guards concurrent builds — running `pnpm build` twice in parallel on the same worktree can race on `deploy-swap.mjs prepare`/`swap`. Not currently an issue (builds are triggered manually/serially), but don't script concurrent invocations without adding one.
+> ⚠️ No lock guards concurrent builds: running `pnpm build` twice in parallel on the same worktree can race on `deploy-swap.mjs prepare`/`swap`. Not currently an issue (builds are triggered manually/serially), but don't script concurrent invocations without adding one.
 
 ### Pre-Build Integrations
 
@@ -554,14 +554,14 @@ pnpm build
 | ---------------- | ---------------------------------------------------------- |
 | `beacon.ts`      | Cloudflare beacon analytics setup                          |
 | `downloads.ts`   | Release-download totals (`src/data/downloads.json`)        |
-| `image-cache.ts` | Certifies the optimized-image cache before every build. `vite-plugin-image-optimizer` keys its cache by PATH (`dist/index.js:241`), and that key encodes neither the `public/` file's content nor the encoder settings. Both holes bit: a replaced `public/favicon.png` shipped as the January 32x32 blob while both RSS feeds declared 144, and 71 of the 167 bundled blobs predate `cc25c54`, which added `compressionLevel: 9`. The guard hashes each `public/` source into `.cache/optimized-images/.image-sources.json` and drops what it cannot certify — the whole directory when the settings signature does not match or no manifest exists (one cold pass, 41 s measured; the 84 lossless AVIF are never cached, so they are not part of that cost). `scripts/ci/check-public-asset-fidelity.mjs` is the matching detector, in `pnpm verify` and CI. |
+| `image-cache.ts` | Certifies the optimized-image cache before every build. `vite-plugin-image-optimizer` keys its cache by PATH (`dist/index.js:241`), and that key encodes neither the `public/` file's content nor the encoder settings. Both holes bit: a replaced `public/favicon.png` shipped as the January 32x32 blob while both RSS feeds declared 144, and 71 of the 167 bundled blobs predate `cc25c54`, which added `compressionLevel: 9`. The guard hashes each `public/` source into `.cache/optimized-images/.image-sources.json` and drops what it cannot certify: the whole directory when the settings signature does not match or no manifest exists (one cold pass, 41 s measured; the 84 lossless AVIF are never cached, so they are not part of that cost). `scripts/ci/check-public-asset-fidelity.mjs` is the matching detector, in `pnpm verify` and CI. |
 
 ### Post-Build Pipeline (`astro:build:done`, `src/integrations/post-build.ts`)
 
-Runs **inside** the build, before the swap — it transforms the not-yet-live `builds/<color>` output and, for the generated Nginx config, writes *outside* it (see "Generated Nginx config never enters the served tree" below). Each step is wrapped in a `timed()` helper (`src/integrations/timing.ts`) that logs `⏱ {step}: {seconds}s` for baseline telemetry.
+Runs **inside** the build, before the swap: it transforms the not-yet-live `builds/<color>` output and, for the generated Nginx config, writes *outside* it (see "Generated Nginx config never enters the served tree" below). Each step is wrapped in a `timed()` helper (`src/integrations/timing.ts`) that logs `⏱ {step}: {seconds}s` for baseline telemetry.
 
-1. `prepareNginxStaging()` — empties the staging dir before anything is written, so an artifact left by a generator that no longer exists is never delivered and a previous run's leftovers cannot pass for this build's output
-2. `extractCssDataUris()` — CSS data URI extraction to physical files
+1. `prepareNginxStaging()`: empties the staging dir before anything is written, so an artifact left by a generator that no longer exists is never delivered and a previous run's leftovers cannot pass for this build's output
+2. `extractCssDataUris()`: CSS data URI extraction to physical files
 3. `processHtmlFiles()`: SRI integrity hashes, nonce attributes, inline style → class, data URI extraction, HTML minification. It also publishes the Cloudflare beacon under a content-addressed path, `/scripts/cf-beacon.<first 12 hex of its SHA-512>.js` (`beacon-version.ts`), which pages load with the usual SRI and nonce, and keeps `/scripts/cf-beacon.js` in the build for old cached HTML: the edge Worker strips the query string from its cache key, so the earlier `?v=` never versioned the edge copy (GEO audit #11). And it removes Mermaid's dead in-SVG `<style set:html=...>` elements (`svg-styles.ts`)
 4. `patchRssEnclosureLengths()` (`rss-enclosures.ts`): sets every RSS `<enclosure length>` to the built file's size and fails the build if a referenced cover is missing. `src/utils/rss.ts` emits `length="0"` as a placeholder because the covers are written after the feed renders, and `scripts/ci/validate-rss.mjs` rejects any 0 that reaches `dist`. Runs before `compressAssets` (which snapshots `rss.xml`); enclosures are JPEG, so the PNG-only `optimizeImages` cannot change a length
 5. `finalizeCspConfig()`: generates `security_headers.conf` + `security_headers_assets.conf` into the staging dir (never into the build output)
@@ -570,7 +570,7 @@ Runs **inside** the build, before the swap — it transforms the not-yet-live `b
 8. `verifyDlPairing()`: the second verifying step. Runs `scripts/ci/check-dl-pairing.mjs`, which fails the build when any `<dl>` group on a built page is not `<dt>` then `<dd>`: a group starting with `<dd>`, a `<dt>` with no `<dd>` after it, a `<div>` group missing either or holding two groups, or a stray element. Value-first tiles made answer engines pair each label with the next tile's figure (GEO audit #11, C2), and neither html-validate nor axe reports the order. To draw a value above its label, keep `<dt>` then `<dd>` in the DOM and reorder with CSS (`display: flex; flex-direction: column` on the group, `order: -1` on the `dd`). Both verifying steps share one `runBuildGuard()` helper: exit 1 is a finding; any other status means the guard could not run.
 9. `generateMdTwinAlternates()`: the `map` that announces each page's markdown twin, written to `<staging>/maps/`
 10. `writeNginxManifest()`: writes `manifest.json` after the seven artifacts and never before, so a build that dies partway leaves no manifest and `deploy-live.mjs` delivers nothing
-11. `optimizeImages()` + `compressAssets()` **run concurrently** (`Promise.all`): they touch disjoint file sets (PNG re-optimization vs gzip/Brotli over js/css/svg/json/xml/txt). Both are backed by a content-hash (SHA-256) cache under `.cache/postbuild-png*` / `.cache/postbuild-compression*`, keyed by a config signature so a settings/dependency change invalidates stale cache entries instead of serving them forever.
+11. `optimizeImages()` + `compressAssets()` **run concurrently** (`Promise.all`): they touch disjoint file sets (PNG re-optimization vs gzip/Brotli over js/css/svg/json/xml/txt/md/jsonld/webmanifest). Both are backed by a content-hash (SHA-256) cache under `.cache/postbuild-png*` / `.cache/postbuild-compression*`, keyed by a config signature so a settings/dependency change invalidates stale cache entries instead of serving them forever.
 12. `fixPermissions()`: chown/chmod **of the build output** for Nginx (`www-data`), only if `POSTBUILD_NGINX_SNIPPETS_DIR` is set. Its `chown -R` deliberately cannot reach staging: `rename(2)` carries the source inode's owner and mode, so a staged file owned by `www-data` would arrive in `/etc/nginx` owned by `www-data`.
 
 > **Generated Nginx config never enters the served tree** (2026-09). The build writes all seven artifacts to a staging directory, `/var/lib/jmrp.io/nginx-staged/` by default (`scripts/nginx-staging.mjs`; `os.tmpdir()/jmrp-nginx-staged` when that is not writable): the two header files at the top level, the five `map` files under `maps/`, plus a `manifest.json`, written after all seven, listing exactly what this build produced. Override the location with `POSTBUILD_NGINX_STAGING_DIR`. Staging is outside the repository and reachable by no URL, lives outside `distDir`, on the same filesystem as `/etc/nginx`, which is what makes delivery a true `rename(2)` move instead of a copy. Every artifact carries one `# Build-Stamp: <id>` line in its header comment block, the same id across all seven for a given build, so `ID=$(sed -n 's/^# Build-Stamp: //p' /etc/nginx/snippets/jmrp/security_headers.conf); nginx -T | grep -c "Build-Stamp: $ID"` returns 7 only when the running config loaded all seven from the same build. Until this change the two header files were written into `dist/` and the four maps into the tracked `nginx/` directory; the only file left there is `nginx/handmade_redirects.conf`, hand-written, still tracked and still included by the vhost.
@@ -581,7 +581,7 @@ Runs **inside** the build, before the swap — it transforms the not-yet-live `b
 
 ### Vite Plugin: Prefetch Nonce
 
-`vite-plugin-prefetch-nonce.ts` — Patches Astro's `appendSpeculationRules` to inject nonce on dynamic speculation rules, preventing CSP violations.
+`vite-plugin-prefetch-nonce.ts` patches Astro's `appendSpeculationRules` to inject nonce on dynamic speculation rules, preventing CSP violations.
 
 ### CSP Strategy: Nonce-Only
 
@@ -598,14 +598,14 @@ Additional security headers: HSTS (1 year, `includeSubDomains; preload`), X-Cont
 
 ### Remark Plugins
 
-- `remarkMermaidBypass` — Transforms `mermaid-render` blocks to `<pre class="mermaid">`
+- `remarkMermaidBypass`: Transforms `mermaid-render` blocks to `<pre class="mermaid">`
 
 ### Rehype Plugins
 
-- `rehypeMermaid` — Mermaid SSR (inline-svg strategy with theme variables)
-- `rehypeRaw` — Allow raw HTML in MDX
-- `rehypeExternalLinks` — `rel="external noopener noreferrer"`, `target="_blank"`
-- `rehypeLinkDisambiguator` — Auto aria-labels for links with same text but different destinations
+- `rehypeMermaid`: Mermaid SSR (inline-svg strategy with theme variables)
+- `rehypeRaw`: Allow raw HTML in MDX
+- `rehypeExternalLinks`: `rel="external noopener noreferrer"`, `target="_blank"`
+- `rehypeLinkDisambiguator`: Auto aria-labels for links with same text but different destinations
 
 ### Custom Shiki Language
 
@@ -619,7 +619,7 @@ RouterOS grammar at `src/languages/routeros.tmLanguage.json`. Aliases: `routeros
 experimental: { clientPrerender: true, contentIntellisense: true, chromeDevtoolsWorkspace: true }
 prefetch: { prefetchAll: true, defaultStrategy: "viewport" }
 i18n: { defaultLocale: "en", locales: ["en", "es"] }
-build: { inlineStylesheets: "always", concurrency: 2 }  // experimento 2026-08-03: inline elimina el CSS render-blocking; revierte "auto" (PR #378) — ver comentario en astro.config.mjs
+build: { inlineStylesheets: "always", concurrency: 2 }  // experimento 2026-08-03: inline elimina el CSS render-blocking; revierte "auto" (PR #378); ver comentario en astro.config.mjs
 // Image: remote patterns for Google favicons, responsiveStyles: true
 // Vite: chunkSizeWarningLimit: 1000, SSR external: citation-js
 // Fonts: Space Grotesk + IBM Plex Sans + IBM Plex Mono via fontsource, optimizedFallbacks: true
@@ -642,8 +642,8 @@ Bilingual support (EN/ES) using Astro's built-in i18n routing with a custom tran
 
 ### URL Structure
 
-- **English (default)**: `/blog/`, `/tools/`, `/cv` — no prefix
-- **Spanish**: `/es/blog/`, `/es/tools/`, `/es/cv` — prefixed
+- **English (default)**: `/blog/`, `/tools/`, `/cv`, no prefix
+- **Spanish**: `/es/blog/`, `/es/tools/`, `/es/cv`, prefixed
 - **`hreflang` alternates**: Auto-generated via `getAlternateLinks()` in `BaseHead.astro`
 - **Language switcher**: `LanguageSwitcher.astro` in header, uses `useTranslatedPath()`
 
@@ -766,13 +766,13 @@ Blog posts and tools content **are fully translated**. `src/content/posts/{en,es
 
 ### Playwright Config
 
-5 projects: `functional` (Desktop Chrome — functional/integration/seo/prerender/security/icons/i18n/tools/schema/content-integrity/ui-components/edge-cases specs), `performance` (Desktop Chrome, 60s timeout, 1-2 retries — `performance.spec.ts` split out so its LCP/lazy-loading assertions aren't starved by the rest of the suite), `mobile-functional` (Pixel 5 — functional + tools specs), `accessibility` (Desktop Chrome, 30s timeout — `accessibility.spec.ts`, axe-core per-page), `a11y-static` (Desktop Chrome, 30s timeout — `deep.accessibility.spec.ts` + `keyboard.accessibility.spec.ts` + `tabs.accessibility.spec.ts`, split out of the `functional` project so `fullyParallel` accessibility runs aren't quadrupled across projects). WebServer: `pnpm astro preview` on port 4321. Permissions: clipboard-read/write.
+5 projects: `functional` (Desktop Chrome: functional/integration/seo/prerender/security/icons/i18n/tools/schema/content-integrity/ui-components/edge-cases specs), `performance` (Desktop Chrome, 60s timeout, 1-2 retries; `performance.spec.ts` split out so its LCP/lazy-loading assertions aren't starved by the rest of the suite), `mobile-functional` (Pixel 5: functional + tools specs), `accessibility` (Desktop Chrome, 30s timeout: `accessibility.spec.ts`, axe-core per-page), `a11y-static` (Desktop Chrome, 30s timeout: `deep.accessibility.spec.ts` + `keyboard.accessibility.spec.ts` + `tabs.accessibility.spec.ts`, split out of the `functional` project so `fullyParallel` accessibility runs aren't quadrupled across projects). WebServer: `pnpm astro preview` on port 4321. Permissions: clipboard-read/write.
 
 ### Test Utils
 
 - `sitemap.ts`: `getCachedPages()`, `getPagesFromSitemap()`, `getSitemapUrls()`, `filterPagesByLocale()`
 - `accessibility.ts`: `aggregateAxeResults()`, report generation
-- `filters.ts`: `shouldIgnoreError()` — filters expected localhost errors
+- `filters.ts`: `shouldIgnoreError()` filters expected localhost errors
 - `index.ts`: Barrel re-exports
 - `types.ts`: Shared test type definitions
 
@@ -793,7 +793,7 @@ Blog posts and tools content **are fully translated**. `src/content/posts/{en,es
 | `remark-mermaid-bypass.mjs`     | Remark plugin: mermaid-render → `<pre class="mermaid">` |
 | `run-lighthouse-audit.mjs`      | Lighthouse audits against localhost/production          |
 | `test-mermaid.mjs`              | Verify mermaid-isomorphic SSR works                     |
-| `deploy-swap.mjs`               | Blue/green build dir selection + atomic `dist` symlink swap |
+| `deploy-swap.mjs`               | Blue/green build dir selection + atomic `dist` symlink swap; files that did not change keep the live build's mtime |
 | `deploy-live.mjs`               | Post-swap publish actions: moves the staged Nginx snippets into place + reload, Cloudflare purge, IndexNow/Bing submission (production-root guarded) |
 | `ghc/rebuild-if-changed.mjs`   | Daily scheduled rebuild (systemd timer) only when the displayed contributions data changed or the last build is > 7 days old; `--dry-run` to inspect |
 
@@ -813,7 +813,7 @@ ci-setup → build → [parallel quality checks] → [parallel tests] → report
 
 ### Quality Checks (parallel jobs)
 
-`astro check`, Prettier, ESLint, pnpm audit, Stylelint, JSDoc coverage, Lychee (links), CSpell, SonarQube, bundle size, HTML validation, RSS validation, schema validation, image optimization. Since T14, jobs that don't consume the build artifact (`sa-astro`, `sa-prettier`, `sa-eslint`, `sa-audit`, `sa-jsdoc`, `sa-cspell`, `sa-stylelint`) no longer `needs: build` — they run immediately off a shared composite setup action (`.github/actions/setup`), instead of waiting on the production build.
+`astro check`, Prettier, ESLint, pnpm audit, Stylelint, JSDoc coverage, Lychee (links), CSpell, SonarQube, bundle size, HTML validation, RSS validation, schema validation, image optimization. Since T14, jobs that don't consume the build artifact (`sa-astro`, `sa-prettier`, `sa-eslint`, `sa-audit`, `sa-jsdoc`, `sa-cspell`, `sa-stylelint`) no longer `needs: build`: they run immediately off a shared composite setup action (`.github/actions/setup`), instead of waiting on the production build.
 
 ### Tests
 
@@ -833,7 +833,7 @@ pnpm exec sonar-scanner
 - **Project key**: `jmrplens_jmrp.io` | **Organization**: `jmrplens`
 - **Config**: `sonar-project.properties` (sources, exclusions, rule suppressions)
 - **IDE**: SonarLint connected mode in `.vscode/settings.json`
-- **Script**: `scripts/ci/get-sonar-issues.mjs` — queries issues + TO_REVIEW hotspots, checks `NOSONAR` suppressions
+- **Script**: `scripts/ci/get-sonar-issues.mjs` queries issues + TO_REVIEW hotspots, checks `NOSONAR` suppressions
 
 ---
 
@@ -863,11 +863,11 @@ pnpm exec sonar-scanner
 | `DEPLOY_LIVE_FORCE`             | Optional | Set to `1` to force `deploy-live.mjs` publish actions outside the production root |
 | `DEPLOY_LIVE_PRODUCTION_ROOT`   | Optional | Overrides the production-root guard path in `deploy-live.mjs` (default `/var/www/jmrp.io`) |
 
-> `POSTBUILD_NGINX_SNIPPETS_PATH` — a single *file* path — is retired and ignored by current code, but is deliberately left in the server's `.env`: `.env` is outside git, so a `git revert` would reintroduce the old code without restoring its key and that code skips the Nginx deploy silently.
+> `POSTBUILD_NGINX_SNIPPETS_PATH`, a single *file* path, is retired and ignored by current code, but is deliberately left in the server's `.env`: `.env` is outside git, so a `git revert` would reintroduce the old code without restoring its key and that code skips the Nginx deploy silently.
 >
 > None of these variables are required for local development. `SONAR_TOKEN` and `SONAR_PROJECT_KEY` are only needed to run the Sonar phase of `pnpm verify` (SonarCloud Analysis + Issues); that phase is skipped automatically when the variables are absent. `deploy-live.mjs`'s publish actions are additionally gated behind the production-root guard (see Deployment).
 >
-> **Where these come from at deploy time**: the post-build hook runs *inside* `astro build`, so it inherits the `.env` — not because the hook loads anything itself, but because Astro's env plugin copies every loaded variable into `process.env` (`node_modules/astro/dist/env/vite-plugin-env.js`: `for (const [key, value] of Object.entries(loadedEnv)) process.env[key] = value`). That is why `post-build.ts` can read `process.env.POSTBUILD_NGINX_SNIPPETS_DIR` with no loader of its own, and why `fixPermissions` runs even when the variable is absent from the shell. `deploy-live.mjs` does **not** — it is a separate Node process spawned after `astro build` exits, so it calls `process.loadEnvFile()` on the project's `.env` itself. Without that it only saw variables exported in the shell, which silently disabled the Nginx header deploy and the Bing submission from the 2026-07-05 refactor until 2026-08-21 (`.env` defined them; the shell did not). `loadEnvFile` never overwrites an already-set variable, so precedence is **shell > `.env`**: exporting a variable as an empty string is how a worktree opts out of an action (e.g. `POSTBUILD_NGINX_SNIPPETS_DIR=` to leave Nginx alone) — though the production-root guard already covers the worktree case.
+> **Where these come from at deploy time**: the post-build hook runs *inside* `astro build`, so it inherits the `.env`, not because the hook loads anything itself but because Astro's env plugin copies every loaded variable into `process.env` (`node_modules/astro/dist/env/vite-plugin-env.js`: `for (const [key, value] of Object.entries(loadedEnv)) process.env[key] = value`). That is why `post-build.ts` can read `process.env.POSTBUILD_NGINX_SNIPPETS_DIR` with no loader of its own, and why `fixPermissions` runs even when the variable is absent from the shell. `deploy-live.mjs` does **not**: it is a separate Node process spawned after `astro build` exits, so it calls `process.loadEnvFile()` on the project's `.env` itself. Without that it only saw variables exported in the shell, which silently disabled the Nginx header deploy and the Bing submission from the 2026-07-05 refactor until 2026-08-21 (`.env` defined them; the shell did not). `loadEnvFile` never overwrites an already-set variable, so precedence is **shell > `.env`**: exporting a variable as an empty string is how a worktree opts out of an action (e.g. `POSTBUILD_NGINX_SNIPPETS_DIR=` to leave Nginx alone), though the production-root guard already covers the worktree case.
 
 ---
 
@@ -904,15 +904,15 @@ Extends: `stylelint-config-standard`, `stylelint-config-recess-order`, `stylelin
 No Docker. Direct SSG deployment on the production server:
 
 - **Project root**: `/var/www/jmrp.io/`
-- **Nginx document root**: `/var/www/jmrp.io/dist/` — a **symlink** to `builds/blue` or `builds/green`, never a real directory; Nginx serves whatever it currently resolves to as `jmrp.io`
-- **Build output**: `pnpm build` builds into the *inactive* color dir (`builds/blue` or `builds/green`), then atomically retargets `dist` to it (`scripts/deploy-swap.mjs` — `ln -sfn` + `mv -T`/`rename(2)`), for zero-downtime deploys
-- **Live update**: Running `pnpm build` on the server immediately updates the live website — no git push, CI pipeline, or separate deploy step is needed
+- **Nginx document root**: `/var/www/jmrp.io/dist/`, a **symlink** to `builds/blue` or `builds/green`, never a real directory; Nginx serves whatever it currently resolves to as `jmrp.io`
+- **Build output**: `pnpm build` builds into the *inactive* color dir (`builds/blue` or `builds/green`), then atomically retargets `dist` to it (`scripts/deploy-swap.mjs`: `ln -sfn` + `mv -T`/`rename(2)`), for zero-downtime deploys
+- **Live update**: Running `pnpm build` on the server immediately updates the live website: no git push, CI pipeline, or separate deploy step is needed
 
 Steps (`pnpm build` = `scripts/deploy-swap.mjs prepare` → `astro build --outDir <color>` → `scripts/deploy-swap.mjs swap <color>` → `scripts/deploy-live.mjs`):
 
 1. `deploy-swap.mjs prepare` picks and empties the inactive `builds/<color>` dir
-2. `astro build --outDir builds/<color>` — includes the pre-build + post-build integrations (see Build System above); the site is fully built but not yet live
-3. `deploy-swap.mjs swap builds/<color>` — atomically retargets the `dist` symlink; the new build is now live
+2. `astro build --outDir builds/<color>`: includes the pre-build + post-build integrations (see Build System above); the site is fully built but not yet live
+3. `deploy-swap.mjs swap builds/<color>`: every file byte-identical to its live copy takes that copy's modification time, then the `dist` symlink is atomically retargeted and the new build is live. Nginx derives ETag and Last-Modified from the modification time, and a build rewrites every file, so without this each deploy made revalidating clients download unchanged files again. Best effort: a file it cannot compare or stamp costs only that file's validators, never the deploy
 4. `deploy-live.mjs` runs **after** the swap and performs the publish side effects:
    - MOVES the seven staged snippets from the staging directory into `POSTBUILD_NGINX_SNIPPETS_DIR` (`/etc/nginx/snippets/jmrp/`, the five maps into its `maps/` subdirectory), driven by the build's `manifest.json` rather than a glob, pruning any `maps/*.conf` the manifest does not list; then verifies config (`nginx -t`), reloads Nginx and clears the site's Nginx cache, restoring all seven destinations and parking the rejected content outside staging if anything fails. Any failure here (no manifest, a failed move, a failed `nginx -t`, or a reload whose rollback also fails) is **fatal**: the delivery is undone and `deploy-live.mjs` exits 1, failing `pnpm build`. It can no longer report success having delivered nothing; the only case that prints "skipping" is an unset gating variable. The swap has already happened by then, so the new site stays live with the previous Nginx config. A failed Cloudflare purge also fails `pnpm build` (exit 1), but only after every other publish action has run; `pnpm verify` stops at phase 2 on it, as on any build failure. A move, not a copy: nothing generated survives in staging or in `dist/`
    - Purges the Cloudflare cache via API. A failed purge is fatal but deferred: IndexNow/Bing, the contributions state record and the end-of-deploy notices still run, then `deploy-live.mjs` exits 1 and names the failure. Until the edge TTL runs out, the edge can keep serving the previous HTML, and the previous copy of any other changed file at an unversioned URL; purge by hand from the Cloudflare dashboard (Caching > Configuration > Purge Everything). The beacon's SRI does not depend on the purge, because it is published under a content-addressed path. A purge skipped because `PRIVATE_CF_ZONE_ID`/`PRIVATE_CF_API_TOKEN` are unset is not a failure
@@ -921,9 +921,9 @@ Steps (`pnpm build` = `scripts/deploy-swap.mjs prepare` → `astro build --outDi
    - Ends with a non-fatal notice when `build:cv` left `public/pdf/CV_*.pdf` modified or untracked (`git status --porcelain`, only inside a git work tree), with the exact `git add`/`git commit` commands (a `chore` commit, which moves no page date) that bring git in line with production. The PDFs stay in git by author decision (2026-09-30), because CI never compiles LaTeX: commit them after each deploy that prints the notice. The helper is `scripts/cv-pdf-notice.mjs`, deliberately outside `scripts/cv/`, whose `.mjs` files `build-cvs.mjs` hashes as PDF inputs
 5. CSP Reporter runs as separate service (`scripts/csp-reporter.mjs`)
 
-> **Production-root guard**: This repo is checked out in multiple worktrees (production at `/var/www/jmrp.io`, plus any staging worktree) that would deliver into the same Nginx snippets directory and purge the same Cloudflare zone. `deploy-live.mjs` is a no-op — skipped entirely, before doing any work — unless `process.cwd()` matches the production root (default `/var/www/jmrp.io`, override via `DEPLOY_LIVE_PRODUCTION_ROOT`) or `DEPLOY_LIVE_FORCE=1` is set. Individual actions are further gated on their own env vars being present (Nginx deploy on `POSTBUILD_NGINX_SNIPPETS_DIR`, Cloudflare purge on `PRIVATE_CF_ZONE_ID`/`PRIVATE_CF_API_TOKEN`, IndexNow on `POSTBUILD_INDEXNOW`, Bing on `BING_WEBMASTER_API_KEY`).
+> **Production-root guard**: This repo is checked out in multiple worktrees (production at `/var/www/jmrp.io`, plus any staging worktree) that would deliver into the same Nginx snippets directory and purge the same Cloudflare zone. `deploy-live.mjs` is a no-op (skipped entirely, before doing any work) unless `process.cwd()` matches the production root (default `/var/www/jmrp.io`, override via `DEPLOY_LIVE_PRODUCTION_ROOT`) or `DEPLOY_LIVE_FORCE=1` is set. Individual actions are further gated on their own env vars being present (Nginx deploy on `POSTBUILD_NGINX_SNIPPETS_DIR`, Cloudflare purge on `PRIVATE_CF_ZONE_ID`/`PRIVATE_CF_API_TOKEN`, IndexNow on `POSTBUILD_INDEXNOW`, Bing on `BING_WEBMASTER_API_KEY`).
 >
-> **First production deploy after merging this branch**: production's `/var/www/jmrp.io/dist` is still a real directory (legacy layout). `deploy-swap.mjs swap` auto-migrates it into `builds/<color>` on first run (rename the real dir out of the way, then symlink in the new build) — but that rename-then-symlink isn't atomic as *one* step, so there's a sub-millisecond window where `dist` exists as neither the old dir nor the new symlink. In practice this is negligible, but to eliminate it entirely, pre-convert `dist` to a symlink by hand before the first post-merge build (e.g. `mv dist builds/blue && ln -s builds/blue dist`).
+> **First production deploy after merging this branch**: production's `/var/www/jmrp.io/dist` is still a real directory (legacy layout). `deploy-swap.mjs swap` auto-migrates it into `builds/<color>` on first run (rename the real dir out of the way, then symlink in the new build), but that rename-then-symlink isn't atomic as *one* step, so there's a sub-millisecond window where `dist` exists as neither the old dir nor the new symlink. In practice this is negligible, but to eliminate it entirely, pre-convert `dist` to a symlink by hand before the first post-merge build (e.g. `mv dist builds/blue && ln -s builds/blue dist`).
 > **No lock for concurrent builds**: nothing prevents two `pnpm build` invocations from racing on `deploy-swap.mjs`; keep deploys serial.
 
 ### Scheduled contributions rebuild
@@ -947,7 +947,7 @@ Steps (`pnpm build` = `scripts/deploy-swap.mjs prepare` → `astro build --outDi
 pnpm dev              # Start dev server (port 4321)
 pnpm build            # Production build (blue/green symlink swap, then deploy-live.mjs)
 pnpm preview          # Preview production build
-pnpm verify           # FULL QA pipeline — static → build → dist → Sonar → E2E (run before PR)
+pnpm verify           # FULL QA pipeline: static → build → dist → Sonar → E2E (run before PR)
 pnpm typecheck        # astro check
 pnpm lint             # ESLint
 pnpm lint:css         # Stylelint
@@ -969,29 +969,29 @@ pnpm exec prettier --check .  # Format check (runs at end of build)
 
 5 phases. The first and third run their steps **concurrently** via `Promise.allSettled`, accumulating every failure instead of stopping at the first one; Build and E2E are always serial:
 
-1. **Static phase (parallel, accumulate)** — never touches `dist/`; any failure here stops the run before the build starts:
-   - **Astro Check** — `pnpm typecheck --minimumFailingSeverity warning` (also validates all JSON-LD `@graph` builders against Schema.org via `schema-dts` `satisfies` types — the official Google Schema.org TypeScript vocabulary)
-   - **ESLint** — `pnpm lint --max-warnings=0`
-   - **Prettier** — `pnpm exec prettier --check .`
-   - **Stylelint** — `pnpm lint:css`
-   - **Token sync** — `node scripts/ci/check-token-sync.mjs`
-   - **Unit tests** — `pnpm test:unit` (`node --test "scripts/**/*.test.mjs"`; also a standalone CI job, `sa-unit`, because phase 2 of this pipeline is a production deploy)
-   - **Spelling (CSpell)** — `pnpm exec cspell lint .`
-   - **JSDoc Coverage** — `node scripts/ci/calculate-jsdoc-coverage.mjs`
-2. **Build phase (serial, hard stop)** — `pnpm run build` (includes pre-build + post-build integrations, blue/green swap, `deploy-live.mjs`); a failure here skips dist-dependent checks, Sonar, and E2E entirely.
-3. **Dist phase (parallel, accumulate)** — only reads `dist/`, so failures here are recorded but don't block Sonar/E2E:
-   - **ATS: CV Compatibility** — `node scripts/cv/verify-ats.mjs`
-   - **HTML5 Validation** — `pnpm lint:html`
-   - **Public asset fidelity** — `node scripts/ci/check-public-asset-fidelity.mjs dist` (every `public/` image must reach the build with the same format, dimensions and pixels). On the production host this phase runs after the build has already swapped `dist/`, so treat it as an alarm; the gate is the `image-optimization` CI job.
-   - **RSS Feed Validation** — `node scripts/ci/validate-rss.mjs dist`
+1. **Static phase (parallel, accumulate)**: never touches `dist/`; any failure here stops the run before the build starts:
+   - **Astro Check**: `pnpm typecheck --minimumFailingSeverity warning` (also validates all JSON-LD `@graph` builders against Schema.org via `schema-dts` `satisfies` types, the official Google Schema.org TypeScript vocabulary)
+   - **ESLint**: `pnpm lint --max-warnings=0`
+   - **Prettier**: `pnpm exec prettier --check .`
+   - **Stylelint**: `pnpm lint:css`
+   - **Token sync**: `node scripts/ci/check-token-sync.mjs`
+   - **Unit tests**: `pnpm test:unit` (`node --test "scripts/**/*.test.mjs"`; also a standalone CI job, `sa-unit`, because phase 2 of this pipeline is a production deploy)
+   - **Spelling (CSpell)**: `pnpm exec cspell lint .`
+   - **JSDoc Coverage**: `node scripts/ci/calculate-jsdoc-coverage.mjs`
+2. **Build phase (serial, hard stop)**: `pnpm run build` (includes pre-build + post-build integrations, blue/green swap, `deploy-live.mjs`); a failure here skips dist-dependent checks, Sonar, and E2E entirely.
+3. **Dist phase (parallel, accumulate)**: only reads `dist/`, so failures here are recorded but don't block Sonar/E2E:
+   - **ATS: CV Compatibility**: `node scripts/cv/verify-ats.mjs`
+   - **HTML5 Validation**: `pnpm lint:html`
+   - **Public asset fidelity**: `node scripts/ci/check-public-asset-fidelity.mjs dist` (every `public/` image must reach the build with the same format, dimensions and pixels). On the production host this phase runs after the build has already swapped `dist/`, so treat it as an alarm; the gate is the `image-optimization` CI job.
+   - **RSS Feed Validation**: `node scripts/ci/validate-rss.mjs dist`
    - **Schema.org ranges**: `node scripts/ci/check-schema-ranges.mjs dist` (built JSON-LD against the pinned schema.org vocabulary; see the Schema.org validation note)
    - **Software drift**: `node scripts/ci/check-software-drift.mjs` (needs the network, not `dist/`: each project's docs-site `#software` node against `projects.yaml`). Exit 1 only for an undeclared contradiction; an unreadable site exits 0 so an offline run does not fail. Declared exceptions (matched by project id and property, with reason and date) live in `scripts/ci/software-drift-decision.mjs` and print as "accepted". Also a step of the CI `schema-validation` job (GEO audit #12, M1; it used to exit 0 whatever it found)
    - **Broken Links (Lychee)**: `lychee --config lychee.toml --root-dir dist "dist/**/*.html"`. The glob is quoted so lychee expands it recursively: the command runs under `sh` (dash), which has no globstar, and the unquoted form reached only `dist/*/*.html`, 12 of 130 pages (never the home page, a post, a tool or a Spanish subpage) until GEO audit #11. CI's `sa-lychee` quotes it for the same reason (the action runs `eval lychee ${ARGS}` in bash without globstar)
    - **Internal anchors (Lychee, offline)**: `lychee --config lychee.toml --offline --include-fragments --index-files index.html --root-dir dist "dist/**/*.html"`. Every `#fragment` of an internal link must exist on the page it names; `--index-files index.html` resolves `/about/#x` to the directory's `index.html` (without it: 148 false errors). The same check runs in the CI `sa-lychee` job
 4. **Sonar phase (serial, non-blocking)**:
-   - **SonarCloud Analysis** — `pnpm exec sonar-scanner` *(conditional: requires `SONAR_TOKEN`; warns but never blocks)*
-   - **SonarCloud Issues** — `node scripts/ci/get-sonar-issues.mjs` *(conditional: requires `SONAR_TOKEN`; recorded as a failure at the end but doesn't block E2E)*
-5. **E2E phase (serial, always last)** — **Playwright E2E** — `pnpm test:e2e`
+   - **SonarCloud Analysis**: `pnpm exec sonar-scanner` *(conditional: requires `SONAR_TOKEN`; warns but never blocks)*
+   - **SonarCloud Issues**: `node scripts/ci/get-sonar-issues.mjs` *(conditional: requires `SONAR_TOKEN`; recorded as a failure at the end but doesn't block E2E)*
+5. **E2E phase (serial, always last)**: **Playwright E2E**: `pnpm test:e2e`
 
 > **Schema.org validation** has two layers. `schema-dts` types (`satisfies`) on every schema builder (`BaseHead`, `BlogPost`, `ToolLayout`, `HomePage`, `CVPage`, `PublicationsPage`, `BlogIndex`, `BlogTagPage`) are checked in phase 1, but they cannot see a node that carries an `@id`: TypeScript accepts it as an `IdReference` in any property, which is how GEO audit #10's M2 (`hasPart` holding an `ItemList` and `Service` nodes) got through. `scripts/ci/check-schema-ranges.mjs` checks the output instead. It reads every built page's JSON-LD, resolves bare `{"@id"}` references to the referenced node's type (same page first, then the whole build), and fails when a node value's type (or a parent type) is outside the property's `rangeIncludes`; a `Role` is accepted anywhere. Literals, properties schema.org does not define, and domain mismatches (the deliberate `codeRepository`/`programmingLanguage` on `SoftwareApplication`) are warnings only. The vocabulary is pinned in `scripts/ci/schema-vocabulary.json` (schema.org 30.1) and regenerated deliberately with `scripts/ci/generate-schema-vocabulary.mjs`, whose header has the `curl -4` download command. It runs in phase 3 and in the CI `schema-validation` job.
 
@@ -1003,14 +1003,14 @@ The final report lists every failed step across all phases (not just the first e
 
 1. Copy `src/content/posts/en/_template.mdx`
 2. Rename with numbered prefix: `013-my-post.mdx` (next free `NNN`; `slug` must match the prefix)
-3. Update frontmatter: title, slug, publishedDate, tags, description ≤ 155 chars, **plus the GEO fields** — `articleType: "TechArticle"` (guides), `proficiencyLevel`, verified `topics` Q-ids, a genuine `faq`, and `howto` for step-by-step guides
+3. Update frontmatter: title, slug, publishedDate, tags, description ≤ 155 chars, **plus the GEO fields**: `articleType: "TechArticle"` (guides), `proficiencyLevel`, verified `topics` Q-ids, a genuine `faq`, and `howto` for step-by-step guides
 4. Standard opening: a short intro paragraph (the "entradilla"), then **`<TLDRSummary>`** (before the first `##`), then import + use other components
-5. Write content with MDX (avoid duplicate heading text — it creates ambiguous ToC anchors)
-6. References auto-collected from markdown links + HTML `<a>` tags; the FAQ section, JSON-LD (TechArticle/FAQPage/HowTo + about/mentions), and the `AuthorCard` are **auto-rendered by `BlogPost.astro`** from the frontmatter — do not hand-add them
+5. Write content with MDX (avoid duplicate heading text: it creates ambiguous ToC anchors)
+6. References auto-collected from markdown links + HTML `<a>` tags; the FAQ section, JSON-LD (TechArticle/FAQPage/HowTo + about/mentions), and the `AuthorCard` are **auto-rendered by `BlogPost.astro`** from the frontmatter; do not hand-add them
 7. For a Spanish version, mirror to `src/content/posts/es/` with translated `faq` and the SAME `topics` Q-ids
 
-> **Dates are computed, not remembered.** A post's `dateModified` — JSON-LD,
-> sitemap `<lastmod>`, the visible "Updated on" line and the markdown twin — is
+> **Dates are computed, not remembered.** A post's `dateModified` (JSON-LD,
+> sitemap `<lastmod>`, the visible "Updated on" line and the markdown twin) is
 > `max(publishedDate, updatedDate?, lastVerified.date?, last substantive commit
 > touching the file)`, resolved in `src/utils/post-dates.ts`. `updatedDate` is
 > now an optional floor, not the source of truth. A commit whose conventional
@@ -1123,21 +1123,21 @@ flowchart LR
 
 ## Anti-Patterns (Avoid)
 
-1. **❌ Inline `<script>` tags** — Breaks CSP, use data attributes or `<script is:inline>` only in app components
-2. **❌ Inline styles** — Use UnoCSS classes
-3. **❌ getElementById/querySelector in .astro** — Prefer CSS-only or islands pattern
-4. **❌ Fixed pixel widths** — Use responsive units (%, rem, ch)
-5. **❌ Missing alt text** — Always describe images
-6. **❌ Color-only indicators** — Add icons or text
-7. **❌ Duplicate icon classes** — UnoCSS handles deduplication
-8. **❌ Hardcoded dark mode colors** — Use CSS custom properties
-9. **❌ Large bundle dependencies** — Prefer smaller alternatives
-10. **❌ Ignoring CLS** — Always size images/embeds
-11. **❌ Meta descriptions > 155 chars** — Google truncates, tests enforce this
+1. **❌ Inline `<script>` tags**: Breaks CSP, use data attributes or `<script is:inline>` only in app components
+2. **❌ Inline styles**: Use UnoCSS classes
+3. **❌ getElementById/querySelector in .astro**: Prefer CSS-only or islands pattern
+4. **❌ Fixed pixel widths**: Use responsive units (%, rem, ch)
+5. **❌ Missing alt text**: Always describe images
+6. **❌ Color-only indicators**: Add icons or text
+7. **❌ Duplicate icon classes**: UnoCSS handles deduplication
+8. **❌ Hardcoded dark mode colors**: Use CSS custom properties
+9. **❌ Large bundle dependencies**: Prefer smaller alternatives
+10. **❌ Ignoring CLS**: Always size images/embeds
+11. **❌ Meta descriptions > 155 chars**: Google truncates, tests enforce this
 12. **❌ Preact in tools**: Tools use vanilla JS via `<script is:inline>`. Tool code must never build a `style=""` attribute either (innerHTML or `setAttribute('style')`): the nonce-only CSP blocks `style-src-attr`, and `csp-filters.mjs` classifies such reports as extension-injected. Use the `hidden` attribute (plus a scoped `[hidden]{display:none}` when the class sets `display`) or CSSOM `el.style`
-13. **❌ Missing `ariaLabel` on Mermaid** — Required for accessibility
-14. **❌ Hardcoded English strings in components** — Use `t()` from `useTranslations()` for all UI text
-15. **❌ Editing `public/.well-known/security.txt` without re-signing** — The file is PGP clearsigned. After any edit, re-sign with: `gpg --clearsign --default-key 0A993B268654DBBA52B7E8D3FCF653391E2C91FC public/.well-known/security.txt && mv public/.well-known/security.txt.asc public/.well-known/security.txt`
+13. **❌ Missing `ariaLabel` on Mermaid**: Required for accessibility
+14. **❌ Hardcoded English strings in components**: Use `t()` from `useTranslations()` for all UI text
+15. **❌ Editing `public/.well-known/security.txt` without re-signing**: The file is PGP clearsigned. After any edit, re-sign with: `gpg --clearsign --default-key 0A993B268654DBBA52B7E8D3FCF653391E2C91FC public/.well-known/security.txt && mv public/.well-known/security.txt.asc public/.well-known/security.txt`
 
 ---
 
@@ -1169,7 +1169,7 @@ flowchart LR
 
 | File                                     | Purpose                                          |
 | ---------------------------------------- | ------------------------------------------------ |
-| `CLAUDE.md`                              | Primary AI context (this file) — VS Code + Claude Code |
+| `CLAUDE.md`                              | Primary AI context (this file): VS Code + Claude Code |
 | `CLAUDE.local.md`                        | Personal overrides (gitignored)                  |
 | `src/components/ui/AGENTS.md`            | UI component quick reference for agents          |
 | `src/components/apps/AGENTS.md`          | Interactive tools reference for agents           |
