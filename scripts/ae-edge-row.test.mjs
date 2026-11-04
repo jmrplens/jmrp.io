@@ -37,7 +37,8 @@ function misc({
   timezone = "Europe/Madrid",
   fetchDest = "document",
   postal = "03001",
-  ray = "a5559c8f0d8d31c1-MAD",
+  // The cf-ray request header a Worker reads: no "-COLO" suffix.
+  ray = "a5559c8f0d8d31c1",
 } = {}) {
   return [
     region,
@@ -106,7 +107,7 @@ test("miscParts reads the position of each part of the blob", () => {
   assert.equal(parts.regionCode, "VC");
   assert.equal(parts.continent, "EU");
   assert.equal(parts.timezone, "Europe/Madrid");
-  assert.equal(parts.cfRay, "a5559c8f0d8d31c1-MAD");
+  assert.equal(parts.cfRay, "a5559c8f0d8d31c1");
   assert.equal(parts.contentType, "text/html");
   assert.equal(parts.postalCode, "03001");
 });

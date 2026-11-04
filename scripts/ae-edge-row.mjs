@@ -21,8 +21,10 @@
  * - String fields: cf_postal, cf_ray. Float fields: cf_lat, cf_lon.
  * - cf_colo equals edge_colo here. On origin rows, with Tiered Cache, it can
  *   name the data centre that reached the origin instead.
- * - cf_ray here is the ray the visitor got. The origin logs the ray of the
- *   Worker's subrequest, so the two never join.
+ * - cf_ray here is the ray id the Worker read from the request: 16 hex
+ *   digits, without the "-COLO" suffix the origin's cf_ray ends in (cf_colo
+ *   holds that). The origin logs the ray of the Worker's subrequest, so the
+ *   two never join.
  * - cf_worker and peer_addr describe how a request reached nginx. These rows
  *   have no nginx line, so they stay empty.
  *
