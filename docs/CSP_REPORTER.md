@@ -92,7 +92,7 @@ Both use `report-uri` only, with no `report-to`:
 - A Reporting API report to another origin is preceded by an `OPTIONS` preflight, which `/csp-report` answers with 404.
 - Chrome uses `report-uri` whenever the policy has no `report-to`, so every browser reports.
 
-The filters apply unchanged, with the reporting page's own site counting as own (see [Injected Third-Party Resources](#4-injected-third-party-resources-isinjectedthirdpartyresource)): a font or video of kleidos.dev or docs.jmrp.io that fails to load is notified. One difference matters: the docs policy allows `font-src 'self' data:`, and the filter that discards fonts from other sites as injected also discards a font from a third-party host that a docs site really tried to load. A stylesheet from a font host, the usual way such a font arrives, is still notified as a `style-src-elem` violation. The rules themselves are described in `plan/docs-edge-worker/README.md` on the server.
+The filters apply unchanged, with the reporting page's own site counting as own (see [Injected Third-Party Resources](#4-injected-third-party-resources-isinjectedthirdpartyresource)): a font or video of kleidos.dev or docs.jmrp.io that fails to load is notified. One difference matters: the docs policy allows `font-src 'self' data:`, and the filter that discards fonts from other sites as injected also discards a font from a third-party host that a docs site really tried to load. A stylesheet from a font host, the usual way such a font arrives, is still notified as a `style-src-elem` violation. The rules themselves are described in `workers/docs-edge/README.md`.
 
 ## False-Positive Filters
 

@@ -3,6 +3,7 @@ Abbrechen
 abre
 abuseipdb
 académicas
+acao
 accionable
 acelerómetros
 acento
@@ -136,6 +137,7 @@ banear
 baneo
 baneó
 baneos
+Barkrowler
 barras
 basados
 basetype
@@ -148,9 +150,11 @@ berlanga
 berlín
 beszel
 Beszel
+bfcache
 bibtex
 bigdog
 bingbot
+bingpreview
 biomédicas
 biomedicina
 biomédico
@@ -169,7 +173,10 @@ bloque
 bloqueantes
 bluesky
 Bluesky
+BODYLESS
+bodyless
 borgbase
+Bravebot
 brea
 brettel
 brotlied
@@ -451,6 +458,7 @@ experimento
 experto
 explícita
 externalagent
+externalhit
 externo
 facebookexternalhit
 faroit
@@ -539,6 +547,7 @@ hardvard
 hashcat
 hashrate
 headlesschrome
+healthchecks
 healthz
 Helme
 helpdesk
@@ -569,6 +578,8 @@ htpasswd
 httpdate
 httponly
 hunde
+hunyuan
+Hunyuan
 hvtracker
 IACR
 icmpv
@@ -620,8 +631,13 @@ intraword
 invassat
 IONOS
 ipcalc
+ipcity
+ipcontinent
+ipcountry
 ipdb
 iperf
+iplatitude
+iplongitude
 iporhost
 ipsets
 iptv
@@ -646,6 +662,7 @@ jmrpio
 jmrplens
 josé
 journalctl
+jscrawler
 jsonld
 jssecurity
 JTAG
@@ -664,6 +681,7 @@ keypairs
 keypoint
 keyserver
 keyspace
+Kimi
 kleidos
 koffi
 kolkata
@@ -868,6 +886,7 @@ noqa
 nosniff
 nosonar
 nospaces
+notebooklm
 notifempty
 nownownow
 nsanitización
@@ -883,6 +902,9 @@ objetivo
 observabilidad
 ocsp
 ocurre
+Pangu
+Qwantbot
+Qwenbot
 öffnen
 oficial
 oids
@@ -1070,6 +1092,7 @@ reescritura
 refactorización
 refactorizar
 referenciarla
+Referers
 reflasheable
 reflasheables
 reflasheo
@@ -1156,6 +1179,7 @@ saura
 scannerwork
 scid
 sclk
+scrapy
 scts
 searchbot
 securepassword
@@ -1178,6 +1202,7 @@ Servidores
 Seznam
 sfmono
 shanghái
+Shap
 shiki
 shiki's
 shuding
@@ -1201,6 +1226,7 @@ Sobre
 sobrecoste
 sobreescribimos
 sobrevenderlo
+Sogou
 sonarcloud
 sonarjs
 sonarqube
@@ -1219,6 +1245,7 @@ srvx
 ssdp
 ssllabs
 sslv
+starlark
 startswith
 streamable
 strs
@@ -1226,9 +1253,13 @@ subacuática
 subclaves
 subnetting
 subpage
+subpages
 subred
 subredes
+subrequest
+subrequests
 subresource
+subresources
 subsetted
 subwavelength
 surý
@@ -1294,6 +1325,8 @@ trixie
 truecolor
 truenas
 ttfb
+turnitin
+Turnitin
 uaaaaj
 uart
 Ubiquiti
@@ -1314,6 +1347,7 @@ unhashed
 unifi
 universitat
 université
+unlogged
 unminified
 unocss
 unpad
@@ -1364,6 +1398,7 @@ wbsearchentities
 wcag
 webdav
 webdev
+webfetch
 webfinger
 webmcp
 webmin

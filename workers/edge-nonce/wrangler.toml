@@ -1,0 +1,41 @@
+# Renamed from "edge-nonce-canary" on 2026-08-22 (GEO audit, B26): the canary
+# graduated to the whole site on 2026-08-03 and a misleading name is an
+# operational risk: someone could delete it believing it an experiment.
+name = "edge-nonce"
+main = "worker.js"
+compatibility_date = "2026-08-01"
+account_id = "d3604ab61425cd17ccc0c6b2f14ec1dd"
+
+# Whole site since 2026-08-03, after a canary on /uses/. The bypasses do NOT
+# go here: they are zone routes with NO Worker, created through the API.
+# Cloudflare applies the MOST SPECIFIC route, so a narrow bypass beats
+# jmrp.io/*. List and reasons in the README.
+#
+# Never `wrangler deploy`: it turns the routes' fail_open off. Deploy with
+# `wrangler versions upload` and `wrangler versions deploy` (README).
+# The two contributions routes re-route back into the worker the subpages
+# that the jmrp.io/projects/* bypass would otherwise exclude. They MUST be
+# listed here: `wrangler deploy` deletes every route of this script that the
+# file does not declare, and on 2026-10-14 it removed both (restored by API).
+routes = [
+  { pattern = "jmrp.io/*", zone_id = "44d43a33307a232a60a5af4fc1504613" },
+  { pattern = "jmrp.io/projects/contributions/*", zone_id = "44d43a33307a232a60a5af4fc1504613" },
+  { pattern = "jmrp.io/es/projects/contributions/*", zone_id = "44d43a33307a232a60a5af4fc1504613" },
+]
+
+# Invocation and error logs in the dashboard (Workers Logs, free plan).
+# head_sampling_rate 1 = all of them; should the volume grow, lower to 0.1.
+workers_dev = false
+
+[observability]
+enabled = true
+head_sampling_rate = 1
+
+# Per-request record since 2026-08-26: Analytics Engine, queryable by SQL,
+# about 90 days of retention against the 3 days of Workers Logs. It says how
+# many requests reach each URL, the markdown twins included, which the nginx
+# logs cannot, because the edge answers from its cache. Example query in the
+# README.
+[[analytics_engine_datasets]]
+binding = "REQS"
+dataset = "jmrp_edge_requests"
