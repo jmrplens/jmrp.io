@@ -524,6 +524,26 @@ function withoutRange(request) {
 }
 
 /**
+ * Fetches a request and, when the edge rejects one that carries a Range,
+ * fetches it once more without it. Cloudflare throws on some ranges instead of
+ * answering them (`bytes=-0,-0`, which the origin answers 416), and a server
+ * may always ignore Range (RFC 9110, 14.2), so the whole file is a valid
+ * answer where a 502 is not.
+ *
+ * @param {Request} request - The request to send.
+ * @param {RequestInit} [init] - Options for fetch, such as `cf`.
+ * @returns {Promise<Response>} The answer.
+ */
+async function fetchOrWhole(request, init) {
+  try {
+    return await fetch(request, init);
+  } catch (error) {
+    if (!request.headers.has("range")) throw error;
+    return fetch(withoutRange(request), init);
+  }
+}
+
+/**
  * Lets go of a response whose body will not be read. A body that cannot be
  * cancelled changes nothing about the answer, so it must not become a 502.
  *
@@ -556,14 +576,20 @@ async function release(response) {
  * @returns {Promise<Response>} The answer to send on.
  */
 async function passThrough(request) {
-  const outgoing = forOrigin(request);
+  const rangeSafe = isRangeSafe(request);
+  // A type outside the list never gets a real range from the edge, so its
+  // Range is not sent at all: the cached whole file comes back with a 200.
+  // Sent, a malformed one such as `bytes=-0,-0` made the edge throw.
+  let outgoing = forOrigin(request);
+  if (!rangeSafe && outgoing.headers.has("range")) {
+    outgoing = withoutRange(outgoing);
+  }
   const cf = { ...EDGE_CACHE_CF };
-  const response = await fetch(outgoing, { cf });
+  const response = await fetchOrWhole(outgoing, { cf });
   if (request.method !== "GET" && request.method !== "HEAD") return response;
   // The label decides first, because it is the stronger proof; the list is the
   // second condition (F07), so a compressed copy GitHub ever sends unlabelled,
   // or labelled with a coding this file does not know, still gets the whole file.
-  const rangeSafe = isRangeSafe(request);
   if (
     isCompressedPartial(response) ||
     (response.status === 206 && !rangeSafe)

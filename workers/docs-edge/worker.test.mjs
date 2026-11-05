@@ -1126,22 +1126,16 @@ describe("worker.fetch", () => {
               at,
             );
           }
+          // A page is not a listed type, so its Range is never sent: one
+          // pass-through for the whole page, and no fragment to release.
           const passes = calls.filter(
             ({ init }) => init?.redirect !== "manual",
           );
-          assert.equal(passes.length, 2, at);
-          assert.equal(passes[0].input.headers.has("range"), true, at);
-          assert.equal(passes[1].input.headers.has("range"), false, at);
-          assert.equal(passes[1].input.method, method, at);
-          assert.equal(passes[1].input.redirect, "manual", at);
-          assert.deepEqual(passes[1].init.cf, EDGE_CACHE_CF, at);
-          if (method === "GET") {
-            assert.equal(
-              respond.upstream[0].bodyUsed,
-              true,
-              `${at}: the fragment is released`,
-            );
-          }
+          assert.equal(passes.length, 1, at);
+          assert.equal(passes[0].input.headers.has("range"), false, at);
+          assert.equal(passes[0].input.method, method, at);
+          assert.equal(passes[0].input.redirect, "manual", at);
+          assert.deepEqual(passes[0].init.cf, EDGE_CACHE_CF, at);
           assert.equal(points.length, 1, at);
           assert.equal(points[0].blobs[10], "200", at);
           if (WITH_TWIN.has(pathname)) {
@@ -1152,7 +1146,7 @@ describe("worker.fetch", () => {
             );
             assert.match(response.headers.get("link"), /rel="alternate"/, at);
           } else {
-            assert.equal(response, respond.upstream[1], at);
+            assert.equal(response, respond.upstream[0], at);
             assert.equal(response.headers.get("vary"), "Accept-Encoding", at);
           }
         }
@@ -1217,6 +1211,36 @@ describe("worker.fetch", () => {
     }
   });
 
+  test("a Range the edge rejects: the whole file, never a 502", async () => {
+    // Cloudflare throws on some ranges instead of answering them
+    // (`bytes=-0,-0`, measured 2026-11-05; the origin answers 416). On a text
+    // type the Range is never sent, so nothing throws; on a listed type the
+    // request is sent once more without it.
+    const rejectRange = (input, init) => {
+      if (init?.redirect !== "manual" && input.headers.has("range")) {
+        throw new TypeError("rejected range");
+      }
+      return new Response("whole", { status: 200 });
+    };
+    for (const [file, sends] of [
+      ["/phonometry/llms.txt", 1],
+      ["/phonometry/media/clip.webm", 2],
+    ]) {
+      for (const method of ["GET", "HEAD"]) {
+        const { response, calls } = await run(
+          worker,
+          req(file, { method, headers: { range: "bytes=-0,-0" } }),
+          rejectRange,
+        );
+        const at = `${method} ${file}`;
+        assert.equal(response.status, 200, at);
+        assert.equal(calls.length, sends, at);
+        assert.equal(calls.at(-1).input.headers.has("range"), false, at);
+        assert.equal(calls.at(-1).input.headers.has("if-range"), false, at);
+      }
+    }
+  });
+
   test("a 206 that is not compressed on a type outside the list: the whole file (F07)", async () => {
     // sitemap-index.xml, pagefind-entry.json and BingSiteAuth.xml are too small
     // for GitHub to gzip, so their 206 was a real one; the list makes the rule
@@ -1240,10 +1264,10 @@ describe("worker.fetch", () => {
             );
             const at = `${method} ${file} ${rangeCoding} ${name}`;
             assert.equal(response.status, 200, at);
-            assert.equal(response, respond.upstream[1], at);
-            assert.equal(calls.length, 2, at);
-            assert.equal(calls[1].input.headers.has("range"), false, at);
-            assert.equal(calls[1].input.method, method, at);
+            assert.equal(response, respond.upstream[0], at);
+            assert.equal(calls.length, 1, at);
+            assert.equal(calls[0].input.headers.has("range"), false, at);
+            assert.equal(calls[0].input.method, method, at);
             assert.equal(points[0].blobs[10], "200", at);
           }
         }
@@ -1507,7 +1531,7 @@ describe("worker.fetch", () => {
             );
             const at = `${method} ${id} ${name} ${page}`;
             const whole = status === 200;
-            const answer = respond.upstream[whole ? 1 : 0];
+            const answer = respond.upstream[0];
             assert.equal(response.status, status, at);
             assert.equal(
               response.headers.get("vary"),
@@ -1521,7 +1545,7 @@ describe("worker.fetch", () => {
             );
             assert.equal(
               calls.length,
-              (whole ? 2 : 1) + (pathname.endsWith("/") ? 1 : 0),
+              1 + (pathname.endsWith("/") ? 1 : 0),
               at,
             );
             if (WITH_TWIN.has(pathname)) {

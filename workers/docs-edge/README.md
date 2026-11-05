@@ -66,9 +66,14 @@ fail if they differ.
 GitHub sends compressible files gzipped, and the edge measures a byte range against
 the stored gzip, which gives a client a piece of a compressed stream with a
 `Content-Range` that says nothing about the file. For any type outside
-`RANGE_SAFE_EXTENSIONS`, the Worker answers a `Range` request with the whole file and
-a 200; binaries in the list keep real ranges. The same list exists in the other two
-Workers and in two zone rules (see `../README.md`).
+`RANGE_SAFE_EXTENSIONS`, the Worker does not send the `Range` on, so the client gets
+the whole file with a 200; binaries in the list keep real ranges. The same list exists
+in the other two Workers and in two zone rules (see `../README.md`).
+
+Cloudflare throws on some ranges instead of answering them: `bytes=-0,-0` gave a 502
+where the origin answers 416. When a request with a `Range` fails like that, the
+Worker sends it once more without one and returns the whole file, which a server may
+always do (RFC 9110, 14.2). On routes with no Worker, Cloudflare's own 502 remains.
 
 ## Zone settings this depends on
 

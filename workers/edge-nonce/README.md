@@ -94,7 +94,9 @@ The live list is what counts. Read it with
 - **Range requests.** The edge stores compressed files and would cut a byte range
   from the stored copy. For any type outside `RANGE_SAFE_EXTENSIONS` the Worker
   drops `Range` and `If-Range`, so the client gets the whole file with a 200.
-  Binaries in the list keep real ranges.
+  Binaries in the list keep real ranges. When Cloudflare rejects a range outright
+  (`bytes=-0,-0`), the fail-open fallback sends the request once more without it
+  and returns the whole file instead of a 502.
 
 ### Chromium: whole file, then a Range (accepted)
 

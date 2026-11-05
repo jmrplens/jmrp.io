@@ -683,6 +683,39 @@ function logEdgeRequest({
   }
 }
 
+/**
+ * The same request without Range and If-Range.
+ *
+ * @param {Request} request - The request.
+ * @returns {Request} A copy with no range headers.
+ */
+function withoutRange(request) {
+  const headers = new Headers(request.headers);
+  headers.delete("range");
+  headers.delete("if-range");
+  return new Request(request, { headers });
+}
+
+/**
+ * Fetches a request and, when the edge rejects one that carries a Range,
+ * fetches it once more without it. Cloudflare throws on some ranges instead of
+ * answering them (`bytes=-0,-0`, which the origin answers 416), and a server
+ * may always ignore Range (RFC 9110, 14.2), so the whole file is a valid
+ * answer where a 502 is not.
+ *
+ * @param {Request} request - The request to send.
+ * @param {RequestInit} [init] - Options for fetch, such as `cf`.
+ * @returns {Promise<Response>} The answer.
+ */
+async function fetchOrWhole(request, init) {
+  try {
+    return await fetch(request, init);
+  } catch (error) {
+    if (!request.headers.has("range")) throw error;
+    return fetch(withoutRange(request), init);
+  }
+}
+
 export default {
   async fetch(request, env) {
     // Fail open, always: an exception here must degrade to "the worker adds
@@ -692,7 +725,7 @@ export default {
       return await handle(request, env);
     } catch {
       try {
-        return await fetch(passthroughRequest(request));
+        return await fetchOrWhole(passthroughRequest(request));
       } catch {
         return new Response("origin unreachable", { status: 502 });
       }
