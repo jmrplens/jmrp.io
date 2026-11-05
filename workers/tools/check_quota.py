@@ -35,11 +35,13 @@ def load_env():
 
 
 ENV = load_env()
-HEADERS = {
-    "X-Auth-Email": ENV["PRIVATE_CF_EMAIL"],
-    "X-Auth-Key": ENV["PRIVATE_CF_API_TOKEN"],
-    "Content-Type": "application/json",
-}
+# Same rule as scripts/deploy-live.mjs: with PRIVATE_CF_EMAIL the key is the
+# account's Global API Key, without it an API token.
+if ENV.get("PRIVATE_CF_EMAIL"):
+    AUTH = {"X-Auth-Email": ENV["PRIVATE_CF_EMAIL"], "X-Auth-Key": ENV["PRIVATE_CF_API_TOKEN"]}
+else:
+    AUTH = {"Authorization": f"Bearer {ENV['PRIVATE_CF_API_TOKEN']}"}
+HEADERS = {**AUTH, "Content-Type": "application/json"}
 
 
 def graphql(query, variables):

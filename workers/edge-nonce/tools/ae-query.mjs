@@ -58,6 +58,11 @@ const ACCOUNT =
   process.env.PRIVATE_CF_ACCOUNT_ID ?? "d3604ab61425cd17ccc0c6b2f14ec1dd";
 const EMAIL = process.env.PRIVATE_CF_EMAIL;
 const KEY = process.env.PRIVATE_CF_API_TOKEN;
+// Same rule as scripts/deploy-live.mjs: with PRIVATE_CF_EMAIL the key is the
+// account's Global API Key, without it an API token.
+const AUTH = EMAIL
+  ? { "X-Auth-Email": EMAIL, "X-Auth-Key": KEY }
+  : { Authorization: `Bearer ${KEY}` };
 
 /**
  * Runs one SQL statement against Analytics Engine.
@@ -70,11 +75,7 @@ async function query(sql) {
     `https://api.cloudflare.com/client/v4/accounts/${ACCOUNT}/analytics_engine/sql`,
     {
       method: "POST",
-      headers: {
-        "X-Auth-Email": EMAIL,
-        "X-Auth-Key": KEY,
-        "Content-Type": "text/plain",
-      },
+      headers: { ...AUTH, "Content-Type": "text/plain" },
       body: sql,
     },
   );

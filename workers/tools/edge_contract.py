@@ -59,7 +59,7 @@ ap.add_argument("--skip-quota-check", action="store_true", help="only when check
 # Imported (the guard's own self-test, g2 mutants), it parses no command line.
 ARGS = ap.parse_args(None if __name__ == "__main__" else [])
 HOSTS = ARGS.host or list(SCRIPT_OF)
-OVERRIDES = {name: version for name, version in (o.split("=", 1) for o in ARGS.override)}
+OVERRIDES = {name: version for name, _, version in (o.partition("=") for o in ARGS.override)}
 
 results = []  # (kind, host, name, ok, detail)
 counts = {"worker": 0, "no_worker": 0, "origin": 0}

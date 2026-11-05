@@ -27,11 +27,13 @@ for line in (ROOT / ".env").read_text().splitlines():
     key, value = line.split("=", 1)
     ENV[key.strip()] = value.strip().strip('"').strip("'")
 ZONE = ENV["PRIVATE_CF_ZONE_ID"]
-HEADERS = {
-    "X-Auth-Email": ENV["PRIVATE_CF_EMAIL"],
-    "X-Auth-Key": ENV["PRIVATE_CF_API_TOKEN"],
-    "User-Agent": "jmrp-edge-guards/1.0",
-}
+# Same rule as scripts/deploy-live.mjs: with PRIVATE_CF_EMAIL the key is the
+# account's Global API Key, without it an API token.
+if ENV.get("PRIVATE_CF_EMAIL"):
+    AUTH = {"X-Auth-Email": ENV["PRIVATE_CF_EMAIL"], "X-Auth-Key": ENV["PRIVATE_CF_API_TOKEN"]}
+else:
+    AUTH = {"Authorization": f"Bearer {ENV['PRIVATE_CF_API_TOKEN']}"}
+HEADERS = {**AUTH, "User-Agent": "jmrp-edge-guards/1.0"}
 
 
 def get(path):
