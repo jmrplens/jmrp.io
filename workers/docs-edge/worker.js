@@ -559,6 +559,32 @@ async function release(response) {
 }
 
 /**
+ * Whether every part of a Range header is a byte range the edge answers
+ * correctly: `first-last` with first not after last, `first-`, or a suffix
+ * `-n` with n above zero, one or several of them. A header with any other
+ * part (an empty suffix such as `-0`, a first byte after the last, a missing
+ * number, another unit) is not sent on, and the client gets the whole file,
+ * which a server may always answer (RFC 9110, 14.2). Sent on, the edge
+ * answered those with a 502, an empty 206 or a 416 that the origin would not
+ * give; valid single and multiple ranges it answers right (measured
+ * 2026-11-05).
+ *
+ * @param {string} value - The Range header.
+ * @returns {boolean} True when the edge can serve every part.
+ */
+function isValidRange(value) {
+  const match = /^bytes=(.+)$/.exec(value.trim());
+  if (!match) return false;
+  return match[1].split(",").every((part) => {
+    const spec = /^(\d*)-(\d*)$/.exec(part.trim());
+    if (!spec) return false;
+    const [, first, last] = spec;
+    if (first === "") return last !== "" && Number(last) > 0;
+    return last === "" || Number(first) <= Number(last);
+  });
+}
+
+/**
  * The pass-through, with the one correction Range requests need on compressed
  * files. A compressed 206 is replaced by the whole file. A 416 cannot be
  * trusted either: the edge compared the range with the gzip size, so a range
@@ -577,11 +603,12 @@ async function release(response) {
  */
 async function passThrough(request) {
   const rangeSafe = isRangeSafe(request);
-  // A type outside the list never gets a real range from the edge, so its
-  // Range is not sent at all: the cached whole file comes back with a 200.
-  // Sent, a malformed one such as `bytes=-0,-0` made the edge throw.
+  // A Range is not sent on for a type outside the list, which never gets a
+  // real range from the edge, nor when a part of it is not a valid range, which the
+  // edge answers wrongly (isValidRange): the whole file comes back with a 200.
   let outgoing = forOrigin(request);
-  if (!rangeSafe && outgoing.headers.has("range")) {
+  const range = outgoing.headers.get("range");
+  if (range !== null && (!rangeSafe || !isValidRange(range))) {
     outgoing = withoutRange(outgoing);
   }
   const cf = { ...EDGE_CACHE_CF };

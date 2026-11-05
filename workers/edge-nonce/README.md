@@ -12,9 +12,9 @@ tools.
 
 | Item             | Value                                                                      |
 | ---------------- | -------------------------------------------------------------------------- |
-| Live version     | `5611584b-d8f2-46df-bee9-85d67c6c03e3` (2026-11-05)                        |
-| Previous version | `8afe29b4-f915-4985-b7e4-dadb2fb07097` (2026-11-04)                        |
-| Roll back        | `wrangler versions deploy 8afe29b4-f915-4985-b7e4-dadb2fb07097@100% --yes` |
+| Live version     | `e01542e5-f422-421e-be64-4dc3406e9b6d` (2026-11-05)                        |
+| Previous version | `5611584b-d8f2-46df-bee9-85d67c6c03e3` (2026-11-05)                        |
+| Roll back        | `wrangler versions deploy 5611584b-d8f2-46df-bee9-85d67c6c03e3@100% --yes` |
 | Routes           | `jmrp.io/*` and the two `contributions` routes below, all fail-open        |
 | Dataset          | `jmrp_edge_requests` (binding `REQS`)                                      |
 
@@ -94,9 +94,10 @@ The live list is what counts. Read it with
 - **Range requests.** The edge stores compressed files and would cut a byte range
   from the stored copy. For any type outside `RANGE_SAFE_EXTENSIONS` the Worker
   drops `Range` and `If-Range`, so the client gets the whole file with a 200.
-  Binaries in the list keep real ranges. When Cloudflare rejects a range outright
-  (`bytes=-0,-0`), the fail-open fallback sends the request once more without it
-  and returns the whole file instead of a 502.
+  Binaries in the list keep real ranges while `isValidRange` accepts every part of
+  them; an invalid range such as `bytes=-0,-0`, which the edge answers with a 502 or
+  an empty 206, is dropped the same way. If the edge still rejects a range, the
+  fail-open fallback (`fetchOrWhole`) sends the request once more without it.
 
 ### Chromium: whole file, then a Range (accepted)
 
@@ -159,8 +160,7 @@ origin, while its output carries a per-visitor nonce.
 | `6aab95f5` | 2026-10-29 | Markdown negotiation hardened: `q` parsed without a quadratic pattern, twin built with `twinUrl`     |
 | `8afe29b4` | 2026-11-04 | `Range` and `If-Range` dropped outside the binary types                                              |
 | `5611584b` | 2026-11-05 | Redirects without CSP and with the query restored, no validators on minted HTML, `Vary` on the feeds |
+| `e01542e5` | 2026-11-05 | An invalid `Range` dropped like one on text; a range the edge rejects retried whole                  |
 
-The source moved here from a git-ignored directory on 2026-11-05. The only changes
-since `5611584b` are comments, formatting, and two behavior-neutral edits that
-satisfy the linter (`replaceAll` with a function, `URL#href`); the next deploy
-publishes them.
+The source moved here from a git-ignored directory on 2026-11-05; `e01542e5` is the
+first version deployed from it.

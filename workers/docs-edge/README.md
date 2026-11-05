@@ -12,9 +12,9 @@ tools.
 
 | Item             | Value                                                                      |
 | ---------------- | -------------------------------------------------------------------------- |
-| Live version     | `230bd6d9-132a-49f4-98aa-e6bafe759c6d` (2026-11-05)                        |
-| Previous version | `98d56f4a-7a42-44aa-bf55-c50a3956ef95` (2026-11-04)                        |
-| Roll back        | `wrangler versions deploy 98d56f4a-7a42-44aa-bf55-c50a3956ef95@100% --yes` |
+| Live version     | `66d907d2-ce76-4efd-8f2b-6eecf0b91b7c` (2026-11-05)                        |
+| Previous version | `230bd6d9-132a-49f4-98aa-e6bafe759c6d` (2026-11-05)                        |
+| Roll back        | `wrangler versions deploy 230bd6d9-132a-49f4-98aa-e6bafe759c6d@100% --yes` |
 | Route            | `docs.jmrp.io/*`, fail-open                                                |
 | Dataset          | `docs_edge_requests` (binding `REQS`)                                      |
 
@@ -70,10 +70,15 @@ the stored gzip, which gives a client a piece of a compressed stream with a
 the whole file with a 200; binaries in the list keep real ranges. The same list exists
 in the other two Workers and in two zone rules (see `../README.md`).
 
-Cloudflare throws on some ranges instead of answering them: `bytes=-0,-0` gave a 502
-where the origin answers 416. When a request with a `Range` fails like that, the
-Worker sends it once more without one and returns the whole file, which a server may
-always do (RFC 9110, 14.2). On routes with no Worker, Cloudflare's own 502 remains.
+An invalid range is not sent on either. The edge does not answer some of them as the
+origin would: `bytes=-0,-0` gave a 502 or an empty 206 where GitHub answers 416.
+`isValidRange` lets a `Range` through only when every part of it is well formed
+(`first-last` with first not above last, `first-`, or `-suffix` with a suffix above
+zero); otherwise the Worker drops `Range` and `If-Range` and the client gets the whole
+file with a 200, which a server may always do (RFC 9110, 14.2). Valid single and
+multiple ranges go through unchanged and the edge answers them correctly (measured on
+2026-11-05). If the edge still throws on a range, `fetchOrWhole` sends the request once
+more without it. On routes with no Worker, Cloudflare's own 502 remains.
 
 ## Zone settings this depends on
 
@@ -110,7 +115,7 @@ copy of the Worker, which you get with `git show` and name in `DOCS_EDGE_BEFORE`
 | `943214a0` | 2026-10-29 | Markdown negotiation                                                                                           |
 | `98d56f4a` | 2026-11-04 | A Range on a compressed answer gets the whole file                                                             |
 | `230bd6d9` | 2026-11-05 | Probe in parallel and capped, negative verdict cached, location headers not forwarded, range-safe types listed |
+| `66d907d2` | 2026-11-05 | A Range goes on only when valid and on a range-safe type; a range the edge rejects gets the whole file         |
 
-The source moved here from a git-ignored directory on 2026-11-05. The changes since
-`230bd6d9` are comments, formatting and one behavior-neutral edit that satisfies the
-linter; the next deploy publishes them.
+The source moved here from a git-ignored directory on 2026-11-05; `66d907d2` is the
+first version deployed from it.

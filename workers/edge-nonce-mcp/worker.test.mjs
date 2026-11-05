@@ -327,10 +327,10 @@ test("the nonce differs per request and the validators stay off", async () => {
 });
 
 test("a Range the edge rejects: the whole file, never a 502", async () => {
-  // Cloudflare throws on some ranges (`bytes=-0,-0`); the fail-open fallback
-  // sends the request once more without Range and gets the whole file.
+  // A valid range the edge throws on: the fail-open fallback sends the
+  // request once more without Range and gets the whole file.
   const { response, calls } = await run("/og-en.png", {
-    headers: { range: "bytes=-0,-0" },
+    headers: { range: "bytes=0-99" },
     origin: (request) => {
       if (request.headers.has("range")) throw new TypeError("rejected range");
       return new Response("whole", { status: 200 });
@@ -339,6 +339,16 @@ test("a Range the edge rejects: the whole file, never a 502", async () => {
   assert.equal(response.status, 200);
   assert.equal(await response.text(), "whole");
   assert.equal(calls.at(-1).headers.has("range"), false);
+});
+
+test("an invalid Range is not sent on at all", async () => {
+  // bytes=-0,-0 made the edge answer 502 on a binary; the whole file instead.
+  const { response, calls } = await run("/og-en.png", {
+    headers: { range: "bytes=-0,-0" },
+    origin: () => new Response("whole", { status: 200 }),
+  });
+  assert.equal(response.status, 200);
+  assert.ok(calls.every((call) => !call.headers.has("range")));
 });
 
 test("the source logs nothing to the console", () => {

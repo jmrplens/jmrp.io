@@ -1222,22 +1222,53 @@ describe("worker.fetch", () => {
       }
       return new Response("whole", { status: 200 });
     };
-    for (const [file, sends] of [
-      ["/phonometry/llms.txt", 1],
-      ["/phonometry/media/clip.webm", 2],
+    // bytes=-0,-0 is no longer sent on at all; a valid range the edge throws
+    // on still gets the whole file through the retry.
+    for (const [file, range, sends] of [
+      ["/phonometry/llms.txt", "bytes=-0,-0", 1],
+      ["/phonometry/media/clip.webm", "bytes=-0,-0", 1],
+      ["/phonometry/media/clip.webm", "bytes=0-99", 2],
     ]) {
       for (const method of ["GET", "HEAD"]) {
         const { response, calls } = await run(
           worker,
-          req(file, { method, headers: { range: "bytes=-0,-0" } }),
+          req(file, { method, headers: { range } }),
           rejectRange,
         );
-        const at = `${method} ${file}`;
+        const at = `${method} ${file} ${range}`;
         assert.equal(response.status, 200, at);
         assert.equal(calls.length, sends, at);
         assert.equal(calls.at(-1).input.headers.has("range"), false, at);
         assert.equal(calls.at(-1).input.headers.has("if-range"), false, at);
       }
+    }
+  });
+
+  test("a Range is sent on only when every part of it is valid, on a listed type", async () => {
+    // An empty suffix, a first byte after the last or a malformed part are
+    // answered wrongly by the edge (a 502, an empty 206, a 416): the whole
+    // file is sent instead. Valid single and multiple ranges reach the edge.
+    const file = "/phonometry/media/clip.webm";
+    for (const [range, kept] of [
+      ["bytes=0-99", true],
+      ["bytes=100-", true],
+      ["bytes=-100", true],
+      ["bytes=5-5", true],
+      ["bytes=-0,-0", false],
+      ["bytes=0-3,-0", false],
+      ["bytes=0-1,4-5", true],
+      ["bytes=0-3,-4", true],
+      ["bytes=-0", false],
+      ["bytes=5-1", false],
+      ["bytes=-", false],
+      ["items=0-1", false],
+    ]) {
+      const { calls } = await run(
+        worker,
+        req(file, { headers: { range } }),
+        () => new Response("whole", { status: 200 }),
+      );
+      assert.equal(calls[0].input.headers.has("range"), kept, range);
     }
   });
 

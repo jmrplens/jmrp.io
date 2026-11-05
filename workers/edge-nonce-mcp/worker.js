@@ -684,6 +684,32 @@ function logEdgeRequest({
 }
 
 /**
+ * Whether every part of a Range header is a byte range the edge answers
+ * correctly: `first-last` with first not after last, `first-`, or a suffix
+ * `-n` with n above zero, one or several of them. A header with any other
+ * part (an empty suffix such as `-0`, a first byte after the last, a missing
+ * number, another unit) is not sent on, and the client gets the whole file,
+ * which a server may always answer (RFC 9110, 14.2). Sent on, the edge
+ * answered those with a 502, an empty 206 or a 416 that the origin would not
+ * give; valid single and multiple ranges it answers right (measured
+ * 2026-11-05).
+ *
+ * @param {string} value - The Range header.
+ * @returns {boolean} True when the edge can serve every part.
+ */
+function isValidRange(value) {
+  const match = /^bytes=(.+)$/.exec(value.trim());
+  if (!match) return false;
+  return match[1].split(",").every((part) => {
+    const spec = /^(\d*)-(\d*)$/.exec(part.trim());
+    if (!spec) return false;
+    const [, first, last] = spec;
+    if (first === "") return last !== "" && Number(last) > 0;
+    return last === "" || Number(first) <= Number(last);
+  });
+}
+
+/**
  * The same request without Range and If-Range.
  *
  * @param {Request} request - The request.
@@ -812,7 +838,11 @@ async function handle(request, env) {
   // server ignore Range, so these get the whole file. One-sided on purpose: an
   // unlisted type costs a whole download, a wrongly listed one a corrupt file.
   const extension = /\.([a-z\d]+)$/i.exec(url.pathname)?.[1]?.toLowerCase();
-  if (!RANGE_SAFE_EXTENSIONS.has(extension)) {
+  const range = originRequest.headers.get("range");
+  if (
+    range !== null &&
+    (!RANGE_SAFE_EXTENSIONS.has(extension) || !isValidRange(range))
+  ) {
     originRequest.headers.delete("range");
     originRequest.headers.delete("if-range");
   }
