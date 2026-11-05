@@ -18,9 +18,25 @@
  *
  * Exits with 1 when anything fails, so systemd marks the run as failed.
  */
+import { lookup } from "node:dns/promises";
+
 const SITE = "https://mcp.jmrp.io/";
 const MCP = "https://mcp.jmrp.io/libgen/health";
 const fails = [];
+
+// fetch uses this server's resolver. mcp.jmrp.io is not in /etc/hosts, so it
+// goes through Cloudflare; were it ever added there, every probe below would
+// test nginx instead of the Worker, so stop before measuring anything.
+const { address } = await lookup("mcp.jmrp.io");
+if (
+  /^(127\.|::1$|10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.|f[cd])/i.test(address)
+) {
+  console.error(
+    `✗ ${new Date().toISOString()}: mcp.jmrp.io resolves to ${address} on this ` +
+      "server, so the probes would test nginx, not the Worker",
+  );
+  process.exit(1);
+}
 
 const pages = await Promise.all(
   [1, 2, 3].map(() =>

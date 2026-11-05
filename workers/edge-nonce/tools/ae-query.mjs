@@ -105,17 +105,28 @@ if (!sql) {
   process.exit(2);
 }
 
+/**
+ * The rows hold what visitors sent (paths, user agents, referers). Control
+ * characters, C1 included, would reach the terminal as escape sequences, so
+ * every printed value has them replaced.
+ *
+ * @param {unknown} value - A value to print.
+ * @returns {string} The value as text, without control characters.
+ */
+const printable = (value) =>
+  String(value).replaceAll(/[\u{0}-\u{8}\u{B}-\u{1F}\u{7F}-\u{9F}]/gu, "?");
+
 let rows;
 try {
   rows = await query(sql);
 } catch (error) {
   // A SQL syntax error is the normal case here, not a failure of the
   // program: report it in one line, without a stack trace.
-  console.error(`error: ${error.message}`);
+  console.error(`error: ${printable(error.message)}`);
   process.exit(1);
 }
 if (asJson || rows.length === 0) {
-  console.log(JSON.stringify(rows, null, 1));
+  console.log(printable(JSON.stringify(rows, null, 1)));
 } else {
   // Column-aligned so a wide result stays readable in a terminal.
   const columns = Object.keys(rows[0]);
@@ -126,7 +137,7 @@ if (asJson || rows.length === 0) {
     ]),
   );
   const line = (cells) =>
-    columns.map((c, i) => String(cells[i]).padEnd(width[c])).join("  ");
+    columns.map((c, i) => printable(cells[i]).padEnd(width[c])).join("  ");
   console.log(line(columns));
   console.log(columns.map((c) => "-".repeat(width[c])).join("  "));
   for (const r of rows) {

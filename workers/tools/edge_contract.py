@@ -37,7 +37,7 @@ import gzip
 import json
 import os
 import pathlib
-import random
+import secrets
 import re
 import subprocess
 import sys
@@ -59,7 +59,7 @@ ap.add_argument("--skip-quota-check", action="store_true", help="only when check
 # Imported (the guard's own self-test, g2 mutants), it parses no command line.
 ARGS = ap.parse_args(None if __name__ == "__main__" else [])
 HOSTS = ARGS.host or list(SCRIPT_OF)
-OVERRIDES = dict(o.split("=", 1) for o in ARGS.override)
+OVERRIDES = {name: version for name, version in (o.split("=", 1) for o in ARGS.override)}
 
 results = []  # (kind, host, name, ok, detail)
 counts = {"worker": 0, "no_worker": 0, "origin": 0}
@@ -234,22 +234,22 @@ def file_bytes(host, rel):
 def jmrp():
     host = "jmrp.io"
     say(f"\n## {host} (edge {edge_ip(host)})")
-    astro_js = sorted(p.name for p in (DIST[host] / "_astro").glob("*.js") if (DIST[host] / "_astro" / (p.name + ".br")).exists())[0]
+    astro_js = min(p.name for p in (DIST[host] / "_astro").glob("*.js") if (DIST[host] / "_astro" / (p.name + ".br")).exists())
     text_range_whole(host, "/llms.txt", file_bytes(host, "llms.txt"))                      # Worker
     text_range_whole(host, f"/_astro/{astro_js}", file_bytes(host, f"_astro/{astro_js}"))  # no Worker, rule 83d49da1
     text_range_whole(host, "/identity/person.jsonld", file_bytes(host, "identity/person.jsonld"), encodings=("gzip",), spec="bytes=100-199")
     binary_range_exact(host, "/nedry/nedry-audio.mp3", file_bytes(host, "nedry/nedry-audio.mp3"))  # Worker
     binary_range_exact(host, "/og/about.png", file_bytes(host, "og/about.png"), spec="bytes=-100")
-    font = sorted((DIST[host] / "_astro" / "fonts").glob("*.woff2"))[0].name
+    font = min((DIST[host] / "_astro" / "fonts").glob("*.woff2")).name
     binary_range_exact(host, f"/_astro/fonts/{font}", file_bytes(host, f"_astro/fonts/{font}"), spec="bytes=0-99")
     # F05: the query is out of the /pdf/ cache key, so a new value is a HIT.
     pdf = "/pdf/certificates/PerspectivaDeGenero.pdf"
     s, h, _ = fetch(host, pdf, ["Range: bytes=0-0"])
-    s, h = binary_range_exact(host, pdf, file_bytes(host, pdf), spec="bytes=0-99", query=f"?contract={random.randrange(10**9)}")
+    s, h = binary_range_exact(host, pdf, file_bytes(host, pdf), spec="bytes=0-99", query=f"?contract={secrets.randbelow(10**9)}")
     record("MUST", host, "/pdf/ with a new query string is served from the cache (F05)",
            h.get("cf-cache-status") == "HIT", f"cf={h.get('cf-cache-status')}")
     # J32 and the twin guards: one precompressed file under each ^~ prefix that holds them, plus the root regex.
-    beacon = sorted(p.name for p in (DIST[host] / "scripts").glob("cf-beacon.*.js.br"))[0]
+    beacon = min(p.name for p in (DIST[host] / "scripts").glob("cf-beacon.*.js.br"))
     for twin in (f"/_astro/{astro_js}.br", f"/scripts/{beacon}", "/identity/projects.json.br", "/llms.txt.br"):
         s, h, _ = fetch(host, twin)
         record("MUST", host, f"twin {twin} answers 404", s == 404, brief(s, h))
@@ -262,14 +262,14 @@ def jmrp():
     record("MUST", host, "/homelab/ is served without the Worker", s == 200 and "x-edge-nonce" not in h,
            f"{s} x-edge-nonce={h.get('x-edge-nonce', '-')}")
     # F04: a 404 under /_astro/ is not stored, so each one has its own nonce.
-    missing = f"/_astro/contract-missing-{random.randrange(10**9)}.js"
+    missing = f"/_astro/contract-missing-{secrets.randbelow(10**9)}.js"
     first = fetch(host, missing)
     second = fetch(host, missing)
     ok = all(r[0] == 404 and r[1].get("cf-cache-status") != "HIT" for r in (first, second)) and nonce(first[1], b"")[0] != nonce(second[1], b"")[0]
     record("MUST", host, "a 404 under /_astro/ is not kept at the edge (F04)", ok,
            f"{first[0]}/{second[0]} cf={first[1].get('cf-cache-status')}/{second[1].get('cf-cache-status')}")
     # F10 is not live yet: the slash redirect through the Worker keeps the query only after it.
-    tag = random.randrange(10**9)
+    tag = secrets.randbelow(10**9)
     s, h, _ = fetch(host, f"/cv?contract={tag}")
     record("PENDING", host, "F10: /cv?q answers a redirect that keeps the query", s in (301, 308) and h.get("location", "").endswith(f"/cv/?contract={tag}"),
            f"{s} location={h.get('location', '-')}")
@@ -282,20 +282,20 @@ def mcp():
     llms = file_bytes(host, "llms.txt")
     text_range_whole(host, "/llms.txt", llms)                                                   # Worker
     text_range_whole(host, "/llms.txt", llms, encodings=("identity",), spec=f"bytes={len(llms) // 2}-")
-    css = sorted(p.name for p in (DIST[host] / "_astro").glob("*.css"))[0]
+    css = min(p.name for p in (DIST[host] / "_astro").glob("*.css"))
     text_range_whole(host, f"/_astro/{css}", file_bytes(host, f"_astro/{css}"), encodings=("br",))  # no Worker, rule 83d49da1
     text_range_whole(host, "/servers/libgen/index.md", file_bytes(host, "servers/libgen/index.md"), encodings=("gzip",))
     binary_range_exact(host, "/og-en.png", file_bytes(host, "og-en.png"), spec="bytes=0-99")   # Worker
-    font = sorted((DIST[host] / "_astro" / "fonts").glob("*.woff2"))[0].name
+    font = min((DIST[host] / "_astro" / "fonts").glob("*.woff2")).name
     binary_range_exact(host, f"/_astro/fonts/{font}", file_bytes(host, f"_astro/fonts/{font}"), spec="bytes=-100")
-    svg = sorted((DIST[host] / "assets" / "extracted").glob("*.svg"))[0]
+    svg = min((DIST[host] / "assets" / "extracted").glob("*.svg"))
     rel = "/" + str(svg.relative_to(DIST[host]))
     h = text_range_whole(host, rel, svg.read_bytes(), encodings=("br",))  # no Worker since F13
     record("MUST", host, "/assets/ runs no Worker (F13)", "x-edge-nonce" not in h, f"x-edge-nonce={h.get('x-edge-nonce', '-')}")
     # The conditional is recorded only: no fix on mcp.jmrp.io claims it.
     h = html_nonce_and_conditional(host, "/license/", conditional_kind="OBS")
     record("MUST", host, "HTML announces HTTP/3 (Alt-Svc, F03)", "h3=" in h.get("alt-svc", ""), h.get("alt-svc", "-"))
-    tag = random.randrange(10**9)
+    tag = secrets.randbelow(10**9)
     s, h, _ = fetch(host, f"/inspector?server=contract{tag}")
     record("MUST", host, "the slash redirect keeps the query (M17, F02)",
            s == 308 and h.get("location", "").endswith(f"/inspector/?server=contract{tag}"), f"{s} location={h.get('location', '-')}")
@@ -306,7 +306,7 @@ def mcp():
            f"{s} location={h.get('location', '-')}")
     record("MUST", host, "the negotiated 302 is open to other origins (A8)", h.get("access-control-allow-origin") == "*",
            f"acao={h.get('access-control-allow-origin', '-')} vary={h.get('vary', '-')}")
-    missing = f"/assets/contract-missing-{random.randrange(10**9)}.svg"
+    missing = f"/assets/contract-missing-{secrets.randbelow(10**9)}.svg"
     s, h, _ = fetch(host, missing)
     record("MUST", host, "a 404 under /assets/ is not stored (F12)", s == 404 and "no-store" in h.get("cache-control", ""),
            f"{s} cf={h.get('cf-cache-status')} cc={h.get('cache-control', '-')}")
@@ -358,7 +358,7 @@ def docs():
 # ---------------------------------------------------------------- TLS (F03)
 def tls(host):
     with tempfile.TemporaryDirectory() as tmp:
-        run = subprocess.run(f"(sleep 2) | timeout 10 openssl s_client -connect {edge_ip(host)}:443 -servername {host} "
+        subprocess.run(f"(sleep 2) | timeout 10 openssl s_client -connect {edge_ip(host)}:443 -servername {host} "
                              f"-tls1_3 -alpn h2,http/1.1 -msg > {tmp}/s 2>&1", shell=True)
         text = pathlib.Path(f"{tmp}/s").read_text(errors="replace")
     requests = text.count("CertificateRequest")

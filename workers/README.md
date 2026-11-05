@@ -52,7 +52,9 @@ not list. Deploy a version at 0%, test it, then promote it:
 ```bash
 # From the repository root.
 # wrangler reads CLOUDFLARE_API_KEY, CLOUDFLARE_EMAIL and CLOUDFLARE_ACCOUNT_ID.
-# The repository .env holds the same key and email under other names:
+# The repository .env holds the same key and email under other names.
+# PRIVATE_CF_API_TOKEN is the account's Global API Key, sent as X-Auth-Key
+# (the tools and scripts/deploy-live.mjs use it the same way), not an API token:
 set -a; . ./.env; set +a
 export CLOUDFLARE_API_KEY="$PRIVATE_CF_API_TOKEN" CLOUDFLARE_EMAIL="$PRIVATE_CF_EMAIL"
 export CLOUDFLARE_ACCOUNT_ID=d3604ab61425cd17ccc0c6b2f14ec1dd

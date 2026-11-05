@@ -498,368 +498,359 @@ const RANGE_SAFE_EXTENSIONS = new Set([
 ]);
 
 async function handle(request, env) {
-  {
-    const url = new URL(request.url);
+  const url = new URL(request.url);
 
-    const startedAt = Date.now();
-    const logReq = (status, cacheStatus, response) =>
-      logEdgeRequest({
-        env,
-        request,
-        url,
-        startedAt,
-        status,
-        cacheStatus,
-        response,
+  const startedAt = Date.now();
+  const logReq = (status, cacheStatus, response) =>
+    logEdgeRequest({
+      env,
+      request,
+      url,
+      startedAt,
+      status,
+      cacheStatus,
+      response,
+    });
+
+  // Anything that is not a plain page read passes straight through, but it
+  // is still logged, with the origin's verdict (the 405 method probes and
+  // MCP endpoint guesses live here).
+  if (request.method !== "GET" && request.method !== "HEAD") {
+    const passthrough = await fetch(request);
+    logReq(passthrough.status, "passthrough", passthrough);
+    return passthrough;
+  }
+
+  // RSS for people: a browser navigation to a feed (only browsers send
+  // Sec-Fetch-Dest: document) goes to the /feeds/ page, while feed readers
+  // and crawlers do not send that header and get the XML untouched at the
+  // same URL. This decision MUST live here and not only in nginx: the origin
+  // subrequest is cached by URL, ignoring headers, so a cached 302 from the
+  // origin would be served to readers too (cache poisoning). It is answered
+  // here, before the cache is touched, and never cached.
+
+  if (
+    (url.pathname === "/rss.xml" || url.pathname === "/es/rss.xml") &&
+    request.headers.get("sec-fetch-dest") === "document"
+  ) {
+    const target = url.pathname.startsWith("/es/") ? "/es/feeds/" : "/feeds/";
+    logReq(302, "rss-human-redirect");
+    return new Response(null, {
+      status: 302,
+      headers: {
+        location: new URL(target, url).href,
+        "cache-control": "no-store",
+        "x-edge-nonce": "rss-human-redirect",
+      },
+    });
+  }
+
+  // Content negotiation for AI agents: a client that PREFERS text/markdown
+  // over HTML gets 302'd from a page to its markdown twin (<page>/index.md):
+  // the same content minus ~90% of the bytes (the HTML text-to-markup
+  // ratio is ~8.6%). The twin lives at the page's own URL with `index.md`
+  // appended, which is the llms.txt spec's form for a URL that has no file
+  // name, which is every URL on this site. No browser ever sends text/markdown, so
+  // human traffic is untouched.
+  //
+  // This decision MUST live here and not in the origin, for the same reason
+  // as the RSS human-redirect above: the edge cache is keyed by URL and
+  // ignores request headers, so an origin-issued redirect would be cached
+  // and then served to browsers. Answered before the cache, never cached.
+  // (GEO audit 2026-08-22, B19.)
+  //
+  // WHICH URLs HAVE A TWIN IS NOT HARD-CODED, and must not be. The regex
+  // this replaces matched blog posts only: 24 of the twins the build
+  // emits (the homepage, /about/, /cv/, /projects/, /publications/,
+  // /privacy/, /uses/ and all 34 tool pages) existed and answered 200 by
+  // explicit URL, but negotiating for them returned HTML. Rather than a list
+  // that goes stale on the next post or tool, the worker ASKS: it fetches
+  // the candidate twin through the edge cache and redirects only on a
+  // literal 200. The build output stays the single source of truth, adding
+  // content needs no worker redeploy, and a URL that has no twin, or no
+  // page at all, falls through to the HTML it really has instead of being
+  // bounced to a 404 (GEO audit 2026-08-27, A1 + M2).
+  //
+  // Six pages have a twin but never reach this code, so they do NOT negotiate:
+  // /homelab/, /es/homelab/, /projects/, /es/projects/,
+  // /tools/http-headers-analyzer/ and /es/tools/http-headers-analyzer/. Their
+  // zone routes carry no worker (per-request metrics, the analyzer's dynamic
+  // API, and /projects/* with only its contributions subpages routed back in),
+  // and a twin there is reachable by its explicit URL only. Accepted by the
+  // author (edge audit 2026-11-04, BJ2, decision A5): about 66 requests a week
+  // and a third copy of prefersMarkdown in nginx are not worth it.
+  //
+  // `redirect: "manual"` so a 3xx can never be mistaken for a live twin, and
+  // a plain GET (not HEAD) so the probe FILLS the very cache entry the
+  // follow-up request reads. The probe is NOT observable in Analytics
+  // Engine: Cloudflare does not re-invoke a Worker for a subrequest to its
+  // own route, so `handle()` never runs for it and no datapoint is written.
+  // Its cost shows up as TTFB on the negotiated request, and nowhere else.
+  //
+  // The path is tested first (inside twinUrl) and the Accept second, so a
+  // request for anything but a slash page never parses its Accept header.
+  const twin = twinUrl(url);
+  if (twin !== null && prefersMarkdown(request.headers.get("accept"))) {
+    // A throwing probe must mean "no twin", not "no nonce": without this
+    // catch a network blip would escape to the outer handler, which degrades
+    // the whole request to an unlogged pass-through with no nonce minted.
+    let probeStatus = 0;
+    try {
+      const probe = await fetch(twin.toString(), {
+        redirect: "manual",
+        cf: {
+          cacheEverything: true,
+          cacheTtlByStatus: {
+            "200-299": EDGE_TTL_SECONDS,
+            "300-399": 0,
+            404: 300,
+            "500-599": 0,
+          },
+        },
       });
-
-    // Anything that is not a plain page read passes straight through, but it
-    // is still logged, with the origin's verdict (the 405 method probes and
-    // MCP endpoint guesses live here).
-    if (request.method !== "GET" && request.method !== "HEAD") {
-      const passthrough = await fetch(request);
-      logReq(passthrough.status, "passthrough", passthrough);
-      return passthrough;
+      probeStatus = probe.status;
+      // Only the status code is needed; releasing the body keeps the
+      // subrequest from being held open for the rest of the invocation.
+      await probe.body?.cancel();
+    } catch {
+      probeStatus = 0;
     }
-
-    // RSS for people: a browser navigation to a feed (only browsers send
-    // Sec-Fetch-Dest: document) goes to the /feeds/ page, while feed readers
-    // and crawlers do not send that header and get the XML untouched at the
-    // same URL. This decision MUST live here and not only in nginx: the origin
-    // subrequest is cached by URL, ignoring headers, so a cached 302 from the
-    // origin would be served to readers too (cache poisoning). It is answered
-    // here, before the cache is touched, and never cached.
-
-    if (
-      (url.pathname === "/rss.xml" || url.pathname === "/es/rss.xml") &&
-      request.headers.get("sec-fetch-dest") === "document"
-    ) {
-      const target = url.pathname.startsWith("/es/") ? "/es/feeds/" : "/feeds/";
-      logReq(302, "rss-human-redirect");
+    if (probeStatus === 200) {
+      logReq(302, "markdown-negotiation");
       return new Response(null, {
         status: 302,
         headers: {
-          location: new URL(target, url).href,
+          location: twin.href,
+          vary: "Accept",
           "cache-control": "no-store",
-          "x-edge-nonce": "rss-human-redirect",
+          "x-edge-nonce": "markdown-negotiation",
         },
       });
     }
+    // No twin: fall through and serve the HTML this URL actually has, which
+    // for a URL that does not exist is the origin's own 404. The fall-through
+    // needs no `Vary: Accept`: the HTML served is byte-identical whatever
+    // the Accept header said, and the negotiation itself is decided here,
+    // ahead of the cache, on every single request.
+  }
 
-    // Content negotiation for AI agents: a client that PREFERS text/markdown
-    // over HTML gets 302'd from a page to its markdown twin (<page>/index.md):
-    // the same content minus ~90% of the bytes (the HTML text-to-markup
-    // ratio is ~8.6%). The twin lives at the page's own URL with `index.md`
-    // appended, which is the llms.txt spec's form for a URL that has no file
-    // name, which is every URL on this site. No browser ever sends text/markdown, so
-    // human traffic is untouched.
-    //
-    // This decision MUST live here and not in the origin, for the same reason
-    // as the RSS human-redirect above: the edge cache is keyed by URL and
-    // ignores request headers, so an origin-issued redirect would be cached
-    // and then served to browsers. Answered before the cache, never cached.
-    // (GEO audit 2026-08-22, B19.)
-    //
-    // WHICH URLs HAVE A TWIN IS NOT HARD-CODED, and must not be. The regex
-    // this replaces matched blog posts only: 24 of the twins the build
-    // emits (the homepage, /about/, /cv/, /projects/, /publications/,
-    // /privacy/, /uses/ and all 34 tool pages) existed and answered 200 by
-    // explicit URL, but negotiating for them returned HTML. Rather than a list
-    // that goes stale on the next post or tool, the worker ASKS: it fetches
-    // the candidate twin through the edge cache and redirects only on a
-    // literal 200. The build output stays the single source of truth, adding
-    // content needs no worker redeploy, and a URL that has no twin, or no
-    // page at all, falls through to the HTML it really has instead of being
-    // bounced to a 404 (GEO audit 2026-08-27, A1 + M2).
-    //
-    // Six pages have a twin but never reach this code, so they do NOT negotiate:
-    // /homelab/, /es/homelab/, /projects/, /es/projects/,
-    // /tools/http-headers-analyzer/ and /es/tools/http-headers-analyzer/. Their
-    // zone routes carry no worker (per-request metrics, the analyzer's dynamic
-    // API, and /projects/* with only its contributions subpages routed back in),
-    // and a twin there is reachable by its explicit URL only. Accepted by the
-    // author (edge audit 2026-11-04, BJ2, decision A5): about 66 requests a week
-    // and a third copy of prefersMarkdown in nginx are not worth it.
-    //
-    // `redirect: "manual"` so a 3xx can never be mistaken for a live twin, and
-    // a plain GET (not HEAD) so the probe FILLS the very cache entry the
-    // follow-up request reads. The probe is NOT observable in Analytics
-    // Engine: Cloudflare does not re-invoke a Worker for a subrequest to its
-    // own route, so `handle()` never runs for it and no datapoint is written.
-    // Its cost shows up as TTFB on the negotiated request, and nowhere else.
-    //
-    // The path is tested first (inside twinUrl) and the Accept second, so a
-    // request for anything but a slash page never parses its Accept header.
-    const twin = twinUrl(url);
-    if (twin !== null && prefersMarkdown(request.headers.get("accept"))) {
-      // A throwing probe must mean "no twin", not "no nonce": without this
-      // catch a network blip would escape to the outer handler, which degrades
-      // the whole request to an unlogged pass-through with no nonce minted.
-      let probeStatus = 0;
-      try {
-        const probe = await fetch(twin.toString(), {
-          redirect: "manual",
-          cf: {
-            cacheEverything: true,
-            cacheTtlByStatus: {
-              "200-299": EDGE_TTL_SECONDS,
-              "300-399": 0,
-              404: 300,
-              "500-599": 0,
-            },
-          },
-        });
-        probeStatus = probe.status;
-        // Only the status code is needed; releasing the body keeps the
-        // subrequest from being held open for the rest of the invocation.
-        await probe.body?.cancel();
-      } catch {
-        probeStatus = 0;
-      }
-      if (probeStatus === 200) {
-        logReq(302, "markdown-negotiation");
-        return new Response(null, {
-          status: 302,
-          headers: {
-            location: twin.href,
-            vary: "Accept",
-            "cache-control": "no-store",
-            "x-edge-nonce": "markdown-negotiation",
-          },
-        });
-      }
-      // No twin: fall through and serve the HTML this URL actually has, which
-      // for a URL that does not exist is the origin's own 404. The fall-through
-      // needs no `Vary: Accept`: the HTML served is byte-identical whatever
-      // the Accept header said, and the negotiation itself is decided here,
-      // ahead of the cache, on every single request.
-    }
+  // The query string is stripped from the origin subrequest, which also
+  // makes it the cache key. `?cb=<random>` used to mint a fresh cache entry
+  // with a 24 h TTL each time, an easy way to fill the cache and force
+  // origin traffic (GEO audit 2026-08-22, B25; `cf.cacheKey` itself is
+  // Enterprise-only, so normalizing the URL is the mechanism available
+  // here). Correct for this site: it is fully static, no page varies on a
+  // query parameter, and every page self-canonicalizes without one. /api/*
+  // and /csp-report* never reach this worker (zone-level bypass routes).
+  const originUrl = new URL(request.url);
+  originUrl.search = "";
+  const originRequest = new Request(originUrl.href, request);
+  originRequest.headers.set("X-Edge-Nonce-Key", env.EDGE_NONCE_KEY);
 
-    // The query string is stripped from the origin subrequest, which also
-    // makes it the cache key. `?cb=<random>` used to mint a fresh cache entry
-    // with a 24 h TTL each time, an easy way to fill the cache and force
-    // origin traffic (GEO audit 2026-08-22, B25; `cf.cacheKey` itself is
-    // Enterprise-only, so normalizing the URL is the mechanism available
-    // here). Correct for this site: it is fully static, no page varies on a
-    // query parameter, and every page self-canonicalizes without one. /api/*
-    // and /csp-report* never reach this worker (zone-level bypass routes).
-    const originUrl = new URL(request.url);
-    originUrl.search = "";
-    const originRequest = new Request(originUrl.href, request);
-    originRequest.headers.set("X-Edge-Nonce-Key", env.EDGE_NONCE_KEY);
+  // Conditional headers are stripped FOR HTML ONLY, so the origin always
+  // hands back a body to rewrite. Without this, a client revalidating an
+  // HTML page with If-None-Match / If-Modified-Since got a 304, which
+  // carries no Content-Type, so it fell through the `text/html` gate below
+  // and was returned verbatim, CSP and all. That CSP still held the literal
+  // placeholder, and RFC 9111 §4.3.4 makes the client update its stored
+  // headers from the 304: the stored body keeps its real nonce while the CSP
+  // switches to `nonce-NGINX_CSP_NONCE`, blocking every inline style and
+  // script on the page.
+  // (GEO audit 2026-08-22, A9. Verified reproducible against /, /es/, /blog/,
+  // /cv/ and the post 003.)
+  //
+  // Cost: HTML no longer answers 304. That is close to free here: HTML is
+  // served `no-store`, so a conforming browser never revalidates it, and the
+  // `Last-Modified` the edge synthesized changed on every cache fill anyway
+  // (and is now deleted from the minted copy, see below),
+  // so a crawler's conditional GET was already being told "changed" almost
+  // every time. THAT COST IS THE POINT, and it must stay: a 304 for HTML
+  // would hand back a stale nonce.
+  //
+  // But the strip used to be UNCONDITIONAL while the reasoning above only
+  // ever applied to HTML, so everything else this worker fronts
+  // /llms.txt, /llms-full.txt, /rss.xml, /sitemap-*.xml, /robots.txt and
+  // every markdown twin, answered a conditional GET with the whole body,
+  // every time, forever. The ORIGIN does emit 304 for them (verified over
+  // loopback); only /_astro/* revalidated at the edge, and that is a worker
+  // BYPASS route, which is what made the breakage look like a non-issue.
+  // (GEO audit 2026-08-27, M1.)
+  //
+  // So: keep stripping wherever the response could be HTML, and let the
+  // conditionals through only for a path whose extension PROVES it is not.
+  // The test is one-sided on purpose. Misclassifying towards HTML costs one
+  // 304 (today's behavior); misclassifying away from it reopens A9. Every
+  // HTML URL on this site ends in `/` and so has no extension at all.
+  const extension = /\.([a-z\d]+)$/i.exec(url.pathname)?.[1]?.toLowerCase();
+  const mayBeHtml =
+    extension === undefined || ["html", "htm"].includes(extension);
+  if (mayBeHtml) {
+    originRequest.headers.delete("if-none-match");
+    originRequest.headers.delete("if-modified-since");
+  }
 
-    // Conditional headers are stripped FOR HTML ONLY, so the origin always
-    // hands back a body to rewrite. Without this, a client revalidating an
-    // HTML page with If-None-Match / If-Modified-Since got a 304, which
-    // carries no Content-Type, so it fell through the `text/html` gate below
-    // and was returned verbatim, CSP and all. That CSP still held the literal
-    // placeholder, and RFC 9111 §4.3.4 makes the client update its stored
-    // headers from the 304: the stored body keeps its real nonce while the CSP
-    // switches to `nonce-NGINX_CSP_NONCE`, blocking every inline style and
-    // script on the page.
-    // (GEO audit 2026-08-22, A9. Verified reproducible against /, /es/, /blog/,
-    // /cv/ and the post 003.)
-    //
-    // Cost: HTML no longer answers 304. That is close to free here: HTML is
-    // served `no-store`, so a conforming browser never revalidates it, and the
-    // `Last-Modified` the edge synthesized changed on every cache fill anyway
-    // (and is now deleted from the minted copy, see below),
-    // so a crawler's conditional GET was already being told "changed" almost
-    // every time. THAT COST IS THE POINT, and it must stay: a 304 for HTML
-    // would hand back a stale nonce.
-    //
-    // But the strip used to be UNCONDITIONAL while the reasoning above only
-    // ever applied to HTML, so everything else this worker fronts
-    // /llms.txt, /llms-full.txt, /rss.xml, /sitemap-*.xml, /robots.txt and
-    // every markdown twin, answered a conditional GET with the whole body,
-    // every time, forever. The ORIGIN does emit 304 for them (verified over
-    // loopback); only /_astro/* revalidated at the edge, and that is a worker
-    // BYPASS route, which is what made the breakage look like a non-issue.
-    // (GEO audit 2026-08-27, M1.)
-    //
-    // So: keep stripping wherever the response could be HTML, and let the
-    // conditionals through only for a path whose extension PROVES it is not.
-    // The test is one-sided on purpose. Misclassifying towards HTML costs one
-    // 304 (today's behavior); misclassifying away from it reopens A9. Every
-    // HTML URL on this site ends in `/` and so has no extension at all.
-    const extension = /\.([a-z\d]+)$/i.exec(url.pathname)?.[1]?.toLowerCase();
-    const mayBeHtml =
-      extension === undefined || ["html", "htm"].includes(extension);
-    if (mayBeHtml) {
-      originRequest.headers.delete("if-none-match");
-      originRequest.headers.delete("if-modified-since");
-    }
+  // Range is dropped unless the extension proves the file is stored as it is.
+  // The edge caches text as the Brotli nginx gave it and measures a range
+  // against that, so bytes=0-99 of /llms.txt answered "0-99/9392" on a 36,898
+  // byte file: an empty body or raw Brotli with no Content-Encoding, and a 416
+  // for a range inside the file, which curl -C - and wget -c read as complete.
+  // RFC 9110 section 14.2 lets a server ignore Range, so these get the whole
+  // file. One-sided on purpose, like mayBeHtml: an unlisted type costs a whole
+  // download, a wrongly listed one costs a corrupt file. The bypass routes
+  // (/_astro/, /assets/) never reach this worker: the same list guards them in
+  // the Cache Rule "a Range request skips the cache". Keep both in step.
+  // (Reported from phonometry's edge checks, 2026-11-04.)
+  if (!RANGE_SAFE_EXTENSIONS.has(extension)) {
+    originRequest.headers.delete("range");
+    originRequest.headers.delete("if-range");
+  }
 
-    // Range is dropped unless the extension proves the file is stored as it is.
-    // The edge caches text as the Brotli nginx gave it and measures a range
-    // against that, so bytes=0-99 of /llms.txt answered "0-99/9392" on a 36,898
-    // byte file: an empty body or raw Brotli with no Content-Encoding, and a 416
-    // for a range inside the file, which curl -C - and wget -c read as complete.
-    // RFC 9110 section 14.2 lets a server ignore Range, so these get the whole
-    // file. One-sided on purpose, like mayBeHtml: an unlisted type costs a whole
-    // download, a wrongly listed one costs a corrupt file. The bypass routes
-    // (/_astro/, /assets/) never reach this worker: the same list guards them in
-    // the Cache Rule "a Range request skips the cache". Keep both in step.
-    // (Reported from phonometry's edge checks, 2026-11-04.)
-    if (!RANGE_SAFE_EXTENSIONS.has(extension)) {
-      originRequest.headers.delete("range");
-      originRequest.headers.delete("if-range");
-    }
+  // Per-status TTLs: success gets the full TTL, redirects and 404s a short
+  // one, and origin errors are never cached: a 5xx burst must not be frozen
+  // into the edge for a day.
+  //
+  // The redirect band is split around 304 rather than written as one
+  // `300-399`. Until the classifier above existed, no conditional ever
+  // reached the origin from here and a 304 could not come back, so a 3600 s
+  // TTL over the whole band was harmless. Now that non-HTML revalidates, 304
+  // (which is *in* that band and is not a representation) would be stored
+  // as one and handed to the next client, conditional request or not.
+  // 300-303 and 305-399 keep the hour; 304 gets zero and the ranges no
+  // longer overlap, so nothing depends on how Cloudflare resolves a specific
+  // status against a range that contains it. (GEO audit 2026-08-27, M1.)
+  const cacheTtlByStatus = {
+    "200-299": EDGE_TTL_SECONDS,
+    "300-303": 3600,
+    304: 0,
+    "305-399": 3600,
+    404: 300,
+    "500-599": 0,
+  };
 
-    // Per-status TTLs: success gets the full TTL, redirects and 404s a short
-    // one, and origin errors are never cached: a 5xx burst must not be frozen
-    // into the edge for a day.
-    //
-    // The redirect band is split around 304 rather than written as one
-    // `300-399`. Until the classifier above existed, no conditional ever
-    // reached the origin from here and a 304 could not come back, so a 3600 s
-    // TTL over the whole band was harmless. Now that non-HTML revalidates, 304
-    // (which is *in* that band and is not a representation) would be stored
-    // as one and handed to the next client, conditional request or not.
-    // 300-303 and 305-399 keep the hour; 304 gets zero and the ranges no
-    // longer overlap, so nothing depends on how Cloudflare resolves a specific
-    // status against a range that contains it. (GEO audit 2026-08-27, M1.)
-    const cacheTtlByStatus = {
-      "200-299": EDGE_TTL_SECONDS,
-      "300-303": 3600,
-      304: 0,
-      "305-399": 3600,
-      404: 300,
-      "500-599": 0,
-    };
+  let response = await fetch(originRequest, {
+    cf: { cacheEverything: true, cacheTtlByStatus },
+  });
 
-    let response = await fetch(originRequest, {
+  // Rail for the classifier above: a 304 carries no Content-Type, so it
+  // falls through the `text/html` gate below and would be handed to the
+  // client verbatim: the exact shape of the A9 failure. Unreachable while
+  // `mayBeHtml` gates the strip; kept so a future edit to that condition
+  // cannot silently reopen A9.
+  //
+  // The recovery re-fetches WITHOUT the conditional headers. That detail is
+  // the whole rail: re-sending the client's own request would let the edge
+  // answer 304 again, this time out of the stored placeholder copy, and the
+  // client would apply RFC 9111 §4.3.4: a `nonce-NGINX_CSP_NONCE` CSP over
+  // a body whose nonce is already minted. That IS A9, so a rail that did
+  // that would be a re-run of the bug it watches. Without conditionals the
+  // answer must carry a body, and it is then fed back through the normal
+  // path: minted if it holds the placeholder, sent to the pass-through rail
+  // if it does not. The verdict is carried into whichever exit runs, so the
+  // request still writes exactly one datapoint.
+  let response304Recovered = false;
+  if (response.status === 304 && mayBeHtml) {
+    const retry = new Request(originUrl.href, request);
+    retry.headers.set("X-Edge-Nonce-Key", env.EDGE_NONCE_KEY);
+    retry.headers.delete("range");
+    retry.headers.delete("if-range");
+    retry.headers.delete("if-none-match");
+    retry.headers.delete("if-modified-since");
+    response = await fetch(retry, {
       cf: { cacheEverything: true, cacheTtlByStatus },
     });
-
-    // Rail for the classifier above: a 304 carries no Content-Type, so it
-    // falls through the `text/html` gate below and would be handed to the
-    // client verbatim: the exact shape of the A9 failure. Unreachable while
-    // `mayBeHtml` gates the strip; kept so a future edit to that condition
-    // cannot silently reopen A9.
-    //
-    // The recovery re-fetches WITHOUT the conditional headers. That detail is
-    // the whole rail: re-sending the client's own request would let the edge
-    // answer 304 again, this time out of the stored placeholder copy, and the
-    // client would apply RFC 9111 §4.3.4: a `nonce-NGINX_CSP_NONCE` CSP over
-    // a body whose nonce is already minted. That IS A9, so a rail that did
-    // that would be a re-run of the bug it watches. Without conditionals the
-    // answer must carry a body, and it is then fed back through the normal
-    // path: minted if it holds the placeholder, sent to the pass-through rail
-    // if it does not. The verdict is carried into whichever exit runs, so the
-    // request still writes exactly one datapoint.
-    let response304Recovered = false;
-    if (response.status === 304 && mayBeHtml) {
-      const retry = new Request(originUrl.href, request);
-      retry.headers.set("X-Edge-Nonce-Key", env.EDGE_NONCE_KEY);
-      retry.headers.delete("range");
-      retry.headers.delete("if-range");
-      retry.headers.delete("if-none-match");
-      retry.headers.delete("if-modified-since");
-      response = await fetch(retry, {
-        cf: { cacheEverything: true, cacheTtlByStatus },
-      });
-      response304Recovered = true;
-    }
-    const verdict = (v) => (response304Recovered ? "bypass-unexpected-304" : v);
-
-    // A redirect is no document and holds no nonce, so it gets no mint. It is
-    // checked ahead of the text/html gate because nginx labels its 3xx body
-    // text/html. Before this, a 3xx with no CSP at all (every `location`
-    // redirect: /feed, /docs/<project>, /github, the retired blog URLs) failed
-    // the placeholder test below and went down the rail, a second uncached fetch
-    // to the origin on every request, about 215 a day; and a 3xx with the
-    // placeholder (the slash 301, /cv -> /cv/) was minted and sent `no-store`.
-    // Both are now served from the stored copy, with the query put back.
-    // The rail still takes a 3xx whose CSP carries a REAL nonce, and also any
-    // 3xx with a CSP that is not the placeholder: that is the shape of nginx's
-    // RSS fallback (`return 302 /feeds/` when Sec-Fetch-Dest is `document`),
-    // which depends on a request header the cache key ignores, so its stored
-    // copy must never be fanned out to feed readers. (Edge audit 2026-11-04, J24.)
-    const isRedirect =
-      response.status >= 300 &&
-      response.status < 400 &&
-      response.status !== 304;
-    const redirectCsp = response.headers.get("content-security-policy") ?? "";
-    if (
-      isRedirect &&
-      (redirectCsp === "" || redirectCsp.includes(PLACEHOLDER))
-    ) {
-      logReq(
-        response.status,
-        verdict(response.headers.get("cf-cache-status") ?? ""),
-        response,
-      );
-      return redirectResponse(response, url);
-    }
-
-    const contentType = response.headers.get("content-type") ?? "";
-    if (!contentType.includes("text/html")) {
-      logReq(
-        response.status,
-        verdict(response.headers.get("cf-cache-status") ?? ""),
-        response,
-      );
-      // The two feeds answer a browser navigation (Sec-Fetch-Dest: document)
-      // with the 302 to /feeds/ above and everyone else with the XML, so the XML
-      // must say it varies on that header. Without it, a browser that fetched the
-      // feed (Sec-Fetch-Dest: empty) could reuse that stored XML for a later
-      // navigation for up to max-age, and show raw XML instead of /feeds/.
-      // (Edge audit 2026-11-04, J23.)
-      if (url.pathname === "/rss.xml" || url.pathname === "/es/rss.xml") {
-        const varied = new Response(response.body, response);
-        varied.headers.append("vary", "Sec-Fetch-Dest");
-        return varied;
-      }
-      return response;
-    }
-
-    // Safety rail: only serve from the placeholder copy. A response whose CSP
-    // already carries a real nonce must never be fanned out to more visitors.
-    const csp = response.headers.get("content-security-policy") ?? "";
-    if (!csp.includes(PLACEHOLDER)) {
-      const passthrough = await fetch(request);
-      const headers = new Headers(passthrough.headers);
-      headers.set("X-Edge-Nonce", "bypass-no-placeholder");
-      logReq(passthrough.status, verdict("bypass-no-placeholder"), passthrough);
-      return new Response(passthrough.body, {
-        status: passthrough.status,
-        headers,
-      });
-    }
-
-    // Fresh 128-bit nonce per visitor.
-    const bytes = new Uint8Array(16);
-    crypto.getRandomValues(bytes);
-    const nonce = [...bytes]
-      .map((b) => b.toString(16).padStart(2, "0"))
-      .join("");
-
-    const body = (await response.text()).replaceAll(PLACEHOLDER, () => nonce);
-
-    const headers = new Headers(response.headers);
-    headers.set(
-      "content-security-policy",
-      csp.replaceAll(PLACEHOLDER, () => nonce),
-    );
-    // The minted nonce must never be cached downstream.
-    headers.set(
-      "cache-control",
-      "no-store, no-cache, must-revalidate, max-age=0",
-    );
-    // The edge stamps its own fill time as Last-Modified on the stored copy (the
-    // origin sends none for HTML), so /about/ claimed to have changed at the last
-    // cache fill while its sitemap entry and JSON-LD gave the real date; and no
-    // validator can describe a body whose nonce differs on every response. Both
-    // go, as on edge-nonce-mcp. (Edge audit 2026-11-04, J12.)
-    headers.delete("last-modified");
-    headers.delete("etag");
-    // Observability: worker ran + whether the edge had the placeholder copy.
-    headers.set("X-Edge-Nonce", "minted");
-    const subCache = response.headers.get("cf-cache-status");
-    if (subCache) headers.set("X-Edge-Sub-Cache", subCache);
-
-    logReq(response.status, verdict(subCache ?? "minted"), response);
-    return new Response(body, { status: response.status, headers });
+    response304Recovered = true;
   }
+  const verdict = (v) => (response304Recovered ? "bypass-unexpected-304" : v);
+
+  // A redirect is no document and holds no nonce, so it gets no mint. It is
+  // checked ahead of the text/html gate because nginx labels its 3xx body
+  // text/html. Before this, a 3xx with no CSP at all (every `location`
+  // redirect: /feed, /docs/<project>, /github, the retired blog URLs) failed
+  // the placeholder test below and went down the rail, a second uncached fetch
+  // to the origin on every request, about 215 a day; and a 3xx with the
+  // placeholder (the slash 301, /cv -> /cv/) was minted and sent `no-store`.
+  // Both are now served from the stored copy, with the query put back.
+  // The rail still takes a 3xx whose CSP carries a REAL nonce, and also any
+  // 3xx with a CSP that is not the placeholder: that is the shape of nginx's
+  // RSS fallback (`return 302 /feeds/` when Sec-Fetch-Dest is `document`),
+  // which depends on a request header the cache key ignores, so its stored
+  // copy must never be fanned out to feed readers. (Edge audit 2026-11-04, J24.)
+  const isRedirect =
+    response.status >= 300 && response.status < 400 && response.status !== 304;
+  const redirectCsp = response.headers.get("content-security-policy") ?? "";
+  if (isRedirect && (redirectCsp === "" || redirectCsp.includes(PLACEHOLDER))) {
+    logReq(
+      response.status,
+      verdict(response.headers.get("cf-cache-status") ?? ""),
+      response,
+    );
+    return redirectResponse(response, url);
+  }
+
+  const contentType = response.headers.get("content-type") ?? "";
+  if (!contentType.includes("text/html")) {
+    logReq(
+      response.status,
+      verdict(response.headers.get("cf-cache-status") ?? ""),
+      response,
+    );
+    // The two feeds answer a browser navigation (Sec-Fetch-Dest: document)
+    // with the 302 to /feeds/ above and everyone else with the XML, so the XML
+    // must say it varies on that header. Without it, a browser that fetched the
+    // feed (Sec-Fetch-Dest: empty) could reuse that stored XML for a later
+    // navigation for up to max-age, and show raw XML instead of /feeds/.
+    // (Edge audit 2026-11-04, J23.)
+    if (url.pathname === "/rss.xml" || url.pathname === "/es/rss.xml") {
+      const varied = new Response(response.body, response);
+      varied.headers.append("vary", "Sec-Fetch-Dest");
+      return varied;
+    }
+    return response;
+  }
+
+  // Safety rail: only serve from the placeholder copy. A response whose CSP
+  // already carries a real nonce must never be fanned out to more visitors.
+  const csp = response.headers.get("content-security-policy") ?? "";
+  if (!csp.includes(PLACEHOLDER)) {
+    const passthrough = await fetch(request);
+    const headers = new Headers(passthrough.headers);
+    headers.set("X-Edge-Nonce", "bypass-no-placeholder");
+    logReq(passthrough.status, verdict("bypass-no-placeholder"), passthrough);
+    return new Response(passthrough.body, {
+      status: passthrough.status,
+      headers,
+    });
+  }
+
+  // Fresh 128-bit nonce per visitor.
+  const bytes = new Uint8Array(16);
+  crypto.getRandomValues(bytes);
+  const nonce = [...bytes].map((b) => b.toString(16).padStart(2, "0")).join("");
+
+  const body = (await response.text()).replaceAll(PLACEHOLDER, () => nonce);
+
+  const headers = new Headers(response.headers);
+  headers.set(
+    "content-security-policy",
+    csp.replaceAll(PLACEHOLDER, () => nonce),
+  );
+  // The minted nonce must never be cached downstream.
+  headers.set(
+    "cache-control",
+    "no-store, no-cache, must-revalidate, max-age=0",
+  );
+  // The edge stamps its own fill time as Last-Modified on the stored copy (the
+  // origin sends none for HTML), so /about/ claimed to have changed at the last
+  // cache fill while its sitemap entry and JSON-LD gave the real date; and no
+  // validator can describe a body whose nonce differs on every response. Both
+  // go, as on edge-nonce-mcp. (Edge audit 2026-11-04, J12.)
+  headers.delete("last-modified");
+  headers.delete("etag");
+  // Observability: worker ran + whether the edge had the placeholder copy.
+  headers.set("X-Edge-Nonce", "minted");
+  const subCache = response.headers.get("cf-cache-status");
+  if (subCache) headers.set("X-Edge-Sub-Cache", subCache);
+
+  logReq(response.status, verdict(subCache ?? "minted"), response);
+  return new Response(body, { status: response.status, headers });
 }

@@ -12,7 +12,7 @@ no_progress = true
 # `100..=103, 200..=299`; 408 and 429 are the additions.
 #
 # Why: the Zenodo DOIs linked from /publications/ intermittently answer 408
-# Request Timeout to GitHub runners — two consecutive red runs on 2026-08-24 over
+# Request Timeout to GitHub runners: two consecutive red runs on 2026-08-24 over
 # the same links. Checked by hand from the server, all 15 doi.org links on the
 # site resolve 200 and redirect to their Zenodo record.
 #
@@ -40,10 +40,14 @@ exclude = [
     # lychee was tried and made things worse (it tripped additional blocks,
     # including doi.org), so the domains are skipped instead.
     'https://eprint\.iacr\.org/.*',
+    # cspell:disable-next-line
+    # cisa.gov answers 403 to every request from this server and from CI, a
+    # browser user-agent included (checked 2026-11-05), like npm below.
+    'https://www\.cisa\.gov/.*',
     # npm is a different case from the rest of this list: it answers 403 to
     # everything from this address, a browser user-agent included, so the note
     # above about a plain curl returning 200 does not apply to it. The packages
-    # are real and verifiable through registry.npmjs.org, which does answer —
+    # are real and verifiable through registry.npmjs.org, which does answer:
     # it is only the human-facing www host that refuses datacenter traffic.
     'https://www\.npmjs\.com/.*',
     'https://www\.iacr\.org/.*',
@@ -93,14 +97,14 @@ exclude = [
     'https://www\.i3m-detectors\.i3m\.upv\.es/.*',
     # The University of Alicante refuses the CI runner at TCP level
     # ("Connection refused") across all five of its hosts that the site links
-    # — the main site, the school, the department, the research institute and
+    # the main site, the school, the department, the research institute and
     # the repository. Not an outage: from this server they answer 301 or 200,
     # each checked by hand. Only the repository host was listed, which is why
     # the other four went red the moment UA started refusing.
     #
     # The subdomain group repeats rather than matching one label, because UA
     # nests: the co-author CV pages sit two labels deep. Those five had a
-    # dedicated line further down, which this pattern now subsumes — so that
+    # dedicated line further down, which this pattern now subsumes: so that
     # line is gone, along with the `https://`-only spelling that would have
     # failed the same way the handle above did.
     'https?://(?:[a-z0-9-]+\.)*ua\.es/.*',
@@ -118,7 +122,7 @@ exclude = [
     # surfaced as an error the moment handle.net stopped answering CI.
     'https?://hdl\.handle\.net/.*',
     # UPV's personal-profile app answers 503, or hangs past the timeout, to
-    # automated requests — verified from this server one URL a second, so it is
+    # automated requests: verified from this server one URL a second, so it is
     # not lychee's concurrency. The rest of www.upv.es answers 200 normally,
     # hence the path prefix rather than the whole domain.
     #
@@ -150,19 +154,19 @@ exclude = [
     'scholar\.google\.com',
     'scholar\.google\.es',
     'youtube\.com/embed/',
-    'mathworks\.com',                  # AUTOSAR rule pages — 403 to bots
-    'https://report-uri\.com/.*',      # Scott Helme's Report URI — 403 to every
+    'mathworks\.com',                  # AUTOSAR rule pages: 403 to bots
+    'https://report-uri\.com/.*',      # Scott Helme's Report URI: 403 to every
                                        # checker UA (old and new paths alike);
                                        # serves fine to real readers
-    'gnu\.org/software/gettext',       # gettext .mo manual — 429 rate-limit
-    'gnu\.org/licenses/',              # GPL/AGPL texts — 429 rate-limit (linked
+    'gnu\.org/software/gettext',       # gettext .mo manual: 429 rate-limit
+    'gnu\.org/licenses/',              # GPL/AGPL texts: 429 rate-limit (linked
                                        # as SoftwareApplication `license` from
                                        # every GPL project on /projects/)
-    'cursor\.directory',               # Cursor directory — 429 rate-limit to bots
-    'glama\.ai',                       # Glama MCP directory — slow, times out in CI
-    'cs\.android\.com',                # Android Code Search — JS SPA, 404s to bots
-    'learn\.microsoft\.com',           # MS Learn — 403s to bots
-    'icu\.unicode\.org',               # ICU design docs — bot-blocked
+    'cursor\.directory',               # Cursor directory: 429 rate-limit to bots
+    'glama\.ai',                       # Glama MCP directory: slow, times out in CI
+    'cs\.android\.com',                # Android Code Search: JS SPA, 404s to bots
+    'learn\.microsoft\.com',           # MS Learn: 403s to bots
+    'icu\.unicode\.org',               # ICU design docs: bot-blocked
     # RSS/Atom Namespaces
     'http://www\.w3\.org/2005/Atom',
     'http://purl\.org/rss/1.0/modules/content/',

@@ -1,8 +1,11 @@
 /**
  * Full-site CSP sweep through the edge: every sitemap URL in a real Chromium.
- * Per page: console CSP violations, page errors, worker marker, nonce
- * header==body match. Homelab pages must BYPASS the worker and show real
- * numbers. Exit 1 on any failure.
+ * Per page: console CSP violations, page errors, the Worker's marker, and the
+ * header nonce equal to the body nonce. Pages on a bypass route must NOT go
+ * through the Worker, and /homelab/ must show real numbers. Exit 1 on any
+ * failure.
+ *
+ * Run from the repository root after a build: node workers/edge-nonce/tools/full-csp-sweep.mjs
  */
 import { Resolver } from "node:dns/promises";
 import { readFileSync } from "node:fs";
@@ -15,6 +18,24 @@ const xml = readFileSync(
 );
 const urls = [...xml.matchAll(/<loc>([^<]+)<\/loc>/g)].map((m) => m[1]);
 console.log(`pages: ${urls.length}`);
+
+// Zone routes with no Worker that hold sitemap pages (see ../README.md). The
+// contributions subpages under /projects/ are routed back into the Worker.
+const BYPASS_PREFIXES = [
+  "/homelab/",
+  "/es/homelab/",
+  "/projects/",
+  "/es/projects/",
+  "/tools/http-headers-analyzer/",
+  "/es/tools/http-headers-analyzer/",
+];
+const BACK_IN_WORKER = [
+  "/projects/contributions/",
+  "/es/projects/contributions/",
+];
+const isBypassed = (path) =>
+  BYPASS_PREFIXES.some((p) => path.startsWith(p)) &&
+  BACK_IN_WORKER.every((p) => !path.startsWith(p));
 
 // This server resolves jmrp.io to itself; ask a public resolver for the
 // Cloudflare address so the sweep goes through the edge.
@@ -29,12 +50,45 @@ const browser = await chromium.launch({
 
 const failures = [];
 const nonces = new Set();
-let minted = 0,
-  bypassed = 0,
-  subHits = 0;
+let minted = 0;
+let bypassed = 0;
+let subHits = 0;
 
 const CONCURRENCY = 4;
 const queue = [...urls];
+
+/** A page on a bypass route: no Worker marker, and homelab's tokens replaced. */
+function checkBypassed(url, path, marker, html) {
+  bypassed++;
+  if (marker)
+    failures.push([url, `bypass route went through the Worker (${marker})`]);
+  if (path.includes("/homelab/") && html.includes("HLM_")) {
+    failures.push([url, "HLM_ tokens not replaced"]);
+  }
+}
+
+/** A page through the Worker: minted marker, one fresh nonce, header equals body. */
+function checkMinted(url, headers, html) {
+  minted++;
+  if (headers["x-edge-sub-cache"] === "HIT") subHits++;
+  const marker = headers["x-edge-nonce"] ?? "";
+  if (marker !== "minted")
+    failures.push([url, `marker='${marker}' (expected minted)`]);
+  const csp = headers["content-security-policy"] ?? "";
+  const headerNonce = /'nonce-([a-f0-9]{32})'/.exec(csp)?.[1];
+  if (headerNonce) {
+    if (nonces.has(headerNonce))
+      failures.push([url, "NONCE REPEATED across pages"]);
+    nonces.add(headerNonce);
+    if (!html.includes(`nonce="${headerNonce}"`)) {
+      failures.push([url, "header nonce != body nonce"]);
+    }
+  } else {
+    failures.push([url, "CSP without a hex nonce"]);
+  }
+  if (html.includes("NGINX_CSP_NONCE"))
+    failures.push([url, "placeholder not replaced"]);
+}
 
 async function checkPage(context, url) {
   const page = await context.newPage();
@@ -52,40 +106,17 @@ async function checkPage(context, url) {
   try {
     const resp = await page.goto(url, { waitUntil: "load", timeout: 30_000 });
     const headers = resp.headers();
-    const marker = headers["x-edge-nonce"] ?? "";
-    const csp = headers["content-security-policy"] ?? "";
-    const headerNonce = /'nonce-([a-f0-9]{32})'/.exec(csp)?.[1];
     // RAW response body, not page.content(): browsers hide the nonce
     // attribute from the live DOM (CSP3 nonce-hiding), so a serialized DOM
     // never contains nonce="..." and the comparison would always fail.
     const html = await resp.text();
-    const isHomelab = /\/homelab\/$/.test(url);
-
     if (violations.length > 0) failures.push([url, `CSP/JS: ${violations[0]}`]);
-
-    if (isHomelab) {
-      if (marker)
-        failures.push([url, `homelab went through the worker (${marker})`]);
-      if (html.includes("HLM_"))
-        failures.push([url, "HLM_ tokens not replaced"]);
+    const path = new URL(url).pathname;
+    if (isBypassed(path)) {
+      checkBypassed(url, path, headers["x-edge-nonce"] ?? "", html);
     } else {
-      if (marker !== "minted")
-        failures.push([url, `marker='${marker}' (expected minted)`]);
-      if (headerNonce) {
-        if (nonces.has(headerNonce))
-          failures.push([url, "NONCE REPEATED across pages"]);
-        nonces.add(headerNonce);
-        if (!html.includes(`nonce="${headerNonce}"`))
-          failures.push([url, "header nonce != body nonce"]);
-      } else {
-        failures.push([url, "CSP without a hex nonce"]);
-      }
-      if (html.includes("NGINX_CSP_NONCE"))
-        failures.push([url, "placeholder not replaced"]);
-      minted++;
-      if (headers["x-edge-sub-cache"] === "HIT") subHits++;
+      checkMinted(url, headers, html);
     }
-    if (isHomelab) bypassed++;
   } catch (error) {
     failures.push([url, `error: ${String(error).slice(0, 100)}`]);
   } finally {
@@ -102,7 +133,7 @@ await Promise.all(
 await browser.close();
 
 console.log(
-  `worker(minted): ${minted} | homelab bypass: ${bypassed} | sub-cache HIT: ${subHits}`,
+  `worker (minted): ${minted} | bypass routes: ${bypassed} | sub-cache HIT: ${subHits}`,
 );
 console.log(`unique nonces: ${nonces.size} (expected ${minted})`);
 console.log(`failures: ${failures.length}`);

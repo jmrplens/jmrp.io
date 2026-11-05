@@ -70,6 +70,29 @@ def last_active_hour(day):
     return hours[-1] if hours else "--"
 
 
+def day_note(date, total, today, now):
+    """The note for one day, and whether that day reached the quota."""
+    note = f"today, until {now:%H:%M} UTC" if date == str(today) else ""
+    if total < WATCH:
+        return note, False
+    last = last_active_hour(date)
+    note = f"{note} last active hour {last}".strip()
+    if total >= LIMIT * 0.99 or (date != str(today) and last < "23"):
+        return f"QUOTA REACHED, Worker skipped until 00:00 UTC. {note}", True
+    return note, False
+
+
+def print_fail_open():
+    """Warns about any Worker route whose fail_open is off."""
+    request = urllib.request.Request(f"{API}/zones/{ENV['PRIVATE_CF_ZONE_ID']}/workers/routes", headers=HEADERS)
+    routes = json.load(urllib.request.urlopen(request, timeout=40))["result"]
+    off = [r["pattern"] for r in routes if r.get("script") and not r.get("request_limit_fail_open")]
+    if off:
+        print(f"WARNING, fail_open is off on: {', '.join(off)}. A plain wrangler deploy resets it.")
+    else:
+        print("fail_open is on in every Worker route.")
+
+
 def main():
     since = sys.argv[1] if len(sys.argv) > 1 else "2026-11-04"
     now = datetime.datetime.now(datetime.timezone.utc)
@@ -87,15 +110,9 @@ def main():
     for date in sorted(days):
         day = days[date]
         total = sum(day.values())
-        note = ""
-        if date == str(today):
-            note = f"today, until {now:%H:%M} UTC"
-        if total >= WATCH:
-            last = last_active_hour(date)
-            note = f"{note} last active hour {last}".strip()
-            if total >= LIMIT * 0.99 or (date != str(today) and last < "23"):
-                note = f"QUOTA REACHED, Worker skipped until 00:00 UTC. {note}"
-                hit.append(date)
+        note, reached = day_note(date, total, today, now)
+        if reached:
+            hit.append(date)
         print(
             f"{date:12}{total:>9}{100 * total / LIMIT:>8.0f}%"
             f"{day.get('docs-edge', 0):>11}{day.get('edge-nonce', 0):>12}"
@@ -108,13 +125,7 @@ def main():
     else:
         print("Quota not reached in this period.")
 
-    request = urllib.request.Request(f"{API}/zones/{ENV['PRIVATE_CF_ZONE_ID']}/workers/routes", headers=HEADERS)
-    routes = json.load(urllib.request.urlopen(request, timeout=40))["result"]
-    off = [r["pattern"] for r in routes if r.get("script") and not r.get("request_limit_fail_open")]
-    if off:
-        print(f"WARNING, fail_open is off on: {', '.join(off)}. A plain wrangler deploy resets it.")
-    else:
-        print("fail_open is on in every Worker route.")
+    print_fail_open()
 
 
 if __name__ == "__main__":
