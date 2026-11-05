@@ -53,7 +53,7 @@ const posts = defineCollection({
        * descriptive, listing what the article covers. The lead is inside
        * `speakable`, so it is an explicit extraction target for voice
        * assistants and AI answers, and a description-style topic label
-       * ("Deep dive into QUIC and HTTP/3 — technical architecture, security
+       * ("Deep dive into QUIC and HTTP/3: technical architecture, security
        * features…") gives an answer engine nothing to quote because it makes
        * no claim.
        *

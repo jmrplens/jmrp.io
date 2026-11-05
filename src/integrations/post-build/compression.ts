@@ -36,8 +36,8 @@ const CACHE_MAX_AGE_MS = 30 * 24 * 60 * 60 * 1000;
 
 /**
  * Compression parameters. Hashed into `configSignature` (see
- * {@link computeConfigSignature}) so that changing gzip/brotli settings —
- * or upgrading Node's bundled zlib — invalidates the entire on-disk cache
+ * {@link computeConfigSignature}) so that changing gzip/brotli settings,
+ * or upgrading Node's bundled zlib, invalidates the entire on-disk cache
  * instead of silently serving blobs compressed under stale settings.
  */
 const COMPRESSION_CONFIG = {
@@ -93,7 +93,7 @@ async function loadManifest(
         return manifestFile.entries;
       }
       logger.info(
-        "  Compression config changed since last build — invalidating compression cache.",
+        "  Compression config changed since last build: invalidating compression cache.",
       );
       await fs.promises.rm(CACHE_BLOBS_DIR, { recursive: true, force: true });
       await fs.promises.mkdir(CACHE_BLOBS_DIR, { recursive: true });
@@ -177,7 +177,16 @@ async function pruneStaleEntries(
 
 /**
  * Compresses static assets in the distribution directory using Gzip and Brotli.
- * Target extensions: .js, .css, .svg, .json, .xml, .txt, .md
+ * Target extensions: .js, .css, .svg, .json, .xml, .txt, .md, .jsonld,
+ * .webmanifest
+ *
+ * Nginx compresses a file with no twin on the fly and weakens its ETag, and
+ * the edge swaps the weak tag for a strong one at the first revalidation: the
+ * Brotli copy of /identity/person.jsonld flipped that way. With a twin the tag
+ * is strong from the first fill. A twin is also a file on disk, so a `^~`
+ * location has to refuse `.br` and `.gz` itself, because the regex guard in
+ * jmrp_static_assets.conf never runs there. `^~ /identity/` needs that guard
+ * before person.jsonld.br exists.
  *
  * Note: HTML files are intentionally excluded because Nginx's sub_filter directive
  * for CSP nonce replacement requires uncompressed content. Pre-compressing HTML
@@ -198,12 +207,15 @@ export async function compressAssets(
 ) {
   logger.info("Compressing assets (Gzip & Brotli)...");
 
-  const files = await glob("**/*.{js,css,svg,json,xml,txt,md}", {
-    cwd: distDir,
-    absolute: true,
-    nodir: true,
-    ignore: ["**/*.gz", "**/*.br"],
-  });
+  const files = await glob(
+    "**/*.{js,css,svg,json,xml,txt,md,jsonld,webmanifest}",
+    {
+      cwd: distDir,
+      absolute: true,
+      nodir: true,
+      ignore: ["**/*.gz", "**/*.br"],
+    },
+  );
 
   await fs.promises.mkdir(CACHE_BLOBS_DIR, { recursive: true });
   const manifest = await loadManifest(logger);
