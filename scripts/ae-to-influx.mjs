@@ -3,7 +3,7 @@
  * Cloudflare Analytics Engine → InfluxDB 3 ingestion.
  *
  * Pulls the edge worker's per-request registry (`jmrp_edge_requests`, written
- * by plan/edge-nonce-worker/worker.js on every request) and lands it in the
+ * by workers/edge-nonce/worker.js on every request) and lands it in the
  * monitoring stack's InfluxDB 3 so Grafana can chart the EDGE side of jmrp.io
  * next to the nginx origin dashboards. This replaces the paid Cloudflare
  * Grafana plugin: the data is already ours, no zone-analytics API involved.
@@ -100,7 +100,7 @@ const EDGE_SITES = [
   { dataset: "jmrp_edge_requests", site: "jmrp", host: "jmrp.io" },
   { dataset: "mcp_edge_requests", site: "mcp", host: "mcp.jmrp.io" },
   // docs.jmrp.io (since 2026-10-14) is GitHub Pages behind a pass-through
-  // logging worker (plan/docs-edge-worker): no nginx ever sees it, so EVERY
+  // logging worker (workers/docs-edge): no nginx ever sees it, so EVERY
   // request is ingested, not only the edge-only verdicts. Its cache column
   // carries Cloudflare's raw cf-cache-status (HIT, MISS, DYNAMIC...).
   {

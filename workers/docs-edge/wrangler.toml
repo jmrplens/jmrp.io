@@ -1,0 +1,16 @@
+name = "docs-edge"
+main = "worker.js"
+compatibility_date = "2026-08-01"
+account_id = "d3604ab61425cd17ccc0c6b2f14ec1dd"
+routes = [
+  { pattern = "docs.jmrp.io/*", zone_id = "44d43a33307a232a60a5af4fc1504613" },
+]
+workers_dev = false
+
+[observability]
+enabled = true
+head_sampling_rate = 1
+
+[[analytics_engine_datasets]]
+binding = "REQS"
+dataset = "docs_edge_requests"

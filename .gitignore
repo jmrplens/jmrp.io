@@ -156,6 +156,11 @@ cv_latex/generated/
 PROJECT_KNOWLEDGE.md
 # Implementation plans and audit docs (local only)
 plan/
+# Edge Workers: wrangler's local state and the live zone rules dumped by
+# workers/tools/dump_rules.py (account data, refreshed on demand).
+workers/**/.wrangler/
+workers/**/__pycache__/
+workers/tools/rules-dump.json
 AI_CONFIG_TASKS.md
 AI_CONTEXT_ROADMAP.md
 SEO_AUDIT.md

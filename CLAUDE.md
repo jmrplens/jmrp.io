@@ -78,6 +78,7 @@
 ├── scripts/
 │   ├── ci/                     # ~13 CI automation scripts
 │   └── *.mjs                   # Development + deploy tools (deploy-swap, deploy-live, etc.)
+├── workers/                    # The zone's 3 Cloudflare Workers + edge tools (see workers/README.md)
 ├── tests/                      # 17 Playwright test suites + utils
 ├── docs/                       # Extended documentation
 ├── public/                     # Static assets (favicons, llms.txt, PDFs)
@@ -998,6 +999,16 @@ pnpm exec prettier --check .  # Format check (runs at end of build)
 The final report lists every failed step across all phases (not just the first encountered), so a single run surfaces the complete picture. Phases 3-5 require a prior build. Phase 4 is skipped without `SONAR_TOKEN`. Pre-run cleanup: removes `html-validation.json`, `rss-validation.json`.
 
 ---
+
+## Edge Workers (`workers/`)
+
+The three Cloudflare Workers of the zone live in `workers/`: `edge-nonce` (jmrp.io: HTML cached at the edge with a CSP nonce minted per visitor), `edge-nonce-mcp` (the same for mcp.jmrp.io, plus keeping the OAuth callback's code out of every log) and `docs-edge` (in front of GitHub Pages for docs.jmrp.io). `workers/README.md` has what they share and the deploy procedure; each Worker's README has its live version and rollback.
+
+- **Never `wrangler deploy`**: it turns the routes' `request_limit_fail_open` off. Use `wrangler versions upload`, deploy at 0%, test with the `Cloudflare-Workers-Version-Overrides` header, then promote.
+- **The free plan allows 100,000 Worker requests a day for the whole account**: check `python3 workers/tools/check_quota.py` before bulk tests on Worker routes.
+- `RANGE_SAFE_EXTENSIONS`, `prefersMarkdown` and `twinUrl` are copied across the three Workers and the zone rules; `workers/docs-edge/worker.test.mjs` fails if they diverge.
+- **What a Worker records is described by `/privacy`** (jmrp.io and docs.jmrp.io) and mcp.jmrp.io's `/policies`: change them in the same pull request.
+- `/homelab/` must never route through a Worker: nginx substitutes its metrics per request.
 
 ## Writing Blog Posts
 

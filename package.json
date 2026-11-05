@@ -41,7 +41,7 @@
     "typecheck": "astro check",
     "typecheck:tsc": "tsc --noEmit",
     "test:e2e": "playwright test",
-    "test:unit": "node --test \"scripts/**/*.test.mjs\"",
+    "test:unit": "node --test \"scripts/**/*.test.mjs\" \"workers/**/*.test.mjs\"",
     "csp:replay": "node scripts/csp-replay.mjs",
     "identity:build": "node scripts/ci/build-identity.mjs",
     "projects:build": "node scripts/ci/build-projects.mjs",

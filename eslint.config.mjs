@@ -414,4 +414,22 @@ export default [
       "astro/jsx-a11y/media-has-caption": "off", // SFX-only audio clip, no spoken content
     },
   },
+  // Edge Workers (workers/). The tests replace the Workers runtime's own
+  // globals (fetch, caches) the way the runtime provides them, and their
+  // table-driven cases loop over many inputs, which inflates cognitive
+  // complexity without making a test harder to read. The tools are CLI
+  // scripts run by hand on the server, like scripts/.
+  {
+    files: ["workers/**/*.test.mjs"],
+    rules: {
+      "unicorn/no-global-object-property-assignment": "off",
+      "sonarjs/cognitive-complexity": "off",
+    },
+  },
+  {
+    files: ["workers/**/tools/*.mjs", "workers/edge-nonce-mcp/monitor.mjs"],
+    rules: {
+      "unicorn/no-process-exit": "off",
+    },
+  },
 ];

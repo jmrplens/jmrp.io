@@ -1,0 +1,32 @@
+name = "edge-nonce-mcp"
+main = "worker.js"
+compatibility_date = "2026-08-01"
+account_id = "d3604ab61425cd17ccc0c6b2f14ec1dd"
+workers_dev = false
+
+# Never `wrangler deploy`: it turns the route's fail_open off. Use
+# `wrangler versions upload` and `wrangler versions deploy`, as the README says.
+
+# The bypasses do NOT go here: they are zone routes with NO worker, created by
+# API. Cloudflare applies the MOST SPECIFIC route, so a narrow bypass beats
+# mcp.jmrp.io/*. List and reasons in the README.
+routes = [
+  { pattern = "mcp.jmrp.io/*", zone_id = "44d43a33307a232a60a5af4fc1504613" },
+]
+
+# Invocation and error logs in the dashboard (free plan, 3 days).
+# head_sampling_rate 1 = all of them; should the volume grow, lower to 0.1.
+[observability]
+enabled = true
+head_sampling_rate = 1
+# Without this, Workers Logs stores each request's whole URL, so the OAuth
+# callback's code too. Script setting, not part of a version: `wrangler versions deploy`
+# syncs it from this file, and it applies at once to every version. See the README.
+redact_query_string = true
+
+# Per-request record (one row per request, about 90 days of retention). Read by
+# scripts/ae-to-influx.mjs in the jmrp.io repo, to put into InfluxDB the requests
+# the edge served without touching the origin.
+[[analytics_engine_datasets]]
+binding = "REQS"
+dataset = "mcp_edge_requests"
