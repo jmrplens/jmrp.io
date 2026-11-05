@@ -13,9 +13,9 @@ was a git-ignored directory of the mcp.jmrp.io tree.
 
 | Item             | Value                                                                      |
 | ---------------- | -------------------------------------------------------------------------- |
-| Live version     | `5fbf88d8-c553-4de4-95b1-e1b6ed6cc0a5` (2026-11-04), see the history below |
-| Previous version | `e13c0e4f-3004-4595-bfc7-8696c4d5f4ef` (2026-10-14)                        |
-| Roll back        | `wrangler versions deploy e13c0e4f-3004-4595-bfc7-8696c4d5f4ef@100% --yes` |
+| Live version     | `5866b3be-9b15-4887-b396-d3d9d631c778` (2026-11-05), see the history below |
+| Previous version | `5fbf88d8-c553-4de4-95b1-e1b6ed6cc0a5` (2026-11-04)                        |
+| Roll back        | `wrangler versions deploy 5fbf88d8-c553-4de4-95b1-e1b6ed6cc0a5@100% --yes` |
 
 ## The problem it solves
 
@@ -77,6 +77,13 @@ so `bytes=0-99` of `/llms.txt` answered `0-99/2675` on an 11,622 byte file, and
 `curl -C -` and `wget -c` took a corrupt or truncated file as complete. RFC 9110
 section 14.2 lets a server ignore Range, so everything outside `RANGE_SAFE_EXTENSIONS`
 gets the whole file.
+
+An invalid range gets the whole file too, on any type: the edge answered
+`bytes=-0,-0` on `og-en.png` with a 502 where nginx answers 416. `isValidRange` lets a
+`Range` through only when every part of it is well formed, and drops `Range` and
+`If-Range` otherwise. If the edge still throws on a range, the fail-open fallback
+(`fetchOrWhole`) sends the request once more without it. `/assets/*` has no Worker and
+keeps Cloudflare's own 502 for that range.
 
 The list is one-sided on purpose: an unlisted type costs a whole download, a wrongly
 listed one a corrupt file. It exists five times and must stay equal: here, in
@@ -230,3 +237,4 @@ the nginx `map` do not match.
 | `e13c0e4f-3004-4595-bfc7-8696c4d5f4ef` | 2026-10-14 | Bot marks in the record                                                                                                                                                                                              |
 | `c1a92605-6f56-4b71-80e0-9068d35610d9` | 2026-11-04 | Range list, subrequest with no query, redirects keep their query and are cacheable with no CSP, `prefersMarkdown` and `twinUrl` copied from jmrp.io, CORS on the negotiated 302, OAuth code redacted from the record |
 | `5fbf88d8-c553-4de4-95b1-e1b6ed6cc0a5` | 2026-11-04 | Same code, comments only                                                                                                                                                                                             |
+| `5866b3be-9b15-4887-b396-d3d9d631c778` | 2026-11-05 | An invalid Range is not sent on; a range the edge rejects is retried whole; first deploy from this directory                                                                                                         |

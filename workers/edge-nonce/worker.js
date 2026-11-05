@@ -462,6 +462,65 @@ function logEdgeRequest({
   }
 }
 
+/**
+ * Whether every part of a Range header is a byte range the edge answers
+ * correctly: `first-last` with first not after last, `first-`, or a suffix
+ * `-n` with n above zero, one or several of them. A header with any other
+ * part (an empty suffix such as `-0`, a first byte after the last, a missing
+ * number, another unit) is not sent on, and the client gets the whole file,
+ * which a server may always answer (RFC 9110, 14.2). Sent on, the edge
+ * answered those with a 502, an empty 206 or a 416 that the origin would not
+ * give; valid single and multiple ranges it answers right (measured
+ * 2026-11-05).
+ *
+ * @param {string} value - The Range header.
+ * @returns {boolean} True when the edge can serve every part.
+ */
+function isValidRange(value) {
+  const match = /^bytes=(.+)$/.exec(value.trim());
+  if (!match) return false;
+  return match[1].split(",").every((part) => {
+    const spec = /^(\d*)-(\d*)$/.exec(part.trim());
+    if (!spec) return false;
+    const [, first, last] = spec;
+    if (first === "") return last !== "" && Number(last) > 0;
+    return last === "" || Number(first) <= Number(last);
+  });
+}
+
+/**
+ * The same request without Range and If-Range.
+ *
+ * @param {Request} request - The request.
+ * @returns {Request} A copy with no range headers.
+ */
+function withoutRange(request) {
+  const headers = new Headers(request.headers);
+  headers.delete("range");
+  headers.delete("if-range");
+  return new Request(request, { headers });
+}
+
+/**
+ * Fetches a request and, when the edge rejects one that carries a Range,
+ * fetches it once more without it. Cloudflare throws on some ranges instead of
+ * answering them (`bytes=-0,-0`, which the origin answers 416), and a server
+ * may always ignore Range (RFC 9110, 14.2), so the whole file is a valid
+ * answer where a 502 is not.
+ *
+ * @param {Request} request - The request to send.
+ * @param {RequestInit} [init] - Options for fetch, such as `cf`.
+ * @returns {Promise<Response>} The answer.
+ */
+async function fetchOrWhole(request, init) {
+  try {
+    return await fetch(request, init);
+  } catch (error) {
+    if (!request.headers.has("range")) throw error;
+    return fetch(withoutRange(request), init);
+  }
+}
+
 export default {
   async fetch(request, env) {
     // Fail open, always: an exception here must degrade to "the worker adds
@@ -471,7 +530,7 @@ export default {
       return await handle(request, env);
     } catch {
       try {
-        return await fetch(request);
+        return await fetchOrWhole(request);
       } catch {
         return new Response("origin unreachable", { status: 502 });
       }
@@ -700,7 +759,11 @@ async function handle(request, env) {
   // (/_astro/, /assets/) never reach this worker: the same list guards them in
   // the Cache Rule "a Range request skips the cache". Keep both in step.
   // (Reported from phonometry's edge checks, 2026-11-04.)
-  if (!RANGE_SAFE_EXTENSIONS.has(extension)) {
+  const range = originRequest.headers.get("range");
+  if (
+    range !== null &&
+    (!RANGE_SAFE_EXTENSIONS.has(extension) || !isValidRange(range))
+  ) {
     originRequest.headers.delete("range");
     originRequest.headers.delete("if-range");
   }

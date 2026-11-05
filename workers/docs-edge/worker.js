@@ -524,6 +524,26 @@ function withoutRange(request) {
 }
 
 /**
+ * Fetches a request and, when the edge rejects one that carries a Range,
+ * fetches it once more without it. Cloudflare throws on some ranges instead of
+ * answering them (`bytes=-0,-0`, which the origin answers 416), and a server
+ * may always ignore Range (RFC 9110, 14.2), so the whole file is a valid
+ * answer where a 502 is not.
+ *
+ * @param {Request} request - The request to send.
+ * @param {RequestInit} [init] - Options for fetch, such as `cf`.
+ * @returns {Promise<Response>} The answer.
+ */
+async function fetchOrWhole(request, init) {
+  try {
+    return await fetch(request, init);
+  } catch (error) {
+    if (!request.headers.has("range")) throw error;
+    return fetch(withoutRange(request), init);
+  }
+}
+
+/**
  * Lets go of a response whose body will not be read. A body that cannot be
  * cancelled changes nothing about the answer, so it must not become a 502.
  *
@@ -536,6 +556,32 @@ async function release(response) {
   } catch {
     // Nothing is waiting on this body.
   }
+}
+
+/**
+ * Whether every part of a Range header is a byte range the edge answers
+ * correctly: `first-last` with first not after last, `first-`, or a suffix
+ * `-n` with n above zero, one or several of them. A header with any other
+ * part (an empty suffix such as `-0`, a first byte after the last, a missing
+ * number, another unit) is not sent on, and the client gets the whole file,
+ * which a server may always answer (RFC 9110, 14.2). Sent on, the edge
+ * answered those with a 502, an empty 206 or a 416 that the origin would not
+ * give; valid single and multiple ranges it answers right (measured
+ * 2026-11-05).
+ *
+ * @param {string} value - The Range header.
+ * @returns {boolean} True when the edge can serve every part.
+ */
+function isValidRange(value) {
+  const match = /^bytes=(.+)$/.exec(value.trim());
+  if (!match) return false;
+  return match[1].split(",").every((part) => {
+    const spec = /^(\d*)-(\d*)$/.exec(part.trim());
+    if (!spec) return false;
+    const [, first, last] = spec;
+    if (first === "") return last !== "" && Number(last) > 0;
+    return last === "" || Number(first) <= Number(last);
+  });
 }
 
 /**
@@ -556,14 +602,21 @@ async function release(response) {
  * @returns {Promise<Response>} The answer to send on.
  */
 async function passThrough(request) {
-  const outgoing = forOrigin(request);
+  const rangeSafe = isRangeSafe(request);
+  // A Range is not sent on for a type outside the list, which never gets a
+  // real range from the edge, nor when a part of it is not a valid range, which the
+  // edge answers wrongly (isValidRange): the whole file comes back with a 200.
+  let outgoing = forOrigin(request);
+  const range = outgoing.headers.get("range");
+  if (range !== null && (!rangeSafe || !isValidRange(range))) {
+    outgoing = withoutRange(outgoing);
+  }
   const cf = { ...EDGE_CACHE_CF };
-  const response = await fetch(outgoing, { cf });
+  const response = await fetchOrWhole(outgoing, { cf });
   if (request.method !== "GET" && request.method !== "HEAD") return response;
   // The label decides first, because it is the stronger proof; the list is the
   // second condition (F07), so a compressed copy GitHub ever sends unlabelled,
   // or labelled with a coding this file does not know, still gets the whole file.
-  const rangeSafe = isRangeSafe(request);
   if (
     isCompressedPartial(response) ||
     (response.status === 206 && !rangeSafe)
