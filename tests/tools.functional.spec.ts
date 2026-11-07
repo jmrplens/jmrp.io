@@ -500,8 +500,10 @@ test.describe("WireGuard Config Generator", () => {
         "# MikroTik RouterOS 7.21 or later; client-mtu needs 7.25 or later",
       );
       expect(text).toContain(`client-mtu=${c.mtu} \\`);
-      expect(text).toContain("responder=yes \\");
+      // Keepalive lives on the client only; the router peer gets neither a
+      // keepalive nor responder=yes (it made the author's iPhone drop).
       expect(text).not.toContain("persistent-keepalive=");
+      expect(text).not.toContain("responder");
 
       await expect(client).toContainText(`MTU = ${c.mtu}`);
       await expect(client).toContainText("PersistentKeepalive = 25");
@@ -515,36 +517,41 @@ test.describe("WireGuard Config Generator", () => {
     await expect(field("mss-v6")).toBeHidden();
     await expect(routeros).toContainText("/ip firewall mangle add");
     await expect(routeros).not.toContainText("/ipv6 firewall mangle");
-    await expect(routeros).toContainText("responder=yes");
+    await expect(routeros).not.toContainText("persistent-keepalive");
   });
 
   test("site-to-site preset keeps the router keepalive", async ({ page }) => {
     const { field, routeros } = await openWireGuardAdvanced(page);
     await page.locator('[data-preset="site-to-site"]').click();
 
-    await expect(field("responder")).not.toBeChecked();
+    await expect(field("router-keepalive")).toBeChecked();
     await expect(routeros).toContainText("persistent-keepalive=25s");
-    await expect(routeros).not.toContainText("responder=yes");
+    await expect(routeros).not.toContainText("responder");
     // The auto-key peer still emits client-allowed-address (RouterOS 7.21).
     await expect(routeros).toContainText("# MikroTik RouterOS 7.21 or later");
   });
 
   test("manual-key peers lower the RouterOS minimum", async ({ page }) => {
-    const { field, routeros } = await openWireGuardAdvanced(page);
+    const { routeros } = await openWireGuardAdvanced(page);
     await page.locator(".wg-peer-keygen").first().selectOption("manual");
 
-    // No client-* block: responder=yes sets the floor at 7.17, and the
+    // No client-* block: peer name= (RouterOS 7.15) is the floor, and the
     // client-mtu note goes away with the block that would carry it.
-    await expect(routeros).toContainText(
-      /# MikroTik RouterOS 7\.17 or later\n/,
-    );
-    await expect(routeros).not.toContainText("client-mtu");
-
-    // Without responder, peer name= (RouterOS 7.15) is the floor.
-    await field("responder").uncheck();
     await expect(routeros).toContainText(
       /# MikroTik RouterOS 7\.15 or later\n/,
     );
+    await expect(routeros).not.toContainText("client-mtu");
+  });
+
+  test("the router-side keepalive is opt-in", async ({ page }) => {
+    const { field, routeros, client } = await openWireGuardAdvanced(page);
+    await expect(field("router-keepalive")).not.toBeChecked();
+    await expect(routeros).not.toContainText("persistent-keepalive");
+
+    await field("router-keepalive").check();
+
+    await expect(routeros).toContainText("persistent-keepalive=25s");
+    await expect(client).toContainText("PersistentKeepalive = 25");
   });
 
   test("clearing RouterOS 7.25 drops client-mtu", async ({ page }) => {

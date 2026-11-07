@@ -34,7 +34,7 @@ Line counts as of 2026-11-07; the category is the `category` field of each tool'
 | `StringPoolPacker` | 1444 | embedded | `string-pool-packer` |
 | `SubnetCalculator` | 2597 | network | `subnet-calculator` |
 | `TimestampConverter` | 1369 | developer | `timestamp-converter` |
-| `WireGuardConfigGenerator` | 3116 | mikrotik | `wireguard-config-generator` |
+| `WireGuardConfigGenerator` | 3118 | mikrotik | `wireguard-config-generator` |
 
 ## How a tool page is wired
 

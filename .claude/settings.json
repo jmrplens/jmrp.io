@@ -42,7 +42,7 @@
           {
             "type": "command",
             "command": "\"${CLAUDE_PROJECT_DIR:-/var/www/jmrp.io}\"/.claude/hooks/prettier-format.sh",
-            "async": true
+            "async": false
           }
         ]
       }

@@ -1239,9 +1239,9 @@ export const tools = {
       "MTU del túnel menos 60 (40 de IPv6 + 20 de TCP), para /ipv6 firewall mangle: la regla de /ip nunca ve IPv6.",
     // Peers
     sectionPeers: "Peers / Clientes",
-    toggleResponder: "El router solo responde handshakes (responder=yes)",
-    hintResponder:
-      "Recomendado para móviles y portátiles que cambian de red: el router contesta pero nunca inicia, así que deja de reintentar contra endpoints muertos, y el keepalive de cada peer va solo al cliente. Quita la marca solo si este router tiene que llamar al peer.",
+    toggleRouterKeepalive: "Keepalive en el lado del router (sitio a sitio)",
+    hintRouterKeepalive:
+      "Déjalo sin marcar para móviles y portátiles: el keepalive de cada peer va en el .conf de su cliente, y un keepalive en el router hace que este siga intentando handshakes contra clientes que han cambiado de red o se han apagado. Marca la casilla solo si este router tiene que llamar al peer.",
     addPeer: "Añadir peer",
     addPeerAriaLabel: "Añadir peer",
     removePeerAriaLabel: "Eliminar peer",

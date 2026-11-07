@@ -27,8 +27,8 @@ faq:
     answer: "Puedes añadir peers ilimitados. Cada dispositivo cliente recibe una dirección IP única autoasignada y su propio archivo .conf, con personalización opcional por peer."
   - question: "¿Cómo calcula el generador el MTU del túnel y el MSS clamping?"
     answer: "Parte del MTU de tu WAN, el actual-mtu que RouterOS muestra para la interfaz WAN (1500 en Ethernet o fibra, 1492 en PPPoE estándar), y le resta lo que añade WireGuard según la familia de direcciones con la que los clientes llegan al endpoint: 60 bytes si el endpoint es solo IPv4 y 80 si tiene dirección IPv6 o el cliente cambia de red. Un WAN de 1500 con un endpoint dual-stack da un MTU de túnel de 1420. Después escribe dos reglas de MSS clamping, porque /ip firewall mangle nunca ve el tráfico IPv6: una en /ip firewall mangle con el MTU menos 40 (1380) y otra en /ipv6 firewall mangle con el MTU menos 60 (1360), esta última solo si IPv6 está activado. Cada .conf de cliente lleva además una línea MTU =, porque sin ella las apps de iOS y Android usan 1280."
-  - question: "¿Por qué el peer del router lleva responder=yes en lugar de persistent-keepalive?"
-    answer: "El keepalive va en el lado que está detrás de NAT, que en un móvil o un portátil es el cliente, así que cada .conf conserva PersistentKeepalive (25 segundos por defecto) y el router lo publica como client-keepalive para el código QR. Si el router envía paquetes keepalive por su cuenta, sigue intentando handshakes hacia el último endpoint que usó un cliente itinerante mucho después de que esa dirección haya dejado de responder. Con responder=yes el router contesta a los handshakes pero nunca los inicia; la propiedad existe desde RouterOS 7.15 y deja de reintentar desde la 7.17. El preset sitio a sitio la desmarca, porque ahí este router puede tener que llamar al peer. La propiedad client-mtu, que lleva el MTU al código QR, necesita RouterOS 7.25 o posterior: en una versión anterior desmarca esa opción, porque RouterOS rechaza el comando entero si lleva un parámetro que no conoce, y la línea MTU = del .conf sigue haciendo su trabajo."
+  - question: "¿Por qué el peer del router no lleva persistent-keepalive?"
+    answer: "El keepalive va en el lado que está detrás de NAT, que en un móvil o un portátil es el cliente, así que cada .conf conserva PersistentKeepalive (25 segundos por defecto) y el router lo publica como client-keepalive para el código QR. Si el router envía paquetes keepalive por su cuenta, sigue intentando handshakes hacia el último endpoint que usó un cliente itinerante mucho después de que esa dirección haya dejado de responder, así que el peer del router no lleva ninguno salvo que marques el keepalive en el lado del router, que es lo que hace el preset sitio a sitio porque ahí este router puede tener que llamar al peer. RouterOS tiene además responder=yes, que impide que el router inicie handshakes, pero el generador no lo usa: en el iPhone del autor hacía que el túnel se cayera con cada cambio de red. La propiedad client-mtu, que lleva el MTU al código QR, necesita RouterOS 7.25 o posterior: en una versión anterior desmarca esa opción, porque RouterOS rechaza el comando entero si lleva un parámetro que no conoce, y la línea MTU = del .conf sigue haciendo su trabajo."
 ---
 
 import WireGuardConfigGenerator from "@components/apps/WireGuardConfigGenerator.astro";
@@ -80,10 +80,10 @@ import ToolInfo from "@components/ui/ToolInfo.astro";
     IP autoasignadas y personalización por peer
   </li>
   <li>
-    <strong>Peers en modo responder</strong>: por defecto el peer del router
-    lleva <code>responder=yes</code>, así que contesta a los handshakes pero
-    nunca los inicia y deja de reintentar hacia clientes itinerantes que ya se
-    han ido, mientras el keepalive se queda en el <code>.conf</code> del cliente
+    <strong>Keepalive en el cliente</strong>: el keepalive va en el
+    <code>.conf</code> de cada cliente y el peer del router no lleva ninguno, así
+    que el router no se queda intentando handshakes hacia clientes itinerantes
+    que ya se han ido. El preset sitio a sitio añade un keepalive en el router
   </li>
   <li>
     <strong>Opciones de generación de claves</strong>: claves autogeneradas por
@@ -139,7 +139,7 @@ import ToolInfo from "@components/ui/ToolInfo.astro";
   </li>
   <li>
     Añade <strong>peers</strong> para cada dispositivo cliente con direcciones
-    IP únicas, y deja marcada la opción <code>responder=yes</code> salvo que
+    IP únicas, y deja sin marcar el keepalive en el lado del router salvo que
     este router tenga que iniciar la conexión con un peer
   </li>
   <li>
@@ -253,8 +253,8 @@ import ToolInfo from "@components/ui/ToolInfo.astro";
     <strong>Cabecera del script</strong>: la versión más antigua de RouterOS
     que acepta todos los comandos del script: 7.21 cuando algún peer lleva las
     propiedades <code>client-*</code> (<code>client-allowed-address</code>
-    llegó en la 7.21); si no, 7.17 con <code>responder=yes</code> o 7.15 sin
-    él (nombres de peer), y además 7.25 cuando incluye <code>client-mtu</code>
+    llegó en la 7.21); si no, 7.15 (nombres de peer), y además 7.25 cuando
+    incluye <code>client-mtu</code>
   </li>
   <li>
     <strong>Creación de interfaz</strong>: interfaz WireGuard con su puerto de
@@ -299,9 +299,9 @@ import ToolInfo from "@components/ui/ToolInfo.astro";
     WireGuard
   </li>
   <li>
-    <strong>Definiciones de peers</strong>: todos los peers con
-    <code>responder=yes</code> (o <code>persistent-keepalive</code> cuando el
-    router tiene que iniciar) y propiedades de cliente para generación de
+    <strong>Definiciones de peers</strong>: todos los peers, con
+    <code>persistent-keepalive</code> solo cuando el router tiene que iniciar,
+    y propiedades de cliente para generación de
     códigos QR, con <code>client-mtu</code> en RouterOS 7.25 o posterior
   </li>
   <li>
