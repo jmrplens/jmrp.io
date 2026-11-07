@@ -2,11 +2,11 @@
 title: "MikroTik WireGuard VPN: Dual-Stack IPv4/IPv6 Configuration"
 slug: "007-mikrotik-wireguard-dual-stack-vpn"
 publishedDate: 2026-02-14
-updatedDate: 2026-08-02
+updatedDate: 2026-11-07
 lastVerified:
-  date: 2026-08-01
+  date: 2026-11-07
   versions:
-    - RouterOS 7.23.2
+    - RouterOS 7.25
     - RB5009UG+S+
 description: "Configure WireGuard VPN on MikroTik RouterOS with full IPv4/IPv6 dual-stack. Access your home network with native IPv6 from any connection."
 lead: "WireGuard on RouterOS with real dual-stack: VPN clients get ULA IPv6 addresses translated to your ISP's global prefix through NAT66, tested on RouterOS 7 on an RB5009."
@@ -17,15 +17,17 @@ coverImage: "../../../assets/images/blog/wireguard-vpn.webp"
 tags: ["MikroTik", "Networking", "IPv6", "Security"]
 faq:
   - question: "What RouterOS version do I need for WireGuard on MikroTik?"
-    answer: "You need MikroTik RouterOS 7.x or later, since WireGuard has been built in since RouterOS 7. The guide is tested on RouterOS 7.x with an RB5009 but applies to any MikroTik router with WireGuard support."
+    answer: "WireGuard has been built into RouterOS since version 7. For what this guide uses: the client-* peer properties behind the QR code exist since RouterOS 7.12 (client-allowed-address since 7.21), responder since 7.15 (it stops the router initiating handshakes from 7.17), and client-mtu since 7.25, so 7.17 is the practical minimum, and client-allowed-address and client-mtu are optional. The guide is tested on RouterOS 7.25 on an RB5009 and applies to any MikroTik router running 7.17 or later."
   - question: "Why use a ULA prefix and NAT66 for IPv6 instead of global addresses?"
     answer: "VPN clients get private Unique Local Addresses (ULA) in the fd00::/8 range, which are guaranteed not to conflict with public IPv6 addresses. The router then NAT66-translates them to your ISP-assigned global IPv6 prefix when clients access the internet."
   - question: "Why use a non-standard WireGuard port like 53537 instead of 51820?"
     answer: "Using a non-standard port instead of the default 51820 helps avoid automated scans targeting common VPN ports. Some networks also block standard VPN ports, so a high random port may offer better connectivity."
   - question: "What is the difference between full tunnel and split tunnel?"
     answer: "Full tunnel (AllowedIPs = 0.0.0.0/0, ::/0) routes all traffic through the VPN, hiding your location but adding latency. Split tunnel routes only specific networks (like your home LAN) through the VPN, giving better performance for general internet use."
-  - question: "Why is persistent-keepalive needed for WireGuard clients?"
-    answer: "The persistent-keepalive=25s setting sends a keepalive packet every 25 seconds, maintaining the NAT translation for mobile devices behind NAT and allowing the server to send data to the client even when the client hasn't sent anything recently."
+  - question: "What MTU should a WireGuard tunnel on MikroTik use?"
+    answer: "Your WAN's actual-mtu minus 60 if the endpoint is IPv4-only and no client roams, or minus 80 if clients can reach it over IPv6: an IPv6 or dual-stack endpoint, or a phone on an IPv6-only mobile network, which reaches even an IPv4 endpoint over IPv6 through 464XLAT. With an IPv6 or dual-stack endpoint, a 1500 WAN gives 1420, standard PPPoE at 1492 gives 1412, and DIGI's PPPoE at 1480 gives 1400. Then add one MSS clamp per inner family, MTU minus 40 for IPv4 and MTU minus 60 for IPv6, and set MTU = in every client configuration, because the iOS and Android apps fall back to 1280 without it."
+  - question: "Should persistent-keepalive go on the WireGuard client or on the router?"
+    answer: "On the side behind NAT, which is the client: PersistentKeepalive = 25 in its configuration, which the router can publish with client-keepalive=25. On the router, peers for roaming clients get responder=yes and no persistent-keepalive, because otherwise the router keeps retrying handshakes against the client's last known endpoint long after the client has moved or powered off."
   - question: "Does IPv6 over the VPN work if my ISP doesn't provide IPv6?"
     answer: "No global IPv6 internet access. NAT66 translates the client's ULA address to your ISP's global IPv6 prefix, so without an ISP prefix there is nothing to translate to. The tunnel itself still carries IPv6 between client and router, but no further."
 topics:
@@ -51,7 +53,7 @@ howto:
     - "WireGuard client"
   steps:
     - name: "Create the WireGuard interface"
-      text: "Add a WireGuard interface on the MikroTik router with a custom listen port; RouterOS generates the keypair automatically. Retrieve the server's public key to configure clients later."
+      text: "Add a WireGuard interface on the MikroTik router with a custom listen port and mtu set to your WAN's actual-mtu minus 80 (1400 on a 1480 PPPoE link); RouterOS generates the keypair automatically. Retrieve the server's public key to configure clients later."
       anchor: "step-1-create-the-wireguard-interface"
     - name: "Assign IPv4 and IPv6 addresses"
       text: "Assign both an IPv4 address and an IPv6 ULA address to the WireGuard interface so it acts as the gateway for VPN clients. Set advertise=no on the IPv6 address."
@@ -65,11 +67,11 @@ howto:
     - name: "Configure NAT/masquerade"
       text: "Add IPv4 masquerade and IPv6 NAT66 srcnat rules so VPN clients' private addresses are translated to your public IP and ISP-assigned global IPv6 prefix."
       anchor: "step-6-configure-natmasquerade"
-    - name: "Tune MSS clamping and the RAW table"
-      text: "Add a change-mss mangle rule to prevent fragmentation over the tunnel, and RAW prerouting rules to skip flood protection for WireGuard traffic."
-      anchor: "step-7-configure-mss-clamping"
+    - name: "Calculate the MTU and clamp MSS"
+      text: "Derive the tunnel MTU from the WAN's actual-mtu (minus 60 for an IPv4-only endpoint, minus 80 for an IPv6 or dual-stack one), then add two change-mss mangle rules: one in /ip firewall mangle with new-mss at the MTU minus 40, and one in /ipv6 firewall mangle at the MTU minus 60, because the /ip table never sees IPv6."
+      anchor: "step-7-calculate-the-mtu-and-clamp-mss"
     - name: "Add WireGuard peers (clients)"
-      text: "Add a peer per device with a unique keypair, preshared key, and dedicated IPv4/IPv6 allowed-address, using persistent-keepalive=25s for devices behind NAT."
+      text: "Add a peer per device with a unique keypair, preshared key, and dedicated IPv4/IPv6 allowed-address, with responder=yes so the router answers handshakes but never starts them; the keepalive goes on the client (PersistentKeepalive = 25)."
       anchor: "step-9-add-wireguard-peers-clients"
     - name: "Configure the client and verify the connection"
       text: "Set up each client device via QR code or a manual config file, then verify the handshake on both ends and test IPv4 and IPv6 connectivity through the tunnel."
@@ -93,29 +95,33 @@ import Prerequisite from "@components/ui/Prerequisite.astro";
 import { Tabs, TabPanel } from "@components/ui/tabs";
 import Collapsible from "@components/ui/Collapsible.astro";
 
+{/* cspell:ignore XLAT CLAT mtumonitor */}
+
 [WireGuard](https://www.wireguard.com/) has revolutionized VPN technology with its simplicity, speed, and modern cryptography. Unlike traditional VPN protocols like [OpenVPN](https://openvpn.net/) or [IPSec](https://datatracker.ietf.org/doc/html/rfc7296), WireGuard uses a minimal codebase (~4,000 lines vs 100,000+) and state-of-the-art cryptographic primitives as described in the [WireGuard whitepaper](https://www.wireguard.com/papers/wireguard.pdf), resulting in faster connections and lower latency.
 
-This guide demonstrates how to configure a **production-ready WireGuard VPN** on MikroTik RouterOS with **dual-stack IPv4/IPv6 support**. The result? You can connect from any network—even those without IPv6—and enjoy full IPv6 connectivity through your home router.
+This guide demonstrates how to configure a **production-ready WireGuard VPN** on MikroTik RouterOS with **dual-stack IPv4/IPv6 support**. The result? You can connect from any network, even one without IPv6, and enjoy full IPv6 connectivity through your home router.
 
-<TLDRSummary title="TL;DR — dual-stack WireGuard on RouterOS">
-  - **WireGuard is built into RouterOS 7**, so a dual-stack VPN server needs no container and no extra package — the interface listens on a high non-standard UDP port (**53537** here, not the default 51820, to sidestep automated scans) and each peer gets one IPv4 and one IPv6 address.
+<TLDRSummary title="TL;DR: dual-stack WireGuard on RouterOS">
+  - **WireGuard is built into RouterOS 7**, so a dual-stack VPN server needs no container and no extra package. The interface listens on a high non-standard UDP port (**53537** here, not the default 51820, to sidestep automated scans) and each peer gets one IPv4 and one IPv6 address.
   - **IPv6 goes through ULA plus NAT66, not a delegated prefix.** Clients receive `fd00::/8` addresses that the router translates to your ISP's global prefix, so the tunnel survives the prefix changing underneath it.
-  - **Clamp TCP MSS or large downloads stall.** With the interface at MTU 1500 the computed ceilings are 1460 for IPv4 (1500 − 20 IP − 20 TCP) and 1440 for IPv6 (1500 − 40 − 20); `new-mss=1420` sits below both, which is why one value works on either stack.
+  - **Size the tunnel from the WAN, then clamp MSS per family.** The tunnel MTU is your WAN's `actual-mtu` minus 60 (IPv4-only endpoint, clients that never roam) or minus 80 (IPv6 or dual-stack endpoint): 1400 on my 1480 PPPoE link, 1420 on a 1500 one. Then two clamps, `/ip` at the MTU − 40 and `/ipv6` at the MTU − 60, and `MTU =` in every client config, because iOS and Android fall back to 1280 without it.
+  - **The router answers; the client keeps the tunnel alive.** Peers get `responder=yes`, so the router never retries handshakes against a roaming client's dead endpoint; `PersistentKeepalive = 25` goes on the client, the side behind NAT.
   - **Each device gets its own key pair and address pair.** Revoking one client is deleting one peer; nothing else has to be reissued.
   - **Split tunnel is an `AllowedIPs` decision on the client**, not a server setting: list only the home prefixes to route home traffic, or `0.0.0.0/0, ::/0` to route everything.
-  - **Tested on RouterOS 7.x on an RB5009**, and applicable to any MikroTik router whose RouterOS build includes WireGuard.
+  - **Tested on RouterOS 7.25 on an RB5009.** The minimum is 7.17, the first version where `responder=yes` stops the router initiating handshakes; `client-allowed-address` needs 7.21 and `client-mtu` 7.25, and both are optional.
 </TLDRSummary>
 
 <Callout type="important" title="Values You Must Customize">
 Throughout this guide, values that **you must replace** with your own are clearly marked. Look for:
 
-- **`wg_devices`** — WireGuard interface name (customize if you prefer a different name)
-- **`53537`** — WireGuard listen port (choose any unused UDP port)
-- **`192.168.100.0/24`** — VPN IPv4 subnet (change if it conflicts with your network)
-- **`fd00:1111:2222:100::/64`** — VPN IPv6 ULA prefix (generate your own at [unique-local-ipv6.com](https://www.unique-local-ipv6.com/))
-- **`192.168.0.0/24`** — Your home LAN subnet (adjust to match your network)
-- **Client keys** — Always generate unique keypairs per device
-- **`your-domain.com`** — Your public IP or DDNS hostname
+- **`wg_devices`**: WireGuard interface name (customize if you prefer a different name)
+- **`53537`**: WireGuard listen port (choose any unused UDP port)
+- **`mtu=1400`**: tunnel MTU, your WAN's `actual-mtu` minus 80 (1400 is for my 1480 PPPoE link; [Step 7](#step-7-calculate-the-mtu-and-clamp-mss) shows how to calculate yours). The values derived from it change with it: the MSS clamps `1360` (IPv4) and `1340` (IPv6), and `MTU = 1400` in the client configs
+- **`192.168.100.0/24`**: VPN IPv4 subnet (change if it conflicts with your network)
+- **`fd00:1111:2222:100::/64`**: VPN IPv6 ULA prefix (generate your own at [unique-local-ipv6.com](https://www.unique-local-ipv6.com/))
+- **`192.168.0.0/24`**: Your home LAN subnet (adjust to match your network)
+- **Client keys**: Always generate unique keypairs per device
+- **`your-domain.com`**: Your public IP or DDNS hostname
 </Callout>
 
 ---
@@ -124,7 +130,7 @@ Throughout this guide, values that **you must replace** with your own are clearl
 
 Yes. WireGuard ships in RouterOS 7 as a built-in interface type and carries IPv6
 natively: you assign an IPv6 address to the WireGuard interface and give each peer
-its own IPv6 `allowed-address`. The catch is addressing — this guide uses a ULA
+its own IPv6 `allowed-address`. The catch is addressing: this guide uses a ULA
 prefix plus NAT66 instead of a delegated prefix, so the tunnel survives your ISP
 renumbering underneath it.
 
@@ -132,9 +138,11 @@ renumbering underneath it.
 
 ## How I run this on my own infrastructure
 
-The configuration above isn't a lab exercise — it's the WireGuard setup I run on my own RB5009UG+S+, using the same interface layout as this guide, at the standard 1500 MTU. The RouterOS version each guide was last checked against is stamped at the top of its own page, which is why the same router shows a different version here and in [the honeypot guide](/blog/006-implementing-mikrotik-honeypot/).
+The configuration in this guide isn't a lab exercise: it's the WireGuard setup I run on my own RB5009UG+S+ with RouterOS 7.25, using the same interface layout as this guide. My WAN is DIGI's PPPoE, which negotiates `actual-mtu=1480` (the [DIGI PPPoE guide](/blog/008-mikrotik-pppoe-dualstack-digi/) explains why it is 1480 and not 1500), so every MTU and MSS value in this guide is the one for that link: tunnel MTU 1400, MSS 1360 for IPv4 and 1340 for IPv6. The RouterOS version each guide was last checked against is stamped at the top of its own page, which is why the same router shows a different version here and in [the honeypot guide](/blog/006-implementing-mikrotik-honeypot/).
 
-Honestly, there isn't an incident to report. I'd like to hand you a war story about MSS clamping gone wrong or a handshake that silently failed, but that's not what happened here: this tunnel has been running for a while without a single usage problem, with good throughput and full dual-stack connectivity — IPv4 and IPv6 both work end to end, every time. If your deployment follows the steps above, that's the boring, reliable outcome you should expect too.
+Getting to those values was not a straight line. On 2026-09-08 I lowered the tunnel to MTU 1400 and the IPv4 clamp to `new-mss=1340`, and added no IPv6 clamp. At 03:10 the next morning I put the MTU back to 1500 from my phone, because I noticed problems I never pinned down, and on 2026-09-11 I reverted the clamp too. My best explanation, which I have not proven, is IPv6: the only IPv6 clamp on the router was a generic rule at 1348, and an IPv6 TCP packet carrying a 1348-byte segment is 1408 bytes (1348 + 40 + 20), which does not fit a 1400 tunnel. It gets through only if the ICMPv6 "Packet Too Big" reaches the origin server and the server acts on it; otherwise the download hangs. That would hit the clients whose own MTU is above 1400 (the Macs, at 1420 in automatic mode, and a Deco mesh router), and not the iPhone, which sits at 1280. On 2026-11-07 I applied the values again, this time with the IPv6 rule from Step 7, and measured them: the numbers are in [What I measured on my router](#what-i-measured-on-my-router).
+
+The keepalive advice has its own story. On 2026-10-27 I found the router retrying handshakes every ~5 seconds towards addresses that no longer answered: the Deco, powered off since 19 September, and a MacBook. That came to around 1,140 log lines an hour in Loki, and both peers had `persistent-keepalive` set on the router side. I removed it there and left the keepalive on the clients; the property RouterOS documents for telling a peer never to initiate is `responder=yes`, which is what [Step 9](#step-9-add-wireguard-peers-clients) uses.
 
 ---
 
@@ -260,7 +268,7 @@ We use [Unique Local Addresses (ULA)](https://datatracker.ietf.org/doc/html/rfc4
 ## Prerequisites
 
 <Prerequisite title="Before You Start">
-  - **MikroTik RouterOS 7.x** or later (WireGuard is built-in since RouterOS 7)
+  - **MikroTik RouterOS 7.17** or later (WireGuard is built in since RouterOS 7; the `client-*` peer properties behind the QR code arrived in 7.12, and `responder=yes` stops the router initiating handshakes from 7.17. `client-allowed-address` needs 7.21 and `client-mtu` 7.25, both optional)
   - **Public IP address** (static) or **Dynamic DNS** (DDNS) configured on your router
   - **IPv6 connectivity** from your ISP (optional but recommended for dual-stack)
   - **UDP port forwarding** capability if your MikroTik is behind another router/NAT
@@ -278,11 +286,13 @@ First, we create the WireGuard interface on the MikroTik router. The router will
 ```routeros
 /interface wireguard add \
     name=wg_devices \
-    mtu=1500 \
+    mtu=1400 \
     listen-port=53537 \
     comment="VPN for Mobile Devices"
 ```
 </Code>
+
+`mtu=1400` is for my WAN, a DIGI PPPoE link that negotiates `actual-mtu=1480`. [Step 7](#step-7-calculate-the-mtu-and-clamp-mss) shows how to calculate yours: your WAN's `actual-mtu` minus 80, which gives 1420 on a 1500 WAN, the same value RouterOS uses by default.
 
 <Callout type="tip" title="Port Selection">
 Using a non-standard port like `53537` instead of the default `51820` helps avoid automated scans targeting common VPN ports. Some networks also block standard VPN ports, so a high random port may have better connectivity.
@@ -300,7 +310,7 @@ After creating the interface, retrieve the public key to configure clients:
 
 ```
 Flags: X - disabled; R - running
- 0  R name="wg_devices" mtu=1500 listen-port=53537
+ 0  R name="wg_devices" mtu=1400 listen-port=53537
       private-key="[REDACTED]"
       public-key="YourServerPublicKeyHere123456789ABCDEFGHIJ="
 ```
@@ -308,7 +318,7 @@ Flags: X - disabled; R - running
   </TerminalSessionOutput>
 </TerminalSession>
 
-Save the `public-key` value—you'll need it when configuring client devices.
+Save the `public-key` value: you'll need it when configuring client devices.
 
 ---
 
@@ -335,7 +345,7 @@ The WireGuard interface needs both IPv4 and IPv6 addresses to serve as the gatew
 </Code>
 
 <Callout type="warning" title="IPv6 Advertise Setting">
-Set `advertise=no` for the WireGuard IPv6 address. We don't want Router Advertisements on the VPN tunnel—clients receive their static addresses through the WireGuard configuration, not SLAAC.
+Set `advertise=no` for the WireGuard IPv6 address. We don't want Router Advertisements on the VPN tunnel: clients receive their static addresses through the WireGuard configuration, not SLAAC.
 </Callout>
 
 ---
@@ -516,32 +526,286 @@ Traditional IPv6 philosophy discourages NAT, preferring end-to-end connectivity.
 
 ---
 
-## Step 7: configure MSS clamping
+## Step 7: calculate the MTU and clamp MSS
 
-TCP Maximum Segment Size (MSS) clamping prevents fragmentation issues with VPN tunnels. The WireGuard overhead reduces the effective MTU, so we must adjust TCP MSS accordingly.
+WireGuard wraps every packet a client sends or receives in a new, encrypted outer packet, and it is the outer packet that has to fit through your WAN. So the tunnel MTU comes from the WAN, not the other way round, and RouterOS will not work it out for you: the interface uses whatever `mtu` you give it, even one whose outer packets cannot fit. An outer packet that is too large is fragmented at the IP layer, which costs CPU at both ends and breaks on paths that drop fragments. TCP MSS clamping then keeps TCP segments inside that MTU.
 
-<Code lang="routeros" title="MSS Clamping">
+### What WireGuard adds to every packet
+
+Each WireGuard data packet is the encrypted inner packet between a fixed header (outer IP, UDP and the WireGuard data header) and a fixed trailer (the Poly1305 tag). Everything except the inner packet is overhead, and the tunnel MTU is the size of the largest inner packet:
+
+<Table title="WireGuard overhead in bytes, by outer family">
+  <thead>
+    <tr>
+      <th scope="col">Part</th>
+      <th scope="col">Outer IPv4</th>
+      <th scope="col">Outer IPv6</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Outer IP header</td>
+      <td>20</td>
+      <td>40</td>
+    </tr>
+    <tr>
+      <td>UDP header</td>
+      <td>8</td>
+      <td>8</td>
+    </tr>
+    <tr>
+      <td>WireGuard data header (type, receiver index, counter)</td>
+      <td>16</td>
+      <td>16</td>
+    </tr>
+    <tr>
+      <td>Poly1305 authentication tag</td>
+      <td>16</td>
+      <td>16</td>
+    </tr>
+    <tr>
+      <td>**Total overhead**</td>
+      <td>**60**</td>
+      <td>**80**</td>
+    </tr>
+  </tbody>
+</Table>
+
+### Outer family sets the MTU, inner family sets the MSS
+
+<Code lang="text" title="Tunnel MTU and MSS">
+```text
+path MTU    = min(server WAN MTU, client-side path MTU)
+tunnel MTU  = path MTU - overhead(outer family)   # 60 for IPv4, 80 for IPv6
+MSS (IPv4)  = tunnel MTU - 40                     # 20 IPv4 + 20 TCP
+MSS (IPv6)  = tunnel MTU - 60                     # 40 IPv6 + 20 TCP
+```
+</Code>
+
+Two address families are in play here, and they decide different things:
+
+- **The outer family** is the family of the encrypted packet that crosses the internet between the client and your WAN. It decides the overhead (60 or 80) and therefore the **MTU**.
+- **The inner family** is the family of your traffic inside the tunnel. It decides **which MSS** applies (MTU − 40 for IPv4, MTU − 60 for IPv6) and **which table the clamp goes in**: `/ip firewall mangle` for IPv4, `/ipv6 firewall mangle` for IPv6. `/ip firewall mangle` never sees an IPv6 packet, so a dual-stack tunnel needs both rules.
+
+### Reference values for common WAN links
+
+<Table title="Tunnel MTU and MSS by WAN MTU and outer family">
+  <thead>
+    <tr>
+      <th scope="col">WAN MTU</th>
+      <th scope="col">Outer family</th>
+      <th scope="col">Tunnel MTU</th>
+      <th scope="col">MSS, inner IPv4</th>
+      <th scope="col">MSS, inner IPv6</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>1500 (Ethernet, fiber)</td>
+      <td>IPv4</td>
+      <td>1440</td>
+      <td>1400</td>
+      <td>1380</td>
+    </tr>
+    <tr>
+      <td>1500 (Ethernet, fiber)</td>
+      <td>IPv6</td>
+      <td>**1420**</td>
+      <td>1380</td>
+      <td>1360</td>
+    </tr>
+    <tr>
+      <td>1492 (standard PPPoE)</td>
+      <td>IPv4</td>
+      <td>1432</td>
+      <td>1392</td>
+      <td>1372</td>
+    </tr>
+    <tr>
+      <td>1492 (standard PPPoE)</td>
+      <td>IPv6</td>
+      <td>**1412**</td>
+      <td>1372</td>
+      <td>1352</td>
+    </tr>
+    <tr>
+      <td>1480 (DIGI's PPPoE, mine)</td>
+      <td>IPv4</td>
+      <td>1420</td>
+      <td>1380</td>
+      <td>1360</td>
+    </tr>
+    <tr>
+      <td>1480 (DIGI's PPPoE, mine)</td>
+      <td>IPv6</td>
+      <td>**1400**</td>
+      <td>**1360**</td>
+      <td>**1340**</td>
+    </tr>
+  </tbody>
+</Table>
+
+The bold MTUs are the IPv6 rows, the ones to use when any client can reach your endpoint over IPv6, which in a dual-stack setup is the normal case. The last row is the one this guide uses.
+
+### Find your WAN's actual MTU
+
+<Code lang="routeros" title="Read the WAN's negotiated MTU">
+```routeros
+/interface print detail where name=<your-wan>
+# Read actual-mtu, not the max-mtu you configured
+```
+</Code>
+
+Go by `actual-mtu`, not by the `max-mtu` you configured: mine says `max-mtu=1500` and negotiates 1480. PPPoE puts an 8-byte header inside the 1500-byte Ethernet payload, which leaves 1492 on a standard PPPoE link; 1480 is what DIGI's server negotiates, as the [DIGI PPPoE guide](/blog/008-mikrotik-pppoe-dualstack-digi/) explains.
+
+### Which outer family to assume
+
+The outer family is decided by the `Endpoint` each client dials, not by what the tunnel carries inside:
+
+<Table title="Outer family by client endpoint">
+  <thead>
+    <tr>
+      <th scope="col">Client `Endpoint`</th>
+      <th scope="col">Possible outer family</th>
+      <th scope="col">Overhead to assume</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>A name with only an A record, or an IPv4 literal</td>
+      <td>Always IPv4</td>
+      <td>60</td>
+    </tr>
+    <tr>
+      <td>A name with A and AAAA records, a name with only AAAA, or an IPv6 literal</td>
+      <td>IPv4 or IPv6, depending on the network the client is on</td>
+      <td>80</td>
+    </tr>
+  </tbody>
+</Table>
+
+Devices that roam need one more caveat. On IPv6-only mobile networks with 464XLAT (CLAT), a connection to an IPv4 endpoint travels as IPv6 over the radio leg, 20 bytes larger, and some mobile networks have an MTU below 1500 to begin with. For phones and laptops the prudent choice is the 80-byte row even when the endpoint is IPv4-only; a fixed client with an A-only endpoint can use 60.
+
+### What each end of the tunnel controls
+
+<Table title="What the MTU on each end controls">
+  <thead>
+    <tr>
+      <th scope="col">Setting</th>
+      <th scope="col">Controls</th>
+      <th scope="col">Value to use</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Server interface MTU (`mtu=` on `/interface wireguard`)</td>
+      <td>Everything the router sends to clients: TCP, UDP and QUIC, DNS, VoIP</td>
+      <td>One value for every peer on the interface, while each peer can use a different outer family and switch when it roams. Take the worst case: WAN − 80 if any peer can arrive over IPv6, WAN − 60 only if every endpoint is A-only and no client roams. To give fixed clients with A-only endpoints the 60-byte value anyway, put them on a second interface.</td>
+    </tr>
+    <tr>
+      <td>Client MTU (`MTU =` in the `.conf`, or `client-mtu` on the RouterOS peer)</td>
+      <td>Everything the client sends, plus the MSS it advertises in its SYNs, which caps what TCP sends to it</td>
+      <td>min(server WAN, client link) − the overhead of the family of *its* endpoint. With my 1480 WAN: my iPhone, on a name with A and AAAA records, uses 1400; a Mac on an A-only name works at 1420 (what macOS picks on its own on a 1500 link), and at 1400 too.</td>
+    </tr>
+    <tr>
+      <td>MSS clamp on the router (two rules, `/ip` and `/ipv6`)</td>
+      <td>TCP only. It covers clients whose MTU is larger than the server's</td>
+      <td>The reference table's values for the server's row</td>
+    </tr>
+  </tbody>
+</Table>
+
+A few rules follow from this:
+
+- **The two ends don't have to share an MTU.** Each one limits what it sends. What must not happen is either end going above its path MTU minus the overhead.
+- **`change-mss` only lowers, never raises.** It is a cap, so the rule should match only SYNs above the new value: `tcp-mss=<new-mss + 1>-65535`. With `new-mss=1360` the range is `1361-65535`, and a SYN that already advertises 1240 passes untouched.
+- **The clamp does not fix UDP.** QUIC (HTTP/3), DNS and VoIP depend on the interface MTU and on path MTU discovery, which is why the server MTU has to be right even with a clamp in place.
+- **IPv6 needs at least 1280.** [RFC 8200](https://datatracker.ietf.org/doc/html/rfc8200#section-5) requires every link to carry 1280-byte packets, so if the formula gives less than 1280 and the tunnel carries IPv6 inside, IPv6 will not work over it.
+- **With `in-interface=wg_devices`, the clamp catches the SYN and the SYN-ACK that come from the client**: connections the client opens, and connections opened towards it from the LAN. That is all the router needs, because it only has to limit what it sends into the tunnel; the client's own MTU limits what the client sends.
+
+### Add the two clamp rules
+
+<Code lang="routeros" title="MSS clamping for IPv4 and IPv6">
 ```routeros
 /ip firewall mangle add \
     chain=forward \
     action=change-mss \
     protocol=tcp \
     tcp-flags=syn \
-    tcp-mss=1349-65535 \
-    new-mss=1420 \
+    tcp-mss=1361-65535 \
+    new-mss=1360 \
     in-interface=wg_devices \
     comment="WireGuard MSS clamping - Devices"
+
+/ipv6 firewall mangle add \
+    chain=forward \
+    action=change-mss \
+    protocol=tcp \
+    tcp-flags=syn \
+    tcp-mss=1341-65535 \
+    new-mss=1340 \
+    in-interface=wg_devices \
+    comment="WireGuard MSS clamping IPv6 - Devices"
 ```
 </Code>
 
-<Callout type="tip" title="MTU and MSS Calculation">
-WireGuard adds overhead to each packet (40 bytes IPv6/20 bytes IPv4 + 8 bytes UDP + 32 bytes WG header). We set `mtu=1500` on the WireGuard interface to allow full-sized inner packets:
+The values are the MTU − 40 and the MTU − 60 for my 1400 tunnel; take yours from the reference table, and keep each `tcp-mss` range starting one above its `new-mss`. Mangle rules default to `passthrough=yes`, so neither rule stops the rest of the chain.
 
-- **WireGuard interface MTU**: 1500 (inner packets; outer packets with WG overhead are fragmented transparently by the transport layer)
-- **TCP MSS for IPv4**: 1500 - 20 (IP) - 20 (TCP) = **1460**
-- **TCP MSS for IPv6**: 1500 - 40 (IPv6) - 20 (TCP) = **1440**
+### What I measured on my router
 
-We use `new-mss=1420` as a conservative value below both limits. If you experience connection issues (pages loading partially, stalled downloads), try reducing to `1380` or setting the WireGuard MTU to `1420` (the RouterOS default, which avoids outer fragmentation by accounting for the WireGuard overhead).
+On 2026-11-07 I measured three configurations from an iPhone 12 Pro Max running the official WireGuard app, on Wi-Fi behind another DIGI line, reaching the router over IPv4. Each row is one speed test run from the phone. Alongside it, the router's sniffer on `wg_devices` (headers only) recorded packet sizes, and [mikroscope](https://docs.jmrp.io/mikroscope/), my sub-second kernel telemetry for RouterOS that runs in a container on the router, recorded softirq time and `time_squeeze` from the kernel's own counters. Its figures only count the seconds with more than 50 Mbps on `wg_devices`.
+
+<Table title="Same phone, same router, three MTU settings">
+  <thead>
+    <tr>
+      <th scope="col">Scenario</th>
+      <th scope="col">Router: tunnel MTU / clamps</th>
+      <th scope="col">iPhone MTU</th>
+      <th scope="col">Speed test ↓ / ↑ (Mbps)</th>
+      <th scope="col">softirq ticks/s</th>
+      <th scope="col">time_squeeze/s</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>A</td>
+      <td>1500 / IPv4 `new-mss=1420`, IPv6 only the generic rule at 1348</td>
+      <td>1280 (automatic)</td>
+      <td>301 / 365</td>
+      <td>111</td>
+      <td>108</td>
+    </tr>
+    <tr>
+      <td>B</td>
+      <td>1400 / IPv4 1360 + IPv6 1340</td>
+      <td>1280 (automatic)</td>
+      <td>387 / 384</td>
+      <td>129</td>
+      <td>126</td>
+    </tr>
+    <tr>
+      <td>C</td>
+      <td>1400 / IPv4 1360 + IPv6 1340</td>
+      <td>**1400** (`MTU = 1400`)</td>
+      <td>**602 / 407**</td>
+      <td>**106**</td>
+      <td>**103**</td>
+    </tr>
+  </tbody>
+</Table>
+
+`time_squeeze` counts the times the kernel's receive softirq ran out of budget with packets still waiting: it climbs when the CPU cannot keep up with the packet rate.
+
+**A to B changed nothing measurable, and that was expected.** Without an `MTU =` line the iPhone uses 1280 and advertises an MSS of 1240. The sniffer shows that in A and in B no packet towards the iPhone went above 1280, and the counters of the MSS rules stayed at 0, because 1240 is below both match ranges. Lowering the server's MTU does nothing for TCP towards a client whose own MTU, and so the MSS it advertises, is already lower; the speed difference between A and B is variation between tests.
+
+**B to C is where it moved.** With the iPhone at 1400 the download went from 387 to 602 Mbps, and mikroscope saw less softirq time (129 to 106 ticks a second) and fewer squeezes (126 to 103 a second) while moving more traffic. The mechanism: at around 400 Mbps the RB5009 has all four cores at 100% encrypting, so it is bound by packets per second, not by bytes, and packets about 9% larger carry about 9% more bytes for the same CPU work. That fits the [iperf3 measurement under Slow performance](#slow-performance), around 15% median `cpu-load` at 70 Mbps: the cost grows with the traffic until the cores run out.
+
+**C did not fragment.** The largest packet towards the iPhone was exactly 1400 bytes, and none had `fragment-offset>0`. A 1401-byte ping with DF set is rejected by the router itself ("packet too large"); without DF, a 1500-byte ping gets through because the router fragments the inner packet. In no scenario did the kernel drop packets from its receive backlog, and the interface showed no new errors.
+
+**What this does not prove.** There is one test per scenario, and the speed test can pick a different server each time. The mechanism explains the direction, not the size: at a fixed packet rate it accounts for about 9% more bytes, not the 56% between 387 and 602 Mbps, and A and B already differed by 29% with no change that mattered. So 602 against 387 Mbps is one sample, not a guaranteed gain: how much a larger client MTU buys depends on the server being CPU-bound, as this one is at that rate.
+
+<Callout type="warning" title="Reading packet sizes from the RouterOS sniffer">
+In the rx direction the sniffer shows packets of up to 64 KB. That is the kernel's GRO merging packets after decryption, not the real MTU, so read packet sizes in the tx direction. Also, `filter-ip-address` only captures IPv4.
 </Callout>
 
 ---
@@ -587,7 +851,7 @@ Choose how to generate the cryptographic keys. The **recommended** approach lets
 <Tabs>
   <TabPanel label="RouterOS (recommended)">
 
-Since RouterOS 7.x, the router can generate all cryptographic keys automatically. This is the **simplest approach** — the router creates the private key, computes the public key, and generates the preshared key in a single command.
+Since RouterOS 7.x, the router can generate all cryptographic keys automatically. This is the **simplest approach**: the router creates the private key, computes the public key, and generates the preshared key in a single command.
 
 #### Create the peer with auto-generated keys
 
@@ -599,7 +863,7 @@ Since RouterOS 7.x, the router can generate all cryptographic keys automatically
     private-key=auto \
     preshared-key=auto \
     allowed-address=192.168.100.2/32,fd00:1111:2222:100::2/128 \
-    persistent-keepalive=25s \
+    responder=yes \
     comment="Client 1 - Mobile"
 ```
 </Code>
@@ -614,17 +878,22 @@ These properties define the client-side configuration and enable the **QR code**
 
 <Code lang="routeros" title="Set Client Configuration Properties">
 ```routeros
-/interface wireguard peers set wg_client1 \
+/interface wireguard peers set [find name=wg_client1] \
     client-address=192.168.100.2/32,fd00:1111:2222:100::2/128 \
     client-dns=192.168.0.1,fd00:1111:2222:100::1 \
     client-endpoint=your-domain.com:53537 \
     client-allowed-address=0.0.0.0/0,::/0 \
-    client-keepalive=25
+    client-keepalive=25 \
+    client-mtu=1400
 ```
 </Code>
 
+<Callout type="warning" title="client-mtu needs RouterOS 7.25 or later">
+`client-mtu` arrived in RouterOS 7.25, so the 7.24 long-term branch does not have it. On an older version RouterOS rejects the whole `set` command because of the unknown parameter: drop the `client-mtu=1400` line there and write `MTU = 1400` in the client's `.conf` by hand ([Step 10](#step-10-client-configuration)). Before 7.21 the same goes for `client-allowed-address`: drop that line too, and the exported configuration carries `0.0.0.0/0, ::/0`, the value it sets here anyway. `client-keepalive=25` sets the client's `PersistentKeepalive`: the keepalive belongs on the client.
+</Callout>
+
 <Callout type="tip" title="QR Code in WinBox / WebFig">
-With these client properties set, open the peer in **WinBox** or **WebFig** and use `show-client-config` to display the complete client configuration and a QR code. This is the **easiest way** to configure iOS/Android clients — just scan the code from the WireGuard app.
+With these client properties set, open the peer in **WinBox** or **WebFig** and use `show-client-config` to display the complete client configuration and a QR code. This is the **easiest way** to configure iOS/Android clients: just scan the code from the WireGuard app.
 </Callout>
 
 #### Retrieve keys for manual client configuration
@@ -681,7 +950,7 @@ Use the client's **public** key (not the private key) and the preshared key:
     public-key="<CLIENT_PUBLIC_KEY>" \
     preshared-key="<PRESHARED_KEY>" \
     allowed-address=192.168.100.2/32,fd00:1111:2222:100::2/128 \
-    persistent-keepalive=25s \
+    responder=yes \
     comment="Client 1 - Mobile"
 ```
 </Code>
@@ -697,7 +966,7 @@ The WireGuard Windows app generates keys automatically when creating a new tunne
 
 1. Download and install [WireGuard for Windows](https://www.wireguard.com/install/)
 2. Open the app and click **Add Tunnel** → **Add empty tunnel**
-3. The app generates a keypair — copy the **Public Key** shown at the top
+3. The app generates a keypair; copy the **Public Key** shown at the top
 4. Generate a preshared key from the command line:
 
 <TerminalCommand title="Generate Preshared Key">
@@ -717,7 +986,7 @@ wg genpsk
     public-key="<CLIENT_PUBLIC_KEY>" \
     preshared-key="<PRESHARED_KEY>" \
     allowed-address=192.168.100.2/32,fd00:1111:2222:100::2/128 \
-    persistent-keepalive=25s \
+    responder=yes \
     comment="Client 1 - Mobile"
 ```
 </Code>
@@ -755,15 +1024,19 @@ wg genpsk
       <td>IPs the client can use; also acts as routing table</td>
     </tr>
     <tr>
-      <td>`persistent-keepalive`</td>
-      <td>25 seconds</td>
-      <td>Maintains NAT mappings, enables incoming connections</td>
+      <td>`responder`</td>
+      <td>`yes`</td>
+      <td>Answers handshakes but never starts them; stops retries towards roaming clients. The keepalive goes on the client (`PersistentKeepalive = 25`)</td>
     </tr>
   </tbody>
 </Table>
 
 <Callout type="warning" title="Persistent Keepalive">
-The `persistent-keepalive=25s` setting is crucial for mobile devices behind NAT. It sends a keepalive packet every 25 seconds, maintaining the NAT translation and allowing the server to send data to the client even if the client hasn't sent anything recently.
+The keepalive belongs on the side that sits behind NAT, which is the client: `PersistentKeepalive = 25` in its `.conf`, or `client-keepalive=25` on the router's peer so the QR code carries it. Every 25 seconds the client refreshes its NAT mapping, which is what lets the router reach it between the client's own packets.
+
+On the router, give those peers [`responder=yes`](https://help.mikrotik.com/docs/spaces/ROS/pages/69664792/WireGuard) instead. The property exists since RouterOS 7.15, and since 7.17 the router no longer initiates handshakes for such a peer. MikroTik documents it for routers that act as servers for clients that connect to them: the router answers handshakes and never starts them. A `persistent-keepalive` on the router side makes the router send on its own instead, so once a phone or laptop moves or is switched off, the router keeps retrying handshakes against the last endpoint it knew.
+
+If **this** router has to call the other end (a site-to-site link where it initiates, with `endpoint-address` set on the peer), don't set `responder`, and leave `persistent-keepalive` on whichever side is behind NAT.
 </Callout>
 
 ### Example: multiple peers
@@ -779,7 +1052,7 @@ Each peer must have a **unique keypair** and **unique IP addresses**. Never reus
     private-key=auto \
     preshared-key=auto \
     allowed-address=192.168.100.2/32,fd00:1111:2222:100::2/128 \
-    persistent-keepalive=25s \
+    responder=yes \
     comment="Phone - Mobile VPN"
 
 # Client 2 - Laptop (e.g., MacBook)
@@ -789,17 +1062,17 @@ Each peer must have a **unique keypair** and **unique IP addresses**. Never reus
     private-key=auto \
     preshared-key=auto \
     allowed-address=192.168.100.3/32,fd00:1111:2222:100::3/128 \
-    persistent-keepalive=25s \
+    responder=yes \
     comment="Laptop - Mobile VPN"
 
-# Client 3 - Remote Site (Site-to-Site VPN)
+# Client 3 - Remote Site (Site-to-Site VPN that dials in to this router)
 /interface wireguard peers add \
     interface=wg_devices \
     name=wg_remote_site \
     private-key=auto \
     preshared-key=auto \
     allowed-address=192.168.100.10/32,fd00:1111:2222:100::a/128 \
-    persistent-keepalive=25s \
+    responder=yes \
     comment="Remote Site - Site-to-Site"
 ```
 </Code>
@@ -812,17 +1085,18 @@ Whether keys are auto-generated on the router or pre-generated on the client, th
 
 ## Step 10: client configuration
 
-Now configure the client device. If you used the **RouterOS auto-keys** method and set the client properties in Step 9, you can simply scan the **QR code** from WinBox/WebFig — no manual configuration needed.
+Now configure the client device. If you used the **RouterOS auto-keys** method and set the client properties in Step 9, you can simply scan the **QR code** from WinBox/WebFig, with no manual configuration needed.
 
 For manual setup, the configuration file format is the same across all platforms, but the setup method varies.
 
 <Callout type="important" title="Replace These Values">
 In every client configuration below, you **must** replace:
-- **`<CLIENT_PRIVATE_KEY>`** — the client's private key (auto-generated on router or generated locally in Step 9)
-- **`<SERVER_PUBLIC_KEY>`** — the server's public key (from Step 1, or retrieved with `:put` in Step 9)
-- **`<PRESHARED_KEY>`** — the preshared key (must match server peer config)
-- **`your-domain.com:53537`** — your router's public IP/domain and WireGuard port
-- **IP addresses** — must match the `allowed-address` configured on the server peer
+- **`<CLIENT_PRIVATE_KEY>`**: the client's private key (auto-generated on router or generated locally in Step 9)
+- **`<SERVER_PUBLIC_KEY>`**: the server's public key (from Step 1, or retrieved with `:put` in Step 9)
+- **`<PRESHARED_KEY>`**: the preshared key (must match server peer config)
+- **`your-domain.com:53537`**: your router's public IP/domain and WireGuard port
+- **IP addresses**: must match the `allowed-address` configured on the server peer
+- **`MTU = 1400`**: the smaller of your server's WAN `actual-mtu` and the client's own link MTU, minus 80 ([Step 7](#step-7-calculate-the-mtu-and-clamp-mss))
 </Callout>
 
 <Tabs>
@@ -843,6 +1117,7 @@ Download the **WireGuard** app from the [App Store](https://apps.apple.com/app/w
 PrivateKey = <CLIENT_PRIVATE_KEY>
 Address = 192.168.100.2/32, fd00:1111:2222:100::2/128
 DNS = 192.168.0.1, fd00:1111:2222:100::1
+MTU = 1400
 
 [Peer]
 PublicKey = <SERVER_PUBLIC_KEY>
@@ -854,7 +1129,7 @@ PersistentKeepalive = 25
 </FileContent>
 
 <Callout type="tip" title="QR Code from RouterOS">
-If you set the client properties in Step 9 (`client-address`, `client-dns`, `client-endpoint`, etc.), open the peer in **WinBox** or **WebFig** and use `show-client-config` to display a QR code. Scan it with the WireGuard app — no manual configuration needed.
+If you set the client properties in Step 9 (`client-address`, `client-dns`, `client-endpoint`, etc.), open the peer in **WinBox** or **WebFig** and use `show-client-config` to display a QR code. Scan it with the WireGuard app; no manual configuration is needed.
 </Callout>
 
   </TabPanel>
@@ -888,6 +1163,7 @@ Create the configuration file:
 PrivateKey = <CLIENT_PRIVATE_KEY>
 Address = 192.168.100.2/32, fd00:1111:2222:100::2/128
 DNS = 192.168.0.1, fd00:1111:2222:100::1
+MTU = 1400
 
 [Peer]
 PublicKey = <SERVER_PUBLIC_KEY>
@@ -934,6 +1210,7 @@ sudo systemctl enable wg-quick@wg_home
 PrivateKey = <CLIENT_PRIVATE_KEY>
 Address = 192.168.100.2/32, fd00:1111:2222:100::2/128
 DNS = 192.168.0.1, fd00:1111:2222:100::1
+MTU = 1400
 
 [Peer]
 PublicKey = <SERVER_PUBLIC_KEY>
@@ -968,6 +1245,10 @@ PersistentKeepalive = 25
       <td>DNS servers to use. Can be your router or any DNS server accessible via VPN</td>
     </tr>
     <tr>
+      <td>`MTU`</td>
+      <td>The tunnel MTU on the client. Always set it: the smaller of your server's WAN `actual-mtu` and the client's own link MTU, minus 80 (minus 60 only for an IPv4-only endpoint and a client that never roams). 1400 here</td>
+    </tr>
+    <tr>
       <td>`Endpoint`</td>
       <td>Your router's public IP or domain name with the WireGuard port</td>
     </tr>
@@ -975,8 +1256,60 @@ PersistentKeepalive = 25
       <td>`AllowedIPs`</td>
       <td>`0.0.0.0/0, ::/0` routes ALL traffic through VPN. Use specific subnets for split-tunnel</td>
     </tr>
+    <tr>
+      <td>`PersistentKeepalive`</td>
+      <td>Seconds between the keepalive packets the client sends to hold its NAT mapping open, so the router can reach it. The keepalive lives here, on the client; the router's peer uses `responder=yes`</td>
+    </tr>
   </tbody>
 </Table>
+
+### Why every client config sets MTU
+
+Leave `MTU =` out and each official app picks its own value, and none of them knows anything about your server's WAN:
+
+<Table title="What each WireGuard app does without MTU =">
+  <thead>
+    <tr>
+      <th scope="col">Platform</th>
+      <th scope="col">Tunnel MTU it picks</th>
+      <th scope="col">Source</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>iOS, iPadOS</td>
+      <td>Fixed at **1280**</td>
+      <td>[`PacketTunnelSettingsGenerator.swift`](https://github.com/WireGuard/wireguard-apple/blob/master/Sources/WireGuardKit/PacketTunnelSettingsGenerator.swift) in wireguard-apple</td>
+    </tr>
+    <tr>
+      <td>macOS</td>
+      <td>MTU of the physical interface **minus 80** (1420 on a 1500 Wi-Fi network)</td>
+      <td>The same file, macOS branch (`tunnelOverheadBytes = 80`)</td>
+    </tr>
+    <tr>
+      <td>Android</td>
+      <td>Fixed at **1280**</td>
+      <td>[`GoBackend.java`](https://github.com/WireGuard/wireguard-android/blob/master/tunnel/src/main/java/com/wireguard/android/backend/GoBackend.java) in wireguard-android</td>
+    </tr>
+    <tr>
+      <td>Linux (`wg-quick`)</td>
+      <td>MTU of the route to the endpoint (failing that, of the default route; failing that, 1500) **minus 80**</td>
+      <td>`set_mtu_up()` in [`linux.bash`](https://github.com/WireGuard/wireguard-tools/blob/master/src/wg-quick/linux.bash), wireguard-tools</td>
+    </tr>
+    <tr>
+      <td>Windows</td>
+      <td>Follows the MTU of the default route's interface **minus 80**, never below 1280 for IPv6</td>
+      <td>[`mtumonitor.go`](https://github.com/WireGuard/wireguard-windows/blob/master/tunnel/mtumonitor.go) in wireguard-windows</td>
+    </tr>
+    <tr>
+      <td>RouterOS (as a client)</td>
+      <td>The interface default, **1420**</td>
+      <td>[MikroTik WireGuard documentation](https://help.mikrotik.com/docs/spaces/ROS/pages/69664792/WireGuard)</td>
+    </tr>
+  </tbody>
+</Table>
+
+The desktop apps subtract 80 from the MTU of the **client's** local link and know nothing about the **server's** WAN. With my server on a 1480 PPPoE link and the tunnel running over IPv6, a Mac in automatic mode uses 1420, and 1420 + 80 = 1500 does not fit in 1480, so it fragments; over IPv4 it fits exactly (1420 + 60 = 1480). The mobile apps go to the other extreme: 1280 always works, but it wastes throughput on a server bound by packets per second, as [the measurements in Step 7](#what-i-measured-on-my-router) show. So write `MTU =` in every client config, with the value from [Step 7](#step-7-calculate-the-mtu-and-clamp-mss).
 
 ### Split tunnel vs full tunnel
 
@@ -1002,7 +1335,7 @@ flowchart TB
 ```
 </Mermaid>
 
-**Full tunnel** — all traffic goes through VPN:
+**Full tunnel** sends all traffic through the VPN:
 - Hides your location from all websites
 - Higher latency for general browsing
 - Full IPv6 access through home connection
@@ -1014,7 +1347,7 @@ AllowedIPs = 0.0.0.0/0, ::/0
 ```
 </Code>
 
-**Split tunnel** — only traffic to specified networks uses VPN:
+**Split tunnel** sends only traffic for the specified networks through the VPN:
 - Better performance for general internet use
 - Home network access without routing everything
 
@@ -1084,10 +1417,10 @@ Flags: X - disabled
 </TerminalSession>
 
 <Callout type="tip" title="Responder Mode (RouterOS 7.15+)">
-If your MikroTik acts as a VPN server (clients connect to it, not the other way around), consider setting `responder=yes` on each peer. This prevents the router from repeatedly trying to initiate connections to clients that don't have a fixed endpoint:
+Every peer in Step 9 is created with `responder=yes`, so the router answers handshakes and never starts them; the property exists since RouterOS 7.15, and since 7.17 the router no longer initiates handshakes for such a peer. For a peer you created without it, set it and drop the router-side keepalive:
 
 ```routeros
-/interface wireguard peers set [find name=wg_client1] responder=yes
+/interface wireguard peers set [find name=wg_client1] responder=yes persistent-keepalive=0
 ```
 </Callout>
 
@@ -1122,7 +1455,7 @@ Here's the complete RouterOS configuration for reference. Values marked with `# 
 # ═══════════════════════════════════════════════════════════════════════════════
 # WIREGUARD VPN - COMPLETE DUAL-STACK CONFIGURATION
 # ═══════════════════════════════════════════════════════════════════════════════
-# MikroTik RouterOS 7.x
+# MikroTik RouterOS 7.17+ (tested on 7.25)
 # IPv4 + IPv6 dual-stack with full internet access
 # ═══════════════════════════════════════════════════════════════════════════════
 
@@ -1130,9 +1463,10 @@ Here's the complete RouterOS configuration for reference. Values marked with `# 
 # INTERFACE CONFIGURATION
 # ───────────────────────────────────────────────────────────────────────────────
 
+# ← CUSTOMIZE mtu: WAN actual-mtu - 80 (1480 - 80 = 1400 here; 1420 on a 1500 WAN)
 /interface wireguard add \
     name=wg_devices \
-    mtu=1500 \
+    mtu=1400 \
     listen-port=53537 \
     comment="VPN for Mobile Devices"                              # ← CUSTOMIZE port
 
@@ -1269,15 +1603,26 @@ Here's the complete RouterOS configuration for reference. Values marked with `# 
 # MANGLE - MSS CLAMPING
 # ───────────────────────────────────────────────────────────────────────────────
 
+# ← CUSTOMIZE: new-mss = MTU - 40 (IPv4) and MTU - 60 (IPv6); tcp-mss starts at new-mss + 1
 /ip firewall mangle add \
     chain=forward \
     action=change-mss \
     protocol=tcp \
     tcp-flags=syn \
-    tcp-mss=1349-65535 \
-    new-mss=1420 \
+    tcp-mss=1361-65535 \
+    new-mss=1360 \
     in-interface=wg_devices \
     comment="WireGuard MSS clamping - Devices"
+
+/ipv6 firewall mangle add \
+    chain=forward \
+    action=change-mss \
+    protocol=tcp \
+    tcp-flags=syn \
+    tcp-mss=1341-65535 \
+    new-mss=1340 \
+    in-interface=wg_devices \
+    comment="WireGuard MSS clamping IPv6 - Devices"
 
 # ───────────────────────────────────────────────────────────────────────────────
 # RAW TABLE - SKIP FLOOD PROTECTION
@@ -1298,26 +1643,28 @@ Here's the complete RouterOS configuration for reference. Values marked with `# 
     comment="WireGuard - Skip flood protection"
 
 # ───────────────────────────────────────────────────────────────────────────────
-# PEERS — Using auto-generated keys (recommended)
+# PEERS: using auto-generated keys (recommended); the router only answers (responder=yes)
 # Retrieve keys with: :put [/interface wireguard peers get [find name=X] private-key]
 # ───────────────────────────────────────────────────────────────────────────────
 
+# ← CUSTOMIZE the IPs in allowed-address
 /interface wireguard peers add \
     interface=wg_devices \
     name=wg_phone \
     private-key=auto \
     preshared-key=auto \
-    allowed-address=192.168.100.2/32,fd00:1111:2222:100::2/128 \  # ← CUSTOMIZE IPs
-    persistent-keepalive=25s \
+    allowed-address=192.168.100.2/32,fd00:1111:2222:100::2/128 \
+    responder=yes \
     comment="Phone - Mobile VPN"                                   # ← CUSTOMIZE
 
+# ← CUSTOMIZE the IPs in allowed-address
 /interface wireguard peers add \
     interface=wg_devices \
     name=wg_laptop \
     private-key=auto \
     preshared-key=auto \
-    allowed-address=192.168.100.3/32,fd00:1111:2222:100::3/128 \  # ← CUSTOMIZE IPs
-    persistent-keepalive=25s \
+    allowed-address=192.168.100.3/32,fd00:1111:2222:100::3/128 \
+    responder=yes \
     comment="Laptop - Mobile VPN"                                  # ← CUSTOMIZE
 ```
 </FileContent>
@@ -1330,7 +1677,7 @@ Here's the complete RouterOS configuration for reference. Values marked with `# 
 
 The most common issue. If `last-handshake` never appears on either side, the initial handshake isn't completing.
 
-**Check the WireGuard interface is running** — a disabled or stopped interface won't accept connections:
+**Check the WireGuard interface is running.** A disabled or stopped interface won't accept connections:
 
 <Code lang="routeros" title="Verify Interface Status">
 ```routeros
@@ -1340,7 +1687,7 @@ The most common issue. If `last-handshake` never appears on either side, the ini
 ```
 </Code>
 
-**Verify the UDP port is reachable** — the firewall must accept incoming WireGuard packets. Check the input chain has an accept rule for your port:
+**Verify the UDP port is reachable.** The firewall must accept incoming WireGuard packets. Check the input chain has an accept rule for your port:
 
 <Code lang="routeros" title="Check Firewall Input Rules">
 ```routeros
@@ -1352,7 +1699,7 @@ The most common issue. If `last-handshake` never appears on either side, the ini
 ```
 </Code>
 
-**Verify the peer's public key matches** — the most subtle error. The server must have the client's public key, and the client must have the server's public key. Any mismatch silently drops all packets:
+**Verify the peer's public key matches.** This is the most subtle error. The server must have the client's public key, and the client must have the server's public key. Any mismatch silently drops all packets:
 
 <Code lang="routeros" title="Verify Keys">
 ```routeros
@@ -1364,7 +1711,7 @@ The most common issue. If `last-handshake` never appears on either side, the ini
 ```
 </Code>
 
-**Check if the peer shows a handshake** — if `last-handshake` shows a time, the tunnel is established even if traffic isn't flowing:
+**Check if the peer shows a handshake.** If `last-handshake` shows a time, the tunnel is established even if traffic isn't flowing:
 
 <Code lang="routeros" title="Check Peer Handshake">
 ```routeros
@@ -1375,14 +1722,14 @@ The most common issue. If `last-handshake` never appears on either side, the ini
 </Code>
 
 <Callout type="tip" title="Port Forwarding">
-If your MikroTik is behind another router or NAT gateway, you must forward the WireGuard UDP port (e.g., `53537`) to your MikroTik's internal IP. WireGuard uses **only UDP** — TCP forwarding will not work.
+If your MikroTik is behind another router or NAT gateway, you must forward the WireGuard UDP port (e.g., `53537`) to your MikroTik's internal IP. WireGuard uses **only UDP**; TCP forwarding will not work.
 </Callout>
 
 ### Can connect but no internet access
 
 The tunnel is up (handshake succeeds) but the client can't browse the web or reach external hosts.
 
-**Check NAT/masquerade rules** — without masquerade, the VPN client's private IP reaches the internet but return packets have nowhere to go:
+**Check NAT/masquerade rules.** Without masquerade, the VPN client's private IP reaches the internet but return packets have nowhere to go:
 
 <Code lang="routeros" title="Verify NAT Rules">
 ```routeros
@@ -1395,7 +1742,7 @@ The tunnel is up (handshake succeeds) but the client can't browse the web or rea
 ```
 </Code>
 
-**Check forward chain rules** — even with NAT, the firewall's forward chain must allow VPN traffic toward the WAN:
+**Check forward chain rules.** Even with NAT, the firewall's forward chain must allow VPN traffic toward the WAN:
 
 <Code lang="routeros" title="Verify Forward Rules">
 ```routeros
@@ -1406,7 +1753,7 @@ The tunnel is up (handshake succeeds) but the client can't browse the web or rea
 ```
 </Code>
 
-**Test DNS resolution** — a common cause of "no internet" is that DNS queries fail. From the client, try reaching an IP directly to isolate the issue:
+**Test DNS resolution.** A common cause of "no internet" is that DNS queries fail. From the client, try reaching an IP directly to isolate the issue:
 
 <TerminalCommand title="Isolate DNS vs Routing Issue">
 ```bash
@@ -1436,7 +1783,7 @@ IPv4 works through the tunnel but IPv6 traffic doesn't flow.
 ```
 </Code>
 
-**Check IPv6 NAT66 rule** — unlike IPv4, the IPv6 masquerade is often forgotten:
+**Check IPv6 NAT66 rule.** Unlike IPv4, the IPv6 masquerade is often forgotten:
 
 <Code lang="routeros" title="Verify IPv6 NAT66">
 ```routeros
@@ -1445,7 +1792,7 @@ IPv4 works through the tunnel but IPv6 traffic doesn't flow.
 ```
 </Code>
 
-**Check IPv6 forward rules** — the IPv6 firewall is independent from IPv4. You need explicit forward rules:
+**Check IPv6 forward rules.** The IPv6 firewall is independent from IPv4. You need explicit forward rules:
 
 <Code lang="routeros" title="Verify IPv6 Forward Rules">
 ```routeros
@@ -1456,7 +1803,7 @@ IPv4 works through the tunnel but IPv6 traffic doesn't flow.
 ```
 </Code>
 
-**Test from the client** — run these commands while connected to the VPN:
+**Test from the client.** Run these commands while connected to the VPN:
 
 <TerminalCommand title="Diagnose IPv6">
 ```bash
@@ -1472,14 +1819,14 @@ curl -6 ifconfig.co
 </TerminalCommand>
 
 <Callout type="warning" title="ISP IPv6 Required">
-NAT66 translates your VPN client's ULA address to your ISP's global IPv6 prefix. If your ISP doesn't provide IPv6, there's no global prefix to translate to, and IPv6 internet access won't work — the tunnel itself will still carry IPv6 between client and router, but no further.
+NAT66 translates your VPN client's ULA address to your ISP's global IPv6 prefix. If your ISP doesn't provide IPv6, there's no global prefix to translate to, and IPv6 internet access won't work. The tunnel itself will still carry IPv6 between client and router, but no further.
 </Callout>
 
 ### Slow performance
 
 WireGuard is extremely efficient, but several factors can limit throughput on MikroTik devices.
 
-**Enable FastTrack** — this is the single largest performance improvement. FastTrack bypasses most firewall processing for established connections:
+**Enable FastTrack.** This is the single largest performance improvement. FastTrack bypasses most firewall processing for established connections:
 
 <Code lang="routeros" title="Check FastTrack">
 ```routeros
@@ -1492,30 +1839,31 @@ WireGuard is extremely efficient, but several factors can limit throughput on Mi
 ```
 </Code>
 
-**Check MSS clamping** — symptoms of missing MSS clamping include: pages partially loading, HTTPS sites timing out, large file downloads failing while small requests work fine:
+**Check MSS clamping.** Symptoms of a missing clamp include pages partially loading, HTTPS sites timing out, and large file downloads failing while small requests work fine. Check both rules: without the `/ipv6` one, the trouble shows up only on IPv6 connections:
 
 <Code lang="routeros" title="Verify MSS Clamping">
 ```routeros
 /ip firewall mangle print where action=change-mss and in-interface=wg_devices
-# Should show: new-mss=1420 tcp-flags=syn tcp-mss=1349-65535
+# Should show: new-mss=1360 tcp-flags=syn tcp-mss=1361-65535
+
+/ipv6 firewall mangle print where action=change-mss and in-interface=wg_devices
+# Should show: new-mss=1340 tcp-flags=syn tcp-mss=1341-65535
 ```
 </Code>
 
-**Check MTU** — if you experience packet loss or stalls, try reducing the WireGuard interface MTU:
+**Check MTU.** The clamp only covers TCP, so loss or stalls in QUIC, DNS or VoIP point at an interface MTU too large for your WAN. [Step 7](#step-7-calculate-the-mtu-and-clamp-mss) shows how to calculate the right value; these two commands show what you have now:
 
-<Code lang="routeros" title="Adjust MTU">
+<Code lang="routeros" title="Check MTU">
 ```routeros
-# Check current MTU
+# Current tunnel MTU
 /interface wireguard print proplist=name,mtu
 
-# If set to 1500 and experiencing issues, try the default 1420:
-/interface wireguard set wg_devices mtu=1420
-# Then update MSS clamping to match:
-# new-mss = MTU - 40 (IPv6 header) - 20 (TCP header) = 1360
+# Your WAN's negotiated MTU (actual-mtu), where the calculation starts
+/interface print detail where name=<your-wan>
 ```
 </Code>
 
-**Monitor CPU load** — WireGuard encryption is not hardware-offloaded on MikroTik. High CPU usage limits throughput:
+**Monitor CPU load.** WireGuard encryption is not hardware-offloaded on MikroTik. High CPU usage limits throughput:
 
 <Code lang="routeros" title="Monitor CPU">
 ```routeros
@@ -1526,11 +1874,11 @@ WireGuard is extremely efficient, but several factors can limit throughput on Mi
 
 An idle tunnel tells you nothing, so I measured this one under load: `iperf3` between a
 phone on the VPN and a host on the LAN side, with the router doing the crypto in between.
-Downstream — the direction where the router encrypts — the tunnel sustained roughly 70 Mbps
+Downstream (the direction where the router encrypts), the tunnel sustained roughly 70 Mbps
 for 30 seconds, and `cpu-load` went from a median of 3% at rest to a median of 15% while it
 ran. Memory barely moved: about 22 MiB of the router's 1 GiB, and it came straight back. So
-the cost of WireGuard on an RB5009 at that rate is around twelve points of aggregate CPU —
-RouterOS reports `cpu-load` averaged across the board's four cores, not per core — and
+the cost of WireGuard on an RB5009 at that rate is around twelve points of aggregate CPU
+(RouterOS reports `cpu-load` averaged across the board's four cores, not per core), and
 nothing else.
 
 Two caveats, because both of them would have made this number a lie. The first is that my
@@ -1538,11 +1886,13 @@ router runs some periodic task every two minutes that takes CPU to 30% on its ow
 visible in the samples at 0, 120, 240 and 360 seconds, has nothing to do with the tunnel,
 and averaging it in would have produced a "peak 31% under VPN load" that is simply false.
 Sample long enough to see your own background, and exclude it. The second is that 70 Mbps
-was my client's ceiling, not the router's — this says what WireGuard costs at that rate, not
-where it stops.
+was my client's ceiling, not the router's: this says what WireGuard costs at that rate, not
+where it stops. [The measurements in Step 7](#what-i-measured-on-my-router) later found where
+the CPU runs out on this router: at around 400 Mbps all four cores sit at 100% encrypting,
+and past that point, in those one-sample tests, what moved more bytes was a larger client MTU.
 
-One result did surprise me. Five parallel streams moved **less** than a single stream —
-about 58 Mbps against roughly 70 — and did it with thirty times the retransmissions. On a
+One result did surprise me. Five parallel streams moved **less** than a single stream,
+about 58 Mbps against roughly 70, and did it with thirty times the retransmissions. On a
 mobile link the parallel flows compete for the same buffer and manufacture the loss that TCP
 then reads as congestion. If you benchmark your own tunnel, start with one stream; reach for
 `-P` only after you have confirmed a single flow cannot fill the pipe.

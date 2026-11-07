@@ -10,10 +10,11 @@
  * <WireGuardConfigGenerator title="WireGuard Config Generator" />
  */
 import { defaultLocale, type Locale } from "@i18n/config";
-import { useTranslations } from "@i18n/utils";
+import { useTranslatedPath, useTranslations } from "@i18n/utils";
 
 const locale = (Astro.currentLocale ?? defaultLocale) as Locale;
 const t = useTranslations(locale);
+const translatePath = useTranslatedPath(locale);
 
 interface Props {
   title?: string;
@@ -77,6 +78,26 @@ const i18n = {
     "tools.wireguardConfigGenerator.retrieveKeysForManual",
   ),
   serverPublicKey: t("tools.wireguardConfigGenerator.serverPublicKey"),
+  // RouterOS header and MTU comments
+  headerRouterosVersion: t(
+    "tools.wireguardConfigGenerator.headerRouterosVersion",
+  ),
+  headerClientMtuVersion: t(
+    "tools.wireguardConfigGenerator.headerClientMtuVersion",
+  ),
+  mtuCommentAuto: t("tools.wireguardConfigGenerator.mtuCommentAuto"),
+  mtuCommentManual: t("tools.wireguardConfigGenerator.mtuCommentManual"),
+  mtuFamilyIpv4: t("tools.wireguardConfigGenerator.mtuFamilyIpv4"),
+  mtuFamilyDual: t("tools.wireguardConfigGenerator.mtuFamilyDual"),
+  confMtuComment: t("tools.wireguardConfigGenerator.confMtuComment"),
+  // MTU warnings
+  warnIpv6MinMtu: t("tools.wireguardConfigGenerator.warnIpv6MinMtu"),
+  warnTunnelMtuTooLarge: t(
+    "tools.wireguardConfigGenerator.warnTunnelMtuTooLarge",
+  ),
+  warnClientMtuTooLarge: t(
+    "tools.wireguardConfigGenerator.warnClientMtuTooLarge",
+  ),
 };
 ---
 
@@ -385,21 +406,138 @@ const i18n = {
             <div class="wg-field">
               <label
                 class="wg-label"
-                for={`${uniqueId}-mtu`}
+                for={`${uniqueId}-wan-mtu`}
               >
-                {t("tools.wireguardConfigGenerator.labelInterfaceMtu")}
+                {t("tools.wireguardConfigGenerator.labelWanMtu")}
               </label>
               <input
-                id={`${uniqueId}-mtu`}
+                id={`${uniqueId}-wan-mtu`}
                 class="wg-input"
                 type="number"
                 value="1500"
                 min="1280"
                 max="9000"
+                aria-describedby={`${uniqueId}-wan-mtu-hint`}
               />
-              <span class="wg-field-hint">
-                {t("tools.wireguardConfigGenerator.hintMtu")}
+              <span
+                class="wg-field-hint"
+                id={`${uniqueId}-wan-mtu-hint`}
+              >
+                {t("tools.wireguardConfigGenerator.hintWanMtu")}
               </span>
+            </div>
+            <div class="wg-field">
+              <label
+                class="wg-label"
+                for={`${uniqueId}-endpoint-family`}
+              >
+                {t("tools.wireguardConfigGenerator.labelEndpointFamily")}
+              </label>
+              <select
+                id={`${uniqueId}-endpoint-family`}
+                class="wg-select"
+                aria-describedby={`${uniqueId}-endpoint-family-hint`}
+              >
+                <option value="ipv4">
+                  {t("tools.wireguardConfigGenerator.optEndpointIpv4")}
+                </option>
+                <option
+                  value="dual"
+                  selected
+                >
+                  {t("tools.wireguardConfigGenerator.optEndpointDual")}
+                </option>
+              </select>
+              <span
+                class="wg-field-hint"
+                id={`${uniqueId}-endpoint-family-hint`}
+              >
+                {t("tools.wireguardConfigGenerator.hintEndpointFamily")}
+              </span>
+            </div>
+          </div>
+          <div class="wg-fields-row">
+            <div class="wg-field">
+              <label
+                class="wg-label"
+                for={`${uniqueId}-mtu`}
+              >
+                {t("tools.wireguardConfigGenerator.labelTunnelMtu")}
+              </label>
+              <input
+                id={`${uniqueId}-mtu`}
+                class="wg-input"
+                type="number"
+                value="1420"
+                min="576"
+                max="9000"
+                aria-describedby={`${uniqueId}-mtu-hint`}
+              />
+              <span
+                class="wg-field-hint"
+                id={`${uniqueId}-mtu-hint`}
+              >
+                {t("tools.wireguardConfigGenerator.hintTunnelMtu")}
+              </span>
+            </div>
+            <div class="wg-field">
+              <label
+                class="wg-label"
+                for={`${uniqueId}-client-mtu`}
+              >
+                {t("tools.wireguardConfigGenerator.labelClientMtu")}
+              </label>
+              <input
+                id={`${uniqueId}-client-mtu`}
+                class="wg-input"
+                type="number"
+                value="1420"
+                min="576"
+                max="9000"
+                aria-describedby={`${uniqueId}-client-mtu-hint`}
+              />
+              <span
+                class="wg-field-hint"
+                id={`${uniqueId}-client-mtu-hint`}
+              >
+                {t("tools.wireguardConfigGenerator.hintClientMtu")}
+              </span>
+            </div>
+          </div>
+          <div class="wg-field">
+            <label class="wg-toggle-label">
+              <input
+                id={`${uniqueId}-ros725`}
+                type="checkbox"
+                checked
+                aria-describedby={`${uniqueId}-ros725-hint`}
+              />
+              <span>{t("tools.wireguardConfigGenerator.toggleRos725")}</span>
+            </label>
+            <span
+              class="wg-field-hint"
+              id={`${uniqueId}-ros725-hint`}
+            >
+              {t("tools.wireguardConfigGenerator.hintRos725")}
+            </span>
+          </div>
+          {/* The status region stays in the accessibility tree so a warning
+               is announced when it appears; only the box inside is hidden. */}
+          <div
+            class="wg-mtu-status"
+            role="status"
+            aria-live="polite"
+          >
+            <div
+              class="wg-mtu-warning"
+              id={`${uniqueId}-mtu-warning`}
+              hidden
+            >
+              <span
+                class="i-mdi:alert-outline"
+                aria-hidden="true"
+              ></span>
+              <span id={`${uniqueId}-mtu-warning-text`}></span>
             </div>
           </div>
         </div>
@@ -565,24 +703,56 @@ const i18n = {
             class="wg-sub-fields"
             id={`${uniqueId}-mss-fields`}
           >
-            <div class="wg-field">
-              <label
-                class="wg-label"
-                for={`${uniqueId}-mss-value`}
+            <div class="wg-fields-row">
+              <div class="wg-field">
+                <label
+                  class="wg-label"
+                  for={`${uniqueId}-mss-v4`}
+                >
+                  {t("tools.wireguardConfigGenerator.labelMssV4")}
+                </label>
+                <input
+                  id={`${uniqueId}-mss-v4`}
+                  class="wg-input"
+                  type="number"
+                  value="1380"
+                  min="500"
+                  max="9000"
+                  aria-describedby={`${uniqueId}-mss-v4-hint`}
+                />
+                <span
+                  class="wg-field-hint"
+                  id={`${uniqueId}-mss-v4-hint`}
+                >
+                  {t("tools.wireguardConfigGenerator.hintMssV4")}
+                </span>
+              </div>
+              <div
+                class="wg-field"
+                id={`${uniqueId}-mss-v6-field`}
               >
-                {t("tools.wireguardConfigGenerator.labelMssValue")}
-              </label>
-              <input
-                id={`${uniqueId}-mss-value`}
-                class="wg-input"
-                type="number"
-                value="1420"
-                min="500"
-                max="9000"
-              />
-              <span class="wg-field-hint">
-                {t("tools.wireguardConfigGenerator.hintMssValue")}
-              </span>
+                <label
+                  class="wg-label"
+                  for={`${uniqueId}-mss-v6`}
+                >
+                  {t("tools.wireguardConfigGenerator.labelMssV6")}
+                </label>
+                <input
+                  id={`${uniqueId}-mss-v6`}
+                  class="wg-input"
+                  type="number"
+                  value="1360"
+                  min="500"
+                  max="9000"
+                  aria-describedby={`${uniqueId}-mss-v6-hint`}
+                />
+                <span
+                  class="wg-field-hint"
+                  id={`${uniqueId}-mss-v6-hint`}
+                >
+                  {t("tools.wireguardConfigGenerator.hintMssV6")}
+                </span>
+              </div>
             </div>
           </div>
         </div>
@@ -614,6 +784,24 @@ const i18n = {
         class="wg-card-body"
         id={`${uniqueId}-peers-container`}
       >
+        <div class="wg-field">
+          <label class="wg-toggle-label">
+            <input
+              id={`${uniqueId}-responder`}
+              type="checkbox"
+              checked
+              aria-describedby={`${uniqueId}-responder-hint`}
+            />
+            <span>{t("tools.wireguardConfigGenerator.toggleResponder")}</span>
+          </label>
+          <span
+            class="wg-field-hint"
+            id={`${uniqueId}-responder-hint`}
+          >
+            {t("tools.wireguardConfigGenerator.hintResponder")}
+          </span>
+        </div>
+
         {/* Peer 1 (default) */}
         <div
           class="wg-peer"
@@ -795,7 +983,9 @@ const i18n = {
                   class="wg-input wg-peer-pubkey"
                   type="text"
                   value=""
-                  placeholder="Auto-derived from private key"
+                  placeholder={t(
+                    "tools.wireguardConfigGenerator.placeholderPublicKey",
+                  )}
                   readonly
                 />
               </div>
@@ -1002,7 +1192,7 @@ const i18n = {
         aria-hidden="true"
       ></span>
       {t("tools.wireguardConfigGenerator.relatedFullGuide")}
-      <a href="/blog/007-mikrotik-wireguard-dual-stack-vpn/">
+      <a href={translatePath("/blog/007-mikrotik-wireguard-dual-stack-vpn/")}>
         {t("tools.wireguardConfigGenerator.relatedLinkText")}
       </a>
     </div>
@@ -1024,7 +1214,13 @@ const i18n = {
     // ── References ──
     var ifaceNameInput = el("iface-name");
     var listenPortInput = el("listen-port");
+    var wanMtuInput = el("wan-mtu");
+    var endpointFamilySelect = el("endpoint-family");
     var mtuInput = el("mtu");
+    var clientMtuInput = el("client-mtu");
+    var ros725Check = el("ros725");
+    var mtuWarning = el("mtu-warning");
+    var mtuWarningText = el("mtu-warning-text");
     var ifaceCommentInput = el("iface-comment");
     var vpnSubnetInput = el("vpn-subnet");
     var lanSubnetInput = el("lan-subnet");
@@ -1049,7 +1245,10 @@ const i18n = {
     var fwMssCheck = el("fw-mss");
     var fwRawCheck = el("fw-raw");
     var mssFields = el("mss-fields");
-    var mssValueInput = el("mss-value");
+    var mssV4Input = el("mss-v4");
+    var mssV6Input = el("mss-v6");
+    var mssV6Field = el("mss-v6-field");
+    var responderCheck = el("responder");
     var genClientConfCheck = el("gen-client-conf");
     var tunnelModeSelect = el("tunnel-mode");
     var splitFields = el("split-fields");
@@ -1528,6 +1727,7 @@ const i18n = {
       extraLansFields.hidden = !enableExtraLansCheck.checked;
       advancedSection.hidden = !advancedCheck.checked;
       mssFields.style.display = fwMssCheck.checked ? "" : "none";
+      mssV6Field.hidden = !ipv6On;
       splitFields.hidden = tunnelModeSelect.value !== "split";
       clientOutputSection.style.display = genClientConfCheck.checked
         ? ""
@@ -1549,16 +1749,211 @@ const i18n = {
       });
     }
 
-    // ── Auto-calculate MSS ──
-    function autoMss() {
-      var mtu = parseInt(mtuInput.value) || 1500;
-      mssValueInput.value = mtu - 80;
+    // ── MTU and MSS ──
+    // The tunnel MTU is the WAN MTU minus the WireGuard overhead, which the
+    // OUTER family decides: 20 IP + 8 UDP + 16 data header + 16 Poly1305 tag
+    // is 60 bytes over IPv4, and 80 over IPv6 (40-byte header). The INNER
+    // family decides the MSS: MTU - 40 for IPv4 (20 IP + 20 TCP) and
+    // MTU - 60 for IPv6 (40 IP + 20 TCP), each clamped in its own table.
+    var IPV6_MIN_MTU = 1280;
+    var TCP_IPV4_HEADERS = 40;
+    var TCP_IPV6_HEADERS = 60;
+
+    // A field edited by hand keeps its value until the field it derives from
+    // changes; a field left empty or implausible goes back to the computed
+    // value once the edit is committed.
+    var mtuManual = false;
+    var clientMtuManual = false;
+    var mssV4Manual = false;
+    var mssV6Manual = false;
+
+    function fmt(template, params) {
+      return template.replace(/\{(\w+)\}/g, function (match, key) {
+        return params[key] === undefined ? match : String(params[key]);
+      });
     }
 
-    mtuInput.addEventListener("input", function () {
-      autoMss();
+    function readInt(input) {
+      return parseInt(input.value, 10);
+    }
+
+    // The input's own min/max are the plausible range. While typing, anything
+    // outside it is a number on its way ("14" on the way to "1480"); on
+    // change, it is a mistake ("14000") and the field is reset.
+    function inRange(input, value) {
+      return (
+        !isNaN(value) &&
+        value >= Number(input.min) &&
+        value <= Number(input.max)
+      );
+    }
+
+    // Last plausible WAN MTU, so partial typing never computes from "14".
+    var wanMtu = inRange(wanMtuInput, readInt(wanMtuInput))
+      ? readInt(wanMtuInput)
+      : 1500;
+
+    function tunnelOverhead() {
+      return endpointFamilySelect.value === "ipv4" ? 60 : 80;
+    }
+
+    function autoTunnelMtu() {
+      return wanMtu - tunnelOverhead();
+    }
+
+    function effectiveTunnelMtu() {
+      var value = readInt(mtuInput);
+      return isNaN(value) ? autoTunnelMtu() : value;
+    }
+
+    function effectiveClientMtu() {
+      var value = readInt(clientMtuInput);
+      return isNaN(value) ? effectiveTunnelMtu() : value;
+    }
+
+    function effectiveMssV4() {
+      var value = readInt(mssV4Input);
+      return isNaN(value) ? effectiveTunnelMtu() - TCP_IPV4_HEADERS : value;
+    }
+
+    function effectiveMssV6() {
+      var value = readInt(mssV6Input);
+      return isNaN(value) ? effectiveTunnelMtu() - TCP_IPV6_HEADERS : value;
+    }
+
+    // Writes the computed value into every field that is not manual, in
+    // dependency order: tunnel MTU, then the client MTU and both MSS values.
+    // `editing` is the field the user is emptying, left blank while focused.
+    function fillAutoValues(editing) {
+      if (!mtuManual && editing !== mtuInput) {
+        mtuInput.value = String(autoTunnelMtu());
+      }
+      var mtu = effectiveTunnelMtu();
+      if (!inRange(mtuInput, mtu)) return;
+      if (!clientMtuManual && editing !== clientMtuInput) {
+        clientMtuInput.value = String(mtu);
+      }
+      if (!mssV4Manual && editing !== mssV4Input) {
+        mssV4Input.value = String(mtu - TCP_IPV4_HEADERS);
+      }
+      if (!mssV6Manual && editing !== mssV6Input) {
+        mssV6Input.value = String(mtu - TCP_IPV6_HEADERS);
+      }
+    }
+
+    function updateMtuWarning(mtu, clientMtu, ipv6On) {
+      // Values outside the inputs' range are still being typed.
+      if (!inRange(mtuInput, mtu) || !inRange(clientMtuInput, clientMtu)) {
+        return;
+      }
+      var maxMtu = autoTunnelMtu();
+      var params = {
+        wan: wanMtu,
+        overhead: tunnelOverhead(),
+        max: maxMtu,
+      };
+      var messages = [];
+      if (ipv6On && mtu < IPV6_MIN_MTU) {
+        messages.push(fmt(i18n.warnIpv6MinMtu, { mtu: mtu }));
+      }
+      if (mtu > maxMtu) {
+        params.mtu = mtu;
+        messages.push(fmt(i18n.warnTunnelMtuTooLarge, params));
+      }
+      if (clientMtu > maxMtu) {
+        params.mtu = clientMtu;
+        messages.push(fmt(i18n.warnClientMtuTooLarge, params));
+      }
+      var text = messages.join(" ");
+      // Rewriting identical text would make the live region announce again.
+      if (mtuWarningText.textContent !== text) {
+        // Controls outside Advanced (the IPv6 toggle, the presets) can raise
+        // a warning while the section is collapsed: reveal it, but only for
+        // a new warning, so Advanced can still be closed while one shows.
+        if (text && advancedSection.hidden) {
+          advancedCheck.checked = true;
+          advancedSection.hidden = false;
+        }
+        mtuWarningText.textContent = text;
+      }
+      mtuWarning.hidden = messages.length === 0;
+    }
+
+    // WAN MTU or endpoint family changed: every MTU and MSS goes back to auto.
+    function onWanOrFamilyChange() {
+      var wan = readInt(wanMtuInput);
+      if (inRange(wanMtuInput, wan)) wanMtu = wan;
+      mtuManual = false;
+      clientMtuManual = false;
+      mssV4Manual = false;
+      mssV6Manual = false;
+      fillAutoValues();
+      generate();
+    }
+
+    wanMtuInput.addEventListener("input", onWanOrFamilyChange);
+    wanMtuInput.addEventListener("change", function () {
+      if (!inRange(wanMtuInput, readInt(wanMtuInput))) {
+        wanMtuInput.value = String(wanMtu);
+      }
       generate();
     });
+    endpointFamilySelect.addEventListener("change", onWanOrFamilyChange);
+
+    // Tunnel MTU edited: it becomes manual (blank means auto again) and the
+    // MSS values, plus the client MTU unless it is manual, follow it.
+    mtuInput.addEventListener("input", function () {
+      mtuManual = mtuInput.value.trim() !== "";
+      mssV4Manual = false;
+      mssV6Manual = false;
+      fillAutoValues(mtuInput);
+      generate();
+    });
+    // Committed blank or implausible ("14000", "500"): back to the computed
+    // value, so the script never carries an MSS larger than its MTU.
+    mtuInput.addEventListener("change", function () {
+      if (!inRange(mtuInput, readInt(mtuInput))) {
+        mtuManual = false;
+        fillAutoValues();
+      }
+      generate();
+    });
+
+    // Client MTU and MSS fields: nothing derives from them.
+    function bindLeafField(input, setManual) {
+      input.addEventListener("input", function () {
+        setManual(input.value.trim() !== "");
+        generate();
+      });
+      input.addEventListener("change", function () {
+        if (!inRange(input, readInt(input))) {
+          setManual(false);
+          fillAutoValues();
+        }
+        generate();
+      });
+    }
+
+    bindLeafField(clientMtuInput, function (manual) {
+      clientMtuManual = manual;
+    });
+    bindLeafField(mssV4Input, function (manual) {
+      mssV4Manual = manual;
+    });
+    bindLeafField(mssV6Input, function (manual) {
+      mssV6Manual = manual;
+    });
+
+    // These fields run their own handlers above (recalculate, then
+    // generate); the generic binding below must skip them.
+    var mtuFields = [
+      wanMtuInput,
+      endpointFamilySelect,
+      mtuInput,
+      clientMtuInput,
+      mssV4Input,
+      mssV6Input,
+    ];
 
     // ── Generate RouterOS config ──
     function generate() {
@@ -1566,7 +1961,12 @@ const i18n = {
 
       var ifaceName = ifaceNameInput.value.trim() || "wg_devices";
       var listenPort = listenPortInput.value.trim() || "53537";
-      var mtu = mtuInput.value.trim() || "1500";
+      var mtu = effectiveTunnelMtu();
+      var clientMtu = effectiveClientMtu();
+      var mssV4 = effectiveMssV4();
+      var mssV6 = effectiveMssV6();
+      var responder = responderCheck.checked;
+      var ros725 = ros725Check.checked;
       var ifaceComment =
         ifaceCommentInput.value.trim() || "VPN for Mobile Devices";
       var vpnSubnet = vpnSubnetInput.value.trim() || "192.168.100.0/24";
@@ -1584,8 +1984,9 @@ const i18n = {
       var fwAddrlist = fwAddrlistCheck.checked;
       var fwMss = fwMssCheck.checked;
       var fwRaw = fwRawCheck.checked;
-      var mssValue = mssValueInput.value.trim() || "1420";
       var extraLans = getExtraLans();
+
+      updateMtuWarning(mtu, clientMtu, ipv6On);
 
       var vpn = parseSubnet(vpnSubnet);
       var lan = parseSubnet(lanSubnet);
@@ -1614,9 +2015,22 @@ const i18n = {
           " CONFIGURATION",
       );
       lines.push(sep);
-      lines.push("# MikroTik RouterOS 7.x");
+      // Oldest RouterOS that accepts every command below (official
+      // changelogs): peer name= since 7.15; responder=yes exists since 7.15
+      // but only stops initiating from 7.17; the client-* block of auto-key
+      // peers carries client-allowed-address, which arrived in 7.21; and
+      // client-mtu arrived in 7.25.
+      var hasClientProps = peers.some(function (p) {
+        return p.keygen === "auto";
+      });
+      var minVersion = hasClientProps ? "7.21" : responder ? "7.17" : "7.15";
       lines.push(
-        "# Generated by WireGuard Config Builder — https://jmrp.io/tools/wireguard-config-generator/",
+        "# " +
+          fmt(i18n.headerRouterosVersion, { version: minVersion }) +
+          (ros725 && hasClientProps ? "; " + i18n.headerClientMtuVersion : ""),
+      );
+      lines.push(
+        "# Generated by WireGuard Config Builder: https://jmrp.io/tools/wireguard-config-generator/",
       );
       lines.push(sep);
       lines.push("");
@@ -1626,6 +2040,24 @@ const i18n = {
       lines.push("# INTERFACE CONFIGURATION");
       lines.push(sec);
       lines.push("");
+      var overhead = tunnelOverhead();
+      lines.push(
+        "# " +
+          (mtuManual
+            ? fmt(i18n.mtuCommentManual, {
+                mtu: mtu,
+                wan: wanMtu,
+                overhead: overhead,
+                auto: autoTunnelMtu(),
+              })
+            : fmt(i18n.mtuCommentAuto, {
+                wan: wanMtu,
+                overhead: overhead,
+                family:
+                  overhead === 60 ? i18n.mtuFamilyIpv4 : i18n.mtuFamilyDual,
+                mtu: mtu,
+              })),
+      );
       lines.push("/interface wireguard add \\");
       lines.push("    name=" + ifaceName + " \\");
       lines.push("    mtu=" + mtu + " \\");
@@ -1847,11 +2279,26 @@ const i18n = {
         lines.push("    action=change-mss \\");
         lines.push("    protocol=tcp \\");
         lines.push("    tcp-flags=syn \\");
-        lines.push("    tcp-mss=1349-65535 \\");
-        lines.push("    new-mss=" + mssValue + " \\");
+        // change-mss only lowers: the match range starts one above new-mss.
+        lines.push("    tcp-mss=" + (mssV4 + 1) + "-65535 \\");
+        lines.push("    new-mss=" + mssV4 + " \\");
         lines.push("    in-interface=" + ifaceName + " \\");
         lines.push('    comment="WireGuard MSS clamping"');
         lines.push("");
+
+        // /ip firewall mangle never sees IPv6 packets.
+        if (ipv6On) {
+          lines.push("/ipv6 firewall mangle add \\");
+          lines.push("    chain=forward \\");
+          lines.push("    action=change-mss \\");
+          lines.push("    protocol=tcp \\");
+          lines.push("    tcp-flags=syn \\");
+          lines.push("    tcp-mss=" + (mssV6 + 1) + "-65535 \\");
+          lines.push("    new-mss=" + mssV6 + " \\");
+          lines.push("    in-interface=" + ifaceName + " \\");
+          lines.push('    comment="WireGuard MSS clamping IPv6"');
+          lines.push("");
+        }
       }
 
       // RAW
@@ -1904,7 +2351,14 @@ const i18n = {
             }
           }
           lines.push("    allowed-address=" + allowedAddr + " \\");
-          lines.push("    persistent-keepalive=" + peer.keepalive + " \\");
+          // A responder answers handshakes but never starts them, so the
+          // router stops retrying a roaming client's last, dead endpoint;
+          // the keepalive then lives only on the client, behind the NAT.
+          if (responder) {
+            lines.push("    responder=yes \\");
+          } else {
+            lines.push("    persistent-keepalive=" + peer.keepalive + " \\");
+          }
           lines.push('    comment="' + peer.comment + '"');
           lines.push("");
 
@@ -1935,6 +2389,7 @@ const i18n = {
               "    client-endpoint=" + endpoint + ":" + listenPort + " \\",
             );
             lines.push("    client-allowed-address=" + clientAllowed + " \\");
+            if (ros725) lines.push("    client-mtu=" + clientMtu + " \\");
             lines.push(
               "    client-keepalive=" + peer.keepalive.replace(/s$/, ""),
             );
@@ -1943,10 +2398,7 @@ const i18n = {
         });
 
         // Key retrieval commands for auto peers
-        var hasAuto = peers.some(function (p) {
-          return p.keygen === "auto";
-        });
-        if (hasAuto) {
+        if (hasClientProps) {
           lines.push("# " + i18n.retrieveKeysForManual);
           peers.forEach(function (peer) {
             if (peer.keygen === "auto") {
@@ -2004,6 +2456,8 @@ const i18n = {
           if (ipv6On && peer.ipv6) addr += ", " + peer.ipv6 + "/128";
           clientLines.push("Address = " + addr);
           clientLines.push("DNS = " + dnsServers.replace(/,/g, ", "));
+          clientLines.push("# " + i18n.confMtuComment);
+          clientLines.push("MTU = " + clientMtu);
           clientLines.push("");
           clientLines.push("[Peer]");
           clientLines.push("PublicKey = <SERVER_PUBLIC_KEY>");
@@ -2056,9 +2510,12 @@ const i18n = {
     }
 
     // ── Presets ──
+    // Presets never touch the WAN MTU or the endpoint family: the family is
+    // set by the endpoint's DNS records, not by the tunnel's inner stack.
     var presets = {
       "ipv4-only": function () {
         enableIpv6Check.checked = false;
+        responderCheck.checked = true;
         fwInternetCheck.checked = true;
         fwLanCheck.checked = true;
         fwFasttrackCheck.checked = true;
@@ -2071,6 +2528,7 @@ const i18n = {
       },
       "dual-stack": function () {
         enableIpv6Check.checked = true;
+        responderCheck.checked = true;
         fwInternetCheck.checked = true;
         fwLanCheck.checked = true;
         fwFasttrackCheck.checked = true;
@@ -2083,6 +2541,8 @@ const i18n = {
       },
       "site-to-site": function () {
         enableIpv6Check.checked = true;
+        // The router may have to call the remote site, so it must initiate.
+        responderCheck.checked = false;
         fwInternetCheck.checked = false;
         fwLanCheck.checked = true;
         fwFasttrackCheck.checked = true;
@@ -2117,7 +2577,7 @@ const i18n = {
 
     // Bind all top-level inputs
     container.querySelectorAll("input, select").forEach(function (inp) {
-      if (!inp.closest(".wg-peer")) {
+      if (!inp.closest(".wg-peer") && mtuFields.indexOf(inp) === -1) {
         inp.addEventListener("input", generate);
         inp.addEventListener("change", generate);
       }
@@ -2145,6 +2605,7 @@ const i18n = {
       });
     });
 
+    fillAutoValues();
     generate();
   })();
 </script>
@@ -2288,7 +2749,7 @@ const i18n = {
     border-bottom: none;
   }
 
-  /* Fields — :global() needed because peers are dynamically created via innerHTML */
+  /* Fields: :global() needed because peers are dynamically created via innerHTML */
   .wg-card-body :global(.wg-fields-row) {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -2379,7 +2840,38 @@ const i18n = {
     display: none;
   }
 
-  /* Peer sections — :global() needed because peers are dynamically created via innerHTML */
+  /* MTU warning. The status region is always rendered (an empty live region
+     still announces what is added to it), so it cancels the card-body gap
+     while empty and the box inside restores it when shown. */
+  .wg-mtu-status {
+    margin-top: -0.625rem;
+  }
+
+  .wg-mtu-warning {
+    display: flex;
+    gap: 0.5rem;
+    align-items: flex-start;
+    padding: 0.5rem 0.625rem;
+    margin-top: 0.625rem;
+    font-size: var(--text-xs);
+    color: var(--color-text);
+    background: var(--warning-dim);
+    border: 1px solid var(--color-warning);
+    border-radius: var(--radius-sm);
+  }
+
+  .wg-mtu-warning[hidden] {
+    display: none;
+  }
+
+  .wg-mtu-warning span[class*="i-"] {
+    flex-shrink: 0;
+    width: 16px;
+    height: 16px;
+    color: var(--color-warning);
+  }
+
+  /* Peer sections: :global() needed because peers are dynamically created via innerHTML */
   .wg-card-body :global(.wg-peer) {
     display: flex;
     flex-direction: column;
@@ -2459,7 +2951,7 @@ const i18n = {
     height: 14px;
   }
 
-  /* Key row (input + generate button) — :global() for dynamic peers */
+  /* Key row (input + generate button); :global() for dynamic peers */
   .wg-card-body :global(.wg-key-row) {
     display: flex;
     gap: 0.375rem;
@@ -2556,7 +3048,8 @@ const i18n = {
     transition: all 0.15s;
   }
 
-  .wg-copy-btn span {
+  /* :global() because the copy handler rewrites the icon through innerHTML */
+  .wg-copy-btn :global(span) {
     width: 14px;
     height: 14px;
   }
