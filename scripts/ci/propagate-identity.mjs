@@ -11,6 +11,11 @@
  * is gone and the commits with it, leaving the one thing that was ever needed:
  * ask each site to rebuild.
  *
+ * Before asking, it waits until raw.githubusercontent.com can no longer serve
+ * the previous copy (see `raw-freshness.mjs`). Dispatched straight after the
+ * merge, a build could download the file from a cache node that still held the
+ * old one, and publish it.
+ *
  * What makes dropping the copy safe is the other half of that change: a
  * consumer build that cannot read the canonical document now FAILS, rather
  * than quietly publishing a stale identity. There is no longer a silent
@@ -21,11 +26,13 @@
  *
  * Usage:
  *   node scripts/ci/propagate-identity.mjs            # dispatch
- *   node scripts/ci/propagate-identity.mjs --dry-run  # report only
+ *   node scripts/ci/propagate-identity.mjs --dry-run  # report only, no wait
  *
  * Requires `IDENTITY_SYNC_TOKEN` (a fine-grained PAT with Actions:write on
- * those repositories), or `GITHUB_TOKEN` when run locally. Contents:write is
- * no longer used and the token can be narrowed to match.
+ * those repositories), or `GITHUB_TOKEN` when run locally. The wait also reads
+ * this repository's identity files through the contents API, which needs no
+ * extra permission: the repository is public. Contents:write is no longer
+ * used and the token can be narrowed to match.
  *
  * @module
  */
@@ -35,6 +42,11 @@ import path from "node:path";
 import process from "node:process";
 
 import { runWithConcurrency } from "../utils/concurrency.mjs";
+import { waitForRawFreshness } from "./raw-freshness.mjs";
+
+// Taken before anything slow: the push started this run, so this moment is no
+// earlier than the push, which is what the raw cache wait is measured from.
+const startedAt = Date.now();
 
 const API = "https://api.github.com";
 const ROOT = process.cwd();
@@ -118,6 +130,47 @@ async function dispatchConsumer(consumer, owner) {
 
 const { owner, consumers } = JSON.parse(fs.readFileSync(CONSUMERS, "utf8"));
 
+// The files the consumers download from raw, and the repository serving them.
+const IDENTITY_FILES = [
+  "public/identity/person.jsonld",
+  "public/identity/projects.json",
+];
+const [selfOwner, selfRepo] = (
+  process.env.GITHUB_REPOSITORY ?? "jmrplens/jmrp.io"
+).split("/", 2);
+
+if (dryRun) {
+  console.log(
+    "[dry-run] Not waiting for the raw.githubusercontent.com cache.\n",
+  );
+} else {
+  try {
+    const { maxAgeSeconds, polls } = await waitForRawFreshness({
+      owner: selfOwner,
+      repo: selfRepo,
+      ref: "main",
+      paths: IDENTITY_FILES,
+      startedAt,
+      expectedBytes: async (filePath) => {
+        const { status, body } = await gh(
+          `/repos/${selfOwner}/${selfRepo}/contents/${filePath}?ref=main`,
+        );
+        if (status !== 200 || body?.encoding !== "base64") {
+          throw new Error(`${filePath}: the contents API answered ${status}`);
+        }
+        return Buffer.from(body.content, "base64");
+      },
+    });
+    console.log(
+      `✓ raw.githubusercontent.com serves the current files (cache lifetime ` +
+        `${maxAgeSeconds} s, ${polls} check${polls === 1 ? "" : "s"}).\n`,
+    );
+  } catch (error) {
+    console.error(`✗ ${error.message}\n  No consumer was dispatched.`);
+    process.exit(1);
+  }
+}
+
 console.log(
   `${dryRun ? "[dry-run] " : ""}Asking ${consumers.length} consumers to ` +
     `rebuild against the canonical #person...\n`,
@@ -137,7 +190,7 @@ const ICON = {
   error: "✗",
 };
 for (const result of results) {
-  const detail = result.detail ? ` — ${result.detail}` : "";
+  const detail = result.detail ? `: ${result.detail}` : "";
   console.log(
     `  ${ICON[result.state] ?? "?"} ${result.repo.padEnd(24)} ${result.state}${detail}`,
   );
@@ -145,7 +198,7 @@ for (const result of results) {
 
 if (process.env.GITHUB_STEP_SUMMARY) {
   const rows = results
-    .map((r) => `| ${r.repo} | ${r.state} | ${r.detail || "—"} |`)
+    .map((r) => `| ${r.repo} | ${r.state} | ${r.detail || ""} |`)
     .join("\n");
   fs.appendFileSync(
     process.env.GITHUB_STEP_SUMMARY,
