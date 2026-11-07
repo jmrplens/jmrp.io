@@ -263,7 +263,7 @@ projects:
     repo: https://github.com/jmrplens/mikroscope
     docs: https://docs.jmrp.io/mikroscope/
     kicker: Telemetry · MikroTik RouterOS
-    operatingSystem: Linux, macOS, Windows
+    operatingSystem: Linux, macOS, Windows, FreeBSD
     docsEs: https://docs.jmrp.io/mikroscope/es/
     # Both registries carry the same agent image. ghcr goes first because it
     # is the pull the docs name, and the authored order is the rendered one.

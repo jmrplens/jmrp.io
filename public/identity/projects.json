@@ -124,7 +124,7 @@
       "language": "Go",
       "license": "MIT",
       "licenseUrl": "https://opensource.org/license/MIT",
-      "operatingSystem": "Linux, macOS, Windows",
+      "operatingSystem": "Linux, macOS, Windows, FreeBSD",
       "repo": "https://github.com/jmrplens/mikroscope",
       "docs": "https://docs.jmrp.io/mikroscope/",
       "docsEs": "https://docs.jmrp.io/mikroscope/es/",
