@@ -157,7 +157,7 @@
       "language": "Bash",
       "license": "MIT",
       "licenseUrl": "https://opensource.org/license/MIT",
-      "operatingSystem": "Linux, macOS, BSD",
+      "operatingSystem": "Linux, macOS, Windows",
       "repo": "https://github.com/jmrplens/Cloudflare-DNS-Updater",
       "docs": "https://docs.jmrp.io/Cloudflare-DNS-Updater/",
       "description": "Bash-based dynamic DNS updater that keeps Cloudflare A and AAAA records pointed at your current public IP.",
