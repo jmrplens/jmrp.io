@@ -2376,7 +2376,7 @@ describe("a 502, 503 or 504 from GitHub is asked for once more", () => {
     }
   });
 
-  test("a retry that throws leaves the first answer standing, body and all", async () => {
+  test("a retry that throws leaves the first answer standing, body and all, and is not counted", async () => {
     for (const status of RETRIED) {
       const github = flaky([status, "throw"], origin(WITH_TWIN));
       const { response, calls, points } = await run(
@@ -2388,12 +2388,110 @@ describe("a 502, 503 or 504 from GitHub is asked for once more", () => {
       assert.equal(response, github.sent[0], String(status));
       assert.equal(response.bodyUsed, false, String(status));
       assert.equal(points[0].blobs[10], String(status), String(status));
-      assert.equal(
-        points[0].blobs[11],
-        `origin-retry-${status}`,
-        String(status),
-      );
+      // No second answer came, so the record says what it says for any
+      // first answer: blob 12 counts only the retries GitHub answered.
+      assert.equal(points[0].blobs[11], "BYPASS", String(status));
     }
+  });
+
+  /**
+   * A GET or HEAD that came with a body, as workerd hands the Worker one
+   * sent with Content-Length (even `Content-Length: 0`) or Transfer-Encoding,
+   * with the `manual` redirect mode of every request that reaches a Worker.
+   * Node's Request refuses to build one, so the body rides on a POST that
+   * reports the client's method.
+   */
+  class BodiedRequest extends Request {
+    #method;
+    constructor(pathname, method, headers = {}) {
+      super(`${ORIGIN}${pathname}`, {
+        method: "POST",
+        body: "data",
+        headers: { "content-length": "4", ...headers },
+        redirect: "manual",
+      });
+      this.#method = method;
+    }
+    get method() {
+      return this.#method;
+    }
+  }
+  /**
+   * The runtime's fetch: a request body is read when it is sent, and a
+   * request whose body is used cannot be sent again (workerd throws
+   * "Cannot reconstruct a Request with a used body.").
+   */
+  const sendsBodies = (respond) => async (input, init) => {
+    if (input.body !== null) {
+      if (input.bodyUsed) {
+        throw new TypeError("Cannot reconstruct a Request with a used body.");
+      }
+      await input.arrayBuffer();
+    }
+    return respond(input, init);
+  };
+
+  test("a GET or HEAD that came with a body goes to GitHub without it, so its retry is sent", async () => {
+    for (const status of RETRIED) {
+      for (const method of ["GET", "HEAD"]) {
+        const respond = origin(WITH_TWIN);
+        const github = flaky([status], respond);
+        const request = new BodiedRequest("/phonometry/llms.txt", method, {
+          "transfer-encoding": "chunked",
+          "cf-ipcountry": "ES",
+          "accept-language": "es",
+        });
+        const { response, calls, points } = await run(
+          worker,
+          request,
+          sendsBodies(github),
+        );
+        const at = `${method} ${status}`;
+        const sent = passes(calls);
+        assert.equal(sent.length, 2, at);
+        // One copy without the body, its framing or the visitor's location,
+        // every other header kept, sent twice.
+        assert.equal(sent[1].input, sent[0].input, at);
+        assert.equal(sent[0].input.method, method, at);
+        assert.equal(sent[0].input.body, null, at);
+        assert.equal(sent[0].input.headers.has("content-length"), false, at);
+        assert.equal(sent[0].input.headers.has("transfer-encoding"), false, at);
+        assert.equal(sent[0].input.headers.has("cf-ipcountry"), false, at);
+        assert.equal(sent[0].input.headers.get("accept-language"), "es", at);
+        assert.equal(sent[0].input.url, request.url, at);
+        assert.equal(sent[0].input.redirect, "manual", at);
+        assert.equal(request.bodyUsed, false, at);
+        assert.equal(response, respond.upstream[0], at);
+        assert.equal(response.status, 200, at);
+        assert.equal(points[0].blobs[10], "200", at);
+        assert.equal(points[0].blobs[11], `origin-retry-${status}`, at);
+      }
+    }
+  });
+
+  test("a GET that came with a body still gets the whole file after an untrusted 416", async () => {
+    // The whole-file request of the Range rules reuses the forwarded request
+    // too: with the body on it, it could not be sent, and the client got the
+    // handler's 502 instead of the whole file.
+    const whole = new Response("<!doctype html><title>page</title>", {
+      status: 200,
+      headers: { "content-type": "text/html; charset=utf-8" },
+    });
+    const respond = (input) =>
+      input.headers.has("range") ? new Response(null, { status: 416 }) : whole;
+    const { response, calls, points } = await run(
+      worker,
+      new BodiedRequest("/phonometry/media/clip.webm", "GET", {
+        range: "bytes=99999-",
+      }),
+      sendsBodies(respond),
+    );
+    const sent = passes(calls);
+    assert.equal(sent.length, 2);
+    assert.equal(sent[0].input.headers.get("range"), "bytes=99999-");
+    assert.equal(sent[1].input.headers.has("range"), false);
+    assert.equal(response, whole);
+    assert.equal(points[0].blobs[10], "200");
   });
 
   test("the retry keeps the Range, the validators and the twin announcement", async () => {

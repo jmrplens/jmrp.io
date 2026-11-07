@@ -1,13 +1,14 @@
 // cspell:words otros formado -- Spanish labels shared with the Telegraf Starlark (ua_class, referer host)
 /**
  * docs-edge: per-request log for docs.jmrp.io, the GitHub Pages documentation
- * host. It forwards every request to GitHub Pages with three changes only: the
- * visitor location headers are left out (2026-11-04, forOrigin), a Range
- * answer that is not a real range of the file becomes the whole file, and a
- * GET or HEAD that GitHub answers with 502, 503 or 504 is sent once more (both
- * below). It writes ONE Analytics Engine datapoint per request that reaches
- * it to the `docs_edge_requests` dataset, the same record edge-nonce keeps for
- * jmrp.io. Not every request does: the account's Bulk Redirect rule (list
+ * host. It forwards every request to GitHub Pages with four changes only: the
+ * visitor location headers are left out (2026-11-04, forOrigin), a GET or
+ * HEAD goes without its body (2026-11-07, forOrigin), a Range answer that is
+ * not a real range of the file becomes the whole file, and a GET or HEAD that
+ * GitHub answers with 502, 503 or 504 is sent once more (both below). It
+ * writes ONE Analytics Engine datapoint per request that reaches it to the
+ * `docs_edge_requests` dataset, the same record edge-nonce keeps for jmrp.io.
+ * Not every request does: the account's Bulk Redirect rule (list
  * `phonometry_retired`, the retired phonometry addresses, 301 with the query
  * kept) answers before any Worker runs, so those 301s are neither logged here
  * nor counted against the Workers quota (README, "Cloudflare settings").
@@ -85,15 +86,17 @@
  * and fonts keep their ranges.
  *
  * A 502, 503 or 504 from GitHub (2026-11-07, fetchOnceMoreOn5xx): GitHub
- * Pages answers a rare 503 for a page that has gone cold. The log holds three
- * of them in the 58,667 requests from 2026-11-03 20:00 UTC to 2026-11-07, all
- * on Spanish pages, all `BYPASS`; a crawl met two such answers, and both pages
- * answered 200 six minutes later. A GET or HEAD so answered is sent once more,
- * at once and unchanged (Range, validators and every other header kept), and
- * the second answer goes out whatever it is; the Range, Vary and twin rules
- * then judge it as they would a first answer. Another method is never sent
- * twice, so a request body is never sent again. One retry per client request
- * at most, and the datapoint names it in its cache verdict (blob 12,
+ * Pages answers a rare 503 for a page that has gone cold. The log holds five
+ * of them in the 103,059 requests from 2026-11-03 20:00 UTC to 2026-11-07
+ * 03:00 UTC, all `BYPASS`: three on Spanish pages of /phonometry/ and two on
+ * English pages of /cs-routeros-bouncer/ and /gitlab-mcp-server/. A GET or
+ * HEAD so answered is sent once more, at once and unchanged (Range,
+ * validators and every other header kept), and the second answer goes out
+ * whatever it is; the Range, Vary and twin rules then judge it as they would
+ * a first answer. A GET or HEAD reaches GitHub without a body (forOrigin), so
+ * it can be sent twice; another method is never sent twice, so a request body
+ * is never sent again. One retry per client request at most, and the
+ * datapoint names one that GitHub answered in its cache verdict (blob 12,
  * `origin-retry-<status>`) with the final status in blob 11 (cacheVerdict).
  *
  * The security headers (CSP, X-Frame-Options and the rest) are NOT set here:
@@ -439,20 +442,43 @@ const VISITOR_LOCATION_HEADERS = [
 
 /**
  * The request as GitHub gets it: the client's own request when it carries
- * none of VISITOR_LOCATION_HEADERS, otherwise a copy without them (method,
- * body, redirect mode and every other header kept). The log still reads the
- * client's request, so Analytics Engine records exactly what it did before.
+ * none of VISITOR_LOCATION_HEADERS and is not a GET or HEAD with a body,
+ * otherwise a copy without those headers (method, redirect mode and every
+ * other header kept, and the body of any other method). The log still reads
+ * the client's request, so Analytics Engine records exactly what it did
+ * before.
+ *
+ * A GET or HEAD goes without its body (2026-11-07). In workerd, a GET that
+ * came with Content-Length, even 0, or Transfer-Encoding reaches the Worker
+ * with a body; the first fetch reads it, and a request whose body was read
+ * cannot be sent again (the second fetch throws), which the retry and the
+ * whole-file requests below must do. A GET or HEAD body has no defined
+ * meaning (RFC 9110, 9.3.1 and 9.3.2), so the copy keeps the URL, method,
+ * redirect mode and headers, less the two that frame a body.
  *
  * @param {Request} request - The client's request.
  * @returns {Request} The request to forward.
  */
 function forOrigin(request) {
-  if (VISITOR_LOCATION_HEADERS.every((name) => !request.headers.has(name))) {
+  const bodied =
+    request.body !== null &&
+    (request.method === "GET" || request.method === "HEAD");
+  if (
+    !bodied &&
+    VISITOR_LOCATION_HEADERS.every((name) => !request.headers.has(name))
+  ) {
     return request;
   }
   const headers = new Headers(request.headers);
   for (const name of VISITOR_LOCATION_HEADERS) headers.delete(name);
-  return new Request(request, { headers });
+  if (!bodied) return new Request(request, { headers });
+  headers.delete("content-length");
+  headers.delete("transfer-encoding");
+  return new Request(request.url, {
+    method: request.method,
+    headers,
+    redirect: request.redirect,
+  });
 }
 
 /**
@@ -554,14 +580,16 @@ const RETRY_STATUSES = new Set([502, 503, 504]);
 /**
  * Fetches a request and, when GitHub answers a GET or HEAD with 502, 503 or
  * 504, sends the very same request once more, with the same options, and
- * answers with the second response, whatever it is. Any other method is
- * never sent twice, so a request body is never sent again. The first answer
- * is let go of only once the second has come; a retry that throws leaves the
- * first answer standing, body and all, so a retry can never turn GitHub's own
- * answer into the handler's 502. Hence one retry per client request at most:
- * this function makes one at most and never throws after making it, and the
- * only other call, fetchOrWhole's Range-less request, follows a fetch that
- * threw, which made none.
+ * answers with the second response, whatever it is. A GET or HEAD has no body
+ * by then (forOrigin), so it can be sent twice; any other method is never sent
+ * twice, so a request body is never sent again. The first answer is let go of
+ * only once the second has come; a retry that throws leaves the first answer
+ * standing, body and all, so a retry can never turn GitHub's own answer into
+ * the handler's 502. The retry is recorded only once its answer has come, so
+ * the datapoint counts the retries GitHub answered and nothing else. One
+ * retry per client request at most: this function makes one at most and
+ * never throws after making it, and the only other call, fetchOrWhole's
+ * Range-less request, follows a fetch that threw, which made none.
  *
  * @param {Request} request - The request to send.
  * @param {RequestInit} init - Options for fetch, such as `cf`.
@@ -576,13 +604,13 @@ async function fetchOnceMoreOn5xx(request, init, trace) {
   ) {
     return first;
   }
-  trace.retriedFrom = first.status;
   let second;
   try {
     second = await fetch(request, init);
   } catch {
     return first;
   }
+  trace.retriedFrom = first.status;
   await release(first);
   return second;
 }
@@ -714,11 +742,12 @@ async function passThrough(request, trace) {
 
 /**
  * The cache verdict a datapoint records (blob 12) for an answer the origin
- * gave: the edge's own `cf-cache-status`, or, when the pass-through had to ask
- * twice, `origin-retry-<status>` with the status the retry replaced, so the
- * record counts the retries and blob 11 says whether each one helped. The
- * record layout is unchanged: blob 12 already holds the Worker's own verdicts
- * (legacy-redirect, markdown-negotiation, origin-error) beside Cloudflare's.
+ * gave: the edge's own `cf-cache-status`, or, when the pass-through asked
+ * twice and GitHub answered the second time, `origin-retry-<status>` with the
+ * status the retry replaced, so the record counts the retries and blob 11
+ * says whether each one helped. The record layout is unchanged: blob 12
+ * already holds the Worker's own verdicts (legacy-redirect,
+ * markdown-negotiation, origin-error) beside Cloudflare's.
  *
  * @param {Response} response - The answer that goes out.
  * @param {RetryTrace} trace - The client request's record of a retry.
