@@ -1,16 +1,17 @@
 ---
 title: "WireGuard Config Generator"
 slug: "wireguard-config-generator"
-description: "Generate MikroTik RouterOS WireGuard VPN configs with dual-stack IPv4/IPv6, firewall rules, NAT, peers, and client files. Runs client-side."
-subtitle: "Build production-ready MikroTik WireGuard VPN configurations with a visual builder — dual-stack, firewall, NAT, and client configs included."
+description: "Generate MikroTik RouterOS WireGuard configs: dual-stack IPv4/IPv6, firewall, NAT, MTU and MSS from your WAN, peers and client files. Runs client-side."
+subtitle: "Build production-ready MikroTik WireGuard VPN configurations with a visual builder: dual-stack, firewall, NAT, MTU and MSS clamping, and client configs included."
 icon: "i-mdi:vpn"
 category: "mikrotik"
 publishedDate: 2026-02-16
-updatedDate: 2026-06-23
+updatedDate: 2026-11-07
 tags: ["wireguard", "vpn", "mikrotik", "routeros", "ipv6", "firewall"]
 features:
   - "MikroTik RouterOS WireGuard script output"
   - "Dual-stack IPv4/IPv6 with NAT and firewall"
+  - "Tunnel MTU and IPv4/IPv6 MSS clamps from your WAN MTU"
   - "Unlimited peers with client .conf files"
   - "Full or split tunnel and QR support"
   - "Runs locally in your browser"
@@ -23,8 +24,10 @@ faq:
     answer: "On the client config, AllowedIPs defines which destinations are sent through the tunnel: use 0.0.0.0/0, ::/0 for a full tunnel or just your VPN and LAN subnets for split tunnel. On the router side, each peer's allowed address is its assigned VPN IP, which the generator fills in automatically."
   - question: "How many peers can I add?"
     answer: "You can add unlimited peers. Each client device gets a unique auto-assigned IP address and its own .conf file, with optional per-peer customization."
-  - question: "Why does the config include MSS clamping and a dual-stack IPv6 setup?"
-    answer: "MSS clamping prevents fragmentation problems over the tunnel by auto-calculating the right MSS value. Dual-stack adds IPv4 plus IPv6 ULA addressing with NAT66 so clients work on IPv6-capable networks; you can pick the IPv4-only preset if you don't need IPv6."
+  - question: "How does the generator calculate the tunnel MTU and the MSS clamps?"
+    answer: "It starts from your WAN MTU, the actual-mtu RouterOS reports for the WAN interface (1500 on Ethernet or fiber, 1492 on standard PPPoE), and subtracts the WireGuard overhead for the address family clients use to reach the endpoint: 60 bytes when the endpoint is IPv4 only, 80 when it has an IPv6 address or the client roams. A 1500 WAN with a dual-stack endpoint gives a 1420 tunnel MTU. It then writes two MSS clamp rules, because /ip firewall mangle never sees IPv6 traffic: one in /ip firewall mangle at the MTU minus 40 (1380) and one in /ipv6 firewall mangle at the MTU minus 60 (1360), the second only when IPv6 is enabled. Every client .conf also gets an MTU = line, because without it the iOS and Android apps fall back to 1280."
+  - question: "Why does the router peer use responder=yes instead of persistent-keepalive?"
+    answer: "Keepalive belongs on the side behind NAT, which for a phone or a laptop is the client, so each .conf keeps PersistentKeepalive (25 seconds by default) and the router publishes it as client-keepalive for the QR code. When the router sends keepalive packets itself, it keeps retrying handshakes towards the last endpoint a roaming client used, long after that address has gone dead. With responder=yes the router answers handshakes but never starts them; the property exists since RouterOS 7.15 and stops the retries from 7.17. The site-to-site preset turns it off, because there this router may have to call the peer. The client-mtu property, which carries the MTU into the QR code, needs RouterOS 7.25 or later: on an older version turn that option off, since RouterOS rejects the whole command when it contains a parameter it does not know, and the MTU = line in the .conf still does the job."
 ---
 
 import WireGuardConfigGenerator from "@components/apps/WireGuardConfigGenerator.astro";
@@ -41,45 +44,64 @@ import ToolInfo from "@components/ui/ToolInfo.astro";
 <p>
   Generate complete MikroTik RouterOS WireGuard VPN configurations with an
   interactive builder. Configure your VPN parameters, add peers, and get a
-  ready-to-paste RouterOS script plus client <code>.conf</code> files.
+  ready-to-paste RouterOS script plus client <code>.conf</code> files. The
+  tunnel MTU is worked out from your WAN MTU and the address family of your
+  endpoint, and the MSS clamps for IPv4 and IPv6 follow from it.
 </p>
 
 <h3>Features</h3>
 <ul>
   <li>
-    <strong>3 presets</strong> — IPv4 Only, Dual-Stack (recommended),
-    Site-to-Site
+    <strong>3 presets</strong>: IPv4 Only, Dual-Stack (recommended),
+    Site-to-Site. A preset never changes the WAN MTU or the endpoint family,
+    which depend on your line and on your endpoint's DNS records
   </li>
   <li>
-    <strong>Dual-stack support</strong> — Full IPv4 + IPv6 ULA configuration
-    with NAT66
+    <strong>Dual-stack support</strong>: full IPv4 + IPv6 ULA configuration with
+    NAT66
   </li>
   <li>
-    <strong>Complete firewall rules</strong> — Input, forward, NAT/masquerade,
-    MSS clamping, RAW flood protection, FastTrack
+    <strong>MTU from your WAN</strong>: enter the WAN MTU and the endpoint
+    family, and the tool subtracts the WireGuard overhead (60 bytes over IPv4,
+    80 over IPv6) to get the tunnel MTU, then derives the client MTU and both
+    MSS values. Each value stays editable, and a warning appears when the MTU
+    would fragment or, with IPv6 enabled, falls below the 1280 bytes IPv6
+    requires
   </li>
   <li>
-    <strong>Multiple peers</strong> — Add unlimited clients with auto-assigned
-    IP addresses and per-peer customization
+    <strong>Complete firewall rules</strong>: input, forward, NAT/masquerade,
+    MSS clamping for IPv4 and IPv6, RAW flood protection, FastTrack
   </li>
   <li>
-    <strong>Key generation options</strong> — RouterOS auto-generated keys
+    <strong>Multiple peers</strong>: add unlimited clients with auto-assigned IP
+    addresses and per-peer customization
+  </li>
+  <li>
+    <strong>Responder peers</strong>: by default the router peer gets
+    <code>responder=yes</code>, so it answers handshakes but never starts them
+    and stops retrying towards roaming clients that have left, while the
+    keepalive stays in the client <code>.conf</code>
+  </li>
+  <li>
+    <strong>Key generation options</strong>: RouterOS auto-generated keys
     (recommended) or manual public key entry
   </li>
   <li>
-    <strong>Client config files</strong> — Complete WireGuard <code>.conf</code>
-    files for each peer with full or split tunnel support
+    <strong>Client config files</strong>: complete WireGuard <code>.conf</code>
+    files for each peer, with an explicit <code>MTU =</code> line and full or
+    split tunnel support
   </li>
   <li>
-    <strong>Client properties</strong> — Auto-generates <code>client-*</code>
-    properties for QR code support in WinBox/WebFig
+    <strong>Client properties</strong>: auto-generates <code>client-*</code>
+    properties for QR code support in WinBox/WebFig, including
+    <code>client-mtu</code> on RouterOS 7.25 or later
   </li>
   <li>
-    <strong>Interface list management</strong> — Configurable WAN, VPN, and LAN
+    <strong>Interface list management</strong>: configurable WAN, VPN, and LAN
     list membership
   </li>
   <li>
-    <strong>Extra LAN subnets</strong> — Allow VPN access to additional networks
+    <strong>Extra LAN subnets</strong>: allow VPN access to additional networks
     (IoT, guest, etc.)
   </li>
 </ul>
@@ -91,7 +113,8 @@ import ToolInfo from "@components/ui/ToolInfo.astro";
     customize from scratch
   </li>
   <li>
-    Configure the <strong>WireGuard interface</strong> settings (name, port, MTU)
+    Configure the <strong>WireGuard interface</strong> settings (name, listen
+    port)
   </li>
   <li>
     Set your <strong>network parameters</strong> (VPN subnet, LAN subnet, IPv6
@@ -101,70 +124,191 @@ import ToolInfo from "@components/ui/ToolInfo.astro";
     Enter your <strong>public endpoint</strong> (domain name or DDNS hostname)
   </li>
   <li>
-    Add <strong>peers</strong> for each client device with unique IP addresses
+    Open <strong>Advanced Configuration</strong> and enter your
+    <strong>WAN MTU</strong> and <strong>endpoint family</strong>. The WAN MTU
+    is the <code>actual-mtu</code> of your WAN interface in
+    <code>/interface print detail</code>, not the configured
+    <code>max-mtu</code>. Choose IPv4 only for an endpoint with just an A record
+    or an IPv4 address and clients that do not roam; otherwise keep IPv6 or
+    dual-stack. Leave the tunnel MTU, client MTU and MSS values on auto unless
+    you need different ones
+  </li>
+  <li>
+    Add <strong>peers</strong> for each client device with unique IP addresses,
+    and keep the <code>responder=yes</code> option ticked unless this router has
+    to start the connection to a peer
   </li>
   <li>
     Choose between <strong>full tunnel</strong> (all traffic via VPN) or{" "}
     <strong>split tunnel</strong> (only specified subnets)
   </li>
   <li>
+    If your router runs a RouterOS version older than 7.25, clear
+    <strong>RouterOS 7.25 or later</strong> so the script leaves out
+    <code>client-mtu</code>
+  </li>
+  <li>
     <strong>Copy</strong> the generated RouterOS configuration and paste it into
     your router's terminal
   </li>
   <li>
-    Use the <strong>client configuration</strong> files to set up each device, or
-    scan the QR code from WinBox/WebFig
+    Use the <strong>client configuration</strong> files to set up each device,
+    or scan the QR code from WinBox/WebFig
   </li>
 </ol>
+
+<h3>Which WAN MTU and endpoint family should I enter?</h3>
+<p>
+  WireGuard adds 60 bytes to every packet that travels over IPv4 (20 IP, 8 UDP,
+  16 WireGuard header, 16 authentication tag) and 80 to every packet that
+  travels over IPv6, whose header is 20 bytes longer. What matters is the family
+  of the encrypted packet crossing the Internet, and the endpoint each client
+  dials decides it: a name with only an A record, or an IPv4 address, travels
+  over IPv4, while a name with an AAAA record, or an IPv6 address, can travel
+  over IPv6 (a name with both A and AAAA records can arrive over either family),
+  which calls for the 80-byte figure. The one exception to the IPv4 case is a
+  phone on an IPv6-only mobile network, which translates IPv4 into IPv6 on the
+  device and sends the packet over IPv6 even when the endpoint is IPv4, so
+  choose IPv6 or dual-stack for anything that roams. The interface MTU is shared
+  by every peer, so it has to fit the worst case. The MSS is then the tunnel MTU
+  minus 40 for IPv4 traffic inside the tunnel (20 IP plus 20 TCP) and minus 60
+  for IPv6 traffic (40 IP plus 20 TCP).
+</p>
+<table>
+  <thead>
+    <tr>
+      <th scope="col">WAN MTU</th>
+      <th scope="col">Endpoint family</th>
+      <th scope="col">Tunnel MTU</th>
+      <th scope="col">IPv4 MSS</th>
+      <th scope="col">IPv6 MSS</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>1500 (Ethernet, fiber)</td>
+      <td>IPv4 only</td>
+      <td>1440</td>
+      <td>1400</td>
+      <td>1380</td>
+    </tr>
+    <tr>
+      <td>1500</td>
+      <td>IPv6 or dual-stack</td>
+      <td>1420</td>
+      <td>1380</td>
+      <td>1360</td>
+    </tr>
+    <tr>
+      <td>1492 (standard PPPoE)</td>
+      <td>IPv4 only</td>
+      <td>1432</td>
+      <td>1392</td>
+      <td>1372</td>
+    </tr>
+    <tr>
+      <td>1492</td>
+      <td>IPv6 or dual-stack</td>
+      <td>1412</td>
+      <td>1372</td>
+      <td>1352</td>
+    </tr>
+    <tr>
+      <td>1480 (PPPoE as DIGI negotiates it)</td>
+      <td>IPv4 only</td>
+      <td>1420</td>
+      <td>1380</td>
+      <td>1360</td>
+    </tr>
+    <tr>
+      <td>1480</td>
+      <td>IPv6 or dual-stack</td>
+      <td>1400</td>
+      <td>1360</td>
+      <td>1340</td>
+    </tr>
+  </tbody>
+</table>
+<p>
+  The MSS clamps cover TCP only. UDP traffic such as QUIC (HTTP/3), DNS and VoIP
+  depends on the interface MTU itself, which is why the MTU has to be right even
+  with the clamps in place. The client MTU defaults to the tunnel MTU and goes
+  into each <code>.conf</code> as <code>MTU =</code>: without that line the iOS
+  and Android apps use 1280, and the desktop apps subtract 80 from their own
+  network link, which knows nothing about your WAN.
+  <a href="/blog/007-mikrotik-wireguard-dual-stack-vpn/#step-7-calculate-the-mtu-and-clamp-mss">
+    Step 7 of the WireGuard guide
+  </a>{" "}
+  explains the model, with the measurements behind it.
+</p>
 
 <h3>Configuration Sections Generated</h3>
 <ul>
   <li>
-    <strong>Interface creation</strong> — WireGuard interface with MTU and listen
-    port
+    <strong>Script header</strong>: the oldest RouterOS version that accepts
+    every command in the script: 7.21 when a peer gets the
+    <code>client-*</code> properties (<code>client-allowed-address</code>
+    arrived in 7.21), otherwise 7.17 with <code>responder=yes</code> or 7.15
+    without it (peer names), plus 7.25 when it includes
+    <code>client-mtu</code>
   </li>
   <li>
-    <strong>IP addressing</strong> — IPv4 and IPv6 (ULA) addresses on the
+    <strong>Interface creation</strong>: WireGuard interface with its listen
+    port and an MTU worked out from your WAN, with the calculation written as a
+    comment above it
+  </li>
+  <li>
+    <strong>IP addressing</strong>: IPv4 and IPv6 (ULA) addresses on the
     interface
   </li>
   <li>
-    <strong>IPv6 pool</strong> — Address pool for IPv6 prefix delegation
+    <strong>IPv6 pool</strong>: address pool for IPv6 prefix delegation
   </li>
   <li>
-    <strong>Interface lists</strong> — VPN and LAN list membership for firewall
+    <strong>Interface lists</strong>: VPN and LAN list membership for firewall
     rule matching
   </li>
   <li>
-    <strong>Address lists</strong> — Firewall address list for FastTrack and rule
+    <strong>Address lists</strong>: firewall address list for FastTrack and rule
     matching
   </li>
   <li>
-    <strong>Firewall input</strong> — Accept WireGuard UDP port on IPv4 and IPv6
+    <strong>Firewall input</strong>: accept WireGuard UDP port on IPv4 and IPv6
   </li>
   <li>
-    <strong>Firewall forward</strong> — VPN to Internet, VPN to LAN, and reply
+    <strong>Firewall forward</strong>: VPN to Internet, VPN to LAN, and reply
     rules
   </li>
   <li>
-    <strong>NAT/masquerade</strong> — IPv4 masquerade and NAT66 for IPv6
+    <strong>NAT/masquerade</strong>: IPv4 masquerade and NAT66 for IPv6
   </li>
   <li>
-    <strong>MSS clamping</strong> — Prevents fragmentation issues with
-    auto-calculated MSS value
+    <strong>MSS clamping</strong>: one <code>change-mss</code> rule in
+    <code>/ip firewall mangle</code> at the tunnel MTU minus 40 and, with IPv6
+    on, another in <code>/ipv6 firewall mangle</code> at the tunnel MTU minus
+    60. Each one matches only SYN packets whose MSS is above the new value,
+    because
+    <code>change-mss</code> can only lower it
   </li>
   <li>
-    <strong>RAW rules</strong> — Skip flood protection for WireGuard port
+    <strong>RAW rules</strong>: skip flood protection for WireGuard port
   </li>
   <li>
-    <strong>Peer definitions</strong> — All peers with client properties for QR
-    code generation
+    <strong>Peer definitions</strong>: all peers with
+    <code>responder=yes</code> (or <code>persistent-keepalive</code> when the
+    router has to initiate) and client properties for QR code generation,
+    <code>client-mtu</code> included on RouterOS 7.25 or later
+  </li>
+  <li>
+    <strong>Client files</strong>: one <code>.conf</code> per peer with
+    <code>MTU =</code> and <code>PersistentKeepalive =</code> lines
   </li>
 </ul>
 
 <h2>Privacy</h2>
 <p>
   This tool runs <strong>entirely in your browser</strong>. No data is sent to
-  any server — all configuration is generated locally using JavaScript. Your
+  any server: all configuration is generated locally using JavaScript. Your
   network settings, IP addresses, and any keys you enter never leave your
   device.
 </p>
@@ -173,7 +317,12 @@ import ToolInfo from "@components/ui/ToolInfo.astro";
 <ul>
   <li>
     <a href="/blog/007-mikrotik-wireguard-dual-stack-vpn/">
-      MikroTik WireGuard Dual-Stack VPN — Step-by-step guide
+      MikroTik WireGuard Dual-Stack VPN: step-by-step guide
+    </a>
+  </li>
+  <li>
+    <a href="/blog/007-mikrotik-wireguard-dual-stack-vpn/#step-7-calculate-the-mtu-and-clamp-mss">
+      How to calculate the WireGuard MTU and clamp MSS on MikroTik
     </a>
   </li>
   <li>

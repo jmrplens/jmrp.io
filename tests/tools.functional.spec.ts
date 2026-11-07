@@ -12,7 +12,7 @@
 /* eslint-disable playwright/no-force-option -- Custom toggle overlays require force clicks */
 /* eslint-disable playwright/no-conditional-in-test -- Conditional logic needed for dynamic tool UIs */
 
-import type { Page } from "@playwright/test";
+import type { Locator, Page } from "@playwright/test";
 import { expect, test } from "@playwright/test";
 
 import { blockCloudflare, shouldIgnoreError } from "./utils";
@@ -407,9 +407,270 @@ test.describe("Nginx Config Generator", () => {
 
 // ─── WireGuard Config Generator ──────────────────────────────────────
 
+/**
+ * Opens the WireGuard generator with its Advanced section (MTU card) shown.
+ * Every field id is `<data-wg-id>-<suffix>`, so `field("mtu")` is the tunnel
+ * MTU and never the WAN or client MTU, which an `[id$="-mtu"]` would also hit.
+ */
+async function openWireGuardAdvanced(page: Page) {
+  await page.goto("/tools/wireguard-config-generator/");
+  const container = page.locator("[data-wg-id]");
+  await expect(container).toBeVisible();
+  const id = await container.getAttribute("data-wg-id");
+  const field = (suffix: string) => page.locator(`#${id}-${suffix}`);
+  await field("advanced").check();
+  await expect(field("advanced-section")).toBeVisible();
+  return {
+    field,
+    routeros: field("output-routeros"),
+    client: field("output-client"),
+  };
+}
+
+/** Splits the RouterOS script into its blank-line separated commands. */
+async function routerosBlocks(routeros: Locator) {
+  const text = (await routeros.textContent()) ?? "";
+  const blocks = text.split("\n\n");
+  return {
+    text,
+    block: (command: string) => blocks.find((b) => b.includes(command)) ?? "",
+  };
+}
+
+const wireGuardMtuCases = [
+  {
+    name: "a 1500 WAN and a dual-stack endpoint (defaults)",
+    wan: "",
+    family: "",
+    mtu: 1420,
+    mssV4: 1380,
+    mssV6: 1360,
+    comment: "# MTU: WAN 1500 - 80 (IPv6 or dual-stack endpoint) = 1420",
+  },
+  {
+    name: "a 1480 WAN and a dual-stack endpoint",
+    wan: "1480",
+    family: "",
+    mtu: 1400,
+    mssV4: 1360,
+    mssV6: 1340,
+    comment: "# MTU: WAN 1480 - 80 (IPv6 or dual-stack endpoint) = 1400",
+  },
+  {
+    name: "a 1500 WAN and an IPv4-only endpoint",
+    wan: "",
+    family: "ipv4",
+    mtu: 1440,
+    mssV4: 1400,
+    mssV6: 1380,
+    comment: "# MTU: WAN 1500 - 60 (IPv4-only endpoint) = 1440",
+  },
+];
+
 test.describe("WireGuard Config Generator", () => {
   test.beforeEach(async ({ page }) => {
     await blockCloudflare(page);
+  });
+
+  for (const c of wireGuardMtuCases) {
+    test(`derives MTU, MSS and client MTU from ${c.name}`, async ({ page }) => {
+      const { field, routeros, client } = await openWireGuardAdvanced(page);
+      if (c.wan) await field("wan-mtu").fill(c.wan);
+      if (c.family) await field("endpoint-family").selectOption(c.family);
+
+      await expect(field("mtu")).toHaveValue(String(c.mtu));
+      await expect(field("client-mtu")).toHaveValue(String(c.mtu));
+      await expect(field("mss-v4")).toHaveValue(String(c.mssV4));
+      await expect(field("mss-v6")).toHaveValue(String(c.mssV6));
+
+      const { text, block } = await routerosBlocks(routeros);
+      const iface = block("/interface wireguard add");
+      expect(iface).toContain(c.comment);
+      expect(iface).toContain(`\n    mtu=${c.mtu} \\`);
+
+      const clampV4 = block("/ip firewall mangle add");
+      expect(clampV4).toContain(`new-mss=${c.mssV4} \\`);
+      expect(clampV4).toContain(`tcp-mss=${c.mssV4 + 1}-65535 \\`);
+      const clampV6 = block("/ipv6 firewall mangle add");
+      expect(clampV6).toContain(`new-mss=${c.mssV6} \\`);
+      expect(clampV6).toContain(`tcp-mss=${c.mssV6 + 1}-65535 \\`);
+      expect(clampV6).toContain('comment="WireGuard MSS clamping IPv6"');
+
+      expect(text).toContain(
+        "# MikroTik RouterOS 7.21 or later; client-mtu needs 7.25 or later",
+      );
+      expect(text).toContain(`client-mtu=${c.mtu} \\`);
+      expect(text).toContain("responder=yes \\");
+      expect(text).not.toContain("persistent-keepalive=");
+
+      await expect(client).toContainText(`MTU = ${c.mtu}`);
+      await expect(client).toContainText("PersistentKeepalive = 25");
+    });
+  }
+
+  test("IPv4-only preset emits no IPv6 MSS clamp", async ({ page }) => {
+    const { field, routeros } = await openWireGuardAdvanced(page);
+    await page.locator('[data-preset="ipv4-only"]').click();
+
+    await expect(field("mss-v6")).toBeHidden();
+    await expect(routeros).toContainText("/ip firewall mangle add");
+    await expect(routeros).not.toContainText("/ipv6 firewall mangle");
+    await expect(routeros).toContainText("responder=yes");
+  });
+
+  test("site-to-site preset keeps the router keepalive", async ({ page }) => {
+    const { field, routeros } = await openWireGuardAdvanced(page);
+    await page.locator('[data-preset="site-to-site"]').click();
+
+    await expect(field("responder")).not.toBeChecked();
+    await expect(routeros).toContainText("persistent-keepalive=25s");
+    await expect(routeros).not.toContainText("responder=yes");
+    // The auto-key peer still emits client-allowed-address (RouterOS 7.21).
+    await expect(routeros).toContainText("# MikroTik RouterOS 7.21 or later");
+  });
+
+  test("manual-key peers lower the RouterOS minimum", async ({ page }) => {
+    const { field, routeros } = await openWireGuardAdvanced(page);
+    await page.locator(".wg-peer-keygen").first().selectOption("manual");
+
+    // No client-* block: responder=yes sets the floor at 7.17, and the
+    // client-mtu note goes away with the block that would carry it.
+    await expect(routeros).toContainText(
+      /# MikroTik RouterOS 7\.17 or later\n/,
+    );
+    await expect(routeros).not.toContainText("client-mtu");
+
+    // Without responder, peer name= (RouterOS 7.15) is the floor.
+    await field("responder").uncheck();
+    await expect(routeros).toContainText(
+      /# MikroTik RouterOS 7\.15 or later\n/,
+    );
+  });
+
+  test("clearing RouterOS 7.25 drops client-mtu", async ({ page }) => {
+    const { field, routeros, client } = await openWireGuardAdvanced(page);
+    await expect(routeros).toContainText("client-mtu=1420");
+
+    await field("ros725").uncheck();
+
+    await expect(routeros).not.toContainText("client-mtu");
+    await expect(client).toContainText("MTU = 1420");
+  });
+
+  test("warns when the tunnel MTU falls below the IPv6 minimum", async ({
+    page,
+  }) => {
+    const { field } = await openWireGuardAdvanced(page);
+    const warning = field("mtu-warning");
+    await expect(warning).toBeHidden();
+
+    await field("wan-mtu").fill("1300");
+
+    await expect(field("mtu")).toHaveValue("1220");
+    await expect(warning).toBeVisible();
+    await expect(warning).toContainText("Tunnel MTU 1220 is below 1280");
+
+    // The 1280 floor only applies with IPv6 inside the tunnel.
+    await field("enable-ipv6").uncheck();
+    await expect(warning).toBeHidden();
+  });
+
+  test("warns when the tunnel MTU exceeds the WAN MTU minus the overhead", async ({
+    page,
+  }) => {
+    const { field } = await openWireGuardAdvanced(page);
+    const warning = field("mtu-warning");
+
+    // The client MTU is not manual, so it follows: both messages show.
+    await field("mtu").fill("1450");
+
+    await expect(warning).toBeVisible();
+    await expect(warning).toContainText("Tunnel MTU 1450 is above 1420");
+    await expect(warning).toContainText("Client MTU 1450 is above 1420");
+  });
+
+  test("a warning raised from outside Advanced reveals the section", async ({
+    page,
+  }) => {
+    const { field } = await openWireGuardAdvanced(page);
+    const warning = field("mtu-warning");
+
+    await field("wan-mtu").fill("1300");
+    await page.locator('[data-preset="ipv4-only"]').click();
+    await expect(warning).toBeHidden();
+    await field("advanced").uncheck();
+    await expect(field("advanced-section")).toBeHidden();
+
+    // Turning IPv6 back on puts the 1220 MTU under the IPv6 minimum.
+    await page.locator('[data-preset="dual-stack"]').click();
+
+    await expect(field("advanced")).toBeChecked();
+    await expect(field("advanced-section")).toBeVisible();
+    await expect(warning).toContainText("Tunnel MTU 1220 is below 1280");
+  });
+
+  test("a hand-edited MTU survives unrelated edits until the WAN changes", async ({
+    page,
+  }) => {
+    const { field, routeros } = await openWireGuardAdvanced(page);
+
+    await field("mtu").fill("1350");
+    await expect(field("mss-v4")).toHaveValue("1310");
+    await expect(field("mss-v6")).toHaveValue("1290");
+    await expect(field("client-mtu")).toHaveValue("1350");
+
+    await field("listen-port").fill("51820");
+    await expect(field("mtu")).toHaveValue("1350");
+    const manual = (await routerosBlocks(routeros)).block(
+      "/interface wireguard add",
+    );
+    expect(manual).toContain("\n    mtu=1350 \\");
+    expect(manual).toContain("(manual;");
+
+    await field("wan-mtu").fill("1480");
+    await expect(field("mtu")).toHaveValue("1400");
+    await expect(field("mss-v4")).toHaveValue("1360");
+    const recalculated = (await routerosBlocks(routeros)).block(
+      "/interface wireguard add",
+    );
+    expect(recalculated).toContain("\n    mtu=1400 \\");
+    expect(recalculated).not.toContain("(manual;");
+
+    // Changing the endpoint family recalculates it too: 1480 - 60 = 1420.
+    await field("mtu").fill("1350");
+    await field("endpoint-family").selectOption("ipv4");
+    await expect(field("mtu")).toHaveValue("1420");
+    await expect(field("mss-v4")).toHaveValue("1380");
+  });
+
+  test("an implausible value goes back to the computed one on change", async ({
+    page,
+  }) => {
+    const { field, routeros, client } = await openWireGuardAdvanced(page);
+
+    // One zero too many, then the field loses focus.
+    await field("mtu").fill("14000");
+    await field("mtu").blur();
+    await expect(field("mtu")).toHaveValue("1420");
+    await expect(routeros).toContainText("new-mss=1380");
+    await expect(routeros).not.toContainText("(manual;");
+
+    await field("client-mtu").fill("14200");
+    await field("client-mtu").blur();
+    await expect(field("client-mtu")).toHaveValue("1420");
+    await expect(client).toContainText("MTU = 1420");
+  });
+
+  test("an emptied client MTU goes back to the tunnel MTU", async ({
+    page,
+  }) => {
+    const { field, client } = await openWireGuardAdvanced(page);
+
+    await field("client-mtu").fill("1280");
+    await expect(client).toContainText("MTU = 1280");
+
+    await field("client-mtu").fill("");
+    await expect(client).toContainText("MTU = 1420");
   });
 
   test("loads generator interface", async ({ page }) => {

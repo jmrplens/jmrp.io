@@ -1,7 +1,7 @@
 ---
 /* eslint-disable sonarjs/no-hardcoded-ip -- Example IPs are essential for a subnet calculator */
 /**
- * SubnetCalculator — Comprehensive IPv4/IPv6 Network Calculator
+ * SubnetCalculator: Comprehensive IPv4/IPv6 Network Calculator
  *
  * Tabs: Subnet Calculator, Address Info, VLSM Planner, Range → CIDR
  * Full IPv4 and IPv6 support with BigInt math.
@@ -37,7 +37,7 @@ const i18n = {
   enterValidIpv4Addresses: t("tools.subnetCalculator.enterValidIpv4Addresses"),
   startMustBeLessOrEqual: t("tools.subnetCalculator.startMustBeLessOrEqual"),
   noCidrBlocksFound: t("tools.subnetCalculator.noCidrBlocksFound"),
-  // Result labels — IPv4 subnet
+  // Result labels: IPv4 subnet
   networkAddress: t("tools.subnetCalculator.networkAddress"),
   broadcastAddress: t("tools.subnetCalculator.broadcastAddress"),
   subnetMask: t("tools.subnetCalculator.subnetMask"),
@@ -53,7 +53,7 @@ const i18n = {
   binaryMask: t("tools.subnetCalculator.binaryMask"),
   reverseDns: t("tools.subnetCalculator.reverseDns"),
   ipv4MappedIpv6: t("tools.subnetCalculator.ipv4MappedIpv6"),
-  // Result labels — IPv6 subnet
+  // Result labels: IPv6 subnet
   networkPrefix: t("tools.subnetCalculator.networkPrefix"),
   firstAddress: t("tools.subnetCalculator.firstAddress"),
   lastAddress: t("tools.subnetCalculator.lastAddress"),
@@ -71,7 +71,7 @@ const i18n = {
   bitsTotal: t("tools.subnetCalculator.bitsTotal"),
   prefixBoundary: t("tools.subnetCalculator.prefixBoundary"),
   prefixExtendsBeyond: t("tools.subnetCalculator.prefixExtendsBeyond"),
-  // Address type strings — IPv4
+  // Address type strings: IPv4
   typeCurrentNetwork: t("tools.subnetCalculator.typeCurrentNetwork"),
   typePrivate: t("tools.subnetCalculator.typePrivate"),
   typeCgnat: t("tools.subnetCalculator.typeCgnat"),
@@ -84,7 +84,7 @@ const i18n = {
   typeBroadcast: t("tools.subnetCalculator.typeBroadcast"),
   typeReserved: t("tools.subnetCalculator.typeReserved"),
   typePublicGlobal: t("tools.subnetCalculator.typePublicGlobal"),
-  // Address type strings — IPv6
+  // Address type strings: IPv6
   typeUnspecified: t("tools.subnetCalculator.typeUnspecified"),
   typeLoopbackV6: t("tools.subnetCalculator.typeLoopbackV6"),
   typeIpv4Mapped: t("tools.subnetCalculator.typeIpv4Mapped"),
@@ -121,6 +121,10 @@ const i18n = {
   scopeMulticast: t("tools.subnetCalculator.scopeMulticast"),
   scopeUnspecified: t("tools.subnetCalculator.scopeUnspecified"),
   scopeReserved: t("tools.subnetCalculator.scopeReserved"),
+  scopeUnknown: t("tools.subnetCalculator.scopeUnknown"),
+  classDMulticast: t("tools.subnetCalculator.classDMulticast"),
+  classEReserved: t("tools.subnetCalculator.classEReserved"),
+  addressRange: t("tools.subnetCalculator.addressRange"),
   // VLSM UI
   subnetNamePlaceholder: t("tools.subnetCalculator.subnetNamePlaceholder"),
   hostsNeededPlaceholder: t("tools.subnetCalculator.hostsNeededPlaceholder"),
@@ -811,8 +815,15 @@ const i18n = {
       if (first < 128) return "A";
       if (first < 192) return "B";
       if (first < 224) return "C";
-      if (first < 240) return "D (Multicast)";
-      return "E (Reserved)";
+      if (first < 240) return i18n.classDMulticast;
+      return i18n.classEReserved;
+    }
+
+    // "first to last" for an address range, worded per locale.
+    function addressRange(first, last) {
+      return i18n.addressRange
+        .replace("{first}", first)
+        .replace("{last}", last);
     }
 
     function ipv4Type(ip) {
@@ -1215,7 +1226,7 @@ const i18n = {
         var bit = document.createElement("span");
         bit.className = i < cidr ? "net-bit net-bit-n" : "net-bit net-bit-h";
         bit.textContent = i < cidr ? "1" : "0";
-        bit.title = "Bit " + i + " — " + (i < cidr ? i18n.network : i18n.host);
+        bit.title = "Bit " + i + ": " + (i < cidr ? i18n.network : i18n.host);
         bitsDiv.appendChild(bit);
       }
       wrapper.appendChild(bitsDiv);
@@ -1314,7 +1325,7 @@ const i18n = {
         ": " +
         ipv6ReverseDNS(netGroups);
 
-      /* Visual binary for IPv6 — show first 32 bits for clarity */
+      /* Visual binary for IPv6: show first 32 bits for clarity */
       renderBinaryVisualV6(cidr);
     }
 
@@ -1572,7 +1583,7 @@ const i18n = {
         return (
           i18n.scopeMulticast +
           " " +
-          (scopes[scope] || "Unknown scope " + scope)
+          (scopes[scope] || i18n.scopeUnknown.replace("{scope}", String(scope)))
         );
       }
       if (g[0] >= 0x2000 && g[0] <= 0x3fff) return i18n.scopeGlobal;
@@ -1746,7 +1757,7 @@ const i18n = {
           a.name,
           intToIPv4(a.network),
           "/" + a.cidr,
-          intToIPv4(a.first) + " – " + intToIPv4(a.last),
+          addressRange(intToIPv4(a.first), intToIPv4(a.last)),
           a.usable.toString(),
           a.needed.toString(),
           (a.usable - a.needed).toString(),
@@ -1867,7 +1878,7 @@ const i18n = {
         var cells = [
           String(idx + 1),
           intToIPv4(b.network) + "/" + b.cidr,
-          intToIPv4(b.network) + " – " + intToIPv4(lastAddr),
+          addressRange(intToIPv4(b.network), intToIPv4(lastAddr)),
           b.size.toLocaleString(),
         ];
         cells.forEach(function (c) {
@@ -1897,9 +1908,7 @@ const i18n = {
             "/" +
             b.cidr +
             "  (" +
-            intToIPv4(b.network) +
-            " – " +
-            intToIPv4(lastAddr) +
+            addressRange(intToIPv4(b.network), intToIPv4(lastAddr)) +
             ")"
           );
         })
@@ -2282,7 +2291,7 @@ const i18n = {
 
   /* ── Result grid ── */
 
-  /* Design-review P3: results as a 2-column "label · value" grid — real
+  /* Design-review P3: results as a 2-column "label · value" grid with a real
      column-gap, label muted, value in heading color. (Now styled because the
      block is is:global; see the note at the top of this \3c style>.) */
   .net-result-grid {

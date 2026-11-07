@@ -1,5 +1,5 @@
 /**
- * Spanish translations — interactive tools.
+ * Spanish translations: interactive tools.
  *
  * Each tool has its own namespace under `tools.<toolName>`.
  * Shared strings used across multiple tools are under `tools.shared`.
@@ -224,21 +224,21 @@ export const tools = {
     // JS script strings
     enterValidAddress: "Introduce una dirección IPv4 o IPv6 válida",
     invalidIpv4: "Dirección IPv4 no válida",
-    ipv4CidrRange: "El CIDR de IPv4 debe ser 0–32",
+    ipv4CidrRange: "El CIDR de IPv4 debe estar entre 0 y 32",
     invalidIpv6: "Dirección IPv6 no válida",
-    ipv6CidrRange: "El CIDR de IPv6 debe ser 0–128",
+    ipv6CidrRange: "El CIDR de IPv6 debe estar entre 0 y 128",
     enterIpOrInteger: "Introduce una dirección IP o un entero",
     couldNotParse:
       "No se pudo interpretar como IPv4, IPv6, entero o hexadecimal",
     invalidBaseNetwork: "Dirección de red base IPv4 no válida",
-    cidrRange030: "El CIDR debe ser 0–30",
+    cidrRange030: "El CIDR debe estar entre 0 y 30",
     addAtLeastOneSubnet: "Añade al menos un requisito de subred",
     notEnoughSpace: "No hay espacio suficiente para todas las subredes",
     enterValidIpv4Addresses: "Introduce direcciones IPv4 válidas",
     startMustBeLessOrEqual:
       "La IP de inicio debe ser menor o igual que la IP de fin",
     noCidrBlocksFound: "No se encontraron bloques CIDR",
-    // Result labels — IPv4 subnet
+    // Result labels: IPv4 subnet
     networkAddress: "Dirección de red",
     broadcastAddress: "Dirección de broadcast",
     subnetMask: "Máscara de subred",
@@ -254,7 +254,7 @@ export const tools = {
     binaryMask: "Máscara binaria",
     reverseDns: "DNS inverso (PTR)",
     ipv4MappedIpv6: "IPv6 mapeada desde IPv4",
-    // Result labels — IPv6 subnet
+    // Result labels: IPv6 subnet
     networkPrefix: "Prefijo de red",
     firstAddress: "Primera dirección",
     lastAddress: "Última dirección",
@@ -270,7 +270,7 @@ export const tools = {
     bitsTotal: "bits en total",
     prefixBoundary: "Límite de prefijo (primeros 64 bits)",
     prefixExtendsBeyond: "El prefijo se extiende más allá de 64 bits",
-    // Address type strings — IPv4
+    // Address type strings: IPv4
     typeCurrentNetwork: "Red actual (RFC 1122)",
     typePrivate: "Privada (RFC 1918)",
     typeCgnat: "CGNAT / Compartida (RFC 6598)",
@@ -283,7 +283,7 @@ export const tools = {
     typeBroadcast: "Broadcast",
     typeReserved: "Reservada",
     typePublicGlobal: "Pública / Global",
-    // Address type strings — IPv6
+    // Address type strings: IPv6
     typeUnspecified: "No especificada (::)",
     typeLoopbackV6: "Loopback (::1)",
     typeIpv4Mapped: "IPv4 mapeada",
@@ -315,9 +315,14 @@ export const tools = {
     scopeSiteLocal: "Site-Local",
     scopeOrgLocal: "Organization-Local",
     scopeGlobal: "Global",
-    scopeMulticast: "Multicast —",
+    scopeMulticast: "Multicast:",
     scopeUnspecified: "No especificado",
     scopeReserved: "Reservado",
+    scopeUnknown: "Ámbito desconocido {scope}",
+    // IPv4 address classes that carry a description
+    classDMulticast: "D (Multicast)",
+    classEReserved: "E (Reservada)",
+    addressRange: "{first} a {last}",
     // VLSM UI
     subnetNamePlaceholder: "Nombre de subred",
     hostsNeededPlaceholder: "Hosts necesarios",
@@ -442,9 +447,9 @@ export const tools = {
     copyFgHsl: "Copiar valor HSL del primer plano",
     copyBgRgb: "Copiar valor RGB del fondo",
     copyBgHsl: "Copiar valor HSL del fondo",
-    previewLargeText: "Texto grande (24px) — Encabezado",
+    previewLargeText: "Texto grande (24px): encabezado",
     previewSmallText:
-      "Texto pequeño (12px) — Información secundaria y subtítulos",
+      "Texto pequeño (12px): información secundaria y subtítulos",
     uiComponents: "Componentes de IU",
     button: "Botón",
     inputField: "Campo de entrada",
@@ -481,7 +486,7 @@ export const tools = {
     apcaLargeNonText: "Solo elementos no textuales grandes",
     apcaNonText: "Elementos no textuales (iconos, bordes)",
     apcaSubtle: "Solo indicadores visuales sutiles",
-    apcaInvisible: "Invisible — no utilizable",
+    apcaInvisible: "Invisible, no utilizable",
   },
   cronBuilder: {
     title: "Constructor de expresiones Cron",
@@ -553,14 +558,14 @@ export const tools = {
     symbolCommaMeaning: "Lista de valores",
     symbolCommaExample: "a :00 y :30",
     symbolDashMeaning: "Rango",
-    symbolDashExample: "cada hora 9–17",
+    symbolDashExample: "cada hora de 9 a 17",
     symbolSlashMeaning: "Paso / intervalo",
     symbolSlashExample: "cada 10 min",
-    syntaxMinute: "minuto (0–59)",
-    syntaxHour: "hora (0–23)",
-    syntaxDom: "día del mes (1–31)",
-    syntaxMonth: "mes (1–12)",
-    syntaxDow: "día de la semana (0–7, 0&7=Dom)",
+    syntaxMinute: "minuto (de 0 a 59)",
+    syntaxHour: "hora (de 0 a 23)",
+    syntaxDom: "día del mes (de 1 a 31)",
+    syntaxMonth: "mes (de 1 a 12)",
+    syntaxDow: "día de la semana (de 0 a 7, 0&7=Dom)",
     syntaxCommand: "comando",
     // Actions
     copyShareableLink: "Copiar enlace compartible",
@@ -587,8 +592,8 @@ export const tools = {
     descEveryMinuteDuringHour: "Cada minuto durante la hora {hour}",
     descAtMinuteOfEveryHour: "En el minuto {min} de cada hora",
     descOnDayOfMonth: "el día {days} del mes",
-    descOnWeekdays: "en días laborables (lun–vie)",
-    descOnWeekends: "en fines de semana (sáb–dom)",
+    descOnWeekdays: "en días laborables (de lun a vie)",
+    descOnWeekends: "en fines de semana (sáb y dom)",
     customSchedule: "Programación personalizada",
     relativeInDH: "en {d}d {h}h",
     relativeInHM: "en {h}h {m}m",
@@ -725,25 +730,24 @@ export const tools = {
     certExpiresIn: "El certificado expira en {days} días",
     certValid: "El certificado es válido",
     rsaKeyTooSmall:
-      "Clave RSA demasiado pequeña ({bits} bits) \u{2014} mínimo 2048 requerido",
+      "Clave RSA demasiado pequeña ({bits} bits): mínimo 2048 requerido",
     rsaKeyOk: "Clave RSA de {bits} bits \u{2713}",
     rsaKeyStrong: "Clave RSA de {bits} bits (fuerte) \u{2713}",
     ecdsaKeyStrong: "Clave ECDSA {curve} (fuerte) \u{2713}",
     ecCurve: "Curva EC: {curve}",
-    sha1Deprecated: "Firma SHA-1 \u{2014} obsoleta e insegura",
+    sha1Deprecated: "Firma SHA-1: obsoleta e insegura",
     sigAlgOk: "Firma {alg} \u{2713}",
     selfSignedWarning:
-      "Certificado autofirmado \u{2014} no confiable por los navegadores",
+      "Certificado autofirmado: no confiable por los navegadores",
     sansPresent: "{count} Nombre(s) Alternativo(s) del Sujeto \u{2713}",
     noSans:
-      "Sin Nombres Alternativos del Sujeto \u{2014} los navegadores modernos requieren SANs",
+      "Sin Nombres Alternativos del Sujeto: los navegadores modernos requieren SANs",
     wildcardDetected: "Certificado comodín detectado",
     isCaCert: "Este es un certificado CA",
     ctSctsPresent: "SCTs de Transparencia de Certificados presentes \u{2713}",
-    noCtScts:
-      "No se encontraron SCTs de CT \u{2014} puede no ser confiable por Chrome",
+    noCtScts: "No se encontraron SCTs de CT: puede no ser confiable por Chrome",
     validityExceeds:
-      "Validez del certificado {days} días \u{2014} excede el máximo de 398 días (CA/B Forum)",
+      "Validez del certificado {days} días: excede el máximo de 398 días (CA/B Forum)",
     validityPeriodOk: "Período de validez {days} días \u{2713}",
   },
   httpHeadersAnalyzer: {
@@ -759,7 +763,7 @@ export const tools = {
     fetching: "Obteniendo...",
     fetchingHeaders: "Obteniendo cabeceras...",
     noHeadersReturned:
-      "No se obtuvieron cabeceras — el servidor puede haber rechazado la solicitud.",
+      "No se obtuvieron cabeceras. El servidor puede haber rechazado la solicitud.",
     fetchedHeaders: "\u{2713} Se obtuvieron {count} cabeceras.",
     failedToFetch: "\u{2717} {msg}",
     failedToFetchDefault: "Error al obtener",
@@ -791,138 +795,131 @@ export const tools = {
     cspDesc:
       "Controla qué recursos se pueden cargar. Esencial para prevenir ataques XSS y de inyección.",
     cspMissing:
-      "Ausente \u{2014} alto riesgo de XSS. Usa la herramienta CSP Builder para generar una política.",
+      "Ausente: alto riesgo de XSS. Usa la herramienta CSP Builder para generar una política.",
     cspDefaultSrcNone: "default-src 'none' \u{2713}",
     cspDefaultSrcSelf:
       "default-src 'self' \u{2713} (considera 'none' para una política más estricta)",
     cspMissingDefaultSrc: "Falta fallback de default-src",
-    cspUnsafeInline:
-      "script-src 'unsafe-inline' \u{2014} anula la protección XSS",
-    cspUnsafeEval:
-      "'unsafe-eval' \u{2014} permite ejecución dinámica de código",
+    cspUnsafeInline: "script-src 'unsafe-inline' anula la protección XSS",
+    cspUnsafeEval: "'unsafe-eval' permite ejecución dinámica de código",
     cspDangerousSource: "Fuente peligrosa en script-src (comodín/data:/blob:)",
     cspTrustsAllHttps:
-      "script-src confía en todo HTTPS \u{2014} prefiere orígenes explícitos o nonces",
+      "script-src confía en todo HTTPS; prefiere orígenes explícitos o nonces",
     cspCdnBypass:
-      "Las listas de CDN pueden eludirse vía JSONP \u{2014} prefiere nonces",
+      "Las listas de CDN pueden eludirse vía JSONP; prefiere nonces",
     cspUsesNonces: "Usa nonces \u{2713}",
     cspMissingNonces:
-      "Faltan nonces \u{2014} considera nonces para un control más estricto (+4 pts)",
+      "Faltan nonces; considera nonces para un control más estricto (+4 pts)",
     cspStrictDynamic: "strict-dynamic \u{2713}",
     cspMissingStrictDynamic:
-      "Falta strict-dynamic \u{2014} recomendado con nonces para CSP Level 3 (+3 pts)",
+      "Falta strict-dynamic: recomendado con nonces para CSP Level 3 (+3 pts)",
     cspObjectSrcNone: "object-src 'none' \u{2713}",
     cspMissingObjectSrc:
-      "Falta object-src 'none' \u{2014} vector de bypass de plugins (+2 pts)",
+      "Falta object-src 'none': vector de bypass de plugins (+2 pts)",
     cspBaseUriRestricted: "base-uri restringido \u{2713}",
     cspMissingBaseUri:
-      "Falta base-uri \u{2014} vulnerable a inyección de etiqueta base (+1 pt)",
+      "Falta base-uri: vulnerable a inyección de etiqueta base (+1 pt)",
     cspFormActionDefined: "form-action definido \u{2713}",
     cspMissingFormAction:
-      "Falta form-action \u{2014} los formularios pueden enviar datos a servidores atacantes (+1 pt)",
+      "Falta form-action: los formularios pueden enviar datos a servidores atacantes (+1 pt)",
     cspFrameAncestorsDefined: "frame-ancestors definido \u{2713}",
     cspMissingFrameAncestors:
-      "Falta frame-ancestors \u{2014} usa 'none' para prevenir enmarcado (+1 pt)",
+      "Falta frame-ancestors; usa 'none' para prevenir enmarcado (+1 pt)",
     cspUpgradeInsecure: "upgrade-insecure-requests \u{2713}",
     cspMissingUpgradeInsecure: "Falta upgrade-insecure-requests (+1 pt)",
     cspReportingConfigured: "Reporte CSP configurado \u{2713}",
     cspNoReporting:
-      "Sin reporte CSP \u{2014} añade report-uri o report-to para monitorear violaciones (+1 pt)",
+      "Sin reporte CSP; añade report-uri o report-to para monitorear violaciones (+1 pt)",
     cspTrustedTypes: "Trusted Types habilitado \u{2713}",
     // HSTS
     hstsDesc:
       "Fuerza conexiones HTTPS. Previene ataques de degradación de protocolo y secuestro de cookies.",
-    hstsMissing: "Ausente \u{2014} vulnerable a ataques de degradación",
+    hstsMissing: "Ausente: vulnerable a ataques de degradación",
     hstsMaxAgeZero: "max-age=0 desactiva HSTS efectivamente",
     hstsMaxAge2Years: "max-age \u{2265} 2 años \u{2713}",
     hstsMaxAge1Year:
-      "max-age \u{2265} 1 año \u{2014} aumenta a 63072000 para 2 años (+1 pt)",
+      "max-age \u{2265} 1 año; aumenta a 63072000 para 2 años (+1 pt)",
     hstsMaxAgeLow: "max-age debería ser \u{2265} 31536000 (1 año)",
     hstsIncludeSubDomains: "includeSubDomains \u{2713}",
     hstsMissingIncludeSubDomains: "Falta includeSubDomains (+2 pts)",
     hstsPreload: "preload \u{2713} (enviar a hstspreload.org)",
     hstsMissingPreload:
-      "Falta preload \u{2014} añádelo para ser elegible en la lista de precarga HSTS (+2 pts)",
+      "Falta preload; añádelo para ser elegible en la lista de precarga HSTS (+2 pts)",
     // X-Content-Type-Options
     xctDesc:
       "Previene el rastreo de tipos MIME. Debe establecerse como 'nosniff'. Evita que los navegadores interpreten archivos como un tipo MIME diferente.",
-    xctMissing: "Ausente \u{2014} el navegador puede rastrear tipos MIME",
+    xctMissing: "Ausente: el navegador puede rastrear tipos MIME",
     xctCorrect: "Configurado correctamente como nosniff \u{2713}",
     xctWrong: "Debería ser exactamente 'nosniff'",
     // X-Frame-Options
     xfoDesc:
       "Previene clickjacking controlando la incrustación en iframes. CSP frame-ancestors es el reemplazo moderno.",
-    xfoMissing:
-      "Ausente \u{2014} considera añadirlo o usar CSP frame-ancestors",
+    xfoMissing: "Ausente; considera añadirlo o usar CSP frame-ancestors",
     xfoDeny: "Establecido como DENY \u{2713}",
     xfoSameorigin:
-      "Establecido como SAMEORIGIN \u{2014} DENY es más restrictivo (+2 pts)",
+      "Establecido como SAMEORIGIN; DENY es más restrictivo (+2 pts)",
     xfoUnexpected: "Valor inesperado: {val}",
     // Referrer-Policy
     rpDesc:
       "Controla cuánta información de referencia se envía con las solicitudes. Previene la filtración de rutas URL sensibles a terceros.",
     rpMissing:
-      "Ausente \u{2014} la URL completa puede filtrarse en la cabecera Referer",
+      "Ausente: la URL completa puede filtrarse en la cabecera Referer",
     rpSecure: "Política segura: {val} \u{2713}",
     rpAcceptable:
       "Aceptable pero se prefiere 'strict-origin-when-cross-origin' (+3 pts)",
-    rpUnsafeUrl:
-      "unsafe-url \u{2014} URL completa filtrada en todas las solicitudes",
+    rpUnsafeUrl: "unsafe-url: URL completa filtrada en todas las solicitudes",
     rpConsider: "Considera una política más restrictiva",
     // Permissions-Policy
     ppDesc:
       "Controla qué funciones del navegador (cámara, micrófono, geolocalización, etc.) se pueden usar. Reduce la superficie de ataque del contenido incrustado.",
-    ppMissing: "Ausente \u{2014} funciones del navegador sin restricciones",
+    ppMissing: "Ausente: funciones del navegador sin restricciones",
     ppDisabled: "{feature} deshabilitado \u{2713}",
     ppMissingRestriction: "Falta restricción {feature}=() (+1 pt)",
     // X-XSS-Protection
     xxpDesc:
       "Filtro XSS heredado. Debería ser '0' (deshabilitado) cuando CSP está presente. Sin CSP, '1; mode=block' proporciona protección básica.",
     xxpAbsentCorrect:
-      "Ausente \u{2014} correcto, CSP proporciona protección superior \u{2713}",
+      "Ausente: correcto, CSP proporciona protección superior \u{2713}",
     xxpDisabledCorrect:
       "Correctamente deshabilitado \u{2713} (CSP lo reemplaza)",
     xxpShouldBeZero:
-      "Debería ser '0' cuando CSP está presente \u{2014} el auditor XSS puede introducir vulnerabilidades",
-    xxpMissingNoCsp:
-      "Ausente y sin CSP \u{2014} sin protección XSS en absoluto",
+      "Debería ser '0' cuando CSP está presente: el auditor XSS puede introducir vulnerabilidades",
+    xxpMissingNoCsp: "Ausente y sin CSP: sin protección XSS en absoluto",
     xxpDisabledNoCsp:
-      "Deshabilitado pero sin CSP \u{2014} considera añadir CSP o '1; mode=block'",
+      "Deshabilitado pero sin CSP. Considera añadir CSP o '1; mode=block'",
     xxpLegacyEnabled:
-      "Filtro heredado habilitado \u{2014} añade CSP para protección adecuada",
+      "Filtro heredado habilitado; añade CSP para protección adecuada",
     xxpConsiderCsp: "Considera añadir CSP para protección robusta",
     // COOP
     coopDesc:
       "Aísla el contexto de navegación de ventanas emergentes de otros orígenes. Previene ataques de canal lateral tipo Spectre.",
-    coopMissing: "Ausente \u{2014} contexto de navegación no aislado",
+    coopMissing: "Ausente: contexto de navegación no aislado",
     coopSameOrigin: "same-origin \u{2713}",
-    coopPartialIsolation:
-      "Aislamiento parcial \u{2014} permite ventanas emergentes",
+    coopPartialIsolation: "Aislamiento parcial: permite ventanas emergentes",
     coopConsiderSameOrigin:
       "Considera same-origin para aislamiento completo (+3 pts)",
     coopUnexpected: "Valor inesperado",
     // CORP
     corpDesc:
       "Controla qué orígenes pueden cargar tus recursos. Previene fugas de datos mediante solicitudes de otros orígenes.",
-    corpMissing:
-      "Ausente \u{2014} los recursos pueden cargarse desde otros orígenes",
+    corpMissing: "Ausente: los recursos pueden cargarse desde otros orígenes",
     corpSameOrigin: "same-origin \u{2713}",
-    corpSameSite: "same-site \u{2014} más restrictivo que cross-origin",
+    corpSameSite: "same-site: más restrictivo que cross-origin",
     corpConsiderSameOrigin2:
       "Considera same-origin para la protección más estricta (+2 pts)",
-    corpCrossOrigin: "cross-origin \u{2014} menos restrictivo",
+    corpCrossOrigin: "cross-origin: menos restrictivo",
     corpConsiderSameOrigin5:
       "Considera same-origin para la protección más estricta (+5 pts)",
     // COEP
     coepDesc:
       "Controla la incrustación de recursos de otros orígenes. Requerido para SharedArrayBuffer y temporizadores de alta resolución.",
-    coepMissing: "Ausente \u{2014} no se puede usar SharedArrayBuffer",
+    coepMissing: "Ausente: no se puede usar SharedArrayBuffer",
     coepRequireCorp: "require-corp \u{2713}",
-    coepCredentialless: "credentialless \u{2014} aceptable",
+    coepCredentialless: "credentialless: aceptable",
     coepConsiderRequireCorp:
       "Considera require-corp para aislamiento completo de orígenes cruzados (+2 pts)",
     coepUnexpected: "Valor inesperado",
-    // Cabeceras de fuga de información — descripciones
+    // Cabeceras de fuga de información: descripciones
     serverDesc:
       "Revela el software y la versión del servidor. Ayuda a los atacantes a identificar vulnerabilidades conocidas.",
     xPoweredByDesc:
@@ -935,35 +932,30 @@ export const tools = {
     // Verificaciones de fuga de información
     serverNotExposed: "No expuesto \u{2713}",
     serverProxyCdn:
-      "Proxy/CDN identificado ('{val}') \u{2014} servidor de origen no expuesto \u{2713}",
+      "Proxy/CDN identificado ('{val}'): servidor de origen no expuesto \u{2713}",
     serverVersionExposed:
-      "Expone la versión del servidor ('{val}') \u{2014} elimina el número de versión",
+      "Expone la versión del servidor ('{val}'); elimina el número de versión",
     serverNameExposed:
-      "Nombre del servidor expuesto ('{val}') \u{2014} considera eliminarlo",
-    xPoweredByExposed:
-      "Expone tecnología: '{val}' \u{2014} elimina esta cabecera",
-    xAspnetVersionExposed:
-      "Expone versión de ASP.NET: '{val}' \u{2014} elimínala",
-    xAspnetMvcVersionExposed:
-      "Expone versión de ASP.NET MVC \u{2014} elimínala",
-    xGeneratorExposed: "Expone generador: '{val}' \u{2014} elimínalo",
+      "Nombre del servidor expuesto ('{val}'); considera eliminarlo",
+    xPoweredByExposed: "Expone tecnología: '{val}'; elimina esta cabecera",
+    xAspnetVersionExposed: "Expone versión de ASP.NET: '{val}'; elimínala",
+    xAspnetMvcVersionExposed: "Expone versión de ASP.NET MVC; elimínala",
+    xGeneratorExposed: "Expone generador: '{val}'; elimínalo",
     // Seguridad de cookies
-    cookieMissingSecure:
-      "Falta la marca Secure \u{2014} cookie enviada por HTTP",
-    cookieMissingHttpOnly:
-      "Falta la marca HttpOnly \u{2014} accesible por JavaScript",
-    cookieMissingSameSite: "Falta el atributo SameSite \u{2014} riesgo de CSRF",
+    cookieMissingSecure: "Falta la marca Secure: cookie enviada por HTTP",
+    cookieMissingHttpOnly: "Falta la marca HttpOnly: accesible por JavaScript",
+    cookieMissingSameSite: "Falta el atributo SameSite: riesgo de CSRF",
     cookieSameSiteNoneNoSecure: "SameSite=None requiere la marca Secure",
     cookieHostPrefix: "Usa el prefijo __Host- \u{2713} (más seguro)",
     cookieSecurePrefix: "Usa el prefijo __Secure- \u{2713}",
     cookieAllPresent: "Secure, HttpOnly, SameSite todos presentes \u{2713}",
     // Consistencia entre cabeceras
     consistencyXfoNoCspFrameAncestors:
-      "X-Frame-Options está establecido pero falta CSP frame-ancestors \u{2014} añade frame-ancestors para navegadores modernos",
+      "X-Frame-Options está establecido pero falta CSP frame-ancestors; añade frame-ancestors para navegadores modernos",
     consistencyXxpNotZero:
-      "CSP está presente pero X-XSS-Protection no es '0' \u{2014} deshabilita el auditor heredado para evitar introducir vulnerabilidades",
+      "CSP está presente pero X-XSS-Protection no es '0'; deshabilita el auditor heredado para evitar introducir vulnerabilidades",
     consistencyUpgradeNoHsts:
-      "upgrade-insecure-requests establecido en CSP pero falta HSTS \u{2014} añade HSTS para aplicación completa de HTTPS",
+      "upgrade-insecure-requests establecido en CSP pero falta HSTS; añade HSTS para aplicación completa de HTTPS",
     consistencyXfoContradictsFrameAncestors:
       "X-Frame-Options ({val}) contradice CSP frame-ancestors 'none'",
   },
@@ -1033,11 +1025,11 @@ export const tools = {
     noSpaces: "Sin espacios",
     cArray: "Array C",
     framePlaceholder: "Configura los campos anteriores para generar una trama",
-    // JS — hints de dirección
+    // JS: hints de dirección
     protocolAddress: "Dirección de protocolo: {addr} (0x{hex})",
     modiconAddress: "Modicon {raw} \u{2192} dirección {addr} (0x{hex})",
     hexAddr: "Hex: 0x{hex}",
-    // JS — etiquetas dinámicas
+    // JS: etiquetas dinámicas
     labelValue: "Valor",
     labelQuantity: "Cantidad",
     coilValue: "Valor de Coil (FF 00=ON, 00 00=OFF)",
@@ -1045,23 +1037,23 @@ export const tools = {
     diagnosticsData: "Datos de diagnóstico (bytes hex)",
     writeDataHex: "Datos de escritura (bytes hex)",
     writeValuesHex: "Valores de escritura (bytes hex, separados por espacio)",
-    // JS — mensajes de error/placeholder
+    // JS: mensajes de error/placeholder
     frameTooShort: "Trama demasiado corta (mínimo 2 bytes)",
     rtuFrameTooShort: "Trama RTU demasiado corta (mín. 4 bytes)",
     tcpFrameTooShort: "Trama TCP demasiado corta (mín. 8 bytes)",
     asciiFrameTooShort: "Trama ASCII demasiado corta",
     enterHexFrame: "Introduce una trama hex y haz clic en Decodificar",
-    // JS — interpretación de datos
+    // JS: interpretación de datos
     byteCount: "Conteo de bytes: {n}",
     rawData: "Sin procesar: {data}",
     register: "Registro",
     hex: "Hex",
     value: "Valor",
     registerPair: "Par de registros",
-    // JS — validación CRC/LRC
+    // JS: validación CRC/LRC
     crcValid: "\u{2713} Válido",
     crcInvalid: "\u{2717} Inválido (esperado {expected})",
-    // JS — hints de respuesta
+    // JS: hints de respuesta
     hintReadRegisterData:
       "Formato: [conteo de bytes] [datos de registro]. Ejemplo: 04 00 0A 00 64 (2 registros: 10, 100)",
     hintReadCoilData:
@@ -1070,7 +1062,7 @@ export const tools = {
       "La respuesta repite la solicitud: [dir alta] [dir baja] [valor alto] [valor bajo]",
     hintMultiWriteEcho:
       "La respuesta repite: [dir alta] [dir baja] [cant alta] [cant baja]",
-    // JS — etiquetas de segmento (desglose de trama)
+    // JS: etiquetas de segmento (desglose de trama)
     segSlave: "Esclavo",
     segData: "Datos",
     segTransaction: "Transacción",
@@ -1081,7 +1073,7 @@ export const tools = {
     segEnd: "Fin",
     segExtraData: "Datos extra",
     segExceptionCode: "Código de excepción",
-    // JS — etiquetas de segmento con marcadores (desglose de trama)
+    // JS: etiquetas de segmento con marcadores (desglose de trama)
     segSlaveLabel: "Esclavo: {value}",
     segTransactionLabel: "Transacción: {value}",
     segProtocolLabel: "Protocolo: {value}",
@@ -1201,8 +1193,30 @@ export const tools = {
     toggleAdvanced: "Configuración avanzada",
     // MTU
     sectionMtu: "MTU",
-    labelInterfaceMtu: "MTU de interfaz",
-    hintMtu: "Por defecto 1500. Reducir a 1420 si hay fragmentación.",
+    labelWanMtu: "MTU del WAN",
+    hintWanMtu:
+      "En PPPoE suele ser 1492; algunos operadores negocian menos (DIGI: 1480). Míralo en actual-mtu con /interface print detail.",
+    labelEndpointFamily: "Familia del endpoint",
+    optEndpointIpv4: "Solo IPv4 (registro A o IPv4 literal)",
+    optEndpointDual: "IPv6 o dual-stack (AAAA, o un cliente que cambia de red)",
+    // cspell:ignore XLAT
+    hintEndpointFamily:
+      "Fija el encapsulado: 60 bytes por IPv4, 80 por IPv6. Los móviles en redes solo IPv6 con 464XLAT viajan como IPv6 aunque el endpoint sea IPv4.",
+    labelTunnelMtu: "MTU del túnel",
+    hintTunnelMtu:
+      "MTU del WAN menos el encapsulado. Edítalo para fijarlo a mano; cambiar el MTU del WAN o la familia del endpoint lo recalcula.",
+    labelClientMtu: "MTU del cliente",
+    hintClientMtu:
+      "Se escribe como MTU = en cada .conf (y como client-mtu en RouterOS 7.25 o posterior). Sin él, iOS y Android usan 1280.",
+    toggleRos725: "RouterOS 7.25 o posterior (añade client-mtu)",
+    hintRos725:
+      "Quita la marca en versiones anteriores: RouterOS rechaza el comando entero si lleva un parámetro que no conoce. La línea MTU = del .conf sigue valiendo.",
+    warnIpv6MinMtu:
+      "El MTU del túnel ({mtu}) queda por debajo de 1280, el mínimo que exige IPv6 en un enlace. Sube el MTU del WAN, elige la familia de endpoint solo IPv4 si es tu caso o desactiva IPv6.",
+    warnTunnelMtuTooLarge:
+      "El MTU del túnel ({mtu}) supera {max} (MTU del WAN {wan} menos {overhead}): los paquetes de tamaño completo se fragmentarán.",
+    warnClientMtuTooLarge:
+      "El MTU del cliente ({mtu}) supera {max} (MTU del WAN {wan} menos {overhead}): los paquetes de tamaño completo que envíe el cliente se fragmentarán.",
     // Listas de interfaces
     sectionInterfaceLists: "Listas de interfaces",
     labelWanList: "Lista WAN",
@@ -1217,11 +1231,17 @@ export const tools = {
     toggleAddressList: "Lista de direcciones",
     toggleMssClamping: "MSS Clamping",
     toggleRawSkipFlood: "RAW Omitir protección contra inundaciones",
-    labelMssValue: "Valor MSS",
-    hintMssValue:
-      "Calculado automáticamente desde el MTU. Modificar si es necesario.",
+    labelMssV4: "MSS IPv4",
+    hintMssV4:
+      "MTU del túnel menos 40 (20 de IPv4 + 20 de TCP), para /ip firewall mangle.",
+    labelMssV6: "MSS IPv6",
+    hintMssV6:
+      "MTU del túnel menos 60 (40 de IPv6 + 20 de TCP), para /ipv6 firewall mangle: la regla de /ip nunca ve IPv6.",
     // Peers
     sectionPeers: "Peers / Clientes",
+    toggleResponder: "El router solo responde handshakes (responder=yes)",
+    hintResponder:
+      "Recomendado para móviles y portátiles que cambian de red: el router contesta pero nunca inicia, así que deja de reintentar contra endpoints muertos, y el keepalive de cada peer va solo al cliente. Quita la marca solo si este router tiene que llamar al peer.",
     addPeer: "Añadir peer",
     addPeerAriaLabel: "Añadir peer",
     removePeerAriaLabel: "Eliminar peer",
@@ -1279,6 +1299,13 @@ export const tools = {
     retrieveKeysForManual:
       "Obtener claves para la configuración manual del cliente:",
     serverPublicKey: "Clave pública del servidor:",
+    headerRouterosVersion: "MikroTik RouterOS {version} o posterior",
+    headerClientMtuVersion: "client-mtu necesita 7.25 o posterior",
+    mtuCommentAuto: "MTU: WAN {wan} - {overhead} ({family}) = {mtu}",
+    mtuCommentManual: "MTU: {mtu} (manual; WAN {wan} - {overhead} = {auto})",
+    mtuFamilyIpv4: "endpoint solo IPv4",
+    mtuFamilyDual: "endpoint IPv6 o dual-stack",
+    confMtuComment: "Fija siempre el MTU: sin él, iOS y Android usan 1280",
   },
   cspBuilder: {
     title: "Constructor de políticas CSP",
@@ -1318,9 +1345,9 @@ export const tools = {
     descScriptSrc: "Permitir scripts del mismo origen con nonce",
     descStyleSrc: "Permitir estilos del mismo origen + estilos en línea",
     descObjectSrc:
-      "Bloquear plugins (Flash, Java) — Requerido para CSP estricto",
+      "Bloquear plugins (Flash, Java); requerido para CSP estricto",
     descBaseUri:
-      "Prevenir inyección de etiqueta base — Requerido para CSP estricto",
+      "Prevenir inyección de etiqueta base; requerido para CSP estricto",
     descFrameAncestors: "Prevenir clickjacking (reemplaza X-Frame-Options)",
     descFormAction: "Restringir envíos de formularios al mismo origen",
     descFrameSrc: "Controlar fuentes de frames e iframes",
@@ -1361,15 +1388,15 @@ export const tools = {
     scriptSrcNonce: "script-src con nonce",
     objectSrcNone: "object-src 'none'",
     baseUriNone: "base-uri 'none'",
-    // Cadenas JS — salida
+    // Cadenas JS: salida
     noDirectivesSelected: "(Ninguna directiva seleccionada)",
-    // Cadenas JS — calificaciones
+    // Cadenas JS: calificaciones
     ratingAPlus: "A+ Estricto",
     ratingA: "A Excelente",
     ratingB: "B Bueno",
     ratingC: "C Básico",
     ratingD: "D Débil",
-    // Cadenas JS — advertencias
+    // Cadenas JS: advertencias
     warnStyleNonce:
       "Considera usar nonce para style-src también en lugar de 'unsafe-inline' para mayor seguridad.",
     warnFrameAncestorsMeta:
@@ -1403,7 +1430,7 @@ export const tools = {
     contextNote:
       "El tag también cubre ver ‖ recordType ‖ slotId ‖ generation. Esos 8 bytes no forman parte del sobre: vienen de dónde vive el registro y de meta.bin, así que reubicar, cambiar de tipo o revertir un registro rompe el MAC. Cambiar uno aquí vuelve a sellar el sobre.",
     fieldType: "recordType",
-    fieldSlot: "slotId (0–65535)",
+    fieldSlot: "slotId (de 0 a 65535)",
     fieldGen: "generation",
     typeCredential: "Credencial (0x01)",
     typeTotp: "Totp (0x02)",
@@ -1411,7 +1438,7 @@ export const tools = {
     prefixLabel: "authPrefix que recalcula la lectura (8 B, no se guarda):",
     envelopeHeading: "Sobre sellado",
     tamperHint:
-      "Pulsa cualquier byte para alterarlo — o usa un ataque de abajo — y observa el veredicto de la lectura.",
+      "Pulsa cualquier byte para alterarlo (o usa un ataque de abajo) y observa el veredicto de la lectura.",
     lengthNote:
       "Aquí el texto cifrado sigue la longitud del secreto, redondeada a 16 bytes. El firmware rellena antes cada credencial hasta un registro fijo de 4.096 bytes, así que todos los cifrados de credencial miden lo mismo.",
     restore: "Restaurar",
@@ -1421,7 +1448,7 @@ export const tools = {
     fieldCipher: "cipher · AES-256-CBC",
     attacksHeading: "Prueba un ataque",
     attacksNote:
-      "Cada uno es una manipulación real del post. Todos se bloquean ante fallos bajo encrypt-then-MAC — pero por motivos distintos.",
+      "Cada uno es una manipulación real del post. Todos se bloquean ante fallos bajo encrypt-then-MAC, pero por motivos distintos.",
     atk_flipCipher: "Voltear un byte del cifrado",
     atk_flipIv: "Voltear un byte del IV",
     atk_forgeTag: "Falsificar el tag",
@@ -1430,26 +1457,26 @@ export const tools = {
     atk_crossType: "Cambiar el tipo de registro",
     atk_rollback: "Revertir la generación",
     modeHeading: "Camino de lectura",
-    modeEtm: "Encrypt-then-MAC — verificar antes de descifrar",
+    modeEtm: "Encrypt-then-MAC: verificar antes de descifrar",
     modeEtmNote:
       "El tag se comprueba primero; un fichero manipulado nunca llega al cifrado.",
-    modeDecryptFirst: "Descifrar-primero — MAC-then-Encrypt (el camino fatal)",
+    modeDecryptFirst: "Descifrar-primero (MAC-then-Encrypt): el camino fatal",
     modeDecryptFirstNote:
-      "El descifrado corre sobre los bytes del atacante antes de consultar el MAC — ahí vive un oráculo de padding.",
+      "El descifrado corre sobre los bytes del atacante antes de consultar el MAC: ahí vive un oráculo de padding.",
     emptyState: "Escribe un secreto arriba para sellarlo en un sobre.",
     emptyPass: "Escribe una frase de paso para crear la bóveda.",
-    okVerdict: "Tag verificado — seguro descifrar.",
+    okVerdict: "Tag verificado: seguro descifrar.",
     failTitle: "La lectura se bloquea ante el fallo.",
     pristine:
-      "El sobre está intacto — altera algún byte para ver cómo reacciona el MAC.",
+      "El sobre está intacto. Altera algún byte para ver cómo reacciona el MAC.",
     reasonByteFlip:
       "Un byte volteado cambia lo que cubre el HMAC, así que el tag recalculado deja de coincidir.",
     reasonFlipCipher:
-      "Un byte del cifrado volteado cambia la entrada del HMAC — el tag deja de coincidir y el cifrado nunca se toca.",
+      "Un byte del cifrado volteado cambia la entrada del HMAC: el tag deja de coincidir y el cifrado nunca se toca.",
     reasonFlipIv:
       "El IV también va autenticado, así que voltear uno de sus bytes rompe el tag antes de cualquier descifrado.",
     reasonForgeTag:
-      "Sin la clave del MAC no puedes falsificar un tag válido — adivinarlo es una búsqueda de 2²⁵⁶.",
+      "Sin la clave del MAC no puedes falsificar un tag válido; adivinarlo es una búsqueda de 2²⁵⁶.",
     reasonTruncate:
       "Quitar un bloque cambia la longitud del cifrado que el tag cubre, así que la verificación falla.",
     reasonCrossSlot:
@@ -1462,14 +1489,14 @@ export const tools = {
       "Versión de formato desconocida: la lectura rechaza el sobre antes incluso de calcular el tag.",
     decryptFirstLeakTitle: "El descifrado corrió sobre bytes del atacante.",
     decryptFirstLeakNote:
-      "Lanzó un error de padding — y esa señal de éxito/fallo es el oráculo de padding. El MAC nunca se alcanzó a tiempo.",
+      "Lanzó un error de padding, y esa señal de éxito/fallo es el oráculo de padding. El MAC nunca se alcanzó a tiempo.",
     decryptFirstOkNote:
       "el cifrado ya produjo salida, y solo ahora se comprueba el MAC (mac {mac}): demasiado tarde.",
     decryptedLabel: "descifrado",
     byteTitle: "Pulsa para alterar este byte",
     byteAria: "{field}, byte {index}: {hex}. Actívalo para voltearlo.",
     insecureContext:
-      "Esta demo en vivo necesita un contexto seguro — ábrela por HTTPS o en localhost para ejecutar la criptografía en el navegador.",
+      "Esta demo en vivo necesita un contexto seguro: ábrela por HTTPS o en localhost para ejecutar la criptografía en el navegador.",
     rekeyHeading: "Cambio de PIN frente a recifrado",
     rekeyNote:
       "Cambiar la frase reenvuelve la clave de bóveda bajo una KEK nueva: cambia una mitad de meta.bin y los registros se quedan como están. Eso abarata el cambio de PIN, y también es la razón de que cambiar el PIN no revoque una clave que alguien ya haya capturado.",
@@ -1496,26 +1523,26 @@ export const tools = {
     oracleRunning:
       "Consultando al oráculo: bloque {block} de {total}, byte a byte…",
     oracleBlocked:
-      "Bloqueado: encrypt-then-MAC verifica el tag primero, así que nunca se llega al descifrado — el oráculo no responde.",
+      "Bloqueado: encrypt-then-MAC verifica el tag primero, así que nunca se llega al descifrado y el oráculo no responde.",
     oracleRecoveredLabel: "Texto plano recuperado:",
     oracleDone:
       "Recuperados los {bytes} bytes (relleno incluido) en {queries} consultas al oráculo, solo con la señal de padding válido/inválido. Sin la clave.",
     oracleNeedBlock: "Hace falta al menos un bloque de cifrado para atacar.",
     oraclePaddingNote:
       "Por qué existe aquí el oráculo: el AES-CBC del navegador añade y comprueba el relleno PKCS#7 por su cuenta, y un relleno malo lanza un error. El firmware rellena con su propio código sobre AES-CBC sin relleno, y comprueba el relleno en tiempo constante solo después de que el MAC haya pasado.",
-    malleabilityHeading: "Maleabilidad CBC — la palanca del atacante",
+    malleabilityHeading: "Maleabilidad CBC: la palanca del atacante",
     malleabilityNote:
-      "En CBC, voltear un byte del IV voltea el byte correspondiente del texto plano del bloque 0 en la misma cantidad exacta — un cambio controlado. (Con encrypt-then-MAC nunca llegas a usarlo.)",
+      "En CBC, voltear un byte del IV voltea el byte correspondiente del texto plano del bloque 0 en la misma cantidad exacta: un cambio controlado. (Con encrypt-then-MAC nunca llegas a usarlo.)",
     malleabilityIdle:
       "Voltea un byte del IV (arriba) para ver el cambio controlado que haría en el texto plano.",
-    malleabilityFlipped: "Cambio controlado en el bloque 0 del texto plano —",
+    malleabilityFlipped: "Cambio controlado en el bloque 0 del texto plano:",
   },
   bruteForceCost: {
     charsetLabel: "Alfabeto del secreto",
-    charsetDigits: "Dígitos (PIN) — 10",
-    charsetAlnumLower: "Minúsculas + dígitos — 36",
-    charsetAlnum: "Letras + dígitos — 62",
-    charsetFull: "Todo ASCII imprimible — 95",
+    charsetDigits: "Dígitos (PIN): 10",
+    charsetAlnumLower: "Minúsculas + dígitos: 36",
+    charsetAlnum: "Letras + dígitos: 62",
+    charsetFull: "Todo ASCII imprimible: 95",
     lengthLabel: "Longitud",
     iterationsLabel: "Iteraciones PBKDF2",
     presetProd: "35.000 (producción del dispositivo)",
@@ -1540,13 +1567,13 @@ export const tools = {
     expectedLabel: "esperado (½)",
     infeasibleTitle: "Inviable offline.",
     infeasibleBody:
-      "Cada intento necesita el secreto sellado del chip original, que no puede extraerse — así que una flash volcada es inútil en cualquier otro hardware.",
+      "Cada intento necesita el secreto sellado del chip original, que no puede extraerse, así que una flash volcada es inútil en cualquier otro hardware.",
     verdictInstant:
       "Un secreto corto tras un factor de trabajo asumible cae prácticamente al instante offline.",
     verdictShort:
-      "Aún al alcance de un atacante paciente — el factor de trabajo solo compra de horas a meses.",
+      "Aún al alcance de un atacante paciente: el factor de trabajo solo compra de horas a meses.",
     verdictLong:
-      "El espacio de claves por sí solo basta para resistir un barrido offline — pero pocos usuarios eligen secretos tan fuertes.",
+      "El espacio de claves por sí solo basta para resistir un barrido offline, pero pocos usuarios eligen secretos tan fuertes.",
     onlineNote:
       "Esto modela el ataque offline (una flash volcada). En el propio dispositivo, los intentos online están limitados por un bloqueo que borra la bóveda tras unos pocos intentos.",
     unitMs: "ms",
@@ -1562,7 +1589,7 @@ export const tools = {
     inputLabel: "Cadenas (una por línea)",
     inputPlaceholder: "Pega una cadena por línea...",
     inputHint:
-      "Cada línea es una entrada del índice — una celda (idioma × ID). Las cadenas idénticas y los sufijos se fusionan.",
+      "Cada línea es una entrada del índice: una celda (idioma × ID). Las cadenas idénticas y los sufijos se fusionan.",
     pointerWidthLabel: "Ancho de puntero",
     bits32: "32 bits (punteros de 4 B)",
     bits64: "64 bits (punteros de 8 B)",
@@ -1583,7 +1610,7 @@ export const tools = {
     colOffset: "Offset",
     colBytes: "Bytes en pool",
     colStatus: "Estado",
-    privacyNote: "Todo se ejecuta en tu navegador — no se sube nada.",
+    privacyNote: "Todo se ejecuta en tu navegador; no se sube nada.",
     emptyState: "Introduce cadenas arriba para ver la comparación.",
     statusStored: "almacenada",
     statusTail: 'cola de "{s}"',
@@ -1604,10 +1631,10 @@ export const tools = {
     lookupIdLabel: "ID de cadena",
     lookupLangLabel: "Idioma",
     lookupResolved: 'gen::string({lang}, {id}) → pool + {off} → "{val}"',
-    lookupTail: 'el offset apunta dentro de "{s}" — se lee igual',
+    lookupTail: 'el offset apunta dentro de "{s}"; la cadena se lee igual',
     retrievalNote:
-      "Toda cadena — almacenada o tail-merged — se lee con pool + offset, así que la recuperación es O(1) e idéntica independientemente de la fusión.",
+      "Toda cadena (almacenada o tail-merged) se lee con pool + offset, así que la recuperación es O(1) e idéntica independientemente de la fusión.",
     csvError:
-      "No se pudo parsear el CSV — necesita una cabecera que empiece por id y al menos una columna de idioma.",
+      "No se pudo parsear el CSV: necesita una cabecera que empiece por id y al menos una columna de idioma.",
   },
 };

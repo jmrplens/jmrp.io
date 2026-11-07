@@ -1,5 +1,5 @@
 /**
- * English translations — interactive tools.
+ * English translations: interactive tools.
  *
  * Each tool has its own namespace under `tools.<toolName>`.
  * Shared strings used across multiple tools are under `tools.shared`.
@@ -33,7 +33,7 @@ export const tools = {
     errorCalculating: "Error calculating hash",
     howItWorks: "How it works:",
     howItWorksText:
-      "The browser calculates the hash of your inline script content (excluding &lt;script&gt; tags) and compares it against the hash in your CSP header. If they match, the script executes. Any change to the script\u{2014}even whitespace\u{2014}invalidates the hash. SHA-256 is recommended for broad compatibility.",
+      "The browser calculates the hash of your inline script content (excluding &lt;script&gt; tags) and compares it against the hash in your CSP header. If they match, the script executes. Any change to the script, even whitespace, invalidates the hash. SHA-256 is recommended for broad compatibility.",
   },
   passwordGenerator: {
     title: "Password Generator",
@@ -223,19 +223,19 @@ export const tools = {
     // JS script strings
     enterValidAddress: "Enter a valid IPv4 or IPv6 address",
     invalidIpv4: "Invalid IPv4 address",
-    ipv4CidrRange: "IPv4 CIDR must be 0–32",
+    ipv4CidrRange: "IPv4 CIDR must be 0 to 32",
     invalidIpv6: "Invalid IPv6 address",
-    ipv6CidrRange: "IPv6 CIDR must be 0–128",
+    ipv6CidrRange: "IPv6 CIDR must be 0 to 128",
     enterIpOrInteger: "Enter an IP address or integer",
     couldNotParse: "Could not parse input as IPv4, IPv6, integer, or hex",
     invalidBaseNetwork: "Invalid base network IPv4 address",
-    cidrRange030: "CIDR must be 0–30",
+    cidrRange030: "CIDR must be 0 to 30",
     addAtLeastOneSubnet: "Add at least one subnet requirement",
     notEnoughSpace: "Not enough space for all subnets",
     enterValidIpv4Addresses: "Enter valid IPv4 addresses",
     startMustBeLessOrEqual: "Start IP must be less than or equal to End IP",
     noCidrBlocksFound: "No CIDR blocks found",
-    // Result labels — IPv4 subnet
+    // Result labels: IPv4 subnet
     networkAddress: "Network Address",
     broadcastAddress: "Broadcast Address",
     subnetMask: "Subnet Mask",
@@ -251,7 +251,7 @@ export const tools = {
     binaryMask: "Binary Mask",
     reverseDns: "Reverse DNS (PTR)",
     ipv4MappedIpv6: "IPv4-Mapped IPv6",
-    // Result labels — IPv6 subnet
+    // Result labels: IPv6 subnet
     networkPrefix: "Network Prefix",
     firstAddress: "First Address",
     lastAddress: "Last Address",
@@ -267,7 +267,7 @@ export const tools = {
     bitsTotal: "bits total",
     prefixBoundary: "Prefix Boundary (first 64 bits)",
     prefixExtendsBeyond: "Prefix extends beyond 64 bits",
-    // Address type strings — IPv4
+    // Address type strings: IPv4
     typeCurrentNetwork: "Current Network (RFC 1122)",
     typePrivate: "Private (RFC 1918)",
     typeCgnat: "CGNAT / Shared (RFC 6598)",
@@ -280,7 +280,7 @@ export const tools = {
     typeBroadcast: "Broadcast",
     typeReserved: "Reserved",
     typePublicGlobal: "Public / Global",
-    // Address type strings — IPv6
+    // Address type strings: IPv6
     typeUnspecified: "Unspecified (::)",
     typeLoopbackV6: "Loopback (::1)",
     typeIpv4Mapped: "IPv4-Mapped",
@@ -312,9 +312,14 @@ export const tools = {
     scopeSiteLocal: "Site-Local",
     scopeOrgLocal: "Organization-Local",
     scopeGlobal: "Global",
-    scopeMulticast: "Multicast —",
+    scopeMulticast: "Multicast:",
     scopeUnspecified: "Unspecified",
     scopeReserved: "Reserved",
+    scopeUnknown: "Unknown scope {scope}",
+    // IPv4 address classes that carry a description
+    classDMulticast: "D (Multicast)",
+    classEReserved: "E (Reserved)",
+    addressRange: "{first} to {last}",
     // VLSM UI
     subnetNamePlaceholder: "Subnet name",
     hostsNeededPlaceholder: "Hosts needed",
@@ -439,8 +444,8 @@ export const tools = {
     copyFgHsl: "Copy foreground HSL value",
     copyBgRgb: "Copy background RGB value",
     copyBgHsl: "Copy background HSL value",
-    previewLargeText: "Large text (24px) — Heading",
-    previewSmallText: "Small text (12px) — Secondary information and captions",
+    previewLargeText: "Large text (24px): heading",
+    previewSmallText: "Small text (12px): secondary information and captions",
     uiComponents: "UI Components",
     button: "Button",
     inputField: "Input field",
@@ -477,7 +482,7 @@ export const tools = {
     apcaLargeNonText: "Large non-text elements only",
     apcaNonText: "Non-text elements (icons, borders)",
     apcaSubtle: "Subtle visual indicators only",
-    apcaInvisible: "Invisible — not usable",
+    apcaInvisible: "Invisible, not usable",
   },
   cronBuilder: {
     title: "Cron Expression Builder",
@@ -549,14 +554,14 @@ export const tools = {
     symbolCommaMeaning: "List of values",
     symbolCommaExample: "at :00 and :30",
     symbolDashMeaning: "Range",
-    symbolDashExample: "every hour 9–17",
+    symbolDashExample: "every hour from 9 to 17",
     symbolSlashMeaning: "Step / interval",
     symbolSlashExample: "every 10 min",
-    syntaxMinute: "minute (0–59)",
-    syntaxHour: "hour (0–23)",
-    syntaxDom: "day of month (1–31)",
-    syntaxMonth: "month (1–12)",
-    syntaxDow: "day of week (0–7, 0&7=Sun)",
+    syntaxMinute: "minute (0 to 59)",
+    syntaxHour: "hour (0 to 23)",
+    syntaxDom: "day of month (1 to 31)",
+    syntaxMonth: "month (1 to 12)",
+    syntaxDow: "day of week (0 to 7, 0&7=Sun)",
     syntaxCommand: "command",
     // Actions
     copyShareableLink: "Copy shareable link",
@@ -583,8 +588,8 @@ export const tools = {
     descEveryMinuteDuringHour: "Every minute during hour {hour}",
     descAtMinuteOfEveryHour: "At minute {min} of every hour",
     descOnDayOfMonth: "on day {days} of the month",
-    descOnWeekdays: "on weekdays (Mon–Fri)",
-    descOnWeekends: "on weekends (Sat–Sun)",
+    descOnWeekdays: "on weekdays (Mon to Fri)",
+    descOnWeekends: "on weekends (Sat and Sun)",
     customSchedule: "Custom schedule",
     relativeInDH: "in {d}d {h}h",
     relativeInHM: "in {h}h {m}m",
@@ -720,25 +725,22 @@ export const tools = {
     certExpired: "Certificate has expired",
     certExpiresIn: "Certificate expires in {days} days",
     certValid: "Certificate is valid",
-    rsaKeyTooSmall:
-      "RSA key too small ({bits} bits) \u{2014} minimum 2048 required",
+    rsaKeyTooSmall: "RSA key too small ({bits} bits): minimum 2048 required",
     rsaKeyOk: "RSA {bits}-bit key \u{2713}",
     rsaKeyStrong: "RSA {bits}-bit key (strong) \u{2713}",
     ecdsaKeyStrong: "ECDSA {curve} key (strong) \u{2713}",
     ecCurve: "EC curve: {curve}",
-    sha1Deprecated: "SHA-1 signature \u{2014} deprecated and insecure",
+    sha1Deprecated: "SHA-1 signature: deprecated and insecure",
     sigAlgOk: "{alg} signature \u{2713}",
-    selfSignedWarning:
-      "Self-signed certificate \u{2014} not trusted by browsers",
+    selfSignedWarning: "Self-signed certificate: not trusted by browsers",
     sansPresent: "{count} Subject Alternative Name(s) \u{2713}",
-    noSans:
-      "No Subject Alternative Names \u{2014} modern browsers require SANs",
+    noSans: "No Subject Alternative Names: modern browsers require SANs",
     wildcardDetected: "Wildcard certificate detected",
     isCaCert: "This is a CA certificate",
     ctSctsPresent: "Certificate Transparency SCTs present \u{2713}",
-    noCtScts: "No CT SCTs found \u{2014} may not be trusted by Chrome",
+    noCtScts: "No CT SCTs found: may not be trusted by Chrome",
     validityExceeds:
-      "Certificate validity {days} days \u{2014} exceeds 398-day maximum (CA/B Forum)",
+      "Certificate validity {days} days: exceeds 398-day maximum (CA/B Forum)",
     validityPeriodOk: "Validity period {days} days \u{2713}",
   },
   httpHeadersAnalyzer: {
@@ -754,7 +756,7 @@ export const tools = {
     fetching: "Fetching...",
     fetchingHeaders: "Fetching headers...",
     noHeadersReturned:
-      "No headers returned — the server may have refused the request.",
+      "No headers returned. The server may have refused the request.",
     fetchedHeaders: "\u{2713} Fetched {count} headers.",
     failedToFetch: "\u{2717} {msg}",
     failedToFetchDefault: "Failed to fetch",
@@ -786,129 +788,125 @@ export const tools = {
     cspDesc:
       "Controls which resources can be loaded. Essential for preventing XSS and injection attacks.",
     cspMissing:
-      "Missing \u{2014} high XSS risk. Use the CSP Builder tool to generate a policy.",
+      "Missing: high XSS risk. Use the CSP Builder tool to generate a policy.",
     cspDefaultSrcNone: "default-src 'none' \u{2713}",
     cspDefaultSrcSelf:
       "default-src 'self' \u{2713} (consider 'none' for stricter policy)",
     cspMissingDefaultSrc: "Missing default-src fallback",
-    cspUnsafeInline:
-      "script-src 'unsafe-inline' \u{2014} negates XSS protection",
-    cspUnsafeEval: "'unsafe-eval' \u{2014} allows dynamic code execution",
+    cspUnsafeInline: "script-src 'unsafe-inline' negates XSS protection",
+    cspUnsafeEval: "'unsafe-eval' allows dynamic code execution",
     cspDangerousSource: "Dangerous source in script-src (wildcard/data:/blob:)",
     cspTrustsAllHttps:
-      "script-src trusts all HTTPS \u{2014} prefer explicit origins or nonces",
-    cspCdnBypass:
-      "CDN allowlisting can be bypassed via JSONP \u{2014} prefer nonces",
+      "script-src trusts all HTTPS; prefer explicit origins or nonces",
+    cspCdnBypass: "CDN allowlisting can be bypassed via JSONP; prefer nonces",
     cspUsesNonces: "Uses nonces \u{2713}",
     cspMissingNonces:
-      "Missing nonces \u{2014} consider nonces for stricter inline control (+4 pts)",
+      "Missing nonces; consider nonces for stricter inline control (+4 pts)",
     cspStrictDynamic: "strict-dynamic \u{2713}",
     cspMissingStrictDynamic:
-      "Missing strict-dynamic \u{2014} recommended with nonces for CSP Level 3 (+3 pts)",
+      "Missing strict-dynamic: recommended with nonces for CSP Level 3 (+3 pts)",
     cspObjectSrcNone: "object-src 'none' \u{2713}",
     cspMissingObjectSrc:
-      "Missing object-src 'none' \u{2014} plugin bypass vector (+2 pts)",
+      "Missing object-src 'none': plugin bypass vector (+2 pts)",
     cspBaseUriRestricted: "base-uri restricted \u{2713}",
     cspMissingBaseUri:
-      "Missing base-uri \u{2014} vulnerable to base tag injection (+1 pt)",
+      "Missing base-uri: vulnerable to base tag injection (+1 pt)",
     cspFormActionDefined: "form-action defined \u{2713}",
     cspMissingFormAction:
-      "Missing form-action \u{2014} forms can submit to attacker servers (+1 pt)",
+      "Missing form-action: forms can submit to attacker servers (+1 pt)",
     cspFrameAncestorsDefined: "frame-ancestors defined \u{2713}",
     cspMissingFrameAncestors:
-      "Missing frame-ancestors \u{2014} use 'none' to prevent framing (+1 pt)",
+      "Missing frame-ancestors; use 'none' to prevent framing (+1 pt)",
     cspUpgradeInsecure: "upgrade-insecure-requests \u{2713}",
     cspMissingUpgradeInsecure: "Missing upgrade-insecure-requests (+1 pt)",
     cspReportingConfigured: "CSP reporting configured \u{2713}",
     cspNoReporting:
-      "No CSP reporting \u{2014} add report-uri or report-to for violation monitoring (+1 pt)",
+      "No CSP reporting; add report-uri or report-to for violation monitoring (+1 pt)",
     cspTrustedTypes: "Trusted Types enabled \u{2713}",
     // HSTS
     hstsDesc:
       "Enforces HTTPS connections. Prevents protocol downgrade and cookie hijacking attacks.",
-    hstsMissing: "Missing \u{2014} vulnerable to downgrade attacks",
+    hstsMissing: "Missing: vulnerable to downgrade attacks",
     hstsMaxAgeZero: "max-age=0 effectively disables HSTS",
     hstsMaxAge2Years: "max-age \u{2265} 2 years \u{2713}",
     hstsMaxAge1Year:
-      "max-age \u{2265} 1 year \u{2014} increase to 63072000 for 2 years (+1 pt)",
+      "max-age \u{2265} 1 year; increase to 63072000 for 2 years (+1 pt)",
     hstsMaxAgeLow: "max-age should be \u{2265} 31536000 (1 year)",
     hstsIncludeSubDomains: "includeSubDomains \u{2713}",
     hstsMissingIncludeSubDomains: "Missing includeSubDomains (+2 pts)",
     hstsPreload: "preload \u{2713} (submit to hstspreload.org)",
     hstsMissingPreload:
-      "Missing preload \u{2014} add to be eligible for HSTS preload list (+2 pts)",
+      "Missing preload; add to be eligible for HSTS preload list (+2 pts)",
     // X-Content-Type-Options
     xctDesc:
       "Prevents MIME type sniffing. Must be set to 'nosniff'. Stops browsers from interpreting files as a different MIME type.",
-    xctMissing: "Missing \u{2014} browser may sniff MIME types",
+    xctMissing: "Missing: browser may sniff MIME types",
     xctCorrect: "Correctly set to nosniff \u{2713}",
     xctWrong: "Should be exactly 'nosniff'",
     // X-Frame-Options
     xfoDesc:
       "Prevents clickjacking by controlling iframe embedding. CSP frame-ancestors is the modern replacement.",
-    xfoMissing: "Missing \u{2014} consider adding or using CSP frame-ancestors",
+    xfoMissing: "Missing; consider adding or using CSP frame-ancestors",
     xfoDeny: "Set to DENY \u{2713}",
-    xfoSameorigin:
-      "Set to SAMEORIGIN \u{2014} DENY is more restrictive (+2 pts)",
+    xfoSameorigin: "Set to SAMEORIGIN; DENY is more restrictive (+2 pts)",
     xfoUnexpected: "Unexpected value: {val}",
     // Referrer-Policy
     rpDesc:
       "Controls how much referrer information is sent with requests. Prevents leaking sensitive URL paths to third parties.",
-    rpMissing: "Missing \u{2014} full URL may leak in Referer header",
+    rpMissing: "Missing: full URL may leak in Referer header",
     rpSecure: "Secure policy: {val} \u{2713}",
     rpAcceptable:
       "Acceptable but 'strict-origin-when-cross-origin' is preferred (+3 pts)",
-    rpUnsafeUrl: "unsafe-url \u{2014} full URL leaked on all requests",
+    rpUnsafeUrl: "unsafe-url: full URL leaked on all requests",
     rpConsider: "Consider a more restrictive policy",
     // Permissions-Policy
     ppDesc:
       "Controls which browser features (camera, mic, geolocation, etc.) can be used. Reduces attack surface from embedded content.",
-    ppMissing: "Missing \u{2014} browser features unrestricted",
+    ppMissing: "Missing: browser features unrestricted",
     ppDisabled: "{feature} disabled \u{2713}",
     ppMissingRestriction: "Missing {feature}=() restriction (+1 pt)",
     // X-XSS-Protection
     xxpDesc:
       "Legacy XSS filter. Should be '0' (disabled) when CSP is present. If no CSP, setting '1; mode=block' provides basic protection.",
     xxpAbsentCorrect:
-      "Absent \u{2014} correct, CSP provides superior protection \u{2713}",
+      "Absent: correct, CSP provides superior protection \u{2713}",
     xxpDisabledCorrect: "Correctly disabled \u{2713} (CSP replaces this)",
     xxpShouldBeZero:
-      "Should be '0' when CSP is present \u{2014} the XSS auditor can introduce vulnerabilities",
-    xxpMissingNoCsp: "Missing and no CSP \u{2014} no XSS protection at all",
+      "Should be '0' when CSP is present: the XSS auditor can introduce vulnerabilities",
+    xxpMissingNoCsp: "Missing and no CSP: no XSS protection at all",
     xxpDisabledNoCsp:
-      "Disabled but no CSP set \u{2014} consider adding CSP or '1; mode=block'",
-    xxpLegacyEnabled:
-      "Legacy filter enabled \u{2014} add CSP for proper protection",
+      "Disabled but no CSP set. Consider adding CSP or '1; mode=block'",
+    xxpLegacyEnabled: "Legacy filter enabled; add CSP for proper protection",
     xxpConsiderCsp: "Consider adding CSP for robust protection",
     // COOP
     coopDesc:
       "Isolates the browsing context from cross-origin popups. Prevents Spectre-type side-channel attacks.",
-    coopMissing: "Missing \u{2014} browsing context not isolated",
+    coopMissing: "Missing: browsing context not isolated",
     coopSameOrigin: "same-origin \u{2713}",
-    coopPartialIsolation: "Partial isolation \u{2014} allows popups",
+    coopPartialIsolation: "Partial isolation: allows popups",
     coopConsiderSameOrigin: "Consider same-origin for full isolation (+3 pts)",
     coopUnexpected: "Unexpected value",
     // CORP
     corpDesc:
       "Controls which origins can load your resources. Prevents data leaks via cross-origin requests.",
-    corpMissing: "Missing \u{2014} resources can be loaded cross-origin",
+    corpMissing: "Missing: resources can be loaded cross-origin",
     corpSameOrigin: "same-origin \u{2713}",
-    corpSameSite: "same-site \u{2014} more restrictive than cross-origin",
+    corpSameSite: "same-site: more restrictive than cross-origin",
     corpConsiderSameOrigin2:
       "Consider same-origin for strictest protection (+2 pts)",
-    corpCrossOrigin: "cross-origin \u{2014} least restrictive",
+    corpCrossOrigin: "cross-origin: least restrictive",
     corpConsiderSameOrigin5:
       "Consider same-origin for strictest protection (+5 pts)",
     // COEP
     coepDesc:
       "Controls embedding of cross-origin resources. Required for SharedArrayBuffer and high-resolution timers.",
-    coepMissing: "Missing \u{2014} cannot use SharedArrayBuffer",
+    coepMissing: "Missing: cannot use SharedArrayBuffer",
     coepRequireCorp: "require-corp \u{2713}",
-    coepCredentialless: "credentialless \u{2014} acceptable",
+    coepCredentialless: "credentialless: acceptable",
     coepConsiderRequireCorp:
       "Consider require-corp for full cross-origin isolation (+2 pts)",
     coepUnexpected: "Unexpected value",
-    // Information leak headers — descriptions
+    // Information leak headers: descriptions
     serverDesc:
       "Reveals server software and version. Helps attackers identify known vulnerabilities.",
     xPoweredByDesc:
@@ -919,33 +917,29 @@ export const tools = {
     // Information leak checks
     serverNotExposed: "Not exposed \u{2713}",
     serverProxyCdn:
-      "Proxy/CDN identified ('{val}') \u{2014} no origin server exposed \u{2713}",
+      "Proxy/CDN identified ('{val}'): no origin server exposed \u{2713}",
     serverVersionExposed:
-      "Exposes server version ('{val}') \u{2014} remove version number",
-    serverNameExposed:
-      "Server name exposed ('{val}') \u{2014} consider removing",
-    xPoweredByExposed:
-      "Exposes technology: '{val}' \u{2014} remove this header",
-    xAspnetVersionExposed:
-      "Exposes ASP.NET version: '{val}' \u{2014} remove it",
-    xAspnetMvcVersionExposed: "Exposes ASP.NET MVC version \u{2014} remove it",
-    xGeneratorExposed: "Exposes generator: '{val}' \u{2014} remove it",
+      "Exposes server version ('{val}'); remove version number",
+    serverNameExposed: "Server name exposed ('{val}'); consider removing",
+    xPoweredByExposed: "Exposes technology: '{val}'; remove this header",
+    xAspnetVersionExposed: "Exposes ASP.NET version: '{val}'; remove it",
+    xAspnetMvcVersionExposed: "Exposes ASP.NET MVC version; remove it",
+    xGeneratorExposed: "Exposes generator: '{val}'; remove it",
     // Cookie security
-    cookieMissingSecure: "Missing Secure flag \u{2014} cookie sent over HTTP",
-    cookieMissingHttpOnly:
-      "Missing HttpOnly flag \u{2014} accessible to JavaScript",
-    cookieMissingSameSite: "Missing SameSite attribute \u{2014} CSRF risk",
+    cookieMissingSecure: "Missing Secure flag: cookie sent over HTTP",
+    cookieMissingHttpOnly: "Missing HttpOnly flag: accessible to JavaScript",
+    cookieMissingSameSite: "Missing SameSite attribute: CSRF risk",
     cookieSameSiteNoneNoSecure: "SameSite=None requires Secure flag",
     cookieHostPrefix: "Uses __Host- prefix \u{2713} (most secure)",
     cookieSecurePrefix: "Uses __Secure- prefix \u{2713}",
     cookieAllPresent: "Secure, HttpOnly, SameSite all present \u{2713}",
     // Cross-header consistency
     consistencyXfoNoCspFrameAncestors:
-      "X-Frame-Options is set but CSP frame-ancestors is missing \u{2014} add frame-ancestors for modern browsers",
+      "X-Frame-Options is set but CSP frame-ancestors is missing; add frame-ancestors for modern browsers",
     consistencyXxpNotZero:
-      "CSP is present but X-XSS-Protection is not '0' \u{2014} disable the legacy auditor to avoid introducing vulnerabilities",
+      "CSP is present but X-XSS-Protection is not '0'; disable the legacy auditor to avoid introducing vulnerabilities",
     consistencyUpgradeNoHsts:
-      "upgrade-insecure-requests set in CSP but HSTS is missing \u{2014} add HSTS for complete HTTPS enforcement",
+      "upgrade-insecure-requests set in CSP but HSTS is missing; add HSTS for complete HTTPS enforcement",
     consistencyXfoContradictsFrameAncestors:
       "X-Frame-Options ({val}) contradicts CSP frame-ancestors 'none'",
   },
@@ -1015,11 +1009,11 @@ export const tools = {
     noSpaces: "No spaces",
     cArray: "C array",
     framePlaceholder: "Configure the fields above to generate a frame",
-    // JS — address hints
+    // JS: address hints
     protocolAddress: "Protocol address: {addr} (0x{hex})",
     modiconAddress: "Modicon {raw} \u{2192} address {addr} (0x{hex})",
     hexAddr: "Hex: 0x{hex}",
-    // JS — dynamic labels
+    // JS: dynamic labels
     labelValue: "Value",
     labelQuantity: "Quantity",
     coilValue: "Coil Value (FF 00=ON, 00 00=OFF)",
@@ -1027,23 +1021,23 @@ export const tools = {
     diagnosticsData: "Diagnostics Data (hex bytes)",
     writeDataHex: "Write Data (hex bytes)",
     writeValuesHex: "Write Values (hex bytes, space-separated)",
-    // JS — error/placeholder messages
+    // JS: error/placeholder messages
     frameTooShort: "Frame too short (minimum 2 bytes)",
     rtuFrameTooShort: "RTU frame too short (min 4 bytes)",
     tcpFrameTooShort: "TCP frame too short (min 8 bytes)",
     asciiFrameTooShort: "ASCII frame too short",
     enterHexFrame: "Enter a hex frame and click Decode",
-    // JS — data interpretation
+    // JS: data interpretation
     byteCount: "Byte count: {n}",
     rawData: "Raw: {data}",
     register: "Register",
     hex: "Hex",
     value: "Value",
     registerPair: "Register Pair",
-    // JS — CRC/LRC validation
+    // JS: CRC/LRC validation
     crcValid: "\u{2713} Valid",
     crcInvalid: "\u{2717} Invalid (expected {expected})",
-    // JS — response hints
+    // JS: response hints
     hintReadRegisterData:
       "Format: [byte count] [register data]. Example: 04 00 0A 00 64 (2 registers: 10, 100)",
     hintReadCoilData:
@@ -1052,7 +1046,7 @@ export const tools = {
       "Response echoes request: [addr hi] [addr lo] [value hi] [value lo]",
     hintMultiWriteEcho:
       "Response echoes: [addr hi] [addr lo] [qty hi] [qty lo]",
-    // JS — segment labels (frame breakdown)
+    // JS: segment labels (frame breakdown)
     segSlave: "Slave",
     segData: "Data",
     segTransaction: "Transaction",
@@ -1063,7 +1057,7 @@ export const tools = {
     segEnd: "End",
     segExtraData: "Extra Data",
     segExceptionCode: "Exception Code",
-    // JS — segment labels with placeholders (frame breakdown)
+    // JS: segment labels with placeholders (frame breakdown)
     segSlaveLabel: "Slave: {value}",
     segTransactionLabel: "Transaction: {value}",
     segProtocolLabel: "Protocol: {value}",
@@ -1183,8 +1177,30 @@ export const tools = {
     toggleAdvanced: "Advanced Configuration",
     // MTU
     sectionMtu: "MTU",
-    labelInterfaceMtu: "Interface MTU",
-    hintMtu: "Default 1500. Reduce to 1420 if experiencing fragmentation.",
+    labelWanMtu: "WAN MTU",
+    hintWanMtu:
+      "PPPoE usually gives 1492; some ISPs negotiate less (DIGI: 1480). Read actual-mtu in /interface print detail.",
+    labelEndpointFamily: "Endpoint family",
+    optEndpointIpv4: "IPv4 only (A record or IPv4 literal)",
+    optEndpointDual: "IPv6 or dual-stack (AAAA, or a roaming client)",
+    // cspell:ignore XLAT
+    hintEndpointFamily:
+      "Sets the overhead: 60 bytes over IPv4, 80 over IPv6. Phones on IPv6-only networks with 464XLAT travel as IPv6 even when the endpoint is IPv4.",
+    labelTunnelMtu: "Tunnel MTU",
+    hintTunnelMtu:
+      "WAN MTU minus the overhead. Edit it to override; changing the WAN MTU or the endpoint family recalculates it.",
+    labelClientMtu: "Client MTU",
+    hintClientMtu:
+      "Written as MTU = in every .conf (and as client-mtu on RouterOS 7.25 or later). Without it, iOS and Android use 1280.",
+    toggleRos725: "RouterOS 7.25 or later (adds client-mtu)",
+    hintRos725:
+      "Clear it on older versions: RouterOS rejects the whole command if it carries a parameter it does not know. The MTU = line in the .conf still applies.",
+    warnIpv6MinMtu:
+      "Tunnel MTU {mtu} is below 1280, the minimum IPv6 requires on a link. Raise the WAN MTU, choose the IPv4-only endpoint family if it applies, or turn IPv6 off.",
+    warnTunnelMtuTooLarge:
+      "Tunnel MTU {mtu} is above {max} (WAN MTU {wan} minus {overhead}): full-size packets will fragment.",
+    warnClientMtuTooLarge:
+      "Client MTU {mtu} is above {max} (WAN MTU {wan} minus {overhead}): full-size packets from the client will fragment.",
     // Interface Lists
     sectionInterfaceLists: "Interface Lists",
     labelWanList: "WAN List",
@@ -1199,10 +1215,17 @@ export const tools = {
     toggleAddressList: "Address List",
     toggleMssClamping: "MSS Clamping",
     toggleRawSkipFlood: "RAW Skip Flood Protection",
-    labelMssValue: "MSS Value",
-    hintMssValue: "Auto-calculated from MTU. Override if needed.",
+    labelMssV4: "IPv4 MSS",
+    hintMssV4:
+      "Tunnel MTU minus 40 (20 IPv4 + 20 TCP), for /ip firewall mangle.",
+    labelMssV6: "IPv6 MSS",
+    hintMssV6:
+      "Tunnel MTU minus 60 (40 IPv6 + 20 TCP), for /ipv6 firewall mangle: the /ip rule never sees IPv6.",
     // Peers
     sectionPeers: "Peers / Clients",
+    toggleResponder: "Router only answers handshakes (responder=yes)",
+    hintResponder:
+      "Recommended for phones and laptops that roam: the router answers but never initiates, so it stops retrying dead endpoints, and each peer's keepalive goes to the client only. Clear it only if this router has to call the peer.",
     addPeer: "Add Peer",
     addPeerAriaLabel: "Add peer",
     removePeerAriaLabel: "Remove peer",
@@ -1256,6 +1279,13 @@ export const tools = {
     orScanQr: "Or scan QR code from WinBox/WebFig → peer → show-client-config",
     retrieveKeysForManual: "Retrieve keys for manual client configuration:",
     serverPublicKey: "Server public key:",
+    headerRouterosVersion: "MikroTik RouterOS {version} or later",
+    headerClientMtuVersion: "client-mtu needs 7.25 or later",
+    mtuCommentAuto: "MTU: WAN {wan} - {overhead} ({family}) = {mtu}",
+    mtuCommentManual: "MTU: {mtu} (manual; WAN {wan} - {overhead} = {auto})",
+    mtuFamilyIpv4: "IPv4-only endpoint",
+    mtuFamilyDual: "IPv6 or dual-stack endpoint",
+    confMtuComment: "Always set MTU: without it iOS and Android use 1280",
   },
   cspBuilder: {
     title: "CSP Policy Builder",
@@ -1293,8 +1323,8 @@ export const tools = {
     descDefaultSrc: "Block all resources by default (deny-by-default approach)",
     descScriptSrc: "Allow scripts from same origin with nonce",
     descStyleSrc: "Allow styles from same origin + inline styles",
-    descObjectSrc: "Block plugins (Flash, Java) — Required for strict CSP",
-    descBaseUri: "Prevent base tag injection — Required for strict CSP",
+    descObjectSrc: "Block plugins (Flash, Java); required for strict CSP",
+    descBaseUri: "Prevent base tag injection; required for strict CSP",
     descFrameAncestors: "Prevent clickjacking (replaces X-Frame-Options)",
     descFormAction: "Restrict form submissions to same origin",
     descFrameSrc: "Control sources for frames and iframes",
@@ -1333,15 +1363,15 @@ export const tools = {
     scriptSrcNonce: "script-src with nonce",
     objectSrcNone: "object-src 'none'",
     baseUriNone: "base-uri 'none'",
-    // JS strings — output
+    // JS strings: output
     noDirectivesSelected: "(No directives selected)",
-    // JS strings — ratings
+    // JS strings: ratings
     ratingAPlus: "A+ Strict",
     ratingA: "A Excellent",
     ratingB: "B Good",
     ratingC: "C Basic",
     ratingD: "D Weak",
-    // JS strings — warnings
+    // JS strings: warnings
     warnStyleNonce:
       "Consider using nonce for style-src too instead of 'unsafe-inline' for better security.",
     warnFrameAncestorsMeta:
@@ -1375,7 +1405,7 @@ export const tools = {
     contextNote:
       "The tag also covers ver ‖ recordType ‖ slotId ‖ generation. These 8 bytes are not part of the envelope: they come from where the record lives and from meta.bin, so relocating, retyping, or rolling back a record breaks the MAC. Changing one here re-seals the envelope.",
     fieldType: "recordType",
-    fieldSlot: "slotId (0–65535)",
+    fieldSlot: "slotId (0 to 65535)",
     fieldGen: "generation",
     typeCredential: "Credential (0x01)",
     typeTotp: "Totp (0x02)",
@@ -1383,7 +1413,7 @@ export const tools = {
     prefixLabel: "authPrefix the read recomputes (8 B, not stored):",
     envelopeHeading: "Sealed envelope",
     tamperHint:
-      "Click any byte to flip it — or use an attack below — then watch the read-path verdict.",
+      "Click any byte to flip it (or use an attack below), then watch the read-path verdict.",
     lengthNote:
       "Here the ciphertext tracks the secret's length, rounded up to 16 bytes. The firmware pads every credential to a fixed 4,096-byte record first, so all credential ciphertexts have the same length.",
     restore: "Restore",
@@ -1393,7 +1423,7 @@ export const tools = {
     fieldCipher: "cipher · AES-256-CBC",
     attacksHeading: "Try an attack",
     attacksNote:
-      "Each one is a real tampering from the post. They all fail closed under encrypt-then-MAC — but for different reasons.",
+      "Each one is a real tampering from the post. They all fail closed under encrypt-then-MAC, but for different reasons.",
     atk_flipCipher: "Flip a cipher byte",
     atk_flipIv: "Flip an IV byte",
     atk_forgeTag: "Forge the tag",
@@ -1402,25 +1432,25 @@ export const tools = {
     atk_crossType: "Change record type",
     atk_rollback: "Roll back generation",
     modeHeading: "Read path",
-    modeEtm: "Encrypt-then-MAC — verify before decrypt",
+    modeEtm: "Encrypt-then-MAC: verify before decrypt",
     modeEtmNote:
       "The tag is checked first; a tampered file never reaches the cipher.",
-    modeDecryptFirst: "Decrypt-first — MAC-then-Encrypt (the doom path)",
+    modeDecryptFirst: "Decrypt-first (MAC-then-Encrypt): the doom path",
     modeDecryptFirstNote:
-      "Decryption runs on attacker bytes before the MAC is consulted — this is where a padding oracle lives.",
+      "Decryption runs on attacker bytes before the MAC is consulted: this is where a padding oracle lives.",
     emptyState: "Enter a secret above to seal it into an envelope.",
     emptyPass: "Enter a passphrase to create the vault.",
-    okVerdict: "Tag verified — safe to decrypt.",
+    okVerdict: "Tag verified: safe to decrypt.",
     failTitle: "Read fails closed.",
-    pristine: "The envelope is pristine — tamper with it to see the MAC react.",
+    pristine: "The envelope is pristine. Tamper with it to see the MAC react.",
     reasonByteFlip:
       "A flipped byte changes what the HMAC covers, so the recomputed tag no longer matches.",
     reasonFlipCipher:
-      "A flipped ciphertext byte changes the HMAC input — the tag no longer matches, and the cipher is never touched.",
+      "A flipped ciphertext byte changes the HMAC input: the tag no longer matches, and the cipher is never touched.",
     reasonFlipIv:
       "The IV is authenticated too, so flipping it breaks the tag before any decryption.",
     reasonForgeTag:
-      "Without the MAC sub-key you cannot forge a valid tag — guessing it is a 2²⁵⁶ search.",
+      "Without the MAC sub-key you cannot forge a valid tag; guessing it is a 2²⁵⁶ search.",
     reasonTruncate:
       "Dropping a block changes the ciphertext length the tag covers, so verification fails.",
     reasonCrossSlot:
@@ -1433,14 +1463,14 @@ export const tools = {
       "Unknown format version: the read rejects the envelope before it even computes the tag.",
     decryptFirstLeakTitle: "Decryption ran on attacker bytes.",
     decryptFirstLeakNote:
-      "It threw a padding error — and that pass/fail signal is the padding oracle. The MAC was never reached in time.",
+      "It threw a padding error, and that pass/fail signal is the padding oracle. The MAC was never reached in time.",
     decryptFirstOkNote:
       "the cipher already produced output, and only now is the MAC checked (mac {mac}): too late.",
     decryptedLabel: "decrypted",
     byteTitle: "Click to flip this byte",
     byteAria: "{field} byte {index}: {hex}. Activate to flip it.",
     insecureContext:
-      "This live demo needs a secure context — open it over HTTPS or on localhost to run the in-browser cryptography.",
+      "This live demo needs a secure context: open it over HTTPS or on localhost to run the in-browser cryptography.",
     rekeyHeading: "PIN change vs re-encryption",
     rekeyNote:
       "Changing the passphrase rewraps the vault key under a new KEK: one half of meta.bin changes and the records stay as they are. That makes a PIN change cheap, and it is also why a PIN change does not revoke a key someone already captured.",
@@ -1467,26 +1497,26 @@ export const tools = {
     oracleRunning:
       "Querying the oracle: block {block} of {total}, byte by byte…",
     oracleBlocked:
-      "Blocked: encrypt-then-MAC verifies the tag first, so the decrypt step is never reached — the oracle never answers.",
+      "Blocked: encrypt-then-MAC verifies the tag first, so the decrypt step is never reached and the oracle never answers.",
     oracleRecoveredLabel: "Recovered plaintext:",
     oracleDone:
       "All {bytes} bytes recovered (padding included) in {queries} oracle queries, using only the padding-valid/invalid signal. No key needed.",
     oracleNeedBlock: "Need at least one ciphertext block to attack.",
     oraclePaddingNote:
       "Why the oracle exists here: the browser's AES-CBC adds and checks PKCS#7 padding itself, and a bad pad throws. The firmware pads in its own code over AES-CBC without padding, and checks the padding in constant time only after the MAC has passed.",
-    malleabilityHeading: "CBC malleability — the attacker's lever",
+    malleabilityHeading: "CBC malleability: the attacker's lever",
     malleabilityNote:
-      "In CBC, flipping a byte of the IV flips the matching plaintext byte of block 0 by the exact same amount — a controlled change. (Encrypt-then-MAC means you never get to use it.)",
+      "In CBC, flipping a byte of the IV flips the matching plaintext byte of block 0 by the exact same amount: a controlled change. (Encrypt-then-MAC means you never get to use it.)",
     malleabilityIdle:
       "Flip an IV byte (above) to see the controlled change it would make to the plaintext.",
-    malleabilityFlipped: "Controlled change to plaintext block 0 —",
+    malleabilityFlipped: "Controlled change to plaintext block 0:",
   },
   bruteForceCost: {
     charsetLabel: "Secret alphabet",
-    charsetDigits: "Digits (PIN) — 10",
-    charsetAlnumLower: "Lowercase + digits — 36",
-    charsetAlnum: "Letters + digits — 62",
-    charsetFull: "All printable ASCII — 95",
+    charsetDigits: "Digits (PIN): 10",
+    charsetAlnumLower: "Lowercase + digits: 36",
+    charsetAlnum: "Letters + digits: 62",
+    charsetFull: "All printable ASCII: 95",
     lengthLabel: "Length",
     iterationsLabel: "PBKDF2 iterations",
     presetProd: "35,000 (device production)",
@@ -1511,13 +1541,13 @@ export const tools = {
     expectedLabel: "expected (½)",
     infeasibleTitle: "Infeasible offline.",
     infeasibleBody:
-      "Every guess needs the original chip's sealed secret, which can't be extracted — so a dumped flash is useless on any other hardware.",
+      "Every guess needs the original chip's sealed secret, which can't be extracted, so a dumped flash is useless on any other hardware.",
     verdictInstant:
       "A short secret behind a feasible work factor falls almost instantly under an offline attack.",
     verdictShort:
-      "Still within reach for a patient attacker — the work factor only buys hours to months.",
+      "Still within reach for a patient attacker: the work factor only buys hours to months.",
     verdictLong:
-      "The keyspace alone is large enough to resist an offline sweep — but most users don't pick secrets this strong.",
+      "The keyspace alone is large enough to resist an offline sweep, but most users don't pick secrets this strong.",
     onlineNote:
       "This models the offline attack (a dumped flash). On the device itself, online guessing is capped by a brute-force lockout that wipes the vault after a handful of tries.",
     unitMs: "ms",
@@ -1533,7 +1563,7 @@ export const tools = {
     inputLabel: "Strings (one per line)",
     inputPlaceholder: "Paste one string per line...",
     inputHint:
-      "Each line is one index entry — a (language × ID) cell. Identical strings and suffixes are merged.",
+      "Each line is one index entry: a (language × ID) cell. Identical strings and suffixes are merged.",
     pointerWidthLabel: "Pointer width",
     bits32: "32-bit (4 B pointers)",
     bits64: "64-bit (8 B pointers)",
@@ -1554,7 +1584,7 @@ export const tools = {
     colOffset: "Offset",
     colBytes: "Pool bytes",
     colStatus: "Status",
-    privacyNote: "Everything runs in your browser — nothing is uploaded.",
+    privacyNote: "Everything runs in your browser; nothing is uploaded.",
     emptyState: "Enter strings above to see the comparison.",
     statusStored: "stored",
     statusTail: 'tail of "{s}"',
@@ -1574,10 +1604,10 @@ export const tools = {
     lookupIdLabel: "String ID",
     lookupLangLabel: "Language",
     lookupResolved: 'gen::string({lang}, {id}) → pool + {off} → "{val}"',
-    lookupTail: 'offset points inside "{s}" — read back identically',
+    lookupTail: 'offset points inside "{s}"; the string reads back identically',
     retrievalNote:
-      "Every string — stored or tail-merged — is read by pool + offset, so retrieval is O(1) and identical regardless of merging.",
+      "Every string (stored or tail-merged) is read by pool + offset, so retrieval is O(1) and identical regardless of merging.",
     csvError:
-      "Could not parse CSV — need a header row starting with id and at least one language column.",
+      "Could not parse CSV: need a header row starting with id and at least one language column.",
   },
 };
