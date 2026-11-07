@@ -11,6 +11,11 @@
 # committed `person.snapshot.json` fallback was removed from every consumer:
 # they fetch the canonical document at build time and fail the build if they
 # cannot read it, so a rebuild is the only thing propagation has to arrange.
+#
+# The dispatch waits first, about five and a half minutes: the consumers fetch
+# from raw.githubusercontent.com, whose cache nodes keep a copy for max-age=300,
+# and a build dispatched straight after the merge could get the previous file
+# (libgen-mcp did, 2026-11-07). See scripts/ci/raw-freshness.mjs.
 
 name: Identity propagation
 
@@ -38,6 +43,9 @@ jobs:
   propagate:
     name: Sync the consumers
     runs-on: ubuntu-latest
+    # The raw cache wait is about 5.5 min and its checks up to 3 more; anything
+    # past this is a hang, not a slow cache.
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v7
 
