@@ -41,7 +41,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "cd \"${CLAUDE_PROJECT_DIR:-/var/www/jmrp.io}\" && f=$(jq -r '.tool_input.file_path // empty') && [ -n \"$f\" ] && timeout 60 pnpm exec prettier --write --ignore-unknown --ignore-path .prettierignore \"$f\" >/dev/null 2>&1 || true",
+            "command": "\"${CLAUDE_PROJECT_DIR:-/var/www/jmrp.io}\"/.claude/hooks/prettier-format.sh",
             "async": true
           }
         ]
