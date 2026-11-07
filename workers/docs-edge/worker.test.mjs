@@ -2257,6 +2257,235 @@ describe("F07: Range on a type outside RANGE_SAFE_EXTENSIONS", () => {
   });
 });
 
+// ── A cold page's 5xx from GitHub (2026-11-07) ───────────────────────────────
+
+describe("a 502, 503 or 504 from GitHub is asked for once more", () => {
+  /**
+   * The GitHub side of a cold page: the first pass-through answers are
+   * `firsts`, in order (a status, or "throw" for a fetch that throws), and
+   * every later pass-through, and every probe, is answered by `then`.
+   */
+  const flaky = (firsts, then) => {
+    const queue = [...firsts];
+    const sent = [];
+    const respond = (input, init) => {
+      if (init?.redirect === "manual" || queue.length === 0) {
+        return then(input, init);
+      }
+      const next = queue.shift();
+      if (next === "throw") throw new TypeError("origin unreachable");
+      const res = new Response(
+        input.method === "HEAD"
+          ? null
+          : `<!doctype html><title>${next}</title>`,
+        {
+          status: next,
+          headers: {
+            "content-type": "text/html; charset=utf-8",
+            "cf-cache-status": "BYPASS",
+          },
+        },
+      );
+      sent.push(res);
+      return res;
+    };
+    respond.sent = sent;
+    return respond;
+  };
+  const passes = (calls) => calls.filter((c) => c.init?.redirect !== "manual");
+  const RETRIED = [502, 503, 504];
+
+  test("a GET or HEAD answered 502, 503 or 504 is sent once more, as it was, and the second answer goes out", async () => {
+    for (const page of ["/phonometry/llms.txt", "/gitlab-mcp-server/"]) {
+      for (const status of RETRIED) {
+        for (const method of ["GET", "HEAD"]) {
+          const respond = origin(WITH_TWIN);
+          const github = flaky([status], respond);
+          const request = req(page, { accept: ACCEPTS.B, method });
+          const { response, calls, points } = await run(
+            worker,
+            request,
+            github,
+          );
+          const at = `${method} ${status} ${page}`;
+          const sent = passes(calls);
+          assert.equal(sent.length, 2, at);
+          // The very request the first fetch sent, sent the same way.
+          assert.equal(sent[0].input, request, at);
+          assert.equal(sent[1].input, request, at);
+          assert.deepEqual(sent[1].init, { cf: EDGE_CACHE_CF }, at);
+          assert.equal(response, respond.upstream[0], at);
+          assert.equal(response.status, 200, at);
+          // The first answer is let go of, never sent on.
+          if (method === "GET") assert.equal(github.sent[0].bodyUsed, true, at);
+          // One datapoint, with the final status, and the retry in the cache
+          // verdict, named by the status it replaced.
+          assert.equal(points.length, 1, at);
+          assert.equal(points[0].blobs[10], "200", at);
+          assert.equal(points[0].blobs[11], `origin-retry-${status}`, at);
+        }
+      }
+    }
+  });
+
+  test("never more than once: a second 502, 503 or 504 goes out as it came", async () => {
+    for (const first of RETRIED) {
+      for (const second of RETRIED) {
+        const github = flaky([first, second], origin(WITH_TWIN));
+        const { response, calls, points } = await run(
+          worker,
+          req("/phonometry/llms.txt"),
+          github,
+        );
+        const at = `${first} then ${second}`;
+        assert.equal(passes(calls).length, 2, at);
+        assert.equal(response, github.sent[1], at);
+        assert.equal(points[0].blobs[10], String(second), at);
+        assert.equal(points[0].blobs[11], `origin-retry-${first}`, at);
+      }
+    }
+  });
+
+  test("any other status is passed on with one fetch, and its verdict is the edge's", async () => {
+    for (const status of [500, 501, 505, 507, 404, 408, 429]) {
+      const github = flaky([status], origin(WITH_TWIN));
+      const { response, calls, points } = await run(
+        worker,
+        req("/phonometry/llms.txt"),
+        github,
+      );
+      assert.equal(passes(calls).length, 1, String(status));
+      assert.equal(response, github.sent[0], String(status));
+      assert.equal(points[0].blobs[11], "BYPASS", String(status));
+    }
+  });
+
+  test("another method is never sent twice, so a request body is never sent again", async () => {
+    for (const method of ["POST", "PUT", "DELETE", "OPTIONS", "PATCH"]) {
+      for (const status of RETRIED) {
+        const github = flaky([status], origin(WITH_TWIN));
+        const body = ["POST", "PUT", "PATCH"].includes(method) ? "data" : null;
+        const request = req("/phonometry/llms.txt", { method, body });
+        const { response, calls, points } = await run(worker, request, github);
+        const at = `${method} ${status}`;
+        assert.equal(calls.length, 1, at);
+        assert.equal(response, github.sent[0], at);
+        assert.equal(request.bodyUsed, false, at);
+        assert.equal(points[0].blobs[11], "BYPASS", at);
+      }
+    }
+  });
+
+  test("a retry that throws leaves the first answer standing, body and all", async () => {
+    for (const status of RETRIED) {
+      const github = flaky([status, "throw"], origin(WITH_TWIN));
+      const { response, calls, points } = await run(
+        worker,
+        req("/phonometry/llms.txt"),
+        github,
+      );
+      assert.equal(passes(calls).length, 2, String(status));
+      assert.equal(response, github.sent[0], String(status));
+      assert.equal(response.bodyUsed, false, String(status));
+      assert.equal(points[0].blobs[10], String(status), String(status));
+      assert.equal(
+        points[0].blobs[11],
+        `origin-retry-${status}`,
+        String(status),
+      );
+    }
+  });
+
+  test("the retry keeps the Range, the validators and the twin announcement", async () => {
+    // A listed type keeps its valid Range on the second request, and the 206
+    // that comes back is a real one, passed on as it came.
+    for (const rangeCoding of [null, "identity"]) {
+      const respond = origin(WITH_TWIN, { rangeCoding });
+      const github = flaky([503], respond);
+      const { response, calls } = await run(
+        worker,
+        req("/phonometry/media/clip.webm", { headers: RANGES["one range"] }),
+        github,
+      );
+      const sent = passes(calls);
+      assert.equal(sent.length, 2, String(rangeCoding));
+      for (const c of sent) {
+        assert.equal(c.input.headers.get("range"), "bytes=0-8");
+      }
+      assert.equal(response, respond.upstream[0], String(rangeCoding));
+      assert.equal(response.status, 206, String(rangeCoding));
+    }
+    // A page with a twin, and one without: after the retry, the answer is
+    // what a first-time answer gets (Link and Vary when the twin exists, the
+    // origin's own object otherwise), and GitHub's validators are kept.
+    for (const page of ["/phonometry/start/getting-started/", "/phonometry/"]) {
+      const twin = WITH_TWIN.has(page);
+      for (const [status, headers] of [
+        [200, {}],
+        [304, CONDITIONAL["If-None-Match"]],
+        [304, CONDITIONAL["If-Modified-Since"]],
+      ]) {
+        const respond = origin(WITH_TWIN);
+        const { response, calls } = await run(
+          worker,
+          req(page, { accept: ACCEPTS.B, headers }),
+          flaky([503], respond),
+        );
+        const at = `${page} ${status} ${JSON.stringify(headers)}`;
+        assert.equal(passes(calls).length, 2, at);
+        assert.equal(response.status, status, at);
+        assert.equal(response.headers.get("etag"), ETAG, at);
+        assert.equal(response.headers.get("last-modified"), LAST_MODIFIED, at);
+        assert.equal(
+          response.headers.get("vary"),
+          twin ? "Accept-Encoding, Accept" : "Accept-Encoding",
+          at,
+        );
+        assert.equal(
+          response.headers.get("link"),
+          twin && status === 200
+            ? `<${ORIGIN}${page}index.md>; rel="alternate"; type="text/markdown"`
+            : null,
+          at,
+        );
+        if (!twin) assert.equal(response, respond.upstream[0], at);
+      }
+    }
+  });
+
+  test("with the Range fallback, still at most one retry", async () => {
+    // The edge throws on the Range, the Range-less request answers 503, and
+    // that one is asked once more: three fetches, never a fourth.
+    for (const last of [200, 503]) {
+      const github = flaky(["throw", 503, last], origin(WITH_TWIN));
+      const { response, calls, points } = await run(
+        worker,
+        req("/phonometry/media/clip.webm", {
+          headers: { range: "bytes=0-99" },
+        }),
+        github,
+      );
+      const sent = passes(calls);
+      assert.equal(sent.length, 3, String(last));
+      assert.equal(sent[0].input.headers.get("range"), "bytes=0-99");
+      assert.equal(sent[1].input.headers.has("range"), false);
+      assert.equal(sent[2].input, sent[1].input);
+      assert.equal(response.status, last, String(last));
+      assert.equal(points[0].blobs[11], "origin-retry-503", String(last));
+    }
+    // A 503 to the Range request whose retry throws: the 503 stands, and the
+    // Range-less fallback is not tried on top of the retry.
+    const github = flaky([503, "throw"], origin(WITH_TWIN));
+    const { response, calls } = await run(
+      worker,
+      req("/phonometry/media/clip.webm", { headers: { range: "bytes=0-99" } }),
+      github,
+    );
+    assert.equal(passes(calls).length, 2);
+    assert.equal(response, github.sent[0]);
+  });
+});
+
 describe("the visitor location headers stay at the edge (2026-11-04)", () => {
   const LOCATION = {
     "cf-ipcity": "Somewhere",

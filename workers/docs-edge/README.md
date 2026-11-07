@@ -42,6 +42,8 @@ anywhere else, reverts whatever changed since.
   the Worker is skipped (quota exhausted, fail-open), the request reaches GitHub
   with them, which cannot be prevented from here.
 - **Redirects the retired `/assets/pdf/*` tree** to `https://jmrp.io/pdf/*` with a 301.
+- **Asks GitHub once more** when it answers a `GET` or `HEAD` with 502, 503 or 504
+  (see "A 502, 503 or 504 from GitHub").
 
 ## Markdown negotiation
 
@@ -79,6 +81,28 @@ file with a 200, which a server may always do (RFC 9110, 14.2). Valid single and
 multiple ranges go through unchanged and the edge answers them correctly (measured on
 2026-11-05). If the edge still throws on a range, `fetchOrWhole` sends the request once
 more without it. On routes with no Worker, Cloudflare's own 502 remains.
+
+## A 502, 503 or 504 from GitHub
+
+GitHub Pages answers a rare 503 for a page that has gone cold. The record holds three
+in the 58,667 requests from 2026-11-03 20:00 UTC to 2026-11-07, all on Spanish pages,
+all `BYPASS`; a crawl of the site met two such answers in that time, and both pages
+answered 200 six minutes later. A crawler that gets one counts a failed fetch.
+
+A `GET` or `HEAD` that GitHub answers with 502, 503 or 504 is sent once more, at
+once and unchanged: the same `Range`, the same validators, every other header. The
+second answer goes out whatever it is, and the Range, `Vary` and twin rules above
+judge it as they would a first answer. Never more than once per request: a second
+5xx goes out as it came. Any other method is never sent twice, so a request body is
+never sent again. If the retry throws, the first answer goes out with its body. The
+whole-file requests of the Range rules and the twin probe are not retried.
+
+The data point records it in the cache verdict (blob 12) as `origin-retry-502`,
+`origin-retry-503` or `origin-retry-504`, naming the status the retry replaced, with
+the final status in blob 11. A retry that helped reads `200` there. The record
+layout does not change: blob 12 already carries the Worker's own verdicts beside
+Cloudflare's `cf-cache-status`, and the privacy page describes it as whether the
+edge served the page from its cache.
 
 ## Zone settings this depends on
 
