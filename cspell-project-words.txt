@@ -1420,6 +1420,7 @@ winget
 withastro
 wmem
 wordmark
+workerd
 worktree
 worktrees
 writemultiple
