@@ -130,7 +130,9 @@ const byCodeUnit = (a, b) => Number(a > b) - Number(a < b);
  */
 export function canonicalJson(value) {
   if (Array.isArray(value)) {
-    const items = [...new Set(value.map(canonicalJson))].sort(byCodeUnit);
+    const items = [...new Set(value.map((entry) => canonicalJson(entry)))].sort(
+      byCodeUnit,
+    );
     return items.length === 1 ? items[0] : `[${items.join(",")}]`;
   }
   if (value !== null && typeof value === "object") {

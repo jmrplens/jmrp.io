@@ -136,7 +136,9 @@ function stalePersonLines(nodes) {
     }
     // Same length with different contents is the usual case (a URL that
     // changed spelling), so name the first entry the served copy lacks.
-    const servedSet = new Set([served[key] ?? []].flat().map(canonicalJson));
+    const servedSet = new Set(
+      [served[key] ?? []].flat().map((entry) => canonicalJson(entry)),
+    );
     const firstMissing = canonicalPerson[key].find(
       (entry) => !servedSet.has(canonicalJson(entry)),
     );
