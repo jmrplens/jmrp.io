@@ -43,8 +43,17 @@
  * `repo`, no `license`/`licenseUrl` when the YAML has none, and a `sameAs`
  * without the repository. `sitemap` (the docs site's sitemap, relative to
  * `docs`) is written only when the YAML sets it; a consumer reads its absence
- * as `sitemap-index.xml`. Every record of a released project keeps exactly
- * the fields and order it always had.
+ * as `sitemap-index.xml`. None of this changes the record of a released
+ * project.
+ *
+ * ── Other names ──────────────────────────────────────────────────────────
+ * `alternateName` follows `name` when the YAML states it, verbatim and in
+ * its order: the other names the project's own site gives the shared
+ * `#software` node, which /projects/ restates. A consumer that writes its
+ * own line or node for the project can then name it the way a reader may
+ * know it (phonometry shipped as PyOctaveBand until 3.0.0). Not every one is
+ * a former name: Kleidos states two descriptive ones, so a consumer that
+ * turns them into prose says "also known as", not "formerly".
  *
  * Usage:
  *   node scripts/ci/build-projects.mjs            # write
@@ -91,6 +100,7 @@ export function toRecords(raw) {
   return items.map((p) => ({
     id: p.id,
     name: p.name,
+    ...(p.alternateName && { alternateName: p.alternateName }),
     status: p.status,
     schemaType: p.schemaType,
     ...(p.applicationCategory && {

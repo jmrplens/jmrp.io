@@ -59,6 +59,9 @@
     {
       "id": "phonometry",
       "name": "phonometry",
+      "alternateName": [
+        "PyOctaveBand"
+      ],
       "status": "active",
       "schemaType": "SoftwareApplication",
       "applicationCategory": "DeveloperApplication",
@@ -274,6 +277,10 @@
     {
       "id": "kleidos",
       "name": "Kleidos",
+      "alternateName": [
+        "Kleidos firmware",
+        "Kleidos password manager"
+      ],
       "status": "upcoming",
       "schemaType": "SoftwareSourceCode",
       "kicker": "Hardware · password manager",
