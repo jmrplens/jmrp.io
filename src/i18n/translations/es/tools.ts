@@ -318,6 +318,11 @@ export const tools = {
     scopeMulticast: "Multicast:",
     scopeUnspecified: "No especificado",
     scopeReserved: "Reservado",
+    scopeUnknown: "Ámbito desconocido {scope}",
+    // IPv4 address classes that carry a description
+    classDMulticast: "D (Multicast)",
+    classEReserved: "E (Reservada)",
+    addressRange: "{first} a {last}",
     // VLSM UI
     subnetNamePlaceholder: "Nombre de subred",
     hostsNeededPlaceholder: "Hosts necesarios",

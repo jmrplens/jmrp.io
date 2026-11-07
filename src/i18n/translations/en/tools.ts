@@ -315,6 +315,11 @@ export const tools = {
     scopeMulticast: "Multicast:",
     scopeUnspecified: "Unspecified",
     scopeReserved: "Reserved",
+    scopeUnknown: "Unknown scope {scope}",
+    // IPv4 address classes that carry a description
+    classDMulticast: "D (Multicast)",
+    classEReserved: "E (Reserved)",
+    addressRange: "{first} to {last}",
     // VLSM UI
     subnetNamePlaceholder: "Subnet name",
     hostsNeededPlaceholder: "Hosts needed",
