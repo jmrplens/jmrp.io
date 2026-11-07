@@ -1223,9 +1223,9 @@ export const tools = {
       "Tunnel MTU minus 60 (40 IPv6 + 20 TCP), for /ipv6 firewall mangle: the /ip rule never sees IPv6.",
     // Peers
     sectionPeers: "Peers / Clients",
-    toggleResponder: "Router only answers handshakes (responder=yes)",
-    hintResponder:
-      "Recommended for phones and laptops that roam: the router answers but never initiates, so it stops retrying dead endpoints, and each peer's keepalive goes to the client only. Clear it only if this router has to call the peer.",
+    toggleRouterKeepalive: "Keepalive on the router side (site-to-site)",
+    hintRouterKeepalive:
+      "Leave it off for phones and laptops: each peer's keepalive goes in its client .conf, and a router-side keepalive makes the router retry handshakes forever against clients that have moved or switched off. Tick it only if this router has to call the peer.",
     addPeer: "Add Peer",
     addPeerAriaLabel: "Add peer",
     removePeerAriaLabel: "Remove peer",

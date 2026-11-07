@@ -787,18 +787,19 @@ const i18n = {
         <div class="wg-field">
           <label class="wg-toggle-label">
             <input
-              id={`${uniqueId}-responder`}
+              id={`${uniqueId}-router-keepalive`}
               type="checkbox"
-              checked
-              aria-describedby={`${uniqueId}-responder-hint`}
+              aria-describedby={`${uniqueId}-router-keepalive-hint`}
             />
-            <span>{t("tools.wireguardConfigGenerator.toggleResponder")}</span>
+            <span>
+              {t("tools.wireguardConfigGenerator.toggleRouterKeepalive")}
+            </span>
           </label>
           <span
             class="wg-field-hint"
-            id={`${uniqueId}-responder-hint`}
+            id={`${uniqueId}-router-keepalive-hint`}
           >
-            {t("tools.wireguardConfigGenerator.hintResponder")}
+            {t("tools.wireguardConfigGenerator.hintRouterKeepalive")}
           </span>
         </div>
 
@@ -1248,7 +1249,7 @@ const i18n = {
     var mssV4Input = el("mss-v4");
     var mssV6Input = el("mss-v6");
     var mssV6Field = el("mss-v6-field");
-    var responderCheck = el("responder");
+    var routerKeepaliveCheck = el("router-keepalive");
     var genClientConfCheck = el("gen-client-conf");
     var tunnelModeSelect = el("tunnel-mode");
     var splitFields = el("split-fields");
@@ -1965,7 +1966,7 @@ const i18n = {
       var clientMtu = effectiveClientMtu();
       var mssV4 = effectiveMssV4();
       var mssV6 = effectiveMssV6();
-      var responder = responderCheck.checked;
+      var routerKeepalive = routerKeepaliveCheck.checked;
       var ros725 = ros725Check.checked;
       var ifaceComment =
         ifaceCommentInput.value.trim() || "VPN for Mobile Devices";
@@ -2016,14 +2017,13 @@ const i18n = {
       );
       lines.push(sep);
       // Oldest RouterOS that accepts every command below (official
-      // changelogs): peer name= since 7.15; responder=yes exists since 7.15
-      // but only stops initiating from 7.17; the client-* block of auto-key
+      // changelogs): peer name= since 7.15; the client-* block of auto-key
       // peers carries client-allowed-address, which arrived in 7.21; and
       // client-mtu arrived in 7.25.
       var hasClientProps = peers.some(function (p) {
         return p.keygen === "auto";
       });
-      var minVersion = hasClientProps ? "7.21" : responder ? "7.17" : "7.15";
+      var minVersion = hasClientProps ? "7.21" : "7.15";
       lines.push(
         "# " +
           fmt(i18n.headerRouterosVersion, { version: minVersion }) +
@@ -2351,12 +2351,13 @@ const i18n = {
             }
           }
           lines.push("    allowed-address=" + allowedAddr + " \\");
-          // A responder answers handshakes but never starts them, so the
-          // router stops retrying a roaming client's last, dead endpoint;
-          // the keepalive then lives only on the client, behind the NAT.
-          if (responder) {
-            lines.push("    responder=yes \\");
-          } else {
+          // The keepalive belongs on the client, behind the NAT. A router-side
+          // keepalive makes the router retry handshakes forever against a
+          // roaming client's dead endpoint, so it is only emitted when this
+          // router has to call the peer (site-to-site). responder=yes is not
+          // offered: on the author's iPhone it made the tunnel drop on every
+          // network change (post 007, "How I run this").
+          if (routerKeepalive) {
             lines.push("    persistent-keepalive=" + peer.keepalive + " \\");
           }
           lines.push('    comment="' + peer.comment + '"');
@@ -2515,7 +2516,7 @@ const i18n = {
     var presets = {
       "ipv4-only": function () {
         enableIpv6Check.checked = false;
-        responderCheck.checked = true;
+        routerKeepaliveCheck.checked = false;
         fwInternetCheck.checked = true;
         fwLanCheck.checked = true;
         fwFasttrackCheck.checked = true;
@@ -2528,7 +2529,7 @@ const i18n = {
       },
       "dual-stack": function () {
         enableIpv6Check.checked = true;
-        responderCheck.checked = true;
+        routerKeepaliveCheck.checked = false;
         fwInternetCheck.checked = true;
         fwLanCheck.checked = true;
         fwFasttrackCheck.checked = true;
@@ -2541,8 +2542,9 @@ const i18n = {
       },
       "site-to-site": function () {
         enableIpv6Check.checked = true;
-        // The router may have to call the remote site, so it must initiate.
-        responderCheck.checked = false;
+        // The router may have to call the remote site, so it keeps the
+        // mapping open from its side too.
+        routerKeepaliveCheck.checked = true;
         fwInternetCheck.checked = false;
         fwLanCheck.checked = true;
         fwFasttrackCheck.checked = true;

@@ -13,6 +13,11 @@
 # Now it formats only files inside this repository or one of its worktrees
 # (same git common dir as the project), with that checkout's own Prettier and
 # .prettierignore, and stays silent otherwise. It never fails the tool call.
+#
+# It runs synchronously ("async": false in settings.json). As an async hook it
+# read the file, formatted it and wrote it back while the next Edit was
+# already being applied, so a quick series of edits to one file could lose
+# the later ones: the formatted copy of the earlier state overwrote them.
 set -u
 
 file=$(jq -r '.tool_input.file_path // empty' 2>/dev/null) || exit 0
