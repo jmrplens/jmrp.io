@@ -119,9 +119,13 @@ person:
     # account connected (its public API reports `github_username: jmrplens`).
     - "https://dev.to/jmrplens"
     # Hackster.io: "José M. Requena Plens", Valencia, and the same one-line bio
-    # as DEV. NOTE: its website field is still empty, so unlike the two above
-    # it does not link back yet; setting it to jmrp.io would close the loop.
+    # as DEV.
     - "https://www.hackster.io/jmrplens"
+    # Reddit, added at his request on 2026-11-07. Reddit answers this server
+    # with a bot challenge (403 on the JSON API, a challenge page instead of
+    # the profile), so like the MikroTik forum it is here because it is true,
+    # not because a crawler can confirm it.
+    - "https://www.reddit.com/user/jmrplens/"
   # Expertise topics emitted as the canonical Person `knowsAbout`, site-wide, by
   # BaseHead.astro. Merged from the former site-config list + about.yaml's
   # embedded-firmware specifics so a single list covers the whole entity;
