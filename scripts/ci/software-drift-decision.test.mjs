@@ -2,7 +2,10 @@
  * Unit tests for the drift guard's pass/fail decision (GEO audit #12, M1).
  */
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import { test } from "node:test";
+
+import { load as loadYaml } from "js-yaml";
 
 import {
   ACCEPTED_DIVERGENCES,
@@ -11,9 +14,13 @@ import {
   divergentProperties,
   driftSkip,
   exitCodeFor,
+  projectValues,
   sameValues,
   valueDifference,
 } from "./software-drift-decision.mjs";
+
+const read = (path) =>
+  readFileSync(new URL(`../../${path}`, import.meta.url), "utf8");
 
 test("the declared exception is matched by project id and property", () => {
   assert.deepEqual(
@@ -88,8 +95,79 @@ test("a project in development without a public repository is skipped out loud",
 // passed unnoticed, and the same systems in another order or shape would
 // have failed as a contradiction the day the property was added.
 
+// One record as projects.yaml authors it, every field the comparison reads
+// filled in.
+const FULL_RECORD = Object.freeze({
+  id: "example",
+  name: "example",
+  summary: Object.freeze({ en: "An example.", es: "Its Spanish summary." }),
+  license: "MIT",
+  language: "Go",
+  applicationCategory: "DeveloperApplication",
+  operatingSystem: "Linux, macOS, BSD",
+  repo: "https://github.com/jmrplens/example",
+  docs: "https://docs.jmrp.io/example/",
+});
+
 test("operatingSystem is one of the properties compared", () => {
   assert.ok(CONTRADICTABLE.includes("operatingSystem"));
+  // From the record through the values jmrp.io states: a property the record
+  // states but `projectValues` leaves out is undefined, and
+  // `divergentProperties` skips it, so it would pass as agreement.
+  assert.deepEqual(
+    divergentProperties(
+      { operatingSystem: "Windows, Linux, macOS" },
+      projectValues(FULL_RECORD, {}),
+    ),
+    ["operatingSystem"],
+  );
+});
+
+test("every compared property is read from projects.yaml, and nothing else", () => {
+  const values = projectValues(FULL_RECORD, {});
+  assert.deepEqual(new Set(Object.keys(values)), new Set(CONTRADICTABLE));
+  for (const property of CONTRADICTABLE) {
+    assert.notEqual(values[property], undefined, property);
+  }
+});
+
+test("every compared project states each property it authors, operatingSystem included", () => {
+  // Where each property comes from in a record, restated here so the test
+  // does not take its expectations from the function it checks.
+  const source = {
+    name: (project) => project.name,
+    description: (project) => project.summary?.en,
+    "description@es": (project) => project.summary?.es,
+    license: (project) => project.licenseUrl ?? project.license,
+    programmingLanguage: (project) => project.language,
+    applicationCategory: (project) => project.applicationCategory,
+    operatingSystem: (project) => project.operatingSystem,
+    codeRepository: (project) => project.repo,
+    url: (project) => project.repo,
+  };
+  assert.deepEqual(new Set(Object.keys(source)), new Set(CONTRADICTABLE));
+
+  const licenseUrls = JSON.parse(read("src/data/license-urls.json"));
+  const compared = loadYaml(
+    read("src/content/profile/projects.yaml"),
+  ).projects.filter((project) => driftSkip(project) === null);
+  const withSystems = compared.filter((project) => project.operatingSystem);
+  assert.ok(withSystems.length > 0, "no compared project states its systems");
+
+  for (const project of compared) {
+    const values = projectValues(project, licenseUrls);
+    for (const property of CONTRADICTABLE) {
+      if (source[property](project) === undefined) continue;
+      assert.notEqual(values[property], undefined, `${project.id} ${property}`);
+    }
+  }
+  for (const project of withSystems) {
+    assert.equal(
+      projectValues(project, licenseUrls).operatingSystem,
+      project.operatingSystem,
+      project.id,
+    );
+  }
 });
 
 test("the same systems in another order or shape agree", () => {

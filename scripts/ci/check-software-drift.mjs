@@ -57,6 +57,7 @@ import {
   driftSkip,
   exitCodeFor,
   LIST_PROPERTIES,
+  projectValues,
   sameValues,
   valueDifference,
 } from "./software-drift-decision.mjs";
@@ -241,24 +242,7 @@ for (const project of projects) {
     continue;
   }
 
-  const ours = {
-    name: project.name,
-    description: project.summary.en,
-    // The graph has stated `summary.es` too since 2026-11-01, as the Spanish
-    // literal of `description`, so a bilingual site that says something else
-    // in Spanish contradicts it the way a different English text would.
-    "description@es": project.summary.es,
-    license:
-      project.licenseUrl ?? LICENSE_URLS[project.license] ?? project.license,
-    programmingLanguage: project.language,
-    applicationCategory: project.applicationCategory,
-    codeRepository: project.repo,
-    url: project.repo,
-    // One comma-joined string here, a list in the graph /projects/ emits and
-    // usually a string on the docs site: compared as the set of systems
-    // either way (see LIST_PROPERTIES).
-    operatingSystem: project.operatingSystem,
-  };
+  const ours = projectValues(project, LICENSE_URLS);
 
   // A bilingual site states `description` as language-tagged literals. The
   // English one is what `summary.en` must match and the Spanish one what

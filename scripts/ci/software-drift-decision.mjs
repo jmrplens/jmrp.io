@@ -50,6 +50,48 @@ export const CONTRADICTABLE = Object.freeze([
 ]);
 
 /**
+ * What projects.yaml states for each property in {@link CONTRADICTABLE}, read
+ * from one project's record. Every compared property has its source here, and
+ * nothing else does: {@link divergentProperties} skips a property either side
+ * leaves undefined, so a compared property without a source would pass as
+ * agreement, whatever the project's site states. Pure.
+ *
+ * @param {{
+ *   name: string,
+ *   summary: { en: string, es?: string },
+ *   license: string,
+ *   licenseUrl?: string,
+ *   language?: string,
+ *   applicationCategory?: string,
+ *   operatingSystem?: string,
+ *   repo?: string,
+ * }} project - The project as authored in projects.yaml.
+ * @param {Readonly<Record<string, string>>} licenseUrls - SPDX identifier to
+ *   license URL, the table the site reads (`src/data/license-urls.json`).
+ * @returns {Record<string, unknown>} The values, by property.
+ */
+export function projectValues(project, licenseUrls) {
+  return {
+    name: project.name,
+    description: project.summary.en,
+    // The graph has stated `summary.es` too since 2026-11-01, as the Spanish
+    // literal of `description`, so a bilingual site that says something else
+    // in Spanish contradicts it the way a different English text would.
+    "description@es": project.summary.es,
+    license:
+      project.licenseUrl ?? licenseUrls[project.license] ?? project.license,
+    programmingLanguage: project.language,
+    applicationCategory: project.applicationCategory,
+    // One comma-joined string here, a list in the graph /projects/ emits and
+    // usually a string on the docs site: compared as the set of systems
+    // either way (see LIST_PROPERTIES).
+    operatingSystem: project.operatingSystem,
+    codeRepository: project.repo,
+    url: project.repo,
+  };
+}
+
+/**
  * Properties whose text can name several items in one comma-joined string.
  * schema.org's own examples write `operatingSystem` as "Windows 7, OS X 10.6,
  * Android 1.6" and `applicationCategory` as "Game, Multimedia"; a project in
