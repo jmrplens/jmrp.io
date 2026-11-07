@@ -83,7 +83,8 @@
       "sameAs": [
         "https://github.com/jmrplens/phonometry",
         "https://pypi.org/project/phonometry/",
-        "https://doi.org/10.5281/zenodo.21215280"
+        "https://doi.org/10.5281/zenodo.21215280",
+        "https://pypi.org/project/PyOctaveBand/"
       ]
     },
     {
