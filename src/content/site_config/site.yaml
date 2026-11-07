@@ -14,7 +14,7 @@ person:
   name: "José Manuel Requena Plens"
   # Name variants emitted as Person `alternateName`, so an engine indexing a
   # paper, a profile or a repo under a different spelling still resolves to
-  # this entity. Every entry below was OBSERVED in the wild — none invented:
+  # this entity. Every entry below was OBSERVED in the wild, none invented:
   # a wrong or speculative variant makes the entity fuzzier, not richer.
   # The `name` above stays the single canonical form.
   alternateName:
@@ -26,7 +26,7 @@ person:
     - "José Manuel Requena-Plens" # hyphenated form of the canonical name
     - "Jose Manuel Requena-Plens" # ASCII fold of the above
     - "Jose Manuel Requena Plens" # ASCII fold of the canonical name
-  # Non-localized fallback only — the canonical, localized jobTitle is sourced
+  # Non-localized fallback only: the canonical, localized jobTitle is sourced
   # from `src/content/profile/about.yaml` (`person.jobTitle[locale]`) by
   # BaseHead.astro. This value is used solely if that entry is unavailable.
   jobTitle: "R&D · Firmware & Software Engineer"
@@ -38,7 +38,7 @@ person:
     - "https://www.researchgate.net/profile/Jose-Requena-Plens-2"
     - "https://www.mathworks.com/matlabcentral/profile/authors/5890853"
     # Forge accounts whose ownership is asserted by a signed `proof@ariadne.id`
-    # notation in the OpenPGP key 0A993B26…91FC — the strongest ownership
+    # notation in the OpenPGP key 0A993B26…91FC, the strongest ownership
     # evidence any profile here has.
     #
     # Verify against the key served over WKD (openpgpkey.jmrp.io, what Keyoxide
@@ -63,19 +63,19 @@ person:
     - "https://www.nuget.org/profiles/jmrplens"
     # MCP directory that publishes a maintainer profile, not just per-server
     # pages: it carries the canonical name, the handle, a link to this site and
-    # both servers marked "verified via GitHub" — the directory checked the
+    # both servers marked "verified via GitHub": the directory checked the
     # repositories against the account, so the tie is asserted at their end too.
     - "https://mcptoplist.com/u/jmrplens"
     # Communities where he posts under the canonical handle. Each one was
     # verified by a link back to this site or to the GitHub account, not by the
-    # handle alone — "jmrplens" is rare, but a matching handle is not proof.
+    # handle alone. "jmrplens" is rare, but a matching handle is not proof.
     #
     # Home Assistant: profile carries the full name, "Valencia, Spain" and
     # jmrp.io in its website field, with 33 posts behind it.
     - "https://community.home-assistant.io/u/jmrplens"
     # MikroTik forum: he writes there as the maintainer of cs-routeros-bouncer.
     # NOTE: the forum answers 403 to anonymous requests, so an external
-    # validator cannot read this one — it is here because it is true, not
+    # validator cannot read this one. It is here because it is true, not
     # because a crawler can confirm it.
     - "https://forum.mikrotik.com/u/jmrplens"
     # AT Protocol professional profile: its content is signed in his own PDS
@@ -84,14 +84,14 @@ person:
     # By DID, not handle: the URL survives a handle change (sifa.id redirects
     # it to the current handle).
     - "https://sifa.id/p/did:plc:jder4wkjnwh6mzhrx4n5ebti"
-    # Stack Exchange NETWORK profile — the account that groups the per-site
+    # Stack Exchange NETWORK profile, the account that groups the per-site
     # ones. Both forms are kept on purpose: the network id survives site
     # migrations, the Stack Overflow one is where the actual answers are.
     - "https://stackexchange.com/users/7889616/jmrplens"
     - "https://dsp.stackexchange.com/users/51783/jmrplens"
     # Stack Overflow. The account is old and was renamed to the canonical handle
     # on 2026-08-27; the numeric id in the URL is what identifies it, and it
-    # survives any future rename — which is why the URL is stored with the id
+    # survives any future rename, which is why the URL is stored with the id
     # rather than as /users/jmrplens.
     - "https://stackoverflow.com/users/5960262/jmrplens"
     # AT Protocol forge, published under the same handle as the Bluesky
@@ -108,9 +108,23 @@ person:
     # GitHub, Mastodon and LinkedIn (checked 2026-11-01). That makes it an
     # identity page, which is what `sameAs` lists.
     - "https://ko-fi.com/jmrplens"
+    # Maker and developer communities where the Kleidos project will be
+    # published. Listed before anything is posted on them because the accounts
+    # are his under the canonical handle; each checked on 2026-11-07.
+    #
+    # Hackaday.io: titled "Jose M. Requena Plens" and linking GitHub, GitLab,
+    # Mastodon and LinkedIn.
+    - "https://hackaday.io/jmrplens"
+    # DEV: full name, "Valencia, Spain", jmrp.io as its website, and the GitHub
+    # account connected (its public API reports `github_username: jmrplens`).
+    - "https://dev.to/jmrplens"
+    # Hackster.io: "José M. Requena Plens", Valencia, and the same one-line bio
+    # as DEV. NOTE: its website field is still empty, so unlike the two above
+    # it does not link back yet; setting it to jmrp.io would close the loop.
+    - "https://www.hackster.io/jmrplens"
   # Expertise topics emitted as the canonical Person `knowsAbout`, site-wide, by
   # BaseHead.astro. Merged from the former site-config list + about.yaml's
-  # embedded-firmware specifics so a single list covers the whole entity —
+  # embedded-firmware specifics so a single list covers the whole entity;
   # page builders must NOT redefine `knowsAbout` locally (see CLAUDE.md GEO
   # audit notes). Terms with a verified Wikidata Q-id are rendered as `Thing`
   # objects by BaseHead; the rest stay as plain strings (mixing is valid).
@@ -211,7 +225,7 @@ nav:
   - label: "Publications"
     href: "/publications/"
 
-# Localized fallback only — the homepage actually renders
+# Localized fallback only: the homepage actually renders
 # `pages.home.heroTitle` / `heroSubtitle` / `heroBio1` / `heroBio2` from the
 # i18n layer (see HomePage.astro and utils/llms.ts). Kept in sync with the
 # English strings there so the two copies never state different facts.

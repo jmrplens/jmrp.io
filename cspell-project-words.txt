@@ -542,6 +542,8 @@ guarinos
 guillem
 habilítalo
 hace
+Hackaday
+Hackster
 halten
 hardvard
 hashcat
