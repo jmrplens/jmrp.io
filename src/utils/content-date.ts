@@ -4,6 +4,9 @@ import path from "node:path";
 import process from "node:process";
 import { fileURLToPath } from "node:url";
 
+import { load as parseYaml } from "js-yaml";
+
+import type { FaqRevision } from "./faq-block-dates.js";
 import { isSubstantive } from "./post-dates.js";
 
 // Field/record separators for the `git log` format below: control characters,
@@ -16,7 +19,7 @@ const RECORD_SEP = "\u{1E}";
  * Repository root, resolved by checking candidates rather than assuming one.
  *
  * The paths callers pass are documented as repo-root-relative, so `git log`
- * has to run from the repo root for that contract to hold — and a mismatch
+ * has to run from the repo root for that contract to hold, and a mismatch
  * fails silently, because `git log -- <path>` returns an empty result rather
  * than an error, so every date would quietly become `undefined`.
  *
@@ -28,7 +31,7 @@ const RECORD_SEP = "\u{1E}";
  *   but NOT against bundling: this module is imported by `.astro` components,
  *   so Vite may relocate it and `../../` then points outside the repo
  *   entirely. Pinning to it alone silently disabled every date on /about/ and
- *   /privacy/ — observed, not hypothetical.
+ *   /privacy/: observed, not hypothetical.
  *
  * So each candidate is validated by looking for `.git` (a directory in a normal
  * clone, a file in a worktree, hence `existsSync` rather than a stat on a dir),
@@ -41,13 +44,41 @@ const REPO_ROOT = [
 ].find((candidate) => existsSync(path.join(candidate, ".git")));
 
 /**
+ * Runs git in the repository and returns its standard output.
+ *
+ * @param root - The repository root.
+ * @param args - The git arguments.
+ * @returns The output; throws when git fails.
+ */
+function git(root: string, args: string[]): string {
+  return execFileSync(
+    // eslint-disable-next-line sonarjs/no-os-command-from-path -- PATH is pinned below to /usr/bin:/bin, both root-owned
+    "git",
+    args,
+    {
+      cwd: root,
+      encoding: "utf8",
+      stdio: ["ignore", "pipe", "ignore"],
+      // Resolve `git` only through root-owned directories, so the binary
+      // cannot be shadowed by a writable PATH entry inherited from the
+      // build shell. Same rationale and same value as `DEFAULT_SECURE_PATH`
+      // in `scripts/deploy-live.mjs`. The rule below cannot see that the
+      // PATH is a hard-coded literal of exactly those two directories, which
+      // is precisely what it asks for.
+      env: { ...process.env, PATH: "/usr/bin:/bin" }, // NOSONAR
+      maxBuffer: 8 * 1024 * 1024,
+    },
+  );
+}
+
+/**
  * Last time a source file actually changed, as an ISO 8601 timestamp.
  *
  * ── Why this exists ──────────────────────────────────────────────────────
  * `/about/` and `/privacy/` used to publish `dateModified: new Date()`, which
  * is the BUILD time. On this site `pnpm build` is also the deploy, so every
  * rebuild restamped both pages as "modified today" even when nothing in them
- * had changed — the two locales of /about/ were observed three seconds apart,
+ * had changed: the two locales of /about/ were observed three seconds apart,
  * which is the giveaway. Google's guidance is explicit that a `dateModified`
  * which churns without content changes is worse than none at all, and it
  * devalues the property everywhere else on the site, including the blog posts
@@ -74,7 +105,7 @@ const REPO_ROOT = [
  * ── Precision ────────────────────────────────────────────────────────────
  * The full ISO timestamp, not a truncated `YYYY-MM-DD`. schema.org accepts
  * either, but every other `dateModified` on this site is a datetime, and git
- * already knows the commit time — throwing that precision away would make this
+ * already knows the commit time; throwing that precision away would make this
  * one property inconsistent with the rest of the graph for no gain.
  *
  * @param repoRelativePath - Path from the repository root, e.g.
@@ -84,30 +115,13 @@ const REPO_ROOT = [
 export function lastCommitDate(repoRelativePath: string): string | undefined {
   if (!REPO_ROOT) return undefined;
   try {
-    const stdout = execFileSync(
-      // eslint-disable-next-line sonarjs/no-os-command-from-path -- PATH is pinned below to /usr/bin:/bin, both root-owned
-      "git",
-      [
-        "log",
-        "--no-merges",
-        `--format=%H${FIELD_SEP}%cI${FIELD_SEP}%s${FIELD_SEP}%(trailers:key=Content-Bump,valueonly,separator=%x2C)${RECORD_SEP}`,
-        "--",
-        repoRelativePath,
-      ],
-      {
-        cwd: REPO_ROOT,
-        encoding: "utf8",
-        stdio: ["ignore", "pipe", "ignore"],
-        // Resolve `git` only through root-owned directories, so the binary
-        // cannot be shadowed by a writable PATH entry inherited from the
-        // build shell. Same rationale and same value as `DEFAULT_SECURE_PATH`
-        // in `scripts/deploy-live.mjs`. The rule below cannot see that the
-        // PATH is a hard-coded literal of exactly those two directories, which
-        // is precisely what it asks for.
-        env: { ...process.env, PATH: "/usr/bin:/bin" }, // NOSONAR
-        maxBuffer: 8 * 1024 * 1024,
-      },
-    );
+    const stdout = git(REPO_ROOT, [
+      "log",
+      "--no-merges",
+      `--format=%H${FIELD_SEP}%cI${FIELD_SEP}%s${FIELD_SEP}%(trailers:key=Content-Bump,valueonly,separator=%x2C)${RECORD_SEP}`,
+      "--",
+      repoRelativePath,
+    ]);
     // Newest first, so the first substantive record is the answer. An empty
     // result means the path is untracked or has no commits, and a history of
     // nothing but mechanical passes has no revision date either: not an
@@ -123,5 +137,58 @@ export function lastCommitDate(repoRelativePath: string): string | undefined {
     return undefined;
   } catch {
     return undefined;
+  }
+}
+
+/**
+ * Every commit that touched a file, newest first, with the file parsed as
+ * YAML at that commit and at its parent: the input `faqBlockDates` compares
+ * block by block (see `faq-block-dates.ts`). Same commit filter as
+ * {@link lastCommitDate}: merges are skipped and `isSubstantive` decides
+ * what counts as a revision.
+ *
+ * A commit with no parent in the local history is left out rather than read
+ * against an empty file: at the edge of a shallow clone that would date every
+ * block to it. A parent that lacks the file is the file's creation, and every
+ * block in it is new.
+ *
+ * @param repoRelativePath - Path from the repository root.
+ * @returns The revisions, or none when git cannot answer.
+ */
+export function yamlRevisions(repoRelativePath: string): FaqRevision[] {
+  if (!REPO_ROOT) return [];
+  const root = REPO_ROOT;
+  const read = (rev: string): unknown => {
+    try {
+      return parseYaml(git(root, ["show", `${rev}:${repoRelativePath}`]));
+    } catch {
+      return undefined;
+    }
+  };
+  try {
+    const stdout = git(root, [
+      "log",
+      "--no-merges",
+      `--format=%H${FIELD_SEP}%P${FIELD_SEP}%cI${FIELD_SEP}%s${FIELD_SEP}%(trailers:key=Content-Bump,valueonly,separator=%x2C)${RECORD_SEP}`,
+      "--",
+      repoRelativePath,
+    ]);
+    const revisions: FaqRevision[] = [];
+    for (const record of stdout.split(RECORD_SEP)) {
+      const [sha = "", parents = "", when = "", subject = "", marker = ""] =
+        record.trim().split(FIELD_SEP);
+      const [parent] = parents.split(" ", 1);
+      if (!sha || !when || !parent) continue;
+      revisions.push({
+        sha,
+        when,
+        substantive: isSubstantive(sha, subject, marker),
+        after: read(sha),
+        before: read(parent),
+      });
+    }
+    return revisions;
+  } catch {
+    return [];
   }
 }
