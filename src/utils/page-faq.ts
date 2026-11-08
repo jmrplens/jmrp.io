@@ -16,6 +16,7 @@ import { type TranslationKey, useTranslations } from "@i18n/utils";
 import { getEntry } from "astro:content";
 import type { FAQPage } from "schema-dts";
 
+import { linkedMarkdown, type TextLink } from "./linked-text";
 import { CATEGORY_ORDER, categoryName } from "./llms/tool-categories";
 import { getSeries } from "./series";
 import { fillSiteFacts, getSiteFacts } from "./site-facts";
@@ -24,6 +25,8 @@ import { fillSiteFacts, getSiteFacts } from "./site-facts";
 export interface FaqItem {
   question: string;
   answer: string;
+  /** Phrases of the answer the page and the twin link; see `@utils/linked-text`. */
+  links?: TextLink[];
 }
 
 /** A page's pairs and whether the page renders them. */
@@ -148,6 +151,8 @@ export function pageFaqNode(
     "@id": `${pageUrl}#faq`,
     inLanguage: locale,
     isPartOf: { "@id": isPartOf },
+    // The answer stays plain text here: its `links` are rendered by the
+    // visible section and the twin only.
     mainEntity: faq.items.map((item) => ({
       "@type": "Question",
       name: item.question,
@@ -174,6 +179,11 @@ export function pageFaqLines(
     "",
     QUESTIONS_HEADING[locale],
     "",
-    ...faq.items.flatMap((f) => [`**${f.question}**`, "", f.answer, ""]),
+    ...faq.items.flatMap((f) => [
+      `**${f.question}**`,
+      "",
+      linkedMarkdown(f.answer, f.links),
+      "",
+    ]),
   ];
 }

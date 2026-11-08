@@ -455,9 +455,11 @@ projects:
   # that site while the project has no documentation: the card and the
   # markdown twins call it the project site because of the status.
   #
-  # Kleidos: `name`, `summary`, `alternateName`, `disambiguatingDescription`
-  # and `keywords` are verbatim the `#software` node its own site publishes
-  # at the same @id, read 2026-11-01 after its GEO audit:
+  # Kleidos: `name`, `summary`, `alternateName`, `disambiguatingDescription`,
+  # `keywords`, `licenseUrl`, `sameAs` (the project's YouTube channel, by id
+  # and by handle), `copyrightHolder`, `isAccessibleForFree` and
+  # `runtimePlatform` are verbatim the `#software` node its own site
+  # publishes at the same @id, last compared 2026-11-08:
   #   https://kleidos.dev/#software
   # That node states the language as a ComputerLanguage node, which
   # `languageNode` copies. It also lists the kleidos-firmware posts as
@@ -468,7 +470,7 @@ projects:
   #
   # No `repo`: it is private. `license` is the GPL-3.0-or-later its site
   # states for the firmware, although GitHub does not detect it in the
-  # private repository. No `operatingSystem`: the site names where
+  # private repository; `licenseUrl` is the SPDX page that site links. No `operatingSystem`: the site names where
   # it runs (ESP32-S3 and ESP32 boards from M5Stack and LilyGO), but the
   # property belongs to SoftwareApplication, and the card shows "Runs on"
   # only where the node states it. Its site publishes `sitemap.xml`, not the
@@ -479,10 +481,17 @@ projects:
     schemaType: SoftwareSourceCode
     language: C++
     license: GPL-3.0-or-later
+    licenseUrl: https://spdx.org/licenses/GPL-3.0-or-later.html
     docs: https://kleidos.dev/
     kicker: Hardware · password manager
     docsEs: https://kleidos.dev/es/
     sitemap: sitemap.xml
+    sameAs:
+      - https://www.youtube.com/channel/UCFoq2KqUch9rWRslqb5UeFQ
+      - https://www.youtube.com/@kleidos
+    copyrightHolder: person
+    isAccessibleForFree: true
+    runtimePlatform: ESP-IDF
     topics:
       - { name: Password manager, wikidata: Q1281199 }
       - { name: ESP32, wikidata: Q27921668 }
@@ -491,8 +500,8 @@ projects:
       - { name: Firmware, wikidata: Q104851 }
       - { name: C++, wikidata: Q2407 }
     summary:
-      en: Passwords kept encrypted on a device you hold, typed over Bluetooth once you unlock it on the device itself. No app, no cloud. Coming soon.
-      es: Contraseñas cifradas en un dispositivo que llevas encima y escritas por Bluetooth al desbloquearlo en el propio dispositivo. Sin app ni nube. Próximamente.
+      en: "Kleidos is a hardware password manager: passwords encrypted on a device you hold, typed over Bluetooth once you unlock it. No app, no cloud. Not released."
+      es: "Kleidos es un gestor de contraseñas por hardware: contraseñas cifradas en un dispositivo que llevas encima, escritas por Bluetooth al desbloquearlo. Sin app ni nube. Sin publicar todavía."
     alternateName:
       - Kleidos firmware
       - Kleidos password manager

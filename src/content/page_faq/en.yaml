@@ -30,9 +30,12 @@ pages:
     visible: true
     items:
       - question: Who is José Manuel Requena Plens?
-        answer: "A firmware and software engineer based in Valencia, Spain, with an R&D background in acoustics: a degree in Telecommunication Engineering, a Master's in Acoustical Engineering and four years of predoctoral research at the UPV (2019–2023). Between 2023 and 2026 he built industrial embedded firmware in C on STM32 and FreeRTOS for solar inverters and battery storage, and he maintains {ownRepos} public repositories of his own on GitHub. Since May 2026 he has been looking for his next role in firmware, software or QA, on-site, remote or hybrid."
+        answer: "A firmware and software engineer based in Valencia, Spain, with an R&D background in acoustics: a degree in Telecommunication Engineering, a Master's in Acoustical Engineering and four years of predoctoral research at the UPV (2019 to 2023). Between 2023 and 2026 he built industrial embedded firmware in C on STM32 and FreeRTOS for solar inverters and battery storage, and he maintains {ownRepos} public repositories of his own on GitHub. Since May 2026 he has been looking for his next role in firmware, software or QA, on-site, remote or hybrid."
       - question: What software does he maintain?
-        answer: "Several Model Context Protocol servers written in Go (among them gitlab-mcp-server, which exposes 850+ GitLab actions, and libgen-mcp), phonometry (a standards-conformant acoustics library for Python), cs-routeros-bouncer (a CrowdSec bouncer for MikroTik RouterOS), Cloudflare-DNS-Updater, the 17 web tools on this site, and Kleidos, a hardware password manager in C++ built in eight variants for different devices, each with its own screen and buttons, and the source of the firmware series on this blog."
+        answer: "Several Model Context Protocol servers written in Go (among them gitlab-mcp-server, which exposes 850+ GitLab actions, and libgen-mcp), phonometry (a standards-conformant acoustics library for Python), cs-routeros-bouncer (a CrowdSec bouncer for MikroTik RouterOS), Cloudflare-DNS-Updater, the 17 web tools on this site, and Kleidos, a hardware password manager in C++ built in nine variants for different devices, each with its own screen and buttons, and the source of the firmware series on this blog."
+        links:
+          - text: Kleidos
+            href: https://kleidos.dev/
 
   - path: /projects/
     visible: true
@@ -76,7 +79,7 @@ pages:
     visible: true
     items:
       - question: What has he published?
-        answer: "Fourteen works from his acoustics research (2018–2023): one journal article, eleven conference and workshop papers and two theses, on acoustic metamaterials, sound diffusers, rocket launch noise prediction and mitigation, loudspeaker enclosure design and room acoustics."
+        answer: "Fourteen works from his acoustics research (2018 to 2023): one journal article, eleven conference and workshop papers and two theses, on acoustic metamaterials, sound diffusers, rocket launch noise prediction and mitigation, loudspeaker enclosure design and room acoustics."
       - question: Where can the papers be read?
         answer: "All but one entry on this page carry a DOI on Zenodo, where the full text is archived and openly accessible; the list is also available on Google Scholar and ORCID."
 
