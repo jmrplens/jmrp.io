@@ -64,6 +64,10 @@ const seriesProject = await getSeriesProject(series);
 
 // The program's own site in this locale. The copy names it in prose
 // ("kleidos.dev", "kleidos.dev/es/"), and that name becomes a link to it.
+// The sentence is an array, not a fragment, and the link takes the name
+// through `set:text`, not as a child: the compiler turns each line break
+// between those pieces into a space, which read "kleidos.dev ," with the
+// comma pushed off the name, and Prettier puts every piece on its own line.
 const projectSite = seriesProject && projectSiteHref(seriesProject, locale);
 const siteMention = (text: string) =>
   projectSite ? splitAtSiteName(text, projectSite) : undefined;
@@ -176,22 +180,19 @@ const afterBlocks = ["after1", "after2"];
         const mention = siteMention(t(key(block)));
         return (
           <p class="series-prose">
-            {mention ? (
-              <>
-                {mention.before}
-                <a
-                  href={projectSite}
-                  target="_blank"
-                  rel="external noopener noreferrer"
-                  aria-label={t("aria.opensNewTab", { text: mention.name })}
-                >
-                  {mention.name}
-                </a>
-                {mention.after}
-              </>
-            ) : (
-              t(key(block))
-            )}
+            {mention
+              ? [
+                  mention.before,
+                  <a
+                    href={projectSite}
+                    target="_blank"
+                    rel="external noopener noreferrer"
+                    aria-label={t("aria.opensNewTab", { text: mention.name })}
+                    set:text={mention.name}
+                  />,
+                  mention.after,
+                ]
+              : t(key(block))}
           </p>
         );
       })}
@@ -247,22 +248,19 @@ const afterBlocks = ["after1", "after2"];
         const mention = siteMention(t(key(block)));
         return (
           <p class="series-prose">
-            {mention ? (
-              <>
-                {mention.before}
-                <a
-                  href={projectSite}
-                  target="_blank"
-                  rel="external noopener noreferrer"
-                  aria-label={t("aria.opensNewTab", { text: mention.name })}
-                >
-                  {mention.name}
-                </a>
-                {mention.after}
-              </>
-            ) : (
-              t(key(block))
-            )}
+            {mention
+              ? [
+                  mention.before,
+                  <a
+                    href={projectSite}
+                    target="_blank"
+                    rel="external noopener noreferrer"
+                    aria-label={t("aria.opensNewTab", { text: mention.name })}
+                    set:text={mention.name}
+                  />,
+                  mention.after,
+                ]
+              : t(key(block))}
           </p>
         );
       })}
