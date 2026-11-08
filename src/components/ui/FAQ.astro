@@ -1,6 +1,6 @@
 ---
 /**
- * FAQ — accessible frequently-asked-questions section.
+ * FAQ: accessible frequently-asked-questions section.
  *
  * The block is a normal `<section>` with an `<h2>` heading (NOT collapsible):
  * only each individual question is a native `<details>`/`<summary>` disclosure.
@@ -11,10 +11,11 @@
  * BlogPost), so structured data never depends on visibility.
  */
 import { getLangFromUrl, useTranslations } from "@i18n/utils";
+import { linkSegments, type TextLink } from "@utils/linked-text";
 
 interface Props {
-  /** Question/answer pairs. */
-  items: { question: string; answer: string }[];
+  /** Question/answer pairs; `links` names phrases of the answer to link. */
+  items: { question: string; answer: string; links?: TextLink[] }[];
 }
 
 const { items } = Astro.props;
@@ -52,7 +53,23 @@ const headingId = `faq-${crypto.getRandomValues(new Uint32Array(1))[0]}`;
             </span>
           </summary>
           <div class="faq__answer">
-            <p>{item.answer}</p>
+            {/* `set:text`, not a child: the compiler keeps the line break
+                before `</a>` as a space inside the link ("Kleidos ,"). */}
+            <p>
+              {linkSegments(item.answer, item.links).map((segment) =>
+                segment.href ? (
+                  <a
+                    href={segment.href}
+                    target="_blank"
+                    rel="external noopener noreferrer"
+                    aria-label={t("aria.opensNewTab", { text: segment.text })}
+                    set:text={segment.text}
+                  />
+                ) : (
+                  segment.text
+                ),
+              )}
+            </p>
           </div>
         </details>
       ))}

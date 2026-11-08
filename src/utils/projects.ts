@@ -95,6 +95,12 @@ export interface Project {
   keywords?: { en: string; es: string };
   /** State `programmingLanguage` as a ComputerLanguage node; see the schema. */
   languageNode?: boolean;
+  /** `person` states `#person` as `copyrightHolder`; see the schema. */
+  copyrightHolder?: "person";
+  /** Overrides the status default for `isAccessibleForFree`; see the schema. */
+  isAccessibleForFree?: boolean;
+  /** SoftwareSourceCode only: the runtime the code targets; see the schema. */
+  runtimePlatform?: string;
 }
 
 /** A post about a project, as the project's `subjectOf` names it. */
@@ -427,8 +433,13 @@ export function buildProjectSchema(
 
   // Released software is free to use and says so twice (`isAccessibleForFree`
   // here, a zero-price `Offer` on SoftwareApplication). A project in
-  // development has nothing to download yet, so neither claim is true of it.
+  // development has nothing to download yet, so by default it claims
+  // neither; when its own site states `isAccessibleForFree` on the shared
+  // node (Kleidos), projects.yaml says so too, and the `Offer` still waits
+  // for a release.
   const released = project.status !== "upcoming";
+  const accessibleForFree =
+    project.isAccessibleForFree ?? (released ? true : undefined);
 
   const shared = {
     "@id": softwareId(project),
@@ -450,7 +461,10 @@ export function buildProjectSchema(
       ? { "@type": "ComputerLanguage" as const, name: project.language }
       : project.language,
     ...(project.license && { license: projectLicenseUrl(project) }),
-    ...(released && { isAccessibleForFree: true }),
+    ...(project.copyrightHolder === "person" && { copyrightHolder: personRef }),
+    ...(accessibleForFree !== undefined && {
+      isAccessibleForFree: accessibleForFree,
+    }),
     // `archived` lived only in projects.json and the twin; the graph said
     // nothing, so a reader of the node could not tell a maintained project
     // from one frozen years ago. creativeWorkStatus is schema.org's lifecycle
@@ -484,6 +498,9 @@ export function buildProjectSchema(
     ? ({
         "@type": "SoftwareSourceCode",
         ...shared,
+        ...(project.runtimePlatform && {
+          runtimePlatform: project.runtimePlatform,
+        }),
       } satisfies SoftwareSourceCode)
     : ({
         "@type": "SoftwareApplication",

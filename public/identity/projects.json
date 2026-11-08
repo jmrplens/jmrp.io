@@ -279,12 +279,12 @@
       "kicker": "Hardware · password manager",
       "language": "C++",
       "license": "GPL-3.0-or-later",
-      "licenseUrl": "https://www.gnu.org/licenses/gpl-3.0.html",
+      "licenseUrl": "https://spdx.org/licenses/GPL-3.0-or-later.html",
       "docs": "https://kleidos.dev/",
       "docsEs": "https://kleidos.dev/es/",
       "sitemap": "sitemap.xml",
-      "description": "Passwords kept encrypted on a device you hold, typed over Bluetooth once you unlock it on the device itself. No app, no cloud. Coming soon.",
-      "descriptionEs": "Contraseñas cifradas en un dispositivo que llevas encima y escritas por Bluetooth al desbloquearlo en el propio dispositivo. Sin app ni nube. Próximamente.",
+      "description": "Kleidos is a hardware password manager: passwords encrypted on a device you hold, typed over Bluetooth once you unlock it. No app, no cloud. Not released.",
+      "descriptionEs": "Kleidos es un gestor de contraseñas por hardware: contraseñas cifradas en un dispositivo que llevas encima, escritas por Bluetooth al desbloquearlo. Sin app ni nube. Sin publicar todavía.",
       "keywords": [
         "Password manager",
         "ESP32",
@@ -293,7 +293,10 @@
         "Firmware",
         "C++"
       ],
-      "sameAs": []
+      "sameAs": [
+        "https://www.youtube.com/channel/UCFoq2KqUch9rWRslqb5UeFQ",
+        "https://www.youtube.com/@kleidos"
+      ]
     },
     {
       "id": "A-Lab",
