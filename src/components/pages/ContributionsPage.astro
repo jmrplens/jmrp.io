@@ -1,6 +1,6 @@
 ---
 /**
- * "Open-source contributions" — the /projects/contributions/ subpage
+ * "Open-source contributions": the /projects/contributions/ subpage
  * (PLAN.md section 2.2). 100% build-time: no `PRJ_*` token anywhere, so the
  * page keeps the edge worker's cache and Early Hints. Every figure comes
  * from `src/data/ghc/projects-contributions.json`, generated at pre-build by
@@ -45,10 +45,12 @@ import {
 import { getSiteUrl } from "@utils/site";
 import { getEntry } from "astro:content";
 import type {
+  Answer,
   CollectionPage,
   CreativeWork,
   ItemList,
   Person,
+  Question,
   SoftwareSourceCode,
   Text,
 } from "schema-dts";
@@ -284,10 +286,12 @@ function upstreamNode(
 // Every "Contributed to" row has at least one merged change, so the person is
 // a contributor of each: the edge this page documents, stated in the one
 // direction schema.org defines (there is no Person → "contributed to").
+// Named for what it holds, not after the page: projects with only open
+// changes are on the page but not in this list.
 const upstreamList = {
   "@type": "ItemList",
   "@id": `${pageUrl}#upstream-list`,
-  name: t("pages.projectsContributions.heading"),
+  name: t("pages.projectsContributions.upstreamListName"),
   numberOfItems: contributedTo.length,
   itemListOrder: "https://schema.org/ItemListUnordered",
   itemListElement: contributedTo.map((row, index) => ({
@@ -347,6 +351,52 @@ const highlightList = {
       ),
     } satisfies CreativeWork,
   })),
+} satisfies ItemList;
+
+// The accepted answers, in the order the page lists them (the lead in view,
+// then the rest behind the disclosure) and with what it prints of each: the
+// question, linked to the answer, and the project. The answer's own URL is
+// its identity; the discussion is the Question it answers, about the
+// project's repository node (the same `@id` the upstream list uses). No
+// dates, because the page shows none; no answer text, because the page
+// links to it rather than quoting it.
+const answersInOrder = [...answersShown, ...answersMore];
+const answersList = {
+  "@type": "ItemList",
+  "@id": `${pageUrl}#answers`,
+  name: t("pages.projectsContributions.answersListName"),
+  numberOfItems: answersInOrder.length,
+  itemListOrder: "https://schema.org/ItemListUnordered",
+  itemListElement: answersInOrder.map((a, index) => {
+    const discussionUrl = `https://github.com/${a.fullName}/discussions/${a.number}`;
+    const project = foldProjectName(a.fullName, displayName);
+    return {
+      "@type": "ListItem" as const,
+      position: index + 1,
+      item: {
+        "@type": "Answer",
+        "@id": a.answerUrl,
+        url: a.answerUrl,
+        author: personRef,
+        // The discussion and its answer are in English, whatever the page's
+        // language (as the highlights' PRs).
+        inLanguage: "en",
+        parentItem: {
+          "@type": "Question",
+          "@id": discussionUrl,
+          name: a.title,
+          url: discussionUrl,
+          inLanguage: "en",
+          about: upstreamNode(
+            project,
+            a.fullName,
+            "github",
+            languageByProject.get(project),
+          ),
+        } satisfies Question,
+      } satisfies Answer,
+    };
+  }),
 } satisfies ItemList;
 
 // GitHub's tier words ("Gold") are translated on the page; achievement and
@@ -410,11 +460,14 @@ const schema = {
   about: personRef,
   // The BreadcrumbList BaseHead emits for this very page.
   breadcrumb: { "@id": `${pageUrl}#breadcrumb` },
-  // Both lists the page is about. `hasPart` would be wrong for the
+  // The lists the page is about. `hasPart` would be wrong for the
   // highlights: its range is CreativeWork and an ItemList is not one, which
   // the Schema Markup Validator reports as a severe error (GEO audit #10, M2).
-  mainEntity:
-    mergedHighlights.length > 0 ? [upstreamList, highlightList] : upstreamList,
+  mainEntity: [
+    upstreamList,
+    ...(mergedHighlights.length > 0 ? [highlightList] : []),
+    ...(answersInOrder.length > 0 ? [answersList] : []),
+  ],
 } satisfies CollectionPage;
 
 const pageFaq = await getPageFaq("/projects/contributions/", locale);
