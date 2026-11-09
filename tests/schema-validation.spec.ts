@@ -1516,6 +1516,49 @@ test.describe("Projects and contributions graphs", () => {
         expect(String(h.url).startsWith(`${String(upstreamRepo)}/`)).toBe(true);
       }
 
+      // Accepted answers: the visible list, in its order (the lead in view,
+      // then the rest behind the disclosure), each an Answer by the person to
+      // the discussion's Question, about the project the page names.
+      const answers = listItems(listById(`${pageUrl}#answers`));
+      const visibleAnswers = await page
+        .locator("ul.answers > li")
+        .evaluateAll((els) =>
+          els.map((el) => {
+            const link = el.querySelector(":scope .answers__q");
+            return {
+              url: link?.getAttribute("href") ?? "",
+              question: link?.textContent?.trim() ?? "",
+              project:
+                el.querySelector(".answers__project")?.textContent?.trim() ??
+                "",
+            };
+          }),
+        );
+      expect(visibleAnswers.length).toBeGreaterThan(0);
+      expect(
+        answers.map((a) => {
+          const question = a.parentItem as JsonLdSchema;
+          return {
+            url: a.url,
+            question: question.name,
+            project: (question.about as JsonLdSchema).name,
+          };
+        }),
+      ).toEqual(visibleAnswers);
+      for (const a of answers) {
+        expect(a["@type"]).toBe("Answer");
+        expect(a["@id"]).toBe(a.url);
+        expect(refId(a.author)).toBe(PERSON_ID);
+        expect(a.dateCreated).toBeUndefined();
+        const question = a.parentItem as JsonLdSchema;
+        expect(question["@type"]).toBe("Question");
+        // The answer is a comment of its discussion.
+        expect(String(a.url).startsWith(`${String(question.url)}#`)).toBe(true);
+        expect((question.about as JsonLdSchema)["@type"]).toBe(
+          "SoftwareSourceCode",
+        );
+      }
+
       // Nothing hidden by `exclude` reaches the graph.
       const graphText = JSON.stringify(jsonLd);
       for (const fragment of excludedUrlFragments()) {

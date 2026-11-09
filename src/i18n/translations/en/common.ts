@@ -1067,6 +1067,10 @@ export const common = {
         "Snapshot as of {date} · {prs} pull and merge requests and {issues} issues in {repos} repositories that are not mine, on GitHub and GitLab.",
       highlightsHeading: "Highlights",
       ledgerHeading: "Code and documentation",
+      // Names of the JSON-LD lists: the projects a change was merged into,
+      // and the answers without the count the visible heading carries.
+      upstreamListName: "Projects with merged code or documentation",
+      answersListName: "Accepted answers in GitHub Discussions",
       itemMergedPill: "Merged",
       itemOpenPill: "Open",
       itemNotMergedPill: "Not merged",

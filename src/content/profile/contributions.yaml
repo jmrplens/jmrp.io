@@ -12,7 +12,7 @@ type: contributions
 #   line), not code or docs. Verified against `datos.md` idea 1's tested SQL
 #   (`full_name IN (...) OR repo LIKE 'awesome-%'`) on 2026-09-26.
 # * `exclude` items are hidden from the DETAILED build-time ledger and the
-#   subpage (title, URL, everything) — never from the live summary counts,
+#   subpage (title, URL, everything), never from the live summary counts,
 #   which must keep matching GitHub's own public search results exactly.
 #   Each one is documented below with why it is here; add a new entry only
 #   with the same kind of verification.
@@ -33,7 +33,7 @@ type: contributions
 #   merge request on GitLab.com; `kind: pull_request`, `number` = the iid). Every entry must be MERGED (or, for an
 #   issue, a genuine accepted contribution) and carry no pending-disclosure
 #   security content. `why.en`/`why.es` are one line, written by the owner or
-#   verified against the PR/issue before being written down — see
+#   verified against the PR/issue before being written down. See
 #   `destacadas.md` section 3 for how these six were chosen among 60 upstream
 #   items (33 merged, 15 open, 11 closed unmerged) and 13 accepted Discussion
 #   answers, all cross-checked against the live GitHub API on 2026-09-26.
@@ -45,13 +45,13 @@ type: contributions
 #   id (`roster.mjs`'s `ACTIVE_REPOS`), so `deriveOwnProjects()` in
 #   `build-data.mjs` can still fold an older listing PR (titled before a
 #   rename) under the project's current id. Every listing PR's own project is
-#   otherwise derived automatically from its title — see that function's doc
-#   comment in `contributions-yaml.mjs`; this map is only for the one case
+#   otherwise derived automatically from its title (see that function's doc
+#   comment in `contributions-yaml.mjs`); this map is only for the one case
 #   the title itself cannot name correctly.
 
 listingRepos:
   # The account's own projects being published to a package manager or
-  # registry — not code contributed to someone else's project.
+  # registry, not code contributed to someone else's project.
   - microsoft/winget-pkgs
   - docker/mcp-registry
   - conda-forge/staged-recipes
@@ -80,7 +80,7 @@ exclude:
 
 displayName:
   # Same change, code and docs: henrygd/beszel#2327 + henrygd/beszel-docs#82.
-  # BOTH repos map to the same display name "Beszel" — folding only works
+  # BOTH repos map to the same display name "Beszel": folding only works
   # when every sibling repo (the code repo included, not just the docs one)
   # resolves to the identical string.
   henrygd/beszel: Beszel
@@ -91,12 +91,12 @@ displayName:
   modelcontextprotocol/go-sdk: MCP Go SDK
   modelcontextprotocol/rust-sdk: MCP Rust SDK
   # opencloud-eu/web-extensions#575 (open PR) grew out of an accepted answer
-  # in opencloud-eu/opencloud#3587 — same org, one project.
+  # in opencloud-eu/opencloud#3587: same org, one project.
   opencloud-eu/web-extensions: OpenCloud
   opencloud-eu/opencloud: OpenCloud
   alshedivat/al-folio: al-folio
-  # Bare repo name alone would read wrong or lowercase — review round #1,
-  # item 3.
+  # Bare repo name alone would read wrong or lowercase (review round #1,
+  # item 3).
   podman-container-tools/podman: Podman
   renovatebot/renovate: Renovate
   TriliumNext/Trilium: Trilium Notes
@@ -119,10 +119,14 @@ displayName:
   acmesh-official/acme.sh: acme.sh
   YunoHost-Apps/coturn_ynh: YunoHost coturn
   # GitLab.com projects are keyed by their full path, which can be nested.
-  # The GitLab application and its Cells HTTP router are one project to a
-  # reader; the Go client library is a separate program.
+  # The Go client library is a separate program. So is the Cells HTTP
+  # router: folded into "GitLab" until 2026-11-09, its one merge counted in
+  # GitLab's total but never showed, being older than the ten rows that
+  # entry prints, and the entry's "all my merge requests" link lists only
+  # gitlab-org/gitlab. Its name is its own description's, "HTTP Router for
+  # Cells"; bare, "http-router" says nothing.
   gitlab-org/gitlab: GitLab
-  gitlab-org/cells/http-router: GitLab
+  gitlab-org/cells/http-router: HTTP Router for Cells
   gitlab-org/api/client-go: GitLab Go client
   # Bare names that named something else (2026-10-30). Each comes from the
   # project's own GitLab name, description or README:
@@ -223,7 +227,7 @@ listingAliases:
 
 # `why.en`/`why.es` are DOUBLE-QUOTED: several mention PR numbers as
 # "#1234", and a plain (unquoted) YAML scalar treats a `#` preceded by
-# whitespace as a comment marker — even mid-string, even inside a folded
+# whitespace as a comment marker, even mid-string, even inside a folded
 # multi-line value. Quoting avoids that trap entirely.
 # Accepted answers the subpage keeps in view (at most six, in this order);
 # the others, newest first, sit behind a "Show the other N" disclosure.

@@ -1044,6 +1044,8 @@ export const common = {
         "Foto a fecha de {date} · {prs} pull requests y merge requests y {issues} issues en {repos} repositorios que no son míos, en GitHub y GitLab.",
       highlightsHeading: "Destacadas",
       ledgerHeading: "Código y documentación",
+      upstreamListName: "Proyectos con código o documentación fusionados",
+      answersListName: "Respuestas aceptadas en GitHub Discussions",
       itemMergedPill: "Fusionada",
       itemOpenPill: "Abierta",
       itemNotMergedPill: "No fusionada",
