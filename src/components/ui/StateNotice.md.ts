@@ -3,7 +3,7 @@ import { markdownFor } from "@utils/llms/mdx/types";
 /**
  * Every StateNotice in the corpus is self-closing: the feature name, its
  * state, the deadline and the replacement are all props, and the body is
- * empty. Dropping the tag therefore deletes the notice outright — the reader
+ * empty. Dropping the tag therefore deletes the notice outright: the reader
  * would go from "here is how to configure `report-uri`" straight to the next
  * section with nothing saying the directive is deprecated.
  *
@@ -34,12 +34,12 @@ const TEXT = {
       security: "has security implications",
     },
     date: {
-      deprecated: "and will be removed in",
-      mandatory: "effective from",
-      experimental: "— target:",
-      preview: "— target:",
-      breaking: "effective from",
-      security: "— mitigation required by",
+      deprecated: " and will be removed in {date}",
+      mandatory: " effective from {date}",
+      experimental: " (target: {date})",
+      preview: " (target: {date})",
+      breaking: " effective from {date}",
+      security: " (mitigation required by {date})",
     },
     useInstead: "Use instead:",
     recommended: "Recommended:",
@@ -62,12 +62,12 @@ const TEXT = {
       security: "tiene implicaciones de seguridad",
     },
     date: {
-      deprecated: "y se eliminará en",
-      mandatory: "vigente desde",
-      experimental: "— objetivo:",
-      preview: "— objetivo:",
-      breaking: "vigente desde",
-      security: "— mitigación requerida antes de",
+      deprecated: " y se eliminará en {date}",
+      mandatory: " vigente desde {date}",
+      experimental: " (objetivo: {date})",
+      preview: " (objetivo: {date})",
+      breaking: " vigente desde {date}",
+      security: " (mitigación requerida antes de {date})",
     },
     useInstead: "Usar en su lugar:",
     recommended: "Recomendado:",
@@ -85,19 +85,21 @@ export default markdownFor({
 
     const title = ctx.attr(node, "title");
     const label = words.label[type];
-    const blocks = [title ? `**${label} — ${title}**` : `**${label}**`];
+    const blocks = [title ? `**${label}: ${title}**` : `**${label}**`];
 
     const feature = ctx.attr(node, "feature");
     if (feature) {
       const removalDate = ctx.attr(node, "removalDate");
-      const deadline = removalDate ? ` ${words.date[type]} ${removalDate}` : "";
+      const deadline = removalDate
+        ? words.date[type].replace("{date}", () => removalDate)
+        : "";
       blocks.push(`\`${feature}\` ${words.state[type]}${deadline}.`);
     }
 
     const alternative = ctx.attr(node, "alternative");
     if (alternative) {
       // "Use instead" only reads right for a replacement; the other five types
-      // are recommending, not replacing — the component makes the same split.
+      // are recommending, not replacing; the component makes the same split.
       const lead = type === "deprecated" ? words.useInstead : words.recommended;
       const url = ctx.attr(node, "alternativeUrl");
       const target = url

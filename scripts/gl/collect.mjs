@@ -204,10 +204,16 @@ export async function collectGitlab(
   { withIssues = true, withAchievements = true, withDetails = true } = {},
 ) {
   const params = { author_id: settings.userId, scope: "all", state: "all" };
+  // Since 2026-11-09 GitLab.com answers `/issues?scope=all` with 400 ("Use
+  // `created_by_me` or `assigned_to_me`, or query a specific group or
+  // project"); `/merge_requests` still takes it. The read token is the
+  // author's own, so `created_by_me` is the same set; `author_id` stays, so a
+  // token of another account returns nothing instead of that account's issues.
+  const issueParams = { ...params, scope: "created_by_me" };
   const [mrs, issues, rawAchievements] = await runWithConcurrency(
     [
       () => client.getAll("/merge_requests", params),
-      async () => (withIssues ? client.getAll("/issues", params) : []),
+      async () => (withIssues ? client.getAll("/issues", issueParams) : []),
       async () =>
         withAchievements
           ? getGitlabAchievements(client, settings.username)
