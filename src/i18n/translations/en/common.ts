@@ -1103,6 +1103,10 @@ export const common = {
       shownMergedFirst: "Showing {shown}, merged first.",
       gitlabLevel4Meaning:
         "7,500 to 37,499 points earned contributing to GitLab",
+      gitlabLevel5Meaning:
+        "More than 37,500 points earned contributing to GitLab",
+      gitlabNotableMeaning:
+        "Recognition GitLab gives a community member every release",
       gitlabPointsLink: "Points on GitLab's contributor platform",
       ledgerIntro:
         "One entry per project, most merged changes first. Each lists up to {max} changes: merged ones first, then open ones, newest first within each.",

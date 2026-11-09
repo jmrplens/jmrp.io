@@ -1078,6 +1078,10 @@ export const common = {
       shownMergedFirst: "Se muestran {shown}, primero las fusionadas.",
       gitlabLevel4Meaning:
         "Entre 7.500 y 37.499 puntos ganados contribuyendo a GitLab",
+      gitlabLevel5Meaning:
+        "Más de 37.500 puntos ganados contribuyendo a GitLab",
+      gitlabNotableMeaning:
+        "Reconocimiento que GitLab da en cada versión a un miembro de la comunidad",
       gitlabPointsLink: "Puntos en la plataforma de colaboradores de GitLab",
       ledgerIntro:
         "Una entrada por proyecto, primero las que tienen más cambios fusionados. Cada una lista hasta {max} cambios: primero los fusionados y luego los abiertos, de más reciente a más antiguo en cada grupo.",

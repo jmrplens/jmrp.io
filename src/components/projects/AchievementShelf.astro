@@ -167,6 +167,10 @@ const INITIALS: Record<string, string> = {
       <ul class="ach">
         {group.items.map((a) => {
           const badge = badgeFor(a);
+          const meaning =
+            a.platform === "gitlab"
+              ? gitlabAwardMeaning(a.achievement, locale)
+              : null;
           return (
             <li>
               <span class="ach__badge">
@@ -200,25 +204,30 @@ const INITIALS: Record<string, string> = {
               </span>
               <b class="ach__name">{a.name}</b>
               <span class="ach__tier">{tierLine(a)}</span>
-              {a.platform === "gitlab" &&
-                gitlabAwardMeaning(a.achievement, locale) && (
-                  <span class="ach__extra">
-                    {gitlabAwardMeaning(a.achievement, locale)}
-                    <br />
-                    <a
-                      class="external-link"
-                      href={gitlabPointsUrl}
-                      target="_blank"
-                      rel="external noopener noreferrer"
-                      aria-label={t("aria.opensNewTab", {
-                        text: t("pages.projectsContributions.gitlabPointsLink"),
-                      })}
-                      set:text={t(
-                        "pages.projectsContributions.gitlabPointsLink",
-                      )}
-                    />
-                  </span>
-                )}
+              {meaning && (
+                <span class="ach__extra">
+                  {meaning.text}
+                  {meaning.points && (
+                    <>
+                      <br />
+                      <a
+                        class="external-link"
+                        href={gitlabPointsUrl}
+                        target="_blank"
+                        rel="external noopener noreferrer"
+                        aria-label={t("aria.opensNewTab", {
+                          text: t(
+                            "pages.projectsContributions.gitlabPointsLink",
+                          ),
+                        })}
+                        set:text={t(
+                          "pages.projectsContributions.gitlabPointsLink",
+                        )}
+                      />
+                    </>
+                  )}
+                </span>
+              )}
               {a.platform !== "gitlab" &&
                 (a.achievement === "galaxy-brain" ? (
                   <span class="ach__extra">
