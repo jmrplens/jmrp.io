@@ -1,5 +1,5 @@
 /**
- * Spanish translations — common UI strings.
+ * Spanish translations: common UI strings.
  *
  * Covers navigation, layout, ARIA labels, and shared UI elements.
  * Keys follow dot-notation convention: `t("nav.home")`.
@@ -156,8 +156,8 @@ export const common = {
       hasSecurityImplications: " tiene implicaciones de seguridad",
       willBeRemoved: " y se eliminará en {date}",
       effectiveFrom: " vigente desde {date}",
-      mitigationRequired: " — mitigación requerida antes de {date}",
-      target: " — objetivo: {date}",
+      mitigationRequired: " (mitigación requerida antes de {date})",
+      target: " (objetivo: {date})",
       useInstead: "Usar en su lugar:",
       recommended: "Recomendado:",
     },
@@ -291,7 +291,7 @@ export const common = {
     callStack: {
       ariaWithTitle: "Pila de llamadas: {title}. {count} marcos.",
       ariaWithoutTitle: "Pila de llamadas con {count} marcos",
-      growthLabel: "más profundo — llamada más reciente",
+      growthLabel: "más profundo: llamada más reciente",
     },
     encodingDiagram: {
       ariaWithTitle: "Codificación: {title}.",
@@ -448,7 +448,7 @@ export const common = {
       title: "Blog",
       kicker: "Notas",
       subtitle: "Reflexiones, tutoriales y notas de ingeniería.",
-      seriesLink: "Algunas se escribieron como conjunto — léelas en orden",
+      seriesLink: "Algunas se escribieron como conjunto: léelas en orden",
       topicsTitle: "Temas",
       allPosts: "todos",
       moreTopics: "+{count} más",
@@ -466,8 +466,8 @@ export const common = {
       relatedTitle: "Relacionado en este sitio",
       relatedTools: "Prueba la herramienta",
       // See the note on the English pair: this line says the author re-ran the
-      // article's instructions, which "Actualizado el {date}" — when the text
-      // changed — does not. Not a calque: "probadas de nuevo … con" is how the
+      // article's instructions, which "Actualizado el {date}" (when the text
+      // changed) does not. Not a calque: "probadas de nuevo … con" is how the
       // claim is made in Spanish, and the connector is part of the string
       // because it differs from the English one.
       lastVerified: "Instrucciones probadas de nuevo el {date}",
@@ -571,7 +571,7 @@ export const common = {
       summary2:
         "Entre los servicios autoalojados hay una instancia de Mastodon, un homeserver de Matrix, un PDS de AT Protocol, sincronización de ficheros, streaming multimedia y monitorización. Junto a ellos corren cuatro nodos Tor: dos puentes que hablan obfs4 y WebTunnel, uno en Valencia y otro en Alicante, y dos relays intermedios en VPS de IONOS, uno en Londres y otro en Madrid.",
       summary3:
-        "La seguridad es una sola tubería, no un conjunto de reglas sueltas. Un honeypot en el router convierte el primer paquete de un escáner en una entrada de address-list, nginx aplica tarpit y coincidencia de patrones en la capa web, ambos alimentan a CrowdSec, y CrowdSec acciona los bouncers de vuelta en el router y en el proxy inverso. Los contadores de arriba indican lo que esa tubería está deteniendo. Las cifras las inyecta el propio servidor perimetral al responder — sin JavaScript de por medio — así que cada lector y cada crawler ve los mismos números, sellados con la hora en que se capturaron.",
+        "La seguridad es una sola tubería, no un conjunto de reglas sueltas. Un honeypot en el router convierte el primer paquete de un escáner en una entrada de address-list, nginx aplica tarpit y coincidencia de patrones en la capa web, ambos alimentan a CrowdSec, y CrowdSec acciona los bouncers de vuelta en el router y en el proxy inverso. Los contadores de arriba indican lo que esa tubería está deteniendo. Las cifras las inyecta el propio servidor perimetral al responder, sin JavaScript de por medio, así que cada lector y cada crawler ve los mismos números, sellados con la hora en que se capturaron.",
       realtimePill: "En vivo · inyectado al servir",
       kpiAriaLabel: "Métricas destacadas del homelab",
       kpiServicesOnline: "servicios online",
@@ -639,7 +639,7 @@ export const common = {
       title: "Homelab",
       schemaName: "Infraestructura del Homelab",
       description:
-        "Estado de la infraestructura autoalojada — Mastodon, Matrix, AT Protocol, MCP y Tor en un homelab personal. Disponibilidad y estadísticas en tiempo real.",
+        "Estado de la infraestructura autoalojada: Mastodon, Matrix, AT Protocol, MCP y Tor en un homelab personal. Disponibilidad y estadísticas en tiempo real.",
       intro:
         "Mantengo un homelab para dar soporte a redes descentralizadas, infraestructura personal y aprendizaje continuo. A continuación se muestra el estado en tiempo real de mis servicios públicos.",
       nginxNode: "Nodo: NGINX Edge Security & Analytics",
@@ -654,7 +654,7 @@ export const common = {
       matrixLink: "Chatear en Matrix",
       pdsName: "PDS AT Protocol",
       pdsDescription:
-        "Mi Personal Data Server autoalojado en la red AT Protocol — la identidad y los datos tras @jmrp.eu en Bluesky.",
+        "Mi Personal Data Server autoalojado en la red AT Protocol: la identidad y los datos tras @jmrp.eu en Bluesky.",
       pdsLink: "Ver en Bluesky",
       mcpName: "Servidores MCP",
       mcpDescription:
@@ -712,7 +712,7 @@ export const common = {
       knownServers: "Servidores Conocidos",
       trendingNow: "Tendencias Ahora",
       pdsRecords: "Registros",
-      // ServerInsights — Matrix
+      // ServerInsights: Matrix
       matrixNode: "Nodo: Servidor Matrix",
       matrixStatsAriaLabel: "Estadísticas en tiempo real del servidor Matrix",
       matrixStatsError: "No se pudieron cargar las estadísticas de Matrix.",
@@ -730,7 +730,7 @@ export const common = {
       matrixTotalEvents: "Eventos Totales",
       matrixDbSize: "Tamaño de Base de Datos",
       matrixSynapse: "Synapse",
-      // ServerInsights — Mastodon
+      // ServerInsights: Mastodon
       mastodonNode: "Nodo: Instancia Mastodon",
       mastodonStatsAriaLabel:
         "Estadísticas en tiempo real del servidor Mastodon",
@@ -747,7 +747,7 @@ export const common = {
       mastodonKnownPeers: "Pares Conocidos",
       mastodonDbSize: "Tamaño de Base de Datos",
       mastodonMediaStorage: "Almacenamiento Media",
-      // ServerInsights — TrueNAS
+      // ServerInsights: TrueNAS
       truenasNode: "Nodo: Servidor de Almacenamiento TrueNAS",
       truenasStatsAriaLabel: "Estadísticas en tiempo real del servidor TrueNAS",
       truenasStatsError: "No se pudieron cargar las estadísticas de TrueNAS.",
@@ -757,7 +757,7 @@ export const common = {
       arcCache: "Caché ZFS ARC",
       cpuTemp: "Temperatura CPU",
       // Edge Router (MikroTik)
-      routerNode: "Edge Router — MikroTik",
+      routerNode: "Edge Router (MikroTik)",
       mikrotikStatsAriaLabel: "Estadísticas y métricas del Edge Router",
       mikrotikStatsError: "No se pudieron cargar las métricas del Edge Router.",
       mikrotikSystem: "Sistema",
@@ -810,7 +810,7 @@ export const common = {
       torAdvertisedBandwidth: "BW Anunciado",
       torLocation: "Ubicación",
       torStatsError: "No se pudieron cargar las estadísticas de Tor.",
-      // ServerInsights — Common
+      // ServerInsights: Common
       resourceLoad: "Carga de Recursos",
       dbConnections: "conexiones",
       redisMemory: "Memoria Redis",
@@ -825,7 +825,7 @@ export const common = {
       schemaDescription:
         "Publicaciones académicas e investigación de José Manuel Requena Plens.",
       periodNote:
-        "Producción investigadora de mi etapa académica (2017–2021), previa a mi paso a la industria.",
+        "Producción investigadora de mi etapa académica (de 2017 a 2021), previa a mi paso a la industria.",
       orcidLink: "ORCID",
       journalArticles: "Artículos de revista",
       conferencePapers: "Ponencias en congresos y talleres",
@@ -862,25 +862,25 @@ export const common = {
         "Ingeniero de firmware y software en Valencia: dispositivos embebidos seguros, herramientas open-source e infraestructura self-hosted.",
       editorialTitle: "// EDITORIAL Y CORRECCIONES",
       editorialBody1:
-        "Todo lo que se publica aquí sale de trabajo realmente hecho: comandos ejecutados en hardware y servidores reales, configuración citada de sistemas que la están ejecutando y, cuando una guía depende de una versión concreta del software, esa versión indicada en el artículo. Las afirmaciones que no son mías —comportamiento de un protocolo, propiedades criptográficas, valores por defecto de un fabricante— se contrastan con fuentes primarias (RFC, organismos de estandarización, documentación del fabricante) y se citan, y los enlaces se vuelven a comprobar automáticamente en CI, salvo una lista documentada de dominios que rechazan a los verificadores automáticos.",
+        "Todo lo que se publica aquí sale de trabajo realmente hecho: comandos ejecutados en hardware y servidores reales, configuración citada de sistemas que la están ejecutando y, cuando una guía depende de una versión concreta del software, esa versión indicada en el artículo. Las afirmaciones que no son mías (comportamiento de un protocolo, propiedades criptográficas, valores por defecto de un fabricante) se contrastan con fuentes primarias (RFC, organismos de estandarización, documentación del fabricante) y se citan, y los enlaces se vuelven a comprobar automáticamente en CI, salvo una lista documentada de dominios que rechazan a los verificadores automáticos.",
       editorialBody2:
         "Cada post lleva una declaración de asistencia por IA, así que esto es exactamente lo que significa. Las herramientas de IA ayudan a redactar, estructurar, pulir el texto y traducir al español. No deciden qué es cierto: cada comando, fragmento de configuración y medición se ejecuta y se verifica antes de publicarse, y nada sale directamente de la salida de un modelo. La versión en español es una traducción del mismo material verificado, no un artículo generado aparte.",
       editorialBody3:
         "Si algo de aquí está mal, dímelo. Basta con un correo breve indicando el artículo y el problema: sin cuenta y sin formulario. Los informes de vulnerabilidades tienen su propio canal y su clave PGP en security.txt.",
       editorialBody4:
-        "Las correcciones se hacen en el propio artículo, no en un hilo de comentarios. La fecha de revisión que se muestra en la página y en sus datos estructurados no se mantiene a mano: se calcula en tiempo de compilación como la más reciente de cuatro cosas —cuándo se publicó el artículo, cualquier fecha que yo le ponga a propósito, la última vez que lo volví a probar contra las versiones de software que nombra, y el último commit que cambió su sustancia—, así que no puede quedarse atrás respecto al texto, ni siquiera cuando el cambio es pequeño. Los cambios mecánicos —un retoque de formato, un atributo de enlace, una errata— no mueven las fechas. Los anteriores a esta regla están listados por hash de commit, cada uno con el motivo que lo justifica, en el módulo que calcula la fecha (src/utils/post-dates.ts); cualquiera posterior se declara en su propio mensaje de commit. No hay un registro de cambios por artículo: el registro de qué cambió, y cuándo, es el historial completo de ediciones de este sitio, que es público en su repositorio.",
+        "Las correcciones se hacen en el propio artículo, no en un hilo de comentarios. La fecha de revisión que se muestra en la página y en sus datos estructurados no se mantiene a mano: se calcula en tiempo de compilación como la más reciente de cuatro cosas: cuándo se publicó el artículo, cualquier fecha que yo le ponga a propósito, la última vez que lo volví a probar contra las versiones de software que nombra, y el último commit que cambió su sustancia. Así no puede quedarse atrás respecto al texto, ni siquiera cuando el cambio es pequeño. Los cambios mecánicos (un retoque de formato, un atributo de enlace, una errata) no mueven las fechas. Los anteriores a esta regla están listados por hash de commit, cada uno con el motivo que lo justifica, en el módulo que calcula la fecha (src/utils/post-dates.ts); cualquiera posterior se declara en su propio mensaje de commit. No hay un registro de cambios por artículo: el registro de qué cambió, y cuándo, es el historial completo de ediciones de este sitio, que es público en su repositorio.",
       editorialReportLabel: "Reportar un error",
       editorialSecurityLabel: "security.txt",
     },
     uses: {
       title: "Uses",
       description:
-        "El hardware, software y servicios que José Manuel Requena Plens tiene en rotación — escritorio, herramientas de desarrollo y homelab.",
+        "El hardware, software y servicios que José Manuel Requena Plens tiene en rotación: escritorio, herramientas de desarrollo y homelab.",
     },
     feeds: {
       blueskyTitle: "Feeds curados en Bluesky",
       blueskyIntro:
-        "Además de los artículos de este sitio, mantengo ocho feeds curados en Bluesky — uno por idioma — sobre open source, programación y homelab. Curación automática con revisión humana; puedes seguirlos desde cualquier cuenta de Bluesky.",
+        "Además de los artículos de este sitio, mantengo ocho feeds curados en Bluesky, uno por idioma, sobre open source, programación y homelab. Curación automática con revisión humana; puedes seguirlos desde cualquier cuenta de Bluesky.",
       blueskyOpen: "Abrir en Bluesky",
       title: "Feeds",
       description:
@@ -888,10 +888,10 @@ export const common = {
       kicker: "FEEDS",
       heading: "Suscríbete con RSS",
       intro:
-        "RSS permite que una aplicación lectora consulte este sitio por ti y te avise de los artículos nuevos. Copia una de las URLs de abajo en cualquier lector (Feedbin, Miniflux, NetNewsWire, Thunderbird…) y los artículos llegarán solos — sin cuenta, sin algoritmo y sin correo.",
+        "RSS permite que una aplicación lectora consulte este sitio por ti y te avise de los artículos nuevos. Copia una de las URLs de abajo en cualquier lector (Feedbin, Miniflux, NetNewsWire, Thunderbird…) y los artículos llegarán solos: sin cuenta, sin algoritmo y sin correo.",
       landedTitle: "¿Esperabas el XML crudo?",
       landedBody:
-        "Esta página aparece al abrir el feed en un navegador. Tu lector RSS sigue recibiendo el XML sin cambios en la misma URL — para él no ha cambiado nada.",
+        "Esta página aparece al abrir el feed en un navegador. Tu lector RSS sigue recibiendo el XML sin cambios en la misma URL; para él no ha cambiado nada.",
       feedEnglish: "Feed del blog en inglés",
       feedSpanish: "Feed del blog en español",
       copyUrl: "Copiar URL del feed",
@@ -901,7 +901,7 @@ export const common = {
     privacy: {
       // The copy lives in src/content/pages/<locale>/privacy.mdx. All that
       // remains here is the contact section's anchor, which the footer links
-      // and which the MDX heading now generates — so it is locale-dependent.
+      // and which the MDX heading now generates, so it is locale-dependent.
       contactAnchor: "contacto",
     },
     projects: {
@@ -1153,15 +1153,15 @@ export const common = {
       inCategory: "en esta categoría",
       backToTools: "← Volver a todas las herramientas",
       securityDesc:
-        "Herramientas de seguridad gratuitas — constructor de políticas y calculadora de hashes CSP, inspector de certificados, analizador de cabeceras y más.",
+        "Herramientas de seguridad gratuitas: constructor de políticas y calculadora de hashes CSP, inspector de certificados, analizador de cabeceras y más.",
       developerDesc:
-        "Utilidades gratuitas para desarrolladores — codificador Base64, probador regex, constructor cron, conversor timestamps y comprobador de contraste.",
+        "Utilidades gratuitas para desarrolladores: codificador Base64, probador regex, constructor cron, conversor timestamps y comprobador de contraste.",
       networkDesc:
-        "Herramientas de red gratuitas — generador de configuración Nginx y calculadora de subredes IPv4/IPv6 con VLSM y DNS inverso. Todo en tu navegador.",
+        "Herramientas de red gratuitas: generador de configuración Nginx y calculadora de subredes IPv4/IPv6 con VLSM y DNS inverso. Todo en tu navegador.",
       embeddedDesc:
-        "Herramientas embebidas gratuitas — constructor de tramas Modbus RTU/TCP con CRC y empaquetador de string pool para traducciones de firmware.",
+        "Herramientas embebidas gratuitas: constructor de tramas Modbus RTU/TCP con CRC y empaquetador de string pool para traducciones de firmware.",
       mikrotikDesc:
-        "Herramientas gratuitas para MikroTik RouterOS — generador de configuración WireGuard VPN para configuraciones dual-stack. Procesamiento local.",
+        "Herramientas gratuitas para MikroTik RouterOS: generador de configuración WireGuard VPN para configuraciones dual-stack. Procesamiento local.",
       securityContext:
         "Úsalas cuando estés endureciendo un sitio o revisando el trabajo de otro: construye una Content-Security-Policy y calcula los hashes de sus scripts inline, inspecciona un certificado TLS antes de confiar en él, audita cabeceras de respuesta, o razona sobre la fortaleza de contraseñas y PIN con números reales. Todo se calcula en tu navegador; las dos excepciones son consultas que lanzas tú: el inspector de certificados busca en los registros públicos de Certificate Transparency, y la consulta opcional del analizador de cabeceras pasa por un proxy de este sitio y no se registra.",
       developerContext:
@@ -1169,14 +1169,14 @@ export const common = {
       networkContext:
         "Para planificar antes de tocar producción: genera un bloque de servidor Nginx con TLS moderno y rate limiting para compararlo con el tuyo, o divide un rango IPv4/IPv6 en subredes con VLSM antes de llevarlo a la configuración del router. Ambas corren en local, en tu navegador.",
       embeddedContext:
-        "Compañeras del trabajo en firmware: construye o decodifica una trama Modbus RTU/TCP byte a byte — CRC incluido — cuando un dispositivo no responde, y mide cuánto ahorraría un pool de cadenas empaquetado en tus tablas de traducción antes de escribir el código. Ambas corren en tu navegador.",
+        "Compañeras del trabajo en firmware: construye o decodifica una trama Modbus RTU/TCP byte a byte, CRC incluido, cuando un dispositivo no responde, y mide cuánto ahorraría un pool de cadenas empaquetado en tus tablas de traducción antes de escribir el código. Ambas corren en tu navegador.",
       mikrotikContext:
-        "RouterOS tiene su propia sintaxis y sus propias trampas. Este generador produce una configuración WireGuard dual-stack completa — interfaz, peers, firewall y NAT — como comandos RouterOS listos para pegar, de modo que la estructura sea correcta antes de adaptarla a tu red. Corre en tu navegador.",
+        "RouterOS tiene su propia sintaxis y sus propias trampas. Este generador produce una configuración WireGuard dual-stack completa (interfaz, peers, firewall y NAT) como comandos RouterOS listos para pegar, de modo que la estructura sea correcta antes de adaptarla a tu red. Corre en tu navegador.",
       fallbackDesc: "Herramientas en la categoría {category}.",
     },
     notFound: {
       title: "404: Ah ah ah!",
-      description: "No has dicho la palabra mágica — página no encontrada",
+      description: "No has dicho la palabra mágica: página no encontrada",
       pageNotFound: "Página no encontrada",
       message: "¡Ah ah ah, no has dicho la palabra mágica!",
       goHome: "← Ir al inicio",

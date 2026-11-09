@@ -1,5 +1,5 @@
 /**
- * English translations — common UI strings.
+ * English translations: common UI strings.
  *
  * Covers navigation, layout, ARIA labels, and shared UI elements.
  * Keys follow dot-notation convention: `t("nav.home")`.
@@ -156,8 +156,8 @@ export const common = {
       hasSecurityImplications: " has security implications",
       willBeRemoved: " and will be removed in {date}",
       effectiveFrom: " effective from {date}",
-      mitigationRequired: " — mitigation required by {date}",
-      target: " — target: {date}",
+      mitigationRequired: " (mitigation required by {date})",
+      target: " (target: {date})",
       useInstead: "Use instead:",
       recommended: "Recommended:",
     },
@@ -290,7 +290,7 @@ export const common = {
     callStack: {
       ariaWithTitle: "Call stack: {title}. {count} frames.",
       ariaWithoutTitle: "Call stack with {count} frames",
-      growthLabel: "deeper — most recent call",
+      growthLabel: "deeper: most recent call",
     },
     encodingDiagram: {
       ariaWithTitle: "Encoding: {title}.",
@@ -446,7 +446,7 @@ export const common = {
       title: "Blog",
       kicker: "Notes",
       subtitle: "Thoughts, tutorials, and engineering notes.",
-      seriesLink: "Some of these were written as a set — read them in order",
+      seriesLink: "Some of these were written as a set: read them in order",
       topicsTitle: "Topics",
       allPosts: "all",
       moreTopics: "+{count} more",
@@ -467,7 +467,7 @@ export const common = {
       // thing: "Updated {date}" is when the TEXT last changed, and this line is
       // when the author last re-ran the article's own instructions. "Last
       // verified 1 August" beside "Updated 3 September" read as a contradiction
-      // — changed today, unchecked for a month — because both labels sounded
+      // (changed today, unchecked for a month) because both labels sounded
       // like a claim about the same act. Naming the act ("re-tested") and what
       // it was performed against removes the collision.
       //
@@ -516,28 +516,28 @@ export const common = {
       // currently label at least one post need an entry here.
       tagIntro: {
         security:
-          "Hardening notes from real production deployments — mutual TLS, Content Security Policy, and deception techniques like tarpits and honeypots that slow down or trap malicious traffic before it reaches anything that matters.",
+          "Hardening notes from real production deployments: mutual TLS, Content Security Policy, and deception techniques like tarpits and honeypots that slow down or trap malicious traffic before it reaches anything that matters.",
         nginx:
           "Nginx configuration deep dives, from access control and security headers to serving files without touching disk and enabling QUIC/HTTP/3 in production.",
         mikrotik:
-          "RouterOS configurations tested on real home-lab hardware — VPN tunnels, dual-stack ISP setups, and defensive tricks running on a MikroTik router.",
+          "RouterOS configurations tested on real home-lab hardware: VPN tunnels, dual-stack ISP setups, and defensive tricks running on a MikroTik router.",
         firmware:
           "Firmware engineering notes for resource-constrained microcontrollers: packing strings, deriving device-bound keys, and building an authenticated storage vault in C++.",
         esp32:
-          "Practical firmware work on the ESP32 — memory-constrained C++ techniques verified on real hardware rather than a simulator.",
+          "Practical firmware work on the ESP32: memory-constrained C++ techniques verified on real hardware rather than a simulator.",
         ipv6: "Dual-stack configurations that treat IPv6 as a first-class citizen alongside IPv4, from prefix delegation on a residential ISP to routing it over a VPN tunnel.",
         networking:
-          "Protocol-level notes on how traffic actually moves — from QUIC's transport-layer redesign to VPN tunnels and deliberately hostile behavior aimed at scanners.",
+          "Protocol-level notes on how traffic actually moves, from QUIC's transport-layer redesign to VPN tunnels and deliberately hostile behavior aimed at scanners.",
         cryptography:
           "Applied cryptography as it shows up in real systems: certificate-based authentication, CSP nonces, and key derivation and authenticated encryption on embedded hardware.",
         devops:
-          "Deployment and infrastructure patterns for running services without unnecessary disk I/O or container image bloat — including Kubernetes health endpoints served straight from configuration.",
+          "Deployment and infrastructure patterns for running services without unnecessary disk I/O or container image bloat, including Kubernetes health endpoints served straight from configuration.",
         embedded:
           "Notes from building software that has to fit in kilobytes of flash and RAM, where every string and byte layout is a deliberate choice.",
         linux:
           "Linux system administration as encountered running actual self-hosted services, not textbook examples.",
         privacy:
-          "Running privacy infrastructure for real — a Tor bridge relay operated and documented from first setup through ongoing maintenance.",
+          "Running privacy infrastructure for real: a Tor bridge relay operated and documented from first setup through ongoing maintenance.",
         "c++":
           "C++ as used in firmware: manual memory layout, avoiding heap allocation where possible, and code verified against real embedded targets.",
       },
@@ -570,17 +570,17 @@ export const common = {
       kicker: "Infrastructure",
       // Standing description of the infrastructure, server-rendered.
       // Everything else on this page is a client-side island, so the static
-      // HTML a crawler or a non-JS reader receives had no substance at all —
+      // HTML a crawler or a non-JS reader receives had no substance at all;
       // the one page carrying first-party measurements was also the emptiest.
       // These are facts that do not expire between deploys, so they can be
       // stated without a live fetch; the live numbers still arrive on hydration.
       summaryAriaLabel: "What runs in this homelab",
       summary1:
-        "Everything described here runs on hardware I own and pay for, on a domestic fibre line in Valencia, Spain — not on a managed platform. The router is a MikroTik RB5009 terminating the ISP link over PPPoE with a delegated IPv6 prefix; the services sit behind it on mini PCs and a NAS, with two VPS for the parts that need to be reachable when the house is not.",
+        "Everything described here runs on hardware I own and pay for, on a domestic fibre line in Valencia, Spain, rather than on a managed platform. The router is a MikroTik RB5009 terminating the ISP link over PPPoE with a delegated IPv6 prefix; the services sit behind it on mini PCs and a NAS, with two VPS for the parts that need to be reachable when the house is not.",
       summary2:
         "The self-hosted services include a Mastodon instance, a Matrix homeserver, an AT Protocol PDS, file sync, media streaming and monitoring. Four Tor nodes run alongside them: two bridges speaking obfs4 and WebTunnel, one in Valencia and one in Alicante, and two middle relays on IONOS VPS instances, one in London and one in Madrid.",
       summary3:
-        "Security is one pipeline rather than a set of unrelated rules. A honeypot on the router turns a scanner's first packet into an address-list entry, nginx tarpits and pattern matches on the web tier, both feed CrowdSec, and CrowdSec drives bouncers back on the router and the reverse proxy. The counters above report what that pipeline is stopping. The figures are injected into this page by the edge server itself as it responds — no JavaScript involved — so every reader and every crawler sees the same numbers, stamped with the time they were captured.",
+        "Security is one pipeline rather than a set of unrelated rules. A honeypot on the router turns a scanner's first packet into an address-list entry, nginx tarpits and pattern matches on the web tier, both feed CrowdSec, and CrowdSec drives bouncers back on the router and the reverse proxy. The counters above report what that pipeline is stopping. The figures are injected into this page by the edge server itself as it responds, with no JavaScript involved, so every reader and every crawler sees the same numbers, stamped with the time they were captured.",
       realtimePill: "Live · injected at serve time",
       kpiAriaLabel: "Homelab headline metrics",
       kpiServicesOnline: "services online",
@@ -653,7 +653,7 @@ export const common = {
       title: "Homelab",
       schemaName: "Homelab Infrastructure",
       description:
-        "Self-hosted infrastructure status — Mastodon, Matrix, AT Protocol, MCP and Tor services on a personal homelab. Real-time availability and statistics.",
+        "Self-hosted infrastructure status: Mastodon, Matrix, AT Protocol, MCP and Tor services on a personal homelab. Real-time availability and statistics.",
       intro:
         "I maintain a homelab to support decentralized networks, personal infrastructure, and continuous learning. Below is the real-time status of my public services.",
       nginxNode: "Node: NGINX Edge Security & Analytics",
@@ -668,7 +668,7 @@ export const common = {
       matrixLink: "Chat on Matrix",
       pdsName: "AT Protocol PDS",
       pdsDescription:
-        "My self-hosted Personal Data Server on the AT Protocol network — the identity and data behind @jmrp.eu on Bluesky.",
+        "My self-hosted Personal Data Server on the AT Protocol network: the identity and data behind @jmrp.eu on Bluesky.",
       pdsLink: "View on Bluesky",
       mcpName: "MCP Servers",
       mcpDescription:
@@ -726,7 +726,7 @@ export const common = {
       knownServers: "Known Servers",
       trendingNow: "Trending Now",
       pdsRecords: "Records",
-      // ServerInsights — Matrix
+      // ServerInsights: Matrix
       matrixNode: "Node: Matrix Homeserver",
       matrixStatsAriaLabel: "Matrix server real-time statistics",
       matrixStatsError: "Unable to load Matrix statistics.",
@@ -744,7 +744,7 @@ export const common = {
       matrixTotalEvents: "Total Events",
       matrixDbSize: "Database Size",
       matrixSynapse: "Synapse",
-      // ServerInsights — Mastodon
+      // ServerInsights: Mastodon
       mastodonNode: "Node: Mastodon Instance",
       mastodonStatsAriaLabel: "Mastodon server real-time statistics",
       mastodonStatsError: "Unable to load Mastodon statistics.",
@@ -760,7 +760,7 @@ export const common = {
       mastodonKnownPeers: "Known Peers",
       mastodonDbSize: "Database Size",
       mastodonMediaStorage: "Media Storage",
-      // ServerInsights — TrueNAS
+      // ServerInsights: TrueNAS
       truenasNode: "Node: TrueNAS Storage Server",
       truenasStatsAriaLabel: "TrueNAS server real-time statistics",
       truenasStatsError: "Unable to load TrueNAS statistics.",
@@ -770,7 +770,7 @@ export const common = {
       arcCache: "ZFS ARC Cache",
       cpuTemp: "CPU Temperature",
       // Edge Router (MikroTik)
-      routerNode: "Edge Router — MikroTik",
+      routerNode: "Edge Router (MikroTik)",
       mikrotikStatsAriaLabel: "Edge Router statistics and metrics",
       mikrotikStatsError: "Unable to load Edge Router metrics.",
       mikrotikSystem: "System",
@@ -823,7 +823,7 @@ export const common = {
       torAdvertisedBandwidth: "Adv. Bandwidth",
       torLocation: "Location",
       torStatsError: "Unable to load Tor statistics.",
-      // ServerInsights — Common
+      // ServerInsights: Common
       resourceLoad: "Resource Load",
       dbConnections: "connections",
       redisMemory: "Redis Memory",
@@ -838,7 +838,7 @@ export const common = {
       schemaDescription:
         "Academic publications and research by José Manuel Requena Plens.",
       periodNote:
-        "Research output from my academic period (2017–2021), before moving to industry.",
+        "Research output from my academic period (2017 to 2021), before moving to industry.",
       orcidLink: "ORCID",
       journalArticles: "Journal articles",
       conferencePapers: "Conference and workshop papers",
@@ -872,28 +872,28 @@ export const common = {
     about: {
       title: "About",
       description:
-        "José Manuel Requena Plens — firmware and software engineer in Valencia building secure embedded devices, open-source tools, and self-hosted infrastructure.",
+        "José Manuel Requena Plens, firmware and software engineer in Valencia building secure embedded devices, open-source tools, and self-hosted infrastructure.",
       editorialTitle: "// EDITORIAL & CORRECTIONS",
       editorialBody1:
-        "Everything published here comes from work actually done: commands run on real hardware and real servers, configuration quoted from systems that are running it, and, where a guide depends on a specific software version, that version stated in the article. Claims that are not mine to make — protocol behavior, cryptographic properties, vendor defaults — are checked against primary sources (RFCs, standards bodies, vendor documentation) and cited, and links are re-checked automatically in CI, except for a documented list of domains that reject automated checkers.",
+        "Everything published here comes from work actually done: commands run on real hardware and real servers, configuration quoted from systems that are running it, and, where a guide depends on a specific software version, that version stated in the article. Claims that are not mine to make (protocol behavior, cryptographic properties, vendor defaults) are checked against primary sources (RFCs, standards bodies, vendor documentation) and cited, and links are re-checked automatically in CI, except for a documented list of domains that reject automated checkers.",
       editorialBody2:
         "Each post carries an AI-assistance disclosure, so here is exactly what it means. AI tools help with drafting, structure, copy-editing and the Spanish translation. They do not decide what is true: every command, configuration snippet and measurement is executed and verified by me before it ships, and nothing is published straight from a model's output. The Spanish version is a translation of the same verified material, not a separately generated article.",
       editorialBody3:
-        "If something here is wrong, tell me. A short email with the article and the problem is enough — no account, no form. Vulnerability reports have their own channel and PGP key in security.txt.",
+        "If something here is wrong, tell me. A short email with the article and the problem is enough: no account, no form. Vulnerability reports have their own channel and PGP key in security.txt.",
       editorialBody4:
-        "Corrections are made in the article itself rather than in a comment thread. The revision date shown on the page and in its structured data is not maintained by hand: it is computed at build time as the most recent of four things — when the article was published, any date I set on it deliberately, the last time I re-tested it against the software versions it names, and the last commit that changed its substance — so it cannot fall behind the text, including when the change is a small one. Mechanical changes — a formatting pass, a link attribute, a typo — leave the dates alone. The ones that predate this rule are listed by commit hash, each with the reason it qualifies, in the module that computes the date (src/utils/post-dates.ts); any later one declares itself in its own commit message. There is no per-article changelog; the record of what changed, and when, is the full edit history of this site, which is public in its repository.",
+        "Corrections are made in the article itself rather than in a comment thread. The revision date shown on the page and in its structured data is not maintained by hand: it is computed at build time as the most recent of four things: when the article was published, any date I set on it deliberately, the last time I re-tested it against the software versions it names, and the last commit that changed its substance. That way it cannot fall behind the text, including when the change is a small one. Mechanical changes (a formatting pass, a link attribute, a typo) leave the dates alone. The ones that predate this rule are listed by commit hash, each with the reason it qualifies, in the module that computes the date (src/utils/post-dates.ts); any later one declares itself in its own commit message. There is no per-article changelog; the record of what changed, and when, is the full edit history of this site, which is public in its repository.",
       editorialReportLabel: "Report an error",
       editorialSecurityLabel: "security.txt",
     },
     uses: {
       title: "Uses",
       description:
-        "The hardware, software, and services José Manuel Requena Plens keeps in rotation — desk, dev tools, and homelab.",
+        "The hardware, software, and services José Manuel Requena Plens keeps in rotation: desk, dev tools, and homelab.",
     },
     feeds: {
       blueskyTitle: "Curated feeds on Bluesky",
       blueskyIntro:
-        "Beyond this site's own posts, I run eight curated Bluesky feeds — one per language — about open source, programming and homelab. Automated curation with human review; follow them from any Bluesky account.",
+        "Beyond this site's own posts, I run eight curated Bluesky feeds, one per language, about open source, programming and homelab. Automated curation with human review; follow them from any Bluesky account.",
       blueskyOpen: "Open on Bluesky",
       title: "Feeds",
       description:
@@ -901,10 +901,10 @@ export const common = {
       kicker: "FEEDS",
       heading: "Subscribe with RSS",
       intro:
-        "RSS lets a reader app check this site for new posts so you don't have to. Copy a feed URL below into any reader (Feedbin, Miniflux, NetNewsWire, Thunderbird…) and new articles will arrive on their own — no account, no algorithm, no email.",
+        "RSS lets a reader app check this site for new posts so you don't have to. Copy a feed URL below into any reader (Feedbin, Miniflux, NetNewsWire, Thunderbird…) and new articles will arrive on their own: no account, no algorithm, no email.",
       landedTitle: "Expected raw XML?",
       landedBody:
-        "This page appears when you open the feed in a browser. Your RSS reader still receives the plain XML feed at the very same URL — nothing changed for it.",
+        "This page appears when you open the feed in a browser. Your RSS reader still receives the plain XML feed at the very same URL; nothing changed for it.",
       feedEnglish: "English blog feed",
       feedSpanish: "Spanish blog feed",
       copyUrl: "Copy feed URL",
@@ -914,7 +914,7 @@ export const common = {
     privacy: {
       // The copy lives in src/content/pages/<locale>/privacy.mdx. All that
       // remains here is the contact section's anchor, which the footer links
-      // and which the MDX heading now generates — so it is locale-dependent.
+      // and which the MDX heading now generates, so it is locale-dependent.
       contactAnchor: "contact",
     },
     projects: {
@@ -1181,17 +1181,17 @@ export const common = {
       securityDesc:
         "Free security tools: a CSP policy builder and hash calculator, a certificate inspector, an HTTP header analyzer, and more.",
       developerDesc:
-        "Free online developer utilities — Base64 encoder, regex tester, cron expression builder, Unix timestamp converter, and color contrast checker.",
+        "Free online developer utilities: Base64 encoder, regex tester, cron expression builder, Unix timestamp converter, and color contrast checker.",
       networkDesc:
-        "Free network tools — an Nginx config generator and an IPv4/IPv6 subnet calculator with VLSM planning and reverse DNS. Both run in your browser.",
+        "Free network tools: an Nginx config generator and an IPv4/IPv6 subnet calculator with VLSM planning and reverse DNS. Both run in your browser.",
       embeddedDesc:
-        "Free embedded tools — a Modbus RTU/TCP frame builder with CRC, and a string-pool packer for firmware translation tables. Both run in your browser.",
+        "Free embedded tools: a Modbus RTU/TCP frame builder with CRC, and a string-pool packer for firmware translation tables. Both run in your browser.",
       mikrotikDesc:
-        "Free MikroTik RouterOS tools — WireGuard VPN config generator for dual-stack setups. All processing runs locally in your browser.",
+        "Free MikroTik RouterOS tools: WireGuard VPN config generator for dual-stack setups. All processing runs locally in your browser.",
       // MAINTENANCE: each <cat>Context below narrates what the category's
       // CURRENT tools do (approved copy, 2026-08-22). Adding, removing or
       // renaming a tool in a category may require updating its context AND its
-      // <cat>Desc above, in BOTH locales — a context that names a tool the
+      // <cat>Desc above, in BOTH locales: a context that names a tool the
       // category no longer has is a checkable lie. See also
       // docs/BLOG_POST_GUIDE.md's sibling note for tools.
       securityContext:
@@ -1201,14 +1201,14 @@ export const common = {
       networkContext:
         "For planning before touching production: generate an Nginx server block with modern TLS and rate limiting to compare against your own, or slice an IPv4/IPv6 range into subnets with VLSM before committing it to router config. Both run locally in your browser.",
       embeddedContext:
-        "Companions for firmware work: build or decode a Modbus RTU/TCP frame byte by byte — CRC included — when a device won't answer, and measure what a packed, tail-merged string pool would save in your translation tables before writing the code. Both run in your browser.",
+        "Companions for firmware work: build or decode a Modbus RTU/TCP frame byte by byte, CRC included, when a device won't answer, and measure what a packed, tail-merged string pool would save in your translation tables before writing the code. Both run in your browser.",
       mikrotikContext:
-        "RouterOS has its own syntax and its own pitfalls. This generator produces a complete dual-stack WireGuard setup — interface, peers, firewall and NAT — as paste-ready RouterOS commands, so the structure is right before you adapt it to your network. Runs in your browser.",
+        "RouterOS has its own syntax and its own pitfalls. This generator produces a complete dual-stack WireGuard setup (interface, peers, firewall and NAT) as paste-ready RouterOS commands, so the structure is right before you adapt it to your network. Runs in your browser.",
       fallbackDesc: "Tools in the {category} category.",
     },
     notFound: {
       title: "404: Ah ah ah!",
-      description: "You didn't say the magic word — page not found",
+      description: "You didn't say the magic word: page not found",
       pageNotFound: "Page Not Found",
       message: "Ah ah ah, you didn't say the magic word!",
       goHome: "← Go Home",

@@ -47,8 +47,8 @@ const contributionsData = asContributionsDataset(rawContributionsData);
  * ── Why /projects/ writes its own header ───────────────────────────────
  * Same reason as `homelabMarkdown`: its freshness line is a LIVE capture
  * token (`PRJ_AS_OF`), substituted at serve time by the same nginx body
- * filter that substitutes every other `PRJ_*` figure on the page — see
- * `ssr-tokens.ts`'s module doc comment. `documentHeader`'s `Updated:` line is
+ * filter that substitutes every other `PRJ_*` figure on the page (see
+ * `ssr-tokens.ts`'s module doc comment). `documentHeader`'s `Updated:` line is
  * a BUILD-TIME content date and would be misleading here.
  *
  * @module
@@ -208,7 +208,7 @@ function withoutTrailingArrow(label: string): string {
 /**
  * The "Contributions to other projects" section, shared by both twins where
  * their content overlaps (the live-token summary and the build-time
- * "contributed to" strip) — the same data `UpstreamBlock.astro` renders on
+ * "contributed to" strip): the same data `UpstreamBlock.astro` renders on
  * the page itself.
  *
  * @param locale - Target locale.
@@ -402,7 +402,7 @@ export async function projectsPageMarkdown(
 
 /**
  * `/projects/contributions/index.md`: 100% build-time twin of
- * `ContributionsPage.astro` — no `PRJ_*` token anywhere (verified by
+ * `ContributionsPage.astro`, with no `PRJ_*` token anywhere (verified by
  * `check-markdown-twins.mjs`'s sibling guard, `check-projects-ssr.mjs`, a
  * later task).
  *
