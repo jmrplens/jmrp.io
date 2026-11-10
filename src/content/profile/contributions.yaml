@@ -193,9 +193,8 @@ displayName:
   # YunoHost packages follow "YunoHost coturn". The bare names that already
   # are the project's own keep no entry: ngx_http_ffi_client, papercite,
   # DNN-HA, csv-to-md-table-action, repository-mirroring-action, gobco,
-  # htmlbeautifier, homeassistant-edata, semver_dialects, scrood and
-  # kg-fixtures (with probe-rs, SafeLine and docker-transmission-openvpn,
-  # above).
+  # htmlbeautifier, homeassistant-edata, semver_dialects and scrood (with
+  # probe-rs, SafeLine and docker-transmission-openvpn, above).
   gitlab-org/terraform-provider-gitlab: GitLab Terraform Provider
   gitlab-org/gitlab-pages: GitLab Pages
   gitlab-org/gitlab-runner: GitLab Runner
@@ -274,11 +273,15 @@ language:
 # next to the GitHub ones (scripts/gl/). `excludeNamespaces` are the owner's
 # own top-level namespaces: his GitLab repositories are mirrors of GitHub
 # ones, so work there is not a contribution to someone else's project.
+# jmrp-oss is his group too ("Open source work by José Manuel Requena
+# Plens", owner jmrp): orbit-fixtures/kg-fixtures, the fixture project he
+# made to exercise GitLab Orbit, listed as an upstream until 2026-11-10.
 gitlab:
   username: jmrp
   userId: 15767218
   excludeNamespaces:
     - jmrp
+    - jmrp-oss
     - plens1
 
 # See this file's header comment. Currently just the one pre-rename PyOctave
