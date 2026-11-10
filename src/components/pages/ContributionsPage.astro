@@ -1198,7 +1198,15 @@ const faqNode = pageFaq && pageFaqNode(pageFaq, pageUrl, schema["@id"], locale);
     font-size: var(--text-sm);
   }
 
+  /* A one-line title is an 18 px tall target, and the first and last rows
+     of an entry sit against the summary, the "Show the other N" disclosure
+     or the listing link: WCAG 2.5.8 (target size, minimum) failed on 68
+     links with every entry open. 3 px of block padding makes each line box
+     24 px. On an inline element it grows the hit area and the focus ring
+     only: line boxes, row heights and the text do not move (the open
+     ledger renders byte-identical at 390 and 1280 px). */
   .items li a {
+    padding-block: 3px;
     color: var(--color-text);
     overflow-wrap: anywhere;
   }

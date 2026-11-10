@@ -9,6 +9,7 @@
  * 3. Skip Links: Verifying skip-to-content functionality.
  */
 
+import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
 
 test.describe("Deep Accessibility & Interaction Tests", () => {
@@ -199,4 +200,32 @@ test.describe("Deep Accessibility & Interaction Tests", () => {
     const successIcon = copyBtn.locator(".success-icon");
     await expect(successIcon).not.toHaveClass(/hidden/);
   });
+
+  // The per-page axe suite scans each page as it loads, with every <details>
+  // closed, so nothing inside the contributions ledger was ever scanned: with
+  // the entries open, 68 row links failed WCAG 2.5.8 (target size). This
+  // scans the page with every entry and every nested "Show the other N"
+  // open, in both themes and both locales.
+  for (const prefix of ["", "/es"]) {
+    test(`Contributions ledger passes axe with every disclosure open (${prefix || "/en"})`, async ({
+      page,
+    }) => {
+      for (const colorScheme of ["dark", "light"] as const) {
+        await page.emulateMedia({ colorScheme });
+        await page.goto(`${prefix}/projects/contributions/`);
+        await page.locator("details").evaluateAll((all) => {
+          for (const details of all)
+            (details as HTMLDetailsElement).open = true;
+        });
+        const results = await new AxeBuilder({ page })
+          .include("main")
+          .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"])
+          .analyze();
+        expect(
+          results.violations.map((v) => `${v.id} (${v.nodes.length})`),
+          colorScheme,
+        ).toEqual([]);
+      }
+    });
+  }
 });
