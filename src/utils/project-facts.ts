@@ -310,8 +310,8 @@ export function gitlabPointsUrl(username: string): string {
 }
 
 /**
- * Items a ledger entry lists before it says "showing N, merged first" and
- * links to the full listing.
+ * Items a ledger entry shows unfolded; the rest sit behind its "Show the
+ * other N" disclosure, followed by the link to the platform's listing.
  */
 export const LEDGER_MAX_ITEMS = 10;
 
@@ -346,7 +346,7 @@ export function formatMergeDuration(hours: number, locale: Locale): string {
 
 /**
  * The GitLab listing of the owner's merge requests to the project a ledger
- * entry mostly targets, for the "showing N, merged first" note.
+ * entry mostly targets, linked under an entry with folded rows.
  *
  * @param items - The entry's items.
  * @param username - The GitLab username.
@@ -372,7 +372,7 @@ export function gitlabListing(
 
 /**
  * A GitHub search for every pull request the owner opened in the entry's
- * repositories, for the "showing N, merged first" note.
+ * repositories, linked under an entry with folded rows.
  *
  * @param items - The entry's items.
  * @param owner - The GitHub login.

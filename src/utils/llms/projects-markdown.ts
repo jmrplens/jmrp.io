@@ -117,30 +117,27 @@ function ledgerItemLabel(
 }
 
 /**
- * The "Showing 10, merged first." note with the link to the full listing,
- * exactly as the page prints it under a truncated project.
+ * The link to the project's listing on its platform, exactly as the page
+ * prints it under an entry with more rows than it shows unfolded.
  *
  * @param project - The folded project name.
  * @param items - All of the project's items.
  * @param t - Translator.
  * @returns One markdown line.
  */
-function truncationNote(
+function listingLink(
   project: string,
   items: readonly { fullName: string; platform?: string }[],
   t: ReturnType<typeof useTranslations>,
 ): string {
-  const shown = t("pages.projectsContributions.shownMergedFirst", {
-    shown: LEDGER_MAX_ITEMS,
-  });
   if (platformOf(items[0]?.platform) === "gitlab") {
     const listing = gitlabListing(
       items,
       contributionsData.gitlab?.username ?? "jmrp",
     );
-    return `${shown} [${t("pages.projectsContributions.seeAllOnGitlab", { repo: listing.repo })}](${listing.url})`;
+    return `[${t("pages.projectsContributions.seeAllOnGitlab", { repo: listing.repo })}](${listing.url})`;
   }
-  return `${shown} [${t("pages.projectsContributions.seeAllOnGithub", { total: items.length, project })}](${githubSearchUrl(items, GITHUB_OWNER)})`;
+  return `[${t("pages.projectsContributions.seeAllOnGithub", { total: items.length, project })}](${githubSearchUrl(items, GITHUB_OWNER)})`;
 }
 
 /**
@@ -469,14 +466,13 @@ export async function contributionsPageMarkdown(
         ]
           .filter(Boolean)
           .join(" · ")}`,
-        ...items
-          .slice(0, LEDGER_MAX_ITEMS)
-          .map((it) => `  - ${ledgerItemLabel(it, t, locale)}`),
-        // The page says when it cut the list and links the full one; the
-        // twin cut at the same place without saying so (twin audit
-        // 2026-09-27, W4).
+        // Every row, as the page lists them (it folds the ones past the
+        // first ten under "Show the other N"; a twin has nothing to fold),
+        // and the link to the platform's listing the page prints under
+        // such an entry.
+        ...items.map((it) => `  - ${ledgerItemLabel(it, t, locale)}`),
         ...(items.length > LEDGER_MAX_ITEMS
-          ? [`  - ${truncationNote(project, items, t)}`]
+          ? [`  - ${listingLink(project, items, t)}`]
           : []),
       ],
     ),
@@ -591,7 +587,7 @@ export async function contributionsPageMarkdown(
     "",
     `## ${t("pages.projectsContributions.ledgerHeading")}`,
     "",
-    t("pages.projectsContributions.ledgerIntro", { max: LEDGER_MAX_ITEMS }),
+    t("pages.projectsContributions.ledgerIntro"),
     "",
     ...ledgerLines,
     `## ${t("pages.projectsContributions.answersHeading", { count: acceptedAnswers.length })}`,

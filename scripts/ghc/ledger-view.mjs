@@ -14,8 +14,8 @@
  * - within an entry, merged rows first, then open ones, newest first in each;
  * - closed (not merged) rows are left out; the page counts them apart.
  *
- * The caller keeps the cap (LEDGER_MAX_ITEMS), so the first rows it shows
- * are merged ones.
+ * The caller folds the rows past LEDGER_MAX_ITEMS, so the ones it shows
+ * unfolded are merged ones first.
  *
  * Pure: the page and the twin both call it, so they cannot drift.
  *

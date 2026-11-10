@@ -1104,7 +1104,6 @@ export const common = {
       seeAllOnGitlab: "All my merge requests to {repo} on GitLab",
       platformGithub: "GitHub",
       platformGitlab: "GitLab",
-      shownMergedFirst: "Showing {shown}, merged first.",
       gitlabLevel4Meaning:
         "7,500 to 37,499 points earned contributing to GitLab",
       gitlabLevel5Meaning:
@@ -1113,7 +1112,9 @@ export const common = {
         "Recognition GitLab gives a community member every release",
       gitlabPointsLink: "Points on GitLab's contributor platform",
       ledgerIntro:
-        "One entry per project, most merged changes first. Each lists up to {max} changes: merged ones first, then open ones, newest first within each.",
+        "One entry per project, most merged changes first. Each lists all its changes: merged ones first, then open ones, newest first within each.",
+      // The rows of an entry past its first ten, folded under this line.
+      ledgerMore: "Show the other {count}",
       notMergedHeading: "Not merged ({count}), counted only",
       answersHeading: "Accepted answers in GitHub Discussions ({count})",
       answersMore: "Show the other {count}",

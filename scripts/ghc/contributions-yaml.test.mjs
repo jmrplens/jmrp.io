@@ -167,7 +167,11 @@ test("the real repository contributions.yaml loads and folds beszel + beszel-doc
     foldProjectName("gitlab-org/api/client-go", config.displayName),
     foldProjectName("gitlab-org/gitlab", config.displayName),
   );
-  assert.deepEqual(config.gitlab?.excludeNamespaces, ["jmrp", "plens1"]);
+  assert.deepEqual(config.gitlab?.excludeNamespaces, [
+    "jmrp",
+    "jmrp-oss",
+    "plens1",
+  ]);
   assert.ok(
     config.featured.some(
       (entry) =>

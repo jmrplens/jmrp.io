@@ -147,8 +147,8 @@ displayName:
   # of components"; the "AWS Fargate driver for Custom Executor" of GitLab
   # Runner; "AI skill definitions for GitLab projects"; "the probe.rs
   # webpage"; Arcane, "Modern Docker Management"; "The Go programming
-  # language"; the Zephyr Project's RTOS; and Arcane's official Android
-  # and mobile apps, as their own descriptions call them.
+  # language"; the Zephyr Project's RTOS; and Arcane's official Android,
+  # mobile and iOS apps, as their own descriptions call them.
   gitlab-org/cli: GitLab CLI (glab)
   components/opentofu: OpenTofu CI/CD component
   components/toolkit: CI/CD components toolkit
@@ -160,6 +160,7 @@ displayName:
   zephyrproject-rtos/zephyr: Zephyr RTOS
   getarcaneapp/android: Arcane Android app
   getarcaneapp/mobile: Arcane mobile app
+  getarcaneapp/ios: Arcane iOS app
   # Each accepted answer names its project under the question (2026-10-30),
   # so the repositories answered in need the name a reader knows, taken from
   # the project's own README or description: "Build Awesome (Eleventy)",
@@ -182,6 +183,66 @@ displayName:
   lemker/unifi-os-server: UniFi OS Server (Docker)
   micropython/micropython: MicroPython
   starship/starship: Starship
+  # Every other project the page names (2026-11-10), so none is left as a
+  # bare repository path. Each name is the project's own: its GitLab or
+  # GitHub name, the first heading of its README, or its description
+  # ("Official GitLab Terraform Provider", "GitLab Pages daemon", "Cline's
+  # MCP Marketplace", "Codex CLI is a coding agent from OpenAI", "Home
+  # Assistant integration for PetKit devices", "glci - GitLab Local CI").
+  # gitlab-agent goes by "GitLab Relay", its project's current name. The
+  # YunoHost packages follow "YunoHost coturn". The bare names that already
+  # are the project's own keep no entry: ngx_http_ffi_client, papercite,
+  # DNN-HA, csv-to-md-table-action, repository-mirroring-action, gobco,
+  # htmlbeautifier, homeassistant-edata, semver_dialects and scrood (with
+  # probe-rs, SafeLine and docker-transmission-openvpn, above).
+  gitlab-org/terraform-provider-gitlab: GitLab Terraform Provider
+  gitlab-org/gitlab-pages: GitLab Pages
+  gitlab-org/gitlab-runner: GitLab Runner
+  gitlab-org/gitlab-shell: GitLab Shell
+  gitlab-org/gitaly: Gitaly
+  gitlab-org/container-registry: GitLab Container Registry
+  gitlab-org/editor-extensions/gitlab-lsp: GitLab Language Server
+  gitlab-org/gitlab-vscode-extension: GitLab for VS Code
+  gitlab-org/cluster-integration/gitlab-agent: GitLab Relay
+  gitlab-org/cloud-native/gitlab-operator: GitLab Operator
+  gitlab-org/omnibus-gitlab: Omnibus GitLab
+  gitlab-org/gitlab-development-kit: GitLab Development Kit (GDK)
+  gitlab-org/gitlab-qa: GitLab QA
+  gitlab-org/gitlab-elasticsearch-indexer: GitLab Elasticsearch Indexer
+  gitlab-org/gitlab-zoekt-indexer: GitLab Zoekt
+  gitlab-org/orbit/knowledge-graph: GitLab Orbit
+  gitlab-org/labkit: LabKit
+  gitlab-org/release-cli: GitLab Release CLI
+  gitlab-org/quality/triage-ops: GitLab Triage Operations
+  gitlab-org/ruby/gems/gitlab-triage: GitLab Triage
+  gitlab-org/ruby/gems/gitlab-dangerfiles: GitLab Dangerfiles
+  gitlab-org/ruby/gems/gitlab-glfm-markdown: GLFM Markdown
+  gitlab-org/ruby/gems/gitlab-grape-openapi: GitLab Grape OpenAPI
+  gitlab-org/ruby/gems/prometheus-client-mmap: Prometheus Ruby Mmap Client
+  gitlab-org/security-products/analyzers/dependency-scanning: Dependency Scanning analyzer
+  gitlab-org/security-products/analyzers/report: Analyzers Report Library
+  gitlab-org/security-products/gemnasium-db: GitLab Advisory Database
+  gitlab-org/gitlab-services/design.gitlab.com: Pajamas Design System
+  gitlab-org/developer-relations/contributor-success/contributors-gitlab-com: GitLab contributor platform
+  gitlab-org/modelops/ai-model-validation-and-research/ai-evaluation/cef-service: CEF Service
+  gitlab-org/fleeting/fleeting: Fleeting
+  gitlab-org/fleeting/taskscaler: Taskscaler
+  gitlab-org/ci-cd/runner-tools/glci: glci (GitLab Local CI)
+  openai/codex: Codex CLI
+  bats-core/bats-core: Bats-core
+  cline/mcp-marketplace: Cline MCP Marketplace
+  DefGuard/defguard: Defguard
+  github/rest-api-description: GitHub REST API OpenAPI description
+  magicstone-dev/ecko: Ecko
+  metabolist/metatext: Metatext
+  openwrt/asu: Attended Sysupgrade Server (OpenWrt)
+  pixelfed/pixelfed: Pixelfed
+  RobertD502/home-assistant-petkit: PetKit integration for Home Assistant
+  Universite-Gustave-Eiffel/acoustic-toolbox: Acoustic Toolbox
+  whad-team/whad-client: WHAD client
+  Yeraze/meshmonitor: MeshMonitor
+  YunoHost-Apps/elasticsearch8_ynh: YunoHost Elasticsearch 8
+  YunoHost-Apps/pixelfed_ynh: YunoHost Pixelfed
 
 # Display name → the repository that stands for a folded project: its link,
 # its star count and its JSON-LD `codeRepository`. Without an entry the repo
@@ -212,11 +273,15 @@ language:
 # next to the GitHub ones (scripts/gl/). `excludeNamespaces` are the owner's
 # own top-level namespaces: his GitLab repositories are mirrors of GitHub
 # ones, so work there is not a contribution to someone else's project.
+# jmrp-oss is his group too ("Open source work by José Manuel Requena
+# Plens", owner jmrp): orbit-fixtures/kg-fixtures, the fixture project he
+# made to exercise GitLab Orbit, listed as an upstream until 2026-11-10.
 gitlab:
   username: jmrp
   userId: 15767218
   excludeNamespaces:
     - jmrp
+    - jmrp-oss
     - plens1
 
 # See this file's header comment. Currently just the one pre-rename PyOctave

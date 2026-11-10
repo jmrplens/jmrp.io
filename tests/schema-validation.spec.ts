@@ -1516,6 +1516,56 @@ test.describe("Projects and contributions graphs", () => {
         expect(String(h.url).startsWith(`${String(upstreamRepo)}/`)).toBe(true);
       }
 
+      // The ledger: every linked row, the ones behind "Show the other N"
+      // included, in the page's order. A highlight is referenced by its @id;
+      // every other row is a CreativeWork named by the title it prints.
+      const ledger = listItems(listById(`${pageUrl}#ledger`));
+      const visibleRows = await page
+        .locator("details[data-project] ul.items > li")
+        .evaluateAll((els) =>
+          els.flatMap((el) => {
+            const link = el.querySelector(":scope .items__t a");
+            return link
+              ? [
+                  {
+                    url: link.getAttribute("href") ?? "",
+                    text: link.textContent?.trim() ?? "",
+                  },
+                ]
+              : [];
+          }),
+        );
+      expect(visibleRows.length).toBeGreaterThan(0);
+      expect(ledger.map((row) => row["@id"])).toEqual(
+        visibleRows.map((row) => row.url),
+      );
+      const highlightIds = new Set(highlights.map((h) => h["@id"]));
+      ledger.forEach((row, index) => {
+        if (row["@type"] === undefined) {
+          expect(highlightIds.has(row["@id"])).toBe(true);
+          return;
+        }
+        expect(row["@type"]).toBe("CreativeWork");
+        expect(row.url).toBe(row["@id"]);
+        expect(refId(row.author)).toBe(PERSON_ID);
+        expect(row.inLanguage).toBe("en");
+        expect(
+          visibleRows[index].text.endsWith(String(row.name)),
+          String(row["@id"]),
+        ).toBe(true);
+        expect(
+          (row.creativeWorkStatus as { "@language"?: string })["@language"],
+        ).toBe(lang);
+        const repo = row.isPartOf as JsonLdSchema;
+        expect(
+          repo["@type"] === "SoftwareSourceCode" ||
+            upstream.some((u) => u["@id"] === repo["@id"]),
+        ).toBe(true);
+        expect(String(row.url).startsWith(`${String(repo["@id"])}/`)).toBe(
+          true,
+        );
+      });
+
       // Accepted answers: the visible list, in its order (the lead in view,
       // then the rest behind the disclosure), each an Answer by the person to
       // the discussion's Question, about the project the page names.
