@@ -210,6 +210,10 @@ test.describe("Deep Accessibility & Interaction Tests", () => {
     test(`Contributions ledger passes axe with every disclosure open (${prefix || "/en"})`, async ({
       page,
     }) => {
+      // The ledger lists every merge request since 2026-11-10, so two axe
+      // passes over it with every entry open take most of the default 30 s
+      // and ran out of it on a busy machine.
+      test.slow();
       for (const colorScheme of ["dark", "light"] as const) {
         await page.emulateMedia({ colorScheme });
         await page.goto(`${prefix}/projects/contributions/`);
