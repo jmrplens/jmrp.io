@@ -89,6 +89,22 @@ test("sitemap is written only when the YAML sets it", () => {
   assert.equal(Object.hasOwn(withoutSitemap, "sitemap"), false);
 });
 
+test("the other names a project goes by follow its name, and only when stated", () => {
+  // /projects/ states them on the shared `#software` node, and the feed is
+  // what the hub builds its own lines for the same project from: a project
+  // known by an earlier name must be findable by it in both.
+  const [renamed, plain] = toRecords({
+    projects: [{ ...released, alternateName: ["OldExample"] }, released],
+  });
+  assert.deepEqual(renamed.alternateName, ["OldExample"]);
+  assert.deepEqual(Object.keys(renamed).slice(0, 3), [
+    "id",
+    "name",
+    "alternateName",
+  ]);
+  assert.equal(Object.hasOwn(plain, "alternateName"), false);
+});
+
 test("an upcoming project that states a license still exports it", () => {
   const [record] = toRecords({
     projects: [{ ...upcoming, license: "GPL-3.0" }],
