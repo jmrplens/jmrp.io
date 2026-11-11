@@ -192,8 +192,12 @@ projects:
       - label: PyPI
         url: https://pypi.org/project/phonometry/
         icon: simple-icons:pypi
+    # The PyPI page of PyOctaveBand, the name the project shipped under until
+    # 3.0.0: its docs site names it in `sameAs` on the shared `#software` node,
+    # since the same project published those releases.
     sameAs:
       - https://doi.org/10.5281/zenodo.21215280
+      - https://pypi.org/project/PyOctaveBand/
     topics:
       - { name: Acoustics, wikidata: Q82811 }
       - { name: Signal processing, wikidata: Q208163 }
