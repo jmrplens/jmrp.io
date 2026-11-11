@@ -263,7 +263,7 @@ projects:
     repo: https://github.com/jmrplens/mikroscope
     docs: https://docs.jmrp.io/mikroscope/
     kicker: Telemetry · MikroTik RouterOS
-    operatingSystem: Linux, macOS, Windows
+    operatingSystem: Linux, macOS, Windows, FreeBSD
     docsEs: https://docs.jmrp.io/mikroscope/es/
     # Both registries carry the same agent image. ghcr goes first because it
     # is the pull the docs name, and the authored order is the rendered one.
@@ -304,7 +304,7 @@ projects:
     repo: https://github.com/jmrplens/Cloudflare-DNS-Updater
     docs: https://docs.jmrp.io/Cloudflare-DNS-Updater/
     kicker: Networking · DDNS
-    operatingSystem: Linux, macOS, BSD
+    operatingSystem: Linux, macOS, Windows
     topics:
       - { name: Dynamic DNS, wikidata: Q1268848 }
       - { name: Cloudflare, wikidata: Q4778915 }
