@@ -18,6 +18,14 @@ updates:
       # the renderer never uses. Drop once mermaid-isomorphic moves to 12.
       - dependency-name: "mermaid"
         update-types: ["version-update:semver-major"]
+      # stylelint stays on 17: stylelint-config-recess-order 7.10.0, the
+      # latest, declares stylelint ^16.18.0 || ^17.0.0, and
+      # stylelint-config-standard 41 asks for stylelint 18, so the two move
+      # together. Drop both entries once recess-order accepts 18.
+      - dependency-name: "stylelint"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "stylelint-config-standard"
+        update-types: ["version-update:semver-major"]
     # Each PR runs the whole CI (about 40 jobs), so a week of separate bumps
     # cost ~400 jobs. Every minor and patch update lands in ONE weekly PR;
     # majors still arrive one per PR, because they are the ones that break

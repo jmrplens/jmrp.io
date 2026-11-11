@@ -53,7 +53,8 @@ test.describe("Image Alt Text Validation", () => {
         ).not.toBeNull();
 
         // Non-decorative images must have non-empty alt
-        const isDecorative = role === "presentation" || ariaHidden === "true";
+        const isDecorative =
+          role === "none" || role === "presentation" || ariaHidden === "true";
         if (!isDecorative && alt === "") {
           const src = await img.getAttribute("src");
           expect
@@ -75,7 +76,7 @@ test.describe("Image Alt Text Validation", () => {
 test.describe("External Links Security", () => {
   // The sample missed the two page types that actually shipped bare external
   // anchors (2026-08-23): /about/, whose links are written by hand in the
-  // component, and a tool page whose MDX writes raw HTML <a> — those reach the
+  // component, and a tool page whose MDX writes raw HTML <a>: those reach the
   // tree as JSX and rehype-external-links never sees them. /uses/ is here for
   // the same reason as /about/. The other test that covers this
   // (functional.spec.ts) only inspects links that ALREADY have target="_blank",
@@ -113,7 +114,7 @@ test.describe("External Links Security", () => {
         // forces external+noopener+noreferrer on every social link while
         // keeping the `me` token, so all 378 of them already satisfy the three
         // assertions below. The skip that used to live here claimed they
-        // "intentionally omit noopener/noreferrer" — untrue since that
+        // "intentionally omit noopener/noreferrer", untrue since that
         // normalizer landed, and it was a hole in the guard for free.
 
         expect(rel, `Link ${href} on ${url} missing noopener`).toContain(
@@ -141,7 +142,7 @@ test.describe("Opted-out Networks", () => {
   // /about/, so it never saw the two <meta> tags BaseHead emitted on all 126
   // pages: twitter:site and twitter:creator, both carrying the handle. This
   // sweeps the whole build instead of a sample, because the leak was in a
-  // layout — one page's worth of coverage would have proved nothing.
+  // layout: one page's worth of coverage would have proved nothing.
   //
   // The rest of the twitter:* namespace is deliberately NOT matched: Slack,
   // Discord and WhatsApp read twitter:card to pick the large-image layout, and
@@ -227,7 +228,7 @@ test.describe("Favicon Files", () => {
   test("required favicon files exist in dist", () => {
     const distDir = join(process.cwd(), "dist");
     // Every file hand-linked from BaseHead's <head> plus the RSS channel
-    // image (favicon.png, src/utils/rss.ts) — these are static public/ URLs
+    // image (favicon.png, src/utils/rss.ts): these are static public/ URLs
     // with no build-time coupling, so this guard is what catches a deletion.
     const required = [
       "favicon.ico",
@@ -346,8 +347,8 @@ test.describe("Sitemap Completeness", () => {
     for (const entry of entries) {
       const path = new URL(entry.loc).pathname;
       const html = await (await page.request.get(path)).text();
-      // Attribute order is not stable — the post-build minifier alphabetizes
-      // them — so the type is matched anywhere inside the tag.
+      // Attribute order is not stable (the post-build minifier alphabetizes
+      // them), so the type is matched anywhere inside the tag.
       const blocks = [
         ...html.matchAll(
           /<script[^>]*application\/ld\+json[^>]*>([\s\S]*?)<\/script>/g,

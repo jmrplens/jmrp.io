@@ -1028,7 +1028,7 @@ describe("worker.fetch", () => {
       status: 200,
       headers: { "content-type": "text/html" },
     });
-    const { response, calls } = await run(worker, request, (input, init) => {
+    const { response, calls } = await run(worker, request, (_input, init) => {
       if (init?.redirect === "manual") throw new TypeError("network down");
       return upstream;
     });
@@ -1973,7 +1973,7 @@ describe("F07: the announcement probe runs beside the pass-through", () => {
     // A pass-through that answers only once the probe has been sent: a handler
     // that waited for the pass-through before probing would never finish.
     const { promise: probeSent, resolve: probed } = Promise.withResolvers();
-    const respond = async (input, init) => {
+    const respond = async (_input, init) => {
       if (init?.redirect === "manual") {
         probed();
         return twinResponse();
@@ -2046,9 +2046,9 @@ describe("F07: the probe gives up after PROBE_TIMEOUT_MS", () => {
   test("the probe fetch carries an abort signal, and a probe past the limit means no twin", async () => {
     assert.equal(PROBE_TIMEOUT_MS, 1000);
     let signal;
-    const fetch = mockFetch((input, init) => {
+    const fetch = mockFetch((_input, init) => {
       signal = init.signal;
-      return new Promise((resolve, reject) => {
+      return new Promise((_resolve, reject) => {
         init.signal.addEventListener("abort", () => reject(init.signal.reason));
       });
     });

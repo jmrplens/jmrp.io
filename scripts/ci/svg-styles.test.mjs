@@ -4,10 +4,13 @@
  *
  * The defect (GEO audit #11, T4): each Mermaid diagram carried a `<style>`
  * whose CSS sat in a literal `set:html` attribute, leaving the element empty
- * and the CSS unapplied: 40 elements, 181,640 bytes on 18 pages. The step must
- * remove exactly those and nothing that styles the page: not a `<style>`
- * outside an SVG, not an SVG `<style>` without the attribute, and not the CSS
- * of one that ever arrives with content.
+ * and the CSS unapplied: 40 elements, 181,640 bytes on 18 pages. Since
+ * `@astrojs/markdown-remark` 7.3.8 the same element arrives with its CSS
+ * inside, Mermaid's light theme, which would override the site's diagram
+ * colors. The step must remove every `<style>` in a Mermaid diagram and
+ * nothing that styles the page: not a `<style>` outside an SVG, not one in
+ * another SVG without the attribute, and not the CSS of another SVG's
+ * `<style>` that arrives with content.
  */
 import assert from "node:assert/strict";
 import test from "node:test";
@@ -83,4 +86,26 @@ test("keeps real CSS and drops only the stray attribute", () => {
   assert.equal($("svg style").length, 1);
   assert.equal($("svg style").text(), ".c{fill:blue}");
   assert.equal($("svg style").attr("set:html"), undefined);
+});
+
+/** The element rehype-mermaid leaves since @astrojs/markdown-remark 7.3.8: its CSS inside. */
+const LIVE_STYLE = `<style>#mermaid-0{font-family:arial,sans-serif;fill:#000000;}#mermaid-0 [data-look="neo"].node rect{stroke:url(#mermaid-0-gradient);}</style>`;
+
+test("removes a diagram's <style> that arrives with its CSS inside", () => {
+  const { $, modified } = run(DIAGRAM_OPEN + LIVE_STYLE + DIAGRAM_REST);
+  assert.equal(modified, true);
+  assert.equal($("svg style").length, 0);
+  assert.doesNotMatch($.html(), /mermaid-0-gradient/);
+  const expected = cheerio.load(
+    `<html><head></head><body>${DIAGRAM_CLEAN}</body></html>`,
+  );
+  assert.equal($.html(), expected.html());
+});
+
+test("keeps the CSS of an SVG <style> whose id is not a Mermaid diagram's", () => {
+  const { $, modified } = run(
+    `<svg id="mermaid-legend" viewBox="0 0 1 1"><style>.d{fill:red}</style></svg><svg id="chart-0" viewBox="0 0 1 1"><style>.e{fill:red}</style></svg>`,
+  );
+  assert.equal(modified, false);
+  assert.equal($("svg style").length, 2);
 });
