@@ -12,9 +12,9 @@ tools.
 
 | Item             | Value                                                                      |
 | ---------------- | -------------------------------------------------------------------------- |
-| Live version     | `66d907d2-ce76-4efd-8f2b-6eecf0b91b7c` (2026-11-05)                        |
-| Previous version | `230bd6d9-132a-49f4-98aa-e6bafe759c6d` (2026-11-05)                        |
-| Roll back        | `wrangler versions deploy 230bd6d9-132a-49f4-98aa-e6bafe759c6d@100% --yes` |
+| Live version     | `6260b55a-f476-4fdb-92b6-3fa5d61b9b4e` (2026-11-11)                        |
+| Previous version | `66d907d2-ce76-4efd-8f2b-6eecf0b91b7c` (2026-11-05)                        |
+| Roll back        | `wrangler versions deploy 66d907d2-ce76-4efd-8f2b-6eecf0b91b7c@100% --yes` |
 | Route            | `docs.jmrp.io/*`, fail-open                                                |
 | Dataset          | `docs_edge_requests` (binding `REQS`)                                      |
 
@@ -151,6 +151,7 @@ copy of the Worker, which you get with `git show` and name in `DOCS_EDGE_BEFORE`
 | `98d56f4a` | 2026-11-04 | A Range on a compressed answer gets the whole file                                                             |
 | `230bd6d9` | 2026-11-05 | Probe in parallel and capped, negative verdict cached, location headers not forwarded, range-safe types listed |
 | `66d907d2` | 2026-11-05 | A Range goes on only when valid and on a range-safe type; a range the edge rejects gets the whole file         |
+| `6260b55a` | 2026-11-11 | A GET or HEAD answered 502, 503 or 504 is sent once more; a GET or HEAD reaches GitHub without a body          |
 
 The source moved here from a git-ignored directory on 2026-11-05; `66d907d2` is the
 first version deployed from it.
