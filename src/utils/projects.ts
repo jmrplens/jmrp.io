@@ -392,6 +392,124 @@ export async function projectArticles(
 }
 
 /**
+ * The URLs a project's node states as `sameAs`.
+ *
+ * The docs URL is an identity alias only when it is a separate site.
+ * Projects without one point `docs` at the repo README anchor, which is
+ * just `url` with a fragment, not a distinct page worth aliasing.
+ * A listing is a `sameAs` that also gets rendered, so they are folded in here
+ * rather than authored twice: one URL, one place to change it.
+ * A project with no public repository has its docs as `url` itself, so
+ * repeating them as an alias would state the same URL twice.
+ *
+ * @param project - The project to describe.
+ * @returns The aliases, possibly none.
+ */
+function projectAliases(project: Project): string[] {
+  const docsIsAlias =
+    project.repo !== undefined && !project.docs.startsWith(`${project.repo}#`);
+  return [
+    ...(docsIsAlias ? [project.docs] : []),
+    ...(project.listings ?? []).map((l) => l.url),
+    ...registryAlias(project.registryId),
+    ...(project.sameAs ?? []),
+  ];
+}
+
+/**
+ * The naming and descriptive properties of a project's node, in the order
+ * the node states them: `alternateName`, `description`,
+ * `disambiguatingDescription` and `keywords`, each optional one only when the
+ * project has it.
+ *
+ * @param project - The project to describe.
+ * @returns The properties to spread into the node.
+ */
+function describingProperties(project: Project) {
+  return {
+    ...(project.alternateName && { alternateName: project.alternateName }),
+    description: localizedValues(project.summary),
+    ...(project.disambiguatingDescription && {
+      disambiguatingDescription: localizedValues(
+        project.disambiguatingDescription,
+      ),
+    }),
+    ...(project.keywords && { keywords: localizedValues(project.keywords) }),
+  };
+}
+
+/**
+ * Whether a project's node states `isAccessibleForFree`, and its
+ * `creativeWorkStatus`.
+ *
+ * Released software is free to use and says so twice (`isAccessibleForFree`
+ * here, a zero-price `Offer` on SoftwareApplication). A project in
+ * development has nothing to download yet, so by default it claims
+ * neither; when its own site states `isAccessibleForFree` on the shared
+ * node (Kleidos), projects.yaml says so too, and the `Offer` still waits
+ * for a release.
+ *
+ * `archived` lived only in projects.json and the twin; the graph said
+ * nothing, so a reader of the node could not tell a maintained project
+ * from one frozen years ago. creativeWorkStatus is schema.org's lifecycle
+ * property on every CreativeWork, SoftwareApplication included (Text in
+ * the pinned vocabulary). An upcoming project states its status the same
+ * way, in the words its card shows.
+ *
+ * @param project - The project to describe.
+ * @param released - Whether the project has shipped a release.
+ * @returns The properties to spread into the node.
+ */
+function lifecycleProperties(project: Project, released: boolean) {
+  const accessibleForFree =
+    project.isAccessibleForFree ?? (released ? true : undefined);
+  return {
+    ...(accessibleForFree !== undefined && {
+      isAccessibleForFree: accessibleForFree,
+    }),
+    ...(project.status === "archived" && { creativeWorkStatus: "Archived" }),
+    ...(project.status === "upcoming" && {
+      creativeWorkStatus: "In development",
+    }),
+  };
+}
+
+/**
+ * The properties only a `SoftwareApplication` node states.
+ *
+ * `operatingSystem` holds the platforms the card shows as "Runs on" (not the
+ * CI matrix, which is the maintenance table's "CI on" column and usually
+ * narrower). projects.yaml writes them as one comma-joined string; the graph
+ * states each one, as a list when there is more than one. The docs sites and
+ * public/identity/projects.json keep the string, and the merged values agree.
+ *
+ * @param project - The project to describe.
+ * @param released - Whether the project has shipped a release, which is
+ *   what earns it the zero-price `Offer`.
+ * @returns The properties to spread into the node.
+ */
+function applicationProperties(project: Project, released: boolean) {
+  return {
+    ...(project.applicationCategory && {
+      applicationCategory: project.applicationCategory,
+    }),
+    ...(project.applicationSubCategory && {
+      applicationSubCategory: project.applicationSubCategory,
+    }),
+    ...(project.operatingSystem && {
+      operatingSystem: operatingSystems(project.operatingSystem),
+    }),
+    ...(released && {
+      offers: {
+        "@type": "Offer" as const,
+        price: "0",
+        priceCurrency: "USD",
+      },
+    }),
+  };
+}
+
+/**
  * Builds the JSON-LD node for one project.
  *
  * `description` is the summary as two language-tagged literals, the same
@@ -414,44 +532,13 @@ export function buildProjectSchema(
 ): Record<string, unknown> {
   const personRef = { "@id": PERSON_ID };
   const [about, ...mentions] = project.topics;
-
-  // The docs URL is an identity alias only when it is a separate site.
-  // Projects without one point `docs` at the repo README anchor, which is
-  // just `url` with a fragment, not a distinct page worth aliasing.
-  // A listing is a `sameAs` that also gets rendered, so they are folded in here
-  // rather than authored twice: one URL, one place to change it.
-  // A project with no public repository has its docs as `url` itself, so
-  // repeating them as an alias would state the same URL twice.
-  const docsIsAlias =
-    project.repo !== undefined && !project.docs.startsWith(`${project.repo}#`);
-  const aliases = [
-    ...(docsIsAlias ? [project.docs] : []),
-    ...(project.listings ?? []).map((l) => l.url),
-    ...registryAlias(project.registryId),
-    ...(project.sameAs ?? []),
-  ];
-
-  // Released software is free to use and says so twice (`isAccessibleForFree`
-  // here, a zero-price `Offer` on SoftwareApplication). A project in
-  // development has nothing to download yet, so by default it claims
-  // neither; when its own site states `isAccessibleForFree` on the shared
-  // node (Kleidos), projects.yaml says so too, and the `Offer` still waits
-  // for a release.
+  const aliases = projectAliases(project);
   const released = project.status !== "upcoming";
-  const accessibleForFree =
-    project.isAccessibleForFree ?? (released ? true : undefined);
 
   const shared = {
     "@id": softwareId(project),
     name: project.name,
-    ...(project.alternateName && { alternateName: project.alternateName }),
-    description: localizedValues(project.summary),
-    ...(project.disambiguatingDescription && {
-      disambiguatingDescription: localizedValues(
-        project.disambiguatingDescription,
-      ),
-    }),
-    ...(project.keywords && { keywords: localizedValues(project.keywords) }),
+    ...describingProperties(project),
     // A project whose repository is still private is reachable only through
     // its documentation, so that is its `url`, and it states no
     // `codeRepository` at all rather than one nobody can open.
@@ -462,19 +549,7 @@ export function buildProjectSchema(
       : project.language,
     ...(project.license && { license: projectLicenseUrl(project) }),
     ...(project.copyrightHolder === "person" && { copyrightHolder: personRef }),
-    ...(accessibleForFree !== undefined && {
-      isAccessibleForFree: accessibleForFree,
-    }),
-    // `archived` lived only in projects.json and the twin; the graph said
-    // nothing, so a reader of the node could not tell a maintained project
-    // from one frozen years ago. creativeWorkStatus is schema.org's lifecycle
-    // property on every CreativeWork, SoftwareApplication included (Text in
-    // the pinned vocabulary). An upcoming project states its status the same
-    // way, in the words its card shows.
-    ...(project.status === "archived" && { creativeWorkStatus: "Archived" }),
-    ...(project.status === "upcoming" && {
-      creativeWorkStatus: "In development",
-    }),
+    ...lifecycleProperties(project, released),
     author: personRef,
     creator: personRef,
     maintainer: personRef,
@@ -505,27 +580,6 @@ export function buildProjectSchema(
     : ({
         "@type": "SoftwareApplication",
         ...shared,
-        ...(project.applicationCategory && {
-          applicationCategory: project.applicationCategory,
-        }),
-        ...(project.applicationSubCategory && {
-          applicationSubCategory: project.applicationSubCategory,
-        }),
-        // The platforms the card shows as "Runs on" (not the CI matrix, which
-        // is the maintenance table's "CI on" column and usually narrower).
-        // projects.yaml writes them as one comma-joined string; the graph
-        // states each one, as a list when there is more than one. The docs
-        // sites and public/identity/projects.json keep the string, and the
-        // merged values agree.
-        ...(project.operatingSystem && {
-          operatingSystem: operatingSystems(project.operatingSystem),
-        }),
-        ...(released && {
-          offers: {
-            "@type": "Offer" as const,
-            price: "0",
-            priceCurrency: "USD",
-          },
-        }),
+        ...applicationProperties(project, released),
       } satisfies SoftwareApplication);
 }

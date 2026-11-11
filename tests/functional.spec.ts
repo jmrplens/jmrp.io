@@ -51,7 +51,7 @@ test.describe("Site-wide Functional Checks", () => {
       await test.step("Horizontal containment (no clipped content)", async () => {
         // Catches the class of bug where an element inflates or escapes its
         // container sideways without widening document.scrollWidth (the body
-        // clips it), so the content is CUT at the viewport edge — e.g. the
+        // clips it), so the content is CUT at the viewport edge, as in the
         // 2026-08 /publications/ mobile regression: contain-intrinsic-size's
         // implicit width floor blew the pub-layout 1fr track to 600px.
         // Elements inside a horizontal scroller (overflow-x auto/scroll) are
@@ -101,15 +101,21 @@ test.describe("Site-wide Functional Checks", () => {
 
       // --- External links security ---
       await test.step("External links have secure rel attributes", async () => {
-        const externalBlankLinks = page.locator(
-          'a[target="_blank"][href^="http"]:not([href*="jmrp.io"]):not([href*="localhost"]):not([href*="astro.build"]):not([href*="withastro"])',
-        );
-        const count = await externalBlankLinks.count();
+        // Read in one call: /es/projects/contributions/ alone has over 300 of
+        // these links, and two round trips per link to the browser ran this
+        // step past the 30 s test timeout on a busy machine.
+        const links = await page
+          .locator(
+            'a[target="_blank"][href^="http"]:not([href*="jmrp.io"]):not([href*="localhost"]):not([href*="astro.build"]):not([href*="withastro"])',
+          )
+          .evaluateAll((all) =>
+            all.map((a) => ({
+              href: a.getAttribute("href"),
+              rel: a.getAttribute("rel"),
+            })),
+          );
 
-        for (let i = 0; i < count; i++) {
-          const link = externalBlankLinks.nth(i);
-          const href = await link.getAttribute("href");
-          const rel = await link.getAttribute("rel");
+        for (const { href, rel } of links) {
           expect
             .soft(
               rel,

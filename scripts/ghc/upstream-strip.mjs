@@ -46,7 +46,10 @@ const OWNER_ALIAS = Object.freeze({
  * @returns {number} Milliseconds since the epoch, or NaN.
  */
 export function instant(value) {
-  if (typeof value !== "string" || value === "") return NaN;
+  // An absent or empty timestamp is NaN like any other unparseable one.
+  // Date.parse("") says so without writing NaN as a literal: ESLint's unicorn
+  // plugin requires `NaN` and SonarJS `Number.NaN` (see sitemap-post-dates.ts).
+  if (typeof value !== "string" || value === "") return Date.parse("");
   const zoned = /(?:Z|[+-]\d{2}:?\d{2})$/i.test(value) ? value : `${value}Z`;
   return Date.parse(zoned);
 }

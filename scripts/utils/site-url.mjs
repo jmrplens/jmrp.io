@@ -33,5 +33,10 @@ export function resolveSiteUrl(root = process.cwd()) {
     process.env.NODE_ENV === "development" ? "development" : "production";
   const env = loadEnv(mode, root, "PUBLIC_");
   const value = env.PUBLIC_SITE_URL || DEFAULT_SITE_URL;
-  return new URL(value).href.replace(/\/+$/, "");
+  // Trailing slashes trimmed by index rather than with /\/+$/, whose
+  // backtracking SonarCloud reports as super-linear (S5852).
+  const href = new URL(value).href;
+  let end = href.length;
+  while (end > 0 && href[end - 1] === "/") end--;
+  return href.slice(0, end);
 }
