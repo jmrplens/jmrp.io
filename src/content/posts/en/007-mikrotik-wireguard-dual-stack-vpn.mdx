@@ -17,7 +17,7 @@ coverImage: "../../../assets/images/blog/wireguard-vpn.webp"
 tags: ["MikroTik", "Networking", "IPv6", "Security"]
 faq:
   - question: "What RouterOS version do I need for WireGuard on MikroTik?"
-    answer: "WireGuard has been built into RouterOS since version 7. For what this guide uses: the client-* peer properties behind the QR code exist since RouterOS 7.12 (client-allowed-address since 7.21), responder since 7.15 (it stops the router initiating handshakes from 7.17), and client-mtu since 7.25, so 7.17 is the practical minimum, and client-allowed-address and client-mtu are optional. The guide is tested on RouterOS 7.25 on an RB5009 and applies to any MikroTik router running 7.17 or later."
+    answer: "WireGuard has been built into RouterOS since version 7. For what this guide uses: the client-* peer properties behind the QR code exist since RouterOS 7.12 (client-allowed-address since 7.21), peer names since 7.15 and client-mtu since 7.25, so 7.15 is the practical minimum, and client-allowed-address and client-mtu are optional. The guide is tested on RouterOS 7.25 on an RB5009 and applies to any MikroTik router running 7.15 or later."
   - question: "Why use a ULA prefix and NAT66 for IPv6 instead of global addresses?"
     answer: "VPN clients get private Unique Local Addresses (ULA) in the fd00::/8 range, which are guaranteed not to conflict with public IPv6 addresses. The router then NAT66-translates them to your ISP-assigned global IPv6 prefix when clients access the internet."
   - question: "Why use a non-standard WireGuard port like 53537 instead of 51820?"
@@ -27,7 +27,7 @@ faq:
   - question: "What MTU should a WireGuard tunnel on MikroTik use?"
     answer: "Your WAN's actual-mtu minus 60 if the endpoint is IPv4-only and no client roams, or minus 80 if clients can reach it over IPv6: an IPv6 or dual-stack endpoint, or a phone on an IPv6-only mobile network, which reaches even an IPv4 endpoint over IPv6 through 464XLAT. With an IPv6 or dual-stack endpoint, a 1500 WAN gives 1420, standard PPPoE at 1492 gives 1412, and DIGI's PPPoE at 1480 gives 1400. Then add one MSS clamp per inner family, MTU minus 40 for IPv4 and MTU minus 60 for IPv6, and set MTU = in every client configuration, because the iOS and Android apps fall back to 1280 without it."
   - question: "Should persistent-keepalive go on the WireGuard client or on the router?"
-    answer: "On the side behind NAT, which is the client: PersistentKeepalive = 25 in its configuration, which the router can publish with client-keepalive=25. On the router, peers for roaming clients get responder=yes and no persistent-keepalive, because otherwise the router keeps retrying handshakes against the client's last known endpoint long after the client has moved or powered off."
+    answer: "On the side behind NAT, which is the client: PersistentKeepalive = 25 in its configuration, which the router can publish with client-keepalive=25. On the router, leave persistent-keepalive off for roaming clients, because otherwise the router keeps retrying handshakes against the client's last known endpoint long after the client has moved or powered off. RouterOS also has responder=yes, which stops the router initiating handshakes at all; I tried it and reverted it because it made my iPhone's tunnel drop on network changes."
   - question: "Does IPv6 over the VPN work if my ISP doesn't provide IPv6?"
     answer: "No global IPv6 internet access. NAT66 translates the client's ULA address to your ISP's global IPv6 prefix, so without an ISP prefix there is nothing to translate to. The tunnel itself still carries IPv6 between client and router, but no further."
 topics:
@@ -71,7 +71,7 @@ howto:
       text: "Derive the tunnel MTU from the WAN's actual-mtu (minus 60 for an IPv4-only endpoint, minus 80 for an IPv6 or dual-stack one), then add two change-mss mangle rules: one in /ip firewall mangle with new-mss at the MTU minus 40, and one in /ipv6 firewall mangle at the MTU minus 60, because the /ip table never sees IPv6."
       anchor: "step-7-calculate-the-mtu-and-clamp-mss"
     - name: "Add WireGuard peers (clients)"
-      text: "Add a peer per device with a unique keypair, preshared key, and dedicated IPv4/IPv6 allowed-address, with responder=yes so the router answers handshakes but never starts them; the keepalive goes on the client (PersistentKeepalive = 25)."
+      text: "Add a peer per device with a unique keypair, preshared key, and dedicated IPv4/IPv6 allowed-address, with no persistent-keepalive on the router side; the keepalive goes on the client (PersistentKeepalive = 25)."
       anchor: "step-9-add-wireguard-peers-clients"
     - name: "Configure the client and verify the connection"
       text: "Set up each client device via QR code or a manual config file, then verify the handshake on both ends and test IPv4 and IPv6 connectivity through the tunnel."
@@ -105,10 +105,10 @@ This guide demonstrates how to configure a **production-ready WireGuard VPN** on
   - **WireGuard is built into RouterOS 7**, so a dual-stack VPN server needs no container and no extra package. The interface listens on a high non-standard UDP port (**53537** here, not the default 51820, to sidestep automated scans) and each peer gets one IPv4 and one IPv6 address.
   - **IPv6 goes through ULA plus NAT66, not a delegated prefix.** Clients receive `fd00::/8` addresses that the router translates to your ISP's global prefix, so the tunnel survives the prefix changing underneath it.
   - **Size the tunnel from the WAN, then clamp MSS per family.** The tunnel MTU is your WAN's `actual-mtu` minus 60 (IPv4-only endpoint, clients that never roam) or minus 80 (IPv6 or dual-stack endpoint): 1400 on my 1480 PPPoE link, 1420 on a 1500 one. Then two clamps, `/ip` at the MTU − 40 and `/ipv6` at the MTU − 60, and `MTU =` in every client config, because iOS and Android fall back to 1280 without it.
-  - **The router answers; the client keeps the tunnel alive.** Peers get `responder=yes`, so the router never retries handshakes against a roaming client's dead endpoint; `PersistentKeepalive = 25` goes on the client, the side behind NAT.
+  - **The keepalive goes on the client, not on the router.** `PersistentKeepalive = 25` on the client keeps its NAT mapping open; a `persistent-keepalive` on the router's peers makes it retry handshakes forever against a roaming client's dead endpoint. I also tried `responder=yes` and reverted it: it made my iPhone's tunnel drop on network changes.
   - **Each device gets its own key pair and address pair.** Revoking one client is deleting one peer; nothing else has to be reissued.
   - **Split tunnel is an `AllowedIPs` decision on the client**, not a server setting: list only the home prefixes to route home traffic, or `0.0.0.0/0, ::/0` to route everything.
-  - **Tested on RouterOS 7.25 on an RB5009.** The minimum is 7.17, the first version where `responder=yes` stops the router initiating handshakes; `client-allowed-address` needs 7.21 and `client-mtu` 7.25, and both are optional.
+  - **Tested on RouterOS 7.25 on an RB5009.** The minimum is 7.15, which added peer names; `client-allowed-address` needs 7.21 and `client-mtu` 7.25, and both are optional.
 </TLDRSummary>
 
 <Callout type="important" title="Values You Must Customize">
@@ -142,7 +142,9 @@ The configuration in this guide isn't a lab exercise: it's the WireGuard setup I
 
 Getting to those values was not a straight line. On 8 September 2026 I lowered the tunnel to MTU 1400 and the IPv4 clamp to `new-mss=1340`, and added no IPv6 clamp. At 03:10 the next morning I put the MTU back to 1500 from my phone, because I noticed problems I never pinned down, and on 11 September 2026 I reverted the clamp too. My best explanation, which I have not proven, is IPv6: the only IPv6 clamp on the router was a generic rule at 1348, and an IPv6 TCP packet carrying a 1348-byte segment is 1408 bytes (1348 + 40 + 20), which does not fit a 1400 tunnel. It gets through only if the ICMPv6 "Packet Too Big" reaches the origin server and the server acts on it; otherwise the download hangs. That would hit the clients whose own MTU is above 1400 (the Macs, at 1420 in automatic mode, and a router that works as a VPN client, giving the devices behind it a tunneled connection with nothing to configure on them), and not the iPhone, which sits at 1280. On 7 November 2026 I applied the values again, this time with the IPv6 rule from Step 7, and measured them: the numbers are in [What I measured on my router](#what-i-measured-on-my-router).
 
-The keepalive advice has its own story. On 27 October 2026 I found the router retrying handshakes every ~5 seconds towards addresses that no longer answered: that VPN-client router, powered off since 19 September, and a MacBook. That came to around 1,140 log lines an hour in Loki, and both peers had `persistent-keepalive` set on the router side. I removed it there and left the keepalive on the clients; the property RouterOS documents for telling a peer never to initiate is `responder=yes`, which is what [Step 9](#step-9-add-wireguard-peers-clients) uses.
+The keepalive advice has its own story. On 27 October 2026 I found the router retrying handshakes every ~5 seconds towards addresses that no longer answered: that VPN-client router, powered off since 19 September, and a MacBook. That came to around 1,140 log lines an hour in Loki, and both peers had `persistent-keepalive` set on the router side. I removed it there and left the keepalive on the clients, and those retries stopped.
+
+Not all of them, though. Without a keepalive the router still starts a handshake when it has traffic for a peer whose session has lapsed, and in the week up to 7 November that added up to 622 failed retries towards my iPhone. In the burst I traced, the router kept knocking for a minute and a half on the port the phone had last used, until the phone reconnected by itself from the same mobile address and a new port. So on 7 November 2026 I set `responder=yes` on every peer, the property RouterOS documents for routers that only serve clients, so that the router would never start a handshake. It did what it promised: the clients renewed their sessions on their own and the router started none. But my iPhone's tunnel dropped with every small change of network, and I reverted it the same afternoon. The router's logs don't show why: the network switches looked the same with and without it. My best guess is the one case they cannot show, the router reopening a session towards a phone that has gone quiet, which is exactly what `responder=yes` forbids. So the router keeps no keepalive and no `responder`, and a few hundred failed retries a week are the price of a tunnel that holds.
 
 ---
 
@@ -268,7 +270,7 @@ We use [Unique Local Addresses (ULA)](https://datatracker.ietf.org/doc/html/rfc4
 ## Prerequisites
 
 <Prerequisite title="Before You Start">
-  - **MikroTik RouterOS 7.17** or later (WireGuard is built in since RouterOS 7; the `client-*` peer properties behind the QR code arrived in 7.12, and `responder=yes` stops the router initiating handshakes from 7.17. `client-allowed-address` needs 7.21 and `client-mtu` 7.25, both optional)
+  - **MikroTik RouterOS 7.15** or later (WireGuard is built in since RouterOS 7; the `client-*` peer properties behind the QR code arrived in 7.12 and peer names in 7.15. `client-allowed-address` needs 7.21 and `client-mtu` 7.25, both optional)
   - **Public IP address** (static) or **Dynamic DNS** (DDNS) configured on your router
   - **IPv6 connectivity** from your ISP (optional but recommended for dual-stack)
   - **UDP port forwarding** capability if your MikroTik is behind another router/NAT
@@ -863,7 +865,6 @@ Since RouterOS 7.x, the router can generate all cryptographic keys automatically
     private-key=auto \
     preshared-key=auto \
     allowed-address=192.168.100.2/32,fd00:1111:2222:100::2/128 \
-    responder=yes \
     comment="Client 1 - Mobile"
 ```
 </Code>
@@ -950,7 +951,6 @@ Use the client's **public** key (not the private key) and the preshared key:
     public-key="<CLIENT_PUBLIC_KEY>" \
     preshared-key="<PRESHARED_KEY>" \
     allowed-address=192.168.100.2/32,fd00:1111:2222:100::2/128 \
-    responder=yes \
     comment="Client 1 - Mobile"
 ```
 </Code>
@@ -986,7 +986,6 @@ wg genpsk
     public-key="<CLIENT_PUBLIC_KEY>" \
     preshared-key="<PRESHARED_KEY>" \
     allowed-address=192.168.100.2/32,fd00:1111:2222:100::2/128 \
-    responder=yes \
     comment="Client 1 - Mobile"
 ```
 </Code>
@@ -1024,9 +1023,9 @@ wg genpsk
       <td>IPs the client can use; also acts as routing table</td>
     </tr>
     <tr>
-      <td>`responder`</td>
-      <td>`yes`</td>
-      <td>Answers handshakes but never starts them; stops retries towards roaming clients. The keepalive goes on the client (`PersistentKeepalive = 25`)</td>
+      <td>`persistent-keepalive`</td>
+      <td>Unset (0)</td>
+      <td>Leave it off for roaming clients: with it the router keeps retrying handshakes against their last endpoint. The keepalive goes on the client (`PersistentKeepalive = 25`)</td>
     </tr>
   </tbody>
 </Table>
@@ -1034,9 +1033,9 @@ wg genpsk
 <Callout type="warning" title="Persistent Keepalive">
 The keepalive belongs on the side that sits behind NAT, which is the client: `PersistentKeepalive = 25` in its `.conf`, or `client-keepalive=25` on the router's peer so the QR code carries it. Every 25 seconds the client refreshes its NAT mapping, which is what lets the router reach it between the client's own packets.
 
-On the router, give those peers [`responder=yes`](https://help.mikrotik.com/docs/spaces/ROS/pages/69664792/WireGuard) instead. The property exists since RouterOS 7.15, and since 7.17 the router no longer initiates handshakes for such a peer. MikroTik documents it for routers that act as servers for clients that connect to them: the router answers handshakes and never starts them. A `persistent-keepalive` on the router side makes the router send on its own instead, so once a phone or laptop moves or is switched off, the router keeps retrying handshakes against the last endpoint it knew.
+On the router, leave `persistent-keepalive` off for those peers. With it the router sends on its own, so once a phone or laptop moves or is switched off, it keeps retrying handshakes against the last endpoint it knew. RouterOS also has [`responder=yes`](https://help.mikrotik.com/docs/spaces/ROS/pages/69664792/WireGuard), which stops the router initiating handshakes at all (from 7.17), but on my iPhone it made the tunnel drop with every small change of network, so this guide does not use it ([How I run this](#how-i-run-this-on-my-own-infrastructure) has the story).
 
-If **this** router has to call the other end (a site-to-site link where it initiates, with `endpoint-address` set on the peer), don't set `responder`, and leave `persistent-keepalive` on whichever side is behind NAT.
+If **this** router has to call the other end (a site-to-site link where it initiates, with `endpoint-address` set on the peer), set `persistent-keepalive` on whichever side is behind NAT.
 </Callout>
 
 ### Example: multiple peers
@@ -1052,7 +1051,6 @@ Each peer must have a **unique keypair** and **unique IP addresses**. Never reus
     private-key=auto \
     preshared-key=auto \
     allowed-address=192.168.100.2/32,fd00:1111:2222:100::2/128 \
-    responder=yes \
     comment="Phone - Mobile VPN"
 
 # Client 2 - Laptop (e.g., MacBook)
@@ -1062,7 +1060,6 @@ Each peer must have a **unique keypair** and **unique IP addresses**. Never reus
     private-key=auto \
     preshared-key=auto \
     allowed-address=192.168.100.3/32,fd00:1111:2222:100::3/128 \
-    responder=yes \
     comment="Laptop - Mobile VPN"
 
 # Client 3 - Remote Site (Site-to-Site VPN that dials in to this router)
@@ -1072,7 +1069,6 @@ Each peer must have a **unique keypair** and **unique IP addresses**. Never reus
     private-key=auto \
     preshared-key=auto \
     allowed-address=192.168.100.10/32,fd00:1111:2222:100::a/128 \
-    responder=yes \
     comment="Remote Site - Site-to-Site"
 ```
 </Code>
@@ -1258,7 +1254,7 @@ PersistentKeepalive = 25
     </tr>
     <tr>
       <td>`PersistentKeepalive`</td>
-      <td>Seconds between the keepalive packets the client sends to hold its NAT mapping open, so the router can reach it. The keepalive lives here, on the client; the router's peer uses `responder=yes`</td>
+      <td>Seconds between the keepalive packets the client sends to hold its NAT mapping open, so the router can reach it. The keepalive lives here, on the client; the router's peer has none</td>
     </tr>
   </tbody>
 </Table>
@@ -1416,12 +1412,14 @@ Flags: X - disabled
   </TerminalSessionOutput>
 </TerminalSession>
 
-<Callout type="tip" title="Responder Mode (RouterOS 7.15+)">
-Every peer in Step 9 is created with `responder=yes`, so the router answers handshakes and never starts them; the property exists since RouterOS 7.15, and since 7.17 the router no longer initiates handshakes for such a peer. For a peer you created without it, set it and drop the router-side keepalive:
+<Callout type="tip" title="Drop the router-side keepalive">
+If you created a peer earlier with `persistent-keepalive` on the router side, set it to 0 and leave the keepalive on the client:
 
 ```routeros
-/interface wireguard peers set [find name=wg_client1] responder=yes persistent-keepalive=0
+/interface wireguard peers set [find name=wg_client1] persistent-keepalive=0
 ```
+
+RouterOS also offers `responder=yes` (since 7.15, honoured from 7.17) to stop the router initiating handshakes at all. I tried it on every peer and reverted it the same day, because my iPhone's tunnel dropped with every small change of network.
 </Callout>
 
 ### Test IPv6 connectivity
@@ -1455,7 +1453,7 @@ Here's the complete RouterOS configuration for reference. Values marked with `# 
 # ═══════════════════════════════════════════════════════════════════════════════
 # WIREGUARD VPN - COMPLETE DUAL-STACK CONFIGURATION
 # ═══════════════════════════════════════════════════════════════════════════════
-# MikroTik RouterOS 7.17+ (tested on 7.25)
+# MikroTik RouterOS 7.15+ (tested on 7.25)
 # IPv4 + IPv6 dual-stack with full internet access
 # ═══════════════════════════════════════════════════════════════════════════════
 
@@ -1643,7 +1641,7 @@ Here's the complete RouterOS configuration for reference. Values marked with `# 
     comment="WireGuard - Skip flood protection"
 
 # ───────────────────────────────────────────────────────────────────────────────
-# PEERS: using auto-generated keys (recommended); the router only answers (responder=yes)
+# PEERS: using auto-generated keys (recommended); no keepalive on the router side
 # Retrieve keys with: :put [/interface wireguard peers get [find name=X] private-key]
 # ───────────────────────────────────────────────────────────────────────────────
 
@@ -1654,7 +1652,6 @@ Here's the complete RouterOS configuration for reference. Values marked with `# 
     private-key=auto \
     preshared-key=auto \
     allowed-address=192.168.100.2/32,fd00:1111:2222:100::2/128 \
-    responder=yes \
     comment="Phone - Mobile VPN"                                   # ← CUSTOMIZE
 
 # ← CUSTOMIZE the IPs in allowed-address
@@ -1664,7 +1661,6 @@ Here's the complete RouterOS configuration for reference. Values marked with `# 
     private-key=auto \
     preshared-key=auto \
     allowed-address=192.168.100.3/32,fd00:1111:2222:100::3/128 \
-    responder=yes \
     comment="Laptop - Mobile VPN"                                  # ← CUSTOMIZE
 ```
 </FileContent>

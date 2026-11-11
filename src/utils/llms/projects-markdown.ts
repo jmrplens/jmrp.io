@@ -47,8 +47,8 @@ const contributionsData = asContributionsDataset(rawContributionsData);
  * ── Why /projects/ writes its own header ───────────────────────────────
  * Same reason as `homelabMarkdown`: its freshness line is a LIVE capture
  * token (`PRJ_AS_OF`), substituted at serve time by the same nginx body
- * filter that substitutes every other `PRJ_*` figure on the page — see
- * `ssr-tokens.ts`'s module doc comment. `documentHeader`'s `Updated:` line is
+ * filter that substitutes every other `PRJ_*` figure on the page (see
+ * `ssr-tokens.ts`'s module doc comment). `documentHeader`'s `Updated:` line is
  * a BUILD-TIME content date and would be misleading here.
  *
  * @module
@@ -117,30 +117,27 @@ function ledgerItemLabel(
 }
 
 /**
- * The "Showing 10, merged first." note with the link to the full listing,
- * exactly as the page prints it under a truncated project.
+ * The link to the project's listing on its platform, exactly as the page
+ * prints it under an entry with more rows than it shows unfolded.
  *
  * @param project - The folded project name.
  * @param items - All of the project's items.
  * @param t - Translator.
  * @returns One markdown line.
  */
-function truncationNote(
+function listingLink(
   project: string,
   items: readonly { fullName: string; platform?: string }[],
   t: ReturnType<typeof useTranslations>,
 ): string {
-  const shown = t("pages.projectsContributions.shownMergedFirst", {
-    shown: LEDGER_MAX_ITEMS,
-  });
   if (platformOf(items[0]?.platform) === "gitlab") {
     const listing = gitlabListing(
       items,
       contributionsData.gitlab?.username ?? "jmrp",
     );
-    return `${shown} [${t("pages.projectsContributions.seeAllOnGitlab", { repo: listing.repo })}](${listing.url})`;
+    return `[${t("pages.projectsContributions.seeAllOnGitlab", { repo: listing.repo })}](${listing.url})`;
   }
-  return `${shown} [${t("pages.projectsContributions.seeAllOnGithub", { total: items.length, project })}](${githubSearchUrl(items, GITHUB_OWNER)})`;
+  return `[${t("pages.projectsContributions.seeAllOnGithub", { total: items.length, project })}](${githubSearchUrl(items, GITHUB_OWNER)})`;
 }
 
 /**
@@ -208,7 +205,7 @@ function withoutTrailingArrow(label: string): string {
 /**
  * The "Contributions to other projects" section, shared by both twins where
  * their content overlaps (the live-token summary and the build-time
- * "contributed to" strip) — the same data `UpstreamBlock.astro` renders on
+ * "contributed to" strip): the same data `UpstreamBlock.astro` renders on
  * the page itself.
  *
  * @param locale - Target locale.
@@ -402,7 +399,7 @@ export async function projectsPageMarkdown(
 
 /**
  * `/projects/contributions/index.md`: 100% build-time twin of
- * `ContributionsPage.astro` — no `PRJ_*` token anywhere (verified by
+ * `ContributionsPage.astro`, with no `PRJ_*` token anywhere (verified by
  * `check-markdown-twins.mjs`'s sibling guard, `check-projects-ssr.mjs`, a
  * later task).
  *
@@ -469,14 +466,13 @@ export async function contributionsPageMarkdown(
         ]
           .filter(Boolean)
           .join(" · ")}`,
-        ...items
-          .slice(0, LEDGER_MAX_ITEMS)
-          .map((it) => `  - ${ledgerItemLabel(it, t, locale)}`),
-        // The page says when it cut the list and links the full one; the
-        // twin cut at the same place without saying so (twin audit
-        // 2026-09-27, W4).
+        // Every row, as the page lists them (it folds the ones past the
+        // first ten under "Show the other N"; a twin has nothing to fold),
+        // and the link to the platform's listing the page prints under
+        // such an entry.
+        ...items.map((it) => `  - ${ledgerItemLabel(it, t, locale)}`),
         ...(items.length > LEDGER_MAX_ITEMS
-          ? [`  - ${truncationNote(project, items, t)}`]
+          ? [`  - ${listingLink(project, items, t)}`]
           : []),
       ],
     ),
@@ -525,14 +521,15 @@ export async function contributionsPageMarkdown(
           date: formatDate(new Date(a.awardedAt), locale),
         })
       : null;
-    // What the level means and where its points are public, as the page
-    // prints them under the award.
+    // What the award means and, for a points level, where its points are
+    // public, as the page prints them under the award.
     const meaning = gitlabAwardMeaning(a.achievement, locale);
+    const pointsLink = meaning?.points
+      ? ` ([${t("pages.projectsContributions.gitlabPointsLink")}](${gitlabPointsUrl(contributionsData.gitlab?.username ?? "jmrp")}))`
+      : "";
     const details = [
       awarded,
-      meaning
-        ? `${meaning} ([${t("pages.projectsContributions.gitlabPointsLink")}](${gitlabPointsUrl(contributionsData.gitlab?.username ?? "jmrp")}))`
-        : null,
+      meaning ? `${meaning.text}${pointsLink}` : null,
     ].filter(Boolean);
     return details.length > 0
       ? `- **${a.name}** (GitLab): ${details.join("; ")}`
@@ -590,7 +587,7 @@ export async function contributionsPageMarkdown(
     "",
     `## ${t("pages.projectsContributions.ledgerHeading")}`,
     "",
-    t("pages.projectsContributions.ledgerIntro", { max: LEDGER_MAX_ITEMS }),
+    t("pages.projectsContributions.ledgerIntro"),
     "",
     ...ledgerLines,
     `## ${t("pages.projectsContributions.answersHeading", { count: acceptedAnswers.length })}`,

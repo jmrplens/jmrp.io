@@ -14,8 +14,8 @@
  * - within an entry, merged rows first, then open ones, newest first in each;
  * - closed (not merged) rows are left out; the page counts them apart.
  *
- * The caller keeps the cap (LEDGER_MAX_ITEMS), so the first rows it shows
- * are merged ones.
+ * The caller folds the rows past LEDGER_MAX_ITEMS, so the ones it shows
+ * unfolded are merged ones first.
  *
  * Pure: the page and the twin both call it, so they cannot drift.
  *
@@ -93,9 +93,9 @@ export function ledgerProjects(ledgerByYear, contributedTo) {
  * The repository prefix a row's label carries on the page: the repo's last
  * path segment and a space, or nothing when the row belongs to the repo
  * holding a strict majority of the entry's rows (or the entry has one repo).
- * GitLab's entry (104 rows in gitlab-org/gitlab, 1 in cells/http-router)
- * names only the odd one out; Beszel and OpenCloud (one row in each of two
- * repos) keep both prefixes.
+ * An entry of 104 rows in one repo and 1 in a sibling names only the odd
+ * one out; Beszel and OpenCloud (one row in each of two repos) keep both
+ * prefixes.
  *
  * @param {readonly {fullName: string}[]} items - The entry's rows.
  * @param {{fullName: string}} item - The row.

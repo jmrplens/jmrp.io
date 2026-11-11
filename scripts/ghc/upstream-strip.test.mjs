@@ -66,11 +66,26 @@ test("keeps the 12-month window, inclusive at its edge", () => {
     row("a/inside", 1, { lastMergedAt: "2025-10-30T10:09:07" }),
     row("b/outside", 9, { lastMergedAt: "2025-10-30T10:09:06" }),
     row("c/never", 5, { lastMergedAt: null }),
-    row("d/after-as-of", 5, { lastMergedAt: "2026-10-31T00:00:00" }),
   ];
   // 2026 has no 29 February: exactly 365 days separate the edge from asOf.
   assert.deepEqual(names(selectUpstreamStrip(rows, "2026-10-30T10:09:07")), [
     "inside",
+  ]);
+});
+
+test("a merge after asOf still counts: GitLab is collected after the GitHub snapshot", () => {
+  // The 2026-11-09 build: asOf 22:04, GitLab fetched at 23:08, and the Go
+  // client's newest merge at 23:02 took it out of the strip.
+  const rows = [
+    row("gitlab-org/gitlab", 105),
+    row("gitlab-org/api/client-go", 31, {
+      lastMergedAt: "2026-11-09T23:02:34.084Z",
+    }),
+    row("gitlab-org/cli", 13),
+  ];
+  assert.deepEqual(names(selectUpstreamStrip(rows, "2026-11-09T22:04:28")), [
+    "gitlab",
+    "client-go",
   ]);
 });
 

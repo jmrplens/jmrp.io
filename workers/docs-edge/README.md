@@ -42,6 +42,9 @@ anywhere else, reverts whatever changed since.
   the Worker is skipped (quota exhausted, fail-open), the request reaches GitHub
   with them, which cannot be prevented from here.
 - **Redirects the retired `/assets/pdf/*` tree** to `https://jmrp.io/pdf/*` with a 301.
+- **Asks GitHub once more** when it answers a `GET` or `HEAD` with 502, 503 or 504,
+  and sends those two methods without a body, so they can go twice (see "A 502, 503
+  or 504 from GitHub").
 
 ## Markdown negotiation
 
@@ -79,6 +82,38 @@ file with a 200, which a server may always do (RFC 9110, 14.2). Valid single and
 multiple ranges go through unchanged and the edge answers them correctly (measured on
 2026-11-05). If the edge still throws on a range, `fetchOrWhole` sends the request once
 more without it. On routes with no Worker, Cloudflare's own 502 remains.
+
+## A 502, 503 or 504 from GitHub
+
+GitHub Pages answers a rare 503 for a page that has gone cold. The record holds five
+in the 103,059 requests from 2026-11-03 20:00 UTC to 2026-11-07 03:00 UTC, all
+`BYPASS`: three on Spanish pages of `/phonometry/` and two on English pages of
+`/cs-routeros-bouncer/` and `/gitlab-mcp-server/`. A crawler that gets one counts a
+failed fetch.
+
+A `GET` or `HEAD` that GitHub answers with 502, 503 or 504 is sent once more, at
+once and unchanged: the same `Range`, the same validators, every other header. The
+second answer goes out whatever it is, and the Range, `Vary` and twin rules above
+judge it as they would a first answer. Never more than once per request: a second
+5xx goes out as it came. Any other method is never sent twice, so a request body is
+never sent again. If the retry throws, the first answer goes out with its body. The
+whole-file requests of the Range rules and the twin probe are not retried.
+
+A `GET` or `HEAD` reaches GitHub without a body, and without the `Content-Length`
+and `Transfer-Encoding` that frame one. In workerd, a `GET` that came with either
+header, even `Content-Length: 0`, reaches the Worker with a body; the first fetch
+reads it, and a request whose body was read cannot be sent again, so the retry, and
+the whole-file request after a 416, would throw instead of reaching GitHub. A body on
+those methods has no defined meaning (RFC 9110, 9.3.1 and 9.3.2).
+
+The data point records a retry that GitHub answered in the cache verdict (blob 12) as
+`origin-retry-502`, `origin-retry-503` or `origin-retry-504`, naming the status the
+retry replaced, with the final status in blob 11. A retry that helped reads `200`
+there, and one that met a second 5xx reads that status. A retry that throws is not
+recorded, so the row reads as it would without one. The record layout does not
+change: blob 12 already carries the Worker's own verdicts beside Cloudflare's
+`cf-cache-status`, and the privacy page describes it as whether the edge served the
+page from its cache.
 
 ## Zone settings this depends on
 

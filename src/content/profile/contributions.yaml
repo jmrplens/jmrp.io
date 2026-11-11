@@ -12,7 +12,7 @@ type: contributions
 #   line), not code or docs. Verified against `datos.md` idea 1's tested SQL
 #   (`full_name IN (...) OR repo LIKE 'awesome-%'`) on 2026-09-26.
 # * `exclude` items are hidden from the DETAILED build-time ledger and the
-#   subpage (title, URL, everything) — never from the live summary counts,
+#   subpage (title, URL, everything), never from the live summary counts,
 #   which must keep matching GitHub's own public search results exactly.
 #   Each one is documented below with why it is here; add a new entry only
 #   with the same kind of verification.
@@ -33,7 +33,7 @@ type: contributions
 #   merge request on GitLab.com; `kind: pull_request`, `number` = the iid). Every entry must be MERGED (or, for an
 #   issue, a genuine accepted contribution) and carry no pending-disclosure
 #   security content. `why.en`/`why.es` are one line, written by the owner or
-#   verified against the PR/issue before being written down — see
+#   verified against the PR/issue before being written down. See
 #   `destacadas.md` section 3 for how these six were chosen among 60 upstream
 #   items (33 merged, 15 open, 11 closed unmerged) and 13 accepted Discussion
 #   answers, all cross-checked against the live GitHub API on 2026-09-26.
@@ -45,13 +45,13 @@ type: contributions
 #   id (`roster.mjs`'s `ACTIVE_REPOS`), so `deriveOwnProjects()` in
 #   `build-data.mjs` can still fold an older listing PR (titled before a
 #   rename) under the project's current id. Every listing PR's own project is
-#   otherwise derived automatically from its title — see that function's doc
-#   comment in `contributions-yaml.mjs`; this map is only for the one case
+#   otherwise derived automatically from its title (see that function's doc
+#   comment in `contributions-yaml.mjs`); this map is only for the one case
 #   the title itself cannot name correctly.
 
 listingRepos:
   # The account's own projects being published to a package manager or
-  # registry — not code contributed to someone else's project.
+  # registry, not code contributed to someone else's project.
   - microsoft/winget-pkgs
   - docker/mcp-registry
   - conda-forge/staged-recipes
@@ -80,7 +80,7 @@ exclude:
 
 displayName:
   # Same change, code and docs: henrygd/beszel#2327 + henrygd/beszel-docs#82.
-  # BOTH repos map to the same display name "Beszel" — folding only works
+  # BOTH repos map to the same display name "Beszel": folding only works
   # when every sibling repo (the code repo included, not just the docs one)
   # resolves to the identical string.
   henrygd/beszel: Beszel
@@ -91,12 +91,12 @@ displayName:
   modelcontextprotocol/go-sdk: MCP Go SDK
   modelcontextprotocol/rust-sdk: MCP Rust SDK
   # opencloud-eu/web-extensions#575 (open PR) grew out of an accepted answer
-  # in opencloud-eu/opencloud#3587 — same org, one project.
+  # in opencloud-eu/opencloud#3587: same org, one project.
   opencloud-eu/web-extensions: OpenCloud
   opencloud-eu/opencloud: OpenCloud
   alshedivat/al-folio: al-folio
-  # Bare repo name alone would read wrong or lowercase — review round #1,
-  # item 3.
+  # Bare repo name alone would read wrong or lowercase (review round #1,
+  # item 3).
   podman-container-tools/podman: Podman
   renovatebot/renovate: Renovate
   TriliumNext/Trilium: Trilium Notes
@@ -119,10 +119,14 @@ displayName:
   acmesh-official/acme.sh: acme.sh
   YunoHost-Apps/coturn_ynh: YunoHost coturn
   # GitLab.com projects are keyed by their full path, which can be nested.
-  # The GitLab application and its Cells HTTP router are one project to a
-  # reader; the Go client library is a separate program.
+  # The Go client library is a separate program. So is the Cells HTTP
+  # router: folded into "GitLab" until 2026-11-09, its one merge counted in
+  # GitLab's total but never showed, being older than the ten rows that
+  # entry prints, and the entry's "all my merge requests" link lists only
+  # gitlab-org/gitlab. Its name is its own description's, "HTTP Router for
+  # Cells"; bare, "http-router" says nothing.
   gitlab-org/gitlab: GitLab
-  gitlab-org/cells/http-router: GitLab
+  gitlab-org/cells/http-router: HTTP Router for Cells
   gitlab-org/api/client-go: GitLab Go client
   # Bare names that named something else (2026-10-30). Each comes from the
   # project's own GitLab name, description or README:
@@ -143,8 +147,8 @@ displayName:
   # of components"; the "AWS Fargate driver for Custom Executor" of GitLab
   # Runner; "AI skill definitions for GitLab projects"; "the probe.rs
   # webpage"; Arcane, "Modern Docker Management"; "The Go programming
-  # language"; the Zephyr Project's RTOS; and Arcane's official Android
-  # and mobile apps, as their own descriptions call them.
+  # language"; the Zephyr Project's RTOS; and Arcane's official Android,
+  # mobile and iOS apps, as their own descriptions call them.
   gitlab-org/cli: GitLab CLI (glab)
   components/opentofu: OpenTofu CI/CD component
   components/toolkit: CI/CD components toolkit
@@ -156,6 +160,7 @@ displayName:
   zephyrproject-rtos/zephyr: Zephyr RTOS
   getarcaneapp/android: Arcane Android app
   getarcaneapp/mobile: Arcane mobile app
+  getarcaneapp/ios: Arcane iOS app
   # Each accepted answer names its project under the question (2026-10-30),
   # so the repositories answered in need the name a reader knows, taken from
   # the project's own README or description: "Build Awesome (Eleventy)",
@@ -178,6 +183,66 @@ displayName:
   lemker/unifi-os-server: UniFi OS Server (Docker)
   micropython/micropython: MicroPython
   starship/starship: Starship
+  # Every other project the page names (2026-11-10), so none is left as a
+  # bare repository path. Each name is the project's own: its GitLab or
+  # GitHub name, the first heading of its README, or its description
+  # ("Official GitLab Terraform Provider", "GitLab Pages daemon", "Cline's
+  # MCP Marketplace", "Codex CLI is a coding agent from OpenAI", "Home
+  # Assistant integration for PetKit devices", "glci - GitLab Local CI").
+  # gitlab-agent goes by "GitLab Relay", its project's current name. The
+  # YunoHost packages follow "YunoHost coturn". The bare names that already
+  # are the project's own keep no entry: ngx_http_ffi_client, papercite,
+  # DNN-HA, csv-to-md-table-action, repository-mirroring-action, gobco,
+  # htmlbeautifier, homeassistant-edata, semver_dialects and scrood (with
+  # probe-rs, SafeLine and docker-transmission-openvpn, above).
+  gitlab-org/terraform-provider-gitlab: GitLab Terraform Provider
+  gitlab-org/gitlab-pages: GitLab Pages
+  gitlab-org/gitlab-runner: GitLab Runner
+  gitlab-org/gitlab-shell: GitLab Shell
+  gitlab-org/gitaly: Gitaly
+  gitlab-org/container-registry: GitLab Container Registry
+  gitlab-org/editor-extensions/gitlab-lsp: GitLab Language Server
+  gitlab-org/gitlab-vscode-extension: GitLab for VS Code
+  gitlab-org/cluster-integration/gitlab-agent: GitLab Relay
+  gitlab-org/cloud-native/gitlab-operator: GitLab Operator
+  gitlab-org/omnibus-gitlab: Omnibus GitLab
+  gitlab-org/gitlab-development-kit: GitLab Development Kit (GDK)
+  gitlab-org/gitlab-qa: GitLab QA
+  gitlab-org/gitlab-elasticsearch-indexer: GitLab Elasticsearch Indexer
+  gitlab-org/gitlab-zoekt-indexer: GitLab Zoekt
+  gitlab-org/orbit/knowledge-graph: GitLab Orbit
+  gitlab-org/labkit: LabKit
+  gitlab-org/release-cli: GitLab Release CLI
+  gitlab-org/quality/triage-ops: GitLab Triage Operations
+  gitlab-org/ruby/gems/gitlab-triage: GitLab Triage
+  gitlab-org/ruby/gems/gitlab-dangerfiles: GitLab Dangerfiles
+  gitlab-org/ruby/gems/gitlab-glfm-markdown: GLFM Markdown
+  gitlab-org/ruby/gems/gitlab-grape-openapi: GitLab Grape OpenAPI
+  gitlab-org/ruby/gems/prometheus-client-mmap: Prometheus Ruby Mmap Client
+  gitlab-org/security-products/analyzers/dependency-scanning: Dependency Scanning analyzer
+  gitlab-org/security-products/analyzers/report: Analyzers Report Library
+  gitlab-org/security-products/gemnasium-db: GitLab Advisory Database
+  gitlab-org/gitlab-services/design.gitlab.com: Pajamas Design System
+  gitlab-org/developer-relations/contributor-success/contributors-gitlab-com: GitLab contributor platform
+  gitlab-org/modelops/ai-model-validation-and-research/ai-evaluation/cef-service: CEF Service
+  gitlab-org/fleeting/fleeting: Fleeting
+  gitlab-org/fleeting/taskscaler: Taskscaler
+  gitlab-org/ci-cd/runner-tools/glci: glci (GitLab Local CI)
+  openai/codex: Codex CLI
+  bats-core/bats-core: Bats-core
+  cline/mcp-marketplace: Cline MCP Marketplace
+  DefGuard/defguard: Defguard
+  github/rest-api-description: GitHub REST API OpenAPI description
+  magicstone-dev/ecko: Ecko
+  metabolist/metatext: Metatext
+  openwrt/asu: Attended Sysupgrade Server (OpenWrt)
+  pixelfed/pixelfed: Pixelfed
+  RobertD502/home-assistant-petkit: PetKit integration for Home Assistant
+  Universite-Gustave-Eiffel/acoustic-toolbox: Acoustic Toolbox
+  whad-team/whad-client: WHAD client
+  Yeraze/meshmonitor: MeshMonitor
+  YunoHost-Apps/elasticsearch8_ynh: YunoHost Elasticsearch 8
+  YunoHost-Apps/pixelfed_ynh: YunoHost Pixelfed
 
 # Display name → the repository that stands for a folded project: its link,
 # its star count and its JSON-LD `codeRepository`. Without an entry the repo
@@ -208,11 +273,15 @@ language:
 # next to the GitHub ones (scripts/gl/). `excludeNamespaces` are the owner's
 # own top-level namespaces: his GitLab repositories are mirrors of GitHub
 # ones, so work there is not a contribution to someone else's project.
+# jmrp-oss is his group too ("Open source work by José Manuel Requena
+# Plens", owner jmrp): orbit-fixtures/kg-fixtures, the fixture project he
+# made to exercise GitLab Orbit, listed as an upstream until 2026-11-10.
 gitlab:
   username: jmrp
   userId: 15767218
   excludeNamespaces:
     - jmrp
+    - jmrp-oss
     - plens1
 
 # See this file's header comment. Currently just the one pre-rename PyOctave
@@ -223,7 +292,7 @@ listingAliases:
 
 # `why.en`/`why.es` are DOUBLE-QUOTED: several mention PR numbers as
 # "#1234", and a plain (unquoted) YAML scalar treats a `#` preceded by
-# whitespace as a comment marker — even mid-string, even inside a folded
+# whitespace as a comment marker, even mid-string, even inside a folded
 # multi-line value. Quoting avoids that trap entirely.
 # Accepted answers the subpage keeps in view (at most six, in this order);
 # the others, newest first, sit behind a "Show the other N" disclosure.

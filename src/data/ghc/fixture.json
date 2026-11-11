@@ -1884,6 +1884,19 @@
       "agrees": false,
       "description": "Wider community member who has earned 7,500 to 37,499 points contributing to GitLab.",
       "awardedAt": "2026-10-09T20:07:11Z"
+    },
+    {
+      "platform": "gitlab",
+      "achievement": "gitlab-notable-contributor",
+      "name": "Notable Contributor",
+      "tierNumber": 1,
+      "tierName": "default",
+      "count": null,
+      "nextThreshold": 0,
+      "percent": 0,
+      "agrees": false,
+      "description": "Every release, GitLab recognizes a community member with the GitLab Notable Contributor award.",
+      "awardedAt": "2026-11-09T16:48:30Z"
     }
   ],
   "communityContributors": {
@@ -3140,6 +3153,14 @@
         "description": "Wider community member who has earned 7,500 to 37,499 points contributing to GitLab.",
         "namespace": "gitlab-org/achievements",
         "awardedAt": "2026-10-09T20:07:11Z"
+      },
+      {
+        "platform": "gitlab",
+        "achievement": "gitlab-notable-contributor",
+        "name": "Notable Contributor",
+        "description": "Every release, GitLab recognizes a community member with the GitLab Notable Contributor award.",
+        "namespace": "gitlab-org/achievements",
+        "awardedAt": "2026-11-09T16:48:30Z"
       }
     ]
   }

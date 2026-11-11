@@ -20,7 +20,7 @@
  * Data is `shapeAchievements()`'s output from `build-data.mjs`: only the
  * four badges the owner decided to show, Pull Shark's raw count already
  * redacted to `null` (it is an authenticated total that includes private
- * PRs — never printed).
+ * PRs, and is never printed).
  *
  * GitLab achievements (`platform: "gitlab"`) have no tiers or progress: the
  * shelf shows GitLab's own badge (self-hosted the same way, from GitLab.com's
@@ -49,7 +49,7 @@ export interface Achievement {
 
 interface Props {
   readonly achievements: readonly Achievement[];
-  /** Real, verifiable count of accepted Discussions answers — NOT the
+  /** Real, verifiable count of accepted Discussions answers, NOT the
    * Galaxy Brain badge's own (lagging) `count`; see the module doc comment
    * in `build-data.mjs` and PLAN.md 3: never show them side by side. */
   readonly acceptedAnswersCount: number;
@@ -167,6 +167,10 @@ const INITIALS: Record<string, string> = {
       <ul class="ach">
         {group.items.map((a) => {
           const badge = badgeFor(a);
+          const meaning =
+            a.platform === "gitlab"
+              ? gitlabAwardMeaning(a.achievement, locale)
+              : null;
           return (
             <li>
               <span class="ach__badge">
@@ -200,25 +204,30 @@ const INITIALS: Record<string, string> = {
               </span>
               <b class="ach__name">{a.name}</b>
               <span class="ach__tier">{tierLine(a)}</span>
-              {a.platform === "gitlab" &&
-                gitlabAwardMeaning(a.achievement, locale) && (
-                  <span class="ach__extra">
-                    {gitlabAwardMeaning(a.achievement, locale)}
-                    <br />
-                    <a
-                      class="external-link"
-                      href={gitlabPointsUrl}
-                      target="_blank"
-                      rel="external noopener noreferrer"
-                      aria-label={t("aria.opensNewTab", {
-                        text: t("pages.projectsContributions.gitlabPointsLink"),
-                      })}
-                      set:text={t(
-                        "pages.projectsContributions.gitlabPointsLink",
-                      )}
-                    />
-                  </span>
-                )}
+              {meaning && (
+                <span class="ach__extra">
+                  {meaning.text}
+                  {meaning.points && (
+                    <>
+                      <br />
+                      <a
+                        class="external-link"
+                        href={gitlabPointsUrl}
+                        target="_blank"
+                        rel="external noopener noreferrer"
+                        aria-label={t("aria.opensNewTab", {
+                          text: t(
+                            "pages.projectsContributions.gitlabPointsLink",
+                          ),
+                        })}
+                        set:text={t(
+                          "pages.projectsContributions.gitlabPointsLink",
+                        )}
+                      />
+                    </>
+                  )}
+                </span>
+              )}
               {a.platform !== "gitlab" &&
                 (a.achievement === "galaxy-brain" ? (
                   <span class="ach__extra">

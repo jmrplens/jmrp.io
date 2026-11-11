@@ -69,13 +69,16 @@ function fakeClient() {
     },
   };
   const requested = [];
+  const listed = [];
   return {
     requested,
+    listed,
     async get(path) {
       requested.push(path);
       return projects[Number(path.split("/").at(-1))];
     },
-    async getAll(path) {
+    async getAll(path, params) {
+      listed.push({ path, params });
       if (path === "/merge_requests") {
         return [
           row(1, 1, "gitlab-org/gitlab", "merged"),
@@ -159,6 +162,24 @@ test("collectGitlab keeps public, non-own items and drops private projects", asy
   );
   // The own namespace is never even asked about.
   assert.ok(!client.requested.includes("/projects/3"));
+});
+
+test("collectGitlab lists issues with created_by_me, merge requests with scope=all", async () => {
+  // GitLab.com rejects `/issues?scope=all` with 400 since 2026-11-09.
+  const client = fakeClient();
+  await collectGitlab(client, SETTINGS);
+  const scopeOf = (path) =>
+    client.listed.find((call) => call.path === path)?.params;
+  assert.deepEqual(scopeOf("/issues"), {
+    author_id: SETTINGS.userId,
+    scope: "created_by_me",
+    state: "all",
+  });
+  assert.deepEqual(scopeOf("/merge_requests"), {
+    author_id: SETTINGS.userId,
+    scope: "all",
+    state: "all",
+  });
 });
 
 test("collectGitlab keeps the image URL out of the stored achievements", async () => {

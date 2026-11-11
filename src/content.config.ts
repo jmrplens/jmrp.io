@@ -878,9 +878,10 @@ const ProjectEntry = z.object({
    * The license URL the project's own site states, when it is not the one
    * `src/data/license-urls.json` maps `license` to. The shared `#software`
    * node must carry one license value, so the site's form wins for that
-   * project; the table stays the default for the rest. No project sets it
-   * since 2026-11-02, when every site moved to OSI's /license/<id> form
-   * (phonometry first, which is what this field was added for).
+   * project; the table stays the default for the rest. Added for phonometry,
+   * which no longer needs it since every docs site moved to OSI's
+   * /license/<id> form (2026-11-02). Kleidos sets it since 2026-11-08: its
+   * own site states the SPDX page.
    */
   licenseUrl: z.url().optional(),
   /**
@@ -1026,6 +1027,23 @@ const ProjectEntry = z.object({
    * two forms.
    */
   languageNode: z.boolean().optional(),
+  /**
+   * Three more properties the project's own site may state on the shared
+   * node, restated only for the projects whose site does, so jmrp.io says
+   * neither less nor more than that site about them.
+   *
+   * `copyrightHolder: person` emits the canonical `#person` reference, the
+   * only holder these projects have. `isAccessibleForFree` overrides the
+   * default, which is `true` for released software and absent for an
+   * `upcoming` project (whose site may still state it: Kleidos's does).
+   * It never adds the zero-price `Offer`, which stays for released
+   * SoftwareApplication nodes. `runtimePlatform` is the framework or runtime
+   * the code targets ("ESP-IDF"); schema.org defines it on
+   * SoftwareSourceCode only, so it is refused on any other `schemaType`.
+   */
+  copyrightHolder: z.literal("person").optional(),
+  isAccessibleForFree: z.boolean().optional(),
+  runtimePlatform: z.string().optional(),
 });
 
 const projectsSchema = z.object({
@@ -1033,6 +1051,16 @@ const projectsSchema = z.object({
   projects: z
     .array(
       ProjectEntry.superRefine((project, ctx) => {
+        if (
+          project.runtimePlatform !== undefined &&
+          project.schemaType !== "SoftwareSourceCode"
+        ) {
+          ctx.addIssue({
+            code: "custom",
+            path: ["runtimePlatform"],
+            message: `${project.id}: \`runtimePlatform\` is a SoftwareSourceCode property; schemaType is "${project.schemaType}"`,
+          });
+        }
         // Only a project in development may lack a public repository or a
         // license: every other status renders both, in the card, the JSON-LD
         // node and projects.json, and an empty one would publish "undefined".
@@ -1261,6 +1289,17 @@ const page_faq = defineCollection({
             z.object({
               question: z.string().min(1),
               answer: z.string().min(1),
+              /**
+               * Phrases of the answer that link somewhere, each by its first
+               * occurrence (`@utils/linked-text`). The visible section and
+               * the twin render them; the FAQPage node keeps the answer as
+               * plain text. A phrase the answer does not contain fails the
+               * build.
+               */
+              links: z
+                .array(z.object({ text: z.string().min(1), href: z.url() }))
+                .min(1)
+                .optional(),
             }),
           )
           .min(1),

@@ -4,11 +4,11 @@ The three Cloudflare Workers of the `jmrp.io` zone, with the tools that check an
 operate them. Each directory is one Worker, deployed with wrangler from that
 directory; nothing here is part of the site build.
 
-| Worker                              | Host           | What it does                                                                        | Record               |
-| ----------------------------------- | -------------- | ----------------------------------------------------------------------------------- | -------------------- |
-| [`edge-nonce`](edge-nonce/)         | `jmrp.io`      | Caches the HTML at the edge and mints a CSP nonce per visitor                       | `jmrp_edge_requests` |
-| [`edge-nonce-mcp`](edge-nonce-mcp/) | `mcp.jmrp.io`  | The same for mcp.jmrp.io, plus keeping the OAuth callback's code out of every log   | `mcp_edge_requests`  |
-| [`docs-edge`](docs-edge/)           | `docs.jmrp.io` | Fronts GitHub Pages: request record, Markdown negotiation, Range and redirect fixes | `docs_edge_requests` |
+| Worker                              | Host           | What it does                                                                               | Record               |
+| ----------------------------------- | -------------- | ------------------------------------------------------------------------------------------ | -------------------- |
+| [`edge-nonce`](edge-nonce/)         | `jmrp.io`      | Caches the HTML at the edge and mints a CSP nonce per visitor                              | `jmrp_edge_requests` |
+| [`edge-nonce-mcp`](edge-nonce-mcp/) | `mcp.jmrp.io`  | The same for mcp.jmrp.io, plus keeping the OAuth callback's code out of every log          | `mcp_edge_requests`  |
+| [`docs-edge`](docs-edge/)           | `docs.jmrp.io` | Fronts GitHub Pages: request record, Markdown negotiation, Range, retry and redirect fixes | `docs_edge_requests` |
 
 Each Worker's README says what it does, what it depends on, its live version and how
 to roll it back.

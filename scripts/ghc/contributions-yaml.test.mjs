@@ -1,6 +1,6 @@
 /**
  * Guards `contributions-yaml.mjs`'s loader against the exact YAML footgun
- * that broke it once (a `#` mid-string being read as a comment — see the
+ * that broke it once (a `#` mid-string being read as a comment; see the
  * header comment in `src/content/profile/contributions.yaml`), and checks
  * the real, checked-in file loads and validates.
  *
@@ -73,7 +73,7 @@ test("loadContributionsConfig throws on an empty featured list", () => {
 test("a title containing a PR number (#1234) round-trips only when quoted", () => {
   // Unquoted: YAML treats the space-then-# as a comment start, silently
   // truncating the value. This is exactly the bug fixed in the real
-  // contributions.yaml — guarded here so it cannot regress unnoticed.
+  // contributions.yaml, guarded here so it cannot regress unnoticed.
   const root = tempRootWith(
     "featured:\n" +
       "  - repo: owner/repo\n" +
@@ -156,17 +156,22 @@ test("the real repository contributions.yaml loads and folds beszel + beszel-doc
   for (const item of config.exclude) {
     assert.match(item, /^[\w.-]+(\/[\w.-]+)+[#!]\d+$/, item);
   }
-  // GitLab: the application and its Cells router fold into one project; the
-  // Go client stays separate; the owner's own namespaces are excluded.
-  assert.equal(
-    foldProjectName("gitlab-org/gitlab", config.displayName),
+  // GitLab: the application, its Cells HTTP router and the Go client are
+  // separate projects (the router's one merge hid inside GitLab's entry);
+  // the owner's own namespaces are excluded.
+  assert.notEqual(
     foldProjectName("gitlab-org/cells/http-router", config.displayName),
+    foldProjectName("gitlab-org/gitlab", config.displayName),
   );
   assert.notEqual(
     foldProjectName("gitlab-org/api/client-go", config.displayName),
     foldProjectName("gitlab-org/gitlab", config.displayName),
   );
-  assert.deepEqual(config.gitlab?.excludeNamespaces, ["jmrp", "plens1"]);
+  assert.deepEqual(config.gitlab?.excludeNamespaces, [
+    "jmrp",
+    "jmrp-oss",
+    "plens1",
+  ]);
   assert.ok(
     config.featured.some(
       (entry) =>

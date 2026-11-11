@@ -7,7 +7,10 @@
  * GitLab, that named acme.sh, Trilium Notes and Nginx Proxy Manager (8 of the
  * 241 merges) and no GitLab project at all. The rule is now about the work:
  *
- * - eligible: a merge in the 12 months before the dataset's `asOf`;
+ * - eligible: a merge in the 12 months before the dataset's `asOf`, or
+ *   after it: `asOf` is the GitHub snapshot's time, and GitLab is
+ *   collected live, later, so its newest merges can postdate it (GitLab Go
+ *   client left the strip for a whole build on 2026-11-09 that way);
  * - order: most merged changes, then stars, then the project's name;
  * - at most `perOwner` rows per owner, then the first `size`.
  *
@@ -81,7 +84,7 @@ export function selectUpstreamStrip(
   const ranked = rows
     .filter((row) => {
       const at = instant(row.lastMergedAt);
-      return row.merged > 0 && at <= end && end - at <= WINDOW_MS;
+      return row.merged > 0 && end - at <= WINDOW_MS;
     })
     .toSorted(
       (a, b) =>

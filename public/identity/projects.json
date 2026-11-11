@@ -59,6 +59,9 @@
     {
       "id": "phonometry",
       "name": "phonometry",
+      "alternateName": [
+        "PyOctaveBand"
+      ],
       "status": "active",
       "schemaType": "SoftwareApplication",
       "applicationCategory": "DeveloperApplication",
@@ -83,7 +86,8 @@
       "sameAs": [
         "https://github.com/jmrplens/phonometry",
         "https://pypi.org/project/phonometry/",
-        "https://doi.org/10.5281/zenodo.21215280"
+        "https://doi.org/10.5281/zenodo.21215280",
+        "https://pypi.org/project/PyOctaveBand/"
       ]
     },
     {
@@ -124,7 +128,7 @@
       "language": "Go",
       "license": "MIT",
       "licenseUrl": "https://opensource.org/license/MIT",
-      "operatingSystem": "Linux, macOS, Windows",
+      "operatingSystem": "Linux, macOS, Windows, FreeBSD",
       "repo": "https://github.com/jmrplens/mikroscope",
       "docs": "https://docs.jmrp.io/mikroscope/",
       "docsEs": "https://docs.jmrp.io/mikroscope/es/",
@@ -157,7 +161,7 @@
       "language": "Bash",
       "license": "MIT",
       "licenseUrl": "https://opensource.org/license/MIT",
-      "operatingSystem": "Linux, macOS, BSD",
+      "operatingSystem": "Linux, macOS, Windows",
       "repo": "https://github.com/jmrplens/Cloudflare-DNS-Updater",
       "docs": "https://docs.jmrp.io/Cloudflare-DNS-Updater/",
       "description": "Bash-based dynamic DNS updater that keeps Cloudflare A and AAAA records pointed at your current public IP.",
@@ -274,17 +278,21 @@
     {
       "id": "kleidos",
       "name": "Kleidos",
+      "alternateName": [
+        "Kleidos firmware",
+        "Kleidos password manager"
+      ],
       "status": "upcoming",
       "schemaType": "SoftwareSourceCode",
       "kicker": "Hardware · password manager",
       "language": "C++",
       "license": "GPL-3.0-or-later",
-      "licenseUrl": "https://www.gnu.org/licenses/gpl-3.0.html",
+      "licenseUrl": "https://spdx.org/licenses/GPL-3.0-or-later.html",
       "docs": "https://kleidos.dev/",
       "docsEs": "https://kleidos.dev/es/",
       "sitemap": "sitemap.xml",
-      "description": "Passwords kept encrypted on a device you hold, typed over Bluetooth once you unlock it on the device itself. No app, no cloud. Coming soon.",
-      "descriptionEs": "Contraseñas cifradas en un dispositivo que llevas encima y escritas por Bluetooth al desbloquearlo en el propio dispositivo. Sin app ni nube. Próximamente.",
+      "description": "Kleidos is a hardware password manager: passwords encrypted on a device you hold, typed over Bluetooth once you unlock it. No app, no cloud. Not released.",
+      "descriptionEs": "Kleidos es un gestor de contraseñas por hardware: contraseñas cifradas en un dispositivo que llevas encima, escritas por Bluetooth al desbloquearlo. Sin app ni nube. Sin publicar todavía.",
       "keywords": [
         "Password manager",
         "ESP32",
@@ -293,7 +301,10 @@
         "Firmware",
         "C++"
       ],
-      "sameAs": []
+      "sameAs": [
+        "https://www.youtube.com/channel/UCFoq2KqUch9rWRslqb5UeFQ",
+        "https://www.youtube.com/@kleidos"
+      ]
     },
     {
       "id": "A-Lab",

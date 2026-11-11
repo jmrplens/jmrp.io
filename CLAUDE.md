@@ -1060,6 +1060,16 @@ The three Cloudflare Workers of the zone live in `workers/`: `edge-nonce` (jmrp.
 > #8 they took the last commit of any kind, so #497's inert 117-file reformat
 > (d88066c, the one later entry in the list) restamped 50 URLs as revised. A
 > dependency or formatting PR that touches components needs the marker too.
+>
+> **Page FAQs are dated per page, not per file.** `src/content/page_faq/{en,es}.yaml`
+> hold the pairs of a dozen pages, so no page lists them as a source (any edit
+> would restamp all of them). Instead the resolver folds into each page the
+> newest substantive commit that changed that page's own block, comparing the
+> file before and after each commit (`src/utils/faq-block-dates.ts`, git reads
+> in `yamlRevisions`). A substantive commit that only retouched another page's
+> block typographically is listed in `TYPOGRAPHIC_FAQ_CHANGES` by hash and
+> path, closed like `MECHANICAL_COMMITS` (#664 and /publications/ is the one
+> entry).
 
 Full workflow + field reference: the `new-blog-post` skill and `docs/BLOG_POST_GUIDE.md`.
 

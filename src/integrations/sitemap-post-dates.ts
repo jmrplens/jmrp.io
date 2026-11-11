@@ -8,8 +8,8 @@
  * ── Why this covers more than posts now ──────────────────────────────────
  * This module used to answer for blog posts only, and every other URL fell back
  * to a single build timestamp. On this site `pnpm build` is the deploy, so that
- * meant 98 of 122 URLs advertised a brand-new `lastmod` on every deploy —
- * identical to the millisecond — including 18 tool pages that simultaneously
+ * meant 98 of 122 URLs advertised a brand-new `lastmod` on every deploy,
+ * identical to the millisecond, including 18 tool pages that simultaneously
  * declared `changefreq: yearly`. Crawlers discount `lastmod` from sources that
  * behave that way, which devalued the signal on the 24 post URLs where it was
  * accurate.
@@ -17,21 +17,22 @@
  * Each page now answers from whatever actually determines its content:
  * frontmatter dates where they exist, the git history of the source file
  * otherwise, and for index/tag/category pages the newest date among the items
- * they list — a listing really is modified when a new entry appears in it.
+ * they list: a listing really is modified when a new entry appears in it.
  */
 import { readdirSync, readFileSync } from "node:fs";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
 import { load as parseYaml } from "js-yaml";
 
-import { lastCommitDate } from "../utils/content-date.js";
+import { lastCommitDate, yamlRevisions } from "../utils/content-date.js";
+import { faqBlockDates } from "../utils/faq-block-dates.js";
 import { postDateModified } from "../utils/post-dates.js";
 import { getSeries } from "../utils/series.js";
 
 // Anchored to the process CWD rather than to `import.meta.url`: Astro bundles
 // this module into an SSR chunk whose `import.meta.url` points at the build
 // output, so the readdirSync fell into
-// its own catch and returned an empty list — silently, which is why /blog/ and
+// its own catch and returned an empty list, silently, which is why /blog/ and
 // /tools/ came out with no `dateModified` while every other page worked.
 const SRC_DIR = pathToFileURL(`${process.cwd()}/src/`);
 
@@ -97,8 +98,8 @@ function listPostFiles(locale: string): { dir: URL; files: string[] } {
  * a published post or has no usable date.
  *
  * The date is the SAME computed `dateModified` the page's JSON-LD and the
- * markdown twin publish — max(publishedDate, updatedDate, lastVerified.date,
- * last substantive commit) — so `<lastmod>` cannot disagree with the graph.
+ * markdown twin publish, max(publishedDate, updatedDate, lastVerified.date,
+ * last substantive commit), so `<lastmod>` cannot disagree with the graph.
  * It used to read `updatedDate ?? publishedDate`, which inherited every missed
  * manual bump: 205d494 edited 25 post files and moved 4 dates, so 21 URLs
  * advertised a `lastmod` older than their own content.
@@ -124,8 +125,8 @@ function readPostDate(
  * Builds a `"<locale>/<slug>" → lastmod ISO string` map from all non-draft
  * posts.
  *
- * Keyed per locale, not per slug. It used to keep one date per slug — the
- * newest of the two translations — which was harmless only while both locales
+ * Keyed per locale, not per slug. It used to keep one date per slug (the
+ * newest of the two translations), which was harmless only while both locales
  * shared the same hand-maintained frontmatter dates. Now that the date folds in
  * the file's own git history the translations really do differ (05af5217 fixed
  * two unprefixed tool links in the Spanish post 010 and nothing in the
@@ -167,6 +168,29 @@ function gitDate(repoRelativePath: string): string | undefined {
 }
 
 /**
+ * When each page's own FAQ last changed, newest across the two locales,
+ * keyed by locale-stripped path.
+ *
+ * The pairs of a dozen pages share one `page_faq/<locale>.yaml` per locale,
+ * so no page can list that file among its sources: any edit would restamp
+ * all of them. Each page is dated by its own block instead (see
+ * `faq-block-dates.ts`), and the resolver folds that date into whatever
+ * else the page is dated by.
+ *
+ * @returns path to ISO timestamp, for the pages some revision changed.
+ */
+function pageFaqDates(): Map<string, string> {
+  const dates = new Map<string, string>();
+  for (const locale of LOCALE_DIRS) {
+    const revisions = yamlRevisions(`src/content/page_faq/${locale}.yaml`);
+    for (const [path, iso] of faqBlockDates(revisions)) {
+      dates.set(path, newest(dates.get(path), iso) ?? iso);
+    }
+  }
+  return dates;
+}
+
+/**
  * Newest of a set of ISO strings, ignoring undefined entries.
  *
  * ISO-8601 timestamps sort correctly as plain strings, but the comparator is
@@ -189,7 +213,7 @@ function newest(...dates: (string | undefined)[]): string | undefined {
  * `pnpm build` for the whole site instead of skipping one page.
  *
  * Extracted so `getToolDateMap` stays under the cognitive-complexity budget,
- * and so neither `NaN` nor `Number.NaN` has to appear as a literal — ESLint's
+ * and so neither `NaN` nor `Number.NaN` has to appear as a literal: ESLint's
  * unicorn plugin requires the first spelling and SonarJS requires the second,
  * so the only way to satisfy both is not to write either.
  */
@@ -205,7 +229,7 @@ function frontmatterDate(value: string | Date | undefined): string | undefined {
  * Derived from the import statements rather than from an `appComponent`
  * frontmatter field, which is what this used to read. That field was the only
  * remaining copy of a name the MDX already states, and since the per-tool CSS
- * split (2026-08-22) nothing rendered from it — so a rename or a typo would
+ * split (2026-08-22) nothing rendered from it, so a rename or a typo would
  * still build, `gitDate()` would quietly find no file, and the tool's
  * `<lastmod>` would stop tracking its own component. The import cannot drift:
  * if it is wrong the page does not compile.
@@ -224,7 +248,7 @@ function appComponentPaths(raw: string): string[] {
 /**
  * Tool slug → lastmod, from frontmatter when present and git history otherwise.
  * Tool pages are hand-maintained MDX, so their real modification date is the
- * last time someone edited that MDX — never the deploy that happened to follow.
+ * last time someone edited that MDX, never the deploy that happened to follow.
  */
 function getToolDateMap(): Map<string, string> {
   const map = new Map<string, string>();
@@ -245,7 +269,7 @@ function getToolDateMap(): Map<string, string> {
       const fm = parseFrontmatter(raw);
       // A tool page is its interactive component far more than its MDX prose.
       // Keyed to frontmatter alone, all 46 tool URLs reported 2026-06-23 while
-      // e.g. SubnetCalculator.astro had changed on 2026-08-01 — understating
+      // e.g. SubnetCalculator.astro had changed on 2026-08-01, understating
       // freshness and suppressing recrawl of genuinely changed pages. Take the
       // newest of: frontmatter, the MDX file, and the components it imports.
       const iso = newest(
@@ -266,7 +290,7 @@ function getToolDateMap(): Map<string, string> {
  * Resolves `<lastmod>` for any sitemap URL from its real content source.
  *
  * @returns A function taking the locale-stripped path, plus the locale that was
- *   stripped off it, and returning an ISO timestamp — or undefined when nothing
+ *   stripped off it, and returning an ISO timestamp, or undefined when nothing
  *   can be determined (the caller then omits `lastmod`: an absent element is
  *   valid and honest, whereas the build clock is a claim that the page changed
  *   when it did not). The locale is optional because a caller that has already
@@ -307,7 +331,7 @@ export function createLastmodResolver(): (
     // The YAML holds the structured facts; the editorial policy, the bio and
     // every heading are strings in the translation bundles. Keyed to the YAML
     // alone, the page rewrote its own correction policy (this change) without
-    // its `lastmod` moving a day — the same failure this module fixes for
+    // its `lastmod` moving a day: the same failure this module fixes for
     // posts. Same reasoning, and same over-reporting tradeoff, as /privacy/
     // and /feeds/ below.
     "/about/": [
@@ -318,7 +342,7 @@ export function createLastmodResolver(): (
     ],
     "/uses/": ["src/content/profile/uses.yaml"],
     // NEVER src/data/ghc/*.json: those are pre-build output, refreshed on
-    // every build from a live query, and are .gitignore'd besides — keying
+    // every build from a live query, and are .gitignore'd besides; keying
     // lastmod to them would restamp both pages on every deploy regardless of
     // whether anything editorial changed. contributions.yaml IS curation
     // content (the "why", the featured picks) and belongs here.
@@ -347,7 +371,7 @@ export function createLastmodResolver(): (
     // The page shell almost never changes; every rendered metric, service
     // card and island lives in src/components/homelab/. Keyed to the shell
     // alone, the sitemap claimed February for a page whose content changed in
-    // July (de6d9f1, "Retire Meshtastic from the homelab") — the oldest and
+    // July (de6d9f1, "Retire Meshtastic from the homelab"), the oldest and
     // least truthful lastmod in the file. gitDate() accepts a directory
     // pathspec, and newest() folds the two together. Every panel's prose and
     // label is a translation string, so the bundles count too, with the same
@@ -364,7 +388,7 @@ export function createLastmodResolver(): (
     // the translation bundles: the privacy entry still named those bundles long
     // after the move, so its <lastmod> tracked any unrelated UI string edit and
     // ignored edits to the policy itself. `/license/` was missing entirely,
-    // which is why both of its locales shipped with no <lastmod> at all —
+    // which is why both of its locales shipped with no <lastmod> at all,
     // caught by the sitemap completeness test.
     "/privacy/": [
       "src/content/pages/en/privacy.mdx",
@@ -391,7 +415,9 @@ export function createLastmodResolver(): (
     ]),
   );
 
-  return (rawPath, locale) => {
+  const faqDates = pageFaqDates();
+
+  const resolve = (rawPath: string, locale?: string): string | undefined => {
     const path = rawPath === "" ? "/" : rawPath;
 
     // Home: the newest thing it surfaces or holds. It is a shop window onto
@@ -401,7 +427,7 @@ export function createLastmodResolver(): (
       return newest(staticDates.get(path), newestPost, newestTool);
 
     // `[^/]+` also matches the section roots `/blog/series/` and `/blog/tags/`,
-    // which are not post slugs — without this guard they resolved to
+    // which are not post slugs; without this guard they resolved to
     // `postDates.get("series")` (undefined) and returned early, so those two
     // URLs shipped with no <lastmod> at all and were resubmitted to IndexNow on
     // every single deploy as "unknown, assume changed".
@@ -450,6 +476,14 @@ export function createLastmodResolver(): (
 
     return staticDates.get(path);
   };
+
+  // A page's FAQ is part of the page: the visible section, the FAQPage node
+  // and the twin all carry it, so a revised answer revises the page.
+  return (rawPath, locale) =>
+    newest(
+      resolve(rawPath, locale),
+      faqDates.get(rawPath === "" ? "/" : rawPath),
+    );
 }
 
 /**

@@ -1,6 +1,6 @@
 ---
 /**
- * "Open-source contributions" — the /projects/contributions/ subpage
+ * "Open-source contributions": the /projects/contributions/ subpage
  * (PLAN.md section 2.2). 100% build-time: no `PRJ_*` token anywhere, so the
  * page keeps the edge worker's cache and Early Hints. Every figure comes
  * from `src/data/ghc/projects-contributions.json`, generated at pre-build by
@@ -45,10 +45,12 @@ import {
 import { getSiteUrl } from "@utils/site";
 import { getEntry } from "astro:content";
 import type {
+  Answer,
   CollectionPage,
   CreativeWork,
   ItemList,
   Person,
+  Question,
   SoftwareSourceCode,
   Text,
 } from "schema-dts";
@@ -284,10 +286,12 @@ function upstreamNode(
 // Every "Contributed to" row has at least one merged change, so the person is
 // a contributor of each: the edge this page documents, stated in the one
 // direction schema.org defines (there is no Person → "contributed to").
+// Named for what it holds, not after the page: projects with only open
+// changes are on the page but not in this list.
 const upstreamList = {
   "@type": "ItemList",
   "@id": `${pageUrl}#upstream-list`,
-  name: t("pages.projectsContributions.heading"),
+  name: t("pages.projectsContributions.upstreamListName"),
   numberOfItems: contributedTo.length,
   itemListOrder: "https://schema.org/ItemListUnordered",
   itemListElement: contributedTo.map((row, index) => ({
@@ -347,6 +351,110 @@ const highlightList = {
       ),
     } satisfies CreativeWork,
   })),
+} satisfies ItemList;
+
+// Every change the ledger lists, in its order, the rows behind each entry's
+// "Show the other N" included: what the page prints of each (its title, its
+// link and its state pill), with the person as author and the repository as
+// the work it belongs to. A redacted row prints neither title nor link, so it
+// has no node. A highlight's PR or MR is already a node under the same `@id`,
+// named as the highlights print it, so here it is only referenced: one node,
+// one name. The repository is referenced when the upstream list defines it,
+// and stated inline (typed, as the highlights do) when it does not: a project
+// with only open changes, or a folded project's sibling repository.
+const highlightUrls = new Set(mergedHighlights.map((h) => h.url));
+const upstreamIds = new Set(
+  contributedTo.map((row) => repoUrl(row.repo, row.platform)),
+);
+const ledgerRows = projectEntries.flatMap((entry) =>
+  entry.items
+    .filter((item) => !item.redacted && item.title)
+    .map((item) => ({ entry, item })),
+);
+const ledgerList = {
+  "@type": "ItemList",
+  "@id": `${pageUrl}#ledger`,
+  name: t("pages.projectsContributions.ledgerHeading"),
+  numberOfItems: ledgerRows.length,
+  itemListOrder: "https://schema.org/ItemListUnordered",
+  itemListElement: ledgerRows.map(({ entry, item }, index) => {
+    const url = itemUrl(item);
+    const platform = item.platform ?? entry.platform;
+    const repoId = repoUrl(item.fullName, platform);
+    return {
+      "@type": "ListItem" as const,
+      position: index + 1,
+      item: highlightUrls.has(url)
+        ? { "@id": url }
+        : ({
+            "@type": "CreativeWork",
+            "@id": url,
+            name: item.title ?? "",
+            url,
+            author: personRef,
+            // The pull or merge request is in English; its state is the
+            // pill the page prints, in the page's language.
+            inLanguage: "en",
+            creativeWorkStatus: {
+              "@value": pillText(item.state),
+              "@language": locale,
+            } satisfies LanguageTaggedValue as unknown as Text,
+            isPartOf: upstreamIds.has(repoId)
+              ? { "@id": repoId }
+              : upstreamNode(
+                  foldProjectName(item.fullName, displayName),
+                  item.fullName,
+                  platform,
+                ),
+          } satisfies CreativeWork),
+    };
+  }),
+} satisfies ItemList;
+
+// The accepted answers, in the order the page lists them (the lead in view,
+// then the rest behind the disclosure) and with what it prints of each: the
+// question, linked to the answer, and the project. The answer's own URL is
+// its identity; the discussion is the Question it answers, about the
+// project's repository node (the same `@id` the upstream list uses). No
+// dates, because the page shows none; no answer text, because the page
+// links to it rather than quoting it.
+const answersInOrder = [...answersShown, ...answersMore];
+const answersList = {
+  "@type": "ItemList",
+  "@id": `${pageUrl}#answers`,
+  name: t("pages.projectsContributions.answersListName"),
+  numberOfItems: answersInOrder.length,
+  itemListOrder: "https://schema.org/ItemListUnordered",
+  itemListElement: answersInOrder.map((a, index) => {
+    const discussionUrl = `https://github.com/${a.fullName}/discussions/${a.number}`;
+    const project = foldProjectName(a.fullName, displayName);
+    return {
+      "@type": "ListItem" as const,
+      position: index + 1,
+      item: {
+        "@type": "Answer",
+        "@id": a.answerUrl,
+        url: a.answerUrl,
+        author: personRef,
+        // The discussion and its answer are in English, whatever the page's
+        // language (as the highlights' PRs).
+        inLanguage: "en",
+        parentItem: {
+          "@type": "Question",
+          "@id": discussionUrl,
+          name: a.title,
+          url: discussionUrl,
+          inLanguage: "en",
+          about: upstreamNode(
+            project,
+            a.fullName,
+            "github",
+            languageByProject.get(project),
+          ),
+        } satisfies Question,
+      } satisfies Answer,
+    };
+  }),
 } satisfies ItemList;
 
 // GitHub's tier words ("Gold") are translated on the page; achievement and
@@ -410,11 +518,15 @@ const schema = {
   about: personRef,
   // The BreadcrumbList BaseHead emits for this very page.
   breadcrumb: { "@id": `${pageUrl}#breadcrumb` },
-  // Both lists the page is about. `hasPart` would be wrong for the
+  // The lists the page is about. `hasPart` would be wrong for the
   // highlights: its range is CreativeWork and an ItemList is not one, which
   // the Schema Markup Validator reports as a severe error (GEO audit #10, M2).
-  mainEntity:
-    mergedHighlights.length > 0 ? [upstreamList, highlightList] : upstreamList,
+  mainEntity: [
+    upstreamList,
+    ...(mergedHighlights.length > 0 ? [highlightList] : []),
+    ...(ledgerRows.length > 0 ? [ledgerList] : []),
+    ...(answersInOrder.length > 0 ? [answersList] : []),
+  ],
 } satisfies CollectionPage;
 
 const pageFaq = await getPageFaq("/projects/contributions/", locale);
@@ -540,9 +652,7 @@ const faqNode = pageFaq && pageFaqNode(pageFaq, pageUrl, schema["@id"], locale);
         {t("pages.projectsContributions.ledgerHeading")}
       </h2>
       <p class="contrib-intro">
-        {t("pages.projectsContributions.ledgerIntro", {
-          max: MAX_ITEMS_PER_PROJECT,
-        })}
+        {t("pages.projectsContributions.ledgerIntro")}
       </p>
       {projectEntries.map((entry) => (
         <details
@@ -568,41 +678,69 @@ const faqNode = pageFaq && pageFaqNode(pageFaq, pageUrl, schema["@id"], locale);
               <span class="i-mdi:minus ledger-toggle__icon ledger-toggle__icon--open" />
             </span>
           </summary>
-          <ul class="items">
-            {entry.items.slice(0, MAX_ITEMS_PER_PROJECT).map((item) => (
-              <li>
-                <span class={pillClass(item.state)}>
-                  {pillText(item.state)}
-                </span>
-                {item.redacted || !item.title ? (
-                  <span>{t("pages.projectsContributions.itemRedacted")}</span>
-                ) : (
-                  <span class="items__t">
-                    {/* One line on purpose, as the highlights' anchor above. */}
-                    {/* prettier-ignore */}
-                    <a class="external-link" href={itemUrl(item)} target="_blank" rel="external noopener noreferrer" aria-label={t("aria.opensNewTab", { text: `${item.fullName} ${itemRef(item)}: ${item.title}` })}><span lang="en">{itemLabel(entry.items, item)}</span></a>
-                  </span>
+          {/* Every row: the first ten in view, the rest folded under
+              "Show the other N" (a nested, zero-JS disclosure), so the page
+              and its JSON-LD name every change, not ten per project. One
+              row template for both halves; `Wrap` is the only difference. */}
+          {[
+            entry.items.slice(0, MAX_ITEMS_PER_PROJECT),
+            entry.items.slice(MAX_ITEMS_PER_PROJECT),
+          ].map((rows, part) => {
+            if (rows.length === 0) return null;
+            const Wrap = part === 0 ? "div" : "details";
+            return (
+              <Wrap class={part === 0 ? undefined : "items-more"}>
+                {part === 1 && (
+                  <summary>
+                    <span
+                      class="ledger-toggle"
+                      aria-hidden="true"
+                    >
+                      <span class="i-mdi:plus ledger-toggle__icon ledger-toggle__icon--closed" />
+                      <span class="i-mdi:minus ledger-toggle__icon ledger-toggle__icon--open" />
+                    </span>
+                    {t("pages.projectsContributions.ledgerMore", {
+                      count: rows.length,
+                    })}
+                  </summary>
                 )}
-                {itemDiffSize(item) ? (
-                  <span class="items__sz">
-                    <DiffSize
-                      size={itemDiffSize(item)}
-                      platform={item.platform ?? entry.platform}
-                    />
-                  </span>
-                ) : (
-                  <span aria-hidden="true" />
-                )}
-                <span class="items__w">{itemTiming(item)}</span>
-              </li>
-            ))}
-          </ul>
+                <ul class="items">
+                  {rows.map((item) => (
+                    <li>
+                      <span class={pillClass(item.state)}>
+                        {pillText(item.state)}
+                      </span>
+                      {item.redacted || !item.title ? (
+                        <span>
+                          {t("pages.projectsContributions.itemRedacted")}
+                        </span>
+                      ) : (
+                        <span class="items__t">
+                          {/* One line on purpose, as the highlights' anchor above. */}
+                          {/* prettier-ignore */}
+                          <a class="external-link" href={itemUrl(item)} target="_blank" rel="external noopener noreferrer" aria-label={t("aria.opensNewTab", { text: `${item.fullName} ${itemRef(item)}: ${item.title}` })}><span lang="en">{itemLabel(entry.items, item)}</span></a>
+                        </span>
+                      )}
+                      {itemDiffSize(item) ? (
+                        <span class="items__sz">
+                          <DiffSize
+                            size={itemDiffSize(item)}
+                            platform={item.platform ?? entry.platform}
+                          />
+                        </span>
+                      ) : (
+                        <span aria-hidden="true" />
+                      )}
+                      <span class="items__w">{itemTiming(item)}</span>
+                    </li>
+                  ))}
+                </ul>
+              </Wrap>
+            );
+          })}
           {entry.items.length > MAX_ITEMS_PER_PROJECT &&
             entry.platform === "gitlab" && (
               <p class="items__more">
-                {t("pages.projectsContributions.shownMergedFirst", {
-                  shown: MAX_ITEMS_PER_PROJECT,
-                })}{" "}
                 <a
                   class="external-link"
                   href={gitlabListing(entry.items).url}
@@ -622,9 +760,6 @@ const faqNode = pageFaq && pageFaqNode(pageFaq, pageUrl, schema["@id"], locale);
           {entry.items.length > MAX_ITEMS_PER_PROJECT &&
             entry.platform === "github" && (
               <p class="items__more">
-                {t("pages.projectsContributions.shownMergedFirst", {
-                  shown: MAX_ITEMS_PER_PROJECT,
-                })}{" "}
                 <a
                   class="external-link"
                   href={githubSearchUrl(entry.items)}
@@ -1063,7 +1198,15 @@ const faqNode = pageFaq && pageFaqNode(pageFaq, pageUrl, schema["@id"], locale);
     font-size: var(--text-sm);
   }
 
+  /* A one-line title is an 18 px tall target, and the first and last rows
+     of an entry sit against the summary, the "Show the other N" disclosure
+     or the listing link: WCAG 2.5.8 (target size, minimum) failed on 68
+     links with every entry open. 3 px of block padding makes each line box
+     24 px. On an inline element it grows the hit area and the focus ring
+     only: line boxes, row heights and the text do not move (the open
+     ledger renders byte-identical at 390 and 1280 px). */
   .items li a {
+    padding-block: 3px;
     color: var(--color-text);
     overflow-wrap: anywhere;
   }
@@ -1133,6 +1276,42 @@ const faqNode = pageFaq && pageFaqNode(pageFaq, pageUrl, schema["@id"], locale);
     margin: 0;
     font-size: var(--text-xs);
     color: var(--color-text-muted);
+  }
+
+  /* An entry's rows past its first ten: the same quiet disclosure as the
+     answers' "Show the other N", inside the entry's box and aligned with
+     the rows above it. */
+  .items-more {
+    margin: 0 var(--space-md) var(--space-sm);
+    background: none;
+    border: 0;
+  }
+
+  .items-more > summary {
+    gap: 6px;
+    align-items: center;
+    padding: 4px 0;
+    font-size: var(--text-sm);
+    color: var(--color-accent);
+  }
+
+  .items-more > summary:hover {
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+
+  .items-more .ledger-toggle {
+    order: -1;
+    margin-inline-start: 0;
+  }
+
+  .items-more .ledger-toggle__icon {
+    color: var(--color-accent);
+  }
+
+  .items-more > .items {
+    padding-inline: 0;
+    margin-top: var(--space-sm);
   }
 
   .contrib-not-merged {

@@ -14,9 +14,12 @@ pages:
     visible: true
     items:
       - question: ¿Quién es José Manuel Requena Plens?
-        answer: "Ingeniero de firmware y software en Valencia, con base en I+D en acústica: Ingeniería de Telecomunicación, Máster en Ingeniería Acústica y cuatro años de investigación predoctoral en la UPV (2019–2023). Entre 2023 y 2026 desarrolló firmware embebido industrial en C sobre STM32 y FreeRTOS para inversores solares y baterías, y mantiene {ownRepos} repositorios públicos propios en GitHub. Desde mayo de 2026 busca su próximo puesto en firmware, software o QA, presencial, remoto o híbrido."
+        answer: "Ingeniero de firmware y software en Valencia, con base en I+D en acústica: Ingeniería de Telecomunicación, Máster en Ingeniería Acústica y cuatro años de investigación predoctoral en la UPV (de 2019 a 2023). Entre 2023 y 2026 desarrolló firmware embebido industrial en C sobre STM32 y FreeRTOS para inversores solares y baterías, y mantiene {ownRepos} repositorios públicos propios en GitHub. Desde mayo de 2026 busca su próximo puesto en firmware, software o QA, presencial, remoto o híbrido."
       - question: ¿Qué software mantiene?
-        answer: "Varios servidores Model Context Protocol en Go (entre ellos gitlab-mcp-server, que expone más de 850 acciones de GitLab, y libgen-mcp), phonometry (biblioteca de acústica para Python conforme a normas), cs-routeros-bouncer (bouncer de CrowdSec para MikroTik RouterOS), Cloudflare-DNS-Updater, las 17 herramientas web de este sitio y Kleidos, un gestor de contraseñas hardware en C++ con ocho variantes para dispositivos distintos, cada uno con su pantalla y sus botones, y el origen de la serie de firmware de este blog."
+        answer: "Varios servidores Model Context Protocol en Go (entre ellos gitlab-mcp-server, que expone más de 850 acciones de GitLab, y libgen-mcp), phonometry (biblioteca de acústica para Python conforme a normas), cs-routeros-bouncer (bouncer de CrowdSec para MikroTik RouterOS), Cloudflare-DNS-Updater, las 17 herramientas web de este sitio y Kleidos, un gestor de contraseñas hardware en C++ con nueve variantes para dispositivos distintos, cada uno con su pantalla y sus botones, y el origen de la serie de firmware de este blog."
+        links:
+          - text: Kleidos
+            href: https://kleidos.dev/es/
 
   - path: /projects/
     visible: true
@@ -60,7 +63,7 @@ pages:
     visible: true
     items:
       - question: ¿Qué ha publicado?
-        answer: "Catorce trabajos de su investigación en acústica (2018–2023): un artículo de revista, once comunicaciones en congresos y talleres y dos tesis, sobre metamateriales acústicos, difusores de sonido, predicción y mitigación del ruido de lanzamiento de cohetes, diseño de cajas de altavoces y acústica de salas."
+        answer: "Catorce trabajos de su investigación en acústica (de 2018 a 2023): un artículo de revista, once comunicaciones en congresos y talleres y dos tesis, sobre metamateriales acústicos, difusores de sonido, predicción y mitigación del ruido de lanzamiento de cohetes, diseño de cajas de altavoces y acústica de salas."
       - question: ¿Dónde se pueden leer los artículos?
         answer: "Todas las entradas de esta página menos una llevan un DOI en Zenodo, donde el texto completo está archivado en abierto; la lista también está en Google Scholar y ORCID."
 

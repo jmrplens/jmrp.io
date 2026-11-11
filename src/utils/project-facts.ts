@@ -252,29 +252,49 @@ export function communityFor(
 }
 
 /**
- * What a GitLab contributor level means, in GitLab's own terms (the
- * achievement's description: "has earned 7,500 to 37,499 points contributing
- * to GitLab"), by achievement id. An id with no entry prints no line; the
- * dataset's English description is never shown untranslated.
+ * What a GitLab award means, in GitLab's own terms (the achievement's
+ * description: "has earned 7,500 to 37,499 points contributing to GitLab"),
+ * by achievement id, and whether the contributor platform's points page backs
+ * it. The levels are points thresholds, so the page links the points; the
+ * Notable Contributor award is GitLab's pick of a community member each
+ * release, which no points total shows. An id with no entry prints no line;
+ * the dataset's English description is never shown untranslated. Level 5 is
+ * listed before it is earned, so the award needs no code change when it
+ * arrives.
  */
-const GITLAB_LEVEL_MEANING: Readonly<Record<string, TranslationKey>> = {
-  "gitlab-level-4-contributor":
-    "pages.projectsContributions.gitlabLevel4Meaning",
+const GITLAB_AWARD_MEANING: Readonly<
+  Record<string, { readonly key: TranslationKey; readonly points: boolean }>
+> = {
+  "gitlab-level-4-contributor": {
+    key: "pages.projectsContributions.gitlabLevel4Meaning",
+    points: true,
+  },
+  "gitlab-level-5-contributor": {
+    key: "pages.projectsContributions.gitlabLevel5Meaning",
+    points: true,
+  },
+  "gitlab-notable-contributor": {
+    key: "pages.projectsContributions.gitlabNotableMeaning",
+    points: false,
+  },
 };
 
 /**
- * The line under a GitLab award, or `null` when the level has no entry.
+ * The line under a GitLab award, or `null` when the award has no entry.
  *
  * @param achievement - The achievement id.
  * @param locale - Which locale.
- * @returns The localized meaning, or `null`.
+ * @returns The localized meaning and whether the points page backs it, or
+ *   `null`.
  */
 export function gitlabAwardMeaning(
   achievement: string,
   locale: Locale,
-): string | null {
-  const key = GITLAB_LEVEL_MEANING[achievement];
-  return key ? useTranslations(locale)(key) : null;
+): { text: string; points: boolean } | null {
+  const entry = GITLAB_AWARD_MEANING[achievement];
+  return entry
+    ? { text: useTranslations(locale)(entry.key), points: entry.points }
+    : null;
 }
 
 /**
@@ -290,8 +310,8 @@ export function gitlabPointsUrl(username: string): string {
 }
 
 /**
- * Items a ledger entry lists before it says "showing N, merged first" and
- * links to the full listing.
+ * Items a ledger entry shows unfolded; the rest sit behind its "Show the
+ * other N" disclosure, followed by the link to the platform's listing.
  */
 export const LEDGER_MAX_ITEMS = 10;
 
@@ -326,7 +346,7 @@ export function formatMergeDuration(hours: number, locale: Locale): string {
 
 /**
  * The GitLab listing of the owner's merge requests to the project a ledger
- * entry mostly targets, for the "showing N, merged first" note.
+ * entry mostly targets, linked under an entry with folded rows.
  *
  * @param items - The entry's items.
  * @param username - The GitLab username.
@@ -352,7 +372,7 @@ export function gitlabListing(
 
 /**
  * A GitHub search for every pull request the owner opened in the entry's
- * repositories, for the "showing N, merged first" note.
+ * repositories, linked under an entry with folded rows.
  *
  * @param items - The entry's items.
  * @param owner - The GitHub login.
