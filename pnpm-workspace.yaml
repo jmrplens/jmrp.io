@@ -31,12 +31,11 @@ overrides:
   "glob@<13.0.6": "^13.0.6"
   "rimraf": ">=6.1.2"
   "uuid": ">=9.0.0"
-  "whatwg-encoding": ">=3.1.1"
   "lodash": ">=4.17.23"
   "lodash-es": ">=4.17.23"
   "@vercel/blob": ">=2.2.0"
   "path-to-regexp": ">=6.3.0"
-  "shiki": "^4.5.0"
+  "shiki": "^4.6.0"
   # Scoped (range-selector) overrides: only the vulnerable instances are
   # remapped, so old-major consumers (minimatch's brace-expansion@1, eslint's
   # ajv@6) keep the version they were built against.
@@ -55,7 +54,7 @@ overrides:
   # core 3. Added 2026-10-24.
   "@opentelemetry/api": "~1.9.1"
   "eslint": "^10.14.0"
-  "vite": "^8.3.5"
+  "vite": "^8.3.8"
   "@astrojs/markdown-remark>smol-toml": "^1.8.0"
   "@astrojs/yaml2ts>yaml": "^2.8.3"
   "@mapbox/node-pre-gyp>tar": "^7.5.22"
@@ -82,6 +81,18 @@ overrides:
   # only calls access/lastMod/list/downloadTo, which are unchanged. Drop this
   # entry once get-uri depends on basic-ftp ^6.2.1.
   "get-uri>basic-ftp": "^6.2.1"
+  # @lhci/cli 0.16.0 still asks for proxy-agent ^6.5.0, while puppeteer 25.17's
+  # @puppeteer/browsers 3.2.7 declares it as an optional peer >=8.0.1 and
+  # picks up whichever copy is installed. Both only `new ProxyAgent()`, which
+  # 8.x keeps; 8.x is ESM-only, and lhci's require() loads it on Node 24.
+  # Drop once @lhci/cli asks for ^8.
+  "@lhci/cli>proxy-agent": "^8.0.2"
+  # cheerio 1.2.0, the latest, still asks for encoding-sniffer ^0.2.1, whose
+  # whatwg-encoding is deprecated and makes every install warn. 1.0 swaps it
+  # for @exodus/bytes and keeps decodeBuffer and DecodeStream, the two names
+  # cheerio imports; its one breaking change is being ESM-only, which
+  # cheerio's require() loads on Node 24. Drop once cheerio asks for ^1.
+  "cheerio>encoding-sniffer": "^1.0.2"
   "@vercel/fun>@tootallnate/once": "^3.0.1"
   "@vercel/fun>tar": "^7.5.22"
   "@vercel/node>undici": "^6.27.0"
@@ -112,17 +123,6 @@ peerDependencyRules:
 
 auditConfig:
   ignoreGhsas:
-    # extract-zip symlink advisory: the "patched" 2.0.2 is unpublished (latest
-    # on npm is still 2.0.1). Dev-only chain (lighthouse > puppeteer-core >
-    # @puppeteer/browsers) extracting Google-served Chrome archives. Remove
-    # this entry as soon as extract-zip >2.0.1 ships. Reviewed 2026-09-10.
-    - GHSA-jmr9-qjv8-65gv
-    # The SAME defect, re-published under a second id on 2026-09-09: same
-    # package, same `<=2.0.1` range, same absent patch. It turned every CI run
-    # red on 2026-09-10, four days after the entry above was last reviewed.
-    # extract-zip has not been published since 2.0.1 (March 2023), so both
-    # entries leave together or not at all.
-    - GHSA-7pqw-9j4j-h8q3
     # Published 2026-09-18 with no patched release: the latest braces (3.0.3)
     # is inside the vulnerable range, and it is not reachable here. Remove
     # the entry as soon as a fixed version ships, and reassess if the path

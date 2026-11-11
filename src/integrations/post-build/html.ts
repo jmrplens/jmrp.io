@@ -59,7 +59,7 @@ function decodeData(
  * temp file in the same directory, then `rename`s it into place, so a
  * concurrent reader (or another file in the same batch extracting the same
  * duplicate asset) can never observe a partially-written blob. Kept fully
- * synchronous — like the rest of `extractDataUri`'s check-then-write — to
+ * synchronous (like the rest of `extractDataUri`'s check-then-write) to
  * preserve the ordering guarantee documented on {@link processHtmlFiles}.
  *
  * @param destPath - Final absolute path for the asset.
@@ -134,7 +134,7 @@ function extractDataUri(
 /**
  * Number of HTML files in flight at once in {@link processHtmlFiles}. Each file's transformation is CPU/IO bound
  * (cheerio parse, hashing, minify) and fully independent of every other
- * file's — the only shared state is the `hashCache` Map and the
+ * file's: the only shared state is the `hashCache` Map and the
  * `cspData.imageDomains` Set, both of which are safe to mutate from
  * concurrently-awaiting single-threaded JS (see the function doc for the
  * ordering analysis). The same pool caps `compression.ts` and `images.ts`.
@@ -158,7 +158,7 @@ const HTML_PROCESSING_CONCURRENCY = 8;
  *   fully synchronous prefix (parsing, image/style/SRI processing, data-URI
  *   writes) runs to completion, with no other file's code in between,
  *   before it suspends at its first `await` (the `minify()` call). Whichever
- *   worker starts a file, that holds — so even the `fs.existsSync` +
+ *   worker starts a file, that holds, so even the `fs.existsSync` +
  *   `writeFileSync` check-then-write for a duplicate embedded asset across
  *   two files in flight at once cannot race.
  */
@@ -250,8 +250,8 @@ function hardenBeaconScript(
     // only ever approximate that, and this one did not even cover RFC1918.
     //
     // An exact host match makes the claim true by construction: any hostname
-    // that is not the production one — LAN IP, mDNS name, tunnel, staging
-    // worktree — reports nothing. `www` is a 301 to the bare host, so pages
+    // that is not the production one (LAN IP, mDNS name, tunnel, staging
+    // worktree) reports nothing. `www` is a 301 to the bare host, so pages
     // are only ever served from one name. Falls back to the previous loopback
     // guard when PUBLIC_SITE_URL is absent, so behavior is unchanged rather
     // than silently disabled if the variable ever goes missing.
@@ -345,21 +345,23 @@ async function processSingleHtmlFile(
   const changed = [
     imgResult.modified,
 
-    // Mermaid's in-SVG <style>, emptied into a `set:html` attribute on the way
-    // through MDX (GEO audit #11, T4). Before the style move below and long
-    // before the nonce pass, which would otherwise stamp a nonce on each one.
+    // Mermaid's in-SVG <style>: emptied into a `set:html` attribute by MDX
+    // until @astrojs/markdown-remark 7.3.8 (GEO audit #11, T4), and since then
+    // Mermaid's light-theme CSS, which would override the site's diagram
+    // colors. Before the style move below and long before the nonce pass,
+    // which would otherwise stamp a nonce on each one.
     removeDeadSvgStyles($),
 
     // Fix style locations
     moveBodyStylesToHead($),
 
     // Undo SmartyPants inside every verbatim surface before anything else reads
-    // the DOM — the repaired text must be what gets hashed, minified and shipped.
+    // the DOM: the repaired text must be what gets hashed, minified and shipped.
     restoreVerbatimTypography($),
 
     // Drop empty <p></p> nodes. MDX emits one wherever a raw-HTML block and a
     // markdown paragraph meet, which left 158 of them across the 34 tool pages
-    // (GEO audit 2026-08-22, B11) — noise that dilutes the extractable-block
+    // (GEO audit 2026-08-22, B11), noise that dilutes the extractable-block
     // ratio and adds phantom prose margins. Only truly empty paragraphs go:
     // anything with text or an element child stays.
     removeEmptyParagraphs($),
@@ -404,7 +406,7 @@ async function processSingleHtmlFile(
 
   // Minify HTML
   const rawHtml = $.html();
-  // LOAD-BEARING: no await may run before this point — the synchronous prefix serializes data-URI check-then-write across the files in flight (see JSDoc above).
+  // LOAD-BEARING: no await may run before this point: the synchronous prefix serializes data-URI check-then-write across the files in flight (see JSDoc above).
   const minifiedHtml = await minify(rawHtml, {
     removeComments: true,
     collapseWhitespace: true,
