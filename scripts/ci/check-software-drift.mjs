@@ -11,6 +11,16 @@
  * one entity. Exactly the failure that hit the Person node twice before it was
  * centralized.
  *
+ * ── Values are compared as sets ──────────────────────────────────────────
+ * JSON-LD arrays are unordered, and the two sites write the same value in
+ * different shapes: /projects/ states `operatingSystem` as a list, the docs
+ * sites as one comma-joined string. Comparing their JSON text would pass
+ * "Windows, Linux, macOS" against ["Linux", "macOS", "Windows"] as a
+ * contradiction, and the same systems in another order too. So every value is
+ * read as the set of things it states (`statedValues` in
+ * `software-drift-decision.mjs`), a list property's string split at its
+ * commas; a missing or an extra item on either side still contradicts.
+ *
  * ── Gate semantics (GEO audit #12, M1) ──────────────────────────────────
  * It used to exit 0 whatever it found, so a contradiction could not stop
  * anything and the rule it enforces drifted unnoticed more than once. Now an
@@ -40,23 +50,19 @@ import { load as loadYaml } from "js-yaml";
 import { softwareId as softwareIdOf } from "../utils/software-id.mjs";
 import {
   ACCEPTED_DIVERGENCES,
+  canonicalJson,
   classifyDivergences,
+  CONTRADICTABLE,
+  divergentProperties,
   driftSkip,
   exitCodeFor,
+  LIST_PROPERTIES,
+  projectValues,
+  sameValues,
+  valueDifference,
 } from "./software-drift-decision.mjs";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
-
-/** Single-valued properties where a divergence is a contradiction, not detail. */
-const CONTRADICTABLE = [
-  "name",
-  "description",
-  "license",
-  "programmingLanguage",
-  "applicationCategory",
-  "codeRepository",
-  "url",
-];
 
 /**
  * Extracts every JSON-LD node from a page.
@@ -121,9 +127,9 @@ function stalePersonLines(nodes) {
   if (!served) return [];
   const lines = [];
   for (const key of PERSON_KEYS) {
-    const ours = JSON.stringify(canonicalPerson[key] ?? null);
-    const theirs = JSON.stringify(served[key] ?? null);
-    if (ours === theirs) continue;
+    // As sets: a served copy that lists the same profiles in another order,
+    // or writes an object's keys in another order, states the same identity.
+    if (sameValues(served[key], canonicalPerson[key])) continue;
     if (!Array.isArray(canonicalPerson[key])) {
       lines.push(`#person ${key}: served copy differs from the canonical one`);
       continue;
@@ -131,10 +137,10 @@ function stalePersonLines(nodes) {
     // Same length with different contents is the usual case (a URL that
     // changed spelling), so name the first entry the served copy lacks.
     const servedSet = new Set(
-      [served[key] ?? []].flat().map((entry) => JSON.stringify(entry)),
+      [served[key] ?? []].flat().map((entry) => canonicalJson(entry)),
     );
     const firstMissing = canonicalPerson[key].find(
-      (entry) => !servedSet.has(JSON.stringify(entry)),
+      (entry) => !servedSet.has(canonicalJson(entry)),
     );
     const label =
       typeof firstMissing === "string"
@@ -238,20 +244,7 @@ for (const project of projects) {
     continue;
   }
 
-  const ours = {
-    name: project.name,
-    description: project.summary.en,
-    // The graph has stated `summary.es` too since 2026-11-01, as the Spanish
-    // literal of `description`, so a bilingual site that says something else
-    // in Spanish contradicts it the way a different English text would.
-    "description@es": project.summary.es,
-    license:
-      project.licenseUrl ?? LICENSE_URLS[project.license] ?? project.license,
-    programmingLanguage: project.language,
-    applicationCategory: project.applicationCategory,
-    codeRepository: project.repo,
-    url: project.repo,
-  };
+  const ours = projectValues(project, LICENSE_URLS);
 
   // A bilingual site states `description` as language-tagged literals. The
   // English one is what `summary.en` must match and the Spanish one what
@@ -271,11 +264,9 @@ for (const project of projects) {
       : theirs[p];
   };
 
-  const allDiffs = [...CONTRADICTABLE, "description@es"].filter(
-    (p) =>
-      theirValue(p) !== undefined &&
-      ours[p] !== undefined &&
-      JSON.stringify(theirValue(p)) !== JSON.stringify(ours[p]),
+  const allDiffs = divergentProperties(
+    Object.fromEntries(CONTRADICTABLE.map((p) => [p, theirValue(p)])),
+    ours,
   );
   const { contradicting: diffs, accepted: acceptedDiffs } = classifyDivergences(
     project.id,
@@ -336,11 +327,25 @@ for (const project of projects) {
     stalePersons++;
     for (const line of personLines) console.log(`   ${line} (stale)`);
   }
+  // Both values as published, then, for a list, the items each side alone
+  // names: the shapes differ by design, so the raw pair rarely shows which
+  // system is the odd one out.
+  const printValues = (p) => {
+    console.log(`     their site : ${JSON.stringify(theirValue(p))}`);
+    console.log(`     projects.yaml: ${JSON.stringify(ours[p])}`);
+    if (!LIST_PROPERTIES.includes(p)) return;
+    const { onlyTheirs, onlyOurs } = valueDifference(p, theirValue(p), ours[p]);
+    if (onlyTheirs.length > 0) {
+      console.log(`     only on their site: ${onlyTheirs.join(", ")}`);
+    }
+    if (onlyOurs.length > 0) {
+      console.log(`     only in projects.yaml: ${onlyOurs.join(", ")}`);
+    }
+  };
   for (const p of diffs) {
     contradictions++;
     console.log(`   ${p} CONTRADICTS`);
-    console.log(`     their site : ${JSON.stringify(theirValue(p))}`);
-    console.log(`     projects.yaml: ${JSON.stringify(ours[p])}`);
+    printValues(p);
   }
   for (const p of acceptedDiffs) {
     acceptedCount++;
@@ -348,8 +353,7 @@ for (const project of projects) {
     console.log(
       `   ${p} differs, accepted (${rule.reason}; decided ${rule.decided})`,
     );
-    console.log(`     their site : ${JSON.stringify(theirValue(p))}`);
-    console.log(`     projects.yaml: ${JSON.stringify(ours[p])}`);
+    printValues(p);
   }
   if (missing.length > 0) {
     console.log(`   sameAs entries their site has and projects.yaml lacks:`);
