@@ -385,7 +385,7 @@ export const common = {
       // omitted the props would have rendered "Yes" to a Spanish reader.
       yes: "Yes",
       no: "No",
-      na: "—",
+      na: "\u{2014}",
     },
     attackSurfaceMatrix: {
       stoppedBy: "Stopped by",
@@ -612,7 +612,7 @@ export const common = {
       // site's only first-party measurements. A placeholder should be empty,
       // not an assertion that there is nothing to measure. Matches the
       // convention already used elsewhere in this file.
-      noData: "—",
+      noData: "\u{2014}",
       nodeCpu: "CPU",
       nodeRam: "RAM",
       nodeTempOptimal: "Temp · Optimal",
@@ -623,10 +623,10 @@ export const common = {
       nodeNginxRole: "Reverse proxy · firewall",
       nodeMatrixName: "Matrix Homeserver",
       nodeMatrixRole: "Synapse",
-      nodeMastodonName: "Mastodon",
-      nodeMastodonRole: "Fediverse instance",
+      nodeMastodonName: "Social node",
+      nodeMastodonRole: "Mastodon · AT Protocol",
       nodeTruenasName: "TrueNAS",
-      nodeTruenasRole: "ZFS storage",
+      nodeTruenasRole: "ZFS storage · RTX 4060",
       nodeRouterName: "Edge Router",
       nodeRouterRole: "MikroTik · CrowdSec",
       edgeDefense: "Edge Defense",
@@ -867,7 +867,7 @@ export const common = {
       chipConference: "conference",
       chipThesis: "thesis",
       chipOther: "other",
-      noData: "—",
+      noData: "\u{2014}",
     },
     about: {
       title: "About",

@@ -387,7 +387,7 @@ export const common = {
       // omitted the props would have rendered "Yes" to a Spanish reader.
       yes: "Sí",
       no: "No",
-      na: "—",
+      na: "\u{2014}",
     },
     attackSurfaceMatrix: {
       stoppedBy: "Lo detiene",
@@ -598,7 +598,7 @@ export const common = {
       nodesLiveHint: "carga en vivo · inyectada al servir",
       nodesAriaLabel: "Carga de recursos de los nodos de infraestructura",
       // Guion largo, no "sin datos": ver la nota en la versión inglesa.
-      noData: "—",
+      noData: "\u{2014}",
       nodeCpu: "CPU",
       nodeRam: "RAM",
       nodeTempOptimal: "Temp · Óptimo",
@@ -609,10 +609,10 @@ export const common = {
       nodeNginxRole: "Proxy inverso · firewall",
       nodeMatrixName: "Matrix Homeserver",
       nodeMatrixRole: "Synapse",
-      nodeMastodonName: "Mastodon",
-      nodeMastodonRole: "Instancia Fediverse",
+      nodeMastodonName: "Nodo social",
+      nodeMastodonRole: "Mastodon · AT Protocol",
       nodeTruenasName: "TrueNAS",
-      nodeTruenasRole: "Almacenamiento ZFS",
+      nodeTruenasRole: "Almacenamiento ZFS · RTX 4060",
       nodeRouterName: "Edge Router",
       nodeRouterRole: "MikroTik · CrowdSec",
       edgeDefense: "Defensa del Edge",
@@ -854,7 +854,7 @@ export const common = {
       chipConference: "congreso",
       chipThesis: "tesis",
       chipOther: "otro",
-      noData: "—",
+      noData: "\u{2014}",
     },
     about: {
       title: "Perfil",

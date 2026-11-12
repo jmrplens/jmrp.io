@@ -69,7 +69,7 @@ pages:
     visible: true
     items:
       - question: What runs on this homelab?
-        answer: "A TrueNAS server (i5-14400, 64 GB, ZFS on 2× 18 TB plus NVMe), a Mastodon node (Ryzen 5 3550H, 64 GB), the nginx edge node that serves this site (Ryzen 5 5500U), a Home Assistant node, a MikroTik RB5009 router, two Tor bridges in Valencia and Alicante and two Tor relays on VPS in London and Madrid. On them: a Mastodon instance, a Matrix homeserver, a Bluesky PDS and the public MCP servers."
+        answer: "A TrueNAS server (i5-14400, 64 GB, a GeForce RTX 4060, ZFS on 2× 18 TB plus NVMe), a social node that runs Mastodon and the Bluesky PDS (Ryzen 5 3550H, 64 GB), the nginx edge node that serves this site (Ryzen 5 5500U), a Home Assistant node, a MikroTik RB5009 router, two Tor bridges in Valencia and Alicante and two Tor relays on VPS in London and Madrid. On them: a Mastodon instance, a Matrix homeserver, a Bluesky PDS and the public MCP servers."
       - question: Are the figures on this page live?
         answer: "Yes. The page is static HTML with no JavaScript; nginx replaces each figure at serve time from the homelab's own metrics (InfluxDB, Prometheus and the services' APIs), refreshed at most once a minute. When a source cannot be read, the figure shows a dash rather than a number."
       - question: How is the homelab defended?
@@ -93,7 +93,7 @@ pages:
     visible: true
     items:
       - question: What does he work with day to day?
-        answer: 'A MacBook Pro (Intel i9, 64 GB) with two 4K LG 27" monitors on macOS, VS Code and Sublime Text as editors, Debian 12 and 13 on the servers, and C, C++, Python, Go and TypeScript as languages, plus Bash, LaTeX and MATLAB. The self-hosted side is the fleet described on /homelab/.'
+        answer: 'A MacBook Pro (Intel i9, 64 GB) and a MacBook Air (M5, 32 GB) with two 4K LG 27" monitors on macOS, VS Code and Sublime Text as editors, Debian 12 and 13 on the servers, and C, C++, Python, Go and TypeScript as languages, plus Bash, LaTeX and MATLAB. The self-hosted side is the fleet described on /homelab/.'
 
   - path: /privacy/
     visible: true

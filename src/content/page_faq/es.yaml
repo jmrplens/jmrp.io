@@ -53,7 +53,7 @@ pages:
     visible: true
     items:
       - question: ¿Qué hay en este homelab?
-        answer: "Un servidor TrueNAS (i5-14400, 64 GB, ZFS sobre 2× 18 TB más NVMe), un nodo Mastodon (Ryzen 5 3550H, 64 GB), el nodo nginx que sirve este sitio (Ryzen 5 5500U), un nodo Home Assistant, un router MikroTik RB5009, dos puentes Tor en Valencia y Alicante y dos relés Tor en VPS de Londres y Madrid. Sobre ellos: una instancia Mastodon, un servidor Matrix, un PDS de Bluesky y los servidores MCP públicos."
+        answer: "Un servidor TrueNAS (i5-14400, 64 GB, una GeForce RTX 4060, ZFS sobre 2× 18 TB más NVMe), un nodo social con Mastodon y el PDS de Bluesky (Ryzen 5 3550H, 64 GB), el nodo nginx que sirve este sitio (Ryzen 5 5500U), un nodo Home Assistant, un router MikroTik RB5009, dos puentes Tor en Valencia y Alicante y dos relés Tor en VPS de Londres y Madrid. Sobre ellos: una instancia Mastodon, un servidor Matrix, un PDS de Bluesky y los servidores MCP públicos."
       - question: ¿Las cifras de esta página son en vivo?
         answer: "Sí. La página es HTML estático sin JavaScript; nginx sustituye cada cifra al servirla con las métricas del propio homelab (InfluxDB, Prometheus y las API de los servicios), actualizadas como mucho una vez por minuto. Cuando una fuente no responde, la cifra muestra un guion en lugar de un número."
       - question: ¿Cómo se defiende el homelab?
@@ -77,7 +77,7 @@ pages:
     visible: true
     items:
       - question: ¿Con qué trabaja a diario?
-        answer: 'Un MacBook Pro (Intel i9, 64 GB) con dos monitores LG 27" 4K en macOS, VS Code y Sublime Text como editores, Debian 12 y 13 en los servidores, y C, C++, Python, Go y TypeScript como lenguajes, más Bash, LaTeX y MATLAB. La parte autoalojada es la flota descrita en /homelab/.'
+        answer: 'Un MacBook Pro (Intel i9, 64 GB) y un MacBook Air (M5, 32 GB) con dos monitores LG 27" 4K en macOS, VS Code y Sublime Text como editores, Debian 12 y 13 en los servidores, y C, C++, Python, Go y TypeScript como lenguajes, más Bash, LaTeX y MATLAB. La parte autoalojada es la flota descrita en /homelab/.'
 
   - path: /privacy/
     visible: true

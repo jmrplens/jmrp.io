@@ -1,25 +1,30 @@
 type: uses
 
 # Real inventory. Per the "only mine" link policy, `href` is set ONLY on the
-# author's own services/infrastructure (homelab) — never on third-party
+# author's own services/infrastructure (homelab), never on third-party
 # products (MacBook, LG, VS Code, …). Paths starting with "/" are localized at
 # render; full URLs are used verbatim. Homelab specs sourced from the fleet's
-# own server-info docs (TrueNAS i5-14400/64 GB, Mastodon Ryzen 3550H, edge
-# Ryzen 5500U, HA i3-7100U, 2× IONOS Tor VPS UK+ES).
+# own server-info docs (TrueNAS i5-14400/64 GB, social node Ryzen 3550H, edge
+# Ryzen 5500U, HA i3-7100U, 2× IONOS Tor VPS UK+ES). TrueNAS's GPU
+# (GeForce RTX 4060, 8 GB, as its driver reports it) and the social node's
+# services (Mastodon and the AT Protocol PDS, `pds-eu`) were read over SSH on
+# 2026-11-12.
 
 en:
   kicker: /uses
   title: What I use
   intro: >-
     The hardware, software and self-hosted infrastructure I actually keep in
-    rotation — not aspirational, just what's on and in front of me. Updated now
-    and then.
+    rotation. Nothing aspirational, just what's on and in front of me. Updated
+    now and then.
   groups:
     - label: // desk
-      intro: The machine and peripherals I work from every day.
+      intro: The machines and peripherals I work from every day.
       items:
         - name: MacBook Pro
           detail: Intel i9 · 64 GB RAM · Radeon Pro 5500M 8 GB · 2 TB SSD
+        - name: MacBook Air
+          detail: Apple M5 · 32 GB RAM · 1 TB SSD
         - name: 2× LG 27"
           detail: IPS · 4K · HDR
         - name: Logitech K380S
@@ -47,14 +52,14 @@ en:
           detail: scripting · docs · numerics
     - label: // homelab
       intro: >-
-        The fleet I run and maintain myself — mini PCs, a NAS, the edge and two
+        The fleet I run and maintain myself: mini PCs, a NAS, the edge and two
         VPS. The live view is at /homelab.
       items:
         - name: TrueNAS
-          detail: i5-14400 · 64 GB · ZFS (2× 18 TB + NVMe)
+          detail: i5-14400 · 64 GB · RTX 4060 8 GB · ZFS (2× 18 TB + NVMe)
           href: /homelab/
-        - name: Mastodon node
-          detail: Ryzen 5 3550H · 64 GB · Debian
+        - name: Social node
+          detail: Ryzen 5 3550H · 64 GB · Mastodon · AT Protocol
           href: /homelab/
         - name: Edge node
           detail: Ryzen 5 5500U · nginx · CrowdSec
@@ -72,7 +77,7 @@ en:
           detail: RouterOS · VLANs · WireGuard · CrowdSec
           href: /homelab/
     - label: // self-hosted
-      intro: The services running on that fleet — social, comms, media and MCP.
+      intro: "The services running on that fleet: social, comms, media and MCP."
       items:
         - name: Mastodon
           detail: Fediverse instance
@@ -111,14 +116,16 @@ es:
   title: Lo que uso
   intro: >-
     El hardware, el software y la infraestructura self-hosted que de verdad
-    tengo en rotación —nada aspiracional, solo lo que está encendido y delante
-    de mí—. Actualizado de vez en cuando.
+    tengo en rotación. Nada aspiracional, solo lo que está encendido y delante
+    de mí. Actualizado de vez en cuando.
   groups:
     - label: // escritorio
-      intro: La máquina y los periféricos con los que trabajo cada día.
+      intro: Las máquinas y los periféricos con los que trabajo cada día.
       items:
         - name: MacBook Pro
           detail: Intel i9 · 64 GB RAM · Radeon Pro 5500M 8 GB · 2 TB SSD
+        - name: MacBook Air
+          detail: Apple M5 · 32 GB RAM · 1 TB SSD
         - name: 2× LG 27"
           detail: IPS · 4K · HDR
         - name: Logitech K380S
@@ -146,14 +153,14 @@ es:
           detail: scripting · docs · cálculo
     - label: // homelab
       intro: >-
-        La flota que administro yo mismo —mini PCs, un NAS, el edge y dos VPS—.
+        La flota que administro yo mismo: mini PCs, un NAS, el edge y dos VPS.
         La vista en vivo está en /homelab.
       items:
         - name: TrueNAS
-          detail: i5-14400 · 64 GB · ZFS (2× 18 TB + NVMe)
+          detail: i5-14400 · 64 GB · RTX 4060 8 GB · ZFS (2× 18 TB + NVMe)
           href: /homelab/
-        - name: Nodo Mastodon
-          detail: Ryzen 5 3550H · 64 GB · Debian
+        - name: Nodo social
+          detail: Ryzen 5 3550H · 64 GB · Mastodon · AT Protocol
           href: /homelab/
         - name: Nodo edge
           detail: Ryzen 5 5500U · nginx · CrowdSec
@@ -172,7 +179,7 @@ es:
           href: /homelab/
     - label: // self-hosted
       intro: >-
-        Los servicios que corren sobre esa flota — social, comunicación, media
+        Los servicios que corren sobre esa flota: social, comunicación, media
         y MCP.
       items:
         - name: Mastodon
