@@ -1110,6 +1110,8 @@ export const common = {
         "More than 37,500 points earned contributing to GitLab",
       gitlabNotableMeaning:
         "Recognition GitLab gives a community member every release",
+      gitlabHackathonFirstMeaning:
+        "First place in a GitLab Hackathon, GitLab's contribution event for the wider community",
       gitlabPointsLink: "Points on GitLab's contributor platform",
       ledgerIntro:
         "One entry per project, most merged changes first. Each lists all its changes: merged ones first, then open ones, newest first within each.",

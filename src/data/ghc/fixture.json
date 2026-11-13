@@ -1897,6 +1897,19 @@
       "agrees": false,
       "description": "Every release, GitLab recognizes a community member with the GitLab Notable Contributor award.",
       "awardedAt": "2026-11-09T16:48:30Z"
+    },
+    {
+      "platform": "gitlab",
+      "achievement": "gitlab-hackathon-first-place",
+      "name": "Hackathon First Place",
+      "tierNumber": 1,
+      "tierName": "default",
+      "count": null,
+      "nextThreshold": 0,
+      "percent": 0,
+      "agrees": false,
+      "description": null,
+      "awardedAt": "2026-11-13T09:44:10Z"
     }
   ],
   "communityContributors": {
@@ -3161,6 +3174,14 @@
         "description": "Every release, GitLab recognizes a community member with the GitLab Notable Contributor award.",
         "namespace": "gitlab-org/achievements",
         "awardedAt": "2026-11-09T16:48:30Z"
+      },
+      {
+        "platform": "gitlab",
+        "achievement": "gitlab-hackathon-first-place",
+        "name": "Hackathon First Place",
+        "description": null,
+        "namespace": "gitlab-org/achievements",
+        "awardedAt": "2026-11-13T09:44:10Z"
       }
     ]
   }

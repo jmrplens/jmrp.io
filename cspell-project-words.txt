@@ -572,6 +572,7 @@ guillem
 habilítalo
 hace
 Hackaday
+hackathon
 Hackster
 halten
 hardvard

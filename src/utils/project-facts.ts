@@ -277,6 +277,12 @@ const GITLAB_AWARD_MEANING: Readonly<
     key: "pages.projectsContributions.gitlabNotableMeaning",
     points: false,
   },
+  // Awarded 2026-11-13 with no description in GitLab's API, so the line is
+  // ours, kept to what the name says; no points page backs a hackathon place.
+  "gitlab-hackathon-first-place": {
+    key: "pages.projectsContributions.gitlabHackathonFirstMeaning",
+    points: false,
+  },
 };
 
 /**
