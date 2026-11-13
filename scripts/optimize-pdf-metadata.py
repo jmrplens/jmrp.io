@@ -166,7 +166,7 @@ PDF_METADATA = {
     },
 
     # === Poster (Spanish thesis poster) ===
-    "paper-resources/TFG-poster.pdf": {
+    "degree/TFG_Poster.pdf": {
         "title": "Póster — Estudio de la relación campo directo/reverberado; útil/perjudicial",
         "subject": "Póster académico del Trabajo Fin de Grado sobre el análisis de campos acústicos directo y reverberante",
         "keywords": "Póster, TFG, Trabajo Fin de Grado, Acústica, Campo Directo, Campo Reverberante, Universidad de Alicante, BSc Thesis Poster",
