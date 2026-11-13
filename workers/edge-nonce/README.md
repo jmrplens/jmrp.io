@@ -12,9 +12,9 @@ tools.
 
 | Item             | Value                                                                      |
 | ---------------- | -------------------------------------------------------------------------- |
-| Live version     | `e01542e5-f422-421e-be64-4dc3406e9b6d` (2026-11-05)                        |
-| Previous version | `5611584b-d8f2-46df-bee9-85d67c6c03e3` (2026-11-05)                        |
-| Roll back        | `wrangler versions deploy 5611584b-d8f2-46df-bee9-85d67c6c03e3@100% --yes` |
+| Live version     | `d602a425-890a-4fcd-ae55-142197ba996e` (2026-11-13)                        |
+| Previous version | `e01542e5-f422-421e-be64-4dc3406e9b6d` (2026-11-05)                        |
+| Roll back        | `wrangler versions deploy e01542e5-f422-421e-be64-4dc3406e9b6d@100% --yes` |
 | Routes           | `jmrp.io/*` and the two `contributions` routes below, all fail-open        |
 | Dataset          | `jmrp_edge_requests` (binding `REQS`)                                      |
 
@@ -28,8 +28,11 @@ tools.
 2. **The Worker** fetches that placeholder copy from the origin and caches it at
    the edge (`cacheEverything` with a 24 hour TTL for a 200; shorter for 3xx and
    404, none for 5xx), mints a 128 bit nonce for each request and replaces the
-   placeholder in the body and the header. The browser never gets a copy it may
-   cache, and the HTML it gets carries no `Last-Modified` or `ETag`.
+   placeholder in the body and the header. The body is rewritten on its bytes,
+   never decoded into a string: decoding and re-encoding 300 to 840 KB pages took
+   the CPU p99 above the Free plan's 10 ms (2026-11-13; `mintBody` in
+   `worker.js`). The browser never gets a copy it may cache, and the HTML it gets
+   carries no `Last-Modified` or `ETag`.
 3. **The safety rail**, which must never be removed: when the origin's CSP has no
    placeholder (the secret was rotated or no longer matches), the Worker passes the
    response through without caching it and marks it
