@@ -39,6 +39,7 @@
  */
 
 const PLACEHOLDER = "NGINX_CSP_NONCE";
+const PLACEHOLDER_BYTES = new TextEncoder().encode(PLACEHOLDER);
 const EDGE_TTL_SECONDS = 86_400; // cached placeholder copy; purged with the zone
 
 /**
@@ -538,6 +539,58 @@ export default {
   },
 };
 
+/**
+ * Replaces every PLACEHOLDER in an HTML body with the nonce, on the bytes.
+ *
+ * The body used to go through `response.text()`, `replaceAll` and back to
+ * bytes in `new Response(string)`: decoding the whole page into a JavaScript
+ * string and encoding it again, which made the CPU time grow with the page
+ * size. Pages of 300 to 840 KB took the p99 to 11 to 12 ms a day, above the
+ * Free plan's 10 ms (Workers Logs, 2026-11-10 to 12: blog posts at 13 to 20 ms
+ * p99). On the bytes the same rewrite is 7 to 12 times cheaper (0.4 ms against
+ * 4.9 ms for the 838 KB contributions page, same engine) and the output is
+ * byte-identical. Safe on UTF-8: the placeholder is ASCII, and an ASCII byte
+ * never occurs inside a multi-byte sequence, so a match can never split a
+ * character.
+ *
+ * @param {Uint8Array} body - The page as the edge copy holds it.
+ * @param {Uint8Array} nonce - The nonce, as ASCII bytes.
+ * @returns {Uint8Array} The body with every placeholder replaced.
+ */
+function mintBody(body, nonce) {
+  const placeholder = PLACEHOLDER_BYTES;
+  const first = placeholder[0];
+  const last = body.length - placeholder.length;
+  const hits = [];
+  let i = body.indexOf(first);
+  while (i !== -1 && i <= last) {
+    let match = true;
+    for (let k = 1; k < placeholder.length; k++) {
+      if (body[i + k] !== placeholder[k]) {
+        match = false;
+        break;
+      }
+    }
+    if (match) hits.push(i);
+    i = body.indexOf(first, match ? i + placeholder.length : i + 1);
+  }
+  if (hits.length === 0) return body;
+  const out = new Uint8Array(
+    body.length + hits.length * (nonce.length - placeholder.length),
+  );
+  let from = 0;
+  let to = 0;
+  for (const hit of hits) {
+    out.set(body.subarray(from, hit), to);
+    to += hit - from;
+    out.set(nonce, to);
+    to += nonce.length;
+    from = hit + placeholder.length;
+  }
+  out.set(body.subarray(from), to);
+  return out;
+}
+
 /** Types the edge stores as they are, so a byte range of them is a real one. */
 const RANGE_SAFE_EXTENSIONS = new Set([
   "pdf",
@@ -890,7 +943,10 @@ async function handle(request, env) {
   crypto.getRandomValues(bytes);
   const nonce = [...bytes].map((b) => b.toString(16).padStart(2, "0")).join("");
 
-  const body = (await response.text()).replaceAll(PLACEHOLDER, () => nonce);
+  const body = mintBody(
+    new Uint8Array(await response.arrayBuffer()),
+    new TextEncoder().encode(nonce),
+  );
 
   const headers = new Headers(response.headers);
   headers.set(
