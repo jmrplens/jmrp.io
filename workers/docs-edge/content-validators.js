@@ -141,10 +141,10 @@ export function forValidation(request) {
  * @returns {number | null} The time, or null.
  */
 export function parseStatedDate(value) {
-  const [day, time, ...rest] = value.split("T");
-  if (rest.length > 0 || !/^\d{4}-\d{2}-\d{2}$/.test(day)) return null;
+  const parts = value.split("T");
+  if (parts.length > 2 || !/^\d{4}-\d{2}-\d{2}$/.test(parts[0])) return null;
   const clock = /^\d{2}:\d{2}(?::\d{2}(?:\.\d{1,9})?)?(?:Z|[+-]\d{2}:\d{2})$/;
-  if (time !== undefined && !clock.test(time)) return null;
+  if (parts.length === 2 && !clock.test(parts[1])) return null;
   const ms = Date.parse(value);
   return Number.isFinite(ms) ? Math.floor(ms / 1000) * 1000 : null;
 }
@@ -162,8 +162,11 @@ export function htmlContentDate(html) {
   if (start === -1) return null;
   const end = html.indexOf("</div>", start);
   const footer = html.slice(start, end === -1 ? undefined : end);
-  const times = [...footer.matchAll(/<time\b[^>]*\bdatetime="([^"]*)"/g)];
-  return times.length === 0 ? null : parseStatedDate(times.at(-1)[1]);
+  let last = null;
+  for (const match of footer.matchAll(/<time\b[^>]*\bdatetime="([^"]*)"/g)) {
+    last = match[1];
+  }
+  return last === null ? null : parseStatedDate(last);
 }
 
 /**
