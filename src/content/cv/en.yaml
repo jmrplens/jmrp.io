@@ -693,7 +693,7 @@ sections:
           Standards-conformant acoustics library: sound level metrology,
           psychoacoustics, room, building, environmental and underwater
           acoustics, vibration, electroacoustics and wave simulation, every
-          method implemented from the standard, with 1897 CI-enforced
+          method implemented from the standard, with 1899 CI-enforced
           conformance checks across 111 domains, against 230 normative
           designations and 121 further published sources. Formerly
           PyOctaveBand.
@@ -701,7 +701,7 @@ sections:
           summary: >-
             Standards-conformant acoustics library: sound level metrology,
             psychoacoustics, room, building and environmental acoustics and
-            vibration, with 1897 CI-enforced conformance checks across 111
+            vibration, with 1899 CI-enforced conformance checks across 111
             domains.
         metrics: [PyPI]
         links:

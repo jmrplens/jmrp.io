@@ -697,14 +697,14 @@ sections:
           Biblioteca de acústica conforme a normas: metrología de niveles
           sonoros, psicoacústica, acústica de salas, edificación, ambiental y
           subacuática, vibración, electroacústica y simulación de ondas, cada
-          método implementado desde la norma, con 1897 comprobaciones de
+          método implementado desde la norma, con 1899 comprobaciones de
           conformidad en CI sobre 111 dominios, frente a 230 designaciones
           normativas y 121 fuentes publicadas adicionales. Antes PyOctaveBand.
         ats:
           summary: >-
             Biblioteca acústica conforme a normas: metrología sonora,
             psicoacústica, acústica de salas, edificación y ambiental y
-            vibraciones, con 1897 pruebas de conformidad en CI sobre 111 dominios.
+            vibraciones, con 1899 pruebas de conformidad en CI sobre 111 dominios.
         metrics: [PyPI]
         links:
           - { label: GitHub, url: https://github.com/jmrplens/phonometry }
