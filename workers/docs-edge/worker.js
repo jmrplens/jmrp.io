@@ -1,11 +1,14 @@
 // cspell:words otros formado -- Spanish labels shared with the Telegraf Starlark (ua_class, referer host)
 /**
  * docs-edge: per-request log for docs.jmrp.io, the GitHub Pages documentation
- * host. It forwards every request to GitHub Pages with four changes only: the
+ * host. It forwards every request to GitHub Pages with five changes only: the
  * visitor location headers are left out (2026-11-04, forOrigin), a GET or
  * HEAD goes without its body (2026-11-07, forOrigin), a Range answer that is
- * not a real range of the file becomes the whole file, and a GET or HEAD that
- * GitHub answers with 502, 503 or 504 is sent once more (both below). It
+ * not a real range of the file becomes the whole file, a GET or HEAD that
+ * GitHub answers with 502, 503 or 504 is sent once more (both below), and a
+ * page or Markdown copy gets an ETag of its bytes and the content date it
+ * states as Last-Modified, with its preconditions answered against them
+ * (2026-11-17, content-validators.js, validatorsOrAsIs). It
  * writes ONE Analytics Engine datapoint per request that reaches it to the
  * `docs_edge_requests` dataset, the same record edge-nonce keeps for jmrp.io.
  * Not every request does: the account's Bulk Redirect rule (list
@@ -99,10 +102,26 @@
  * datapoint names one that GitHub answered in its cache verdict (blob 12,
  * `origin-retry-<status>`) with the final status in blob 11 (cacheVerdict).
  *
+ * Content validators (2026-11-17, content-validators.js): GitHub's ETag and
+ * Last-Modified are the file's mtime, which every deploy and some replicas
+ * change for the same bytes, so a revalidating crawler got every page again.
+ * A GET or HEAD of a page path goes to the edge as a GET without its four
+ * preconditions (forValidation); a 200 HTML or Markdown answer gets
+ * `ETag: W/"<SHA-256 of the body, 128 bits>"` and the content date the page
+ * states as Last-Modified, and the Worker answers If-Match,
+ * If-Unmodified-Since, If-None-Match and If-Modified-Since against them, after
+ * announceTwin, so a 304 carries the Vary of its 200. Every other path keeps
+ * GitHub's validators and the edge's own 304.
+ *
  * The security headers (CSP, X-Frame-Options and the rest) are NOT set here:
  * they come from the zone's response header Transform Rules (README).
  */
 
+import {
+  forValidation,
+  validatesContent,
+  withContentValidators,
+} from "./content-validators.js";
 import {
   announceTwin,
   EDGE_CACHE_CF,
@@ -788,6 +807,25 @@ function probeOptions(ctx) {
   };
 }
 
+/**
+ * The page answer with its content validators (content-validators.js), or,
+ * if computing them throws, the answer as it came (with no body for a HEAD,
+ * which went to the edge as a GET): a validator must never cost a page.
+ *
+ * @param {Request} request - The client's request.
+ * @param {Response} response - The answer to its forValidation copy.
+ * @returns {Promise<Response>} The answer to send.
+ */
+async function validatorsOrAsIs(request, response) {
+  try {
+    return await withContentValidators(request, response);
+  } catch {
+    if (request.method !== "HEAD") return response;
+    await release(response);
+    return new Response(null, response);
+  }
+}
+
 export default {
   async fetch(request, env, ctx) {
     const startedAt = Date.now();
@@ -833,9 +871,13 @@ export default {
     const probe = startTwinProbe(request, url, undefined, options);
     if (probe !== null) options.defer(probe);
     const trace = { retriedFrom: null };
+    const validated = validatesContent(request, url);
     let response;
     try {
-      response = await passThrough(request, trace);
+      response = await passThrough(
+        validated ? forValidation(request) : request,
+        trace,
+      );
     } catch {
       logEdgeRequest({
         env,
@@ -849,6 +891,7 @@ export default {
       return new Response("origin unreachable", { status: 502 });
     }
     response = await announceTwin(request, url, response, undefined, probe);
+    if (validated) response = await validatorsOrAsIs(request, response);
     logEdgeRequest({
       env,
       request,

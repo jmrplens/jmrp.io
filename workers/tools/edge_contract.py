@@ -14,6 +14,9 @@ quietly undo it:
 - the redirects that must keep the query string keep it (M17);
 - negotiation follows q values and case (M05), its 302 is open to other origins
   (A8), and docs' /_astro/ 304 keeps the year (F08);
+- a docs page and its Markdown copy carry an ETag of their bytes that does not
+  move between requests, the content date they state as Last-Modified, and a
+  304 for either validator (content validators, 2026-11-17);
 - no CertificateRequest in the TLS handshake and an Alt-Svc on HTML (F03).
 
 Checks are MUST (a failure exits 1) or PENDING (a fix not yet live: printed,
@@ -342,8 +345,10 @@ def docs():
            s == 302 and h.get("access-control-allow-origin") == "*" and "accept" in h.get("vary", "").lower(),
            f"{s} acao={h.get('access-control-allow-origin', '-')} vary={h.get('vary', '-')}")
     s, h, _ = fetch(host, "/libgen-mcp/", ["Accept: text/html", "Accept-Encoding: gzip, br"])
-    record("MUST", host, "a page 200 carries GitHub's ETag (F09)", s == 200 and bool(h.get("etag")), f"{s} etag={h.get('etag', '-')}")
+    record("MUST", host, "a page 200 carries an ETag (F09)", s == 200 and bool(h.get("etag")), f"{s} etag={h.get('etag', '-')}")
     record("MUST", host, "HTML announces HTTP/3 (Alt-Svc, F03)", "h3=" in h.get("alt-svc", ""), h.get("alt-svc", "-"))
+    content_validators(host, "/libgen-mcp/", "Accept: text/html")
+    content_validators(host, "/libgen-mcp/how-search-works/index.md", "Accept: text/markdown")
     s, h, _ = fetch(host, "/libgen-mcp/", method="OPTIONS")
     record("MUST", host, "a 405 names Allow (F08)", s == 405 and "GET" in h.get("allow", ""), f"{s} allow={h.get('allow', '-')}")
     s, h, _ = fetch(host, "/mikroscope/llms.txt", method="HEAD")
@@ -353,6 +358,53 @@ def docs():
     record("MUST", host, "a11y-diagrams is noindex once and still answers (A11)", s == 200 and tags == "noindex, follow", f"{s} x-robots-tag={tags or '-'}")
     s, h, _ = fetch(host, "/libgen-mcp/og.png", ["Range: bytes=-0,-0"])
     record("OBS", host, "bytes=-0,-0 (O1, A13: Cloudflare answers 502 here)", True, brief(s, h))
+
+
+CONTENT_ETAG = re.compile(r'W/"[0-9a-f]{32}"')
+
+
+def stated_date(body, markdown):
+    """The content date a page or copy states, as content-validators.js reads it, or None."""
+    text = body.decode("utf-8", "replace")
+    if markdown:
+        head = text[:16384].split("\n")
+        rule = next((i for i, line in enumerate(head) if line.rstrip() == "---"), None)
+        found = [m.group(1) for line in head[:rule or 0] if (m := re.match(r"Updated: (\S+)\s*$", line))]
+    else:
+        start = text.rfind('<div class="meta sl-flex')
+        footer = text[start:text.find("</div>", start)] if start != -1 else ""
+        found = re.findall(r'<time\b[^>]*\bdatetime="([^"]*)"', footer)
+    if not found:
+        return None
+    value = found[-1] if not markdown else found[0]
+    stamp = datetime.datetime.fromisoformat(value.replace("Z", "+00:00"))
+    if stamp.tzinfo is None:
+        stamp = stamp.replace(tzinfo=datetime.timezone.utc)
+    return stamp.replace(microsecond=0)
+
+
+def content_validators(host, path, accept):
+    """Content validators (2026-11-17): an ETag of the body that does not move, the stated date, and 304s on both."""
+    s1, h1, body = fetch(host, path, [accept, "Accept-Encoding: gzip, br"], decode=True)
+    s2, h2, _ = fetch(host, path, [accept, "Accept-Encoding: gzip, br"], decode=True)
+    tag = h1.get("etag", "")
+    record("MUST", host, f"{path}: the ETag is a digest of the body, the same twice",
+           s1 == s2 == 200 and bool(CONTENT_ETAG.fullmatch(tag)) and h2.get("etag") == tag, f"{tag} / {h2.get('etag', '-')}")
+    stated = stated_date(body, path.endswith(".md"))
+    modified = h1.get("last-modified", "")
+    if stated is not None:
+        record("MUST", host, f"{path}: Last-Modified is the date it states",
+               modified == stated.strftime("%a, %d %b %Y %H:%M:%S GMT"), f"{modified} / {stated:%Y-%m-%d %H:%M:%S}")
+    s, h, _ = fetch(host, path, [accept, "Accept-Encoding: gzip, br", f"If-None-Match: {tag}"])
+    record("MUST", host, f"{path}: If-None-Match with that ETag answers 304, with its Vary",
+           s == 304 and h.get("etag") == tag and h.get("vary") == h1.get("vary"), f"{brief(s, h)} vary={h.get('vary', '-')}")
+    s, h, _ = fetch(host, path, [accept, "Accept-Encoding: gzip, br", f"If-Modified-Since: {modified}"])
+    record("MUST", host, f"{path}: If-Modified-Since with that Last-Modified answers 304", s == 304, brief(s, h))
+    s, h, _ = fetch(host, path, [accept, "Accept-Encoding: gzip, br", 'If-None-Match: W/"6afc31e5-3d193"'])
+    record("MUST", host, f"{path}: another ETag gets the whole page", s == 200 and h.get("etag") == tag, brief(s, h))
+    s, h, _ = fetch(host, path, [accept], method="HEAD")
+    record("MUST", host, f"{path}: a HEAD carries the validators of the GET",
+           s == 200 and h.get("etag") == tag and h.get("last-modified") == modified, f"{s} etag={h.get('etag', '-')}")
 
 
 # ---------------------------------------------------------------- TLS (F03)
