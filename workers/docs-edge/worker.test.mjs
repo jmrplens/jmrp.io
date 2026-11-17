@@ -1,13 +1,15 @@
-// cspell:ignore noextension pdfx
+// cspell:ignore noextension pdfx Publicado
 // Unit tests for docs-edge's Markdown negotiation (decision D6, 2026-10-29).
 // Run beside the worker: `node --test` in workers/docs-edge. Nothing here
 // touches the network: every fetch is a mock.
 import assert from "node:assert/strict";
+import { createHash } from "node:crypto";
 import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { describe, test } from "node:test";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
+import { validatesContent } from "./content-validators.js";
 import {
   announceTwin,
   EDGE_CACHE_CF,
@@ -66,9 +68,15 @@ function req(
 // answer with a 304 (a revalidation) or a 206 (one range, or several).
 const LAST_MODIFIED = "Tue, 03 Nov 2026 20:19:02 GMT";
 const ETAG = 'W/"6aea41b6-38bf6"';
+// The page the mocked GitHub serves, and the ETag the Worker gives it: the
+// first 128 bits of the SHA-256 of its bytes (content-validators.js). A page
+// path is revalidated with that ETag; GitHub's own is the one of every other
+// path, and the mock answers any If-None-Match there with a 304.
+const PAGE_BODY = "<!doctype html><title>page</title>";
+const PAGE_ETAG = `W/"${createHash("sha256").update(PAGE_BODY).digest("hex").slice(0, 32)}"`;
 const CONDITIONAL = {
   "If-Modified-Since": { "if-modified-since": LAST_MODIFIED },
-  "If-None-Match": { "if-none-match": ETAG },
+  "If-None-Match": { "if-none-match": PAGE_ETAG },
 };
 const RANGES = {
   "one range": { range: "bytes=0-8" },
@@ -856,6 +864,57 @@ async function run(mod, request, respond) {
   }
 }
 
+/** Whether the Worker gives a path content validators (content-validators.js). */
+function validated(pathname) {
+  const request = req(pathname);
+  return validatesContent(request, new URL(request.url));
+}
+
+/**
+ * Asserts that the Worker sent `request` to the edge as it should: the very
+ * request, except a HEAD of a page path, which goes as a GET of the same URL
+ * so that it carries the validators of the GET (content-validators.js).
+ */
+function assertSentAs(input, request, at) {
+  const pathname = new URL(request.url).pathname;
+  if (request.method === "HEAD" && validated(pathname)) {
+    assert.notEqual(input, request, at);
+    assert.equal(input.method, "GET", at);
+    assert.equal(input.url, request.url, at);
+  } else {
+    assert.equal(input, request, at);
+  }
+}
+
+/**
+ * Asserts that `response` is the origin's `upstream` as the Worker passes it
+ * on: the very object for any path that is not a page, and for a 200 HTML or
+ * Markdown answer to a page path a copy with the same status and headers but
+ * the ETag of its body (content-validators.js), and no body for a HEAD.
+ */
+function assertPassedOn(response, upstream, pathname, at, method = "GET") {
+  if (!validated(pathname) || upstream.status !== 200) {
+    if (method === "HEAD" && validated(pathname)) {
+      assert.equal(response.status, upstream.status, at);
+      assert.equal(response.body, null, at);
+      return;
+    }
+    assert.equal(response, upstream, at);
+    return;
+  }
+  assert.notEqual(response, upstream, at);
+  assert.equal(response.status, upstream.status, at);
+  assert.match(response.headers.get("etag"), /^W\/"[0-9a-f]{32}"$/, at);
+  const others = (headers) =>
+    [...headers].filter(([name]) => name !== "etag" && name !== "link");
+  assert.deepEqual(
+    others(response.headers).filter(([name]) => name !== "vary"),
+    others(upstream.headers).filter(([name]) => name !== "vary"),
+    at,
+  );
+  if (method === "HEAD") assert.equal(response.body, null, at);
+}
+
 /**
  * The GitHub side: twins exist for `withTwin` pages, every page answers 200
  * HTML, or, with `passThroughThrows`, the pass-through fetch throws (the
@@ -918,7 +977,7 @@ function origin(
         },
       });
     } else {
-      res = new Response("<!doctype html><title>page</title>", {
+      res = new Response(PAGE_BODY, {
         status: 200,
         headers: {
           "content-type": "text/html; charset=utf-8",
@@ -1006,10 +1065,11 @@ describe("worker.fetch", () => {
     // The probe and the pass-through fill the edge cache the same way, so a
     // probe leaves the shared `<page>/index.md` entry as a direct request would.
     assert.deepEqual(calls[0].init.cf, calls[1].init.cf);
-    assert.equal(
+    assertPassedOn(
       response,
       respond.upstream[0],
-      "the origin's response, untouched",
+      "/gitlab-mcp-server/",
+      "the origin's response, with the ETag of its body",
     );
     assert.equal(
       response.headers.get("vary"),
@@ -1037,7 +1097,7 @@ describe("worker.fetch", () => {
       3,
       "negotiation probe, pass-through, announcement probe",
     );
-    assert.equal(response, upstream);
+    assertPassedOn(response, upstream, "/phonometry/start/getting-started/");
   });
 
   test("the legacy /assets/pdf/ redirect wins whatever the Accept, with no probe", async () => {
@@ -1064,7 +1124,7 @@ describe("worker.fetch", () => {
           const pathname = new URL(`${ORIGIN}${page}`).pathname;
           const slash = pathname.endsWith("/");
           assert.equal(calls.length, slash ? 2 : 1, at);
-          assert.equal(calls[0].input, request, at);
+          assertSentAs(calls[0].input, request, at);
           assert.deepEqual(
             calls[0].init,
             { cf: { cacheEverything: true } },
@@ -1085,7 +1145,7 @@ describe("worker.fetch", () => {
               at,
             );
           } else {
-            assert.equal(response, respond.upstream[0], at);
+            assertPassedOn(response, respond.upstream[0], pathname, at, method);
             assert.equal(
               response.headers.get("vary"),
               respond.upstream[0].headers.get("vary"),
@@ -1133,7 +1193,11 @@ describe("worker.fetch", () => {
           );
           assert.equal(passes.length, 1, at);
           assert.equal(passes[0].input.headers.has("range"), false, at);
-          assert.equal(passes[0].input.method, method, at);
+          assert.equal(
+            passes[0].input.method,
+            validated(pathname) ? "GET" : method,
+            at,
+          );
           assert.equal(passes[0].input.redirect, "manual", at);
           assert.deepEqual(passes[0].init.cf, EDGE_CACHE_CF, at);
           assert.equal(points.length, 1, at);
@@ -1146,7 +1210,7 @@ describe("worker.fetch", () => {
             );
             assert.match(response.headers.get("link"), /rel="alternate"/, at);
           } else {
-            assert.equal(response, respond.upstream[0], at);
+            assertPassedOn(response, respond.upstream[0], pathname, at, method);
             assert.equal(response.headers.get("vary"), "Accept-Encoding", at);
           }
         }
@@ -1295,10 +1359,14 @@ describe("worker.fetch", () => {
             );
             const at = `${method} ${file} ${rangeCoding} ${name}`;
             assert.equal(response.status, 200, at);
-            assert.equal(response, respond.upstream[0], at);
+            assertPassedOn(response, respond.upstream[0], file, at, method);
             assert.equal(calls.length, 1, at);
             assert.equal(calls[0].input.headers.has("range"), false, at);
-            assert.equal(calls[0].input.method, method, at);
+            assert.equal(
+              calls[0].input.method,
+              validated(file) ? "GET" : method,
+              at,
+            );
             assert.equal(points[0].blobs[10], "200", at);
           }
         }
@@ -1401,7 +1469,7 @@ describe("worker.fetch", () => {
       () => answers.shift(),
     );
     assert.equal(calls.length, 2);
-    assert.equal(response, page);
+    assertPassedOn(response, page, "/gitlab-mcp-server/page.html");
   });
 
   test("a 416 for a file the edge holds as it is stands, and the whole file is released", async () => {
@@ -1579,6 +1647,15 @@ describe("worker.fetch", () => {
               1 + (pathname.endsWith("/") ? 1 : 0),
               at,
             );
+            // A page path reaches the edge without its precondition, so
+            // GitHub's answer is the 200, and the Worker makes the 304 from
+            // it: the same headers, less the body's own, with the ETag of
+            // the page's bytes (content-validators.js).
+            const pageAnswer = validated(pathname);
+            const expected = [...answer.headers]
+              .filter(([k]) => k !== "vary")
+              .filter(([k]) => !(pageAnswer && !whole && k === "content-type"))
+              .map(([k, v]) => [k, pageAnswer && k === "etag" ? PAGE_ETAG : v]);
             if (WITH_TWIN.has(pathname)) {
               assert.notEqual(response, answer, at);
               assert.equal(
@@ -1590,7 +1667,15 @@ describe("worker.fetch", () => {
                 [...response.headers].filter(
                   ([k]) => k !== "vary" && k !== "link",
                 ),
-                [...answer.headers].filter(([k]) => k !== "vary"),
+                expected,
+                at,
+              );
+            } else if (pageAnswer) {
+              assert.notEqual(response, answer, at);
+              assert.equal(response.headers.get("vary"), "Accept-Encoding", at);
+              assert.deepEqual(
+                [...response.headers].filter(([k]) => k !== "vary"),
+                expected,
                 at,
               );
             } else {
@@ -2311,10 +2396,10 @@ describe("a 502, 503 or 504 from GitHub is asked for once more", () => {
           const sent = passes(calls);
           assert.equal(sent.length, 2, at);
           // The very request the first fetch sent, sent the same way.
-          assert.equal(sent[0].input, request, at);
-          assert.equal(sent[1].input, request, at);
+          assertSentAs(sent[0].input, request, at);
+          assert.equal(sent[1].input, sent[0].input, at);
           assert.deepEqual(sent[1].init, { cf: EDGE_CACHE_CF }, at);
-          assert.equal(response, respond.upstream[0], at);
+          assertPassedOn(response, respond.upstream[0], page, at, method);
           assert.equal(response.status, 200, at);
           // The first answer is let go of, never sent on.
           if (method === "GET") assert.equal(github.sent[0].bodyUsed, true, at);
@@ -2515,7 +2600,9 @@ describe("a 502, 503 or 504 from GitHub is asked for once more", () => {
     }
     // A page with a twin, and one without: after the retry, the answer is
     // what a first-time answer gets (Link and Vary when the twin exists, the
-    // origin's own object otherwise), and GitHub's validators are kept.
+    // origin's own object otherwise), with the content validators of the
+    // page (content-validators.js): the ETag of its bytes, and GitHub's
+    // Last-Modified, since the mocked page states no date.
     for (const page of ["/phonometry/start/getting-started/", "/phonometry/"]) {
       const twin = WITH_TWIN.has(page);
       for (const [status, headers] of [
@@ -2532,7 +2619,7 @@ describe("a 502, 503 or 504 from GitHub is asked for once more", () => {
         const at = `${page} ${status} ${JSON.stringify(headers)}`;
         assert.equal(passes(calls).length, 2, at);
         assert.equal(response.status, status, at);
-        assert.equal(response.headers.get("etag"), ETAG, at);
+        assert.equal(response.headers.get("etag"), PAGE_ETAG, at);
         assert.equal(response.headers.get("last-modified"), LAST_MODIFIED, at);
         assert.equal(
           response.headers.get("vary"),
@@ -2546,7 +2633,9 @@ describe("a 502, 503 or 504 from GitHub is asked for once more", () => {
             : null,
           at,
         );
-        if (!twin) assert.equal(response, respond.upstream[0], at);
+        if (!twin && status === 200) {
+          assertPassedOn(response, respond.upstream[0], page, at);
+        }
       }
     }
   });
@@ -2876,4 +2965,327 @@ describe("G1: one type list and one negotiation across the edge", () => {
       }
     },
   );
+});
+
+// ── content validators (2026-11-17) ─────────────────────────────────────────
+
+describe("a page's validators come from what it says, not from when GitHub wrote it", () => {
+  // GitHub's validators move with the file's mtime: every deploy, and some
+  // replicas within one deploy, give the same bytes a new ETag and
+  // Last-Modified (W/"6afc31e5-3d193" and W/"6afc31e6-3d193" for one page on
+  // 2026-11-17). The Worker sends an ETag of the body and the page's own
+  // content date, and answers the preconditions against them.
+  const FOOTER = (inner) =>
+    `<div class="meta sl-flex astro-x"><a href="https://github.com/x/edit">Edit page</a>${inner}</div><div class="pagination-links">`;
+  const STARLIGHT = `<!doctype html><title>q</title><main>body</main>${FOOTER(
+    '<p>Last updated: <time datetime="2026-08-29T09:20:42.000Z">Aug 29, 2026</time></p>',
+  )}`;
+  const PHONOMETRY = `<!doctype html><main><p>Current release: <time datetime="2026-11-16">x</time></p></main>${FOOTER(
+    '<p>Published <time datetime="2026-07-05">Jul 5, 2026</time>, updated <time datetime="2026-11-17T10:30:31.000Z">Nov 17, 2026</time></p>',
+  )}`;
+  const PUBLISHED_ONLY = `<!doctype html>${FOOTER(
+    '<p>Publicado el <time datetime="2026-07-05">5 jul 2026</time></p>',
+  )}`;
+  const COPY = [
+    "# Getting Started",
+    "",
+    "Canonical: https://docs.jmrp.io/phonometry/start/getting-started/",
+    "Published: 2026-07-05",
+    "Updated: 2026-11-17",
+    "",
+    "---",
+    "",
+    "Text.",
+    "Updated: 2030-01-01",
+    "",
+  ].join("\n");
+  const NOW = Date.parse("2026-11-17T14:00:00Z");
+  const sha = (text) =>
+    createHash("sha256").update(text).digest("hex").slice(0, 32);
+
+  /**
+   * GitHub for one path: `body` with `type`, and validators that change on
+   * every call (a new mtime, as a deploy or another replica gives), unless
+   * `validators` pins them. A request with a precondition gets GitHub's own
+   * answer to it, judged against its own ETag, as the edge gives it.
+   */
+  function github(body, type = "text/html; charset=utf-8", options = {}) {
+    let mtime = 1_794_912_741; // 0x6afc31e5, 2026-11-17 10:52:21 UTC
+    const seen = [];
+    const respond = (input, init) => {
+      if (init?.redirect === "manual") return notFound();
+      seen.push(input);
+      mtime += 1;
+      const etag =
+        options.etag ?? `W/"${mtime.toString(16)}-${body.length.toString(16)}"`;
+      const headers = {
+        "content-type": type,
+        "cache-control": "max-age=600",
+        vary: "Accept-Encoding",
+        etag,
+        "last-modified":
+          options.lastModified ?? new Date(mtime * 1000).toUTCString(),
+        "cf-cache-status": "HIT",
+      };
+      const status = options.status ?? 200;
+      if (input.headers.get("if-none-match") === etag) {
+        return new Response(null, { status: 304, headers });
+      }
+      return new Response(input.method === "HEAD" ? null : body, {
+        status,
+        headers,
+      });
+    };
+    respond.seen = seen;
+    return respond;
+  }
+
+  async function page(
+    pathname,
+    respond,
+    { method = "GET", headers = {} } = {},
+  ) {
+    const saved = Date.now;
+    Date.now = () => NOW;
+    try {
+      const { response, calls, points } = await run(
+        worker,
+        req(pathname, { method, headers }),
+        respond,
+      );
+      const body = method === "HEAD" ? null : await response.text();
+      return { response, body, calls, points };
+    } finally {
+      Date.now = saved;
+    }
+  }
+
+  test("the same bytes keep one ETag across deploys and replicas, a digest of the body", async () => {
+    const respond = github(STARLIGHT);
+    const first = await page("/gitlab-mcp-server/", respond);
+    const second = await page("/gitlab-mcp-server/", respond);
+    assert.equal(first.response.headers.get("etag"), `W/"${sha(STARLIGHT)}"`);
+    assert.equal(
+      second.response.headers.get("etag"),
+      first.response.headers.get("etag"),
+    );
+    assert.equal(first.body, STARLIGHT);
+    const other = await page("/gitlab-mcp-server/", github(`${STARLIGHT} `));
+    assert.notEqual(
+      other.response.headers.get("etag"),
+      first.response.headers.get("etag"),
+    );
+  });
+
+  test("Last-Modified is the date the page states, never GitHub's mtime", async () => {
+    for (const [body, expected] of [
+      [STARLIGHT, "Sat, 29 Aug 2026 09:20:42 GMT"],
+      [PHONOMETRY, "Tue, 17 Nov 2026 10:30:31 GMT"],
+      [PUBLISHED_ONLY, "Sun, 05 Jul 2026 00:00:00 GMT"],
+    ]) {
+      const { response } = await page("/phonometry/es/x/", github(body));
+      assert.equal(response.headers.get("last-modified"), expected);
+    }
+  });
+
+  test("a page that states no date keeps GitHub's Last-Modified", async () => {
+    const lastModified = "Tue, 17 Nov 2026 10:52:22 GMT";
+    const { response } = await page(
+      "/",
+      github("<!doctype html><title>hub</title>", undefined, { lastModified }),
+    );
+    assert.equal(response.headers.get("last-modified"), lastModified);
+    assert.match(response.headers.get("etag"), /^W\/"[0-9a-f]{32}"$/);
+  });
+
+  test("a date after now is now (RFC 9110, 8.8.2.1)", async () => {
+    const future = STARLIGHT.replace("2026-08-29T09:20:42.000Z", "2027-01-01");
+    const { response } = await page("/mikroscope/", github(future));
+    assert.equal(
+      response.headers.get("last-modified"),
+      new Date(NOW).toUTCString(),
+    );
+  });
+
+  test("If-None-Match with the Worker's ETag: a 304, judged on the whole page the edge returned", async () => {
+    const respond = github(STARLIGHT);
+    const { response: first } = await page("/libgen-mcp/", respond);
+    const etag = first.headers.get("etag");
+    const { response, body, calls, points } = await page(
+      "/libgen-mcp/",
+      respond,
+      { headers: { "if-none-match": etag } },
+    );
+    assert.equal(response.status, 304);
+    assert.equal(body, "");
+    assert.equal(response.headers.get("etag"), etag);
+    assert.equal(
+      response.headers.get("last-modified"),
+      "Sat, 29 Aug 2026 09:20:42 GMT",
+    );
+    assert.equal(response.headers.get("cache-control"), "max-age=600");
+    assert.equal(response.headers.get("vary"), "Accept-Encoding");
+    assert.equal(response.headers.get("content-type"), null);
+    const forwarded = calls.find((c) => c.init?.redirect !== "manual").input;
+    assert.equal(forwarded.headers.get("if-none-match"), null);
+    assert.equal(points[0].blobs[10], "304");
+    assert.equal(points[0].blobs[11], "HIT");
+  });
+
+  test("If-None-Match with GitHub's old ETag: the whole page", async () => {
+    const respond = github(STARLIGHT, undefined, {
+      etag: 'W/"6afc31e5-3d193"',
+    });
+    const { response, body } = await page("/libgen-mcp/", respond, {
+      headers: { "if-none-match": 'W/"6afc31e5-3d193"' },
+    });
+    assert.equal(response.status, 200);
+    assert.equal(body, STARLIGHT);
+    assert.equal(response.headers.get("etag"), `W/"${sha(STARLIGHT)}"`);
+  });
+
+  test("If-Modified-Since against the content date, and only without If-None-Match", async () => {
+    const respond = github(STARLIGHT);
+    for (const [headers, status] of [
+      [{ "if-modified-since": "Sat, 29 Aug 2026 09:20:42 GMT" }, 304],
+      [{ "if-modified-since": "Mon, 31 Aug 2026 00:00:00 GMT" }, 304],
+      [{ "if-modified-since": "Sat, 29 Aug 2026 09:20:41 GMT" }, 200],
+      [{ "if-modified-since": "not a date" }, 200],
+      [
+        {
+          "if-none-match": '"something else"',
+          "if-modified-since": "Mon, 31 Aug 2026 00:00:00 GMT",
+        },
+        200,
+      ],
+      [{ "if-none-match": "*" }, 304],
+    ]) {
+      const { response } = await page("/ghchronicle/", respond, { headers });
+      assert.equal(response.status, status, JSON.stringify(headers));
+    }
+  });
+
+  test("If-Match and If-Unmodified-Since: a 412 when they fail", async () => {
+    const respond = github(STARLIGHT);
+    const etag = `W/"${sha(STARLIGHT)}"`;
+    for (const [headers, status] of [
+      [{ "if-match": "*" }, 200],
+      [{ "if-match": etag }, 412], // a weak tag never matches strongly
+      [{ "if-match": `"${sha(STARLIGHT)}"` }, 412],
+      [{ "if-unmodified-since": "Sat, 29 Aug 2026 09:20:42 GMT" }, 200],
+      [{ "if-unmodified-since": "Fri, 28 Aug 2026 00:00:00 GMT" }, 412],
+    ]) {
+      const { response } = await page("/cs-routeros-bouncer/", respond, {
+        headers,
+      });
+      assert.equal(response.status, status, JSON.stringify(headers));
+    }
+  });
+
+  test("a Markdown copy: the ETag of its bytes and the Updated: line of its header", async () => {
+    const respond = github(COPY, "text/markdown; charset=utf-8");
+    const { response, body } = await page(
+      "/phonometry/start/getting-started/index.md",
+      respond,
+    );
+    assert.equal(body, COPY);
+    assert.equal(response.headers.get("etag"), `W/"${sha(COPY)}"`);
+    assert.equal(
+      response.headers.get("last-modified"),
+      "Tue, 17 Nov 2026 00:00:00 GMT",
+    );
+    const again = await page(
+      "/phonometry/start/getting-started/index.md",
+      respond,
+      { headers: { "if-none-match": response.headers.get("etag") } },
+    );
+    assert.equal(again.response.status, 304);
+    const bare = await page(
+      "/mikroscope/index.md",
+      github("# mikroscope\n\nUpdated: 2030-01-01\n", "text/markdown", {
+        lastModified: "Mon, 16 Nov 2026 23:42:56 GMT",
+      }),
+    );
+    assert.equal(
+      bare.response.headers.get("last-modified"),
+      "Mon, 16 Nov 2026 23:42:56 GMT",
+      "no header above a --- line: no stated date",
+    );
+  });
+
+  test("a HEAD carries the validators of the GET, and gets its 304 too", async () => {
+    const respond = github(PHONOMETRY);
+    const get = await page("/phonometry/", respond);
+    const head = await page("/phonometry/", respond, { method: "HEAD" });
+    assert.equal(head.response.status, 200);
+    assert.equal(head.response.body, null);
+    for (const name of ["etag", "last-modified"]) {
+      assert.equal(
+        head.response.headers.get(name),
+        get.response.headers.get(name),
+        name,
+      );
+    }
+    const revalidated = await page("/phonometry/", respond, {
+      method: "HEAD",
+      headers: { "if-none-match": get.response.headers.get("etag") },
+    });
+    assert.equal(revalidated.response.status, 304);
+  });
+
+  test("a page with a twin: the 304 keeps the Vary of the 200 and drops the Link", async () => {
+    const respond = (input, init) => {
+      if (init?.redirect === "manual") return twinResponse();
+      return github(STARLIGHT)(input, init);
+    };
+    const pathname = "/phonometry/start/getting-started/";
+    const { response: first } = await page(pathname, respond);
+    assert.equal(first.headers.get("vary"), "Accept-Encoding, Accept");
+    assert.ok(first.headers.get("link"));
+    const { response } = await page(pathname, respond, {
+      headers: { "if-none-match": first.headers.get("etag") },
+    });
+    assert.equal(response.status, 304);
+    assert.equal(response.headers.get("vary"), "Accept-Encoding, Accept");
+    assert.equal(response.headers.get("link"), null);
+  });
+
+  test("not a page: assets, images and llms.txt keep GitHub's validators and its own 304", async () => {
+    for (const [pathname, type] of [
+      ["/phonometry/llms.txt", "text/plain; charset=utf-8"],
+      ["/phonometry/_astro/x.css", "text/css"],
+      ["/libgen-mcp/og.png", "image/png"],
+    ]) {
+      const etag = 'W/"6afc31e5-10"';
+      const respond = github("0123456789abcdef", type, { etag });
+      const { response, calls } = await page(pathname, respond, {
+        headers: { "if-none-match": etag },
+      });
+      assert.equal(response.status, 304, pathname);
+      assert.equal(response.headers.get("etag"), etag, pathname);
+      assert.equal(calls[0].input.headers.get("if-none-match"), etag);
+    }
+  });
+
+  test("a page path whose answer is not a page: preconditions judged on GitHub's validators", async () => {
+    const etag = 'W/"6afc31e5-10"';
+    const json = github("{}", "application/json", { etag });
+    const { response } = await page("/x/data", json, {
+      headers: { "if-none-match": etag },
+    });
+    assert.equal(response.status, 304);
+    assert.equal(response.headers.get("etag"), etag);
+    for (const status of [301, 404]) {
+      const { response: other } = await page(
+        "/phonometry/start/getting-started",
+        github("<!doctype html>", undefined, { status }),
+        { headers: { "if-none-match": "*" } },
+      );
+      assert.equal(
+        other.status,
+        status,
+        "a precondition only applies to a 2xx",
+      );
+    }
+  });
 });

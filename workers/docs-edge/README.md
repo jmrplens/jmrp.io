@@ -18,9 +18,9 @@ tools.
 | Route            | `docs.jmrp.io/*`, fail-open                                                |
 | Dataset          | `docs_edge_requests` (binding `REQS`)                                      |
 
-Files: `worker.js` (the handler and the record), `markdown-negotiation.js` (imported
-by `worker.js`; wrangler bundles both), `worker.test.mjs` (not deployed),
-`wrangler.toml`.
+Files: `worker.js` (the handler and the record), `markdown-negotiation.js` and
+`content-validators.js` (imported by `worker.js`; wrangler bundles the three),
+`worker.test.mjs` and `content-validators.test.mjs` (not deployed), `wrangler.toml`.
 
 Deploy only from this directory: a deploy from an older copy, on this server or
 anywhere else, reverts whatever changed since.
@@ -45,6 +45,9 @@ anywhere else, reverts whatever changed since.
 - **Asks GitHub once more** when it answers a `GET` or `HEAD` with 502, 503 or 504,
   and sends those two methods without a body, so they can go twice (see "A 502, 503
   or 504 from GitHub").
+- **Gives every page and Markdown copy validators of its own**: an ETag of its bytes
+  and the content date the page states, and judges a revalidation against them (see
+  "Validators").
 
 ## Markdown negotiation
 
@@ -115,6 +118,50 @@ change: blob 12 already carries the Worker's own verdicts beside Cloudflare's
 `cf-cache-status`, and the privacy page describes it as whether the edge served the
 page from its cache.
 
+## Validators
+
+GitHub Pages sends `ETag: W/"<mtime hex>-<size hex>"` and the file's mtime as
+`Last-Modified`, and the mtime is when a deploy wrote the file. So every deploy changed
+the validators of every page, even when no page's content changed (IndexNow found
+983, 4, 0, 0 and 8 changed pages across five deploys on 2026-11-16 and 17), and
+GitHub's replicas gave the same bytes different validators within one deploy
+(`W/"6afc31e5-3d193"` and `W/"6afc31e6-3d193"` for one page from one edge, with no
+deploy between them). A crawler that revalidated got the whole page every time.
+
+For a `GET` or `HEAD` of a page path (one that ends in `/`, `.html` or `.md`, or whose
+last segment has no dot) answered with a 200 `text/html` or `text/markdown`,
+`content-validators.js` replaces both:
+
+- `ETag: W/"<32 hex digits>"`, the first 128 bits of the SHA-256 of the body as the
+  client gets it, decoded. The same bytes give the same ETag from any replica and
+  across deploys; different bytes give another. Weak, because the edge sends the body
+  compressed in more than one way.
+- `Last-Modified`, the content date the page states: the last `<time datetime>` in
+  Starlight's footer (`<div class="meta sl-flex">`: "Last updated" on every project,
+  "updated" on phonometry, or its "Published" date when it has not changed since), or
+  the `Updated:` line of a Markdown copy's header. A day with no time is midnight UTC,
+  and a date after now is now. A page that states none keeps GitHub's.
+
+The Worker then answers the preconditions itself (RFC 9110, 13.2.2): `If-Match` and
+`If-Unmodified-Since` with a 412, `If-None-Match` by weak comparison with a 304, and
+`If-Modified-Since` only when there is no `If-None-Match`. To have the whole page to
+hash, those four headers do not reach the edge on a page path, and a `HEAD` goes as a
+`GET`, so it carries exactly the validators of the `GET`. The 304 keeps every header of
+the 200 (Vary, Cache-Control, Expires and the rest) less `Content-Type`,
+`Content-Length`, `Content-Encoding`, `Content-Range` and the twin's `Link`.
+
+A change of the shared markup (navigation, the site-wide JSON-LD) changes the ETag and
+not the content date. A client that sends both validators gets `If-None-Match` judged
+first and sees the new bytes; one that sends only `If-Modified-Since` keeps its copy
+until the content changes, which is what the sitemap and IndexNow say about the page.
+
+Anything else is passed on as before: another status or type, a body above 4 MB (the
+largest page is 720 KB, and hashing and searching it takes about 4 ms), and every path
+that is not a page, whose preconditions still go to the edge. When the Worker took a
+page path's preconditions off and the answer is not one it validates, it judges them
+against GitHub's own validators instead. If computing the validators throws, the page
+goes out as it came.
+
 ## Zone settings this depends on
 
 - DNS: `docs` is a proxied CNAME to `jmrplens.github.io`.
@@ -137,8 +184,8 @@ These rules apply even when the Worker is skipped.
 
 ## Tests
 
-`node --test` in this directory (Node 22 or later). Nothing touches the network:
-every `fetch` is a mock. Without `../tools/rules-dump.json` two guard tests are
+`node --test` in this directory (Node 22 or later) runs `worker.test.mjs` and
+`content-validators.test.mjs`. Nothing touches the network: every `fetch` is a mock. Without `../tools/rules-dump.json` two guard tests are
 skipped (they read the live zone rules), and two more compare against an earlier
 copy of the Worker, which you get with `git show` and name in `DOCS_EDGE_BEFORE`;
 `pnpm test:unit` runs the rest in CI.
