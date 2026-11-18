@@ -128,6 +128,11 @@ function primaryLanguage(value) {
  * sends comes before sec-fetch-dest, so a "|" in a header can shift cfRay or
  * postalCode, which are string fields, but never the location tags.
  *
+ * phonometry.dev's beacon rows append five more parts: navigation type, 404
+ * flag, webdriver flag, and the browser's language and time zone as the
+ * page's script read them (navType, notFound, webdriver, language, timeZone
+ * below); other rows leave them unset.
+ *
  * @param {string} [misc] - The blob; a shorter or empty one leaves parts unset.
  * @returns {Record<string, string | undefined>} The parts this module reads.
  */
@@ -146,6 +151,11 @@ export function miscParts(misc) {
     cfRay: p[9],
     contentType: p[10],
     postalCode: p[13],
+    navType: p[14],
+    notFound: p[15],
+    webdriver: p[16],
+    language: p[17],
+    timeZone: p[18],
   };
 }
 
@@ -204,6 +214,16 @@ export function edgeRow(r, site) {
     ["cf_region_code", misc.regionCode],
     ["cf_city", r.city],
     ["cf_tz", misc.timezone],
+    // phonometry.dev beacon rows only (ae-sites.mjs): how the page was
+    // reached and whether an automated browser reported it.
+    ["nav_type", misc.navType],
+    ["webdriver", misc.webdriver],
+    // The browser's own language (navigator.language) and time zone
+    // (Intl), beside `lang` (the Accept-Language header) and `cf_tz`
+    // (Cloudflare's, from the address). The 404 flag is not repeated: a
+    // beacon row from the 404 page already has status 404.
+    ["js_lang", misc.language],
+    ["js_tz", misc.timeZone],
   ];
   for (const [name, value] of optionalTags) {
     if (value) tags.push(`${name}=${tagEsc(value)}`);
@@ -229,6 +249,14 @@ export function edgeRow(r, site) {
     ["edge_rtt_ms", r.rtt, false],
     ["edge_ms", r.edge_ms, false],
     ["edge_age", r.age, true],
+    // phonometry.dev beacon rows only: doubles 10 to 15 of the record
+    // (BEACON_COLUMNS in ae-sites.mjs). Absent on every other row.
+    ["page_load_ms", r.load_ms, false],
+    ["screen_width", r.screen_w, true],
+    ["screen_height", r.screen_h, true],
+    ["viewport_width", r.viewport_w, true],
+    ["viewport_height", r.viewport_h, true],
+    ["device_pixel_ratio", r.dpr, false],
   ];
   for (const [name, raw, integer] of optionalNumbers) {
     const value = Number(raw);

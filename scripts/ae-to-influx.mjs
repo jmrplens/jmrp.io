@@ -55,8 +55,9 @@
  * llms-txt, feed-xml). `agent` and `ua_class` carry the named crawler or
  * browser family, not a full User-Agent string. `site`, `request_clean` and
  * `ua_class` mirror what the Telegraf starlark processor derives for nginx
- * rows (one dataset per edge worker, see EDGE_SITES: jmrp.io and, since
- * 2026-09-05, mcp.jmrp.io); `edge=1`, `ssl_protocol` and the GeoIP coordinates come from the
+ * rows (one dataset per edge worker, see EDGE_SITES in ae-sites.mjs: jmrp.io,
+ * mcp.jmrp.io since 2026-09-05, docs.jmrp.io and, since 2026-11-18,
+ * phonometry.dev from its own Cloudflare account); `edge=1`, `ssl_protocol` and the GeoIP coordinates come from the
  * worker's own record. `trusted` and `lang` do not exist on edge rows. Since
  * 2026-11-04 they also carry Cloudflare's location in the same cf_* columns
  * Telegraf writes; scripts/ae-edge-row.mjs builds the row and explains them.
@@ -78,6 +79,15 @@ import path from "node:path";
 import process from "node:process";
 
 import { edgeRow } from "./ae-edge-row.mjs";
+import {
+  BEACON_COLUMNS,
+  collectSites,
+  DEFAULT_ACCOUNT,
+  EDGE_SITES,
+  firstRowPending,
+  nextState,
+  siteWindow,
+} from "./ae-sites.mjs";
 import { runWithConcurrency } from "./utils/concurrency.mjs";
 
 try {
@@ -87,29 +97,8 @@ try {
 }
 const { PRIVATE_CF_API_TOKEN, PRIVATE_CF_EMAIL, INFLUX3_URL, INFLUX3_TOKEN } =
   process.env;
-const CF_ACCOUNT = "d3604ab61425cd17ccc0c6b2f14ec1dd";
 const DB = "cloudflare";
 const NGINX_DB = "nginx";
-/**
- * Every edge worker that keeps a per-request log with the shared blob
- * layout, and the nginx_access identity its edge-served rows carry.
- * mcp.jmrp.io's worker started logging on 2026-09-05; before that there is
- * nothing to ingest for it.
- */
-const EDGE_SITES = [
-  { dataset: "jmrp_edge_requests", site: "jmrp", host: "jmrp.io" },
-  { dataset: "mcp_edge_requests", site: "mcp", host: "mcp.jmrp.io" },
-  // docs.jmrp.io (since 2026-10-14) is GitHub Pages behind a pass-through
-  // logging worker (workers/docs-edge): no nginx ever sees it, so EVERY
-  // request is ingested, not only the edge-only verdicts. Its cache column
-  // carries Cloudflare's raw cf-cache-status (HIT, MISS, DYNAMIC...).
-  {
-    dataset: "docs_edge_requests",
-    site: "docs",
-    host: "docs.jmrp.io",
-    ingestAll: true,
-  },
-];
 /** Cache verdicts the origin never saw: the request ended at the edge. */
 const EDGE_ONLY_VERDICTS = [
   "HIT",
@@ -122,10 +111,17 @@ const BUCKET_S = 300; // 5-minute buckets
 const LAG_S = 360; // do not read the last 6 minutes (ingestion lag)
 const MAX_WINDOW_S = 24 * 3600; // first run / long outage backfill cap
 
-/** Runs one SQL query against the Analytics Engine SQL API. */
-async function aeQuery(sql) {
+/**
+ * Runs one SQL query against the Analytics Engine SQL API of an account
+ * (a dataset lives in the account whose Worker writes it; ae-sites.mjs).
+ *
+ * @param {string} sql - The query, without FORMAT.
+ * @param {string} [account] - The account id; the jmrp.io account by default.
+ * @returns {Promise<object[]>} The rows.
+ */
+async function aeQuery(sql, account = DEFAULT_ACCOUNT) {
   const res = await fetch(
-    `https://api.cloudflare.com/client/v4/accounts/${CF_ACCOUNT}/analytics_engine/sql`,
+    `https://api.cloudflare.com/client/v4/accounts/${account}/analytics_engine/sql`,
     {
       method: "POST",
       headers: {
@@ -319,8 +315,10 @@ async function collectEdgeServed(fromS, toS, site = EDGE_SITES[0]) {
   // the others only what the origin never saw, so nothing is counted twice.
   const verdicts = EDGE_ONLY_VERDICTS.map((v) => "'" + v + "'").join(", ");
   const verdictFilter = site.ingestAll ? "" : ` AND blob12 IN (${verdicts})`;
+  const beacon = site.beacon ? `, ${BEACON_COLUMNS}` : "";
   const rows = await aeQuery(
-    `SELECT toUnixTimestamp(timestamp) AS ts, index1 AS c, blob1 AS p, blob2 AS ua, blob3 AS cc, blob4 AS a, blob5 AS ref, blob6 AS colo, blob7 AS city, blob8 AS asn_org, blob9 AS proto, blob10 AS tls, blob11 AS st, blob12 AS cache, blob13 AS accept, blob14 AS method, blob15 AS ua_full, blob16 AS ip, blob17 AS lang, blob18 AS referer_full, blob19 AS qs, blob20 AS misc, double1 AS lat, double2 AS lon, double3 AS asn, double4 AS rtt, double5 AS contentLength, double6 AS age, double7 AS edge_ms, double9 AS tms, _sample_interval AS n FROM ${site.dataset} WHERE timestamp >= toDateTime(${fromS}) AND timestamp < toDateTime(${toS}) AND blob11 != ''${verdictFilter}`,
+    `SELECT toUnixTimestamp(timestamp) AS ts, index1 AS c, blob1 AS p, blob2 AS ua, blob3 AS cc, blob4 AS a, blob5 AS ref, blob6 AS colo, blob7 AS city, blob8 AS asn_org, blob9 AS proto, blob10 AS tls, blob11 AS st, blob12 AS cache, blob13 AS accept, blob14 AS method, blob15 AS ua_full, blob16 AS ip, blob17 AS lang, blob18 AS referer_full, blob19 AS qs, blob20 AS misc, double1 AS lat, double2 AS lon, double3 AS asn, double4 AS rtt, double5 AS contentLength, double6 AS age, double7 AS edge_ms, double9 AS tms${beacon}, _sample_interval AS n FROM ${site.dataset} WHERE timestamp >= toDateTime(${fromS}) AND timestamp < toDateTime(${toS}) AND blob11 != ''${verdictFilter}`,
+    site.account,
   );
   const key = (r) =>
     [
@@ -387,6 +385,13 @@ async function influxWrite(lines, db = DB, precision = "s") {
 /** Replays edge-served rows for [fromS, toS) in one-hour windows. */
 async function backfill(fromS, toS) {
   const HOUR = 3600;
+  let state = null;
+  try {
+    state = JSON.parse(fs.readFileSync(STATE_FILE, "utf8"));
+  } catch {
+    // No state yet: a site's failure counts unless it waits for its first row.
+  }
+  const failedSites = new Set();
   const windows = [];
   for (let a = fromS; a < toS; a += HOUR) {
     windows.push([a, Math.min(a + HOUR, toS)]);
@@ -397,43 +402,50 @@ async function backfill(fromS, toS) {
     windows.map(
       ([a, b]) =>
         () =>
-          backfillWindow(a, b),
+          backfillWindow(a, b, state, failedSites),
     ),
     1,
   );
   const total = counts.reduce((sum, n) => sum + n, 0);
   console.log(`[ae-influx] backfill done: ${total} edge-served rows`);
+  if (failedSites.size > 0) {
+    console.error(
+      `[ae-influx] backfill incomplete for ${[...failedSites].join(", ")}`,
+    );
+    process.exitCode = 1;
+  }
 }
 
 /**
- * Collects every site's edge-served rows for [a, b) and writes them.
+ * Collects every site's edge-served rows for [a, b), each site on its own
+ * (collectSites), writes the rows of the sites that answered and logs each
+ * site that failed.
  *
  * @param {number} a - Window start, epoch seconds.
  * @param {number} b - Window end, epoch seconds.
+ * @param {object | null} state - The state file, for firstRowPending.
+ * @param {Set<string>} failedSites - Gains each site whose query failed for real.
  * @returns {Promise<number>} How many rows were written.
  */
-async function backfillWindow(a, b) {
-  const lines = await collectAllEdgeServed(a, b);
+async function backfillWindow(a, b, state, failedSites) {
+  const { lines, failed } = await collectSites(EDGE_SITES, (site) =>
+    collectEdgeServed(a, b, site),
+  );
   await influxWrite(lines, NGINX_DB, "ns");
+  for (const { site, error } of failed) {
+    if (firstRowPending(site, state, error.message)) {
+      console.warn(
+        `[ae-influx] ${site.site}: no row yet (${error.message}); window empty`,
+      );
+    } else {
+      failedSites.add(site.site);
+      console.error(`[ae-influx] ${site.site}: ${error.message}`);
+    }
+  }
   console.log(
     `[ae-influx] backfill ${new Date(a * 1000).toISOString()} → ${new Date(b * 1000).toISOString()}: ${lines.length} edge-served rows`,
   );
   return lines.length;
-}
-
-/**
- * Every edge site's served rows for [fromS, toS), queried concurrently: the
- * sites are independent datasets.
- *
- * @param {number} fromS - Window start, epoch seconds.
- * @param {number} toS - Window end, epoch seconds.
- * @returns {Promise<string[]>} Line-protocol rows, in site order.
- */
-async function collectAllEdgeServed(fromS, toS) {
-  const perSite = await Promise.all(
-    EDGE_SITES.map((site) => collectEdgeServed(fromS, toS, site)),
-  );
-  return perSite.flat();
 }
 
 /** Reads `--name value` from argv. */
@@ -464,27 +476,63 @@ async function main() {
   const nowS = Math.floor(Date.now() / 1000);
   // Window end: last completed 5-min bucket older than the lag guard.
   const toS = Math.floor((nowS - LAG_S) / BUCKET_S) * BUCKET_S;
-  let fromS = toS - BUCKET_S;
+  let state = null;
   try {
-    const st = JSON.parse(fs.readFileSync(STATE_FILE, "utf8"));
-    if (Number.isSafeInteger(st.lastEnd)) fromS = st.lastEnd;
+    state = JSON.parse(fs.readFileSync(STATE_FILE, "utf8"));
   } catch {
-    fromS = toS - MAX_WINDOW_S; // first run: backfill a day
+    // First run: every window backfills a day (MAX_WINDOW_S).
   }
-  fromS = Math.max(fromS, toS - MAX_WINDOW_S);
-  if (fromS >= toS) {
-    console.log("[ae-influx] window not ready yet, nothing to do");
-    return;
-  }
-  const lines = await collectWindow(fromS, toS);
-  const edgeLines = await collectAllEdgeServed(fromS, toS);
-  await influxWrite(lines);
-  await influxWrite(edgeLines, NGINX_DB, "ns");
-  fs.mkdirSync(STATE_DIR, { recursive: true });
-  fs.writeFileSync(STATE_FILE, JSON.stringify({ lastEnd: toS }));
-  console.log(
-    `[ae-influx] ${new Date(fromS * 1000).toISOString()} → ${new Date(toS * 1000).toISOString()}: ${lines.length} points (cloudflare), ${edgeLines.length} edge-served rows (nginx_access)`,
+  const shared = siteWindow(
+    state && { lastEnd: state.lastEnd },
+    { dataset: "" },
+    toS,
+    MAX_WINDOW_S,
   );
+  const lines = shared ? await collectWindow(shared[0], toS) : [];
+  // Each site reads its own window and moves its own end: one account or
+  // dataset that fails is retried from where it stopped on the next run and
+  // does not hold the others back (ae-sites.mjs).
+  const written = {};
+  const starts = {};
+  const answered = {};
+  let failed = false;
+  let edgeRows = 0;
+  for (const site of EDGE_SITES) {
+    const window = siteWindow(state, site, toS, MAX_WINDOW_S);
+    if (window === null) {
+      written[site.dataset] = true;
+      continue;
+    }
+    starts[site.dataset] = window[0];
+    try {
+      const edgeLines = await collectEdgeServed(window[0], toS, site);
+      answered[site.dataset] = true;
+      await influxWrite(edgeLines, NGINX_DB, "ns");
+      written[site.dataset] = true;
+      edgeRows += edgeLines.length;
+    } catch (error) {
+      written[site.dataset] = false;
+      if (firstRowPending(site, state, error.message)) {
+        // Its dataset has no row yet: an empty window that keeps the end.
+        console.warn(
+          `[ae-influx] ${site.site}: no row yet (${error.message}); window empty`,
+        );
+      } else {
+        failed = true;
+        console.error(`[ae-influx] ${site.site}: ${error.message}`);
+      }
+    }
+  }
+  await influxWrite(lines);
+  fs.mkdirSync(STATE_DIR, { recursive: true });
+  fs.writeFileSync(
+    STATE_FILE,
+    JSON.stringify(nextState(state, toS, written, starts, answered)),
+  );
+  console.log(
+    `[ae-influx] → ${new Date(toS * 1000).toISOString()}: ${lines.length} points (cloudflare), ${edgeRows} edge-served rows (nginx_access)`,
+  );
+  if (failed) process.exitCode = 1;
 }
 
 await main();
