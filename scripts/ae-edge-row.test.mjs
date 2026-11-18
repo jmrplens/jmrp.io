@@ -230,3 +230,70 @@ test("the geoip columns keep what they already carried", () => {
   assert.equal(fieldValue(fields, "geoip_lat"), "38.3964");
   assert.equal(fieldValue(fields, "geoip_lon"), "-0.5255");
 });
+
+/**
+ * A phonometry.dev beacon row: blob 20 with the beacon's five appended parts
+ * and doubles 10 to 15 read as load_ms, screen_w, screen_h, viewport_w,
+ * viewport_h and dpr (ae-sites.mjs, BEACON_COLUMNS).
+ * @param {object} [overrides] Columns to replace.
+ * @returns {object} The row.
+ */
+function beaconRow(overrides = {}) {
+  return aeRow({
+    cache: "beacon",
+    misc: `${misc()}|navigate|0|1|es-ES|Europe/Madrid`,
+    load_ms: 421,
+    screen_w: 1920,
+    screen_h: 1080,
+    viewport_w: 1280,
+    viewport_h: 720,
+    dpr: 1.5,
+    ...overrides,
+  });
+}
+
+const DEV = { site: "phonometry-dev", host: "phonometry.dev" };
+
+test("a beacon row carries the page view's load time, screen and viewport", () => {
+  const { tags, fields } = edgeRow(beaconRow(), DEV);
+  assert.equal(fieldValue(fields, "page_load_ms"), "421");
+  assert.equal(fieldValue(fields, "screen_width"), "1920i");
+  assert.equal(fieldValue(fields, "screen_height"), "1080i");
+  assert.equal(fieldValue(fields, "viewport_width"), "1280i");
+  assert.equal(fieldValue(fields, "viewport_height"), "720i");
+  assert.equal(fieldValue(fields, "device_pixel_ratio"), "1.5");
+  assert.equal(tagValue(tags, "nav_type"), "navigate");
+  assert.equal(tagValue(tags, "webdriver"), "1");
+  assert.equal(tagValue(tags, "site"), "phonometry-dev");
+  assert.equal(tagValue(tags, "edge_cache"), "beacon");
+});
+
+test("miscParts reads the beacon's appended parts and leaves them unset elsewhere", () => {
+  const parts = miscParts(`${misc()}|reload|1|0|en|UTC`);
+  assert.equal(parts.navType, "reload");
+  assert.equal(parts.notFound, "1");
+  assert.equal(parts.webdriver, "0");
+  assert.equal(miscParts(misc()).navType, undefined);
+});
+
+test("rows of the other sites gain no beacon column", () => {
+  const { tags, fields } = edgeRow(aeRow(), SITE);
+  for (const name of [
+    "page_load_ms",
+    "screen_width",
+    "screen_height",
+    "viewport_width",
+    "viewport_height",
+    "device_pixel_ratio",
+  ]) {
+    assert.equal(fieldValue(fields, name), undefined, name);
+  }
+  assert.equal(tagValue(tags, "nav_type"), undefined);
+  assert.equal(tagValue(tags, "webdriver"), undefined);
+});
+
+test("a beacon without a measured load time writes no zero", () => {
+  const { fields } = edgeRow(beaconRow({ load_ms: 0, dpr: 0 }), DEV);
+  assert.equal(fieldValue(fields, "page_load_ms"), undefined);
+  assert.equal(fieldValue(fields, "device_pixel_ratio"), undefined);
+});
