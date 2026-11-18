@@ -48,7 +48,10 @@ export const EDGE_SITES = Object.freeze([
   // Worker in the Phonometry account that writes docs-edge's layout for the
   // files agents read and for the page views its beacon reports (verdict
   // `beacon`). Pages are static assets that reach no code, so every row is
-  // ingested; beacon rows carry six more doubles (BEACON_COLUMNS).
+  // ingested; beacon rows carry six more doubles (BEACON_COLUMNS). Its
+  // dataset is new: until a query of it has answered once, the answers
+  // Analytics Engine gives before the first row (FIRST_ROW_PENDING) are an
+  // empty window, not a failure.
   {
     dataset: "phonometry_dev_requests",
     site: "phonometry-dev",
@@ -56,8 +59,56 @@ export const EDGE_SITES = Object.freeze([
     account: "4dbfb3b955a0c856bfe066f2a6061dd5",
     ingestAll: true,
     beacon: true,
+    awaitsFirstRow: true,
   },
 ]);
+
+/**
+ * What the Analytics Engine SQL API answers for a dataset that has no row
+ * yet: `Authorization error` while no dataset exists in the account, and
+ * `unable to find type of column` right after the first write.
+ */
+export const FIRST_ROW_PENDING = Object.freeze([
+  /Authorization error/u,
+  /unable to find type of column/u,
+]);
+
+/**
+ * Whether a failed query only means the site's dataset has no row yet: the
+ * site waits for its first row, no query of it has answered before (the
+ * state's `answered` list), and the error is one of FIRST_ROW_PENDING. Such
+ * a window is empty and keeps the site's end; any other failure, and any
+ * failure once the dataset has answered, is a failure.
+ *
+ * @param {{dataset: string, awaitsFirstRow?: boolean}} site - The site.
+ * @param {{answered?: string[]} | null} state - The state file, or null.
+ * @param {string} message - The error message.
+ * @returns {boolean} True when the window is only empty.
+ */
+export function firstRowPending(site, state, message) {
+  if (!site.awaitsFirstRow) return false;
+  if ((state?.answered ?? []).includes(site.dataset)) return false;
+  return FIRST_ROW_PENDING.some((pattern) => pattern.test(message));
+}
+
+/**
+ * Collects every site's rows on its own: one site that fails does not stop
+ * the others, and what the rest returned is kept.
+ *
+ * @param {object[]} sites - The sites.
+ * @param {(site: object) => Promise<string[]>} collect - One site's lines.
+ * @returns {Promise<{lines: string[], failed: {site: object, error: Error}[]}>} The lines and the sites that failed.
+ */
+export async function collectSites(sites, collect) {
+  const settled = await Promise.allSettled(sites.map((site) => collect(site)));
+  const lines = [];
+  const failed = [];
+  settled.forEach((result, i) => {
+    if (result.status === "fulfilled") lines.push(...result.value);
+    else failed.push({ site: sites[i], error: result.reason });
+  });
+  return { lines, failed };
+}
 
 /** Doubles 10 to 15 of a beacon row: load time, screen, viewport, pixel ratio. */
 export const BEACON_COLUMNS =
@@ -91,14 +142,24 @@ export function siteWindow(state, site, toS, maxWindowS) {
  * @param {Record<string, boolean>} written - Dataset name to whether its rows were written.
  * @param {Record<string, number>} [starts] - Dataset name to the start of the window it tried; a failed
  *   site with no end of its own yet keeps that start, so its first window is read again.
- * @returns {{lastEnd: number, sites: Record<string, number>}} The new state.
+ * @param {Record<string, boolean>} [answered] - Dataset name to whether its query answered in this run;
+ *   kept in `answered`, the datasets whose failures always count (firstRowPending).
+ * @returns {{lastEnd: number, sites: Record<string, number>, answered: string[]}} The new state.
  */
-export function nextState(state, toS, written, starts = {}) {
+export function nextState(state, toS, written, starts = {}, answered = {}) {
   const sites = {};
   for (const site of EDGE_SITES) {
     const previous =
       state?.sites?.[site.dataset] ?? state?.lastEnd ?? starts[site.dataset];
     sites[site.dataset] = written[site.dataset] ? toS : (previous ?? toS);
   }
-  return { lastEnd: toS, sites };
+  const seen = new Set(state?.answered);
+  for (const [dataset, yes] of Object.entries(answered)) {
+    if (yes) seen.add(dataset);
+  }
+  return {
+    lastEnd: toS,
+    sites,
+    answered: [...seen].sort((a, b) => a.localeCompare(b)),
+  };
 }

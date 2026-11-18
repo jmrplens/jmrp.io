@@ -129,8 +129,9 @@ function primaryLanguage(value) {
  * postalCode, which are string fields, but never the location tags.
  *
  * phonometry.dev's beacon rows append five more parts: navigation type, 404
- * flag, webdriver flag, language and time zone (navType, notFound,
- * webdriver below); other rows leave them unset.
+ * flag, webdriver flag, and the browser's language and time zone as the
+ * page's script read them (navType, notFound, webdriver, language, timeZone
+ * below); other rows leave them unset.
  *
  * @param {string} [misc] - The blob; a shorter or empty one leaves parts unset.
  * @returns {Record<string, string | undefined>} The parts this module reads.
@@ -153,6 +154,8 @@ export function miscParts(misc) {
     navType: p[14],
     notFound: p[15],
     webdriver: p[16],
+    language: p[17],
+    timeZone: p[18],
   };
 }
 
@@ -215,6 +218,12 @@ export function edgeRow(r, site) {
     // reached and whether an automated browser reported it.
     ["nav_type", misc.navType],
     ["webdriver", misc.webdriver],
+    // The browser's own language (navigator.language) and time zone
+    // (Intl), beside `lang` (the Accept-Language header) and `cf_tz`
+    // (Cloudflare's, from the address). The 404 flag is not repeated: a
+    // beacon row from the 404 page already has status 404.
+    ["js_lang", misc.language],
+    ["js_tz", misc.timeZone],
   ];
   for (const [name, value] of optionalTags) {
     if (value) tags.push(`${name}=${tagEsc(value)}`);

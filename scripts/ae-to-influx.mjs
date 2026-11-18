@@ -81,8 +81,10 @@ import process from "node:process";
 import { edgeRow } from "./ae-edge-row.mjs";
 import {
   BEACON_COLUMNS,
+  collectSites,
   DEFAULT_ACCOUNT,
   EDGE_SITES,
+  firstRowPending,
   nextState,
   siteWindow,
 } from "./ae-sites.mjs";
@@ -383,6 +385,13 @@ async function influxWrite(lines, db = DB, precision = "s") {
 /** Replays edge-served rows for [fromS, toS) in one-hour windows. */
 async function backfill(fromS, toS) {
   const HOUR = 3600;
+  let state = null;
+  try {
+    state = JSON.parse(fs.readFileSync(STATE_FILE, "utf8"));
+  } catch {
+    // No state yet: a site's failure counts unless it waits for its first row.
+  }
+  const failedSites = new Set();
   const windows = [];
   for (let a = fromS; a < toS; a += HOUR) {
     windows.push([a, Math.min(a + HOUR, toS)]);
@@ -393,43 +402,50 @@ async function backfill(fromS, toS) {
     windows.map(
       ([a, b]) =>
         () =>
-          backfillWindow(a, b),
+          backfillWindow(a, b, state, failedSites),
     ),
     1,
   );
   const total = counts.reduce((sum, n) => sum + n, 0);
   console.log(`[ae-influx] backfill done: ${total} edge-served rows`);
+  if (failedSites.size > 0) {
+    console.error(
+      `[ae-influx] backfill incomplete for ${[...failedSites].join(", ")}`,
+    );
+    process.exitCode = 1;
+  }
 }
 
 /**
- * Collects every site's edge-served rows for [a, b) and writes them.
+ * Collects every site's edge-served rows for [a, b), each site on its own
+ * (collectSites), writes the rows of the sites that answered and logs each
+ * site that failed.
  *
  * @param {number} a - Window start, epoch seconds.
  * @param {number} b - Window end, epoch seconds.
+ * @param {object | null} state - The state file, for firstRowPending.
+ * @param {Set<string>} failedSites - Gains each site whose query failed for real.
  * @returns {Promise<number>} How many rows were written.
  */
-async function backfillWindow(a, b) {
-  const lines = await collectAllEdgeServed(a, b);
+async function backfillWindow(a, b, state, failedSites) {
+  const { lines, failed } = await collectSites(EDGE_SITES, (site) =>
+    collectEdgeServed(a, b, site),
+  );
   await influxWrite(lines, NGINX_DB, "ns");
+  for (const { site, error } of failed) {
+    if (firstRowPending(site, state, error.message)) {
+      console.warn(
+        `[ae-influx] ${site.site}: no row yet (${error.message}); window empty`,
+      );
+    } else {
+      failedSites.add(site.site);
+      console.error(`[ae-influx] ${site.site}: ${error.message}`);
+    }
+  }
   console.log(
     `[ae-influx] backfill ${new Date(a * 1000).toISOString()} → ${new Date(b * 1000).toISOString()}: ${lines.length} edge-served rows`,
   );
   return lines.length;
-}
-
-/**
- * Every edge site's served rows for [fromS, toS), queried concurrently: the
- * sites are independent datasets.
- *
- * @param {number} fromS - Window start, epoch seconds.
- * @param {number} toS - Window end, epoch seconds.
- * @returns {Promise<string[]>} Line-protocol rows, in site order.
- */
-async function collectAllEdgeServed(fromS, toS) {
-  const perSite = await Promise.all(
-    EDGE_SITES.map((site) => collectEdgeServed(fromS, toS, site)),
-  );
-  return perSite.flat();
 }
 
 /** Reads `--name value` from argv. */
@@ -478,6 +494,8 @@ async function main() {
   // does not hold the others back (ae-sites.mjs).
   const written = {};
   const starts = {};
+  const answered = {};
+  let failed = false;
   let edgeRows = 0;
   for (const site of EDGE_SITES) {
     const window = siteWindow(state, site, toS, MAX_WINDOW_S);
@@ -488,24 +506,33 @@ async function main() {
     starts[site.dataset] = window[0];
     try {
       const edgeLines = await collectEdgeServed(window[0], toS, site);
+      answered[site.dataset] = true;
       await influxWrite(edgeLines, NGINX_DB, "ns");
       written[site.dataset] = true;
       edgeRows += edgeLines.length;
     } catch (error) {
       written[site.dataset] = false;
-      console.error(`[ae-influx] ${site.site}: ${error.message}`);
+      if (firstRowPending(site, state, error.message)) {
+        // Its dataset has no row yet: an empty window that keeps the end.
+        console.warn(
+          `[ae-influx] ${site.site}: no row yet (${error.message}); window empty`,
+        );
+      } else {
+        failed = true;
+        console.error(`[ae-influx] ${site.site}: ${error.message}`);
+      }
     }
   }
   await influxWrite(lines);
   fs.mkdirSync(STATE_DIR, { recursive: true });
   fs.writeFileSync(
     STATE_FILE,
-    JSON.stringify(nextState(state, toS, written, starts)),
+    JSON.stringify(nextState(state, toS, written, starts, answered)),
   );
   console.log(
     `[ae-influx] → ${new Date(toS * 1000).toISOString()}: ${lines.length} points (cloudflare), ${edgeRows} edge-served rows (nginx_access)`,
   );
-  if (Object.values(written).includes(false)) process.exitCode = 1;
+  if (failed) process.exitCode = 1;
 }
 
 await main();

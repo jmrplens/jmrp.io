@@ -264,6 +264,8 @@ test("a beacon row carries the page view's load time, screen and viewport", () =
   assert.equal(fieldValue(fields, "device_pixel_ratio"), "1.5");
   assert.equal(tagValue(tags, "nav_type"), "navigate");
   assert.equal(tagValue(tags, "webdriver"), "1");
+  assert.equal(tagValue(tags, "js_lang"), "es-ES");
+  assert.equal(tagValue(tags, "js_tz"), "Europe/Madrid");
   assert.equal(tagValue(tags, "site"), "phonometry-dev");
   assert.equal(tagValue(tags, "edge_cache"), "beacon");
 });
@@ -273,7 +275,10 @@ test("miscParts reads the beacon's appended parts and leaves them unset elsewher
   assert.equal(parts.navType, "reload");
   assert.equal(parts.notFound, "1");
   assert.equal(parts.webdriver, "0");
+  assert.equal(parts.language, "en");
+  assert.equal(parts.timeZone, "UTC");
   assert.equal(miscParts(misc()).navType, undefined);
+  assert.equal(miscParts(misc()).language, undefined);
 });
 
 test("rows of the other sites gain no beacon column", () => {
@@ -290,6 +295,8 @@ test("rows of the other sites gain no beacon column", () => {
   }
   assert.equal(tagValue(tags, "nav_type"), undefined);
   assert.equal(tagValue(tags, "webdriver"), undefined);
+  assert.equal(tagValue(tags, "js_lang"), undefined);
+  assert.equal(tagValue(tags, "js_tz"), undefined);
 });
 
 test("a beacon without a measured load time writes no zero", () => {
