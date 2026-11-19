@@ -11,10 +11,13 @@
  * (2026-11-17, content-validators.js, validatorsOrAsIs). It
  * writes ONE Analytics Engine datapoint per request that reaches it to the
  * `docs_edge_requests` dataset, the same record edge-nonce keeps for jmrp.io.
- * Not every request does: the account's Bulk Redirect rule (list
- * `phonometry_retired`, the retired phonometry addresses, 301 with the query
- * kept) answers before any Worker runs, so those 301s are neither logged here
- * nor counted against the Workers quota (README, "Cloudflare settings").
+ * Not every request does: phonometry moved to https://phonometry.dev/, and
+ * the account's Bulk Redirect rules answer every /phonometry address before any
+ * Worker runs (list `phonometry_retired_v2`, the retired addresses and the
+ * pages without their trailing slash, each 301 straight to its final page,
+ * then list `phonometry_moved`, the rest of /phonometry, 301 to the same path
+ * there; the query is kept), so those 301s are neither logged here nor counted
+ * against the Workers quota (README, "Cloudflare settings").
  *
  * Two things on top of the pass-through, both from the first day of logs
  * (2026-10-14):

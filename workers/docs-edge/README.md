@@ -176,7 +176,11 @@ goes out as it came.
   but out of search indexes.
 - A Compression Rule that prefers Brotli over zstd for HTML and a few JSON types,
   and a response rule that removes `Accept-Ranges` outside the binary types.
-- Bulk Redirects at account level, with the list of retired phonometry URLs.
+- Bulk Redirects at account level for phonometry, which moved to https://phonometry.dev/:
+  the list `phonometry_retired_v2` (the retired addresses and the pages without their
+  trailing slash, each 301 straight to its final page) and then `phonometry_moved`
+  (every other address under `/phonometry`, 301 to the same path there), both keeping
+  the query. Nothing else on `docs.jmrp.io` is redirected.
 - A custom firewall rule that skips the zone's bot and security checks for
   `docs.jmrp.io`.
 
