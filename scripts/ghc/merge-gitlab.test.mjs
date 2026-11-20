@@ -19,6 +19,7 @@ import {
   loadGitlabPart,
   median,
   shapeGitlabAchievements,
+  withoutHiddenAchievements,
 } from "./merge-gitlab.mjs";
 
 const DISPLAY = {
@@ -199,6 +200,69 @@ test("loadGitlabPart falls back to the fixture's GitLab part only", async () => 
   assert.equal(fromFixture, true);
   assert.deepEqual(part, fixturePart);
   assert.ok(warnings.some((line) => line.includes("is not set")));
+});
+
+test("withoutHiddenAchievements drops only the listed ids", () => {
+  const rows = [
+    { achievement: "gitlab-codebase-custodian" },
+    { achievement: "gitlab-seed-sower" },
+  ];
+  assert.deepEqual(withoutHiddenAchievements(rows, ["gitlab-seed-sower"]), [
+    { achievement: "gitlab-codebase-custodian" },
+  ]);
+  assert.deepEqual(withoutHiddenAchievements(rows), rows);
+});
+
+test("loadGitlabPart drops hidden achievements, live and from the fixture", async () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "gl-hide-"));
+  const fixturePath = path.join(dir, "fixture.json");
+  const achievements = [
+    { achievement: "gitlab-codebase-custodian", name: "Codebase Custodian" },
+    { achievement: "gitlab-seed-sower", name: "Seed Sower" },
+  ];
+  fs.writeFileSync(
+    fixturePath,
+    JSON.stringify({ gitlab: { ...EMPTY_GITLAB_PART, achievements } }),
+  );
+  const contributions = /** @type {any} */ ({
+    gitlab: {
+      username: "jmrp",
+      userId: 1,
+      excludeNamespaces: [],
+      hideAchievements: ["gitlab-seed-sower"],
+    },
+  });
+  const fromFixture = await loadGitlabPart({
+    root: dir,
+    fixturePath,
+    contributions,
+    warn: () => {},
+    makeClient: () => {
+      throw new Error("no token");
+    },
+  });
+  assert.deepEqual(
+    fromFixture.part.achievements.map((row) => row.achievement),
+    ["gitlab-codebase-custodian"],
+  );
+  const live = await loadGitlabPart({
+    root: dir,
+    fixturePath,
+    contributions,
+    warn: () => {},
+    makeClient: () => /** @type {any} */ ({}),
+    collect: async () =>
+      /** @type {any} */ ({
+        ...EMPTY_GITLAB_PART,
+        achievements,
+        rawAchievements: [],
+      }),
+  });
+  assert.equal(live.fromFixture, false);
+  assert.deepEqual(
+    live.part.achievements.map((row) => row.achievement),
+    ["gitlab-codebase-custodian"],
+  );
 });
 
 test("loadGitlabPart returns the empty part when no GitLab account is configured", async () => {

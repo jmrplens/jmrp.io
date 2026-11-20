@@ -238,6 +238,20 @@ export function shapeGitlabAchievements(rows) {
 }
 
 /**
+ * Drops the achievements `contributions.yaml` hides (`gitlab.hideAchievements`)
+ * from a GitLab part or from the raw rows the badge downloader reads.
+ *
+ * @template {{achievement: string}} T
+ * @param {readonly T[]} rows - Achievement rows.
+ * @param {readonly string[]} [hidden] - Hidden achievement ids.
+ * @returns {T[]} The rows still shown.
+ */
+export function withoutHiddenAchievements(rows, hidden = []) {
+  const set = new Set(hidden);
+  return rows.filter((row) => !set.has(row.achievement));
+}
+
+/**
  * The GitLab part of the committed fixture, or the empty part.
  *
  * @param {string} fixturePath - Absolute fixture path.
@@ -257,7 +271,8 @@ export function readFixtureGitlabPart(fixturePath) {
 /**
  * Collects the GitLab part live (and self-hosts its badges), falling back
  * to the committed fixture's GitLab part, and only that part, when GitLab.com
- * is unreachable or no token is configured. Never throws.
+ * is unreachable or no token is configured. Either way the achievements
+ * `gitlab.hideAchievements` lists are dropped. Never throws.
  *
  * @param {object} options - Options.
  * @param {string} options.root - Repository root.
@@ -279,13 +294,23 @@ export async function loadGitlabPart({
   if (!contributions.gitlab) {
     return { part: EMPTY_GITLAB_PART, fromFixture: false };
   }
+  const hidden = contributions.gitlab.hideAchievements ?? [];
   try {
     const { rawAchievements, ...part } = await collect(
       makeClient(),
       contributions.gitlab,
     );
-    await ensureGitlabAchievementBadges(rawAchievements, { root, warn });
-    return { part, fromFixture: false };
+    await ensureGitlabAchievementBadges(
+      withoutHiddenAchievements(rawAchievements, hidden),
+      { root, warn },
+    );
+    return {
+      part: {
+        ...part,
+        achievements: withoutHiddenAchievements(part.achievements, hidden),
+      },
+      fromFixture: false,
+    };
   } catch (error) {
     const message = (
       error instanceof Error ? error.message : String(error)
@@ -293,6 +318,16 @@ export async function loadGitlabPart({
     warn(
       `Could not collect the GitLab.com contributions (${message}); using the GitLab part of ${path.relative(root, fixturePath)}.`,
     );
-    return { part: readFixtureGitlabPart(fixturePath), fromFixture: true };
+    const fixturePart = readFixtureGitlabPart(fixturePath);
+    return {
+      part: {
+        ...fixturePart,
+        achievements: withoutHiddenAchievements(
+          fixturePart.achievements ?? [],
+          hidden,
+        ),
+      },
+      fromFixture: true,
+    };
   }
 }

@@ -1194,13 +1194,21 @@ const contributionsSchema = z.object({
    * GitLab.com account whose authored merge requests and issues are added to
    * the GitHub ones. `excludeNamespaces` are the owner's own top-level
    * namespaces (mirrors of his GitHub repositories), never counted as
-   * contributions to someone else's project.
+   * contributions to someone else's project. `hideAchievements` lists the
+   * GitLab achievements the author chose not to show.
    */
   gitlab: z
     .object({
       username: z.string().regex(/^[\w.-]+$/),
       userId: z.number().int().positive(),
       excludeNamespaces: z.array(z.string()).default([]),
+      /**
+       * GitLab achievement ids (`gitlab-<slugged name>`) never shown: dropped
+       * when the GitLab part is collected or read from the fixture.
+       */
+      hideAchievements: z
+        .array(z.string().regex(/^gitlab-[a-z0-9-]+$/, "gitlab-<slug>"))
+        .default([]),
     })
     .optional(),
   /**

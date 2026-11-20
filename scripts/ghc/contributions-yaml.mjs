@@ -43,6 +43,8 @@ export const CONTRIBUTIONS_YAML_PATH = "src/content/profile/contributions.yaml";
  * @property {number} userId - GitLab.com numeric user id.
  * @property {string[]} excludeNamespaces - The owner's own top-level
  *   namespaces (mirrors of GitHub repositories), never counted.
+ * @property {string[]} hideAchievements - GitLab achievement ids
+ *   (`gitlab-<slug>`) never shown.
  */
 
 /**
@@ -162,6 +164,9 @@ function shapeGitlabSettings(raw) {
     userId: block.userId,
     excludeNamespaces: Array.isArray(block.excludeNamespaces)
       ? block.excludeNamespaces.map(String)
+      : [],
+    hideAchievements: Array.isArray(block.hideAchievements)
+      ? block.hideAchievements.map(String)
       : [],
   };
 }
