@@ -187,10 +187,10 @@ projects:
     language: Python
     license: MIT
     repo: https://github.com/jmrplens/phonometry
-    docs: https://docs.jmrp.io/phonometry/
+    docs: https://phonometry.dev/
     kicker: Acoustics · DSP
     operatingSystem: Linux, macOS, Windows
-    docsEs: https://docs.jmrp.io/phonometry/es/
+    docsEs: https://phonometry.dev/es/
     listings:
       - label: PyPI
         url: https://pypi.org/project/phonometry/

@@ -61,7 +61,7 @@ test("a project with its own docs site is compared", () => {
       id: "phonometry",
       status: "active",
       repo: "https://github.com/jmrplens/phonometry",
-      docs: "https://docs.jmrp.io/phonometry/",
+      docs: "https://phonometry.dev/",
     }),
     null,
   );

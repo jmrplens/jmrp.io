@@ -318,7 +318,7 @@ def mcp():
 # ---------------------------------------------------------------- docs.jmrp.io
 def docs():
     host = "docs.jmrp.io"
-    say(f"\n## {host} (edge {edge_ip(host)}; phonometry is left out, it republishes often)")
+    say(f"\n## {host} (edge {edge_ip(host)}; phonometry lives at phonometry.dev, only its 301s are checked)")
     _, _, page = fetch(host, "/libgen-mcp/", origin_github=True)
     astro = re.search(rb'/libgen-mcp/_astro/[\w.-]+\.(?:js|css)', page)
     llms = fetch(host, "/libgen-mcp/llms.txt", ["Accept-Encoding: identity"], origin_github=True)[2]
@@ -358,6 +358,35 @@ def docs():
     record("MUST", host, "a11y-diagrams is noindex once and still answers (A11)", s == 200 and tags == "noindex, follow", f"{s} x-robots-tag={tags or '-'}")
     s, h, _ = fetch(host, "/libgen-mcp/og.png", ["Range: bytes=-0,-0"])
     record("OBS", host, "bytes=-0,-0 (O1, A13: Cloudflare answers 502 here)", True, brief(s, h))
+    phonometry_moved(host)
+
+
+# phonometry moved to https://phonometry.dev/ (2026-11): every address under
+# /phonometry answers one 301 from the account's Bulk Redirects (the retired
+# addresses first, straight to their final page, then a catch-all for the rest),
+# and nothing else on docs.jmrp.io moves.
+PHONOMETRY_MOVES = (
+    ("/phonometry", "https://phonometry.dev/"),
+    ("/phonometry/", "https://phonometry.dev/"),
+    ("/phonometry/signals/?q=1", "https://phonometry.dev/signals/?q=1"),
+    ("/phonometry/signals", "https://phonometry.dev/signals/"),
+    ("/phonometry/signals/index.md", "https://phonometry.dev/signals/index.md"),
+    ("/phonometry/llms.txt", "https://phonometry.dev/llms.txt"),
+    ("/phonometry/about/?q=1", "https://phonometry.dev/start/about/?q=1"),
+)
+
+
+def phonometry_moved(host):
+    for path, target in PHONOMETRY_MOVES:
+        s, h, _ = fetch(host, path)
+        record("MUST", host, f"{path} answers one 301 to phonometry.dev", s == 301 and h.get("location") == target,
+               f"{s} location={h.get('location', '-')}")
+    s, h, _ = fetch(host, "/phonometry/signals/", ["Accept: text/markdown"])
+    record("MUST", host, "a Markdown request under /phonometry/ is moved too, not negotiated here",
+           s == 301 and h.get("location") == "https://phonometry.dev/signals/", f"{s} location={h.get('location', '-')}")
+    for path in ("/", "/robots.txt", "/llms.txt", "/libgen-mcp/"):
+        s, h, _ = fetch(host, path, method="HEAD")
+        record("MUST", host, f"{path} stays on docs.jmrp.io (no redirect)", s == 200, brief(s, h))
 
 
 CONTENT_ETAG = re.compile(r'W/"[0-9a-f]{32}"')
