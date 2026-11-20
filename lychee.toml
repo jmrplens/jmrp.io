@@ -77,6 +77,12 @@ exclude = [
     # as far as can be told; the checker never will be. Post 003 cites the
     # 2009 announcement of CSP there.
     'https://blog\.mozilla\.org/.*',
+    # libraries.io answers lychee from GitHub's runners with 403: every run
+    # of the link check for jmrp.io #692 (three) and #693 (one) on 2026-11-19
+    # and 2026-11-20, while from this server it answers 200 to a plain curl
+    # and to lychee's user-agent alike (checked 2026-11-20). The
+    # gitlab-mcp-server page in `sameAs` is real; the checker cannot see it.
+    'https://libraries\.io/.*',
     'https://gitlab\.torproject\.org/.*',
     'https://www\.abuseipdb\.com/.*',
     # The 404 page legitimately answers 404; it is its own canonical. The
