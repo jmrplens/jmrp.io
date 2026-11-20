@@ -283,6 +283,12 @@ const GITLAB_AWARD_MEANING: Readonly<
     key: "pages.projectsContributions.gitlabHackathonFirstMeaning",
     points: false,
   },
+  // Awarded 2026-11-20 for removing dead code and paying down tech debt, in
+  // GitLab's words; a recognition, not a points threshold.
+  "gitlab-codebase-custodian": {
+    key: "pages.projectsContributions.gitlabCodebaseCustodianMeaning",
+    points: false,
+  },
 };
 
 /**

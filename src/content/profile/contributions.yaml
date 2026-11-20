@@ -276,6 +276,11 @@ language:
 # jmrp-oss is his group too ("Open source work by José Manuel Requena
 # Plens", owner jmrp): orbit-fixtures/kg-fixtures, the fixture project he
 # made to exercise GitLab Orbit, listed as an upstream until 2026-11-10.
+# `hideAchievements` are GitLab achievement ids (`gitlab-<slugged name>`)
+# the author chose not to show: dropped when collected, so neither the
+# shelf, the markdown twin nor the JSON-LD names them, and their badge is
+# never downloaded. Seed Sower (2026-11-16, "Planted trees in the GitLab
+# forest") is not a contribution award; hidden by the author on 2026-11-20.
 gitlab:
   username: jmrp
   userId: 15767218
@@ -283,6 +288,8 @@ gitlab:
     - jmrp
     - jmrp-oss
     - plens1
+  hideAchievements:
+    - gitlab-seed-sower
 
 # See this file's header comment. Currently just the one pre-rename PyOctave
 # → phonometry titles (conda-forge/staged-recipes#34074 "Adding

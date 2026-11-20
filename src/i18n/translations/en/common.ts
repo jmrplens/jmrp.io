@@ -1112,6 +1112,8 @@ export const common = {
         "Recognition GitLab gives a community member every release",
       gitlabHackathonFirstMeaning:
         "First place in a GitLab Hackathon, GitLab's contribution event for the wider community",
+      gitlabCodebaseCustodianMeaning:
+        "Cleaned up GitLab's codebase by removing dead code and paying down tech debt",
       gitlabPointsLink: "Points on GitLab's contributor platform",
       ledgerIntro:
         "One entry per project, most merged changes first. Each lists all its changes: merged ones first, then open ones, newest first within each.",
