@@ -32,7 +32,10 @@
 const IDENTIFIER = /^[A-Za-z0-9.+-]+$/;
 
 /** The operator between two identifiers of an AND expression. */
-const AND = /\s+AND\s+/;
+const AND = "AND";
+
+/** The run of whitespace between the tokens of an expression. */
+const SPACE = /\s+/;
 
 /**
  * The identifiers an expression joins, in its order.
@@ -44,13 +47,27 @@ const AND = /\s+AND\s+/;
  *   `AND`.
  */
 export function licenseIdentifiers(expression) {
-  const identifiers = expression.trim().split(AND);
-  for (const identifier of identifiers) {
-    if (!IDENTIFIER.test(identifier)) {
-      throw new Error(
-        `license "${expression}": expected one SPDX identifier or identifiers ` +
-          `joined by AND, and "${identifier}" is not an identifier`,
-      );
+  // Split once on whitespace and read the tokens in turn: an identifier at
+  // every even position, the operator at every odd one. One split with a
+  // single quantifier runs in linear time, where a pattern that matched the
+  // operator with whitespace on both sides could backtrack.
+  const tokens = expression.trim().split(SPACE);
+  const refuse = (/** @type {string} */ reason) =>
+    new Error(
+      `license "${expression}": expected one SPDX identifier or identifiers ` +
+        `joined by AND, and ${reason}`,
+    );
+  if (tokens.length % 2 === 0) {
+    throw refuse(`"${tokens.at(-1)}" ends it without an identifier after it`);
+  }
+  const identifiers = [];
+  for (const [index, token] of tokens.entries()) {
+    if (index % 2 === 1) {
+      if (token !== AND) throw refuse(`"${token}" is not AND`);
+    } else if (IDENTIFIER.test(token)) {
+      identifiers.push(token);
+    } else {
+      throw refuse(`"${token}" is not an identifier`);
     }
   }
   return identifiers;

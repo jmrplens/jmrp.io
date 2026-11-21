@@ -1064,6 +1064,49 @@ const ProjectEntry = z.object({
   runtimePlatform: z.string().optional(),
 });
 
+/**
+ * What is wrong with a project's `license` and `licenseUrl` taken together:
+ * every identifier of the license must resolve to a URL, either from
+ * `licenseUrl` (one per identifier, in its order) or from the table. Without
+ * this, an identifier the table lacks would be published as if it were its
+ * own URL, on the card, the node and in projects.json. An expression the
+ * grammar refuses is reported by the `license` field itself, not here.
+ *
+ * @param project - The project entry as the schema parsed it.
+ * @param project.id - Its id, named in each message.
+ * @param project.license - Its SPDX expression, when it has one.
+ * @param project.licenseUrl - Its own license URL or URLs, when given.
+ * @returns One issue per problem, ready for `ctx.addIssue`.
+ */
+function licenseIssues(project: {
+  id: string;
+  license?: string;
+  licenseUrl?: string | string[];
+}): { code: "custom"; path: string[]; message: string }[] {
+  if (project.license === undefined || !isLicenseExpression(project.license)) {
+    return [];
+  }
+  const identifiers = licenseIdentifiers(project.license);
+  if (project.licenseUrl !== undefined) {
+    const stated = [project.licenseUrl].flat();
+    if (stated.length === identifiers.length) return [];
+    return [
+      {
+        code: "custom",
+        path: ["licenseUrl"],
+        message: `${project.id}: \`licenseUrl\` gives ${stated.length} URL(s) for the ${identifiers.length} identifier(s) of "${project.license}"; give one per identifier, in its order`,
+      },
+    ];
+  }
+  return identifiers
+    .filter((id) => !Object.hasOwn(licenseUrls, id))
+    .map((id) => ({
+      code: "custom" as const,
+      path: ["license"],
+      message: `${project.id}: "${id}" has no URL in src/data/license-urls.json; add it there or give \`licenseUrl\``,
+    }));
+}
+
 const projectsSchema = z.object({
   type: z.literal("projects"),
   projects: z
@@ -1079,38 +1122,7 @@ const projectsSchema = z.object({
             message: `${project.id}: \`runtimePlatform\` is a SoftwareSourceCode property; schemaType is "${project.schemaType}"`,
           });
         }
-        // Every identifier of the license resolves to a URL: `licenseUrl`
-        // gives one per identifier, or the table knows each one. Without
-        // this, an identifier the table lacks would be published as if it
-        // were its own URL, on the card, the node and in projects.json.
-        if (
-          project.license !== undefined &&
-          isLicenseExpression(project.license)
-        ) {
-          const identifiers = licenseIdentifiers(project.license);
-          const stated =
-            project.licenseUrl === undefined
-              ? undefined
-              : [project.licenseUrl].flat();
-          if (stated !== undefined && stated.length !== identifiers.length) {
-            ctx.addIssue({
-              code: "custom",
-              path: ["licenseUrl"],
-              message: `${project.id}: \`licenseUrl\` gives ${stated.length} URL(s) for the ${identifiers.length} identifier(s) of "${project.license}"; give one per identifier, in its order`,
-            });
-          }
-          if (stated === undefined) {
-            for (const id of identifiers) {
-              if (!Object.hasOwn(licenseUrls, id)) {
-                ctx.addIssue({
-                  code: "custom",
-                  path: ["license"],
-                  message: `${project.id}: "${id}" has no URL in src/data/license-urls.json; add it there or give \`licenseUrl\``,
-                });
-              }
-            }
-          }
-        }
+        for (const issue of licenseIssues(project)) ctx.addIssue(issue);
         // Only a project in development may lack a public repository or a
         // license: every other status renders both, in the card, the JSON-LD
         // node and projects.json, and an empty one would publish "undefined".
