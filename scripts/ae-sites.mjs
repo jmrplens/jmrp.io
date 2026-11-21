@@ -64,6 +64,48 @@ export const EDGE_SITES = Object.freeze([
 ]);
 
 /**
+ * Requests read from a zone's own HTTP analytics instead of a Worker's
+ * dataset (ae-zone-rows.mjs): the files a site serves as static assets, which
+ * run no code and so write no Analytics Engine row. Each source keeps its
+ * own window end in the state file under its `dataset` key, like a site.
+ *
+ * phonometry.dev (since 2026-11-21) hands every file to the assets and runs
+ * its Worker for the beacon alone. The first group was static already
+ * (robots.txt left the Worker in #1183; the rest are files no Worker ever
+ * ran for). The second was logged by the Worker until the deploy that made
+ * it static: a window in which the Worker still wrote one of those verdicts
+ * reads that group from the Worker only, so a request is never counted twice
+ * and a rollback to a version that logs them needs no change here.
+ */
+export const ZONE_SOURCES = Object.freeze([
+  {
+    dataset: "zone:phonometry.dev",
+    site: "phonometry-dev",
+    host: "phonometry.dev",
+    zone: "594554a63737deee229566971a765fd4",
+    worker: {
+      dataset: "phonometry_dev_requests",
+      account: "4dbfb3b955a0c856bfe066f2a6061dd5",
+    },
+    groups: Object.freeze([
+      Object.freeze({
+        patterns: Object.freeze([
+          "/robots.txt",
+          "/ai.txt",
+          "/humans.txt",
+          "/ads.txt",
+          "/.well-known/%",
+        ]),
+      }),
+      Object.freeze({
+        patterns: Object.freeze(["%/index.md", "/llms%.txt", "/sitemap%.xml"]),
+        workerVerdicts: Object.freeze(["asset", "redirect", "not-modified"]),
+      }),
+    ]),
+  },
+]);
+
+/**
  * What the Analytics Engine SQL API answers for a dataset that has no row
  * yet: `Authorization error` while no dataset exists in the account, and
  * `unable to find type of column` right after the first write.
@@ -135,7 +177,7 @@ export function siteWindow(state, site, toS, maxWindowS) {
 
 /**
  * The state to save after a run: the shared end moves to toS, each site's
- * end moves only when its rows were written.
+ * (and each zone source's) end moves only when its rows were written.
  *
  * @param {{lastEnd?: number, sites?: Record<string, number>} | null} state - The state read at the start.
  * @param {number} toS - The run's window end.
@@ -148,7 +190,7 @@ export function siteWindow(state, site, toS, maxWindowS) {
  */
 export function nextState(state, toS, written, starts = {}, answered = {}) {
   const sites = {};
-  for (const site of EDGE_SITES) {
+  for (const site of [...EDGE_SITES, ...ZONE_SOURCES]) {
     const previous =
       state?.sites?.[site.dataset] ?? state?.lastEnd ?? starts[site.dataset];
     sites[site.dataset] = written[site.dataset] ? toS : (previous ?? toS);
