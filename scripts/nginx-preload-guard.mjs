@@ -22,6 +22,11 @@
 import fs from "node:fs";
 import path from "node:path";
 
+/**
+ * The server_name values that mark a dumped file as this site's own, compared
+ * as whole names (a Set lookup, not a substring test).
+ */
+const SITE_SERVER_NAMES = new Set(["jmrp.io"]);
 /** Hosts whose absolute URLs are this site's own files. */
 const SITE_HOSTS = new Set(["jmrp.io", "www.jmrp.io"]);
 
@@ -144,7 +149,10 @@ function isOwnSection(section, snippetsDir) {
     // both quantifiers claim the same spaces (Sonar S5852).
     /\bserver_name\s([^;]*);/g,
   )) {
-    if (match[1].trim().split(/\s+/).includes("jmrp.io")) return true;
+    // Whole names compared for equality, never a substring test, so
+    // `bio.jmrp.io` or `jmrp.io.example` cannot pass for this site.
+    const names = match[1].trim().split(/\s+/);
+    if (names.some((name) => SITE_SERVER_NAMES.has(name))) return true;
   }
   return false;
 }

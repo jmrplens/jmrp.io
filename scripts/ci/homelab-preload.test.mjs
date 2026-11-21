@@ -219,7 +219,10 @@ http {
     access_log off;
     include ${prefix}/map.conf;
     server {
-        listen 127.0.0.1:1;
+        # A socket in the scratch prefix, not a TCP port: nginx -t binds the
+        # listen address on this build, and a runner without root cannot
+        # bind a port below 1024.
+        listen unix:${prefix}/nginx.sock;
         location / {
             add_header Link '</llms.txt>; rel="describedby"${HOMELAB_PRELOAD_VARIABLE}' always;
         }
