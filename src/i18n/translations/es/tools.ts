@@ -644,7 +644,7 @@ export const tools = {
   certInspector: {
     title: "Inspector de Certificados",
     // Input section
-    fetchFromUrl: "Obtener desde URL",
+    fetchFromUrl: "Buscar en los registros de Certificate Transparency",
     urlPlaceholder: "https://ejemplo.com",
     fetch: "Obtener",
     certificatesFound: "Certificados Encontrados",

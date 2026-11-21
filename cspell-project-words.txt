@@ -380,6 +380,7 @@ depende
 depurabilidad
 desactualizadas
 desactualizados
+desarrollo
 descargable
 descargables
 descárgalo

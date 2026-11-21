@@ -30,7 +30,9 @@ const locale = getLangFromUrl(Astro.url);
 const t = useTranslations(locale);
 const translatePath = useTranslatedPath(locale);
 
-const headingId = `related-${crypto.getRandomValues(new Uint32Array(1))[0]}`;
+// Fixed, not random: a per-build random id moved the anchor on every deploy
+// (GEO audit #13, B6), and a post renders one related-content block.
+const headingId = "related";
 ---
 
 {(posts.length > 0 || tools.length > 0) && (

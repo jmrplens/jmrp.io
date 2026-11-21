@@ -639,8 +639,9 @@ export const tools = {
   },
   certInspector: {
     title: "Certificate Inspector",
-    // Input section
-    fetchFromUrl: "Fetch from URL",
+    // Input section. The lookup asks Certificate Transparency logs (Cert
+    // Spotter, then crt.sh) about the domain; it never contacts the host.
+    fetchFromUrl: "Look up in Certificate Transparency logs",
     urlPlaceholder: "https://example.com",
     fetch: "Fetch",
     certificatesFound: "Certificates Found",

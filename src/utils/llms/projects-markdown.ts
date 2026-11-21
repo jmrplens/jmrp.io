@@ -92,10 +92,17 @@ function ledgerItemLabel(
   t: ReturnType<typeof useTranslations>,
   locale: "en" | "es",
 ): string {
+  // A linked row, as the page links it. Since the page's JSON-LD stopped
+  // restating every row (GEO audit #13, M4), this twin is the Dataset
+  // distribution that carries the full inventory, so each row keeps the
+  // address the graph used as its identifier. A redacted row prints no link
+  // on the page either. Brackets in a title are escaped so that they cannot
+  // close the link text early.
+  const linkText = itemTitleLine(item).replaceAll(/[[\]]/g, String.raw`\$&`);
   const title =
     item.redacted || !item.title
       ? t("pages.projectsContributions.itemRedacted")
-      : itemTitleLine(item);
+      : `[${linkText}](${itemUrl(item)})`;
   const size = diffSizeText(
     itemDiffSize(item),
     platformOf(item.platform),
@@ -487,12 +494,15 @@ export async function contributionsPageMarkdown(
     "",
   ];
 
-  // The page's order: the author's lead first, then the rest.
+  // The page's order: the author's lead first, then the rest. The page's
+  // JSON-LD restates only the lead, so this list is where the rest are
+  // machine-readable (GEO audit #13, M4); brackets in a title are escaped,
+  // as in the ledger rows, so that they cannot close the link text early.
   const answersSplit = splitAnswers(acceptedAnswers, answersLead, () => {});
-  const answerLines = [...answersSplit.lead, ...answersSplit.rest].map(
-    (a) =>
-      `- ${foldProjectName(a.fullName, displayName)}: [${a.title}](${a.answerUrl})`,
-  );
+  const answerLines = [...answersSplit.lead, ...answersSplit.rest].map((a) => {
+    const linkText = a.title.replaceAll(/[[\]]/g, String.raw`\$&`);
+    return `- ${foldProjectName(a.fullName, displayName)}: [${linkText}](${a.answerUrl})`;
+  });
 
   // The page's shelf, line by line: tier and multiplier ("x4") for GitHub,
   // the estimated progress to the next tier where the page shows it, the
@@ -581,6 +591,16 @@ export async function contributionsPageMarkdown(
           "",
         ]
       : []),
+    // The FAQ sits right after the intro, ahead of the highlights and the
+    // ledger, not at the end as on the other twins: the ledger lists every
+    // row (more than 11,000 words), so a chunking extractor that reads the
+    // file in order met the answers last, if at all (GEO audit #13, O7).
+    // `slice(1)` drops the block's leading blank line, which the intro
+    // above already ends with.
+    ...pageFaqLines(
+      await getPageFaq("/projects/contributions/", locale),
+      locale,
+    ).slice(1),
     `## ${t("pages.projectsContributions.highlightsHeading")}`,
     "",
     ...highlightLines,
@@ -615,9 +635,5 @@ export async function contributionsPageMarkdown(
     ...(hasGithubAchievements
       ? [t("pages.projectsContributions.achievementsHiddenNote"), ""]
       : []),
-    ...pageFaqLines(
-      await getPageFaq("/projects/contributions/", locale),
-      locale,
-    ),
   ].join("\n");
 }

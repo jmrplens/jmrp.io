@@ -4,14 +4,14 @@
  * Data, not logic: each entry is one page's title and prose in both languages,
  * written by hand. They live apart from `@utils/llms` for two reasons. The
  * shape `{ en: {...}, es: {...} }` repeats once per entry by construction, so
- * a copy-paste detector reads a hand-written bilingual table as duplication —
+ * a copy-paste detector reads a hand-written bilingual table as duplication,
  * the same reason `src/i18n/translations/**` is already excluded from CPD.
  * Keeping them here means that exclusion can name this file precisely, and the
  * renderers in `@utils/llms` stay under the detector where they belong.
  *
  * @module
  */
-// cspell:locale es,en — half of every entry is Spanish by design.
+// cspell:locale es,en: half of every entry is Spanish by design.
 
 /**
  * Stands in for the lines that list the projects themselves. `llms.ts`
@@ -50,13 +50,13 @@ export const CONTRIBUTIONS_URL = "{{contributions-url}}";
  *
  * The index promised Homelab, Projects, Uses and Privacy; the full document
  * expanded only About, Blog, Tools, CV and Publications, so a model that
- * followed the index into the full file found nothing for four of them —
+ * followed the index into the full file found nothing for four of them,
  * including /privacy/, which carries some of the most quotable prose on the
  * site because its claims are falsifiable rather than promotional.
  *
  * The home page and /about/ were the last two gaps, and the worst of them:
- * /about/ is the author-entity page — the one a model reads to answer who
- * this person is — and neither it nor its twin appeared anywhere in the full
+ * /about/ is the author-entity page (the one a model reads to answer who
+ * this person is) and neither it nor its twin appeared anywhere in the full
  * document, in either language.
  *
  * Written as standing facts rather than generated from the pages: /homelab/'s
@@ -108,7 +108,7 @@ export const PROFILE_SECTIONS: {
       lines: [
         "Open-source software authored and maintained by the author, each entry listing language and documentation site, plus license and source repository once released.",
         PROJECT_ROSTER,
-        `As of ${CONTRIBUTIONS_DATE}, the page also names code and documentation the author contributed to projects he does not maintain on GitHub and GitLab: merged pull and merge requests, accepted GitHub Discussions answers, and packaging that lists his own tools in public registries. The full ledger, grouped by project, is at ${CONTRIBUTIONS_URL}.`,
+        `As of ${CONTRIBUTIONS_DATE}, the page also names code and documentation the author contributed to projects he does not maintain on GitHub and GitLab: merged pull and merge requests, and accepted GitHub Discussions answers. The full ledger, grouped by project, is at ${CONTRIBUTIONS_URL}.`,
       ],
     },
     es: {
@@ -116,7 +116,7 @@ export const PROFILE_SECTIONS: {
       lines: [
         "Software de código abierto escrito y mantenido por el autor; cada entrada indica lenguaje y sitio de documentación y, una vez publicado, licencia y repositorio de código.",
         PROJECT_ROSTER,
-        `A fecha de ${CONTRIBUTIONS_DATE}, la página también recoge código y documentación que el autor ha aportado a proyectos que no mantiene en GitHub y GitLab: pull requests y merge requests fusionadas, respuestas aceptadas en GitHub Discussions y empaquetado que lista sus propias herramientas en registros públicos. El libro completo, agrupado por proyecto, está en ${CONTRIBUTIONS_URL}.`,
+        `A fecha de ${CONTRIBUTIONS_DATE}, la página también recoge código y documentación que el autor ha aportado a proyectos que no mantiene en GitHub y GitLab: pull requests y merge requests fusionadas, y respuestas aceptadas en GitHub Discussions. El libro completo, agrupado por proyecto, está en ${CONTRIBUTIONS_URL}.`,
       ],
     },
   },
@@ -125,13 +125,13 @@ export const PROFILE_SECTIONS: {
     en: {
       title: "Open-source contributions",
       lines: [
-        `A build-time snapshot (${CONTRIBUTIONS_DATE}) of the author's work on GitHub and GitLab projects he does not maintain: code and documentation pull and merge requests grouped by project, the issues he reported, pull requests that list his own tools in package managers, registries and curated lists, accepted GitHub Discussions answers, and achievements on GitHub and GitLab. The figures come from the author's own GitHub collector (ghchronicle) and the GitLab API, and each item links to its pull request, merge request or thread. Full page: ${CONTRIBUTIONS_URL}`,
+        `A build-time snapshot (${CONTRIBUTIONS_DATE}) of the author's work on GitHub and GitLab projects he does not maintain: code and documentation pull and merge requests grouped by project, the issues he reported, accepted GitHub Discussions answers, and achievements on GitHub and GitLab. The figures come from the author's own GitHub collector (ghchronicle) and the GitLab API, and each item links to its pull request, merge request or thread. Full page: ${CONTRIBUTIONS_URL}`,
       ],
     },
     es: {
       title: "Aportaciones open source",
       lines: [
-        `Instantánea del build (${CONTRIBUTIONS_DATE}) del trabajo del autor en proyectos de GitHub y GitLab que no mantiene: pull requests y merge requests de código y documentación agrupadas por proyecto, las issues que ha reportado, pull requests que publican sus propias herramientas en gestores de paquetes, registros y listas curadas, respuestas aceptadas en GitHub Discussions y logros en GitHub y GitLab. Las cifras salen del recolector de GitHub del propio autor (ghchronicle) y de la API de GitLab, y cada elemento enlaza a su pull request, merge request o hilo. Página completa: ${CONTRIBUTIONS_URL}`,
+        `Instantánea del build (${CONTRIBUTIONS_DATE}) del trabajo del autor en proyectos de GitHub y GitLab que no mantiene: pull requests y merge requests de código y documentación agrupadas por proyecto, las issues que ha reportado, respuestas aceptadas en GitHub Discussions y logros en GitHub y GitLab. Las cifras salen del recolector de GitHub del propio autor (ghchronicle) y de la API de GitLab, y cada elemento enlaza a su pull request, merge request o hilo. Página completa: ${CONTRIBUTIONS_URL}`,
       ],
     },
   },
@@ -186,7 +186,8 @@ export const PROFILE_SECTIONS: {
       lines: [
         "No cookies, no third-party scripts, no advertising network, no cross-site tracking, and no mailing list.",
         "Measurement is named in full rather than summarized. Page views are counted by Cloudflare Web Analytics, with a script served from this domain that strips the query string and fragment before reporting and sets no cookie.",
-        "An edge worker the author runs at Cloudflare records one row per request with the same fields as the server logs, IP address included, plus what only the edge knows, such as which Cloudflare data centre answered and the bot score Cloudflare gives the request. Cloudflare keeps those rows for about ninety days; every five minutes they are copied into the author's own monitoring database, where they follow the server logs' rule of one year, then deletion. The project documentation at docs.jmrp.io, hosted by GitHub Pages, is recorded the same way by a second worker, and loads no analytics script.",
+        "An edge worker the author runs at Cloudflare records one row per request with the same fields as the server logs, IP address included, plus what only the edge knows, such as which Cloudflare data centre answered and the bot score Cloudflare gives the request. Cloudflare keeps those rows for about ninety days; every five minutes they are copied into the author's own monitoring database, which keeps them, and its copy of the server logs, for ninety days. The server's log files themselves are kept for one year, then deleted. Cloudflare also keeps its own sampled log of the requests to the domain (address, path and query string, user agent, country, status) for 31 days. The project documentation at docs.jmrp.io, hosted by GitHub Pages, is recorded the same way by a second worker, and loads no analytics script.",
+        "The logs are not joined with analytics or used to build reader profiles. One part is shared, deliberately: when a request trips a blocklist rule, its address, the rule and the request's host, path and query string, method, status and user agent are sent to the CrowdSec network, as is any address the author blocks by hand. The Content Security Policy and integrity reports a browser may send are kept for one year with the sender's IP address and user agent, and forwarded to a private Telegram chat.",
         "No advertising, no affiliate links and no sponsored content; the only funding routes are two donation links on the projects page, GitHub Sponsors and Ko-fi, named on the privacy page as a conflict-of-interest declaration rather than left for the reader to find.",
       ],
     },
@@ -195,7 +196,8 @@ export const PROFILE_SECTIONS: {
       lines: [
         "Sin cookies, sin scripts de terceros, sin red publicitaria, sin rastreo entre sitios y sin lista de correo.",
         "La medición se enuncia entera en vez de resumirse. Las páginas vistas las cuenta Cloudflare Web Analytics, con un script servido desde este dominio que elimina la cadena de consulta y el fragmento antes de informar y no pone ninguna cookie.",
-        "Un worker que el autor ejecuta en el borde de Cloudflare anota una fila por petición con los mismos campos que los registros del servidor, dirección IP incluida, más lo que solo sabe el borde, como qué centro de datos de Cloudflare respondió o la puntuación de bot que Cloudflare asigna a la petición. Cloudflare conserva esas filas unos noventa días; cada cinco minutos se copian a la base de datos de monitorización del autor, donde siguen la regla de los registros del servidor: un año y después se borran. La documentación de los proyectos en docs.jmrp.io, alojada en GitHub Pages, la registra igual un segundo worker, y no carga ningún script de analítica.",
+        "Un worker que el autor ejecuta en el borde de Cloudflare anota una fila por petición con los mismos campos que los registros del servidor, dirección IP incluida, más lo que solo sabe el borde, como qué centro de datos de Cloudflare respondió o la puntuación de bot que Cloudflare asigna a la petición. Cloudflare conserva esas filas unos noventa días; cada cinco minutos se copian a la base de datos de monitorización del autor, que las conserva noventa días, igual que su copia de los registros del servidor. Los ficheros de registro del servidor se conservan un año y después se borran. Cloudflare guarda además su propio registro, por muestreo, de las peticiones al dominio (dirección, ruta y cadena de consulta, user agent, país, código) durante 31 días. La documentación de los proyectos en docs.jmrp.io, alojada en GitHub Pages, la registra igual un segundo worker, y no carga ningún script de analítica.",
+        "Los registros no se cruzan con la analítica ni se usan para construir perfiles de lectores. Una parte se comparte, a propósito: cuando una petición dispara una regla de la lista de bloqueo, su dirección, la regla y el host, la ruta y la cadena de consulta, el método, el código y el user agent de la petición se envían a la red de CrowdSec, igual que cualquier dirección que el autor bloquee a mano. Los informes de Content Security Policy y de integridad que puede enviar un navegador se conservan un año con la dirección IP y el user agent de quien los envía, y se reenvían a un chat privado de Telegram.",
         "Ni publicidad, ni enlaces de afiliado, ni contenido patrocinado; las únicas vías de financiación son dos enlaces de donación en la página de proyectos, GitHub Sponsors y Ko-fi, nombrados en la página de privacidad como declaración de conflicto de intereses en vez de dejarlos a que el lector los descubra.",
       ],
     },
@@ -325,12 +327,12 @@ export const SITE_SECTIONS: {
     en: {
       title: "Open-source contributions",
       description:
-        "Code and documentation merged into GitHub and GitLab projects he does not maintain, accepted GitHub Discussions answers, and packaging PRs, grouped by project",
+        "Code and documentation merged into GitHub and GitLab projects he does not maintain, accepted GitHub Discussions answers and achievements, grouped by project",
     },
     es: {
       title: "Aportaciones open source",
       description:
-        "Código y documentación fusionados en proyectos de GitHub y GitLab que no mantiene, respuestas aceptadas en GitHub Discussions y PR de empaquetado, agrupados por proyecto",
+        "Código y documentación fusionados en proyectos de GitHub y GitLab que no mantiene, respuestas aceptadas en GitHub Discussions y logros, agrupados por proyecto",
     },
   },
   {
@@ -406,7 +408,7 @@ export const SITE_SECTIONS: {
  * from {@link TWINNED_PAGES}, the single list that also drives llms.txt and
  * llms-full.txt. This entry used to carry its own boolean, which is how
  * /blog/ and /tools/ went on being described as twin-less for months after
- * the routes existed — and how /homelab/ would have been announced with a
+ * the routes existed, and how /homelab/ would have been announced with a
  * twin that 404s.
  *
  * The optional `note` says what a bare URL cannot: that a listing's items are
@@ -449,8 +451,8 @@ export const HOME_SECTIONS: {
       es: "Aportaciones open source",
     },
     note: {
-      en: "Build-time snapshot: code and docs pull and merge requests merged into GitHub and GitLab projects the author does not maintain, listings of his own tools, accepted answers and achievements.",
-      es: "Instantánea del build: pull requests y merge requests de código y documentación fusionadas en proyectos de GitHub y GitLab que el autor no mantiene, listados de sus herramientas, respuestas aceptadas y logros.",
+      en: "Build-time snapshot: code and docs pull and merge requests merged into GitHub and GitLab projects the author does not maintain, accepted answers and achievements.",
+      es: "Instantánea del build: pull requests y merge requests de código y documentación fusionadas en proyectos de GitHub y GitLab que el autor no mantiene, respuestas aceptadas y logros.",
     },
   },
   {

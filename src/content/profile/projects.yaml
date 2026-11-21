@@ -247,6 +247,10 @@ projects:
     alternateName:
       - PyOctaveBand
 
+  # `summary` ends in a full stop like every other entry (GEO audit #13: the
+  # documentation hub's llms.txt printed it running into the next words).
+  # Its docs site still publishes the sentence without one, a divergence
+  # declared in software-drift-decision.mjs until that site catches up.
   - id: cs-routeros-bouncer
     name: cs-routeros-bouncer
     status: active
@@ -256,6 +260,7 @@ projects:
     license: MIT
     repo: https://github.com/jmrplens/cs-routeros-bouncer
     docs: https://docs.jmrp.io/cs-routeros-bouncer/
+    docsEs: https://docs.jmrp.io/cs-routeros-bouncer/es/
     kicker: Security · networking
     operatingSystem: Linux, macOS, Windows, FreeBSD
     listings:
@@ -269,8 +274,8 @@ projects:
       - { name: Intrusion detection system, wikidata: Q745881 }
       - { name: Go, wikidata: Q37227 }
     summary:
-      en: "CrowdSec bouncer for MikroTik RouterOS: automatic firewall management via the RouterOS API"
-      es: "Bouncer de CrowdSec para MikroTik RouterOS: gestión automática del firewall mediante la API de RouterOS"
+      en: "CrowdSec bouncer for MikroTik RouterOS: automatic firewall management via the RouterOS API."
+      es: "Bouncer de CrowdSec para MikroTik RouterOS: gestión automática del firewall mediante la API de RouterOS."
 
   # Published 2026-09-16. `name` and `summary.en` are verbatim the `#software`
   # node its own site publishes, read from the live JSON-LD the day this was
@@ -287,7 +292,9 @@ projects:
     status: active
     schemaType: SoftwareApplication
     applicationCategory: DeveloperApplication
-    applicationSubCategory: Monitoring
+    # Verbatim the docs site's `applicationSubCategory`; "Monitoring" here
+    # put a second value on the shared node (GEO audit #13).
+    applicationSubCategory: Network monitoring
     language: Go
     license: MIT
     repo: https://github.com/jmrplens/mikroscope
@@ -333,6 +340,7 @@ projects:
     license: MIT
     repo: https://github.com/jmrplens/Cloudflare-DNS-Updater
     docs: https://docs.jmrp.io/Cloudflare-DNS-Updater/
+    docsEs: https://docs.jmrp.io/Cloudflare-DNS-Updater/es/
     kicker: Networking · DDNS
     operatingSystem: Linux, macOS, Windows
     topics:
@@ -354,6 +362,7 @@ projects:
     license: MIT
     repo: https://github.com/jmrplens/libgen-mcp
     docs: https://docs.jmrp.io/libgen-mcp/
+    docsEs: https://docs.jmrp.io/libgen-mcp/es/
     kicker: MCP server · AI tooling
     operatingSystem: Linux, macOS, Windows
     hosted: https://mcp.jmrp.io/servers/libgen/
@@ -478,6 +487,7 @@ projects:
       es: Plantilla LaTeX para Trabajos Fin de Grado y Fin de Máster en la Universidad de Alicante (EPS), con pipeline de compilación automatizado en CI.
 
   # ── In development ─────────────────────────────────────────────────────
+  # cspell:words LILYGO
   # Public through the project's own site, repository still private while
   # the first release is prepared. The page renders this group first,
   # before the maintained projects, and its ItemList follows the page, so
@@ -489,8 +499,13 @@ projects:
   # `keywords`, `licenseUrl`, `sameAs` (the project's YouTube channel, by id
   # and by handle), `copyrightHolder`, `isAccessibleForFree` and
   # `runtimePlatform` are verbatim the `#software` node its own site
-  # publishes at the same @id, last compared 2026-11-08:
+  # publishes at the same @id, last compared 2026-11-21 (GEO audit #13 found
+  # this copy still spelling the vendor "LilyGO" where the site writes
+  # "LILYGO", and `summary.es` behind the site's wording):
   #   https://kleidos.dev/#software
+  # check-software-drift.mjs compares this entry against that node since
+  # then, although it has no public repository, so the next divergence
+  # fails the run instead of waiting for an audit.
   # That node states the language as a ComputerLanguage node, which
   # `languageNode` copies. It also lists the kleidos-firmware posts as
   # `subjectOf`, which /projects/ derives from the series (`series.ts`).
@@ -501,7 +516,7 @@ projects:
   # No `repo`: it is private. `license` is the GPL-3.0-or-later its site
   # states for the firmware, although GitHub does not detect it in the
   # private repository; `licenseUrl` is the SPDX page that site links. No `operatingSystem`: the site names where
-  # it runs (ESP32-S3 and ESP32 boards from M5Stack and LilyGO), but the
+  # it runs (ESP32-S3 and ESP32 boards from M5Stack and LILYGO), but the
   # property belongs to SoftwareApplication, and the card shows "Runs on"
   # only where the node states it. Its site publishes `sitemap.xml`, not the
   # Starlight `sitemap-index.xml`.
@@ -531,16 +546,16 @@ projects:
       - { name: C++, wikidata: Q2407 }
     summary:
       en: "Kleidos is a hardware password manager: passwords encrypted on a device you hold, typed over Bluetooth once you unlock it. No app, no cloud. Not released."
-      es: "Kleidos es un gestor de contraseñas por hardware: contraseñas cifradas en un dispositivo que llevas encima, escritas por Bluetooth al desbloquearlo. Sin app ni nube. Sin publicar todavía."
+      es: "Kleidos es un gestor de contraseñas por hardware: contraseñas cifradas en un dispositivo que tienes tú, escritas por Bluetooth al desbloquearlo. Sin app ni nube. Sin publicar."
     alternateName:
       - Kleidos firmware
       - Kleidos password manager
     disambiguatingDescription:
-      en: Hardware password manager firmware for nine M5Stack and LilyGO ESP32 boards, by José M. Requena Plens.
-      es: Firmware de gestor de contraseñas por hardware para nueve placas ESP32 de M5Stack y LilyGO, escrito por José M. Requena Plens.
+      en: Hardware password manager firmware for nine M5Stack and LILYGO ESP32 boards, by José M. Requena Plens.
+      es: Firmware de gestor de contraseñas por hardware para nueve placas ESP32 de M5Stack y LILYGO, escrito por José M. Requena Plens.
     keywords:
-      en: hardware password manager, ESP32, ESP32-S3, Bluetooth LE HID keyboard, AES-256-CBC, HMAC-SHA256, PBKDF2, TOTP, GPL-3.0-or-later firmware, M5Stack, LilyGO T-Deck, no cloud
-      es: gestor de contraseñas hardware, ESP32, ESP32-S3, teclado HID por Bluetooth LE, AES-256-CBC, HMAC-SHA256, PBKDF2, TOTP, firmware GPL-3.0-or-later, M5Stack, LilyGO T-Deck, sin nube
+      en: hardware password manager, ESP32, ESP32-S3, Bluetooth LE HID keyboard, AES-256-CBC, HMAC-SHA256, PBKDF2, TOTP, GPL-3.0-or-later firmware, M5Stack, LILYGO T-Deck, no cloud
+      es: gestor de contraseñas hardware, ESP32, ESP32-S3, teclado HID por Bluetooth LE, AES-256-CBC, HMAC-SHA256, PBKDF2, TOTP, firmware GPL-3.0-or-later, M5Stack, LILYGO T-Deck, sin nube
     languageNode: true
 
   # ── Archived ───────────────────────────────────────────────────────────

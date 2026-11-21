@@ -47,10 +47,13 @@
  * and are deliberately skipped, so origin + edge rows add up to the real
  * total with nothing counted twice.
  *
- * What the edge does not know is filled honestly: `client_ip` is the literal
- * `cf-edge` (the worker never records visitor IPs), `verb` is GET (only
- * GET/HEAD are cacheable), `resp_bytes` is 0 (unknown; it exists because the
- * dashboards count rows with count(resp_bytes)), and `resp_content_type` is
+ * Since 2026-09-05 the worker records the visitor's address (cf-connecting-ip,
+ * blob16), so `client_ip` is that address; only rows written before then, which
+ * have no blob16, fall back to the literal `cf-edge`. `verb` is the recorded
+ * method (blob14), GET when a row has none, and `resp_bytes` is the response's
+ * Content-Length (double5), 0 when the edge did not know it (the field exists
+ * because the dashboards count rows with count(resp_bytes)). What the edge does
+ * not know is filled honestly: `resp_content_type` is
  * derived from the request class only where it is certain (page, md-twin,
  * llms-txt, feed-xml). `agent` and `ua_class` carry the named crawler or
  * browser family, not a full User-Agent string. `site`, `request_clean` and

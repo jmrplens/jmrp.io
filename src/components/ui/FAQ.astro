@@ -21,7 +21,14 @@ interface Props {
 const { items } = Astro.props;
 const locale = getLangFromUrl(Astro.url);
 const t = useTranslations(locale);
-const headingId = `faq-${crypto.getRandomValues(new Uint32Array(1))[0]}`;
+// A fixed id, not a random one: the FAQ is the block answer engines cite most,
+// and a per-build random id gave it a different anchor on every deploy, so a
+// link to it broke at the next build (GEO audit #13, B6). It is also the
+// fragment the FAQPage JSON-LD already names as its `@id` (`<page>#faq`, in
+// BlogPost, ToolLayout and page-faq.ts), which now resolves to this heading.
+// Every page renders at most one FAQ (its layout passes one `faq` list), so
+// the id stays unique; no content heading slugs to "faq" today.
+const headingId = "faq";
 ---
 
 {items.length > 0 && (

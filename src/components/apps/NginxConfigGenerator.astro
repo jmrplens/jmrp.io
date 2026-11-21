@@ -1124,7 +1124,7 @@ const i18n = {
 
       // Tarpit zone
       if (hasTarpit) {
-        lines.push("# Place in http {} context — tarpit rate limiter");
+        lines.push("# Place in http {} context: tarpit rate limiter");
         lines.push(
           "limit_req_zone $binary_remote_addr zone=tarpit:10m rate=1r/m;",
         );
@@ -1133,7 +1133,7 @@ const i18n = {
 
       // WebSocket map block
       if (proxy && wsCheck.checked) {
-        lines.push("# Place in http {} context — WebSocket upgrade map");
+        lines.push("# Place in http {} context: WebSocket upgrade map");
         lines.push("map $http_upgrade $connection_upgrade {");
         lines.push(I1 + "default upgrade;");
         lines.push(I1 + "''      close;");
@@ -1147,7 +1147,7 @@ const i18n = {
           /[^a-zA-Z0-9_]/g,
           "_",
         );
-        lines.push("# Place in http {} context — proxy cache zone");
+        lines.push("# Place in http {} context: proxy cache zone");
         lines.push(
           "proxy_cache_path /var/cache/nginx/" +
             cacheName +
@@ -1378,7 +1378,7 @@ const i18n = {
         if (cspCheck.checked) {
           lines.push(
             I1 +
-              "# Basic CSP — use /tools/csp-builder/ to create a complete policy",
+              "# Basic CSP: use /tools/csp-builder/ to create a complete policy",
           );
           lines.push(
             I1 +
@@ -1477,11 +1477,17 @@ const i18n = {
 
       // Block hidden files
       if (blockHiddenCheck.checked) {
-        lines.push(I1 + "# Block hidden files (.git, .env, .htaccess, etc.)");
-        lines.push(I1 + "location ~ /\\. {");
+        // The lookahead keeps /.well-known/ reachable: ACME HTTP-01 renewals
+        // and security.txt live there, and blocking them breaks the Let's
+        // Encrypt certificates this generator configures by default.
+        lines.push(
+          I1 +
+            "# Block hidden files (.git, .env, .htaccess), except /.well-known/",
+        );
+        lines.push(I1 + "location ~ /\\.(?!well-known) {");
         if (hasTarpit) {
           lines.push(I2 + "limit_req zone=tarpit burst=1 nodelay;");
-          lines.push(I2 + "limit_rate 50;  # bytes/sec — slow tarpit response");
+          lines.push(I2 + "limit_rate 50;  # bytes/sec, slow tarpit response");
           lines.push(I2 + "return 444;");
         } else {
           lines.push(I2 + "deny all;");
@@ -1501,7 +1507,7 @@ const i18n = {
         if (hasTarpit) {
           lines.push(I2 + "limit_req zone=tarpit burst=1 nodelay;");
           lines.push(
-            I2 + "limit_rate 50;  # bytes/sec — waste attacker resources",
+            I2 + "limit_rate 50;  # bytes/sec, waste attacker resources",
           );
           lines.push(I2 + "return 444;");
         } else {

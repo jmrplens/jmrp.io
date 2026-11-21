@@ -2,11 +2,11 @@
 title: "Domina los archivos virtuales en Nginx: Guía completa"
 slug: "002-serve-virtual-files-nginx"
 lastVerified:
-  date: 2026-08-22
+  date: 2026-11-21
   versions:
-    - nginx 1.31.3
+    - nginx 1.31.8 (ejemplos njs sin volver a probar, módulo no instalado)
 description: "Sirve archivos virtuales en Nginx sin I/O de disco. Cubre root vs alias vs try_files, named locations, endpoints de salud en Kubernetes y containers."
-lead: "Nginx puede servir robots.txt, security.txt y sondas de salud de Kubernetes desde la propia configuración, sin ningún fichero en disco — y el matching de location gana por prioridad, no por el orden en que escribiste los bloques."
+lead: "Nginx puede servir robots.txt, security.txt y sondas de salud de Kubernetes desde la propia configuración, sin ningún fichero en disco, y el matching de location gana por prioridad, no por el orden en que escribiste los bloques."
 author: "José Manuel Requena Plens"
 authorEmail: "mail@jmrp.io"
 publishedDate: 2025-12-18
@@ -83,7 +83,7 @@ import TerminalOutput from "@components/ui/TerminalOutput.astro";
 import Table from "@components/ui/Table.astro";
 import TLDRSummary from "@components/ui/TLDRSummary.astro";
 
-Al desplegar aplicaciones web modernas —especialmente las que están en containers o en plataformas gestionadas— a menudo no tienes acceso directo al web root. ¿Qué pasa cuando necesitas servir `robots.txt`, `security.txt` o un endpoint de health check? No puedes simplemente meter un archivo en una imagen Docker.
+Al desplegar aplicaciones web modernas, especialmente las que están en containers o en plataformas gestionadas, a menudo no tienes acceso directo al web root. ¿Qué pasa cuando necesitas servir `robots.txt`, `security.txt` o un endpoint de health check? No puedes simplemente meter un archivo en una imagen Docker.
 
 **Nginx es más que un reverse proxy.** Es una herramienta potente para generar y servir contenido que no existe físicamente en disco. Esta técnica es esencial para:
 
@@ -94,8 +94,8 @@ Al desplegar aplicaciones web modernas —especialmente las que están en contai
 
 En esta guía completa, exploraremos las potentes directivas de Nginx para servir archivos virtuales, desde técnicas básicas hasta patrones avanzados utilizados en despliegues de producción con Kubernetes.
 
-<TLDRSummary title="TL;DR — sirve archivos que Nginx nunca lee del disco">
-  - **El location matching gana por prioridad, no por el orden de la configuración:** exacto `=` primero, luego `^~`, después regex y por último el prefijo más largo — usa `=` para archivos virtuales como `/robots.txt`.
+<TLDRSummary title="TL;DR: sirve archivos que Nginx nunca lee del disco">
+  - **El location matching gana por prioridad, no por el orden de la configuración:** exacto `=` primero, luego `^~`, después regex y por último el prefijo más largo: usa `=` para archivos virtuales como `/robots.txt`.
   - **`root` vs `alias` vs `try_files`:** `root` añade la URI, `alias` reemplaza el prefijo coincidente y `try_files` comprueba archivos en orden con un fallback.
   - **La directiva `return` sirve contenido inline** (texto, JSON, redirecciones, `204` vacío) sin ningún archivo físico; establece el tipo con `default_type`.
   - **Las named locations (`@nombre`) e `internal`** habilitan fallbacks de SPA, proxy a backend y descargas protegidas (cuidado con el path traversal usando `$arg_file`).
@@ -279,9 +279,9 @@ location @backend {
 </FileContent>
 
 El orden de comprobación es:
-1. `$uri` — Intenta la ruta exacta del archivo
-2. `$uri/` — Intenta como directorio con index
-3. `@backend` — Recurre a la named location
+1. `$uri`: Intenta la ruta exacta del archivo
+2. `$uri/`: Intenta como directorio con index
+3. `@backend`: Recurre a la named location
 
 ---
 
@@ -415,11 +415,9 @@ location /protected-files/ {
     alias /var/secure/files/;
 }
 
-# Option A: Direct internal redirect with secure link and error_page
-location /download {
-    internal;
-    alias /var/secure/files;
-    
+# Option A: Public URL checked by secure_link, then an internal rewrite
+# Request: /download?file=report.pdf&md5=<hash>&expires=<unix time>
+location = /download {
     # Secure link check
     secure_link $arg_md5,$arg_expires;
     # IMPORTANT: Include $arg_file in hash to prevent path manipulation
@@ -428,14 +426,12 @@ location /download {
     if ($secure_link = "") { return 403; }
     if ($secure_link = "0") { return 410; }
 
-    # Forward to named location to serve file
-    error_page 418 = @serve_file;
-    return 418;
-}
+    # A flat file name only: no slash, no leading dot, no percent escapes
+    if ($arg_file !~ "^[A-Za-z0-9_-][A-Za-z0-9._-]*$") { return 400; }
 
-location @serve_file {
-    internal;
-    alias /var/secure/files/$arg_file;
+    # Hand the request to the internal prefix location above, which owns
+    # the alias. The trailing "?" drops the signed query string.
+    rewrite ^ /protected-files/$arg_file? last;
 }
 
 # Option B: Backend sets X-Accel-Redirect header
@@ -448,12 +444,13 @@ location /download-via-backend {
 </FileContent>
 
 <Callout type="warning" icon="mdi:shield-alert">
-  **Advertencia de seguridad:** El patrón `alias /var/secure/files/$arg_file;` es vulnerable a ataques de path traversal si `$arg_file` no se valida. Un atacante podría solicitar `?file=../../../etc/passwd` para acceder a archivos fuera del directorio previsto.
+  **Advertencia de seguridad:** Construir una ruta de archivo a partir de `$arg_file` es vulnerable a ataques de path traversal si el valor no se valida. Un atacante podría solicitar `?file=../../../etc/passwd` para llegar a archivos fuera del directorio previsto.
   
   **Mitigaciones:**
-  - Asegúrate de que `secure_link_md5` incluya `$arg_file` en el cálculo del hash
-  - Valida los nombres de archivo con una directiva `map` (p. ej., rechazar patrones que contengan `..`)
+  - Asegúrate de que `secure_link_md5` incluya `$arg_file` en el cálculo del hash, para que un enlace firmado no sirva para otro archivo
+  - Valida el nombre de archivo antes de usarlo: la Opción A solo acepta letras, dígitos, `.`, `_` y `-`, nunca una barra ni un punto inicial, y responde 400 a cualquier otra cosa
   - Usa una aplicación backend para validar y generar headers `X-Accel-Redirect`
+  - Deja el `alias` en una location de prefijo normal: `alias` no está permitido dentro de una named location (`@nombre`), y `nginx -t` rechaza la configuración si lo pones ahí
 </Callout>
 
 <Callout type="info" icon="mdi:information">
@@ -527,7 +524,7 @@ location = /app-ads.txt {
 
 Aunque los navegadores modernos prefieren SVG o PNG, `favicon.ico` sigue siendo solicitado por herramientas legacy y crawlers. Un único archivo `.ico` típicamente agrupa tamaños de 16x16, 32x32 y 48x48.
 
-<FileContent filename="favicon handling">
+<FileContent filename="favicon from disk">
 ```nginx
 # Serve from custom location
 location = /favicon.ico {
@@ -535,8 +532,14 @@ location = /favicon.ico {
     access_log off;
     expires 1y;
 }
+```
+</FileContent>
 
-# Or return empty (no favicon)
+Si el sitio no tiene favicon, responde con una respuesta vacía. Usa uno de los dos bloques, no ambos: dos bloques `location = /favicon.ico` en el mismo server hacen fallar `nginx -t` con "duplicate location".
+
+<FileContent filename="empty favicon">
+```nginx
+# Return empty (no favicon)
 location = /favicon.ico {
     return 204;
     access_log off;
@@ -1222,7 +1225,7 @@ location = /blog/tags/key%20derivation/ { return 301 /blog/tags/cryptography/; }
 
 La URI se normaliza y se decodifica antes de la coincidencia de location, de
 modo que el valor en la configuración tiene que ser aquello a lo que la ruta
-*decodifica* —un espacio literal—, que a su vez hay que entrecomillar para que
+*decodifica*, un espacio literal, que a su vez hay que entrecomillar para que
 nginx llegue siquiera a parsear la directiva:
 
 ```nginx
@@ -1243,8 +1246,8 @@ nunca.
 
 ### Documentación oficial
 - [Nginx Beginner's Guide](https://nginx.org/en/docs/beginners_guide.html)
-- [ngx_http_core_module](https://nginx.org/en/docs/http/ngx_http_core_module.html) — `location`, `root`, `alias`
-- [ngx_http_rewrite_module](https://nginx.org/en/docs/http/ngx_http_rewrite_module.html) — `return`, `rewrite`
+- [ngx_http_core_module](https://nginx.org/en/docs/http/ngx_http_core_module.html): `location`, `root`, `alias`
+- [ngx_http_rewrite_module](https://nginx.org/en/docs/http/ngx_http_rewrite_module.html): `return`, `rewrite`
 
 ### Tutoriales
 - [DigitalOcean: Understanding Server and Location Blocks](https://www.digitalocean.com/community/tutorials/understanding-nginx-server-and-location-block-selection-algorithms)

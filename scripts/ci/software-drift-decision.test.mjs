@@ -1,3 +1,5 @@
+// cspell:locale en,es
+// cspell:words LILYGO
 /**
  * Unit tests for the drift guard's pass/fail decision (GEO audit #12, M1).
  */
@@ -9,13 +11,17 @@ import { load as loadYaml } from "js-yaml";
 
 import {
   ACCEPTED_DIVERGENCES,
+  articleHeadlines,
   classifyDivergences,
   CONTRADICTABLE,
   divergentProperties,
   driftSkip,
   exitCodeFor,
+  postHeadlines,
   projectValues,
   sameValues,
+  siteValues,
+  taggedLiteral,
   valueDifference,
 } from "./software-drift-decision.mjs";
 
@@ -79,14 +85,26 @@ test("a README-documented project is skipped silently, as before", () => {
   );
 });
 
-test("a project in development without a public repository is skipped out loud", () => {
-  const skip = driftSkip({
-    id: "device",
-    status: "upcoming",
-    docs: "https://docs.jmrp.io/device/",
-  });
-  assert.equal(skip?.quiet, false);
-  assert.match(skip?.reason ?? "", /no public repository \(status: upcoming\)/);
+// Kleidos was skipped as "no public repository" while its node on
+// kleidos.dev and the copy in projects.yaml drifted apart (GEO audit #13).
+test("a project in development without a public repository is compared", () => {
+  assert.equal(
+    driftSkip({
+      id: "device",
+      status: "upcoming",
+      docs: "https://device.example/",
+    }),
+    null,
+  );
+});
+
+test("a project without a repository states its docs as url, and no codeRepository", () => {
+  const values = projectValues(
+    { ...FULL_RECORD, repo: undefined, docs: "https://device.example/" },
+    {},
+  );
+  assert.equal(values.url, "https://device.example/");
+  assert.equal(values.codeRepository, undefined);
 });
 
 // Multi-valued properties are compared as sets. Before, every property was
@@ -100,10 +118,17 @@ test("a project in development without a public repository is skipped out loud",
 const FULL_RECORD = Object.freeze({
   id: "example",
   name: "example",
+  alternateName: Object.freeze(["example tool"]),
   summary: Object.freeze({ en: "An example.", es: "Its Spanish summary." }),
+  disambiguatingDescription: Object.freeze({
+    en: "The example by its author.",
+    es: "El ejemplo de su autor.",
+  }),
+  keywords: Object.freeze({ en: "example, tool", es: "ejemplo, herramienta" }),
   license: "MIT",
   language: "Go",
   applicationCategory: "DeveloperApplication",
+  applicationSubCategory: "Network monitoring",
   operatingSystem: "Linux, macOS, BSD",
   repo: "https://github.com/jmrplens/example",
   docs: "https://docs.jmrp.io/example/",
@@ -136,14 +161,22 @@ test("every compared project states each property it authors, operatingSystem in
   // does not take its expectations from the function it checks.
   const source = {
     name: (project) => project.name,
+    alternateName: (project) => project.alternateName,
     description: (project) => project.summary?.en,
     "description@es": (project) => project.summary?.es,
+    disambiguatingDescription: (project) =>
+      project.disambiguatingDescription?.en,
+    "disambiguatingDescription@es": (project) =>
+      project.disambiguatingDescription?.es,
+    keywords: (project) => project.keywords?.en,
+    "keywords@es": (project) => project.keywords?.es,
     license: (project) => project.licenseUrl ?? project.license,
     programmingLanguage: (project) => project.language,
     applicationCategory: (project) => project.applicationCategory,
+    applicationSubCategory: (project) => project.applicationSubCategory,
     operatingSystem: (project) => project.operatingSystem,
     codeRepository: (project) => project.repo,
-    url: (project) => project.repo,
+    url: (project) => project.repo ?? project.docs,
   };
   assert.deepEqual(new Set(Object.keys(source)), new Set(CONTRADICTABLE));
 
@@ -401,5 +434,199 @@ test("one identifier still states one URL", () => {
   assert.equal(
     projectValues(FULL_RECORD, licenseUrls).license,
     "https://opensource.org/license/MIT",
+  );
+});
+
+// GEO audit #13: mikroscope's docs site said "Network monitoring" and
+// /projects/ "Monitoring" on the same node, and nothing compared the
+// property.
+test("applicationSubCategory is compared", () => {
+  assert.ok(CONTRADICTABLE.includes("applicationSubCategory"));
+  assert.deepEqual(
+    divergentProperties(
+      siteValues({ applicationSubCategory: "Network monitoring" }),
+      projectValues(
+        { ...FULL_RECORD, applicationSubCategory: "Monitoring" },
+        {},
+      ),
+    ),
+    ["applicationSubCategory"],
+  );
+});
+
+test("a localized property is read per language on the site's node", () => {
+  const node = {
+    description: [
+      { "@value": "English.", "@language": "en" },
+      { "@value": "Español.", "@language": "es" },
+    ],
+    keywords: "plain, english",
+  };
+  const values = siteValues(node);
+  assert.equal(values.description, "English.");
+  assert.equal(values["description@es"], "Español.");
+  // An untagged value is the English one, and there is no Spanish one.
+  assert.equal(values.keywords, "plain, english");
+  assert.equal(values["keywords@es"], undefined);
+  assert.equal(taggedLiteral(node.description, "fr"), undefined);
+});
+
+// Kleidos's site spells the vendor "LILYGO"; projects.yaml wrote "LilyGO" in
+// `disambiguatingDescription` and `keywords`, two properties nothing compared.
+test("a vendor spelled differently in disambiguatingDescription contradicts", () => {
+  const theirs = siteValues({
+    disambiguatingDescription: [
+      {
+        "@value": "Firmware for M5Stack and LILYGO boards.",
+        "@language": "en",
+      },
+      { "@value": "Firmware para placas M5Stack y LILYGO.", "@language": "es" },
+    ],
+  });
+  const ours = projectValues(
+    {
+      ...FULL_RECORD,
+      disambiguatingDescription: {
+        en: "Firmware for M5Stack and LilyGO boards.",
+        es: "Firmware para placas M5Stack y LILYGO.",
+      },
+    },
+    {},
+  );
+  assert.deepEqual(divergentProperties(theirs, ours), [
+    "disambiguatingDescription",
+  ]);
+});
+
+// The node as kleidos.dev served it on 2026-11-21, the properties
+// projects.yaml restates. A future edit of the entry that departs from the
+// site fails here without the network; the live comparison catches the site
+// moving.
+const KLEIDOS_NODE = Object.freeze({
+  "@id": "https://kleidos.dev/#software",
+  name: "Kleidos",
+  alternateName: ["Kleidos firmware", "Kleidos password manager"],
+  url: "https://kleidos.dev/",
+  description: [
+    {
+      "@value":
+        "Kleidos is a hardware password manager: passwords encrypted on a device you hold, typed over Bluetooth once you unlock it. No app, no cloud. Not released.",
+      "@language": "en",
+    },
+    {
+      "@value":
+        "Kleidos es un gestor de contraseñas por hardware: contraseñas cifradas en un dispositivo que tienes tú, escritas por Bluetooth al desbloquearlo. Sin app ni nube. Sin publicar.",
+      "@language": "es",
+    },
+  ],
+  disambiguatingDescription: [
+    {
+      "@value":
+        "Hardware password manager firmware for nine M5Stack and LILYGO ESP32 boards, by José M. Requena Plens.",
+      "@language": "en",
+    },
+    {
+      "@value":
+        "Firmware de gestor de contraseñas por hardware para nueve placas ESP32 de M5Stack y LILYGO, escrito por José M. Requena Plens.",
+      "@language": "es",
+    },
+  ],
+  license: "https://spdx.org/licenses/GPL-3.0-or-later.html",
+  programmingLanguage: { "@type": "ComputerLanguage", name: "C++" },
+  keywords: [
+    {
+      "@value":
+        "hardware password manager, ESP32, ESP32-S3, Bluetooth LE HID keyboard, AES-256-CBC, HMAC-SHA256, PBKDF2, TOTP, GPL-3.0-or-later firmware, M5Stack, LILYGO T-Deck, no cloud",
+      "@language": "en",
+    },
+    {
+      "@value":
+        "gestor de contraseñas hardware, ESP32, ESP32-S3, teclado HID por Bluetooth LE, AES-256-CBC, HMAC-SHA256, PBKDF2, TOTP, firmware GPL-3.0-or-later, M5Stack, LILYGO T-Deck, sin nube",
+      "@language": "es",
+    },
+  ],
+});
+
+test("Kleidos's projects.yaml entry agrees with the node kleidos.dev serves", () => {
+  const licenseUrls = JSON.parse(read("src/data/license-urls.json"));
+  const kleidos = loadYaml(
+    read("src/content/profile/projects.yaml"),
+  ).projects.find((project) => project.id === "kleidos");
+  assert.equal(driftSkip(kleidos), null);
+  const theirs = siteValues(KLEIDOS_NODE);
+  const ours = projectValues(kleidos, licenseUrls);
+  assert.deepEqual(divergentProperties(theirs, ours), []);
+  // Every restated property was actually compared, not skipped as unstated.
+  for (const property of [
+    "name",
+    "alternateName",
+    "description",
+    "description@es",
+    "disambiguatingDescription",
+    "disambiguatingDescription@es",
+    "keywords",
+    "keywords@es",
+    "license",
+    "programmingLanguage",
+    "url",
+  ]) {
+    assert.notEqual(theirs[property], undefined, `site ${property}`);
+    assert.notEqual(ours[property], undefined, `ours ${property}`);
+  }
+});
+
+test("each subjectOf article is its own key, matched to the post's title", () => {
+  const theirs = articleHeadlines([
+    {
+      "@id": "https://jmrp.io/blog/011-vault/#article",
+      headline: "A Vault File",
+    },
+    {
+      "@id": "https://jmrp.io/es/blog/011-vault/#article",
+      headline: "Un llavero",
+    },
+    { url: "https://elsewhere.example/" },
+  ]);
+  assert.deepEqual(Object.keys(theirs), [
+    "subjectOf headline https://jmrp.io/blog/011-vault/#article",
+    "subjectOf headline https://jmrp.io/es/blog/011-vault/#article",
+  ]);
+  const ours = postHeadlines(
+    [
+      { lang: "en", slug: "011-vault", title: "A Vault File" },
+      { lang: "es", slug: "011-vault", title: "Una bóveda" },
+      { lang: "en", slug: "015-draft", title: "Draft", draft: true },
+    ],
+    "https://jmrp.io",
+  );
+  assert.equal(Object.keys(ours).length, 2);
+  assert.deepEqual(divergentProperties(theirs, ours, Object.keys(theirs)), [
+    "subjectOf headline https://jmrp.io/es/blog/011-vault/#article",
+  ]);
+});
+
+test("the Kleidos headline exception covers that one article only", () => {
+  const wrong =
+    "subjectOf headline https://jmrp.io/es/blog/011-encrypt-then-mac-vault/#article";
+  const other =
+    "subjectOf headline https://jmrp.io/es/blog/012-device-bound-key-derivation/#article";
+  assert.deepEqual(classifyDivergences("kleidos", [wrong, other]), {
+    contradicting: [other],
+    accepted: [wrong],
+  });
+});
+
+test("the headlines jmrp.io states are the posts' titles", () => {
+  const es011 = loadYaml(
+    /^---\n([\s\S]*?)\n---/.exec(
+      read("src/content/posts/es/011-encrypt-then-mac-vault.mdx"),
+    )[1],
+  );
+  const ours = postHeadlines([{ lang: "es", ...es011 }], "https://jmrp.io");
+  assert.equal(
+    ours[
+      "subjectOf headline https://jmrp.io/es/blog/011-encrypt-then-mac-vault/#article"
+    ],
+    es011.title,
   );
 });

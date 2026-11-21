@@ -4,17 +4,18 @@
  *
  * Runs as a plain Node script, invoked by `pnpm build` AFTER
  * `deploy-swap.mjs swap` has retargeted the `dist` symlink to the freshly
- * built `builds/<color>` directory. Everything here is a **publish** action —
+ * built `builds/<color>` directory. Everything here is a **publish** action:
  * it makes the already-live content visible/known to the outside world:
  *
  * 1. Delivers the Nginx artifacts the build staged in
- *    `/var/lib/jmrp.io/nginx-staged/` — outside the repo and outside `dist/`
+ *    `/var/lib/jmrp.io/nginx-staged/`, outside the repo and outside `dist/`
  *    (generated during the Astro `astro:build:done` hook, see
  *    `src/integrations/post-build.ts`): the two security-header snippets and
- *    the five http-level redirect/alternate maps. They are MOVED (not
+ *    the six http-level maps (redirects, alternates and the /homelab/
+ *    preload header). They are MOVED (not
  *    copied) into `$POSTBUILD_NGINX_SNIPPETS_DIR`, map snippets this build
  *    did not produce are pruned, then the config is tested, Nginx reloaded
- *    and its cache cleared — rolling the whole delivery back on any failure.
+ *    and its cache cleared, rolling the whole delivery back on any failure.
  * 2. Purges the Cloudflare cache for the zone.
  * 3. Submits the sitemap URLs to IndexNow and to the Bing Webmaster API.
  * 4. Records which contributions data the live build used (the display
@@ -26,18 +27,21 @@
  *    deploy ends with a loud warning. Never fatal.
  * 5. Ends with a notice (never fatal) when `build:cv` left CV PDFs under
  *    `public/pdf/` uncommitted, with the commands that commit them.
+ * 6. Ends with a notice (never fatal) when a `rel=preload` link anywhere in
+ *    this site's Nginx config (`nginx -T`) names a file missing from `dist/`
+ *    (`scripts/nginx-preload-guard.mjs`).
  *
  * Why a move and not a copy: generated configuration used to be written into
  * the repository working tree (the four maps) and into the served build
  * output (the two header snippets), which meant the same content existed in
- * three places that could disagree — and `nginx` read two of them straight
+ * three places that could disagree, and `nginx` read two of them straight
  * out of a git checkout, so a `git checkout` could change the live config.
  * Now the build produces each artifact exactly once, in a staging directory
  * that is neither tracked nor served, and this script relocates it. A
  * successful deploy therefore leaves the staging directory empty, which is
  * the observable proof that nothing was left behind.
  *
- * This logic used to run *inside* the Astro build hook, before the swap —
+ * This logic used to run *inside* the Astro build hook, before the swap,
  * meaning the new headers/CDN purge/reindex signals could go out while the
  * live `dist/` symlink still pointed at the OLD content. Moving it here,
  * after the swap, closes that window.
@@ -53,11 +57,11 @@
  *
  * Gating (identical to the previous in-hook behavior). Every variable below is
  * read from `process.env` AFTER the project's `.env` has been merged into it
- * (see the `loadEnvFile` call at the top) — an exported value, empty string
+ * (see the `loadEnvFile` call at the top): an exported value, empty string
  * included, still wins over `.env`:
  * - Nginx delivery: skipped unless `POSTBUILD_NGINX_SNIPPETS_DIR` is set.
  *   (`POSTBUILD_NGINX_SNIPPETS_PATH`, the retired single-file variable, is
- *   ignored — see {@link runNginxDeployment} for why it is not removed.)
+ *   ignored; see {@link runNginxDeployment} for why it is not removed.)
  * - Cloudflare purge: skipped unless `PRIVATE_CF_ZONE_ID` and
  *   `PRIVATE_CF_API_TOKEN` are set.
  * - IndexNow: skipped unless `POSTBUILD_INDEXNOW` is set.
@@ -65,7 +69,7 @@
  *
  * Failure semantics:
  * - A missing delivery manifest, a failed move, a failed Nginx config test,
- *   or a failed reload whose rollback ALSO fails, is fatal — this script
+ *   or a failed reload whose rollback ALSO fails, is fatal: this script
  *   exits with code 1 and the build fails. It does NOT fail silently: the
  *   only case that prints "skipping" is an unset gating variable.
  * - A failed Cloudflare purge is fatal too, but deferred: every remaining
@@ -96,6 +100,10 @@ import {
   isNonLiveState,
   recordBuiltDataset,
 } from "./ghc/rebuild-state.mjs";
+import {
+  findStalePreloads,
+  formatPreloadNotice,
+} from "./nginx-preload-guard.mjs";
 import { stagingCandidates } from "./nginx-staging.mjs";
 
 /**
@@ -106,7 +114,7 @@ import { stagingCandidates } from "./nginx-staging.mjs";
  * `.env` that Astro/Vite loads for the build. The result was silent: from the
  * 2026-07-05 refactor that moved publish actions out of the build hook until
  * 2026-08-21, every deploy logged "skipping Nginx deployment
- * (POSTBUILD_NGINX_SNIPPETS_PATH not set)" even though `.env` defined it —
+ * (POSTBUILD_NGINX_SNIPPETS_PATH not set)" even though `.env` defined it,
  * so the freshly generated `security_headers*.conf` were never copied to
  * Nginx. The Cloudflare purge kept working only by luck, because those
  * variables happen to be exported in the shell profile too.
@@ -114,7 +122,7 @@ import { stagingCandidates } from "./nginx-staging.mjs";
  * `loadEnvFile` does NOT overwrite variables already present in the
  * environment, which is exactly the precedence we want: `.env` supplies the
  * defaults, and exporting a variable (including as an EMPTY string) still
- * overrides it — that is how a worktree opts out of touching Nginx.
+ * overrides it; that is how a worktree opts out of touching Nginx.
  *
  * Resolved relative to this file, not `cwd`, so the script behaves the same
  * however it is invoked. A missing `.env` is normal (CI, fresh clone) and
@@ -126,13 +134,13 @@ try {
 } catch (error) {
   // A MISSING .env is normal (CI, a fresh clone) and every action below is
   // gated on its own variable anyway, so that case stays silent. Anything else
-  // — unreadable file, malformed syntax — must not be: it would strip the
+  // (unreadable file, malformed syntax) must not be: it would strip the
   // variables just as effectively as not loading them at all, sending us back
   // to the exact silent failure this call exists to fix.
   if (error?.code !== "ENOENT") {
     console.warn(
       `deploy-live: could not read .env (${error?.message ?? String(error)}); ` +
-        "continuing with the ambient environment only — publish actions whose " +
+        "continuing with the ambient environment only; publish actions whose " +
         "variables live only in .env will be skipped.",
     );
   }
@@ -147,7 +155,7 @@ const DIST_DIR = path.join(ROOT, "dist");
  *
  * It sits OUTSIDE `dist/` for two reasons: generated config must never be
  * part of the served tree, and `fixPermissions()` runs `chown -R www-data`
- * over `dist/` — `rename(2)` carries the SOURCE inode's owner, so a staged
+ * over `dist/`: `rename(2)` carries the SOURCE inode's owner, so a staged
  * file caught by that would land in `/etc/nginx/` owned by `www-data`. It must also share a filesystem with the destination, which is
  * what makes the delivery a true move rather than a copy.
  */
@@ -171,7 +179,7 @@ const BUILD_STAMP_PREFIX = "# Build-Stamp: ";
 /**
  * Shape a manifest entry must have: `<name>.conf`, or one `maps/` level deep.
  * The manifest is a file this script reads and then acts on inside `/etc`, so
- * its paths are treated as untrusted input — no absolute paths, no traversal,
+ * its paths are treated as untrusted input: no absolute paths, no traversal,
  * no other extension.
  */
 const ARTIFACT_RELATIVE_PATTERN = /^(?:maps\/)?[\w.-]+\.conf$/;
@@ -180,7 +188,7 @@ const ARTIFACT_RELATIVE_PATTERN = /^(?:maps\/)?[\w.-]+\.conf$/;
  * Filesystem root of the production checkout that is allowed to run publish
  * actions (Nginx snippet deploy + reload, Cloudflare purge, IndexNow, Bing).
  * Overridable via `DEPLOY_LIVE_PRODUCTION_ROOT` for exceptional cases (e.g.
- * relocating the production checkout) — normally left at its default.
+ * relocating the production checkout), normally left at its default.
  */
 const PRODUCTION_ROOT =
   process.env.DEPLOY_LIVE_PRODUCTION_ROOT || "/var/www/jmrp.io";
@@ -189,7 +197,7 @@ const PRODUCTION_ROOT =
  * Guards against running publish actions (Nginx deploy/reload, Cloudflare
  * purge, IndexNow, Bing) from a non-production checkout. This repo lives in
  * multiple worktrees (e.g. a staging worktree serving a preview domain)
- * that share the same Nginx snippets and Cloudflare zone as production — a
+ * that share the same Nginx snippets and Cloudflare zone as production: a
  * `pnpm build` run from a worktree must never purge production's CDN cache
  * or reload production's Nginx config. Set `DEPLOY_LIVE_FORCE=1` to bypass
  * (e.g. for intentional production-root maintenance from a script/CI runner
@@ -208,18 +216,18 @@ function isProductionDeployAllowed() {
  * command's PATH must resolve only through directories that are not
  * writable by non-root users).
  *
- * Deliberately narrowed to `/usr/bin:/bin` — every command this script
+ * Deliberately narrowed to `/usr/bin:/bin`: every command this script
  * resolves itself (`stat`, `sudo`) lives there. `nginx`, `find`, `install`,
  * `chown`, `chmod`, `mv`, and `rm` are all invoked as *arguments to* `sudo`, so their
  * lookup is governed by `sudoers`' own `secure_path`
  * (`/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin` here),
- * not by this env var — this PATH never needs to include `/usr/sbin` or the
+ * not by this env var, so this PATH never needs to include `/usr/sbin` or the
  * `/usr/local/*` directories for those to keep working.
  */
 const DEFAULT_SECURE_PATH = "/usr/bin:/bin";
 
 const INDEXNOW_ENDPOINT = "https://api.indexnow.org/indexnow";
-/** IndexNow verification key — must match the filename of `public/<key>.txt`. */
+/** IndexNow verification key; it must match the filename of `public/<key>.txt`. */
 const INDEXNOW_KEY = "e0f36bbff68da9f8d629749b848ed7c8";
 const INDEXNOW_MAX_URLS = 10_000; // IndexNow per-request limit.
 
@@ -295,8 +303,8 @@ function validateNginxPath(systemNginxPath) {
  *
  * {@link validateNginxPath} cannot be reused for it: that one requires the
  * path to end in `.conf`, so it rejects a directory outright. The properties
- * that matter are the same — absolute, no `..` traversal, never a symlink
- * (which would silently redirect the whole delivery elsewhere) — plus "if it
+ * that matter are the same: absolute, no `..` traversal, never a symlink
+ * (which would silently redirect the whole delivery elsewhere), plus "if it
  * exists at all, it is a directory".
  *
  * @param {string} dirPath - The absolute directory path to validate.
@@ -383,7 +391,7 @@ function createSecureSpawnOptions() {
  * bare `fs` calls, deliberately: `fs.chownSync` throws `EPERM` for a
  * non-root invoker, which is not the `EACCES` a permission fallback would
  * catch. Builds run as root today, so this only matters if the deploy user
- * ever changes — but the property is cheap to keep.
+ * ever changes, but the property is cheap to keep.
  *
  * @param {string[]} args - Arguments passed to `sudo` (the command first).
  * @param {{stdio: "inherit", env: NodeJS.ProcessEnv}} secureOpts - Spawn options.
@@ -418,8 +426,8 @@ function getOwnerUsername(targetPath) {
 /**
  * Removes a file, swallowing any error.
  *
- * Used for best-effort cleanup — an orphaned rollback temp file, and the
- * consumed manifest — where failing to delete must never become the reason a
+ * Used for best-effort cleanup (an orphaned rollback temp file, and the
+ * consumed manifest), where failing to delete must never become the reason a
  * deploy reports failure.
  *
  * @param {string} filePath - Path to remove.
@@ -436,7 +444,7 @@ function removeFileQuietly(filePath) {
 /**
  * Picks a scratch directory on the SAME filesystem as `targetDir`.
  *
- * `mv` is `rename(2)` — atomic, and a true move — only within one filesystem.
+ * `mv` is `rename(2)` (atomic, and a true move) only within one filesystem.
  * Across devices it degrades to copy+unlink, which leaves a window where the
  * destination is truncated. `/var/tmp` shares a device with `/etc` on this
  * host while `/tmp` is a separate filesystem, so the check is made rather than
@@ -524,7 +532,7 @@ function clearNginxCache(systemNginxCachePath) {
     );
   }
 
-  // Only force ownership when it isn't already www-data — avoids an O(n)
+  // Only force ownership when it isn't already www-data: avoids an O(n)
   // recursive chown of the whole cache directory on every single build.
   const owner = getOwnerUsername(systemNginxCachePath);
   if (owner === "www-data") {
@@ -622,7 +630,7 @@ function executeNginxReload(testTimeout, reloadTimeout, systemNginxCachePath) {
  * Reads and validates the delivery manifest the post-build hook writes LAST,
  * after every generator has run.
  *
- * The manifest — not a glob — is the delivery contract. Globbing the staging
+ * The manifest, not a glob, is the delivery contract. Globbing the staging
  * directory would happily pick up a `*.conf.tmp-<rand>` orphan from a killed
  * build and install it as live config; and a build that dies partway leaves
  * no manifest at all, which is exactly the state this function must refuse to
@@ -633,7 +641,7 @@ function executeNginxReload(testTimeout, reloadTimeout, systemNginxCachePath) {
  * `{ "stamp": "<id>", "generatedAt": "<ISO 8601>", "files": ["security_headers.conf", "maps/…", …] }`.
  * `generatedAt` is informational. `buildStamp` is accepted as an alias for
  * `stamp` so renaming it on the generator side cannot silently cost the stamp
- * check; `files` has no alias — a manifest without it is refused, with the
+ * check; `files` has no alias: a manifest without it is refused, with the
  * keys it did have named in the error. There is no alias for the file list:
  * `artifacts` is NOT read, so a generator that renamed it would fail loudly
  * here rather than deliver a partial set.
@@ -650,7 +658,7 @@ function readDeliveryManifest(stagingDir) {
     if (error?.code === "ENOENT") {
       throw new Error(
         `No delivery manifest at ${manifestPath}. The post-build hook writes it last, ` +
-          "so its absence means this build produced no Nginx artifacts — or a previous " +
+          "so its absence means this build produced no Nginx artifacts, or a previous " +
           "deploy already consumed them. Run a build before deploying.",
       );
     }
@@ -687,7 +695,7 @@ function readDeliveryManifest(stagingDir) {
  * Turns the manifest's relative paths into validated source/destination
  * pairs, failing before ANY file moves if a single one is unusable.
  *
- * Every entry is checked against {@link ARTIFACT_RELATIVE_PATTERN} — a
+ * Every entry is checked against {@link ARTIFACT_RELATIVE_PATTERN}: a
  * manifest is a file this script reads and then writes into `/etc`, so a path
  * in it is treated as untrusted input: at most one `maps/` level, no
  * traversal, `.conf` only. Each destination additionally goes through
@@ -732,8 +740,8 @@ function planDelivery(stagingDir, snippetsDir, files) {
 /**
  * Reads every staged artifact into memory before the first move.
  *
- * The bytes are needed twice: to check the build stamp, and — if the reload
- * is rejected — to park the rejected content, which after a `rename(2)` only
+ * The bytes are needed twice: to check the build stamp, and, if the reload
+ * is rejected, to park the rejected content, which after a `rename(2)` only
  * exists at the destination we are about to overwrite again.
  *
  * @param {{relative: string, src: string, dst: string}[]} entries - The delivery plan.
@@ -806,8 +814,8 @@ function ensureSnippetDirectories(snippetsDir, entries, secureOpts) {
  * Lists delivered `maps/*.conf` files that this build did NOT produce.
  *
  * Mandatory rather than tidy-up: the vhost includes `maps/*.conf` by
- * wildcard, so a file left behind by a generator that no longer exists — a
- * renamed artifact, a removed feature — stays loaded by Nginx forever, with
+ * wildcard, so a file left behind by a generator that no longer exists (a
+ * renamed artifact, a removed feature) stays loaded by Nginx forever, with
  * nothing in the repo to explain it. Only `maps/` is pruned: the two header
  * snippets at the top level are named by exact includes, so an orphan there
  * is inert, and removing unknown files from a directory an operator may have
@@ -847,7 +855,7 @@ function snapshotDestination(dstPath) {
  * Moves one staged artifact into place.
  *
  * `rename(2)` carries the SOURCE inode's owner and mode, so both are set on
- * the source immediately before the move — fixing them afterwards would leave
+ * the source immediately before the move; fixing them afterwards would leave
  * a window where the live file is wrong. `mv` within one filesystem IS
  * `rename(2)`: atomic, and a true move, so nothing is left behind in staging.
  *
@@ -895,8 +903,8 @@ function statOwnership(paths) {
  *
  * They should be right by construction (the source has its owner and mode set
  * before the move), so this is an assertion, not the mechanism. Deliberately
- * NOT fatal: for an *included* `.conf` the mode is hygiene, not uptime — only
- * the root master process parses config, and workers never re-read it — so
+ * NOT fatal: for an *included* `.conf` the mode is hygiene, not uptime (only
+ * the root master process parses config, and workers never re-read it), so
  * rolling a good CSP back over a wrong group bit would trade a real
  * regression for a cosmetic one.
  *
@@ -995,7 +1003,7 @@ function parkRejectedDelivery(entries, contents, manifestPath) {
 function restoreDestination(dstPath, originalContent, tempDir, secureOpts) {
   if (originalContent === null) {
     // It did not exist before this delivery, so "restoring" it means removing
-    // it — leaving it would make a rolled-back deploy look successful.
+    // it; leaving it would make a rolled-back deploy look successful.
     runPrivileged(
       ["rm", "-f", dstPath],
       secureOpts,
@@ -1031,8 +1039,8 @@ function restoreDestination(dstPath, originalContent, tempDir, secureOpts) {
 }
 
 /**
- * Restores every destination this delivery touched — the moved artifacts AND
- * the pruned orphans — then proves Nginx is left in a testable state.
+ * Restores every destination this delivery touched (the moved artifacts AND
+ * the pruned orphans), then proves Nginx is left in a testable state.
  *
  * @param {Map<string, Buffer | null>} snapshot - Destination → pre-delivery content (`null` = absent).
  * @param {string} tempDir - Scratch directory on the destination's filesystem.
@@ -1054,7 +1062,7 @@ function rollbackDelivery(snapshot, tempDir, secureOpts, testTimeout) {
  * Handles a failed delivery: parks the rejected content, restores every
  * destination, confirms Nginx still tests clean, and re-throws.
  *
- * Always throws — either the original error (the delivery was rejected but
+ * Always throws: either the original error (the delivery was rejected but
  * the box is back on its previous configuration) or the rollback's own error
  * (the box needs a human).
  *
@@ -1075,7 +1083,7 @@ function handleDeliveryFailure(deliveryError, context) {
   parkRejectedDelivery(context.entries, context.contents, context.manifestPath);
   // The manifest describes a delivery that has now been undone, and its
   // sources are gone from staging. Leaving it would make the next deploy fail
-  // with "staged artifact missing" instead of the accurate "no manifest — run
+  // with "staged artifact missing" instead of the accurate "no manifest: run
   // a build"; a copy is already in the park directory.
   removeFileQuietly(context.manifestPath);
 
@@ -1109,7 +1117,7 @@ function handleDeliveryFailure(deliveryError, context) {
  * `rename(2)` already took the artifacts themselves; what is left is the
  * manifest and the now-empty `maps/` directory. Removing those is what makes
  * "the staging directory is empty" a usable proof that the build MOVED its
- * output instead of copying it. Anything else still in there is reported, not deleted — it
+ * output instead of copying it. Anything else still in there is reported, not deleted: it
  * is either a generator writing files no manifest claims, or a temp file from
  * a killed build, and both are worth seeing.
  *
@@ -1152,7 +1160,7 @@ function clearStagingAfterDelivery(stagingDir) {
  *
  * Nothing includes it there any more, and the vhost 404s the path, but a
  * `.conf` under `dist/` means a generator is still writing into the served
- * tree — the defect this whole delivery path exists to remove.
+ * tree, the defect this whole delivery path exists to remove.
  *
  * @param {string} distDir - The swapped `dist/` directory.
  * @returns {void}
@@ -1165,14 +1173,14 @@ function warnAboutServedArtifacts(distDir) {
   if (strays.length === 0) return;
   console.warn(
     `deploy-live: ⚠ generated Nginx config is still present in the served tree (${distDir}): ${strays.join(", ")}. ` +
-      "It is not what Nginx loads, but it must not be published — check the post-build generators.",
+      "It is not what Nginx loads, but it must not be published; check the post-build generators.",
   );
 }
 
 /**
  * Delivers this build's staged Nginx artifacts: moves each one into the
  * snippets directory, prunes map snippets the build did not produce, tests
- * the configuration, reloads Nginx and clears its cache — rolling the whole
+ * the configuration, reloads Nginx and clears its cache, rolling the whole
  * delivery back if any of that fails.
  *
  * @param {string} stagingDir - Directory the build staged artifacts in.
@@ -1253,11 +1261,11 @@ function deployNginxSnippets(stagingDir, snippetsDir) {
 
 /**
  * Delivers the generated Nginx artifacts (see {@link deployNginxSnippets}),
- * gated on `POSTBUILD_NGINX_SNIPPETS_DIR`. Any failure here is fatal — it
+ * gated on `POSTBUILD_NGINX_SNIPPETS_DIR`. Any failure here is fatal: it
  * propagates to the caller.
  *
- * `POSTBUILD_NGINX_SNIPPETS_PATH` — the retired single-file variable this
- * replaced — is deliberately ignored rather than removed from `.env`: that
+ * `POSTBUILD_NGINX_SNIPPETS_PATH`, the retired single-file variable this
+ * replaced, is deliberately ignored rather than removed from `.env`: that
  * file is git-ignored, so a `git revert` of this change restores the old code
  * WITHOUT restoring its variable, and the old code's missing-variable branch
  * was silent. Keeping the key means a revert still works unattended; a
@@ -1274,7 +1282,7 @@ function runNginxDeployment() {
     );
     if (process.env.POSTBUILD_NGINX_SNIPPETS_PATH) {
       console.warn(
-        "deploy-live: ⚠ POSTBUILD_NGINX_SNIPPETS_PATH is set but retired — this build " +
+        "deploy-live: ⚠ POSTBUILD_NGINX_SNIPPETS_PATH is set but retired: this build " +
           "delivered NOTHING to Nginx. Set POSTBUILD_NGINX_SNIPPETS_DIR to the snippets " +
           "directory (e.g. /etc/nginx/snippets/jmrp).",
       );
@@ -1397,7 +1405,7 @@ function extractLocs(xml) {
  * Computed once and shared by both IndexNow and Bing Webmaster submitters.
  *
  * `lastmod` is the empty string when a URL carries none, which is a valid
- * sitemap and simply means "no change signal available" — such URLs are then
+ * sitemap and simply means "no change signal available"; such URLs are then
  * treated as always-changed by {@link selectChangedUrls}, which is the safe
  * direction.
  *
@@ -1411,8 +1419,8 @@ function collectSitemapEntries(distDir) {
   const indexPath = path.join(distDir, "sitemap-index.xml");
   // `complete` is what makes the caller able to fail closed. A partial read is
   // worse than an empty one: it yields a positive total, so the URLs from the
-  // missing child look like "unchanged" and — once the ledger is written from
-  // that truncated map — they are never announced again.
+  // missing child look like "unchanged" and, once the ledger is written from
+  // that truncated map, they are never announced again.
   if (!fs.existsSync(indexPath)) {
     console.warn(`deploy-live: no sitemap-index.xml under ${distDir}.`);
     return { entries, complete: false };
@@ -1445,7 +1453,7 @@ function collectSitemapEntries(distDir) {
 /**
  * Path of the ledger recording what was last announced to the search APIs.
  *
- * Lives in `.cache/` (git-ignored, survives builds, wiped by a cache clear —
+ * Lives in `.cache/` (git-ignored, survives builds, wiped by a cache clear;
  * at which point the next deploy re-announces everything, which is harmless).
  */
 const SUBMISSION_LEDGER = path.join(
@@ -1467,7 +1475,7 @@ const SUBMISSION_LEDGER = path.join(
  *
  * The ledger stores the `loc → lastmod` map that was last announced. A URL is
  * resubmitted when it is new, when its `lastmod` moved, or when it has no
- * `lastmod` at all. On the very first run — no ledger — everything is
+ * `lastmod` at all. On the very first run (no ledger) everything is
  * submitted, which is the correct bootstrap.
  *
  * @param {Map<string, string>} current - loc → lastmod from this build.
@@ -1525,7 +1533,7 @@ function writeSubmissionLedger(current) {
  * Submits the site's URLs to IndexNow (Bing, Yandex, Seznam, Naver…) so new
  * and updated pages are picked up immediately instead of waiting for a
  * crawl. Gated behind `POSTBUILD_INDEXNOW` so local/CI builds never ping
- * the API. Never throws — failures are logged as warnings.
+ * the API. Never throws: failures are logged as warnings.
  *
  * @param {string[]} urlList - Pre-collected sitemap URLs (see {@link collectSitemapEntries}).
  * @returns {Promise<void>}
@@ -1550,7 +1558,7 @@ async function submitToIndexNow(urlList) {
   if (submittedUrls.length === 0) {
     // `urlList` is the DIFF against the ledger, not the sitemap. Empty almost
     // always means "nothing changed since the last deploy", which is the whole
-    // point of the differential submission — not a missing or empty sitemap.
+    // point of the differential submission, not a missing or empty sitemap.
     // The previous wording said "no sitemap URLs found" and sent a reader off
     // debugging sitemap generation that was working fine. The line above
     // already reports the real counts ("N of M URL(s) changed").
@@ -1612,7 +1620,7 @@ async function submitToIndexNow(urlList) {
 /**
  * Submits the site's URLs to the Bing Webmaster "SubmitUrlbatch" API using a
  * Webmaster API key. Complementary to IndexNow; uses the site's own Bing
- * Webmaster quota. Gated behind `BING_WEBMASTER_API_KEY`. Never throws —
+ * Webmaster quota. Gated behind `BING_WEBMASTER_API_KEY`. Never throws:
  * failures are logged as warnings.
  *
  * @param {string[]} urlList - Pre-collected sitemap URLs (see {@link collectSitemapEntries}).
@@ -1697,7 +1705,7 @@ async function submitToBingWebmaster(urlList) {
  * The step's own return value is passed through: the submitters report whether
  * they actually reached the API, and the caller needs that to decide whether
  * the submission ledger may be updated. This helper used to discard it, which
- * silently defeated that check — `undefined` is not `false`, so every failed
+ * silently defeated that check: `undefined` is not `false`, so every failed
  * submission still looked successful.
  *
  * @template T
@@ -1737,7 +1745,7 @@ function resolveUrlsToAnnounce() {
 
     if (!complete) {
       // Fail closed. A partial read still produces a positive total, so
-      // submitting from it would announce a truncated set — and writing the
+      // submitting from it would announce a truncated set, and writing the
       // ledger from it would mark the URLs we never read as "already
       // announced", leaving them unannounced on every future deploy.
       console.warn(
@@ -1751,11 +1759,11 @@ function resolveUrlsToAnnounce() {
       // exactly that. It would be the wrong story if the sitemap itself came
       // back empty, so diagnose that case separately.
       console.warn(
-        `deploy-live: no URLs in the sitemaps under ${DIST_DIR} — check sitemap-index.xml and its children.`,
+        `deploy-live: no URLs in the sitemaps under ${DIST_DIR}; check sitemap-index.xml and its children.`,
       );
     } else if (isBootstrap) {
       console.log(
-        `deploy-live: no submission ledger yet — announcing all ${total} URL(s) in ${elapsed(startedAt)}.`,
+        `deploy-live: no submission ledger yet; announcing all ${total} URL(s) in ${elapsed(startedAt)}.`,
       );
     } else {
       console.log(
@@ -1787,7 +1795,7 @@ function resolveUrlsToAnnounce() {
  */
 async function runPublishNotifications() {
   // Skip reading/logging the sitemap entirely when neither URL-list consumer
-  // is configured (e.g. local/CI builds) — nothing would use it. Cloudflare
+  // is configured (e.g. local/CI builds): nothing would use it. Cloudflare
   // is deliberately excluded here: purgeCloudflareCache() always purges the
   // whole zone (purge_everything) and never reads urlList, so it has no
   // dependency on the sitemap collection below.
@@ -1815,13 +1823,13 @@ async function runPublishNotifications() {
   // The ledger records what the search APIs have been TOLD, so it must only be
   // written when they were actually told. Both submitters swallow their errors
   // to keep a deploy from failing over a search-engine ping, which means
-  // allSettled reports "fulfilled" even for an HTTP 500 or a timeout — so they
+  // allSettled reports "fulfilled" even for an HTTP 500 or a timeout, so they
   // now return an explicit outcome and it is checked here. Writing the ledger
   // regardless would mark a failed URL as announced and never retry it.
   // Strictly `=== true`: a step that threw comes back as undefined from
   // `timed()`, and treating anything-but-false as success is exactly the bug
   // this check was written to prevent. A disabled submitter returns true
-  // explicitly — skipped is not failed.
+  // explicitly: skipped is not failed.
   const announced = (result) =>
     result.status === "fulfilled" && result.value === true;
   const allAnnounced = announced(indexNow) && announced(bing);
@@ -1908,11 +1916,68 @@ function reportUncommittedDeployFiles() {
 }
 
 /**
+ * Prints a notice, at the end of a production deploy, for every `rel=preload`
+ * link in this site's Nginx configuration whose file is not in `dist/` (see
+ * `scripts/nginx-preload-guard.mjs`). The /homelab/ font preloads were
+ * hand-written in the vhost and 404ed for two weeks after the font hashes
+ * changed (GEO audit #13, B5); they are generated now, and this catches the
+ * next hand-written one.
+ *
+ * Reads `nginx -T`, which dumps the configuration on disk. {@link main} only
+ * gets here after a successful delivery (a failed one exits first), so that
+ * is the configuration Nginx just reloaded. Gated like the delivery, on `POSTBUILD_NGINX_SNIPPETS_DIR`, so a box whose
+ * Nginx this script does not manage is not asked. Never fatal: a wrong hint
+ * costs a console error and a 404 per visit, not the page.
+ *
+ * @returns {void}
+ */
+function reportStalePreloads() {
+  const snippetsDir = process.env.POSTBUILD_NGINX_SNIPPETS_DIR || "";
+  if (!snippetsDir) return;
+  try {
+    const nginxConfigPath = process.env.POSTBUILD_NGINX_CONFIG_PATH;
+    if (nginxConfigPath) validateNginxPath(nginxConfigPath);
+    const args = nginxConfigPath
+      ? ["nginx", "-T", "-c", nginxConfigPath]
+      : ["nginx", "-T"];
+    const options = {
+      encoding: /** @type {const} */ ("utf8"),
+      // The dump of every vhost on the box runs to a few MB; the default
+      // 1 MB buffer would cut it and report a truncated config.
+      maxBuffer: 64 * 1024 * 1024,
+      timeout: readTimeout("POSTBUILD_NGINX_TEST_TIMEOUT", 10_000),
+      stdio: ["ignore", "pipe", "pipe"],
+      env: { ...process.env, PATH: DEFAULT_SECURE_PATH },
+    };
+    const result = spawnSync("sudo", args, options); // NOSONAR suppressed: external command usage is intentional
+    if (result.error || result.status !== 0) {
+      const detail = result.error?.message || `exit code ${result.status}`;
+      console.warn(
+        `deploy-live: could not read the Nginx config to check its preload links (${detail}).`,
+      );
+      return;
+    }
+    const stale = findStalePreloads(result.stdout, {
+      distDir: DIST_DIR,
+      snippetsDir,
+    });
+    for (const line of formatPreloadNotice(stale)) {
+      console.warn(`deploy-live: ${line}`);
+    }
+  } catch (error) {
+    console.warn(
+      `deploy-live: could not check the Nginx preload links (${error instanceof Error ? error.message : String(error)}).`,
+    );
+  }
+}
+
+/**
  * Entry point: exits immediately (no publish actions run) unless the
  * current checkout is the production root (see {@link isProductionDeployAllowed}),
  * then delivers the staged Nginx artifacts (fatal on failure), then records
  * the contributions rebuild state and runs the publish notifications, then
  * reports, last so nothing scrolls them away: uncommitted CV PDFs (notice),
+ * preload links in the Nginx config that name a missing file (notice),
  * a contributions dataset that is not live (warning), and a failed
  * Cloudflare purge (exit 1, after everything else has run).
  *
@@ -1921,7 +1986,7 @@ function reportUncommittedDeployFiles() {
 async function main() {
   if (!isProductionDeployAllowed()) {
     console.log(
-      `deploy-live: skipping — non-production worktree detected (cwd=${ROOT}, expected ${PRODUCTION_ROOT}); set DEPLOY_LIVE_FORCE=1 to override.`,
+      `deploy-live: skipping: non-production worktree detected (cwd=${ROOT}, expected ${PRODUCTION_ROOT}); set DEPLOY_LIVE_FORCE=1 to override.`,
     );
     return;
   }
@@ -1950,6 +2015,7 @@ async function main() {
   const { purgeFailed } = await runPublishNotifications();
 
   reportUncommittedDeployFiles();
+  reportStalePreloads();
 
   if (contributionsState && isNonLiveState(contributionsState)) {
     for (const line of describeNonLiveBuild(contributionsState)) {
