@@ -5,10 +5,12 @@
  *
  * ── Why this exists ──────────────────────────────────────────────────────
  * /projects/ restates `name`, `description` and `license` for every project.
- * For the five with their own docs site, those values describe a node under a
- * SHARED `@id` (`https://github.com/jmrplens/<repo>#software`), so a divergent
- * value is not extra detail, it is two documents contradicting each other about
- * one entity. Exactly the failure that hit the Person node twice before it was
+ * For those with their own docs site, those values describe a node under a
+ * SHARED `@id` (`https://github.com/jmrplens/<repo>#software`, or
+ * `<docs>#software` for a project whose repository is still private), so a
+ * divergent value is not extra detail, it is two documents contradicting each
+ * other about one entity. The headlines a site's `subjectOf` gives jmrp.io's
+ * own articles are compared too, one article at a time. Exactly the failure that hit the Person node twice before it was
  * centralized.
  *
  * ── Values are compared as sets ──────────────────────────────────────────
@@ -40,16 +42,18 @@
  *   node scripts/ci/check-software-drift.mjs
  *   pnpm run check:software-drift
  */
-import { readFileSync } from "node:fs";
+import { readdirSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import process from "node:process";
 import { fileURLToPath } from "node:url";
 
 import { load as loadYaml } from "js-yaml";
 
+import { resolveSiteUrl } from "../utils/site-url.mjs";
 import { softwareId as softwareIdOf } from "../utils/software-id.mjs";
 import {
   ACCEPTED_DIVERGENCES,
+  articleHeadlines,
   canonicalJson,
   classifyDivergences,
   CONTRADICTABLE,
@@ -57,8 +61,10 @@ import {
   driftSkip,
   exitCodeFor,
   LIST_PROPERTIES,
+  postHeadlines,
   projectValues,
   sameValues,
+  siteValues,
   valueDifference,
 } from "./software-drift-decision.mjs";
 
@@ -94,6 +100,40 @@ async function graphOf(url) {
 const projects = loadYaml(
   readFileSync(join(ROOT, "src/content/profile/projects.yaml"), "utf8"),
 ).projects;
+
+/**
+ * The frontmatter of every post in both locales, for the headlines a site's
+ * `subjectOf` states about jmrp.io's articles. Files starting with `_` are
+ * templates, which the content collection excludes too.
+ *
+ * @returns {{ lang: string, slug: string, title: string, draft?: boolean }[]}
+ *   One record per post.
+ */
+function readPosts() {
+  const posts = [];
+  for (const lang of ["en", "es"]) {
+    const dir = join(ROOT, "src/content/posts", lang);
+    for (const file of readdirSync(dir)) {
+      if (!file.endsWith(".mdx") || file.startsWith("_")) continue;
+      const text = readFileSync(join(dir, file), "utf8");
+      const frontmatter = /^---\n([\s\S]*?)\n---/.exec(text)?.[1];
+      if (!frontmatter) continue;
+      const data = loadYaml(frontmatter);
+      posts.push({
+        lang,
+        slug: data.slug,
+        title: data.title,
+        draft: data.draft,
+      });
+    }
+  }
+  return posts;
+}
+
+// What jmrp.io states as each article's headline, keyed as a site's
+// `subjectOf` is read. kleidos.dev listed post 011's Spanish article under a
+// headline jmrp.io never published, and nothing compared it (GEO audit #13).
+const OUR_HEADLINES = postHeadlines(readPosts(), resolveSiteUrl(ROOT));
 
 // The canonical Person node, for the second comparison below. Every docs site
 // splices `https://jmrp.io/#person` into its own graph at build time, so a
@@ -206,7 +246,8 @@ const graphs = await fetchGraphs([
 for (const project of projects) {
   // Only projects with their own documentation site can contradict anything;
   // for the rest, projects.yaml is the sole publisher. A project in
-  // development is named, so nobody reads its absence as a pass.
+  // development without a public repository is compared too: its site
+  // publishes the node at the @id its docs URL gives it.
   const skip = driftSkip(project);
   if (skip) {
     if (!skip.quiet) console.log(`- ${project.id}: skipped, ${skip.reason}`);
@@ -244,30 +285,29 @@ for (const project of projects) {
     continue;
   }
 
-  const ours = projectValues(project, LICENSE_URLS);
-
-  // A bilingual site states `description` as language-tagged literals. The
-  // English one is what `summary.en` must match and the Spanish one what
-  // `summary.es` must match; comparing the whole array against a string
-  // reported mikroscope and ghchronicle as contradicting while their English
-  // text was identical. An English-only site has no Spanish literal to
-  // contradict.
-  const theirDescriptions = [theirs.description ?? []].flat();
-  const tagged = (lang) =>
-    theirDescriptions.find((literal) => literal?.["@language"] === lang)?.[
-      "@value"
-    ];
-  const theirValue = (p) => {
-    if (p === "description@es") return tagged("es");
-    return p === "description" && tagged("en") !== undefined
-      ? tagged("en")
-      : theirs[p];
+  // A localized property is read per language on both sides (`siteValues`):
+  // the English literal against the `en` text of projects.yaml, the Spanish
+  // one against the `es` text.
+  // Each article the site's `subjectOf` names is one more property, keyed by
+  // the article's @id. Ours holds the headline of every post jmrp.io
+  // publishes; an article that is not one of them (another site's, or a
+  // post that does not exist) is left out of the comparison and named below.
+  const theirHeadlines = articleHeadlines(theirs.subjectOf);
+  const headlineKeys = Object.keys(theirHeadlines);
+  const theirValues = { ...siteValues(theirs), ...theirHeadlines };
+  const ours = {
+    ...projectValues(project, LICENSE_URLS),
+    ...Object.fromEntries(headlineKeys.map((key) => [key, OUR_HEADLINES[key]])),
   };
-
-  const allDiffs = divergentProperties(
-    Object.fromEntries(CONTRADICTABLE.map((p) => [p, theirValue(p)])),
-    ours,
+  const theirValue = (p) => theirValues[p];
+  const unknownArticles = headlineKeys.filter(
+    (key) => OUR_HEADLINES[key] === undefined,
   );
+
+  const allDiffs = divergentProperties(theirValues, ours, [
+    ...CONTRADICTABLE,
+    ...headlineKeys,
+  ]);
   const { contradicting: diffs, accepted: acceptedDiffs } = classifyDivergences(
     project.id,
     allDiffs,
@@ -310,7 +350,8 @@ for (const project of projects) {
     diffs.length === 0 &&
     acceptedDiffs.length === 0 &&
     missing.length === 0 &&
-    personLines.length === 0
+    personLines.length === 0 &&
+    unknownArticles.length === 0
   ) {
     console.log(`✓ ${project.id}`);
     continue;
@@ -332,7 +373,11 @@ for (const project of projects) {
   // system is the odd one out.
   const printValues = (p) => {
     console.log(`     their site : ${JSON.stringify(theirValue(p))}`);
-    console.log(`     projects.yaml: ${JSON.stringify(ours[p])}`);
+    // A headline comes from the post's frontmatter, not from projects.yaml.
+    const source = Object.hasOwn(theirHeadlines, p)
+      ? "jmrp.io post"
+      : "projects.yaml";
+    console.log(`     ${source}: ${JSON.stringify(ours[p])}`);
     if (!LIST_PROPERTIES.includes(p)) return;
     const { onlyTheirs, onlyOurs } = valueDifference(p, theirValue(p), ours[p]);
     if (onlyTheirs.length > 0) {
@@ -358,6 +403,14 @@ for (const project of projects) {
   if (missing.length > 0) {
     console.log(`   sameAs entries their site has and projects.yaml lacks:`);
     for (const u of missing) console.log(`     ${u}`);
+  }
+  if (unknownArticles.length > 0) {
+    // Not a contradiction: the article may be another site's. When it names
+    // a jmrp.io URL, the post was renamed or never existed.
+    console.log(`   subjectOf articles jmrp.io publishes no post for:`);
+    for (const key of unknownArticles) {
+      console.log(`     ${key.replace("subjectOf headline ", "")}`);
+    }
   }
 }
 

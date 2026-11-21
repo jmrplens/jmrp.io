@@ -4,11 +4,11 @@ slug: "005-implementing-tarpit-nginx"
 publishedDate: 2026-01-16
 updatedDate: 2026-08-22
 lastVerified:
-  date: 2026-08-22
+  date: 2026-11-21
   versions:
-    - nginx 1.31.3 (--with-http_perl_module)
+    - nginx 1.31.8 (--with-http_perl_module)
 description: "Implement an Nginx tarpit to slow down and trap malicious bots, vulnerability scanners, and brute-force attackers. Includes CrowdSec integration."
-lead: "A tarpit answers scanners at about 10 bytes per second so they sit there waiting instead of retrying instantly the way they do after a 403 — and a single Brotli setting silently disabled mine for months."
+lead: "A tarpit answers scanners at about 10 bytes per second so they sit there waiting instead of retrying instantly the way they do after a 403, and a single Brotli setting silently disabled mine for months."
 author: "José Manuel Requena Plens"
 authorEmail: "mail@jmrp.io"
 draft: false
@@ -48,7 +48,7 @@ howto:
     - "CrowdSec"
   steps:
     - name: "Prepare the http block"
-      text: "In nginx.conf, define maps for trusted IPs, the dynamic tarpit rate, and the loggable flag, plus a dedicated log_format that forces status 418 and a perl_set that generates a large random payload."
+      text: "In nginx.conf, above the include lines, define maps for trusted IPs, the dynamic tarpit rate, and the loggable flag, plus a dedicated log_format that forces status 418 and a perl_set that generates a large random payload."
       anchor: "step-1-prepare-nginx-http-block"
     - name: "Create the tarpit snippet"
       text: "Write a reusable snippet that logs only tarpitted requests, returns 403 for trusted IPs, applies limit_rate to throttle delivery to about 10 bytes/second, and returns 200 with the slow random content."
@@ -79,7 +79,7 @@ import TLDRSummary from "@components/ui/TLDRSummary.astro";
 
 If you've ever looked at your server logs, you've likely seen countless attempts to access files like `/.env`, `/wp-login.php`, `/.git/config`, or `/admin`. These are automated scanners probing your server for vulnerabilities. While simply blocking them with a 403 or 404 response works, there's a more *satisfying* approach: **trapping them in a tarpit**.
 
-<TLDRSummary title="TL;DR — Trap scanners in a slow Nginx tarpit">
+<TLDRSummary title="TL;DR: Trap scanners in a slow Nginx tarpit">
 - **A tarpit drips data slowly** (about 10 bytes/second) so malicious scanners stay stuck instead of instantly retrying like they do after a 403/404.
 - **Three Nginx pieces**: a large random payload via the Perl module, `limit_rate` to throttle delivery, and a dedicated `log_format` that forces status **418** for clean parsing.
 - **Sensitive paths return 418** (`/.env`, `/.git`, backups, CMS exploits, dotfiles) and `error_page 418 = @tarpit` routes them into the slow-response snippet.
@@ -91,11 +91,11 @@ If you've ever looked at your server logs, you've likely seen countless attempts
 
 ## What I found when I actually measured my own tarpit
 
-The tarpit above isn't a lab exercise — it's been running on this site in production, logging `418` for every capture while serving `200` to keep the client hooked, exactly as described above. Recently I found out it had stopped doing the second half of that job for a while, and nothing in the logs gave it away: every capture still showed the expected `200`/`418` split, so on paper it looked like it was working perfectly.
+The tarpit above isn't a lab exercise: it's been running on this site in production, logging `418` for every capture while serving `200` to keep the client hooked, exactly as described above. Recently I found out it had stopped doing the second half of that job for a while, and nothing in the logs gave it away: every capture still showed the expected `200`/`418` split, so on paper it looked like it was working perfectly.
 
 ### The bug: compression undid the throttle
 
-My production tarpit doesn't serve the guide's random Perl string — it serves an animated decoy page, `nedry.html` (255,864 bytes), followed by roughly 10 MB of zero-byte padding, for a combined payload of 10,255,882 bytes. `limit_rate` only throttles bytes that actually cross the wire, and Nginx applies it *after* compression runs. Brotli reduced that entire ~10 MB response down to 189,208 bytes (the 189,368 you'll see in the raw log includes HTTP headers), and my `limit_rate_after` was set to 300 KB — comfortably above the compressed size, but nowhere near the true payload. The throttle simply never engaged: every scanner downloaded the full 10.25 MB at full speed, in a fraction of a second, and moved on. The 300 KB threshold itself was correctly chosen — `nedry.html` alone is ~250 KB, sized so the visible animation still loads fast for anyone who isn't being tarpitted — the padding is what quietly broke it.
+My production tarpit doesn't serve the guide's random Perl string: it serves an animated decoy page, `nedry.html` (255,864 bytes), followed by roughly 10 MB of zero-byte padding, for a combined payload of 10,255,882 bytes. `limit_rate` only throttles bytes that actually cross the wire, and Nginx applies it *after* compression runs. Brotli reduced that entire ~10 MB response down to 189,208 bytes (the 189,368 you'll see in the raw log includes HTTP headers), and my `limit_rate_after` was set to 300 KB, comfortably above the compressed size, but nowhere near the true payload. The throttle simply never engaged: every scanner downloaded the full 10.25 MB at full speed, in a fraction of a second, and moved on. The 300 KB threshold itself was correctly chosen: `nedry.html` alone is ~250 KB, sized so the visible animation still loads fast for anyone who isn't being tarpitted; the padding is what quietly broke it.
 
 ### The fix, and what changed
 
@@ -123,7 +123,7 @@ The fix was one line, `gzip off; brotli off;`, in the tarpit snippet, validated 
   </tbody>
 </Table>
 
-The log-level picture agrees. Comparing the 14 hours before the fix against a 9-hour window afterward, the **median bytes served per capture jumped from 189,368 to 306,948** — for the first time, above the `limit_rate_after` threshold, which is exactly what "the throttle is finally engaging" looks like. I'd also expected captures-per-hour to fall sharply as scanners got stuck instead of firing dozens of quick requests, and it did (266/hour before, 14/hour after) — but I'm not presenting that number as proven on its own: the "after" window runs into the night, when scan traffic is naturally lower, so part of the drop could simply be the daily scanning cycle rather than the fix. Confirming it properly means comparing the same hours across different days, not two consecutive windows. The byte figures don't have that problem — they're a direct, mechanical consequence of turning compression off, not something traffic variation could produce.
+The log-level picture agrees. Comparing the 14 hours before the fix against a 9-hour window afterward, the **median bytes served per capture jumped from 189,368 to 306,948**: for the first time, above the `limit_rate_after` threshold, which is exactly what "the throttle is finally engaging" looks like. I'd also expected captures-per-hour to fall sharply as scanners got stuck instead of firing dozens of quick requests, and it did (266/hour before, 14/hour after), but I'm not presenting that number as proven on its own: the "after" window runs into the night, when scan traffic is naturally lower, so part of the drop could simply be the daily scanning cycle rather than the fix. Confirming it properly means comparing the same hours across different days, not two consecutive windows. The byte figures don't have that problem: they're a direct, mechanical consequence of turning compression off, not something traffic variation could produce.
 
 ### How to verify your own tarpit is actually working
 
@@ -160,18 +160,18 @@ awk '{for(i=1;i<=NF;i++) if($i=="418"){print $(i+1);break}}' tarpit_access.log \
 
 ### Two ways to pad the payload, and the trade-off
 
-There are two honest ways to build the multi-megabyte filler, and neither is a free lunch — I'm presenting both rather than pretending the one I run today is simply "the right one":
+There are two honest ways to build the multi-megabyte filler, and neither is a free lunch, so I'm presenting both rather than pretending the one I run today is simply "the right one":
 
-1. **Zero-byte padding with compression disabled** (what's running now). Simple to generate and easy to reason about, but fragile: it depends on nothing downstream ever re-compressing the response. Any intermediate proxy that applies its own gzip or Brotli collapses the 10 MB back down to ~189 KB and silently defeats the tarpit again — no error, no alert, just a throttle that quietly stops throttling.
+1. **Zero-byte padding with compression disabled** (what's running now). Simple to generate and easy to reason about, but fragile: it depends on nothing downstream ever re-compressing the response. Any intermediate proxy that applies its own gzip or Brotli collapses the 10 MB back down to ~189 KB and silently defeats the tarpit again: no error, no alert, just a throttle that quietly stops throttling.
 2. **Random bytes instead of zeros.** Incompressible by construction, so the tarpit works whether or not compression is active anywhere in the chain, and survives intermediate proxies that zero padding doesn't. The cost: the file never compresses even in cases where that would help (say, serving it over a slow uplink), and a few megabytes of genuine randomness is more work to generate and regenerate than a stream of zeros.
 
-I'm running option 1 today because it's what I could ship immediately after finding the bug — but it's the more fragile of the two, and now I know exactly what "fragile" looks like when it fails silently.
+I'm running option 1 today because it's what I could ship immediately after finding the bug, but it's the more fragile of the two, and now I know exactly what "fragile" looks like when it fails silently.
 
 ---
 
 ## What is a tarpit?
 
-A **[tarpit](https://en.wikipedia.org/wiki/Tarpit_%28networking%29)** (also known as a "tar pit" or "[sticky honeypot](/blog/006-implementing-mikrotik-honeypot/)") is a network security mechanism designed to **slow down attackers** by deliberately responding to their requests at an extremely slow rate. The name comes from the natural phenomenon of tar pits—geological formations where animals become trapped in viscous tar and cannot escape.
+A **[tarpit](https://en.wikipedia.org/wiki/Tarpit_%28networking%29)** (also known as a "tar pit" or "[sticky honeypot](/blog/006-implementing-mikrotik-honeypot/)") is a network security mechanism designed to **slow down attackers** by deliberately responding to their requests at an extremely slow rate. The name comes from the natural phenomenon of tar pits: geological formations where animals become trapped in viscous tar and cannot escape.
 
 In cybersecurity, a tarpit does the same thing digitally: it accepts incoming connections from malicious actors but **drip-feeds data so slowly** that the attacker's tools become stuck, wasting their time and resources while they wait for a response that never fully arrives. For more background, see [Hedgehog Security's excellent overview](https://web.archive.org/web/20250811164646/https://www.hedgehogsecurity.co.uk/blog/what-are-tarpits) (archived copy; the original page is gone).
 
@@ -275,12 +275,12 @@ Let's implement a complete, production-grade tarpit solution in [Nginx](https://
 
 ### Step 1: prepare Nginx (http block)
 
-We need to define our log formats and map variables in the main `nginx.conf`. This setup allows us to **whitelist trusted IPs** (like your home IP or VPN) so you don't tarpit yourself!
+We need to define our log formats and map variables in the main `nginx.conf`, above its `include` lines: nginx reads the file in order, and the server block of step 4 fails `nginx -t` with `unknown log format "tarpit_418_fixed"` when the format comes after the include that loads it. This setup allows us to **whitelist trusted IPs** (like your home IP or VPN) so you don't tarpit yourself!
 
 <FileContent filename="/etc/nginx/nginx.conf" ariaLabel="Nginx configuration for maps and logging">
 ```nginx
 http {
-    # ... existing config ...
+    # ... existing config (types, logging, gzip) ...
 
     # 1. Map to identify trusted IPs (Localhost, VPN, etc.)
     map $remote_addr $is_trusted_ip {
@@ -318,6 +318,12 @@ http {
         }
         return $result;
     }';
+
+    # The includes come last: nginx reads its configuration in order, and a
+    # server block that includes snippets/tarpit.conf (step 4) needs the
+    # tarpit_418_fixed format to be defined before it.
+    include /etc/nginx/conf.d/*.conf;
+    include /etc/nginx/sites-enabled/*;
 }
 ```
 </FileContent>
@@ -347,8 +353,11 @@ limit_rate $tarpit_rate;
 # Start throttling after the first byte
 limit_rate_after 1;
 
-# Send the slow response
-add_header Content-Type text/plain;
+# Send the slow response as plain text whatever the requested extension:
+# the empty types block stops /backup.zip being labelled application/zip,
+# and "add_header Content-Type" would add a second header, not replace it.
+types { }
+default_type text/plain;
 add_header Cache-Control "no-store, no-cache, must-revalidate, max-age=0";
 add_header Pragma "no-cache";
 return 200 $slow_content;
@@ -544,7 +553,7 @@ One of the most powerful aspects of running a tarpit is the **intelligence you g
 ### Why report malicious IPs?
 
 <Callout type="info" title="The Power of Collective Defense">
-When you report a malicious IP, you're not just protecting yourself—you're protecting **everyone**. Threat intelligence platforms aggregate reports from thousands of contributors, creating real-time blocklists that can preemptively block attackers before they reach your server.
+When you report a malicious IP, you're not just protecting yourself; you're protecting **everyone**. Threat intelligence platforms aggregate reports from thousands of contributors, creating real-time blocklists that can preemptively block attackers before they reach your server.
 </Callout>
 
 Benefits of reporting include:
@@ -662,7 +671,7 @@ Unlike AbuseIPDB (which is passive lookup), [CrowdSec](https://www.crowdsec.net/
   </tbody>
 </Table>
 
-The Community Blocklist updates in real-time and is tailored to your stack—if you run WordPress, you'll receive WordPress-specific threat IPs automatically.
+The Community Blocklist updates in real-time and is tailored to your stack: if you run WordPress, you'll receive WordPress-specific threat IPs automatically.
 
 ---
 
@@ -767,11 +776,11 @@ Implementing the **production-grade architecture** with forced 418 logging has s
 - **Clear Signal:** The 418 status code acts as a high-fidelity signal for "confirmed malicious intent".
 - **Zero False Positives:** By using the trusted IP map, admin traffic is never accidentally tarpitted.
 - **Resource Protection:** The rate limit bypass ensures valid traffic flows smoothly while attackers are stuck in the slow lane.
-- **CrowdSec Integration:** The parser logic became trivial—simply matching `status == 418` is enough to ban an IP, regardless of the requested path.
+- **CrowdSec Integration:** The parser logic became trivial: simply matching `status == 418` is enough to ban an IP, regardless of the requested path.
 
 <Callout type="keypoint" title="What this tarpit has actually caught">
 The four points above are qualitative, so here is the number. This site runs the
-tarpit described here, and the counter is on the [homelab page](/homelab/) —
+tarpit described here, and the counter is on the [homelab page](/homelab/),
 injected by the edge server as it responds, not by JavaScript, so what you read
 is what the server had at that moment. It stood at **1,318 tarpit hits and 90
 Nginx bans** when this note was written (2026-08-22); by the time you read it,

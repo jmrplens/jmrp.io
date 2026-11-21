@@ -107,8 +107,9 @@
       "operatingSystem": "Linux, macOS, Windows, FreeBSD",
       "repo": "https://github.com/jmrplens/cs-routeros-bouncer",
       "docs": "https://docs.jmrp.io/cs-routeros-bouncer/",
-      "description": "CrowdSec bouncer for MikroTik RouterOS: automatic firewall management via the RouterOS API",
-      "descriptionEs": "Bouncer de CrowdSec para MikroTik RouterOS: gestión automática del firewall mediante la API de RouterOS",
+      "docsEs": "https://docs.jmrp.io/cs-routeros-bouncer/es/",
+      "description": "CrowdSec bouncer for MikroTik RouterOS: automatic firewall management via the RouterOS API.",
+      "descriptionEs": "Bouncer de CrowdSec para MikroTik RouterOS: gestión automática del firewall mediante la API de RouterOS.",
       "keywords": [
         "Network security",
         "RouterOS",
@@ -127,7 +128,7 @@
       "status": "active",
       "schemaType": "SoftwareApplication",
       "applicationCategory": "DeveloperApplication",
-      "applicationSubCategory": "Monitoring",
+      "applicationSubCategory": "Network monitoring",
       "kicker": "Telemetry · MikroTik RouterOS",
       "language": "Go",
       "license": "MIT",
@@ -168,6 +169,7 @@
       "operatingSystem": "Linux, macOS, Windows",
       "repo": "https://github.com/jmrplens/Cloudflare-DNS-Updater",
       "docs": "https://docs.jmrp.io/Cloudflare-DNS-Updater/",
+      "docsEs": "https://docs.jmrp.io/Cloudflare-DNS-Updater/es/",
       "description": "Bash-based dynamic DNS updater that keeps Cloudflare A and AAAA records pointed at your current public IP.",
       "descriptionEs": "Cliente de DNS dinámico en Bash que mantiene los registros A y AAAA de Cloudflare apuntando a tu IP pública actual.",
       "keywords": [
@@ -194,6 +196,7 @@
       "operatingSystem": "Linux, macOS, Windows",
       "repo": "https://github.com/jmrplens/libgen-mcp",
       "docs": "https://docs.jmrp.io/libgen-mcp/",
+      "docsEs": "https://docs.jmrp.io/libgen-mcp/es/",
       "description": "MCP server for federated search, citation and reading of books, research papers, comics, magazines and standards across the Library Genesis catalog and open-access sources. No account required.",
       "descriptionEs": "Servidor MCP para búsqueda federada, cita y lectura de libros, artículos de investigación, cómics, revistas y normas en el catálogo de Library Genesis y en fuentes de acceso abierto. Sin necesidad de cuenta.",
       "keywords": [
@@ -296,7 +299,7 @@
       "docsEs": "https://kleidos.dev/es/",
       "sitemap": "sitemap.xml",
       "description": "Kleidos is a hardware password manager: passwords encrypted on a device you hold, typed over Bluetooth once you unlock it. No app, no cloud. Not released.",
-      "descriptionEs": "Kleidos es un gestor de contraseñas por hardware: contraseñas cifradas en un dispositivo que llevas encima, escritas por Bluetooth al desbloquearlo. Sin app ni nube. Sin publicar todavía.",
+      "descriptionEs": "Kleidos es un gestor de contraseñas por hardware: contraseñas cifradas en un dispositivo que tienes tú, escritas por Bluetooth al desbloquearlo. Sin app ni nube. Sin publicar.",
       "keywords": [
         "Password manager",
         "ESP32",

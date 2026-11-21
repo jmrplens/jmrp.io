@@ -203,7 +203,7 @@ const i18n = {
   ),
 };
 
-const sampleHeaders = `content-security-policy: default-src 'none'; script-src 'self' 'nonce-MASKED' 'strict-dynamic'; style-src 'self' 'nonce-MASKED'; img-src 'self' data: https://*.jmrp.io; font-src 'self'; connect-src 'self' https://api.github.com https://cloudflareinsights.com https://*.cloudflareinsights.com; media-src 'self'; manifest-src 'self'; frame-src 'none'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests; report-uri /csp-report
+const sampleHeaders = `content-security-policy: default-src 'none'; script-src 'self' 'nonce-MASKED' 'strict-dynamic'; style-src 'self' 'nonce-MASKED'; img-src 'self' data: https://*.jmrp.io; font-src 'self'; connect-src 'self' https://cloudflareinsights.com https://*.cloudflareinsights.com; media-src 'self'; manifest-src 'self'; frame-src 'none'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests; report-uri /csp-report
 strict-transport-security: max-age=63072000; includeSubDomains; preload
 x-content-type-options: nosniff
 x-frame-options: DENY
@@ -224,7 +224,7 @@ server: jmrp.io`;
   being an open header-fetching service for arbitrary URLs: unlike Origin or
   Referer, it cannot be forged without the server-side key.
 
-  This page is therefore excluded from the edge-nonce Worker's routes — a
+  This page is therefore excluded from the edge-nonce Worker's routes: a
   5-minute token inside a copy cached for 24 h would go stale and lock the tool
   out of its own backend. Same exclusion /homelab/ already has, same reason.
 */}
@@ -352,7 +352,7 @@ server: jmrp.io`;
           class="hdr-score-grade"
           id={`${uniqueId}-grade`}
         >
-          —
+          -
         </span>
         <div
           class="hdr-summary"
@@ -418,10 +418,18 @@ server: jmrp.io`;
 
         try {
           var token = container.getAttribute("data-hdr-token");
-          var res = await fetch(
-            "/api/headers-proxy?url=" + encodeURIComponent(url),
-            token ? { headers: { "X-Headers-Token": token } } : undefined,
-          );
+          // The inspected URL travels in the body of a POST, never in the
+          // query string. nginx writes no log for this endpoint, but
+          // Cloudflare's own zone dataset keeps every request's path and
+          // query string beside the client address for 31 days, and it
+          // keeps no request bodies (GEO audit #13, M3c).
+          var reqHeaders = { "Content-Type": "application/json" };
+          if (token) reqHeaders["X-Headers-Token"] = token;
+          var res = await fetch("/api/headers-proxy", {
+            method: "POST",
+            headers: reqHeaders,
+            body: JSON.stringify({ url: url }),
+          });
           var data = await res.json();
           if (!res.ok || data.error) {
             throw new Error(data.error || i18n.failedToFetchDefault);

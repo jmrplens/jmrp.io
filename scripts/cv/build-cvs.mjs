@@ -2,8 +2,8 @@
  * Builds the CV PDFs as part of `pnpm build`.
  *
  * Locally (e.g. on the deploy server) it regenerates the ATS LaTeX from the YAML
- * and compiles all six PDFs via `cv_latex/compile_cv.sh`. In CI (`process.env.CI`)
- * — where the LaTeX toolchain is not installed — it is skipped and the committed
+ * and compiles all six PDFs via `cv_latex/compile_cv.sh`. In CI (`process.env.CI`),
+ * where the LaTeX toolchain is not installed, it is skipped and the committed
  * PDFs are used (the `verify-ats` step validates those). It also skips, with a
  * warning, if no LaTeX engine is found, so a contributor without TeX can still
  * run `pnpm build`.
@@ -17,11 +17,18 @@
  * script and these scripts) and skips the compile when the hash matches the
  * previous run AND all six PDFs are still on disk.
  *
- * Trade-off worth knowing: the four ATS PDFs embed GitHub stars/downloads
- * fetched at generation time (see github-stats.mjs). Those numbers drift
- * without any file changing, so a skipped build keeps the previous figures.
- * Force a refresh with `pnpm build:cv --force` (or `CV_BUILD_FORCE=1`), which
- * is also what to run after bumping the LaTeX toolchain.
+ * The downloads snapshot is hashed by what the PDFs print from it, not by its
+ * raw counts (see `downloadsDisplayProjection`): Docker pulls, NuGet and
+ * conda-forge move the exact totals on every refresh, while a badge only says
+ * "~185k downloads". Hashing the raw counts recompiled all six PDFs on every
+ * deploy and left them modified in git (GEO audit #13).
+ *
+ * Trade-off worth knowing: the PDFs also embed GitHub stars and release
+ * counts fetched at generation time (see github-stats.mjs). Those numbers
+ * drift without any file changing, so a skipped build keeps the previous
+ * figures. Force a refresh with `pnpm build:cv --force` (or
+ * `CV_BUILD_FORCE=1`), which is also what to run after bumping the LaTeX
+ * toolchain.
  *
  * @module
  */
@@ -53,7 +60,7 @@ const INPUT_SOURCES = [
   { dir: path.join(ROOT, "src", "content", "cv"), exts: [".yaml", ".yml"] },
   { dir: path.join(ROOT, "cv_latex"), exts: [".tex", ".cls", ".sty", ".sh"] },
   // The design CVs render the publications straight from papers.bib, and every
-  // PDF embeds the vendored fonts — both changes must invalidate the cache.
+  // PDF embeds the vendored fonts: both changes must invalidate the cache.
   // (collectInputFiles does not recurse, so each directory is listed.)
   {
     dir: path.join(ROOT, "src", "content", "publications_data"),
@@ -76,9 +83,9 @@ const INPUT_FILES = [
   // changes the numbers printed in the PDFs.
   path.join(ROOT, "scripts", "download-sources.mjs"),
   // The download figures themselves. Refreshed by `main()` before the hash is
-  // taken, so a build whose numbers moved recompiles and one whose numbers
-  // did not is skipped; `generatedAt` is left out of the hash for that reason
-  // (see `hashableContent`). Before this the PDFs fetched their own figures
+  // taken, and hashed through the same formatter the PDFs print with (see
+  // `hashableContent`), so a build whose printed badges moved recompiles and
+  // one whose exact totals moved below the rounding is skipped. Before this the PDFs fetched their own figures
   // and only when something ELSE changed, so they trailed the page next to
   // them by a build or more (GEO audit #9, A1).
   path.join(ROOT, DOWNLOADS_DATA_PATH),
@@ -122,33 +129,101 @@ function collectInputFiles() {
 }
 
 /**
- * The bytes of an input file that matter to the PDFs. The downloads snapshot
- * carries the time it was written, which changes on every refresh whether or
- * not a single figure did; hashing it would recompile the six PDFs (~70 s) on
- * every build for nothing.
+ * @typedef {(
+ *   stats: { stars: number, releases: number, downloads: number },
+ *   locale: string,
+ * ) => string[]} StatsFormatter
+ * The badge formatter of github-stats.mjs (`formatStats`).
+ */
+
+/** The locales the six PDFs are generated in. */
+const PDF_LOCALES = ["en", "es"];
+
+/**
+ * What the PDFs print from a downloads snapshot, as a stable string.
+ *
+ * The generators read one figure per project, `projects[<repo>].total`, and
+ * print it only through `formatStats`, which rounds it to thousands and drops
+ * it below the display floor. Everything else in the file (the site-wide
+ * total, the per-channel split, `generatedAt`) never reaches a PDF. So the
+ * projection runs every project's total through that same formatter, in both
+ * locales, and keeps only the badges: totals that differ below the rounding
+ * give the same string, and a change to the rounding or the floor in
+ * github-stats.mjs moves the hash with it. Stars and releases are passed as
+ * zero because they come from the live API, not from this file; their badges
+ * are therefore constant here.
+ *
+ * A project without a numeric total maps to null: `fetchRepoStats` then
+ * fetches that project's figure live, so a total appearing or disappearing
+ * changes what the PDFs print and must change the hash.
+ *
+ * @param {unknown} snapshot - The parsed downloads snapshot.
+ * @param {StatsFormatter} format - The formatter the PDFs use.
+ * @returns {string} JSON of `[project, badges by locale | null][]`, sorted.
+ */
+export function downloadsDisplayProjection(snapshot, format) {
+  const projects =
+    snapshot && typeof snapshot === "object" && "projects" in snapshot
+      ? snapshot.projects
+      : undefined;
+  const entries =
+    projects && typeof projects === "object" ? Object.entries(projects) : [];
+  const projection = entries
+    .map(([name, figures]) => {
+      const total = figures?.total;
+      if (typeof total !== "number") return [name, null];
+      return [
+        name,
+        PDF_LOCALES.map((locale) =>
+          format({ stars: 0, releases: 0, downloads: total }, locale),
+        ),
+      ];
+    })
+    .sort(([a], [b]) => a.localeCompare(b));
+  return JSON.stringify(projection);
+}
+
+/**
+ * The bytes of an input file that matter to the PDFs. Every file is hashed
+ * whole except the downloads snapshot, which is hashed by what the PDFs print
+ * from it (see {@link downloadsDisplayProjection}): its exact totals and its
+ * `generatedAt` change on every refresh whether or not a printed badge did,
+ * and hashing them recompiled the six PDFs (~70 s) on every build for nothing.
  *
  * @param {string} file - Absolute path of the input file.
+ * @param {{ root?: string, format: StatsFormatter }} options - The repository
+ *   root the file is relative to, and the PDFs' badge formatter.
  * @returns {Buffer | string} What to hash for it.
  */
-function hashableContent(file) {
+export function hashableContent(file, { root = ROOT, format }) {
   const content = fs.readFileSync(file);
-  if (path.relative(ROOT, file) !== DOWNLOADS_DATA_PATH) return content;
+  if (path.relative(root, file) !== DOWNLOADS_DATA_PATH) return content;
   try {
-    const snapshot = JSON.parse(content.toString("utf8"));
-    delete snapshot.generatedAt;
-    return JSON.stringify(snapshot);
+    return downloadsDisplayProjection(
+      JSON.parse(content.toString("utf8")),
+      format,
+    );
   } catch {
+    // An unreadable snapshot is hashed as bytes: any edit to it recompiles,
+    // which is the safe direction.
     return content;
   }
 }
 
-/** SHA-256 over the input files' relative paths and contents. */
-function computeInputHash(files) {
+/**
+ * SHA-256 over the input files' relative paths and hashable contents.
+ *
+ * @param {string[]} files - Absolute paths, in a stable order.
+ * @param {{ root?: string, format: StatsFormatter }} options - See
+ *   {@link hashableContent}.
+ * @returns {string} The hex digest.
+ */
+export function computeInputHash(files, { root = ROOT, format }) {
   const hash = crypto.createHash("sha256");
   for (const file of files) {
-    hash.update(path.relative(ROOT, file));
+    hash.update(path.relative(root, file));
     hash.update("\0");
-    hash.update(hashableContent(file));
+    hash.update(hashableContent(file, { root, format }));
     hash.update("\0");
   }
   return hash.digest("hex");
@@ -168,7 +243,7 @@ function readCachedHash() {
     const cached = JSON.parse(fs.readFileSync(CACHE_FILE, "utf8"));
     return typeof cached.inputHash === "string" ? cached.inputHash : null;
   } catch {
-    // No cache yet, or it is unreadable/corrupt — treat as a miss and rebuild.
+    // No cache yet, or it is unreadable or corrupt: treat it as a miss and rebuild.
     return null;
   }
 }
@@ -182,20 +257,18 @@ function writeCache(inputHash, fileCount) {
       JSON.stringify({ inputHash, fileCount, pdfs: EXPECTED_PDFS }, null, 2),
     );
   } catch (error) {
-    console.warn(`CV build: could not write cache — ${error.message}`);
+    console.warn(`CV build: could not write cache: ${error.message}`);
   }
 }
 
 async function main() {
   if (process.env.CI) {
-    console.log(
-      "CV build: CI detected — skipping LaTeX, using committed PDFs.",
-    );
+    console.log("CV build: CI detected; skipping LaTeX, using committed PDFs.");
     return;
   }
   if (!hasBinary("lualatex") || !hasBinary("xelatex")) {
     console.warn(
-      "CV build: LaTeX (lualatex/xelatex) not found — skipping CV compilation.",
+      "CV build: LaTeX (lualatex/xelatex) not found; skipping CV compilation.",
     );
     return;
   }
@@ -219,12 +292,17 @@ async function main() {
     throw new Error(`CV build: could not fetch download totals (${message})`);
   }
 
+  // Imported here, after the refresh, rather than at the top: github-stats.mjs
+  // reads the snapshot when it loads and throws without one when
+  // CV_REQUIRE_DOWNLOADS_SNAPSHOT is exported, which on a fresh clone would
+  // fail before the refresh above had written the file.
+  const { formatStats } = await import("./github-stats.mjs");
   const inputFiles = collectInputFiles();
-  const inputHash = computeInputHash(inputFiles);
+  const inputHash = computeInputHash(inputFiles, { format: formatStats });
 
   if (!force && inputHash === readCachedHash() && outputsPresent()) {
     console.log(
-      `CV build: inputs unchanged (${inputFiles.length} files) — reusing the ` +
+      `CV build: inputs unchanged (${inputFiles.length} files); reusing the ` +
         "six existing PDFs. Use `--force` to recompile and refresh GitHub stats.",
     );
     return;
@@ -232,8 +310,8 @@ async function main() {
 
   console.log(
     force
-      ? "CV build: --force — compiling all CV PDFs from the YAML…"
-      : "CV build: inputs changed — compiling all CV PDFs from the YAML…",
+      ? "CV build: --force, compiling all CV PDFs from the YAML..."
+      : "CV build: inputs changed, compiling all CV PDFs from the YAML...",
   );
   // A repo-owned script, run by an absolute interpreter path so nothing on
   // PATH can stand in for it (skipped in CI).
@@ -253,4 +331,21 @@ async function main() {
   writeCache(inputHash, inputFiles.length);
 }
 
-await main();
+// Run only when executed (`pnpm build:cv`), not when a test imports the hash
+// helpers: `main()` refreshes the downloads snapshot over the network and
+// compiles LaTeX.
+// realpath on both sides, because the worktrees and `pnpm` may reach this
+// file through a symlink.
+function isEntryPoint() {
+  try {
+    return (
+      fs.realpathSync(process.argv[1] ?? "") ===
+      fs.realpathSync(fileURLToPath(import.meta.url))
+    );
+  } catch {
+    // No script path (`node -e`, a REPL) or one that no longer exists.
+    return false;
+  }
+}
+
+if (isEntryPoint()) await main();

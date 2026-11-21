@@ -5,11 +5,11 @@ lang: "es"
 publishedDate: 2025-12-19
 updatedDate: 2026-08-27
 lastVerified:
-  date: 2026-08-01
+  date: 2026-11-21
   versions:
-    - nginx 1.31.2
-description: "Domina Content Security Policy de cero a A+ — nonces, hashes, strict-dynamic, Trusted Types, prevención de bypass y configuraciones Nginx en producción."
-lead: "El 75,81 % de las CSP usan listas de permitidos de scripts que un atacante puede eludir, según la propia investigación de Google; lo que de verdad detiene el script inyectado —y saca un A+— es una política con nonce y strict-dynamic."
+    - nginx 1.31.8
+description: "Domina Content Security Policy de cero a A+: nonces, hashes, strict-dynamic, Trusted Types, prevención de bypass y configuraciones Nginx en producción."
+lead: "El 75,81 % de las CSP usan listas de permitidos de scripts que un atacante puede eludir, según la propia investigación de Google; lo que de verdad detiene el script inyectado (y saca un A+) es una política con nonce y strict-dynamic."
 coverImage: "../../../assets/images/blog/csp-shield.webp"
 tags: ["Nginx", "Security", "Cryptography"]
 faq:
@@ -90,15 +90,15 @@ import Prerequisite from "@components/ui/Prerequisite.astro";
 import Timeline from "@components/ui/Timeline.astro";
 import DirectiveCard from "@components/ui/DirectiveCard.astro";
 
-**Cross-Site Scripting (XSS)** sigue siendo una de las vulnerabilidades web más devastadoras. En el [OWASP Top 10 2021](https://owasp.org/Top10/2021/A03_2021-Injection/) está dentro de **A03: Injection** como CWE-79 — una categoría con 33 CWE mapeadas, 274.228 apariciones registradas y una tasa de incidencia máxima del **19,09 %** en las aplicaciones analizadas. Según la [investigación de seguridad de Google](https://research.google/pubs/csp-is-dead-long-live-csp-on-the-insecurity-of-whitelists-and-the-future-of-content-security-policy/), incluso los sitios web con CSP a menudo fallan en implementarla correctamente: Google logró eludir el **94,72 % de todas las políticas distintas**, y el **75,81 %** se apoya en listas de permitidos de scripts que un atacante puede eludir.
+**Cross-Site Scripting (XSS)** sigue siendo una de las vulnerabilidades web más devastadoras. En el [OWASP Top 10 2021](https://owasp.org/Top10/2021/A03_2021-Injection/) está dentro de **A03: Injection** como CWE-79, una categoría con 33 CWE mapeadas, 274.228 apariciones registradas y una tasa de incidencia máxima del **19,09 %** en las aplicaciones analizadas. Según la [investigación de seguridad de Google](https://research.google/pubs/csp-is-dead-long-live-csp-on-the-insecurity-of-whitelists-and-the-future-of-content-security-policy/), incluso los sitios web con CSP a menudo fallan en implementarla correctamente: Google logró eludir el **94,72 % de todas las políticas distintas**, y el **75,81 %** se apoya en listas de permitidos de scripts que un atacante puede eludir.
 
 **Content Security Policy (CSP)** es tu defensa a nivel de navegador contra estos ataques. Piensa en ella como una estricta "lista de invitados" para tu sitio web: le indicas al navegador explícitamente qué recursos (scripts, estilos, imágenes) pueden ejecutarse. Todo lo que no esté en la lista se bloquea, incluso si un atacante consigue inyectar código malicioso.
 
 Esta guía te lleva desde cero hasta una configuración CSP lista para producción con **calificación A+**. Aprenderás no solo el "cómo" sino el "por qué" detrás de cada directiva, comprenderás las técnicas modernas de bypass y cómo prevenirlas, y descubrirás temas avanzados como Trusted Types para la prevención de XSS basado en DOM.
 
-<TLDRSummary title="TL;DR — una CSP basada en nonces sobre Nginx">
-  - **Las allowlists no aguantan.** Google logró eludir el **94,72 % de todas las políticas CSP distintas**, y el **75,81 %** se apoya específicamente en listas de permitidos de scripts que un atacante puede eludir — porque los CDN de confianza alojan endpoints JSONP y librerías desactualizadas que convierten un origen permitido en una vía de ejecución.
-  - **Un nonce es por petición e impredecible**, así que un `<script>` inyectado no lleva token válido y se rechaza — que es justo lo que una allowlist no puede prometer. No es una garantía absoluta: `strict-dynamic` permite que un script ya confiable cargue más, un nonce filtrado es un nonce válido, y los sinks del DOM requieren Trusted Types (más abajo).
+<TLDRSummary title="TL;DR: una CSP basada en nonces sobre Nginx">
+  - **Las allowlists no aguantan.** Google logró eludir el **94,72 % de todas las políticas CSP distintas**, y el **75,81 %** se apoya específicamente en listas de permitidos de scripts que un atacante puede eludir, porque los CDN de confianza alojan endpoints JSONP y librerías desactualizadas que convierten un origen permitido en una vía de ejecución.
+  - **Un nonce es por petición e impredecible**, así que un `<script>` inyectado no lleva token válido y se rechaza, que es justo lo que una allowlist no puede prometer. No es una garantía absoluta: `strict-dynamic` permite que un script ya confiable cargue más, un nonce filtrado es un nonce válido, y los sinks del DOM requieren Trusted Types (más abajo).
   - **Un sitio estático también puede usar nonces.** Nginx genera uno por petición y `sub_filter` sustituye el placeholder en el cuerpo de la respuesta, sin servidor de aplicación de por medio. Así se sirve exactamente esta página.
   - **`strict-dynamic` propaga la confianza** de un script con nonce a lo que este cargue, que es lo que permite que la política sobreviva a bundlers e imports dinámicos sin volver a abrir la allowlist.
   - **`object-src 'none'` y `base-uri 'none'` no son opcionales**: sin ellos una política estricta sigue siendo eludible mediante contenido de plugins e inyección de `<base>`.
@@ -119,34 +119,34 @@ Esta guía te lleva desde cero hasta una configuración CSP lista para producci�
 
 {/* El <span> dentro de este <code> es FUNCIONAL, no una errata. Esta frase nombra el marcador
     que usa producción de verdad, y el propio `sub_filter` de producción reescribe ese literal
-    al servir — escribirlo contiguo hacía que la página publicara un nonce en vivo en lugar del
+    al servir, así que escribirlo contiguo hacía que la página publicara un nonce en vivo en lugar del
     token (auditoría GEO 2026-08-22, K1). Partirlo deja el texto renderizado y copiado idéntico
     mientras los bytes servidos nunca coinciden. Con backticks NO funciona, y `&#67;` tampoco:
-    cheerio vuelve a decodificar las entidades — verificado. En el resto del post el token se
+    cheerio vuelve a decodificar las entidades (verificado). En el resto del post el token se
     escribe deliberadamente invertido, como CSP_NONCE_NGINX. */}
 
-Esto no es hipotético — jmrp.io es en sí mismo la implementación de referencia de todo lo anterior. En producción, Nginx fija `set $cspNonce $request_id;` y reescribe el marcador con <code>sub_filter NGINX_CSP_<span>NONCE</span> $cspNonce;</code>, de modo que cada respuesta lleva un nonce fresco atado a esa petición. La cabecera que este sitio sirve realmente está basada en nonces: `default-src 'none'`, `script-src 'self' 'nonce-…' 'strict-dynamic'`, `style-src 'self' 'nonce-…'`, más `frame-ancestors 'none'`, `base-uri 'none'` y `report-uri /csp-report`. El `'self'` que aparece ahí es un respaldo de mismo origen para navegadores sin soporte de `strict-dynamic`; donde sí lo soportan, el navegador ignora `'self'` y el nonce es lo único que autoriza la ejecución. Cero `unsafe-inline`, cero listas de dominios de terceros que mantener.
+Esto no es hipotético: jmrp.io es en sí mismo la implementación de referencia de todo lo anterior. En producción, Nginx fija `set $cspNonce $request_id;` y reescribe el marcador con <code>sub_filter NGINX_CSP_<span>NONCE</span> $cspNonce;</code>, de modo que cada respuesta lleva un nonce fresco atado a esa petición. La cabecera que este sitio sirve realmente está basada en nonces: `default-src 'none'`, `script-src 'self' 'nonce-…' 'strict-dynamic'`, `style-src 'self' 'nonce-…'`, más `frame-ancestors 'none'`, `base-uri 'none'` y `report-uri /csp-report`. El `'self'` que aparece ahí es un respaldo de mismo origen para navegadores sin soporte de `strict-dynamic`; donde sí lo soportan, el navegador ignora `'self'` y el nonce es lo único que autoriza la ejecución. Cero `unsafe-inline`, cero listas de dominios de terceros que mantener.
 
 Las violaciones no se pierden en un log que nadie lee: tengo mi propio receptor (`scripts/csp-reporter.mjs`) que las saca a la luz en cuanto ocurren, en vez de depender de un servicio de terceros para saber qué se está rompiendo.
 
-Medida con la API de Mozilla Observatory, esta configuración obtiene una **A+**. La calificación se ha mantenido en las dos generaciones de puntuación: 140 con los 10 tests pasados bajo el algoritmo v5, y 160 con los 12 pasados bajo v6, medido el 2 de septiembre de 2026. Ninguna de las dos es el 145 que el README de este repositorio anunció hasta hace poco, de un commit de diciembre de 2025. Aquel total incluía un bonus de 5 puntos que Observatory concede por servir cookies con `Secure`/`HttpOnly`/`SameSite`; esas cookies eran dos valores dummy que no hacían nada útil, y eliminarlas —para que la página `/privacy/` de este sitio pueda afirmar honestamente que ninguna respuesta fija `Set-Cookie`— costó 5 puntos cosméticos en una política que ya no falla ni un solo test. Ese cambio mereció claramente la pena, y el badge ahora lleva la calificación y no una puntuación, porque la calificación es la parte que no se mueve.
+Medida con la API de Mozilla Observatory, esta configuración obtiene una **A+**. La calificación se ha mantenido en las dos generaciones de puntuación: 140 con los 10 tests pasados bajo el algoritmo v5, y 160 con los 12 pasados bajo v6, medido el 2 de septiembre de 2026. Ninguna de las dos es el 145 que el README de este repositorio anunció hasta hace poco, de un commit de diciembre de 2025. Aquel total incluía un bonus de 5 puntos que Observatory concede por servir cookies con `Secure`/`HttpOnly`/`SameSite`; esas cookies eran dos valores dummy que no hacían nada útil, y eliminarlas (para que la página `/privacy/` de este sitio pueda afirmar honestamente que ninguna respuesta fija `Set-Cookie`) costó 5 puntos cosméticos en una política que ya no falla ni un solo test. Ese cambio mereció claramente la pena, y el badge ahora lleva la calificación y no una puntuación, porque la calificación es la parte que no se mueve.
 
 ### Qué contienen de verdad los informes de violación
 
 Ese receptor recibe de media una veintena de informes al día, y la media es el número menos útil del conjunto: la mayoría de los días traen un puñado y algún día suelto trae cientos. Lo que importa es la composición, y es estable desde que empecé a leerlos. La gran mayoría son crawlers. Casi todo el resto son extensiones del navegador y antivirus inyectando scripts y estilos en la página de otra persona. **Ni uno solo ha resultado ser un defecto de este sitio.**
 
-Los informes de `eval` bloqueado son el caso más claro, porque son trivialmente falsables: ningún fichero JavaScript que sirve este sitio contiene `eval(` ni `new Function(` — tras un build de producción, las únicas apariciones de ese literal en toda la salida están en la prosa de este mismo artículo. Llegan a rachas desde una sola dirección y un solo user-agent, que es un visitante con algo inyectando código en su navegador, no una política demasiado estricta.
+Los informes de `eval` bloqueado son el caso más claro, porque son trivialmente falsables: ningún fichero JavaScript que sirve este sitio contiene `eval(` ni `new Function(`: tras un build de producción, las únicas apariciones de ese literal en toda la salida están en la prosa de este mismo artículo. Llegan a rachas desde una sola dirección y un solo user-agent, que es un visitante con algo inyectando código en su navegador, no una política demasiado estricta.
 
-Ese es el rendimiento honesto de un `report-uri`: te cuenta sobre todo lo que el software de otros le hace a tus páginas. Ni una sola vez me ha dicho que mi propia política estuviera mal — lo cual no lo hace inútil, porque me llevó a leer mi propio receptor con la atención suficiente para encontrar el fallo de abajo.
+Ese es el rendimiento honesto de un `report-uri`: te cuenta sobre todo lo que el software de otros le hace a tus páginas. Ni una sola vez me ha dicho que mi propia política estuviera mal, lo cual no lo hace inútil, porque me llevó a leer mi propio receptor con la atención suficiente para encontrar el fallo de abajo.
 
 
 ### El fallo que esta auditoría encontró en mi propio receptor
 
 Esa composición solo es fiable porque sentarme a comprobarla destapó un fallo de parseo en el propio receptor.
 
-El 22 de agosto añadí un endpoint `report-to` junto al `report-uri` de siempre. Las dos API no se ponen de acuerdo en la forma: la antigua envía por POST un único objeto `{"csp-report": {…}}` con nombres de campo en kebab-case, mientras que la Reporting API manda envoltorios `{type, url, body: {…}}` en camelCase. Para eso existe una función `normalizeReports()`, que traduce la segunda forma a la primera — y lo hacía, pero solo cuando el cuerpo llegaba como array.
+El 22 de agosto añadí un endpoint `report-to` junto al `report-uri` de siempre. Las dos API no se ponen de acuerdo en la forma: la antigua envía por POST un único objeto `{"csp-report": {…}}` con nombres de campo en kebab-case, mientras que la Reporting API manda envoltorios `{type, url, body: {…}}` en camelCase. Para eso existe una función `normalizeReports()`, que traduce la segunda forma a la primera, y lo hacía, pero solo cuando el cuerpo llegaba como array.
 
-<Code lang="javascript" title="scripts/csp-reporter.mjs — el fallo">
+<Code lang="javascript" title="scripts/csp-reporter.mjs: el fallo">
 ```javascript
 function normalizeReports(parsed) {
   // Un envoltorio suelto no es un array: se escapaba por esta línea
@@ -157,16 +157,16 @@ function normalizeReports(parsed) {
 ```
 </Code>
 
-Un navegador que envía un envoltorio suelto en vez de un array de uno se colaba de largo por esa primera línea. El informe llegaba a los filtros sin directiva, sin URI bloqueada y sin fichero de origen —nada con lo que casar—, así que no se descartaba nada, todo se registraba como inclasificable y cuatro de esos informes vacíos esquivaron el limitador de frecuencia y acabaron en mi móvil como alertas de Telegram con una violación en blanco dentro.
+Un navegador que envía un envoltorio suelto en vez de un array de uno se colaba de largo por esa primera línea. El informe llegaba a los filtros sin directiva, sin URI bloqueada y sin fichero de origen (nada con lo que casar), así que no se descartaba nada, todo se registraba como inclasificable y cuatro de esos informes vacíos esquivaron el limitador de frecuencia y acabaron en mi móvil como alertas de Telegram con una violación en blanco dentro.
 
 Diez informes entraron así entre el 22 y el 26 de agosto. Descodificados a mano no tienen ningún misterio: seis traen un fichero de origen `safari-web-extension://…` o `safari-extension://…`, y los otros cuatro son elementos `<style>` inline que el navegador atribuye al propio documento. Los filtros de descarte ya cubrían ambas categorías; sencillamente nunca llegaron a ver los campos. El arreglo consiste en aceptar también el envoltorio suelto, no solo el array.
 
-La forma del error es lo que merece escribirse. Una afirmación de que ninguno de estos informes es un defecto real, apoyada en parte en informes que nadie podía leer, no es una afirmación — y no tenía manera de saber cuál de las dos cosas era hasta decodificarlos a mano.
+La forma del error es lo que merece escribirse. Una afirmación de que ninguno de estos informes es un defecto real, apoyada en parte en informes que nadie podía leer, no es una afirmación, y no tenía manera de saber cuál de las dos cosas era hasta decodificarlos a mano.
 
 <Callout type="keypoint" title="Un informe que no sabes parsear es peor que uno que nunca recibiste">
   Te cuesta igual una alerta y encima parece señal. Si le enchufas un endpoint
   `report-to` a un receptor que ya tenía `report-uri`, lo primero que hay que
-  probar es un envoltorio suelto — no el array que enseñan los ejemplos de la
+  probar es un envoltorio suelto, no el array que enseñan los ejemplos de la
   especificación.
 </Callout>
 
@@ -197,6 +197,7 @@ Vamos a poner en marcha una CSP funcional ahora mismo. Abre tu configuración de
 server {
     listen 443 ssl;
     server_name example.com;
+    # ... ssl_certificate and ssl_certificate_key, as in your TLS setup
     
     # Your first CSP - allow resources only from your own domain
     add_header Content-Security-Policy "default-src 'self'" always;
@@ -230,7 +231,7 @@ violates the following Content Security Policy directive: "default-src 'self'".
   - Estilos inline (`style="..."`)
   - Imágenes, fuentes y frames externos
   
-  Esto es intencionalmente restrictivo — a continuación lo relajaremos de forma selectiva.
+  Esto es intencionalmente restrictivo; a continuación lo relajaremos de forma selectiva.
 </Callout>
 
 ---
@@ -265,7 +266,7 @@ Con CSP, el navegador verifica cada recurso contra tu política **antes** de eje
 <Callout type="keypoint" icon="mdi:shield">
   **CSP es una segunda línea de defensa.**
   
-  CSP no impide que ocurra la inyección — deberías seguir saneando la entrada del usuario y utilizando consultas parametrizadas. Pero cuando la validación de entrada falla (y acabará fallando), CSP atrapa el ataque a nivel de navegador, impidiendo la ejecución.
+  CSP no impide que ocurra la inyección; deberías seguir saneando la entrada del usuario y utilizando consultas parametrizadas. Pero cuando la validación de entrada falla (y acabará fallando), CSP atrapa el ataque a nivel de navegador, impidiendo la ejecución.
 </Callout>
 
 ---
@@ -405,8 +406,8 @@ Esta es la directiva comodín. Si no especificas una directiva para un tipo de r
   **Buena práctica:** establece `default-src 'none'` y permite explícitamente lo que necesites. Este es el enfoque "denegar por defecto" que recomiendan los profesionales de seguridad.
 </DirectiveCard>
 
-<Code lang="nginx" title="Directiva default-src">
-```nginx
+<Code lang="text" title="Directiva default-src">
+```text
 # Block everything by default - explicitly allow what you need
 Content-Security-Policy: default-src 'none';
 ```
@@ -496,8 +497,8 @@ Controla qué scripts pueden ejecutarse en tu página. Si te equivocas aquí, to
   mdnUrl="https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy/style-src"
 />
 
-<Code lang="nginx" title="style-src con unsafe-inline">
-```nginx
+<Code lang="text" title="style-src con unsafe-inline">
+```text
 # Allow styles from same origin + inline styles
 style-src 'self' 'unsafe-inline';
 ```
@@ -513,7 +514,7 @@ style-src 'self' 'unsafe-inline';
 
 <Tabs>
   <TabPanel label="img-src">
-    ```nginx
+    ```text
     # Allow images from same origin + data: URIs (for base64)
     img-src 'self' data:;
     ```
@@ -521,7 +522,7 @@ style-src 'self' 'unsafe-inline';
     `data:` suele necesitarse para imágenes codificadas en base64, iconos SVG o imágenes placeholder.
   </TabPanel>
   <TabPanel label="font-src">
-    ```nginx
+    ```text
     # Allow fonts from same origin only
     font-src 'self';
     
@@ -530,7 +531,7 @@ style-src 'self' 'unsafe-inline';
     ```
   </TabPanel>
   <TabPanel label="connect-src">
-    ```nginx
+    ```text
     # Restrict XHR/Fetch/WebSocket destinations
     # Critical for preventing data exfiltration
     connect-src 'self' https://api.example.com;
@@ -539,13 +540,13 @@ style-src 'self' 'unsafe-inline';
     Esto controla a dónde puede enviar datos JavaScript. Es crítico para evitar que se envíen datos robados a servidores del atacante.
   </TabPanel>
   <TabPanel label="media-src">
-    ```nginx
+    ```text
     # Audio and video sources
     media-src 'self';
     ```
   </TabPanel>
   <TabPanel label="worker-src">
-    ```nginx
+    ```text
     # Web Workers and Service Workers
     worker-src 'self';
     
@@ -561,12 +562,12 @@ style-src 'self' 'unsafe-inline';
 
 A menudo se pasan por alto pero son **obligatorias para una CSP estricta**:
 
-#### `object-src 'none'` — Bloquear plugins
+#### `object-src 'none'`: bloquear plugins
 
 Los plugins como Flash y Java han sido históricamente vectores de vulnerabilidades importantes. Aunque Flash está obsoleto, bloquear `object-src` previene cualquier ataque basado en plugins:
 
-<Code lang="nginx" title="Directiva object-src">
-```nginx
+<Code lang="text" title="Directiva object-src">
+```text
 # Block all plugins (Flash, Java, Silverlight, PDF viewers)
 object-src 'none';
 ```
@@ -576,7 +577,7 @@ object-src 'none';
   **Obligatorio para CSP estricta.** Sin `object-src 'none'`, los atacantes podrían utilizar vulnerabilidades de plugins para eludir tus restricciones de scripts.
 </Callout>
 
-#### `base-uri 'none'` — Prevenir la inyección de etiqueta base
+#### `base-uri 'none'`: prevenir la inyección de etiqueta base
 
 La etiqueta `<base>` define una URL base para todas las URLs relativas de un documento. Si un atacante inyecta una etiqueta `<base>`, puede redirigir todas tus URLs relativas a su servidor:
 
@@ -602,12 +603,12 @@ La etiqueta `<base>` define una URL base para todas las URLs relativas de un doc
   </div>
 </BeforeAfter>
 
-#### `frame-ancestors 'none'` — Protección contra clickjacking
+#### `frame-ancestors 'none'`: protección contra clickjacking
 
 Impide que tu sitio se incruste en iframes en otros sitios:
 
-<Code lang="nginx" title="Directiva frame-ancestors">
-```nginx
+<Code lang="text" title="Directiva frame-ancestors">
+```text
 # Don't allow embedding anywhere (replaces X-Frame-Options)
 frame-ancestors 'none';
 
@@ -620,12 +621,12 @@ frame-ancestors 'self';
   `frame-ancestors` es más flexible que la antigua cabecera `X-Frame-Options` y debería ser la opción preferida. Sin embargo, para máxima compatibilidad con navegadores, puedes configurar ambas.
 </Callout>
 
-#### `form-action 'self'` — Controlar el envío de formularios
+#### `form-action 'self'`: controlar el envío de formularios
 
 Impide que los atacantes inyecten formularios que envían datos a sus servidores:
 
-<Code lang="nginx" title="Directiva form-action">
-```nginx
+<Code lang="text" title="Directiva form-action">
+```text
 # Forms can only submit to your own domain
 form-action 'self';
 ```
@@ -649,7 +650,7 @@ En lugar de escribir una CSP perfecta de golpe (lo que lleva a la frustración),
     <tr>
       <td><strong>0</strong></td>
       <td>Sin CSP</td>
-      <td data-status="error">Ninguna — completamente expuesto a XSS</td>
+      <td data-status="error">Ninguna, completamente expuesto a XSS</td>
     </tr>
     <tr>
       <td><strong>1</strong></td>
@@ -690,21 +691,24 @@ Así es como se ve el Nivel 6 en la práctica:
 
 <FileContent filename="/etc/nginx/sites-available/example.com">
 ```nginx
-add_header Content-Security-Policy "
-    default-src 'none';
-    script-src 'self';
-    style-src 'self' 'unsafe-inline';
-    img-src 'self' data:;
-    font-src 'self';
-    connect-src 'self';
-    object-src 'none';
-    base-uri 'none';
-    frame-ancestors 'none';
-    form-action 'self';
-    upgrade-insecure-requests;
-" always;
+set $csp "default-src 'none'; ";
+set $csp "${csp}script-src 'self'; ";
+set $csp "${csp}style-src 'self' 'unsafe-inline'; ";
+set $csp "${csp}img-src 'self' data:; ";
+set $csp "${csp}font-src 'self'; ";
+set $csp "${csp}connect-src 'self'; ";
+set $csp "${csp}object-src 'none'; ";
+set $csp "${csp}base-uri 'none'; ";
+set $csp "${csp}frame-ancestors 'none'; ";
+set $csp "${csp}form-action 'self'; ";
+set $csp "${csp}upgrade-insecure-requests";
+add_header Content-Security-Policy $csp always;
 ```
 </FileContent>
+
+<Callout type="info">
+  **Por qué una línea `set` por directiva:** nginx envía el valor entre comillas de una cabecera tal y como está escrito, saltos de línea incluidos. Una política repartida en varias líneas dentro de una cadena de `add_header` llega a los clientes HTTP/1.1 como una cabecera plegada, y los clientes HTTP/2 rechazan la respuesta entera: curl 8.14 aborta con "Invalid HTTP header field was received". Construir el valor con `set $csp "${csp}..."` mantiene la cabecera en una línea y la configuración legible. Los comentarios van fuera de las comillas, donde nginx los trata como comentarios.
+</Callout>
 
 <Callout type="success">
   **Punto de control:** esta CSP protege contra la mayoría de ataques XSS, limita la exfiltración de datos, previene el clickjacking y cierra los vectores de ataque basados en plugins.
@@ -765,7 +769,7 @@ Con `script-src 'self'`, esto se bloquea. Tienes **tres soluciones**:
 
 ### Solución 1: mover a archivos externos
 
-El enfoque más limpio — mover el código inline a archivos `.js`:
+El enfoque más limpio: mover el código inline a archivos `.js`:
 
 <BeforeAfter beforeLabel="Inline (bloqueado por CSP)" afterLabel="Externo (permitido)">
   <div slot="before">
@@ -798,7 +802,7 @@ Genera un hash SHA-256 del contenido de tu script y añádelo a tu CSP. Puedes c
   Copia ese hash directamente en tu CSP.
 </Callout>
 
-**Limitación:** debes regenerar el hash cada vez que cambie el contenido del script — incluso añadir un espacio lo invalidará.
+**Limitación:** debes regenerar el hash cada vez que cambie el contenido del script; incluso añadir un espacio lo invalidará.
 
 ### Solución 3: usar nonces
 
@@ -806,7 +810,7 @@ Añade un token aleatorio tanto a la cabecera CSP como a tus etiquetas de script
 
 <Tabs>
   <TabPanel label="Cabecera CSP">
-    ```nginx
+    ```text
     Content-Security-Policy: 
       script-src 'self' 'nonce-abc123def456';
     ```
@@ -824,7 +828,7 @@ Añade un token aleatorio tanto a la cabecera CSP como a tus etiquetas de script
 **Fundamental:** el nonce debe ser:
 - **Criptográficamente aleatorio** (al menos 128 bits / 16 bytes)
 - **Único por petición** (nunca reutilices nonces)
-- **Codificado** (base64 o hex — el `$request_id` de Nginx usa hex, que es válido según la especificación CSP)
+- **Codificado** (base64 o hex: el `$request_id` de Nginx usa hex, que es válido según la especificación CSP)
 
 ---
 
@@ -884,6 +888,7 @@ En tus plantillas, usa un placeholder que Nginx reemplazará:
 server {
     listen 443 ssl;
     server_name example.com;
+    # ... ssl_certificate and ssl_certificate_key, as in your TLS setup
     
     # ================================================
     # STEP 1: Generate unique nonce per request
@@ -898,25 +903,24 @@ server {
     # For proxied backends, add: proxy_set_header Accept-Encoding "";
     # For static files, ensure gzip is disabled or applied after sub_filter.
     sub_filter_once off;  # Replace ALL occurrences
-    sub_filter_types text/html text/css application/javascript;
+    sub_filter_types text/css application/javascript;  # text/html is always included
     sub_filter CSP_NONCE_NGINX $cspNonce;
 
     # ================================================
     # STEP 3: Set CSP header with same nonce
     # ================================================
-    add_header Content-Security-Policy "
-        default-src 'none';
-        script-src 'self' 'nonce-$cspNonce' 'strict-dynamic';
-        style-src 'self' 'nonce-$cspNonce';
-        img-src 'self' data:;
-        font-src 'self';
-        connect-src 'self';
-        object-src 'none';
-        base-uri 'none';
-        frame-ancestors 'none';
-        form-action 'self';
-        upgrade-insecure-requests;
-    " always;
+    set $csp "default-src 'none'; ";
+    set $csp "${csp}script-src 'self' 'nonce-${cspNonce}' 'strict-dynamic'; ";
+    set $csp "${csp}style-src 'self' 'nonce-${cspNonce}'; ";
+    set $csp "${csp}img-src 'self' data:; ";
+    set $csp "${csp}font-src 'self'; ";
+    set $csp "${csp}connect-src 'self'; ";
+    set $csp "${csp}object-src 'none'; ";
+    set $csp "${csp}base-uri 'none'; ";
+    set $csp "${csp}frame-ancestors 'none'; ";
+    set $csp "${csp}form-action 'self'; ";
+    set $csp "${csp}upgrade-insecure-requests";
+    add_header Content-Security-Policy $csp always;
     
     # ... rest of config
 }
@@ -928,8 +932,8 @@ server {
   
   El `$request_id` de Nginx proporciona:
   - **128 bits** de entropía (32 caracteres hexadecimales)
-  - **Único por petición** — generado de nuevo cada vez
-  - **Impredecible** — derivado de la aleatoriedad del sistema
+  - **Único por petición**: generado de nuevo cada vez
+  - **Impredecible**: derivado de la aleatoriedad del sistema
   
   Esto supera la entropía mínima recomendada por CSP para nonces.
 </Callout>
@@ -1012,7 +1016,7 @@ flowchart TB
 </Code>
 
 <Callout type="warning">
-  **Comportamiento importante:** cuando `'strict-dynamic'` está presente, las fuentes de tipo allowlist como `'self'` o `https://example.com` se **ignoran** para la carga de scripts. Solo los nonces/hashes otorgan confianza inicial — los scripts cargados dinámicamente la heredan.
+  **Comportamiento importante:** cuando `'strict-dynamic'` está presente, las fuentes de tipo allowlist como `'self'` o `https://example.com` se **ignoran** para la carga de scripts. Solo los nonces/hashes otorgan confianza inicial; los scripts cargados dinámicamente la heredan.
   
   Esto es intencionado y en realidad aumenta la seguridad.
 </Callout>
@@ -1075,8 +1079,8 @@ Según la [investigación de Google](https://web.dev/articles/strict-csp), una "
 
 ### La plantilla
 
-<Code lang="nginx" title="Plantilla de CSP estricta">
-```nginx
+<Code lang="text" title="Plantilla de CSP estricta">
+```text
 # The three essential directives for strict CSP
 script-src 'nonce-$cspNonce' 'strict-dynamic';
 object-src 'none';
@@ -1116,7 +1120,7 @@ Los endpoints JSONP ejecutan callbacks controlados por el usuario, lo que los co
 
 <BeforeAfter beforeLabel="Vulnerable" afterLabel="Protegido">
   <div slot="before">
-    ```nginx
+    ```text
     # CSP trusts all of cdn.example.com
     script-src 'self' https://cdn.example.com;
     ```
@@ -1126,7 +1130,7 @@ Los endpoints JSONP ejecutan callbacks controlados por el usuario, lo que los co
     ```
   </div>
   <div slot="after">
-    ```nginx
+    ```text
     # Use nonces instead of domain allowlists
     script-src 'nonce-$cspNonce' 'strict-dynamic';
     ```
@@ -1154,7 +1158,7 @@ Los atacantes pueden inyectar formularios para robar credenciales si no se estab
 </Code>
 
 **Prevención:**
-```nginx
+```text
 form-action 'self';
 ```
 
@@ -1173,7 +1177,7 @@ form-action 'self';
 </Code>
 
 **Prevención:**
-```nginx
+```text
 base-uri 'none';
 ```
 
@@ -1247,7 +1251,7 @@ Sin `object-src 'none'`, los atacantes pueden usar plugins para ejecutar código
 </Code>
 
 **Prevención:**
-```nginx
+```text
 object-src 'none';
 ```
 
@@ -1292,22 +1296,20 @@ flowchart LR
 
 <FileContent filename="nginx.conf (CSP con Trusted Types)">
 ```nginx
-add_header Content-Security-Policy "
-    default-src 'none';
-    script-src 'self' 'nonce-$cspNonce' 'strict-dynamic';
-    style-src 'self' 'nonce-$cspNonce';
-    img-src 'self' data:;
-    font-src 'self';
-    connect-src 'self';
-    object-src 'none';
-    base-uri 'none';
-    frame-ancestors 'none';
-    form-action 'self';
-    
-    # Trusted Types enforcement
-    require-trusted-types-for 'script';
-    trusted-types default;
-" always;
+set $csp "default-src 'none'; ";
+set $csp "${csp}script-src 'self' 'nonce-${cspNonce}' 'strict-dynamic'; ";
+set $csp "${csp}style-src 'self' 'nonce-${cspNonce}'; ";
+set $csp "${csp}img-src 'self' data:; ";
+set $csp "${csp}font-src 'self'; ";
+set $csp "${csp}connect-src 'self'; ";
+set $csp "${csp}object-src 'none'; ";
+set $csp "${csp}base-uri 'none'; ";
+set $csp "${csp}frame-ancestors 'none'; ";
+set $csp "${csp}form-action 'self'; ";
+# Trusted Types enforcement
+set $csp "${csp}require-trusted-types-for 'script'; ";
+set $csp "${csp}trusted-types default";
+add_header Content-Security-Policy $csp always;
 ```
 </FileContent>
 
@@ -1365,6 +1367,7 @@ Diferentes partes de tu sitio pueden necesitar políticas distintas:
 server {
     listen 443 ssl;
     server_name example.com;
+    # ... ssl_certificate and ssl_certificate_key, as in your TLS setup
     
     # Default: strict CSP for HTML pages
     location / {
@@ -1392,11 +1395,10 @@ server {
   <TabPanel label="Estricta (páginas HTML)">
     ```nginx
     # /etc/nginx/snippets/security-headers-strict.conf
-    add_header Content-Security-Policy "
-        default-src 'none';
-        script-src 'self' 'nonce-$cspNonce' 'strict-dynamic';
-        ...
-    " always;
+    set $csp "default-src 'none'; ";
+    set $csp "${csp}script-src 'self' 'nonce-${cspNonce}' 'strict-dynamic'; ";
+    # ... more directives, one set line each
+    add_header Content-Security-Policy $csp always;
     
     # Prevent embedding
     add_header Cross-Origin-Resource-Policy "same-origin" always;
@@ -1405,11 +1407,10 @@ server {
   <TabPanel label="Relajada (Assets)">
     ```nginx
     # /etc/nginx/snippets/security-headers-assets.conf
-    add_header Content-Security-Policy "
-        default-src 'none';
-        img-src 'self';
-        font-src 'self';
-    " always;
+    set $csp "default-src 'none'; ";
+    set $csp "${csp}img-src 'self'; ";
+    set $csp "${csp}font-src 'self'";
+    add_header Content-Security-Policy $csp always;
     
     # Allow social media to fetch images for previews
     add_header Cross-Origin-Resource-Policy "cross-origin" always;
@@ -1450,20 +1451,19 @@ server {
 <Code lang="nginx" title="Modo report-only">
 ```nginx
 # Logs violations but doesn't block anything
-add_header Content-Security-Policy-Report-Only "
-    default-src 'none';
-    script-src 'self' 'nonce-$cspNonce' 'strict-dynamic';
-    style-src 'self' 'nonce-$cspNonce';
-    img-src 'self' data:;
-    font-src 'self';
-    connect-src 'self';
-    object-src 'none';
-    base-uri 'none';
-    frame-ancestors 'none';
-    form-action 'self';
-    upgrade-insecure-requests;
-    report-uri /csp-report;
-" always;
+set $csp "default-src 'none'; ";
+set $csp "${csp}script-src 'self' 'nonce-${cspNonce}' 'strict-dynamic'; ";
+set $csp "${csp}style-src 'self' 'nonce-${cspNonce}'; ";
+set $csp "${csp}img-src 'self' data:; ";
+set $csp "${csp}font-src 'self'; ";
+set $csp "${csp}connect-src 'self'; ";
+set $csp "${csp}object-src 'none'; ";
+set $csp "${csp}base-uri 'none'; ";
+set $csp "${csp}frame-ancestors 'none'; ";
+set $csp "${csp}form-action 'self'; ";
+set $csp "${csp}upgrade-insecure-requests; ";
+set $csp "${csp}report-uri /csp-report";
+add_header Content-Security-Policy-Report-Only $csp always;
 ```
 </Code>
 
@@ -1493,7 +1493,7 @@ add_header Content-Security-Policy-Report-Only "...even-stricter-policy..." alwa
 
 ## Configurar el reporting de CSP
 
-El reporting integrado de CSP te informa cuando se producen violaciones — es esencial para la depuración y la detección de ataques.
+El reporting integrado de CSP te informa cuando se producen violaciones, algo esencial para la depuración y la detección de ataques.
 
 <StateNotice
   type="deprecated"
@@ -1507,17 +1507,41 @@ El reporting integrado de CSP te informa cuando se producen violaciones — es e
   **Para máxima compatibilidad, usa ambos:** Chrome 70+ utiliza `report-to` e ignora `report-uri`. Firefox y Safari aún dependen de `report-uri`.
 </Callout>
 
-### Opción 1: Logging simple con Nginx
+### Opción 1: Registrar los informes con Nginx
 
-<FileContent filename="/etc/nginx/sites-available/example.com">
+Una location que solo hace `return 204;` con el formato de log por defecto cuenta violaciones y nada más: nginx responde sin leer el cuerpo de la petición, así que la línea de log guarda la hora, la dirección y el user agent, nunca la directiva violada ni la URI bloqueada. Para conservar el informe, registra `$request_body` y dale a nginx un motivo para leer el cuerpo haciendo proxy de la petición a un sumidero local:
+
+<FileContent filename="/etc/nginx/conf.d/csp-report.conf">
 ```nginx
-# Reporting endpoint
-location /csp-report {
-    access_log /var/log/nginx/csp-report.log;
+# Reports are JSON: escape=json keeps each one on a single log line
+log_format csp_report escape=json
+    '{"time":"$time_iso8601","ua":"$http_user_agent","report":"$request_body"}';
+
+# Local sink that answers every report with 204. nginx only reads a
+# request body it has to pass on, so the endpoint proxies to it.
+server {
+    listen 127.0.0.1:8099;
+    access_log off;
     return 204;
 }
 ```
 </FileContent>
+
+<FileContent filename="/etc/nginx/sites-available/example.com">
+```nginx
+# Reporting endpoint
+location = /csp-report {
+    limit_except POST { deny all; }
+    client_max_body_size 64k;
+    # Keep the body in memory: $request_body is empty once it spills to a file
+    client_body_buffer_size 64k;
+    access_log /var/log/nginx/csp-report.log csp_report;
+    proxy_pass http://127.0.0.1:8099;
+}
+```
+</FileContent>
+
+Cada línea lleva entonces el informe JSON del navegador, que dice qué directiva saltó y qué bloqueó. Los límites de 64 KB sobran para un informe CSP e impiden usar el endpoint para llenar el disco.
 
 <FileContent filename="Cabecera CSP con reporting">
 ```nginx
@@ -1525,13 +1549,12 @@ location /csp-report {
 add_header Reporting-Endpoints 'csp-endpoint="/csp-report"' always;
 
 # CSP with both legacy and modern reporting
-add_header Content-Security-Policy "
-    default-src 'none';
-    script-src 'self' 'nonce-$cspNonce' 'strict-dynamic';
-    ...
-    report-uri /csp-report;
-    report-to csp-endpoint;
-" always;
+set $csp "default-src 'none'; ";
+set $csp "${csp}script-src 'self' 'nonce-${cspNonce}' 'strict-dynamic'; ";
+# ... more directives, one set line each
+set $csp "${csp}report-uri /csp-report; ";
+set $csp "${csp}report-to csp-endpoint";
+add_header Content-Security-Policy $csp always;
 ```
 </FileContent>
 
@@ -1539,8 +1562,8 @@ add_header Content-Security-Policy "
 
 Servicios como [Report URI](https://report-uri.com/) proporcionan dashboards y análisis:
 
-<Code lang="nginx" title="Reporting con servicio externo">
-```nginx
+<Code lang="text" title="Reporting con servicio externo">
+```text
 report-uri https://your-subdomain.report-uri.com/r/d/csp/enforce;
 report-to csp-endpoint;
 ```
@@ -1709,13 +1732,13 @@ Los cinco errores más frecuentes son permitir `'unsafe-inline'` para scripts, l
 
 <BeforeAfter beforeLabel="Anula la protección de CSP" afterLabel="Usa nonces en su lugar">
   <div slot="before">
-    ```nginx
+    ```text
     # Your CSP is now useless for XSS protection
     script-src 'self' 'unsafe-inline';
     ```
   </div>
   <div slot="after">
-    ```nginx
+    ```text
     # Actual protection
     script-src 'self' 'nonce-$cspNonce';
     ```
@@ -1724,8 +1747,8 @@ Los cinco errores más frecuentes son permitir `'unsafe-inline'` para scripts, l
 
 ### 2. Fuentes excesivamente permisivas
 
-<Code lang="nginx" title="NO HAGAS ESTO: Confiar en esquemas completos">
-```nginx
+<Code lang="text" title="NO HAGAS ESTO: Confiar en esquemas completos">
+```text
 # DANGER: Trusts the entire internet!
 script-src 'self' https:;
 img-src *;
@@ -1738,13 +1761,13 @@ Esto permite que cualquier script HTTPS se ejecute, anulando completamente el pr
 
 <BeforeAfter beforeLabel="Incompleta - Eludible" afterLabel="CSP estricta completa">
   <div slot="before">
-    ```nginx
+    ```text
     # Missing critical directives!
     script-src 'nonce-$cspNonce';
     ```
   </div>
   <div slot="after">
-    ```nginx
+    ```text
     # All required directives present
     script-src 'nonce-$cspNonce' 'strict-dynamic';
     object-src 'none';
@@ -1802,6 +1825,9 @@ server {
     listen [::]:443 ssl;
     http2 on;
     server_name example.com;
+
+    ssl_certificate     /etc/letsencrypt/live/example.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/example.com/privkey.pem;
     
     root /var/www/example.com;
     index index.html;
@@ -1811,7 +1837,7 @@ server {
     # ================================================
     set $cspNonce $request_id;
     sub_filter_once off;
-    sub_filter_types text/html text/css application/javascript;
+    sub_filter_types text/css application/javascript;  # text/html is always included
     sub_filter CSP_NONCE_NGINX $cspNonce;
     
     # ================================================
@@ -1855,7 +1881,9 @@ server {
         try_files $uri $uri/ =404;
     }
     
-    # CSP Violation Reporting Endpoint
+    # CSP violation reporting endpoint. This logs one line per report, which
+    # counts violations; to keep each report's JSON, use the csp_report
+    # receiver from "Configurar el reporting de CSP".
     location /csp-report {
         access_log /var/log/nginx/csp-report.log;
         return 204;
@@ -1882,16 +1910,16 @@ server {
 ## Tu camino con CSP: Resumen
 
 <StepByStep title="Hoja de ruta para implementar CSP">
-  <li>**Empieza simple** — Despliega `default-src 'self'` en modo report-only</li>
-  <li>**Añade directivas progresivamente** — Scripts, estilos, imágenes, etc.</li>
-  <li>**Gestiona los scripts inline** — Muévelos a archivos, usa hashes o implementa nonces</li>
-  <li>**Para sitios estáticos** — Usa `sub_filter` de Nginx para inyección de nonces</li>
-  <li>**Aplica la CSP estricta** — Añade `'strict-dynamic'`, `object-src 'none'`, `base-uri 'none'`</li>
-  <li>**Configura el reporting** — Monitoriza las violaciones con `report-uri` / `report-to`</li>
-  <li>**Aplica gradualmente** — Cambia de report-only a aplicación tras las pruebas</li>
-  <li>**Mantén e itera** — Sigue monitorizando, actualiza según evolucione tu aplicación</li>
+  <li>**Empieza simple**: Despliega `default-src 'self'` en modo report-only</li>
+  <li>**Añade directivas progresivamente**: Scripts, estilos, imágenes, etc.</li>
+  <li>**Gestiona los scripts inline**: Muévelos a archivos, usa hashes o implementa nonces</li>
+  <li>**Para sitios estáticos**: Usa `sub_filter` de Nginx para inyección de nonces</li>
+  <li>**Aplica la CSP estricta**: Añade `'strict-dynamic'`, `object-src 'none'`, `base-uri 'none'`</li>
+  <li>**Configura el reporting**: Monitoriza las violaciones con `report-uri` / `report-to`</li>
+  <li>**Aplica gradualmente**: Cambia de report-only a aplicación tras las pruebas</li>
+  <li>**Mantén e itera**: Sigue monitorizando, actualiza según evolucione tu aplicación</li>
 </StepByStep>
 
 <Callout type="success" icon="mdi:trophy">
-  **Resultado:** Esta es exactamente la configuración que corre en producción en este sitio — una calificación A+ en [Mozilla Observatory](https://developer.mozilla.org/en-US/observatory), con la funcionalidad completa del sitio intacta y los usuarios protegidos de ataques XSS.
+  **Resultado:** Esta es exactamente la configuración que corre en producción en este sitio: una calificación A+ en [Mozilla Observatory](https://developer.mozilla.org/en-US/observatory), con la funcionalidad completa del sitio intacta y los usuarios protegidos de ataques XSS.
 </Callout>

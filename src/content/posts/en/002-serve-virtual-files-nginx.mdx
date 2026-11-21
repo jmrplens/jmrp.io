@@ -2,11 +2,11 @@
 title: "Mastering Virtual Files in Nginx: A Complete Guide"
 slug: "002-serve-virtual-files-nginx"
 lastVerified:
-  date: 2026-08-22
+  date: 2026-11-21
   versions:
-    - nginx 1.31.3
+    - nginx 1.31.8 (njs examples not re-tested, module not installed)
 description: "Serve virtual files in Nginx without disk I/O. Covers root vs alias vs try_files, named locations, Kubernetes health endpoints, and containers."
-lead: "Nginx can serve robots.txt, security.txt and Kubernetes health probes from the config itself, with no file on disk — and location matching picks the winner by priority, not by the order you wrote the blocks in."
+lead: "Nginx can serve robots.txt, security.txt and Kubernetes health probes from the config itself, with no file on disk, and location matching picks the winner by priority, not by the order you wrote the blocks in."
 author: "José Manuel Requena Plens"
 authorEmail: "mail@jmrp.io"
 publishedDate: 2025-12-18
@@ -82,7 +82,7 @@ import TerminalOutput from "@components/ui/TerminalOutput.astro";
 import Table from "@components/ui/Table.astro";
 import TLDRSummary from "@components/ui/TLDRSummary.astro";
 
-When deploying modern web applications—especially containerized ones or services on managed platforms—you often don't have direct access to the web root. What happens when you need to serve `robots.txt`, `security.txt`, or a health check endpoint? You can't just drop a file into a Docker image.
+When deploying modern web applications, especially containerized ones or services on managed platforms, you often don't have direct access to the web root. What happens when you need to serve `robots.txt`, `security.txt`, or a health check endpoint? You can't just drop a file into a Docker image.
 
 **Nginx is more than a reverse proxy.** It's a powerful tool for generating and serving content that doesn't physically exist on disk. This technique is essential for:
 
@@ -93,8 +93,8 @@ When deploying modern web applications—especially containerized ones or servic
 
 In this comprehensive guide, we'll explore Nginx's powerful directives for serving virtual files, from basic techniques to advanced patterns used in production Kubernetes deployments.
 
-<TLDRSummary title="TL;DR — serve files Nginx never reads from disk">
-  - **Location matching wins by priority, not config order:** exact `=` first, then `^~`, then regex, then longest prefix — use `=` for virtual files like `/robots.txt`.
+<TLDRSummary title="TL;DR: serve files Nginx never reads from disk">
+  - **Location matching wins by priority, not config order:** exact `=` first, then `^~`, then regex, then longest prefix: use `=` for virtual files like `/robots.txt`.
   - **`root` vs `alias` vs `try_files`:** `root` appends the URI, `alias` replaces the matched prefix, `try_files` checks files in order with a fallback.
   - **The `return` directive serves inline content** (text, JSON, redirects, empty `204`) without any physical file; set the type with `default_type`.
   - **Named locations (`@name`) and `internal`** enable SPA fallbacks, backend proxying, and protected downloads (watch for path traversal with `$arg_file`).
@@ -278,9 +278,9 @@ location @backend {
 </FileContent>
 
 The order of checking is:
-1. `$uri` — Try the exact file path
-2. `$uri/` — Try as a directory with index
-3. `@backend` — Fall back to named location
+1. `$uri`: Try the exact file path
+2. `$uri/`: Try as a directory with index
+3. `@backend`: Fall back to named location
 
 ---
 
@@ -414,11 +414,9 @@ location /protected-files/ {
     alias /var/secure/files/;
 }
 
-# Option A: Direct internal redirect with secure link and error_page
-location /download {
-    internal;
-    alias /var/secure/files;
-    
+# Option A: Public URL checked by secure_link, then an internal rewrite
+# Request: /download?file=report.pdf&md5=<hash>&expires=<unix time>
+location = /download {
     # Secure link check
     secure_link $arg_md5,$arg_expires;
     # IMPORTANT: Include $arg_file in hash to prevent path manipulation
@@ -427,14 +425,12 @@ location /download {
     if ($secure_link = "") { return 403; }
     if ($secure_link = "0") { return 410; }
 
-    # Forward to named location to serve file
-    error_page 418 = @serve_file;
-    return 418;
-}
+    # A flat file name only: no slash, no leading dot, no percent escapes
+    if ($arg_file !~ "^[A-Za-z0-9_-][A-Za-z0-9._-]*$") { return 400; }
 
-location @serve_file {
-    internal;
-    alias /var/secure/files/$arg_file;
+    # Hand the request to the internal prefix location above, which owns
+    # the alias. The trailing "?" drops the signed query string.
+    rewrite ^ /protected-files/$arg_file? last;
 }
 
 # Option B: Backend sets X-Accel-Redirect header
@@ -447,12 +443,13 @@ location /download-via-backend {
 </FileContent>
 
 <Callout type="warning" icon="mdi:shield-alert">
-  **Security Warning:** The `alias /var/secure/files/$arg_file;` pattern is vulnerable to path traversal attacks if `$arg_file` is not validated. An attacker could request `?file=../../../etc/passwd` to access files outside the intended directory.
+  **Security Warning:** Building a file path from `$arg_file` is vulnerable to path traversal attacks if the value is not validated. An attacker could request `?file=../../../etc/passwd` to reach files outside the intended directory.
   
   **Mitigations:**
-  - Ensure `secure_link_md5` includes `$arg_file` in the hash computation
-  - Validate filenames with a `map` directive (e.g., reject patterns containing `..`)
+  - Ensure `secure_link_md5` includes `$arg_file` in the hash computation, so a signed link cannot be reused for another file
+  - Validate the file name before using it: Option A only accepts letters, digits, `.`, `_` and `-`, never a slash or a leading dot, and answers anything else with 400
   - Use a backend application to validate and generate `X-Accel-Redirect` headers
+  - Keep the `alias` in a regular prefix location: `alias` is not allowed inside a named location (`@name`), and `nginx -t` rejects the configuration if you put it there
 </Callout>
 
 <Callout type="info" icon="mdi:information">
@@ -526,7 +523,7 @@ location = /app-ads.txt {
 
 While modern browsers prefer SVG or PNG, `favicon.ico` is still requested by legacy tools and crawlers. A single `.ico` file typically bundles 16x16, 32x32, and 48x48 sizes.
 
-<FileContent filename="favicon handling">
+<FileContent filename="favicon from disk">
 ```nginx
 # Serve from custom location
 location = /favicon.ico {
@@ -534,8 +531,14 @@ location = /favicon.ico {
     access_log off;
     expires 1y;
 }
+```
+</FileContent>
 
-# Or return empty (no favicon)
+If the site has no favicon, answer with an empty response instead. Use one of the two blocks, not both: two `location = /favicon.ico` blocks in the same server make `nginx -t` fail with "duplicate location".
+
+<FileContent filename="empty favicon">
+```nginx
+# Return empty (no favicon)
 location = /favicon.ico {
     return 204;
     access_log off;
@@ -1193,7 +1196,7 @@ Sometimes you need more than just static strings. Here is how the main scripting
 This site retired fifteen blog tags in one pass, which left sixty URLs that had
 been indexed and linked pointing at pages that no longer existed. Every one of
 them is an exact-match `location` block in the nginx config in front of this
-page — the technique this article describes, applied to a real problem rather
+page: the technique this article describes, applied to a real problem rather
 than an illustrative one:
 
 ```nginx
@@ -1201,7 +1204,7 @@ location = /blog/tags/mtls/  { return 301 /blog/tags/security/; }
 location = /blog/tags/mtls   { return 301 /blog/tags/security/; }
 ```
 
-All sixty blocks are live right now — fifteen tags, each written twice for the
+All sixty blocks are live right now: fifteen tags, each written twice for the
 with- and without-trailing-slash forms, in both locales. They are `=` matches on
 purpose: a prefix match on `/blog/tags/` would swallow the tags that still
 exist, and the `=` form also stops nginx searching any further, which is the
@@ -1219,7 +1222,7 @@ location = /blog/tags/key%20derivation/ { return 301 /blog/tags/cryptography/; }
 ```
 
 The URI is normalized and percent-decoded before location matching, so the
-value in the config has to be what the path decodes *to* — a literal space,
+value in the config has to be what the path decodes *to*, a literal space,
 which then needs quoting for nginx to parse the directive at all:
 
 ```nginx
@@ -1239,8 +1242,8 @@ encoded character, because the failure is silent: nginx accepts the config,
 
 ### Official Documentation
 - [Nginx Beginner's Guide](https://nginx.org/en/docs/beginners_guide.html)
-- [ngx_http_core_module](https://nginx.org/en/docs/http/ngx_http_core_module.html) — `location`, `root`, `alias`
-- [ngx_http_rewrite_module](https://nginx.org/en/docs/http/ngx_http_rewrite_module.html) — `return`, `rewrite`
+- [ngx_http_core_module](https://nginx.org/en/docs/http/ngx_http_core_module.html): `location`, `root`, `alias`
+- [ngx_http_rewrite_module](https://nginx.org/en/docs/http/ngx_http_rewrite_module.html): `return`, `rewrite`
 
 ### Tutorials
 - [DigitalOcean: Understanding Server and Location Blocks](https://www.digitalocean.com/community/tutorials/understanding-nginx-server-and-location-block-selection-algorithms)

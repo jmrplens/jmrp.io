@@ -24,6 +24,8 @@ import {
   createVocabulary,
   jsonLdBlocks,
   loadVocabulary,
+  MAX_BLOCK_BYTES,
+  oversizedBlocks,
 } from "./check-schema-ranges.mjs";
 import {
   compactVocabulary,
@@ -306,6 +308,33 @@ test("jsonLdBlocks reads every block, whatever the attribute order", () => {
   assert.match(errors[0], /block 3 is not valid JSON/);
 });
 
+test("jsonLdBlocks measures every block in UTF-8 bytes, unparsable ones too", () => {
+  const html =
+    '<script type="application/ld+json">{"name":"é"}</script>' +
+    '<script type="application/ld+json">{broken</script>';
+  const { sizes } = jsonLdBlocks(html);
+  // "é" is two bytes in UTF-8, so the first body is 13 bytes, not 12.
+  assert.deepEqual(sizes, [13, 7]);
+});
+
+test("the size cap is 80 KB, the margin under what the validator was seen to read (audit #13, M4)", () => {
+  assert.equal(MAX_BLOCK_BYTES, 80 * 1024);
+});
+
+test("oversizedBlocks lists only the blocks above the cap, largest first", () => {
+  const pages = [
+    { file: "a/index.html", sizes: [100, 300] },
+    { file: "b/index.html", sizes: [250] },
+    { file: "c/index.html", sizes: [200] },
+    { file: "d/index.html" },
+  ];
+  assert.deepEqual(oversizedBlocks(pages, 200), [
+    { file: "a/index.html", block: 2, bytes: 300 },
+    { file: "b/index.html", block: 1, bytes: 250 },
+  ]);
+  assert.deepEqual(oversizedBlocks(pages, 300), []);
+});
+
 test("the generator keeps superclasses, ranges, domains and supersession", () => {
   const graph = [
     { "@id": "schema:Thing", "@type": "rdfs:Class" },
@@ -393,12 +422,21 @@ function makeSite(graph) {
   return dir;
 }
 
-test("CLI exit codes: 0 clean, 1 violations, 2 could not run", () => {
+test("CLI exit codes: 0 clean, 1 violations or an oversized block, 2 could not run", () => {
   const clean = makeSite([
     { "@type": "CollectionPage", hasPart: { "@type": "CreativeWork" } },
   ]);
   const broken = makeSite([
     { "@type": "CollectionPage", hasPart: { "@type": "ItemList" } },
+  ]);
+  // Range-clean, but one block over the cap: the shape of the 268 KB
+  // contributions graph that the Schema Markup Validator could not read.
+  const oversized = makeSite([
+    {
+      "@type": "CollectionPage",
+      description: "x".repeat(MAX_BLOCK_BYTES),
+      hasPart: { "@type": "CreativeWork" },
+    },
   ]);
   const notASite = makeSite(null);
   try {
@@ -411,9 +449,13 @@ test("CLI exit codes: 0 clean, 1 violations, 2 could not run", () => {
       failed.stderr,
       /CollectionPage\.hasPart = ItemList \(expected CreativeWork\)/,
     );
+    const tooBig = run(oversized);
+    assert.equal(tooBig.status, 1);
+    assert.match(tooBig.stderr, /JSON-LD blocks over 80 KB/);
+    assert.match(tooBig.stderr, /block 1 {2}\| index\.html/);
     assert.equal(run(notASite).status, 2);
   } finally {
-    for (const dir of [clean, broken, notASite])
+    for (const dir of [clean, broken, oversized, notASite])
       fs.rmSync(dir, { recursive: true, force: true });
   }
 });

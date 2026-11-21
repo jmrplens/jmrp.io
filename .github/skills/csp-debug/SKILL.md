@@ -14,9 +14,9 @@ This project uses a **nonce-only CSP strategy**:
 
 - Nginx replaces the `NGINX_CSP_NONCE` placeholder with `$cspNonce` per-request
 - Two header files are generated at build time into `.nginx-staged/` (override: `POSTBUILD_NGINX_STAGING_DIR`), then MOVED to `/etc/nginx/snippets/jmrp/` by `deploy-live.mjs` after the blue/green swap. They are never part of the served output, so there is no copy under `dist/`:
-  - `security_headers.conf` — For HTML pages (nonce in `script-src` + `style-src` + `strict-dynamic`)
-  - `security_headers_assets.conf` — For static assets (`default-src 'none'`, no nonces)
-- A build alone changes nothing Nginx serves: a bare `astro build` never invokes `deploy-live.mjs` at all, and in CI or a worktree the production-root guard skips it — either way the two files just stay staged
+  - `security_headers.conf`: For HTML pages (nonce in `script-src` + `style-src` + `strict-dynamic`)
+  - `security_headers_assets.conf`: For static assets (`default-src 'none'`, no nonces)
+- A build alone changes nothing Nginx serves: a bare `astro build` never invokes `deploy-live.mjs` at all, and in CI or a worktree the production-root guard skips it; either way the two files just stay staged
 
 ## Key Files
 
@@ -73,7 +73,7 @@ pnpm test:e2e --grep "security"
 
 ### Check Generated CSP Headers
 
-There is no `dist/security_headers.conf`. Read the staged copy when a build has not been deployed (CI, a worktree, a scratch build); read the delivered copy — the one Nginx actually loaded — otherwise. After a successful deploy staging is empty, so the delivered copy is the answer on production:
+There is no `dist/security_headers.conf`. Read the staged copy when a build has not been deployed (CI, a worktree, a scratch build); read the delivered copy (the one Nginx actually loaded) otherwise. After a successful deploy staging is empty, so the delivered copy is the answer on production:
 
 ```bash
 # Staged: this build's output, not yet delivered
@@ -85,14 +85,14 @@ cat "${POSTBUILD_NGINX_SNIPPETS_DIR:-/etc/nginx/snippets/jmrp}/security_headers.
 
 ### Confirm Nginx Is Serving *This* Build's Headers
 
-Every generated snippet carries a `# Build-Stamp:` line in its header comment block, with the same id across all six files of a build, and `nginx -T` dumps each distinct file exactly once, comments included. A count of 6 (two header files + four maps) proves the running config came from a single build rather than from a stale or hand-placed copy:
+Every generated snippet carries a `# Build-Stamp:` line in its header comment block, with the same id across all eight files of a build, and `nginx -T` dumps each distinct file exactly once, comments included. A count of 8 (two header files + six maps) proves the running config came from a single build rather than from a stale or hand-placed copy:
 
 ```bash
 ID=$(sed -n 's/^# Build-Stamp: //p' /etc/nginx/snippets/jmrp/security_headers.conf)
-nginx -T | grep -c "Build-Stamp: $ID"   # expect 6
+nginx -T | grep -c "Build-Stamp: $ID"   # expect 8
 ```
 
-An empty `$ID` means the delivered file is missing or unstamped — a failure in itself, and it degrades the `grep` into counting every stamp in the dump. Check `$ID` is non-empty before believing the count.
+An empty `$ID` means the delivered file is missing or unstamped: a failure in itself, and it degrades the `grep` into counting every stamp in the dump. Check `$ID` is non-empty before believing the count.
 
 ### Verify SRI on Built HTML
 
@@ -120,11 +120,11 @@ TELEGRAM_BOT_TOKEN=xxx TELEGRAM_CHAT_ID=xxx node scripts/csp-reporter.mjs
 
 ## Critical Rules
 
-- **Never use inline `<script>` tags** — they break CSP nonce-only policy
-- **Never use inline `style="..."` attributes** — use UnoCSS utility classes
-- **Always rebuild after changes** — SRI hashes and nonce placeholders are generated at build time
-- **A rebuild is not a deploy** — the header files only reach Nginx when `deploy-live.mjs` runs after the swap, which happens only from the production root; elsewhere they stay in `.nginx-staged/`
-- **Dev server lacks nonces/SRI** — always test CSP against `pnpm preview`, not `pnpm dev`
+- **Never use inline `<script>` tags**: they break CSP nonce-only policy
+- **Never use inline `style="..."` attributes**: use UnoCSS utility classes
+- **Always rebuild after changes**: SRI hashes and nonce placeholders are generated at build time
+- **A rebuild is not a deploy**: the header files only reach Nginx when `deploy-live.mjs` runs after the swap, which happens only from the production root; elsewhere they stay in `.nginx-staged/`
+- **Dev server lacks nonces/SRI**: always test CSP against `pnpm preview`, not `pnpm dev`
 - **External links**: Use `rel="external noopener noreferrer"` + `target="_blank"`
 - JSON-LD must use `safeJsonLd()` from `@utils/html` to prevent XSS
 
@@ -146,11 +146,11 @@ Requires `SONAR_TOKEN` env var. Reports open issues and TO_REVIEW security hotsp
 
 ### SonarLint IDE
 
-SonarLint connected mode is configured in `.vscode/settings.json` — provides real-time security issue detection in the editor.
+SonarLint connected mode is configured in `.vscode/settings.json`: provides real-time security issue detection in the editor.
 
 ### Key Security Rules Tracked
 
-- **S4721** — OS Command Injection (execSync/execFileSync usage)
-- **S5852** — Regex Denial of Service (complex regex patterns)
-- **S4036** — OS command shell security (PATH resolution)
+- **S4721**: OS Command Injection (execSync/execFileSync usage)
+- **S5852**: Regex Denial of Service (complex regex patterns)
+- **S4036**: OS command shell security (PATH resolution)
 - Suppressions defined in `sonar-project.properties` for CI scripts with validated inputs

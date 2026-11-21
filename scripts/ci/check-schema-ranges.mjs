@@ -29,12 +29,20 @@
  * `generate-schema-vocabulary.mjs`), so the check is offline and gives the
  * same answer on every run.
  *
+ * It also fails any single JSON-LD block larger than `MAX_BLOCK_BYTES`
+ * (80 KB). A block can be valid in every range and still be useless: the
+ * Schema Markup Validator extracted 0 objects from the 268 KB block of
+ * /projects/contributions/, and 8 once it was cut to 88 KB, so a block that
+ * grows past that size silently takes the whole page's graph out of reach
+ * (GEO audit #13, M4). The largest other block when the cap was set was
+ * /publications/, about 61 KB.
+ *
  * Run manually: `node scripts/ci/check-schema-ranges.mjs [distDir] [--verbose]`
  * Wired into `pnpm verify` (dist phase) and the CI `schema-validation` job.
  *
- * Exit codes: 0 no range violation · 1 range violations found (listed) ·
- * 2 the guard itself could not run (bad argument, unreadable build or
- * vocabulary).
+ * Exit codes: 0 no range violation and no oversized block · 1 range
+ * violations or oversized blocks found (listed) · 2 the guard itself could
+ * not run (bad argument, unreadable build or vocabulary).
  */
 
 import fs from "node:fs";
@@ -124,27 +132,57 @@ const JSON_LD_SCRIPT =
   /<script\b[^>]*\btype=["']?application\/ld\+json["']?[^>]*>([\s\S]*?)<\/script\s*>/gi;
 
 /**
+ * The largest JSON-LD block, in UTF-8 bytes of the served body, that a page
+ * may carry. The Schema Markup Validator read an 88 KB block and nothing from
+ * a 160 KB one (GEO audit #13, M4); 80 KB keeps a margin under the size it
+ * was seen to read.
+ */
+export const MAX_BLOCK_BYTES = 80 * 1024;
+
+/**
  * The JSON-LD blocks of a page, parsed.
  *
  * @param {string} html - The page source.
- * @returns {{blocks: unknown[], errors: string[]}} Parsed blocks, and a
- *   message per block that is not valid JSON.
+ * @returns {{blocks: unknown[], errors: string[], sizes: number[]}} Parsed
+ *   blocks, a message per block that is not valid JSON, and the UTF-8 size
+ *   in bytes of every block body as served, parsed or not, in page order.
  */
 export function jsonLdBlocks(html) {
   /** @type {unknown[]} */
   const blocks = [];
   /** @type {string[]} */
   const errors = [];
+  /** @type {number[]} */
+  const sizes = [];
   let i = 0;
   for (const [, body] of html.matchAll(JSON_LD_SCRIPT)) {
     i++;
+    sizes.push(Buffer.byteLength(body, "utf8"));
     try {
       blocks.push(JSON.parse(body));
     } catch (error) {
       errors.push(`JSON-LD block ${i} is not valid JSON: ${error.message}`);
     }
   }
-  return { blocks, errors };
+  return { blocks, errors, sizes };
+}
+
+/**
+ * Every JSON-LD block above the size cap, largest first.
+ *
+ * @param {{file: string, sizes?: number[]}[]} pages - Pages with the byte
+ *   size of each of their blocks, as `readDist` returns them.
+ * @param {number} [limit] - The cap in bytes; `MAX_BLOCK_BYTES` by default.
+ * @returns {{file: string, block: number, bytes: number}[]} One entry per
+ *   oversized block, `block` counted from 1 in page order.
+ */
+export function oversizedBlocks(pages, limit = MAX_BLOCK_BYTES) {
+  return pages
+    .flatMap(({ file, sizes = [] }) =>
+      sizes.map((bytes, index) => ({ file, block: index + 1, bytes })),
+    )
+    .filter(({ bytes }) => bytes > limit)
+    .sort((a, b) => b.bytes - a.bytes || a.file.localeCompare(b.file));
 }
 
 /**
@@ -183,7 +221,7 @@ export function typedIds(blocks, into = new Map()) {
 }
 
 /**
- * @typedef {{file: string, blocks: unknown[]}} Page
+ * @typedef {{file: string, blocks: unknown[], sizes?: number[]}} Page
  * @typedef {{key: string, files: string[]}} Finding
  */
 
@@ -413,9 +451,11 @@ export function readDist(distDir) {
   const parseErrors = new Map();
   for (const file of htmlFiles(distDir)) {
     const rel = path.relative(distDir, file);
-    const { blocks, errors } = jsonLdBlocks(fs.readFileSync(file, "utf8"));
+    const { blocks, errors, sizes } = jsonLdBlocks(
+      fs.readFileSync(file, "utf8"),
+    );
     for (const error of errors) note(parseErrors, error, rel);
-    pages.push({ file: rel, blocks });
+    pages.push({ file: rel, blocks, sizes });
   }
   return { pages, parseErrors: listed(parseErrors) };
 }
@@ -447,6 +487,55 @@ function printFindings(findings, verbose, print) {
 }
 
 /**
+ * Prints the warnings (not failures), grouped by kind, when there are any.
+ *
+ * @param {Record<string, object[]>} warnings - Findings by warning kind.
+ * @param {boolean} verbose - Whether to list every page of each finding.
+ * @returns {void}
+ */
+function reportWarnings(warnings, verbose) {
+  const warningCount = Object.values(warnings).reduce(
+    (n, list) => n + list.length,
+    0,
+  );
+  if (warningCount === 0) return;
+  console.log(
+    `ℹ️  ${warningCount} distinct warning(s), not failures (--verbose lists every page):`,
+  );
+  for (const [kind, title] of Object.entries(WARNING_TITLES)) {
+    if (warnings[kind].length === 0) continue;
+    console.log(`  ${title}:`);
+    printFindings(warnings[kind], verbose, console.log);
+  }
+}
+
+/**
+ * Prints the JSON-LD blocks over the size cap, when there are any.
+ *
+ * @param {{ file: string, block: number, bytes: number }[]} oversized - The
+ *   blocks over `MAX_BLOCK_BYTES`.
+ * @param {string} distArg - The build directory as given, for the message.
+ * @returns {void}
+ */
+function reportOversized(oversized, distArg) {
+  if (oversized.length === 0) return;
+  console.error(
+    `❌ JSON-LD blocks over ${MAX_BLOCK_BYTES / 1024} KB in ${distArg}:`,
+  );
+  for (const { file, block, bytes } of oversized)
+    console.error(
+      `    ${(bytes / 1024).toFixed(1).padStart(7)} KB  block ${block}  | ${file}`,
+    );
+  console.error(
+    "\n  The Schema Markup Validator extracts nothing from a block this\n" +
+      "  size, so every node on the page goes unread. Keep in the graph what\n" +
+      "  the page shows, and point at the full list through a Dataset whose\n" +
+      "  distribution is a file (the markdown twin, a JSON file). See GEO\n" +
+      "  audit #13, M4.\n",
+  );
+}
+
+/**
  * CLI entry: checks the given build and sets the exit code.
  *
  * @param {string[]} argv - `[distDir] [--verbose]`.
@@ -471,29 +560,23 @@ function main(argv) {
   const vocabulary = loadVocabulary();
   const { pages, parseErrors } = readDist(distDir);
   const { violations, warnings, checked } = checkRanges(pages, vocabulary);
+  const oversized = oversizedBlocks(pages);
 
-  const warningCount = Object.values(warnings).reduce(
-    (n, list) => n + list.length,
-    0,
-  );
-  if (warningCount > 0) {
-    console.log(
-      `ℹ️  ${warningCount} distinct warning(s), not failures (--verbose lists every page):`,
-    );
-    for (const [kind, title] of Object.entries(WARNING_TITLES)) {
-      if (warnings[kind].length === 0) continue;
-      console.log(`  ${title}:`);
-      printFindings(warnings[kind], verbose, console.log);
-    }
-  }
+  reportWarnings(warnings, verbose);
 
-  if (violations.length === 0 && parseErrors.length === 0) {
+  if (
+    violations.length === 0 &&
+    parseErrors.length === 0 &&
+    oversized.length === 0
+  ) {
     console.log(
       `✅ Schema.org ranges hold in ${distArg}: ${pages.length} pages, ` +
-        `${checked} node values checked against schema.org ${vocabulary.release}.`,
+        `${checked} node values checked against schema.org ${vocabulary.release}, ` +
+        `no JSON-LD block over ${MAX_BLOCK_BYTES / 1024} KB.`,
     );
     return;
   }
+  reportOversized(oversized, distArg);
   if (parseErrors.length > 0) {
     console.error(`❌ Unreadable JSON-LD in ${distArg}:`);
     printFindings(parseErrors, true, console.error);

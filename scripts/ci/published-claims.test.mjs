@@ -13,6 +13,18 @@
  * - M1: the machine summaries kept a title the `#person` node had dropped.
  *   The fallback job title, the home title and the author card now read the
  *   profile's own `jobTitle` and `occupation`.
+ *
+ * And for GEO audit #13:
+ *
+ * - M1: llms.txt, llms-full.txt and the home twin went on describing the
+ *   packaging and listings section that #628 removed from
+ *   /projects/contributions/, three weeks after the page lost it.
+ * - M3a/M3b/M3c/B15: /privacy/ said the server logs were "not shared with
+ *   anyone" while CrowdSec shares blocklist alerts, left out that CSP reports
+ *   are kept and forwarded to Telegram, and said the monitoring copy followed
+ *   the one-year rule when that database keeps ninety days. The header
+ *   analyzer put the inspected URL in a query string, which Cloudflare's
+ *   zone log keeps beside the address for 31 days.
  */
 // Half of the expected strings are Spanish, by design.
 // cspell:locale es,en
@@ -255,4 +267,88 @@ describe("positioning (M1)", () => {
       }
     });
   }
+});
+
+/** Phrases for the packaging and listings section #628 removed. */
+const RETIRED_CONTRIBUTIONS_SECTION = [
+  /packaging PRs/iu,
+  /PR de empaquetado/iu,
+  /packaging that lists/iu,
+  /empaquetado que lista/iu,
+  /listings of his own tools/iu,
+  /listados de sus herramientas/iu,
+  /in package managers, registries and curated lists/iu,
+  /en gestores de paquetes, registros y listas curadas/iu,
+];
+
+describe("retired contributions section (GEO audit #13, M1)", () => {
+  for (const locale of /** @type {const} */ (["en", "es"])) {
+    it(`${locale}: no machine summary describes the packaging section`, () => {
+      const common = locale === "en" ? en : es;
+      const sources = {
+        "PROFILE_SECTIONS (llms-full.txt)": JSON.stringify(
+          PROFILE_SECTIONS.map((s) => s[locale]),
+        ),
+        "SITE_SECTIONS (llms.txt)": JSON.stringify(
+          SITE_SECTIONS.map((s) => s[locale]),
+        ),
+        "HOME_SECTIONS (home twin)": JSON.stringify(
+          HOME_SECTIONS.map((s) => s.note?.[locale]),
+        ),
+        "common.ts": JSON.stringify(common.pages.projectsContributions),
+        page_faq: JSON.stringify([...pageFaq(locale).values()]),
+      };
+      for (const [where, text] of Object.entries(sources)) {
+        for (const stale of RETIRED_CONTRIBUTIONS_SECTION) {
+          assert.doesNotMatch(text, stale, where);
+        }
+      }
+    });
+  }
+});
+
+describe("privacy disclosures (GEO audit #13, M3, B15)", () => {
+  for (const locale of /** @type {const} */ (["en", "es"])) {
+    const page = read(`src/content/pages/${locale}/privacy.mdx`);
+    const faq = JSON.stringify(pageFaq(locale).get("/privacy/"));
+    const summaries = { page, faq, "llms-full.txt": privacySection(locale) };
+
+    it(`${locale}: every summary names the CrowdSec sharing and none says the logs are shared with no one`, () => {
+      for (const [where, text] of Object.entries(summaries)) {
+        assert.match(text, /CrowdSec/u, where);
+        for (const stale of [
+          /not shared with anyone/iu,
+          /no se comparten con nadie/iu,
+        ]) {
+          assert.doesNotMatch(text, stale, where);
+        }
+      }
+    });
+
+    it(`${locale}: no summary says the monitoring copy is kept for a year`, () => {
+      for (const [where, text] of Object.entries(summaries)) {
+        for (const stale of [
+          /same one-year rule/iu,
+          /rule of one year/iu,
+          /follow the same rules as they do/iu,
+          /misma regla de un año/iu,
+          /regla de los registros del servidor: un año/iu,
+          /siguen sus mismas reglas/iu,
+        ]) {
+          assert.doesNotMatch(text, stale, where);
+        }
+      }
+    });
+
+    it(`${locale}: the page declares the CSP report forwarding and Cloudflare's zone log`, () => {
+      assert.match(page, /Telegram/u);
+      assert.match(page, locale === "en" ? /for 31 days/u : /durante 31 días/u);
+    });
+  }
+
+  it("the header analyzer never puts the inspected URL in a query string", () => {
+    const source = read("src/components/apps/HTTPHeadersAnalyzer.astro");
+    assert.doesNotMatch(source, /headers-proxy\?url=/u);
+    assert.match(source, /method: "POST"/u);
+  });
 });

@@ -54,7 +54,18 @@ const translatePath = useTranslatedPath(locale);
 const siteEntry = await getEntry("site_config", "site");
 const siteData = (siteEntry?.data || {}) as SiteConfig;
 
-const { Content, headings } = await render(post);
+const { Content, headings: contentHeadings } = await render(post);
+// The FAQ is rendered after the MDX body, so it is not among the post's own
+// headings; it is listed last so the block answer engines cite most has an
+// entry in the table of contents, at its fixed `#faq` anchor (FAQ.astro,
+// GEO audit #13, B6).
+const headings =
+  post.data.faq && post.data.faq.length > 0
+    ? [
+        ...contentHeadings,
+        { depth: 2, slug: "faq", text: t("components.faqHeading") },
+      ]
+    : contentHeadings;
 
 // Revision date computed, not remembered: max(publishedDate, updatedDate,
 // lastVerified.date, last substantive commit touching this file). The

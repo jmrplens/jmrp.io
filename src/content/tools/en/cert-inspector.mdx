@@ -1,15 +1,15 @@
 ---
 title: "Certificate Inspector"
 slug: "cert-inspector"
-description: "Decode PEM SSL/TLS certificates or fetch from a URL client-side. Inspect subject, issuer, validity, SANs, key usage, and security assessment."
-subtitle: "Decode and inspect X.509 certificates. Fetch from a URL or paste PEM data. View subject, SANs, key details, extensions, and security assessment — all client-side."
+description: "Decode a PEM certificate, or look a domain up in public Certificate Transparency logs (crt.sh, Cert Spotter); parsing runs in your browser."
+subtitle: "Decode and inspect X.509 certificates. Paste PEM data, or look a domain up in public Certificate Transparency logs. View subject, SANs, key details, extensions, and security assessment, parsed in your browser."
 icon: "i-mdi:certificate"
 category: "security"
 publishedDate: 2026-02-16
 updatedDate: 2026-06-23
 tags: ["ssl", "tls", "certificates", "x509", "pem", "security"]
 features:
-  - "Decode PEM or fetch certificates by URL"
+  - "Decode PEM or look a domain up in CT logs"
   - "Inspect subject, issuer, validity, and SANs"
   - "View key details, usage, and extensions"
   - "Compute SHA-256 fingerprint in-browser"
@@ -18,7 +18,7 @@ faq:
   - question: "Is my certificate uploaded to a server?"
     answer: "No. All ASN.1/DER parsing, SHA-256 fingerprinting, and the security assessment run entirely in your browser. Pasted PEM data never leaves your device."
   - question: "Can I inspect a private or internal certificate?"
-    answer: "Yes. Paste the PEM-encoded data directly instead of fetching by URL. URL fetching relies on public Certificate Transparency log APIs (certspotter, crt.sh) and only works for publicly logged certificates."
+    answer: "Yes. Paste the PEM-encoded data directly instead of looking the domain up. The lookup asks public Certificate Transparency log APIs (Cert Spotter, crt.sh), never the host itself, so it only finds publicly logged certificates."
   - question: "What does the security assessment check?"
     answer: "The Certificate Inspector's security assessment evaluates key strength, the signature algorithm, the validity duration, and Certificate Transparency (SCT) compliance, flagging weak keys, deprecated algorithms, and overly long validity periods."
   - question: "What is a Subject Alternative Name (SAN)?"
@@ -44,51 +44,52 @@ import {
 
 <h2>About This Tool</h2>
 <p>
-  Inspect SSL/TLS certificates by fetching them from a URL or pasting
-  PEM-encoded data. The tool decodes the ASN.1 DER structure entirely in your
-  browser and provides a comprehensive analysis including a security assessment.
+  Inspect SSL/TLS certificates by pasting PEM-encoded data, or by looking a
+  domain up in public Certificate Transparency logs. The tool decodes the ASN.1
+  DER structure in your browser and provides a comprehensive analysis including
+  a security assessment.
 </p>
 <h3>What information does it display?</h3>
 <ul>
   <li>
-    <strong>Validity status</strong> — valid, expiring soon, or expired with
+    <strong>Validity status</strong>: valid, expiring soon, or expired with
     days remaining
   </li>
   <li>
-    <strong>Subject &amp; Issuer</strong> — distinguished names with CN, O, C
+    <strong>Subject &amp; Issuer</strong>: distinguished names with CN, O, C
     breakdown
   </li>
   <li>
-    <strong>Subject Alternative Names</strong> — all DNS names, IPs, emails,
+    <strong>Subject Alternative Names</strong>: all DNS names, IPs, emails,
     URIs
   </li>
   <li>
-    <strong>Public key</strong> — algorithm (RSA/EC/Ed25519), key size, curve,
+    <strong>Public key</strong>: algorithm (RSA/EC/Ed25519), key size, curve,
     signature algorithm
   </li>
   <li>
-    <strong>Key Usage &amp; Extended Key Usage</strong> — digital signature,
+    <strong>Key Usage &amp; Extended Key Usage</strong>: digital signature,
     server/client auth
   </li>
   <li>
-    <strong>Authority Info Access</strong> — OCSP and CA Issuer URLs
+    <strong>Authority Info Access</strong>: OCSP and CA Issuer URLs
   </li>
   <li>
-    <strong>Certificate Transparency</strong> — SCT presence check
+    <strong>Certificate Transparency</strong>: SCT presence check
   </li>
   <li>
-    <strong>SHA-256 fingerprint</strong> — computed in-browser via Web Crypto
+    <strong>SHA-256 fingerprint</strong>: computed in-browser via Web Crypto
   </li>
   <li>
-    <strong>Security assessment</strong> — key strength, signature algorithm,
+    <strong>Security assessment</strong>: key strength, signature algorithm,
     validity duration, CT compliance
   </li>
 </ul>
 <h3>How do I use it?</h3>
 <ol>
   <li>
-    Enter a URL and click <strong>Fetch</strong> to download the certificate, or
-    paste PEM data directly
+    Enter a domain or URL and click <strong>Fetch</strong> to find its
+    certificate in the Certificate Transparency logs, or paste PEM data directly
   </li>
   <li>
     Click <strong>Inspect Certificate</strong> to decode and analyze
@@ -97,10 +98,11 @@ import {
 </ol>
 <h3>Privacy</h3>
 <p>
-  All certificate parsing and analysis happens entirely in your browser. When
-  fetching by URL, public CT log APIs are used (certspotter, crt.sh) — no
-  server-side proxy. For private/internal certificates, use the PEM paste option
-  or the <code>openssl</code> commands below.
+  All certificate parsing and analysis happens in your browser. Fetch is the
+  one network request: your browser sends the domain name to the public CT log
+  APIs of Cert Spotter (and crt.sh as a fallback), with no proxy on this site,
+  and never contacts the host itself. For private/internal certificates, use
+  the PEM paste option or the <code>openssl</code> commands below.
 </p>
 
 <h3>Linux Command Reference</h3>

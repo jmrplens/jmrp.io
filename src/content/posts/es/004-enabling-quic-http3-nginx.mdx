@@ -9,9 +9,9 @@ authorEmail: "mail@jmrp.io"
 publishedDate: 2026-01-14
 updatedDate: 2026-08-27
 lastVerified:
-  date: 2026-08-01
+  date: 2026-11-21
   versions:
-    - nginx 1.31.2
+    - nginx 1.31.8
 draft: false
 coverImage: "../../../assets/images/blog/http3-quic.webp"
 tags: ["Nginx", "Networking", "Security"]
@@ -545,7 +545,7 @@ sequenceDiagram
   - Usar 0-RTT solo para **peticiones idempotentes** (GET, HEAD)
   - Los servidores deben rechazar datos 0-RTT no idempotentes
   - Usar `ssl_early_data on;` en Nginx entendiendo los riesgos
-  - La cabecera `Early-Data` avisa a los backends sobre peticiones repetidas
+  - Pasa `proxy_set_header Early-Data $ssl_early_data;` al backend, para que pueda responder `425 Too Early` (RFC 8470) a una petición que podría ser repetida; `add_header` solo devolvería la cabecera al cliente
 </Callout>
 
 ---
@@ -1023,9 +1023,6 @@ server {
     # Advertise HTTP/3 availability
     add_header Alt-Svc 'h3=":443"; ma=86400' always;
     
-    # Warn backends about 0-RTT replay risk
-    add_header Early-Data $ssl_early_data always;
-    
     # Security headers
     add_header Strict-Transport-Security "max-age=63072000; includeSubDomains; preload" always;
     add_header X-Content-Type-Options "nosniff" always;
@@ -1044,6 +1041,17 @@ server {
     
     location / {
         try_files $uri $uri/ =404;
+    }
+
+    # Application behind the proxy. Early-Data: 1 marks a request that
+    # arrived as 0-RTT data and could be a replay, so the backend can refuse
+    # non-idempotent ones with 425 Too Early (RFC 8470). It has to be a
+    # request header (proxy_set_header): add_header would only send it back
+    # to the client. nginx omits the header when $ssl_early_data is empty.
+    location /api/ {
+        proxy_pass http://127.0.0.1:3000;
+        proxy_set_header Host $host;
+        proxy_set_header Early-Data $ssl_early_data;
     }
     
     # Static assets with long cache

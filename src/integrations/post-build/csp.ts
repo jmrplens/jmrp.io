@@ -22,7 +22,7 @@ import { buildStampLine, writeNginxSnippet } from "./utils.js";
  * two generated artifacts living inside the served tree; `scripts/deploy-live.mjs`
  * now moves them out of staging into the snippets directory the vhost includes,
  * after the blue/green swap. A build alone therefore no longer changes the live
- * policy — adding an image domain leaves it CSP-blocked until a real deploy.
+ * policy: adding an image domain leaves it CSP-blocked until a real deploy.
  *
  * @param {string} stagingDir - Absolute path of the Nginx staging directory.
  * @param {CspData} cspData - The data object containing domains collected during HTML processing.
@@ -37,10 +37,10 @@ export async function finalizeCspConfig(
 ) {
   logger.info("Finalizing CSP and Security Headers (nonce-only strategy)...");
 
-  // Sorted for a deterministic .conf across builds — `cspData.imageDomains`
+  // Sorted for a deterministic .conf across builds: `cspData.imageDomains`
   // is a Set populated in HTML-processing order (which varies with the
   // glob/batch scheduling in `processHtmlFiles`), so without sorting the
-  // img-src directive's domain order — and thus the generated file's bytes —
+  // img-src directive's domain order, and thus the generated file's bytes,
   // could differ between two builds of identical content.
   const imgSrc = [...cspData.imageDomains]
     .sort((a, b) => a.localeCompare(b))
@@ -53,7 +53,13 @@ export async function finalizeCspConfig(
       ? `img-src 'self' data: ${imgSrc} https://*.jmrp.io`
       : "img-src 'self' data: https://*.jmrp.io",
     "font-src 'self'",
-    "connect-src 'self' https://api.github.com https://cloudflareinsights.com https://*.cloudflareinsights.com https://api.certspotter.com https://crt.sh",
+    // Only the hosts a page actually fetches from the browser: the analytics
+    // beacon's report and the Certificate Inspector's two Certificate
+    // Transparency services. https://api.github.com was dropped (GEO audit
+    // #13, O11): the site reads the GitHub API only at build time, and an
+    // allowed host nothing uses is an exfiltration path the privacy page
+    // would have to explain.
+    "connect-src 'self' https://cloudflareinsights.com https://*.cloudflareinsights.com https://api.certspotter.com https://crt.sh",
     "media-src 'self'",
     "manifest-src 'self'",
     "frame-src 'none'",
@@ -75,13 +81,13 @@ export async function finalizeCspConfig(
   ];
 
   // Nonce-only CSP: all scripts/styles use nonces, external same-origin covered by 'self'
-  // default-src 'none' denies everything not explicitly allowed — recommended by Mozilla Observatory.
+  // default-src 'none' denies everything not explicitly allowed, as recommended by Mozilla Observatory.
   // Every resource type has its own explicit directive (script-src, style-src, img-src, etc.).
   // Prefetch/prerender: `prefetch-src` was removed from the CSP spec and is unrecognized by
   // current browsers (Chrome logs "Unrecognized Content-Security-Policy directive 'prefetch-src'";
   // Firefox never supported it), so it is intentionally omitted. Chrome's Speculation Rules
   // prefetch is governed by `script-src` (the nonce'd speculationrules script); other prefetch
-  // falls back to `default-src` — no functional loss versus the old directive, minus the warning.
+  // falls back to `default-src`, so there is no functional loss versus the old directive, minus the warning.
   // worker-src 'self' is added explicitly since no dedicated worker-src would otherwise
   // fall back to the blocked default-src.
   const cspHeader = [
@@ -167,8 +173,8 @@ add_header Permissions-Policy "${permissionsPolicy}" always;
   // attribute.
   //
   // The real reason is the browser. Navigate straight to an image or to
-  // /sitemap-index.xml and Chrome wraps it in a generated HTML document —
-  // centred image on a dark backdrop, collapsible XML tree — whose styles are
+  // /sitemap-index.xml and Chrome wraps it in a generated HTML document
+  // (centred image on a dark backdrop, collapsible XML tree) whose styles are
   // inline, and that document inherits THIS policy. Tightening to 'none' was
   // tried and reverted the same day: 20 violations across png, webp, avif, jpeg
   // and the sitemap, each one Chrome's own viewer being blocked. No hash can
@@ -228,7 +234,7 @@ add_header Permissions-Policy "${permissionsPolicy}" always;
 
   // Through writeNginxSnippet, not a bare writeFile: these two were the only
   // artifacts written without a temp+rename and without an explicit mode. Now
-  // all six are atomic and all six are 0644 — which is the mode they arrive
+  // all six are atomic and all six are 0644, which is the mode they arrive
   // with at /etc/nginx/snippets/, since rename(2) carries the source inode's.
   await Promise.all([
     writeNginxSnippet(path.join(stagingDir, "security_headers.conf"), content),

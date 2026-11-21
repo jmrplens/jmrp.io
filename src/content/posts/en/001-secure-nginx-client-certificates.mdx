@@ -2,11 +2,11 @@
 title: "Mastering Mutual TLS (mTLS) with Nginx: A Deep Dive"
 slug: "001-secure-nginx-client-certificates"
 lastVerified:
-  date: 2026-08-22
+  date: 2026-11-21
   versions:
-    - nginx 1.31.3
-description: "Implement Mutual TLS (mTLS) with Nginx — create a CA, generate client certificates, configure CRL and OCSP revocation, and enable Zero Trust."
-lead: "Nginx rejects a connection that lacks a valid client certificate before your application ever loads, and the private key never leaves the device — which is what makes mTLS unphishable."
+    - nginx 1.31.8
+description: "Implement Mutual TLS (mTLS) with Nginx: create a CA, generate client certificates, configure CRL and OCSP revocation, and enable Zero Trust."
+lead: "Nginx rejects a connection that lacks a valid client certificate before your application ever loads, and the private key never leaves the device, which is what makes mTLS unphishable."
 author: "José Manuel Requena Plens"
 authorEmail: "mail@jmrp.io"
 publishedDate: 2025-12-16
@@ -82,18 +82,18 @@ import Mermaid from "@components/ui/Mermaid.astro";
 import Table from "@components/ui/Table.astro";
 import TLDRSummary from "@components/ui/TLDRSummary.astro";
 
-**[Mutual TLS (mTLS)](https://www.cloudflare.com/learning/access-management/what-is-mutual-tls/)** represents the gold standard for securing private web services. Unlike passwords, API keys, or even 2FA, mTLS requires the client (your browser/device) to present a cryptographic certificate signed by your own Certificate Authority (CA)—a secret that _cannot_ be phished, guessed, or brute-forced.
+**[Mutual TLS (mTLS)](https://www.cloudflare.com/learning/access-management/what-is-mutual-tls/)** represents the gold standard for securing private web services. Unlike passwords, API keys, or even 2FA, mTLS requires the client (your browser/device) to present a cryptographic certificate signed by your own Certificate Authority (CA), a secret that _cannot_ be phished, guessed, or brute-forced.
 
 If the client doesn't have the certificate, Nginx rejects the connection **before** the application even loads. This is perfect for securing private administration panels, NAS interfaces, or internal tools.
 
 In this comprehensive guide, I'll walk you through implementing mTLS on Nginx, covering everything from creating a certificate authority to advanced topics like **OCSP vs CRL revocation**, **Zero Trust architecture**, and **performance tuning**. This guide incorporates best practices from [Smallstep](https://smallstep.com/hello-mtls), [SSL.com](https://www.ssl.com/article/authenticating-users-and-iot-devices-with-mutual-tls/), and [official Nginx documentation](https://nginx.org/en/docs/http/ngx_http_ssl_module.html).
 
-<TLDRSummary title="TL;DR — mTLS on Nginx in a nutshell">
+<TLDRSummary title="TL;DR: mTLS on Nginx in a nutshell">
 - **mTLS is unphishable** because the client must present a certificate signed by your own CA; the private key never leaves the device and is never transmitted, so Nginx rejects connections without a valid cert **before** the app loads.
 - **Build your own PKI**: create a **4096-bit RSA** CA valid for 10 years, then sign per-device client certs (2048-bit minimum, 1-year validity) and distribute them as password-protected **PKCS12 (.p12)** bundles.
-- **Enable it in Nginx** with `ssl_client_certificate` (your CA), `ssl_verify_client on`, and `ssl_verify_depth` — or `optional` plus a `map` to enforce it only on critical routes (see my deployment below); never use `optional_no_ca` in production. Restrict to **TLS 1.2/1.3** with strong ECDHE ciphers.
+- **Enable it in Nginx** with `ssl_client_certificate` (your CA), `ssl_verify_client on`, and `ssl_verify_depth`, or `optional` plus a `map` to enforce it only on critical routes (see my deployment below); never use `optional_no_ca` in production. Restrict to **TLS 1.2/1.3** with strong ECDHE ciphers.
 - **Add fine-grained control** with a `map` on `$ssl_client_s_dn` for CN allowlists, and use `$ssl_client_verify` to let authenticated clients **bypass rate limiting**.
-- **Revoke compromised certs** via **CRL** (`openssl ca -revoke` + `-gencrl`, then `ssl_crl`) for small setups or **OCSP** for larger ones — regenerate the CRL and reload Nginx every time. Automate creation and renewal with scripts.
+- **Revoke compromised certs** via **CRL** (`openssl ca -revoke` + `-gencrl`, then `ssl_crl`) for small setups or **OCSP** for larger ones: regenerate the CRL and reload Nginx every time. Automate creation and renewal with scripts.
 </TLDRSummary>
 
 ---
@@ -150,10 +150,10 @@ mTLS is a cornerstone of Zero Trust architecture because it provides **mutual au
 
 Unlike passwords, client certificates:
 
-1. **Are never transmitted** — only a signature proving possession is sent
-2. **Are bound to hardware** — stored in secure keychains/TPMs
-3. **Require private key access** — the private key never leaves the device
-4. **Are validated cryptographically** — forging is computationally infeasible
+1. **Are never transmitted**: only a signature proving possession is sent
+2. **Are bound to hardware**: stored in secure keychains/TPMs
+3. **Require private key access**: the private key never leaves the device
+4. **Are validated cryptographically**: forging is computationally infeasible
 
 <Callout type="keypoint" icon="mdi:shield-check">
   **Key Insight:** With mTLS, even if an attacker steals your password AND intercepts your 2FA code, they still cannot access the protected resource without the certificate file installed on an authorized device.
@@ -182,11 +182,11 @@ location = /api/assets {
 }
 ```
 
-Why? With `on` at the server level, any client without a certificate gets a cryptic TLS error before ever reaching Nginx — impossible for a non-technical user to debug, and with no way to fall back to another authentication layer. With `optional` + `map`, the handshake always completes and I decide, route by route, what requires a certificate (write APIs return an explicit 403) and what can fall through to a second authentication layer. That second layer exists: requests from my LAN pass an independent network allowlist, so the certificate is never the only control — defense in depth, not a single master key.
+Why? With `on` at the server level, any client without a certificate gets a cryptic TLS error before ever reaching Nginx: impossible for a non-technical user to debug, and with no way to fall back to another authentication layer. With `optional` + `map`, the handshake always completes and I decide, route by route, what requires a certificate (write APIs return an explicit 403) and what can fall through to a second authentication layer. That second layer exists: requests from my LAN pass an independent network allowlist, so the certificate is never the only control: defense in depth, not a single master key.
 
-As for issuance: I keep a per-device OpenSSL workflow (a CSR, a config, and a metadata sheet per client), with `ssl_verify_depth 2` on the server. Three certificates are active today, each tied to one specific device and person — when a device is retired, its certificate is retired with it.
+As for issuance: I keep a per-device OpenSSL workflow (a CSR, a config, and a metadata sheet per client), with `ssl_verify_depth 2` on the server. Three certificates are active today, each tied to one specific device and person; when a device is retired, its certificate is retired with it.
 
-An honest confession: **I publish no CRL and no OCSP**. With three certificates on devices I physically control, revocation at this scale means reissuing from the CA — a reasonable trade-off here that would be unacceptable with dozens of clients. If your fleet grows, `ssl_crl` stops being optional.
+An honest confession: **I publish no CRL and no OCSP**. With three certificates on devices I physically control, revocation at this scale means reissuing from the CA, a reasonable trade-off here that would be unacceptable with dozens of clients. If your fleet grows, `ssl_crl` stops being optional.
 
 ## What is the difference between one-way TLS and mutual TLS?
 
@@ -230,7 +230,7 @@ Understanding the difference is fundamental:
 
 In regular HTTPS, only the server presents a certificate.
 
- The client (browser) verifies it, but the server has no way to verify _who_ the client is—it just knows the connection is encrypted.
+ The client (browser) verifies it, but the server has no way to verify _who_ the client is; it just knows the connection is encrypted.
 
 ### The mTLS enhancement
 
@@ -324,11 +324,11 @@ echo 1000 | sudo tee crlnumber > /dev/null
 <Callout type="info" icon="mdi:folder-outline">
   **Directory Structure Explained:**
   
-  - `ca/` — Certificate Authority certificates
-  - `certs/` — Issued client and server certificates
-  - `private/` — Private keys (chmod 700!)
-  - `crl/` — Certificate Revocation Lists
-  - `newcerts/` — OpenSSL's archive of issued certs
+  - `ca/`: Certificate Authority certificates
+  - `certs/`: Issued client and server certificates
+  - `private/`: Private keys (chmod 700!)
+  - `crl/`: Certificate Revocation Lists
+  - `newcerts/`: OpenSSL's archive of issued certs
 </Callout>
 
 ---
@@ -855,6 +855,13 @@ The `ssl_verify_client` directive controls how Nginx handles client certificates
 
 <FileContent filename="/etc/nginx/sites-available/secure.example.com.conf">
 ```nginx
+# The combined format plus the client certificate subject and the result of
+# its verification. log_format belongs to the http context; a file in
+# sites-available is included inside http, so it can sit above the server.
+log_format mtls '$remote_addr - $remote_user [$time_local] "$request" '
+                '$status $body_bytes_sent "$http_referer" "$http_user_agent" '
+                'dn="$ssl_client_s_dn" verify=$ssl_client_verify';
+
 server {
     listen 443 ssl;
     listen [::]:443 ssl;
@@ -896,9 +903,9 @@ server {
     ssl_session_tickets off;
     
     # =================================================
-    # Logging (Include Client DN for Debugging)
+    # Logging (client certificate DN for debugging)
     # =================================================
-    access_log /var/log/nginx/secure.access.log combined;
+    access_log /var/log/nginx/secure.access.log mtls;
     error_log /var/log/nginx/secure.error.log warn;
     
     # =================================================
@@ -1792,15 +1799,15 @@ tail -f /var/log/nginx/error.log | grep ssl
 ## Deep Dive
 
 ### Official Documentation
-- [Nginx ngx_http_ssl_module](https://nginx.org/en/docs/http/ngx_http_ssl_module.html) — All SSL/TLS directives
-- [OpenSSL CA Documentation](https://docs.openssl.org/3.5/man1/openssl-ca/) — Certificate authority commands
+- [Nginx ngx_http_ssl_module](https://nginx.org/en/docs/http/ngx_http_ssl_module.html): All SSL/TLS directives
+- [OpenSSL CA Documentation](https://docs.openssl.org/3.5/man1/openssl-ca/): Certificate authority commands
 
 ### Tutorials & Guides
-- [Smallstep Hello mTLS](https://smallstep.com/hello-mtls) — Interactive mTLS tutorial
-- [SSL.com mTLS Guide](https://www.ssl.com/article/authenticating-users-and-iot-devices-with-mutual-tls/) — IoT and user authentication
-- [Cloudflare: What is mTLS?](https://www.cloudflare.com/learning/access-management/what-is-mutual-tls/) — Conceptual overview
+- [Smallstep Hello mTLS](https://smallstep.com/hello-mtls): Interactive mTLS tutorial
+- [SSL.com mTLS Guide](https://www.ssl.com/article/authenticating-users-and-iot-devices-with-mutual-tls/): IoT and user authentication
+- [Cloudflare: What is mTLS?](https://www.cloudflare.com/learning/access-management/what-is-mutual-tls/): Conceptual overview
 
 ### Tools
-- [step-ca](https://smallstep.com/docs/step-ca/) — Modern certificate authority
-- [cfssl](https://github.com/cloudflare/cfssl) — Cloudflare's PKI toolkit
-- [easy-rsa](https://github.com/OpenVPN/easy-rsa) — Simple CA management scripts
+- [step-ca](https://smallstep.com/docs/step-ca/): Modern certificate authority
+- [cfssl](https://github.com/cloudflare/cfssl): Cloudflare's PKI toolkit
+- [easy-rsa](https://github.com/OpenVPN/easy-rsa): Simple CA management scripts

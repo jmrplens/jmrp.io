@@ -1516,62 +1516,40 @@ test.describe("Projects and contributions graphs", () => {
         expect(String(h.url).startsWith(`${String(upstreamRepo)}/`)).toBe(true);
       }
 
-      // The ledger: every linked row, the ones behind "Show the other N"
-      // included, in the page's order. A highlight is referenced by its @id;
-      // every other row is a CreativeWork named by the title it prints.
-      const ledger = listItems(listById(`${pageUrl}#ledger`));
-      const visibleRows = await page
-        .locator("details[data-project] ul.items > li")
-        .evaluateAll((els) =>
-          els.flatMap((el) => {
-            const link = el.querySelector(":scope .items__t a");
-            return link
-              ? [
-                  {
-                    url: link.getAttribute("href") ?? "",
-                    text: link.textContent?.trim() ?? "",
-                  },
-                ]
-              : [];
-          }),
-        );
-      expect(visibleRows.length).toBeGreaterThan(0);
-      expect(ledger.map((row) => row["@id"])).toEqual(
-        visibleRows.map((row) => row.url),
+      // The ledger's rows are not restated in the graph (GEO audit #13, M4:
+      // 430 CreativeWork nodes took the block to 268 KB, and the Schema
+      // Markup Validator extracts nothing from a block that size). The full
+      // inventory is a Dataset whose distribution is this page's markdown
+      // twin, and the twin links every row the page links.
+      expect(listById(`${pageUrl}#ledger`)).toBeUndefined();
+      const dataset = listById(`${pageUrl}#ledger-dataset`);
+      expect(dataset?.["@type"]).toBe("Dataset");
+      expect(refId(dataset?.creator)).toBe(PERSON_ID);
+      expect(dataset?.license).toBe(
+        "https://creativecommons.org/licenses/by/4.0/",
       );
-      const highlightIds = new Set(highlights.map((h) => h["@id"]));
-      ledger.forEach((row, index) => {
-        if (row["@type"] === undefined) {
-          expect(highlightIds.has(row["@id"])).toBe(true);
-          return;
-        }
-        expect(row["@type"]).toBe("CreativeWork");
-        expect(row.url).toBe(row["@id"]);
-        expect(refId(row.author)).toBe(PERSON_ID);
-        expect(row.inLanguage).toBe("en");
-        expect(
-          visibleRows[index].text.endsWith(String(row.name)),
-          String(row["@id"]),
-        ).toBe(true);
-        expect(
-          (row.creativeWorkStatus as { "@language"?: string })["@language"],
-        ).toBe(lang);
-        const repo = row.isPartOf as JsonLdSchema;
-        expect(
-          repo["@type"] === "SoftwareSourceCode" ||
-            upstream.some((u) => u["@id"] === repo["@id"]),
-        ).toBe(true);
-        expect(String(row.url).startsWith(`${String(repo["@id"])}/`)).toBe(
-          true,
-        );
-      });
+      const distribution = dataset?.distribution as JsonLdSchema;
+      expect(distribution["@type"]).toBe("DataDownload");
+      expect(distribution.encodingFormat).toBe("text/markdown");
+      expect(distribution.contentUrl).toBe(`${pageUrl}index.md`);
+      const rowUrls = await page
+        .locator("details[data-project] ul.items > li .items__t a")
+        .evaluateAll((els) => els.map((el) => el.getAttribute("href") ?? ""));
+      expect(rowUrls.length).toBeGreaterThan(0);
+      const twin = await (
+        await page.request.get(`${prefix}/projects/contributions/index.md`)
+      ).text();
+      for (const url of rowUrls) expect(twin, url).toContain(`](${url})`);
 
-      // Accepted answers: the visible list, in its order (the lead in view,
-      // then the rest behind the disclosure), each an Answer by the person to
-      // the discussion's Question, about the project the page names.
-      const answers = listItems(listById(`${pageUrl}#answers`));
+      // Accepted answers: the ones in view (the lead), in the page's order,
+      // each an Answer by the person to the discussion's Question, about the
+      // project the page names. The rest, behind "Show the other N", are not
+      // restated in the graph (GEO audit #13, M4: they were the part of the
+      // block that grew with the data); the markdown twin lists every one.
+      const answersNode = listById(`${pageUrl}#answers`);
+      const answers = listItems(answersNode);
       const visibleAnswers = await page
-        .locator("ul.answers > li")
+        .locator("ul.answers:not(.answers--more) > li")
         .evaluateAll((els) =>
           els.map((el) => {
             const link = el.querySelector(":scope .answers__q");
@@ -1585,6 +1563,17 @@ test.describe("Projects and contributions graphs", () => {
           }),
         );
       expect(visibleAnswers.length).toBeGreaterThan(0);
+      expect(answersNode?.numberOfItems).toBe(visibleAnswers.length);
+      const foldedAnswers = await page
+        .locator("ul.answers--more .answers__q")
+        .evaluateAll((els) => els.map((el) => el.getAttribute("href") ?? ""));
+      for (const url of foldedAnswers) {
+        expect(
+          answers.some((a) => a.url === url),
+          url,
+        ).toBe(false);
+        expect(twin, url).toContain(url);
+      }
       expect(
         answers.map((a) => {
           const question = a.parentItem as JsonLdSchema;

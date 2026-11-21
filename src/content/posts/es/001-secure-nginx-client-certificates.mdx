@@ -2,10 +2,10 @@
 title: "Dominando Mutual TLS (mTLS) con Nginx: Una Guía Completa"
 slug: "001-secure-nginx-client-certificates"
 lastVerified:
-  date: 2026-08-22
+  date: 2026-11-21
   versions:
-    - nginx 1.31.3
-description: "Implementa Mutual TLS (mTLS) con Nginx — crea una CA, genera certificados de cliente, configura revocación CRL y OCSP, y habilita Zero Trust."
+    - nginx 1.31.8
+description: "Implementa Mutual TLS (mTLS) con Nginx: crea una CA, genera certificados de cliente, configura revocación CRL y OCSP, y habilita Zero Trust."
 lead: "Nginx rechaza una conexión sin certificado de cliente válido antes de que tu aplicación llegue a cargarse, y la clave privada nunca sale del dispositivo: por eso el mTLS no se puede robar con phishing."
 author: "José Manuel Requena Plens"
 authorEmail: "mail@jmrp.io"
@@ -83,18 +83,18 @@ import Mermaid from "@components/ui/Mermaid.astro";
 import Table from "@components/ui/Table.astro";
 import TLDRSummary from "@components/ui/TLDRSummary.astro";
 
-**[Mutual TLS (mTLS)](https://www.cloudflare.com/learning/access-management/what-is-mutual-tls/)** representa el estándar de referencia para asegurar servicios web privados. A diferencia de las contraseñas, las API keys o incluso el 2FA, mTLS requiere que el cliente (tu navegador/dispositivo) presente un certificado criptográfico firmado por tu propia Certificate Authority (CA) — un secreto que _no puede_ ser robado mediante phishing, adivinado o forzado por fuerza bruta.
+**[Mutual TLS (mTLS)](https://www.cloudflare.com/learning/access-management/what-is-mutual-tls/)** representa el estándar de referencia para asegurar servicios web privados. A diferencia de las contraseñas, las API keys o incluso el 2FA, mTLS requiere que el cliente (tu navegador/dispositivo) presente un certificado criptográfico firmado por tu propia Certificate Authority (CA), un secreto que _no puede_ ser robado mediante phishing, adivinado o forzado por fuerza bruta.
 
 Si el cliente no tiene el certificado, Nginx rechaza la conexión **antes** de que la aplicación siquiera se cargue. Esto es perfecto para asegurar paneles de administración privados, interfaces NAS o herramientas internas.
 
 En esta guía completa, te guiaré a través de la implementación de mTLS en Nginx, cubriendo todo desde la creación de una certificate authority hasta temas avanzados como **revocación OCSP vs CRL**, **arquitectura Zero Trust** y **ajuste de rendimiento**. Esta guía incorpora las mejores prácticas de [Smallstep](https://smallstep.com/hello-mtls), [SSL.com](https://www.ssl.com/article/authenticating-users-and-iot-devices-with-mutual-tls/) y la [documentación oficial de Nginx](https://nginx.org/en/docs/http/ngx_http_ssl_module.html).
 
-<TLDRSummary title="TL;DR — mTLS en Nginx de un vistazo">
+<TLDRSummary title="TL;DR: mTLS en Nginx de un vistazo">
 - **mTLS no puede ser víctima de phishing** porque el cliente debe presentar un certificado firmado por tu propia CA; la clave privada nunca sale del dispositivo ni se transmite, así que Nginx rechaza las conexiones sin un certificado válido **antes** de que la aplicación se cargue.
 - **Crea tu propia PKI**: genera una CA **RSA de 4096 bits** válida 10 años y firma certificados de cliente por dispositivo (mínimo 2048 bits, validez de 1 año), distribuyéndolos como paquetes **PKCS12 (.p12)** protegidos por contraseña.
-- **Actívalo en Nginx** con `ssl_client_certificate` (tu CA), `ssl_verify_client on` y `ssl_verify_depth` — o `optional` más un `map` para exigirlo solo en rutas críticas (ver mi despliegue más abajo); nunca uses `optional_no_ca` en producción. Restringe a **TLS 1.2/1.3** con cipher suites ECDHE fuertes.
+- **Actívalo en Nginx** con `ssl_client_certificate` (tu CA), `ssl_verify_client on` y `ssl_verify_depth`, o `optional` más un `map` para exigirlo solo en rutas críticas (ver mi despliegue más abajo); nunca uses `optional_no_ca` en producción. Restringe a **TLS 1.2/1.3** con cipher suites ECDHE fuertes.
 - **Añade control granular** con un `map` sobre `$ssl_client_s_dn` para listas de permitidos por CN, y usa `$ssl_client_verify` para que los clientes autenticados **eviten el rate limiting**.
-- **Revoca certificados comprometidos** mediante **CRL** (`openssl ca -revoke` + `-gencrl`, luego `ssl_crl`) para despliegues pequeños u **OCSP** para los más grandes — regenera el CRL y recarga Nginx cada vez. Automatiza la creación y renovación con scripts.
+- **Revoca certificados comprometidos** mediante **CRL** (`openssl ca -revoke` + `-gencrl`, luego `ssl_crl`) para despliegues pequeños u **OCSP** para los más grandes: regenera el CRL y recarga Nginx cada vez. Automatiza la creación y renovación con scripts.
 </TLDRSummary>
 
 ---
@@ -151,10 +151,10 @@ mTLS es una piedra angular de la arquitectura Zero Trust porque proporciona **au
 
 A diferencia de las contraseñas, los certificados de cliente:
 
-1. **Nunca se transmiten** — solo se envía una firma que demuestra la posesión
-2. **Están vinculados al hardware** — almacenados en keychains/TPMs seguros
-3. **Requieren acceso a la clave privada** — la clave privada nunca sale del dispositivo
-4. **Se validan criptográficamente** — falsificarlos es computacionalmente inviable
+1. **Nunca se transmiten**: solo se envía una firma que demuestra la posesión
+2. **Están vinculados al hardware**: almacenados en keychains/TPMs seguros
+3. **Requieren acceso a la clave privada**: la clave privada nunca sale del dispositivo
+4. **Se validan criptográficamente**: falsificarlos es computacionalmente inviable
 
 <Callout type="keypoint" icon="mdi:shield-check">
   **Punto Clave:** Con mTLS, incluso si un atacante roba tu contraseña E intercepta tu código 2FA, seguiría sin poder acceder al recurso protegido sin el archivo de certificado instalado en un dispositivo autorizado.
@@ -183,11 +183,11 @@ location = /api/assets {
 }
 ```
 
-¿Por qué? Con `on` a nivel de servidor, cualquier cliente sin certificado recibe un error TLS críptico antes de llegar siquiera a Nginx — imposible de depurar para un usuario no técnico y sin posibilidad de degradar a otra capa de autenticación. Con `optional` + `map`, el handshake siempre se completa y soy yo quien decide, ruta a ruta, qué exige certificado (las APIs de escritura devuelven un 403 explícito) y qué puede caer a una segunda capa. Esa segunda capa existe: las peticiones desde mi LAN pasan por un allowlist de red independiente, de modo que el certificado nunca es el único control — defensa en profundidad, no una llave maestra única.
+¿Por qué? Con `on` a nivel de servidor, cualquier cliente sin certificado recibe un error TLS críptico antes de llegar siquiera a Nginx: imposible de depurar para un usuario no técnico y sin posibilidad de degradar a otra capa de autenticación. Con `optional` + `map`, el handshake siempre se completa y soy yo quien decide, ruta a ruta, qué exige certificado (las APIs de escritura devuelven un 403 explícito) y qué puede caer a una segunda capa. Esa segunda capa existe: las peticiones desde mi LAN pasan por un allowlist de red independiente, de modo que el certificado nunca es el único control: defensa en profundidad, no una llave maestra única.
 
-En cuanto a la emisión: mantengo un flujo con OpenSSL por dispositivo (un CSR, una config y una ficha de metadatos por cliente), con `ssl_verify_depth 2` en el servidor. Hoy hay tres certificados activos, cada uno ligado a un dispositivo y una persona concretos — cuando un dispositivo se retira, su certificado se retira con él.
+En cuanto a la emisión: mantengo un flujo con OpenSSL por dispositivo (un CSR, una config y una ficha de metadatos por cliente), con `ssl_verify_depth 2` en el servidor. Hoy hay tres certificados activos, cada uno ligado a un dispositivo y una persona concretos; cuando un dispositivo se retira, su certificado se retira con él.
 
-Una confesión honesta: **no publico CRL ni OCSP**. Con tres certificados en dispositivos que controlo físicamente, revocar a esta escala significa reemitir desde la CA — un compromiso razonable aquí que sería inaceptable con decenas de clientes. Si tu flota crece, `ssl_crl` deja de ser opcional.
+Una confesión honesta: **no publico CRL ni OCSP**. Con tres certificados en dispositivos que controlo físicamente, revocar a esta escala significa reemitir desde la CA, un compromiso razonable aquí que sería inaceptable con decenas de clientes. Si tu flota crece, `ssl_crl` deja de ser opcional.
 
 ## ¿Qué diferencia hay entre TLS unidireccional y mutual TLS?
 
@@ -231,7 +231,7 @@ Entender la diferencia es fundamental:
 
 En el HTTPS regular, solo el servidor presenta un certificado.
 
- El cliente (navegador) lo verifica, pero el servidor no tiene forma de verificar _quién_ es el cliente — solo sabe que la conexión está cifrada.
+ El cliente (navegador) lo verifica, pero el servidor no tiene forma de verificar _quién_ es el cliente; solo sabe que la conexión está cifrada.
 
 ### La mejora de mTLS
 
@@ -325,11 +325,11 @@ echo 1000 | sudo tee crlnumber > /dev/null
 <Callout type="info" icon="mdi:folder-outline">
   **Estructura de Directorios Explicada:**
   
-  - `ca/` — Certificados de la Certificate Authority
-  - `certs/` — Certificados de cliente y servidor emitidos
-  - `private/` — Claves privadas (¡chmod 700!)
-  - `crl/` — Listas de Revocación de Certificados (CRL)
-  - `newcerts/` — Archivo de certificados emitidos por OpenSSL
+  - `ca/`: Certificados de la Certificate Authority
+  - `certs/`: Certificados de cliente y servidor emitidos
+  - `private/`: Claves privadas (¡chmod 700!)
+  - `crl/`: Listas de Revocación de Certificados (CRL)
+  - `newcerts/`: Archivo de certificados emitidos por OpenSSL
 </Callout>
 
 ---
@@ -856,6 +856,13 @@ La directiva `ssl_verify_client` controla cómo Nginx gestiona los certificados 
 
 <FileContent filename="/etc/nginx/sites-available/secure.example.com.conf">
 ```nginx
+# The combined format plus the client certificate subject and the result of
+# its verification. log_format belongs to the http context; a file in
+# sites-available is included inside http, so it can sit above the server.
+log_format mtls '$remote_addr - $remote_user [$time_local] "$request" '
+                '$status $body_bytes_sent "$http_referer" "$http_user_agent" '
+                'dn="$ssl_client_s_dn" verify=$ssl_client_verify';
+
 server {
     listen 443 ssl;
     listen [::]:443 ssl;
@@ -897,9 +904,9 @@ server {
     ssl_session_tickets off;
     
     # =================================================
-    # Logging (Include Client DN for Debugging)
+    # Logging (client certificate DN for debugging)
     # =================================================
-    access_log /var/log/nginx/secure.access.log combined;
+    access_log /var/log/nginx/secure.access.log mtls;
     error_log /var/log/nginx/secure.error.log warn;
     
     # =================================================
@@ -1793,15 +1800,15 @@ tail -f /var/log/nginx/error.log | grep ssl
 ## Profundización
 
 ### Documentación Oficial
-- [Nginx ngx_http_ssl_module](https://nginx.org/en/docs/http/ngx_http_ssl_module.html) — Todas las directivas SSL/TLS
-- [Documentación de CA de OpenSSL](https://docs.openssl.org/3.5/man1/openssl-ca/) — Comandos de la certificate authority
+- [Nginx ngx_http_ssl_module](https://nginx.org/en/docs/http/ngx_http_ssl_module.html): Todas las directivas SSL/TLS
+- [Documentación de CA de OpenSSL](https://docs.openssl.org/3.5/man1/openssl-ca/): Comandos de la certificate authority
 
 ### Tutoriales y Guías
-- [Smallstep Hello mTLS](https://smallstep.com/hello-mtls) — Tutorial interactivo de mTLS
-- [Guía de mTLS de SSL.com](https://www.ssl.com/article/authenticating-users-and-iot-devices-with-mutual-tls/) — Autenticación de IoT y usuarios
-- [Cloudflare: ¿Qué es mTLS?](https://www.cloudflare.com/learning/access-management/what-is-mutual-tls/) — Resumen conceptual
+- [Smallstep Hello mTLS](https://smallstep.com/hello-mtls): Tutorial interactivo de mTLS
+- [Guía de mTLS de SSL.com](https://www.ssl.com/article/authenticating-users-and-iot-devices-with-mutual-tls/): Autenticación de IoT y usuarios
+- [Cloudflare: ¿Qué es mTLS?](https://www.cloudflare.com/learning/access-management/what-is-mutual-tls/): Resumen conceptual
 
 ### Herramientas
-- [step-ca](https://smallstep.com/docs/step-ca/) — Certificate authority moderna
-- [cfssl](https://github.com/cloudflare/cfssl) — Kit de herramientas PKI de Cloudflare
-- [easy-rsa](https://github.com/OpenVPN/easy-rsa) — Scripts simples de gestión de CA
+- [step-ca](https://smallstep.com/docs/step-ca/): Certificate authority moderna
+- [cfssl](https://github.com/cloudflare/cfssl): Kit de herramientas PKI de Cloudflare
+- [easy-rsa](https://github.com/OpenVPN/easy-rsa): Scripts simples de gestión de CA

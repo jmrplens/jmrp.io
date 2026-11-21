@@ -34,6 +34,7 @@ import { getCollection, getEntry } from "astro:content";
 import type {
   SoftwareApplication,
   SoftwareSourceCode,
+  Text,
   Thing,
 } from "schema-dts";
 
@@ -42,7 +43,7 @@ import {
   projectLicenseValue,
 } from "../../scripts/utils/license-expression.mjs";
 import { softwareId as softwareIdRule } from "../../scripts/utils/software-id.mjs";
-import { SCHOOL_IDS } from "./person";
+import { type LanguageTaggedValue, SCHOOL_IDS } from "./person";
 
 /** A Wikidata-grounded subject of a project. */
 export interface ProjectTopic {
@@ -502,8 +503,16 @@ function lifecycleProperties(project: Project, released: boolean) {
       isAccessibleForFree: accessibleForFree,
     }),
     ...(project.status === "archived" && { creativeWorkStatus: "Archived" }),
+    // Language-tagged, as kleidos.dev states it on the shared #software node:
+    // a plain string here made the two documents publish different values for
+    // one @id (GEO audit #13, B10).
     ...(project.status === "upcoming" && {
-      creativeWorkStatus: "In development",
+      // schema-dts's Text does not model language-tagged objects, which
+      // JSON-LD allows: the same satisfies-then-cast as `bilingual` in CVPage.
+      creativeWorkStatus: [
+        { "@value": "In development", "@language": "en" },
+        { "@value": "En desarrollo", "@language": "es" },
+      ] satisfies LanguageTaggedValue[] as unknown as Text,
     }),
   };
 }

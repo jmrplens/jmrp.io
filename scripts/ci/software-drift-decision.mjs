@@ -1,3 +1,5 @@
+// cspell:locale en,es
+// cspell:words LILYGO
 /**
  * The pass/fail decision of `check-software-drift.mjs`, kept apart from the
  * network code so it is tested without fetching anything.
@@ -16,6 +18,18 @@ import { projectLicenseValue } from "../utils/license-expression.mjs";
  * its docs site measure different GitLab tiers, so both are true (author
  * decision, 2026-09-03; see `src/content/profile/projects.yaml`).
  *
+ * cs-routeros-bouncer: `summary` gained its final full stop on 2026-11-21
+ * (GEO audit #13), because the documentation hub's llms.txt printed the
+ * sentence running into the license note after it. Its docs site, another
+ * repository, still publishes the sentence without one. Delete the entry
+ * once that site carries the full stop.
+ *
+ * kleidos: kleidos.dev lists post 011's Spanish article with the headline "Un
+ * llavero con bloqueo ante fallos...", a title jmrp.io never published (the
+ * post is "Una bóveda con bloqueo ante fallos..."). The fix belongs in the
+ * Kleidos site's repository; this entry names that one article, so any other
+ * headline it misstates still fails the run (GEO audit #13).
+ *
  * @type {Readonly<Record<string, {properties: readonly string[], reason: string, decided: string}>>}
  */
 export const ACCEPTED_DIVERGENCES = Object.freeze({
@@ -24,6 +38,20 @@ export const ACCEPTED_DIVERGENCES = Object.freeze({
     reason:
       "the action count and the tool count measure different GitLab tiers",
     decided: "2026-09-03",
+  }),
+  "cs-routeros-bouncer": Object.freeze({
+    properties: Object.freeze(["description"]),
+    reason:
+      "jmrp.io added the final full stop its docs site has yet to publish",
+    decided: "2026-11-21",
+  }),
+  kleidos: Object.freeze({
+    properties: Object.freeze([
+      "subjectOf headline https://jmrp.io/es/blog/011-encrypt-then-mac-vault/#article",
+    ]),
+    reason:
+      "kleidos.dev states a Spanish headline for post 011 that jmrp.io never published; the fix is in the Kleidos repository",
+    decided: "2026-11-21",
   }),
 });
 
@@ -37,19 +65,135 @@ export const ACCEPTED_DIVERGENCES = Object.freeze({
  * string ("Windows, Linux, macOS"), and nothing compared the two, so a site
  * that named other systems shipped unnoticed.
  *
+ * `applicationSubCategory`, `alternateName`, `disambiguatingDescription` and
+ * `keywords` joined on 2026-11-21 (GEO audit #13). mikroscope's docs site
+ * said "Network monitoring" and /projects/ "Monitoring", and Kleidos's site
+ * spelled its board vendor "LILYGO" where projects.yaml wrote "LilyGO", on
+ * properties nothing compared. Each localized property is read as its English
+ * value and, under `<property>@es`, its Spanish one, as `description` is.
+ *
  * @type {readonly string[]}
  */
 export const CONTRADICTABLE = Object.freeze([
   "name",
+  "alternateName",
   "description",
   "description@es",
+  "disambiguatingDescription",
+  "disambiguatingDescription@es",
+  "keywords",
+  "keywords@es",
   "license",
   "programmingLanguage",
   "applicationCategory",
+  "applicationSubCategory",
   "operatingSystem",
   "codeRepository",
   "url",
 ]);
+
+/**
+ * The properties projects.yaml writes as an `{ en, es }` pair and the graph
+ * states as two language-tagged literals. A bilingual site states them the
+ * same way; an English-only one states a plain string, which is the English
+ * value. {@link siteValues} and {@link projectValues} split each into
+ * `<property>` (English) and `<property>@es` (Spanish).
+ *
+ * @type {readonly string[]}
+ */
+export const LOCALIZED = Object.freeze([
+  "description",
+  "disambiguatingDescription",
+  "keywords",
+]);
+
+/**
+ * The literal one language states for a localized property, or `undefined`.
+ * Pure.
+ *
+ * @param {unknown} value - The property as published: a string, one
+ *   language-tagged literal or a list of them.
+ * @param {string} lang - The language tag wanted.
+ * @returns {string | undefined} The `@value` tagged with `lang`.
+ */
+export function taggedLiteral(value, lang) {
+  return [value ?? []]
+    .flat()
+    .find((literal) => literal?.["@language"] === lang)?.["@value"];
+}
+
+/**
+ * What a project's own site states for each property in
+ * {@link CONTRADICTABLE}, read from its `#software` node. Pure.
+ *
+ * A localized property gives its English literal as `<property>` and its
+ * Spanish one as `<property>@es`. A site that states the property untagged
+ * gives the whole value as `<property>` and nothing as `<property>@es`: an
+ * English-only site has no Spanish literal to contradict. Comparing the whole
+ * tagged array against `summary.en` reported mikroscope and ghchronicle as
+ * contradicting while their English text was identical.
+ *
+ * @param {Record<string, unknown>} node - The site's `#software` node.
+ * @returns {Record<string, unknown>} The values, by property.
+ */
+export function siteValues(node) {
+  const values = {};
+  for (const property of CONTRADICTABLE) {
+    const [base, lang] = property.split("@", 2);
+    if (!LOCALIZED.includes(base)) {
+      values[property] = node[property];
+    } else if (lang) {
+      values[property] = taggedLiteral(node[base], lang);
+    } else {
+      values[property] = taggedLiteral(node[base], "en") ?? node[base];
+    }
+  }
+  return values;
+}
+
+/** Prefix of the per-article keys {@link articleHeadlines} builds. */
+const HEADLINE_KEY = "subjectOf headline ";
+
+/**
+ * The headline a site states for each article in a node's `subjectOf`, one
+ * key per article (`subjectOf headline <@id>`), so a divergence names the
+ * article and an accepted exception covers that article alone. Items with
+ * no `@id` or no headline name nothing to compare. Pure.
+ *
+ * @param {unknown} subjectOf - The node's `subjectOf`.
+ * @returns {Record<string, string>} Headline by key.
+ */
+export function articleHeadlines(subjectOf) {
+  const headlines = {};
+  for (const item of [subjectOf ?? []].flat()) {
+    if (typeof item?.["@id"] === "string" && typeof item.headline === "string")
+      headlines[`${HEADLINE_KEY}${item["@id"]}`] = item.headline;
+  }
+  return headlines;
+}
+
+/**
+ * The headline jmrp.io states for each of its posts, keyed as
+ * {@link articleHeadlines} keys a site's: the post's article node is
+ * `<site>[/es]/blog/<slug>/#article` and its headline the post's `title`,
+ * the rule `projectArticles` in `src/utils/projects.ts` follows. Drafts are
+ * not published, so they state nothing. Pure.
+ *
+ * @param {readonly { lang: string, slug: string, title: string, draft?: boolean }[]} posts
+ *   The posts' frontmatter.
+ * @param {string} siteUrl - The site's URL, without a trailing slash.
+ * @returns {Record<string, string>} Headline by key.
+ */
+export function postHeadlines(posts, siteUrl) {
+  const headlines = {};
+  for (const post of posts) {
+    if (post.draft) continue;
+    const prefix = post.lang === "es" ? "/es" : "";
+    headlines[`${HEADLINE_KEY}${siteUrl}${prefix}/blog/${post.slug}/#article`] =
+      post.title;
+  }
+  return headlines;
+}
 
 /**
  * What projects.yaml states for each property in {@link CONTRADICTABLE}, read
@@ -60,13 +204,18 @@ export const CONTRADICTABLE = Object.freeze([
  *
  * @param {{
  *   name: string,
+ *   alternateName?: string[],
  *   summary: { en: string, es?: string },
+ *   disambiguatingDescription?: { en: string, es?: string },
+ *   keywords?: { en: string, es?: string },
  *   license?: string,
  *   licenseUrl?: string | string[],
  *   language?: string,
  *   applicationCategory?: string,
+ *   applicationSubCategory?: string,
  *   operatingSystem?: string,
  *   repo?: string,
+ *   docs: string,
  * }} project - The project as authored in projects.yaml.
  * @param {Readonly<Record<string, string>>} licenseUrls - SPDX identifier to
  *   license URL, the table the site reads (`src/data/license-urls.json`).
@@ -75,11 +224,16 @@ export const CONTRADICTABLE = Object.freeze([
 export function projectValues(project, licenseUrls) {
   return {
     name: project.name,
+    alternateName: project.alternateName,
     description: project.summary.en,
     // The graph has stated `summary.es` too since 2026-11-01, as the Spanish
     // literal of `description`, so a bilingual site that says something else
     // in Spanish contradicts it the way a different English text would.
     "description@es": project.summary.es,
+    disambiguatingDescription: project.disambiguatingDescription?.en,
+    "disambiguatingDescription@es": project.disambiguatingDescription?.es,
+    keywords: project.keywords?.en,
+    "keywords@es": project.keywords?.es,
     // One URL for one identifier, the list of URLs for an AND expression
     // (phonometry's "MIT AND LicenseRef-EASA-ANP"), which is how its docs
     // site states `license`: compared as sets, so the order does not matter
@@ -90,12 +244,15 @@ export function projectValues(project, licenseUrls) {
         : projectLicenseValue(project, licenseUrls),
     programmingLanguage: project.language,
     applicationCategory: project.applicationCategory,
+    applicationSubCategory: project.applicationSubCategory,
     // One comma-joined string here, a list in the graph /projects/ emits and
     // usually a string on the docs site: compared as the set of systems
     // either way (see LIST_PROPERTIES).
     operatingSystem: project.operatingSystem,
     codeRepository: project.repo,
-    url: project.repo,
+    // The node's `url` is the repository, or the documentation for a project
+    // whose repository is still private (`buildProjectSchema`).
+    url: project.repo ?? project.docs,
   };
 }
 
@@ -284,29 +441,24 @@ export function exitCodeFor({ contradictions }) {
  * Why a project is left out of the comparison, or `null` when it is compared.
  * Pure.
  *
- * Two kinds are skipped:
- * - A project whose `docs` is its own repository's README anchor has no
- *   separate site to contradict anything, so it is skipped silently, as it
- *   always was (`quiet: true`).
- * - A project with no public repository (`status: upcoming`) is skipped with
- *   a line saying so. The comparison is built around the repository: `url`
- *   and `codeRepository` both are the repo in projects.yaml, and the sameAs
- *   check starts from it. A site that already publishes a node for such a
- *   project stays unchecked until its repository is public.
+ * Only a project whose `docs` is its own repository's README anchor is
+ * skipped: it has no separate site to contradict anything, so it is skipped
+ * silently, as it always was (`quiet: true`).
+ *
+ * A project with no public repository (`status: upcoming`) is compared like
+ * any other since 2026-11-21. It used to be skipped because `url` was read
+ * from the repository, and Kleidos's node drifted from kleidos.dev unseen
+ * for that reason (GEO audit #13). Its `@id` and `url` come from its docs
+ * instead, as `software-id.mjs` and `buildProjectSchema` derive them, and a
+ * property neither side can state (`codeRepository`) is simply not compared.
+ * The `{ quiet: false }` shape stays for a future skip that has to be named.
  *
  * @param {{ id: string, status?: string, repo?: string, docs: string }} project
  *   The project as authored in projects.yaml.
  * @returns {{ quiet: boolean, reason: string } | null} The skip, or `null`.
  */
 export function driftSkip(project) {
-  if (!project.repo) {
-    const status = project.status ? ` (status: ${project.status})` : "";
-    return {
-      quiet: false,
-      reason: `no public repository${status}, not compared`,
-    };
-  }
-  if (project.docs.startsWith(`${project.repo}#`)) {
+  if (project.repo && project.docs.startsWith(`${project.repo}#`)) {
     return { quiet: true, reason: "documentation is the repository README" };
   }
   return null;

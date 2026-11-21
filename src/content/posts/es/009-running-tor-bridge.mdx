@@ -29,7 +29,7 @@ faq:
   - question: "¿Por qué la ruta secreta de WebTunnel devuelve un error 502 con curl?"
     answer: "Un error 502 Bad Gateway al hacer curl a la ruta secreta es el comportamiento esperado, porque WebTunnel necesita un handshake completo del protocolo WebSocket/WebTunnel que un simple GET HTTP no puede completar. Si los clientes de Tor consiguen conectarse, todo funciona correctamente."
   - question: "¿Cuánto tarda mi bridge en obtener flags de relé y conexiones de clientes?"
-    answer: "Los flags aparecen poco a poco: Running y Valid tardan alrededor de 1 hora, Stable necesita unos 7 días de funcionamiento ininterrumpido y Guard unos 8 días. BridgeDB reparte los bridges nuevos a lo largo de 24–48 horas, así que es normal esperar hasta una semana antes de ver tus primeras conexiones de clientes."
+    answer: "Los flags aparecen poco a poco: Running y Valid tardan alrededor de 1 hora, Stable necesita unos 7 días de funcionamiento ininterrumpido y Guard unos 8 días. BridgeDB reparte los bridges nuevos a lo largo de 24-48 horas, así que es normal esperar hasta una semana antes de ver tus primeras conexiones de clientes."
 topics:
   - name: "Tor"
     wikidata: "Q202044"
@@ -81,7 +81,7 @@ howto:
       text: "Añade un target de scrape de Prometheus para el MetricsPort (9052), restringe el acceso a tu servidor de monitorización y monta paneles de Grafana para ancho de banda, conexiones, flags del relé y salud."
       anchor: "paso-8-monitorización-con-prometheus-y-grafana"
     - name: "Integrar CrowdSec sin bloquear clientes de Tor"
-      text: "Añade un bypass de tres capas — reglas ACCEPT de iptables antes de CROWDSEC_CHAIN, una excepción Lua de Nginx para el dominio de Tor y una lista blanca del parser de CrowdSec — y persiste las reglas de iptables mediante un servicio systemd."
+      text: "Añade un bypass de tres capas (reglas ACCEPT de iptables antes de CROWDSEC_CHAIN, una excepción Lua de Nginx para el dominio de Tor y una lista blanca del parser de CrowdSec) y persiste las reglas de iptables mediante un servicio systemd."
       anchor: "paso-9-integración-con-crowdsec-si-aplica"
 ---
 
@@ -104,17 +104,17 @@ import BeforeAfter from "@components/ui/BeforeAfter.astro";
 import SecurityRating from "@components/ui/SecurityRating.astro";
 
 
-En 2026, más de **2,5 millones de personas** al día llegan a una Internet libre y abierta a través de la [red Tor](https://www.torproject.org/) conectando directamente a un relé — [Tor Metrics sitúa esa estimación diaria por encima de los tres millones durante la mayor parte del año](https://metrics.torproject.org/userstats-relay-country.html), y solo cuenta conexiones directas: quien entra por un bridge, que es de lo que trata esta guía, se contabiliza aparte y no está en esa cifra. Periodistas en regímenes autoritarios, activistas que organizan protestas, denunciantes que destapan casos de corrupción y ciudadanos corrientes que protegen su privacidad: todos ellos dependen de una red **operada íntegramente por voluntarios**.
+En 2026, más de **2,5 millones de personas** al día llegan a una Internet libre y abierta a través de la [red Tor](https://www.torproject.org/) conectando directamente a un relé; [Tor Metrics sitúa esa estimación diaria por encima de los tres millones durante la mayor parte del año](https://metrics.torproject.org/userstats-relay-country.html), y solo cuenta conexiones directas: quien entra por un bridge, que es de lo que trata esta guía, se contabiliza aparte y no está en esa cifra. Periodistas en regímenes autoritarios, activistas que organizan protestas, denunciantes que destapan casos de corrupción y ciudadanos corrientes que protegen su privacidad: todos ellos dependen de una red **operada íntegramente por voluntarios**.
 
-¿El problema? Solo hay unos **2.600 bridges** dando servicio a esos millones de usuarios. Los bridges son el recurso más crítico y escaso en el ecosistema Tor — son el primer punto de contacto para usuarios en países censurados, y cada nuevo bridge ayuda directamente a alguien a acceder a la información libremente.
+¿El problema? Solo hay unos **2.600 bridges** dando servicio a esos millones de usuarios. Los bridges son el recurso más crítico y escaso en el ecosistema Tor: son el primer punto de contacto para usuarios en países censurados, y cada nuevo bridge ayuda directamente a alguien a acceder a la información libremente.
 
-Esta guía te enseñará todo lo que necesitas saber sobre la red Tor, el enrutamiento onion, y cómo configurar un **bridge obfs4 + WebTunnel listo para producción** en Linux — completo con camuflaje Nginx, endurecimiento del firewall, monitorización con Prometheus e integración con CrowdSec.
+Esta guía te enseñará todo lo que necesitas saber sobre la red Tor, el enrutamiento onion, y cómo configurar un **bridge obfs4 + WebTunnel listo para producción** en Linux, completo con camuflaje Nginx, endurecimiento del firewall, monitorización con Prometheus e integración con CrowdSec.
 
-<TLDRSummary title="TL;DR — un puente, dos pluggable transports">
+<TLDRSummary title="TL;DR: un puente, dos pluggable transports">
 - **Un mismo puente puede ejecutar obfs4 y WebTunnel a la vez**, y merece la pena porque fallan en sitios distintos: obfs4 aleatoriza el tráfico para que no se parezca a ningún protocolo, mientras que WebTunnel se esconde dentro de HTTPS normal en el puerto 443 y sobrevive a los censores que bloquean de plano todo el tráfico "inclasificable".
 - **Nginx es lo que hace creíble a WebTunnel.** Se pone delante del puente en el 443 y sirve un sitio web real en todas las rutas salvo la secreta, así que un censor que sondee el host ve una web normal en vez de un endpoint que responde raro.
-- **Los flags del consenso tardan días, no minutos.** Running y Valid llegan en menos de una hora; Stable y Guard tardaron alrededor de una semana en este despliegue. Se puntúan a partir de un tiempo medio entre fallos ponderado y, en el caso de Guard, también de ancho de banda y familiaridad —no de un contador de uptime—, así que un puente que se reinicia cada dos días no deja de reiniciar la evidencia con la que se puntúan, y puede que no llegue a obtenerlos.
-- **Detrás de NAT hay que reenviar los TCP 9001, 4443 y 443** —ORPort, obfs4 y WebTunnel respectivamente— y abrirlos en el firewall del host; el autotest del ORPort falla en silencio si el router no lo hace.
+- **Los flags del consenso tardan días, no minutos.** Running y Valid llegan en menos de una hora; Stable y Guard tardaron alrededor de una semana en este despliegue. Se puntúan a partir de un tiempo medio entre fallos ponderado y, en el caso de Guard, también de ancho de banda y familiaridad, no de un contador de uptime, así que un puente que se reinicia cada dos días no deja de reiniciar la evidencia con la que se puntúan, y puede que no llegue a obtenerlos.
+- **Detrás de NAT hay que reenviar los TCP 9001, 4443 y 443** (ORPort, obfs4 y WebTunnel respectivamente) y abrirlos en el firewall del host; el autotest del ORPort falla en silencio si el router no lo hace.
 - **Dile a tu IDS que deje en paz a los clientes de Tor.** CrowdSec ve muchas conexiones desde muchas direcciones y banea a usuarios legítimos si no se excluyen los puertos del puente.
 - **Todo corre bajo systemd**, así que el stack vuelve solo tras un reinicio, que es justo lo que exigen los flags basados en uptime.
 </TLDRSummary>
@@ -125,21 +125,21 @@ Esta guía te enseñará todo lo que necesitas saber sobre la red Tor, el enruta
 
 ### ¿Qué es Tor?
 
-**[Tor](https://en.wikipedia.org/wiki/Tor_%28network%29)** (The Onion Router) es una red descentralizada operada por voluntarios, diseñada para proteger la privacidad de los usuarios y resistir la censura. Cuando usas Tor, tu tráfico de Internet se enruta a través de una serie de relés cifrados, lo que hace que sea extremadamente difícil para cualquiera — tu ISP, gobierno o un actor malicioso — rastrear tu actividad y asociarla contigo.
+**[Tor](https://en.wikipedia.org/wiki/Tor_%28network%29)** (The Onion Router) es una red descentralizada operada por voluntarios, diseñada para proteger la privacidad de los usuarios y resistir la censura. Cuando usas Tor, tu tráfico de Internet se enruta a través de una serie de relés cifrados, lo que hace que sea extremadamente difícil para cualquiera (tu ISP, gobierno o un actor malicioso) rastrear tu actividad y asociarla contigo.
 
 Pero Tor no es solo una herramienta de privacidad. Es una parte esencial de la **infraestructura de derechos humanos**. En países como China, Irán, Rusia y Myanmar, donde los gobiernos bloquean activamente el acceso a la información, Tor es a menudo la única forma para que los ciudadanos accedan a Internet sin censura.
 
 <Callout type="info" title="Un error común">
-Solo alrededor del **1,5%** del tráfico de Tor va a sitios `.onion` (la llamada "dark web"). La inmensa mayoría — más del **98%** — son personas normales navegando por Internet de forma privada. Tor es principalmente una herramienta de privacidad y anti-censura, no una puerta de entrada a contenido ilegal.
+Solo alrededor del **1,5%** del tráfico de Tor va a sitios `.onion` (la llamada "dark web"). La inmensa mayoría, más del **98%**, son personas normales navegando por Internet de forma privada. Tor es principalmente una herramienta de privacidad y anti-censura, no una puerta de entrada a contenido ilegal.
 </Callout>
 
 ### Una breve historia
 
-Los [orígenes de Tor](https://www.onion-router.net/History.html) se remontan a los años 90 en el **Laboratorio de Investigación Naval de EE.UU.** (NRL), donde investigadores [Paul Syverson](https://en.wikipedia.org/wiki/Paul_Syverson), David Goldschlag y Michael Reed desarrollaron el concepto de [enrutamiento onion](https://en.wikipedia.org/wiki/Onion_routing) — una técnica de comunicación anónima sobre una red de ordenadores. Puedes leer más sobre [la historia completa de Tor](https://www.torproject.org/about/history/) en el sitio oficial.
+Los [orígenes de Tor](https://www.onion-router.net/History.html) se remontan a los años 90 en el **Laboratorio de Investigación Naval de EE.UU.** (NRL), donde investigadores [Paul Syverson](https://en.wikipedia.org/wiki/Paul_Syverson), David Goldschlag y Michael Reed desarrollaron el concepto de [enrutamiento onion](https://en.wikipedia.org/wiki/Onion_routing), una técnica de comunicación anónima sobre una red de ordenadores. Puedes leer más sobre [la historia completa de Tor](https://www.torproject.org/about/history/) en el sitio oficial.
 
 <Timeline events={[
   { date: "1995", title: "Se inventa el enrutamiento onion", description: "Syverson, Goldschlag y Reed, en el Laboratorio de Investigación Naval de EE.UU., desarrollan el concepto de cifrado en capas para la comunicación anónima.", type: "milestone" },
-  { date: "2002", title: "Nace el Proyecto Tor", description: "Roger Dingledine y Nick Mathewson, ambos del MIT, se unen a Syverson para construir 'The Onion Router' — Tor. El código se publica como software libre con alrededor de una docena de nodos voluntarios.", type: "success" },
+  { date: "2002", title: "Nace el Proyecto Tor", description: "Roger Dingledine y Nick Mathewson, ambos del MIT, se unen a Syverson para construir 'The Onion Router': Tor. El código se publica como software libre con alrededor de una docena de nodos voluntarios.", type: "success" },
   { date: "2004", title: "La EFF empieza a financiarlo", description: "La Electronic Frontier Foundation reconoce la importancia de Tor para los derechos digitales y aporta una financiación crítica en los primeros años. El NRL libera el código al dominio público.", type: "success" },
   { date: "2006", title: "Se funda Tor Project, Inc.", description: "El Proyecto Tor se convierte en una organización sin ánimo de lucro 501(c)(3) con sede en Massachusetts, lo que asegura desarrollo y gobernanza a largo plazo.", type: "milestone" },
   { date: "2007", title: "Llegan los bridges", description: "Se desarrollan direcciones de relé secretas (bridges) para ayudar a los usuarios a esquivar firewalls en países censurados donde el directorio de Tor está bloqueado.", type: "success" },
@@ -152,7 +152,7 @@ Los [orígenes de Tor](https://www.onion-router.net/History.html) se remontan a 
 
 ### ¿Cómo funciona el enrutamiento onion?
 
-[El enrutamiento onion](https://en.wikipedia.org/wiki/Onion_routing) debe su nombre a las capas de una cebolla — tus datos se envuelven en **múltiples capas de cifrado**, y cada relé en el circuito "pela" una capa para revelar el siguiente destino. Ningún relé único conoce jamás tanto el origen como el destino del tráfico.
+[El enrutamiento onion](https://en.wikipedia.org/wiki/Onion_routing) debe su nombre a las capas de una cebolla: tus datos se envuelven en **múltiples capas de cifrado**, y cada relé en el circuito "pela" una capa para revelar el siguiente destino. Ningún relé único conoce jamás tanto el origen como el destino del tráfico.
 
 <Mermaid caption="Enrutamiento onion: tres capas de cifrado a través de tres relés" maxWidth="800px" ariaLabel="Diagrama que muestra cómo viajan los datos por un circuito Tor: el cliente cifra los datos con tres capas (una por relé) y los envía a través de los relés guard, middle y exit. Cada relé quita una capa de cifrado. El guard conoce al usuario pero no el destino. El exit conoce el destino pero no al usuario.">
 ```mermaid-render
@@ -232,43 +232,43 @@ La red Tor está compuesta por diferentes tipos de nodos operados por voluntario
       <td>**Guard Relay**</td>
       <td>Primer salto del circuito. Ve la IP del usuario, pero no el destino.</td>
       <td>Bajo</td>
-      <td>Alto — aporta ancho de banda</td>
+      <td>Alto: aporta ancho de banda</td>
     </tr>
     <tr>
       <td>**Middle Relay**</td>
       <td>Salto intermedio. No ve nada útil.</td>
       <td>Muy bajo</td>
-      <td>Medio — añade ancho de banda y diversidad de ruta</td>
+      <td>Medio: añade ancho de banda y diversidad de ruta</td>
     </tr>
     <tr>
       <td>**Exit Relay**</td>
       <td>Último salto. Se conecta al destino en nombre del usuario.</td>
       <td>Alto</td>
-      <td>Muy alto — el recurso más necesario y escaso</td>
+      <td>Muy alto: el recurso más necesario y escaso</td>
     </tr>
     <tr>
       <td>**Bridge**</td>
       <td>Punto de entrada oculto para usuarios de países censurados. No figura en el directorio público de Tor.</td>
       <td>Bajo</td>
-      <td>**Crítico** — es lo que permite eludir la censura directamente</td>
+      <td>**Crítico**: es lo que permite eludir la censura directamente</td>
     </tr>
     <tr>
       <td>**Snowflake Proxy**</td>
       <td>Proxy WebRTC efímero que ayuda a los usuarios censurados a llegar a la red Tor.</td>
       <td>Muy bajo</td>
-      <td>Medio — fácil de ejecutar, incluso en una pestaña del navegador</td>
+      <td>Medio: fácil de ejecutar, incluso en una pestaña del navegador</td>
     </tr>
     <tr>
       <td>**Directory Authority**</td>
       <td>Servidor de confianza que mantiene el consenso de la red.</td>
       <td>N/A</td>
-      <td>Crítico — solo existen 9, operadas por el Proyecto Tor</td>
+      <td>Crítico: solo existen 9, operadas por el Proyecto Tor</td>
     </tr>
   </tbody>
 </Table>
 
 <Callout type="tip" title="Por qué los bridges importan tanto ahora">
-En 2026, la [red Tor tiene unos **10.000 relés** pero solo alrededor de **2.600 bridges**](https://metrics.torproject.org/networksize.html). Los bridges son especialmente valiosos porque dan servicio a usuarios a los que se les **bloquea activamente** el acceso a Tor — gente de países como China, Irán o Rusia, donde el gobierno bloquea las conexiones a los relés Tor conocidos. Cada bridge nuevo es un **salvavidas** para alguien bajo censura.
+En 2026, la [red Tor tiene unos **10.000 relés** pero solo alrededor de **2.600 bridges**](https://metrics.torproject.org/networksize.html). Los bridges son especialmente valiosos porque dan servicio a usuarios a los que se les **bloquea activamente** el acceso a Tor: gente de países como China, Irán o Rusia, donde el gobierno bloquea las conexiones a los relés Tor conocidos. Cada bridge nuevo es un **salvavidas** para alguien bajo censura.
 </Callout>
 
 ### ¿Qué son los pluggable transports?
@@ -289,28 +289,28 @@ Los censores no solo bloquean Tor por IP: usan **inspección profunda de paquete
     <tr>
       <td>**[obfs4](https://gitlab.torproject.org/tpo/anti-censorship/pluggable-transports/lyrebird)**</td>
       <td>Hace que el tráfico parezca bytes aleatorios</td>
-      <td>Alta — resiste el fingerprinting por DPI</td>
+      <td>Alta: resiste el fingerprinting por DPI</td>
       <td>Rápida</td>
       <td>Muy desplegado, fácil de configurar</td>
     </tr>
     <tr>
       <td>**[WebTunnel](https://gitlab.torproject.org/tpo/anti-censorship/pluggable-transports/webtunnel)**</td>
       <td>Imita tráfico HTTPS/WebSocket</td>
-      <td>Muy alta — parece navegación web normal</td>
+      <td>Muy alta: parece navegación web normal</td>
       <td>Rápida</td>
       <td>Más reciente, requiere servidor web + dominio</td>
     </tr>
     <tr>
       <td>**Snowflake**</td>
       <td>Usa WebRTC a través de proxies efímeros</td>
-      <td>Muy alta — los proxies rotan constantemente</td>
+      <td>Muy alta: los proxies rotan constantemente</td>
       <td>Variable</td>
       <td>Solo en cliente (los voluntarios ejecutan proxies de navegador)</td>
     </tr>
     <tr>
       <td>**meek**</td>
       <td>Disfraza el tráfico como peticiones a servicios en la nube (Azure, CDN)</td>
-      <td>Extrema — bloquearlo implica bloquear servicios en la nube</td>
+      <td>Extrema: bloquearlo implica bloquear servicios en la nube</td>
       <td>Lenta</td>
       <td>Costoso de mantener, último recurso</td>
     </tr>
@@ -331,7 +331,7 @@ Ejecuta **obfs4 y WebTunnel a la vez**. WebTunnel disfraza el tráfico de Tor co
 <details>
 <summary>No tengo un servidor, pero quiero ayudar ahora mismo</summary>
 
-Instala la [extensión de navegador Snowflake](https://snowflake.torproject.org/) — se tarda 30 segundos y convierte tu navegador en un proxy temporal para usuarios censurados. No requiere mantenimiento.
+Instala la [extensión de navegador Snowflake](https://snowflake.torproject.org/): se tarda 30 segundos y convierte tu navegador en un proxy temporal para usuarios censurados. No requiere mantenimiento.
 </details>
 <details>
 <summary>Quiero contribuir el máximo ancho de banda a la red</summary>
@@ -352,12 +352,12 @@ En esta guía configuraremos **obfs4 y WebTunnel** en el mismo servidor, para ma
 - **RAM**: mínimo 1 GB (lo que exige WebTunnel), 4 GB recomendados si vas a servir mucho tráfico
 - **Almacenamiento**: mínimo 5 GB (para datos de Tor, logs y claves)
 - **Red**: al menos **10 Mbps** de ancho de banda de subida (cuanto más, mejor)
-- **Uptime**: el servidor debe estar en marcha 24/7 — Tor penaliza los relés inestables
+- **Uptime**: el servidor debe estar en marcha 24/7, porque Tor penaliza los relés inestables
 
 ### Requisitos de software
 - **Distribución Linux** (esta guía usa Debian 12/13 o Ubuntu 22.04+)
 - **Acceso root** (o privilegios sudo)
-- **Nginx** (para el camuflaje de WebTunnel — innecesario si solo montas obfs4)
+- **Nginx** (para el camuflaje de WebTunnel; innecesario si solo montas obfs4)
 - **Un nombre de dominio** con DNS apuntando a tu servidor (solo para WebTunnel)
 - **Certificado TLS** (Let's Encrypt es gratuito y perfecto para esto)
 
@@ -528,11 +528,11 @@ Sustituye el contenido de `/etc/tor/torrc` por:
 <FileContent filename="/etc/tor/torrc" language="ini" collapsible={false}>
 ```ini
 # =============================================================
-# Tor Bridge Configuration — obfs4 + WebTunnel
+# Tor Bridge Configuration: obfs4 + WebTunnel
 # =============================================================
 
 # --- General Settings ---
-SocksPort 0                        # Not a client — disable SOCKS
+SocksPort 0                        # Not a client: disable SOCKS
 RunAsDaemon 0                      # Managed by systemd
 DataDirectory /var/lib/tor
 Log notice file /var/log/tor/notices.log
@@ -545,7 +545,7 @@ DisableDebuggerAttachment 1        # Prevent ptrace/debugger attachment
 BridgeRelay 1                      # This is a bridge, not a relay
 PublishServerDescriptor bridge     # Publish to BridgeDB (not public directory)
 
-# --- ORPort — IPv4 (NAT from router) + IPv6 (direct, global) ---
+# --- ORPort: IPv4 (NAT from router) + IPv6 (direct, global) ---
 # IMPORTANT: Use 0.0.0.0 for NAT environments, not 127.0.0.1
 ORPort 0.0.0.0:9001
 ORPort [YOUR_IPV6_ADDRESS]:9001
@@ -571,7 +571,7 @@ ServerTransportOptions webtunnel url=https://YOUR-DOMAIN/YOUR-SECRET-PATH
 RelayBandwidthRate 31 MBytes       # Sustained rate
 RelayBandwidthBurst 35 MBytes     # Burst allowance
 
-# --- Memory — cap internal queue memory (OOM protection) ---
+# --- Memory: cap internal queue memory (OOM protection) ---
 MaxMemInQueues 4096 MB
 
 # --- Statistics ---
@@ -597,7 +597,7 @@ Repasemos las secciones críticas:
   title="Opciones de configuración clave, explicadas"
   items={[
     { key: "BridgeRelay 1", value: "Modo bridge", description: "Le dice a Tor que es un bridge, no un relé público. Los bridges no figuran en el directorio público de Tor." },
-    { key: "ORPort 0.0.0.0:9001", value: "Onion Router Port (IPv4)", description: "El puerto que Tor usa para comunicarse con otros relés. Usa 0.0.0.0 (no 127.0.0.1) si estás detrás de NAT — Tor necesita escuchar en todas las interfaces para que el autotest pase." },
+    { key: "ORPort 0.0.0.0:9001", value: "Onion Router Port (IPv4)", description: "El puerto que Tor usa para comunicarse con otros relés. Usa 0.0.0.0 (no 127.0.0.1) si estás detrás de NAT: Tor necesita escuchar en todas las interfaces para que el autotest pase." },
     { key: "ORPort [IPv6]:9001", value: "Onion Router Port (IPv6)", description: "Si tu servidor tiene una dirección IPv6 global, añade una segunda línea ORPort con ella. Las direcciones IPv6 son enrutables globalmente: no hace falta NAT ni reenvío de puertos, solo reglas de firewall." },
     { key: "ExtORPort auto", value: "Extended ORPort", description: "Canal de comunicación interno entre Tor y los pluggable transports. Con 'auto', Tor elige un puerto local al azar." },
     { key: "ServerTransportListenAddr obfs4", value: "Dirección de escucha de obfs4", description: "El puerto donde obfs4proxy espera las conexiones ofuscadas entrantes. Tiene que ser alcanzable desde Internet." },
@@ -629,7 +629,7 @@ Usa la dirección (sin el prefijo `/64`) en tu `torrc`:
 ORPort [2001:db8::1]:9001
 ```
 
-A diferencia de IPv4, las direcciones IPv6 son **enrutables globalmente** — no hace falta NAT ni redirección de puertos. Solo necesitas que tu firewall permita TCP entrante al puerto 9001 en esa dirección.
+A diferencia de IPv4, las direcciones IPv6 son **enrutables globalmente**: no hace falta NAT ni redirección de puertos. Solo necesitas que tu firewall permita TCP entrante al puerto 9001 en esa dirección.
 </Callout>
 
 ### Generar la ruta secreta de WebTunnel
@@ -709,7 +709,7 @@ sudo certbot --nginx -d your-domain.com
 
 <FileContent filename="/etc/nginx/sites-available/tor-bridge.conf" language="nginx">
 ```nginx
-# Tor WebTunnel Bridge — Camouflage configuration
+# Tor WebTunnel Bridge: Camouflage configuration
 # This looks like a normal HTTPS website but proxies
 # a secret path to the WebTunnel pluggable transport
 
@@ -760,9 +760,13 @@ server {
         proxy_read_timeout 36000s;
         proxy_send_timeout 36000s;
 
-        # Disable logging for the secret path (privacy)
+        # Disable logging for the secret path (privacy). error_log has no
+        # "off" value: "error_log off;" opens a file named "off". /dev/null
+        # discards what nginx logs while serving this location; errors raised
+        # before the location is chosen (TLS handshake) still reach the
+        # server's error log.
         access_log off;
-        error_log off;
+        error_log /dev/null crit;
     }
 }
 
@@ -809,7 +813,7 @@ Content-Type: text/html
 
 **Conexión del bridge de WebTunnel**
 
-Una petición `GET /SECRET_PATH` con una cabecera `Connection: Upgrade` llega al servidor WebTunnel, que abre un túnel persistente para el tráfico de Tor — todo dentro de la misma sesión TLS.
+Una petición `GET /SECRET_PATH` con una cabecera `Connection: Upgrade` llega al servidor WebTunnel, que abre un túnel persistente para el tráfico de Tor, todo dentro de la misma sesión TLS.
 
 ```
 HTTP/1.1 101 Switching Protocols
@@ -839,19 +843,19 @@ Si tu servidor está detrás de un router (lo habitual en instalaciones domésti
     <tr>
       <td>**9001**</td>
       <td>TCP</td>
-      <td>ORPort — comunicación entre relés</td>
+      <td>ORPort: comunicación entre relés</td>
       <td>Sí (siempre)</td>
     </tr>
     <tr>
       <td>**4443**</td>
       <td>TCP</td>
-      <td>obfs4 — transporte ofuscado</td>
+      <td>obfs4: transporte ofuscado</td>
       <td>Sí (si ejecutas obfs4)</td>
     </tr>
     <tr>
       <td>**443**</td>
       <td>TCP</td>
-      <td>HTTPS — WebTunnel vía Nginx</td>
+      <td>HTTPS: WebTunnel vía Nginx</td>
       <td>Sí (si ejecutas WebTunnel)</td>
     </tr>
   </tbody>
@@ -914,7 +918,7 @@ sudo iptables -A INPUT -p tcp --dport 443 -j ACCEPT
 A diferencia de IPv4, las direcciones IPv6 son **enrutables globalmente**: no hay NAT. Eso quiere decir que la dirección IPv6 de tu servidor es accesible desde Internet sin reenvío de puertos. Aun así, sigue haciendo falta:
 
 1. **Permitir los puertos en el firewall del servidor** (UFW cubre IPv4 e IPv6 a la vez)
-2. **Permitir los puertos en el firewall IPv6 del router** — casi todos los routers llevan un firewall IPv6 aparte que bloquea por defecto todo el tráfico entrante
+2. **Permitir los puertos en el firewall IPv6 del router**: casi todos los routers llevan un firewall IPv6 aparte que bloquea por defecto todo el tráfico entrante
 
 <Callout type="warning" title="El firewall IPv6 del router">
 Casi todos los routers **bloquean todo el tráfico IPv6 entrante** por defecto (a diferencia de IPv4, donde el "firewall" lo hace el propio NAT). Tienes que crear **reglas de permiso** explícitas en el firewall IPv6 del router para los puertos TCP 9001 y 4443; sin ellas nada llega a la dirección IPv6 de tu servidor. No hace falta NAT de destino: bastan reglas de aceptación en el firewall.
@@ -1121,7 +1125,7 @@ Tor expone decenas de métricas de Prometheus. Estas son las más importantes pa
     <tr>
       <td>`tor_relay_traffic_bytes`</td>
       <td>Counter</td>
-      <td>Bytes leídos y escritos en total — tu aportación de ancho de banda a la red</td>
+      <td>Bytes leídos y escritos en total: tu aportación de ancho de banda a la red</td>
     </tr>
     <tr>
       <td>`tor_relay_flag`</td>
@@ -1136,17 +1140,17 @@ Tor expone decenas de métricas de Prometheus. Estas son las más importantes pa
     <tr>
       <td>`tor_relay_streams_total`</td>
       <td>Counter</td>
-      <td>Streams procesados — una aproximación a las conexiones reales de usuarios</td>
+      <td>Streams procesados: una aproximación a las conexiones reales de usuarios</td>
     </tr>
     <tr>
       <td>`tor_relay_load_oom_bytes_total`</td>
       <td>Counter</td>
-      <td>Eventos de falta de memoria — si sube, añade más RAM</td>
+      <td>Eventos de falta de memoria: si sube, añade más RAM</td>
     </tr>
     <tr>
       <td>`tor_relay_load_tcp_exhaustion_total`</td>
       <td>Counter</td>
-      <td>Agotamiento de puertos TCP — si sube, ajusta los parámetros de red del kernel</td>
+      <td>Agotamiento de puertos TCP: si sube, ajusta los parámetros de red del kernel</td>
     </tr>
     <tr>
       <td>`process_resident_memory_bytes`</td>
@@ -1165,12 +1169,12 @@ Tor expone decenas de métricas de Prometheus. Estas son las más importantes pa
 
 Puedes montar un panel de Grafana bastante completo con gráficas para:
 
-1. **Ancho de banda** — `rate(tor_relay_traffic_bytes[5m])` — throughput de entrada y salida en tiempo real
-2. **Conexiones** — `tor_relay_connections_total` por tipo — quién se está conectando
-3. **Flags del relé** — `tor_relay_flag` — ¿ha reconocido la red tu puente?
-4. **Circuitos** — `tor_relay_circuits_total` — cuántos circuitos hay activos
-5. **Recursos del sistema** — `process_resident_memory_bytes`, `process_cpu_seconds_total`
-6. **Salud** — `tor_relay_load_oom_bytes_total`, `tor_relay_load_tcp_exhaustion_total`
+1. **Ancho de banda**: `rate(tor_relay_traffic_bytes[5m])`, throughput de entrada y salida en tiempo real
+2. **Conexiones**: `tor_relay_connections_total` por tipo, quién se está conectando
+3. **Flags del relé**: `tor_relay_flag`, ¿ha reconocido la red tu puente?
+4. **Circuitos**: `tor_relay_circuits_total`, cuántos circuitos hay activos
+5. **Recursos del sistema**: `process_resident_memory_bytes`, `process_cpu_seconds_total`
+6. **Salud**: `tor_relay_load_oom_bytes_total`, `tor_relay_load_tcp_exhaustion_total`
 
 <Callout type="tip" title="Cronología de los flags del relé">
 Después de arrancar el puente, los flags van apareciendo poco a poco:
@@ -1206,7 +1210,7 @@ El bouncer de firewall de CrowdSec añade una `CROWDSEC_CHAIN` al principio de t
 
 La solución es un **bypass de tres capas** que garantiza que el tráfico de Tor no se bloquee nunca:
 
-### Capa 1: iptables — esquivar el bouncer de firewall
+### Capa 1: iptables para esquivar el bouncer de firewall
 
 Inserta reglas ACCEPT para los puertos concretos de Tor **antes** de la CROWDSEC_CHAIN:
 
@@ -1226,7 +1230,7 @@ sudo ip6tables -I INPUT 1 -p tcp --dport 9001 -j ACCEPT
 El puerto 443 lo comparten todos tus servicios HTTPS, no solo Tor. Saltarse CrowdSec para **todo** el tráfico HTTPS abriría un agujero de seguridad. El bypass de WebTunnel en el puerto 443 se resuelve en Nginx (capa 2), donde sí podemos filtrar por nombre de dominio.
 </Callout>
 
-### Capa 2: Nginx — esquivar el bouncer Lua
+### Capa 2: Nginx para esquivar el bouncer Lua
 
 Si el bouncer de Nginx de CrowdSec usa un `rewrite_by_lua_block` a nivel de `http {}`, añade una excepción para tu dominio de Tor:
 
@@ -1257,7 +1261,7 @@ Aun con lo anterior, CrowdSec seguirá **analizando** tus logs de Tor y puede ge
 name: custom/tor-bridge-whitelist
 description: "Ignore all traffic to the Tor bridge domain"
 whitelist:
-  reason: "Tor bridge traffic — legitimate by definition"
+  reason: "Tor bridge traffic, legitimate by definition"
   expression:
     - evt.Parsed.target_fqdn == 'your-tor-domain.com'
 ```
@@ -1297,7 +1301,7 @@ Las reglas de bypass de iptables se pierden al reiniciar. Crea un servicio syste
 <FileContent filename="/etc/systemd/system/tor-bypass-crowdsec.service" language="ini">
 ```ini
 [Unit]
-Description=Tor Bridge — iptables bypass for CrowdSec
+Description=Tor Bridge: iptables bypass for CrowdSec
 After=crowdsec-firewall-bouncer.service
 Wants=crowdsec-firewall-bouncer.service
 
@@ -1434,21 +1438,21 @@ Un bridge en marcha necesita tres cosas de ti: paciencia, porque el arranque, la
 ### ¿Qué sucede después de arrancar el bridge?
 
 <Timeline events={[
-  { date: "0–1 hora", title: "Bootstrap y autotest", description: "Tor se conecta a la red, descarga el consenso y comprueba si tu ORPort es accesible. Si el autotest pasa, tu puente ya está operativo.", type: "success" },
-  { date: "1–24 horas", title: "Publicación del descriptor", description: "Tor publica el descriptor de tu puente en la Autoridad de Puentes. BridgeDB ya lo conoce, pero todavía no lo reparte entre los usuarios.", type: "default" },
-  { date: "24–48 horas", title: "Distribución por BridgeDB", description: "BridgeDB empieza a repartir tu línea de puente entre quienes piden puentes. Aquí pueden aparecer tus primeras conexiones de clientes.", type: "success" },
-  { date: "1–7 días", title: "Llegada de los flags", description: "Las autoridades de directorio asignan los flags según el comportamiento de tu puente. Running y Valid llegan primero; Stable exige unos 7 días de funcionamiento ininterrumpido.", type: "default" },
+  { date: "0-1 hora", title: "Bootstrap y autotest", description: "Tor se conecta a la red, descarga el consenso y comprueba si tu ORPort es accesible. Si el autotest pasa, tu puente ya está operativo.", type: "success" },
+  { date: "1-24 horas", title: "Publicación del descriptor", description: "Tor publica el descriptor de tu puente en la Autoridad de Puentes. BridgeDB ya lo conoce, pero todavía no lo reparte entre los usuarios.", type: "default" },
+  { date: "24-48 horas", title: "Distribución por BridgeDB", description: "BridgeDB empieza a repartir tu línea de puente entre quienes piden puentes. Aquí pueden aparecer tus primeras conexiones de clientes.", type: "success" },
+  { date: "1-7 días", title: "Llegada de los flags", description: "Las autoridades de directorio asignan los flags según el comportamiento de tu puente. Running y Valid llegan primero; Stable exige unos 7 días de funcionamiento ininterrumpido.", type: "default" },
   { date: "Continuo", title: "Régimen estable", description: "Tu puente está plenamente integrado en la red Tor. Vigila las métricas, mantén el software actualizado y cuida el uptime para maximizar el impacto.", type: "milestone" },
 ]} />
 
 ### Buenas prácticas de mantenimiento
 
 <CheckList title="Mantenimiento continuo">
-<li data-check="check">**Mantén Tor actualizado**: revisa las actualizaciones cada semana — `sudo apt update && sudo apt upgrade tor`</li>
+<li data-check="check">**Mantén Tor actualizado**: revisa las actualizaciones cada semana: `sudo apt update && sudo apt upgrade tor`</li>
 <li data-check="check">**Vigila los logs**: revisa `/var/log/tor/notices.log` en busca de avisos y errores</li>
 <li data-check="check">**Observa las métricas**: configura alertas de Grafana para caídas anómalas de ancho de banda o fallos de conexión</li>
 <li data-check="check">**Cuida el uptime**: la red Tor penaliza a los relés que se caen a menudo</li>
-<li data-check="warning">**Nunca borres** `/var/lib/tor/pt_state/` — ahí están tus claves obfs4. Perderlas implica estrenar identidad de puente</li>
+<li data-check="warning">**Nunca borres** `/var/lib/tor/pt_state/`: ahí están tus claves obfs4. Perderlas implica estrenar identidad de puente</li>
 <li data-check="warning">**¿IP dinámica?** Si tu IP pública cambia, la línea de puente obfs4 deja de valer. A WebTunnel no le afecta (va por nombre de dominio). Plantéate un servicio DDNS para obfs4.</li>
 <li data-check="optional">**Renueva los certificados TLS**: si usas Let's Encrypt con renovación automática, esto se resuelve solo</li>
 </CheckList>
@@ -1522,14 +1526,14 @@ Comprueba que:
 1. Tu puente está publicando descriptores: `grep "publishing" /var/log/tor/notices.log`
 2. El autotest del ORPort ha pasado
 3. El puente lleva funcionando sin interrupciones
-4. Y consulta [Tor Metrics Relay Search](https://metrics.torproject.org/rs.html) con tu huella digital (los puentes pueden tardar 24–48 h en aparecer)
+4. Y consulta [Tor Metrics Relay Search](https://metrics.torproject.org/rs.html) con tu huella digital (los puentes pueden tardar 24-48 h en aparecer)
 </details>
 <details>
 <summary>Ninguna conexión de clientes tras varios días</summary>
 
 Es lo normal en un puente nuevo. BridgeDB los reparte poco a poco:
 1. Confirma que tu puente aparece en Relay Search
-2. Los puentes se reparten según la demanda — algunos transportes captan más usuarios que otros
+2. Los puentes se reparten según la demanda: algunos transportes captan más usuarios que otros
 3. Los puentes WebTunnel suelen captar usuarios antes en regiones muy censuradas
 4. Dale hasta una semana antes de preocuparte
 </details>
@@ -1543,7 +1547,7 @@ Cuatro nodos Tor, que es justo el motivo de que esta guía exista en lugar de se
 un resumen del manual.
 
 Dos puentes: uno en Valencia, en el mismo servidor que sirve esta página, y otro
-en Alicante en un mini PC en casa — ese segundo cuelga de una línea de fibra
+en Alicante en un mini PC en casa; ese segundo cuelga de una línea de fibra
 doméstica por detrás del router MikroTik, de ahí que la sección de NAT y reenvío
 de puertos de más arriba esté escrita como está. Los dos relays intermedios son
 instancias VPS de IONOS, una en Londres y otra en Madrid, porque un relay quiere

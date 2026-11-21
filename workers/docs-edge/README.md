@@ -169,8 +169,10 @@ goes out as it came.
   HTTPS Rewrites and Cloudflare Fonts. With either of the two on, the edge rewrites
   the HTML and drops GitHub's `ETag`, so every revalidation downloads the page again.
 - Response header Transform Rules for `docs.jmrp.io`: the security headers (CSP,
-  `X-Frame-Options`) and `Access-Control-Allow-Origin: *`; the `Link` header on a
-  twin; `X-Robots-Tag: noindex` on every `llms*.txt`; a year of `max-age` for
+  `X-Frame-Options`) and `Access-Control-Allow-Origin: *`; the `Link` header and
+  `X-Robots-Tag: noindex, follow` on a twin (the second since 2026-11-21, GEO audit
+  #13: Bing had started reading the twins, as it did on jmrp.io before 2026-10-10);
+  `X-Robots-Tag: noindex` on every `llms*.txt`; a year of `max-age` for
   `/_astro/` on 200, 206 and 304; `Allow: GET, HEAD` on a 405;
   `X-Robots-Tag: noindex, follow` for `/a11y-diagrams/`, which must stay reachable
   but out of search indexes.

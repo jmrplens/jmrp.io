@@ -5,15 +5,17 @@
  * It runs after the build is complete (`astro:build:done` hook) and TRANSFORMS
  * the content of the (not-yet-live) `builds/<color>` output directory: HTML/CSS
  * optimization, CSP artifact generation, image optimization, compression, and
- * permission fixups. Two steps VERIFY rather than transform:
+ * permission fixups. Three steps VERIFY rather than transform:
  * `verifyMarkdownTwins()` throws when the built pages, their markdown twins
- * and the index files disagree, and `verifyDlPairing()` throws when a
- * description list pairs a value with the wrong label. They live here
+ * and the index files disagree, `verifyDlPairing()` throws when a
+ * description list pairs a value with the wrong label, and
+ * `verifyJsonLdSize()` throws when a JSON-LD block outgrows what the Schema
+ * Markup Validator can read. They live here
  * precisely because a throw here happens before `deploy-swap.mjs` retargets
  * `dist/`.
  *
- * It also GENERATES the seven Nginx artifacts (`security_headers.conf`,
- * `security_headers_assets.conf` and the five http-level maps under `maps/`),
+ * It also GENERATES the eight Nginx artifacts (`security_headers.conf`,
+ * `security_headers_assets.conf` and the six http-level maps under `maps/`),
  * but into NEITHER the served tree NOR the git working tree. They are written
  * to a staging directory (`/var/lib/jmrp.io/nginx-staged/` by default,
  * overridable with
@@ -26,15 +28,15 @@
  * nothing and a stray temp file is never delivered.
  *
  * Every generated artifact carries one `# Build-Stamp:` line, identical across
- * the seven files and unique to this build. It is what makes
- * `nginx -T | grep -c "Build-Stamp: <id>"` = 7 a proof that the RUNNING config
- * came from a build rather than from a hand-seeded copy — `nginx -T` dumps
+ * the eight files and unique to this build. It is what makes
+ * `nginx -T | grep -c "Build-Stamp: <id>"` = 8 a proof that the RUNNING config
+ * came from a build rather than from a hand-seeded copy: `nginx -T` dumps
  * comments verbatim and dumps each distinct file exactly once, however many
  * times it is included.
  *
  * PUBLISH actions (moving those artifacts to system Nginx + test + reload +
  * rollback, Cloudflare cache purge, IndexNow/Bing Webmaster submission)
- * intentionally do NOT live here — they run from `scripts/deploy-live.mjs`
+ * intentionally do NOT live here: they run from `scripts/deploy-live.mjs`
  * AFTER `deploy-swap.mjs` has atomically retargeted `dist/` to this directory.
  * Running them here (pre-swap) would deploy new headers/CDN state while
  * `dist/` still pointed at the previous build.
@@ -57,6 +59,11 @@ import { compressAssets } from "./post-build/compression.js";
 import { finalizeCspConfig } from "./post-build/csp.js";
 import { extractCssDataUris } from "./post-build/css.js";
 import { generateDocsRedirects } from "./post-build/docs-redirects.js";
+import {
+  HOMELAB_PRELOAD_FILE,
+  readHomelabPreloads,
+  renderHomelabPreloadMap,
+} from "./post-build/homelab-preload.js";
 import { processHtmlFiles } from "./post-build/html.js";
 import { optimizeImages } from "./post-build/images.js";
 import { generateMdTwinAlternates } from "./post-build/md-twin-alternates.js";
@@ -64,7 +71,11 @@ import { generatePdfCaseRedirects } from "./post-build/pdf-case-redirects.js";
 import { patchRssEnclosureLengths } from "./post-build/rss-enclosures.js";
 import { generateTagRedirects } from "./post-build/tag-redirects.js";
 import type { CspData } from "./post-build/types.js";
-import { BUILD_STAMP_PREFIX, writeNginxSnippet } from "./post-build/utils.js";
+import {
+  BUILD_STAMP_PREFIX,
+  buildStampLine,
+  writeNginxSnippet,
+} from "./post-build/utils.js";
 import { timed } from "./timing.js";
 
 /**
@@ -75,12 +86,12 @@ const DEFAULT_SECURE_PATH =
   "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin";
 
 /**
- * The seven Nginx artifacts this build delivers, as paths relative to the
- * staging directory — and, one-for-one, to `/etc/nginx/snippets/jmrp/`.
+ * The eight Nginx artifacts this build delivers, as paths relative to the
+ * staging directory, and, one-for-one, to `/etc/nginx/snippets/jmrp/`.
  *
  * This list IS the delivery contract. It is written verbatim into
  * `manifest.json`, and `deploy-live.mjs` moves exactly these files and prunes
- * any `maps/*.conf` at the destination that is not named here: with the five
+ * any `maps/*.conf` at the destination that is not named here: with the six
  * maps behind a single wildcard `include`, an orphan left by a generator that
  * no longer exists would otherwise stay live forever.
  *
@@ -95,6 +106,7 @@ const NGINX_ARTIFACTS = [
   "maps/tag_redirects.conf",
   "maps/md_twin_alternates.conf",
   "maps/pdf_case_redirects.conf",
+  `maps/${HOMELAB_PRELOAD_FILE}`,
 ] as const;
 
 /**
@@ -123,14 +135,14 @@ export default function postBuildIntegration(): AstroIntegration {
         };
 
         // ONE stamp per build, computed here and handed to every generator, so
-        // the seven artifacts are provably one set. `stampId` is the bare value
+        // the eight artifacts are provably one set. `stampId` is the bare value
         // (it goes into the manifest); `stamp` is the ready-to-prepend banner
         // line each generator emits, built from the prefix the generators
         // validate against, so the two halves cannot drift apart.
         const stampId = createBuildStampId();
         const stamp = `${BUILD_STAMP_PREFIX}${stampId}\n`;
 
-        // Resolved ONCE, here, and passed down — the generators never look the
+        // Resolved ONCE, here, and passed down: the generators never look the
         // location up for themselves, so there is exactly one place that
         // decides where a build's Nginx artifacts land.
         const stagingDir = resolveNginxStagingDir();
@@ -140,7 +152,7 @@ export default function postBuildIntegration(): AstroIntegration {
 
           // Before the first generator writes. Clearing (rather than
           // overwriting in place) is what stops an artifact from a previous
-          // build — or from a generator that no longer exists — surviving as
+          // build, or from a generator that no longer exists, surviving as
           // an orphan that the manifest would not mention but a stale copy at
           // the destination would keep alive.
           // The prepared directory, which may differ from the configured one
@@ -196,13 +208,13 @@ export default function postBuildIntegration(): AstroIntegration {
           // Verification, not a transform: the built pages, their markdown
           // twins and the three index surfaces must agree. Runs BEFORE the
           // image/compression phase so a drift fails in ~0.2s instead of after
-          // ~30s of work, and — being inside astro:build:done — it fails the
+          // ~30s of work, and, being inside astro:build:done, it fails the
           // build before deploy-swap.mjs retargets the `dist` symlink, so a
           // drifted build can never become the live one. See GEO audit #6,
           // findings A2 / M5 / M8 (and A3, via the twin date rule).
           //
           // It also runs before generateMdTwinAlternates, and that order is
-          // load-bearing — less so than when the generators wrote straight
+          // load-bearing, less so than when the generators wrote straight
           // into the working tree's nginx/ snippets (a failed build left the
           // announcement map rewritten and waiting for the next unrelated
           // `nginx -s reload` to publish it), but still worth keeping: this is
@@ -223,8 +235,16 @@ export default function postBuildIntegration(): AstroIntegration {
           await timed("verifyDlPairing", logger, () =>
             verifyDlPairing(distDir),
           );
+          // Same kind of step: no JSON-LD block over 80 KB. Only the live
+          // contributions data, which CI never builds from, pushes
+          // /projects/contributions/ toward the cap, so the check has to run
+          // inside the build, where the scheduled rebuild also passes
+          // (GEO audit #13, M4).
+          await timed("verifyJsonLdSize", logger, () =>
+            verifyJsonLdSize(distDir),
+          );
 
-          // Fourth Nginx artifact: the markdown-twin alternate map. Derived
+          // Nginx artifact: the markdown-twin alternate map. Derived
           // from the twins the build actually wrote, so a page never announces
           // a twin that does not exist, and removing one withdraws the
           // announcement in the same build (GEO audit 2026-09-02, A2).
@@ -232,16 +252,25 @@ export default function postBuildIntegration(): AstroIntegration {
             generateMdTwinAlternates(distDir, stagedIn, stamp, logger),
           );
 
+          // Nginx artifact: the Link header fragment that announces
+          // the font preloads of /homelab/ for Cloudflare Early Hints. Read
+          // from the built pages, so a font hash change can no longer leave
+          // the header naming files that 404 (GEO audit #13, B5). After
+          // processHtmlFiles, which is the last step that rewrites the HTML.
+          await timed("generateHomelabPreload", logger, () =>
+            generateHomelabPreload(distDir, stagedIn, stamp, logger),
+          );
+
           // LAST of the Nginx steps, on purpose: the manifest is what makes
-          // the staged set deliverable, so it must not exist until all seven
+          // the staged set deliverable, so it must not exist until all eight
           // artifacts do.
           await timed("writeNginxManifest", logger, () =>
             writeNginxManifest(stagedIn, stampId, logger),
           );
 
           // optimizeImages (re-compresses PNGs) and compressAssets (gzip/brotli
-          // over js/css/svg/json/xml/txt) touch disjoint file sets — PNG is not
-          // in compressAssets' extension list — so they can run concurrently
+          // over js/css/svg/json/xml/txt) touch disjoint file sets (PNG is not
+          // in compressAssets' extension list), so they can run concurrently
           // instead of back-to-back.
           await Promise.all([
             timed("optimizeImages", logger, () =>
@@ -255,7 +284,7 @@ export default function postBuildIntegration(): AstroIntegration {
           if (systemNginxDir) {
             // Only fix permissions when deploying to Nginx (requires sudo and www-data user).
             // The actual move-to-Nginx + reload happens post-swap in scripts/deploy-live.mjs.
-            // It reaches distDir only — stagedIn sits outside it, so the
+            // It reaches distDir only: stagedIn sits outside it, so the
             // staged snippets keep root ownership and arrive at /etc/nginx
             // owned by root (rename(2) carries the source inode's owner).
             await timed("fixPermissions", logger, () =>
@@ -285,9 +314,9 @@ export default function postBuildIntegration(): AstroIntegration {
 /**
  * Builds the identifier every generated Nginx artifact of this build carries.
  *
- * Two properties matter. It must be UNIQUE per build — a timestamp alone is
+ * Two properties matter. It must be UNIQUE per build: a timestamp alone is
  * not enough, since two builds inside the same second would collide and a
- * stale file would masquerade as fresh — hence the random suffix. And it must
+ * stale file would masquerade as fresh, hence the random suffix. And it must
  * contain no regular-expression metacharacter, because the documented
  * verification greps it back out of `nginx -T`
  * (`ID=$(sed -n 's/^# Build-Stamp: //p' …); nginx -T | grep -c "Build-Stamp: $ID"`)
@@ -310,7 +339,7 @@ function createBuildStampId(): string {
  * then `/etc/nginx/snippets/jmrp/`. Keeping it out of the repo means a
  * `git checkout` can never change live configuration, and keeping it out of
  * `dist/` means no rule in the vhost is the only thing standing between a
- * config file and the public — which is what it used to be.
+ * config file and the public, which is what it used to be.
  *
  * `/var/lib` shares a filesystem with `/etc/nginx` (both device 66306 on this
  * host), and that is what makes the delivery a real `rename(2)` move instead of
@@ -332,15 +361,15 @@ function resolveNginxStagingDir(): string {
  * come from an environment variable, so the destructive step gets an explicit
  * precondition rather than trusting whatever was exported. Rejected: the
  * filesystem root, the project root or any ancestor of it, any ancestor of the
- * build output — and, in the other direction, anything INSIDE `distDir`, which
+ * build output, and, in the other direction, anything INSIDE `distDir`, which
  * would both serve the snippets over HTTP and hand them to `fixPermissions()`'s
  * `chown -R www-data` (a mode/owner `rename(2)` would then carry into
  * `/etc/nginx`).
  *
  * Rejected separately, because it is the one plausible wrong value with
  * catastrophic reach: the delivery DESTINATION, or any directory containing
- * it. `POSTBUILD_NGINX_STAGING_DIR=/etc/nginx/snippets/jmrp` — or `/etc/nginx`
- * — would make the clear an `rm -rf` over the live configuration, and
+ * it. `POSTBUILD_NGINX_STAGING_DIR=/etc/nginx/snippets/jmrp`, or `/etc/nginx`
+ * would make the clear an `rm -rf` over the live configuration, and
  * `security_headers*.conf` are named by exact `include`s, so the next
  * `systemctl restart` would refuse to start every vhost on the box. Nothing
  * legitimate stages into its own destination anyway: delivery is a move, and
@@ -418,7 +447,7 @@ async function prepareNginxStaging(
     // The staging root is deployment configuration, not a universal constant:
     // on this host it is /var/lib/jmrp.io/nginx-staged, which only root can
     // create. A CI runner and a contributor's laptop cannot, and neither of
-    // them delivers anything — deploy-live.mjs refuses to run outside the
+    // them delivers anything: deploy-live.mjs refuses to run outside the
     // production root. So fall back to a writable directory that is still
     // outside the repository and outside the served tree, and say so loudly:
     // a build that stages here CANNOT deliver, and a silent fallback would let
@@ -427,7 +456,7 @@ async function prepareNginxStaging(
     const fallback = FALLBACK_STAGING_DIR;
     logger.warn(
       `Cannot write Nginx staging at [${stagedIn}] (${code}). Falling back ` +
-        `to [${fallback}] — this build stages but CANNOT deliver. Set ` +
+        `to [${fallback}]: this build stages but CANNOT deliver. Set ` +
         `POSTBUILD_NGINX_STAGING_DIR to a writable path to silence this.`,
     );
     await fs.promises.rm(fallback, { recursive: true, force: true });
@@ -446,7 +475,7 @@ async function prepareNginxStaging(
  * missing one fails the build. That check is load-bearing rather than
  * defensive: `deploy-live.mjs` prunes any `maps/*.conf` at the destination
  * that the manifest does not name, so a generator that silently produced
- * nothing would not merely fail to update its map — it would DELETE the live
+ * nothing would not merely fail to update its map; it would DELETE the live
  * one. Failing here keeps the previous, working config in place.
  *
  * Written last and atomically (temp file + `rename(2)`, via
@@ -454,9 +483,9 @@ async function prepareNginxStaging(
  * and therefore delivers nothing.
  *
  * @param stagedIn - Absolute path of the staging directory.
- * @param stampId - The bare build stamp shared by all seven artifacts.
+ * @param stampId - The bare build stamp shared by all eight artifacts.
  * @param logger - Astro logger instance.
- * @throws If any of the seven artifacts is missing or empty.
+ * @throws If any of the eight artifacts is missing or empty.
  */
 async function writeNginxManifest(
   stagedIn: string,
@@ -476,7 +505,7 @@ async function writeNginxManifest(
     .map((entry) => entry.relPath);
   if (missing.length > 0) {
     throw new Error(
-      `Nginx staging is incomplete — missing or empty: ${missing.join(", ")}.` +
+      `Nginx staging is incomplete; missing or empty: ${missing.join(", ")}.` +
         " Refusing to write manifest.json: deploy-live.mjs prunes maps/*.conf" +
         " it does not name, so delivering a partial set would remove live" +
         " configuration instead of updating it.",
@@ -489,7 +518,7 @@ async function writeNginxManifest(
       {
         // Key names are `deploy-live.mjs`'s canonical contract. It also
         // accepts `buildStamp`/`artifacts` as legacy aliases, precisely so a
-        // generator that drifts is visible — emitting an alias from the only
+        // generator that drifts is visible; emitting an alias from the only
         // generator there is would ship that drift instead of catching it.
         stamp: stampId,
         generatedAt: new Date().toISOString(),
@@ -501,6 +530,37 @@ async function writeNginxManifest(
   );
   logger.info(
     `✓ Staged ${NGINX_ARTIFACTS.length} Nginx artifacts (Build-Stamp: ${stampId}).`,
+  );
+}
+
+/**
+ * Stages `maps/homelab_preload.conf` (see `post-build/homelab-preload.ts`).
+ *
+ * The reading and rendering live in that module, which has no relative
+ * imports so `node --test` can load it; the two helpers every staged artifact
+ * shares, the stamp check and the atomic write, are applied here.
+ *
+ * @param distDir - The directory Astro just built into.
+ * @param stagedIn - Staging root; the map goes in its `maps/` subdirectory.
+ * @param stamp - The per-build `# Build-Stamp:` banner.
+ * @param logger - Astro logger instance.
+ * @throws If a /homelab/ page is missing or preloads a file the build lacks.
+ */
+async function generateHomelabPreload(
+  distDir: string,
+  stagedIn: string,
+  stamp: string,
+  logger: AstroIntegrationLogger,
+): Promise<void> {
+  const pages = readHomelabPreloads(distDir);
+  const outPath = path.join(stagedIn, "maps", HOMELAB_PRELOAD_FILE);
+  await writeNginxSnippet(
+    outPath,
+    renderHomelabPreloadMap(pages, buildStampLine(stamp)),
+  );
+  const total = pages.reduce((sum, page) => sum + page.preloads.length, 0);
+  logger.info(
+    `  ✓ Staged ${outPath} (${total} preloads across ${pages.length} pages)`,
   );
 }
 
@@ -640,5 +700,21 @@ function verifyDlPairing(distDir: string) {
     "check-dl-pairing.mjs",
     distDir,
     "description lists pair a value with the wrong label: see the groups listed above",
+  );
+}
+
+/**
+ * Fails the build when a JSON-LD block is over 80 KB
+ * (`scripts/ci/check-jsonld-size.mjs`): the Schema Markup Validator reads
+ * nothing from a block that size, and only the live contributions data, which
+ * CI never builds from, pushes /projects/contributions/ toward it.
+ *
+ * @param distDir - The directory Astro just built into.
+ */
+function verifyJsonLdSize(distDir: string) {
+  runBuildGuard(
+    "check-jsonld-size.mjs",
+    distDir,
+    "a JSON-LD block is over 80 KB: see the blocks listed above",
   );
 }
