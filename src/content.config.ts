@@ -2,6 +2,11 @@ import { glob } from "astro/loaders";
 import { z } from "astro/zod";
 import { defineCollection } from "astro:content";
 
+import {
+  isLicenseExpression,
+  licenseIdentifiers,
+} from "../scripts/utils/license-expression.mjs";
+import licenseUrls from "./data/license-urls.json";
 import { stripExtension } from "./utils/content";
 
 /**
@@ -868,22 +873,35 @@ const ProjectEntry = z.object({
   applicationSubCategory: z.string().optional(),
   language: z.string(),
   /**
-   * SPDX-style identifier; mapped to a license URL in `@utils/projects`.
-   * Required for `active` and `archived`. Optional only for `upcoming`: a
-   * project that has not published its code may not have stated its terms
-   * yet, and an absent license is better than an invented one.
+   * One SPDX identifier, or identifiers joined by AND when the project
+   * declares an expression in its package metadata (phonometry: "MIT AND
+   * LicenseRef-EASA-ANP", as PyPI states it). Each identifier maps to a
+   * license URL in `src/data/license-urls.json`, through the one rule in
+   * `scripts/utils/license-expression.mjs`; `OR`, `WITH` and parentheses are
+   * refused. Required for `active` and `archived`. Optional only for
+   * `upcoming`: a project that has not published its code may not have
+   * stated its terms yet, and an absent license is better than an invented
+   * one.
    */
-  license: z.string().optional(),
+  license: z
+    .string()
+    .refine(isLicenseExpression, {
+      message:
+        "expected one SPDX identifier, or identifiers joined by AND (no OR, WITH or parentheses)",
+    })
+    .optional(),
   /**
    * The license URL the project's own site states, when it is not the one
-   * `src/data/license-urls.json` maps `license` to. The shared `#software`
-   * node must carry one license value, so the site's form wins for that
-   * project; the table stays the default for the rest. Added for phonometry,
-   * which no longer needs it since every docs site moved to OSI's
-   * /license/<id> form (2026-11-02). Kleidos sets it since 2026-11-08: its
-   * own site states the SPDX page.
+   * `src/data/license-urls.json` maps `license` to: one URL, or one per
+   * identifier of an AND expression, in its order. The shared `#software`
+   * node carries the same license value(s) on both sites, one URL for one
+   * identifier and the list for an AND expression, so the site's form wins
+   * for that project; the table stays the default for the rest. Added for
+   * phonometry, which no longer needs it since every docs site moved to
+   * OSI's /license/<id> form (2026-11-02). Kleidos sets it since
+   * 2026-11-08: its own site states the SPDX page.
    */
-  licenseUrl: z.url().optional(),
+  licenseUrl: z.union([z.url(), z.array(z.url()).min(2)]).optional(),
   /**
    * Public repository URL. Required for `active` and `archived`; absent for
    * `upcoming` while the repository is private (a link to it would be a 404
@@ -1046,6 +1064,49 @@ const ProjectEntry = z.object({
   runtimePlatform: z.string().optional(),
 });
 
+/**
+ * What is wrong with a project's `license` and `licenseUrl` taken together:
+ * every identifier of the license must resolve to a URL, either from
+ * `licenseUrl` (one per identifier, in its order) or from the table. Without
+ * this, an identifier the table lacks would be published as if it were its
+ * own URL, on the card, the node and in projects.json. An expression the
+ * grammar refuses is reported by the `license` field itself, not here.
+ *
+ * @param project - The project entry as the schema parsed it.
+ * @param project.id - Its id, named in each message.
+ * @param project.license - Its SPDX expression, when it has one.
+ * @param project.licenseUrl - Its own license URL or URLs, when given.
+ * @returns One issue per problem, ready for `ctx.addIssue`.
+ */
+function licenseIssues(project: {
+  id: string;
+  license?: string;
+  licenseUrl?: string | string[];
+}): { code: "custom"; path: string[]; message: string }[] {
+  if (project.license === undefined || !isLicenseExpression(project.license)) {
+    return [];
+  }
+  const identifiers = licenseIdentifiers(project.license);
+  if (project.licenseUrl !== undefined) {
+    const stated = [project.licenseUrl].flat();
+    if (stated.length === identifiers.length) return [];
+    return [
+      {
+        code: "custom",
+        path: ["licenseUrl"],
+        message: `${project.id}: \`licenseUrl\` gives ${stated.length} URL(s) for the ${identifiers.length} identifier(s) of "${project.license}"; give one per identifier, in its order`,
+      },
+    ];
+  }
+  return identifiers
+    .filter((id) => !Object.hasOwn(licenseUrls, id))
+    .map((id) => ({
+      code: "custom" as const,
+      path: ["license"],
+      message: `${project.id}: "${id}" has no URL in src/data/license-urls.json; add it there or give \`licenseUrl\``,
+    }));
+}
+
 const projectsSchema = z.object({
   type: z.literal("projects"),
   projects: z
@@ -1061,6 +1122,7 @@ const projectsSchema = z.object({
             message: `${project.id}: \`runtimePlatform\` is a SoftwareSourceCode property; schemaType is "${project.schemaType}"`,
           });
         }
+        for (const issue of licenseIssues(project)) ctx.addIssue(issue);
         // Only a project in development may lack a public repository or a
         // license: every other status renders both, in the card, the JSON-LD
         // node and projects.json, and an empty one would publish "undefined".

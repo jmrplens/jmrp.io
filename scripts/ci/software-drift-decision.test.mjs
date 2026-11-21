@@ -347,3 +347,59 @@ test("values that differ in content still differ", () => {
   assert.ok(!sameValues("a, b", ["a", "b"]));
   assert.ok(!sameValues(undefined, "a"));
 });
+
+// phonometry declares "MIT AND LicenseRef-EASA-ANP", as its PyPI metadata
+// does, and its docs site states both URLs as `license` on the shared
+// `#software` node. Read as one identifier, the expression resolved to
+// itself and the run failed on `phonometry: license`.
+const PHONOMETRY_DOCS_LICENSE = Object.freeze([
+  "https://opensource.org/license/MIT",
+  "https://github.com/jmrplens/phonometry/blob/main/LICENSES/LicenseRef-EASA-ANP.txt",
+]);
+
+test("an AND expression is compared as the list of its URLs", () => {
+  const licenseUrls = JSON.parse(read("src/data/license-urls.json"));
+  const ours = projectValues(
+    { ...FULL_RECORD, license: "MIT AND LicenseRef-EASA-ANP" },
+    licenseUrls,
+  );
+  assert.deepEqual(
+    divergentProperties({ license: [...PHONOMETRY_DOCS_LICENSE] }, ours),
+    [],
+  );
+  // In either order: JSON-LD arrays are unordered.
+  assert.deepEqual(
+    divergentProperties(
+      { license: PHONOMETRY_DOCS_LICENSE.toReversed() },
+      ours,
+    ),
+    [],
+  );
+  // A site that states one of the two terms still contradicts.
+  assert.deepEqual(
+    divergentProperties({ license: PHONOMETRY_DOCS_LICENSE[0] }, ours),
+    ["license"],
+  );
+});
+
+test("phonometry's projects.yaml entry agrees with the license its docs node states", () => {
+  const licenseUrls = JSON.parse(read("src/data/license-urls.json"));
+  const phonometry = loadYaml(
+    read("src/content/profile/projects.yaml"),
+  ).projects.find((project) => project.id === "phonometry");
+  assert.deepEqual(
+    divergentProperties(
+      { license: [...PHONOMETRY_DOCS_LICENSE] },
+      projectValues(phonometry, licenseUrls),
+    ),
+    [],
+  );
+});
+
+test("one identifier still states one URL", () => {
+  const licenseUrls = JSON.parse(read("src/data/license-urls.json"));
+  assert.equal(
+    projectValues(FULL_RECORD, licenseUrls).license,
+    "https://opensource.org/license/MIT",
+  );
+});

@@ -113,6 +113,25 @@ test("an upcoming project that states a license still exports it", () => {
   assert.equal(typeof record.licenseUrl, "string");
 });
 
+test("an AND expression keeps its text in license and lists its URLs in licenseUrl", () => {
+  // phonometry declares "MIT AND LicenseRef-EASA-ANP", as its PyPI metadata
+  // does; its docs site states both URLs on the shared `#software` node, and
+  // the feed the hub builds its own line from carries the same pair.
+  const [expression, single] = toRecords({
+    projects: [
+      { ...released, license: "MIT AND LicenseRef-EASA-ANP" },
+      released,
+    ],
+  });
+  assert.equal(expression.license, "MIT AND LicenseRef-EASA-ANP");
+  assert.deepEqual(expression.licenseUrl, [
+    "https://opensource.org/license/MIT",
+    "https://github.com/jmrplens/phonometry/blob/main/LICENSES/LicenseRef-EASA-ANP.txt",
+  ]);
+  // One identifier keeps its one URL, a string, exactly as before.
+  assert.equal(single.licenseUrl, "https://opensource.org/license/MIT");
+});
+
 test("the committed projects.json is what the YAML generates", () => {
   // The same comparison `--check` makes, so `pnpm test:unit` catches a
   // projects.yaml edit that forgot to regenerate the published list.

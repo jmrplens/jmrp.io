@@ -37,6 +37,10 @@ import type {
   Thing,
 } from "schema-dts";
 
+import {
+  projectLicenses as licensesOf,
+  projectLicenseValue,
+} from "../../scripts/utils/license-expression.mjs";
 import { softwareId as softwareIdRule } from "../../scripts/utils/software-id.mjs";
 import { SCHOOL_IDS } from "./person";
 
@@ -62,10 +66,13 @@ export interface Project {
   /** Platforms the software runs on; rendered on the card as "Runs on". */
   operatingSystem?: string;
   language: string;
-  /** Absent only for an `upcoming` project (the schema enforces it). */
+  /**
+   * One SPDX identifier, or identifiers joined by AND; absent only for an
+   * `upcoming` project (the schema enforces it).
+   */
   license?: string;
-  /** The license URL its own site states, when not the table's; see the schema. */
-  licenseUrl?: string;
+  /** The license URL(s) its own site states, when not the table's; see the schema. */
+  licenseUrl?: string | string[];
   /** Absent only for an `upcoming` project, whose repository is private. */
   repo?: string;
   docs: string;
@@ -117,21 +124,48 @@ export interface ProjectArticle {
  * takes a URL, and a stable, well-known one lets a consumer resolve the terms
  * without parsing an identifier string.
  */
-
-/** Resolves an SPDX id to its canonical license URL (identity if unknown). */
-export const licenseUrl = (license: string): string =>
-  (licenseUrls as Record<string, string>)[license] ?? license;
+const LICENSE_URLS = licenseUrls as Record<string, string>;
 
 /**
- * A project's license URL: the one its own site states (`licenseUrl` in
- * projects.yaml) when it differs from the table, the table's otherwise.
+ * A project's license as the shared `#software` node states it: the URL(s)
+ * its own site states (`licenseUrl` in projects.yaml) when they differ from
+ * the table, the table's otherwise. One identifier gives one URL, exactly as
+ * before AND expressions were read; an AND expression gives the list. The
+ * split is the one rule in `scripts/utils/license-expression.mjs`.
  *
  * @param project - The project, which must have a `license`.
- * @returns The license URL.
+ * @returns The license URL, or the URLs of an AND expression.
+ * @throws {Error} When the project states no license.
  */
 export const projectLicenseUrl = (
   project: Pick<Project, "license" | "licenseUrl">,
-): string => project.licenseUrl ?? licenseUrl(project.license ?? "");
+): string | string[] => {
+  if (project.license === undefined) {
+    throw new Error("projectLicenseUrl: the project states no license");
+  }
+  return projectLicenseValue(
+    { license: project.license, licenseUrl: project.licenseUrl },
+    LICENSE_URLS,
+  );
+};
+
+/**
+ * Each identifier of a project's license with the URL that states it, in the
+ * expression's order: what the card links, one link per identifier. Empty for
+ * a project that states no license.
+ *
+ * @param project - The project.
+ * @returns One `{ id, url }` per identifier.
+ */
+export const projectLicenses = (
+  project: Pick<Project, "license" | "licenseUrl">,
+): { id: string; url: string }[] =>
+  project.license === undefined
+    ? []
+    : licensesOf(
+        { license: project.license, licenseUrl: project.licenseUrl },
+        LICENSE_URLS,
+      );
 
 /**
  * The @id every project's software entity is published under: the GitHub
