@@ -436,6 +436,7 @@ DSCP
 dstnat
 dualstack
 dwyer
+EASA
 ecssmet
 editables
 edítalo
@@ -620,6 +621,7 @@ idempotentes
 idempotently
 idioma
 idiomas
+idstring
 igic
 ignoreGhsas
 ihdr

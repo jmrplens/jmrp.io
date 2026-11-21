@@ -68,8 +68,11 @@
       "applicationSubCategory": "Scientific/Engineering",
       "kicker": "Acoustics · DSP",
       "language": "Python",
-      "license": "MIT",
-      "licenseUrl": "https://opensource.org/license/MIT",
+      "license": "MIT AND LicenseRef-EASA-ANP",
+      "licenseUrl": [
+        "https://opensource.org/license/MIT",
+        "https://github.com/jmrplens/phonometry/blob/main/LICENSES/LicenseRef-EASA-ANP.txt"
+      ],
       "operatingSystem": "Linux, macOS, Windows",
       "repo": "https://github.com/jmrplens/phonometry",
       "docs": "https://phonometry.dev/",

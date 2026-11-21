@@ -46,6 +46,16 @@
  * as `sitemap-index.xml`. None of this changes the record of a released
  * project.
  *
+ * ── Licenses ─────────────────────────────────────────────────────────────
+ * `license` is what the YAML declares: one SPDX identifier, or identifiers
+ * joined by AND. `licenseUrl` is one URL for one identifier, as it always
+ * was, and the list of URLs, in the expression's order, for an AND
+ * expression: phonometry declares "MIT AND LicenseRef-EASA-ANP", as its
+ * PyPI metadata does, so its record carries both URLs, the same list its
+ * docs site states as `license` on the shared `#software` node. A consumer
+ * that reads `licenseUrl` takes a string or an array. The split is the one
+ * rule in `scripts/utils/license-expression.mjs`.
+ *
  * ── Other names ──────────────────────────────────────────────────────────
  * `alternateName` follows `name` when the YAML states it, verbatim and in
  * its order: the other names the project's own site gives the shared
@@ -68,6 +78,8 @@ import process from "node:process";
 import { fileURLToPath } from "node:url";
 
 import { load as parseYaml } from "js-yaml";
+
+import { projectLicenseValue } from "../utils/license-expression.mjs";
 
 const ROOT = process.cwd();
 const SOURCE = path.join(ROOT, "src/content/profile/projects.yaml");
@@ -113,7 +125,7 @@ export function toRecords(raw) {
     language: p.language,
     ...(p.license && {
       license: p.license,
-      licenseUrl: p.licenseUrl ?? LICENSE_URLS[p.license] ?? p.license,
+      licenseUrl: projectLicenseValue(p, LICENSE_URLS),
     }),
     ...(p.operatingSystem && { operatingSystem: p.operatingSystem }),
     ...(p.repo && { repo: p.repo }),

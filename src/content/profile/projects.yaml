@@ -70,6 +70,15 @@ type: projects
 #   prefix.
 # * `sameAs` holds the registry/identity URLs that are NOT rendered: secondary
 #   directories and the Zenodo DOI. Identity signal only, no navigation.
+# * `license` is one SPDX identifier, or identifiers joined by `AND` when the
+#   project declares an expression in its package metadata (phonometry:
+#   "MIT AND LicenseRef-EASA-ANP", as on PyPI). Each identifier maps to its
+#   URL in `src/data/license-urls.json`; one identifier states one URL as
+#   `license` on the node and in projects.json, an AND expression states the
+#   list. The card links each identifier. The one rule is
+#   `scripts/utils/license-expression.mjs`; `OR`, `WITH` and parentheses are
+#   refused, as is an identifier the table does not know (unless `licenseUrl`
+#   gives its URL).
 # * `endpoint` is the raw callable MCP URL and the single source of truth for
 #   the fleet: BaseHead/build-identity derive `<endpoint>#api` owns @ids from
 #   it, the /homelab/ MCP card lists it, and llms.txt iterates it. Adding a
@@ -185,7 +194,11 @@ projects:
     applicationCategory: DeveloperApplication
     applicationSubCategory: Scientific/Engineering
     language: Python
-    license: MIT
+    # The expression PyPI declares (`license_expression`, 4.0.1): the code is
+    # MIT and the EASA ANP tables it bundles are under EASA's terms. Its docs
+    # site states both URLs as `license` on the shared `#software` node, so
+    # "MIT" alone would state a subset of the terms under the same @id.
+    license: MIT AND LicenseRef-EASA-ANP
     repo: https://github.com/jmrplens/phonometry
     docs: https://phonometry.dev/
     kicker: Acoustics · DSP

@@ -54,7 +54,7 @@ import {
   mcpApiId,
   type Project,
   projectArticles,
-  projectLicenseUrl,
+  projectLicenses,
   softwareId,
 } from "@utils/projects";
 import { getSeriesForProject } from "@utils/series";
@@ -510,15 +510,23 @@ const faqNode =
                   {project.license && (
                     <div class="proj-card__meta-pair">
                       <dt>{t("pages.projects.license")}</dt>
+                      {/*
+                       * One link per identifier of the declared expression,
+                       * the operator between them as text: phonometry's
+                       * "MIT AND LicenseRef-EASA-ANP" links both terms, as
+                       * its node states both URLs. One identifier renders the
+                       * one link it always did.
+                       */}
                       <dd>
-                        <a
-                          href={projectLicenseUrl(project)}
-                          target="_blank"
-                          rel="external noopener noreferrer"
-                          aria-label={cardLinkName(project.license, project)}
-                        >
-                          {project.license}
-                        </a>
+                        {projectLicenses(project).map(({ id, url }, index) =>
+                          // Pinned on one line, like the downloads note above:
+                          // reflowed, the link text sits on its own line, Astro
+                          // keeps that whitespace, and the first link of an
+                          // expression rendered "MIT " with the space inside
+                          // the link, underlined.
+                          // prettier-ignore
+                          <>{index > 0 && " AND "}<a href={url} target="_blank" rel="external noopener noreferrer" aria-label={cardLinkName(id, project)}>{id}</a></>,
+                        )}
                       </dd>
                     </div>
                   )}

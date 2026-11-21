@@ -5,6 +5,8 @@
  * @module
  */
 
+import { projectLicenseValue } from "../utils/license-expression.mjs";
+
 /**
  * Divergences the author decided to keep, matched by project id and property
  * (never by text, so rewording the summary cannot silently lift or hide the
@@ -59,8 +61,8 @@ export const CONTRADICTABLE = Object.freeze([
  * @param {{
  *   name: string,
  *   summary: { en: string, es?: string },
- *   license: string,
- *   licenseUrl?: string,
+ *   license?: string,
+ *   licenseUrl?: string | string[],
  *   language?: string,
  *   applicationCategory?: string,
  *   operatingSystem?: string,
@@ -78,8 +80,14 @@ export function projectValues(project, licenseUrls) {
     // literal of `description`, so a bilingual site that says something else
     // in Spanish contradicts it the way a different English text would.
     "description@es": project.summary.es,
+    // One URL for one identifier, the list of URLs for an AND expression
+    // (phonometry's "MIT AND LicenseRef-EASA-ANP"), which is how its docs
+    // site states `license`: compared as sets, so the order does not matter
+    // and a missing or an extra term still contradicts.
     license:
-      project.licenseUrl ?? licenseUrls[project.license] ?? project.license,
+      project.license === undefined
+        ? undefined
+        : projectLicenseValue(project, licenseUrls),
     programmingLanguage: project.language,
     applicationCategory: project.applicationCategory,
     // One comma-joined string here, a list in the graph /projects/ emits and
