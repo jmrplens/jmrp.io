@@ -60,6 +60,12 @@ const DIRECTORIES: Readonly<Record<string, Directory>> = {
   // Package indexes: "how do I install this".
   "npmjs.com": { label: "npm", icon: "simple-icons:npm" },
   "pypi.org": { label: "PyPI", icon: "simple-icons:pypi" },
+  // conda-forge publishes through anaconda.org; the channel is the name a
+  // reader installs from, so it is the label, not the host.
+  "anaconda.org/conda-forge": {
+    label: "conda-forge",
+    icon: "simple-icons:condaforge",
+  },
   "nuget.org": { label: "NuGet", icon: "simple-icons:nuget" },
   "hub.docker.com": { label: "Docker Hub", icon: "simple-icons:docker" },
   "github.com/microsoft/winget-pkgs": {

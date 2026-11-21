@@ -305,6 +305,7 @@ comprobador
 computacional
 computacionalmente
 comsol
+condaforge
 configurables
 configurarlas
 Consérvalos
