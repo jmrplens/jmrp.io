@@ -14,6 +14,8 @@ export interface DownloadsData {
     dockerHub: number;
     /** Lifetime NuGet downloads (meta packages only). */
     nuget: number;
+    /** Lifetime conda-forge downloads (every file of each package). */
+    condaForge: number;
     /** Hand-read counts (MathWorks blocks scripted requests). */
     manual: number;
   };

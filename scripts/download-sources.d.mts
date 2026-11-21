@@ -16,6 +16,8 @@ export interface ProjectDownloads {
   docker: number;
   /** Lifetime NuGet downloads, meta packages only. */
   nuget: number;
+  /** Lifetime conda-forge downloads, every file of each package. */
+  conda: number;
   /** Hand-read counts from channels that refuse scripted requests. */
   manual: number;
 }
@@ -28,6 +30,8 @@ export const DOWNLOAD_SOURCES: Record<
     docker: string[];
     /** NuGet package ids; absent when the project ships through no such feed. */
     nuget?: string[];
+    /** conda-forge package names; absent when the project is not on conda-forge. */
+    conda?: string[];
     manual?: { source: string; count: number };
   }
 >;
@@ -87,6 +91,24 @@ export function fetchNuGetDownloads(id: string): Promise<number>;
 export function readNuGetTotal(body: unknown, id: string): number;
 
 /**
+ * Reads the lifetime download count of one conda-forge package out of the
+ * package record anaconda.org serves.
+ *
+ * @param body - Parsed package record.
+ * @param name - Package name that was asked for.
+ * @returns The sum of `ndownloads` over every file of the package.
+ */
+export function readCondaForgeTotal(body: unknown, name: string): number;
+
+/**
+ * Reads the lifetime download count of a single conda-forge package.
+ *
+ * @param name - Package name on the conda-forge channel.
+ * @returns The package's lifetime download count.
+ */
+export function fetchCondaForgeDownloads(name: string): Promise<number>;
+
+/**
  * Combined download count of one project across every channel (cached).
  *
  * @param repo - Repository name under the owner account.
@@ -111,6 +133,7 @@ export function fetchAllDownloads(token?: string): Promise<{
     githubReleases: number;
     dockerHub: number;
     nuget: number;
+    condaForge: number;
     manual: number;
   };
   /** Counted and reported, but deliberately outside `total`. */

@@ -29,7 +29,8 @@ export const OWNER = "jmrplens";
  * that is a distributable artifact — see {@link isVerificationAsset} for what
  * is excluded and why; `docker` sums the cumulative `pull_count` of each
  * Docker Hub image; `nuget` sums the lifetime `totalDownloads` of each NuGet
- * package id.
+ * package id; `conda` sums the lifetime `ndownloads` anaconda.org reports for
+ * every file (one per version and build) of each conda-forge package.
  *
  * `nuget` names ONLY the meta package. The GitLab server and libgen-mcp each
  * publish seven ids, the meta package plus one per runtime identifier, and a single
@@ -63,7 +64,8 @@ export const OWNER = "jmrplens";
  *   2026-08-27), and folding a window into a cumulative total would let the
  *   published figure go DOWN between builds as the window rolls. `pepy.tech`
  *   does have a lifetime number but gates it behind an API key, and its
- *   free badge rounds to one significant figure ("2k").
+ *   free badge rounds to one significant figure ("2k"). phonometry is counted
+ *   through conda-forge instead, whose counter is lifetime (since 2026-11-21).
  * - **npm**: the bare `gitlab-mcp-server` package belongs to a different
  *   author (`unadlib`), verified 2026-08-27. This owner's packages are the
  *   scoped `@jmrp.io/gitlab-mcp-server` and `@jmrp.io/libgen-mcp`, which
@@ -99,6 +101,10 @@ export const DOWNLOAD_SOURCES = {
     docker: [`${OWNER}/mikroscope-agent`, `${OWNER}/mikroscope`],
   },
   ghchronicle: { releases: true, docker: [`${OWNER}/ghchronicle`] },
+  // conda-forge only. Its GitHub Release carries the wheel and sdist PyPI
+  // serves, which readers install from PyPI, and an SBOM (`.cdx.json`) that
+  // isVerificationAsset does not know; PyPI keeps no lifetime counter.
+  phonometry: { releases: false, docker: [], conda: ["phonometry"] },
   "cs-routeros-bouncer": { releases: true, docker: [] },
   "Cloudflare-DNS-Updater": { releases: true, docker: [] },
   "A-Lab": {
@@ -188,7 +194,7 @@ export function isVerificationAsset(name) {
   );
 }
 
-/** @type {Map<string, Promise<{total:number, releases:number, excludedVerification:number, docker:number, nuget:number, manual:number}>>} */
+/** @type {Map<string, Promise<{total:number, releases:number, excludedVerification:number, docker:number, nuget:number, conda:number, manual:number}>>} */
 const cache = new Map();
 
 /**
@@ -482,13 +488,74 @@ export async function fetchNuGetDownloads(id) {
 }
 
 /**
+ * Reads the lifetime download count of one conda-forge package out of the
+ * package record anaconda.org serves: the sum of `ndownloads` over every file,
+ * one file per version and build.
+ *
+ * Split from the request, as {@link readNuGetTotal} is, so the part that
+ * decides whether a payload can be believed is tested on its own. It throws
+ * rather than returning 0, so the caller keeps the last good total.
+ *
+ * @param {unknown} body - Parsed package record.
+ * @param {string} name - Package name that was asked for.
+ * @returns {number} The package's lifetime download count.
+ * @throws {TypeError} When the record is for another package, lists no file,
+ *   or a file carries no usable count.
+ */
+export function readCondaForgeTotal(body, name) {
+  const record =
+    /** @type {{name?: unknown, owner?: {login?: unknown}, files?: Array<{ndownloads?: unknown}>}} */ (
+      body
+    );
+  if (record?.name !== name || record?.owner?.login !== "conda-forge") {
+    throw new TypeError(
+      `conda-forge ${name}: the record is for another package`,
+    );
+  }
+  const files = Array.isArray(record.files) ? record.files : [];
+  if (files.length === 0) {
+    throw new TypeError(`conda-forge ${name}: the record lists no file`);
+  }
+  let total = 0;
+  for (const file of files) {
+    const count = file?.ndownloads;
+    if (
+      typeof count !== "number" ||
+      !Number.isSafeInteger(count) ||
+      count < 0
+    ) {
+      throw new TypeError(`conda-forge ${name}: a file carries no ndownloads`);
+    }
+    total += count;
+  }
+  return total;
+}
+
+/**
+ * Reads the lifetime download count of a single conda-forge package.
+ *
+ * @param {string} name - Package name on the conda-forge channel.
+ * @returns {Promise<number>} The package's lifetime download count.
+ */
+export async function fetchCondaForgeDownloads(name) {
+  const url = `https://api.anaconda.org/package/conda-forge/${encodeURIComponent(name)}`;
+  const res = await fetch(url, {
+    headers: { "User-Agent": UA },
+    signal: AbortSignal.timeout(15_000),
+  });
+  if (!res.ok) throw new Error(`conda-forge ${name}: ${res.status}`);
+
+  return readCondaForgeTotal(await res.json(), name);
+}
+
+/**
  * Combined download count of one project across every channel it ships
  * through. Cached per process, so the CV page and the LaTeX generators do not
  * re-fetch what the pre-build step already asked for.
  *
  * @param {string} repo - Repository name under {@link OWNER}.
  * @param {string} [token] - GitHub token; falls back to the environment.
- * @returns {Promise<{total:number, releases:number, excludedVerification:number, docker:number, nuget:number, manual:number}>} Counts per channel.
+ * @returns {Promise<{total:number, releases:number, excludedVerification:number, docker:number, nuget:number, conda:number, manual:number}>} Counts per channel.
  */
 export function fetchProjectDownloads(repo, token) {
   const cached = cache.get(repo);
@@ -502,28 +569,34 @@ export function fetchProjectDownloads(repo, token) {
       excludedVerification: 0,
       docker: 0,
       nuget: 0,
+      conda: 0,
       manual: 0,
     });
 
   const promise = (async () => {
-    const [release, dockerCounts, nugetCounts] = await Promise.all([
-      config.releases
-        ? fetchReleaseDownloads(repo, token)
-        : { artifacts: 0, verification: 0 },
-      Promise.all((config.docker ?? []).map(fetchDockerHubPulls)),
-      Promise.all((config.nuget ?? []).map(fetchNuGetDownloads)),
-    ]);
+    const [release, dockerCounts, nugetCounts, condaCounts] = await Promise.all(
+      [
+        config.releases
+          ? fetchReleaseDownloads(repo, token)
+          : { artifacts: 0, verification: 0 },
+        Promise.all((config.docker ?? []).map(fetchDockerHubPulls)),
+        Promise.all((config.nuget ?? []).map(fetchNuGetDownloads)),
+        Promise.all((config.conda ?? []).map(fetchCondaForgeDownloads)),
+      ],
+    );
     const docker = dockerCounts.reduce((sum, n) => sum + n, 0);
     const nuget = nugetCounts.reduce((sum, n) => sum + n, 0);
+    const conda = condaCounts.reduce((sum, n) => sum + n, 0);
     const manual = config.manual?.count ?? 0;
-    // `total` sums the four CHANNELS only. `excludedVerification` rides along
+    // `total` sums the five CHANNELS only. `excludedVerification` rides along
     // for auditability and is never a summand — see isVerificationAsset.
     return {
-      total: release.artifacts + docker + nuget + manual,
+      total: release.artifacts + docker + nuget + conda + manual,
       releases: release.artifacts,
       excludedVerification: release.verification,
       docker,
       nuget,
+      conda,
       manual,
     };
   })();
@@ -538,7 +611,7 @@ export function fetchProjectDownloads(repo, token) {
  * Fetches every configured project at once and aggregates the grand total.
  *
  * @param {string} [token] - GitHub token; falls back to the environment.
- * @returns {Promise<{total:number, sources:{githubReleases:number, dockerHub:number, nuget:number, manual:number}, excluded:{githubVerification:number}, manualVerifiedOn:string, projects:Record<string,{total:number, releases:number, excludedVerification:number, docker:number, nuget:number, manual:number}>}>} The full breakdown.
+ * @returns {Promise<{total:number, sources:{githubReleases:number, dockerHub:number, nuget:number, condaForge:number, manual:number}, excluded:{githubVerification:number}, manualVerifiedOn:string, projects:Record<string,{total:number, releases:number, excludedVerification:number, docker:number, nuget:number, conda:number, manual:number}>}>} The full breakdown.
  */
 export async function fetchAllDownloads(token) {
   const repos = Object.keys(DOWNLOAD_SOURCES);
@@ -546,12 +619,13 @@ export async function fetchAllDownloads(token) {
     repos.map((repo) => fetchProjectDownloads(repo, token)),
   );
 
-  /** @type {Record<string, {total:number, releases:number, excludedVerification:number, docker:number, nuget:number, manual:number}>} */
+  /** @type {Record<string, {total:number, releases:number, excludedVerification:number, docker:number, nuget:number, conda:number, manual:number}>} */
   const projects = {};
   let githubReleases = 0;
   let githubVerification = 0;
   let dockerHub = 0;
   let nuget = 0;
+  let condaForge = 0;
   let manual = 0;
   for (const [index, repo] of repos.entries()) {
     const count = counts[index];
@@ -560,6 +634,7 @@ export async function fetchAllDownloads(token) {
     githubVerification += count.excludedVerification;
     dockerHub += count.docker;
     nuget += count.nuget;
+    condaForge += count.conda;
     manual += count.manual;
   }
 
@@ -567,8 +642,8 @@ export async function fetchAllDownloads(token) {
   // under `excluded`, so summing `sources` can never reproduce the inflated
   // figure this split exists to remove.
   return {
-    total: githubReleases + dockerHub + nuget + manual,
-    sources: { githubReleases, dockerHub, nuget, manual },
+    total: githubReleases + dockerHub + nuget + condaForge + manual,
+    sources: { githubReleases, dockerHub, nuget, condaForge, manual },
     excluded: { githubVerification },
     manualVerifiedOn: MANUAL_COUNTS_VERIFIED_ON,
     projects,

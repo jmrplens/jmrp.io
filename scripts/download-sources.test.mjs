@@ -1,3 +1,4 @@
+/* cspell:ignore noarch pyhc -- conda package file names */
 /**
  * Guards the download/verification split in `download-sources.mjs`: the
  * published "downloads" figure must never count an asset that merely verifies
@@ -14,7 +15,11 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 
-import { isVerificationAsset, readNuGetTotal } from "./download-sources.mjs";
+import {
+  isVerificationAsset,
+  readCondaForgeTotal,
+  readNuGetTotal,
+} from "./download-sources.mjs";
 
 test("isVerificationAsset: verification artifacts are excluded", () => {
   const verification = [
@@ -123,6 +128,73 @@ test("readNuGetTotal: rejects a payload it cannot believe", () => {
   for (const body of unusable) {
     assert.throws(
       () => readNuGetTotal(body, "gitlab-mcp-server"),
+      TypeError,
+      `expected a throw for: ${JSON.stringify(body)}`,
+    );
+  }
+});
+
+test("readCondaForgeTotal: sums every file of the package asked for", () => {
+  // Shape of a real api.anaconda.org/package/conda-forge/<name> record,
+  // trimmed to the fields read: one file per version and build.
+  const body = {
+    name: "phonometry",
+    owner: { login: "conda-forge" },
+    files: [
+      {
+        basename: "noarch/phonometry-4.0.1-pyhc364b38_0.conda",
+        ndownloads: 32,
+      },
+      {
+        basename: "noarch/phonometry-4.0.2-pyhc364b38_0.conda",
+        ndownloads: 10,
+      },
+    ],
+  };
+  assert.equal(readCondaForgeTotal(body, "phonometry"), 42);
+});
+
+test("readCondaForgeTotal: never counts a package other than the one asked for", () => {
+  // A record for another name, or for the same name on another channel, must
+  // not enter the total.
+  for (const body of [
+    {
+      name: "phonometry-extra",
+      owner: { login: "conda-forge" },
+      files: [{ ndownloads: 5 }],
+    },
+    {
+      name: "phonometry",
+      owner: { login: "someone" },
+      files: [{ ndownloads: 5 }],
+    },
+  ]) {
+    assert.throws(
+      () => readCondaForgeTotal(body, "phonometry"),
+      /another package/,
+      `expected a throw for: ${JSON.stringify(body)}`,
+    );
+  }
+});
+
+test("readCondaForgeTotal: rejects a payload it cannot believe", () => {
+  // An empty file list reads as "the package is gone", a missing or
+  // non-integer count as a silent zero or a string sum.
+  const owner = { login: "conda-forge" };
+  const unusable = [
+    undefined,
+    null,
+    {},
+    { name: "phonometry", owner, files: [] },
+    { name: "phonometry", owner, files: null },
+    { name: "phonometry", owner, files: [{}] },
+    { name: "phonometry", owner, files: [{ ndownloads: "32" }] },
+    { name: "phonometry", owner, files: [{ ndownloads: NaN }] },
+    { name: "phonometry", owner, files: [{ ndownloads: -1 }] },
+  ];
+  for (const body of unusable) {
+    assert.throws(
+      () => readCondaForgeTotal(body, "phonometry"),
       TypeError,
       `expected a throw for: ${JSON.stringify(body)}`,
     );

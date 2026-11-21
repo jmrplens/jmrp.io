@@ -116,7 +116,8 @@ export async function refreshDownloadsFile({
     log(
       `  ✓ Downloads total: ${total.toLocaleString("en-US")} ` +
         `(releases ${sources.githubReleases}, docker ${sources.dockerHub}, ` +
-        `nuget ${sources.nuget}, manual ${sources.manual}, ` +
+        `nuget ${sources.nuget}, conda-forge ${sources.condaForge}, ` +
+        `manual ${sources.manual}, ` +
         `${Object.keys(projects).length} projects; ` +
         `${excluded.githubVerification} checksum/signature fetches excluded)`,
     );

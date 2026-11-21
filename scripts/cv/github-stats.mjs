@@ -161,7 +161,8 @@ export function fetchRepoStats(slug) {
       const name = slug.split("/", 2)[1] ?? "";
       const snapshotted = snapshot?.projects?.[name]?.total;
       // Without a snapshot, the same per-project total the snapshot is made
-      // of (releases + Docker Hub + NuGet + manual), never a partial sum.
+      // of (releases + Docker Hub + NuGet + conda-forge + manual), never a
+      // partial sum.
       let combined = downloads;
       if (typeof snapshotted === "number") combined = snapshotted;
       else if (DOWNLOAD_SOURCES[name]) {
