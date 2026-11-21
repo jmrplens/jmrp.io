@@ -1,3 +1,4 @@
+/* cspell:ignore geoip -- Influx column names written by ae-edge-row.mjs */
 import assert from "node:assert/strict";
 import { test } from "node:test";
 

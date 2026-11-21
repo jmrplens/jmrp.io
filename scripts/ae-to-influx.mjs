@@ -451,8 +451,8 @@ async function collectZone(fromS, toS, source) {
   );
   const patterns = windowPatterns(source, new Set(seen.map((r) => r.v)));
   if (patterns.length === 0) return [];
-  const rows = (await zoneRequests(source, patterns, fromS, toS)).map(
-    zoneToEdgeRow,
+  const rows = (await zoneRequests(source, patterns, fromS, toS)).map((z) =>
+    zoneToEdgeRow(z),
   );
   const key = (r) => [r.ts, r.misc, r.p, r.ip].join("\u{1}");
   rows.sort((x, y) => key(x).localeCompare(key(y)));
@@ -560,6 +560,37 @@ function argValue(name) {
   return i === -1 ? undefined : process.argv[i + 1];
 }
 
+/**
+ * Copies one zone source's window into nginx_access.
+ *
+ * @param {object} state - The saved window ends.
+ * @param {object} source - One entry of ZONE_SOURCES.
+ * @param {number} toS - The run's end, epoch seconds.
+ * @returns {Promise<{dataset: string, start?: number, written: boolean, answered: boolean, rows: number}>}
+ *   What nextState() needs for this source, and the rows written.
+ */
+async function syncZoneSource(state, source, toS) {
+  const outcome = {
+    dataset: source.dataset,
+    written: true,
+    answered: false,
+    rows: 0,
+  };
+  const window = siteWindow(state, source, toS, MAX_WINDOW_S);
+  if (window === null) return outcome;
+  outcome.start = window[0];
+  try {
+    const zoneLines = await collectZone(window[0], toS, source);
+    outcome.answered = true;
+    await influxWrite(zoneLines, NGINX_DB, "ns");
+    outcome.rows = zoneLines.length;
+  } catch (error) {
+    outcome.written = false;
+    console.error(`[ae-influx] ${source.dataset}: ${error.message}`);
+  }
+  return outcome;
+}
+
 async function main() {
   const backfillFrom = argValue("--backfill-from");
   if (backfillFrom) {
@@ -630,26 +661,16 @@ async function main() {
     }
   }
   // The zone sources (ae-zone-rows.mjs): requests no Worker logs, each
-  // source on its own window and end, like a site.
+  // source on its own window and end, like a site, and none waits for another.
   let zoneRows = 0;
-  for (const source of ZONE_SOURCES) {
-    const window = siteWindow(state, source, toS, MAX_WINDOW_S);
-    if (window === null) {
-      written[source.dataset] = true;
-      continue;
-    }
-    starts[source.dataset] = window[0];
-    try {
-      const zoneLines = await collectZone(window[0], toS, source);
-      answered[source.dataset] = true;
-      await influxWrite(zoneLines, NGINX_DB, "ns");
-      written[source.dataset] = true;
-      zoneRows += zoneLines.length;
-    } catch (error) {
-      written[source.dataset] = false;
-      failed = true;
-      console.error(`[ae-influx] ${source.dataset}: ${error.message}`);
-    }
+  for (const outcome of await Promise.all(
+    ZONE_SOURCES.map((source) => syncZoneSource(state, source, toS)),
+  )) {
+    written[outcome.dataset] = outcome.written;
+    if (outcome.start !== undefined) starts[outcome.dataset] = outcome.start;
+    if (outcome.answered) answered[outcome.dataset] = true;
+    zoneRows += outcome.rows;
+    failed ||= !outcome.written;
   }
   await influxWrite(lines);
   fs.mkdirSync(STATE_DIR, { recursive: true });

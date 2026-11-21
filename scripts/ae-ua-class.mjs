@@ -1,3 +1,4 @@
+// cspell:words otros -- Spanish labels of the copied classifier, as in workers/docs-edge/worker.js
 /**
  * The user-agent classifier of the edge Workers, for rows that no Worker
  * wrote: the requests scripts/ae-zone-rows.mjs reads from a zone's own HTTP
