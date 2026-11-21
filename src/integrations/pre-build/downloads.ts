@@ -18,8 +18,8 @@ import { safeStringify } from "../shared.js";
  * /projects/, which show a figure only once it clears
  * `DOWNLOADS_DISPLAY_MIN`.
  *
- * Which channels are counted — and which are left out, with the reason for
- * each — lives in `scripts/download-sources.mjs`, shared with the CV
+ * Which channels are counted (and which are left out, with the reason for
+ * each) lives in `scripts/download-sources.mjs`, shared with the CV
  * generators so the same project cannot be reported two different ways.
  *
  * Checksum and signature assets are excluded from every figure (see
@@ -39,7 +39,7 @@ interface DownloadsData {
   total: number;
   /** ISO timestamp of the last successful refresh. */
   generatedAt: string;
-  /** Aggregate breakdown per kind of source — a strict partition of `total`. */
+  /** Aggregate breakdown per kind of source: a strict partition of `total`. */
   sources: {
     githubReleases: number;
     dockerHub: number;
@@ -70,10 +70,10 @@ const outputPath = path.join(outputDirAbs, OUTPUT_FILE);
 /**
  * Writes a zeroed {@link DOWNLOADS_DATA_PATH}, creating its directory.
  *
- * Zero is a value the pages can show, not a broken one: `HomePage` shows "—" for
+ * Zero is a value the pages can show, not a broken one: `HomePage` shows a dash for
  * a total of 0 and `ProjectsPage` shows no figure for a project below its
  * display floor. So an empty roster degrades to "no numbers", where a missing
- * file is a hard failure — both pages import it statically.
+ * file is a hard failure: both pages import it statically.
  */
 function writeZeroed(): void {
   const empty: DownloadsData = {
@@ -101,7 +101,7 @@ function writeZeroed(): void {
  *
  * The refresh below only runs for `astro build`, but the file is imported
  * statically by two pages, so EVERY command that resolves modules needs it to
- * exist — `astro check` and `astro dev` included. While the file was tracked
+ * exist, `astro check` and `astro dev` included. While the file was tracked
  * that was free; now that it is generated, a fresh clone has none until
  * something writes one, and `astro check` would fail to resolve the import
  * before any build had a chance to run.
@@ -114,7 +114,7 @@ function writeZeroed(): void {
 export function ensureDownloadsData(logger: AstroIntegrationLogger): void {
   if (fs.existsSync(outputPath)) return;
   writeZeroed();
-  logger.info(`  ✓ No ${OUTPUT_FILE} yet — wrote a zeroed one.`);
+  logger.info(`  ✓ No ${OUTPUT_FILE} yet; wrote a zeroed one.`);
 }
 
 /**

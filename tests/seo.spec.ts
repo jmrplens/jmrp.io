@@ -15,12 +15,17 @@
  * Per-page tests run in parallel across workers for maximum performance.
  * Dynamically tests all pages discovered from the sitemap.
  */
-// cspell:locale es,en — the llms-full.txt assertion below lists that file's H2
+// cspell:locale es,en
+// The llms-full.txt assertion below lists that file's H2
 // headings verbatim, and half of them are the Spanish profile sections. They
 // are expected values copied from the document, not prose, so they cannot be
 // written in English; the same treatment `@utils/llms/listing-markdown` gets.
 
+import fs from "node:fs";
+import path from "node:path";
+
 import { expect, test } from "@playwright/test";
+import { load as parseYaml } from "js-yaml";
 
 import { getCachedPages } from "./utils";
 
@@ -139,7 +144,7 @@ test.describe("SEO Per-Page Checks", () => {
         ).toBeLessThanOrEqual(160);
 
         // Robots meta tag should be present. Indexable pages additionally
-        // lift the default snippet/preview caps — the site's whole posture is
+        // lift the default snippet/preview caps: the site's whole posture is
         // to be quotable, so the conservative defaults work against it. The
         // trailing group is optional because noindex pages omit it, where the
         // directives would be meaningless. Still anchored at both ends so a
@@ -161,12 +166,12 @@ test.describe("SEO Per-Page Checks", () => {
         // og:image gets more than a presence check: BaseHead points it AND
         // twitter:image at /og/<pathname>.png without ever checking that the
         // card was generated, so a page missing from STATIC_PAGES ships a 404
-        // preview image in both locales — GEO audit #6, finding M1.
+        // preview image in both locales (GEO audit #6, finding M1).
         //
         // The value is judged whole before anything is derived from it. Going
         // straight to `new URL(ogImage ?? "", "https://jmrp.io").pathname`
         // resolves a blank, whitespace-only or relative og:image to "/", whose
-        // 200 then "proves" a card that was never declared — and dropping the
+        // 200 then "proves" a card that was never declared, and dropping the
         // origin lets a card hosted on someone else's domain pass on the local
         // path's 200. Open Graph wants an absolute URL and every card here is
         // same-origin, which is also what makes swapping in the preview
@@ -414,7 +419,7 @@ test.describe("SEO & Metadata Checks", () => {
       if (match && match[1].length === 2) structural.push(match[2]);
     }
 
-    // Only true document sections may be H2 — post and tool bodies must be
+    // Only true document sections may be H2: post and tool bodies must be
     // demoted below their own title, or H2-boundary chunkers would detach
     // every section from its article.
     expect(structural).toEqual([
@@ -424,8 +429,8 @@ test.describe("SEO & Metadata Checks", () => {
       "Developer Tools",
       "Developer Tools (Español)",
       // The listing twins llms-full.txt never indexed: the series hubs, the
-      // tool categories — which were in no index at all, by neither their
-      // .md nor their HTML URL — and /feeds/. Twenty published documents.
+      // tool categories (which were in no index at all, by neither their
+      // .md nor their HTML URL) and /feeds/. Twenty published documents.
       "Series",
       "Series (Español)",
       "Tool Categories",
@@ -450,7 +455,7 @@ test.describe("SEO & Metadata Checks", () => {
       // stating reuse terms per kind of work; it is a real document section,
       // not a post body, so H2 is where it belongs.
       "License",
-      // The Spanish profile sections were absent entirely — the document
+      // The Spanish profile sections were absent entirely: the document
       // carried both languages for posts and tools but only English for the
       // pages, so half the site had no entry under the index that promised it.
       "Inicio",
@@ -463,7 +468,7 @@ test.describe("SEO & Metadata Checks", () => {
       "Licencia",
       // Not a page of this site: the author's MCP endpoints live on
       // mcp.jmrp.io. Its own H2 because these are callable endpoints, not
-      // prose to read — see mcpBlock() in `@utils/llms`. Both languages in
+      // prose to read (see mcpBlock() in `@utils/llms`). Both languages in
       // the combined document, like the post/tool sections above.
       "MCP Servers (self-hosted, different domain)",
       "Servidores MCP (autoalojados, en otro dominio)",
@@ -483,7 +488,7 @@ test.describe("SEO & Metadata Checks", () => {
     expect(content).toContain("## Blog Posts (Español)");
     expect(content).toContain("## Developer Tools (Español)");
 
-    // Every post line carries TWO links — the article and its markdown twin —
+    // Every post line carries TWO links (the article and its markdown twin),
     // so the count has to name which one it means or it doubles. The twin is
     // `<page>/index.md`: the spec's form for a URL with no file name.
     const esPosts =
@@ -500,8 +505,8 @@ test.describe("SEO & Metadata Checks", () => {
 
   test("llms.txt indexes the tool category twins", async ({ page }) => {
     // These ten twins were in no index at all: llms.txt had no categories
-    // section, and /tools/index.md — whose generator builds exactly these
-    // lines — is never routed. Ten of the thirteen twins never fetched once
+    // section, and /tools/index.md, whose generator builds exactly these
+    // lines, is never routed. Ten of the thirteen twins never fetched once
     // in 22 days were these (GEO audit #6, A2).
     const content = await (await page.request.get("/llms.txt")).text();
     expect(content).toContain("## Tool Categories");
@@ -537,7 +542,7 @@ test.describe("SEO & Metadata Checks", () => {
       // The re-verification claim reaches machines, not only the byline: post
       // 004 pins `lastVerified` with the version it was re-tested against.
       // Without this the twin silently drops the strongest freshness signal
-      // the article makes — which is how post 011 came to advertise a
+      // the article makes, which is how post 011 came to advertise a
       // `dateModified` 67 days older than its own page said it was.
       expect(body, path).toMatch(/^Instructions re-tested: \d{4}-\d{2}-\d{2}/m);
       // No component tag may survive the conversion.
@@ -596,9 +601,9 @@ test.describe("SEO & Metadata Checks", () => {
   });
 
   test("a page without a twin does not claim one", async ({ page }) => {
-    // The four pure listings are excluded from twins on purpose — llms.txt
+    // The four pure listings are excluded from twins on purpose: llms.txt
     // already publishes that inventory (see the TWINNED_PAGES doc comment in
-    // src/utils/llms.ts) — so the tag must not appear there.
+    // src/utils/llms.ts), so the tag must not appear there.
     for (const pagePath of ["/blog/", "/tools/", "/es/blog/", "/es/tools/"]) {
       await page.goto(pagePath);
       await expect(
@@ -611,7 +616,7 @@ test.describe("SEO & Metadata Checks", () => {
   test("the Spanish corpus reaches its post bodies", async ({ page }) => {
     // This used to assert a post TITLE and call it a body check. It passed for
     // the wrong reason: the string it looked for is the title of post 012, and
-    // titles appear in the index links whether or not any body is present — so
+    // titles appear in the index links whether or not any body is present, so
     // the assertion survived the bodies moving out to one file per post and
     // guarded nothing.
     const index = await (await page.request.get("/llms-full.txt")).text();
@@ -871,5 +876,87 @@ test.describe("Markdown twins: production audit 2026-09-27", () => {
     const full = await (await page.request.get("/llms-full.txt")).text();
     expect(full).toContain(`A build-time snapshot (${date})`);
     expect(full).toContain(`As of ${date}, the page also names`);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Markdown twins: the /projects/ cards' listings (package indexes and hubs)
+// ---------------------------------------------------------------------------
+
+/** One `listings` entry of a project in `projects.yaml`, as the card links it. */
+interface ProjectListing {
+  label: string;
+  url: string;
+}
+
+/**
+ * Every project in `projects.yaml` that declares `listings`, read from the
+ * YAML itself rather than from a hard-coded list, so a listing added later is
+ * covered the day it lands and a project that loses its listings drops out.
+ *
+ * @returns The display name (the twin's `### <name>` heading) and listings.
+ */
+function projectsWithListings(): {
+  name: string;
+  listings: ProjectListing[];
+}[] {
+  const doc = parseYaml(
+    fs.readFileSync(path.resolve("src/content/profile/projects.yaml"), "utf-8"),
+  ) as { projects: { name: string; listings?: ProjectListing[] }[] };
+  return doc.projects.flatMap((project) =>
+    project.listings && project.listings.length > 0
+      ? [{ name: project.name, listings: project.listings }]
+      : [],
+  );
+}
+
+test.describe("Markdown twins: project listings", () => {
+  test("every card listing appears once, under its own project", async ({
+    page,
+  }) => {
+    // The twin used to drop the listings the card links: the card sent a
+    // reader to phonometry's PyPI and conda-forge pages while the markdown
+    // copy named neither, so "how do I install it" had no answer there.
+    // Exactly once guards both directions: a listing also folded into the
+    // "Also at" line (projects.yaml forbids repeating one under `sameAs`)
+    // would print twice, and a line under the wrong heading would attach the
+    // package to the wrong project.
+    const projects = projectsWithListings();
+    expect(projects.length).toBeGreaterThan(0);
+
+    for (const twinPath of ["/projects/index.md", "/es/projects/index.md"]) {
+      const response = await page.request.get(twinPath);
+      expect(response.ok(), twinPath).toBe(true);
+      const lines = (await response.text()).split("\n");
+      // URLs as whole tokens: a substring count would also match
+      // `.../mikroscope` inside `.../mikroscope-agent`.
+      const tokens = lines.flatMap((line) => line.split(/[\s,]+/u));
+
+      for (const { name, listings } of projects) {
+        const start = lines.indexOf(`### ${name}`);
+        expect(start, `${twinPath}: heading of ${name}`).toBeGreaterThan(-1);
+        // The section runs to the next `##` or `###` heading.
+        const next = lines.findIndex(
+          (line, index) => index > start && /^#{2,3} /u.test(line),
+        );
+        const section = lines.slice(
+          start + 1,
+          next === -1 ? lines.length : next,
+        );
+
+        for (const { label, url } of listings) {
+          const where = `${twinPath}: ${name} ${label}`;
+          const line = `- ${label}: ${url}`;
+          expect(
+            section.filter((candidate) => candidate === line),
+            where,
+          ).toHaveLength(1);
+          expect(
+            tokens.filter((token) => token === url),
+            where,
+          ).toHaveLength(1);
+        }
+      }
+    }
   });
 });

@@ -39,8 +39,8 @@ const contributionsData = asContributionsDataset(rawContributionsData);
  * Q-id. The YAML stays the single source and the markdown is derived from it,
  * so the structured data and the twin can never disagree.
  *
- * `/uses/` has no schema, but it is an inventory — a table of names and
- * details — and an inventory written as prose is worse in both directions.
+ * `/uses/` has no schema, but it is an inventory (a table of names and
+ * details), and an inventory written as prose is worse in both directions.
  *
  * @module
  */
@@ -48,7 +48,7 @@ const contributionsData = asContributionsDataset(rawContributionsData);
 /** A rendered markdown document, as lines. */
 type Lines = string[];
 
-/** `Name (Q123)` — a topic with its Wikidata id. */
+/** `Name (Q123)`: a topic with its Wikidata id. */
 function namedTopic(topic: { name: string; wikidata: string }): string {
   return `${topic.name} (${topic.wikidata})`;
 }
@@ -64,8 +64,8 @@ function item(name: string, detail?: string): string {
  *
  * The same document, the same threshold and therefore the same DECISION as
  * `ProjectsPage.astro`: a project under `DOWNLOADS_DISPLAY_MIN` renders no
- * figure, because "a small number next to a project reads as a verdict on it"
- * — an editorial call the twin has no business overriding, and one the page's
+ * figure, because "a small number next to a project reads as a verdict on it":
+ * an editorial call the twin has no business overriding, and one the page's
  * own methodology note states out loud ("a project shows its own figure only
  * once it passes 1,000"). Publishing here what the page withholds would make
  * that sentence false in the very document it travels in.
@@ -100,7 +100,7 @@ function downloadsOf(id: string): number | undefined {
  * Dropped, exactly as the page drops it, when the hand-read date is missing or
  * unparseable: `downloads.json` is generated and git-ignored, so a build host
  * can hold a copy that predates the field, and `Intl.DateTimeFormat.format`
- * throws on an invalid Date. The `typeof` guard is load-bearing there too —
+ * throws on an invalid Date. The `typeof` guard is load-bearing there too:
  * `new Date(null)` is the epoch, not an invalid date.
  *
  * @param locale - Which locale's copy, and which date format.
@@ -133,8 +133,8 @@ function downloadsMethodologyLines(locale: "en" | "es"): Lines {
  *
  * ── Why it carries more than the bio ──────────────────────────────────────
  * This twin used to emit the lead, the note, "I build", "I write about" and
- * education, and stopped there — 41% of the page's word count and 36% of its
- * vocabulary, against 104–159% for every other twin. What it dropped was the
+ * education, and stopped there: 41% of the page's word count and 36% of its
+ * vocabulary, against 104 to 159% for every other twin. What it dropped was the
  * half of the page worth citing: the four featured open-source projects with
  * their technologies and metrics, the contact block, and the editorial &
  * corrections policy that every post's AI-assistance disclosure links to. On
@@ -179,7 +179,7 @@ export async function aboutLines(
   const hosted = await getProjects();
   // Throwing, not filtering: a name in `featuredProjects` that matches no CV
   // project would drop that project from the twin while AboutPage still
-  // rendered it — the page and its markdown copy would disagree, silently and
+  // rendered it: the page and its markdown copy would disagree, silently and
   // in the direction nobody checks. Same failure class as the missing
   // about.yaml above, so it gets the same treatment.
   const featured = entry.data.featuredProjects.map((name) => {
@@ -210,7 +210,7 @@ export async function aboutLines(
     "",
     // The same three rows the "say hi" card renders. The address is written
     // in plain text on purpose: ObfuscatedEmail exists to keep it out of the
-    // MARKUP, and this document is machine-readable by definition — the very
+    // MARKUP, and this document is machine-readable by definition, and the very
     // same address is already published in person.jsonld and security.txt.
     `- git: https://github.com/jmrplens`,
     `- mail: ${entry.data.person.email}`,
@@ -425,6 +425,14 @@ function extraLinkLines(
     ...(p.endpoint
       ? [`- ${t("pages.projects.twin.endpoint")}: ${p.endpoint}`]
       : []),
+    // The listings the card links (package indexes and hubs: PyPI,
+    // conda-forge, npm, NuGet), each under its own name, as the card labels
+    // it. They answer "how do I install this", and the twin used to drop
+    // them: the card linked phonometry's PyPI and conda-forge pages while
+    // the twin named neither.
+    ...(p.listings ?? []).map(
+      (listing) => `- ${listing.label}: ${listing.url}`,
+    ),
     ...(p.sameAs && p.sameAs.length > 0
       ? [`- ${t("pages.projects.twin.alsoAt")}: ${p.sameAs.join(", ")}`]
       : []),

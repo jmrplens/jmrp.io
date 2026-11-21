@@ -76,10 +76,13 @@
  * `node scripts/ae-to-influx.mjs --backfill-from 2026-08-26T17:00:00Z
  * [--backfill-to <iso>]` replays the edge-served rows (nginx_access only)
  * hour by hour from that instant up to the end recorded in the state file,
- * without touching the state. Timestamps are deterministic, so replaying a
- * window rewrites the same points. That only holds for rows written with the
- * current set of tags: a replay from before 2026-11-04 adds the cf_* tags, which
- * makes new points beside the old ones and counts those requests twice.
+ * without touching the state. The zone sources only read the last 31 days,
+ * all the zone keeps on the Free plan (ZONE_RETENTION_S, ae-zone-rows.mjs),
+ * measured as each window runs; the run says once where they start.
+ * Timestamps are deterministic, so replaying a window rewrites the same
+ * points. That only holds for rows written with the current set of tags: a
+ * replay from before 2026-11-04 adds the cf_* tags, which makes new points
+ * beside the old ones and counts those requests twice.
  *
  * Runs from a systemd timer every 5 minutes. Manual: `node scripts/ae-to-influx.mjs`.
  */
@@ -100,10 +103,10 @@ import {
   ZONE_SOURCES,
 } from "./ae-sites.mjs";
 import {
-  PAGE_SIZE,
-  windowPatterns,
-  zoneQuery,
-  zoneToEdgeRow,
+  collectZone,
+  epochSecondsNow,
+  zoneBackfillCutter,
+  zoneBackfillNotice,
 } from "./ae-zone-rows.mjs";
 import { runWithConcurrency } from "./utils/concurrency.mjs";
 
@@ -408,62 +411,8 @@ async function graphql(body) {
   return answer.data;
 }
 
-/**
- * Every zone request of [fromS, toS) on some paths. A page that comes back
- * full is not the whole window: the window is halved until each half fits.
- *
- * @param {object} source - The zone source (ae-sites.mjs).
- * @param {string[]} patterns - The path patterns.
- * @param {number} fromS - Window start, epoch seconds.
- * @param {number} toS - Window end, epoch seconds.
- * @returns {Promise<object[]>} The requests, oldest first.
- */
-async function zoneRequests(source, patterns, fromS, toS) {
-  const data = await graphql(zoneQuery(source, patterns, fromS, toS));
-  const rows = data.viewer.zones[0]?.httpRequestsAdaptive ?? [];
-  if (rows.length < PAGE_SIZE) return rows;
-  if (toS - fromS <= 1) {
-    throw new Error(
-      `${source.site}: more than ${PAGE_SIZE} requests in one second`,
-    );
-  }
-  const mid = Math.floor((fromS + toS) / 2);
-  return [
-    ...(await zoneRequests(source, patterns, fromS, mid)),
-    ...(await zoneRequests(source, patterns, mid, toS)),
-  ];
-}
-
-/**
- * One `nginx_access` row per request a zone source read for the window
- * (ae-zone-rows.mjs), with the timestamps collectEdgeServed gives a row
- * without the Worker's millisecond clock: the second, then a sequence.
- *
- * @param {number} fromS - Window start, epoch seconds.
- * @param {number} toS - Window end, epoch seconds.
- * @param {object} source - The zone source.
- * @returns {Promise<string[]>} Line-protocol lines for database `nginx`.
- */
-async function collectZone(fromS, toS, source) {
-  const seen = await aeQuery(
-    `SELECT blob12 AS v, count() AS n FROM ${source.worker.dataset} WHERE timestamp >= toDateTime(${fromS}) AND timestamp < toDateTime(${toS}) GROUP BY v`,
-    source.worker.account,
-  );
-  const patterns = windowPatterns(source, new Set(seen.map((r) => r.v)));
-  if (patterns.length === 0) return [];
-  const rows = (await zoneRequests(source, patterns, fromS, toS)).map((z) =>
-    zoneToEdgeRow(z),
-  );
-  const key = (r) => [r.ts, r.misc, r.p, r.ip].join("\u{1}");
-  rows.sort((x, y) => key(x).localeCompare(key(y)));
-  const perSecond = new Map();
-  return rows.map((r) => {
-    const seq = (perSecond.get(r.ts) || 0) + 1;
-    perSecond.set(r.ts, seq);
-    const { tags, fields } = edgeRow(r, source);
-    return `nginx_access,${tags.join(",")} ${fields.join(",")} ${r.ts}${String(seq).padStart(9, "0")}`;
-  });
-}
+/** The queries collectZone (ae-zone-rows.mjs) runs, the real ones. */
+const ZONE_QUERY = Object.freeze({ aeQuery, graphql });
 
 /** Writes line protocol to InfluxDB 3 (v2-compatible endpoint). */
 async function influxWrite(lines, db = DB, precision = "s") {
@@ -497,13 +446,24 @@ async function backfill(fromS, toS) {
   for (let a = fromS; a < toS; a += HOUR) {
     windows.push([a, Math.min(a + HOUR, toS)]);
   }
+  // The zone keeps 31 days: an older window would only be refused and fail
+  // the run, so the zone sources skip it, said once here and not per window.
+  // The edge itself is measured again as each window runs (zoneBackfillCutter).
+  const notice = zoneBackfillNotice(
+    ZONE_SOURCES.map((s) => s.dataset),
+    fromS,
+    toS,
+    epochSecondsNow(),
+  );
+  if (notice) console.warn(`[ae-influx] ${notice}`);
+  const zoneCut = zoneBackfillCutter();
   // One window at a time: a backfill can span days of hourly windows, and
   // each is a set of Analytics Engine queries plus an InfluxDB write.
   const counts = await runWithConcurrency(
     windows.map(
       ([a, b]) =>
         () =>
-          backfillWindow(a, b, state, failedSites),
+          backfillWindow(a, b, state, failedSites, zoneCut),
     ),
     1,
   );
@@ -526,32 +486,55 @@ async function backfill(fromS, toS) {
  * @param {number} b - Window end, epoch seconds.
  * @param {object | null} state - The state file, for firstRowPending.
  * @param {Set<string>} failedSites - Gains each site whose query failed for real.
+ * @param {(fromS: number, toS: number) => [number, number] | null} zoneCut - What the zone keeps of [a, b) now (zoneBackfillCutter).
  * @returns {Promise<number>} How many rows were written.
  */
-async function backfillWindow(a, b, state, failedSites) {
+async function backfillWindow(a, b, state, failedSites, zoneCut) {
   const edge = await collectSites(EDGE_SITES, (site) =>
     collectEdgeServed(a, b, site),
   );
-  const zone = await collectSites(ZONE_SOURCES, (source) =>
-    collectZone(a, b, source),
-  );
+  // Measured after the Worker queries, just before the zone's own is sent.
+  const zoneWindow = zoneCut(a, b);
+  const zone = zoneWindow
+    ? await collectSites(ZONE_SOURCES, (source) =>
+        collectZone(zoneWindow[0], zoneWindow[1], source, ZONE_QUERY),
+      )
+    : { lines: [], failed: [] };
   const lines = [...edge.lines, ...zone.lines];
-  const failed = [...edge.failed, ...zone.failed];
   await influxWrite(lines, NGINX_DB, "ns");
-  for (const { site, error } of failed) {
+  for (const { site, error } of edge.failed) {
     if (firstRowPending(site, state, error.message)) {
       console.warn(
-        `[ae-influx] ${site.site}: no row yet (${error.message}); window empty`,
+        `[ae-influx] ${site.site}: no row yet (${logLine(error)}); window empty`,
       );
     } else {
       failedSites.add(site.site);
-      console.error(`[ae-influx] ${site.site}: ${error.message}`);
+      console.error(`[ae-influx] ${site.site}: ${logLine(error)}`);
     }
+  }
+  // A zone source shares its `site` with the Worker dataset of the same
+  // host, so it is named by its dataset, as main() names it, and a failure
+  // of one is never read as a failure of the other.
+  for (const { site: source, error } of zone.failed) {
+    failedSites.add(source.dataset);
+    console.error(`[ae-influx] ${source.dataset}: ${logLine(error)}`);
   }
   console.log(
     `[ae-influx] backfill ${new Date(a * 1000).toISOString()} → ${new Date(b * 1000).toISOString()}: ${lines.length} edge-served rows`,
   );
   return lines.length;
+}
+
+/**
+ * An error message as one log line. Messages carry text from Cloudflare's
+ * and InfluxDB's answers, and a CR or LF in one would start a forged entry
+ * in the journal (Sonar S5145), so each run of them becomes a space.
+ *
+ * @param {Error} error - The error caught.
+ * @returns {string} Its message on one line.
+ */
+function logLine(error) {
+  return String(error.message).replaceAll(/[\r\n]+/gu, " ");
 }
 
 /** Reads `--name value` from argv. */
@@ -580,34 +563,90 @@ async function syncZoneSource(state, source, toS) {
   if (window === null) return outcome;
   outcome.start = window[0];
   try {
-    const zoneLines = await collectZone(window[0], toS, source);
+    const zoneLines = await collectZone(window[0], toS, source, ZONE_QUERY);
     outcome.answered = true;
     await influxWrite(zoneLines, NGINX_DB, "ns");
     outcome.rows = zoneLines.length;
   } catch (error) {
     outcome.written = false;
-    console.error(`[ae-influx] ${source.dataset}: ${error.message}`);
+    console.error(`[ae-influx] ${source.dataset}: ${logLine(error)}`);
   }
   return outcome;
 }
 
-async function main() {
-  const backfillFrom = argValue("--backfill-from");
-  if (backfillFrom) {
-    const fromS = Math.floor(Date.parse(backfillFrom) / 1000);
-    let toS;
-    const toArg = argValue("--backfill-to");
-    toS = toArg
-      ? Math.floor(Date.parse(toArg) / 1000)
-      : JSON.parse(fs.readFileSync(STATE_FILE, "utf8")).lastEnd;
-    if (
-      !Number.isSafeInteger(fromS) ||
-      !Number.isSafeInteger(toS) ||
-      fromS >= toS
-    ) {
-      throw new Error("backfill: invalid range");
+/**
+ * Copies one Worker site's window into nginx_access, the way syncZoneSource
+ * does for a zone source. Never throws: a failure is in the outcome.
+ *
+ * @param {object | null} state - The saved window ends.
+ * @param {object} site - One entry of EDGE_SITES.
+ * @param {number} toS - The run's end, epoch seconds.
+ * @returns {Promise<{dataset: string, start?: number, written: boolean, answered: boolean, rows: number, failed: boolean}>}
+ *   What nextState() needs for this site, the rows written, and whether it
+ *   failed for real (a dataset with no row yet keeps its end without failing
+ *   the run).
+ */
+async function syncEdgeSite(state, site, toS) {
+  const outcome = {
+    dataset: site.dataset,
+    written: true,
+    answered: false,
+    rows: 0,
+    failed: false,
+  };
+  const window = siteWindow(state, site, toS, MAX_WINDOW_S);
+  if (window === null) return outcome;
+  outcome.start = window[0];
+  try {
+    const edgeLines = await collectEdgeServed(window[0], toS, site);
+    outcome.answered = true;
+    await influxWrite(edgeLines, NGINX_DB, "ns");
+    outcome.rows = edgeLines.length;
+  } catch (error) {
+    outcome.written = false;
+    if (firstRowPending(site, state, error.message)) {
+      // Its dataset has no row yet: an empty window that keeps the end.
+      console.warn(
+        `[ae-influx] ${site.site}: no row yet (${logLine(error)}); window empty`,
+      );
+    } else {
+      outcome.failed = true;
+      console.error(`[ae-influx] ${site.site}: ${logLine(error)}`);
     }
-    await backfill(fromS, toS);
+  }
+  return outcome;
+}
+
+/**
+ * The range `--backfill-from <iso> [--backfill-to <iso>]` asks for, the end
+ * defaulting to the one recorded in the state file; null when the run is not
+ * a backfill.
+ *
+ * @returns {[number, number] | null} [fromS, toS), epoch seconds.
+ * @throws {Error} When the range is not a valid, non-empty one.
+ */
+function backfillRange() {
+  const backfillFrom = argValue("--backfill-from");
+  if (!backfillFrom) return null;
+  const fromS = Math.floor(Date.parse(backfillFrom) / 1000);
+  const toArg = argValue("--backfill-to");
+  const toS = toArg
+    ? Math.floor(Date.parse(toArg) / 1000)
+    : JSON.parse(fs.readFileSync(STATE_FILE, "utf8")).lastEnd;
+  if (
+    !Number.isSafeInteger(fromS) ||
+    !Number.isSafeInteger(toS) ||
+    fromS >= toS
+  ) {
+    throw new Error("backfill: invalid range");
+  }
+  return [fromS, toS];
+}
+
+async function main() {
+  const range = backfillRange();
+  if (range) {
+    await backfill(...range);
     return;
   }
   const nowS = Math.floor(Date.now() / 1000);
@@ -628,50 +667,29 @@ async function main() {
   const lines = shared ? await collectWindow(shared[0], toS) : [];
   // Each site reads its own window and moves its own end: one account or
   // dataset that fails is retried from where it stopped on the next run and
-  // does not hold the others back (ae-sites.mjs).
+  // does not hold the others back (ae-sites.mjs). The Worker sites run one at
+  // a time, as they always have.
+  const edge = await runWithConcurrency(
+    EDGE_SITES.map((site) => () => syncEdgeSite(state, site, toS)),
+    1,
+  );
+  // The zone sources (ae-zone-rows.mjs): requests no Worker logs, each
+  // source on its own window and end, like a site, and none waits for another.
+  const zone = await Promise.all(
+    ZONE_SOURCES.map((source) => syncZoneSource(state, source, toS)),
+  );
   const written = {};
   const starts = {};
   const answered = {};
-  let failed = false;
-  let edgeRows = 0;
-  for (const site of EDGE_SITES) {
-    const window = siteWindow(state, site, toS, MAX_WINDOW_S);
-    if (window === null) {
-      written[site.dataset] = true;
-      continue;
-    }
-    starts[site.dataset] = window[0];
-    try {
-      const edgeLines = await collectEdgeServed(window[0], toS, site);
-      answered[site.dataset] = true;
-      await influxWrite(edgeLines, NGINX_DB, "ns");
-      written[site.dataset] = true;
-      edgeRows += edgeLines.length;
-    } catch (error) {
-      written[site.dataset] = false;
-      if (firstRowPending(site, state, error.message)) {
-        // Its dataset has no row yet: an empty window that keeps the end.
-        console.warn(
-          `[ae-influx] ${site.site}: no row yet (${error.message}); window empty`,
-        );
-      } else {
-        failed = true;
-        console.error(`[ae-influx] ${site.site}: ${error.message}`);
-      }
-    }
-  }
-  // The zone sources (ae-zone-rows.mjs): requests no Worker logs, each
-  // source on its own window and end, like a site, and none waits for another.
-  let zoneRows = 0;
-  for (const outcome of await Promise.all(
-    ZONE_SOURCES.map((source) => syncZoneSource(state, source, toS)),
-  )) {
+  for (const outcome of [...edge, ...zone]) {
     written[outcome.dataset] = outcome.written;
     if (outcome.start !== undefined) starts[outcome.dataset] = outcome.start;
     if (outcome.answered) answered[outcome.dataset] = true;
-    zoneRows += outcome.rows;
-    failed ||= !outcome.written;
   }
+  const rowsOf = (outcomes) => outcomes.reduce((sum, o) => sum + o.rows, 0);
+  const failed =
+    edge.some((outcome) => outcome.failed) ||
+    zone.some((outcome) => !outcome.written);
   await influxWrite(lines);
   fs.mkdirSync(STATE_DIR, { recursive: true });
   fs.writeFileSync(
@@ -679,7 +697,7 @@ async function main() {
     JSON.stringify(nextState(state, toS, written, starts, answered)),
   );
   console.log(
-    `[ae-influx] → ${new Date(toS * 1000).toISOString()}: ${lines.length} points (cloudflare), ${edgeRows} edge-served rows and ${zoneRows} zone rows (nginx_access)`,
+    `[ae-influx] → ${new Date(toS * 1000).toISOString()}: ${lines.length} points (cloudflare), ${rowsOf(edge)} edge-served rows and ${rowsOf(zone)} zone rows (nginx_access)`,
   );
   if (failed) process.exitCode = 1;
 }

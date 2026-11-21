@@ -705,7 +705,7 @@ sections:
             Biblioteca acústica conforme a normas: metrología sonora,
             psicoacústica, acústica de salas, edificación y ambiental y
             vibraciones, con 1899 pruebas de conformidad en CI sobre 111 dominios.
-        metrics: [PyPI]
+        metrics: ["En PyPI y conda-forge"]
         links:
           - { label: GitHub, url: https://github.com/jmrplens/phonometry }
           - { label: PyPI, url: https://pypi.org/project/phonometry/ }

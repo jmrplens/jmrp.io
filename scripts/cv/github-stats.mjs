@@ -112,7 +112,7 @@ function sumAssetDownloads(releases) {
   for (const rel of releases) {
     for (const asset of rel.assets ?? []) {
       // Checksums and signatures are fetched alongside the binary, so
-      // counting them would count the same install twice — the same
+      // counting them would count the same install twice, the same
       // rule the homepage total uses, imported rather than restated.
       if (isVerificationAsset(asset.name)) continue;
       downloads += asset.download_count ?? 0;
@@ -195,7 +195,7 @@ export function fetchRepoStats(slug) {
 export function formatStats(stats, locale) {
   const out = [`${stats.stars}★`];
   if (stats.releases > 0) out.push(`${stats.releases} releases`);
-  // Below the threshold the figure is not flattering — "104 downloads" next
+  // Below the threshold the figure is not flattering: "104 downloads" next
   // to a project reads as a verdict on it. The project keeps contributing to
   // the site-wide total either way; what is suppressed is only its own badge.
   if (stats.downloads >= DOWNLOADS_DISPLAY_MIN) {

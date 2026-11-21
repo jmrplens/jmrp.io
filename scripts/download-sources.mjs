@@ -5,7 +5,7 @@
  * One module because three consumers need the SAME number: the pre-build
  * integration that writes `src/data/downloads.json` (homepage terminal), the
  * Astro CV page, and the LaTeX CV generators (plain Node, hence `.mjs` with a
- * sibling `.d.mts` — the same arrangement as `cv/github-stats.mjs`). A project
+ * sibling `.d.mts`, the same arrangement as `cv/github-stats.mjs`). A project
  * shipped through more than one channel is the normal case, not the exception,
  * so combining them lives here rather than in each caller.
  *
@@ -21,13 +21,13 @@ const GITHUB_API = "https://api.github.com";
 export const OWNER = "jmrplens";
 
 /**
- * Per-project distribution channels, keyed by GitHub repository name — the
+ * Per-project distribution channels, keyed by GitHub repository name: the
  * same key `projects.yaml` uses as `id` and the one a CV GitHub link resolves
  * to, so a project is looked up by one identifier everywhere.
  *
  * `releases` counts the cumulative `download_count` of every release asset
- * that is a distributable artifact — see {@link isVerificationAsset} for what
- * is excluded and why; `docker` sums the cumulative `pull_count` of each
+ * that is a distributable artifact (see {@link isVerificationAsset} for what
+ * is excluded and why); `docker` sums the cumulative `pull_count` of each
  * Docker Hub image; `nuget` sums the lifetime `totalDownloads` of each NuGet
  * package id; `conda` sums the lifetime `ndownloads` anaconda.org reports for
  * every file (one per version and build) of each conda-forge package.
@@ -48,15 +48,15 @@ export const OWNER = "jmrplens";
  * Channels deliberately NOT counted, each for a different reason:
  *
  * - **Glama, cursor.directory, mcp.so, the MCP Registry, mcp.jmrp.io**:
- *   listings and documentation pages, not distribution channels — none of
+ *   listings and documentation pages, not distribution channels: none of
  *   them publishes a download counter. LobeHub is the only one with a number
  *   ("63 installs" on 2026-08-27), and an install of a hosted server is not a
  *   download of the software.
  * - **ghcr.io**: the images are mirrored there (`ghcr.io/jmrplens/*`), but the
- *   GitHub Packages API exposes no download count for containers — verified
- *   2026-08-27, the package objects have no such field.
+ *   GitHub Packages API exposes no download count for containers (verified
+ *   2026-08-27: the package objects have no such field).
  * - **Zenodo** (`gitlab-mcp-server`): the archive of each release exists and
- *   its API does report downloads, but the figure is 9 across all versions —
+ *   its API does report downloads, but the figure is 9 across all versions:
  *   an archive of record, not a way anyone installs this.
  * - **PyPI** (`phonometry`, `jmrplens-gitlab-mcp-server`): publishes no
  *   lifetime counter. `pypistats` only
@@ -141,7 +141,7 @@ export const MANUAL_COUNTS_VERIFIED_ON = "2026-08-27";
 /**
  * Minimum download count a project must reach before its own figure is shown
  * next to it (CV metric badge, project card). Below this the number says
- * nothing flattering and invites the reader to do the comparison for us — the
+ * nothing flattering and invites the reader to do the comparison for us. The
  * grand total on the homepage still includes every project regardless.
  */
 export const DOWNLOADS_DISPLAY_MIN = 1000;
@@ -162,7 +162,7 @@ const CHECKSUM_MANIFEST = /(?:^|[_-])checksums?(?:\.|$)/i;
  * release signing or GitHub artifact attestations cannot silently re-inflate
  * the published figure. Kept as a second pattern rather than one alternation
  * because a single combined regex trips the lint rules `anchor-precedence`
- * and — once `bundle` is in the list — `regex-complexity` (21 > 20).
+ * and, once `bundle` is in the list, `regex-complexity` (21 > 20).
  */
 const VERIFICATION_EXTENSION =
   /\.(?:asc|sig|pem|md5|sha\d+|bundle|sigstore\.json|spdx\.json|sbom\.json|intoto\.jsonl)$/i;
@@ -181,7 +181,7 @@ const VERIFICATION_EXTENSION =
  *
  * Total on purpose: it answers `false` for anything that is not a string, so
  * it never decides on a payload it cannot read. Rejecting such a payload is
- * {@link readAssetDownloads}'s job, before this is ever called — inline the
+ * {@link readAssetDownloads}'s job, before this is ever called; inline the
  * call and a nameless asset silently becomes a download again.
  *
  * @param {string} name - The release asset filename.
@@ -229,7 +229,7 @@ function ghHeaders(token) {
  * the caller can fall back.
  *
  * A body that is not an array (an error object, a malformed 200) yields `[]`,
- * which the caller reads as "no more pages" — the same stop condition as an
+ * which the caller reads as "no more pages", the same stop condition as an
  * empty page.
  *
  * @param {string} repo - Repository name under {@link OWNER}.
@@ -252,8 +252,8 @@ async function fetchReleasesPage(repo, page, token) {
  * Reads one release asset into the split, rejecting a payload the classifier
  * cannot judge.
  *
- * {@link isVerificationAsset} is a total predicate — it answers `false` for a
- * name that is missing or not a string — so an asset arriving without one
+ * {@link isVerificationAsset} is a total predicate (it answers `false` for a
+ * name that is missing or not a string), so an asset arriving without one
  * would be filed as a distributable artifact and inflate the published
  * figure, which is the exact error this split exists to remove.
  *
@@ -261,7 +261,7 @@ async function fetchReleasesPage(repo, page, token) {
  * {@link fetchDockerHubPulls} makes for a malformed body: the refresh stays
  * atomic, so the caller's catch keeps the last total that was fully
  * classifiable instead of persisting a quietly reduced one that no reader can
- * tell from a genuine drop. Throwing costs no build either — the only caller,
+ * tell from a genuine drop. Throwing costs no build either: the only caller,
  * `setupDownloads`, catches, warns and leaves the previous `downloads.json`
  * exactly where it was.
  *
@@ -278,8 +278,8 @@ function readAssetDownloads(asset, repo) {
   if (typeof name !== "string" || name.length === 0) {
     // The id is as unchecked as the name, so it is narrowed to a primitive
     // before it reaches the message. An object id would interpolate as
-    // "[object Object]" — and `String()` would produce exactly the same
-    // useless label — naming no asset at all; "?" at least does not pretend.
+    // "[object Object]" (and `String()` would produce exactly the same
+    // useless label), naming no asset at all; "?" at least does not pretend.
     const id = asset?.id;
     const label =
       typeof id === "number" || typeof id === "string" ? id.toString() : "?";
@@ -288,7 +288,7 @@ function readAssetDownloads(asset, repo) {
     );
   }
   // `download_count` is checked here too because a non-number would turn every
-  // sum downstream into string concatenation — publishing nonsense rather than
+  // sum downstream into string concatenation, publishing nonsense rather than
   // merely an inflated figure.
   const count = asset.download_count ?? 0;
   if (typeof count !== "number" || !Number.isFinite(count)) {
@@ -360,7 +360,7 @@ export async function fetchDockerHubPulls(slug) {
   if (!res.ok) throw new Error(`Docker Hub ${slug}: ${res.status}`);
 
   // Optional chaining guards a null/malformed 200 body; throwing (rather than
-  // returning 0) keeps the refresh atomic — the caller's catch then preserves
+  // returning 0) keeps the refresh atomic: the caller's catch then preserves
   // the last good total instead of persisting a partial one.
   const repo = await res.json();
   if (typeof repo?.pull_count !== "number") {
@@ -589,7 +589,7 @@ export function fetchProjectDownloads(repo, token) {
     const conda = condaCounts.reduce((sum, n) => sum + n, 0);
     const manual = config.manual?.count ?? 0;
     // `total` sums the five CHANNELS only. `excludedVerification` rides along
-    // for auditability and is never a summand — see isVerificationAsset.
+    // for auditability and is never a summand (see isVerificationAsset).
     return {
       total: release.artifacts + docker + nuget + conda + manual,
       releases: release.artifacts,

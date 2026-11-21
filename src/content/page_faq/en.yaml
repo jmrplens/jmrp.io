@@ -41,7 +41,7 @@ pages:
     visible: true
     items:
       - question: How are the download figures on this page counted?
-        answer: "The figures combine GitHub release artifacts, Docker Hub image pulls, NuGet installs of the meta package and MATLAB File Exchange downloads. Checksum, signature and SBOM files are excluded because every install fetches them next to the binary, and a project shows its own figure only once it passes 1,000."
+        answer: "The figures combine GitHub release artifacts, Docker Hub image pulls, NuGet installs of the meta package, conda-forge downloads and MATLAB File Exchange downloads. Checksum, signature and SBOM files are excluded because every install fetches them next to the binary, and a project shows its own figure only once it passes 1,000."
       - question: Which of these projects can be used without installing anything?
         answer: "The MCP servers: gitlab-mcp-server at https://mcp.jmrp.io/gitlab and libgen-mcp at https://mcp.jmrp.io/libgen are public endpoints any MCP client can point at."
       - question: Where are the MCP servers published?

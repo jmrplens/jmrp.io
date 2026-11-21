@@ -23,7 +23,10 @@
  * One identifier, or identifiers joined by `AND`: every term applies, each
  * to its own part, and each has a URL. `OR`, `WITH` and parentheses are
  * refused rather than guessed at: a choice between terms is not a list of
- * URLs, and no project here declares one.
+ * URLs, and no project here declares one. An operator word standing where an
+ * identifier belongs ("OR", "MIT AND WITH") is refused as well, and so is an
+ * identifier named twice ("MIT AND MIT"), which would state the same URL
+ * twice.
  *
  * @module
  */
@@ -33,6 +36,14 @@ const IDENTIFIER = /^[A-Za-z0-9.+-]+$/;
 
 /** The operator between two identifiers of an AND expression. */
 const AND = "AND";
+
+/**
+ * The SPDX operator words, lowercased. IDENTIFIER alone accepts them, so
+ * "OR" or "MIT AND WITH" would pass as identifiers and the refusal of OR and
+ * WITH would hold only between identifiers. They are compared
+ * case-insensitively because an identifier spelled "or" is just as wrong.
+ */
+const OPERATORS = new Set(["and", "or", "with"]);
 
 /** The run of whitespace between the tokens of an expression. */
 const SPACE = /\s+/;
@@ -61,14 +72,26 @@ export function licenseIdentifiers(expression) {
     throw refuse(`"${tokens.at(-1)}" ends it without an identifier after it`);
   }
   const identifiers = [];
+  // SPDX matches identifiers case-insensitively, so "MIT AND mit" names the
+  // same license twice. A Set keeps the duplicate check linear.
+  const seen = new Set();
   for (const [index, token] of tokens.entries()) {
     if (index % 2 === 1) {
       if (token !== AND) throw refuse(`"${token}" is not AND`);
-    } else if (IDENTIFIER.test(token)) {
-      identifiers.push(token);
-    } else {
+      continue;
+    }
+    const folded = token.toLowerCase();
+    if (OPERATORS.has(folded)) {
+      throw refuse(`"${token}" is an operator, not an identifier`);
+    }
+    if (!IDENTIFIER.test(token)) {
       throw refuse(`"${token}" is not an identifier`);
     }
+    if (seen.has(folded)) {
+      throw refuse(`"${token}" is named more than once`);
+    }
+    seen.add(folded);
+    identifiers.push(token);
   }
   return identifiers;
 }

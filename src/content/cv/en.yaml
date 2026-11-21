@@ -703,7 +703,7 @@ sections:
             psychoacoustics, room, building and environmental acoustics and
             vibration, with 1899 CI-enforced conformance checks across 111
             domains.
-        metrics: [PyPI]
+        metrics: ["On PyPI & conda-forge"]
         links:
           - { label: GitHub, url: https://github.com/jmrplens/phonometry }
           - { label: PyPI, url: https://pypi.org/project/phonometry/ }

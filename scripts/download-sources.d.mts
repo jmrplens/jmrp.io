@@ -2,14 +2,14 @@
 
 /** Download counts of one project, split by distribution channel. */
 export interface ProjectDownloads {
-  /** Every channel combined — the figure shown next to the project. */
+  /** Every channel combined: the figure shown next to the project. */
   total: number;
   /** Cumulative GitHub release-asset downloads. */
   releases: number;
   /**
    * Cumulative downloads of verification assets (checksums, signatures,
    * SBOMs). Reported so the exclusion is auditable; NEVER a summand of
-   * `total` — see `isVerificationAsset`.
+   * `total` (see `isVerificationAsset`).
    */
   excludedVerification: number;
   /** Cumulative Docker Hub pulls. */

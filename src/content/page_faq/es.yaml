@@ -25,7 +25,7 @@ pages:
     visible: true
     items:
       - question: ¿Cómo se cuentan las descargas de esta página?
-        answer: "Suman los artefactos de las releases de GitHub, los pulls de imagen de Docker Hub, las instalaciones de NuGet del paquete principal y las descargas de MATLAB File Exchange. Los ficheros de checksum, firma y SBOM se excluyen porque cada instalación los descarga junto al binario, y un proyecto solo muestra su cifra al superar las 1.000."
+        answer: "Suman los artefactos de las releases de GitHub, los pulls de imagen de Docker Hub, las instalaciones de NuGet del paquete principal, las descargas de conda-forge y las de MATLAB File Exchange. Los ficheros de checksum, firma y SBOM se excluyen porque cada instalación los descarga junto al binario, y un proyecto solo muestra su cifra al superar las 1.000."
       - question: ¿Cuáles de estos proyectos se pueden usar sin instalar nada?
         answer: "Los servidores MCP: gitlab-mcp-server en https://mcp.jmrp.io/gitlab y libgen-mcp en https://mcp.jmrp.io/libgen son endpoints públicos a los que puede apuntar cualquier cliente MCP."
       - question: ¿Dónde están publicados los servidores MCP?

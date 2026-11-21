@@ -61,10 +61,13 @@ const DIRECTORIES: Readonly<Record<string, Directory>> = {
   "npmjs.com": { label: "npm", icon: "simple-icons:npm" },
   "pypi.org": { label: "PyPI", icon: "simple-icons:pypi" },
   // conda-forge publishes through anaconda.org; the channel is the name a
-  // reader installs from, so it is the label, not the host.
+  // reader installs from, so it is the label, not the host. The mark is a
+  // solid anvil, not `simple-icons:condaforge`: that one is the logo's
+  // hairline outline, which at 14 px read far paler than the solid marks
+  // beside it on the card (checked in both themes, 2026-11-21).
   "anaconda.org/conda-forge": {
     label: "conda-forge",
-    icon: "simple-icons:condaforge",
+    icon: "mdi:anvil",
   },
   "nuget.org": { label: "NuGet", icon: "simple-icons:nuget" },
   "hub.docker.com": { label: "Docker Hub", icon: "simple-icons:docker" },
@@ -153,6 +156,23 @@ const MAX_KEY_DEPTH = Math.max(
 const bareHost = (host: string): string => host.replace(/^www\./, "");
 
 /**
+ * The URL as a reader would type it: bare host, path, query and fragment,
+ * with the scheme and a trailing slash dropped. Used only for rows whose
+ * label and host are shared with another row (see `projectListings`), where
+ * the path is the one part that says which package each row is.
+ *
+ * @param url - The parsed listing URL.
+ * @returns For example `pypi.org/project/PyOctaveBand`.
+ */
+const locationOf = (url: URL): string => {
+  // Trailing slashes trimmed by index, not by a `/\/+$/` replace, which
+  // backtracks on a long run of slashes (Sonar S5852).
+  let end = url.pathname.length;
+  while (end > 0 && url.pathname[end - 1] === "/") end -= 1;
+  return `${bareHost(url.host)}${url.pathname.slice(0, end)}${url.search}${url.hash}`;
+};
+
+/**
  * Resolves the directory entry for a URL, preferring the most specific key.
  *
  * @param url - The parsed listing URL.
@@ -179,7 +199,12 @@ export interface ProjectListing {
   label: string;
   /** Bare Iconify id; the consumer prefixes it with `i-`. */
   icon: string;
-  /** Bare host, shown as secondary text when it is not already the label. */
+  /**
+   * Secondary text, shown when it is not already the label: the bare host,
+   * or, when another listing of the same project shares this row's label,
+   * the host plus path (`pypi.org/project/PyOctaveBand`). The consumer feeds
+   * it into the row's accessible name as well, so the two cannot disagree.
+   */
   host: string;
   /**
    * Whether this URL is also one of the card's rendered `listings` links.
@@ -194,17 +219,22 @@ export interface ProjectListing {
 }
 
 /**
- * Sort key for one listing: the lowercased visible LABEL.
+ * Sort key for one listing: the lowercased visible LABEL, then the lowercased
+ * secondary text.
  *
  * The label is what the reader scans, so it is what the order has to follow;
  * sorting by host would put "npmjs.com" under N and "mcp.so" under M while the
  * rows read "npm" and "mcp.so", and sorting by YAML order is no order at all.
+ * The secondary text only breaks ties between rows on the same directory,
+ * which carry their path there (see `ProjectListing.host`); the NUL between
+ * the two parts sorts below every printable character, so "PyPI" followed by
+ * anything still sorts before a longer label such as "PyPI Mirror".
  *
  * @param listing - The listing to key.
  * @returns The comparison key.
  */
 const sortKey = (listing: ProjectListing): string =>
-  listing.label.toLowerCase();
+  `${listing.label}\0${listing.host}`.toLowerCase();
 
 /**
  * Every directory and registry a project is listed on, ordered for reading:
@@ -220,8 +250,19 @@ const sortKey = (listing: ProjectListing): string =>
  * and every label is ASCII because they are proper nouns that are never
  * translated (see `Directory.label`). `toLowerCase` is locale-independent by
  * spec, unlike `toLocaleLowerCase`, so it cannot introduce a Turkish-i style
- * difference either. Ties are impossible: two entries with the same label
- * would be the same directory, and the URL set is deduplicated below.
+ * difference either. Ties are impossible: two rows with the same label are
+ * two pages on the same directory, so their secondary text carries the path
+ * that tells them apart (see `sortKey`), and the URL set is deduplicated
+ * below.
+ *
+ * ── Why two rows can share a label ───────────────────────────────────────
+ * The label names the directory, not the page. phonometry is on PyPI twice,
+ * once under its current name and once under PyOctaveBand, the name it
+ * shipped under before, and both rows used to read "PyPI pypi.org": two
+ * links with the same text and different destinations, which leaves a reader
+ * no way to tell what the second one is (WCAG 2.4.4 Link Purpose). Those
+ * rows, and only those, show the URL's path as their secondary text, so
+ * every popover without a repeated directory renders exactly as before.
  *
  * Deliberately NOT included is the MCP Registry alias that
  * `buildProjectSchema` synthesizes from `registryId`. It is the one alias with
@@ -240,21 +281,27 @@ export function projectListings(project: Project): ProjectListing[] {
   const onCard = new Set(rendered.map((listing) => listing.url));
   const urls = [...new Set([...onCard, ...(project.sameAs ?? [])])];
 
-  return urls
-    .map((url) => {
-      // Safe to parse unguarded: the collection schema validates every one of
-      // these fields with `z.url()`, so an unparseable URL fails the build.
-      const parsed = new URL(url);
-      const directory = directoryFor(parsed);
-      const host = bareHost(parsed.host);
-      return {
-        url,
-        label: directory.label ?? host,
-        icon: directory.icon,
-        host,
-        onCard: onCard.has(url),
-      };
-    })
+  const rows = urls.map((url) => {
+    // Safe to parse unguarded: the collection schema validates every one of
+    // these fields with `z.url()`, so an unparseable URL fails the build.
+    const parsed = new URL(url);
+    const directory = directoryFor(parsed);
+    const host = bareHost(parsed.host);
+    return { url, parsed, label: directory.label ?? host, directory, host };
+  });
+  const labelCounts = new Map<string, number>();
+  for (const { label } of rows) {
+    labelCounts.set(label, (labelCounts.get(label) ?? 0) + 1);
+  }
+
+  return rows
+    .map(({ url, parsed, label, directory, host }) => ({
+      url,
+      label,
+      icon: directory.icon,
+      host: (labelCounts.get(label) ?? 0) > 1 ? locationOf(parsed) : host,
+      onCard: onCard.has(url),
+    }))
     .sort((a, b) => {
       // The card's own links first: those are the rows a reader arrives
       // already knowing, so they belong at the top rather than scattered

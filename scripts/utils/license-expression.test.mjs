@@ -101,6 +101,39 @@ test("OR, WITH and parentheses are refused, not read as one identifier", () => {
   assert.equal(isLicenseExpression("GPL-3.0-or-later"), true);
 });
 
+test("an operator word at an identifier position is refused", () => {
+  for (const [expression, token] of [
+    ["OR", "OR"],
+    ["AND", "AND"],
+    ["WITH", "WITH"],
+    ["or", "or"],
+    ["MIT AND OR", "OR"],
+    ["MIT AND WITH", "WITH"],
+    ["MIT AND and", "and"],
+  ]) {
+    assert.equal(isLicenseExpression(expression), false, expression);
+    assert.throws(
+      () => licenseIdentifiers(expression),
+      new RegExp(`"${token}" is an operator, not an identifier`),
+      expression,
+    );
+  }
+});
+
+test("an identifier named twice is refused, whatever its case", () => {
+  for (const [expression, token] of [
+    ["MIT AND MIT", "MIT"],
+    ["MIT AND LicenseRef-EASA-ANP AND mit", "mit"],
+  ]) {
+    assert.equal(isLicenseExpression(expression), false, expression);
+    assert.throws(
+      () => licenseIdentifiers(expression),
+      new RegExp(`"${token}" is named more than once`),
+      expression,
+    );
+  }
+});
+
 test("an identifier the table does not know falls back to itself", () => {
   // The documented fallback for a partial table; the next test refuses it
   // for every project projects.yaml lists.

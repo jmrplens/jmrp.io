@@ -208,11 +208,16 @@ projects:
       - label: PyPI
         url: https://pypi.org/project/phonometry/
         icon: simple-icons:pypi
-      # On conda-forge since 2026-11-21 (feedstock conda-forge/phonometry-feedstock);
-      # its docs site lists the same URL in `sameAs` on the shared `#software` node.
+      # On conda-forge since 2026-11-21 (feedstock conda-forge/phonometry-feedstock).
+      # Its docs site adds the same URL to `sameAs` on the shared `#software`
+      # node in jmrplens/phonometry#1185, still open on 2026-11-21; until that
+      # deploys, the two nodes differ by this one alias (not a contradiction
+      # for check-software-drift.mjs).
+      # A solid anvil: the `simple-icons:condaforge` outline reads too pale at
+      # card size (see `project-listings.ts`).
       - label: conda-forge
         url: https://anaconda.org/conda-forge/phonometry
-        icon: simple-icons:condaforge
+        icon: mdi:anvil
     # The PyPI page of PyOctaveBand, the name the project shipped under until
     # 3.0.0: its docs site names it in `sameAs` on the shared `#software` node,
     # since the same project published those releases.

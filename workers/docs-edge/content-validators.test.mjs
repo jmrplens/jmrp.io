@@ -353,13 +353,18 @@ describe("withContentValidators", () => {
   test("the largest page measured (720 KB) costs a few milliseconds", async () => {
     const page = `<!doctype html>${"<p>text</p>".repeat(65_000)}<div class="meta sl-flex"><p>Last updated: <time datetime="2026-08-29T09:20:42.000Z">x</time></p></div>`;
     await withContentValidators(new Request(`${ORIGIN}/x/`), html(page), NOW);
-    const started = performance.now();
+    // CPU time of this process, not wall-clock time: the budget is about the
+    // work the hashing does, and on a shared host other busy processes
+    // stretched the wall clock of the same run to 130.9 ms (2026-11-21, load
+    // average 50) while it took 3 ms run alone.
+    const started = process.cpuUsage();
     const response = await withContentValidators(
       new Request(`${ORIGIN}/x/`),
       html(page),
       NOW,
     );
-    const ms = performance.now() - started;
+    const { user, system } = process.cpuUsage(started);
+    const ms = (user + system) / 1000;
     assert.equal(
       response.headers.get("last-modified"),
       "Sat, 29 Aug 2026 09:20:42 GMT",

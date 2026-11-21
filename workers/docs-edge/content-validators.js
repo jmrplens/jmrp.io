@@ -161,7 +161,7 @@ export function htmlContentDate(html) {
   const start = html.lastIndexOf('<div class="meta sl-flex');
   if (start === -1) return null;
   const end = html.indexOf("</div>", start);
-  const footer = html.slice(start, end === -1 ? undefined : end);
+  const footer = html.slice(start, end === -1 ? html.length : end);
   let last = null;
   for (const match of footer.matchAll(/<time\b[^>]*\bdatetime="([^"]*)"/g)) {
     last = match[1];
