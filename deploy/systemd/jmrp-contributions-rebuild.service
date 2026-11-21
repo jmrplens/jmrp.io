@@ -29,7 +29,7 @@ WorkingDirectory=/var/www/jmrp.io
 EnvironmentFile=/etc/jmrp.io/ghc-read.env
 Environment=HOME=/root
 Environment=COREPACK_ENABLE_DOWNLOAD_PROMPT=0
-Environment=PATH=/root/.nvm/versions/node/v25.2.1/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
-ExecStart=/root/.nvm/versions/node/v25.2.1/bin/node scripts/ghc/rebuild-if-changed.mjs
+Environment=PATH=/usr/local/lib/node-lts/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+ExecStart=/usr/local/lib/node-lts/bin/node scripts/ghc/rebuild-if-changed.mjs
 TimeoutStartSec=30min
 Nice=10

@@ -36,7 +36,6 @@ Usage:
 """
 import argparse
 import datetime
-import gzip
 import json
 import os
 import pathlib
@@ -77,7 +76,9 @@ def quota_gate():
     if ARGS.skip_quota_check:
         say("quota check skipped on request")
         return
-    run = subprocess.run(["python3", str(HERE / "check_quota.py")],
+    # The interpreter running this script, not whatever "python3" the
+    # current directory's pyenv selection resolves to.
+    run = subprocess.run([sys.executable, str(HERE / "check_quota.py")],
                          capture_output=True, text=True, timeout=180)
     today = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d")
     total = None

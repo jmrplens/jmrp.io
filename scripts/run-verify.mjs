@@ -377,7 +377,7 @@ async function runVerify() {
   // --- Phase 4: Sonar — serial, non-blocking (unchanged behavior) ---
   const sonarScanResult = await runStep(
     "Security: SonarCloud Analysis",
-    "pnpm exec sonar-scanner",
+    "pnpm exec sonar-scanner-npm",
     { condition: () => !!process.env.SONAR_TOKEN },
   );
   if (!sonarScanResult.success && !sonarScanResult.skipped) {

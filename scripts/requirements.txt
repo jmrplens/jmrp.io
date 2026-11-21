@@ -1,0 +1,6 @@
+# Third-party packages the repo's Python tools import, for the interpreter
+# .python-version names (pyenv). Install with:
+#   python3 -m pip install -r scripts/requirements.txt
+# Only scripts/optimize-pdf-metadata.py needs one; workers/tools/*.py and
+# public/downloads/gen_i18n.py use the standard library alone.
+pikepdf>=10.18.2

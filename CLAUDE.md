@@ -1,7 +1,7 @@
 # CLAUDE.md - AI Context for jmrp.io
 
 > **Purpose**: Comprehensive context for Claude, Copilot, Gemini, and other AI agents working on this codebase.
-> **Last verified**: October 2026 (Astro 7.4.2, Vite 8.3 / Rolldown, UnoCSS 66.11.0, pnpm 12.14)
+> **Last verified**: November 2026 (Astro 7.4.13, Vite 8.3 / Rolldown, UnoCSS 66.13.0, pnpm 12.21, Node 26 LTS, Python 3.15 via pyenv)
 
 ## Project Overview
 
@@ -30,17 +30,18 @@
 
 | Layer           | Technology               | Version        |
 | --------------- | ------------------------ | -------------- |
-| Framework       | Astro                    | 7.4.2          |
-| Bundler         | Vite (Rolldown)          | ^8.3.5         |
-| Content         | MDX                      | 8.1.1          |
-| Styling         | UnoCSS (presetWind4)     | ^66.11.0       |
-| Islands         | Preact                   | ^11.0.1        |
+| Framework       | Astro                    | 7.4.13         |
+| Bundler         | Vite (Rolldown)          | ^8.3.8         |
+| Content         | MDX                      | 8.1.6          |
+| Styling         | UnoCSS (presetWind4)     | ^66.13.0       |
+| Islands         | Preact                   | ^11.2.0        |
 | Diagrams        | Mermaid + mermaid-isomorphic | ^11.17.2 / ^3.1.0 |
-| Syntax          | Shiki                    | ^4.5.0         |
-| Testing         | Playwright + Axe-core    | ^1.64.1 / ^4.14.0 |
+| Syntax          | Shiki                    | ^4.6.0         |
+| Testing         | Playwright + Axe-core    | ^1.65.1 / ^4.14.1 |
 | Icons           | Iconify (12 collections) | @iconify-json/* |
-| Package Manager | pnpm                     | >=12           |
-| Node            | Required                 | >=24.0.0 (LTS) |
+| Package Manager | pnpm (corepack)          | 12.21          |
+| Node            | Host and CI: `.nvmrc`    | 26 LTS (floor >=24) |
+| Python          | pyenv, `.python-version` | 3.15.2 (`scripts/requirements.txt`) |
 
 ---
 
@@ -827,7 +828,7 @@ Playwright E2E (functional + accessibility + Lighthouse). Accessibility and Ligh
 SONAR_PROJECT_KEY=jmrplens_jmrp.io node scripts/ci/get-sonar-issues.mjs
 
 # Run full scanner analysis
-pnpm exec sonar-scanner
+pnpm exec sonar-scanner-npm
 ```
 
 - **Dashboard**: `https://sonarcloud.io/dashboard?id=jmrplens_jmrp.io`
@@ -990,7 +991,7 @@ pnpm exec prettier --check .  # Format check (runs at end of build)
    - **Broken Links (Lychee)**: `lychee --config lychee.toml --root-dir dist "dist/**/*.html"`. The glob is quoted so lychee expands it recursively: the command runs under `sh` (dash), which has no globstar, and the unquoted form reached only `dist/*/*.html`, 12 of 130 pages (never the home page, a post, a tool or a Spanish subpage) until GEO audit #11. CI's `sa-lychee` quotes it for the same reason (the action runs `eval lychee ${ARGS}` in bash without globstar)
    - **Internal anchors (Lychee, offline)**: `lychee --config lychee.toml --offline --include-fragments --index-files index.html --root-dir dist "dist/**/*.html"`. Every `#fragment` of an internal link must exist on the page it names; `--index-files index.html` resolves `/about/#x` to the directory's `index.html` (without it: 148 false errors). The same check runs in the CI `sa-lychee` job
 4. **Sonar phase (serial, non-blocking)**:
-   - **SonarCloud Analysis**: `pnpm exec sonar-scanner` *(conditional: requires `SONAR_TOKEN`; warns but never blocks)*
+   - **SonarCloud Analysis**: `pnpm exec sonar-scanner-npm` *(conditional: requires `SONAR_TOKEN`; warns but never blocks)*
    - **SonarCloud Issues**: `node scripts/ci/get-sonar-issues.mjs` *(conditional: requires `SONAR_TOKEN`; recorded as a failure at the end but doesn't block E2E)*
 5. **E2E phase (serial, always last)**: **Playwright E2E**: `pnpm test:e2e`
 

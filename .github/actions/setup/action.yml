@@ -7,7 +7,10 @@ runs:
     - uses: pnpm/action-setup@v6.1.1
     - uses: actions/setup-node@v7
       with:
-        node-version-file: package.json
+        # .nvmrc names the line the host runs; package.json only states a
+        # floor (>=24), which setup-node would resolve to whatever its
+        # toolcache holds, so CI would not test the production runtime.
+        node-version-file: .nvmrc
         cache: pnpm
     - run: pnpm install --frozen-lockfile --prefer-offline
       shell: bash

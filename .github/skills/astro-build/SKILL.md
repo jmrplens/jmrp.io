@@ -58,7 +58,7 @@ Runs `scripts/run-verify.mjs` — 13 sequential steps (fail-fast except SonarClo
 | 8  | Lint: Spelling (CSpell)        | `pnpm exec cspell lint .`                          |
 | 9  | Lint: Broken Links (Lychee)   | `lychee --config lychee.toml --root-dir dist dist/**/*.html` |
 | 10 | Lint: JSDoc Coverage          | `node scripts/ci/calculate-jsdoc-coverage.mjs`     |
-| 11 | Security: SonarCloud Analysis | `pnpm exec sonar-scanner` *(if SONAR_TOKEN set)*   |
+| 11 | Security: SonarCloud Analysis | `pnpm exec sonar-scanner-npm` *(if SONAR_TOKEN set)*   |
 | 12 | Analyze: SonarCloud Issues    | `node scripts/ci/get-sonar-issues.mjs` *(if SONAR_TOKEN + SONAR_PROJECT_KEY)* |
 | 13 | Tests: Playwright E2E         | `pnpm test:e2e`                                    |
 
@@ -97,7 +97,7 @@ This script queries the SonarCloud API for:
 ### Run SonarCloud Scanner
 
 ```bash
-pnpm exec sonar-scanner  # Requires SONAR_TOKEN
+pnpm exec sonar-scanner-npm  # Requires SONAR_TOKEN
 ```
 
 ### SonarCloud Dashboard
