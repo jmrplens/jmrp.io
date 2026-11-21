@@ -45,6 +45,8 @@ interface DownloadsData {
     dockerHub: number;
     /** Lifetime NuGet downloads (meta packages only, no runtime-specific ids). */
     nuget: number;
+    /** Lifetime conda-forge downloads (every file of each package). */
+    condaForge: number;
     /** Hand-read counts (MathWorks blocks scripted requests). */
     manual: number;
   };
@@ -77,7 +79,13 @@ function writeZeroed(): void {
   const empty: DownloadsData = {
     total: 0,
     generatedAt: new Date().toISOString(),
-    sources: { githubReleases: 0, dockerHub: 0, nuget: 0, manual: 0 },
+    sources: {
+      githubReleases: 0,
+      dockerHub: 0,
+      nuget: 0,
+      condaForge: 0,
+      manual: 0,
+    },
     excluded: { githubVerification: 0 },
     manualVerifiedOn: MANUAL_COUNTS_VERIFIED_ON,
     projects: {},

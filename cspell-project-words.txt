@@ -58,6 +58,7 @@ meshmonitor
 metabolist
 mmap
 modelops
+ndownloads
 omitempty
 openwrt
 papercite
@@ -73,6 +74,7 @@ recifras
 reenvolver
 reenvuelve
 scrood
+sdist
 sysupgrade
 taskscaler
 unapprove
@@ -305,6 +307,7 @@ comprobador
 computacional
 computacionalmente
 comsol
+condaforge
 configurables
 configurarlas
 Consérvalos

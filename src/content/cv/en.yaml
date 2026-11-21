@@ -707,6 +707,8 @@ sections:
         links:
           - { label: GitHub, url: https://github.com/jmrplens/phonometry }
           - { label: PyPI, url: https://pypi.org/project/phonometry/ }
+          - label: conda-forge
+            url: https://anaconda.org/conda-forge/phonometry
           - { label: Docs, url: https://phonometry.dev/ }
       - name: cs-routeros-bouncer
         tech: Go · Firewall · MikroTik · WAF
