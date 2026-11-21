@@ -71,6 +71,8 @@ test("a failed site keeps its end; the others move on", () => {
       mcp_edge_requests: 1300,
       docs_edge_requests: 1300,
       phonometry_dev_requests: 1000,
+      // A zone source keeps an end of its own, like a site (ZONE_SOURCES).
+      "zone:phonometry.dev": 1000,
     },
     answered: [],
   });
