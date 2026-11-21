@@ -998,7 +998,7 @@ jobs:
           # now governed by the project's 'Deployment Protection' setting in the
           # Vercel Dashboard (disable it to view PR reports without auth).
           PR_ID=${{ github.event.pull_request.number || '0' }}
-          DEPLOY_URL=$(npx vercel deploy ./dist-reports --archive=tgz --name jmrp-ci-reports --token="$VERCEL_TOKEN" --yes $IS_PROD --meta prid=$PR_ID)
+          DEPLOY_URL=$(npx vercel deploy ./dist-reports --archive=tgz --project jmrp-ci-reports --token="$VERCEL_TOKEN" --yes $IS_PROD --meta prid=$PR_ID)
           echo "url=$DEPLOY_URL" >> $GITHUB_OUTPUT
       - name: Update CI Comment (Final Results)
         uses: actions/github-script@v9

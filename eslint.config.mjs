@@ -115,6 +115,13 @@ export default [
         "error",
         { allow: { "@utils/llms/mdx/types": ["markdownFor"] } },
       ],
+      // v80 (2026-11): an API-shape opinion with no autofix. Its 6 hits are
+      // exported signatures with optional trailing parameters (ae-sites
+      // nextState, the CI health score, three docs-edge Worker helpers and a
+      // test helper); folding them into an options object reshapes about 49
+      // call sites and a deployed Worker, churn a dependency bump must not
+      // carry.
+      "unicorn/prefer-options-parameter": "off",
       // Buffer.from(x, "base64") is standard Node and is the right type for the
       // crypto/fs (Buffer) flows in post-build; the Uint8Array.fromBase64 form
       // is adopted where it's a clean swap (scripts/preview-rss.mjs).

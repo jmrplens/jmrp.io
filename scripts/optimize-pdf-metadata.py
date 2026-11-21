@@ -12,7 +12,6 @@ Usage:
 import pikepdf
 import os
 import sys
-from datetime import datetime
 
 AUTHOR = "José Manuel Requena Plens"
 AUTHOR_GUARINOS = "José M. Requena-Plens, Nicolás Guarinos"

@@ -1010,6 +1010,7 @@ phpmyadmin
 pickmcp
 picó
 pids
+pikepdf
 pizarra
 pkill
 placa
@@ -1079,6 +1080,7 @@ pwgen
 pycrowdsec
 pymodbus
 pyoctaveband
+pyenv
 pypi
 pypistats
 pytest

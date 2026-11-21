@@ -39,7 +39,7 @@ function run(cmd) {
 function getDeployments(next = "") {
   try {
     const nextParam = next ? `--next ${next}` : "";
-    const cmd = `npx vercel ls ${PROJECT_NAME} --token=${TOKEN} --format json ${nextParam}`;
+    const cmd = `npx vercel ls ${PROJECT_NAME} --token=${TOKEN} --json ${nextParam}`;
     const output = run(cmd);
     return JSON.parse(output);
   } catch (error) {
@@ -81,7 +81,11 @@ function cleanup() {
       for (const dep of targetDeployments) {
         try {
           process.stdout.write(`   🗑️ Deleting ${dep.url}... `);
-          run(`npx vercel rm ${dep.url} --token=${TOKEN} --yes`);
+          // vercel 66 deprecates --yes here: the delete is approved by naming
+          // the deployment again, exactly as given in the arguments.
+          run(
+            `npx vercel rm ${dep.url} --token=${TOKEN} --confirm-name ${dep.url}`,
+          );
           console.log("✅");
           deletedCount++;
         } catch (error) {

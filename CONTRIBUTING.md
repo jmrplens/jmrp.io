@@ -74,7 +74,7 @@ This master script (`scripts/run-verify.mjs`) orchestrates 13 sequential steps (
 | 8   | Spelling (CSpell)     | `pnpm exec cspell lint .`                                                               |
 | 9   | Broken Links (Lychee) | `lychee --config lychee.toml --root-dir dist dist/**/*.html`                            |
 | 10  | JSDoc Coverage        | `node scripts/ci/calculate-jsdoc-coverage.mjs`                                          |
-| 11  | SonarCloud Analysis   | `pnpm exec sonar-scanner` _(requires `SONAR_TOKEN`)_                                    |
+| 11  | SonarCloud Analysis   | `pnpm exec sonar-scanner-npm` _(requires `SONAR_TOKEN`)_                                |
 | 12  | SonarCloud Issues     | `node scripts/ci/get-sonar-issues.mjs` _(requires `SONAR_TOKEN` + `SONAR_PROJECT_KEY`)_ |
 | 13  | Playwright E2E        | `pnpm test:e2e`                                                                         |
 
