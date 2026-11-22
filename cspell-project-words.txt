@@ -706,6 +706,7 @@ jssecurity
 JTAG
 jund
 kaspersky
+katex
 Kconfig
 KDBX
 keil

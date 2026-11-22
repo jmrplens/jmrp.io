@@ -25,8 +25,9 @@ overrides:
   "tmp": ">=0.2.5"
   # A floor, not a pin: every glob older than 13.0.6 moves to it, while the
   # direct dependency follows its own range (14 since 2026-11-01). Pinning
-  # all copies would push glob 14's matching changes onto @vercel/nft and
-  # @sentry/bundler-plugins, which were written against 13.
+  # all copies would push glob 14's matching changes onto consumers written
+  # against 13. Since 2026-11-22 @vercel/nft, the last of them, is moved to a
+  # release that asks for glob 14 itself (see its entry below).
   "glob@<13.0.6": "^13.0.6"
   "rimraf": ">=6.1.2"
   "uuid": ">=9.0.0"
@@ -92,11 +93,39 @@ overrides:
   # cheerio imports; its one breaking change is being ESM-only, which
   # cheerio's require() loads on Node 24. Drop once cheerio asks for ^1.
   "cheerio>encoding-sniffer": "^1.0.2"
+  # GHSA-g3hv-75wg-m249 (minimatch 7.0.0 to 11.0.0, fixed only in 11.0.1;
+  # every 10.x is affected). 11 drops makeRe(), Minimatch#regexp, AST and
+  # matchOne(), and its Minimatch.set entries are no longer RegExps, so each
+  # consumer was read before moving it (2026-11-22):
+  # - eslint-plugin-sonarjs 4.2.2 asks for ^10.2.6 but only calls
+  #   new Minimatch(...).match(), which 11 keeps.
+  # - @vercel/python-analysis (inside the vercel CLI) pins 10.1.1 and only
+  #   calls match(); its entry further down moves to ^11.0.1.
+  # - glob 13 reads RegExps out of Minimatch.set, so it cannot take 11. Its
+  #   one consumer was @vercel/nft 1.10.0, pinned exactly by the CLI's
+  #   builders; 1.11.11 asks for glob ^14.0.6 (minimatch 11). A minor within
+  #   1.x, used only by the builders of serverless functions, which the CI's
+  #   static `vercel deploy` never runs.
+  # Drop each once its consumer asks for minimatch 11 or nft 1.11.
+  "eslint-plugin-sonarjs>minimatch": "^11.0.1"
+  "@vercel/nft": "^1.11.11"
+  # GHSA-238p-pmpm-9mq7 (katex 0.11.0 to 0.18.1, fixed in 0.18.2). mermaid
+  # 11.17.2, the last 11.x, asks for ^0.16.47, and 0.16 to 0.18 is a major
+  # step in 0.x. mermaid only calls katex.renderToString for $$ math in
+  # diagram labels, which no page uses; the breaking changes since 0.16 are
+  # an internal API (__defineFunction), KaTeX's own CSS class names and
+  # strict-mode warnings. Renders at build time only: no katex reaches a
+  # visitor. mermaid-isomorphic 3.1.0 (^0.16.0) moves with it: it only injects
+  # katex/dist/katex.css into the page it renders in, and that stylesheet
+  # must come from the same katex as the renderer, since 0.18 renamed the
+  # classes. Drop once mermaid and mermaid-isomorphic ask for a fixed katex.
+  "mermaid>katex": "^0.19.1"
+  "mermaid-isomorphic>katex": "^0.19.1"
   "@vercel/fun>@tootallnate/once": "^3.0.1"
   "@vercel/fun>tar": "^7.5.22"
   "@vercel/node>undici": "^6.27.0"
   "@vercel/python-analysis>js-yaml": "^4.3.0"
-  "@vercel/python-analysis>minimatch": "^10.2.3"
+  "@vercel/python-analysis>minimatch": "^11.0.1"
   "@vercel/python-analysis>smol-toml": "^1.8.0"
   "@vercel/rust>smol-toml": "^1.8.0"
   "@vercel/sandbox>undici": "^7.24.0"
