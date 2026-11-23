@@ -281,6 +281,8 @@ language:
 # shelf, the markdown twin nor the JSON-LD names them, and their badge is
 # never downloaded. Seed Sower (2026-11-16, "Planted trees in the GitLab
 # forest") is not a contribution award; hidden by the author on 2026-11-20.
+# Palindrome (2026-11-22, a work item or MR with a palindromic id) is a
+# curiosity, not a contribution award; hidden by the author on 2026-11-23.
 gitlab:
   username: jmrp
   userId: 15767218
@@ -290,6 +292,7 @@ gitlab:
     - plens1
   hideAchievements:
     - gitlab-seed-sower
+    - gitlab-palindrome
 
 # See this file's header comment. Currently just the one pre-rename PyOctave
 # → phonometry titles (conda-forge/staged-recipes#34074 "Adding
