@@ -506,7 +506,7 @@ export async function contributionsPageMarkdown(
 
   // The page's shelf, line by line: tier and multiplier ("x4") for GitHub,
   // the estimated progress to the next tier where the page shows it, the
-  // award date for GitLab, and the note naming the achievements hidden by
+  // times awarded for a repeated GitLab award, and the note naming the achievements hidden by
   // design (twin audit 2026-09-27, W4).
   const achievementLines = achievements.map((a) => {
     if (a.platform !== "gitlab") {
@@ -524,13 +524,14 @@ export async function contributionsPageMarkdown(
           : "";
       return `- **${a.name}**${multiplier} (GitHub): ${tierLabel(a.tierName, t)}${progress}`;
     }
-    // A full date takes "on"/"el"; the page's month-and-year form keeps
-    // "en", which is wrong before a full date in Spanish (W6).
-    const awarded = a.awardedAt
-      ? t("pages.projectsContributions.achievementAwardedOn", {
-          date: formatDate(new Date(a.awardedAt), locale),
-        })
-      : null;
+    // No award date, as on the page; a repeated award prints its count.
+    const times = a.timesAwarded ?? 1;
+    const awarded =
+      times > 1
+        ? t("pages.projectsContributions.achievementAwardedTimes", {
+            count: times,
+          })
+        : null;
     // What the award means and, for a points level, where its points are
     // public, as the page prints them under the award.
     const meaning = gitlabAwardMeaning(a.achievement, locale);
@@ -541,9 +542,10 @@ export async function contributionsPageMarkdown(
       awarded,
       meaning ? `${meaning.text}${pointsLink}` : null,
     ].filter(Boolean);
+    const multiplier = times > 1 ? ` x${times}` : "";
     return details.length > 0
-      ? `- **${a.name}** (GitLab): ${details.join("; ")}`
-      : `- **${a.name}** (GitLab)`;
+      ? `- **${a.name}**${multiplier} (GitLab): ${details.join("; ")}`
+      : `- **${a.name}**${multiplier} (GitLab)`;
   });
   const hasGithubAchievements = achievements.some(
     (a) => a.platform !== "gitlab",

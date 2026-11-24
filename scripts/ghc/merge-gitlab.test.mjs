@@ -175,6 +175,30 @@ test("shapeGitlabAchievements marks the platform and has no progress", () => {
   assert.equal(row.awardedAt, "2026-09-14T20:11:50Z");
 });
 
+test("shapeGitlabAchievements folds repeated awards into one counted row", () => {
+  const award = (achievement, awardedAt) => ({
+    achievement,
+    name: achievement,
+    description: null,
+    namespace: null,
+    awardedAt,
+  });
+  const rows = shapeGitlabAchievements([
+    award("gitlab-notable-contributor", "2026-11-09T16:48:30Z"),
+    award("gitlab-codebase-custodian", "2026-11-20T09:10:10Z"),
+    award("gitlab-palindrome", "2026-11-22T16:07:25Z"),
+    award("gitlab-codebase-custodian", "2026-11-24T09:09:34Z"),
+  ]);
+  assert.deepEqual(
+    rows.map((row) => [row.achievement, row.timesAwarded, row.awardedAt]),
+    [
+      ["gitlab-notable-contributor", 1, "2026-11-09T16:48:30Z"],
+      ["gitlab-codebase-custodian", 2, "2026-11-24T09:09:34Z"],
+      ["gitlab-palindrome", 1, "2026-11-22T16:07:25Z"],
+    ],
+  );
+});
+
 test("loadGitlabPart falls back to the fixture's GitLab part only", async () => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "gl-merge-"));
   const fixturePath = path.join(dir, "fixture.json");

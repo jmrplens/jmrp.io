@@ -217,12 +217,34 @@ export function gitlabContributedTo(part, displayName, canonicalRepo = {}) {
  * achievements have no tiers or progress, so those fields are neutral and
  * the shelf shows the award date instead.
  *
+ * GitLab can award the same achievement more than once (Codebase Custodian,
+ * 2026-11-20 and 2026-11-24): its API returns one node per award, and its
+ * profile shows one badge with "2x". Rows are folded the same way: one per
+ * achievement, at the position of its first award, with `timesAwarded` and
+ * the latest award as `awardedAt`.
+ *
  * @param {readonly {achievement: string, name: string, description: string | null,
  *   namespace: string | null, awardedAt: string | null}[]} rows - GitLab rows.
  * @returns {object[]} Shelf rows with `platform: "gitlab"`.
  */
 export function shapeGitlabAchievements(rows) {
-  return rows.map((row) => ({
+  /** @type {Map<string, {row: (typeof rows)[number], times: number, latest: string | null}>} */
+  const byId = new Map();
+  for (const row of rows) {
+    const seen = byId.get(row.achievement);
+    if (!seen) {
+      byId.set(row.achievement, { row, times: 1, latest: row.awardedAt });
+      continue;
+    }
+    seen.times += 1;
+    if (
+      row.awardedAt &&
+      (!seen.latest || Date.parse(row.awardedAt) > Date.parse(seen.latest))
+    ) {
+      seen.latest = row.awardedAt;
+    }
+  }
+  return [...byId.values()].map(({ row, times, latest }) => ({
     platform: "gitlab",
     achievement: row.achievement,
     name: row.name,
@@ -233,7 +255,8 @@ export function shapeGitlabAchievements(rows) {
     percent: 0,
     agrees: false,
     description: row.description,
-    awardedAt: row.awardedAt,
+    awardedAt: latest,
+    timesAwarded: times,
   }));
 }
 

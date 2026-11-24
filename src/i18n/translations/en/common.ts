@@ -1129,8 +1129,7 @@ export const common = {
       achievementsHeading: "Achievements on GitHub and GitLab",
       achievementsHiddenNote:
         "Only these GitHub achievements are shown. Hidden by design: Quickdraw, YOLO, Arctic Code Vault Contributor and Public Sponsor.",
-      achievementAwardedOn: "awarded on {date}",
-      achievementAwarded: "awarded {date}",
+      achievementAwardedTimes: "awarded {count} times",
       badgeAltGitlab: "{name} achievement, awarded by GitLab",
       achievementEstimated: "estimated",
       achievementProgress: "{value} of {max} ({label})",
