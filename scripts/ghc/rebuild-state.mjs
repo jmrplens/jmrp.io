@@ -21,7 +21,8 @@
  * - `achievements`: platform, id, name, tier name and number, and the
  *   progress `count` / `nextThreshold` ONLY when the badge shelf prints
  *   them (GitHub badge, not Galaxy Brain, `agrees`, a next tier exists and
- *   the count is known), mirroring `AchievementShelf.astro`.
+ *   the count is known), mirroring `AchievementShelf.astro`; for GitLab,
+ *   also `timesAwarded` (a repeated award prints "x2").
  * - `highlights`: the curated entries (repository, number, kind, platform,
  *   both `why` texts, the summed diff size and the language they print).
  * - `contributedTo`: membership and order, with the star count rounded
@@ -385,6 +386,10 @@ export function projectDisplay(dataset) {
       progress: showsProgress(row)
         ? { count: row.count, nextThreshold: row.nextThreshold }
         : null,
+      // GitLab repeats some awards; the shelf prints how many times ("x2").
+      ...(row.platform === "gitlab" && {
+        timesAwarded: row.timesAwarded ?? 1,
+      }),
     })),
   };
 }

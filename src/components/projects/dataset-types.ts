@@ -141,8 +141,10 @@ export interface AchievementItem {
   readonly percent: number;
   /** True when the estimated tier matches the one GitHub shows. */
   readonly agrees: boolean;
-  /** GitLab only: when GitLab awarded it. */
+  /** GitLab only: when GitLab awarded it (the latest award when repeated). */
   readonly awardedAt?: string | null;
+  /** GitLab only: how many times GitLab awarded it (absent means once). */
+  readonly timesAwarded?: number;
   /** GitLab only: GitLab's own description of the achievement. */
   readonly description?: string | null;
 }

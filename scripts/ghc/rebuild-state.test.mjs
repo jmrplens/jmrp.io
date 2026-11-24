@@ -191,6 +191,28 @@ function hashAfter(mutate) {
 
 const BASE = hashProjection(makeDataset()).projectionHash;
 
+test("a repeated GitLab award changes the hash; a missing count reads as once", () => {
+  // `null` leaves the field out, as datasets written before it was added.
+  const withCustodian = (timesAwarded) => (d) => {
+    d.achievements.push({
+      platform: "gitlab",
+      achievement: "gitlab-codebase-custodian",
+      name: "Codebase Custodian",
+      tierNumber: 1,
+      tierName: "default",
+      count: null,
+      nextThreshold: 0,
+      percent: 0,
+      agrees: false,
+      awardedAt: "2026-11-20T09:10:10Z",
+      ...(timesAwarded !== null && { timesAwarded }),
+    });
+  };
+  const once = hashAfter(withCustodian(1));
+  assert.equal(hashAfter(withCustodian(null)), once);
+  assert.notEqual(hashAfter(withCustodian(2)), once);
+});
+
 test("compactStars matches formatCompactStars' rounding", () => {
   assert.equal(compactStars(708), "708");
   assert.equal(compactStars(38_012), "38k");
