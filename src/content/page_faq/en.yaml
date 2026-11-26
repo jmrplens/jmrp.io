@@ -30,7 +30,7 @@ pages:
     visible: true
     items:
       - question: Who is José Manuel Requena Plens?
-        answer: "A firmware and software engineer based in Valencia, Spain, with an R&D background in acoustics: a degree in Telecommunication Engineering, a Master's in Acoustical Engineering and four years of predoctoral research at the UPV (2019 to 2023). Between 2023 and 2026 he built industrial embedded firmware in C on STM32 and FreeRTOS for solar inverters and battery storage, and he maintains {ownRepos} public repositories of his own on GitHub. Since May 2026 he has been looking for his next role in firmware, software or QA, on-site, remote or hybrid."
+        answer: "A firmware and software engineer based in Valencia, Spain, with an R&D background in acoustics: a degree in Telecommunication Engineering, a Master's in Acoustical Engineering and four years of predoctoral research at the UPV (2019 to 2023). Between 2023 and 2026 he built industrial embedded firmware in C on STM32 and FreeRTOS for solar inverters and battery storage, and he maintains {ownRepos} public repositories of his own on GitHub. Since November 2026 he has been a Flight Software V&V Engineer at PLD Space."
       - question: What software does he maintain?
         answer: "Several Model Context Protocol servers written in Go (among them gitlab-mcp-server, which exposes 850+ GitLab actions, and libgen-mcp), phonometry (a standards-conformant acoustics library for Python), cs-routeros-bouncer (a CrowdSec bouncer for MikroTik RouterOS), Cloudflare-DNS-Updater, the 17 web tools on this site, and Kleidos, a hardware password manager in C++ built in nine variants for different devices, each with its own screen and buttons, and the source of the firmware series on this blog."
         links:
@@ -61,7 +61,7 @@ pages:
     visible: true
     items:
       - question: What is his background and experience?
-        answer: "Degree in Telecommunication Engineering (Sound and Image) at the University of Alicante, Master's in Acoustical Engineering at the UPV, and predoctoral research at the UPV, CSIC and Hospital La Fe on ultrasound and acoustic metamaterials. From April 2023 to May 2026, R&D Software Developer at Power Electronics: firmware in C on STM32 for solar inverters, Modbus RTU/TCP, unit and on-hardware test automation. Open to on-site, remote or hybrid roles in firmware, software and QA."
+        answer: "Degree in Telecommunication Engineering (Sound and Image) at the University of Alicante, Master's in Acoustical Engineering at the UPV, and predoctoral research at the UPV, CSIC and Hospital La Fe on ultrasound and acoustic metamaterials. From April 2023 to May 2026, R&D Software Developer at Power Electronics: firmware in C on STM32 for solar inverters, Modbus RTU/TCP, unit and on-hardware test automation. Since November 2026, Flight Software V&V Engineer at PLD Space."
       - question: Is there a downloadable version of this CV?
         answer: "Yes, as PDF in English and Spanish, each in three layouts: the designed one, an ATS-friendly one and an extended ATS one. Every version is generated from the same source as this page, so they never disagree."
 

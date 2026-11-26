@@ -2,7 +2,7 @@
  * llms.txt / llms-full.txt generators (llmstxt.org standard).
  *
  * Both files are generated from the content collections (posts, tools) so they
- * stay in sync with the site automatically — no hand maintenance. `llms.txt` is
+ * stay in sync with the site automatically, no hand maintenance. `llms.txt` is
  * a concise link index; `llms-full.txt` enriches each post with its description,
  * tags, FAQ questions, and HowTo step names (all sourced from frontmatter).
  */
@@ -86,7 +86,7 @@ const DESCRIPTION =
   "Personal technical blog and portfolio of José Manuel Requena Plens, a firmware and software engineer in Valencia, Spain: industrial embedded systems, open-source tooling, and self-hosted infrastructure.";
 
 const ABOUT =
-  "José Manuel Requena Plens (JMRP) is a firmware and software engineer in Valencia, Spain. From April 2023 to May 2026 he was an R&D Software Developer at Power Electronics, writing firmware in C on STM32 and FreeRTOS for solar inverters, with Modbus communications and hardware test automation; before that, acoustics research at the UPV (2019–2023) on rocket launch noise mitigation for the European Space Agency (ESA), acoustic metamaterials and biomedical ultrasound. Since May 2026 he has been looking for firmware, software or QA roles, on-site, remote or hybrid. Active open-source contributor and self-hoster.";
+  "José Manuel Requena Plens (JMRP) is a firmware and software engineer in Valencia, Spain. From April 2023 to May 2026 he was an R&D Software Developer at Power Electronics, writing firmware in C on STM32 and FreeRTOS for solar inverters, with Modbus communications and hardware test automation; before that, acoustics research at the UPV (2019-2023) on rocket launch noise mitigation for the European Space Agency (ESA), acoustic metamaterials and biomedical ultrasound. Since November 2026 he has been a Flight Software V&V Engineer at PLD Space, verifying embedded real-time flight software for space launchers. Active open-source contributor and self-hoster.";
 
 /*
  * The MCP section gets its own H2 rather than a line under `## Sections`
@@ -102,7 +102,7 @@ const ABOUT =
  * Endpoint-specific prose per fleet member, keyed by project id. Richer than
  * the language-neutral `summary` in projects.yaml because it can state the
  * calling contract (credentials, headers). A server with no entry here still
- * gets a bullet — `mcpBlock` falls back to the YAML summary — so growing the
+ * gets a bullet, `mcpBlock` falls back to the YAML summary, so growing the
  * fleet never silently drops a line from this section.
  */
 const MCP_PROSE: Record<string, { en: string; es: string }> = {
@@ -160,8 +160,8 @@ async function mcpBlock(locale: "en" | "es"): Promise<string> {
  * The author's public profiles, for the `## Contact` section.
  *
  * Derived from the SAME source as the Person JSON-LD rather than listed here.
- * The hardcoded version carried six entries while `person.jsonld` — which this
- * very file links under `## Optional` — carried fourteen: Bluesky, Matrix,
+ * The hardcoded version carried six entries while `person.jsonld`, which this
+ * very file links under `## Optional`, carried fourteen: Bluesky, Matrix,
  * Keyoxide, ResearchGate, MathWorks, Codeberg, GitLab, PyPI and Docker Hub
  * never reached the corpus. A model reading llms.txt saw a smaller person than
  * the machine-readable entity beside it.
@@ -172,7 +172,7 @@ async function mcpBlock(locale: "en" | "es"): Promise<string> {
 async function contactLines(siteData: SiteConfig): Promise<string[]> {
   // The address comes from `about.person.email`, the same field BaseHead feeds
   // to the Person JSON-LD (`BaseHead.astro:301`). Hardcoding `mail@jmrp.io`
-  // here was the very duplication this function exists to remove — it derived
+  // here was the very duplication this function exists to remove, it derived
   // the fourteen profiles from the canonical source and then wrote the address
   // by hand two lines below.
   const about = await getEntry("profile", "about");
@@ -180,7 +180,7 @@ async function contactLines(siteData: SiteConfig): Promise<string[]> {
     about?.data.type === "about" ? about.data.person.email : undefined;
   // Typed explicitly: the schema declares `name: z.string()`, but `SiteConfig`
   // is an `Extract` over a discriminated union and the inference does not carry
-  // that through — which reads, to a static analyser, as a possible object
+  // that through, which reads, to a static analyser, as a possible object
   // reaching string interpolation.
   const named = new Map<string, string>(
     (siteData.social_links ?? []).map((l) => [l.url, l.name]),
@@ -197,7 +197,7 @@ async function contactLines(siteData: SiteConfig): Promise<string[]> {
  *
  * Those entries exist to strengthen entity recognition rather than to be
  * rendered, so they carry no label. The host is a usable fallback but a poor
- * name — "Google Scholar" is the entity a model knows, "scholar.google.com"
+ * name, "Google Scholar" is the entity a model knows, "scholar.google.com"
  * is a string it has to resolve. Keyed by host so a changed profile path does
  * not silently lose its name.
  */
@@ -244,9 +244,9 @@ const today = () => new Date().toISOString().slice(0, 10);
  *
  * ONE list, read by all three surfaces that make a claim about twins:
  * `buildProfileSections` (llms-full.txt), `sectionsBlock` (llms.txt) and
- * `HOME_SECTIONS` (the homepage twin). They used to disagree — llms-full.txt
+ * `HOME_SECTIONS` (the homepage twin). They used to disagree, llms-full.txt
  * knew about two of them, llms.txt advertised none, and the homepage twin
- * carried its own hand-kept boolean — so a page could gain a twin and stay
+ * carried its own hand-kept boolean, so a page could gain a twin and stay
  * invisible in two of the three indexes, or worse, be advertised at a URL
  * that 404s. Membership here is a fact about which `index.md.ts` routes exist
  * under `src/pages/`, so adding a route and adding a line here is one change.
@@ -261,7 +261,7 @@ const today = () => new Date().toISOString().slice(0, 10);
  * description and its own twin link, so a twin of the listing page would be a
  * verbatim second copy of a section of the index that points at it. The series
  * hubs and the tool categories DO get one, because their pages carry hand-
- * written prose — a reading order, a "use these when" paragraph — that exists
+ * written prose, a reading order, a "use these when" paragraph, that exists
  * nowhere else.
  */
 const TWINNED_PAGES: ReadonlySet<string> = new Set([
@@ -348,7 +348,7 @@ async function buildProfileSections(
       "",
       `URL: ${siteUrl}${localePrefix}${section.url}`,
       // The twin, where one exists. Its content is generated from the same
-      // YAML the page renders, so it cannot drift from what a visitor sees —
+      // YAML the page renders, so it cannot drift from what a visitor sees,
       // unlike the curated lines below it, which is where a claim about a
       // Nextcloud that does not exist survived for months.
       ...(TWINNED_PAGES.has(section.url)
@@ -392,7 +392,7 @@ function collapseWhitespace(value: string): string {
  * The previous version walked the object generically and pushed every string it
  * met, which discarded the key. A role, its four institutions, a location and a
  * date range arrived as six unlabelled sibling bullets, so nothing in 427 lines
- * of the corpus said which was which — the reader had to infer that "Valencia,
+ * of the corpus said which was which, the reader had to infer that "Valencia,
  * Spain" was a location and not an employer. Typing the walk to the schema costs
  * one branch per section kind and makes every value self-describing.
  *
@@ -429,17 +429,17 @@ function suffixed(value?: string): string {
   return value ? `. ${value}.` : ".";
 }
 
-/** ` — text`, or nothing when the value is absent. */
+/** `: text`, or nothing when the value is absent. */
 function dashed(value?: string): string {
   return value ? `: ${value}` : "";
 }
 
-/** `Name (Q123)` — extracted so the post entry is not a nested template. */
+/** `Name (Q123)`, extracted so the post entry is not a nested template. */
 function namedTopic(topic: { name: string; wikidata: string }): string {
   return `${topic.name} (${topic.wikidata})`;
 }
 
-/** `label (url)` — extracted so the CV header is not a nested template. */
+/** `label (url)`, extracted so the CV header is not a nested template. */
 function labelledUrl(link: { label: string; url: string }): string {
   return `${link.label} (${link.url})`;
 }
@@ -614,7 +614,7 @@ function cvToMarkdown(
 
   for (const section of cv.sections) {
     // H2, not H3: the only caller is `generateCvMarkdown`, whose `# <name>` is
-    // one line above, so the document went H1 → H3 and had no H2 at all —
+    // one line above, so the document went H1 → H3 and had no H2 at all,
     // which breaks any consumer that segments a document by heading level.
     out.push(`## ${section.title}`, "");
     // The cast re-links section to its own branch: TypeScript narrows the
@@ -665,7 +665,7 @@ export async function getToolsByLocale(lang: "en" | "es") {
 }
 
 /**
- * Builds the locale-aware absolute URL for a tool entry — `/tools/<slug>/`
+ * Builds the locale-aware absolute URL for a tool entry, `/tools/<slug>/`
  * for English entries, `/es/tools/<slug>/` for Spanish entries. Callers pass
  * already locale-filtered lists (see `getToolsByLocale()`), but the URL is
  * still derived from `tool.data.lang` rather than the caller's intent, so it
@@ -705,7 +705,7 @@ function toolIndexLine(
  *
  * These were missing entirely: the file had zero references to `/blog/series/`
  * or any hub. They are, after the posts themselves, the densest citable pages
- * on the site — a tag page can only list articles, whereas a hub states why
+ * on the site, a tag page can only list articles, whereas a hub states why
  * the cluster exists, in what order to read it, and what it deliberately does
  * not cover. That framing is exactly what a model needs to summarize a topic
  * rather than a single post.
@@ -718,12 +718,12 @@ function seriesBlock(siteUrl: string, locale: "en" | "es"): string {
   return [
     heading,
     "",
-    // Each hub and the index now publish a twin, so the line carries both —
+    // Each hub and the index now publish a twin, so the line carries both,
     // the page is the URL worth citing, the twin is the one worth reading.
     `- [${t("series.ui.indexTitle")}](${siteUrl}${indexPath}): ${t(
       "series.ui.indexDescription",
     )} ([markdown](${siteUrl}${markdownTwinPath(indexPath)}))`,
-    // The slug is only known at runtime, so the key is cast — the same
+    // The slug is only known at runtime, so the key is cast, the same
     // pattern SeriesPage.astro uses for `series.<slug>.*`.
     ...SERIES.map(({ slug }) => {
       const title = t(`series.${slug}.title` as TranslationKey);
@@ -739,7 +739,7 @@ function seriesBlock(siteUrl: string, locale: "en" | "es"): string {
  *
  * The ten `/tools/categories/<cat>/` pages were the only URLs in the sitemap
  * that appeared in `llms.txt` neither by their `.md` twin nor by their HTML
- * URL — wholly invisible in the index, while their twins had been published
+ * URL, wholly invisible in the index, while their twins had been published
  * for weeks (audit #6, M5). The rule this restores, and that the two
  * derivations below are written to keep: every twin listed by its `.md`,
  * every page without one listed by its HTML URL.
@@ -751,7 +751,7 @@ function seriesBlock(siteUrl: string, locale: "en" | "es"): string {
  *   falls back to the English tool when a locale has no translation, so a
  *   category can exist as a page in `es` on the strength of an English-only
  *   tool. Deriving from the strict `getToolsByLocale` here would generate the
- *   page and omit it from the index — the exact invisibility this fixes.
+ *   page and omit it from the index, the exact invisibility this fixes.
  * - the TWIN LINK comes from `getToolsByLocale`, which is what
  *   `toolCategoryMarkdownRoute` builds ITS paths from. A fallback-only
  *   category therefore has a page and no twin, and is listed by its HTML URL
@@ -795,7 +795,7 @@ async function categoriesBlock(
  * `/feeds/`, as an `llms-full.txt` section.
  *
  * Both twins were published and neither appeared in that document. The copy
- * is read from `SITE_SECTIONS` — the same entry `llms.txt` renders — instead
+ * is read from `SITE_SECTIONS`, the same entry `llms.txt` renders, instead
  * of being written a second time here, so the two indexes cannot describe the
  * page differently.
  *
@@ -865,7 +865,7 @@ export async function generateLlmsTxt(siteUrl: string): Promise<string> {
     `> ${DESCRIPTION}`,
     "",
     // The origin this index describes, stated once, so a copy of the file
-    // that travels away from the site still says where its content lives —
+    // that travels away from the site still says where its content lives,
     // the question the twins' own `Canonical:` line answers per page.
     //
     // Honest about its status: llmstxt.org defines no key-value header for
@@ -877,7 +877,7 @@ export async function generateLlmsTxt(siteUrl: string): Promise<string> {
     //
     // Nor is it common practice: checked on 2026-09-03 against the llms.txt of
     // developers.cloudflare.com, docs.anthropic.com, svelte.dev,
-    // docs.stripe.com and ai-sdk.dev — none carries a `Canonical:` line, and
+    // docs.stripe.com and ai-sdk.dev, none carries a `Canonical:` line, and
     // none carries a key-value header of any kind. Kept anyway because it is
     // correct and costs a spec-compliant consumer nothing: what a parser reads
     // is the H1, the summary blockquote and the H2 link lists. Recorded here so
@@ -891,7 +891,7 @@ export async function generateLlmsTxt(siteUrl: string): Promise<string> {
     // sort: this index is regenerated whole on every deploy, so the line moved
     // to today whether or not a single word of what it lists had changed, and
     // it is the first file a recency-weighted consumer reads. Same value, same
-    // reasoning and now the same word as the 94 twins — one vocabulary across
+    // reasoning and now the same word as the 94 twins, one vocabulary across
     // every machine surface, with no date on any of them claiming to be a
     // content date it is not.
     `Build-Date: ${today()}`,
@@ -920,7 +920,7 @@ export async function generateLlmsTxt(siteUrl: string): Promise<string> {
     "",
     "## Blog Posts",
     "",
-    // The canonical article first — that is the URL worth citing — then the
+    // The canonical article first, that is the URL worth citing, then the
     // shard, so a model can reach the full body in one hop. Before this the
     // index never mentioned the shards at all, leaving every post body two
     // hops away behind an `## Optional` link.
@@ -941,7 +941,7 @@ export async function generateLlmsTxt(siteUrl: string): Promise<string> {
     ),
     "",
     // Before the tool lists, on this file's own precedent: the series hubs are
-    // listed before the posts they group, for the same reason — an agent
+    // listed before the posts they group, for the same reason, an agent
     // budgeting fetches meets the dense grouping documents before the leaves.
     await categoriesBlock(siteUrl, "en"),
     "",
@@ -949,7 +949,7 @@ export async function generateLlmsTxt(siteUrl: string): Promise<string> {
     "",
     "## Developer Tools",
     "",
-    // The canonical page first, then its twin — the same two-link shape the
+    // The canonical page first, then its twin, the same two-link shape the
     // post lines above use.
     ...toolsEn.map((tool) => toolIndexLine(siteUrl, tool, "en")),
     "",
@@ -992,8 +992,8 @@ export async function generateLlmsTxt(siteUrl: string): Promise<string> {
  *
  * The path MIRRORS the article's own URL with `index.md` appended, which is
  * what the spec prescribes for a URL that has no file name. The shape before
- * that — `/llms-blog-<locale>-<slug>.txt` at the
- * site root — could not be derived from anything: an agent holding `/blog/005-foo/` had to invent
+ * that, `/llms-blog-<locale>-<slug>.txt` at the
+ * site root, could not be derived from anything: an agent holding `/blog/005-foo/` had to invent
  * a prefix AND move the locale from a path segment to a filename infix, while
  * the convention it would actually try (append `.md`) returned 404. The access
  * log agrees: across its whole history `/llms.txt` and `/llms-full.txt` were
@@ -1028,7 +1028,7 @@ function postRevisionLines(
   //
   // Deliberately NOT `pageLastmod(path)`, which `documentHeader` below uses:
   // that call takes no locale and answers with the NEWEST of the two
-  // translations. Right for a page twin, wrong here — the two translations of
+  // translations. Right for a page twin, wrong here, the two translations of
   // a post have their own edit histories, and es/006 resolves to a different
   // day from en/006.
   //
@@ -1051,21 +1051,21 @@ function postRevisionLines(
  * the frontmatter's field name: `Last verified:` sat one line under `Updated:`
  * here exactly as it sat beside "Updated …" on the page, and in both places the
  * two labels read as competing claims about the same act instead of two
- * different facts — when the text changed, and when the steps were last run.
+ * different facts, when the text changed, and when the steps were last run.
  *
  * @param d - The post's frontmatter.
  * @returns One line, or none.
  */
 function postLastVerifiedLines(d: CollectionEntry<"posts">["data"]): string[] {
-  // The strongest freshness claim the article makes — re-tested on this
-  // date, against these versions — and it reached no machine-readable
+  // The strongest freshness claim the article makes, re-tested on this
+  // date, against these versions, and it reached no machine-readable
   // surface at all: the page renders it under the title and the twin
   // dropped it, so a model reading the markdown could not tell a guide
   // verified last week from one last touched two years ago. Same source as
   // the page and the JSON-LD: the post's own `lastVerified` frontmatter.
   const verified = d.lastVerified;
   if (!verified) return [];
-  // The versions are appended only when there are any — the schema defaults
+  // The versions are appended only when there are any, the schema defaults
   // them to an empty array, which would otherwise leave a dangling `·`.
   const versions =
     verified.versions.length > 0 ? ` · ${verified.versions.join(" · ")}` : "";
@@ -1087,8 +1087,8 @@ function postFaqLines(
 ): string[] {
   // The ANSWER, not only the question. Emitting the questions alone
   // published the promise and withheld the payload: these pairs are the
-  // most directly citable prose on the site — they are written as the
-  // query a reader actually types — and the page already renders them and
+  // most directly citable prose on the site, they are written as the
+  // query a reader actually types, and the page already renders them and
   // ships them as FAQPage JSON-LD.
   const faq = d.faq;
   if (!faq || faq.length === 0) return [];
@@ -1160,7 +1160,7 @@ function buildPostEntry(
     // No `### <title>` here: the only caller is the shard, whose `# <title>`
     // header names the post one line above. Emitting both put the article
     // title in the document twice and pushed every real section down a level.
-    // The same key the page twins carry — see `documentHeader`. A post twin
+    // The same key the page twins carry, see `documentHeader`. A post twin
     // builds its header here rather than there, so the two have to be kept
     // saying the same thing by hand.
     `Canonical: ${postUrl}`,
@@ -1182,7 +1182,7 @@ function buildPostEntry(
       ? [`Topics: ${d.topics.map(namedTopic).join(", ")}`]
       : []),
     // The build clock, last in the block and named for the artifact rather than
-    // the article — same key, same reasoning and same position as the page
+    // the article, same key, same reasoning and same position as the page
     // twins get from `documentHeader`. It stood above the whole entry as
     // `> Generated:` until GEO audit #7 measured what that cost: on 60 of the
     // 94 twins it was the first date in the file AND a later one than
@@ -1260,7 +1260,7 @@ export function generateLlmsPostTxt(
     "",
     // The build date used to stand here, above the entry, as `> Generated:`.
     // It now travels with the rest of the schema as the last key `buildPostEntry`
-    // emits — see the note there, and the matching one in `documentHeader`.
+    // emits, see the note there, and the matching one in `documentHeader`.
     ...buildPostEntry(post, siteUrl, localePrefix, locale),
   ].join("\n");
 }
@@ -1270,10 +1270,10 @@ export function generateLlmsPostTxt(
  * llms-full.
  *
  * ── Why the body is inlined and not sharded like a post ───────────────────
- * A post body gets its own file because it is a self-contained 31–59 KB guide:
+ * A post body gets its own file because it is a self-contained 31-59 KB guide:
  * big enough that inlining twelve of them made the document 587 KB and any
  * ingestion cap landed mid-guide. A tool body is not that. Converted, the
- * largest is 9.1 KB and the median 4.6 KB — the whole 17-tool English corpus
+ * largest is 9.1 KB and the median 4.6 KB, the whole 17-tool English corpus
  * (76.5 KB) is barely larger than one post shard. It is also not a document:
  * "How is the CRC-16 calculated?" is only useful next to the URL, category and
  * feature list of the tool that calculates it, and splitting the two would cost
@@ -1304,7 +1304,7 @@ export function generateLlmsPostTxt(
  *
  * Split from the field keys (`URL:`, `Published:`, `Tags:`…) on purpose. Those
  * are a schema: their values already carry the language, and what makes them
- * parseable is being identical across all 72 documents — the same reason
+ * parseable is being identical across all 72 documents, the same reason
  * JSON-LD property names stay English whatever `inLanguage` says. These, by
  * contrast, are sentences, and a markdown file has no `lang` attribute and no
  * hreflang: its own text is the ONLY language signal it carries. English
@@ -1369,8 +1369,8 @@ export function documentHeader(
   // `Updated:` is the CONTENT date, resolved from the same function that
   // answers for the sitemap's <lastmod> and for the page's JSON-LD
   // `dateModified`, so the three surfaces cannot disagree. Without it every
-  // page twin carried only a build date — the build clock, identical across
-  // the whole corpus — while the HTML beside it declared a real date, and a
+  // page twin carried only a build date, the build clock, identical across
+  // the whole corpus, while the HTML beside it declared a real date, and a
   // recency-weighted pipeline read the whole set as changed today.
   //
   // Resolved here rather than passed in through `extra` so a twin added later
@@ -1383,7 +1383,7 @@ export function documentHeader(
     `> ${CHROME.page[locale]} ${index}`,
     "",
     // `Canonical:`, not `URL:`. The value is the PAGE this document mirrors,
-    // and `URL:` never said which of the two it meant — this file, or the page
+    // and `URL:` never said which of the two it meant, this file, or the page
     // it twins. The name is the one nginx already uses on these very bytes, in
     // the `Link: <…>; rel="canonical"` header it sends with every twin, so the
     // header and the body now answer with the same word.
@@ -1414,7 +1414,7 @@ export function documentHeader(
     // the FIRST date in the document and, in 60 of the 94 twins, a LATER one
     // than the `Updated:` line further down: the site is rebuilt on every
     // deploy, the content is not. A pipeline that takes the topmost date, or
-    // reads "generated" as "produced this text", got the build clock — which is
+    // reads "generated" as "produced this text", got the build clock, which is
     // exactly what PR #478 stopped the PAGE doing and did not stop here.
     //
     // Not dropped, because a reader is entitled to know how old the rendering
@@ -1480,8 +1480,8 @@ function toolIndexEntry(
     `Category: ${d.category}`,
     ...(d.tags.length > 0 ? [`Tags: ${d.tags.join(", ")}`] : []),
     d.description,
-    // Both of these already reach the page as JSON-LD — `featureList` on the
-    // SoftwareApplication and a FAQPage — so withholding them from the text
+    // Both of these already reach the page as JSON-LD, `featureList` on the
+    // SoftwareApplication and a FAQPage, so withholding them from the text
     // corpus meant the machine-readable surface was richer than the one
     // written for machines. They stay in the index because they are what lets
     // an agent choose WHICH tool to fetch, which is the job of a file list.
@@ -1553,7 +1553,7 @@ function publicationsLines(
 ): string[] {
   const abstractLabel = useTranslations(locale)("pages.publications.abstract");
   return groups.flatMap((group) => [
-    // H2, not H3 — same fix as `cvToMarkdown`. `# Publications` is the line
+    // H2, not H3, same fix as `cvToMarkdown`. `# Publications` is the line
     // above, so H3 here left the document with no H2 at all.
     `## ${group.title}`,
     "",
@@ -1644,8 +1644,8 @@ export async function generatePublicationsMarkdown(
  *
  * `heroSubtitle` and `heroBio2` are the only translated strings that carry
  * markup, because the page renders them with `set:html`. Stripping the tags
- * would have been one line, but it drops the two links inside them — the
- * public MCP servers and the CV — which are exactly the paths an agent
+ * would have been one line, but it drops the two links inside them, the
+ * public MCP servers and the CV, which are exactly the paths an agent
  * reading this document should be able to follow. So the three tags that
  * actually occur are mapped, and anything else is stripped.
  *
@@ -1674,12 +1674,12 @@ function heroToMarkdown(html: string, siteUrl: string): string {
 /**
  * The homepage as a standalone markdown document.
  *
- * The page itself is orientation — who this is, and where everything lives —
+ * The page itself is orientation, who this is, and where everything lives,
  * so its twin is a map: the same hero identity, then every section with its
  * own twin listed beside it. An agent that lands here reaches the whole site
  * in markdown without parsing one page of HTML.
  *
- * The featured projects carry the same figures the page prints on each card —
+ * The featured projects carry the same figures the page prints on each card,
  * star count, language and the curated, localized summary from
  * `projects.yaml`. Not a second reading: both call `@utils/featured-projects`,
  * whose GitHub fetch and ghchronicle read settle once per build, so the twin
@@ -1687,8 +1687,8 @@ function heroToMarkdown(html: string, siteUrl: string): string {
  * independently-drifting copy"; that was a fair warning against a private
  * fetch, and the shared accessor is what answers it. Its other half was
  * simply wrong: `/projects/` publishes the CURATED description from
- * `projects.yaml`, so the repository's own description — the string carrying
- * "850+ GitLab actions (1,000+ Enterprise)" — reached no generated markdown
+ * `projects.yaml`, so the repository's own description, the string carrying
+ * "850+ GitLab actions (1,000+ Enterprise)", reached no generated markdown
  * document at all. What did drift was the hand-written "38 public
  * repositories … more than 350 stars (August 2026)" in `about.yaml`, retyped
  * as 44 at the next audit and wrong again eleven days later; since GEO audit
@@ -1712,7 +1712,7 @@ export async function generateHomeMarkdown(
     sections: { en: "Sections", es: "Secciones" },
     featured: { en: "Featured projects", es: "Proyectos destacados" },
     latest: { en: "Latest posts", es: "Últimas entradas" },
-    status: { en: "Status", es: "Estado" },
+    location: { en: "Location", es: "Ubicación" },
     role: { en: "Role", es: "Perfil" },
     focus: { en: "Focus", es: "Enfoque" },
     base: { en: "Base", es: "Base" },
@@ -1771,7 +1771,7 @@ export async function generateHomeMarkdown(
       `${siteUrl}/llms.txt`,
       locale,
       [
-        `${label.status[locale]}: ${t("pages.home.availability")}`,
+        `${label.location[locale]}: ${t("pages.home.location")}`,
         `${label.role[locale]}: ${t("pages.home.terminalRole")}`,
         ...whoami,
       ],
@@ -1842,7 +1842,7 @@ export async function generateProfileMarkdown(
 /**
  * A prose page from the `pages` collection, as a standalone markdown document.
  *
- * These are MDX, so the body goes through the same converter every post uses —
+ * These are MDX, so the body goes through the same converter every post uses,
  * which is half the reason the privacy policy stopped being 32 translation
  * keys: a document gets its twin for free, a string table never can.
  *
@@ -1881,7 +1881,7 @@ export async function generateLlmsFullTxt(siteUrl: string): Promise<string> {
   const postsEs = await getPostsByLocale("es");
   const toolsEn = await getToolsByLocale("en");
   const toolsEs = await getToolsByLocale("es");
-  // Post bodies are NOT inlined any more — see llmsPostShardPath(). What goes
+  // Post bodies are NOT inlined any more, see llmsPostShardPath(). What goes
   // in here is a link index; the bodies are one file per post.
   const postSectionEn = buildPostIndex(postsEn, siteUrl, "en");
   const postSectionEs = buildPostIndex(postsEs, siteUrl, "es");
@@ -1901,14 +1901,14 @@ export async function generateLlmsFullTxt(siteUrl: string): Promise<string> {
     // llms.txt and all 96 twins write it: a plain line, not a blockquote.
     // Written as `> Canonical:` inside a blockquote, it was the ONE copy of
     // this key in the whole corpus that an anchored `^Canonical:` could not
-    // find — which is how a consumer that learned the key from a twin would
+    // find, which is how a consumer that learned the key from a twin would
     // look for it. Both indexes name one origin for everything they list, and
     // now say so in the same shape.
     `Canonical: ${siteUrl}/`,
     "",
     // The build clock, named for the artifact, exactly as the twins name it.
-    // This file has no content date to compete with — it is regenerated whole
-    // on every build — but there is no reason for the index and the documents
+    // This file has no content date to compete with, it is regenerated whole
+    // on every build, but there is no reason for the index and the documents
     // it indexes to call the same value by two different words.
     `Build-Date: ${today()}`,
     "",
@@ -1932,8 +1932,8 @@ export async function generateLlmsFullTxt(siteUrl: string): Promise<string> {
     ...toolSectionEs,
     // The three families of listing twin this document never indexed: the
     // series hubs, the tool categories and /feeds/. Twenty published twins,
-    // reachable from llms.txt — or, for the ten categories, from nowhere at
-    // all — and absent from the file that calls itself the full context.
+    // reachable from llms.txt, or, for the ten categories, from nowhere at
+    // all, and absent from the file that calls itself the full context.
     seriesBlock(siteUrl, "en"),
     "",
     seriesBlock(siteUrl, "es"),
@@ -1956,7 +1956,7 @@ export async function generateLlmsFullTxt(siteUrl: string): Promise<string> {
     `- [Publications](${siteUrl}${markdownTwinPath("/publications/")}): every paper with its abstract and DOI ([page](${siteUrl}/publications/))`,
     `- [Publicaciones](${siteUrl}${markdownTwinPath("/es/publications/")}): cada artículo con su resumen y DOI ([página](${siteUrl}/es/publications/))`,
     "",
-    // The sections llms.txt advertises but this file used to skip — in BOTH
+    // The sections llms.txt advertises but this file used to skip, in BOTH
     // languages. `buildProfileSections` always took a locale and was only ever
     // called with "en", so /es/projects/ and /es/uses/ appeared nowhere in the
     // corpus even though their twins had been published for months.

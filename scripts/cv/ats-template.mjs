@@ -27,6 +27,10 @@ import { escapeLatex, escapeLatexUrl } from "./inline-markdown.mjs";
  * @param {number} [opts.lineSpread] - `\linespread` factor. The concise
  *   profile uses LaTeX's own 1.0 to stay within two pages; the extended one
  *   keeps the slightly looser 1.02.
+ * @param {"10pt" | "11pt"} [opts.fontSize] - Body size, as a document class
+ *   option. The concise profile uses 10pt: with a current position added
+ *   (PLD Space, 2026-11) it ran to three pages at 11pt, Education falling
+ *   whole onto the third; 10.5pt was not enough. The extended one keeps 11pt.
  * @returns {string} The preamble LaTeX.
  */
 export function documentPreamble({
@@ -36,6 +40,7 @@ export function documentPreamble({
   pdfSubject,
   pdfKeywords,
   lineSpread = 1.02,
+  fontSize = "11pt",
 }) {
   // es-nolists keeps the standard bullet (U+2022) in Spanish lists. Without
   // it babel-spanish draws a small square that has no character in the text
@@ -54,7 +59,7 @@ export function documentPreamble({
 % this makes rebuilds byte-identical, so an unchanged CV produces no git diff.
 \ExplSyntaxOn \sys_gset_rand_seed:n {20260826} \ExplSyntaxOff
 \DocumentMetadata{lang=${docLang}, pdfversion=2.0, testphase={phase-III}}
-\documentclass[11pt,a4paper]{article}
+\documentclass[${fontSize},a4paper]{article}
 
 % ---- Codificación / idioma ----
 \usepackage{fontspec}
@@ -116,6 +121,7 @@ export function documentPreamble({
 \usepackage{enumitem}
 \setlist[itemize]{
   leftmargin=1.1em, topsep=1pt, partopsep=0pt, parsep=0pt, itemsep=1pt,
+  beginpenalty=10000,
   label=\small\textcolor{accent}{\textbullet}
 }
 
@@ -148,6 +154,31 @@ export function documentPreamble({
 \linespread{${lineSpread}}
 \setlength{\parindent}{0pt}
 
+% ---- Page breaks ----
+% No paragraph is split across pages: a bullet, a skill line or a reference
+% moves whole. Every paragraph here is a few lines long, so this costs little
+% space.
+\interlinepenalty=10000
+\clubpenalty=10000
+\widowpenalty=10000
+% A list never starts a page apart from the line that introduces it
+% (beginpenalty in \setlist above). That penalty alone does not hold in the
+% tagged PDF, whose structure marks open breaks of their own, so the concise
+% profile also reserves four lines before each entry (\Needspace, in the
+% generator): its title, organization and first bullet stay together.
+% In the extended profile one entry (a job, a study, a project) is never split
+% at all: \samepage forbids breaks inside its lists and paragraphs, and the
+% macros below put \nopagebreak between its paragraphs. The generator allows a
+% break only between two entries, never right after a section title. The
+% concise profile skips that wrapper: it must fit two pages, and whole-entry
+% blocks left a gap at the foot of page one that pushed it onto a third.
+%
+% Every \color that opens a paragraph comes after \leavevmode. In vertical mode
+% \color leaves a whatsit on the page list, and the glue after it is a legal
+% page break: that is how an entry's title line ended a page with its
+% organization line on the next.
+\newenvironment{cvkeep}{\par\samepage}{\par}
+
 % =====================================================================
 %  Comandos de ayuda
 % =====================================================================
@@ -161,8 +192,8 @@ export function documentPreamble({
 % entries in ES. The occasional split is parser boundary noise that no layout
 % eliminates; do not "fix" this again without re-measuring.
 \newcommand{\cventry}[4]{%
-  \textbf{#1}\hfill\textbf{#4}\par
-  {\color{muted}\textit{#2}\hfill\textit{#3}}\par
+  \textbf{#1}\hfill\textbf{#4}\par\nopagebreak
+  {\leavevmode\color{muted}\textit{#2}\hfill\textit{#3}}\par\nopagebreak
   \vspace{2pt}
 }
 % Proyecto: {nombre}{stack}{métricas}. Métricas en su propia línea a la
@@ -172,8 +203,8 @@ export function documentPreamble({
 % separa con raya (perfil extendido). La diferencia es medida, no estética: ver
 % projectMacro en generate-ats.mjs.
 \newcommand{\cvprojectline}[2]{%
-  #1\par
-  \if\relax\detokenize{#2}\relax\else{\small\textcolor{accent}{#2}}\par\fi
+  #1\par\nopagebreak
+  \if\relax\detokenize{#2}\relax\else{\small\textcolor{accent}{#2}}\par\nopagebreak\fi
   \vspace{1pt}
 }
 \newcommand{\cvproject}[3]{%
@@ -185,7 +216,11 @@ export function documentPreamble({
 % Skill: {categoría}{items}
 \newcommand{\cvskill}[2]{\textbf{#1:} #2\par\vspace{2pt}}
 % Subencabezado dentro de una sección (p.ej. categoría de certificados)
-\newcommand{\cvsubhead}[1]{\vspace{2pt}{\color{ink}\textbf{#1}}\par\vspace{1pt}}
+% \Needspace keeps the heading with its first item: the tagged PDF puts a
+% structure mark at the start of each list, and the glue after it is a legal
+% break that no penalty here can forbid. (The lowercase \needspace misjudged
+% the space left on the page and pushed whole entries over.)
+\newcommand{\cvsubhead}[1]{\Needspace{3\baselineskip}\vspace{2pt}{\leavevmode\color{ink}\textbf{#1}}\par\nopagebreak\vspace{1pt}}
 % Divisor inline. Sin \raisebox: un bullet elevado obtiene una línea base
 % distinta y los extractores PDF lo leen como una "línea" suelta de un solo
 % "•" → rompe la heurística de una sola columna. En la línea base se agrupa bien.

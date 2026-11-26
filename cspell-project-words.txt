@@ -1234,6 +1234,7 @@ semiempírico
 Semrush
 semrushbot
 sendfile
+Sectigo
 seqmp
 serde
 serializa

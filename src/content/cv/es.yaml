@@ -3,15 +3,17 @@ basics:
   headline: Ingeniero de Firmware y Software
   location: Valencia, España
   availability: Presencial, remota o híbrida
+  # Publishes availability and objetivo (job-search signals) when true.
+  showJobSearch: false
   email: jmrplens@gmail.com
   profile: >-
     **Ingeniero de firmware y software** con experiencia en firmware
     industrial para inversores solares (C, STM32, FreeRTOS) y una sólida base de I+D
     en acústica (física). Especializado en optimización de bajo nivel, comunicaciones
     industriales (Modbus) y automatización de pruebas sobre hardware. Mantengo
-    proyectos *open source* usados por desarrolladores de todo el mundo. Oriento
-    mi carrera a roles de **firmware, software y QA**, aportando rigor de
-    ingeniería y foco en la calidad.
+    proyectos *open source* usados por desarrolladores de todo el mundo.
+    Actualmente verifico software de vuelo para lanzadores espaciales en PLD
+    Space.
   links:
     - { kind: website, label: jmrp.io, url: https://jmrp.io }
     - {
@@ -97,6 +99,43 @@ sections:
   - kind: experience
     title: Experiencia
     items:
+      - role: Ingeniero de Verificación y Validación (V&V) de Software de Vuelo
+        org:
+          - { name: PLD Space, short: PLD, url: "https://pldspace.com/es/" }
+        location: Elche, España
+        period: Nov 2026 - Actualidad
+        summary: >-
+          Verificación a nivel unitario de software de vuelo embebido y de tiempo
+          real (C y C++) para lanzadores espaciales, dentro del área de Flight
+          Software.
+        bullets:
+          - Diseño y automatización de pruebas unitarias a partir de requisitos de bajo nivel y diseño detallado.
+          - Stubs, drivers y mocks para aislar componentes durante la verificación.
+          - Cobertura estructural (sentencias, decisiones y MC/DC) y métricas de calidad del software.
+          - Trazabilidad entre requisitos, casos de prueba, resultados y evidencias de verificación.
+          - >-
+            Integración de las campañas en CI/CD y documentación de verificación
+            para la cualificación y certificación del software.
+          - "Entorno: C, C++, Linux, Git y CI/CD."
+        ats:
+          normal: true
+          org: PLD Space (Payload Aerospace S.A.)
+          # The concise CV prints no summary: these three bullets carry it
+          # and the six bullets above, reworded to fit two pages.
+          bullets:
+            - >-
+              Verificación a nivel unitario de software de vuelo embebido y de
+              tiempo real (C y C++) para lanzadores espaciales: pruebas
+              unitarias diseñadas y automatizadas a partir de requisitos de bajo
+              nivel y diseño detallado, con stubs, drivers y mocks.
+            - >-
+              Cobertura estructural (sentencias, decisiones y MC/DC), métricas
+              de calidad del software y trazabilidad entre requisitos, casos de
+              prueba, resultados y evidencias de verificación.
+            - >-
+              Integración de las campañas en CI/CD y documentación de
+              verificación para la cualificación y certificación del software
+              (C, C++, Linux, Git y CI/CD).
       - role: Desarrollador de Software I+D
         org:
           - {

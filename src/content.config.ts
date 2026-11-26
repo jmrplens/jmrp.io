@@ -354,30 +354,47 @@ const CVPubGroup = z.object({
   items: z.array(z.string()),
 });
 
-/** Header / identity block (name, headline, contact, profile summary). */
-const CVBasics = z.object({
-  name: z.string(),
-  headline: z.string(),
-  location: z.string(),
-  availability: z.string().optional(),
-  email: z.string().optional(),
-  /** Profile summary (inline markdown). */
-  profile: z.string(),
-  links: z.array(CVLink),
-  /**
-   * Job-search target role categories shown as chips in the CV sidebar.
-   * These are NOT claimed positions: they describe the roles the author
-   * is actively targeting (e.g. ["Firmware", "Software", "QA"]).
-   */
-  objetivo: z.array(z.string()).optional(),
-  /**
-   * Language proficiencies shown in the CV sidebar.
-   * `level` should be written in the locale's own language (e.g. "Nativo").
-   */
-  idiomas: z
-    .array(z.object({ name: z.string(), level: z.string() }))
-    .optional(),
-});
+/**
+ * Header / identity block (name, headline, contact, profile summary).
+ *
+ * `availability` and `objetivo` are job-search signals. They stay in the YAML
+ * but are published only while `showJobSearch` is true: the transform blanks
+ * both otherwise, so no page, markdown twin or schema can print them. The PDF
+ * generators read the YAML directly and apply the same rule through
+ * `scripts/cv/job-search.mjs`.
+ */
+const CVBasics = z
+  .object({
+    name: z.string(),
+    headline: z.string(),
+    location: z.string(),
+    /** Work-mode preference (e.g. "On-site, remote or hybrid"). */
+    availability: z.string().optional(),
+    /** Publish `availability` and `objetivo`. Hidden unless set to true. */
+    showJobSearch: z.boolean().default(false),
+    email: z.string().optional(),
+    /** Profile summary (inline markdown). */
+    profile: z.string(),
+    links: z.array(CVLink),
+    /**
+     * Job-search target role categories shown as chips in the CV sidebar.
+     * These are NOT claimed positions: they describe the roles the author
+     * is actively targeting (e.g. ["Firmware", "Software", "QA"]).
+     */
+    objetivo: z.array(z.string()).optional(),
+    /**
+     * Language proficiencies shown in the CV sidebar.
+     * `level` should be written in the locale's own language (e.g. "Nativo").
+     */
+    idiomas: z
+      .array(z.object({ name: z.string(), level: z.string() }))
+      .optional(),
+  })
+  .transform((basics) => ({
+    ...basics,
+    availability: basics.showJobSearch ? basics.availability : undefined,
+    objetivo: basics.showJobSearch ? basics.objetivo : undefined,
+  }));
 
 /** A downloadable CV file within a download format group. */
 const CVDownloadFile = z.object({
@@ -743,6 +760,26 @@ const aboutSchema = z.object({
           ),
         "education: newest first and startDate <= endDate",
       ),
+    /**
+     * Positions he holds now, emitted as `worksFor` Roles. A finished one is
+     * removed from here (the CV keeps its record), since `worksFor` reads in
+     * the present tense.
+     */
+    employment: z
+      .array(
+        z.object({
+          organization: z.object({
+            name: z.string(),
+            legalName: z.string().optional(),
+            url: z.url().optional(),
+            /** The organization's Wikidata item, checked before use. */
+            sameAs: z.url().optional(),
+          }),
+          roleName: LocalizedString,
+          startDate: z.string().regex(/^\d{4}(-\d{2}(-\d{2})?)?$/),
+        }),
+      )
+      .default([]),
     /** Organizations he belonged to, emitted as dated `memberOf` Roles. */
     memberships: z
       .array(

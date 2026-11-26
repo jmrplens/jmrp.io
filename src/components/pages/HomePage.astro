@@ -97,14 +97,14 @@ function formatCompact(n: number): string {
 const terminal = {
   focus: siteData.terminal?.focus ?? "Firmware · Software · QA",
   base: siteData.terminal?.base ?? "Valencia, ES",
-  downloads: downloadsData.total > 0 ? formatCompact(downloadsData.total) : "—",
+  downloads: downloadsData.total > 0 ? formatCompact(downloadsData.total) : "-",
   ownRepos: siteFacts.ownRepos,
 };
 
 // The canonical author-entity page is /about/ (see AboutPage.astro's
 // ProfilePage). The homepage only needs a lightweight WebPage node pointing
 // at the single, fully-populated #person node (defined as the WebSite
-// publisher in BaseHead) — emitting a second ProfilePage here would just
+// publisher in BaseHead), emitting a second ProfilePage here would just
 // duplicate that identity data across pages.
 const homeSchema = {
   "@type": "WebPage",
@@ -116,7 +116,7 @@ const homeSchema = {
   isPartOf: { "@id": WEBSITE_ID },
   about: { "@id": PERSON_ID },
   // Marks the hero identity block as the citable/answer-target summary for
-  // "who is José Manuel Requena Plens?" queries — same speakable pattern the
+  // "who is José Manuel Requena Plens?" queries, same speakable pattern the
   // blog posts use for their header + TL;DR.
   speakable: {
     "@type": "SpeakableSpecification",
@@ -150,15 +150,15 @@ const faqNode =
       <div class="hero__text">
         <p class="hero__status">
           <span
-            class="hero__status-dot"
+            class="hero__status-icon i-fa-solid:map-marker-alt"
             aria-hidden="true"
           ></span>
-          <span class="hero__status-full">{t("pages.home.availability")}</span>
+          <span class="hero__status-full">{t("pages.home.location")}</span>
           <span
             class="hero__status-short"
             aria-hidden="true"
           >
-            {t("pages.home.availabilityShort")}
+            {t("pages.home.locationShort")}
           </span>
         </p>
 
@@ -397,7 +397,7 @@ const faqNode =
     min-width: 0;
   }
 
-  /* Availability status pill — teal dot + text (never colour alone) */
+  /* Location pill: a map marker and the city with its time zone */
   .hero__status {
     display: inline-flex;
     gap: var(--space-sm);
@@ -433,13 +433,9 @@ const faqNode =
     }
   }
 
-  .hero__status-dot {
+  .hero__status-icon {
     flex-shrink: 0;
-    width: 0.5rem;
-    height: 0.5rem;
-    background: var(--teal);
-    border-radius: 50%;
-    box-shadow: 0 0 0 3px color-mix(in srgb, var(--teal) 22%, transparent);
+    color: var(--teal);
   }
 
   .hero__title {
@@ -666,7 +662,7 @@ const faqNode =
     text-underline-offset: 3px;
   }
 
-  /* Featured project cards — 2-col desktop, 1-col mobile */
+  /* Featured project cards, 2-col desktop, 1-col mobile */
   .proj-grid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
@@ -702,7 +698,7 @@ const faqNode =
     margin-bottom: var(--space-md);
   }
 
-  /* accent category chip — "mcp · ai", "hardware · embedded" … */
+  /* accent category chip, "mcp · ai", "hardware · embedded" … */
   .proj-card__chip {
     display: inline-flex;
     align-items: center;
@@ -767,7 +763,7 @@ const faqNode =
     color: var(--color-text-muted);
   }
 
-  /* Upstream contributions strip — build-time line under the project grid */
+  /* Upstream contributions strip, build-time line under the project grid */
   .upstream-strip {
     display: flex;
     flex-wrap: wrap;
@@ -832,7 +828,7 @@ const faqNode =
   }
 
   /* Title + tag grouped (P2): the tag sits next to the title, not at the right
-     edge — removes the mid-row "white river". */
+     edge, removes the mid-row "white river". */
   .notes-main {
     display: flex;
     flex-wrap: wrap;

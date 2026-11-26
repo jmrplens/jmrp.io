@@ -163,6 +163,37 @@ export function educationProperties(education) {
 }
 
 /**
+ * The current employments as the `#person`'s `worksFor`: one Role per
+ * employer, with the position held and its start date. Only positions still
+ * held belong here, because `worksFor` reads in the present tense; a finished
+ * one leaves `profile/about.yaml` (its record stays in the CV, which /cv/
+ * emits as dated Roles of its own).
+ *
+ * @param {readonly {
+ *   organization: { name: string, legalName?: string, url?: string, sameAs?: string },
+ *   roleName: { en: string, es: string },
+ *   startDate: string,
+ * }[]} employment - `person.employment` from profile/about.yaml.
+ * @returns {object[]} The `worksFor` list (empty when there is none).
+ */
+export function employmentRoles(employment) {
+  return employment.map((entry) => ({
+    "@type": "OrganizationRole",
+    worksFor: {
+      "@type": "Organization",
+      name: entry.organization.name,
+      ...(entry.organization.legalName && {
+        legalName: entry.organization.legalName,
+      }),
+      ...(entry.organization.url && { url: entry.organization.url }),
+      ...(entry.organization.sameAs && { sameAs: entry.organization.sameAs }),
+    },
+    roleName: localizedValues(entry.roleName),
+    startDate: entry.startDate,
+  }));
+}
+
+/**
  * The memberships as the `#person`'s `memberOf`: one Role per organization,
  * with the role held and its years.
  *
