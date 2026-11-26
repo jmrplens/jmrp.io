@@ -83,6 +83,13 @@ exclude = [
     # and to lychee's user-agent alike (checked 2026-11-20). The
     # gitlab-mcp-server page in `sameAs` is real; the checker cannot see it.
     'https://libraries\.io/.*',
+    # PLD Space serves its leaf certificate without the Sectigo intermediate
+    # (`openssl s_client` from this server: "unable to verify the first
+    # certificate", checked 2026-11-26). Browsers fetch the missing link
+    # through the certificate's AIA URL and load the site; lychee and curl do
+    # not, and report "SSL certificate not trusted". The CV links the
+    # company's own home page.
+    'https://pldspace\.com/.*',
     'https://gitlab\.torproject\.org/.*',
     'https://www\.abuseipdb\.com/.*',
     # The 404 page legitimately answers 404; it is its own canonical. The
