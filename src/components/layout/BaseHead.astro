@@ -28,6 +28,7 @@ import { markdownTwinHref } from "@utils/llms/twin-routes";
 import {
   CANONICAL_PERSON_IMAGE,
   educationProperties,
+  employmentRoles,
   localizedValues,
   membershipRoles,
   PERSON_ID,
@@ -280,6 +281,9 @@ const personOccupations = (aboutData?.person.occupations ?? []).map(
  * Emitted site-wide and reference-only: every page connects the identity to
  * the body of work without repeating the project descriptions.
  */
+/** The positions held now, each a `worksFor` Role; see `employmentRoles`. */
+const personEmployment = employmentRoles(aboutData?.person.employment ?? []);
+
 /** The memberships, each a dated `memberOf` Role; see `membershipRoles`. */
 const personMemberships = membershipRoles(aboutData?.person.memberships ?? []);
 
@@ -445,10 +449,12 @@ const websiteSchema = {
     // documentation sites that splice /identity/person.jsonld in verbatim.
     // Each study is a dated `alumniOf` Role; see `educationProperties`.
     ...educationProperties(aboutData?.person.education ?? []),
+    // The employer, only while the position is held: `worksFor` reads in the
+    // present tense, so a finished one would publish a stale employer here
+    // and to every project site that splices this node in.
+    ...(personEmployment.length > 0 && { worksFor: personEmployment }),
     ...(personMemberships.length > 0 && { memberOf: personMemberships }),
-    // The professions, not the employer: `worksFor` reads as present tense
-    // and the last role has ended, so asserting it would publish a stale
-    // employer here and to every project site that splices this node in.
+    // The professions, each dated; the positions are in /cv/'s `worksFor`.
     ...(personOccupations.length > 0 && { hasOccupation: personOccupations }),
     ...(aboutData?.person.knowsLanguage && {
       knowsLanguage: aboutData.person.knowsLanguage.map((language) => ({

@@ -438,8 +438,8 @@ export const common = {
       upstreamStrip:
         "También aporto código y documentación a proyectos open source de otros, como {names}.",
       upstreamLink: "Ver las contribuciones →",
-      availability: "Buscando empleo · Valencia (CET/CEST)",
-      availabilityShort: "Buscando empleo",
+      location: "Valencia (CET/CEST)",
+      locationShort: "Valencia",
       seeProjects: "Ver proyectos",
       terminalLabel: "Resumen de perfil",
       terminalRole: "Ing. Firmware / Software",
@@ -540,7 +540,7 @@ export const common = {
       title: "CV",
       heading: "Curriculum Vitae",
       description:
-        "CV de José Manuel Requena Plens, ingeniero de firmware y software (C, STM32, FreeRTOS, Modbus, testing). Abierto a puestos de firmware, software y QA.",
+        "CV de José Manuel Requena Plens, ingeniero de firmware y software (C, STM32, FreeRTOS, Modbus, testing). V&V de software de vuelo en PLD Space.",
       certificateFallback: "Certificado",
       schemaDescription:
         "Ingeniero de firmware y software en Valencia: sistemas embebidos industriales, herramientas open source e infraestructura self-hosted.",
@@ -554,7 +554,7 @@ export const common = {
       downloadsTitle: "Descargar CV",
       downloadRecommended: "recomendado",
       availability: "Disponibilidad",
-      sidebarAriaLabel: "Barra lateral del CV: contacto, objetivo e idiomas",
+      sidebarAriaLabel: "Barra lateral del CV: descargas, contacto e idiomas",
       projectLinksAriaLabel: "Enlaces de {project}",
       sidebarContact: "Contacto",
       sidebarObjective: "Objetivo",

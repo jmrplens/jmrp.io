@@ -2,7 +2,7 @@
 // interpolations; the lint rule below produces only false positives here.
 
 /**
- * DESIGN CV generator — the sidebar layout, fed from the same single source
+ * DESIGN CV generator, the sidebar layout, fed from the same single source
  * of truth as the ATS CVs.
  *
  * Reads `src/content/cv/{es,en}.yaml` plus `papers.bib` and emits
@@ -14,7 +14,7 @@
  *
  * Layout and rationale live in `design-template.mjs`; the direction (sidebar,
  * compact publications in it, photo kept) was picked by the author from three
- * measured prototypes — see plan/cv-redesign/PLAN.md.
+ * measured prototypes, see plan/cv-redesign/PLAN.md.
  *
  * The phone number works exactly like in `generate-ats.mjs`: `CV_PHONE` in
  * `.env` drives a second private set under `cv_private/tex/`, and the public
@@ -37,6 +37,7 @@ import { designHeader, designPreamble } from "./design-template.mjs";
 import { labelForContact } from "./generate-ats.mjs";
 import { fetchRepoStats, formatStats, githubSlug } from "./github-stats.mjs";
 import { escapeLatex, markdownToLatex } from "./inline-markdown.mjs";
+import { publishableBasics } from "./job-search.mjs";
 
 const nodeRequire = createRequire(import.meta.url);
 const Cite = nodeRequire("citation-js");
@@ -290,7 +291,10 @@ async function fetchProjectStats(sections, locale) {
 export async function buildDesign(locale, options = {}) {
   const meta = META[locale];
   const yamlPath = path.join(REPO_ROOT, `src/content/cv/${locale}.yaml`);
-  const { basics, sections } = yaml.load(fs.readFileSync(yamlPath, "utf8"));
+  const { basics: rawBasics, sections } = yaml.load(
+    fs.readFileSync(yamlPath, "utf8"),
+  );
+  const basics = publishableBasics(rawBasics);
   const statsBySlug = await fetchProjectStats(sections, locale);
   const by = (kind) => sections.find((s) => s.kind === kind);
 
@@ -322,7 +326,7 @@ export async function buildDesign(locale, options = {}) {
       docLang: meta.docLang,
       // Escaped: a raw & reaches hypersetup as an alignment char and the
       // PDF title came out as "Firmware  Software Engineer".
-      pdfTitle: escapeLatex(`${basics.name} — CV (${basics.headline})`),
+      pdfTitle: escapeLatex(`${basics.name}: CV (${basics.headline})`),
       pdfSubject: meta.pdfSubject,
       pdfKeywords: meta.pdfKeywords,
     }),
@@ -347,7 +351,9 @@ export async function buildDesign(locale, options = {}) {
     // Availability leads the sidebar, untitled: top of page one, where a
     // recruiter scans for work mode, without crowding the name or the
     // headline line (which barely fits in Spanish as it is).
-    String.raw`{\footnotesize\color{muted}\faBriefcase~${escapeLatex(basics.availability ?? "")}\par}`,
+    basics.availability
+      ? String.raw`{\footnotesize\color{muted}\faBriefcase~${escapeLatex(basics.availability)}\par}`
+      : "",
     renderSkills(by("skills")),
     String.raw`\CVSection{${escapeLatex(meta.languagesTitle)}}`,
     (basics.idiomas ?? [])

@@ -14,7 +14,7 @@ pages:
     visible: true
     items:
       - question: ¿Quién es José Manuel Requena Plens?
-        answer: "Ingeniero de firmware y software en Valencia, con base en I+D en acústica: Ingeniería de Telecomunicación, Máster en Ingeniería Acústica y cuatro años de investigación predoctoral en la UPV (de 2019 a 2023). Entre 2023 y 2026 desarrolló firmware embebido industrial en C sobre STM32 y FreeRTOS para inversores solares y baterías, y mantiene {ownRepos} repositorios públicos propios en GitHub. Desde mayo de 2026 busca su próximo puesto en firmware, software o QA, presencial, remoto o híbrido."
+        answer: "Ingeniero de firmware y software en Valencia, con base en I+D en acústica: Ingeniería de Telecomunicación, Máster en Ingeniería Acústica y cuatro años de investigación predoctoral en la UPV (de 2019 a 2023). Entre 2023 y 2026 desarrolló firmware embebido industrial en C sobre STM32 y FreeRTOS para inversores solares y baterías, y mantiene {ownRepos} repositorios públicos propios en GitHub. Desde noviembre de 2026 es Ingeniero de Verificación y Validación (V&V) de Software de Vuelo en PLD Space."
       - question: ¿Qué software mantiene?
         answer: "Varios servidores Model Context Protocol en Go (entre ellos gitlab-mcp-server, que expone más de 850 acciones de GitLab, y libgen-mcp), phonometry (biblioteca de acústica para Python conforme a normas), cs-routeros-bouncer (bouncer de CrowdSec para MikroTik RouterOS), Cloudflare-DNS-Updater, las 17 herramientas web de este sitio y Kleidos, un gestor de contraseñas hardware en C++ con nueve variantes para dispositivos distintos, cada uno con su pantalla y sus botones, y el origen de la serie de firmware de este blog."
         links:
@@ -45,7 +45,7 @@ pages:
     visible: true
     items:
       - question: ¿Cuál es su formación y experiencia?
-        answer: "Grado en Ingeniería de Telecomunicación (Sonido e Imagen) por la Universidad de Alicante, Máster en Ingeniería Acústica por la UPV e investigación predoctoral en la UPV, el CSIC y el Hospital La Fe sobre ultrasonidos y metamateriales acústicos. De abril de 2023 a mayo de 2026, desarrollador de software I+D en Power Electronics: firmware en C sobre STM32 para inversores solares, Modbus RTU/TCP y automatización de pruebas unitarias y en hardware. Abierto a puestos presenciales, remotos o híbridos de firmware, software y QA."
+        answer: "Grado en Ingeniería de Telecomunicación (Sonido e Imagen) por la Universidad de Alicante, Máster en Ingeniería Acústica por la UPV e investigación predoctoral en la UPV, el CSIC y el Hospital La Fe sobre ultrasonidos y metamateriales acústicos. De abril de 2023 a mayo de 2026, desarrollador de software I+D en Power Electronics: firmware en C sobre STM32 para inversores solares, Modbus RTU/TCP y automatización de pruebas unitarias y en hardware. Desde noviembre de 2026, Ingeniero de Verificación y Validación (V&V) de Software de Vuelo en PLD Space."
       - question: ¿Hay una versión descargable de este CV?
         answer: "Sí, en PDF en inglés y en español, cada uno en tres formatos: el de diseño, uno compatible con ATS y uno ATS extendido. Todas las versiones se generan de la misma fuente que esta página, así que nunca discrepan."
 

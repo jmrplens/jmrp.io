@@ -6,7 +6,7 @@
  *
  * The layout is the "sidebar" direction the author picked from the three
  * prototypes (plan/cv-redesign/, 2026-08-26): a full-width header, then two
- * `paracol` columns that FLOW independently across pages — main column
+ * `paracol` columns that FLOW independently across pages: main column
  * (profile, experience, projects, education) at 64%, sidebar (skills with
  * level dots, languages, certificates, compact publications) at 36%. paracol
  * is what AltaCV 1.7.4 itself migrated to: unlike the old marginpar sidebar,
@@ -25,7 +25,7 @@
  * Site typography: Space Grotesk (display, vendored TTF), IBM Plex Sans
  * (body) + IBM Plex Mono, both from TeX Live. Plex is loaded BY FILENAME:
  * the family-name lookup ("IBM Plex Sans SemiBold") silently fails and
- * typesets every bold run in nullfont — the text just disappears from the
+ * typesets every bold run in nullfont, so the text just disappears from the
  * PDF. Filename lookup goes through kpathsea and cannot miss.
  *
  * @module
@@ -53,13 +53,13 @@ export function designPreamble({
   const babelOptions =
     babelLang === "spanish" ? "spanish,es-noshorthands" : babelLang;
   return String.raw`% =====================================================================
-%  CV — José Manuel Requena Plens — Versión diseño (sidebar/paracol)
+%  CV: José Manuel Requena Plens, versión diseño (sidebar/paracol)
 %  GENERADO automáticamente desde src/content/cv/{es,en}.yaml + papers.bib.
 %  NO editar a mano: los cambios se sobrescriben. Editar el YAML + el generador
 %  (scripts/cv/generate-design.mjs). Motor: LuaLaTeX + fontspec.
 % =====================================================================
 % NO \DocumentMetadata here, deliberately: tagging (tagpdf) does not support
-% paracol — the column re-processing re-creates structure objects and the run
+% paracol: the column re-processing re-creates structure objects and the run
 % dies with "\g__tag_struct_N_prop already defined" mid-document. The tagged,
 % accessible documents are the ATS versions; this one keeps /Lang,
 % pdfdisplaydoctitle and the visual design. Re-test when the LaTeX tagging
@@ -84,7 +84,7 @@ export function designPreamble({
 % - a hyphen-compound bullet; 3em clears it without visibly loose lines).
 \emergencystretch=3em
 
-% ---- Site light palette — KEEP-IN-SYNC: light-tokens (src/styles/tokens.css)
+% ---- Site light palette. KEEP-IN-SYNC: light-tokens (src/styles/tokens.css)
 % The redesign's brand is AMBER (#F5A623 on dark); as text on a light page it
 % is the darkened --color-primary #8F5300 (AA), with --accent-hi #C07A10 for
 % decorative fills only. Page background is the site's warm --color-bg.
@@ -98,7 +98,7 @@ export function designPreamble({
 \pagecolor{pagebg}
 
 % hypersetup AFTER the palette: under \DocumentMetadata (pdfmanagement),
-% hyperref resolves urlcolor/linkcolor at \hypersetup time, not lazily —
+% hyperref resolves urlcolor/linkcolor at \hypersetup time, not lazily:
 % with the colors below undefined it aborts with "Unknown color 'accent'".
 \hypersetup{
   hidelinks, colorlinks=true, urlcolor=accent, linkcolor=accent,
@@ -130,7 +130,24 @@ export function designPreamble({
 % ---- helpers ----
 \newcommand{\SkillDots}[1]{{\scriptsize\foreach \i in {1,...,5}{\ifnum\i>#1{\textcolor{border}{\faCircle}}\else{\textcolor{accenthi}{\faCircle}}\fi\,}}}
 \newcommand{\CVDot}{\,\textcolor{accent}{\textbullet}\,}
-\newcommand{\SoftKeepStart}{\par\penalty-200\interlinepenalty=300\relax}
+% A right-aligned date that never splits: when the title leaves no room, the
+% whole date drops to the next line, still flush right (TeXbook, ch. 14). A
+% plain \hfill broke "Nov 2026 - Actualidad" after "Nov".
+\newcommand{\RightDate}[1]{\unskip\nobreak\hfil\penalty50\hskip1em\hbox{}\nobreak\hfill\mbox{#1}}
+% Page breaks. A block (a job, a study, a project, a skill group) is never
+% split: \KeepStart offers a break before it and forbids one inside it, its
+% list included (\CVBulletsBegin). A publication group may run across pages,
+% but each reference moves whole (\CVPubI).
+% Every \color that opens a paragraph comes after \leavevmode. In vertical mode
+% \color leaves a whatsit on the page list, and the glue after it is a legal
+% break: that is how a job's title ended page one with its summary on two.
+% No break is offered right after a section title (\ifcvaftersection), so a
+% title never ends a page without its first block.
+\newif\ifcvaftersection
+\newcommand{\BlockBreak}{\ifcvaftersection\global\cvaftersectionfalse\else\penalty-200\fi}
+\newcommand{\KeepStart}{\par\BlockBreak\interlinepenalty=10000\relax}
+\newcommand{\KeepEnd}{\par\interlinepenalty=0\relax}
+\newcommand{\SoftKeepStart}{\par\BlockBreak\interlinepenalty=300\relax}
 \newcommand{\SoftKeepEnd}{\par\interlinepenalty=0\relax}
 \newcommand{\ContactEntry}[3]{%
   \mbox{{\color{accent}#1}~{\cvmono\footnotesize\ifx\relax#3\relax#2\else\href{#3}{#2}\fi}}\hspace{0.8em plus 0.6em}}
@@ -139,45 +156,45 @@ export function designPreamble({
 \newcommand{\CVSection}[1]{%
   \par\penalty-400\vspace{8pt}%
   {\cvmono\scriptsize\color{muted}//\ }{\displayfont\bfseries\large\color{heading}\MakeUppercase{#1}}\\[-0.55em]
-  {\color{accent}\rule{\linewidth}{1.2pt}}\par\nobreak\vspace{4pt}}
+  {\color{accent}\rule{\linewidth}{1.2pt}}\par\nobreak\vspace{4pt}\global\cvaftersectiontrue}
 \newcommand{\SideSection}[1]{%
   \par\penalty-400\vspace{8pt}%
   {\displayfont\bfseries\color{heading}\MakeUppercase{#1}}\\[-0.6em]
-  {\color{border}\rule{\linewidth}{0.9pt}}\par\nobreak\vspace{3pt}}
+  {\color{border}\rule{\linewidth}{0.9pt}}\par\nobreak\vspace{3pt}\global\cvaftersectiontrue}
 
 % ---- experience ----
 \newcommand{\CVEventStart}[5]{%
-  \SoftKeepStart\vspace{4pt}%
-  {\displayfont\bfseries\color{heading}#1}\hfill{\cvmono\footnotesize\color{muted}#3}\\*
+  \KeepStart\vspace{4pt}%
+  {\displayfont\bfseries\color{heading}#1}\RightDate{\cvmono\footnotesize\color{muted}#3}\\*
   {\small\color{accent}#2}{\small\color{muted}\ifx\relax#5\relax\else\ \textperiodcentered\ #5\fi\ifx\relax#4\relax\else\ \textperiodcentered\ #4\fi}\par\nobreak}
-\newcommand{\CVEventSummary}[1]{{\nobreak\small\color{muted}\itshape #1\par}}
-\newcommand{\CVBulletsBegin}{\nobreak\begin{itemize}[leftmargin=1.05em,itemsep=1pt,topsep=2pt,parsep=0pt,label=\textcolor{accent}{\small\textbullet}]}
+\newcommand{\CVEventSummary}[1]{{\nobreak\small\leavevmode\color{muted}\itshape #1\par}}
+\newcommand{\CVBulletsBegin}{\nobreak\begin{itemize}[leftmargin=1.05em,itemsep=1pt,topsep=2pt,parsep=0pt,beginpenalty=10000,midpenalty=10000,label=\textcolor{accent}{\small\textbullet}]}
 \newcommand{\CVBullet}[1]{\item #1}
 \newcommand{\CVBulletsEnd}{\end{itemize}}
-\newcommand{\CVEventEnd}{\SoftKeepEnd\vspace{2pt}}
+\newcommand{\CVEventEnd}{\KeepEnd\vspace{2pt}}
 
 % ---- projects (metrics line from live GitHub stats, like the ATS CVs) ----
 \newcommand{\CVProject}[4]{%
-  \SoftKeepStart\vspace{3pt}%
-  {\displayfont\bfseries\color{heading}#1}\hfill{\cvmono\footnotesize\color{muted}#2}\par\nobreak
-  \ifx\relax#3\relax\else{\footnotesize\color{muted}#3\par\nobreak}\fi
-  {\small #4\par}\SoftKeepEnd\vspace{2pt}}
+  \KeepStart\vspace{3pt}%
+  {\displayfont\bfseries\color{heading}#1}\RightDate{\cvmono\footnotesize\color{muted}#2}\par\nobreak
+  \ifx\relax#3\relax\else{\footnotesize\leavevmode\color{muted}#3\par\nobreak}\fi
+  {\small #4\par}\KeepEnd\vspace{2pt}}
 
 % ---- education ----
 \newcommand{\CVEdu}[4]{%
-  \SoftKeepStart\vspace{2pt}{\bfseries #1}\hfill{\cvmono\footnotesize\color{muted}#3}\\*
-  {\small\color{muted}#2\ifx\relax#4\relax\else\ \textperiodcentered\ #4\fi}\par\SoftKeepEnd}
+  \KeepStart\vspace{2pt}{\bfseries #1}\RightDate{\cvmono\footnotesize\color{muted}#3}\\*
+  {\small\color{muted}#2\ifx\relax#4\relax\else\ \textperiodcentered\ #4\fi}\par\KeepEnd}
 
 % ---- sidebar: skills / languages / certificates / publications ----
-\newcommand{\CVSkillGroupStart}[1]{\SoftKeepStart\vspace{3pt}{\bfseries\small #1}\par\nobreak\vspace{1pt}\footnotesize}
+\newcommand{\CVSkillGroupStart}[1]{\KeepStart\vspace{3pt}{\bfseries\small #1}\par\nobreak\vspace{1pt}\footnotesize}
 \newcommand{\CVSkillI}[2]{\mbox{#1}\hfill\SkillDots{#2}\\*[0.5pt]}
-\newcommand{\CVSkillGroupEnd}{\par\SoftKeepEnd\normalsize\vspace{1pt}}
+\newcommand{\CVSkillGroupEnd}{\par\KeepEnd\normalsize\vspace{1pt}}
 \newcommand{\CVLang}[2]{{\bfseries #1}\hfill{\footnotesize\color{muted}#2}\\*[0.5pt]}
-\newcommand{\CVCertGroupStart}[1]{\SoftKeepStart\vspace{2pt}{\bfseries\small #1}\par\nobreak\footnotesize\color{muted}\raggedright}
+\newcommand{\CVCertGroupStart}[1]{\SoftKeepStart\vspace{2pt}{\bfseries\small #1}\par\nobreak\footnotesize\leavevmode\color{muted}\raggedright}
 \newcommand{\CVCertI}[3]{{\color{ink}#1} \mbox{(#2, #3)}\\*[0.5pt]}
 \newcommand{\CVCertGroupEnd}{\par\SoftKeepEnd\normalsize\color{ink}}
 \newcommand{\CVPubGroupStart}[1]{\SoftKeepStart\vspace{2pt}{\bfseries\small #1}\par\nobreak\footnotesize\raggedright}
-\newcommand{\CVPubI}[3]{{\color{ink}#1}\ {\color{muted}\textperiodcentered\ \textit{#2}, #3}\par\vspace{1.5pt}}
+\newcommand{\CVPubI}[3]{{\interlinepenalty=10000\leavevmode{\color{ink}#1}\ {\color{muted}\textperiodcentered\ \textit{#2}, #3}\par}\vspace{1.5pt}}
 \newcommand{\CVPubGroupEnd}{\par\SoftKeepEnd\normalsize\vspace{1pt}}
 `;
 }

@@ -3,14 +3,16 @@ basics:
   headline: Firmware & Software Engineer
   location: Valencia, Spain
   availability: On-site, remote or hybrid
+  # Publishes availability and objetivo (job-search signals) when true.
+  showJobSearch: false
   email: jmrplens@gmail.com
   profile: >-
     **Embedded firmware and software engineer** with experience building industrial
     firmware for solar inverters (C, STM32, FreeRTOS) and a solid R&D
     background in acoustics (physics). Focused on low-level optimization, industrial communications
     (Modbus) and hardware test automation. I maintain *open source* projects used
-    by developers worldwide. Targeting **firmware, software and QA** roles,
-    bringing engineering rigor and a focus on quality.
+    by developers worldwide. Currently verifying flight software for space
+    launchers at PLD Space.
   links:
     - { kind: website, label: jmrp.io, url: https://jmrp.io }
     - {
@@ -96,6 +98,42 @@ sections:
   - kind: experience
     title: Experience
     items:
+      - role: Flight Software V&V Engineer
+        org:
+          - { name: PLD Space, short: PLD, url: "https://pldspace.com/en/" }
+        location: Elche, Spain
+        period: Nov 2026 - Present
+        summary: >-
+          Unit-level verification of embedded, real-time flight software (C and
+          C++) for space launchers, within the Flight Software area.
+        bullets:
+          - Design and automation of unit tests from low-level requirements and detailed design.
+          - Stubs, drivers and mocks to isolate components during verification.
+          - Structural coverage (statement, decision and MC/DC) and software quality metrics.
+          - Traceability between requirements, test cases, results and verification evidence.
+          - >-
+            Integration of test campaigns into CI/CD, and verification
+            documentation for software qualification and certification.
+          - "Environment: C, C++, Linux, Git and CI/CD."
+        ats:
+          normal: true
+          org: PLD Space (Payload Aerospace S.A.)
+          # The concise CV prints no summary: these three bullets carry it
+          # and the six bullets above, reworded to fit two pages.
+          bullets:
+            - >-
+              Unit-level verification of embedded, real-time flight software (C
+              and C++) for space launchers: unit tests designed and automated
+              from low-level requirements and detailed design, with stubs,
+              drivers and mocks.
+            - >-
+              Structural coverage (statement, decision and MC/DC), software
+              quality metrics, and traceability between requirements, test
+              cases, results and verification evidence.
+            - >-
+              Test campaigns integrated into CI/CD, and verification
+              documentation for software qualification and certification
+              (C, C++, Linux, Git and CI/CD).
       - role: R&D Software Developer
         org:
           - {

@@ -4,7 +4,7 @@
  * Renders the curriculum vitae from `src/content/cv/{locale}.yaml`
  * (`{ basics, downloads, sections }`). Section bodies are rendered by `kind`.
  *
- * Desktop: 2-column grid — 300 px sticky sidebar + 1 fr main.
+ * Desktop: 2-column grid, 300 px sticky sidebar + 1 fr main.
  * Mobile (< 1024 px): single column; sidebar flows above main content.
  * The CVMenu FAB drawer handles section navigation on all viewports.
  */
@@ -137,9 +137,9 @@ if (projectsSection?.kind === "projects") {
   );
 }
 
-// /cv/ is not the canonical ProfilePage (that's /about/ — see AboutPage.astro)
+// /cv/ is not the canonical ProfilePage (that's /about/, see AboutPage.astro)
 // so it emits a plain WebPage referencing the canonical #person node, plus a
-// SEPARATE Person node that only ADDS occupation/education/credential facts —
+// SEPARATE Person node that only ADDS occupation/education/credential facts,
 // it must never redefine name/jobTitle/description/image/sameAs/knowsAbout,
 // which are now defined once in BaseHead.astro.
 const cvWebPage = {
@@ -151,8 +151,8 @@ const cvWebPage = {
   inLanguage: locale,
   isPartOf: { "@id": WEBSITE_ID },
   mainEntity: { "@id": PERSON_ID },
-  // Every blog post declares a speakable region; the CV — the page an
-  // assistant is most likely to be asked to read out about this person — had
+  // Every blog post declares a speakable region; the CV, the page an
+  // assistant is most likely to be asked to read out about this person, had
   // none. Points at the identity line only: the section grids below are
   // tabular and read badly aloud.
   speakable: {
@@ -179,6 +179,8 @@ const MONTHS: Record<string, string> = {
 
 /**
  * Turns a CV `period` such as `"Apr 2023 - May 2026"` into ISO year-months.
+ * A current position (`"Nov 2026 - Present"`) gets a `startDate` and no
+ * `endDate`, which is how schema.org reads a Role that is still held.
  *
  * Always parsed from the English CV: the Spanish one localizes the month
  * abbreviations, and the dates must be identical in both documents because
@@ -195,8 +197,14 @@ function parsePeriod(period: string | number | undefined): {
   startDate?: string;
   endDate?: string;
 } {
-  const match = /^(\w{3})\s+(\d{4})\s*[-–]\s*(\w{3})\s+(\d{4})$/.exec(
-    String(period ?? ""),
+  const text = String(period ?? "");
+  const current = /^(\w{3})\s+(\d{4})\s*-\s*Present$/.exec(text);
+  if (current) {
+    const start = MONTHS[current[1]];
+    return start ? { startDate: `${current[2]}-${start}` } : {};
+  }
+  const match = /^(\w{3})\s+(\d{4})\s*[-\u{2013}]\s*(\w{3})\s+(\d{4})$/u.exec(
+    text,
   );
   if (!match) return {};
   const [, m1, y1, m2, y2] = match;
@@ -233,12 +241,12 @@ const experienceEs = cvEs.sections.find((s) => s.kind === "experience");
  * carried eight occupations and not a single employer, so "where has this
  * person worked?" was unanswerable from the structured data even though the CV
  * states it (GEO audit 2026-08-22, A7). It also left two entries both named
- * "Predoctoral researcher" with nothing to tell them apart — the dates and the
+ * "Predoctoral researcher" with nothing to tell them apart, the dates and the
  * organization now do.
  *
  * One node per position, naming only the FIRST organization of the entry.
  * Three roles are joint appointments (UPV / CSIC / Hospital La Fe) and the CV
- * lists them in order of primacy, so the first is the employer of record —
+ * lists them in order of primacy, so the first is the employer of record,
  * author's call, and it keeps one employment from reading as three. The
  * abbreviation travels as `alternateName`, which is how "UPV" stays a
  * resolvable alias for "Universitat Politècnica de València".
@@ -251,7 +259,7 @@ const experienceEs = cvEs.sections.find((s) => s.kind === "experience");
  * `hasOccupation` (profile/about.yaml); positions are employments, and live
  * here only.
  *
- * Nothing here is invented — every field comes from the CV.
+ * Nothing here is invented, every field comes from the CV.
  */
 const aboutEntry = await getEntry("profile", "about");
 if (aboutEntry?.data.type !== "about") {
@@ -263,6 +271,11 @@ const aboutPerson = aboutEntry.data.person;
 // `memberships`), so it is not restated here as an employment.
 const membershipNames = new Set(
   aboutPerson.memberships.map((entry) => entry.organization.name),
+);
+// The current position is the canonical node's `worksFor` (BaseHead, every
+// page), so restating it here would give the merged node two Roles for it.
+const employerNames = new Set(
+  aboutPerson.employment.map((entry) => entry.organization.name),
 );
 
 /**
@@ -302,7 +315,12 @@ const cvWorksFor =
         const dates = parsePeriod(job.period);
         const org = job.org?.[0];
         const orgEs = jobEs?.org?.[0];
-        if (!org || membershipNames.has(org.name)) return [];
+        if (
+          !org ||
+          membershipNames.has(org.name) ||
+          employerNames.has(org.name)
+        )
+          return [];
         const summaryEn = job.summary
           ? stripToText(markdownToHtml(job.summary))
           : undefined;
@@ -395,7 +413,7 @@ const cvSchema = [cvWebPage, cvPersonFacts];
 
 /**
  * Link kinds displayed in the sidebar contact block.
- * "orcid" and other academic IDs are intentionally omitted — they belong
+ * "orcid" and other academic IDs are intentionally omitted, they belong
  * in the full profile / publications page, not the sidebar snapshot.
  */
 const SIDEBAR_LINK_KINDS = new Set([
@@ -949,7 +967,7 @@ const faqNode =
   .cv-layout {
     display: grid;
     grid-template-columns: 300px 1fr;
-    gap: var(--space-lg-xl); /* 48px — matches mockup */
+    gap: var(--space-lg-xl); /* 48px, matches mockup */
     align-items: start;
   }
 
@@ -974,7 +992,7 @@ const faqNode =
     display: contents;
   }
 
-  /* Mono eyebrow label — same "// " prefix style as section headings */
+  /* Mono eyebrow label, same "// " prefix style as section headings */
   .cv-sb-eyebrow {
     margin: 0 0 0.8125rem; /* 13px */
     font-family: var(--font-mono);
@@ -1026,7 +1044,7 @@ const faqNode =
     color: var(--color-accent);
   }
 
-  /* Location is static text — override pointer so it stays default */
+  /* Location is static text, override pointer so it stays default */
   .cv-sb-location {
     cursor: default;
   }
@@ -1086,14 +1104,14 @@ const faqNode =
 
   /* ===== Right main column ======================================== */
 
-  /* Profile text — first item in the main column */
+  /* Profile text, first item in the main column */
   .cv-profile {
     margin-bottom: var(--space-lg-xl);
     line-height: 1.65;
     color: var(--color-text);
   }
 
-  /* Emphasis in the profile: heading color (not extra-bold) — limits amber density. */
+  /* Emphasis in the profile: heading color (not extra-bold), limits amber density. */
   .cv-profile :global(strong) {
     font-weight: var(--fw-semibold);
     color: var(--color-text-heading);
@@ -1136,7 +1154,7 @@ const faqNode =
     scroll-margin-top: calc(var(--header-height) + 1rem);
   }
 
-  /* ===== Downloads — format cards ================================= */
+  /* ===== Downloads, format cards ================================= */
   .dl-format {
     padding: var(--space-md);
     background-color: var(--color-surface-2);
@@ -1236,7 +1254,7 @@ const faqNode =
     border-left: 1px solid var(--color-hair);
   }
 
-  /* Desktop: 2-column grid — date column left (130 px) + content right. */
+  /* Desktop: 2-column grid, date column left (130 px) + content right. */
   .timeline-item {
     position: relative;
     display: grid;
@@ -1270,7 +1288,7 @@ const faqNode =
     position: relative;
   }
 
-  /* Mono date — left column in the 2-col grid. */
+  /* Mono date, left column in the 2-col grid. */
   .item-year {
     padding-top: 3px; /* align top with role title cap-height */
     font-family: var(--font-mono);
@@ -1279,7 +1297,7 @@ const faqNode =
     overflow-wrap: break-word; /* allow long date ranges to wrap in 130 px column */
   }
 
-  /* Role / degree heading — display font, 19 px / 500 (mockup spec). */
+  /* Role / degree heading, display font, 19 px / 500 (mockup spec). */
   .item-title {
     margin: 0;
     font-family: var(--font-display);
@@ -1358,7 +1376,7 @@ const faqNode =
   .grid-layout {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
-    gap: 0.875rem; /* 14 px — tight card grid (projects + certs) */
+    gap: 0.875rem; /* 14 px, tight card grid (projects + certs) */
     align-items: start;
   }
 

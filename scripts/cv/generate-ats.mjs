@@ -45,6 +45,7 @@ import {
 } from "./ats-template.mjs";
 import { fetchRepoStats, formatStats, githubSlug } from "./github-stats.mjs";
 import { escapeLatex, markdownToLatex } from "./inline-markdown.mjs";
+import { publishableBasics } from "./job-search.mjs";
 
 const nodeRequire = createRequire(import.meta.url);
 const Cite = nodeRequire("citation-js");
@@ -161,13 +162,38 @@ function entryHead(title, item, profile) {
   return `\\cventry{${markdownToLatex(title)}}{${arg2}}{${arg3}}{${period}}\n`;
 }
 
+/**
+ * Wraps the entries of one section so none is split across pages, with a
+ * page-break opportunity between two entries and none before the first: the
+ * section title stays with its first entry (see `cvkeep` in ats-template.mjs).
+ * Only the extended profile: the concise one must fit two pages, so its
+ * entries may break between bullets, and only `\Needspace` keeps each title
+ * with its first bullet.
+ *
+ * @param {string[]} entries - Rendered entries, in order.
+ * @param {"normal" | "extended"} profile - Which CV is being built.
+ * @returns {string} The section body.
+ */
+function keepEntries(entries, profile) {
+  if (profile === "normal")
+    return entries
+      .map((entry) => `\\Needspace{4\\baselineskip}\n${entry}`)
+      .join("");
+  return entries
+    .map(
+      (entry, index) =>
+        `${index > 0 ? "\\penalty0\n" : ""}\\begin{cvkeep}\n${entry}\\end{cvkeep}\n`,
+    )
+    .join("");
+}
+
 /** Renders a single experience entry. */
 function renderExperience(item, profile) {
   let out = entryHead(item.role, item, profile);
   if (profile === "extended") {
     if (item.summary) out += `${markdownToLatex(item.summary)}\n`;
     for (const note of item.notes ?? [])
-      out += `${markdownToLatex(note)}\\par\n`;
+      out += `${markdownToLatex(note)}\\par\\nopagebreak\n`;
     out += renderItemize(item.bullets);
   } else {
     out += renderItemize(item.ats?.bullets ?? item.bullets);
@@ -182,7 +208,7 @@ function renderEducation(item, profile) {
   if (profile === "extended") {
     if (item.summary) out += `${markdownToLatex(item.summary)}\n`;
     for (const note of item.notes ?? [])
-      out += `${markdownToLatex(note)}\\par\n`;
+      out += `${markdownToLatex(note)}\\par\\nopagebreak\n`;
     out += renderItemize(item.bullets);
     // No line of `documents` links (diploma, academic record) here: Affinda
     // took each "Diploma" label for a degree and invented education entries
@@ -190,7 +216,7 @@ function renderEducation(item, profile) {
   } else {
     const summary = item.ats?.summary ?? item.summary;
     if (summary)
-      out += `{\\color{muted}\\small ${markdownToLatex(summary)}}\\par\n`;
+      out += `{\\leavevmode\\color{muted}\\small ${markdownToLatex(summary)}}\\par\n`;
   }
   out += "\\vspace{2pt}\n";
   return out;
@@ -278,7 +304,7 @@ const projectMacro = (profile) =>
 
 /** Renders a projects section body. */
 function renderProjects(items, profile, statsBySlug, locale) {
-  return items
+  const entries = items
     .filter((p) => !(profile === "normal" && p.ats?.normal === false))
     .map((p) => {
       const firstLink = p.links?.[0];
@@ -296,11 +322,11 @@ function renderProjects(items, profile, statsBySlug, locale) {
       const description =
         (profile === "normal" && p.ats?.summary) || p.description;
       if (description) {
-        out += `${markdownToLatex(description)}\\par\\vspace{4pt}\n`;
+        out += `${markdownToLatex(description)}\\par\\nopagebreak\\vspace{4pt}\n`;
       }
       return out;
-    })
-    .join("\n");
+    });
+  return keepEntries(entries, profile);
 }
 
 /**
@@ -442,7 +468,10 @@ async function fetchProjectStats(sections, locale) {
 export async function buildDocument(locale, profile, options = {}) {
   const meta = META[locale];
   const yamlPath = path.join(REPO_ROOT, `src/content/cv/${locale}.yaml`);
-  const { basics, sections } = yaml.load(fs.readFileSync(yamlPath, "utf8"));
+  const { basics: rawBasics, sections } = yaml.load(
+    fs.readFileSync(yamlPath, "utf8"),
+  );
+  const basics = publishableBasics(rawBasics);
   const statsBySlug = await fetchProjectStats(sections, locale);
 
   let doc = documentPreamble({
@@ -454,6 +483,7 @@ export async function buildDocument(locale, profile, options = {}) {
     pdfSubject: meta.pdfSubject,
     pdfKeywords: meta.pdfKeywords,
     lineSpread: profile === "normal" ? 1 : 1.02,
+    fontSize: profile === "normal" ? "10pt" : "11pt",
   });
 
   const contactParts = [
@@ -499,14 +529,20 @@ export async function buildDocument(locale, profile, options = {}) {
         const items = section.items.filter(
           (it) => !(profile === "normal" && it.ats?.normal === false),
         );
-        doc += items.map((it) => renderExperience(it, profile)).join("");
+        doc += keepEntries(
+          items.map((it) => renderExperience(it, profile)),
+          profile,
+        );
         break;
       }
       case "education": {
         const items = section.items.filter(
           (it) => !(profile === "normal" && it.ats?.normal === false),
         );
-        doc += items.map((it) => renderEducation(it, profile)).join("");
+        doc += keepEntries(
+          items.map((it) => renderEducation(it, profile)),
+          profile,
+        );
         break;
       }
       case "skills": {

@@ -8,6 +8,7 @@ import { load as loadYaml } from "js-yaml";
 
 import {
   educationProperties,
+  employmentRoles,
   localizedValues,
   membershipRoles,
   schoolNode,
@@ -110,6 +111,30 @@ test("membershipRoles states the organization, the role and its years", () => {
   assert.equal("url" in role.memberOf, false);
   assert.deepEqual(role.roleName, localizedValues(pair("Founder", "Fundador")));
   assert.equal(role.endDate, "2018");
+});
+
+test("employmentRoles states the employer, the position and its start", () => {
+  const [role] = employmentRoles([
+    {
+      organization: {
+        name: "Example Space",
+        legalName: "Example S.A.",
+        sameAs: "https://www.wikidata.org/wiki/Q1",
+      },
+      roleName: pair("Engineer", "Ingeniero"),
+      startDate: "2026-11-25",
+    },
+  ]);
+  assert.equal(role["@type"], "OrganizationRole");
+  assert.equal(role.worksFor.name, "Example Space");
+  assert.equal(role.worksFor.legalName, "Example S.A.");
+  assert.equal("url" in role.worksFor, false);
+  assert.deepEqual(
+    role.roleName,
+    localizedValues(pair("Engineer", "Ingeniero")),
+  );
+  assert.equal(role.startDate, "2026-11-25");
+  assert.equal("endDate" in role, false);
 });
 
 test("the real profile/about.yaml names only known schools", () => {

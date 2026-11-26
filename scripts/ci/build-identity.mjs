@@ -2,7 +2,7 @@
 /**
  * Canonical identity document generator.
  *
- * Writes `public/identity/person.jsonld` — the standalone JSON-LD description
+ * Writes `public/identity/person.jsonld`, the standalone JSON-LD description
  * of the `https://jmrp.io/#person` entity, assembled from the same YAML sources
  * BaseHead.astro reads (`site_config/site.yaml`, `profile/about.yaml`,
  * `profile/projects.yaml`) plus the shared Wikidata map in
@@ -12,7 +12,7 @@
  * The five project documentation sites restate this same entity, and they read
  * it at BUILD time from their own CI runners. Fetching it from jmrp.io would
  * route those builds through this server's Cloudflare / CrowdSec / MikroTik
- * stack — the one place where a blocked runner IP would silently degrade every
+ * stack, the one place where a blocked runner IP would silently degrade every
  * downstream site to a stale snapshot. Committing the artifact means it is also
  * served by GitHub:
  *
@@ -47,7 +47,7 @@
  * and splice this node into their `@graph` verbatim, so they inherit both
  * labels instead of hard-coding an English one next to Spanish prose. They
  * consume the node as JSON-LD only (none renders these values as display
- * text), so the array shape is safe for them — verified 2026-08-02 across
+ * text), so the array shape is safe for them, verified 2026-08-02 across
  * gitlab-mcp-server, phonometry, cs-routeros-bouncer, Cloudflare-DNS-Updater,
  * libgen-mcp and jmrplens.github.io.
  *
@@ -77,6 +77,7 @@ import { load as loadYaml } from "js-yaml";
 
 import {
   educationProperties,
+  employmentRoles,
   localizedValues,
   membershipRoles,
 } from "../utils/person-schema.mjs";
@@ -102,7 +103,7 @@ const IMAGE = {
 };
 
 /**
- * Wikidata's canonical entity URI. Plain `http:` by design — it is the Linked
+ * Wikidata's canonical entity URI. Plain `http:` by design, it is the Linked
  * Data identifier, not a fetchable link. Mirrors `wikidataEntityUri` in
  * `src/utils/wikidata.ts`.
  *
@@ -116,7 +117,7 @@ const wikidataEntityUri = (qid) => `http://www.wikidata.org/entity/${qid}`;
  * Whether a URL points at ORCID, matched on the parsed hostname.
  *
  * A substring test (`url.includes("orcid.org")`) would also accept
- * `https://evil.example/?ref=orcid.org` — flagged by CodeQL as
+ * `https://evil.example/?ref=orcid.org`, flagged by CodeQL as
  * `js/incomplete-url-substring-sanitization`. The input here is a
  * repo-committed YAML list rather than user input, so it was not exploitable,
  * but the hostname check is both correct and free. Kept identical to the same
@@ -161,12 +162,12 @@ function buildIdentityDocument() {
   );
   // Canonical Wikidata labels, so the Thing nodes here carry exactly the same
   // `name` as the ones BaseHead.astro emits for the same `@id`. Without this
-  // the two implementations drift and schema-validation.spec.ts fails — which
+  // the two implementations drift and schema-validation.spec.ts fails, which
   // is precisely how this line came to exist.
   const wikidataLabels = JSON.parse(
     readFileSync(join(ROOT, "src/data/wikidata-labels.json"), "utf8"),
   );
-  // Must stay identical to LABEL_OVERRIDES in src/utils/wikidata.ts — see the
+  // Must stay identical to LABEL_OVERRIDES in src/utils/wikidata.ts, see the
   // rationale there. A .astro component cannot be imported from a plain Node
   // script, which is why this small table is duplicated rather than shared;
   // schema-validation.spec.ts compares the two outputs and fails on drift.
@@ -234,6 +235,7 @@ function buildIdentityDocument() {
     },
   }));
 
+  const employment = employmentRoles(about.person.employment ?? []);
   const memberships = membershipRoles(about.person.memberships ?? []);
 
   const sameAs = [
@@ -265,10 +267,10 @@ function buildIdentityDocument() {
     //
     // A plain URL, not the `#profile` node reference: the six downstream sites
     // splice this document into a graph that does NOT contain that node, so an
-    // `@id` reference would dangle for them. Unprefixed (EN) on purpose — the
+    // `@id` reference would dangle for them. Unprefixed (EN) on purpose, the
     // entity is locale-neutral, like `#person` and `#website` themselves.
     mainEntityOfPage: `${SITE_URL}/about/`,
-    // The editorial & corrections policy published at /about/#editorial —
+    // The editorial & corrections policy published at /about/#editorial,
     // verification, corrections and AI-assistance disclosure. Stated in the
     // graph rather than only in prose, so the six downstream sites that splice
     // this node in inherit the signal too.
@@ -288,7 +290,7 @@ function buildIdentityDocument() {
     // `recipient` names who receives the donation, and it is not optional
     // politeness. schema.org defines `potentialAction` as "an idealized action
     // in which this thing would play an OBJECT role", and a DonateAction's
-    // object is the thing donated — so the action on its own said the person
+    // object is the thing donated, so the action on its own said the person
     // was the donated good. schema.org's own DonateAction example ("John
     // donated $10 to Steve") puts the human in `recipient`, which is the only
     // property that states the receiving end; there is no inverse property to
@@ -298,7 +300,7 @@ function buildIdentityDocument() {
     // would resolve the `@id` "only by luck". They resolve it by construction:
     // all six strip `@context` and splice THIS node into their graph verbatim,
     // keeping this same `@id`, so the reference names the very node that
-    // carries it — exactly like `image.creator` below, which has shipped in
+    // carries it, exactly like `image.creator` below, which has shipped in
     // this shape all along.
     // KEEP-IN-SYNC: src/components/layout/BaseHead.astro.
     ...(about.person.funding?.length > 0 && {
@@ -342,12 +344,12 @@ function buildIdentityDocument() {
       // The portrait is deliberately NOT under the CC BY 4.0 that covers the
       // post covers: it identifies a person rather than illustrating an
       // article, and a free-reuse grant on a face is the one that cannot be
-      // walked back. Anchors are the English slugs on purpose — this node is
+      // walked back. Anchors are the English slugs on purpose, this node is
       // the canonical identity document six external sites splice in verbatim,
       // so it must not vary by the locale that happened to render it.
       license: `${SITE_URL}/license/#portrait`,
       acquireLicensePage: `${SITE_URL}/license/#permission`,
-      // Numeric QuantitativeValue, not a quoted string — schema.org types
+      // Numeric QuantitativeValue, not a quoted string, schema.org types
       // MediaObject width/height as Distance | QuantitativeValue, never Text.
       // E37 = pixel (UN/CEFACT). Must mirror BaseHead.astro exactly: the
       // schema-validation spec compares this document to the rendered node.
@@ -363,6 +365,7 @@ function buildIdentityDocument() {
       },
     },
     ...educationProperties(about.person.education ?? []),
+    ...(employment.length > 0 && { worksFor: employment }),
     ...(memberships.length > 0 && { memberOf: memberships }),
     ...(occupations.length > 0 && { hasOccupation: occupations }),
     ...(about.person.knowsLanguage && {
@@ -388,7 +391,7 @@ function buildIdentityDocument() {
     ...(orcidId && {
       // Array, not a bare object: the entity must be able to carry more than one
       // identifier without silently dropping all but the first. Mirrors the same
-      // shape in BaseHead.astro — the two are compared in schema-validation.spec.ts.
+      // shape in BaseHead.astro, the two are compared in schema-validation.spec.ts.
       identifier: [
         {
           "@type": "PropertyValue",

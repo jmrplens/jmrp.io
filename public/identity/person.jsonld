@@ -315,6 +315,29 @@
       "dateCreated": "2009"
     }
   ],
+  "worksFor": [
+    {
+      "@type": "OrganizationRole",
+      "worksFor": {
+        "@type": "Organization",
+        "name": "PLD Space",
+        "legalName": "Payload Aerospace S.A.",
+        "url": "https://pldspace.com/en/",
+        "sameAs": "https://www.wikidata.org/wiki/Q21076153"
+      },
+      "roleName": [
+        {
+          "@value": "Flight Software V&V Engineer",
+          "@language": "en"
+        },
+        {
+          "@value": "Ingeniero de Verificación y Validación (V&V) de Software de Vuelo",
+          "@language": "es"
+        }
+      ],
+      "startDate": "2026-11-25"
+    }
+  ],
   "memberOf": [
     {
       "@type": "OrganizationRole",

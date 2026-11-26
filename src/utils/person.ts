@@ -8,6 +8,7 @@ import type {
 
 import {
   educationProperties as buildEducationProperties,
+  employmentRoles as buildEmploymentRoles,
   localizedValues as tagLanguages,
   membershipRoles as buildMembershipRoles,
   SCHOOLS as SCHOOL_NODES,
@@ -17,7 +18,7 @@ import {
  * A JSON-LD language-tagged literal: `{ "@value": …, "@language": … }`.
  *
  * `schema-dts` models every `Text`-valued property as a bare `string`, so it
- * rejects this shape — but the shape is not an extension, it is core JSON-LD
+ * rejects this shape, but the shape is not an extension, it is core JSON-LD
  * 1.1 (§4.2.4 "Language-Tagged Strings") and plain RDF. The library's types are
  * simply narrower than the specification they describe; Google's own
  * documentation shows language-tagged values for multilingual entities.
@@ -25,7 +26,7 @@ import {
  * Declared here, once, so the widening is a named and explained concept rather
  * than an `as unknown as` scattered across the schema builders. Use it ONLY for
  * properties that genuinely carry one value per language on a single `@id`
- * (`jobTitle`, `description`, `Occupation.name`) — never to smuggle an
+ * (`jobTitle`, `description`, `Occupation.name`), never to smuggle an
  * otherwise ill-typed value past the checker.
  *
  * A `Multilingual<T> = T | LanguageTaggedValue[]` alias was tried and removed: the
@@ -64,7 +65,7 @@ export const WEBSITE_ID = "https://jmrp.io/#website";
  * origin at a fixed path.
  *
  * It must NOT be an `import`ed asset. Astro fingerprints those, so a
- * `/_astro/mehome.<hash>.webp` URL changes on every deploy — fine for this
+ * `/_astro/mehome.<hash>.webp` URL changes on every deploy, fine for this
  * site, which regenerates it, but poison for the five project documentation
  * sites that restate this same `@id`: a copied hash 404s the moment jmrp.io
  * rebuilds. That is exactly how Cloudflare-DNS-Updater ended up advertising a
@@ -73,7 +74,7 @@ export const WEBSITE_ID = "https://jmrp.io/#website";
  * `public/identity/avatar.png` satisfies both constraints at once: it is
  * copied verbatim, so the URL is as stable across deploys as the GitHub avatar
  * endpoint it replaces, and the identity it advertises is now hosted by the
- * entity that claims it, next to `/identity/person.jsonld` — which a consumer
+ * entity that claims it, next to `/identity/person.jsonld`, which a consumer
  * already has to reach this origin to fetch.
  *
  * Site-root-relative on purpose: consumers absolutize it against the site URL
@@ -127,6 +128,32 @@ export interface EducationEntry {
     category: string;
     eqfLevel: number;
   };
+}
+
+/** One `employment` entry of `profile/about.yaml`: a position still held. */
+export interface EmploymentEntry {
+  organization: {
+    name: string;
+    legalName?: string;
+    url?: string;
+    sameAs?: string;
+  };
+  roleName: { en: string; es: string };
+  startDate: string;
+}
+
+/**
+ * The current employments as the `#person`'s `worksFor`, one dated Role each,
+ * built by the shared rule in `scripts/utils/person-schema.mjs`.
+ *
+ * @param employment - `person.employment` from `profile/about.yaml`.
+ * @returns The `worksFor` list (empty when there is none).
+ */
+export function employmentRoles(employment: readonly EmploymentEntry[]) {
+  return buildEmploymentRoles(employment) as OrganizationRole<
+    Organization,
+    "worksFor"
+  >[];
 }
 
 /** One `memberships` entry of `profile/about.yaml`. */
