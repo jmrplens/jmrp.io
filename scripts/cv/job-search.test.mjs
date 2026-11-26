@@ -22,5 +22,16 @@ test("hides them when showJobSearch is false", () => {
 
 test("keeps them when showJobSearch is true", () => {
   const shown = { ...basics, showJobSearch: true };
-  assert.deepEqual(publishableBasics(shown), shown);
+  // Compared with a separate copy: comparing with `shown` itself would pass
+  // even if the function deleted the fields in place.
+  assert.deepEqual(publishableBasics(shown), {
+    ...basics,
+    showJobSearch: true,
+  });
+});
+
+test("never changes the object it is given", () => {
+  const input = { ...basics, showJobSearch: false };
+  publishableBasics(input);
+  assert.deepEqual(input, { ...basics, showJobSearch: false });
 });
